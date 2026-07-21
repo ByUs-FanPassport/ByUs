@@ -25,7 +25,7 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "off",
-    screenshot: "only-on-failure",
+    screenshot: "off",
     video: "off",
   },
   projects: [
