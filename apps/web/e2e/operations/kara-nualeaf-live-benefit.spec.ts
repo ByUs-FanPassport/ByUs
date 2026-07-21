@@ -86,6 +86,10 @@ test.describe("KARA × NUALEAF linked Dev operational journey", () => {
       expect(activation.status(), await activation.text()).toBe(201);
     }
 
+    await page.goto("/");
+    await page.evaluate((accessToken) => {
+      localStorage.setItem("privy:token", JSON.stringify(accessToken));
+    }, token);
     await page.goto(`/live/${liveSlug}?locale=ko`);
     const youtube = page.getByRole("link", { name: /YouTube LIVE 입장/ }).first();
     await expect(youtube).toHaveAttribute("href", live.watch.url);

@@ -23,6 +23,14 @@ const rawBenefitSchema = benefitCatalogItemSchema
   .omit({ state: true, applicationStatus: true })
   .extend({ available: z.boolean() });
 
+function normalizeExternalDelivery<T>(value: T): T {
+  if (!value || typeof value !== "object") return value;
+  const record = value as Record<string, unknown>;
+  return (record.deliveryType === "external_link"
+    ? { ...record, deliveryType: "external_url" }
+    : value) as T;
+}
+
 export type BenefitFailureCode =
   | "BENEFIT_NOT_FOUND"
   | "BENEFIT_LOCKED"
@@ -114,7 +122,7 @@ export class DefaultBenefitRepository implements BenefitRepository {
         input.locale,
         input.now,
       )
-    ).map((item) => rawBenefitSchema.parse(item));
+    ).map((item) => rawBenefitSchema.parse(normalizeExternalDelivery(item)));
     const viewer = input.appUserId
       ? await this.source.getEligibility(input.appUserId, input.celebritySlug)
       : null;
@@ -153,7 +161,7 @@ export class DefaultBenefitRepository implements BenefitRepository {
     let projected: BenefitClaimResponse;
     try {
       projected = benefitClaimResponseSchema.parse(
-        await this.source.claim(input),
+        normalizeExternalDelivery(await this.source.claim(input)),
       );
     } catch (error) {
       if (error instanceof BenefitRepositoryError) throw error;
@@ -195,9 +203,10 @@ export class DefaultBenefitRepository implements BenefitRepository {
     const raw = await this.source.application(input);
     if (raw === null) return null;
     try {
-      const record = raw as { claim?: { deliveryType?: string } | null };
-      if (record.claim?.deliveryType === "external_link")
-        record.claim.deliveryType = "external_url";
+      const sourceRecord = raw as { claim?: Record<string, unknown> | null };
+      const record = sourceRecord.claim
+        ? { ...sourceRecord, claim: normalizeExternalDelivery(sourceRecord.claim) }
+        : sourceRecord;
       const projected = benefitOwnedApplicationResponseSchema.parse(record);
       if (projected.claim?.deliveryType === "external_url")
         return {

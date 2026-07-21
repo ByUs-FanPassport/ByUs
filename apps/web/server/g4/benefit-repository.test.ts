@@ -70,6 +70,20 @@ describe("benefit repository", () => {
     expect(JSON.stringify(result)).not.toContain("deliveryValue");
   });
 
+  it("normalizes the database external_link enum at the public catalog boundary", async () => {
+    const repository = new DefaultBenefitRepository(
+      source({ getPublished: vi.fn(async () => [{ ...raw, deliveryType: "external_link" }]) }),
+    );
+    await expect(
+      repository.list({
+        celebritySlug: "kara",
+        locale: "ko",
+        appUserId: "owner",
+        now: new Date("2026-07-21T12:00:00Z"),
+      }),
+    ).resolves.toMatchObject({ benefits: [{ deliveryType: "external_url" }] });
+  });
+
   it("returns opaque null when benefit is absent or unpublished", async () => {
     const repository = new DefaultBenefitRepository(
       source({ findCelebritySlug: vi.fn(async () => null) }),
@@ -90,7 +104,7 @@ describe("benefit repository", () => {
         claim: vi.fn(async () => ({
           claimId: "22222222-2222-4222-8222-222222222222",
           benefitId: id,
-          deliveryType: "external_url",
+          deliveryType: "external_link",
           deliveryValue: "https://example.com/reward",
           claimedAt: "2026-07-21T12:00:00.000Z",
           replayed: true,
