@@ -26,6 +26,20 @@ const reservation = {
   },
 };
 
+const attendanceResult = {
+  attendance: {
+    id: "22222222-2222-4222-8222-222222222222",
+    liveEventId: "819b52d9-62c3-450c-b3dc-78d84d2238c6",
+    attendedAt: "2026-07-24T12:10:00.000Z",
+    scorePoints: 3,
+    stamp: {
+      id: "44444444-4444-4444-8444-444444444444",
+      businessStatus: "issued",
+      mintStatus: "queued",
+    },
+  },
+};
+
 function payload(primaryAction = "reserve", withReservation = false) {
   return {
     live: {
@@ -114,5 +128,85 @@ describe("LiveEventScreen", () => {
     expect(watch).toHaveAttribute("rel", "noopener noreferrer");
     fireEvent.click(watch);
     await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe("/live/kara-nualeaf?locale=ko#fan-code"));
+  });
+
+  it("posts the normalized Fan Code with an idempotency header and shows Attendance Stamp +3", async () => {
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    livePayload.live.watch = { available: true, url: "https://youtube.com/live/abc123" };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(livePayload), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(attendanceResult), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const input = await screen.findByRole("textbox", { name: "Fan Code 입력" });
+    fireEvent.change(input, { target: { value: " kara 2026 " } });
+    fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
+
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
+    expect(screen.getByText("Attendance Stamp와 Fan Score +3이 기록되었습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /설문 참여/ })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=ko");
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/live-events/kara-nualeaf/attendance");
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({
+      method: "POST",
+      headers: expect.objectContaining({ "content-type": "application/json", "idempotency-key": expect.any(String) }),
+      body: JSON.stringify({ code: "KARA2026" }),
+    }));
+    expect(screen.queryByRole("textbox", { name: "Fan Code 입력" })).not.toBeInTheDocument();
+  });
+
+  it("supports retroactive attendance without a reservation and clears an invalid code", async () => {
+    const endedPayload = payload("live_ended", false);
+    endedPayload.live.effectiveStatus = "ended";
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(endedPayload), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "ATTENDANCE_CODE_INVALID" } }), { status: 422 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
+    const input = await screen.findByRole("textbox", { name: "Enter Fan Code" });
+    fireEvent.change(input, { target: { value: "NOPE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Verify attendance" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("That Fan Code isn’t valid");
+    expect(input).toHaveValue("");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a rate-limit countdown and disables further attempts", async () => {
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(livePayload), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "ATTENDANCE_RATE_LIMITED" } }), { status: 429, headers: { "retry-after": "60" } }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const input = await screen.findByRole("textbox", { name: "Fan Code 입력" });
+    fireEvent.change(input, { target: { value: "KARA2026" } });
+    fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/1:00 후 다시 시도/);
+    expect(input).toBeDisabled();
+  });
+
+  it("reuses the idempotency key for a safe network retry without persisting the Fan Code", async () => {
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(livePayload), { status: 200 }))
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce(new Response(JSON.stringify(attendanceResult), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const input = await screen.findByRole("textbox", { name: "Fan Code 입력" });
+    fireEvent.change(input, { target: { value: "KARA2026" } });
+    fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("지금은 출석을 확인할 수 없어요");
+    expect(input).toHaveValue("KARA2026");
+
+    fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
+    expect(await screen.findByText("이미 완료한 출석 기록을 안전하게 확인했어요.")).toBeInTheDocument();
+    expect((fetchMock.mock.calls[1][1]?.headers as Record<string, string>)["idempotency-key"])
+      .toBe((fetchMock.mock.calls[2][1]?.headers as Record<string, string>)["idempotency-key"]);
+    expect(sessionStorage.getItem("KARA2026")).toBeNull();
   });
 });

@@ -6,6 +6,7 @@
 }
 
 .page :where(a, button):focus-visible,
+.page input:focus-visible,
 .fanCode:focus-visible {
   outline: 3px solid oklch(18% 0 0);
   outline-offset: 3px;
@@ -227,19 +228,84 @@
 .journey small { color: oklch(48% 0 0); font-size: 12px; font-weight: 550; line-height: 1.5; }
 
 .fanCode {
-  display: flex;
-  gap: 20px;
-  align-items: center;
   margin: 0 4px 64px;
-  padding: 24px;
+  padding: 28px;
   border: 1px solid oklch(90% 0 0);
-  border-radius: 12px;
+  border-radius: 16px;
   transition: background 240ms cubic-bezier(.2, 0, 0, 1), border-color 240ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.fanCode > div:first-child { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: #f6f6f5; }
 .fanCode h2 { margin-bottom: 4px; font-size: 20px; }
 .fanCode[data-return-focus="true"] { border-color: oklch(18% 0 0); background: oklch(97.5% 0 0); }
+
+.fanCodeContent { display: flex; flex-direction: column; gap: 24px; }
+.fanCodeIntro { display: flex; gap: 16px; align-items: center; }
+.fanCodeIcon { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: #f6f6f5; }
+.fanCodeIcon svg { width: 22px; height: 22px; }
+.fanCodeForm { display: flex; flex-direction: column; gap: 8px; }
+.fanCodeForm label { font-size: 14px; font-weight: 750; }
+.fanCodeControl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.fanCodeControl input {
+  min-width: 0;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid oklch(76% 0 0);
+  border-radius: 12px;
+  color: oklch(18% 0 0);
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.fanCodeControl input::placeholder { color: oklch(43% 0 0); font-size: 14px; font-weight: 550; letter-spacing: 0; text-transform: none; }
+.fanCodeControl input[aria-invalid="true"] { border-color: oklch(45% .18 25); }
+.fanCodeControl button,
+.attendanceAction,
+.surveyAction {
+  display: inline-flex;
+  min-height: 52px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: oklch(18% 0 0);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 160ms cubic-bezier(.2, 0, 0, 1), transform 160ms cubic-bezier(.2, 0, 0, 1);
+}
+.fanCodeControl button:hover, .attendanceAction:hover, .surveyAction:hover { background: oklch(25% 0 0); }
+.fanCodeControl button:active, .attendanceAction:active, .surveyAction:active { transform: translateY(1px); }
+.fanCodeControl button:disabled { background: oklch(90% 0 0); color: oklch(43% 0 0); cursor: not-allowed; }
+.attendanceAction { align-self: flex-start; }
+.attendanceAction svg, .surveyAction svg { width: 18px; height: 18px; }
+.inputHelp { font-size: 12px !important; line-height: 1.5 !important; }
+.attendanceError { color: oklch(42% .18 25) !important; font-size: 13px !important; font-weight: 650 !important; line-height: 1.5 !important; }
+.attendanceNotice { display: flex; align-items: center; gap: 8px; color: oklch(43% 0 0); font-size: 14px !important; font-weight: 650 !important; }
+.attendanceNotice svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.attendanceGate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+
+.attendanceSuccess { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 32px; align-items: center; }
+.attendanceStampWrap { position: relative; }
+.attendanceStamp { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); animation: stamp-arrive 480ms cubic-bezier(.16, 1, .3, 1) both; }
+.attendanceStampWrap span { position: absolute; right: 4px; bottom: 12px; display: grid; min-width: 52px; height: 52px; place-items: center; border-radius: 999rem; background: oklch(18% 0 0); color: #fff; font-size: 18px; font-weight: 850; animation: score-arrive 360ms 180ms cubic-bezier(.16, 1, .3, 1) both; }
+.attendanceSuccessCopy { display: flex; flex-direction: column; align-items: flex-start; }
+.attendanceSuccessCopy .attendanceEyebrow { margin-bottom: 8px; color: oklch(18% 0 0); font-size: 13px; font-weight: 800; }
+.attendanceSuccessCopy h2 { margin-bottom: 8px; font-size: 24px; }
+.attendanceSuccessCopy .replayNote { margin-top: 8px; font-size: 13px; }
+.surveyAction { margin-top: 20px; }
+
+@keyframes stamp-arrive { from { opacity: 0; transform: scale(.88) rotate(-3deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes score-arrive { from { opacity: 0; transform: translateY(8px) scale(.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 .identity {
   position: sticky;
@@ -333,6 +399,15 @@
   .journey li { min-height: auto; display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; }
   .journey small { grid-column: 2; }
   .fanCode { margin: 0 0 48px; padding: 20px; }
+  .fanCodeIntro { align-items: flex-start; }
+  .fanCodeControl { grid-template-columns: 1fr; }
+  .fanCodeControl button, .attendanceAction, .surveyAction { width: 100%; }
+  .attendanceSuccess { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+  .attendanceStampWrap { width: min(220px, 72%); margin: 0 auto; }
+  .attendanceSuccessCopy { align-items: stretch; }
+  .attendanceSuccessCopy .attendanceEyebrow { text-align: center; }
+  .attendanceSuccessCopy h2 { font-size: 22px; text-align: center; }
+  .attendanceSuccessCopy > p { text-align: center; }
   .identity { grid-template-columns: 56px minmax(0, 1fr) 44px; }
   .identity img { width: 56px; height: 56px; }
   .dialog { padding: 32px 20px 20px; }
