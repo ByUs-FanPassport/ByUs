@@ -1,0 +1,17 @@
+.page { display: grid; min-height: 100svh; padding: 24px 16px; place-items: center; background: #fff; color: oklch(18% 0 0); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.panel { display: grid; width: min(100%, 460px); gap: 28px; padding: 32px 24px; border: 1px solid oklch(93% 0 0); border-radius: 16px; box-shadow: 0 1px 2px oklch(18% 0 0 / .05), 0 4px 12px oklch(18% 0 0 / .03); }
+.brand { display: inline-flex; width: max-content; min-height: 44px; align-items: center; }
+.copy { display: grid; gap: 12px; }
+.copy h1 { max-width: 12ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.035em; line-height: 1.08; text-wrap: balance; }
+.copy p, .context, .error { margin: 0; font-size: 14px; line-height: 1.6; text-wrap: pretty; }
+.copy p, .context { color: oklch(48% 0 0); }
+.googleButton { display: flex; width: 100%; min-height: 52px; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 20px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff,#fff) padding-box, linear-gradient(125deg,oklch(68% .22 18),oklch(62% .25 340),oklch(56% .22 285)) border-box; color: oklch(45% .22 315); cursor: pointer; font-family: "Google Sans", Roboto, Arial, sans-serif; font-size: 15px; font-weight: 600; }
+.googleButton span { flex: 1; text-align: center; }
+.googleButton svg { width: 18px; height: 18px; flex: none; }
+.googleButton:disabled { cursor: wait; opacity: .55; }
+.googleButton:focus-visible, .brand:focus-visible, .backLink:focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+.context { text-align: center; }
+.error { padding: 12px; border-radius: 12px; background: oklch(96% .025 20); color: oklch(38% .16 20); font-weight: 650; }
+.backLink { display: inline-flex; min-height: 44px; align-items: center; justify-self: center; color: oklch(48% 0 0); font-size: 14px; font-weight: 650; }
+@media (min-width: 48rem) { .panel { padding: 40px; } .copy h1 { font-size: 40px; } }
+@media (prefers-reduced-motion: reduce) { .page * { transition-duration: .01ms !important; } }

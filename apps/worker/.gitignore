@@ -1,0 +1,7 @@
+dist/
+dist-lambda/
+lambda-package.zip
+node_modules/
+.env
+.env.*
+!.env.example

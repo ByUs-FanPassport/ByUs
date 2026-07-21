@@ -1,0 +1,78 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Private/local documentation
+/docs/
+
+# OS and editor files
+.DS_Store
+.worktrees/
+
+# Dependencies
+node_modules/
+
+# JavaScript / TypeScript build and test output
+dist/
+build/
+.next/
+.turbo/
+playwright-report/
+test-results/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Deployment tool state
+.vercel/
+
+# Solidity / Foundry build output
+/contracts/out/
+/contracts/cache/
+/contracts/cache_forge/
+/contracts/broadcast/
+/contracts/artifacts/
+
+# Local AI and design-tool workspaces
+/.agents/
+/.claude-design/
+/.codex/
+/.impeccable/
+/.nexus/
+/.omx/
+/.stitch/
+/.superpowers/
+/apps/*/.agents/
+skills-lock.json
+**/skills-lock.json
+
+# Non-runtime design exploration and generated deliverables
+/design/
+/design.md
+/artifacts/
+/outputs/
+/tmp/
+/design-preview.html
+/design-qa.md
+/apps/*/design/
+/apps/*/src/design-lab/
+/apps/*/public/previews/
+
+# Non-production prototype app
+/apps/fan-web/
+
+# Design-generation and review scripts
+/scripts/build-byus-system-candidates.mjs
+/scripts/build-slides14-41-deliverables.mjs
+/scripts/check-byus-design-docs.mjs
+/scripts/generate-baseline.py
+/scripts/verify-byus-non-mutation.mjs
+/scripts/write-byus-visual-review.mjs
+
+# Local product brief
+/PRODUCT.md
+
+# Accidental CLI output
+/--full-page

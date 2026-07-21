@@ -1,0 +1,29 @@
+{
+  "name": "@byus/worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "build:lambda": "node scripts/build-lambda.mjs",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.901.0",
+    "@supabase/supabase-js": "2.110.7",
+    "viem": "2.55.4",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.13",
+    "esbuild": "^0.25.11",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}
