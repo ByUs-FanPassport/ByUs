@@ -10,6 +10,7 @@ export type BenefitAdminDependencies = {
     correlationId: string;
   }): Promise<AdminSession>;
   repository: BenefitAdminRepository;
+  invalidatePublicContent(): void;
 };
 const uuid = z.string().uuid(),
   instant = z.string().datetime({ offset: true });
@@ -169,6 +170,7 @@ export function createPostBenefitAdminHandler(d: BenefitAdminDependencies) {
           p.action,
           p.action === "archive" ? p.reason : undefined,
         );
+        d.invalidatePublicContent();
         return json({ ok: true }, 200);
       }
       if (p.action === "decide")

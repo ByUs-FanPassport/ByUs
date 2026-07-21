@@ -1,19 +1,24 @@
 import "server-only";
 
-import { parseContentLocale, parsePublishedCelebritySlug } from "../content/content-domain";
+import { publicContentCacheHeaders } from "../cache/public-content-cache";
+import {
+  parseContentLocale,
+  parsePublishedCelebritySlug,
+} from "../content/content-domain";
 import type { PublicQuizIntroRepository } from "./public-quiz-intro-repository";
 
-export const PUBLIC_CONTENT_CACHE_CONTROL =
-  "public, max-age=0, s-maxage=60, stale-while-revalidate=300";
-
-function json(body: unknown, status: number): Response {
+function json(body: unknown, status: number, cacheable = false): Response {
   return Response.json(body, {
     status,
-    headers: { "cache-control": PUBLIC_CONTENT_CACHE_CONTROL },
+    headers: cacheable
+      ? publicContentCacheHeaders()
+      : { "cache-control": "private, no-store" },
   });
 }
 
-export function createPublicQuizIntroHandler(repository: PublicQuizIntroRepository) {
+export function createPublicQuizIntroHandler(
+  repository: PublicQuizIntroRepository,
+) {
   return async function GET(
     request: Request,
     input: { slug: string },
@@ -27,7 +32,9 @@ export function createPublicQuizIntroHandler(repository: PublicQuizIntroReposito
 
     let locale;
     try {
-      locale = parseContentLocale(new URL(request.url).searchParams.get("locale") ?? "ko");
+      locale = parseContentLocale(
+        new URL(request.url).searchParams.get("locale") ?? "ko",
+      );
     } catch {
       return json({ error: "invalid_locale" }, 400);
     }
@@ -35,7 +42,7 @@ export function createPublicQuizIntroHandler(repository: PublicQuizIntroReposito
     try {
       const intro = await repository.findBySlug({ slug, locale });
       if (!intro) return json({ error: "content_not_found" }, 404);
-      return json({ intro }, 200);
+      return json({ intro }, 200, true);
     } catch {
       return json({ error: "content_unavailable" }, 503);
     }

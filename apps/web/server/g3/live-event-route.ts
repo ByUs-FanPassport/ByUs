@@ -4,6 +4,7 @@ import { AuthError } from "../../features/auth/domain/auth-errors";
 import { parseLiveLocale } from "../../features/live/domain/live-event";
 import { FanAuthUnavailableError } from "../fan-auth/fan-auth-gate";
 import type { LiveEventRepository } from "./live-event-repository";
+import { publicContentCacheHeaders } from "../cache/public-content-cache";
 
 export interface LiveEventRouteDependencies {
   repository: LiveEventRepository;
@@ -11,7 +12,11 @@ export interface LiveEventRouteDependencies {
   now(): Date;
 }
 
-function response(code: string, status: number, authenticated = false): Response {
+function response(
+  code: string,
+  status: number,
+  authenticated = false,
+): Response {
   return Response.json(
     { error: { code } },
     {
@@ -19,22 +24,29 @@ function response(code: string, status: number, authenticated = false): Response
       headers: authenticated
         ? { "cache-control": "private, no-store", vary: "Authorization" }
         : {
-            "cache-control": "public, max-age=0, s-maxage=30, stale-while-revalidate=60",
+            ...publicContentCacheHeaders(),
             vary: "Authorization",
           },
     },
   );
 }
 
-export function createGetLiveEventHandler(dependencies: LiveEventRouteDependencies) {
-  return async function GET(request: Request, input: { slug: string }): Promise<Response> {
+export function createGetLiveEventHandler(
+  dependencies: LiveEventRouteDependencies,
+) {
+  return async function GET(
+    request: Request,
+    input: { slug: string },
+  ): Promise<Response> {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.slug)) {
       return response("LIVE_NOT_FOUND", 404);
     }
 
     let locale;
     try {
-      locale = parseLiveLocale(new URL(request.url).searchParams.get("locale") ?? "ko");
+      locale = parseLiveLocale(
+        new URL(request.url).searchParams.get("locale") ?? "ko",
+      );
     } catch {
       return response("INVALID_LOCALE", 400);
     }
@@ -68,7 +80,7 @@ export function createGetLiveEventHandler(dependencies: LiveEventRouteDependenci
         headers: appUserId
           ? { "cache-control": "private, no-store", vary: "Authorization" }
           : {
-              "cache-control": "public, max-age=0, s-maxage=30, stale-while-revalidate=60",
+              ...publicContentCacheHeaders(),
               vary: "Authorization",
             },
       });

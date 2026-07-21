@@ -43,3 +43,24 @@ Lambda execution role can read only `byus/worker/<environment>` in Secrets
 Manager. Enabling a function requires a complete, strictly validated secret
 including an immutable metadata asset CID; never enable it with placeholder
 metadata or a shared Dev/Production secret.
+
+The notification delivery worker is packaged and deployed independently, so
+mint worker configuration and scheduling remain unchanged. Validate the bundle,
+IAM document and exact target names without contacting AWS:
+
+```sh
+./scripts/deploy-aws-notification-worker.sh dev false --dry-run
+AWS_PROFILE=coredot-prod EXPECTED_AWS_ACCOUNT_ID=<isolated-prod-account> \
+  ./scripts/deploy-aws-notification-worker.sh prod false --dry-run
+```
+
+Omit `--dry-run` only during an authorized release. The script creates a
+fail-closed Lambda and an EventBridge `rate(1 minute)` rule. A disabled deploy
+leaves both the Lambda flag and rule disabled. Enabling requires the exact
+`byus/notification/<environment>` secret to exist first. Its execution role can
+read only that environment's notification secret; it cannot read mint-worker or
+opposite-environment secrets.
+Production rejects the default or `coredot-dev` profile. It requires the
+committed approved profile name `coredot-prod`, an explicit 12-digit
+`EXPECTED_AWS_ACCOUNT_ID` different from the Dev account, and an exact STS
+caller-account match before any AWS mutation.

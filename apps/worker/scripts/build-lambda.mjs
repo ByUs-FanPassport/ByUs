@@ -17,3 +17,14 @@ await build({
   minify: false,
   legalComments: "none",
 });
+await build({
+  entryPoints: [resolve(root, "src/notification-lambda-entry.ts")],
+  outfile: resolve(output, "notification-index.cjs"),
+  bundle: true,
+  platform: "node",
+  target: "node24",
+  format: "cjs",
+  sourcemap: true,
+  minify: false,
+  legalComments: "none",
+});

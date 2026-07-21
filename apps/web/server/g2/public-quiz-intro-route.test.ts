@@ -6,7 +6,11 @@ import { createPublicQuizIntroHandler } from "./public-quiz-intro-route";
 
 const intro = {
   celebrity: { slug: "kara", name: "KARA" },
-  quiz: { availability: "unavailable" as const, totalQuestions: 3 as const, passThreshold: 2 as const },
+  quiz: {
+    availability: "unavailable" as const,
+    totalQuestions: 3 as const,
+    passThreshold: 2 as const,
+  },
 };
 
 describe("GET /api/public/celebrities/[slug]/quiz", () => {
@@ -19,7 +23,10 @@ describe("GET /api/public/celebrities/[slug]/quiz", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe(
-      "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+      "public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=300",
+    );
+    expect(response.headers.get("vercel-cache-tag")).toBe(
+      "byus-public-content",
     );
     expect(await response.json()).toEqual({ intro });
     expect(findBySlug).toHaveBeenCalledWith({ slug: "kara", locale: "ko" });
@@ -40,6 +47,8 @@ describe("GET /api/public/celebrities/[slug]/quiz", () => {
 
     expect(malformed.status).toBe(404);
     expect(await malformed.json()).toEqual({ error: "content_not_found" });
+    expect(malformed.headers.get("cache-control")).toBe("private, no-store");
+    expect(malformed.headers.get("vercel-cache-tag")).toBeNull();
     expect(missing.status).toBe(404);
     expect(await missing.json()).toEqual({ error: "content_not_found" });
     expect(findBySlug).toHaveBeenCalledTimes(1);
@@ -52,16 +61,24 @@ describe("GET /api/public/celebrities/[slug]/quiz", () => {
       { slug: "kara" },
     );
     expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("vercel-cache-tag")).toBeNull();
     expect(await response.json()).toEqual({ error: "invalid_locale" });
     expect(findBySlug).not.toHaveBeenCalled();
   });
 
   it("fails closed without leaking repository details", async () => {
     const response = await createPublicQuizIntroHandler({
-      findBySlug: vi.fn().mockRejectedValue(new Error("service role key secret")),
-    })(new Request("https://byus.kr/api/public/celebrities/kara/quiz"), { slug: "kara" });
+      findBySlug: vi
+        .fn()
+        .mockRejectedValue(new Error("service role key secret")),
+    })(new Request("https://byus.kr/api/public/celebrities/kara/quiz"), {
+      slug: "kara",
+    });
 
     expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("vercel-cache-tag")).toBeNull();
     expect(await response.json()).toEqual({ error: "content_unavailable" });
   });
 });

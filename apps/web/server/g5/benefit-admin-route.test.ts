@@ -7,14 +7,13 @@ import {
 } from "./benefit-admin-route";
 function deps(role: "admin" | "operator" | "viewer" = "admin") {
   return {
-    authorize: vi
-      .fn()
-      .mockResolvedValue({
-        appUserId: "11111111-1111-4111-8111-111111111111",
-        allowlistId: "22222222-2222-4222-8222-222222222222",
-        email: "ops@byus.test",
-        role,
-      }),
+    authorize: vi.fn().mockResolvedValue({
+      appUserId: "11111111-1111-4111-8111-111111111111",
+      allowlistId: "22222222-2222-4222-8222-222222222222",
+      email: "ops@byus.test",
+      role,
+    }),
+    invalidatePublicContent: vi.fn(),
     repository: {
       read: vi.fn().mockResolvedValue({ benefits: [], celebrities: [] }),
       save: vi.fn().mockResolvedValue("33333333-3333-4333-8333-333333333333"),
@@ -54,6 +53,19 @@ describe("benefit admin route", () => {
     );
     expect(r.status).toBe(403);
     expect(d.repository.state).not.toHaveBeenCalled();
+    expect(d.invalidatePublicContent).not.toHaveBeenCalled();
+  });
+  it("invalidates public content only after a successful publication command", async () => {
+    const d = deps();
+    const r = await createPostBenefitAdminHandler(d)(
+      req({
+        action: "publish",
+        id: "33333333-3333-4333-8333-333333333333",
+        expectedRevision: 1,
+      }),
+    );
+    expect(r.status).toBe(200);
+    expect(d.invalidatePublicContent).toHaveBeenCalledOnce();
   });
   it("passes code inventory without echoing it", async () => {
     const d = deps();

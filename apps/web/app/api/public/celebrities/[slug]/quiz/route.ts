@@ -14,9 +14,7 @@ export async function GET(
       { error: "content_unavailable" },
       {
         status: 503,
-        headers: {
-          "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
-        },
+        headers: { "cache-control": "private, no-store" },
       },
     );
   }

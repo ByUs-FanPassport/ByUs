@@ -1,0 +1,389 @@
+.page {
+  min-height: 100vh;
+  background: #fff;
+  color: oklch(18% 0 0);
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+}
+.header {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  background: rgb(255 255 255/0.94);
+  backdrop-filter: blur(14px);
+}
+.header > div {
+  width: min(100% - 48px, 960px);
+  height: 68px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.header a svg {
+  width: 19px;
+}
+.wordmark {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.main {
+  width: min(100% - 48px, 720px);
+  margin: auto;
+  padding: 56px 0 96px;
+}
+.intro {
+  margin-bottom: 48px;
+}
+.intro > p {
+  margin: 0 0 8px;
+  color: oklch(48% 0 0);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.intro h1 {
+  margin: 0 0 10px;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+.intro > span {
+  color: oklch(48% 0 0);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.section {
+  padding: 24px 0;
+  border-top: 1px solid oklch(93% 0 0);
+}
+.section:last-of-type {
+  border-bottom: 1px solid oklch(93% 0 0);
+}
+.sectionTitle {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.sectionTitle h2,
+.sectionTitle p {
+  margin: 0;
+}
+.sectionTitle h2 {
+  font-size: 17px;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+}
+.sectionTitle p {
+  margin-top: 4px;
+  color: oklch(48% 0 0);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid oklch(93% 0 0);
+  border-radius: 12px;
+  background: oklch(97.5% 0 0);
+}
+.icon svg {
+  width: 20px;
+}
+.valueRow,
+.walletValue {
+  margin: 20px 0 0 58px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border: 1px solid oklch(90% 0 0);
+  border-radius: 12px;
+}
+.valueRow strong {
+  font-size: 15px;
+}
+.valueRow button,
+.renameForm button,
+.center button {
+  min-width: 60px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: oklch(45% 0.22 315);
+  font-weight: 800;
+  cursor: pointer;
+}
+.renameForm {
+  margin: 20px 0 0 58px;
+  display: grid;
+  gap: 8px;
+}
+.renameForm label {
+  font-size: 13px;
+  font-weight: 750;
+}
+.renameForm input {
+  height: 50px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid oklch(76% 0 0);
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+}
+.renameForm small,
+.support {
+  color: oklch(48% 0 0);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.renameForm > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.renameForm .primary {
+  padding: 0 18px;
+  background: oklch(18% 0 0);
+  color: #fff;
+}
+.segmented {
+  margin: 20px 0 0 58px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border: 1px solid oklch(90% 0 0);
+  border-radius: 12px;
+  background: oklch(97.5% 0 0);
+}
+.segmented button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: oklch(48% 0 0);
+  font-weight: 750;
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: #fff;
+  color: oklch(18% 0 0);
+  box-shadow: 0 1px 2px rgb(0 0 0/0.06);
+}
+.toggles {
+  margin: 20px 0 0 58px;
+}
+.toggles label {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid oklch(93% 0 0);
+  font-size: 14px;
+  font-weight: 700;
+}
+.toggles input {
+  width: 46px;
+  height: 26px;
+  appearance: none;
+  border-radius: 999px;
+  background: oklch(84% 0 0);
+  cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.toggles input:before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0/0.22);
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.toggles input:checked {
+  background: oklch(18% 0 0);
+}
+.toggles input:checked:before {
+  transform: translateX(20px);
+}
+.support,
+.installState {
+  margin: 14px 0 0 58px;
+}
+.walletValue {
+  display: grid;
+  justify-content: start;
+  gap: 2px;
+}
+.walletValue code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 750;
+}
+.walletValue span {
+  color: oklch(48% 0 0);
+  font-size: 11px;
+}
+.installButton {
+  margin: 20px 0 0 58px;
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid oklch(76% 0 0);
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.installButton svg {
+  width: 18px;
+}
+.installState {
+  color: oklch(37% 0.12 145);
+  font-size: 13px;
+  font-weight: 750;
+}
+.message {
+  min-height: 24px;
+  margin: 24px 0 0;
+  color: oklch(40% 0.16 145);
+  font-size: 13px;
+  text-align: center;
+}
+.pushRow {
+  margin-left: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pushRow .support {
+  margin-left: 0;
+}
+.pushRow button {
+  min-height: 44px;
+  padding: 0 14px;
+  flex: 0 0 auto;
+  border: 1px solid oklch(90% 0 0);
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.center {
+  min-height: 70vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  color: oklch(48% 0 0);
+  font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  text-align: center;
+}
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid oklch(90% 0 0);
+  border-top-color: oklch(18% 0 0);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+.page a,
+.page button,
+.page input {
+  transition:
+    border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.page a:focus-visible,
+.page button:focus-visible,
+.page input:focus-visible,
+.center button:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .valueRow button:hover,
+  .header a:hover,
+  .installButton:hover {
+    background: oklch(97.5% 0 0);
+  }
+}
+@media (max-width: 767px) {
+  .header > div,
+  .main {
+    width: calc(100% - 32px);
+  }
+  .main {
+    padding: 36px 0 88px;
+  }
+  .intro {
+    margin-bottom: 36px;
+  }
+  .intro h1 {
+    font-size: 32px;
+  }
+  .valueRow,
+  .walletValue,
+  .renameForm,
+  .segmented,
+  .toggles,
+  .support,
+  .installState,
+  .installButton {
+    margin-left: 0;
+  }
+  .section {
+    padding: 22px 0;
+  }
+  .pushRow {
+    margin-left: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page *,
+  .page *:before,
+  .page *:after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

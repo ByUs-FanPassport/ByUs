@@ -23,7 +23,10 @@ describe("GET /api/public/celebrities", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe(
-      "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+      "public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=300",
+    );
+    expect(response.headers.get("vercel-cache-tag")).toBe(
+      "byus-public-content",
     );
     expect(await response.json()).toEqual({ celebrities: [celebrity] });
     expect(list).toHaveBeenCalledWith("ko");

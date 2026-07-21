@@ -10,6 +10,7 @@ import {
   BenefitRepositoryError,
   type BenefitRepository,
 } from "./benefit-repository";
+import { publicContentCacheHeaders } from "../cache/public-content-cache";
 
 export interface BenefitRouteDependencies {
   repository: BenefitRepository;
@@ -23,8 +24,7 @@ function json(body: unknown, status: number, authenticated: boolean): Response {
     headers: authenticated
       ? { "cache-control": "private, no-store", vary: "Authorization" }
       : {
-          "cache-control":
-            "public, max-age=0, s-maxage=30, stale-while-revalidate=60",
+          ...publicContentCacheHeaders(),
           vary: "Authorization",
         },
   });

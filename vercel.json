@@ -4,5 +4,8 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build --workspace @byus/web",
   "outputDirectory": "apps/web/.next",
-  "regions": ["icn1"]
+  "regions": ["icn1"],
+  "crons": [
+    { "path": "/api/internal/notifications/enqueue", "schedule": "* * * * *" }
+  ]
 }

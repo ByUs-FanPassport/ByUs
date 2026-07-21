@@ -12,6 +12,7 @@ export interface CmsRouteDeps {
     correlationId: string;
   }): Promise<AdminSession>;
   repository: ContentCmsRepository;
+  invalidatePublicContent(): void;
 }
 export function correlation(request: Request) {
   const value = request.headers.get("x-correlation-id")?.trim();
@@ -76,23 +77,24 @@ export function celebrityHandlers(deps: CmsRouteDeps) {
               body.payload,
             ),
           );
-        if (body.action === "archive")
-          return Response.json(
-            await deps.repository.archive(
-              admin,
-              c,
-              body.celebrityId,
-              body.reason,
-            ),
-          );
-        return Response.json(
-          await deps.repository.publication(
+        if (body.action === "archive") {
+          const result = await deps.repository.archive(
             admin,
             c,
             body.celebrityId,
-            body.action === "publish",
-          ),
+            body.reason,
+          );
+          deps.invalidatePublicContent();
+          return Response.json(result);
+        }
+        const result = await deps.repository.publication(
+          admin,
+          c,
+          body.celebrityId,
+          body.action === "publish",
         );
+        deps.invalidatePublicContent();
+        return Response.json(result);
       } catch (e) {
         return failure(e);
       }
@@ -122,15 +124,15 @@ export function quizHandlers(deps: CmsRouteDeps) {
           return Response.json(
             await deps.repository.saveQuiz(admin, c, celebrityId, body.payload),
           );
-        return Response.json(
-          await deps.repository.quizCommand(
-            admin,
-            c,
-            celebrityId,
-            body.action,
-            body.quizId,
-          ),
+        const result = await deps.repository.quizCommand(
+          admin,
+          c,
+          celebrityId,
+          body.action,
+          body.quizId,
         );
+        if (body.action === "publish") deps.invalidatePublicContent();
+        return Response.json(result);
       } catch (e) {
         return failure(e);
       }
