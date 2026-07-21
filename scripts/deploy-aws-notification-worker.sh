@@ -71,15 +71,38 @@ if ! aws iam get-role --profile "$profile" --role-name "$role_name" >/dev/null 2
 fi
 aws iam attach-role-policy --profile "$profile" --role-name "$role_name" --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 aws iam put-role-policy --profile "$profile" --role-name "$role_name" --policy-name "byus-notification-worker-${environment}-secret-read" --policy-document "file://${secret_policy}"
+aws iam wait role-exists --profile "$profile" --role-name "$role_name"
 role_arn="$(aws iam get-role --profile "$profile" --role-name "$role_name" --query 'Role.Arn' --output text)"
 
 lambda_environment="Variables={NOTIFICATION_WORKER_ENABLED=${enabled},NOTIFICATION_WORKER_ENVIRONMENT=${environment},NOTIFICATION_WORKER_SECRET_ID=${secret_name}}"
+create_notification_lambda() {
+  local attempt=1
+  local max_attempts=12
+  local retry_delay_seconds=5
+  local error_file="${package_dir}/create-function-error.txt"
+  while (( attempt <= max_attempts )); do
+    if aws lambda create-function --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --architectures arm64 --role "$role_arn" --handler index.handler --zip-file "fileb://${package_file}" --timeout 60 --memory-size 256 --environment "$lambda_environment" > /dev/null 2>"$error_file"; then
+      return 0
+    fi
+    if ! grep -Fq 'role defined for the function cannot be assumed by Lambda' "$error_file"; then
+      cat "$error_file" >&2
+      return 1
+    fi
+    if (( attempt == max_attempts )); then
+      echo "Lambda role propagation did not converge after ${max_attempts} attempts" >&2
+      cat "$error_file" >&2
+      return 1
+    fi
+    sleep "$retry_delay_seconds"
+    attempt=$((attempt + 1))
+  done
+}
 if aws lambda get-function --profile "$profile" --region "$region" --function-name "$function_name" >/dev/null 2>&1; then
   aws lambda update-function-code --profile "$profile" --region "$region" --function-name "$function_name" --zip-file "fileb://${package_file}" >/dev/null
   aws lambda wait function-updated-v2 --profile "$profile" --region "$region" --function-name "$function_name"
   aws lambda update-function-configuration --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --handler index.handler --timeout 60 --memory-size 256 --environment "$lambda_environment" >/dev/null
 else
-  aws lambda create-function --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --architectures arm64 --role "$role_arn" --handler index.handler --zip-file "fileb://${package_file}" --timeout 60 --memory-size 256 --environment "$lambda_environment" >/dev/null
+  create_notification_lambda
 fi
 aws lambda wait function-active-v2 --profile "$profile" --region "$region" --function-name "$function_name"
 aws lambda put-function-concurrency --profile "$profile" --region "$region" --function-name "$function_name" --reserved-concurrent-executions 1 >/dev/null

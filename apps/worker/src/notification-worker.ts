@@ -11,6 +11,7 @@ export class NotificationWorker {
     },
   ) {}
   async runOnce() {
+    await this.queue.enqueueDue(new Date().toISOString());
     const deliveries = await this.queue.claim(
       this.options.workerId,
       this.options.batchSize,

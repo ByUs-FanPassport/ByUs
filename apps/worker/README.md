@@ -64,3 +64,8 @@ Production rejects the default or `coredot-dev` profile. It requires the
 committed approved profile name `coredot-prod`, an explicit 12-digit
 `EXPECTED_AWS_ACCOUNT_ID` different from the Dev account, and an exact STS
 caller-account match before any AWS mutation.
+EventBridge and the Notification Lambda are the canonical scheduler. Every
+invocation first runs `enqueue_due_fan_notifications(now)` (including delivery
+backfill), then claims and sends. Enqueue failure is fail-closed: no delivery is
+claimed or pushed. The protected Web enqueue route is manual diagnostics only;
+runtime operation does not require a Vercel cron or `CRON_SECRET`.

@@ -21,6 +21,7 @@ const delivery: NotificationDelivery = {
 };
 function queue(items = [delivery]): NotificationQueue {
   return {
+    enqueueDue: vi.fn(async () => 0),
     claim: vi.fn(async () => items),
     complete: vi.fn(async () => undefined),
     retry: vi.fn(async () => undefined),
@@ -106,5 +107,29 @@ describe("NotificationWorker", () => {
     expect(sender.send).not.toHaveBeenCalled();
     expect(q.complete).not.toHaveBeenCalled();
     expect(q.retry).not.toHaveBeenCalled();
+  });
+  it("enqueues due notifications before claiming deliveries", async () => {
+    const events: string[] = [];
+    const q = queue([]);
+    vi.mocked(q.enqueueDue).mockImplementation(async () => {
+      events.push("enqueue");
+      return 2;
+    });
+    vi.mocked(q.claim).mockImplementation(async () => {
+      events.push("claim");
+      return [];
+    });
+    await new NotificationWorker(q, { send: vi.fn() }, {
+      workerId: "notify-1", batchSize: 25, leaseSeconds: 120,
+    }).runOnce();
+    expect(events).toEqual(["enqueue", "claim"]);
+  });
+  it("fails closed without claiming when enqueue fails", async () => {
+    const q = queue([]);
+    vi.mocked(q.enqueueDue).mockRejectedValue(new Error("enqueue unavailable"));
+    await expect(new NotificationWorker(q, { send: vi.fn() }, {
+      workerId: "notify-1", batchSize: 25, leaseSeconds: 120,
+    }).runOnce()).rejects.toThrow("enqueue unavailable");
+    expect(q.claim).not.toHaveBeenCalled();
   });
 });

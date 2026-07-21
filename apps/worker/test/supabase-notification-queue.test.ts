@@ -12,6 +12,14 @@ const row = {
   lease_expires_at: "2099-01-01T00:00:00Z",
 };
 describe("SupabaseNotificationQueue", () => {
+  it("enqueues and backfills due notifications before claim", async () => {
+    const rpc = vi.fn(async () => ({ data: 3, error: null }));
+    const queue = new SupabaseNotificationQueue({ rpc } as never);
+    expect(await queue.enqueueDue("2026-07-22T00:00:00.000Z")).toBe(3);
+    expect(rpc).toHaveBeenCalledWith("enqueue_due_fan_notifications", {
+      p_now: "2026-07-22T00:00:00.000Z",
+    });
+  });
   it("claims with bounded lease inputs and maps private subscription credentials", async () => {
     const rpc = vi.fn(async () => ({ data: [row], error: null }));
     const queue = new SupabaseNotificationQueue({ rpc } as never);

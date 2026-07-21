@@ -1,5 +1,6 @@
 import type { NotificationDelivery } from "./notification-domain.js";
 export interface NotificationQueue {
+  enqueueDue(now: string): Promise<number>;
   claim(
     workerId: string,
     batchSize: number,

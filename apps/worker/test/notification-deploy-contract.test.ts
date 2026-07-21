@@ -7,6 +7,7 @@ const script = readFileSync(
   resolve(root, "scripts/deploy-aws-notification-worker.sh"),
   "utf8",
 );
+const vercel = JSON.parse(readFileSync(resolve(root, "vercel.json"), "utf8"));
 describe("notification AWS deployment contract", () => {
   it("packages only the notification bundle with its own function and handler", () => {
     expect(script).toContain("dist-lambda/notification-index.cjs");
@@ -20,6 +21,7 @@ describe("notification AWS deployment contract", () => {
     expect(script).toContain("byus.notification-cron");
     expect(script).toContain("events.amazonaws.com");
     expect(script).toContain("aws events put-targets");
+    expect(vercel).not.toHaveProperty("crons");
   });
   it("is fail closed for account, region, enablement and secret existence", () => {
     expect(script).toContain("AWS account mismatch");
@@ -27,6 +29,22 @@ describe("notification AWS deployment contract", () => {
     expect(script).toContain('[[ "$enabled" == "true" ]]');
     expect(script).toContain("secretsmanager describe-secret");
     expect(script).toContain('rule_state="DISABLED"');
+  });
+  it("bounds CreateFunction retries to the known IAM propagation error", () => {
+    expect(script).toContain("aws iam wait role-exists");
+    expect(script).toContain("create_notification_lambda()");
+    expect(script).toContain("max_attempts=12");
+    expect(script).toContain("retry_delay_seconds=5");
+    expect(script).toContain(
+      "role defined for the function cannot be assumed by Lambda",
+    );
+    expect(script).toContain(
+      "Lambda role propagation did not converge after ${max_attempts} attempts",
+    );
+    expect(script).toMatch(
+      /if ! grep -Fq [^\n]+cannot be assumed by Lambda[^\n]+; then[\s\S]+?return 1/,
+    );
+    expect(script).not.toMatch(/while\s+true/);
   });
   it("rejects a prod dry-run using the implicit dev profile before build or AWS access", () => {
     const result = spawnSync(

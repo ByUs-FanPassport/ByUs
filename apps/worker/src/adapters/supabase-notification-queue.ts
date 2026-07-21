@@ -28,6 +28,14 @@ export class SupabaseNotificationQueue implements NotificationQueue {
       }),
     );
   }
+  async enqueueDue(now: string) {
+    const { data, error } = await this.client.rpc(
+      "enqueue_due_fan_notifications",
+      { p_now: now },
+    );
+    if (error) throw new Error("notification enqueue failed");
+    return Number(data ?? 0);
+  }
   async claim(workerId: string, batchSize: number, leaseSeconds: number) {
     const { data, error } = await this.client.rpc(
       "claim_notification_deliveries",
