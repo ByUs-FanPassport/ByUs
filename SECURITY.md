@@ -75,3 +75,13 @@ On 2026-07-21 under Node.js 24.13.1 and npm 11.18.0:
 - a `ws@8.21.1` canary completed connect, message, clean close, and reconnect;
 - the remaining production audit result was 12 moderate findings, limited to
   the two accepted-risk groups above.
+
+The current product configuration does not expose Coinbase Wallet,
+WalletConnect pairing, external-wallet message signing, or external-wallet
+transaction signing. Authentication regression coverage therefore verifies
+Google-only Privy login, access-token session synchronization, embedded-wallet
+creation/visibility, identity mapping, and session restoration. The `ws`
+canary covers the transitive server runtime with repeated connect, close, and
+reconnect cycles plus RSS and unhandled-rejection observation; a real
+WalletConnect pairing/signing canary becomes mandatory before any external
+wallet connector is enabled.
