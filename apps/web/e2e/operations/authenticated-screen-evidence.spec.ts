@@ -54,6 +54,7 @@ test("captures authenticated fan credential, live, survey and benefit surfaces",
     ["FAN-011", `/passports/${passport.id}?locale=ko`],
     ["FAN-012", `/stamps/${stamp.id}?locale=ko`],
     ["FAN-013", `/live/${liveSlug}?locale=ko`],
+    ["FAN-014", `/live/${liveSlug}?locale=ko`],
     ["FAN-015", `/live/${liveSlug}?locale=ko`],
     ["FAN-016", `/live/${liveSlug}/survey?locale=ko`],
     ["FAN-017", "/benefits?celebrity=kara&locale=ko"],
@@ -66,12 +67,28 @@ test("captures authenticated fan credential, live, survey and benefit surfaces",
   }
 });
 
-test("captures every implemented administrator surface", async ({ page }, testInfo) => {
+test("captures every implemented administrator surface", async ({ page, request }, testInfo) => {
+  const headers = { authorization: `Bearer ${token}` };
+  const [celebritiesResponse, livesResponse] = await Promise.all([
+    request.get("/api/admin/celebrities", { headers }),
+    request.get("/api/admin/lives", { headers }),
+  ]);
+  expect(celebritiesResponse.status()).toBe(200);
+  expect(livesResponse.status()).toBe(200);
+  const celebritiesPayload = await celebritiesResponse.json();
+  const livesPayload = await livesResponse.json();
+  const kara = celebritiesPayload.items.find((item: any) => item.slug === "kara");
+  const live = livesPayload.lives.find((item: any) => item.slug === liveSlug);
+  expect(kara).toBeTruthy();
+  expect(live).toBeTruthy();
+
   await authenticate(page);
   const adminScreens = [
     ["ADM-002", "/admin/dashboard"],
     ["ADM-003", "/admin/celebrities"],
+    ["ADM-004", `/admin/celebrities/${kara.id}/quiz`],
     ["ADM-005", "/admin/lives"],
+    ["ADM-006", `/admin/lives/${live.id}/survey`],
     ["ADM-007", "/admin/benefits"],
     ["ADM-008", "/admin/dashboard?view=creator"],
     ["ADM-009", "/admin/dashboard?view=brand"],
