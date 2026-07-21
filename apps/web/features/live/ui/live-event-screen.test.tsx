@@ -89,6 +89,20 @@ describe("LiveEventScreen", () => {
     expect(link.getAttribute("href")).toContain(encodeURIComponent("/live/kara-nualeaf?locale=ko"));
   });
 
+  it("QA-RSVP-001 sends a fan without a Passport to verification without posting a reservation", async () => {
+    const missingPassport = payload("verify_fan");
+    missingPassport.viewer.passport = "missing";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(missingPassport), { status: 200 }),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("link", { name: /팬 인증하고 예약하기/ }))
+      .toHaveAttribute("href", "/c/kara/verify");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("posts one idempotent reservation, refreshes the projection, and opens FAN-014", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify(payload()), { status: 200 }))
@@ -170,6 +184,53 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("That Fan Code isn’t valid");
     expect(input).toHaveValue("");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("QA-ATT-003 records walk-in attendance after the LIVE without creating a reservation", async () => {
+    const endedPayload = payload("live_ended", false);
+    endedPayload.live.effectiveStatus = "ended";
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(endedPayload), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(attendanceResult), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Enter Fan Code" }), {
+      target: { value: "KARA2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Verify attendance" }));
+
+    expect(await screen.findByRole("heading", { name: "Your LIVE attendance is recorded" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/live-events/kara-nualeaf/attendance");
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/reservation"))).toBe(false);
+  });
+
+  it("QA-ATT-005 blocks attendance without a Passport and links to fan verification", async () => {
+    const missingPassport = payload("verify_fan", false);
+    missingPassport.live.effectiveStatus = "ended";
+    missingPassport.viewer.passport = "missing";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(missingPassport), { status: 200 }),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByText("Fan Passport 발급 후 참여할 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Fan Passport 발급하기" }))
+      .toHaveAttribute("href", "/c/kara/verify");
+    expect(screen.queryByRole("textbox", { name: "Fan Code 입력" })).not.toBeInTheDocument();
+  });
+
+  it("QA-ATT-006 keeps Fan Code attendance available after the LIVE has ended", async () => {
+    const endedPayload = payload("live_ended", false);
+    endedPayload.live.effectiveStatus = "ended";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(endedPayload), { status: 200 }),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("textbox", { name: "Fan Code 입력" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "출석 인증하기" })).toBeInTheDocument();
   });
 
   it("shows a rate-limit countdown and disables further attempts", async () => {

@@ -61,6 +61,20 @@ describe("live survey handlers", () => {
     expect((await run(request("GET"), { slug: "kara-live" })).status).toBe(401);
   });
 
+  it("QA-SURV-001 rejects survey read when attendance for the same LIVE is missing", async () => {
+    const get = vi.fn().mockRejectedValue(new LiveSurveyRepositoryError("ATTENDANCE_REQUIRED"));
+    const run = createGetLiveSurveyHandler({
+      authorize: async () => ({ appUserId: "owner" }),
+      repository: { get, saveDraft: vi.fn(), submit: vi.fn() },
+    });
+
+    const response = await run(request("GET"), { slug: "kara-live" });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: { code: "ATTENDANCE_REQUIRED" } });
+    expect(get).toHaveBeenCalledWith({ appUserId: "owner", slug: "kara-live", locale: "ko" });
+  });
+
   it.each([
     ["ATTENDANCE_REQUIRED", 403], ["INVALID_ANSWERS", 422], ["SURVEY_ALREADY_SUBMITTED", 409],
     ["IDEMPOTENCY_KEY_CONFLICT", 409], ["REVISION_CONFLICT", 409], ["SURVEY_INTEGRITY_ERROR", 503],

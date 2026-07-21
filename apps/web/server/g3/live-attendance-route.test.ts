@@ -49,7 +49,7 @@ describe("POST live attendance handler", () => {
     expect(attend).not.toHaveBeenCalled();
   });
 
-  it("classifies a malformed code without forwarding its raw value", async () => {
+  it("QA-ATT-002 classifies a wrong code without forwarding its raw value", async () => {
     const attend = vi.fn().mockRejectedValue(new LiveAttendanceRepositoryError("ATTENDANCE_CODE_INVALID"));
     const run = createPostLiveAttendanceHandler({ authorize: async () => ({ appUserId: "owner-id" }), repository: { attend } });
     const response = await run(request({ code: "raw-secret-value!" }), { slug: "kara-first-live" });

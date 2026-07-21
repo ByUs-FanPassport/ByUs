@@ -62,14 +62,14 @@ describe("LiveSurveyScreen", () => {
     expect(screen.getByRole("link", { name: "KO / EN" })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=en");
   });
 
-  it("shows the attendance eligibility gate and retains locale in the Fan Code route", async () => {
+  it("QA-SURV-001 shows the attendance eligibility gate and retains locale in the Fan Code route", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(payload({ attendance: false })));
     render(<LiveSurveyScreen slug="kara-nualeaf" locale="en" />);
     expect(await screen.findByRole("heading", { name: "Complete attendance to join" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Enter Fan Code" })).toHaveAttribute("href", "/live/kara-nualeaf?locale=en#fan-code");
   });
 
-  it("announces required errors inline and focuses the first invalid question", async () => {
+  it("QA-SURV-003 announces required errors inline and focuses the first invalid question", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(payload()));
     render(<LiveSurveyScreen slug="kara-nualeaf" locale="ko" />);
     await screen.findByRole("heading", { name: "LIVE 설문" });
