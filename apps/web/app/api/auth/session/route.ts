@@ -12,7 +12,11 @@ export async function POST(request: Request): Promise<Response> {
     const profile = await syncAuthenticatedSession({
       authorization: request.headers.get("authorization") ?? "",
       chainId: env.GIWA_CHAIN_ID,
-      resolver: createPrivyNodeSessionResolver({ appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET }),
+      resolver: createPrivyNodeSessionResolver({
+        appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET,
+        appEnvironment: env.PRIVY_APP_ENVIRONMENT,
+        testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED,
+      }),
       repository: createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY }),
     });
     return Response.json({ profile }, { status: 200, headers: { "cache-control": "no-store", vary: "Authorization" } });

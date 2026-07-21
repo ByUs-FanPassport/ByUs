@@ -10,7 +10,7 @@ import { ArrowRight, GoogleMark } from "./icons";
 import { appendLoginContext, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 import styles from "./login-page.module.css";
 
-export function LoginPage() {
+export function LoginPage({ testAccountLoginEnabled = false }: { testAccountLoginEnabled?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { ready, authenticated, getAccessToken } = usePrivy();
@@ -48,7 +48,11 @@ export function LoginPage() {
   }, [entity, getAccessToken, intent, locale, returnTo, router]);
   const { login } = useLogin({
     onComplete: synchronizeSession,
-    onError: () => setError("로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요."),
+    onError: () => setError(
+      testAccountLoginEnabled
+        ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
+        : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.",
+    ),
   });
 
   useEffect(() => {
@@ -72,6 +76,23 @@ export function LoginPage() {
         <button className={styles.googleButton} type="button" disabled={!ready || authenticated} onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}>
           <GoogleMark /><span>{ready ? "Google로 계속하기" : "로그인 준비 중"}</span><ArrowRight />
         </button>
+        {testAccountLoginEnabled && (
+          <div className={styles.testAccountGroup} role="group" aria-label="개발 환경 Test Account 로그인">
+            <span className={styles.divider}>개발 환경 Test Account</span>
+            <button
+              className={styles.emailButton}
+              type="button"
+              disabled={!ready || authenticated}
+              onClick={() => {
+                setError(null);
+                login({ loginMethods: ["email"] });
+              }}
+            >
+              <span>Test Account 이메일로 계속하기</span><ArrowRight />
+            </button>
+            <p>Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요.</p>
+          </div>
+        )}
         <p className={styles.context}>{context}</p>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <Link className={styles.backLink} href="/">홈으로 돌아가기</Link>

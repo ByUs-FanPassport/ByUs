@@ -10,7 +10,11 @@ import type { PassportReadRouteDependencies } from "./passport-read-route";
 export function createPassportReadRouteDependencies(): PassportReadRouteDependencies {
   const environment = loadServerEnv();
   const database = createClient(environment.SUPABASE_URL, environment.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const verifier = createPrivyNodeAccessVerifier({ appId: environment.PRIVY_APP_ID, appSecret: environment.PRIVY_APP_SECRET });
+  const verifier = createPrivyNodeAccessVerifier({
+    appId: environment.PRIVY_APP_ID, appSecret: environment.PRIVY_APP_SECRET,
+    appEnvironment: environment.PRIVY_APP_ENVIRONMENT,
+    testAccountLoginEnabled: environment.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED,
+  });
   const fanRepository = createSupabaseFanAuthRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }, database);
   return {
     authorize: (authorization) => authorizeFanRequest({ authorization, verifier, repository: fanRepository }),

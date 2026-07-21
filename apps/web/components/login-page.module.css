@@ -9,8 +9,16 @@
 .googleButton { display: flex; width: 100%; min-height: 52px; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 20px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff,#fff) padding-box, linear-gradient(125deg,oklch(68% .22 18),oklch(62% .25 340),oklch(56% .22 285)) border-box; color: oklch(45% .22 315); cursor: pointer; font-family: "Google Sans", Roboto, Arial, sans-serif; font-size: 15px; font-weight: 600; }
 .googleButton span { flex: 1; text-align: center; }
 .googleButton svg { width: 18px; height: 18px; flex: none; }
-.googleButton:disabled { cursor: wait; opacity: .55; }
-.googleButton:focus-visible, .brand:focus-visible, .backLink:focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+.googleButton:disabled, .emailButton:disabled { cursor: wait; opacity: .55; }
+.googleButton:focus-visible, .emailButton:focus-visible, .brand:focus-visible, .backLink:focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+.testAccountGroup { display: grid; gap: 12px; }
+.divider { display: flex; align-items: center; gap: 12px; color: oklch(48% 0 0); font-size: 12px; font-weight: 700; text-align: center; }
+.divider::before, .divider::after { height: 1px; flex: 1; background: oklch(90% 0 0); content: ""; }
+.emailButton { display: flex; width: 100%; min-height: 52px; align-items: center; justify-content: center; gap: 12px; padding-inline: 20px; border: 1px solid oklch(90% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); cursor: pointer; font: inherit; font-size: 15px; font-weight: 750; transition: background-color 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
+.emailButton span { flex: 1; text-align: center; }
+.emailButton svg { width: 18px; height: 18px; flex: none; }
+.testAccountGroup p { margin: 0; color: oklch(48% 0 0); font-size: 13px; line-height: 1.5; text-align: center; text-wrap: pretty; }
+@media (hover: hover) and (pointer: fine) { .emailButton:hover:not(:disabled) { border-color: oklch(76% 0 0); background: oklch(97.5% 0 0); } }
 .context { text-align: center; }
 .error { padding: 12px; border-radius: 12px; background: oklch(96% .025 20); color: oklch(38% .16 20); font-weight: 650; }
 .backLink { display: inline-flex; min-height: 44px; align-items: center; justify-self: center; color: oklch(48% 0 0); font-size: 14px; font-weight: 650; }

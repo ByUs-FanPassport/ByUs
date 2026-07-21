@@ -25,6 +25,7 @@ const event: LiveEventRecord = {
 
 function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSource {
   return {
+    findLatestPublishedSlug: async () => event.slug,
     findPublishedEvent: async () => event,
     findViewer: async () => ({ hasPassport: false, reservation: null }),
     ...overrides,
@@ -32,6 +33,26 @@ function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSour
 }
 
 describe("DefaultLiveEventRepository", () => {
+  it("uses the latest admin-created published slug and the same effective projection for Home", async () => {
+    const findPublishedEvent = vi.fn().mockResolvedValue(event);
+    const repository = new DefaultLiveEventRepository(source({
+      findLatestPublishedSlug: async () => event.slug,
+      findPublishedEvent,
+    }));
+
+    const result = await repository.findFeaturedPublished({ locale: "ko", now: new Date("2026-07-21T00:00:00Z") });
+
+    expect(findPublishedEvent).toHaveBeenCalledWith(event.slug, "ko");
+    expect(result?.live.slug).toBe(event.slug);
+    expect(result?.live.effectiveStatus).toBe("scheduled");
+    expect(result?.primaryAction).toBe("sign_in_to_reserve");
+  });
+
+  it("returns a truthful empty Home state when no published Live exists", async () => {
+    const repository = new DefaultLiveEventRepository(source({ findLatestPublishedSlug: async () => null }));
+    await expect(repository.findFeaturedPublished({ locale: "ko", now: new Date() })).resolves.toBeNull();
+  });
+
   it("returns only the public localized projection for a guest", async () => {
     const result = await new DefaultLiveEventRepository(source()).findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
     expect(result).toMatchObject({

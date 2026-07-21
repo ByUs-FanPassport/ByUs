@@ -13,8 +13,12 @@ import {
 const validEnv = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
   NEXT_PUBLIC_PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
+  NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
+  NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
   PRIVY_APP_SECRET: "privy-app-secret-value",
+  PRIVY_APP_ENVIRONMENT: "development",
+  PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key-value",
   GIWA_CHAIN_ID: "91342",
@@ -26,10 +30,26 @@ const validEnv = {
 } as const;
 
 describe("public environment", () => {
+  it("keeps existing deployments backward-compatible and fail-closed", () => {
+    const legacy = { ...validEnv } as Record<string, string>;
+    delete legacy.NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT;
+    delete legacy.NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED;
+    delete legacy.PRIVY_APP_ENVIRONMENT;
+    delete legacy.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED;
+    expect(parseServerEnv(legacy)).toMatchObject({
+      NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "production",
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
+      PRIVY_APP_ENVIRONMENT: "production",
+      PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
+    });
+  });
+
   it("accepts HTTPS deployment URLs and the explicit localhost HTTP exception", () => {
     expect(parsePublicEnv(validEnv)).toEqual({
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       NEXT_PUBLIC_PRIVY_APP_ID: validEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+      NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
     });
     expect(
       parsePublicEnv({ ...validEnv, NEXT_PUBLIC_APP_URL: "https://staging.byus.vercel.app" }),
@@ -78,7 +98,10 @@ describe("server environment", () => {
 
   it("fails for every missing canonical server value", () => {
     const serverKeys = Object.keys(validEnv).filter(
-      (key) => !key.startsWith("NEXT_PUBLIC_"),
+      (key) =>
+        !key.startsWith("NEXT_PUBLIC_") &&
+        key !== "PRIVY_APP_ENVIRONMENT" &&
+        key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
     );
 
     for (const key of serverKeys) {
@@ -119,6 +142,32 @@ describe("server environment", () => {
     expect(() => parseServerEnv({ ...validEnv, PRIVY_APP_ID: "different-app" })).toThrowError(
       /PRIVY_APP_ID/,
     );
+  });
+
+  it("enables Test Account login only for matching non-production client and server policy", () => {
+    expect(parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+      PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+    })).toMatchObject({ PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: true });
+
+    expect(() => parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_APP_URL: "https://byus.kr",
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+      PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+    })).toThrowError(/NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
+    expect(() => parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "production",
+      PRIVY_APP_ENVIRONMENT: "production",
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+      PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+    })).toThrowError(/NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
+    expect(() => parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+    })).toThrowError(/PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
   });
 
   it.each([

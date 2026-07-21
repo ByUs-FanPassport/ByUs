@@ -16,6 +16,10 @@ import {
 } from "../../features/live/domain/live-event";
 
 export interface LiveEventRepository {
+  findFeaturedPublished(input: {
+    locale: LiveLocale;
+    now: Date;
+  }): Promise<LiveEventResponse | null>;
   findPublishedBySlug(input: {
     slug: string;
     locale: LiveLocale;
@@ -54,12 +58,19 @@ export interface LiveViewerRecord {
 }
 
 export interface LiveEventDataSource {
+  findLatestPublishedSlug(): Promise<string | null>;
   findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null>;
   findViewer(appUserId: string, event: LiveEventRecord): Promise<LiveViewerRecord>;
 }
 
 export class DefaultLiveEventRepository implements LiveEventRepository {
   constructor(private readonly source: LiveEventDataSource) {}
+
+  async findFeaturedPublished(input: { locale: LiveLocale; now: Date }): Promise<LiveEventResponse | null> {
+    const slug = await this.source.findLatestPublishedSlug();
+    if (!slug) return null;
+    return this.findPublishedBySlug({ ...input, slug, appUserId: null });
+  }
 
   async findPublishedBySlug(input: {
     slug: string;
@@ -133,6 +144,18 @@ function onlyRow<T>(value: T | T[] | null): T | null {
 
 class SupabaseLiveEventDataSource implements LiveEventDataSource {
   constructor(private readonly database: DatabaseClient) {}
+
+  async findLatestPublishedSlug(): Promise<string | null> {
+    const { data, error } = await this.database
+      .from("live_events")
+      .select("slug")
+      .eq("publication_status", "published")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error("Featured published live lookup failed");
+    return data?.slug ?? null;
+  }
 
   async findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null> {
     const { data: event, error: eventError } = await this.database

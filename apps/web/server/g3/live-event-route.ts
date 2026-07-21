@@ -7,7 +7,7 @@ import type { LiveEventRepository } from "./live-event-repository";
 import { publicContentCacheHeaders } from "../cache/public-content-cache";
 
 export interface LiveEventRouteDependencies {
-  repository: LiveEventRepository;
+  repository: Pick<LiveEventRepository, "findPublishedBySlug">;
   authorize(authorization: string): Promise<{ appUserId: string }>;
   now(): Date;
 }

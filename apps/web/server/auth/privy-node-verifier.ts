@@ -42,6 +42,8 @@ export interface PrivyNodeClientPort {
 export interface PrivyNodeServerConfig {
   appId: string;
   appSecret: string;
+  appEnvironment?: "development" | "production";
+  testAccountLoginEnabled?: boolean;
 }
 
 interface WalletVisibilityOptions {
@@ -79,6 +81,33 @@ function latestVerifiedGoogleEmail(user: PrivyUserShape): string | null {
   return account?.email ?? null;
 }
 
+function verifiedPrivyTestAccountEmail(user: PrivyUserShape): string | null {
+  const account = user.linked_accounts
+    .filter((candidate) => {
+      const email = candidate.email ?? candidate.address;
+      return (
+        candidate.type === "email" &&
+        typeof email === "string" &&
+        email.toLowerCase().endsWith("@privy.io") &&
+        typeof candidate.verified_at === "number" &&
+        candidate.verified_at > 0
+      );
+    })
+    .sort((left, right) => (right.verified_at ?? 0) - (left.verified_at ?? 0))[0];
+
+  return account?.email ?? account?.address ?? null;
+}
+
+function verifiedFanEmail(user: PrivyUserShape, config: PrivyNodeServerConfig): string | null {
+  const googleEmail = latestVerifiedGoogleEmail(user);
+  if (googleEmail) return googleEmail;
+  if (!config.testAccountLoginEnabled) return null;
+  if (config.appEnvironment !== "development") {
+    throw new Error("Privy Test Account login requires a development Privy app");
+  }
+  return verifiedPrivyTestAccountEmail(user);
+}
+
 export function createPrivyNodeAccessVerifier(
   config: PrivyNodeServerConfig,
   client?: PrivyNodeClientPort,
@@ -101,7 +130,7 @@ export function createPrivyNodeAccessVerifier(
 
       return {
         privyUserId: claims.user_id,
-        verifiedEmail: latestVerifiedGoogleEmail(user),
+        verifiedEmail: verifiedFanEmail(user, config),
       };
     },
   };
@@ -151,7 +180,10 @@ export function createPrivyNodeSessionResolver(
         if (user.id !== claims.user_id) throw new Error("Privy token subject mismatch");
         const wallet = extractEmbeddedEvmWallet(user, chainId);
         if (wallet) {
-          const identity = mapPrivyIdentity({ privyUserId: user.id, verifiedEmail: latestVerifiedGoogleEmail(user) });
+          const identity = mapPrivyIdentity({
+            privyUserId: user.id,
+            verifiedEmail: verifiedFanEmail(user, config),
+          });
           return { identity, wallet };
         }
         if (attempt < attempts) await sleep(delayMs);

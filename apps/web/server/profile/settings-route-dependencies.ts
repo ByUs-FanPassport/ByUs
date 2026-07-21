@@ -24,6 +24,8 @@ export function createSettingsRouteDependencies(): SettingsRouteDependencies {
   const verifier = createPrivyNodeAccessVerifier({
     appId: environment.PRIVY_APP_ID,
     appSecret: environment.PRIVY_APP_SECRET,
+    appEnvironment: environment.PRIVY_APP_ENVIRONMENT,
+    testAccountLoginEnabled: environment.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED,
   });
   const fanRepository = createSupabaseFanAuthRepository(
     {

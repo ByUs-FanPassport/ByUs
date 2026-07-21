@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ByUsPrivyProvider } from "../components/privy-provider";
 import { PwaRegistration } from "../components/pwa-registration";
+import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,10 +20,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
+  const testAccountLoginEnabled = readPublicPrivyTestAccountPolicy();
   return (
     <html lang="ko">
       <body>
-        <ByUsPrivyProvider appId={privyAppId}>
+        <ByUsPrivyProvider
+          appId={privyAppId}
+          testAccountLoginEnabled={testAccountLoginEnabled}
+        >
           <PwaRegistration />
           {children}
         </ByUsPrivyProvider>

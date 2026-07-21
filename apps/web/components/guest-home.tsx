@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Bell, Book, CalendarHeart, ChevronRight, Clock, GoogleMark, Home, Languages, Menu, Play, Radio, Users } from "./icons";
+import type { LiveEventResponse } from "../features/live/domain/live-event";
 import styles from "./guest-home.module.css";
 
 const celebrities = [
@@ -18,16 +19,25 @@ const socials = [
   { id: "instagram", name: "Instagram", icon: "/images/guest-home/instagram.svg" },
 ] as const;
 
-const upcoming = [
-  { celebrity: "KARA", slug: "kara-nualeaf", image: "/images/guest-home/kara-card.jpg", title: "KARA × NUALEAF LIVE", date: "7월 24일 오후 8:00", reservations: "12,430명" },
-  { celebrity: "SS501", slug: "ss501-summer-special", image: "/images/guest-home/ss501.jpg", title: "SUMMER SPECIAL LIVE", date: "7월 25일 오후 7:00", reservations: "8,210명" },
-  { celebrity: "Elina", slug: "elina-beauty-talk", image: "/images/guest-home/elina-card.jpg", title: "BEAUTY TALK LIVE", date: "7월 27일 오후 8:00", reservations: "3,480명" },
-] as const;
+export function formatKoreanLiveDate(value: string) {
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) throw new Error("Invalid LIVE timestamp");
+  const kst = new Date(instant.getTime() + 9 * 60 * 60 * 1000);
+  const hour = kst.getUTCHours();
+  const period = hour < 12 ? "오전" : "오후";
+  const displayHour = hour % 12 || 12;
+  return `${kst.getUTCMonth() + 1}월 ${kst.getUTCDate()}일 ${period} ${displayHour}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
+}
 
-const authHref = "/login?returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
-
-export function GuestHome() {
+export function GuestHome({ featuredLive }: { featuredLive: LiveEventResponse | null }) {
   const [panelOpen, setPanelOpen] = useState(true);
+  const detailHref = featuredLive ? `/live/${featuredLive.live.slug}` : null;
+  const heroHref = detailHref && featuredLive?.primaryAction === "sign_in_to_reserve"
+    ? `/login?returnTo=${encodeURIComponent(detailHref)}&intent=reserve`
+    : detailHref;
+  const status = featuredLive?.live.effectiveStatus;
+  const statusLabel = status === "live" ? "LIVE" : status === "ended" ? "종료" : status === "cancelled" ? "취소" : "UPCOMING";
+  const heroActionLabel = featuredLive?.primaryAction === "sign_in_to_reserve" ? "라이브 예약하기" : "LIVE 상세보기";
 
   return (
     <div className={styles.page} data-fan-pulse-home data-candidate="03">
@@ -58,13 +68,15 @@ export function GuestHome() {
               <a className={styles.textLink} href="#upcoming">전체 라이브 <ChevronRight /></a>
             </div>
             <article className={styles.heroCard}>
-              <Image src="/images/guest-home/kara-hero.png" alt="오렌지색 배경 앞 검정 의상을 입은 KARA 멤버들" fill sizes="(min-width: 1024px) 66vw, 100vw" priority />
+              {featuredLive && <Image src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} fill sizes="(min-width: 1024px) 66vw, 100vw" priority />}
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
-                <div className={styles.statusRail}><p className={styles.liveStatus}><Radio /> UPCOMING</p><p className={styles.heroDate}>7월 24일 오후 8:00</p></div>
-                <h2>KARA × NUALEAF</h2>
-                <p className={styles.heroCountdown} aria-label="남은 시간 6일 22시간 41분 23초"><Clock /> D-06 <span aria-hidden="true">·</span> 22:41:23</p>
-                <a className={styles.primaryButton} href={authHref}><span><Play />라이브 예약하기</span><ArrowRight /></a>
+                {featuredLive ? <>
+                  <div className={styles.statusRail}><p className={styles.liveStatus}><Radio /> {statusLabel}</p><p className={styles.heroDate}>{formatKoreanLiveDate(featuredLive.live.startsAt)}</p></div>
+                  <h2>{featuredLive.live.title}</h2>
+                  <p className={styles.heroCountdown}><Clock /> {featuredLive.live.celebrity.name} × {featuredLive.live.brand.name}</p>
+                  {heroHref && <a className={styles.primaryButton} href={heroHref}><span><Play />{heroActionLabel}</span><ArrowRight /></a>}
+                </> : <><p className={styles.liveStatus}>공개된 LIVE 없음</p><h2>새로운 LIVE를 준비하고 있어요.</h2></>}
               </div>
             </article>
           </section>
@@ -96,14 +108,12 @@ export function GuestHome() {
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
             <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="upcoming-heading">다가오는 LIVE</h2><p>미리 예약하고 알림을 받아보세요.</p></div></div>
             <div className={styles.liveList}>
-              {upcoming.map((live) => (
-                <article className={styles.liveRow} key={live.slug}>
-                  <Image className={styles.liveAvatar} src={live.image} alt={`${live.celebrity} 프로필`} width={64} height={64} />
-                  <div className={styles.liveDetails}><span>{live.celebrity}</span><h3>{live.title}</h3><p>{live.date}</p></div>
-                  <div className={styles.liveMeta}><span>예정</span><p>예약 {live.reservations}</p></div>
-                  <a className={styles.rowAction} href={`/live/${live.slug}`} aria-label={`${live.title} 상세 보기`}><ChevronRight /></a>
-                </article>
-              ))}
+              {featuredLive ? <article className={styles.liveRow}>
+                <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} 프로필`} width={64} height={64} />
+                <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatKoreanLiveDate(featuredLive.live.startsAt)}</p></div>
+                <div className={styles.liveMeta}><span>{statusLabel}</span></div>
+                <a className={styles.rowAction} href={detailHref!} aria-label={`${featuredLive.live.title} 상세 보기`}><ChevronRight /></a>
+              </article> : <p>현재 공개된 LIVE가 없습니다.</p>}
             </div>
           </section>
         </main>

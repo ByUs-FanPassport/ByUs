@@ -50,19 +50,48 @@ function isSecureAppUrl(value: string): boolean {
 }
 
 const httpsUrl = z.string().trim().refine(isHttpsUrl, "must be an HTTPS URL");
+const booleanFlag = z.enum(["true", "false"]).default("false").transform((value) => value === "true");
+const privyAppEnvironment = z.enum(["development", "production"]).default("production");
 
-const publicEnvSchema = z.object({
-  NEXT_PUBLIC_APP_URL: z
-    .string()
-    .trim()
-    .refine(isSecureAppUrl, "must be HTTPS, except for an HTTP localhost app URL"),
-  NEXT_PUBLIC_PRIVY_APP_ID: z.string().trim().min(1),
-});
+function isProductionHostname(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return hostname === "byus.kr" || hostname === "www.byus.kr";
+  } catch {
+    return false;
+  }
+}
+
+const publicEnvSchema = z
+  .object({
+    NEXT_PUBLIC_APP_URL: z
+      .string()
+      .trim()
+      .refine(isSecureAppUrl, "must be HTTPS, except for an HTTP localhost app URL"),
+    NEXT_PUBLIC_PRIVY_APP_ID: z.string().trim().min(1),
+    NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
+    NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
+  })
+  .superRefine((value, context) => {
+    if (
+      value.NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED &&
+      (value.NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT !== "development" ||
+        isProductionHostname(value.NEXT_PUBLIC_APP_URL))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Privy Test Account login is restricted to a non-production Privy app and URL",
+        path: ["NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED"],
+      });
+    }
+  });
 
 const serverEnvSchema = publicEnvSchema
   .extend({
     PRIVY_APP_ID: z.string().trim().min(1),
     PRIVY_APP_SECRET: z.string().trim().min(8),
+    PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
+    PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
     SUPABASE_URL: httpsUrl,
     SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(16),
     GIWA_CHAIN_ID: z.coerce.number().int().refine((value) => value === 91342),
@@ -78,6 +107,23 @@ const serverEnvSchema = publicEnvSchema
         code: "custom",
         message: "must match NEXT_PUBLIC_PRIVY_APP_ID",
         path: ["PRIVY_APP_ID"],
+      });
+    }
+    if (value.PRIVY_APP_ENVIRONMENT !== value.NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT) {
+      context.addIssue({
+        code: "custom",
+        message: "must match NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT",
+        path: ["PRIVY_APP_ENVIRONMENT"],
+      });
+    }
+    if (
+      value.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED !==
+      value.NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "must match NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
+        path: ["PRIVY_TEST_ACCOUNT_LOGIN_ENABLED"],
       });
     }
   });

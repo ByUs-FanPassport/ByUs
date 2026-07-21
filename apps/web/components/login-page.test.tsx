@@ -36,6 +36,14 @@ describe("Privy login page", () => {
     fireEvent.click(screen.getByRole("button", { name: /Google로 계속하기/ }));
     expect(login).toHaveBeenCalledWith({ loginMethods: ["google"] });
     expect(screen.getByText("로그인 후 선택한 라이브 예약 화면으로 돌아갑니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Test Account 이메일/ })).not.toBeInTheDocument();
+  });
+
+  it("uses Privy's email OTP UI only when the non-production Test Account path is enabled", () => {
+    render(<LoginPage testAccountLoginEnabled />);
+    fireEvent.click(screen.getByRole("button", { name: /Test Account 이메일로 계속하기/ }));
+    expect(login).toHaveBeenCalledWith({ loginMethods: ["email"] });
+    expect(screen.getByText(/Privy 대시보드에 등록된 Test Account 이메일과 OTP/)).toBeInTheDocument();
   });
 
   it("syncs the verified Privy session before resuming the sanitized route", async () => {
