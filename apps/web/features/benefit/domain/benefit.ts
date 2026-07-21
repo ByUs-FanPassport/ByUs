@@ -12,8 +12,24 @@ export const benefitStateSchema = z.enum([
 ]);
 export type BenefitState = z.infer<typeof benefitStateSchema>;
 
-export const benefitDeliveryTypeSchema = z.enum(["shared_code", "unique_code", "external_url"]);
+export const benefitDeliveryTypeSchema = z.enum([
+  "shared_code",
+  "unique_code",
+  "external_url",
+]);
 export type BenefitDeliveryType = z.infer<typeof benefitDeliveryTypeSchema>;
+export const benefitAllocationModeSchema = z.enum([
+  "direct_claim",
+  "application_selection",
+]);
+export const benefitApplicationStatusSchema = z.enum([
+  "submitted",
+  "selected",
+  "not_selected",
+]);
+export type BenefitApplicationStatus = z.infer<
+  typeof benefitApplicationStatusSchema
+>;
 
 export const benefitCatalogItemSchema = z.object({
   id: z.string().uuid(),
@@ -23,12 +39,18 @@ export const benefitCatalogItemSchema = z.object({
   eligibilityLabel: z.string().min(1),
   deliveryLabel: z.string().min(1),
   deliveryType: benefitDeliveryTypeSchema,
+  allocationMode: benefitAllocationModeSchema,
+  applicationStatus: benefitApplicationStatusSchema.nullable(),
   claimOpensAt: z.string().datetime({ offset: true }),
   claimClosesAt: z.string().datetime({ offset: true }),
   minimumScore: z.number().int().nonnegative(),
   minimumLevel: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]),
-  requiredStampType: z.enum(["knowledge", "reservation", "attendance", "survey"]).nullable(),
-  requiredActivityType: z.enum(["knowledge", "reservation", "attendance", "survey"]).nullable(),
+  requiredStampType: z
+    .enum(["knowledge", "reservation", "attendance", "survey"])
+    .nullable(),
+  requiredActivityType: z
+    .enum(["knowledge", "reservation", "attendance", "survey"])
+    .nullable(),
   state: benefitStateSchema,
 });
 export type BenefitCatalogItem = z.infer<typeof benefitCatalogItemSchema>;
@@ -38,7 +60,35 @@ export const benefitListResponseSchema = z.object({
 });
 export type BenefitListResponse = z.infer<typeof benefitListResponseSchema>;
 
-export const claimBenefitRequestSchema = z.object({ idempotencyKey: z.string().uuid() }).strict();
+export const claimBenefitRequestSchema = z
+  .object({ idempotencyKey: z.string().uuid() })
+  .strict();
+export const benefitApplicationResponseSchema = z.object({
+  applicationId: z.string().uuid(),
+  status: benefitApplicationStatusSchema,
+  replayed: z.boolean(),
+});
+export type BenefitApplicationResponse = z.infer<
+  typeof benefitApplicationResponseSchema
+>;
+export const benefitOwnedApplicationResponseSchema = z.object({
+  applicationId: z.string().uuid(),
+  benefitId: z.string().uuid(),
+  status: benefitApplicationStatusSchema,
+  submittedAt: z.string().datetime({ offset: true }),
+  claim: z
+    .object({
+      claimId: z.string().uuid(),
+      benefitId: z.string().uuid(),
+      deliveryType: benefitDeliveryTypeSchema,
+      deliveryValue: z.string().min(1),
+      claimedAt: z.string().datetime({ offset: true }),
+    })
+    .nullable(),
+});
+export type BenefitOwnedApplicationResponse = z.infer<
+  typeof benefitOwnedApplicationResponseSchema
+>;
 
 export const benefitClaimResponseSchema = z.object({
   claimId: z.string().uuid(),
@@ -50,7 +100,13 @@ export const benefitClaimResponseSchema = z.object({
 });
 export type BenefitClaimResponse = z.infer<typeof benefitClaimResponseSchema>;
 
-const levelRank = { Bronze: 1, Silver: 2, Gold: 3, Platinum: 4, Diamond: 5 } as const;
+const levelRank = {
+  Bronze: 1,
+  Silver: 2,
+  Gold: 3,
+  Platinum: 4,
+  Diamond: 5,
+} as const;
 
 export interface BenefitEligibilitySnapshot {
   authenticated: boolean;
@@ -60,6 +116,7 @@ export interface BenefitEligibilitySnapshot {
   stampTypes: ReadonlySet<string>;
   activityTypes: ReadonlySet<string>;
   claimedBenefitIds: ReadonlySet<string>;
+  benefitApplicationStatuses?: ReadonlyMap<string, BenefitApplicationStatus>;
 }
 
 export interface BenefitAvailabilityInput {
@@ -79,8 +136,12 @@ export function deriveBenefitState(
   now: Date,
 ): BenefitState {
   if (viewer?.claimedBenefitIds.has(benefit.id)) return "claimed";
-  if (now.getTime() >= new Date(benefit.claimClosesAt).getTime()) return "expired";
-  if (now.getTime() >= new Date(benefit.claimOpensAt).getTime() && !benefit.available) {
+  if (now.getTime() >= new Date(benefit.claimClosesAt).getTime())
+    return "expired";
+  if (
+    now.getTime() >= new Date(benefit.claimOpensAt).getTime() &&
+    !benefit.available
+  ) {
     return "sold_out";
   }
   if (
@@ -88,8 +149,10 @@ export function deriveBenefitState(
     !viewer.hasPassport ||
     viewer.score < benefit.minimumScore ||
     levelRank[viewer.level] < levelRank[benefit.minimumLevel] ||
-    (benefit.requiredStampType !== null && !viewer.stampTypes.has(benefit.requiredStampType)) ||
-    (benefit.requiredActivityType !== null && !viewer.activityTypes.has(benefit.requiredActivityType))
+    (benefit.requiredStampType !== null &&
+      !viewer.stampTypes.has(benefit.requiredStampType)) ||
+    (benefit.requiredActivityType !== null &&
+      !viewer.activityTypes.has(benefit.requiredActivityType))
   ) {
     return "locked";
   }
@@ -108,7 +171,12 @@ export function parseSafeExternalHttpsUrl(value: string): string {
   } catch {
     throw new Error("Invalid external benefit URL");
   }
-  if (parsed.protocol !== "https:" || parsed.username || parsed.password || !parsed.hostname) {
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.username ||
+    parsed.password ||
+    !parsed.hostname
+  ) {
     throw new Error("Invalid external benefit URL");
   }
   return parsed.href;
