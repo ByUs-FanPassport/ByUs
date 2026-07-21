@@ -1,0 +1,25 @@
+import "server-only";
+import { z } from "zod";
+import { AuthError } from "../../features/auth/domain/auth-errors";
+import type { AdminSession } from "../admin/admin-session-gate";
+import { FanOperationsRepositoryError, type FanCursor, type FanOperationsRepository } from "./fan-operations-repository";
+
+export interface FanOperationsRouteDependencies { repository: FanOperationsRepository; authorize(input: { authorization: string; correlationId: string }): Promise<AdminSession> }
+const uuid = z.string().uuid();
+const adjustmentSchema = z.object({ celebrityId: uuid, points: z.number().int().min(-100).max(100).refine((value) => value !== 0), reason: z.string().trim().min(10).max(500), idempotencyKey: uuid }).strict();
+
+function correlation(request: Request): string { const value=request.headers.get("x-correlation-id")?.trim(); return value && z.string().uuid().safeParse(value).success ? value : crypto.randomUUID(); }
+function json(body: unknown, status: number): Response { return Response.json(body,{status,headers:{"cache-control":"private, no-store",vary:"Authorization"}}); }
+async function admin(request: Request,deps: FanOperationsRouteDependencies,id: string): Promise<AdminSession|Response> { try { return await deps.authorize({authorization:request.headers.get("authorization")??"",correlationId:id}); } catch(error) { if(error instanceof AuthError) return json({error:{code:error.status===401?"UNAUTHENTICATED":"FORBIDDEN"}},error.status===401?401:403); return json({error:{code:"FAN_OPERATIONS_UNAVAILABLE"}},503); } }
+function mapError(error: unknown): Response { if(!(error instanceof FanOperationsRepositoryError)) return json({error:{code:"FAN_OPERATIONS_UNAVAILABLE"}},503); const map={NOT_FOUND:[404,"FAN_NOT_FOUND"],FORBIDDEN:[403,"FORBIDDEN"],INVALID:[400,"INVALID_REQUEST"],CONFLICT:[409,"IDEMPOTENCY_CONFLICT"],TARGET_UNAVAILABLE:[409,"TARGET_UNAVAILABLE"],NEGATIVE_SCORE:[409,"NEGATIVE_SCORE"],SCORE_LIMIT:[409,"SCORE_LIMIT"],UNAVAILABLE:[503,"FAN_OPERATIONS_UNAVAILABLE"]} as const; const [status,code]=map[error.code]; return json({error:{code}},status); }
+
+export function createGetFansHandler(deps: FanOperationsRouteDependencies) { return async function GET(request: Request): Promise<Response> {
+  const id=correlation(request); const actor=await admin(request,deps,id); if(actor instanceof Response)return actor;
+  const p=new URL(request.url).searchParams; const q=p.get("q")?.trim()||null; const celebrityId=p.get("celebrityId"); const status=p.get("status"); const limit=Number(p.get("limit")??"50");
+  let cursor: FanCursor|null=null; const cursorCreatedAt=p.get("cursorCreatedAt"),cursorId=p.get("cursorId");
+  if((q!==null&&(q.length<2||q.length>100))||(celebrityId!==null&&!uuid.safeParse(celebrityId).success)||(status!==null&&status!=="active"&&status!=="disabled")||!Number.isInteger(limit)||limit<1||limit>100||((cursorCreatedAt===null)!==(cursorId===null))||(cursorCreatedAt!==null&&(Number.isNaN(Date.parse(cursorCreatedAt))||!uuid.safeParse(cursorId).success))) return json({error:{code:"INVALID_REQUEST"}},400);
+  if(cursorCreatedAt&&cursorId)cursor={createdAt:cursorCreatedAt,id:cursorId};
+  try { return json(await deps.repository.list({actor:{appUserId:actor.appUserId,allowlistId:actor.allowlistId},correlationId:id,locale:p.get("lang")==="en"?"en":"ko",query:q,celebrityId,accountStatus:status as "active"|"disabled"|null,cursor,limit}),200); } catch(error){return mapError(error);}
+}; }
+export function createGetFanDetailHandler(deps: FanOperationsRouteDependencies) { return async function GET(request: Request,input:{fanId:string}):Promise<Response>{ const id=correlation(request);const actor=await admin(request,deps,id);if(actor instanceof Response)return actor;if(!uuid.safeParse(input.fanId).success)return json({error:{code:"FAN_NOT_FOUND"}},404);try{return json({fan:await deps.repository.detail({actor:{appUserId:actor.appUserId,allowlistId:actor.allowlistId},correlationId:id,fanId:input.fanId,locale:new URL(request.url).searchParams.get("lang")==="en"?"en":"ko"})},200);}catch(error){return mapError(error);} }; }
+export function createAdjustFanScoreHandler(deps: FanOperationsRouteDependencies){return async function POST(request:Request,input:{fanId:string}):Promise<Response>{const id=correlation(request);const actor=await admin(request,deps,id);if(actor instanceof Response)return actor;if(actor.role==="viewer")return json({error:{code:"FORBIDDEN"}},403);if(!uuid.safeParse(input.fanId).success||!(request.headers.get("content-type")??"").toLowerCase().startsWith("application/json"))return json({error:{code:"INVALID_REQUEST"}},400);let body:z.infer<typeof adjustmentSchema>;try{const text=await request.text();if(new TextEncoder().encode(text).byteLength>1024)throw new Error();body=adjustmentSchema.parse(JSON.parse(text));}catch{return json({error:{code:"INVALID_REQUEST"}},400);}try{return json({adjustment:await deps.repository.adjust({actor:{appUserId:actor.appUserId,allowlistId:actor.allowlistId},correlationId:id,fanId:input.fanId,...body})},200);}catch(error){return mapError(error);}};}

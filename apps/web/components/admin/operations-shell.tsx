@@ -10,8 +10,8 @@ import styles from "./operations.module.css";
 export type AdminLocale = "ko" | "en";
 
 const copy = {
-  ko: { menu: "관리자 메뉴", overview: "개요", celebrities: "셀럽 콘텐츠", analytics: "분석", jobs: "블록체인 작업", audit: "감사 로그", language: "English", environment: "운영" },
-  en: { menu: "Admin menu", overview: "Overview", celebrities: "Celebrity content", analytics: "Analytics", jobs: "Blockchain jobs", audit: "Audit log", language: "한국어", environment: "Operations" },
+  ko: { menu: "관리자 메뉴", overview: "개요", celebrities: "셀럽 콘텐츠", lives: "라이브", benefits: "혜택", analytics: "분석", fans: "팬 운영", jobs: "블록체인 작업", audit: "감사 로그", language: "English", environment: "운영" },
+  en: { menu: "Admin menu", overview: "Overview", celebrities: "Celebrity content", lives: "Lives", benefits: "Benefits", analytics: "Analytics", fans: "Fan operations", jobs: "Blockchain jobs", audit: "Audit log", language: "한국어", environment: "Operations" },
 } as const;
 
 export function AdminOperationsShell({ locale, children }: { locale: AdminLocale; children: ReactNode }) {
@@ -31,7 +31,10 @@ export function AdminOperationsShell({ locale, children }: { locale: AdminLocale
     <nav aria-label={t.menu}>
       <Link className={pathname === "/admin" ? styles.activeNav : undefined} aria-current={pathname === "/admin" ? "page" : undefined} href={(locale === "en" ? "/admin?lang=en" : "/admin") as Route}>{t.overview}</Link>
       <Link href={(locale === "en" ? "/admin/celebrities?lang=en" : "/admin/celebrities") as Route}>{t.celebrities}</Link>
+      <Link className={pathname.startsWith("/admin/lives") ? styles.activeNav : undefined} aria-current={pathname.startsWith("/admin/lives") ? "page" : undefined} href={(locale === "en" ? "/admin/lives?lang=en" : "/admin/lives") as Route}>{t.lives}</Link>
+      <Link className={pathname.startsWith("/admin/benefits") ? styles.activeNav : undefined} aria-current={pathname.startsWith("/admin/benefits") ? "page" : undefined} href={(locale === "en" ? "/admin/benefits?lang=en" : "/admin/benefits") as Route}>{t.benefits}</Link>
       <Link className={pathname === "/admin/dashboard" ? styles.activeNav : undefined} aria-current={pathname === "/admin/dashboard" ? "page" : undefined} href={(locale === "en" ? "/admin/dashboard?view=creator&lang=en" : "/admin/dashboard?view=creator") as Route}>{t.analytics}</Link>
+      <Link className={pathname === "/admin/fans" ? styles.activeNav : undefined} aria-current={pathname === "/admin/fans" ? "page" : undefined} href={(locale === "en" ? "/admin/fans?lang=en" : "/admin/fans") as Route}>{t.fans}</Link>
       <Link className={pathname === "/admin/blockchain-jobs" ? styles.activeNav : undefined} aria-current={pathname === "/admin/blockchain-jobs" ? "page" : undefined} href={(locale === "en" ? "/admin/blockchain-jobs?lang=en" : "/admin/blockchain-jobs") as Route}>{t.jobs}</Link>
       <Link className={pathname === "/admin/audit" ? styles.activeNav : undefined} aria-current={pathname === "/admin/audit" ? "page" : undefined} href={(locale === "en" ? "/admin/audit?lang=en" : "/admin/audit") as Route}>{t.audit}</Link>
     </nav>

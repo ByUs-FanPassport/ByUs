@@ -1,100 +1,495 @@
 "use client";
-
-import { AlertCircle, ImagePlus, Plus, Search, ShieldAlert } from "lucide-react";
-import type { Route } from "next";
+import { usePrivy } from "@privy-io/react-auth";
+import { Archive, ExternalLink, Plus, Save, Search } from "lucide-react";
 import Link from "next/link";
-import styles from "./admin.module.css";
+import type { Route } from "next";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AdminAccessState } from "./admin-access-state";
+import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
-
-type CelebrityManagerAccess = "unauthenticated" | "integration-pending";
+import styles from "./admin.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
-
-export function AuthorizedCelebrityManager({ environment }: { environment: DeploymentEnvironment }) {
+type Loc = { name: string; summary: string; imageAlt: string };
+type Social = {
+  platform: "youtube" | "tiktok" | "instagram";
+  url: string;
+  position: number;
+  active: boolean;
+};
+type Theme = { slug: string; nameKo: string; nameEn: string; position: number };
+type Celebrity = {
+  id: string;
+  slug: string;
+  status: "draft" | "published";
+  imageUrl: string;
+  imagePosition: string;
+  displayOrder: number;
+  archivedAt: string | null;
+  updatedAt: string;
+  localizations: { ko: Loc; en: Loc };
+  themes: Theme[];
+  socialLinks: Social[];
+};
+const blank: Omit<Celebrity, "id" | "status" | "archivedAt" | "updatedAt"> = {
+  slug: "",
+  imageUrl: "",
+  imagePosition: "center",
+  displayOrder: 0,
+  localizations: {
+    ko: { name: "", summary: "", imageAlt: "" },
+    en: { name: "", summary: "", imageAlt: "" },
+  },
+  themes: [],
+  socialLinks: [],
+};
+export function AuthorizedCelebrityManager({
+  environment,
+}: {
+  environment: DeploymentEnvironment;
+}) {
   const session = useAdminSession();
-  if (session.status !== "authorized") {
-    return <CelebrityManager access="unauthenticated" environment={environment} />;
-  }
-  return <CelebrityManager access="integration-pending" environment={environment} />;
-}
-
-export function CelebrityManager({ access, environment = "Development" }: { access: CelebrityManagerAccess; environment?: DeploymentEnvironment }) {
-  if (access === "unauthenticated") {
-    return (
-      <main className={styles.accessPage}>
-        <section className={styles.accessPanel} aria-labelledby="access-heading">
-          <ShieldAlert aria-hidden="true" />
-          <h1 id="access-heading">관리자 로그인이 필요합니다</h1>
-          <p>셀럽 콘텐츠와 운영 정보는 권한이 확인된 관리자에게만 표시됩니다.</p>
-          <Link className={styles.primaryLink} href={"/admin/login" as Route}>관리자 로그인</Link>
-        </section>
-      </main>
-    );
-  }
-
-  const disabled = true;
-
+  const locale: AdminLocale =
+    typeof location !== "undefined" &&
+    new URLSearchParams(location.search).get("lang") === "en"
+      ? "en"
+      : "ko";
+  if (session.status !== "authorized")
+    return <AdminAccessState status={session.status} locale={locale} />;
   return (
-    <div className={styles.adminPage}>
-      <header className={styles.topbar}>
-        <Link className={styles.adminBrand} href={"/admin" as Route}>ByUs <span>Admin</span></Link>
-        <span className={styles.environment}>{environment}</span>
-      </header>
-      <div className={styles.adminLayout}>
-        <aside className={styles.sidebar} aria-label="관리자 메뉴">
-          <nav>
-            <Link href={"/admin" as Route}>개요</Link>
-            <Link className={styles.activeNav} href={"/admin/celebrities" as Route} aria-current="page">셀럽 콘텐츠</Link>
-            <span aria-disabled="true">라이브</span>
-            <span aria-disabled="true">혜택</span>
-            <span aria-disabled="true">블록체인 작업</span>
-            <span aria-disabled="true">감사 로그</span>
-          </nav>
-        </aside>
-
-        <main className={styles.workspace} id="main-content">
-          <div className={styles.workspaceHeading}>
-            <div><p className={styles.breadcrumb}>콘텐츠 관리</p><h1>셀럽</h1><p>한국어와 영어 프로필을 준비하고 팬 화면 공개 상태를 관리합니다.</p></div>
-            <button type="button" disabled={disabled}><Plus aria-hidden="true" /> 새 셀럽 등록</button>
-          </div>
-
-          {disabled && (
-            <div className={styles.integrationNotice} role="status">
-              <AlertCircle aria-hidden="true" />
-              <div><strong>관리자 서버 연결 전</strong><p>현재는 화면 구조만 확인할 수 있습니다. 인증된 CMS API가 연결되기 전까지 조회·저장·발행은 실행되지 않습니다.</p></div>
-            </div>
-          )}
-
-          <div className={styles.managerLayout}>
-            <section className={styles.listPane} aria-labelledby="celebrity-list-heading">
-              <div className={styles.paneHeading}><h2 id="celebrity-list-heading">등록된 셀럽</h2><span>0명</span></div>
-              <label className={styles.searchField}><span className={styles.srOnly}>셀럽 검색</span><Search aria-hidden="true" /><input type="search" placeholder="이름으로 검색" disabled={disabled} /></label>
-              <div className={styles.emptyState}><p>표시할 수 있는 셀럽 데이터가 없습니다.</p><span>권한 확인과 CMS 조회가 완료되면 목록이 표시됩니다.</span></div>
-            </section>
-
-            <section className={styles.editorPane} aria-labelledby="editor-heading">
-              <div className={styles.paneHeading}><div><h2 id="editor-heading">새 셀럽 정보</h2><p>필수 콘텐츠를 모두 입력해야 발행할 수 있습니다.</p></div><span className={styles.draftBadge}>초안</span></div>
-              <form className={styles.editorForm} aria-label="셀럽 콘텐츠 편집">
-                <fieldset disabled={disabled}>
-                  <legend>기본 정보</legend>
-                  <div className={styles.fieldGrid}>
-                    <label><span>셀럽 이름 (한국어)</span><input name="nameKo" required autoComplete="off" /></label>
-                    <label><span>Celebrity name (English)</span><input name="nameEn" required autoComplete="off" lang="en" /></label>
-                  </div>
-                  <label><span>공개 URL</span><div className={styles.slugField}><span>byus.kr/celebrities/</span><input name="slug" required aria-label="공개 URL 슬러그" /></div></label>
-                </fieldset>
-
-                <fieldset disabled={disabled}>
-                  <legend>프로필 이미지</legend>
-                  <label className={styles.imageDrop}><ImagePlus aria-hidden="true" /><strong>프로필 이미지 선택</strong><span>세로형 4:5, JPG·PNG·WebP</span><input className={styles.fileInput} type="file" accept="image/jpeg,image/png,image/webp" aria-label="프로필 이미지" required /></label>
-                </fieldset>
-
-                <p className={styles.publishRule}><AlertCircle aria-hidden="true" /> 한국어와 영어 콘텐츠, 프로필 이미지가 모두 있어야 발행할 수 있습니다.</p>
-                <div className={styles.formActions}><button className={styles.secondaryButton} type="button" disabled={disabled}>초안 저장</button><button className={styles.primaryButton} type="submit" disabled={disabled}>발행하기</button></div>
-              </form>
-            </section>
-          </div>
-        </main>
+    <CelebrityCms
+      role={session.admin.role}
+      locale={locale}
+      environment={environment}
+    />
+  );
+}
+function CelebrityCms({
+  role,
+  locale,
+  environment,
+}: {
+  role: string;
+  locale: AdminLocale;
+  environment: DeploymentEnvironment;
+}) {
+  const { getAccessToken } = usePrivy(),
+    canEdit = role !== "viewer";
+  const [items, setItems] = useState<Celebrity[]>([]),
+    [selected, setSelected] = useState<string | null>(null),
+    [draft, setDraft] = useState(blank),
+    [lang, setLang] = useState<AdminLocale>("ko"),
+    [query, setQuery] = useState(""),
+    [state, setState] = useState<"loading" | "ready" | "error" | "saving">(
+      "loading",
+    ),
+    [message, setMessage] = useState("");
+  const request = useCallback(
+    async (method: string, body?: unknown) => {
+      const token = await getAccessToken();
+      if (!token) throw new Error();
+      const r = await fetch("/api/admin/celebrities", {
+        method,
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          "x-correlation-id": crypto.randomUUID(),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        cache: "no-store",
+      });
+      if (!r.ok) {
+        const p = await r.json().catch(() => ({}));
+        throw new Error(p.message || p.error || "request failed");
+      }
+      return r.json();
+    },
+    [getAccessToken],
+  );
+  const load = useCallback(async () => {
+    setState("loading");
+    try {
+      const p = (await request("GET")) as { items: Celebrity[] };
+      setItems(p.items);
+      setState("ready");
+    } catch {
+      setState("error");
+    }
+  }, [request]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const current = items.find((x) => x.id === selected);
+  useEffect(() => {
+    if (current)
+      setDraft({
+        slug: current.slug,
+        imageUrl: current.imageUrl,
+        imagePosition: current.imagePosition,
+        displayOrder: current.displayOrder,
+        localizations: current.localizations,
+        themes: current.themes,
+        socialLinks: current.socialLinks,
+      });
+  }, [current]);
+  const filtered = useMemo(
+    () =>
+      items.filter((x) =>
+        (x.localizations.ko?.name || x.slug)
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+      ),
+    [items, query],
+  );
+  async function command(body: unknown) {
+    setState("saving");
+    setMessage("");
+    try {
+      await request("POST", body);
+      await load();
+      setMessage(
+        locale === "ko" ? "변경사항을 저장했습니다." : "Changes saved.",
+      );
+    } catch (e) {
+      setState("ready");
+      setMessage(e instanceof Error ? e.message : "Error");
+    }
+  }
+  const updateLoc = (key: keyof Loc, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      localizations: {
+        ...d.localizations,
+        [lang]: { ...d.localizations[lang], [key]: value },
+      },
+    }));
+  return (
+    <AdminOperationsShell locale={locale}>
+      <div className={styles.cmsHeading}>
+        <div>
+          <p>ADM-003 · {environment}</p>
+          <h1>{locale === "ko" ? "셀럽 콘텐츠" : "Celebrity content"}</h1>
+          <span>
+            {locale === "ko"
+              ? "프로필을 미리 보고 공개 상태와 팬 퀴즈를 관리합니다."
+              : "Preview profiles, publication, and fan quizzes."}
+          </span>
+        </div>
+        {canEdit && (
+          <button
+            className={styles.cmsPrimary}
+            onClick={() => {
+              setSelected(null);
+              setDraft(blank);
+            }}
+          >
+            <Plus aria-hidden="true" />{" "}
+            {locale === "ko" ? "새 셀럽" : "New celebrity"}
+          </button>
+        )}
       </div>
-    </div>
+      <div className={styles.cmsGrid}>
+        <section
+          className={styles.cmsList}
+          aria-label={locale === "ko" ? "셀럽 목록" : "Celebrity list"}
+        >
+          <label className={styles.searchField}>
+            <Search aria-hidden="true" />
+            <span className={styles.srOnly}>Search</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={locale === "ko" ? "이름 검색" : "Search names"}
+            />
+          </label>
+          {state === "loading" ? (
+            <p>Loading…</p>
+          ) : (
+            filtered.map((x) => (
+              <button
+                key={x.id}
+                className={selected === x.id ? styles.cmsListActive : ""}
+                onClick={() => setSelected(x.id)}
+              >
+                <img src={x.imageUrl} alt="" />
+                <span>
+                  <strong>{x.localizations[locale]?.name || x.slug}</strong>
+                  <small>
+                    {x.slug} · {x.archivedAt ? "ARCHIVED" : x.status}
+                  </small>
+                </span>
+              </button>
+            ))
+          )}
+        </section>
+        <section className={styles.cmsEditor}>
+          <div className={styles.cmsToolbar}>
+            <div role="group" aria-label="Language">
+              <button
+                className={lang === "ko" ? styles.cmsTabActive : ""}
+                onClick={() => setLang("ko")}
+              >
+                KO
+              </button>
+              <button
+                className={lang === "en" ? styles.cmsTabActive : ""}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+            </div>
+            {current && (
+              <span
+                className={
+                  current.status === "published"
+                    ? styles.cmsPublished
+                    : styles.draftBadge
+                }
+              >
+                {current.archivedAt ? "ARCHIVED" : current.status.toUpperCase()}
+              </span>
+            )}
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void command({
+                action: "save",
+                celebrityId: selected,
+                payload: draft,
+              });
+            }}
+            className={styles.cmsForm}
+          >
+            <fieldset disabled={!canEdit || !!current?.archivedAt}>
+              <legend>{locale === "ko" ? "기본 정보" : "Profile"}</legend>
+              <label>
+                <span>{lang === "ko" ? "이름" : "Name"}</span>
+                <input
+                  required
+                  value={draft.localizations[lang].name}
+                  onChange={(e) => updateLoc("name", e.target.value)}
+                />
+              </label>
+              <label>
+                <span>{lang === "ko" ? "소개" : "Summary"}</span>
+                <textarea
+                  required
+                  value={draft.localizations[lang].summary}
+                  onChange={(e) => updateLoc("summary", e.target.value)}
+                />
+              </label>
+              <label>
+                <span>
+                  {lang === "ko" ? "이미지 대체 텍스트" : "Image alt"}
+                </span>
+                <input
+                  required
+                  value={draft.localizations[lang].imageAlt}
+                  onChange={(e) => updateLoc("imageAlt", e.target.value)}
+                />
+              </label>
+              <div className={styles.fieldGrid}>
+                <label>
+                  <span>Slug</span>
+                  <input
+                    required
+                    pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                    value={draft.slug}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, slug: e.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>{locale === "ko" ? "정렬 순서" : "Sort order"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={draft.displayOrder}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        displayOrder: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <label>
+                <span>{locale === "ko" ? "이미지 URL" : "Image URL"}</span>
+                <input
+                  required
+                  value={draft.imageUrl}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, imageUrl: e.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                <span>object-position</span>
+                <input
+                  required
+                  value={draft.imagePosition}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, imagePosition: e.target.value }))
+                  }
+                />
+              </label>
+            </fieldset>
+            <fieldset disabled={!canEdit || !!current?.archivedAt}>
+              <legend>
+                {locale === "ko" ? "분류와 채널" : "Taxonomy and channels"}
+              </legend>
+              <label>
+                <span>
+                  {locale === "ko"
+                    ? "테마 (한 줄에 slug|한국어|English)"
+                    : "Themes (slug|KO|EN per line)"}
+                </span>
+                <textarea
+                  value={draft.themes
+                    .map((t) => `${t.slug}|${t.nameKo}|${t.nameEn}`)
+                    .join("\n")}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      themes: e.target.value
+                        .split("\n")
+                        .filter(Boolean)
+                        .map((row, position) => {
+                          const [slug, nameKo, nameEn] = row.split("|");
+                          return { slug, nameKo, nameEn, position };
+                        }),
+                    }))
+                  }
+                />
+              </label>
+              <h3 className={styles.cmsSubheading}>
+                {locale === "ko" ? "소셜 링크" : "Social links"}
+              </h3>
+              {(["youtube", "tiktok", "instagram"] as const).map(
+                (platform, position) => (
+                  <label key={platform}>
+                    <span>{platform}</span>
+                    <input
+                      type="url"
+                      value={
+                        draft.socialLinks.find((x) => x.platform === platform)
+                          ?.url || ""
+                      }
+                      onChange={(e) =>
+                        setDraft((d) => ({
+                          ...d,
+                          socialLinks: [
+                            ...d.socialLinks.filter(
+                              (x) => x.platform !== platform,
+                            ),
+                            ...(e.target.value
+                              ? [
+                                  {
+                                    platform,
+                                    url: e.target.value,
+                                    position,
+                                    active: true,
+                                  },
+                                ]
+                              : []),
+                          ],
+                        }))
+                      }
+                    />
+                  </label>
+                ),
+              )}
+            </fieldset>
+            <aside className={styles.cmsPreview}>
+              <span>
+                {locale === "ko" ? "팬 화면 미리보기" : "Fan preview"}
+              </span>
+              {draft.imageUrl && (
+                <img
+                  src={draft.imageUrl}
+                  alt={draft.localizations[lang].imageAlt}
+                />
+              )}
+              <h2>{draft.localizations[lang].name || "—"}</h2>
+              <p>{draft.localizations[lang].summary || "—"}</p>
+            </aside>
+            {message && (
+              <p role="status" className={styles.cmsMessage}>
+                {message}
+              </p>
+            )}
+            <div className={styles.formActions}>
+              {current && (
+                <Link
+                  href={`/admin/celebrities/${current.id}/quiz` as Route}
+                  className={styles.secondaryButton}
+                >
+                  <ExternalLink aria-hidden="true" /> Quiz
+                </Link>
+              )}
+              {canEdit && (
+                <>
+                  <button
+                    type="submit"
+                    className={styles.secondaryButton}
+                    disabled={state === "saving"}
+                  >
+                    <Save aria-hidden="true" />
+                    {locale === "ko" ? "저장" : "Save"}
+                  </button>
+                  {current && !current.archivedAt && (
+                    <button
+                      type="button"
+                      className={styles.cmsPrimary}
+                      onClick={() =>
+                        void command({
+                          action:
+                            current.status === "published"
+                              ? "unpublish"
+                              : "publish",
+                          celebrityId: current.id,
+                        })
+                      }
+                    >
+                      {current.status === "published"
+                        ? locale === "ko"
+                          ? "공개 중지"
+                          : "Unpublish"
+                        : locale === "ko"
+                          ? "발행"
+                          : "Publish"}
+                    </button>
+                  )}
+                  {current && !current.archivedAt && (
+                    <button
+                      type="button"
+                      className={styles.cmsDanger}
+                      onClick={() => {
+                        const reason = prompt(
+                          locale === "ko"
+                            ? "보관 사유를 10자 이상 입력하세요."
+                            : "Enter an archive reason (10+ characters).",
+                        );
+                        if (reason)
+                          void command({
+                            action: "archive",
+                            celebrityId: current.id,
+                            reason,
+                          });
+                      }}
+                    >
+                      <Archive aria-hidden="true" />
+                      {locale === "ko" ? "보관" : "Archive"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </form>
+        </section>
+      </div>
+    </AdminOperationsShell>
   );
 }
