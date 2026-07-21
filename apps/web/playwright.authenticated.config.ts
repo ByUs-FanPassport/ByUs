@@ -25,8 +25,15 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "off",
-    screenshot: "off",
+    screenshot: "only-on-failure",
     video: "off",
   },
-  projects: [{ name: "authenticated-no-retention", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1024 } } }],
+  projects: [
+    { name: "chromium-360", use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 800 } } },
+    { name: "chromium-1440", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1024 } } },
+    { name: "webkit-360", use: { ...devices["Desktop Safari"], viewport: { width: 360, height: 800 } } },
+    { name: "webkit-1440", use: { ...devices["Desktop Safari"], viewport: { width: 1440, height: 1024 } } },
+    { name: "firefox-360", use: { ...devices["Desktop Firefox"], viewport: { width: 360, height: 800 } } },
+    { name: "firefox-1440", use: { ...devices["Desktop Firefox"], viewport: { width: 1440, height: 1024 } } },
+  ],
 });
