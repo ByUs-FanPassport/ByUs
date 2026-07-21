@@ -122,6 +122,14 @@ describe("G2 credential queue reconciliation static migration contract", () => {
     expect(sql).toContain("from jsonb_object_keys(");
   });
 
+  it("keeps JSONB key-count subqueries outside PL/pgSQL boolean expressions", () => {
+    expect(functionDefinition("assert_credential_blockchain_job_link("))
+      .toContain("into worker_submission_key_count");
+    expect(functionDefinition("enforce_linked_blockchain_job_immutability()"))
+      .toContain("into worker_submission_key_count");
+    expect(sql).not.toMatch(/\bor\s+case[\s\S]{0,300}jsonb_object_keys/i);
+  });
+
   it("revokes direct execution from browser and public roles", () => {
     expect(functionDefinition("validate_credential_blockchain_job_link()"))
       .toContain("security definer");

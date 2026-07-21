@@ -24,6 +24,8 @@ declare
   expected_operation_key text;
   expected_mint_status public.credential_mint_status;
   expected_payload_keys integer;
+  actual_payload_keys integer;
+  worker_submission_key_count integer;
 begin
   if credential_job_id is null then
     if credential_mint_status <> 'queued'
@@ -76,12 +78,12 @@ begin
   expected_payload_keys := case credential_kind when 'passport' then 3 else 4 end;
   if job_payload ? 'workerSubmission' then
     expected_payload_keys := expected_payload_keys + 1;
-    if jsonb_typeof(job_payload -> 'workerSubmission') <> 'object'
-       or case
-            when jsonb_typeof(job_payload -> 'workerSubmission') = 'object'
-              then (select count(*) from jsonb_object_keys(job_payload -> 'workerSubmission'))
-            else 0
-          end <> 2
+    if jsonb_typeof(job_payload -> 'workerSubmission') <> 'object' then
+      raise exception 'job worker submission payload is invalid';
+    end if;
+    select count(*) into worker_submission_key_count
+    from jsonb_object_keys(job_payload -> 'workerSubmission');
+    if worker_submission_key_count <> 2
        or not ((job_payload -> 'workerSubmission') ?& array['txHash', 'signedTransaction'])
        or jsonb_typeof(job_payload -> 'workerSubmission' -> 'txHash') <> 'string'
        or jsonb_typeof(job_payload -> 'workerSubmission' -> 'signedTransaction') <> 'string'
@@ -92,7 +94,8 @@ begin
     end if;
   end if;
 
-  if (select count(*) from jsonb_object_keys(job_payload)) <> expected_payload_keys then
+  select count(*) into actual_payload_keys from jsonb_object_keys(job_payload);
+  if actual_payload_keys <> expected_payload_keys then
     raise exception 'job payload contains unexpected fields';
   end if;
 
@@ -188,6 +191,7 @@ set search_path = ''
 as $$
 declare
   is_linked boolean;
+  worker_submission_key_count integer;
 begin
   select exists (
     select 1 from public.fan_passports where blockchain_job_id = old.id
@@ -219,12 +223,13 @@ begin
   if old.payload ? 'workerSubmission'
      or not (new.payload ? 'workerSubmission')
      or new.payload - 'workerSubmission' <> old.payload
-     or jsonb_typeof(new.payload -> 'workerSubmission') <> 'object'
-     or case
-          when jsonb_typeof(new.payload -> 'workerSubmission') = 'object'
-            then (select count(*) from jsonb_object_keys(new.payload -> 'workerSubmission'))
-          else 0
-        end <> 2
+     or jsonb_typeof(new.payload -> 'workerSubmission') <> 'object' then
+    raise exception 'linked blockchain job payload is immutable';
+  end if;
+
+  select count(*) into worker_submission_key_count
+  from jsonb_object_keys(new.payload -> 'workerSubmission');
+  if worker_submission_key_count <> 2
      or not ((new.payload -> 'workerSubmission') ?& array['txHash', 'signedTransaction'])
      or jsonb_typeof(new.payload -> 'workerSubmission' -> 'txHash') <> 'string'
      or jsonb_typeof(new.payload -> 'workerSubmission' -> 'signedTransaction') <> 'string'
