@@ -154,7 +154,7 @@ test.describe("KARA × NUALEAF linked Dev operational journey", () => {
     expect(selectedDelivery.status(), await selectedDelivery.text()).toBe(200);
     const ownedApplication = (await json(selectedDelivery)).application;
     expect(ownedApplication).toEqual(expect.objectContaining({ applicationId: applicationResult.applicationId, status: "selected" }));
-    expect(ownedApplication.claim).toEqual(expect.objectContaining({ claimId: decisionResult.claimId, deliveryType: "external_link", deliveryValue: env("BYUS_E2E_YOUTUBE_URL") }));
+    expect(ownedApplication.claim).toEqual(expect.objectContaining({ claimId: decisionResult.claimId, deliveryType: "external_url", deliveryValue: env("BYUS_E2E_YOUTUBE_URL") }));
     const selectedDeliveryReplay = await request.get(`/api/benefits/${application.id}/applications`, { headers: auth() });
     expect(selectedDeliveryReplay.status()).toBe(200);
     expect((await json(selectedDeliveryReplay)).application).toEqual(ownedApplication);
