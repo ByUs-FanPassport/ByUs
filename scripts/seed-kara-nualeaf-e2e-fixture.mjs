@@ -13,6 +13,7 @@ const readOnlyRequired = [
   "BYUS_E2E_FAN_ACCESS_TOKEN",
   "BYUS_E2E_TOKEN_DISPOSABLE_UNTIL",
   "BYUS_E2E_RUN_ID",
+  "VERCEL_AUTOMATION_BYPASS_SECRET",
 ];
 const mutationRequired = ["seed", "activate"].includes(action) ? ["BYUS_E2E_FAN_CODE", "BYUS_E2E_YOUTUBE_URL"] : [];
 const mutating = ["seed", "activate", "cleanup"].includes(action);
@@ -65,6 +66,9 @@ const actor = {
   allowlistId: process.env.BYUS_E2E_ADMIN_ALLOWLIST_ID.trim(),
 };
 const correlation = () => crypto.randomUUID();
+const deploymentHeaders = () => ({
+  "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+});
 const must = (label, result) => {
   if (result.error) throw new Error(`${label}: ${result.error.message}`);
   return result.data;
@@ -84,7 +88,7 @@ async function context() {
 }
 
 async function appJson(path, token, label) {
-  const response = await fetch(`${baseUrl}${path}`, { headers: { authorization: `Bearer ${token}` } });
+  const response = await fetch(`${baseUrl}${path}`, { headers: { ...deploymentHeaders(), authorization: `Bearer ${token}` } });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(`${label}: HTTP ${response.status} ${body?.error?.code ?? "UNKNOWN"}`);
   return body;
@@ -93,7 +97,7 @@ async function appJson(path, token, label) {
 async function adminPost(path, body, label) {
   const response = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { authorization: `Bearer ${process.env.BYUS_E2E_ADMIN_ACCESS_TOKEN}`, "content-type": "application/json", "x-correlation-id": correlation() },
+    headers: { ...deploymentHeaders(), authorization: `Bearer ${process.env.BYUS_E2E_ADMIN_ACCESS_TOKEN}`, "content-type": "application/json", "x-correlation-id": correlation() },
     body: JSON.stringify(body),
   });
   const result = await response.json().catch(() => null);

@@ -1,5 +1,6 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 import { createHash } from "node:crypto";
+import { expect, test } from "../fixtures/protected-preview";
 
 const env = (key: string) => process.env[key]?.trim() ?? "";
 const runId = env("BYUS_E2E_RUN_ID").toLowerCase();

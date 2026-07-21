@@ -72,7 +72,7 @@ const rawAttemptResultSchema = z
     id: z.uuid(),
     status: z.enum(["open", "passed", "failed"]),
     score: z.number().int().min(0).max(3).nullable(),
-    submittedAt: z.iso.datetime().nullable(),
+    submittedAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .strict();
 

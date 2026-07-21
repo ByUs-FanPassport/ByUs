@@ -144,6 +144,24 @@ describe("quiz attempt public DTO", () => {
       }),
     ).toEqual(expect.objectContaining({ issuance: expect.objectContaining({ scorePoints: 1 }) }));
   });
+
+  it("accepts the PostgreSQL UTC offset used by live submit projections", () => {
+    expect(
+      parseQuizSubmitProjection({
+        attempt: {
+          id: openAttempt.attempt.id,
+          status: "passed",
+          score: 3,
+          submittedAt: "2026-07-21T12:00:00.000+00:00",
+        },
+        issuance: {
+          passportId: "30000000-0000-4000-8000-000000000001",
+          stampId: "40000000-0000-4000-8000-000000000001",
+          scorePoints: 1,
+        },
+      }),
+    ).toEqual(expect.objectContaining({ attempt: expect.objectContaining({ status: "passed" }) }));
+  });
 });
 
 describe("quiz answer request", () => {

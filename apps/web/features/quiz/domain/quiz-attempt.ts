@@ -16,7 +16,7 @@ const failedAttemptSchema = z
     id: uuidSchema,
     status: z.literal("failed"),
     score: z.union([z.literal(0), z.literal(1)]),
-    submittedAt: z.iso.datetime(),
+    submittedAt: z.iso.datetime({ offset: true }),
   })
   .strict();
 
@@ -25,7 +25,7 @@ const passedAttemptSchema = z
     id: uuidSchema,
     status: z.literal("passed"),
     score: z.union([z.literal(2), z.literal(3)]),
-    submittedAt: z.iso.datetime(),
+    submittedAt: z.iso.datetime({ offset: true }),
   })
   .strict();
 

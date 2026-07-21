@@ -11,6 +11,9 @@ if (baseURL.replace(/\/$/, "") !== APPROVED_LINKED_DEV_ORIGIN || process.env.BYU
 if (process.env.BYUS_E2E_ALLOW_MUTATION !== "I_UNDERSTAND_LINKED_DEV_MUTATION") {
   throw new Error("E2E_MUTATION_OPT_IN_REQUIRED");
 }
+if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim()) {
+  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required");
+}
 
 export default defineConfig({
   testDir: "./e2e",
