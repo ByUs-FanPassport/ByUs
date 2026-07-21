@@ -163,7 +163,7 @@ export function SurveyBuilder({ liveEventId }: { liveEventId: string }) {
   }, [getAccessToken, liveEventId]);
   useEffect(() => {
     if (session.status === "authorized") void load();
-  }, [session.status]);
+  }, [session.status, load]);
   function choose(id: string) {
     const version = document?.versions.find((v) => v.id === id);
     setSelectedId(id);

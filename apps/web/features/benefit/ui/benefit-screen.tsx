@@ -364,6 +364,7 @@ export function BenefitsScreen({
         {view.kind === "loading" && (
           <div
             className={styles.skeletonGrid}
+            role="status"
             aria-busy="true"
             aria-label={
               locale === "ko" ? "혜택 불러오는 중" : "Loading benefits"

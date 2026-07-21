@@ -28,9 +28,16 @@
     "test:web": "npm run test --workspace @byus/web",
     "test:e2e": "npm run test:e2e --workspace @byus/web",
     "typecheck": "npm run typecheck --workspace @byus/web",
+    "lint": "eslint apps/web apps/worker scripts --max-warnings=0",
+    "lint:web": "eslint apps/web --max-warnings=0",
+    "lint:worker": "eslint apps/worker --max-warnings=0",
     "security:audit": "npm audit --omit=dev",
     "security:tree": "npm ls @aws-sdk/client-secrets-manager fast-xml-parser axios ws postcss uuid --all",
     "security:verify": "node scripts/verify-security-dependencies.mjs",
     "security:ws-canary": "node scripts/verify-websocket-canary.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.10"
   }
 }

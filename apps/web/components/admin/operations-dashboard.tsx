@@ -507,7 +507,7 @@ export function AdminAnalytics({
   const session = useAdminSession();
   const { getAccessToken } = usePrivy();
   const [view, setView] = useState<AnalyticsView>(initialView);
-  const initialWindow = useMemo(defaultWindow, []);
+  const initialWindow = useMemo(() => defaultWindow(), []);
   const [scope, setScope] = useState("");
   const [live, setLive] = useState("");
   const [from, setFrom] = useState(initialWindow.from);

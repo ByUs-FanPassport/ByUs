@@ -141,7 +141,7 @@ function DigitalDisclosure({ mint, locale }: { mint: { status: string; txHash: s
 
 export function PassportDetailScreen({ id }: { id: string }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
-  const parse = useCallback(parsePassport, []); const fetcher = useOwnedApi(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
+  const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedApi(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
   return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <PassportDetailView passport={fetcher.state.data} locale={locale} />}</Frame>;
 }
 
@@ -156,7 +156,7 @@ function PassportDetailView({ passport, locale }: { passport: PassportDetail; lo
 }
 
 export function StampDetailScreen({ id }: { id: string }) {
-  const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback(parseStamp, []);
+  const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
   const fetcher = useOwnedApi(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
   return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} />}</Frame>;
 }

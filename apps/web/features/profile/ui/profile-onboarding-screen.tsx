@@ -133,7 +133,7 @@ export function ProfileOnboardingScreen() {
       }
     })();
     return () => controller.abort();
-  }, [authenticated, context, currentOnboardingPath, getAccessToken, ready, replace, returnTo]);
+  }, [authenticated, context, currentOnboardingPath, getAccessToken, locale, ready, replace, returnTo]);
 
   const updateNickname = useCallback((value: string) => {
     setNickname(value);
@@ -174,7 +174,7 @@ export function ProfileOnboardingScreen() {
         }
         else if (code === "INVALID_NICKNAME") setState("invalid");
         else setState("network");
-        requestAnimationFrame(() => inputRef.current?.focus());
+        inputRef.current?.focus();
         return;
       }
       const savedNickname = body.profile?.nickname ?? normalized;
@@ -185,7 +185,7 @@ export function ProfileOnboardingScreen() {
       window.setTimeout(() => replace(returnTo as Route), completionDelay);
     } catch {
       setState("network");
-      requestAnimationFrame(() => inputRef.current?.focus());
+      inputRef.current?.focus();
     }
   };
 

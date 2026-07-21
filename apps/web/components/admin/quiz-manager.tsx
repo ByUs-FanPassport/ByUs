@@ -94,7 +94,7 @@ export function QuizManager({ celebrityId }: { celebrityId: string }) {
   }, [req, selected]);
   useEffect(() => {
     if (session.status === "authorized") void load();
-  }, [session.status, req]);
+  }, [session.status, load]);
   if (session.status !== "authorized")
     return <AdminAccessState status={session.status} locale={locale} />;
   const quiz = items.find((x) => x.id === selected),

@@ -19,7 +19,7 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     console.error("[auth/session] synchronization failed", {
       name: error instanceof Error ? error.name : "UnknownError",
-      message: error instanceof Error ? error.message : "Unknown session synchronization failure",
+      code: error instanceof AuthError ? error.code : "SESSION_SYNC_FAILED",
     });
     const status = error instanceof AuthError ? error.status : 503;
     const code = error instanceof AuthError ? error.code : "SESSION_SYNC_FAILED";
