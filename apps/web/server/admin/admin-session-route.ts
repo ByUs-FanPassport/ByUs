@@ -29,7 +29,7 @@ export function createAdminSessionHandler(dependencies: AdminSessionHandlerDepen
         correlationId: correlationId(request),
       });
       return Response.json(
-        { admin },
+        { admin: { email: admin.email, role: admin.role } },
         { status: 200, headers: { "cache-control": "no-store" } },
       );
     } catch (error) {

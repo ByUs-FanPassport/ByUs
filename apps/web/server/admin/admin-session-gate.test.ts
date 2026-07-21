@@ -42,7 +42,12 @@ describe("authorizeAdminSession", () => {
         verifier,
         repository: repo,
       }),
-    ).resolves.toEqual({ email: "biz@sallylab.io", role: "admin" });
+    ).resolves.toEqual({
+      email: "biz@sallylab.io",
+      role: "admin",
+      appUserId: "user-1",
+      allowlistId: "allow-1",
+    });
 
     expect(repo.findUserByPrivyId).toHaveBeenCalledWith("did:privy:admin");
     expect(repo.findActiveAdminByEmail).toHaveBeenCalledWith("biz@sallylab.io");

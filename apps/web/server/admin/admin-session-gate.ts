@@ -22,6 +22,8 @@ export interface AdminSessionRepository
 export interface AdminSession {
   email: string;
   role: AdminRole;
+  appUserId: string;
+  allowlistId: string;
 }
 
 function bearerToken(authorization: string): string {
@@ -75,5 +77,10 @@ export async function authorizeAdminSession(input: {
     summary: { outcome: "authorized", role: admin.role },
   });
 
-  return { email: admin.email, role: admin.role };
+  return {
+    email: admin.email,
+    role: admin.role,
+    appUserId: user.id,
+    allowlistId: admin.allowlistId,
+  };
 }
