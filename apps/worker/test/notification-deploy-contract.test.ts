@@ -46,21 +46,11 @@ describe("notification AWS deployment contract", () => {
     );
     expect(script).not.toMatch(/while\s+true/);
   });
-  it("rejects a prod dry-run using the implicit dev profile before build or AWS access", () => {
-    const result = spawnSync(
-      resolve(root, "scripts/deploy-aws-notification-worker.sh"),
-      ["prod", "false", "--dry-run"],
-      {
-        encoding: "utf8",
-        env: { ...process.env, AWS_PROFILE: "", EXPECTED_AWS_ACCOUNT_ID: "" },
-      },
-    );
-    expect(result.status).toBe(78);
-    expect(result.stderr).toContain(
-      "requires explicit AWS_PROFILE=coredot-prod",
-    );
-  });
-  it("accepts local prod dry-run validation with the explicit approved isolated identity", () => {
+  it.each([
+    ["AWS_PROFILE", { AWS_PROFILE: "" }, "requires an explicit AWS_PROFILE"],
+    ["EXPECTED_AWS_ACCOUNT_ID", { EXPECTED_AWS_ACCOUNT_ID: "" }, "requires a 12-digit EXPECTED_AWS_ACCOUNT_ID"],
+    ["BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM", { BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM: "" }, "requires the exact BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM acknowledgement"],
+  ])("rejects prod before AWS mutation when %s is missing", (_gate, override, message) => {
     const result = spawnSync(
       resolve(root, "scripts/deploy-aws-notification-worker.sh"),
       ["prod", "false", "--dry-run"],
@@ -68,31 +58,38 @@ describe("notification AWS deployment contract", () => {
         encoding: "utf8",
         env: {
           ...process.env,
-          AWS_PROFILE: "coredot-prod",
-          EXPECTED_AWS_ACCOUNT_ID: "999999999999",
+          AWS_PROFILE: "coredot-dev",
+          EXPECTED_AWS_ACCOUNT_ID: "200151116034",
+          BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM: "I_UNDERSTAND_BYUS_NOTIFICATION_PROD_MUTATION",
+          ...override,
+        },
+      },
+    );
+    expect(result.status).toBe(78);
+    expect(result.stderr).toContain(message);
+    expect(result.stdout).not.toContain("validated notification deployment");
+    expect(script.indexOf("BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM")).toBeLessThan(
+      script.indexOf("npm run build:lambda"),
+    );
+  });
+  it("accepts the explicit shared-account prod gate", () => {
+    const result = spawnSync(
+      resolve(root, "scripts/deploy-aws-notification-worker.sh"),
+      ["prod", "false", "--dry-run"],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          AWS_PROFILE: "coredot-dev",
+          EXPECTED_AWS_ACCOUNT_ID: "200151116034",
+          BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM: "I_UNDERSTAND_BYUS_NOTIFICATION_PROD_MUTATION",
         },
       },
     );
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(
-      "environment=prod enabled=false profile=coredot-prod account=999999999999",
+      "environment=prod enabled=false profile=coredot-dev account=200151116034",
     );
-  });
-  it("rejects the dev account even through the approved prod profile", () => {
-    const result = spawnSync(
-      resolve(root, "scripts/deploy-aws-notification-worker.sh"),
-      ["prod", "false", "--dry-run"],
-      {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          AWS_PROFILE: "coredot-prod",
-          EXPECTED_AWS_ACCOUNT_ID: "200151116034",
-        },
-      },
-    );
-    expect(result.status).toBe(78);
-    expect(result.stderr).toContain("prod account must be isolated");
   });
   it("limits dev IAM to the committed dev account and secret", () => {
     const policy = JSON.parse(
