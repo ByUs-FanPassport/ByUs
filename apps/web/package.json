@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "node scripts/run-playwright.mjs",
-    "test:e2e:smoke": "node scripts/run-playwright.mjs --project=chromium-360 --project=chromium-1440"
+    "test:e2e:smoke": "node scripts/run-playwright.mjs --project=chromium-360 --project=chromium-1440",
+    "test:e2e:kara-nualeaf": "node ../../scripts/run-kara-nualeaf-e2e.mjs",
+    "test:e2e:kara-nualeaf:public": "node scripts/run-playwright.mjs e2e/operations/kara-nualeaf-live-benefit.spec.ts --grep=\"public shell\" --project=chromium-1440"
   },
   "dependencies": {
     "@privy-io/node": "0.26.0",
