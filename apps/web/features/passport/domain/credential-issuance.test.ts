@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildKnowledgeStampJob,
   buildPassportJob,
+  deriveCredentialId,
   mapQueueStatusToMintStatus,
 } from "./credential-issuance";
 
@@ -12,6 +13,15 @@ const stampId = "82479946-5c2b-4cb7-838a-cd48f260bbcf";
 const recipient = "0x82162619589cfE3e0DCC58C43DfBf121844f8e9C";
 
 describe("credential issuance contract", () => {
+  it("derives only canonical ByUs Passport and Stamp operation keys", () => {
+    expect(
+      deriveCredentialId(`byus:passport:v1:${appUserId}:kara`),
+    ).toBe("0x9646a4e4d2c97e0824fbd1cfde719c3399035db1c3dcaf20fd2e472ce18e276c");
+    expect(deriveCredentialId(`byus:stamp:v1:${stampId}`)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(() => deriveCredentialId("attacker-controlled-operation")).toThrow();
+    expect(() => deriveCredentialId(`byus:passport:v1:${appUserId}:KARA`)).toThrow();
+  });
+
   it("matches the deployed Dev Passport operation-key and keccak vector", () => {
     const job = buildPassportJob({ appUserId, passportRecordId, celebritySlug: "kara", recipient });
 
