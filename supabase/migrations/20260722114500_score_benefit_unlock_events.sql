@@ -151,7 +151,7 @@ declare
   current_level text;
   benefit_record record;
   change_id uuid;
-  notification_id uuid;
+  created_notification_id uuid;
 begin
   select * into source_ledger from public.fan_score_ledger where id=p_source_ledger_id;
   if not found then raise exception 'score ledger source is required'; end if;
@@ -182,14 +182,14 @@ begin
     values(change_id,source_ledger.id,source_ledger.app_user_id,source_ledger.celebrity_id,benefit_record.id,benefit_record.revision,'locked','eligible',previous_score,current_score,source_ledger.created_at)
     on conflict(app_user_id,benefit_id,benefit_policy_version) do nothing returning id into change_id;
     if change_id is null then continue; end if;
-    notification_id:=extensions.gen_random_uuid();
+    created_notification_id:=extensions.gen_random_uuid();
     insert into public.fan_notifications(id,app_user_id,kind,source_key,benefit_id,scheduled_for,celebrity_id,source_event_id,target_type,target_id,deep_link,payload,created_at)
-    values(notification_id,source_ledger.app_user_id,'benefit_unlocked','benefit:'||benefit_record.id::text||':policy:'||benefit_record.revision::text,benefit_record.id,source_ledger.created_at,source_ledger.celebrity_id,change_id,'benefit',benefit_record.id,'/benefits/'||benefit_record.id::text,
+    values(created_notification_id,source_ledger.app_user_id,'benefit_unlocked','benefit:'||benefit_record.id::text||':policy:'||benefit_record.revision::text,benefit_record.id,source_ledger.created_at,source_ledger.celebrity_id,change_id,'benefit',benefit_record.id,'/benefits/'||benefit_record.id::text,
       jsonb_build_object('schemaVersion',1,'celebrityId',source_ledger.celebrity_id,'benefitId',benefit_record.id,'benefitSlug',benefit_record.slug,'benefitPolicyVersion',benefit_record.revision,'previousScore',previous_score,'currentScore',current_score),source_ledger.created_at)
-    on conflict(app_user_id,source_key) do nothing returning id into notification_id;
-    if notification_id is not null then
+    on conflict(app_user_id,source_key) do nothing returning id into created_notification_id;
+    if created_notification_id is not null then
       insert into public.notification_delivery_outbox(notification_id,subscription_id,available_at)
-      select notification_id,subscription.id,source_ledger.created_at from public.push_subscriptions subscription
+      select created_notification_id,subscription.id,source_ledger.created_at from public.push_subscriptions subscription
       where subscription.app_user_id=source_ledger.app_user_id and subscription.disabled_at is null
         and coalesce((select preference.benefit_notifications from public.notification_preferences preference where preference.app_user_id=source_ledger.app_user_id),true)
       on conflict(notification_id,subscription_id) do nothing;

@@ -23,6 +23,13 @@ const foundationSql = readFileSync(
   ),
   "utf8",
 );
+const correctiveSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260722120000_fix_benefit_unlock_projector_ambiguity.sql",
+  ),
+  "utf8",
+);
 
 function fn(name: string) {
   const start = sql.indexOf(`create function public.${name}`);
@@ -144,5 +151,19 @@ describe("SCORE-006 / BEN-013 database and outbox contract", () => {
       "public.claim_notification_deliveries(text,integer,integer)",
     );
     expect(foundationSql).toContain("to service_role");
+  });
+
+  it("keeps fresh and upgraded databases on an unambiguous projector body", () => {
+    expect(correctiveSql).toContain(
+      "create or replace function public.project_benefit_unlock_events",
+    );
+    for (const body of [fn("project_benefit_unlock_events("), correctiveSql]) {
+      expect(body).toContain("created_notification_id uuid");
+      expect(body).toContain(
+        "select created_notification_id,subscription.id",
+      );
+      expect(body).not.toMatch(/\bnotification_id\s*:=/);
+      expect(body).not.toContain("select notification_id,subscription.id");
+    }
   });
 });

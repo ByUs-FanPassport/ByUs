@@ -8,6 +8,13 @@ const sql = readFileSync(
   ),
   "utf8",
 );
+const registrationFix = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260722121000_fix_push_subscription_registration.sql",
+  ),
+  "utf8",
+);
 describe("notification scheduler migration", () => {
   it("enforces one notification per owner/source and one delivery per subscription", () => {
     expect(sql).toContain("unique (app_user_id, source_key)");
@@ -73,5 +80,18 @@ describe("notification scheduler migration", () => {
     expect(sql).toContain(
       "public.backfill_notification_deliveries(p_now,null)",
     );
+  });
+  it("qualifies subscription identifiers in fresh and upgraded registration definitions", () => {
+    const fresh = sql.slice(
+      sql.indexOf("create function public.register_push_subscription"),
+      sql.indexOf("create function public.enqueue_due_fan_notifications"),
+    );
+    for (const definition of [fresh, registrationFix]) {
+      expect(definition).toContain("v_subscription_id uuid");
+      expect(definition).toContain("delivery.subscription_id=v_existing.id");
+      expect(definition).toContain("subscription.endpoint_hash=p_endpoint_hash");
+      expect(definition).not.toMatch(/\bwhere\s+subscription_id\s*=/i);
+      expect(definition).not.toContain("declare existing");
+    }
   });
 });
