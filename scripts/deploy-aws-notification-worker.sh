@@ -15,15 +15,13 @@ if [[ "$enabled" != "true" && "$enabled" != "false" ]]; then echo "enabled must 
 if [[ -n "$mode" && "$mode" != "--dry-run" ]]; then echo "third argument must be --dry-run" >&2; exit 2; fi
 
 if [[ "$environment" == "prod" ]]; then
-  if [[ -z "${AWS_PROFILE:-}" ]]; then echo "prod deployment requires explicit AWS_PROFILE=coredot-prod" >&2; exit 78; fi
-  if [[ "$AWS_PROFILE" != "coredot-prod" ]]; then echo "prod deployment requires the approved coredot-prod profile" >&2; exit 78; fi
+  if [[ -z "${AWS_PROFILE:-}" ]]; then echo "prod deployment requires an explicit AWS_PROFILE" >&2; exit 78; fi
   profile="$AWS_PROFILE"
   expected_account="${EXPECTED_AWS_ACCOUNT_ID:-}"
   if [[ ! "$expected_account" =~ ^[0-9]{12}$ ]]; then echo "prod deployment requires a 12-digit EXPECTED_AWS_ACCOUNT_ID" >&2; exit 78; fi
-  if [[ "$expected_account" == "$dev_account" ]]; then echo "prod account must be isolated from the dev account" >&2; exit 78; fi
+  if [[ "${BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM:-}" != "I_UNDERSTAND_BYUS_NOTIFICATION_PROD_MUTATION" ]]; then echo "prod deployment requires the exact BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM acknowledgement" >&2; exit 78; fi
 else
   profile="${AWS_PROFILE:-coredot-dev}"
-  if [[ "$profile" == "coredot-prod" ]]; then echo "dev deployment cannot use the coredot-prod profile" >&2; exit 78; fi
   expected_account="$dev_account"
 fi
 

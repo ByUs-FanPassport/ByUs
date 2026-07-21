@@ -50,7 +50,8 @@ IAM document and exact target names without contacting AWS:
 
 ```sh
 ./scripts/deploy-aws-notification-worker.sh dev false --dry-run
-AWS_PROFILE=coredot-prod EXPECTED_AWS_ACCOUNT_ID=<isolated-prod-account> \
+AWS_PROFILE=<explicit-profile> EXPECTED_AWS_ACCOUNT_ID=<verified-prod-account> \
+  BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM=I_UNDERSTAND_BYUS_NOTIFICATION_PROD_MUTATION \
   ./scripts/deploy-aws-notification-worker.sh prod false --dry-run
 ```
 
@@ -60,10 +61,12 @@ leaves both the Lambda flag and rule disabled. Enabling requires the exact
 `byus/notification/<environment>` secret to exist first. Its execution role can
 read only that environment's notification secret; it cannot read mint-worker or
 opposite-environment secrets.
-Production rejects the default or `coredot-dev` profile. It requires the
-committed approved profile name `coredot-prod`, an explicit 12-digit
-`EXPECTED_AWS_ACCOUNT_ID` different from the Dev account, and an exact STS
-caller-account match before any AWS mutation.
+Production has no default profile. It requires an explicit `AWS_PROFILE`, an
+explicit 12-digit `EXPECTED_AWS_ACCOUNT_ID`, the exact
+`BYUS_NOTIFICATION_PROD_DEPLOY_CONFIRM` acknowledgement shown above, and an
+exact STS caller-account match before any AWS mutation. Dev and Prod may share
+an AWS account; function, role, rule, permission and secret names remain
+strictly environment-suffixed.
 EventBridge and the Notification Lambda are the canonical scheduler. Every
 invocation first runs `enqueue_due_fan_notifications(now)` (including delivery
 backfill), then claims and sends. Enqueue failure is fail-closed: no delivery is
