@@ -8,8 +8,9 @@ describe("syncAuthenticatedSession", () => {
       wallet: { chainId: 91342, address: "0x82162619589cfe3e0dcc58c43dfbf121844f8e9c" },
     };
     const resolver = { resolve: vi.fn().mockResolvedValue(resolved) };
-    const repository = { sync: vi.fn().mockResolvedValue(undefined) };
-    await syncAuthenticatedSession({ authorization: "Bearer token", chainId: 91342, resolver, repository });
+    const profile = { completed: false, nickname: null } as const;
+    const repository = { sync: vi.fn().mockResolvedValue(profile) };
+    await expect(syncAuthenticatedSession({ authorization: "Bearer token", chainId: 91342, resolver, repository })).resolves.toEqual(profile);
     expect(resolver.resolve).toHaveBeenCalledWith("token", 91342);
     expect(repository.sync).toHaveBeenCalledWith(resolved.identity, resolved.wallet);
   });

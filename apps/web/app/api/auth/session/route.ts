@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request): Promise<Response> {
   const env = loadServerEnv();
   try {
-    await syncAuthenticatedSession({
+    const profile = await syncAuthenticatedSession({
       authorization: request.headers.get("authorization") ?? "",
       chainId: env.GIWA_CHAIN_ID,
       resolver: createPrivyNodeSessionResolver({ appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET }),
       repository: createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY }),
     });
-    return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+    return Response.json({ profile }, { status: 200, headers: { "cache-control": "no-store", vary: "Authorization" } });
   } catch (error) {
     console.error("[auth/session] synchronization failed", {
       name: error instanceof Error ? error.name : "UnknownError",

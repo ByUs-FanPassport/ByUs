@@ -27,7 +27,7 @@ describe("Privy login page", () => {
     login.mockClear(); replace.mockClear();
     authenticated = false;
     getAccessToken.mockResolvedValue("privy-access-token");
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ profile: { completed: true, nickname: "John" } }));
     vi.mocked(globalThis.fetch).mockClear();
   });
 
@@ -56,11 +56,20 @@ describe("Privy login page", () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     expect(replace).not.toHaveBeenCalled();
-    finishSync?.(new Response(null, { status: 204 }));
+    finishSync?.(Response.json({ profile: { completed: true, nickname: "John" } }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
     expect(fetch).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
       method: "POST",
       headers: { authorization: "Bearer privy-access-token" },
     }));
+  });
+
+  it("detours only an authenticated user without a profile before restoring the exact intent", async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
+    render(<LoginPage />);
+    onComplete?.();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf&locale=ko&intent=reserve",
+    ));
   });
 });

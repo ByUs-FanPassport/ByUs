@@ -7,7 +7,7 @@ import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, GoogleMark } from "./icons";
-import { sanitizeIntent, sanitizeReturnTo } from "./login-intent";
+import { appendLoginContext, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 import styles from "./login-page.module.css";
 
 export function LoginPage() {
@@ -18,6 +18,8 @@ export function LoginPage() {
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const returnTo = useMemo(() => sanitizeReturnTo(searchParams.get("returnTo")), [searchParams]);
   const intent = useMemo(() => sanitizeIntent(searchParams.get("intent")), [searchParams]);
+  const entity = useMemo(() => sanitizeEntity(searchParams.get("entity")), [searchParams]);
+  const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
   const synchronizeSession = useCallback(() => {
     if (synchronizationRef.current) return synchronizationRef.current;
 
@@ -31,7 +33,11 @@ export function LoginPage() {
           cache: "no-store",
         });
         if (!response.ok) throw new Error("Session synchronization failed");
-        router.replace(returnTo as Route);
+        const body = await response.json() as { profile?: { completed?: boolean } };
+        const destination = body.profile?.completed
+          ? returnTo
+          : appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale });
+        router.replace(destination as Route);
       } catch {
         synchronizationRef.current = null;
         setError("로그인 정보를 안전하게 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -39,7 +45,7 @@ export function LoginPage() {
     })();
 
     return synchronizationRef.current;
-  }, [getAccessToken, returnTo, router]);
+  }, [entity, getAccessToken, intent, locale, returnTo, router]);
   const { login } = useLogin({
     onComplete: synchronizeSession,
     onError: () => setError("로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요."),
