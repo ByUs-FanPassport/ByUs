@@ -69,4 +69,21 @@ describe("AWS Lambda worker entrypoint", () => {
 
     await expect(handler({ source: "byus.supabase-cron", environment: "dev" })).rejects.toThrow();
   });
+
+  it("fails closed when Secrets Manager returns plain text instead of JSON", async () => {
+    const runWorker = vi.fn();
+    const handler = createLambdaHandler({
+      loadSecret: vi.fn().mockResolvedValue("plain-text-secret"),
+      runWorker,
+    }, {
+      WORKER_ENABLED: "true",
+      WORKER_ENVIRONMENT: "dev",
+      WORKER_SECRET_ID: "byus/worker/dev",
+    });
+
+    await expect(
+      handler({ source: "byus.supabase-cron", environment: "dev" }),
+    ).rejects.toThrow(SyntaxError);
+    expect(runWorker).not.toHaveBeenCalled();
+  });
 });

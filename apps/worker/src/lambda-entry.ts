@@ -1,14 +1,12 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { createWorkerSecretLoader } from "./aws-secret.js";
 import { createLambdaHandler } from "./lambda.js";
 import { runWorkerOnce } from "./runtime.js";
 
 const secrets = new SecretsManagerClient({});
+const loadSecret = createWorkerSecretLoader((command: GetSecretValueCommand) => secrets.send(command));
 
 export const handler = createLambdaHandler({
-  async loadSecret(secretId) {
-    const result = await secrets.send(new GetSecretValueCommand({ SecretId: secretId }));
-    if (!result.SecretString) throw new Error("worker secret does not contain a SecretString");
-    return result.SecretString;
-  },
+  loadSecret,
   runWorker: runWorkerOnce,
 }, process.env);
