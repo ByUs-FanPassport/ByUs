@@ -15,6 +15,11 @@
     "@solana-program/token": "0.9.0",
     "@solana/kit": "5.5.1"
   },
+  "overrides": {
+    "@coinbase/cdp-sdk": {
+      "axios": "1.18.1"
+    }
+  },
   "scripts": {
     "dev": "npm run dev --workspace @byus/web",
     "build": "npm run build --workspace @byus/web",
