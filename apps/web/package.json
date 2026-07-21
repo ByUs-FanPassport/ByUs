@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:e2e": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "node scripts/run-playwright.mjs",
+    "test:e2e:smoke": "node scripts/run-playwright.mjs --project=chromium-360 --project=chromium-1440"
   },
   "dependencies": {
     "@privy-io/node": "0.26.0",
@@ -25,6 +27,7 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "server-only": "0.0.1",
+    "viem": "2.55.4",
     "zod": "4.4.3"
   },
   "devDependencies": {

@@ -19,6 +19,20 @@ const job: BlockchainJob = {
 };
 
 describe("SupabaseQueueAdapter", () => {
+  it("claims only through the existing queue RPC and preserves its argument contract", async () => {
+    const rpc = vi.fn(async () => ({ data: [row], error: null }));
+    const from = vi.fn();
+    const adapter = new SupabaseQueueAdapter({ rpc, from } as unknown as SupabaseClient);
+
+    await expect(adapter.claim("worker-test", 7, 180)).resolves.toEqual([job]);
+    expect(rpc).toHaveBeenCalledWith("claim_blockchain_jobs", {
+      p_worker_id: "worker-test",
+      p_batch_size: 7,
+      p_lease_seconds: 180,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it("records prepared bytes only through the lease-checked RPC", async () => {
     const rpc = vi.fn(async () => ({
       data: { ...row, tx_hash: txHash, payload: { ...row.payload, workerSubmission: { txHash, signedTransaction } } },
@@ -40,4 +54,56 @@ describe("SupabaseQueueAdapter", () => {
     await expect(adapter.recordPrepared(job, { txHash, signedTransaction })).rejects.toMatchObject({ code: "QUEUE_DATABASE_ERROR" });
     expect(from).not.toHaveBeenCalled();
   });
+
+  it("completes through the existing RPC with a lossless numeric string and no credential-table write", async () => {
+    const rpc = vi.fn(async () => ({ data: row, error: null }));
+    const from = vi.fn();
+    const adapter = new SupabaseQueueAdapter({ rpc, from } as unknown as SupabaseClient);
+    const tokenId = 2n ** 255n;
+
+    await adapter.complete(job, txHash, tokenId);
+
+    expect(rpc).toHaveBeenCalledWith("complete_blockchain_job", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_tx_hash: txHash,
+      p_token_id: tokenId.toString(),
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("retries through the existing RPC without directly updating either credential table", async () => {
+    const rpc = vi.fn(async () => ({ data: row, error: null }));
+    const from = vi.fn();
+    const adapter = new SupabaseQueueAdapter({ rpc, from } as unknown as SupabaseClient);
+
+    await adapter.retry(job, "RPC_TIMEOUT", "provider timed out", true);
+
+    expect(rpc).toHaveBeenCalledWith("retry_blockchain_job", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_error_code: "RPC_TIMEOUT",
+      p_error_message: "provider timed out",
+      p_retryable: true,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["claim", () => new SupabaseQueueAdapter(failingClient()).claim("worker-test", 1, 120)],
+    ["complete", () => new SupabaseQueueAdapter(failingClient()).complete(job, txHash, 7n)],
+    ["retry", () => new SupabaseQueueAdapter(failingClient()).retry(job, "RPC_TIMEOUT", "timeout", true)],
+  ])("surfaces %s RPC rejection without a direct-table fallback", async (_operation, invoke) => {
+    await expect(invoke()).rejects.toMatchObject({ code: "QUEUE_DATABASE_ERROR" });
+  });
 });
+
+function failingClient(): SupabaseClient {
+  const from = vi.fn(() => {
+    throw new Error("direct table fallback must not be used");
+  });
+  return {
+    rpc: vi.fn(async () => ({ data: null, error: { message: "database rejected operation", code: "P0001" } })),
+    from,
+  } as unknown as SupabaseClient;
+}
