@@ -4,7 +4,7 @@ import path from "node:path";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL;
 if (!baseURL) throw new Error("PLAYWRIGHT_BASE_URL is required");
-const APPROVED_LINKED_DEV_ORIGIN = "https://buyus.vercel.app";
+const APPROVED_LINKED_DEV_ORIGIN = "https://byus-dev.vercel.app";
 if (baseURL.replace(/\/$/, "") !== APPROVED_LINKED_DEV_ORIGIN || process.env.BYUS_E2E_ALLOWED_BASE_URL?.replace(/\/$/, "") !== APPROVED_LINKED_DEV_ORIGIN) {
   throw new Error("E2E_DEPLOYMENT_BINDING_MISMATCH");
 }

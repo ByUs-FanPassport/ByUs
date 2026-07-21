@@ -16,8 +16,8 @@ describe("KARA NUALEAF operational E2E safety contract", () => {
     expect(fixture).toContain("I_UNDERSTAND_LINKED_DEV_MUTATION");
     expect(fixture).toContain("E2E_SUPABASE_PROJECT_MISMATCH");
     expect(fixture).toContain("E2E_DEPLOYMENT_BINDING_MISMATCH");
-    expect(fixture).toContain('APPROVED_LINKED_DEV_ORIGIN = "https://buyus.vercel.app"');
-    expect(config).toContain('APPROVED_LINKED_DEV_ORIGIN = "https://buyus.vercel.app"');
+    expect(fixture).toContain('APPROVED_LINKED_DEV_ORIGIN = "https://byus-dev.vercel.app"');
+    expect(config).toContain('APPROVED_LINKED_DEV_ORIGIN = "https://byus-dev.vercel.app"');
     expect(runner.indexOf('"preflight"')).toBeLessThan(runner.indexOf('"seed"'));
     expect(fixture).toContain('appJson("/api/admin/e2e-deployment-fingerprint"');
     expect(fixture.indexOf("deployment fingerprint preflight")).toBeLessThan(fixture.indexOf("const dependencies = await context()"));

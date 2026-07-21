@@ -29,7 +29,7 @@ const APPROVED_LINKED_DEV_REFS = new Set(["xcppyedwusirqnfpbtit"]);
 if (!projectRef || !APPROVED_LINKED_DEV_REFS.has(projectRef) || projectRef !== process.env.BYUS_E2E_ALLOWED_SUPABASE_PROJECT_REF.trim()) {
   throw new Error("E2E_SUPABASE_PROJECT_MISMATCH");
 }
-const APPROVED_LINKED_DEV_ORIGIN = "https://buyus.vercel.app";
+const APPROVED_LINKED_DEV_ORIGIN = "https://byus-dev.vercel.app";
 const baseUrl = new URL(process.env.PLAYWRIGHT_BASE_URL).toString().replace(/\/$/, "");
 const allowedBaseUrl = new URL(process.env.BYUS_E2E_ALLOWED_BASE_URL).toString().replace(/\/$/, "");
 if (baseUrl !== APPROVED_LINKED_DEV_ORIGIN || allowedBaseUrl !== APPROVED_LINKED_DEV_ORIGIN) {
