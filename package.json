@@ -27,6 +27,10 @@
     "test": "npm run test --workspaces --if-present",
     "test:web": "npm run test --workspace @byus/web",
     "test:e2e": "npm run test:e2e --workspace @byus/web",
-    "typecheck": "npm run typecheck --workspace @byus/web"
+    "typecheck": "npm run typecheck --workspace @byus/web",
+    "security:audit": "npm audit --omit=dev",
+    "security:tree": "npm ls @aws-sdk/client-secrets-manager fast-xml-parser axios ws postcss uuid --all",
+    "security:verify": "node scripts/verify-security-dependencies.mjs",
+    "security:ws-canary": "node scripts/verify-websocket-canary.mjs"
   }
 }
