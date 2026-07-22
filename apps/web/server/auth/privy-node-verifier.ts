@@ -52,7 +52,10 @@ interface WalletVisibilityOptions {
   sleep?: (milliseconds: number) => Promise<void>;
 }
 
-const DEFAULT_WALLET_VISIBILITY_ATTEMPTS = 8;
+// Privy's access token can become valid before a newly provisioned embedded
+// wallet is visible through the server API. Keep the first session sync open
+// long enough for that documented asynchronous provisioning step to settle.
+const DEFAULT_WALLET_VISIBILITY_ATTEMPTS = 20;
 const DEFAULT_WALLET_VISIBILITY_DELAY_MS = 750;
 
 function defaultSleep(milliseconds: number): Promise<void> {

@@ -194,4 +194,52 @@ describe("@privy-io/node server adapter", () => {
     expect(sleep).toHaveBeenCalledOnce();
     expect(sleep).toHaveBeenCalledWith(750);
   });
+
+  it("keeps the default session sync open through a slower wallet propagation window", async () => {
+    const withoutWallet = {
+      id: "did:privy:user-1",
+      linked_accounts: [
+        { type: "google_oauth", email: "fan@example.com", verified_at: 20 },
+      ],
+    };
+    const getUser = vi
+      .fn()
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce(withoutWallet)
+      .mockResolvedValueOnce({
+        id: "did:privy:user-1",
+        linked_accounts: [
+          { type: "google_oauth", email: "fan@example.com", verified_at: 20 },
+          {
+            type: "wallet",
+            chain_type: "ethereum",
+            connector_type: "embedded",
+            wallet_client: "privy",
+            address: "0xEEE82F960476C888950C798C444C1FD92CBBFE50",
+          },
+        ],
+      });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const resolver = createPrivyNodeSessionResolver(
+      { appId: "app-1", appSecret: "secret" },
+      {
+        utils: () => ({ auth: () => ({ verifyAccessToken: vi.fn().mockResolvedValue({ app_id: "app-1", user_id: "did:privy:user-1" }) }) }),
+        users: () => ({ _get: getUser }),
+      },
+      { sleep },
+    );
+
+    await expect(resolver.resolve("access-token", 91342)).resolves.toMatchObject({
+      wallet: { chainId: 91342 },
+    });
+    expect(getUser).toHaveBeenCalledTimes(10);
+    expect(sleep).toHaveBeenCalledTimes(9);
+  });
 });
