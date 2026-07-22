@@ -16,6 +16,9 @@
     "@solana/kit": "5.5.1"
   },
   "overrides": {
+    "next": {
+      "sharp": "0.35.3"
+    },
     "@coinbase/cdp-sdk": {
       "axios": "1.18.1"
     },
