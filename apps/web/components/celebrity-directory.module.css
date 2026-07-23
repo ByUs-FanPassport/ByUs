@@ -1,17 +1,28 @@
 .page { min-height: 100vh; background: #fff; color: oklch(18% 0 0); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 .page *, .page *::before, .page *::after { box-sizing: border-box; }
-.header { display: flex; width: min(100%, 1200px); min-height: 68px; align-items: center; justify-content: space-between; margin-inline: auto; padding-inline: 16px; }
-.brand, .homeLink { display: inline-flex; min-height: 44px; align-items: center; }
+.homeLink { display: inline-flex; min-height: 44px; align-items: center; }
 .homeLink { color: oklch(48% 0 0); font-size: 14px; font-weight: 650; text-decoration: none; }
 .homeLink svg { width: 16px; height: 16px; }
 .content { width: min(100%, 1200px); margin-inline: auto; padding: 40px 16px 80px; }
 .intro { display: grid; gap: 8px; margin-bottom: 32px; }
 .intro h1 { margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.035em; line-height: 1.1; }
 .intro p { margin: 0; color: oklch(48% 0 0); font-size: 15px; line-height: 1.55; }
+.controls { display: grid; gap: 12px; margin-bottom: 12px; }
+.controls label { color: oklch(36% 0 0); font-size: 13px; font-weight: 700; }
+.searchField,.sortField { display: grid; gap: 7px; }
+.searchField input,.sortField select { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid oklch(88% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font: inherit; font-size: 15px; transition: border-color 160ms cubic-bezier(.2,0,0,1),background-color 160ms cubic-bezier(.2,0,0,1); }
+.searchField input::placeholder { color: oklch(46% 0 0); }
+.passportFilter { display: inline-flex; min-height: 48px; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid oklch(88% 0 0); border-radius: 12px; cursor: pointer; }
+.passportFilter input { width: 18px; height: 18px; accent-color: oklch(45% .22 315); }
+.passportFilter[data-disabled="true"] { color: oklch(55% 0 0); cursor: not-allowed; }
+.filterMeta { display: flex; min-height: 44px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; margin-bottom: 20px; color: oklch(48% 0 0); font-size: 13px; }
+.filterMeta p { margin: 0; }
+.filterMeta button { min-height: 44px; padding: 0 4px; border: 0; background: none; color: oklch(38% .2 315); font: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; }
 .card { min-width: 0; }
-.media { display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 16px; background: #f6f6f5; }
+.media { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 16px; background: #f6f6f5; }
 .media img { width: 100%; height: 100%; object-fit: cover; transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.passportBadge { position: absolute; right: 12px; bottom: 12px; display: inline-flex; min-height: 32px; align-items: center; padding: 0 12px; border-radius: 999rem; background: rgb(255 255 255 / 94%); color: oklch(26% .08 315); font-size: 12px; font-weight: 800; box-shadow: 0 1px 4px rgb(0 0 0 / 12%); }
 .cardBody { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 4px 0; }
 .cardBody h2 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.025em; }
 .cardBody p { margin: 4px 0 0; color: oklch(48% 0 0); font-size: 13px; line-height: 1.5; }
@@ -21,7 +32,8 @@
 .empty h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.025em; }
 .empty p { max-width: 34ch; margin: 10px 0 20px; color: oklch(48% 0 0); font-size: 14px; line-height: 1.6; }
 .empty a { display: inline-flex; min-height: 44px; align-items: center; color: oklch(45% .22 315); font-size: 14px; font-weight: 750; }
-.page :is(a):focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
-@media (min-width: 48rem) { .header, .content { padding-inline: 32px; } .content { padding-top: 64px; } .intro h1 { font-size: 40px; } .grid { gap: 24px; } }
-@media (hover:hover) and (pointer:fine) { .media:hover img { transform: scale(1.02); } .homeLink:hover, .cardBody > a:hover { color: oklch(45% .22 315); } }
+.empty > button { display: inline-flex; min-height: 44px; align-items: center; padding: 0 16px; border: 1px solid oklch(84% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
+.page :is(a,button,input,select):focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+@media (min-width: 48rem) { .content { padding-inline: 32px; padding-top: 64px; } .intro h1 { font-size: 40px; } .controls { grid-template-columns: minmax(240px,1fr) 180px auto; align-items: end; } .grid { gap: 24px; } }
+@media (hover:hover) and (pointer:fine) { .media:hover img { transform: scale(1.02); } .homeLink:hover, .cardBody > a:hover { color: oklch(45% .22 315); } .searchField input:hover,.sortField select:hover,.passportFilter:hover:not([data-disabled="true"]) { border-color: oklch(72% 0 0); background: oklch(98.5% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { transition-duration: .01ms !important; } }

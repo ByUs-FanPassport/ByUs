@@ -1,14 +1,19 @@
 import { notFound } from "next/navigation";
 import { CelebrityFanPage } from "../../../components/celebrity-fan-page";
-import { findPublishedCelebrity, publishedCelebrityFixtures } from "../../../components/public-celebrity-fixtures";
+import { createPublishedContentRepositoryFromEnvironment } from "../../../server/content/published-content-repository";
 
-export function generateStaticParams() {
-  return publishedCelebrityFixtures.map(({ slug }) => ({ slug }));
-}
+export const dynamic = "force-dynamic";
 
-export default async function CelebrityPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string }> }) {
   const { slug } = await params;
-  const celebrity = findPublishedCelebrity(slug);
+  const { locale: requestedLocale } = await searchParams;
+  const locale = requestedLocale === "en" ? "en" : "ko";
+  const repository = createPublishedContentRepositoryFromEnvironment();
+  const [celebrity, primaryLives] = await Promise.all([
+    repository.findBySlug(locale, slug),
+    repository.listPrimaryLives(locale),
+  ]);
   if (!celebrity) notFound();
-  return <CelebrityFanPage celebrity={celebrity} />;
+  const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
+  return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />;
 }

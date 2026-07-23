@@ -1,0 +1,13 @@
+.page { display: grid; min-height: 60vh; place-items: center; padding: 40px 20px; color: oklch(18% 0 0); background: #fff; font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; }
+.state { display: grid; width: min(100%, 520px); justify-items: center; gap: 16px; text-align: center; }
+.wordmark { font-size: 24px; font-weight: 900; letter-spacing: -.04em; }
+.state h1 { margin: 0; font-size: 24px; font-weight: 800; line-height: 1.3; letter-spacing: -.03em; text-wrap: balance; }
+.state p { margin: 0; color: oklch(48% 0 0); font-size: 15px; line-height: 1.6; }
+.progress { width: min(100%, 280px); height: 8px; overflow: hidden; border-radius: 999rem; background: oklch(94% 0 0); }
+.progress::after { display: block; width: 42%; height: 100%; border-radius: inherit; background: oklch(18% 0 0); content: ""; animation: progress 1.1s cubic-bezier(.2,0,0,1) infinite alternate; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.actions button, .actions a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 18px; border: 1px solid oklch(90% 0 0); border-radius: 12px; color: inherit; background: #fff; font: inherit; font-weight: 750; text-decoration: none; cursor: pointer; transition: background 160ms cubic-bezier(.2,0,0,1); }
+.actions button:focus-visible, .actions a:focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+@media (hover:hover) and (pointer:fine) { .actions button:hover, .actions a:hover { background: oklch(97.5% 0 0); } }
+@keyframes progress { from { transform: translateX(-72%); } to { transform: translateX(138%); } }
+@media (prefers-reduced-motion: reduce) { .progress::after { animation: none; transform: none; } .actions button, .actions a { transition-duration: .01ms; } }

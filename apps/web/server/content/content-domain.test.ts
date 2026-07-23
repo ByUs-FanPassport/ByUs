@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseContentLocale,
   parsePublishedCelebrity,
+  parsePublishedCelebrityLive,
   parsePublishedCelebritySlug,
 } from "./content-domain";
 
@@ -16,6 +17,7 @@ const completeRow = {
   image_position: "center 46%",
   themes: [{ slug: "beauty", name: "뷰티" }],
   social_links: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
+  display_order: 0,
 };
 
 describe("published content boundary", () => {
@@ -47,6 +49,7 @@ describe("published content boundary", () => {
       },
       themes: [{ slug: "beauty", name: "뷰티" }],
       socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
+      displayOrder: 0,
     });
   });
 
@@ -70,6 +73,36 @@ describe("published content boundary", () => {
       parsePublishedCelebrity({
         ...completeRow,
         social_links: [{ platform: "youtube", url: "javascript:alert(1)" }],
+      }),
+    ).toThrow();
+  });
+
+  it("accepts only public scheduled or live discovery summaries", () => {
+    expect(
+      parsePublishedCelebrityLive({
+        slug: "kara-live",
+        celebrity_slug: "kara",
+        locale: "ko",
+        title: "KARA LIVE",
+        starts_at: "2026-07-24T11:00:00.000+00:00",
+        effective_status: "scheduled",
+      }),
+    ).toEqual({
+      slug: "kara-live",
+      celebritySlug: "kara",
+      locale: "ko",
+      title: "KARA LIVE",
+      startsAt: "2026-07-24T11:00:00.000+00:00",
+      effectiveStatus: "scheduled",
+    });
+    expect(() =>
+      parsePublishedCelebrityLive({
+        slug: "old-live",
+        celebrity_slug: "kara",
+        locale: "ko",
+        title: "Old LIVE",
+        starts_at: "2026-07-20T11:00:00.000+00:00",
+        effective_status: "ended",
       }),
     ).toThrow();
   });

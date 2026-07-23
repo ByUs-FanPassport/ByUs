@@ -44,6 +44,16 @@ const publishedCelebrityRowSchema = z.object({
   image_position: z.string().trim().min(1).max(100),
   themes: z.array(themeSchema),
   social_links: z.array(socialLinkSchema),
+  display_order: z.number().int().min(0),
+});
+
+const publishedCelebrityLiveRowSchema = z.object({
+  slug: slugSchema,
+  celebrity_slug: slugSchema,
+  locale: localeSchema,
+  title: z.string().trim().min(1).max(160),
+  starts_at: z.string().datetime({ offset: true }),
+  effective_status: z.enum(["scheduled", "live"]),
 });
 
 export type ContentLocale = z.infer<typeof localeSchema>;
@@ -60,6 +70,16 @@ export type PublishedCelebrity = Readonly<{
     platform: "youtube" | "tiktok" | "instagram";
     url: string;
   }>[];
+  displayOrder: number;
+}>;
+
+export type PublishedCelebrityLive = Readonly<{
+  slug: string;
+  celebritySlug: string;
+  locale: ContentLocale;
+  title: string;
+  startsAt: string;
+  effectiveStatus: "scheduled" | "live";
 }>;
 
 export function parsePublishedCelebritySlug(value: unknown): PublishedCelebritySlug {
@@ -80,5 +100,20 @@ export function parsePublishedCelebrity(value: unknown): PublishedCelebrity {
     image: { url: row.image_url, alt: row.image_alt, position: row.image_position },
     themes: row.themes,
     socialLinks: row.social_links,
+    displayOrder: row.display_order,
+  };
+}
+
+export function parsePublishedCelebrityLive(
+  value: unknown,
+): PublishedCelebrityLive {
+  const row = publishedCelebrityLiveRowSchema.parse(value);
+  return {
+    slug: row.slug,
+    celebritySlug: row.celebrity_slug,
+    locale: row.locale,
+    title: row.title,
+    startsAt: row.starts_at,
+    effectiveStatus: row.effective_status,
   };
 }

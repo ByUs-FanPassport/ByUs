@@ -8,7 +8,7 @@ import {
 import { publicContentCacheHeaders } from "../../../../server/cache/public-content-cache";
 
 export function createGetPublishedCelebrities(
-  repository: PublishedContentRepository,
+  repository: Pick<PublishedContentRepository, "list" | "listPrimaryLives">,
 ) {
   return async function GET(request: Request): Promise<Response> {
     let locale;
@@ -21,9 +21,12 @@ export function createGetPublishedCelebrities(
     }
 
     try {
-      const celebrities = await repository.list(locale);
+      const [celebrities, primaryLives] = await Promise.all([
+        repository.list(locale),
+        repository.listPrimaryLives(locale),
+      ]);
       return NextResponse.json(
-        { celebrities },
+        { celebrities, primaryLives },
         { status: 200, headers: publicContentCacheHeaders() },
       );
     } catch {
