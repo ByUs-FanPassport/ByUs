@@ -16,7 +16,7 @@ if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim()) {
 }
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./e2e/operations",
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -30,10 +30,13 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium-360", use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 800 } } },
+    { name: "chromium-390", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } } },
     { name: "chromium-1440", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1024 } } },
     { name: "webkit-360", use: { ...devices["Desktop Safari"], viewport: { width: 360, height: 800 } } },
+    { name: "webkit-390", use: { ...devices["Desktop Safari"], viewport: { width: 390, height: 844 } } },
     { name: "webkit-1440", use: { ...devices["Desktop Safari"], viewport: { width: 1440, height: 1024 } } },
     { name: "firefox-360", use: { ...devices["Desktop Firefox"], viewport: { width: 360, height: 800 } } },
+    { name: "firefox-390", use: { ...devices["Desktop Firefox"], viewport: { width: 390, height: 844 } } },
     { name: "firefox-1440", use: { ...devices["Desktop Firefox"], viewport: { width: 1440, height: 1024 } } },
   ],
 });

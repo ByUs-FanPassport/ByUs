@@ -2,26 +2,27 @@ import AxeBuilder from "@axe-core/playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { observeBrowserErrors, requireEvidenceRunId } from "./public-test-support";
 
 const repoRoot = path.resolve(__dirname, "../../../..");
 
 test("FAN-001 public home is responsive and accessible", async ({ page }, testInfo) => {
-  const firstPartyErrors: string[] = [];
-  const thirdPartyErrors: string[] = [];
-  page.on("pageerror", (error) => {
-    const detail = `pageerror: ${error.stack || error.message}`;
-    if (detail.includes("https://auth.privy.io/")) thirdPartyErrors.push(detail);
-    else firstPartyErrors.push(detail);
-  });
-  page.on("console", (message) => {
-    if (message.type() === "error") firstPartyErrors.push(`console.error: ${message.text()}`);
-  });
+  const browserErrors = observeBrowserErrors(page);
 
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
   await expect(page).toHaveTitle(/ByUs/);
-  const primaryAction = page.getByRole("link", { name: /라이브 예약하기/ });
+  const primaryAction = page.getByRole("link", { name: /라이브 예약하기|LIVE 상세보기/ });
   await expect(primaryAction).toBeVisible();
+  const actionLabel = (await primaryAction.textContent()) ?? "";
+  if (actionLabel.includes("라이브 예약하기")) {
+    await expect(primaryAction).toHaveAttribute("href", /\/login\?returnTo=%2Flive%2F.+&intent=reserve/);
+  } else {
+    await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
+    const hero = primaryAction.locator("xpath=ancestor::article[1]");
+    await expect(hero.locator("p").first()).toContainText(/종료|취소|LIVE/);
+  }
   await expect(page.getByRole("link", { name: /Fan Passport 발급받기/ }).first()).toBeVisible();
 
   const viewport = page.viewportSize();
@@ -56,18 +57,14 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
     .analyze();
   expect(accessibility.violations).toEqual([]);
 
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.reload();
-  await expect(primaryAction).toBeVisible();
+  const errorResult = browserErrors.result();
+  expect(errorResult.firstPartyErrors).toEqual([]);
 
-  expect(firstPartyErrors).toEqual([]);
-
-  const runId = process.env.BYUS_E2E_RUN_ID;
-  expect(runId).toBeTruthy();
+  const runId = requireEvidenceRunId();
   const evidenceDirectory = path.join(
     repoRoot,
     "artifacts/e2e/g6-release",
-    runId!,
+    runId,
     "public-home",
     testInfo.project.name,
   );
@@ -84,7 +81,8 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
       project: testInfo.project.name,
       viewport,
       generatedAt: new Date().toISOString(),
-      thirdPartyErrors,
+      externalErrors: errorResult.externalErrors,
+      externalFailures: errorResult.externalFailures,
     }, null, 2)}\n`,
   );
 

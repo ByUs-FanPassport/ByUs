@@ -12,7 +12,9 @@ function canReservePort(port) {
       if (error.code === "EADDRINUSE") resolve(false);
       else reject(error);
     });
-    server.listen(port, "127.0.0.1", () => {
+    // Bind the wildcard host so an IPv6-only listener on localhost is not
+    // mistaken for an available Privy-allowlisted port.
+    server.listen(port, () => {
       server.close((error) => error ? reject(error) : resolve(true));
     });
   });
@@ -28,10 +30,13 @@ async function selectPrivyAllowedPort() {
   throw new Error("Privy가 허용한 localhost:3000 및 localhost:5173 포트를 사용할 수 없습니다.");
 }
 
-const port = process.env.PLAYWRIGHT_BASE_URL
-  ? process.env.PLAYWRIGHT_PORT
-  : String(await selectPrivyAllowedPort());
-const runId = process.env.BYUS_E2E_RUN_ID || new Date().toISOString().replace(/[.:]/g, "-");
+if (process.env.PLAYWRIGHT_BASE_URL?.trim()) {
+  throw new Error("The public E2E runner is local-only; use the guarded deployed-Dev operations runner for PLAYWRIGHT_BASE_URL");
+}
+const port = String(await selectPrivyAllowedPort());
+const runId = process.env.BYUS_E2E_RUN_ID?.trim()
+  || `local-public-${new Date().toISOString().replace(/[.:]/g, "-")}`;
+console.log(`BYUS public E2E run: ${runId}`);
 const child = spawn(process.execPath, [playwrightCli, "test", ...process.argv.slice(2)], {
   env: {
     ...process.env,

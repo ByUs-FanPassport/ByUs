@@ -1,6 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
+if (process.env.PLAYWRIGHT_BASE_URL?.trim()) {
+  throw new Error(
+    "playwright.config.ts is the self-contained local public baseline; use playwright.authenticated.config.ts for deployed-Dev operations",
+  );
+}
 const localPort = Number(process.env.PLAYWRIGHT_PORT || 3000);
 const localBaseUrl = `http://localhost:${localPort}`;
 
@@ -16,7 +20,7 @@ const viewports = [
 ] as const;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./e2e/public",
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   workers: process.env.CI ? 2 : 3,
@@ -25,7 +29,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results",
   use: {
-    baseURL: externalBaseUrl || localBaseUrl,
+    baseURL: localBaseUrl,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
@@ -39,12 +43,10 @@ export default defineConfig({
       },
     })),
   ),
-  webServer: externalBaseUrl
-    ? undefined
-    : {
-        command: `npm run build && npm run start:e2e -- --port ${localPort}`,
-        url: localBaseUrl,
-        reuseExistingServer: false,
-        timeout: 120_000,
-      },
+  webServer: {
+    command: `npm run build && npm run start:e2e -- --port ${localPort}`,
+    url: localBaseUrl,
+    reuseExistingServer: false,
+    timeout: 120_000,
+  },
 });

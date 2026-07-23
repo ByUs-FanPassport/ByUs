@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { requireEvidenceRunId } from "./public-test-support";
 
 const repoRoot = path.resolve(__dirname, "../../../..");
 const CTA_SLO_MS = 8_000;
@@ -34,10 +35,15 @@ test("SYS-004 primary CTA is operable within 8s on slow 3G with motion and optio
     waitUntil: "domcontentloaded",
     timeout: 30_000,
   });
-  const primaryAction = page.getByRole("link", { name: /라이브 예약하기/ });
+  const primaryAction = page.getByRole("link", { name: /라이브 예약하기|LIVE 상세보기/ });
   await expect(primaryAction).toBeVisible({ timeout: CTA_SLO_MS });
   const ctaOperableMs = Math.round(performance.now() - startedAt);
-  await expect(primaryAction).toHaveAttribute("href", /returnTo=%2Flive%2F/);
+  const actionLabel = (await primaryAction.textContent()) ?? "";
+  if (actionLabel.includes("라이브 예약하기")) {
+    await expect(primaryAction).toHaveAttribute("href", /returnTo=%2Flive%2F/);
+  } else {
+    await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
+  }
 
   expect(response?.status()).toBeLessThan(400);
   expect(ctaOperableMs).toBeLessThanOrEqual(CTA_SLO_MS);
@@ -47,12 +53,11 @@ test("SYS-004 primary CTA is operable within 8s on slow 3G with motion and optio
     ),
   ).not.toBe("none");
 
-  const runId = process.env.BYUS_E2E_RUN_ID;
-  expect(runId).toBeTruthy();
+  const runId = requireEvidenceRunId();
   const evidenceDirectory = path.join(
     repoRoot,
     "artifacts/e2e/g6-release",
-    runId!,
+    runId,
     "performance",
     testInfo.project.name,
   );
@@ -73,6 +78,7 @@ test("SYS-004 primary CTA is operable within 8s on slow 3G with motion and optio
         },
         sloMs: CTA_SLO_MS,
         ctaOperableMs,
+        actionLabel: actionLabel.trim(),
         status: response?.status(),
         generatedAt: new Date().toISOString(),
       },

@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { observeBrowserErrors, requireEvidenceRunId } from "./public-test-support";
 
 const repoRoot = path.resolve(__dirname, "../../../..");
 
@@ -15,25 +16,13 @@ const surfaces = [
 
 for (const surface of surfaces) {
   test(`${surface.screen} ${surface.name} is responsive and accessible`, async ({ page }, testInfo) => {
-    const firstPartyErrors: string[] = [];
-    const thirdPartyErrors: string[] = [];
-
-    page.on("pageerror", (error) => {
-      const detail = `pageerror: ${error.stack || error.message}`;
-      if (detail.includes("auth.privy.io")) thirdPartyErrors.push(detail);
-      else firstPartyErrors.push(detail);
-    });
-    page.on("console", (message) => {
-      if (message.type() !== "error") return;
-      const detail = `console.error: ${message.text()}`;
-      if (detail.includes("auth.privy.io")) thirdPartyErrors.push(detail);
-      else firstPartyErrors.push(detail);
-    });
+    const browserErrors = observeBrowserErrors(page);
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     const response = await page.goto(surface.path, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBeLessThan(400);
-    await expect(page.locator("main")).toBeVisible();
+    await expect(page.locator('main[aria-busy="true"]')).toHaveCount(0);
+    await expect(page.getByRole("main")).toBeVisible();
 
     const viewport = page.viewportSize();
     expect(viewport?.width).toBe(testInfo.project.name.endsWith("-360") ? 360 : 1440);
@@ -49,14 +38,14 @@ for (const surface of surfaces) {
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(accessibility.violations).toEqual([]);
-    expect(firstPartyErrors).toEqual([]);
+    const errorResult = browserErrors.result();
+    expect(errorResult.firstPartyErrors).toEqual([]);
 
-    const runId = process.env.BYUS_E2E_RUN_ID;
-    expect(runId).toBeTruthy();
+    const runId = requireEvidenceRunId();
     const evidenceDirectory = path.join(
       repoRoot,
       "artifacts/e2e/g6-release",
-      runId!,
+      runId,
       "public-surfaces",
       surface.screen,
       testInfo.project.name,
@@ -79,7 +68,8 @@ for (const surface of surfaces) {
         horizontalOverflow: false,
         keyboardFocusEnteredDocument: true,
         generatedAt: new Date().toISOString(),
-        thirdPartyErrors,
+        externalErrors: errorResult.externalErrors,
+        externalFailures: errorResult.externalFailures,
       }, null, 2)}\n`,
     );
   });
