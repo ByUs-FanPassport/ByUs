@@ -14,9 +14,10 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
   });
   const celebrityRepository = createPublishedContentRepositoryFromEnvironment();
-  const [featuredLive, celebrities] = await Promise.all([
-    liveRepository.findFeaturedPublished({ locale, now: new Date() }),
+  const [featuredLives, celebrities, celebrityLives] = await Promise.all([
+    liveRepository.listFeaturedPublished({ locale, now: new Date() }),
     celebrityRepository.list(locale),
+    celebrityRepository.listPrimaryLives(locale),
   ]);
-  return <GuestHome celebrities={celebrities} featuredLive={featuredLive} locale={locale} />;
+  return <GuestHome celebrities={celebrities} celebrityLives={celebrityLives} featuredLives={featuredLives} locale={locale} />;
 }

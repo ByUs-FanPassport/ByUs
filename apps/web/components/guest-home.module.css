@@ -50,6 +50,11 @@
 .textLink { display: inline-flex; flex: none; min-height: 44px; align-items: center; color: var(--muted) !important; font-size: 14px; font-weight: 650; }
 .textLink svg { width: 16px; height: 16px; }
 
+.heroCarousel { position: relative; color: #fff; }
+.heroCarousel[data-has-controls="true"] { margin-bottom: 44px; }
+.heroViewport { overflow: hidden; aspect-ratio: 4 / 5; border-radius: 20px; background: var(--ink); }
+.heroTrack { display: flex; width: 100%; height: 100%; transition: transform 240ms cubic-bezier(.2,0,0,1); will-change: transform; }
+.heroCarousel .heroCard { flex: 0 0 100%; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .heroCard { position: relative; display: flex; aspect-ratio: 4 / 5; overflow: hidden; align-items: flex-end; border-radius: 20px; background: var(--ink); color: #fff; }
 .heroCard > img { object-fit: cover; object-position: 51% center; }
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 52%) 0%, rgb(10 10 12 / 24%) 28%, rgb(10 10 12 / 6%) 54%, transparent 76%), linear-gradient(to right, rgb(10 10 12 / 24%) 0%, rgb(10 10 12 / 6%) 38%, transparent 64%); }
@@ -64,6 +69,18 @@
 .primaryButton { display: flex; width: min(320px, 100%); min-height: 52px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
 .primaryButton span { display: inline-flex; align-items: center; gap: 8px; }
 .primaryButton svg { width: 16px; height: 16px; }
+.carouselControls { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
+.carouselControls > button { position: absolute; top: calc(50% - 22px); display: grid; width: 44px; min-width: 44px; height: 44px; padding: 0; place-items: center; border: 0; background: transparent; color: #fff; cursor: pointer; pointer-events: auto; }
+.carouselControls > button::before { position: absolute; width: 32px; height: 32px; border: 1px solid rgb(255 255 255 / 24%); border-radius: 50%; background: rgb(10 10 12 / 44%); content: ""; transition: background-color 160ms cubic-bezier(.2,0,0,1); }
+.carouselControls > button svg { position: relative; z-index: 1; width: 16px; height: 16px; }
+.carouselPrevious { left: 8px; }
+.carouselNext { right: 8px; }
+.carouselDots { position: absolute; bottom: -42px; left: 50%; display: flex; width: 132px; height: 44px; align-items: center; justify-content: center; transform: translateX(-50%); pointer-events: auto; }
+.carouselDots::before { position: absolute; right: 8px; left: 8px; height: 4px; border-radius: 999rem; background: var(--line); content: ""; }
+.carouselControls .carouselDot { position: relative; display: grid; width: 44px; min-width: 44px; height: 44px; padding: 0; place-items: center; border: 0; background: transparent; cursor: pointer; }
+.carouselDot span { position: relative; width: 28px; height: 4px; border-radius: 999rem; background: transparent; transition: background-color 160ms cubic-bezier(.2,0,0,1); }
+.carouselDot[aria-current="true"] span { background: var(--ink); }
+.carouselAnnouncement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 .mobileContextActions { display: grid; gap: 12px; margin-top: 24px; padding: 16px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
 .mobileContextActions a, .googleButton, .passportFooter > a { display: flex; min-height: 52px; align-items: center; justify-content: center; gap: 12px; padding-inline: 16px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff, #fff) padding-box, var(--spectrum) border-box; color: var(--service-ink) !important; font-size: 15px; font-weight: 800; }
@@ -77,11 +94,22 @@
 .celebrityCard { min-width: 0; scroll-snap-align: start; }
 .celebrityMediaBox { display: grid; aspect-ratio: 1; padding: 16.75%; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .celebrityMediaBox img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.celebrityInfo { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; }
-.celebrityInfo h3 { min-width: 0; flex: 1; margin: 0; font-size: 18px; font-weight: 850; letter-spacing: -.025em; line-height: 1.3; }
+.celebrityInfo { display: grid; min-width: 0; gap: 4px; padding-top: 12px; }
+.celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+.celebrityInfo h3, .celebrityInfo p { min-width: 0; margin: 0; font-size: 13px; font-weight: 400; line-height: 1.35; }
+.celebrityInfo h3 { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.celebrityLiveStatus { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--ink); white-space: nowrap; }
+.liveDot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--muted); }
+.liveDotActive { background: #ef2b51; animation: live-dot-pulse 1.2s cubic-bezier(.2,0,0,1) infinite; }
+.fanCount { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .socialLinks { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 0; margin-left: auto; }
 .socialLink { display: inline-flex; width: 44px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 999rem; color: var(--muted) !important; transition: background 160ms cubic-bezier(.2,0,0,1); }
 .socialLink img { display: block; width: 20px; height: 20px; }
+
+@keyframes live-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .28; }
+}
 
 .liveList { display: grid; gap: 12px; }
 .liveRow { display: grid; grid-template-columns: 56px minmax(0,1fr) 44px; gap: 12px; align-items: center; min-height: 104px; padding: 16px; border: 1px solid var(--card-line); border-radius: 12px; background: var(--canvas); box-shadow: var(--card-shadow); }
@@ -129,7 +157,8 @@
   .headerActions { min-height: 44px; padding-inline: 4px; border: 1px solid var(--line); border-radius: 999rem; }
   .shell { padding-top: 32px; }
   .sectionHeadingRow :is(h1,h2) { font-size: 24px; }
-  .heroCard { aspect-ratio: 16 / 8; }
+  .heroViewport, .heroCard { aspect-ratio: 16 / 8; }
+  .heroCarousel .heroCard { aspect-ratio: auto; }
   .heroContent { padding: 40px; }
   .heroContent h2 { font-size: 48px; }
   .mobileContextActions { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -153,11 +182,12 @@
 @media (min-width: 80rem) {
   .headerInner, .shell { padding-inline: 40px; }
   .panelOpen { grid-template-columns: minmax(0,1fr) 384px; gap: 32px; }
-  .heroContent { padding: 48px; }
+  .heroContent { padding: 48px 48px 48px 64px; }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .desktopNav a:hover, .textLink:hover, .languageButton:hover, .panelToggle:hover, .rowAction:hover, .socialLink:hover { background: var(--surface-soft); color: var(--ink) !important; }
+  .carouselControls > button:hover::before { background: rgb(10 10 12 / 68%); }
   .primaryButton:hover { background: var(--spectrum-hover); }
   .celebrityMediaBox:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
   .mobileContextActions a:hover, .googleButton:hover, .passportFooter > a:hover { background: linear-gradient(var(--surface-soft), var(--surface-soft)) padding-box, var(--spectrum-hover) border-box; }
@@ -165,5 +195,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .liveDotActive { animation: none; }
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  .heroCarousel[data-reduced-motion="true"] .heroTrack { display: grid; transform: none !important; will-change: auto; }
+  .heroCarousel[data-reduced-motion="true"] .heroCard { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 150ms ease !important; }
+  .heroCarousel[data-reduced-motion="true"] .heroCard[data-active="true"] { z-index: 1; opacity: 1; visibility: visible; }
 }

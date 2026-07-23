@@ -43,6 +43,8 @@ Maintain 44px minimum targets, a 3px Near Black `focus-visible` outline, 160ms c
 
 Preserve the current rendered information architecture, Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel/navigation behavior. The hero remains the sole dominant visual surface and the reservation CTA remains the only gradient-filled action.
 
+The Home hero is an ordered carousel of every published LIVE whose effective status is active or scheduled. Active LIVE events come first; scheduled events follow by nearest start time, then creation time and slug for deterministic ties. With more than one item it advances horizontally every 6 seconds and exposes separate circular previous/next controls inset 8px from both image edges plus a thin segmented indicator centered 20px below the image; every interactive target remains 44px. At 1280px and wider, the information block uses 64px left padding and 48px on the other sides, preserving clear space after the previous control; mobile positioning remains unchanged. Hover, keyboard focus, and pointer interaction temporarily pause playback. Reduced-motion users receive no autoplay or large translation and navigate with a short opacity transition. A single item renders without carousel controls, and the truthful empty state remains when no eligible LIVE exists.
+
 ## 1. Visual Theme & Atmosphere
 
 Fan Pulse Spectrum is a bright, image-first fan utility interface. A full-color KARA hero supplies nearly all of the page's visual intensity; the surrounding product UI stays white, neutral, and deliberately quiet. The composition pairs editorial entertainment imagery with disciplined product surfaces: generous whitespace, black display type, hairline borders, short micro-shadows, and one pink-to-violet conversion accent. The result should feel like a polished global fan platform rather than a promotional microsite or a dense dashboard.
@@ -142,7 +144,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | Hero event title | Pretendard Variable | `48px` desktop / `32px` mobile | `850` | `1.02` | `-0.04em` | White overlay title, maximum `15ch` |
 | Page and section heading | Pretendard Variable | `24px` from 768px / `20px` mobile | `800` | `1.2` | `-0.03em` | Always paired with a restrained subtitle |
 | Context-card heading | Pretendard Variable | `20px` | `850` | `1.2` | `-0.03em` | “곧 만날 최애”, “최애의 Fan Passport” |
-| Artist name | Pretendard Variable | `18px` | `850` | `1.3` | `-0.025em` | Immediately below the image field |
+| Favorite-card metadata | Pretendard Variable | `13px` | `400` | `1.35` | `0` | Two rows below the image: identity/LIVE status, then fan count/social controls |
 | Live-row title | Pretendard Variable | `15px` | `750` | Normal | `-0.02em` | Single-line truncation |
 | Section subtitle | Pretendard Variable | `14px` | `550` | `1.5` | `0` | Muted Ink, sentence-style Korean |
 | Primary CTA | Pretendard Variable | `15px` | `800` | Normal | `0` | Compact, direct verb phrase |
@@ -155,6 +157,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 - Use weight contrast before introducing additional size tiers.
 - Korean headings are short, assertive noun phrases; subtitles explain value in one sentence.
+- Home Hero event titles use `{celebrity name} LIVE` and do not repeat the associated brand name. CMS titles and brand context remain unchanged for LIVE lists and detail screens.
 - Do not use the Bricolage wordmark font for UI copy. The custom wordmark remains an image asset.
 - Keep hero text high-contrast and left aligned; keep Passport empty-state copy centered.
 
@@ -162,10 +165,12 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 ### Buttons and Links
 
-- Primary CTA: 320px maximum width, 52px minimum height, full pill radius, Spectrum Relay fill, white text, play icon left and arrow right.
+- Primary CTA: 320px maximum width, 52px minimum height, full pill radius, Spectrum Relay fill, white text, play icon left and arrow right. Hero labels follow the effective action: `라이브 입장하기` / `Enter LIVE` for `watch_live`, `라이브 예약하기` / `Reserve LIVE` for `sign_in_to_reserve`, and `LIVE 상세보기` / `View LIVE details` otherwise.
 - Google login: 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, authentic multicolor G mark, centered label.
 - Passport CTA: label `Fan Passport 발급받기`; 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, centered label and right arrow.
-- Celebrity social controls: place the artist name and three icon-only 44×44px links on one row; align the icon group to the far right. Use 20×20px brand marks and `0px` gap between the adjacent 44×44px targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
+- Favorite-card metadata: use two `minmax(0, 1fr) auto` rows, 12px below the media field and 4px apart. Row one places the regular-weight artist name at left and the current LIVE state at right. Row two places the compact operator-managed fan count at left and up to three icon-only social links at right. All visible metadata text uses `13px/400`; use color, not font weight, for hierarchy.
+- LIVE state: show a blinking red dot plus `LIVE 진행중` / `LIVE NOW` only for an active LIVE, a static muted dot plus `LIVE 예정` / `UPCOMING LIVE` for a scheduled LIVE, and no status when neither exists. Disable dot animation for reduced-motion users.
+- Celebrity social controls: align the icon group to the far right of the second metadata row. Use 20×20px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
 - Mobile/tablet context actions: below 1024px, replace the hidden desktop side panel with a regular in-flow action section immediately after the Hero. Keep both `Google로 계속하기` and `Fan Passport 발급받기` visible, 52px high, full-pill, Spectrum-outline controls; use one column on mobile and two columns from 768px.
 - Text links: minimum 44px interaction height, 14px/650, Muted Ink, unboxed chevron treatment.
 - Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
@@ -204,8 +209,8 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 ### Distinctive Components
 
-- Status Rail: UPCOMING outline pill plus date on one horizontal rail; the countdown sits below in monospace.
-- Favorite Gallery Collection: one rounded outer collection, three light media fields, names and real YouTube/TikTok/Instagram marks below each portrait.
+- Status Rail: UPCOMING outline pill plus date on one horizontal rail; the countdown sits below in monospace. Scheduled LIVE events use `D-{days} HH:MM:SS`, omitting the day prefix when less than 24 hours remain, and update once per second. Active events and countdowns that reach zero show `LIVE NOW`.
+- Favorite Gallery Collection: one rounded outer collection, three light media fields, then two compact regular-weight metadata rows with identity/LIVE state and fan count/real YouTube, TikTok, and Instagram marks.
 - Logged-out Live Card: heading and subtitle at the top, centered calendar-heart line icon, centered explanatory copy, Google login CTA at the bottom.
 - Fan Passport Card: title/subtitle, opened Passport asset, lifecycle value copy, and login CTA in one quiet vertical composition.
 - Upcoming LIVE Row: circular avatar, identity/title/date block, right-aligned reservation metadata on tablet/desktop, and a 44px chevron action.
@@ -332,7 +337,7 @@ Build a white, image-first K-pop fan product with Pretendard typography, a domin
 ### Example Component Prompts
 
 - Hero: “Create a 2:1 desktop live hero with full-bleed high-resolution artist photography, a restrained left-and-bottom black scrim, an outlined UPCOMING rail, 48px white event title, monospace countdown, and one 320×52px spectrum-gradient reservation pill.”
-- Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; center square portraits at 66.5% of each field, then add artist names and three 44px social controls.”
+- Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; center square portraits at 66.5% of each field, then add two regular-weight metadata rows: artist/LIVE state and compact fan count/three 44px social controls.”
 - Navigation: “Create a 64px sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Hide the pill below 768px.”
 - Passport: “Create a quiet White Passport utility card with a 20px/850 title, 14px subtitle, fully opened identity-and-stamp asset, centered two-line lifecycle copy, and a 90%-width 52px outlined login CTA.”
 - Live row: “Create a 112px White live row with a 64px circular artist avatar, compact title/date stack, right-aligned booking meta, and a 44px chevron target; reduce to 104px and hide booking meta on mobile.”

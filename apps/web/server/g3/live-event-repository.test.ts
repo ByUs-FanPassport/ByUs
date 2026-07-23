@@ -25,7 +25,7 @@ const event: LiveEventRecord = {
 
 function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSource {
   return {
-    findLatestPublishedSlug: async () => event.slug,
+    listPublishedSlugs: async () => [{ slug: event.slug, createdAt: "2026-07-20T00:00:00.000Z" }],
     findPublishedEvent: async () => event,
     findViewer: async () => ({ hasPassport: false, reservation: null }),
     ...overrides,
@@ -33,24 +33,48 @@ function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSour
 }
 
 describe("DefaultLiveEventRepository", () => {
-  it("uses the latest admin-created published slug and the same effective projection for Home", async () => {
+  it("uses all published slugs and the same effective projection for Home", async () => {
     const findPublishedEvent = vi.fn().mockResolvedValue(event);
     const repository = new DefaultLiveEventRepository(source({
-      findLatestPublishedSlug: async () => event.slug,
       findPublishedEvent,
     }));
 
-    const result = await repository.findFeaturedPublished({ locale: "ko", now: new Date("2026-07-21T00:00:00Z") });
+    const result = await repository.listFeaturedPublished({ locale: "ko", now: new Date("2026-07-21T00:00:00Z") });
 
     expect(findPublishedEvent).toHaveBeenCalledWith(event.slug, "ko");
-    expect(result?.live.slug).toBe(event.slug);
-    expect(result?.live.effectiveStatus).toBe("scheduled");
-    expect(result?.primaryAction).toBe("sign_in_to_reserve");
+    expect(result[0]?.live.slug).toBe(event.slug);
+    expect(result[0]?.live.effectiveStatus).toBe("scheduled");
+    expect(result[0]?.primaryAction).toBe("sign_in_to_reserve");
   });
 
   it("returns a truthful empty Home state when no published Live exists", async () => {
-    const repository = new DefaultLiveEventRepository(source({ findLatestPublishedSlug: async () => null }));
-    await expect(repository.findFeaturedPublished({ locale: "ko", now: new Date() })).resolves.toBeNull();
+    const repository = new DefaultLiveEventRepository(source({ listPublishedSlugs: async () => [] }));
+    await expect(repository.listFeaturedPublished({ locale: "ko", now: new Date() })).resolves.toEqual([]);
+  });
+
+  it("orders live first, then scheduled by start time, creation time, and slug while excluding ended events", async () => {
+    const records = new Map<string, LiveEventRecord>([
+      ["kara", { ...event, slug: "kara", sourceStatus: "live", startsAt: "2026-07-01T00:00:00.000Z", endsAt: "2026-09-01T00:00:00.000Z" }],
+      ["elina", { ...event, slug: "elina", startsAt: "2026-09-15T11:00:00.000Z", endsAt: "2026-09-15T12:00:00.000Z" }],
+      ["changha", { ...event, slug: "changha", startsAt: "2026-09-15T11:00:00.000Z", endsAt: "2026-09-15T12:00:00.000Z" }],
+      ["ended", { ...event, slug: "ended", sourceStatus: "ended", startsAt: "2026-07-01T00:00:00.000Z", endsAt: "2026-07-01T01:00:00.000Z" }],
+    ]);
+    const repository = new DefaultLiveEventRepository(source({
+      listPublishedSlugs: async () => [
+        { slug: "changha", createdAt: "2026-07-22T00:00:00.000Z" },
+        { slug: "ended", createdAt: "2026-07-18T00:00:00.000Z" },
+        { slug: "elina", createdAt: "2026-07-21T00:00:00.000Z" },
+        { slug: "kara", createdAt: "2026-07-20T00:00:00.000Z" },
+      ],
+      findPublishedEvent: async (slug) => records.get(slug) ?? null,
+    }));
+
+    const result = await repository.listFeaturedPublished({
+      locale: "ko",
+      now: new Date("2026-07-24T00:00:00.000Z"),
+    });
+
+    expect(result.map(({ live }) => live.slug)).toEqual(["kara", "elina", "changha"]);
   });
 
   it("returns only the public localized projection for a guest", async () => {

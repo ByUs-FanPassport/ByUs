@@ -10,11 +10,13 @@ export function ArrowRight(props: IconProps) { return <Icon {...props}><path d="
 export function Bell(props: IconProps) { return <Icon {...props}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></Icon>; }
 export function Book(props: IconProps) { return <Icon {...props}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5zM4 6.5v13" /></Icon>; }
 export function CalendarHeart(props: IconProps) { return <Icon {...props}><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2" /><path d="M12 17s-3-1.8-3-3.8a1.7 1.7 0 0 1 3-1 1.7 1.7 0 0 1 3 1c0 2-3 3.8-3 3.8" /></Icon>; }
+export function ChevronLeft(props: IconProps) { return <Icon {...props}><path d="m15 18-6-6 6-6" /></Icon>; }
 export function ChevronRight(props: IconProps) { return <Icon {...props}><path d="m9 18 6-6-6-6" /></Icon>; }
 export function Clock(props: IconProps) { return <Icon {...props}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>; }
 export function Home(props: IconProps) { return <Icon {...props}><path d="m3 11 9-8 9 8v9H3zM9 20v-6h6v6" /></Icon>; }
 export function Languages(props: IconProps) { return <Icon {...props}><path d="m5 8 6 0M8 5v3c0 4-2 6-4 7M6 12c1 2 3 3 5 4M14 19l3-8 3 8M15 16h4" /></Icon>; }
 export function Menu(props: IconProps) { return <Icon {...props}><path d="M4 7h16M4 12h16M4 17h16" /></Icon>; }
+export function Pause(props: IconProps) { return <Icon {...props}><path d="M8 5v14M16 5v14" /></Icon>; }
 export function Play(props: IconProps) { return <Icon {...props}><path fill="currentColor" stroke="none" d="m8 5 11 7-11 7z" /></Icon>; }
 export function Radio(props: IconProps) { return <Icon {...props}><circle cx="12" cy="12" r="2" fill="currentColor" /><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" /></Icon>; }
 export function Users(props: IconProps) { return <Icon {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></Icon>; }

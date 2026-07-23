@@ -16,10 +16,10 @@ import {
 } from "../../features/live/domain/live-event";
 
 export interface LiveEventRepository {
-  findFeaturedPublished(input: {
+  listFeaturedPublished(input: {
     locale: LiveLocale;
     now: Date;
-  }): Promise<LiveEventResponse | null>;
+  }): Promise<readonly LiveEventResponse[]>;
   findPublishedBySlug(input: {
     slug: string;
     locale: LiveLocale;
@@ -58,7 +58,7 @@ export interface LiveViewerRecord {
 }
 
 export interface LiveEventDataSource {
-  findLatestPublishedSlug(): Promise<string | null>;
+  listPublishedSlugs(): Promise<readonly { slug: string; createdAt: string }[]>;
   findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null>;
   findViewer(appUserId: string, event: LiveEventRecord): Promise<LiveViewerRecord>;
 }
@@ -66,10 +66,37 @@ export interface LiveEventDataSource {
 export class DefaultLiveEventRepository implements LiveEventRepository {
   constructor(private readonly source: LiveEventDataSource) {}
 
-  async findFeaturedPublished(input: { locale: LiveLocale; now: Date }): Promise<LiveEventResponse | null> {
-    const slug = await this.source.findLatestPublishedSlug();
-    if (!slug) return null;
-    return this.findPublishedBySlug({ ...input, slug, appUserId: null });
+  async listFeaturedPublished(input: { locale: LiveLocale; now: Date }): Promise<readonly LiveEventResponse[]> {
+    const published = await this.source.listPublishedSlugs();
+    const projected = await Promise.all(
+      published.map(async ({ slug, createdAt }) => ({
+        createdAt,
+        response: await this.findPublishedBySlug({ ...input, slug, appUserId: null }),
+      })),
+    );
+
+    return projected
+      .filter(
+        (item): item is { createdAt: string; response: LiveEventResponse } =>
+          item.response?.live.effectiveStatus === "live" ||
+          item.response?.live.effectiveStatus === "scheduled",
+      )
+      .sort((left, right) => {
+        const statusOrder = (status: EffectiveLiveStatus) => status === "live" ? 0 : 1;
+        const statusDifference =
+          statusOrder(left.response.live.effectiveStatus) -
+          statusOrder(right.response.live.effectiveStatus);
+        if (statusDifference !== 0) return statusDifference;
+        const startDifference =
+          new Date(left.response.live.startsAt).getTime() -
+          new Date(right.response.live.startsAt).getTime();
+        if (startDifference !== 0) return startDifference;
+        const createdDifference =
+          new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+        if (createdDifference !== 0) return createdDifference;
+        return left.response.live.slug.localeCompare(right.response.live.slug);
+      })
+      .map(({ response }) => response);
   }
 
   async findPublishedBySlug(input: {
@@ -145,16 +172,17 @@ function onlyRow<T>(value: T | T[] | null): T | null {
 class SupabaseLiveEventDataSource implements LiveEventDataSource {
   constructor(private readonly database: DatabaseClient) {}
 
-  async findLatestPublishedSlug(): Promise<string | null> {
+  async listPublishedSlugs(): Promise<readonly { slug: string; createdAt: string }[]> {
     const { data, error } = await this.database
       .from("live_events")
-      .select("slug")
+      .select("slug, created_at")
       .eq("publication_status", "published")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error("Featured published live lookup failed");
-    return data?.slug ?? null;
+      .order("created_at", { ascending: true });
+    if (error) throw new Error("Published live list lookup failed");
+    return (data ?? []).map((event) => ({
+      slug: event.slug,
+      createdAt: event.created_at,
+    }));
   }
 
   async findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null> {

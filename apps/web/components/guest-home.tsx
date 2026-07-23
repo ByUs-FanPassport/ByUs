@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
-import { ArrowRight, Bell, Book, CalendarHeart, ChevronRight, Clock, GoogleMark, Home, Languages, Menu, Play, Radio, Users } from "./icons";
+import { ArrowRight, Bell, Book, CalendarHeart, ChevronRight, GoogleMark, Home, Languages, Menu, Users } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
-import type { ContentLocale, PublishedCelebrity } from "../server/content/content-domain";
+import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanHeader } from "./fan-shell/fan-header";
 import {
@@ -14,13 +14,18 @@ import {
   FanPrimaryNavigation,
   type FanNavigationItem,
 } from "./fan-shell/fan-navigation";
+import { LiveHeroCarousel } from "./live-hero-carousel";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
+const fanCountFormatter = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 const copy = {
-  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "로그인 및 Passport 영역 접기", panelOpen: "로그인 및 Passport 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요." },
-  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse sign-in and Passport panel", panelOpen: "Expand sign-in and Passport panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite." },
+  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "로그인 및 Passport 영역 접기", panelOpen: "로그인 및 Passport 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요." },
+  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse sign-in and Passport panel", panelOpen: "Expand sign-in and Passport panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite." },
 } as const;
 
 export function formatKoreanLiveDate(value: string) {
@@ -38,7 +43,11 @@ function formatLiveDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value));
 }
 
-export function GuestHome({ celebrities, featuredLive, locale }: { celebrities: readonly PublishedCelebrity[]; featuredLive: LiveEventResponse | null; locale: ContentLocale }) {
+export function formatFanCount(value: number) {
+  return `${fanCountFormatter.format(value)} Fans`;
+}
+
+export function GuestHome({ celebrities, celebrityLives = [], featuredLives, locale }: { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
   const primaryNavigation: readonly FanNavigationItem[] = [
@@ -54,10 +63,11 @@ export function GuestHome({ celebrities, featuredLive, locale }: { celebrities: 
     { id: "notification", href: `/notifications${localeQuery}` as Route, icon: <Bell />, label: <span>{locale === "ko" ? "알림" : "Alerts"}</span> },
   ];
   const [panelOpen, setPanelOpen] = useState(true);
+  const featuredLive = featuredLives[0] ?? null;
   const detailHref = featuredLive ? `/live/${featuredLive.live.slug}` : null;
   const status = featuredLive?.live.effectiveStatus;
   const statusLabel = status === "live" ? "LIVE" : status === "ended" ? (locale === "ko" ? "종료" : "ENDED") : status === "cancelled" ? (locale === "ko" ? "취소" : "CANCELLED") : "UPCOMING";
-  const heroActionLabel = featuredLive?.primaryAction === "sign_in_to_reserve" ? t.reserve : t.details;
+  const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
 
   return (
     <div className={styles.page} data-fan-pulse-home data-candidate="03">
@@ -82,20 +92,7 @@ export function GuestHome({ celebrities, featuredLive, locale }: { celebrities: 
               <div className={styles.sectionIntro}><h1 id="live-heading">{t.liveHeading}</h1><p>{t.liveSub}</p></div>
               <a className={styles.textLink} href="#upcoming">{t.allLive} <ChevronRight /></a>
             </div>
-            <article className={styles.heroCard}>
-              {featuredLive && <Image src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} fill sizes="(min-width: 1024px) 66vw, 100vw" priority />}
-              <div className={styles.heroOverlay} aria-hidden="true" />
-              <div className={styles.heroContent}>
-                {featuredLive ? <>
-                  <div className={styles.statusRail}><p className={styles.liveStatus}><Radio /> {statusLabel}</p><p className={styles.heroDate}>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
-                  <h2>{featuredLive.live.title}</h2>
-                  <p className={styles.heroCountdown}><Clock /> {featuredLive.live.celebrity.name} × {featuredLive.live.brand.name}</p>
-                  {detailHref && (featuredLive?.primaryAction === "sign_in_to_reserve" ? (
-                    <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: detailHref, sourceQuery: localeQuery, actionType: "RESERVE_LIVE", targetType: "live_event", targetId: featuredLive.live.slug }}><span><Play />{heroActionLabel}</span><ArrowRight /></AuthIntentLink>
-                  ) : <Link className={styles.primaryButton} href={`${detailHref}${localeQuery}` as Route}><span><Play />{heroActionLabel}</span><ArrowRight /></Link>)}
-                </> : <><p className={styles.liveStatus}>{t.noneStatus}</p><h2>{t.noneTitle}</h2></>}
-              </div>
-            </article>
+            <LiveHeroCarousel featuredLives={featuredLives} locale={locale} />
           </section>
 
           <section className={styles.mobileContextActions} aria-label={t.context}>
@@ -106,19 +103,28 @@ export function GuestHome({ celebrities, featuredLive, locale }: { celebrities: 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="celebrities-heading">{t.favorites}</h2><p>{t.favoritesSub}</p></div><Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link></div>
             <div className={styles.celebrityRail} aria-label={t.celebrityList}>
-              {celebrities.map((celebrity) => (
+              {celebrities.map((celebrity) => {
+                const celebrityLive = liveByCelebrity.get(celebrity.slug);
+                const isLiveNow = celebrityLive?.effectiveStatus === "live";
+                return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
                   <Link className={styles.celebrityMediaBox} href={`/c/${celebrity.slug}${localeQuery}` as Route} aria-label={`${celebrity.name} ${t.detail}`}>
                     <Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
                   </Link>
                   <div className={styles.celebrityInfo}>
-                    <h3>{celebrity.name}</h3>
-                    <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
-                      {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={16} height={16} aria-hidden="true" /></a>)}
+                    <div className={styles.celebrityMetaRow}>
+                      <h3>{celebrity.name}</h3>
+                      {celebrityLive ? <p className={styles.celebrityLiveStatus} data-live-state={celebrityLive.effectiveStatus}><span className={`${styles.liveDot} ${isLiveNow ? styles.liveDotActive : ""}`} aria-hidden="true" />{isLiveNow ? t.liveNow : t.liveUpcoming}</p> : null}
+                    </div>
+                    <div className={styles.celebrityMetaRow}>
+                      <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
+                      <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
+                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={16} height={16} aria-hidden="true" /></a>)}
+                      </div>
                     </div>
                   </div>
                 </article>
-              ))}
+              )})}
               {celebrities.length === 0 ? <p role="status">{t.noCelebrities}</p> : null}
             </div>
           </section>
