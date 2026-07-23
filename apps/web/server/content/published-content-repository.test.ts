@@ -15,6 +15,7 @@ const row = {
   themes: [],
   social_links: [],
   display_order: 3,
+  fan_count: 12_800_000,
 };
 
 function queryResult(data: unknown, error: unknown = null) {
@@ -42,7 +43,7 @@ describe("SupabasePublishedContentRepository", () => {
     ]);
     expect(client.from).toHaveBeenCalledWith("published_celebrities");
     expect(query.select).toHaveBeenCalledWith(
-      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order",
+      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count",
     );
     expect(query.eq).toHaveBeenCalledWith("locale", "ko");
     expect(query.order).toHaveBeenCalledWith("display_order", { ascending: true });

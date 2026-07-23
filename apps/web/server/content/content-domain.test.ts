@@ -18,6 +18,7 @@ const completeRow = {
   themes: [{ slug: "beauty", name: "뷰티" }],
   social_links: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
   display_order: 0,
+  fan_count: 12_800_000,
 };
 
 describe("published content boundary", () => {
@@ -50,6 +51,7 @@ describe("published content boundary", () => {
       themes: [{ slug: "beauty", name: "뷰티" }],
       socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
       displayOrder: 0,
+      fanCount: 12_800_000,
     });
   });
 

@@ -17,6 +17,7 @@ describe("content CMS", () => {
         imageUrl: "/kara.jpg",
         imagePosition: "center",
         displayOrder: 0,
+        fanCount: 12_800_000,
         localizations: {
           ko: { name: "카라", summary: "소개", imageAlt: "카라" },
         },
@@ -24,6 +25,25 @@ describe("content CMS", () => {
         socialLinks: [],
       }),
     ).toThrow();
+  });
+
+  it("accepts an omitted draft fan count but rejects invalid fan counts", () => {
+    const base = {
+      slug: "kara",
+      imageUrl: "/kara.jpg",
+      imagePosition: "center",
+      displayOrder: 0,
+      localizations: {
+        ko: { name: "카라", summary: "소개", imageAlt: "카라" },
+        en: { name: "KARA", summary: "Profile", imageAlt: "KARA" },
+      },
+      themes: [],
+      socialLinks: [],
+    };
+    expect(celebrityPayload.parse({ ...base, fanCount: null }).fanCount).toBeNull();
+    expect(() => celebrityPayload.parse({ ...base, fanCount: -1 })).toThrow();
+    expect(() => celebrityPayload.parse({ ...base, fanCount: 1.5 })).toThrow();
+    expect(() => celebrityPayload.parse({ ...base, fanCount: "12800000" })).toThrow();
   });
 
   it("requires exactly four options and one correct answer", () => {

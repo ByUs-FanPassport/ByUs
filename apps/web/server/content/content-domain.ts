@@ -45,6 +45,7 @@ const publishedCelebrityRowSchema = z.object({
   themes: z.array(themeSchema),
   social_links: z.array(socialLinkSchema),
   display_order: z.number().int().min(0),
+  fan_count: z.number().int().min(0),
 });
 
 const publishedCelebrityLiveRowSchema = z.object({
@@ -71,6 +72,7 @@ export type PublishedCelebrity = Readonly<{
     url: string;
   }>[];
   displayOrder: number;
+  fanCount: number;
 }>;
 
 export type PublishedCelebrityLive = Readonly<{
@@ -101,6 +103,7 @@ export function parsePublishedCelebrity(value: unknown): PublishedCelebrity {
     themes: row.themes,
     socialLinks: row.social_links,
     displayOrder: row.display_order,
+    fanCount: row.fan_count,
   };
 }
 

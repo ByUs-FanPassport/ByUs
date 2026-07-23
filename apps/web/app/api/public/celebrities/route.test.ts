@@ -13,6 +13,7 @@ const celebrity = {
   themes: [],
   socialLinks: [],
   displayOrder: 0,
+  fanCount: 12_800_000,
 };
 
 describe("GET /api/public/celebrities", () => {

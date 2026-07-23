@@ -24,6 +24,7 @@ type Celebrity = {
   imageUrl: string;
   imagePosition: string;
   displayOrder: number;
+  fanCount: number | null;
   archivedAt: string | null;
   updatedAt: string;
   localizations: { ko: Loc; en: Loc };
@@ -35,6 +36,7 @@ const blank: Omit<Celebrity, "id" | "status" | "archivedAt" | "updatedAt"> = {
   imageUrl: "",
   imagePosition: "center",
   displayOrder: 0,
+  fanCount: null,
   localizations: {
     ko: { name: "", summary: "", imageAlt: "" },
     en: { name: "", summary: "", imageAlt: "" },
@@ -126,6 +128,7 @@ function CelebrityCms({
         imageUrl: current.imageUrl,
         imagePosition: current.imagePosition,
         displayOrder: current.displayOrder,
+        fanCount: current.fanCount,
         localizations: current.localizations,
         themes: current.themes,
         socialLinks: current.socialLinks,
@@ -314,6 +317,28 @@ function CelebrityCms({
                     }
                   />
                 </label>
+                <label>
+                  <span>{locale === "ko" ? "통합 팬 수" : "Total fans"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={draft.fanCount ?? ""}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        fanCount:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      }))
+                    }
+                    aria-describedby="fan-count-help"
+                  />
+                  <small id="fan-count-help">
+                    {locale === "ko"
+                      ? "공개하려면 0 이상의 정수가 필요합니다."
+                      : "A non-negative integer is required before publishing."}
+                  </small>
+                </label>
               </div>
               <label>
                 <span>{locale === "ko" ? "이미지 URL" : "Image URL"}</span>
@@ -413,6 +438,15 @@ function CelebrityCms({
                 />
               )}
               <h2>{draft.localizations[lang].name || "—"}</h2>
+              {draft.fanCount !== null && (
+                <p>
+                  {new Intl.NumberFormat("en-US", {
+                    notation: "compact",
+                    maximumFractionDigits: 1,
+                  }).format(draft.fanCount)}{" "}
+                  Fans
+                </p>
+              )}
               <p>{draft.localizations[lang].summary || "—"}</p>
             </aside>
             {message && (

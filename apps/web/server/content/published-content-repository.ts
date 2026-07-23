@@ -11,7 +11,7 @@ import {
 } from "./content-domain";
 
 const PUBLIC_COLUMNS =
-  "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order";
+  "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count";
 
 type QueryResult = PromiseLike<{
   data: unknown;

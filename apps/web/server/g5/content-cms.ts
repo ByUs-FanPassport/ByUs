@@ -16,6 +16,7 @@ export const celebrityPayload = z.object({
     .refine((v) => v.startsWith("/") || v.startsWith("https://")),
   imagePosition: z.string().trim().min(1).max(100),
   displayOrder: z.number().int().min(0),
+  fanCount: z.number().int().min(0).nullable(),
   localizations: z.object({ ko: localization, en: localization }),
   themes: z
     .array(
