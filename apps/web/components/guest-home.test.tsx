@@ -90,9 +90,36 @@ describe("canonical 03 guest home", () => {
 
     expect(screen.getAllByRole("link", { name: "Google로 계속하기" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(2);
+    expect(
+      screen.getByRole("img", {
+        name: "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport",
+      }),
+    ).toHaveAttribute(
+      "src",
+      expect.stringContaining("passport-open-blank-9-transparent.png"),
+    );
     expect(screen.queryByText("로그인하고 내 Passport 확인하기")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /라이브 예약하기/ })).toHaveAttribute("href", "/login?returnTo=%2Flive%2Fadmin-created-live%3Flocale%3Dko&locale=ko&intent=reserve&entity=admin-created-live");
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
+  });
+
+  it("localizes the nine-empty-stamp Passport image description", () => {
+    render(
+      <GuestHome
+        celebrities={celebrities}
+        featuredLives={[featuredLive]}
+        locale="en"
+      />,
+    );
+
+    expect(
+      screen.getByRole("img", {
+        name: "Opened Fan Passport with nine empty Stamp circles",
+      }),
+    ).toHaveAttribute(
+      "src",
+      expect.stringContaining("passport-open-blank-9-transparent.png"),
+    );
   });
 
   it("keeps the guest-specific desktop and mobile navigation contract", () => {
@@ -117,6 +144,108 @@ describe("canonical 03 guest home", () => {
       "href",
       "/passports?locale=ko",
     );
+  });
+
+  it("uses the Korean and English language glyph while preserving locale switching", () => {
+    const { rerender } = render(
+      <GuestHome {...defaultProps} featuredLives={[featuredLive]} />,
+    );
+
+    const koreanLanguageLink = screen.getByRole("link", {
+      name: "언어 선택, 현재 한국어",
+    });
+    expect(koreanLanguageLink).toHaveAttribute("href", "/?locale=en");
+    expect(
+      koreanLanguageLink.querySelector(
+        'svg[data-language-icon="ko-en"] [data-language-glyph="ko"]',
+      ),
+    ).toHaveAttribute("d", "M3.5 6.5h4.25V13M10.5 5.5v9M10.5 9h2");
+    expect(
+      koreanLanguageLink.querySelector(
+        'svg[data-language-icon="ko-en"] [data-language-glyph="en"]',
+      ),
+    ).toBeInTheDocument();
+
+    rerender(
+      <GuestHome
+        celebrities={celebrities}
+        featuredLives={[featuredLive]}
+        locale="en"
+      />,
+    );
+    expect(
+      screen.getByRole("link", {
+        name: "Choose language, currently English",
+      }),
+    ).toHaveAttribute("href", "/?locale=ko");
+  });
+
+  it("renders every active and scheduled featured LIVE in the upcoming list", () => {
+    const activeLive = {
+      ...featuredLive,
+      live: {
+        ...featuredLive.live,
+        effectiveStatus: "live" as const,
+      },
+      primaryAction: "watch_live" as const,
+    };
+    const elinaLive = {
+      ...featuredLive,
+      live: {
+        ...featuredLive.live,
+        id: "919b52d9-62c3-450c-b3dc-78d84d2238c6",
+        slug: "elina-live",
+        title: "Elina 예정 LIVE",
+        startsAt: "2026-07-25T11:00:00.000Z",
+        celebrity: {
+          slug: "elina",
+          name: "Elina",
+          image: "/images/guest-home/elina-card.jpg",
+        },
+      },
+    };
+    const changhaLive = {
+      ...featuredLive,
+      live: {
+        ...featuredLive.live,
+        id: "a19b52d9-62c3-450c-b3dc-78d84d2238c6",
+        slug: "changha-live",
+        title: "Changha 예정 LIVE",
+        startsAt: "2026-07-26T11:00:00.000Z",
+        celebrity: {
+          slug: "changha",
+          name: "Changha",
+          image: "/images/guest-home/changha-card.jpg",
+        },
+      },
+    };
+
+    render(
+      <GuestHome
+        {...defaultProps}
+        featuredLives={[activeLive, elinaLive, changhaLive]}
+      />,
+    );
+
+    const upcoming = screen
+      .getByRole("heading", { name: "다가오는 LIVE" })
+      .closest("section");
+    expect(upcoming).not.toBeNull();
+    const list = within(upcoming!);
+    const rows = list.getAllByRole("article");
+
+    expect(rows).toHaveLength(3);
+    expect(within(rows[0]).getByText("KARA")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("LIVE")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("Elina 예정 LIVE")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("UPCOMING")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Changha 예정 LIVE")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("7월 26일 오후 8:00")).toBeInTheDocument();
+    expect(
+      within(rows[2]).getByRole("link", {
+        name: "Changha 예정 LIVE 상세 보기",
+      }),
+    ).toHaveAttribute("href", "/live/changha-live?locale=ko");
   });
 
   it("renders two regular-weight metadata rows with compact fans, live state, and icon-only social controls", () => {

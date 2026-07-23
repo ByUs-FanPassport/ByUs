@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/live/elina-nualeaf-live/:path*",
+        destination: "/live/elina-byus-live/:path*",
+        permanent: true,
+      },
+      {
+        source: "/live/changha-nualeaf-live/:path*",
+        destination: "/live/changha-byus-live/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

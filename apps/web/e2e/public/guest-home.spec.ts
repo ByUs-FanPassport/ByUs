@@ -13,15 +13,28 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
   await page.goto("/");
 
   await expect(page).toHaveTitle(/ByUs/);
-  const primaryAction = page.getByRole("link", { name: /라이브 예약하기|LIVE 상세보기/ });
-  await expect(primaryAction).toBeVisible();
-  const actionLabel = (await primaryAction.textContent()) ?? "";
-  if (actionLabel.includes("라이브 예약하기")) {
-    await expect(primaryAction).toHaveAttribute("href", /\/login\?returnTo=%2Flive%2F.+&intent=reserve/);
+  const heroLives = page.locator(
+    'section[aria-labelledby="live-heading"] article[aria-roledescription="slide"]',
+  );
+  const upcomingLives = page.locator("#upcoming article");
+  const heroLiveCount = await heroLives.count();
+  await expect(upcomingLives).toHaveCount(heroLiveCount);
+
+  const primaryAction = page.getByRole("link", { name: /라이브 입장하기|라이브 예약하기|LIVE 상세보기/ });
+  if (heroLiveCount > 0) {
+    await expect(primaryAction).toBeVisible();
+    const actionLabel = (await primaryAction.textContent()) ?? "";
+    if (actionLabel.includes("라이브 예약하기")) {
+      await expect(primaryAction).toHaveAttribute("href", /\/login\?returnTo=%2Flive%2F.+&intent=reserve/);
+    } else {
+      await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
+      const hero = primaryAction.locator("xpath=ancestor::article[1]");
+      await expect(hero.locator("p").first()).toContainText(/종료|취소|LIVE/);
+    }
   } else {
-    await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
-    const hero = primaryAction.locator("xpath=ancestor::article[1]");
-    await expect(hero.locator("p").first()).toContainText(/종료|취소|LIVE/);
+    await expect(primaryAction).toHaveCount(0);
+    await expect(page.getByText("새로운 LIVE를 준비하고 있어요.")).toBeVisible();
+    await expect(page.getByText("현재 공개된 LIVE가 없습니다.")).toBeVisible();
   }
   await expect(page.getByRole("link", { name: /Fan Passport 발급받기/ }).first()).toBeVisible();
 
@@ -38,8 +51,33 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
     await expect(desktopContext).toBeVisible();
   }
 
+  const googleActions = page.getByRole("link", { name: "Google로 계속하기" });
+  const passportActions = page.getByRole("link", {
+    name: /Fan Passport 발급받기/,
+  });
+  const secondaryAction =
+    viewport?.width === 360 ? googleActions.first() : googleActions.last();
+  const secondaryPassportAction =
+    viewport?.width === 360 ? passportActions.first() : passportActions.last();
+  const secondaryActionBox = await secondaryAction.boundingBox();
+  const secondaryPassportActionBox = await secondaryPassportAction.boundingBox();
+  expect(secondaryActionBox).not.toBeNull();
+  expect(secondaryPassportActionBox).not.toBeNull();
+  expect(secondaryActionBox!.height).toBe(viewport?.width === 360 ? 48 : 44);
+  expect(secondaryPassportActionBox!.height).toBe(
+    viewport?.width === 360 ? 48 : 44,
+  );
+  expect(secondaryActionBox!.width).toBe(
+    secondaryPassportActionBox!.width,
+  );
+  if (viewport?.width === 1440) {
+    expect(secondaryActionBox!.width).toBe(280);
+  }
+
   const primaryActionBox = await primaryAction.boundingBox();
   expect(primaryActionBox).not.toBeNull();
+  expect(primaryActionBox!.height).toBe(52);
+  expect(primaryActionBox!.height).toBeGreaterThan(secondaryActionBox!.height);
   expect(primaryActionBox!.x).toBeGreaterThanOrEqual(0);
   expect(primaryActionBox!.x + primaryActionBox!.width).toBeLessThanOrEqual(viewport!.width);
 

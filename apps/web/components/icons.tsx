@@ -14,7 +14,15 @@ export function ChevronLeft(props: IconProps) { return <Icon {...props}><path d=
 export function ChevronRight(props: IconProps) { return <Icon {...props}><path d="m9 18 6-6-6-6" /></Icon>; }
 export function Clock(props: IconProps) { return <Icon {...props}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>; }
 export function Home(props: IconProps) { return <Icon {...props}><path d="m3 11 9-8 9 8v9H3zM9 20v-6h6v6" /></Icon>; }
-export function Languages(props: IconProps) { return <Icon {...props}><path d="m5 8 6 0M8 5v3c0 4-2 6-4 7M6 12c1 2 3 3 5 4M14 19l3-8 3 8M15 16h4" /></Icon>; }
+export function Languages(props: IconProps) {
+  return (
+    <Icon {...props} data-language-icon="ko-en">
+      <path data-language-glyph="ko" d="M3.5 6.5h4.25V13M10.5 5.5v9M10.5 9h2" />
+      <circle cx="13.75" cy="12" r=".65" fill="currentColor" stroke="none" />
+      <path data-language-glyph="en" d="m15.25 18.5 2.6-8 2.65 8M16.25 15.5h3.25" />
+    </Icon>
+  );
+}
 export function Menu(props: IconProps) { return <Icon {...props}><path d="M4 7h16M4 12h16M4 17h16" /></Icon>; }
 export function Pause(props: IconProps) { return <Icon {...props}><path d="M8 5v14M16 5v14" /></Icon>; }
 export function Play(props: IconProps) { return <Icon {...props}><path fill="currentColor" stroke="none" d="m8 5 11 7-11 7z" /></Icon>; }

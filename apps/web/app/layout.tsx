@@ -5,10 +5,6 @@ import { DocumentLocale } from "../components/document-locale";
 import { ByUsPrivyProvider } from "../components/privy-provider";
 import { PwaRegistration } from "../components/pwa-registration";
 import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
-import {
-  isLocalProductionData,
-  ProductionDataIndicator,
-} from "../components/production-data-indicator";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,10 +35,6 @@ export default async function RootLayout({
   const locale = requestHeaders.get("x-byus-locale") === "en" ? "en" : "ko";
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
   const testAccountLoginEnabled = readPublicPrivyTestAccountPolicy();
-  const showProductionDataIndicator = isLocalProductionData(
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT,
-  );
   return (
     <html lang={locale}>
       <body>
@@ -54,7 +46,6 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <DocumentLocale />
           </Suspense>
-          <ProductionDataIndicator visible={showProductionDataIndicator} />
           {children}
           {modal}
         </ByUsPrivyProvider>

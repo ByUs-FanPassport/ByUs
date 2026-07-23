@@ -63,10 +63,6 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
     { id: "notification", href: `/notifications${localeQuery}` as Route, icon: <Bell />, label: <span>{locale === "ko" ? "알림" : "Alerts"}</span> },
   ];
   const [panelOpen, setPanelOpen] = useState(true);
-  const featuredLive = featuredLives[0] ?? null;
-  const detailHref = featuredLive ? `/live/${featuredLive.live.slug}` : null;
-  const status = featuredLive?.live.effectiveStatus;
-  const statusLabel = status === "live" ? "LIVE" : status === "ended" ? (locale === "ko" ? "종료" : "ENDED") : status === "cancelled" ? (locale === "ko" ? "취소" : "CANCELLED") : "UPCOMING";
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
 
   return (
@@ -132,12 +128,17 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
             <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="upcoming-heading">{t.upcoming}</h2><p>{t.upcomingSub}</p></div></div>
             <div className={styles.liveList}>
-              {featuredLive ? <article className={styles.liveRow}>
-                <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} ${locale === "ko" ? "프로필" : "profile"}`} width={64} height={64} />
-                <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
-                <div className={styles.liveMeta}><span>{statusLabel}</span></div>
-                <Link className={styles.rowAction} href={`${detailHref}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>
-              </article> : <p>{t.noLive}</p>}
+              {featuredLives.length > 0 ? featuredLives.map((featuredLive) => {
+                const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
+                return (
+                  <article className={styles.liveRow} key={featuredLive.live.id}>
+                    <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} ${locale === "ko" ? "프로필" : "profile"}`} width={64} height={64} />
+                    <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
+                    <div className={styles.liveMeta}><span>{statusLabel}</span></div>
+                    <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>
+                  </article>
+                );
+              }) : <p>{t.noLive}</p>}
             </div>
           </section>
         </main>
@@ -148,7 +149,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           </section>
           <section id="passport" className={`${styles.guestCard} ${styles.passportReferenceCard}`} aria-labelledby="passport-heading">
             <div className={styles.passportHeader}><h2 id="passport-heading">{t.passportHeading}</h2><p>{t.passportSub}</p></div>
-            <div className={styles.passportAsset}><Image src="/images/guest-home/passport-open-empty.png" alt={locale === "ko" ? "모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport" : "Opened Fan Passport with empty Stamp spaces"} width={1536} height={1024} /></div>
+            <div className={styles.passportAsset}><Image src="/images/guest-home/passport-open-blank-9-transparent.png" alt={locale === "ko" ? "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport" : "Opened Fan Passport with nine empty Stamp circles"} width={1536} height={1024} /></div>
             <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
           </section>
         </aside>}
