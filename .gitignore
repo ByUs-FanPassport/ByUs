@@ -53,6 +53,7 @@ skills-lock.json
 /design.md
 /artifacts/
 /outputs/
+/output/
 /tmp/
 /design-preview.html
 /design-qa.md
@@ -73,6 +74,9 @@ skills-lock.json
 
 # Local product brief
 /PRODUCT.md
+
+# Local task notes
+/todo*.md
 
 # Accidental CLI output
 /--full-page
