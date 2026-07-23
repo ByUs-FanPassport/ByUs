@@ -18,7 +18,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+  modal,
+}: Readonly<{ children: React.ReactNode; modal?: React.ReactNode }>) {
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
   const testAccountLoginEnabled = readPublicPrivyTestAccountPolicy();
   return (
@@ -30,6 +31,7 @@ export default function RootLayout({
         >
           <PwaRegistration />
           {children}
+          {modal}
         </ByUsPrivyProvider>
       </body>
     </html>

@@ -2,8 +2,8 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import { FanWordmarkLink } from "@/components/fan-shell/fan-wordmark-link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -13,9 +13,13 @@ import {
   ExternalLink,
   LockKeyhole,
   TicketCheck,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
 
 import {
   benefitCatalogItemSchema,
@@ -32,6 +36,13 @@ import {
 import styles from "./benefit-screen.module.css";
 
 export type BenefitLocale = "ko" | "en";
+
+const benefitUpdatedEvent = "byus:benefit-updated";
+
+type BenefitUpdatedDetail = Pick<
+  BenefitCatalogItem,
+  "id" | "state" | "applicationStatus"
+>;
 
 const celebritiesResponseSchema = z.object({
   celebrities: z.array(z.object({ slug: z.string(), name: z.string() })),
@@ -66,6 +77,7 @@ const copy = {
     stamp: "필요 Stamp",
     activity: "필요 활동",
     claim: "혜택 수령하기",
+    signIn: "로그인하고 혜택 이어받기",
     claiming: "수령 처리 중",
     locked: "조건을 달성하면 수령할 수 있어요",
     claimed: "이미 수령한 혜택이에요",
@@ -118,6 +130,7 @@ const copy = {
     stamp: "Stamp",
     activity: "Activity",
     claim: "Claim benefit",
+    signIn: "Sign in to continue",
     claiming: "Claiming",
     locked: "Complete the requirements to claim",
     claimed: "You already claimed this benefit",
@@ -180,15 +193,10 @@ function Header({
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <Link className={styles.wordmark} href="/" aria-label="ByUs home">
-          <Image
-            src="/images/guest-home/byus-wordmark.svg"
-            alt="ByUs"
-            width={80}
-            height={30}
-            priority
-          />
-        </Link>
+        <FanWordmarkLink
+          className={styles.wordmark}
+          ariaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"}
+        />
         <nav
           className={styles.nav}
           aria-label={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
@@ -306,6 +314,30 @@ export function BenefitsScreen({
   useEffect(() => {
     void loadCelebrities();
   }, [loadCelebrities]);
+  useEffect(() => {
+    function updateBenefit(event: Event) {
+      const detail = (event as CustomEvent<BenefitUpdatedDetail>).detail;
+      if (!detail?.id) return;
+      setView((current) =>
+        current.kind === "ready"
+          ? {
+              kind: "ready",
+              benefits: current.benefits.map((benefit) =>
+                benefit.id === detail.id
+                  ? {
+                      ...benefit,
+                      state: detail.state,
+                      applicationStatus: detail.applicationStatus,
+                    }
+                  : benefit,
+              ),
+            }
+          : current,
+      );
+    }
+    window.addEventListener(benefitUpdatedEvent, updateBenefit);
+    return () => window.removeEventListener(benefitUpdatedEvent, updateBenefit);
+  }, []);
 
   const load = useCallback(async () => {
     if (!ready || !selected) return;
@@ -414,6 +446,7 @@ export function BenefitsScreen({
                   href={
                     `/benefits/${benefit.id}?${query(locale, selected)}` as Route
                   }
+                  scroll={false}
                   aria-label={`${benefit.title}: ${c.details}`}
                 >
                   <ArrowRight aria-hidden="true" />
@@ -436,15 +469,23 @@ export function BenefitDetailScreen({
   benefitId,
   locale,
   celebrity,
+  presentation = "page",
+  onBusyChange,
 }: {
   benefitId: string;
   locale: BenefitLocale;
   celebrity?: string;
+  presentation?: "page" | "overlay";
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const c = copy[locale];
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [view, setView] = useState<DetailView>({ kind: "loading" });
   const [pending, setPending] = useState(false);
+  useEffect(() => {
+    onBusyChange?.(pending);
+    return () => onBusyChange?.(false);
+  }, [onBusyChange, pending]);
   const [claim, setClaim] = useState<BenefitClaimResponse | null>(null);
   const [application, setApplication] =
     useState<BenefitApplicationResponse | null>(null);
@@ -453,6 +494,7 @@ export function BenefitDetailScreen({
   const [actionError, setActionError] = useState(false);
   const [copied, setCopied] = useState(false);
   const claimRef = useRef<Promise<void> | null>(null);
+  const resumedIntentRef = useRef<string | null>(null);
   const load = useCallback(async () => {
     if (!ready) return;
     setView({ kind: "loading" });
@@ -492,7 +534,7 @@ export function BenefitDetailScreen({
     void load();
   }, [load]);
 
-  async function claimBenefit() {
+  const claimBenefit = useCallback(async () => {
     if (view.kind !== "ready" || pending || claimRef.current) return;
     const operation = (async () => {
       setPending(true);
@@ -525,6 +567,17 @@ export function BenefitDetailScreen({
           kind: "ready",
           benefit: { ...view.benefit, state: "claimed" },
         });
+        window.dispatchEvent(
+          new CustomEvent<BenefitUpdatedDetail>(benefitUpdatedEvent, {
+            detail: {
+              id: benefitId,
+              state: "claimed",
+              applicationStatus: view.benefit.applicationStatus,
+            },
+          }),
+        );
+        const intentId = new URLSearchParams(window.location.search).get("authIntent");
+        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
       } catch {
         setActionError(true);
       } finally {
@@ -534,8 +587,8 @@ export function BenefitDetailScreen({
     })();
     claimRef.current = operation;
     await operation;
-  }
-  async function applyForBenefit() {
+  }, [benefitId, getAccessToken, pending, view]);
+  const applyForBenefit = useCallback(async () => {
     if (
       view.kind !== "ready" ||
       pending ||
@@ -575,6 +628,17 @@ export function BenefitDetailScreen({
           kind: "ready",
           benefit: { ...view.benefit, applicationStatus: result.status },
         });
+        window.dispatchEvent(
+          new CustomEvent<BenefitUpdatedDetail>(benefitUpdatedEvent, {
+            detail: {
+              id: benefitId,
+              state: view.benefit.state,
+              applicationStatus: result.status,
+            },
+          }),
+        );
+        const intentId = new URLSearchParams(window.location.search).get("authIntent");
+        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
       } catch {
         setActionError(true);
       } finally {
@@ -584,7 +648,18 @@ export function BenefitDetailScreen({
     })();
     claimRef.current = operation;
     await operation;
-  }
+  }, [benefitId, getAccessToken, pending, view]);
+
+  useEffect(() => {
+    if (!authenticated || view.kind !== "ready" || view.benefit.state !== "eligible") return;
+    const intentId = new URLSearchParams(window.location.search).get("authIntent");
+    if (!intentId || resumedIntentRef.current === intentId) return;
+    const intent = readAuthIntent(window.sessionStorage, intentId);
+    if (!intent || intent.targetType !== "benefit" || intent.targetId !== benefitId) return;
+    resumedIntentRef.current = intentId;
+    if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.allocationMode === "direct_claim") void claimBenefit();
+    if (intent.actionType === "APPLY_BENEFIT" && view.benefit.allocationMode === "application_selection") void applyForBenefit();
+  }, [applyForBenefit, authenticated, benefitId, claimBenefit, view]);
   async function copyCode(value: string) {
     try {
       await navigator.clipboard.writeText(value);
@@ -596,7 +671,16 @@ export function BenefitDetailScreen({
   }
 
   if (view.kind === "loading")
-    return (
+    return presentation === "overlay" ? (
+      <main className={`${styles.detailMain} ${styles.overlayMain}`} aria-busy="true">
+        <div className={styles.detailSkeleton}>
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+      </main>
+    ) : (
       <div className={styles.page}>
         <Header
           locale={locale}
@@ -614,7 +698,23 @@ export function BenefitDetailScreen({
       </div>
     );
   if (view.kind === "error")
-    return (
+    return presentation === "overlay" ? (
+      <main className={`${styles.detailMain} ${styles.overlayMain}`}>
+        <section
+          className={styles.message}
+          role={view.notFound ? "status" : "alert"}
+        >
+          <TicketCheck aria-hidden="true" />
+          <h1>{view.notFound ? c.notFound : c.loadError}</h1>
+          <p>{view.notFound ? c.emptyHelp : c.loadHelp}</p>
+          {!view.notFound && (
+            <button type="button" onClick={() => void load()}>
+              {c.retry}
+            </button>
+          )}
+        </section>
+      </main>
+    ) : (
       <div className={styles.page}>
         <Header
           locale={locale}
@@ -651,14 +751,9 @@ export function BenefitDetailScreen({
         : benefit.state === "sold_out"
           ? c.sold_out
           : c.expired;
-  return (
-    <div className={styles.page}>
-      <Header
-        locale={locale}
-        celebrity={celebrity}
-        currentPath={`/benefits/${benefitId}`}
-      />
-      <main className={styles.detailMain}>
+  const detailContent = (
+    <main className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`}>
+      {presentation === "page" && (
         <Link
           className={styles.back}
           href={`/benefits?${query(locale, celebrity)}` as Route}
@@ -666,112 +761,162 @@ export function BenefitDetailScreen({
           <ArrowLeft aria-hidden="true" />
           {c.back}
         </Link>
-        <article className={styles.detail}>
-          <div className={styles.detailIntro}>
-            <StateBadge state={benefit.state} locale={locale} />
-            <h1>{benefit.title}</h1>
-            <p>{benefit.summary}</p>
-          </div>
-          <div className={styles.detailColumns}>
-            <section>
-              <h2>{c.requirement}</h2>
-              <p>{benefit.eligibilityLabel}</p>
-              <RequirementList benefit={benefit} locale={locale} />
-            </section>
-            <section>
-              <h2>{c.delivery}</h2>
-              <p>{benefit.deliveryLabel}</p>
-              <dl className={styles.period}>
-                <div>
-                  <dt>{c.period}</dt>
-                  <dd>
-                    {formatDate(benefit.claimOpensAt, locale)} —{" "}
-                    {formatDate(benefit.claimClosesAt, locale)}
-                  </dd>
-                </div>
-              </dl>
-            </section>
-          </div>
-          {deliveredClaim ? (
-            <section className={styles.delivery} aria-live="polite">
-              <Check aria-hidden="true" />
+      )}
+      <article className={styles.detail}>
+        <div className={styles.detailIntro}>
+          <StateBadge state={benefit.state} locale={locale} />
+          <h1>{benefit.title}</h1>
+          <p>{benefit.summary}</p>
+        </div>
+        <div className={styles.detailColumns}>
+          <section>
+            <h2>{c.requirement}</h2>
+            <p>{benefit.eligibilityLabel}</p>
+            <RequirementList benefit={benefit} locale={locale} />
+          </section>
+          <section>
+            <h2>{c.delivery}</h2>
+            <p>{benefit.deliveryLabel}</p>
+            <dl className={styles.period}>
               <div>
-                <h2>{c.delivered}</h2>
-                {deliveredClaim.deliveryType === "external_url" ? (
-                  <a
-                    href={deliveredClaim.deliveryValue}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {c.open}
-                    <ExternalLink aria-hidden="true" />
-                  </a>
-                ) : (
-                  <div className={styles.secret}>
-                    <span>{c.code}</span>
-                    <code>{deliveredClaim.deliveryValue}</code>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void copyCode(deliveredClaim.deliveryValue)
-                      }
-                      aria-label={c.copy}
-                    >
-                      <Copy aria-hidden="true" />
-                      {copied ? c.copied : c.copy}
-                    </button>
-                  </div>
-                )}
+                <dt>{c.period}</dt>
+                <dd>
+                  {formatDate(benefit.claimOpensAt, locale)} —{" "}
+                  {formatDate(benefit.claimClosesAt, locale)}
+                </dd>
               </div>
-            </section>
-          ) : benefit.allocationMode === "application_selection" &&
-            (application?.status ?? benefit.applicationStatus) ? (
-            <div className={styles.unavailable} role="status">
-              <TicketCheck aria-hidden="true" />
-              <span>
-                {
-                  c.applicationStates[
-                    (application?.status ?? benefit.applicationStatus)!
-                  ]
-                }
-              </span>
+            </dl>
+          </section>
+        </div>
+        {deliveredClaim ? (
+          <section className={styles.delivery} aria-live="polite">
+            <Check aria-hidden="true" />
+            <div>
+              <h2>{c.delivered}</h2>
+              {deliveredClaim.deliveryType === "external_url" ? (
+                <a
+                  href={deliveredClaim.deliveryValue}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {c.open}
+                  <ExternalLink aria-hidden="true" />
+                </a>
+              ) : (
+                <div className={styles.secret}>
+                  <span>{c.code}</span>
+                  <code>{deliveredClaim.deliveryValue}</code>
+                  <button
+                    type="button"
+                    onClick={() => void copyCode(deliveredClaim.deliveryValue)}
+                    aria-label={c.copy}
+                  >
+                    <Copy aria-hidden="true" />
+                    {copied ? c.copied : c.copy}
+                  </button>
+                </div>
+              )}
             </div>
-          ) : benefit.state === "eligible" &&
-            benefit.allocationMode === "application_selection" ? (
-            <button
-              className={styles.claimButton}
-              type="button"
-              onClick={() => void applyForBenefit()}
-              disabled={pending}
-            >
-              {pending ? c.applying : c.apply}
-              <ArrowRight aria-hidden="true" />
-            </button>
-          ) : benefit.state === "eligible" ? (
-            <button
-              className={styles.claimButton}
-              type="button"
-              onClick={() => void claimBenefit()}
-              disabled={pending}
-            >
-              {pending ? c.claiming : c.claim}
-              <ArrowRight aria-hidden="true" />
-            </button>
-          ) : (
-            <div className={styles.unavailable}>
-              <LockKeyhole aria-hidden="true" />
-              <span>{unavailableCopy}</span>
-            </div>
-          )}
-          {actionError && (
-            <p className={styles.actionError} role="alert">
-              {benefit.allocationMode === "application_selection"
-                ? c.applyError
-                : c.claimError}
-            </p>
-          )}
-        </article>
-      </main>
+          </section>
+        ) : !authenticated && benefit.state !== "sold_out" && benefit.state !== "expired" ? (
+          <AuthIntentLink
+            className={styles.claimButton}
+            locale={locale}
+            input={{
+              sourcePath: `/benefits/${benefitId}`,
+              sourceQuery: `?locale=${locale}${celebrity ? `&celebrity=${encodeURIComponent(celebrity)}` : ""}`,
+              actionType: benefit.allocationMode === "application_selection" ? "APPLY_BENEFIT" : "CLAIM_BENEFIT",
+              targetType: "benefit",
+              targetId: benefitId,
+            }}
+          >
+            {c.signIn}
+            <ArrowRight aria-hidden="true" />
+          </AuthIntentLink>
+        ) : benefit.allocationMode === "application_selection" &&
+          (application?.status ?? benefit.applicationStatus) ? (
+          <div className={styles.unavailable} role="status">
+            <TicketCheck aria-hidden="true" />
+            {c.applicationStates[
+              (application?.status ?? benefit.applicationStatus) as keyof typeof c.applicationStates
+            ]}
+          </div>
+        ) : benefit.state === "eligible" ? (
+          <button
+            className={styles.claimButton}
+            type="button"
+            disabled={pending}
+            onClick={() => void (benefit.allocationMode === "application_selection" ? applyForBenefit() : claimBenefit())}
+          >
+            {pending
+              ? benefit.allocationMode === "application_selection" ? c.applying : c.claiming
+              : benefit.allocationMode === "application_selection" ? c.apply : c.claim}
+            <ArrowRight aria-hidden="true" />
+          </button>
+        ) : (
+          <div className={styles.unavailable} role="status">
+            <LockKeyhole aria-hidden="true" />
+            {unavailableCopy}
+          </div>
+        )}
+        {actionError && (
+          <p className={styles.actionError} role="alert">
+            {benefit.allocationMode === "application_selection" ? c.applyError : c.claimError}
+          </p>
+        )}
+      </article>
+    </main>
+  );
+  if (presentation === "overlay") return detailContent;
+  return (
+    <div className={styles.page}>
+      <Header
+        locale={locale}
+        celebrity={celebrity}
+        currentPath={`/benefits/${benefitId}`}
+      />
+      {detailContent}
     </div>
+  );
+}
+
+function useMobileBenefitOverlay() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 47.999rem)");
+    const update = () => setMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  return mobile;
+}
+
+export function BenefitDetailOverlay({ benefitId, locale, celebrity }: { benefitId: string; locale: BenefitLocale; celebrity?: string }) {
+  const router = useRouter();
+  const mobile = useMobileBenefitOverlay();
+  const [busy, setBusy] = useState(false);
+  const close = useCallback(() => {
+    if (!busy) router.back();
+  }, [busy, router]);
+  const Overlay = mobile ? BottomSheet : Drawer;
+  return (
+    <Overlay
+      open
+      onClose={close}
+      labelledBy="benefit-overlay-title"
+      backdropClassName={styles.overlayBackdrop}
+      contentClassName={styles.overlayPanel}
+      busy={busy}
+    >
+      <header className={styles.overlayHeader}>
+        <h2 id="benefit-overlay-title">{locale === "ko" ? "혜택 상세" : "Benefit details"}</h2>
+        <button type="button" aria-label={locale === "ko" ? "혜택 상세 닫기" : "Close benefit details"} data-autofocus disabled={busy} onClick={close}>
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      <BenefitDetailScreen benefitId={benefitId} locale={locale} celebrity={celebrity} presentation="overlay" onBusyChange={setBusy} />
+    </Overlay>
   );
 }

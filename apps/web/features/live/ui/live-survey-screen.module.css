@@ -10,10 +10,9 @@
   outline-offset: 3px;
 }
 
-.header { position: sticky; z-index: 20; top: 0; height: 68px; background: rgb(255 255 255 / 96%); }
-.headerInner { display: flex; width: min(944px, calc(100% - 80px)); height: 100%; align-items: center; justify-content: space-between; margin: 0 auto; }
-.wordmark, .locale { display: inline-flex; min-width: 88px; min-height: 44px; align-items: center; }
-.wordmark img { width: 80px; height: auto; }
+.header { --focus-flow-header-background: rgb(255 255 255 / 96%); }
+.headerInner { width: min(944px, calc(100% - 80px)); }
+.locale { display: inline-flex; min-width: 88px; min-height: 44px; align-items: center; }
 .locale { justify-content: flex-end; color: oklch(18% 0 0); font-size: 13px; font-weight: 750; text-decoration: none; }
 
 .main { width: min(800px, calc(100% - 80px)); margin: 0 auto; padding: 28px 0 112px; }

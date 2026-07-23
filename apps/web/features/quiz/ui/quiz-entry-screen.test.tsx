@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { QuizEntryScreen } from "./quiz-entry-screen";
+import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 
 const getAccessToken = vi.fn();
 const push = vi.fn();
@@ -27,6 +28,8 @@ describe("QuizEntryScreen", () => {
     privyState = { ready: true, authenticated: true };
     getAccessToken.mockResolvedValue("privy-token");
     push.mockReset();
+    sessionStorage.clear();
+    window.history.replaceState({}, "", "/c/kara/verify");
   });
 
   it("loads the public intro and starts the server-owned attempt before navigating", async () => {
@@ -49,7 +52,22 @@ describe("QuizEntryScreen", () => {
     privyState = { ready: true, authenticated: false };
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ intro }));
     render(<QuizEntryScreen slug="kara" />);
-    expect(await screen.findByRole("link", { name: "로그인하고 시작하기" })).toHaveAttribute("href", `/login?returnTo=${encodeURIComponent("/c/kara/verify")}&intent=passport`);
+    expect(await screen.findByRole("link", { name: "로그인하고 시작하기" })).toHaveAttribute("href", `/login?returnTo=${encodeURIComponent("/c/kara/verify")}&locale=ko&intent=passport&entity=kara`);
+  });
+
+  it("resumes a matching durable verification action once and consumes it after the server projection", async () => {
+    const intent = createAuthIntent({ sourcePath: "/c/kara/verify", sourceQuery: "", actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: "kara" });
+    persistAuthIntent(sessionStorage, intent);
+    window.history.replaceState({}, "", `/c/kara/verify?authIntent=${intent.id}`);
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ intro }))
+      .mockResolvedValueOnce(Response.json({ result: { kind: "holder", passportId: "22222222-2222-4222-8222-222222222222" } }));
+
+    render(<QuizEntryScreen slug="kara" />);
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/passports/22222222-2222-4222-8222-222222222222"));
+    expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("renders an honest unavailable state without starting an attempt", async () => {

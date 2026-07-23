@@ -4,7 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,6 +33,21 @@ import {
   liveEventResponseSchema,
   type LiveEventResponse,
 } from "@/features/live/domain/live-event";
+import {
+  buildAuthLoginHref,
+  consumeAuthIntent,
+  createAuthIntent,
+  persistAuthIntent,
+  readAuthIntent,
+} from "@/components/auth-intent";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { FanHeader } from "@/components/fan-shell/fan-header";
+import {
+  FanBottomNavigation,
+  FanLocaleLink,
+  FanPrimaryNavigation,
+  type FanNavigationItem,
+} from "@/components/fan-shell/fan-navigation";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -196,6 +211,14 @@ const copy = {
   },
 } as const;
 
+const liveNavigationIds = [
+  "home",
+  "celebrities",
+  "live",
+  "passports",
+  "benefits",
+] as const;
+
 type AttendanceState =
   | { kind: "idle" }
   | { kind: "pending" }
@@ -249,45 +272,42 @@ function navigationHref(index: number, slug: string, locale: Locale): Route {
   return "/benefits" as Route;
 }
 
+function liveNavigationItems(
+  slug: string,
+  locale: Locale,
+): readonly FanNavigationItem[] {
+  return copy[locale].nav.map((label, index) => ({
+    id: liveNavigationIds[index],
+    href: navigationHref(index, slug, locale),
+    isCurrent: index === 2,
+    label,
+  }));
+}
+
 function LiveHeader({ locale, slug }: { locale: Locale; slug: string }) {
-  const c = copy[locale];
   const otherLocale = locale === "ko" ? "en" : "ko";
   return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <Link className={styles.wordmark} href="/" aria-label="ByUs home">
-          <Image
-            src="/images/guest-home/byus-wordmark.svg"
-            alt="ByUs"
-            width={80}
-            height={30}
-            priority
-          />
-        </Link>
-        <nav
-          className={styles.desktopNav}
-          aria-label={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
-        >
-          {c.nav.map((label, index) => (
-            <Link
-              key={label}
-              className={index === 2 ? styles.activeNav : undefined}
-              href={navigationHref(index, slug, locale)}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <Link
-          className={styles.locale}
-          href={`/live/${slug}?locale=${otherLocale}` as Route}
-          lang={otherLocale}
-          hrefLang={otherLocale}
-        >
-          {locale === "ko" ? "KO / EN" : "EN / KO"}
-        </Link>
-      </div>
-    </header>
+    <FanHeader
+      brandAriaLabel="ByUs home"
+      brandClassName={styles.wordmark}
+      className={styles.header}
+      innerClassName={styles.headerInner}
+    >
+      <FanPrimaryNavigation
+        activeItemClassName={styles.activeNav}
+        className={styles.desktopNav}
+        ariaLabel={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
+        items={liveNavigationItems(slug, locale)}
+      />
+      <FanLocaleLink
+        className={styles.locale}
+        href={`/live/${slug}?locale=${otherLocale}` as Route}
+        lang={otherLocale}
+        hrefLang={otherLocale}
+      >
+        {locale === "ko" ? "KO / EN" : "EN / KO"}
+      </FanLocaleLink>
+    </FanHeader>
   );
 }
 
@@ -431,6 +451,7 @@ export function LiveEventScreen({
   const c = copy[locale];
   const { ready: authReady, authenticated, getAccessToken } = usePrivy();
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [view, setView] = useState<ViewState>({ kind: "loading" });
   const [reservePending, setReservePending] = useState(false);
@@ -445,6 +466,7 @@ export function LiveEventScreen({
   const fanCodeInputRef = useRef<HTMLInputElement>(null);
   const attendanceKeyRef = useRef<string | null>(null);
   const attendanceAttemptsRef = useRef(0);
+  const resumedIntentRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!authReady) return;
@@ -509,7 +531,7 @@ export function LiveEventScreen({
     return () => window.clearInterval(interval);
   }, [attendance]);
 
-  async function reserve() {
+  const reserve = useCallback(async () => {
     if (view.kind !== "ready" || reservePending) return;
     setReservePending(true);
     setActionError(null);
@@ -570,7 +592,7 @@ export function LiveEventScreen({
     } finally {
       setReservePending(false);
     }
-  }
+  }, [c.reserveError, getAccessToken, locale, reservePending, slug, view]);
 
   function rememberWatchReturn() {
     const query = searchParams.toString();
@@ -584,19 +606,35 @@ export function LiveEventScreen({
     );
   }
 
-  async function attend(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const submitAttendance = useCallback(async (rawCode: string) => {
     if (
       view.kind !== "ready" ||
       attendance.kind === "pending" ||
       attendance.kind === "rate-limited"
     )
       return;
-    const normalizedCode = normalizeFanCode(fanCode);
+    const normalizedCode = normalizeFanCode(rawCode);
     if (!isNormalizedFanCodeValid(normalizedCode)) {
       setFanCode("");
       setAttendance({ kind: "error", code: "FORMAT" });
       window.requestAnimationFrame(() => fanCodeInputRef.current?.focus());
+      return;
+    }
+
+    if (!authenticated) {
+      const draftRef = `byus:fan-code-draft:${slug}`;
+      window.sessionStorage.setItem(draftRef, normalizedCode);
+      const intent = createAuthIntent({
+        sourcePath: `/live/${slug}`,
+        sourceQuery: `?locale=${locale}`,
+        returnAnchor: "#fan-code",
+        actionType: "SUBMIT_FAN_CODE",
+        targetType: "live_event",
+        targetId: slug,
+        draftPayload: { draftRef },
+      });
+      persistAuthIntent(window.sessionStorage, intent);
+      router.push(buildAuthLoginHref(intent, locale) as Route);
       return;
     }
 
@@ -633,6 +671,9 @@ export function LiveEventScreen({
         attendanceKeyRef.current = null;
         attendanceAttemptsRef.current = 0;
         setAttendance({ kind: "success", result, replayed: replayedRequest });
+        const intentId = searchParams.get("authIntent");
+        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
+        window.sessionStorage.removeItem(`byus:fan-code-draft:${slug}`);
         return;
       }
       const body = (await response.json().catch(() => null)) as {
@@ -670,7 +711,41 @@ export function LiveEventScreen({
       setAttendance({ kind: "error", code: "ATTENDANCE_UNAVAILABLE" });
       window.requestAnimationFrame(() => fanCodeInputRef.current?.focus());
     }
+  }, [attendance.kind, authenticated, getAccessToken, locale, router, searchParams, slug, view]);
+
+  async function attend(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitAttendance(fanCode);
   }
+
+  useEffect(() => {
+    if (!authenticated || view.kind !== "ready") return;
+    const intentId = searchParams.get("authIntent");
+    if (!intentId) return;
+    const intent = readAuthIntent(window.sessionStorage, intentId);
+    if (!intent || intent.targetType !== "live_event" || intent.targetId !== slug) return;
+
+    if (intent.actionType === "RESERVE_LIVE") {
+      if (view.data.viewer.reservation) {
+        consumeAuthIntent(window.sessionStorage, intentId);
+        resumedIntentRef.current = intentId;
+      } else if (view.data.primaryAction === "reserve" && resumedIntentRef.current !== intentId) {
+        resumedIntentRef.current = intentId;
+        void reserve();
+      }
+      return;
+    }
+
+    if (intent.actionType === "SUBMIT_FAN_CODE") {
+      if (resumedIntentRef.current === intentId) return;
+      const draftRef = typeof intent.draftPayload.draftRef === "string" ? intent.draftPayload.draftRef : null;
+      const draft = draftRef ? window.sessionStorage.getItem(draftRef) : null;
+      if (!draft) return;
+      resumedIntentRef.current = intentId;
+      setFanCode(draft);
+      void submitAttendance(draft);
+    }
+  }, [authenticated, reserve, searchParams, slug, submitAttendance, view]);
 
   if (view.kind === "loading") {
     return (
@@ -720,10 +795,9 @@ export function LiveEventScreen({
     ? c.reservePending
     : c.action[primaryAction];
   const calendarUrl = googleCalendarUrl(live);
-  const returnTo = `/live/${slug}?locale=${locale}`;
   const primaryClass =
     primaryAction === "reserve" ? styles.spectrumAction : styles.primaryAction;
-  const bottomNavItems = Array.from(c.nav).slice(0, 4);
+  const bottomNavItems = liveNavigationItems(slug, locale).slice(0, 4);
   const attendanceError =
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
@@ -741,16 +815,21 @@ export function LiveEventScreen({
 
   const primaryControl =
     primaryAction === "sign_in_to_reserve" ? (
-      <Link
+      <AuthIntentLink
         className={primaryClass}
-        href={
-          `/login?returnTo=${encodeURIComponent(returnTo)}&intent=reserve` as Route
-        }
+        locale={locale}
+        input={{
+          sourcePath: `/live/${slug}`,
+          sourceQuery: `?locale=${locale}`,
+          actionType: "RESERVE_LIVE",
+          targetType: "live_event",
+          targetId: slug,
+        }}
       >
         <TicketCheck aria-hidden="true" />
         {actionLabel}
         <ArrowRight aria-hidden="true" />
-      </Link>
+      </AuthIntentLink>
     ) : primaryAction === "verify_fan" ? (
       <Link
         className={primaryClass}
@@ -952,17 +1031,7 @@ export function LiveEventScreen({
                       <p>{c.fanCodeHelper}</p>
                     </div>
                   </div>
-                  {!authenticated ? (
-                    <Link
-                      className={styles.attendanceAction}
-                      href={
-                        `/login?returnTo=${encodeURIComponent(`${returnTo}#fan-code`)}&intent=attendance` as Route
-                      }
-                    >
-                      {c.attendance.signIn}
-                      <ArrowRight aria-hidden="true" />
-                    </Link>
-                  ) : viewer.passport === "missing" ? (
+                  {authenticated && viewer.passport === "missing" ? (
                     <div className={styles.attendanceGate}>
                       <p>{c.attendance.passport}</p>
                       <Link
@@ -973,7 +1042,7 @@ export function LiveEventScreen({
                         <ArrowRight aria-hidden="true" />
                       </Link>
                     </div>
-                  ) : live.effectiveStatus === "scheduled" ? (
+                  ) : authenticated && live.effectiveStatus === "scheduled" ? (
                     <p className={styles.attendanceNotice}>
                       <Clock3 aria-hidden="true" />
                       {c.attendance.beforeLive}
@@ -1033,7 +1102,9 @@ export function LiveEventScreen({
                             fanCode.trim().length < 4
                           }
                         >
-                          {attendance.kind === "pending"
+                          {!authenticated
+                            ? c.attendance.signIn
+                            : attendance.kind === "pending"
                             ? c.attendance.pending
                             : c.attendance.submit}
                         </button>
@@ -1083,20 +1154,12 @@ export function LiveEventScreen({
           onClose={() => setShowConfirmation(false)}
         />
       )}
-      <nav
+      <FanBottomNavigation
+        activeItemClassName={styles.bottomActive}
         className={styles.bottomNav}
-        aria-label={locale === "ko" ? "하단 메뉴" : "Bottom navigation"}
-      >
-        {bottomNavItems.map((label, index) => (
-          <Link
-            key={label}
-            className={index === 2 ? styles.bottomActive : undefined}
-            href={navigationHref(index, slug, locale)}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
+        ariaLabel={locale === "ko" ? "하단 메뉴" : "Bottom navigation"}
+        items={bottomNavItems}
+      />
     </div>
   );
 }

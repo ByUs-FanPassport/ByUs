@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendLoginContext, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
+import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 
 describe("login return intent", () => {
   it.each([
@@ -17,8 +17,16 @@ describe("login return intent", () => {
 
   it("accepts only declared intent values", () => {
     expect(sanitizeIntent("reserve")).toBe("reserve");
+    expect(sanitizeIntent("attendance")).toBe("attendance");
+    expect(sanitizeIntent("survey")).toBe("survey");
+    expect(sanitizeIntent("benefit-claim")).toBe("benefit-claim");
     expect(sanitizeIntent("passport")).toBe("passport");
     expect(sanitizeIntent("redirect:https://evil.example")).toBeNull();
+  });
+
+  it("accepts only UUID intent storage identifiers", () => {
+    expect(sanitizeAuthIntentId("11111111-1111-4111-8111-111111111111")).toBe("11111111-1111-4111-8111-111111111111");
+    expect(sanitizeAuthIntentId("../intent")).toBeNull();
   });
 
   it("accepts only bounded opaque entity keys and supported locales", () => {
@@ -34,7 +42,8 @@ describe("login return intent", () => {
       returnTo: "/live/kara-nualeaf?tab=reservation#fan-code",
       intent: "reserve",
       entity: "kara-nualeaf",
+      authIntent: "11111111-1111-4111-8111-111111111111",
       locale: "en",
-    })).toBe("/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf%3Ftab%3Dreservation%23fan-code&locale=en&intent=reserve&entity=kara-nualeaf");
+    })).toBe("/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf%3Ftab%3Dreservation%23fan-code&locale=en&intent=reserve&entity=kara-nualeaf&authIntent=11111111-1111-4111-8111-111111111111");
   });
 });

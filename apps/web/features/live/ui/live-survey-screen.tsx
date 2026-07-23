@@ -14,6 +14,9 @@ import {
   type LiveSurveyResponse,
   type SurveyAnswer,
 } from "@/features/live/domain/live-survey";
+import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { FocusFlowHeader } from "@/components/fan-shell/focus-flow-header";
 import styles from "./live-survey-screen.module.css";
 
 type Locale = "ko" | "en";
@@ -38,6 +41,7 @@ const copy = {
     loadError: "설문을 불러오지 못했어요.",
     notFound: "현재 참여할 수 있는 설문이 없어요.",
     retry: "다시 불러오기",
+    signIn: "로그인하고 설문 이어가기",
     saving: "초안 저장 중",
     saved: "초안 저장됨",
     saveError: "초안을 저장하지 못했어요. 답변은 이 화면에 남아 있습니다.",
@@ -74,6 +78,7 @@ const copy = {
     loadError: "We couldn’t load this survey.",
     notFound: "There is no survey available right now.",
     retry: "Try again",
+    signIn: "Sign in to continue",
     saving: "Saving draft",
     saved: "Draft saved",
     saveError: "We couldn’t save the draft. Your answers remain on this screen.",
@@ -132,11 +137,7 @@ function errorCode(value: unknown): string {
 function Header({ slug, locale }: { slug: string; locale: Locale }) {
   const other = locale === "ko" ? "en" : "ko";
   return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <Link className={styles.wordmark} href="/" aria-label="ByUs home">
-          <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
-        </Link>
+    <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner} sticky>
         <Link
           className={styles.locale}
           href={`/live/${slug}/survey?locale=${other}` as Route}
@@ -145,8 +146,7 @@ function Header({ slug, locale }: { slug: string; locale: Locale }) {
         >
           {locale === "ko" ? "KO / EN" : "EN / KO"}
         </Link>
-      </div>
-    </header>
+    </FocusFlowHeader>
   );
 }
 
@@ -202,6 +202,15 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   }, [authReady, authenticated, getAccessToken, locale, slug]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (!authenticated || view.kind !== "ready") return;
+    const intentId = new URLSearchParams(window.location.search).get("authIntent");
+    const intent = readAuthIntent(window.sessionStorage, intentId);
+    if (intent?.actionType === "OPEN_SURVEY" && intent.targetType === "survey" && intent.targetId === slug) {
+      consumeAuthIntent(window.sessionStorage, intent.id);
+    }
+  }, [authenticated, slug, view]);
 
   const saveDraft = useCallback(async (draftAnswers: SurveyAnswer[], expectedRevision: number, resolveConflict = false) => {
     if ((!resolveConflict && conflict) || submitPending) return;
@@ -351,13 +360,20 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
 
   if (view.kind === "error") {
     const notFound = view.code === "SURVEY_NOT_FOUND";
+    const authenticationRequired = view.code === "AUTHENTICATION_REQUIRED";
     return (
       <div className={styles.page}>
         <Header slug={slug} locale={locale} />
         <main className={styles.state} role="alert">
           <RotateCcw aria-hidden="true" />
-          <h1>{notFound ? c.notFound : c.loadError}</h1>
-          {!notFound && <button type="button" onClick={() => void load()}>{c.retry}</button>}
+          <h1>{notFound ? c.notFound : authenticationRequired ? c.signIn : c.loadError}</h1>
+          {authenticationRequired ? (
+            <AuthIntentLink
+              className={styles.primary}
+              locale={locale}
+              input={{ sourcePath: `/live/${slug}/survey`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_SURVEY", targetType: "survey", targetId: slug }}
+            >{c.signIn}</AuthIntentLink>
+          ) : !notFound && <button type="button" onClick={() => void load()}>{c.retry}</button>}
           <Link href={liveHref}>{c.back}</Link>
         </main>
       </div>

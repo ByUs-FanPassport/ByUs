@@ -1,7 +1,5 @@
 .page { min-height:100svh; background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
-.brand { position:absolute; top:16px; left:16px; display:inline-flex; width:88px; min-height:44px; align-items:center; color:inherit; text-decoration:none; }
-.brand img { display:block; width:80px; height:30px; }
 .shell { display:grid; width:min(100%,760px); min-height:100svh; margin-inline:auto; padding:88px 16px 40px; place-items:center; }
 .entry { width:100%; }
 .entry header p,.entry header h1,.description,.facts,.note,.message h1,.message p,.loading p,.inlineError { margin:0; }
@@ -28,6 +26,6 @@
 .loading p { grid-column:1/-1; margin-top:8px; color:oklch(48% 0 0); font-size:14px; text-align:center; }
 .page :is(a,button):focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 @keyframes pulse { to { background:oklch(93% 0 0); } }
-@media (min-width:48rem) { .brand { top:20px; left:32px; } .shell { padding-inline:32px; } .entry header h1 { font-size:44px; } }
+@media (min-width:48rem) { .shell { padding-inline:32px; } .entry header h1 { font-size:44px; } }
 @media (hover:hover) and (pointer:fine) { .primaryAction:hover:not(:disabled) { background:oklch(28% 0 0); } .secondaryAction:hover { background:oklch(97.5% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }

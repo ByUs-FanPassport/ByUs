@@ -3,13 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { usePrivy } from "@privy-io/react-auth";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 
-import type { IssuanceAggregate } from "../domain/issuance-aggregate";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import styles from "./passport-issuance-dialog.module.css";
 
-interface PassportIssuanceDialogProps { issuance: IssuanceAggregate }
+interface PassportIssuanceCeremonyProps { issuance: IssuanceAggregate }
 
 function issuanceStatus(issuance: IssuanceAggregate): string {
   const statuses = [issuance.passport.mintStatus, issuance.firstStamp.mintStatus];
@@ -21,20 +23,18 @@ function issuanceStatus(issuance: IssuanceAggregate): string {
   return "디지털 발급 준비 중";
 }
 
-export function PassportIssuanceDialog({ issuance }: PassportIssuanceDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyProps) {
   const [stage, setStage] = useState(0);
   const [stampImageFailed, setStampImageFailed] = useState(false);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && typeof dialog.showModal === "function") {
-      if (dialog.open) dialog.close();
-      dialog.showModal();
-    }
-    return () => {
-      if (dialog?.open && typeof dialog.close === "function") dialog.close();
+    function completeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setStage(3);
     };
+    document.addEventListener("keydown", completeOnEscape);
+    return () => document.removeEventListener("keydown", completeOnEscape);
   }, []);
 
   useEffect(() => {
@@ -58,21 +58,9 @@ export function PassportIssuanceDialog({ issuance }: PassportIssuanceDialogProps
   }).format(new Date(issuance.firstStamp.issuedAt));
 
   return (
-    <dialog
-      ref={dialogRef}
-      open
-      className={styles.dialog}
+    <main
+      className={styles.screen}
       aria-labelledby="passport-issuance-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        setStage(3);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          setStage(3);
-        }
-      }}
     >
       <div className={styles.frame}>
         <header className={styles.header}>
@@ -97,8 +85,8 @@ export function PassportIssuanceDialog({ issuance }: PassportIssuanceDialogProps
               priority
             />
             <div className={styles.identity}>
-              <h2 id="passport-issuance-title">{issuance.celebrity.name} 팬 Passport 발급</h2>
-              <p>첫 팬 인증 기록이 Passport에 저장되었어요.</p>
+              <h2 id="passport-issuance-title">{issuance.celebrity.name} 팬 Passport 발급 완료</h2>
+              <p>팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.</p>
               <dl>
                 <div><dt>Celebrity</dt><dd>{issuance.celebrity.name}</dd></div>
                 <div><dt>Tier</dt><dd>Bronze Fan</dd></div>
@@ -141,6 +129,66 @@ export function PassportIssuanceDialog({ issuance }: PassportIssuanceDialogProps
           </Link>
         )}
       </div>
-    </dialog>
+    </main>
+  );
+}
+
+type ScreenState =
+  | { kind: "loading" }
+  | { kind: "auth" }
+  | { kind: "error" }
+  | { kind: "ready"; issuance: IssuanceAggregate };
+
+export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
+  const { ready, authenticated, getAccessToken } = usePrivy();
+  const [state, setState] = useState<ScreenState>({ kind: "loading" });
+
+  const load = useCallback(async () => {
+    if (!ready) return;
+    if (!authenticated) {
+      setState({ kind: "auth" });
+      return;
+    }
+    setState({ kind: "loading" });
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("missing access token");
+      const response = await fetch(`/api/passports/${encodeURIComponent(passportId)}/issuance?locale=ko`, {
+        method: "GET",
+        headers: { authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("issuance unavailable");
+      const body = await response.json() as { issuance?: unknown };
+      setState({ kind: "ready", issuance: parseIssuanceAggregate(body.issuance) });
+    } catch {
+      setState({ kind: "error" });
+    }
+  }, [authenticated, getAccessToken, passportId, ready]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} />;
+  return (
+    <main className={styles.screen}>
+      <div className={styles.state} aria-live="polite">
+        {state.kind === "loading" ? (
+          <><h1>발급된 Passport 확인 중</h1><p>이미 완료된 팬 인증 결과를 안전하게 불러오고 있어요.</p></>
+        ) : state.kind === "auth" ? (
+          <>
+            <h1>로그인이 필요해요.</h1>
+            <p>내 계정에 이미 발급된 Passport를 확인하려면 로그인해 주세요.</p>
+            <AuthIntentLink locale="ko" input={{ sourcePath: `/passports/${passportId}/issuance`, sourceQuery: "", actionType: "OPEN_PASSPORT", targetType: "passport", targetId: passportId }}>로그인하고 발급 결과 확인하기</AuthIntentLink>
+          </>
+        ) : (
+          <>
+            <h1>발급 결과를 불러오지 못했어요.</h1>
+            <p>이 화면에서는 Passport를 새로 발급하지 않아요. 내 Passport 화면에서 상태를 다시 확인할 수 있어요.</p>
+            <button type="button" onClick={() => void load()}><RotateCcw aria-hidden="true" />다시 확인</button>
+            <Link href={`/passports/${passportId}` as Route}>Passport 열기<ArrowRight aria-hidden="true" /></Link>
+          </>
+        )}
+      </div>
+    </main>
   );
 }

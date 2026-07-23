@@ -1,8 +1,7 @@
 .page { min-height: 100svh; background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
-.header { display:flex; height:68px; align-items:center; justify-content:space-between; padding:0 16px; border-bottom:1px solid oklch(93% 0 0); }
-.wordmark,.locale a,.secondary { display:inline-flex; min-height:44px; align-items:center; }
-.wordmark { width:88px; }
-.wordmark img { display:block; width:80px; height:30px; }
+.header { border-bottom:1px solid oklch(93% 0 0); }
+.headerInner { padding:0 16px; }
+.locale a,.secondary { display:inline-flex; min-height:44px; align-items:center; }
 .locale { display:flex; align-items:center; gap:10px; font-size:14px; }
 .locale a { color:oklch(48% 0 0); font-weight:600; text-decoration:none; }
 .locale a[aria-current="page"] { color:oklch(18% 0 0); font-weight:800; }
@@ -43,9 +42,9 @@
 .primary:active:not(:disabled) { transform:translateY(1px); }
 .primary:disabled { cursor:not-allowed; background:oklch(80% 0 0); }
 .secondary { border:1px solid oklch(90% 0 0); color:oklch(18% 0 0); text-decoration:none; }
-.wordmark:focus-visible,.locale a:focus-visible,.form input:focus-visible,.primary:focus-visible,.secondary:focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
+.locale a:focus-visible,.form input:focus-visible,.primary:focus-visible,.secondary:focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 @media (min-width:48rem) {
-  .header { padding-inline:32px; }
+  .headerInner { padding-inline:32px; }
   .main { width:min(100% - 64px,1120px); padding-top:64px; }
   .intro { margin-bottom:40px; }
   .intro h1 { font-size:36px; }
@@ -56,5 +55,5 @@
   .secondary { width:auto; min-width:132px; padding-inline:24px; grid-row:1; grid-column:2; }
   .primary { grid-row:1; grid-column:1; }
 }
-@media (min-width:80rem) { .header { padding-inline:40px; } }
+@media (min-width:80rem) { .headerInner { padding-inline:40px; } }
 @media (prefers-reduced-motion:reduce) { .page * { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; } }

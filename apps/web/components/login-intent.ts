@@ -1,9 +1,10 @@
-const allowedIntents = new Set(["reserve", "passport", "youtube", "tiktok", "instagram"]);
+const allowedIntents = new Set(["reserve", "attendance", "survey", "benefit-claim", "benefit-application", "passport", "youtube", "tiktok", "instagram"]);
 
 export type LoginContext = {
   returnTo: string;
   intent: string | null;
   entity: string | null;
+  authIntent?: string | null;
   locale: "ko" | "en";
 };
 
@@ -33,9 +34,16 @@ export function sanitizeLocale(value: string | null | undefined): "ko" | "en" {
   return value === "en" ? "en" : "ko";
 }
 
+export function sanitizeAuthIntentId(value: string | null | undefined): string | null {
+  return value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value.toLowerCase()
+    : null;
+}
+
 export function appendLoginContext(pathname: string, context: LoginContext): string {
   const query = new URLSearchParams({ returnTo: context.returnTo, locale: context.locale });
   if (context.intent) query.set("intent", context.intent);
   if (context.entity) query.set("entity", context.entity);
+  if (context.authIntent) query.set("authIntent", context.authIntent);
   return `${pathname}?${query.toString()}`;
 }

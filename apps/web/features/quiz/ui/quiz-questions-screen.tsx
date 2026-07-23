@@ -3,7 +3,6 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +13,7 @@ import {
   parseQuizSubmitProjection,
   type QuizAttemptProjection,
 } from "../domain/quiz-attempt";
+import { FocusFlowBrand } from "@/components/fan-shell/focus-flow-brand";
 import styles from "./quiz-questions-screen.module.css";
 
 type ScreenState =
@@ -219,5 +219,5 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
 }
 
 function QuizFrame({ children }: { children: React.ReactNode }) {
-  return <main className={styles.page}><Link className={styles.brand} href="/" aria-label="ByUs 홈"><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority /></Link><div className={styles.shell}>{children}</div></main>;
+  return <main className={styles.page}><FocusFlowBrand /><div className={styles.shell}>{children}</div></main>;
 }

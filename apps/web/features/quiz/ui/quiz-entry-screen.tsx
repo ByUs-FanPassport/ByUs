@@ -3,13 +3,15 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { parseQuizStartProjection } from "../domain/quiz-attempt";
 import { parsePublicQuizIntro, type PublicQuizIntro } from "../domain/quiz-intro";
+import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { FocusFlowBrand } from "@/components/fan-shell/focus-flow-brand";
 import styles from "./quiz-entry-screen.module.css";
 
 type ScreenState =
@@ -46,6 +48,7 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const requestGeneration = useRef(0);
+  const resumedIntentRef = useRef<string | null>(null);
 
   const loadIntro = useCallback(async () => {
     const generation = ++requestGeneration.current;
@@ -82,6 +85,11 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
       });
       const body = await readJson(response) as { result?: unknown };
       const result = parseQuizStartProjection(body.result);
+      const intentId = new URLSearchParams(window.location.search).get("authIntent");
+      const intent = readAuthIntent(window.sessionStorage, intentId);
+      if (intent?.actionType === "START_FAN_VERIFICATION" && intent.targetType === "celebrity" && intent.targetId === slug) {
+        consumeAuthIntent(window.sessionStorage, intent.id);
+      }
       if (result.kind === "holder") {
         router.push(`/passports/${result.passportId}` as Route);
         return;
@@ -97,11 +105,19 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
     }
   }, [authenticated, getAccessToken, ready, router, slug, starting]);
 
+  useEffect(() => {
+    if (!authenticated || screen.kind !== "ready" || screen.intro.quiz.availability !== "available") return;
+    const intentId = new URLSearchParams(window.location.search).get("authIntent");
+    if (!intentId || resumedIntentRef.current === intentId) return;
+    const intent = readAuthIntent(window.sessionStorage, intentId);
+    if (intent?.actionType !== "START_FAN_VERIFICATION" || intent.targetType !== "celebrity" || intent.targetId !== slug) return;
+    resumedIntentRef.current = intentId;
+    void start();
+  }, [authenticated, screen, slug, start]);
+
   return (
     <main className={styles.page}>
-      <Link className={styles.brand} href="/" aria-label="ByUs 홈">
-        <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
-      </Link>
+      <FocusFlowBrand />
       <div className={styles.shell}>
         {screen.kind === "loading" && (
           <div className={styles.loading} role="status" aria-label="팬 인증 정보 불러오는 중">
@@ -135,7 +151,7 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
             ) : authenticated ? (
               <button className={styles.primaryAction} type="button" disabled={starting} onClick={() => void start()}>{starting ? "팬 인증 시작 중…" : "팬 인증 시작하기"}<ArrowRight /></button>
             ) : (
-              <Link className={styles.primaryAction} href={`/login?returnTo=${encodeURIComponent(`/c/${slug}/verify`)}&intent=passport` as Route}>로그인하고 시작하기 <ArrowRight /></Link>
+              <AuthIntentLink className={styles.primaryAction} locale="ko" input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: "", actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>로그인하고 시작하기 <ArrowRight /></AuthIntentLink>
             )}
             {startError && <p className={styles.inlineError} role="alert">{startError}</p>}
             <p className={styles.note}>이미 시작한 인증이 있다면 저장된 문항부터 이어서 진행됩니다.</p>

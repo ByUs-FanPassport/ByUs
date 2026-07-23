@@ -40,29 +40,6 @@ function terminalAttempt(status: "passed" | "failed", score: 1 | 2) {
   };
 }
 
-const issuance = {
-  passport: {
-    id: passportId,
-    businessStatus: "issued",
-    mintStatus: "queued",
-    tokenId: null,
-    issuedAt: "2026-07-21T05:00:00+00:00",
-  },
-  celebrity: {
-    slug: "kara",
-    name: "KARA",
-    image: { url: "/images/kara.jpg", alt: "KARA", position: "center" },
-  },
-  firstStamp: {
-    type: "knowledge",
-    businessStatus: "issued",
-    mintStatus: "queued",
-    tokenId: null,
-    issuedAt: "2026-07-21T05:00:00+00:00",
-  },
-  score: { points: 1 },
-};
-
 describe("QuizResultScreen", () => {
   beforeEach(() => {
     authenticated = true;
@@ -84,10 +61,8 @@ describe("QuizResultScreen", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("loads the terminal pass without exposing answers and gets existing issuance once", async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)))
-      .mockResolvedValueOnce(Response.json({ issuance }));
+  it("links the terminal pass to the recoverable, GET-only issuance route", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
 
     render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" />);
 
@@ -95,16 +70,11 @@ describe("QuizResultScreen", () => {
     expect(screen.getByText("3문항 중 2문항을 맞혔어요.")).toBeInTheDocument();
     expect(screen.queryByText(/정답과 해설/)).not.toBeInTheDocument();
 
-    const button = screen.getByRole("button", { name: "Passport 받기" });
-    fireEvent.click(button);
-    fireEvent.click(button);
-
-    expect(await screen.findByRole("dialog", { name: "KARA 팬 Passport 발급" })).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch).toHaveBeenLastCalledWith(
-      `/api/passports/${passportId}/issuance?locale=ko`,
-      expect.objectContaining({ method: "GET", headers: { authorization: "Bearer access-token" } }),
+    expect(screen.getByRole("link", { name: "Passport 받기" })).toHaveAttribute(
+      "href",
+      `/passports/${passportId}/issuance`,
     );
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST" && String(init))).toBe(false);
   });
 

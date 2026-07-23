@@ -1,12 +1,12 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { appendLoginContext, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
+import { FocusFlowHeader } from "@/components/fan-shell/focus-flow-header";
+import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
 import styles from "./profile-onboarding-screen.module.css";
 
 type ScreenState = "checking" | "empty" | "typing" | "valid" | "duplicate" | "prohibited" | "invalid" | "saving" | "saved" | "network";
@@ -84,12 +84,14 @@ export function ProfileOnboardingScreen() {
   const rawReturnTo = searchParams.get("returnTo");
   const rawIntent = searchParams.get("intent");
   const rawEntity = searchParams.get("entity");
+  const rawAuthIntent = searchParams.get("authIntent");
   const rawLocale = searchParams.get("locale");
   const returnTo = useMemo(() => sanitizeReturnTo(rawReturnTo), [rawReturnTo]);
   const intent = useMemo(() => sanitizeIntent(rawIntent), [rawIntent]);
   const entity = useMemo(() => sanitizeEntity(rawEntity), [rawEntity]);
+  const authIntent = useMemo(() => sanitizeAuthIntentId(rawAuthIntent), [rawAuthIntent]);
   const locale = useMemo(() => sanitizeLocale(rawLocale), [rawLocale]);
-  const context = useMemo(() => ({ returnTo, intent, entity, locale }), [entity, intent, locale, returnTo]);
+  const context = useMemo(() => ({ returnTo, intent, entity, locale, authIntent }), [authIntent, entity, intent, locale, returnTo]);
   const t = copy[locale];
   const normalized = nickname.normalize("NFKC").trim();
   const count = graphemeCount(nickname, locale);
@@ -196,16 +198,13 @@ export function ProfileOnboardingScreen() {
 
   return (
     <div className={styles.page} data-state={state}>
-      <header className={styles.header}>
-        <Link className={styles.wordmark} href="/" aria-label={t.home}>
-          <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
-        </Link>
+      <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner}>
         <nav className={styles.locale} aria-label={t.language}>
           <Link aria-current={locale === "ko" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "ko" }) as Route}>KO</Link>
           <span aria-hidden="true">/</span>
           <Link aria-current={locale === "en" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "en" }) as Route}>EN</Link>
         </nav>
-      </header>
+      </FocusFlowHeader>
 
       <main className={styles.main}>
         <section className={styles.intro} aria-labelledby="profile-heading">

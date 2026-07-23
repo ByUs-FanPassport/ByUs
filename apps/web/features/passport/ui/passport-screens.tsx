@@ -1,12 +1,15 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, Languages, RotateCcw, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, Languages, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { AuthIntentLink } from "@/components/auth-intent-link";
+import { FanWordmarkLink } from "@/components/fan-shell/fan-wordmark-link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
 import type { PassportCollection } from "../domain/passport-collection";
 import type { PassportDetail } from "../domain/passport-detail";
 import type { PassportLocale } from "../domain/passport-read-model";
@@ -75,19 +78,24 @@ function AppHeader({ locale }: { locale: PassportLocale }) {
   const router = useRouter();
   const next = locale === "ko" ? "en" : "ko";
   return <header className={styles.header}><div className={styles.headerInner}>
-    <Link className={styles.wordmark} href={withLocale("/", locale)} aria-label="ByUs home"><Image src="/images/guest-home/byus-wordmark.svg" width={80} height={28} alt="ByUs" priority /></Link>
+    <FanWordmarkLink className={styles.wordmark} href={withLocale("/", locale)} ariaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"} />
     <nav aria-label={locale === "ko" ? "주요 메뉴" : "Main navigation"}><Link href={withLocale("/", locale)}>HOME</Link><Link aria-current="page" href={withLocale("/passports", locale)}>PASSPORT</Link><Link href={withLocale("/benefits", locale)}>BENEFIT</Link></nav>
     <button className={styles.locale} type="button" onClick={() => router.push(withLocale(pathname, next))} aria-label={locale === "ko" ? "Switch to English" : "한국어로 변경"}><Languages /><span>{next.toUpperCase()}</span></button>
   </div></header>;
 }
 
-function Frame({ locale, children }: { locale: PassportLocale; children: React.ReactNode }) { return <div className={styles.app}><AppHeader locale={locale} /><main className={styles.main}>{children}</main></div>; }
+function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
+  if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`}><main className={styles.overlayMain}>{children}</main></div>;
+  return <div className={styles.app}><AppHeader locale={locale} /><main className={styles.main}>{children}</main></div>;
+}
 
 function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
 
 function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocale; kind: "auth" | "missing" | "network"; retry: () => void; returnTo: string }) {
   const c = copy[locale]; const missing = kind === "missing";
-  return <section className={styles.state} aria-labelledby="state-title"><CircleHelp /><h1 id="state-title">{missing ? c.notFound : c.loadError}</h1><p>{missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <Link className={styles.primaryButton} href={`/login?returnTo=${encodeURIComponent(returnTo)}&intent=passport` as Route}>{c.login}<ArrowRight /></Link> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
+  const source = new URL(returnTo, "https://byus.local");
+  const targetId = source.pathname.split("/").filter(Boolean).at(-1) ?? "collection";
+  return <section className={styles.state} aria-labelledby="state-title"><CircleHelp /><h1 id="state-title">{missing ? c.notFound : c.loadError}</h1><p>{missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
 }
 
 function useOwnedApi<T>(url: string, parse: (value: unknown) => T, authReady: boolean, authenticated: boolean, getAccessToken: () => Promise<string | null>) {
@@ -150,18 +158,42 @@ function PassportDetailView({ passport, locale }: { passport: PassportDetail; lo
   const activities = [...passport.activities].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id));
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
     <section className={styles.passportHero}><div className={styles.passportVisual}><Image src="/images/guest-home/passport-open-empty.png" alt={`${passport.celebrity.name} Fan Passport`} width={1536} height={1024} /></div><div className={styles.identity}><Image src={passport.celebrity.image.url} alt="" width={72} height={72} style={{ objectPosition: passport.celebrity.image.position }} /><div><span>{passport.celebrity.name}</span><strong>{passport.display.level}</strong><small>{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
-    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div><div className={styles.stampGrid}>{slots.map((type) => { const stamp = byType.get(type); return stamp ? <Link key={type} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)}><StampArtwork type={type} label={c.slot[type]} /><strong>{c.slot[type]}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link> : <div key={type} className={styles.stampSlot} data-empty="true"><StampArtwork type={type} label={c.slot[type]} empty /><strong>{c.slot[type]}</strong><span>{c.emptySlot}</span></div>; })}</div></section>
+    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div><div className={styles.stampGrid}>{slots.map((type) => { const stamp = byType.get(type); return stamp ? <Link key={type} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><StampArtwork type={type} label={c.slot[type]} /><strong>{c.slot[type]}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link> : <div key={type} className={styles.stampSlot} data-empty="true"><StampArtwork type={type} label={c.slot[type]} empty /><strong>{c.slot[type]}</strong><span>{c.emptySlot}</span></div>; })}</div></section>
     <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.display.type}</strong><time dateTime={item.occurredAt}>{date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <DigitalDisclosure mint={passport.mint} locale={locale} /></>;
 }
 
-export function StampDetailScreen({ id }: { id: string }) {
+export function StampDetailScreen({ id, presentation = "page", onClose }: { id: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
   const fetcher = useOwnedApi(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} />}</Frame>;
+  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} onClose={onClose} />}</Frame>;
 }
 
-function StampDetailView({ stamp, locale }: { stamp: StampDetail; locale: PassportLocale }) {
-  const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={<Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
+function StampDetailView({ stamp, locale, onClose }: { stamp: StampDetail; locale: PassportLocale; onClose?: () => void }) {
+  const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={onClose ? <button className={styles.back} type="button" onClick={onClose} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button> : <Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
     <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><StampArtwork type={stamp.type} label={stamp.display.type} /><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} /></aside></div></>;
+}
+
+function useMobileDetail() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobile(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return mobile;
+}
+
+export function StampDetailOverlay({ id }: { id: string }) {
+  const router = useRouter();
+  const mobile = useMobileDetail();
+  const close = useCallback(() => router.back(), [router]);
+  const Overlay = mobile ? BottomSheet : Drawer;
+  return <Overlay open onClose={close} labelledBy="stamp-detail-overlay-title" closeOnBackdrop backdropClassName={styles.detailBackdrop} contentClassName={styles.detailOverlay}>
+    <h1 className={styles.visuallyHidden} id="stamp-detail-overlay-title">Stamp 상세</h1>
+    <StampDetailScreen id={id} presentation="overlay" onClose={close} />
+  </Overlay>;
 }

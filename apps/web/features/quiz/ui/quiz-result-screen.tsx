@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, Info, RefreshCw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { parseIssuanceAggregate, type IssuanceAggregate } from "../../passport/domain/issuance-aggregate";
-import { PassportIssuanceDialog } from "../../passport/ui/passport-issuance-dialog";
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
 import styles from "./quiz-result-screen.module.css";
 
@@ -45,10 +43,8 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [view, setView] = useState<ViewState>({ kind: "loading" });
-  const [issuance, setIssuance] = useState<IssuanceAggregate | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
-  const issuanceRequest = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -82,31 +78,6 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
     })();
     return () => { active = false; };
   }, [attemptId, authenticated, getAccessToken, passportId, ready]);
-
-  async function loadIssuance() {
-    if (!passportId || issuanceRequest.current) return issuanceRequest.current;
-    const request = (async () => {
-      setActionPending(true);
-      setActionError(null);
-      try {
-        const token = await getAccessToken();
-        if (!token) throw new Error("missing access token");
-        const body = await parseJson(await fetch(`/api/passports/${passportId}/issuance?locale=ko`, {
-          method: "GET",
-          headers: { authorization: `Bearer ${token}` },
-          cache: "no-store",
-        })) as { issuance?: unknown };
-        setIssuance(parseIssuanceAggregate(body.issuance));
-      } catch {
-        setActionError("발급된 Passport를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
-      } finally {
-        setActionPending(false);
-        issuanceRequest.current = null;
-      }
-    })();
-    issuanceRequest.current = request;
-    return request;
-  }
 
   async function retry() {
     if (actionPending) return;
@@ -186,9 +157,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
               <div><span>Stamp</span><strong>Knowledge Stamp</strong><small>적립 완료</small></div>
               <div><span>Score</span><strong>팬 점수 +1</strong><small>반영 완료</small></div>
             </div>
-            <button className={styles.primary} type="button" disabled={actionPending} onClick={() => void loadIssuance()}>
-              {actionPending ? "Passport 확인 중" : "Passport 받기"}
-            </button>
+            <Link className={styles.primary} href={`/passports/${passportId}/issuance` as Route}>Passport 받기</Link>
           </>
         ) : (
           <>
@@ -202,7 +171,6 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
         {!passed && <p className={styles.note}><Info aria-hidden="true" />재도전 횟수와 시간 제한은 없습니다.</p>}
         {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
       </section>
-      {issuance && <PassportIssuanceDialog issuance={issuance} />}
     </main>
   );
 }

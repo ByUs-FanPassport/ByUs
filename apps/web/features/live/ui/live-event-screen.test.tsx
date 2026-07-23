@@ -1,19 +1,22 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveEventScreen } from "./live-event-screen";
+import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 
 const getAccessToken = vi.fn(async () => "access-token");
 let authenticated = true;
+const push = vi.fn();
+let query = "locale=ko";
 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated, getAccessToken }),
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push }),
   usePathname: () => "/live/kara-nualeaf",
-  useSearchParams: () => new URLSearchParams("locale=ko"),
+  useSearchParams: () => new URLSearchParams(query),
 }));
 
 const reservation = {
@@ -66,6 +69,9 @@ function payload(primaryAction = "reserve", withReservation = false) {
 describe("LiveEventScreen", () => {
   beforeEach(() => {
     authenticated = true;
+    query = "locale=ko";
+    push.mockReset();
+    sessionStorage.clear();
     vi.restoreAllMocks();
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); });
     HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); });
@@ -80,6 +86,29 @@ describe("LiveEventScreen", () => {
     expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
   });
 
+  it("keeps LIVE current across desktop and mobile navigation and preserves locale switching", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(payload()), { status: 200 }),
+    );
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
+    const bottom = screen.getByRole("navigation", { name: "하단 메뉴" });
+    expect(within(primary).getByRole("link", { name: "라이브" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(bottom).getByRole("link", { name: "라이브" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "KO / EN" })).toHaveAttribute(
+      "href",
+      "/live/kara-nualeaf?locale=en",
+    );
+  });
+
   it("restores unauthenticated reservation intent through login returnTo", async () => {
     authenticated = false;
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload("sign_in_to_reserve")), { status: 200 }));
@@ -87,6 +116,58 @@ describe("LiveEventScreen", () => {
     const link = await screen.findByRole("link", { name: /로그인하고 예약하기/ });
     expect(link.getAttribute("href")).toContain("intent=reserve");
     expect(link.getAttribute("href")).toContain(encodeURIComponent("/live/kara-nualeaf?locale=ko"));
+  });
+
+  it("keeps a guest Fan Code outside the intent payload and resumes through an exact stored action", async () => {
+    authenticated = false;
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(livePayload), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Fan Code 입력" }), { target: { value: " kara 2026 " } });
+    fireEvent.click(screen.getByRole("button", { name: "로그인하고 출석 인증하기" }));
+
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBe("KARA2026");
+    const stored = [...Array(sessionStorage.length)].map((_, index) => sessionStorage.key(index)).find((key) => key?.startsWith("byus:auth-intent:v1:"));
+    expect(stored).toBeTruthy();
+    expect(JSON.parse(sessionStorage.getItem(stored!)!)).toMatchObject({
+      actionType: "SUBMIT_FAN_CODE",
+      targetType: "live_event",
+      targetId: "kara-nualeaf",
+      draftPayload: { draftRef: "byus:fan-code-draft:kara-nualeaf" },
+    });
+    expect(JSON.stringify(JSON.parse(sessionStorage.getItem(stored!)!))).not.toContain("KARA2026");
+    expect(push).toHaveBeenCalledWith(expect.stringContaining("authIntent="));
+  });
+
+  it("restores and submits the guest Fan Code once after authentication", async () => {
+    const draftRef = "byus:fan-code-draft:kara-nualeaf";
+    sessionStorage.setItem(draftRef, "KARA2026");
+    const intent = createAuthIntent({
+      sourcePath: "/live/kara-nualeaf",
+      sourceQuery: "?locale=ko",
+      returnAnchor: "#fan-code",
+      actionType: "SUBMIT_FAN_CODE",
+      targetType: "live_event",
+      targetId: "kara-nualeaf",
+      draftPayload: { draftRef },
+    });
+    persistAuthIntent(sessionStorage, intent);
+    query = `locale=ko&authIntent=${intent.id}`;
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(livePayload), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(attendanceResult), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/attendance"))).toHaveLength(1);
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ code: "KARA2026" });
+    expect(sessionStorage.getItem(draftRef)).toBeNull();
+    expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
   });
 
   it("QA-RSVP-001 sends a fan without a Passport to verification without posting a reservation", async () => {
@@ -121,6 +202,22 @@ describe("LiveEventScreen", () => {
       body: expect.any(String),
     }));
     expect(JSON.parse(String(request[1]?.body))).toEqual({ idempotencyKey: expect.any(String) });
+  });
+
+  it("automatically resumes one matching reservation action after login", async () => {
+    const intent = createAuthIntent({ sourcePath: "/live/kara-nualeaf", sourceQuery: "?locale=ko", actionType: "RESERVE_LIVE", targetType: "live_event", targetId: "kara-nualeaf" });
+    persistAuthIntent(sessionStorage, intent);
+    query = `locale=ko&authIntent=${intent.id}`;
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload()), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ reservation }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload("reserved", true)), { status: 200 }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/reservation"))).toHaveLength(1);
+    await waitFor(() => expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull());
   });
 
   it("shows reserved state and Calendar as a secondary action without cancellation", async () => {

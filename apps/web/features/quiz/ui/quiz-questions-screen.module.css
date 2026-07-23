@@ -1,7 +1,5 @@
 .page { min-height:100svh; background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
-.brand { position:absolute; top:16px; left:16px; display:inline-flex; width:88px; min-height:44px; align-items:center; color:inherit; text-decoration:none; }
-.brand img { display:block; width:80px; height:30px; }
 .shell { display:grid; width:min(100%,760px); min-height:100svh; margin-inline:auto; padding:88px 16px 40px; place-items:center; }
 .quiz { width:100%; }
 .quizHeader { display:flex; align-items:end; justify-content:space-between; gap:24px; }
@@ -43,6 +41,6 @@
 .loading span { height:56px; border-radius:12px; background:oklch(97.5% 0 0); animation:pulse 1.2s ease-in-out infinite alternate; }
 .loading p { grid-column:1/-1; margin-top:8px; color:oklch(48% 0 0); font-size:14px; text-align:center; }
 @keyframes pulse { to { background:oklch(93% 0 0); } }
-@media (min-width:48rem) { .brand { top:20px; left:32px; } .shell { padding-inline:32px; } .quizHeader h1 { font-size:24px; } .question legend { font-size:36px; } }
+@media (min-width:48rem) { .shell { padding-inline:32px; } .quizHeader h1 { font-size:24px; } .question legend { font-size:36px; } }
 @media (hover:hover) and (pointer:fine) { .option:hover { background:oklch(97.5% 0 0); } .previous:hover,.secondaryAction:hover { background:oklch(97.5% 0 0); } .next:hover,.submit:hover { background:oklch(28% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
