@@ -77,6 +77,31 @@ describe("DefaultLiveEventRepository", () => {
     expect(result.map(({ live }) => live.slug)).toEqual(["kara", "elina", "changha"]);
   });
 
+  it("groups the public LIVE catalog and sorts replay by latest end time", async () => {
+    const records = new Map<string, LiveEventRecord>([
+      ["live", { ...event, slug: "live", sourceStatus: "live", startsAt: "2026-07-24T00:00:00.000Z", endsAt: "2026-08-01T00:00:00.000Z" }],
+      ["upcoming", { ...event, slug: "upcoming", startsAt: "2026-09-15T11:00:00.000Z", endsAt: "2026-09-15T12:00:00.000Z" }],
+      ["older", { ...event, slug: "older", sourceStatus: "ended", startsAt: "2026-07-01T00:00:00.000Z", endsAt: "2026-07-01T01:00:00.000Z" }],
+      ["newer", { ...event, slug: "newer", sourceStatus: "ended", startsAt: "2026-07-02T00:00:00.000Z", endsAt: "2026-07-02T01:00:00.000Z" }],
+      ["cancelled", { ...event, slug: "cancelled", sourceStatus: "cancelled" }],
+    ]);
+    const repository = new DefaultLiveEventRepository(source({
+      listPublishedSlugs: async () => [...records.keys()].map((slug) => ({ slug, createdAt: "2026-07-01T00:00:00.000Z" })),
+      findPublishedEvent: async (slug) => records.get(slug) ?? null,
+    }));
+
+    const result = await repository.listPublishedCatalog({
+      locale: "ko",
+      appUserId: null,
+      now: new Date("2026-07-24T00:00:00.000Z"),
+    });
+
+    expect(result.liveNow.map(({ live }) => live.slug)).toEqual(["live"]);
+    expect(result.upcoming.map(({ live }) => live.slug)).toEqual(["upcoming"]);
+    expect(result.replay.map(({ live }) => live.slug)).toEqual(["newer", "older"]);
+    expect(result.replay.every(({ live }) => live.watch.mode === "replay")).toBe(true);
+  });
+
   it("returns only the public localized projection for a guest", async () => {
     const result = await new DefaultLiveEventRepository(source()).findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
     expect(result).toMatchObject({

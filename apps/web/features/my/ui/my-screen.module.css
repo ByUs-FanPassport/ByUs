@@ -1,0 +1,41 @@
+.main { width:min(100% - 32px,1180px); margin-inline:auto; padding:48px 0 96px; }
+.heading { margin-bottom:40px; }
+.heading h1 { margin:0; font-size:36px; font-weight:850; letter-spacing:-.035em; }
+.guest,.state { display:grid; min-height:360px; place-content:center; justify-items:center; padding:40px 20px; border:1px solid oklch(93% 0 0); border-radius:16px; text-align:center; }
+.guest > svg { width:48px; height:48px; margin-bottom:24px; stroke-width:1.4; }
+.guest h2 { margin:0; font-size:24px; letter-spacing:-.03em; }
+.guest p { max-width:48ch; margin:12px 0 24px; color:oklch(48% 0 0); line-height:1.6; }
+.guest a,.state button { display:flex; width:min(100%,280px); min-height:48px; align-items:center; justify-content:space-between; gap:10px; padding-inline:18px; border:1px solid oklch(78% .12 315); border-radius:999rem; background:#fff; color:oklch(42% .2 315); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.guest a svg,.state button svg { width:17px; }
+.dashboard { display:grid; gap:48px; }
+.welcome { margin:0; font-size:24px; font-weight:850; letter-spacing:-.03em; }
+.sectionHeading { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.sectionHeading h2,.sectionHeading p { margin:0; }
+.sectionHeading h2 { font-size:22px; letter-spacing:-.025em; }
+.sectionHeading p { margin-top:5px; color:oklch(48% 0 0); font-size:14px; }
+.sectionHeading > a { display:flex; min-height:44px; align-items:center; gap:6px; color:oklch(48% 0 0); font-size:13px; font-weight:750; }
+.sectionHeading svg { width:16px; }
+.passportList,.reservationList { display:grid; gap:12px; }
+.passportList > a,.reservationList > a { display:grid; grid-template-columns:64px minmax(0,1fr) 44px; align-items:center; gap:14px; min-height:96px; padding:16px; border:1px solid oklch(93% 0 0); border-radius:12px; }
+.passportList img,.reservationList img { width:64px; height:64px; border-radius:50%; object-fit:cover; }
+.passportList div,.reservationList div { display:grid; min-width:0; gap:5px; }
+.passportList strong,.reservationList strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+.passportList span,.reservationList span { color:oklch(48% 0 0); font-size:13px; }
+.passportList svg,.reservationList svg { width:18px; justify-self:center; }
+.empty { display:flex; min-height:104px; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:20px; border:1px solid oklch(93% 0 0); border-radius:12px; color:oklch(48% 0 0); font-size:14px; }
+.empty a { display:flex; min-height:44px; align-items:center; gap:8px; color:oklch(18% 0 0); font-weight:800; }
+.empty svg { width:16px; }
+.utilities { display:grid; gap:12px; }
+.utilities a { display:grid; grid-template-columns:44px minmax(0,1fr) auto; min-height:72px; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid oklch(93% 0 0); }
+.utilities svg { width:20px; justify-self:center; }
+.utilities span { font-size:15px; font-weight:750; }
+.utilities strong { font-size:18px; }
+@media (min-width:48rem) {
+  .main { width:min(100% - 64px,1180px); padding-top:64px; }
+  .passportList { grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+  .dashboard { grid-template-columns:minmax(0,1.5fr) minmax(300px,.7fr); column-gap:40px; }
+  .welcome,.passports { grid-column:1 / -1; }
+  .reservations { grid-column:1; }
+  .utilities { grid-column:2; align-self:start; }
+}
+@media (hover:hover) and (pointer:fine) { .passportList > a:hover,.reservationList > a:hover,.utilities a:hover { background:oklch(98% 0 0); } }

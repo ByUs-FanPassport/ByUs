@@ -7,9 +7,12 @@ import { loadServerEnv } from "../config/env";
 import { authorizeFanRequest } from "../fan-auth/fan-auth-gate";
 import { createSupabaseFanAuthRepository } from "../fan-auth/supabase-fan-auth-repository";
 import { createLiveEventRepositoryFromEnvironment } from "./live-event-repository";
+import type { LiveEventRepository } from "./live-event-repository";
 import type { LiveEventRouteDependencies } from "./live-event-route";
 
-export function createLiveEventRouteDependencies(): LiveEventRouteDependencies {
+export function createLiveEventRouteDependencies(): LiveEventRouteDependencies & {
+  repository: LiveEventRepository;
+} {
   const environment = loadServerEnv();
   const database = createClient(
     environment.SUPABASE_URL,

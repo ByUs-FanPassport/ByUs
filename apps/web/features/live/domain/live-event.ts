@@ -66,7 +66,11 @@ export const publicLiveEventSchema = z.object({
     logo: safeAssetUrl,
     websiteUrl: z.string().url().startsWith("https://").nullable(),
   }),
-  watch: z.object({ available: z.boolean(), url: z.string().url().startsWith("https://") }),
+  watch: z.object({
+    available: z.boolean(),
+    mode: z.enum(["live", "replay", "unavailable"]).optional(),
+    url: z.string().url().startsWith("https://"),
+  }),
 });
 
 export const liveReservationSummarySchema = z.object({

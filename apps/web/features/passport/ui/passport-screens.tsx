@@ -1,12 +1,12 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, Languages, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, RotateCcw, Sparkles, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FanWordmarkLink } from "@/components/fan-shell/fan-wordmark-link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
@@ -73,20 +73,9 @@ function safeExplorerUrl(hash: string): string | null {
   } catch { return null; }
 }
 
-function AppHeader({ locale }: { locale: PassportLocale }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const next = locale === "ko" ? "en" : "ko";
-  return <header className={styles.header}><div className={styles.headerInner}>
-    <FanWordmarkLink className={styles.wordmark} href={withLocale("/", locale)} ariaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"} />
-    <nav aria-label={locale === "ko" ? "주요 메뉴" : "Main navigation"}><Link href={withLocale("/", locale)}>HOME</Link><Link aria-current="page" href={withLocale("/passports", locale)}>PASSPORT</Link><Link href={withLocale("/benefits", locale)}>BENEFIT</Link></nav>
-    <button className={styles.locale} type="button" onClick={() => router.push(withLocale(pathname, next))} aria-label={locale === "ko" ? "Switch to English" : "한국어로 변경"}><Languages /><span>{next.toUpperCase()}</span></button>
-  </div></header>;
-}
-
 function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
   if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`}><main className={styles.overlayMain}>{children}</main></div>;
-  return <div className={styles.app}><AppHeader locale={locale} /><main className={styles.main}>{children}</main></div>;
+  return <FanAppFrame locale={locale}><div className={styles.app}><main className={styles.main}>{children}</main></div></FanAppFrame>;
 }
 
 function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }

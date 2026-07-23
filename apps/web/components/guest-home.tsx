@@ -4,16 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
-import { ArrowRight, Bell, Book, CalendarHeart, ChevronRight, GoogleMark, Home, Languages, Menu, Users } from "./icons";
+import { ArrowRight, Book, CalendarHeart, ChevronRight, GoogleMark, Menu } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
-import { FanHeader } from "./fan-shell/fan-header";
-import {
-  FanBottomNavigation,
-  FanPrimaryNavigation,
-  type FanNavigationItem,
-} from "./fan-shell/fan-navigation";
+import { FanAppFrame } from "./fan-shell/fan-app-shell";
 import { LiveHeroCarousel } from "./live-hero-carousel";
 import styles from "./guest-home.module.css";
 
@@ -50,43 +45,23 @@ export function formatFanCount(value: number) {
 export function GuestHome({ celebrities, celebrityLives = [], featuredLives, locale }: { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
-  const primaryNavigation: readonly FanNavigationItem[] = [
-    { id: "home", href: "#main-content", label: "HOME", isCurrent: true },
-    { id: "live", href: "#upcoming", label: "LIVE" },
-    { id: "celebrity", href: "#celebrities", label: locale === "ko" ? "최애" : "FAVORITES" },
-    { id: "my", href: "#passport", label: "MY" },
-  ];
-  const bottomNavigation: readonly FanNavigationItem[] = [
-    { id: "home", href: "#main-content", icon: <Home />, label: <span>{locale === "ko" ? "홈" : "Home"}</span>, isCurrent: true },
-    { id: "celebrity", href: `/celebrities${localeQuery}` as Route, icon: <Users />, label: <span>{locale === "ko" ? "셀럽" : "Celebrities"}</span> },
-    { id: "passport", href: `/passports${localeQuery}` as Route, icon: <Book />, label: <span>Passport</span> },
-    { id: "notification", href: `/notifications${localeQuery}` as Route, icon: <Bell />, label: <span>{locale === "ko" ? "알림" : "Alerts"}</span> },
-  ];
   const [panelOpen, setPanelOpen] = useState(true);
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
 
   return (
+    <FanAppFrame
+      locale={locale}
+      actions={<button className={styles.panelToggle} type="button" aria-label={panelOpen ? t.panelClose : t.panelOpen} aria-expanded={panelOpen} aria-controls="guest-context-panel" onClick={() => setPanelOpen((value) => !value)}><Menu /></button>}
+    >
     <div className={styles.page} data-fan-pulse-home data-candidate="03">
       <a className={styles.skipLink} href="#main-content">{t.skip}</a>
-      <FanHeader className={styles.header} innerClassName={styles.headerInner} brandClassName={styles.brand} brandHref={`/${localeQuery}` as Route} brandAriaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"}>
-        <FanPrimaryNavigation
-          activeItemClassName={styles.activeNav}
-          ariaLabel={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
-          className={styles.desktopNav}
-          items={primaryNavigation}
-        />
-        <div className={styles.headerActions}>
-          <Link className={styles.languageButton} href={`/?locale=${locale === "ko" ? "en" : "ko"}`} aria-label={t.language}><Languages /></Link>
-          <button className={styles.panelToggle} type="button" aria-label={panelOpen ? t.panelClose : t.panelOpen} aria-expanded={panelOpen} aria-controls="guest-context-panel" onClick={() => setPanelOpen((value) => !value)}><Menu /></button>
-        </div>
-      </FanHeader>
 
       <div className={`${styles.shell} ${panelOpen ? styles.panelOpen : styles.panelClosed}`}>
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
             <div className={styles.sectionHeadingRow}>
               <div className={styles.sectionIntro}><h1 id="live-heading">{t.liveHeading}</h1><p>{t.liveSub}</p></div>
-              <a className={styles.textLink} href="#upcoming">{t.allLive} <ChevronRight /></a>
+              <Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>
             </div>
             <LiveHeroCarousel featuredLives={featuredLives} locale={locale} />
           </section>
@@ -155,12 +130,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
         </aside>}
       </div>
 
-      <FanBottomNavigation
-        activeItemClassName={styles.bottomNavActive}
-        ariaLabel={locale === "ko" ? "모바일 주요 메뉴" : "Mobile primary navigation"}
-        className={styles.bottomNav}
-        items={bottomNavigation}
-      />
     </div>
+    </FanAppFrame>
   );
 }

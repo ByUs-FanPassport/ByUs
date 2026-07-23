@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronRight } from "./icons";
-import { FanCompactHeader } from "./fan-shell/fan-compact-header";
+import { ArrowRight } from "./icons";
+import { FanAppFrame } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import styles from "./celebrity-directory.module.css";
 
@@ -100,10 +100,8 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
   const passportFilterDisabled = passportState.status !== "ready";
 
   return (
+    <FanAppFrame locale={locale}>
     <main className={styles.page}>
-      <FanCompactHeader brandAriaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"} brandHref={`/${localeQuery}` as Route}>
-        <Link className={styles.homeLink} href={`/${localeQuery}`}> {t.home} <ChevronRight /></Link>
-      </FanCompactHeader>
       <section className={styles.content} aria-labelledby="directory-heading">
         <div className={styles.intro}><h1 id="directory-heading">{t.heading}</h1><p>{t.intro}</p></div>
         {celebrities.length === 0 ? (
@@ -139,5 +137,6 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
         </>}
       </section>
     </main>
+    </FanAppFrame>
   );
 }

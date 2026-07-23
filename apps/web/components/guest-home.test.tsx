@@ -7,7 +7,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatKoreanLiveDate, GuestHome } from "./guest-home";
 import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 const featuredLive = {
   live: {
@@ -122,7 +125,7 @@ describe("canonical 03 guest home", () => {
     );
   });
 
-  it("keeps the guest-specific desktop and mobile navigation contract", () => {
+  it("uses the same product destinations in desktop and mobile navigation", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
@@ -132,7 +135,7 @@ describe("canonical 03 guest home", () => {
     );
     expect(within(primary).getByRole("link", { name: "LIVE" })).toHaveAttribute(
       "href",
-      "#upcoming",
+      "/live?locale=ko",
     );
 
     const mobile = screen.getByRole("navigation", { name: "모바일 주요 메뉴" });
@@ -140,9 +143,9 @@ describe("canonical 03 guest home", () => {
       "aria-current",
       "page",
     );
-    expect(within(mobile).getByRole("link", { name: "Passport" })).toHaveAttribute(
+    expect(within(mobile).getByRole("link", { name: "MY" })).toHaveAttribute(
       "href",
-      "/passports?locale=ko",
+      "/my?locale=ko",
     );
   });
 

@@ -41,7 +41,7 @@ Maintain 44px minimum targets, a 3px Near Black `focus-visible` outline, 160ms c
 
 ## Locked Contract
 
-Preserve the current rendered information architecture, Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel/navigation behavior. The hero remains the sole dominant visual surface and the reservation CTA remains the only gradient-filled action.
+Preserve the Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel behavior. The global fan information architecture is `HOME · LIVE · 최애 · MY` on desktop and mobile: HOME routes to `/`, LIVE to `/live`, 최애 to `/celebrities`, and MY to `/my`. Passport, benefits, notifications, and settings are MY sub-surfaces and keep MY active. Focused login, onboarding, verification, attendance, and survey flows may use the compact Focus Header. The hero remains the sole dominant visual surface and the reservation CTA remains the only gradient-filled action.
 
 The Home hero is an ordered carousel of every published LIVE whose effective status is active or scheduled. Active LIVE events come first; scheduled events follow by nearest start time, then creation time and slug for deterministic ties. With more than one item it advances horizontally every 6 seconds and exposes separate circular previous/next controls inset 8px from both image edges plus a thin segmented indicator centered 20px below the image; every interactive target remains 44px. At 1280px and wider, the information block uses 64px left padding and 48px on the other sides, preserving clear space after the previous control; mobile positioning remains unchanged. Hover, keyboard focus, and pointer interaction temporarily pause playback. Reduced-motion users receive no autoplay or large translation and navigate with a short opacity transition. A single item renders without carousel controls, and the truthful empty state remains when no eligible LIVE exists.
 
@@ -198,6 +198,8 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Desktop optical correction: navigation is translated upward by 1px to align Pretendard with the wordmark.
 - Below 768px, hide the desktop pill and retain brand plus header actions.
 - Below 1024px, show a fixed 64px four-column bottom navigation with a thin top line and a 2px active indicator.
+- Desktop and mobile use the same four product destinations: `HOME`, `LIVE`, `최애`, `MY`. Do not replace them with section anchors or separate mobile-only labels.
+- `/passports`, `/stamps`, `/benefits`, `/notifications`, and `/settings` are MY sub-routes and render MY as the current top-level destination.
 
 ### Image Treatment
 

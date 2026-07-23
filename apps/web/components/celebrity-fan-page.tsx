@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useState } from "react";
-import { ArrowRight, Book, ChevronRight, Clock, Play, Radio } from "./icons";
+import { ArrowRight, Book, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
-import { FanCompactHeader } from "./fan-shell/fan-compact-header";
+import { FanAppFrame } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import styles from "./celebrity-fan-page.module.css";
 
@@ -62,8 +62,8 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive }: { celebrit
   }, [authenticated, celebrity.slug, getAccessToken, locale, ready, requestKey]);
 
   return (
+    <FanAppFrame locale={locale}>
     <main className={styles.page}>
-      <FanCompactHeader brandAriaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"} brandHref={`/${localeQuery}` as Route}><Link className={styles.directoryLink} href={`/celebrities${localeQuery}`}>{t.directory} <ChevronRight /></Link></FanCompactHeader>
       <section className={styles.hero} aria-labelledby="celebrity-heading">
         <Image src={celebrity.image.url} alt={celebrity.image.alt} fill sizes="(min-width: 1024px) 1200px, 100vw" priority style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
         <div className={styles.scrim} aria-hidden="true" />
@@ -103,5 +103,6 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive }: { celebrit
         </aside>
       </div>
     </main>
+    </FanAppFrame>
   );
 }

@@ -20,6 +20,15 @@ export interface LiveEventRepository {
     locale: LiveLocale;
     now: Date;
   }): Promise<readonly LiveEventResponse[]>;
+  listPublishedCatalog(input: {
+    locale: LiveLocale;
+    appUserId: string | null;
+    now: Date;
+  }): Promise<{
+    liveNow: readonly LiveEventResponse[];
+    upcoming: readonly LiveEventResponse[];
+    replay: readonly LiveEventResponse[];
+  }>;
   findPublishedBySlug(input: {
     slug: string;
     locale: LiveLocale;
@@ -99,6 +108,30 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       .map(({ response }) => response);
   }
 
+  async listPublishedCatalog(input: {
+    locale: LiveLocale;
+    appUserId: string | null;
+    now: Date;
+  }) {
+    const published = await this.source.listPublishedSlugs();
+    const projected = (await Promise.all(
+      published.map(({ slug }) =>
+        this.findPublishedBySlug({ ...input, slug }),
+      ),
+    )).filter((item): item is LiveEventResponse => item !== null);
+    const byStart = (left: LiveEventResponse, right: LiveEventResponse) =>
+      Date.parse(left.live.startsAt) - Date.parse(right.live.startsAt) ||
+      left.live.slug.localeCompare(right.live.slug);
+    const byLatestEnd = (left: LiveEventResponse, right: LiveEventResponse) =>
+      Date.parse(right.live.endsAt) - Date.parse(left.live.endsAt) ||
+      left.live.slug.localeCompare(right.live.slug);
+    return {
+      liveNow: projected.filter(({ live }) => live.effectiveStatus === "live").sort(byStart),
+      upcoming: projected.filter(({ live }) => live.effectiveStatus === "scheduled").sort(byStart),
+      replay: projected.filter(({ live }) => live.effectiveStatus === "ended" && live.watch.available).sort(byLatestEnd),
+    };
+  }
+
   async findPublishedBySlug(input: {
     slug: string;
     locale: LiveLocale;
@@ -148,7 +181,11 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
           logo: record.brand.logo,
           websiteUrl: record.brand.websiteUrl,
         },
-        watch: { available: effectiveStatus === "live", url: watchUrl },
+        watch: {
+          available: effectiveStatus === "live" || effectiveStatus === "ended",
+          mode: effectiveStatus === "live" ? "live" : effectiveStatus === "ended" ? "replay" : "unavailable",
+          url: watchUrl,
+        },
       },
       viewer,
       primaryAction: deriveLivePrimaryAction({

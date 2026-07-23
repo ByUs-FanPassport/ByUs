@@ -22,6 +22,7 @@ export function FanWordmarkLink({
         alt="ByUs"
         width={80}
         height={30}
+        style={{ height: "auto" }}
         priority={priority}
       />
     </Link>

@@ -3,17 +3,16 @@
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Bell,
-  ChevronLeft,
   Download,
   Globe2,
   Pencil,
   Smartphone,
   WalletCards,
 } from "lucide-react";
-import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
 import {
   enablePushNotifications,
 } from "../../notification/ui/push-subscription";
@@ -417,31 +416,23 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   if (!ready || state === "loading")
     return (
-      <main className={styles.center} aria-busy="true">
+      <FanAppFrame locale={locale}><main className={styles.center} aria-busy="true">
         <span className={styles.spinner} />
         {t.loading}
-      </main>
+      </main></FanAppFrame>
     );
-  if (!authenticated) return <main className={styles.center}>{t.auth}</main>;
+  if (!authenticated) return <FanAppFrame locale={locale}><main className={styles.center}>{t.auth}</main></FanAppFrame>;
   if (state === "error" || !settings || !preferences)
     return (
-      <main className={styles.center}>
+      <FanAppFrame locale={locale}><main className={styles.center}>
         <p>{t.unavailable}</p>
         <button onClick={() => void load()}>{t.retry}</button>
-      </main>
+      </main></FanAppFrame>
     );
 
   return (
+    <FanAppFrame locale={locale}>
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <Link href={`/?locale=${locale}`} aria-label={t.back}>
-            <ChevronLeft />
-            {t.back}
-          </Link>
-          <span className={styles.wordmark}>ByUs</span>
-        </div>
-      </header>
       <main className={styles.main}>
         <div className={styles.intro}>
           <p>FAN-020</p>
@@ -690,5 +681,6 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         </p>
       </main>
     </div>
+    </FanAppFrame>
   );
 }

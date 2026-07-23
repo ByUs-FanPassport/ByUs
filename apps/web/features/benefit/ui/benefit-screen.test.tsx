@@ -145,9 +145,10 @@ describe("benefit screens", () => {
         new Response(JSON.stringify({ benefits: [benefit] })),
       );
     render(<BenefitsScreen locale="ko" />);
-    expect(
-      screen.getByRole("link", { name: "혜택" }),
-    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: "MY" })).toHaveLength(2);
+    for (const currentLink of screen.getAllByRole("link", { name: "MY" })) {
+      expect(currentLink).toHaveAttribute("aria-current", "page");
+    }
     expect(
       await screen.findByRole("heading", { name: "KARA 영상 메시지" }),
     ).toBeInTheDocument();

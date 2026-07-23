@@ -3,7 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
-import { FanWordmarkLink } from "@/components/fan-shell/fan-wordmark-link";
+import { FanAppBottomNavigation, FanAppHeader } from "@/components/fan-shell/fan-app-shell";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -181,46 +181,11 @@ function Header({
   celebrity?: string;
   currentPath?: string;
 }) {
-  const c = copy[locale];
-  const other = locale === "ko" ? "en" : "ko";
-  const hrefs: Route[] = [
-    "/",
-    "/celebrities",
-    "/",
-    "/passports" as Route,
-    `/benefits?${query(locale, celebrity)}` as Route,
-  ];
   return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <FanWordmarkLink
-          className={styles.wordmark}
-          ariaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"}
-        />
-        <nav
-          className={styles.nav}
-          aria-label={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
-        >
-          {c.nav.map((label, index) => (
-            <Link
-              key={label}
-              href={hrefs[index]}
-              aria-current={index === 4 ? "page" : undefined}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <Link
-          className={styles.locale}
-          href={`${currentPath}?${query(other, celebrity)}` as Route}
-          lang={other}
-          hrefLang={other}
-        >
-          {c.locale}
-        </Link>
-      </div>
-    </header>
+    <>
+      <FanAppHeader locale={locale} />
+      <FanAppBottomNavigation locale={locale} />
+    </>
   );
 }
 

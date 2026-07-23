@@ -83,8 +83,8 @@ describe("FAN-019 Notification Center", () => {
     });
     expect(link).toHaveAttribute("href", "/live/kara-live");
     expect(screen.getByText("읽지 않음")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "알림" })).toHaveLength(2);
-    for (const currentLink of screen.getAllByRole("link", { name: "알림" })) {
+    expect(screen.getAllByRole("link", { name: "MY" })).toHaveLength(2);
+    for (const currentLink of screen.getAllByRole("link", { name: "MY" })) {
       expect(currentLink).toHaveAttribute("aria-current", "page");
     }
     expect(link).toHaveAttribute("data-read-state", "unread");
@@ -103,11 +103,11 @@ describe("FAN-019 Notification Center", () => {
     expect(screen.queryByText("Notification Center")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "알림 설정 열기" })).toHaveAttribute(
       "href",
-      "/settings",
+      "/settings?locale=ko",
     );
     expect(screen.getByRole("link", { name: "다가오는 LIVE 보기" })).toHaveAttribute(
       "href",
-      "/",
+      "/live?locale=ko",
     );
   });
 

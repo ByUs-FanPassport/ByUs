@@ -6,20 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Bell,
-  BookOpen,
   CheckCheck,
   ChevronRight,
-  Home,
   Radio,
   Settings2,
-  Users,
 } from "lucide-react";
-import { FanHeader } from "@/components/fan-shell/fan-header";
-import {
-  FanBottomNavigation,
-  FanPrimaryNavigation,
-  type FanNavigationItem,
-} from "@/components/fan-shell/fan-navigation";
+import { FanAppBottomNavigation, FanAppHeader } from "@/components/fan-shell/fan-app-shell";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -53,40 +45,6 @@ const ko = {
   retry: "다시 시도",
 };
 
-const primaryNavigation: readonly FanNavigationItem[] = [
-  { id: "home", href: "/", label: "HOME" },
-  { id: "celebrity", href: "/celebrities", label: "최애" },
-  { id: "passport", href: "/passports", label: "Passport" },
-  {
-    id: "notification",
-    href: "/notifications",
-    label: "알림",
-    isCurrent: true,
-  },
-];
-
-const bottomNavigation: readonly FanNavigationItem[] = [
-  { id: "home", href: "/", icon: <Home aria-hidden="true" />, label: "홈" },
-  {
-    id: "celebrity",
-    href: "/celebrities",
-    icon: <Users aria-hidden="true" />,
-    label: "셀럽",
-  },
-  {
-    id: "passport",
-    href: "/passports",
-    icon: <BookOpen aria-hidden="true" />,
-    label: "Passport",
-  },
-  {
-    id: "notification",
-    href: "/notifications",
-    icon: <Bell aria-hidden="true" />,
-    label: "알림",
-    isCurrent: true,
-  },
-];
 function sameDay(value: string) {
   const date = new Date(value),
     now = new Date();
@@ -107,6 +65,7 @@ function time(value: string) {
 export function NotificationCenter() {
   const { ready, authenticated, getAccessToken } = usePrivy();
   const params = useSearchParams();
+  const locale = params.get("locale") === "en" ? "en" : "ko";
   const [state, setState] = useState<State>({ kind: "loading" });
   const [permission, setPermission] = useState<PushEnableResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -119,7 +78,7 @@ export function NotificationCenter() {
     try {
       const token = await getAccessToken();
       if (!token) throw new Error();
-      const response = await fetch("/api/notifications?locale=ko", {
+      const response = await fetch(`/api/notifications?locale=${locale}`, {
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",
       });
@@ -133,7 +92,7 @@ export function NotificationCenter() {
     } catch {
       setState({ kind: "error" });
     }
-  }, [authenticated, getAccessToken, ready]);
+  }, [authenticated, getAccessToken, locale, ready]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -236,21 +195,11 @@ export function NotificationCenter() {
       <a className={styles.skipLink} href="#notification-content">
         본문으로 바로가기
       </a>
-      <FanHeader
-        className={styles.serviceHeader}
-        innerClassName={styles.serviceHeaderInner}
-        brandClassName={styles.brand}
-      >
-        <FanPrimaryNavigation
-          activeItemClassName={styles.activeNav}
-          ariaLabel="주요 메뉴"
-          className={styles.desktopNav}
-          items={primaryNavigation}
-        />
-        <Link className={styles.settingsLink} href="/settings" aria-label="알림 설정 열기">
+      <FanAppHeader locale={locale} actions={
+        <Link className={styles.settingsLink} href={`/settings?locale=${locale}`} aria-label="알림 설정 열기">
           <Settings2 aria-hidden="true" />
         </Link>
-      </FanHeader>
+      } />
 
       <main className={styles.content} id="notification-content">
       <header className={styles.pageHeading}>
@@ -324,7 +273,7 @@ export function NotificationCenter() {
           <Radio aria-hidden="true" />
           <h2>{ko.empty}</h2>
           <p>{ko.emptyHelp}</p>
-          <Link className={styles.messageAction} href="/">
+          <Link className={styles.messageAction} href={`/live?locale=${locale}` as Route}>
             다가오는 LIVE 보기
           </Link>
         </div>
@@ -380,12 +329,7 @@ export function NotificationCenter() {
       )}
       </main>
 
-      <FanBottomNavigation
-        activeItemClassName={styles.bottomNavActive}
-        ariaLabel="모바일 주요 메뉴"
-        className={styles.bottomNav}
-        items={bottomNavigation}
-      />
+      <FanAppBottomNavigation locale={locale} />
     </div>
   );
 }
