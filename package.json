@@ -25,7 +25,8 @@
     "ws@>=8.0.0 <8.21.0": "8.21.1"
   },
   "scripts": {
-    "dev": "npm run dev --workspace @byus/web",
+    "env:local:prod": "node scripts/sync-web-env.mjs prod-local",
+    "dev": "node scripts/verify-local-production-env.mjs && npm run dev --workspace @byus/web",
     "build": "npm run build --workspace @byus/web",
     "test": "npm run test --workspaces --if-present",
     "test:web": "npm run test --workspace @byus/web",
@@ -34,7 +35,8 @@
     "lint": "eslint apps/web apps/worker scripts --max-warnings=0",
     "lint:web": "eslint apps/web --max-warnings=0",
     "lint:worker": "eslint apps/worker --max-warnings=0",
-    "security:audit": "npm audit --omit=dev",
+    "security:audit": "npm audit --omit=dev --ignore-scripts",
+    "security:audit:baseline": "node scripts/verify-npm-audit-baseline.mjs",
     "security:tree": "npm ls @aws-sdk/client-secrets-manager fast-xml-parser axios ws postcss uuid --all",
     "security:verify": "node scripts/verify-security-dependencies.mjs",
     "security:ws-canary": "node scripts/verify-websocket-canary.mjs"

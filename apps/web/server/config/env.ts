@@ -52,6 +52,8 @@ function isSecureAppUrl(value: string): boolean {
 const httpsUrl = z.string().trim().refine(isHttpsUrl, "must be an HTTPS URL");
 const booleanFlag = z.enum(["true", "false"]).default("false").transform((value) => value === "true");
 const privyAppEnvironment = z.enum(["development", "production"]).default("production");
+const dataEnvironment = z.enum(["development", "production"]);
+const PRODUCTION_SUPABASE_HOSTNAME = "gmrykvmtmuaeswpajteq.supabase.co";
 
 function isProductionHostname(value: string): boolean {
   try {
@@ -69,6 +71,7 @@ const publicEnvSchema = z
       .trim()
       .refine(isSecureAppUrl, "must be HTTPS, except for an HTTP localhost app URL"),
     NEXT_PUBLIC_PRIVY_APP_ID: z.string().trim().min(1),
+    NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: dataEnvironment,
     NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
     NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
   })
@@ -90,6 +93,7 @@ const serverEnvSchema = publicEnvSchema
   .extend({
     PRIVY_APP_ID: z.string().trim().min(1),
     PRIVY_APP_SECRET: z.string().trim().min(8),
+    BYUS_DATA_ENVIRONMENT: dataEnvironment,
     PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
     PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
     SUPABASE_URL: httpsUrl,
@@ -109,6 +113,13 @@ const serverEnvSchema = publicEnvSchema
         path: ["PRIVY_APP_ID"],
       });
     }
+    if (value.BYUS_DATA_ENVIRONMENT !== value.NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT) {
+      context.addIssue({
+        code: "custom",
+        message: "must match NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT",
+        path: ["BYUS_DATA_ENVIRONMENT"],
+      });
+    }
     if (value.PRIVY_APP_ENVIRONMENT !== value.NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT) {
       context.addIssue({
         code: "custom",
@@ -125,6 +136,25 @@ const serverEnvSchema = publicEnvSchema
         message: "must match NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
         path: ["PRIVY_TEST_ACCOUNT_LOGIN_ENABLED"],
       });
+    }
+    if (value.BYUS_DATA_ENVIRONMENT === "production") {
+      if (new URL(value.SUPABASE_URL).hostname !== PRODUCTION_SUPABASE_HOSTNAME) {
+        context.addIssue({
+          code: "custom",
+          message: "must identify the ByUs Production Supabase project",
+          path: ["SUPABASE_URL"],
+        });
+      }
+      if (
+        value.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED ||
+        value.NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Production data forbids Privy Test Account login in every Privy environment",
+          path: ["PRIVY_TEST_ACCOUNT_LOGIN_ENABLED"],
+        });
+      }
     }
   });
 

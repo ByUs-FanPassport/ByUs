@@ -13,10 +13,12 @@ import {
 const validEnv = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
   NEXT_PUBLIC_PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
+  NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "development",
   NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
   NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
   PRIVY_APP_SECRET: "privy-app-secret-value",
+  BYUS_DATA_ENVIRONMENT: "development",
   PRIVY_APP_ENVIRONMENT: "development",
   PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   SUPABASE_URL: "https://example.supabase.co",
@@ -48,6 +50,7 @@ describe("public environment", () => {
     expect(parsePublicEnv(validEnv)).toEqual({
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       NEXT_PUBLIC_PRIVY_APP_ID: validEnv.NEXT_PUBLIC_PRIVY_APP_ID,
+      NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "development",
       NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
       NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
     });
@@ -94,6 +97,30 @@ describe("server environment", () => {
       GIWA_CHAIN_ID: 91342,
       PRIVY_APP_ID: validEnv.PRIVY_APP_ID,
     });
+  });
+
+  it("accepts localhost with Production data and the demo Privy Development app", () => {
+    expect(parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "production",
+      BYUS_DATA_ENVIRONMENT: "production",
+      SUPABASE_URL: "https://gmrykvmtmuaeswpajteq.supabase.co",
+    })).toMatchObject({
+      BYUS_DATA_ENVIRONMENT: "production",
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+    });
+  });
+
+  it("rejects a Dev Supabase project with Production data", () => {
+    const productionBase = {
+      ...validEnv,
+      NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "production",
+      BYUS_DATA_ENVIRONMENT: "production",
+    };
+    expect(() => parseServerEnv({
+      ...productionBase,
+      SUPABASE_URL: "https://xcppyedwusirqnfpbtit.supabase.co",
+    })).toThrowError(/SUPABASE_URL/);
   });
 
   it("fails for every missing canonical server value", () => {
