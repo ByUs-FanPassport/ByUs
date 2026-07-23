@@ -16,7 +16,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   enablePushNotifications,
-  type PushEnableResult,
 } from "../../notification/ui/push-subscription";
 import styles from "./settings-screen.module.css";
 
@@ -36,6 +35,39 @@ interface Preferences {
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+export type BrowserPermissionState =
+  | "pending"
+  | "default"
+  | "granted"
+  | "denied"
+  | "unsupported"
+  | "insecure";
+type PushConnectionState = "idle" | "pending" | "subscribed" | "error";
+type InstallState =
+  | "checking"
+  | "available"
+  | "pending"
+  | "installed"
+  | "unsupported"
+  | "error";
+
+export function resolveBrowserPermissionState(input: {
+  secureContext: boolean;
+  hasNotification: boolean;
+  hasPushManager: boolean;
+  hasServiceWorker: boolean;
+  permission?: NotificationPermission;
+}): Exclude<BrowserPermissionState, "pending"> {
+  if (!input.secureContext) return "insecure";
+  if (
+    !input.hasNotification ||
+    !input.hasPushManager ||
+    !input.hasServiceWorker
+  )
+    return "unsupported";
+  return input.permission ?? "default";
 }
 
 const copy = {
@@ -59,11 +91,20 @@ const copy = {
     live: "LIVE 시작 알림",
     survey: "설문 참여 알림",
     benefit: "혜택 오픈 알림",
-    browserConnected: "이 브라우저에 알림이 연결되어 있어요.",
-    browserDisconnected: "브라우저 알림은 아직 연결되지 않았어요.",
     browserConnect: "브라우저 알림 연결",
+    browserReconnect: "현재 브라우저 연결",
+    permissionLabel: "현재 브라우저 권한",
+    permissionPending: "브라우저 상태 확인 중",
+    permissionDefault: "아직 알림 권한을 요청하지 않았어요.",
+    permissionGranted: "알림 권한이 허용되어 있어요.",
     pushDenied: "브라우저 설정에서 알림 권한을 허용해 주세요.",
     pushUnsupported: "이 브라우저는 푸시 알림을 지원하지 않습니다.",
+    pushInsecure: "보안 연결(HTTPS)에서만 브라우저 알림을 사용할 수 있어요.",
+    pushPending: "브라우저 알림을 연결하는 중이에요.",
+    pushFailed: "브라우저 알림을 연결하지 못했어요. 다시 시도해 주세요.",
+    subscriptionLabel: "계정 알림 연결",
+    subscriptionOn: "등록된 브라우저 알림이 있어요.",
+    subscriptionOff: "등록된 브라우저 알림이 없어요.",
     wallet: "연결된 지갑",
     walletHelp:
       "Privy가 생성한 지갑은 변경하거나 출금할 수 없으며 주소는 일부만 표시됩니다.",
@@ -71,8 +112,11 @@ const copy = {
     install: "앱 설치",
     installHelp: "홈 화면에 ByUs를 추가하면 더 빠르게 열 수 있어요.",
     installAction: "ByUs 설치하기",
+    installChecking: "설치 가능 여부를 확인하고 있어요.",
+    installing: "설치 요청 확인 중…",
     installed: "이 기기에 설치됨",
     unsupported: "브라우저 메뉴의 ‘홈 화면에 추가’를 이용해 주세요.",
+    installFailed: "설치 요청을 열지 못했어요. 브라우저 메뉴를 이용해 주세요.",
     loading: "설정을 불러오는 중",
     unavailable: "설정을 불러오지 못했어요. 다시 시도해 주세요.",
     retry: "다시 시도",
@@ -103,11 +147,20 @@ const copy = {
     live: "LIVE start reminders",
     survey: "Survey reminders",
     benefit: "Benefit alerts",
-    browserConnected: "Notifications are connected to this browser.",
-    browserDisconnected: "Browser notifications are not connected yet.",
     browserConnect: "Connect browser notifications",
+    browserReconnect: "Connect this browser",
+    permissionLabel: "This browser's permission",
+    permissionPending: "Checking browser status",
+    permissionDefault: "Notification permission has not been requested yet.",
+    permissionGranted: "Notification permission is allowed.",
     pushDenied: "Allow notifications in your browser settings.",
     pushUnsupported: "Push notifications are not supported in this browser.",
+    pushInsecure: "Browser notifications require a secure HTTPS connection.",
+    pushPending: "Connecting browser notifications.",
+    pushFailed: "We couldn't connect browser notifications. Try again.",
+    subscriptionLabel: "Account notification connection",
+    subscriptionOn: "Your account has a registered browser notification.",
+    subscriptionOff: "Your account has no registered browser notification.",
     wallet: "Connected wallet",
     walletHelp:
       "Your Privy wallet cannot be changed or withdrawn here. Only a masked address is shown.",
@@ -115,8 +168,11 @@ const copy = {
     install: "Install app",
     installHelp: "Add ByUs to your home screen for faster access.",
     installAction: "Install ByUs",
+    installChecking: "Checking installation availability.",
+    installing: "Waiting for installation…",
     installed: "Installed on this device",
     unsupported: "Use your browser’s Add to Home Screen menu.",
+    installFailed: "We couldn't open the install request. Use your browser menu.",
     loading: "Loading settings",
     unavailable: "We couldn't load your settings. Try again.",
     retry: "Try again",
@@ -147,8 +203,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
   );
-  const [installed, setInstalled] = useState(false);
-  const [pushState, setPushState] = useState<PushEnableResult | null>(null);
+  const [installState, setInstallState] = useState<InstallState>("checking");
+  const [permissionState, setPermissionState] =
+    useState<BrowserPermissionState>("pending");
+  const [pushState, setPushState] =
+    useState<PushConnectionState>("idle");
   const nicknameRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -196,16 +255,21 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }, [locale]);
 
   useEffect(() => {
-    setInstalled(
-      typeof window.matchMedia === "function" &&
-        window.matchMedia("(display-mode: standalone)").matches,
-    );
+    const navigatorWithStandalone = navigator as Navigator & {
+      standalone?: boolean;
+    };
+    const isInstalled =
+      (typeof window.matchMedia === "function" &&
+        window.matchMedia("(display-mode: standalone)").matches) ||
+      navigatorWithStandalone.standalone === true;
+    setInstallState(isInstalled ? "installed" : "unsupported");
     const capture = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
+      setInstallState("available");
     };
     const installedHandler = () => {
-      setInstalled(true);
+      setInstallState("installed");
       setInstallPrompt(null);
     };
     window.addEventListener("beforeinstallprompt", capture);
@@ -214,6 +278,19 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       window.removeEventListener("beforeinstallprompt", capture);
       window.removeEventListener("appinstalled", installedHandler);
     };
+  }, []);
+
+  useEffect(() => {
+    setPermissionState(
+      resolveBrowserPermissionState({
+        secureContext: window.isSecureContext !== false,
+        hasNotification: "Notification" in window,
+        hasPushManager: "PushManager" in window,
+        hasServiceWorker: "serviceWorker" in navigator,
+        permission:
+          "Notification" in window ? Notification.permission : undefined,
+      }),
+    );
   }, []);
 
   async function rename(event: FormEvent) {
@@ -285,19 +362,57 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   async function install() {
     if (!installPrompt) return;
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setInstalled(true);
-    setInstallPrompt(null);
+    setInstallState("pending");
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      setInstallPrompt(null);
+      setInstallState(choice.outcome === "accepted" ? "pending" : "unsupported");
+    } catch {
+      setInstallPrompt(null);
+      setInstallState("error");
+    }
   }
 
   async function connectPush() {
+    const currentPermission = resolveBrowserPermissionState({
+      secureContext: window.isSecureContext !== false,
+      hasNotification: "Notification" in window,
+      hasPushManager: "PushManager" in window,
+      hasServiceWorker: "serviceWorker" in navigator,
+      permission:
+        "Notification" in window ? Notification.permission : undefined,
+    });
+    setPermissionState(currentPermission);
+    if (
+      currentPermission === "denied" ||
+      currentPermission === "unsupported" ||
+      currentPermission === "insecure"
+    )
+      return;
+    setPushState("pending");
     const result = await enablePushNotifications(getAccessToken);
-    setPushState(result);
-    if (result === "subscribed")
+    const permissionAfterRequest =
+      "Notification" in window ? Notification.permission : undefined;
+    if (permissionAfterRequest)
+      setPermissionState(permissionAfterRequest);
+    if (result === "subscribed") {
+      setPushState("subscribed");
       setPreferences((current) =>
         current ? { ...current, browserSubscription: "subscribed" } : current,
       );
+      return;
+    }
+    if (result === "denied") {
+      setPushState("idle");
+      return;
+    }
+    if (result === "unsupported") {
+      setPermissionState("unsupported");
+      setPushState("idle");
+      return;
+    }
+    setPushState("error");
   }
 
   if (!ready || state === "loading")
@@ -458,24 +573,56 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             ))}
           </div>
           <div className={styles.pushRow}>
-            <p className={styles.support}>
-              {preferences.browserSubscription === "subscribed" ||
-              pushState === "subscribed"
-                ? t.browserConnected
-                : pushState === "denied"
-                  ? t.pushDenied
-                  : pushState === "unsupported"
-                    ? t.pushUnsupported
-                    : pushState === "failed"
-                      ? t.failed
-                      : t.browserDisconnected}
-            </p>
-            {preferences.browserSubscription === "unsubscribed" &&
-              pushState !== "subscribed" && (
-                <button onClick={() => void connectPush()}>
-                  {t.browserConnect}
-                </button>
-              )}
+            <dl className={styles.stateList} aria-live="polite">
+              <div>
+                <dt>{t.permissionLabel}</dt>
+                <dd data-state={permissionState}>
+                  {permissionState === "pending"
+                    ? t.permissionPending
+                    : permissionState === "default"
+                      ? t.permissionDefault
+                      : permissionState === "granted"
+                        ? t.permissionGranted
+                        : permissionState === "denied"
+                          ? t.pushDenied
+                          : permissionState === "insecure"
+                            ? t.pushInsecure
+                            : t.pushUnsupported}
+                </dd>
+              </div>
+              <div>
+                <dt>{t.subscriptionLabel}</dt>
+                <dd
+                  data-state={
+                    pushState === "pending" || pushState === "error"
+                      ? pushState
+                      : preferences.browserSubscription
+                  }
+                >
+                  {pushState === "pending"
+                    ? t.pushPending
+                    : pushState === "error"
+                      ? t.pushFailed
+                      : preferences.browserSubscription === "subscribed" ||
+                          pushState === "subscribed"
+                        ? t.subscriptionOn
+                        : t.subscriptionOff}
+                </dd>
+              </div>
+            </dl>
+            {(permissionState === "default" ||
+              (permissionState === "granted" &&
+                preferences.browserSubscription === "unsubscribed") ||
+              pushState === "error") && (
+              <button
+                disabled={pushState === "pending"}
+                onClick={() => void connectPush()}
+              >
+                {permissionState === "granted"
+                  ? t.browserReconnect
+                  : t.browserConnect}
+              </button>
+            )}
           </div>
         </section>
 
@@ -507,9 +654,13 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               <p>{t.installHelp}</p>
             </div>
           </div>
-          {installed ? (
+          {installState === "checking" ? (
+            <p className={styles.support} role="status">
+              {t.installChecking}
+            </p>
+          ) : installState === "installed" ? (
             <p className={styles.installState}>{t.installed}</p>
-          ) : installPrompt ? (
+          ) : installState === "available" && installPrompt ? (
             <button
               className={styles.installButton}
               onClick={() => void install()}
@@ -517,6 +668,14 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               <Download />
               {t.installAction}
             </button>
+          ) : installState === "pending" ? (
+            <p className={styles.installState} role="status">
+              {t.installing}
+            </p>
+          ) : installState === "error" ? (
+            <p className={styles.support} role="alert">
+              {t.installFailed}
+            </p>
           ) : (
             <p className={styles.support}>{t.unsupported}</p>
           )}

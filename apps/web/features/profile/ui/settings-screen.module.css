@@ -15,7 +15,6 @@
   z-index: 10;
   top: 0;
   background: rgb(255 255 255/0.94);
-  backdrop-filter: blur(14px);
 }
 .header > div {
   width: min(100% - 48px, 960px);
@@ -280,19 +279,49 @@
   text-align: center;
 }
 .pushRow {
-  margin-left: 58px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  margin: 18px 0 0 58px;
+  display: grid;
+  gap: 12px;
 }
-.pushRow .support {
-  margin-left: 0;
+.stateList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.stateList > div {
+  display: grid;
+  grid-template-columns: minmax(136px, 0.45fr) 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+.stateList dt,
+.stateList dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.stateList dt {
+  color: oklch(48% 0 0);
+  font-weight: 700;
+}
+.stateList dd {
+  color: oklch(30% 0 0);
+  font-weight: 750;
+}
+.stateList dd[data-state="denied"],
+.stateList dd[data-state="insecure"],
+.stateList dd[data-state="unsupported"],
+.stateList dd[data-state="error"] {
+  color: oklch(42% 0.16 24);
+}
+.stateList dd[data-state="granted"],
+.stateList dd[data-state="subscribed"] {
+  color: oklch(37% 0.12 145);
 }
 .pushRow button {
   min-height: 44px;
   padding: 0 14px;
-  flex: 0 0 auto;
+  justify-self: start;
   border: 1px solid oklch(90% 0 0);
   border-radius: 10px;
   background: #fff;
@@ -300,6 +329,10 @@
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+.pushRow button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 .center {
   min-height: 70vh;
@@ -341,7 +374,8 @@
 @media (hover: hover) {
   .valueRow button:hover,
   .header a:hover,
-  .installButton:hover {
+  .installButton:hover,
+  .pushRow button:hover:not(:disabled) {
     background: oklch(97.5% 0 0);
   }
 }
@@ -374,9 +408,10 @@
   }
   .pushRow {
     margin-left: 0;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+  }
+  .stateList > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

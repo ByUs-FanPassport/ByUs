@@ -4,7 +4,22 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { Bell, CheckCheck, ChevronRight, Radio, Settings2 } from "lucide-react";
+import {
+  Bell,
+  BookOpen,
+  CheckCheck,
+  ChevronRight,
+  Home,
+  Radio,
+  Settings2,
+  Users,
+} from "lucide-react";
+import { FanHeader } from "@/components/fan-shell/fan-header";
+import {
+  FanBottomNavigation,
+  FanPrimaryNavigation,
+  type FanNavigationItem,
+} from "@/components/fan-shell/fan-navigation";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -37,6 +52,41 @@ const ko = {
   signIn: "로그인 후 알림을 확인해 주세요.",
   retry: "다시 시도",
 };
+
+const primaryNavigation: readonly FanNavigationItem[] = [
+  { id: "home", href: "/", label: "HOME" },
+  { id: "celebrity", href: "/celebrities", label: "최애" },
+  { id: "passport", href: "/passports", label: "Passport" },
+  {
+    id: "notification",
+    href: "/notifications",
+    label: "알림",
+    isCurrent: true,
+  },
+];
+
+const bottomNavigation: readonly FanNavigationItem[] = [
+  { id: "home", href: "/", icon: <Home aria-hidden="true" />, label: "홈" },
+  {
+    id: "celebrity",
+    href: "/celebrities",
+    icon: <Users aria-hidden="true" />,
+    label: "셀럽",
+  },
+  {
+    id: "passport",
+    href: "/passports",
+    icon: <BookOpen aria-hidden="true" />,
+    label: "Passport",
+  },
+  {
+    id: "notification",
+    href: "/notifications",
+    icon: <Bell aria-hidden="true" />,
+    label: "알림",
+    isCurrent: true,
+  },
+];
 function sameDay(value: string) {
   const date = new Date(value),
     now = new Date();
@@ -182,10 +232,29 @@ export function NotificationCenter() {
             ? ko.failed
             : null;
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
+    <div className={styles.page}>
+      <a className={styles.skipLink} href="#notification-content">
+        본문으로 바로가기
+      </a>
+      <FanHeader
+        className={styles.serviceHeader}
+        innerClassName={styles.serviceHeaderInner}
+        brandClassName={styles.brand}
+      >
+        <FanPrimaryNavigation
+          activeItemClassName={styles.activeNav}
+          ariaLabel="주요 메뉴"
+          className={styles.desktopNav}
+          items={primaryNavigation}
+        />
+        <Link className={styles.settingsLink} href="/settings" aria-label="알림 설정 열기">
+          <Settings2 aria-hidden="true" />
+        </Link>
+      </FanHeader>
+
+      <main className={styles.content} id="notification-content">
+      <header className={styles.pageHeading}>
         <div>
-          <p className={styles.eyebrow}>Notification Center</p>
           <h1>{ko.title}</h1>
           <p>{ko.subtitle}</p>
         </div>
@@ -220,14 +289,31 @@ export function NotificationCenter() {
         </button>
       </section>
       {state.kind === "loading" && (
-        <p className={styles.message} aria-live="polite">
-          알림을 불러오는 중입니다.
-        </p>
+        <div
+          className={`${styles.message} ${styles.loading}`}
+          aria-busy="true"
+          aria-live="polite"
+          role="status"
+        >
+          <span className={styles.loadingIcon} aria-hidden="true" />
+          <p>알림을 불러오는 중입니다.</p>
+        </div>
       )}
-      {state.kind === "auth" && <p className={styles.message}>{ko.signIn}</p>}
-      {state.kind === "error" && (
+      {state.kind === "auth" && (
         <div className={styles.message}>
-          <p>알림을 불러오지 못했습니다.</p>
+          <Bell aria-hidden="true" />
+          <h2>{ko.signIn}</h2>
+          <p>로그인하면 읽지 않은 소식과 예약한 LIVE 알림을 이어서 볼 수 있어요.</p>
+          <Link className={styles.messageAction} href="/login?returnTo=%2Fnotifications">
+            로그인하기
+          </Link>
+        </div>
+      )}
+      {state.kind === "error" && (
+        <div className={styles.message} role="alert">
+          <Bell aria-hidden="true" />
+          <h2>알림을 불러오지 못했습니다.</h2>
+          <p>연결을 확인한 뒤 다시 시도해 주세요.</p>
           <button type="button" onClick={load}>
             {ko.retry}
           </button>
@@ -238,6 +324,9 @@ export function NotificationCenter() {
           <Radio aria-hidden="true" />
           <h2>{ko.empty}</h2>
           <p>{ko.emptyHelp}</p>
+          <Link className={styles.messageAction} href="/">
+            다가오는 LIVE 보기
+          </Link>
         </div>
       )}
       {state.kind === "ready" && state.items.length > 0 && (
@@ -253,6 +342,7 @@ export function NotificationCenter() {
                       key={item.id}
                       className={styles.row}
                       data-unread={!item.readAt}
+                      data-read-state={item.readAt ? "read" : "unread"}
                       onClick={() => void read(item)}
                     >
                       <span className={styles.dot} aria-hidden="true" />
@@ -262,7 +352,7 @@ export function NotificationCenter() {
                           {item.detail} · {time(item.createdAt)}
                         </span>
                       </span>
-                      <span className={styles.read}>
+                      <span className={styles.read} aria-label={item.readAt ? "읽은 알림" : "읽지 않은 알림"}>
                         {item.readAt ? "읽음" : "읽지 않음"}
                       </span>
                       <ChevronRight aria-hidden="true" />
@@ -272,9 +362,9 @@ export function NotificationCenter() {
               ) : null,
             )}
           </div>
-          <aside className={styles.summary}>
-            <Settings2 aria-hidden="true" />
-            <h2>요약</h2>
+          <aside className={styles.summary} aria-labelledby="notification-summary-title">
+            <Bell aria-hidden="true" />
+            <h2 id="notification-summary-title">알림 요약</h2>
             <dl>
               <div>
                 <dt>읽지 않은 알림</dt>
@@ -288,6 +378,14 @@ export function NotificationCenter() {
           </aside>
         </div>
       )}
-    </main>
+      </main>
+
+      <FanBottomNavigation
+        activeItemClassName={styles.bottomNavActive}
+        ariaLabel="모바일 주요 메뉴"
+        className={styles.bottomNav}
+        items={bottomNavigation}
+      />
+    </div>
   );
 }

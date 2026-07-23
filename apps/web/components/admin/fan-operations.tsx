@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
+import { Drawer } from "../ui/overlay/accessible-overlay";
 import ops from "./operations.module.css";
 import styles from "./fan-operations.module.css";
 
@@ -185,9 +186,7 @@ export function FanOperations() {
   const adjustmentAttempt = useRef<{ payload: string; key: string } | null>(
     null,
   );
-  const dialogRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const triggerRef = useRef<HTMLElement | null>(null);
   const openRequestId = useRef(0);
   const load = useCallback(async () => {
     setState("loading");
@@ -212,10 +211,8 @@ export function FanOperations() {
   useEffect(() => {
     if (session.status === "authorized") void load();
   }, [load, session.status]);
-  async function open(fan: Fan, rememberTrigger = true) {
+  async function open(fan: Fan) {
     const requestId = ++openRequestId.current;
-    if (rememberTrigger && document.activeElement instanceof HTMLElement)
-      triggerRef.current = document.activeElement;
     setSelected(fan);
     setDetail(null);
     setState("loading");
@@ -242,37 +239,7 @@ export function FanOperations() {
     openRequestId.current += 1;
     setSelected(null);
     setDetail(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
   }, [saving]);
-  useEffect(() => {
-    if (!selected) return;
-    closeButtonRef.current?.focus();
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeDrawer();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0],
-        last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [closeDrawer, selected]);
   function apply(form: FormData) {
     const next = new URLSearchParams();
     if (locale === "en") next.set("lang", "en");
@@ -324,7 +291,7 @@ export function FanOperations() {
       if (!response.ok) throw new Error();
       adjustmentAttempt.current = null;
       setMessage("saved");
-      await open(selected, false);
+      await open(selected);
       await load();
     } catch {
       setMessage("error");
@@ -398,22 +365,15 @@ export function FanOperations() {
         <FanTable fans={fans} locale={locale} labels={t} open={open} />
       )}
       {selected && (
-        <>
-          <button
-            type="button"
-            className={`${ops.drawerBackdrop} ${styles.backdropButton}`}
-            aria-hidden="true"
-            tabIndex={-1}
-            disabled={saving}
-            onClick={closeDrawer}
-          />
-          <aside
-            ref={dialogRef}
-            className={`${ops.drawer} ${styles.drawerWide}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="fan-title"
-          >
+        <Drawer
+          open
+          onClose={closeDrawer}
+          labelledBy="fan-title"
+          backdropClassName={ops.drawerBackdrop}
+          contentClassName={`${ops.drawer} ${styles.drawerWide}`}
+          initialFocusRef={closeButtonRef}
+          busy={saving}
+        >
             <div className={ops.drawerHeader}>
               <div>
                 <p>{selected.fanId}</p>
@@ -486,8 +446,7 @@ export function FanOperations() {
                 </>
               )}
             </div>
-          </aside>
-        </>
+        </Drawer>
       )}
     </AdminOperationsShell>
   );

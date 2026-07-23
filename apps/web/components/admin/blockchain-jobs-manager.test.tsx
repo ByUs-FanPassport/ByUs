@@ -37,4 +37,15 @@ describe("ADM-011 blockchain jobs", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/blockchain-jobs?lang=en"));
   });
+  it("keeps the visible filter controls synchronized with URL state after navigation", async () => {
+    const rendered = render(<BlockchainJobsManager />);
+    await screen.findByText("FAILED");
+    expect(screen.getByRole("combobox", { name: "상태" })).toHaveValue("");
+    query = "status=FAILED&jobId=11111111-1111-4111-8111-111111111111";
+    rendered.rerender(<BlockchainJobsManager />);
+    expect(screen.getByRole("combobox", { name: "상태" })).toHaveValue("FAILED");
+    expect(screen.getByRole("textbox", { name: "작업 ID" })).toHaveValue(
+      "11111111-1111-4111-8111-111111111111",
+    );
+  });
 });

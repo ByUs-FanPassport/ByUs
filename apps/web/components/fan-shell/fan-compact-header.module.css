@@ -1,0 +1,26 @@
+.header {
+  display: flex;
+  width: min(100%, 1200px);
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.brand {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+.brand:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
+
+@media (min-width: 48rem) {
+  .header {
+    padding-inline: 32px;
+  }
+}

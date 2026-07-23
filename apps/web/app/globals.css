@@ -2,13 +2,61 @@
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+
+  /* Canonical semantic foundation from the root DESIGN.md. */
+  --color-canvas: #fff;
+  --color-surface: #fff;
+  --color-soft: oklch(97.5% 0 0);
+  --color-ink: oklch(18% 0 0);
+  --color-muted: oklch(48% 0 0);
+  --color-line: oklch(90% 0 0);
+  --color-line-subtle: oklch(93% 0 0);
+  --color-error: #9f1239;
+  --color-success: #17613f;
+  --color-warning: #8a4b08;
+  --color-backdrop: rgb(23 23 26 / 42%);
+  --color-focus: var(--color-ink);
+  --color-primary-action: linear-gradient(125deg, oklch(68% 0.22 18), oklch(62% 0.25 340), oklch(56% 0.22 285));
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-control: 12px;
+  --radius-collection: 16px;
+  --radius-hero: 20px;
+  --radius-pill: 999rem;
+
+  --motion-control: 160ms;
+  --motion-layout: 240ms;
+  --motion-easing: cubic-bezier(.2, 0, 0, 1);
+
+  --z-sticky-header: 20;
+  --z-bottom-nav: 30;
+  --z-dropdown: 35;
+  --z-backdrop: 40;
+  --z-drawer: 45;
+  --z-dialog: 50;
+  --z-alertdialog: 55;
+  --z-tooltip: 60;
+
+  --min-target: 44px;
+  --focus-width: 3px;
+  --focus-offset: 3px;
 }
 
 html,
 body {
   min-width: 320px;
   margin: 0;
-  background: #fff;
+  background: var(--color-canvas);
 }
 
 button,

@@ -1,0 +1,29 @@
+.brand {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  width: 88px;
+  min-height: 44px;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand img {
+  display: block;
+  width: 80px;
+  height: 30px;
+}
+
+.brand:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
+
+@media (min-width: 48rem) {
+  .brand {
+    top: 20px;
+    left: 32px;
+  }
+}

@@ -1,0 +1,38 @@
+.header {
+  height: 68px;
+  background: var(--focus-flow-header-background, #fff);
+}
+
+.sticky {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: auto;
+}
+
+.wordmark {
+  display: inline-flex;
+  width: 88px;
+  min-height: 44px;
+  align-items: center;
+}
+
+.wordmark img {
+  display: block;
+  width: 80px;
+  height: 30px;
+}
+
+.wordmark:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
