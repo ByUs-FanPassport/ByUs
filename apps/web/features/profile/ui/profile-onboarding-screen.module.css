@@ -1,6 +1,3 @@
-.page { min-height: 100svh; background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
-.header { border-bottom:1px solid oklch(93% 0 0); }
-.headerInner { padding:0 16px; }
 .locale a,.secondary { display:inline-flex; min-height:44px; align-items:center; }
 .locale { display:flex; align-items:center; gap:10px; font-size:14px; }
 .locale a { color:oklch(48% 0 0); font-weight:600; text-decoration:none; }
@@ -12,15 +9,22 @@
 .intro h1 { max-width:19ch; margin:0; font-size:28px; font-weight:850; line-height:1.18; letter-spacing:-.035em; text-wrap:balance; }
 .intro p { margin:0; color:oklch(48% 0 0); font-size:14px; font-weight:550; line-height:1.55; text-wrap:pretty; }
 .composition { display:grid; gap:24px; }
-.preview { display:grid; align-content:start; min-height:420px; padding:24px; border:1px solid oklch(90% 0 0); border-radius:16px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0/.05),0 4px 12px oklch(18% 0 0/.03); }
-.passportHead { display:grid; gap:8px; padding-bottom:20px; border-bottom:1px solid oklch(90% 0 0); }
-.passportHead span { color:oklch(48% 0 0); font-size:12px; font-weight:800; letter-spacing:.04em; }
-.passportHead strong { font-size:22px; font-weight:850; letter-spacing:-.025em; }
-.preview dl { display:grid; gap:0; margin:12px 0 0; }
+.preview { display:grid; align-content:start; min-height:420px; overflow:hidden; border:1px solid oklch(90% 0 0); border-radius:16px; background:linear-gradient(145deg,#fff 8%,oklch(98% .012 340) 62%,oklch(97.2% .018 300)); box-shadow:0 1px 2px oklch(18% 0 0/.05),0 4px 12px oklch(18% 0 0/.03); }
+.celebrityContext { display:grid; grid-template-columns:56px minmax(0,1fr) auto; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid oklch(91% .01 315); background:rgb(255 255 255/.7); }
+.celebrityImage { position:relative; width:56px; height:56px; overflow:hidden; border-radius:50%; background:oklch(94% 0 0); }
+.celebrityImage img { object-fit:cover; }
+.celebrityContext div:nth-child(2) { display:grid; min-width:0; gap:3px; }
+.celebrityContext span { color:oklch(45% .12 315); font-size:11px; font-weight:800; letter-spacing:.06em; }
+.celebrityContext strong { overflow:hidden; font-size:17px; font-weight:850; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
+.celebrityContext em { padding:6px 9px; border:1px solid oklch(75% .09 315); border-radius:999rem; color:oklch(40% .12 315); font-size:11px; font-style:normal; font-weight:800; white-space:nowrap; }
+.passportArtwork { display:grid; min-height:220px; place-items:center; padding:24px 28px 8px; }
+.passportArtwork img { display:block; width:100%; height:auto; max-height:260px; object-fit:contain; filter:drop-shadow(0 8px 14px rgb(23 25 28/.07)); }
+.preview dl { display:grid; gap:0; margin:0 24px 24px; padding:0 16px; border:1px solid oklch(91% 0 0); border-radius:12px; background:rgb(255 255 255/.88); }
 .preview dl div { display:grid; grid-template-columns:112px 1fr; min-height:48px; align-items:center; border-bottom:1px solid oklch(93% 0 0); }
+.preview dl div:last-child { border-bottom:0; }
 .preview dt { color:oklch(48% 0 0); font-size:13px; font-weight:600; }
 .preview dd { min-width:0; margin:0; font-size:14px; font-weight:750; }
-.preview .ownerRow { min-height:76px; }
+.preview .ownerRow { min-height:64px; }
 .ownerRow dd { font-size:24px; font-weight:850; letter-spacing:-.03em; }
 .form { align-self:start; display:grid; gap:14px; padding:24px 0; }
 .fieldHead { display:flex; align-items:end; justify-content:space-between; gap:16px; }
@@ -45,16 +49,21 @@
 .secondary { border:1px solid oklch(90% 0 0); color:oklch(18% 0 0); text-decoration:none; }
 .locale a:focus-visible,.form input:focus-visible,.primary:focus-visible,.secondary:focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 @media (min-width:48rem) {
-  .headerInner { padding-inline:32px; }
   .main { width:min(100% - 64px,1120px); padding-top:64px; }
   .intro { margin-bottom:40px; }
   .intro h1 { font-size:36px; }
   .composition { grid-template-columns:minmax(320px, .9fr) minmax(400px, 1.1fr); gap:48px; align-items:start; }
-  .preview { min-height:500px; padding:32px; }
+  .preview { min-height:500px; }
   .form { padding:32px 0; }
   .actions { position:static; grid-template-columns:1fr auto; margin:18px 0 0; padding:0; }
   .secondary { width:auto; min-width:132px; padding-inline:24px; grid-row:1; grid-column:2; }
   .primary { grid-row:1; grid-column:1; }
 }
-@media (min-width:80rem) { .headerInner { padding-inline:40px; } }
-@media (prefers-reduced-motion:reduce) { .page * { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; } }
+@media (max-width:30rem) {
+  .celebrityContext { grid-template-columns:48px minmax(0,1fr); padding-inline:18px; }
+  .celebrityImage { width:48px; height:48px; }
+  .celebrityContext em { grid-column:2; justify-self:start; }
+  .passportArtwork { padding-inline:18px; }
+  .preview dl { margin-inline:18px; }
+}
+@media (prefers-reduced-motion:reduce) { .main * { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; } }

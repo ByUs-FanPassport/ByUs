@@ -13,7 +13,7 @@ import {
   parseQuizSubmitProjection,
   type QuizAttemptProjection,
 } from "../domain/quiz-attempt";
-import { FocusFlowBrand } from "@/components/fan-shell/focus-flow-brand";
+import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import styles from "./quiz-questions-screen.module.css";
 
 type ScreenState =
@@ -233,5 +233,5 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
 }
 
 function QuizFrame({ children }: { children: React.ReactNode }) {
-  return <main className={styles.page} data-fan-surface lang="ko"><FocusFlowBrand /><div className={styles.shell}>{children}</div></main>;
+  return <FocusFlowFrame locale="ko"><main className={styles.page}><div className={styles.shell}>{children}</div></main></FocusFlowFrame>;
 }

@@ -10,6 +10,8 @@ import { X } from "lucide-react";
 import { ArrowRight, GoogleMark } from "./icons";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 import { BottomSheet, Dialog } from "./ui/overlay/accessible-overlay";
+import { FanSiteFooter } from "./fan-shell/fan-site-footer";
+import { readAuthIntent } from "./auth-intent";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -70,11 +72,15 @@ export function LoginPage({
         if (!response.ok) throw new Error("Session synchronization failed");
         const body = await response.json() as { profile?: { completed?: boolean } };
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
+        const storedIntent = typeof window === "undefined" ? null : readAuthIntent(window.sessionStorage, authIntent);
+        const continuesFanVerification = storedIntent?.actionType === "START_FAN_VERIFICATION"
+          || (intent === "passport" && entity !== null && returnPathname === `/c/${entity}/verify`);
+        const safeReturnTo = returnPathname === "/onboarding/profile" ? `/?locale=${locale}` : returnTo;
         const destination = body.profile?.completed
-          ? returnTo
-          : returnPathname === "/onboarding/profile"
-            ? returnTo
-            : appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent });
+          ? safeReturnTo
+          : continuesFanVerification
+            ? appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent })
+            : safeReturnTo;
         router.replace(destination as Route);
       } catch {
         synchronizationRef.current = null;
@@ -215,14 +221,7 @@ export function LoginPage({
           </div>
         </section>
       </div>
-      <footer className={styles.footer}>
-        <span>© 2026 Sallylab Inc.</span>
-        <nav aria-label="법적 고지">
-          <Link href="/privacy" aria-label="개인정보처리방침 열기">개인정보처리방침</Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/terms" aria-label="이용약관 열기">이용약관</Link>
-        </nav>
-      </footer>
+      <FanSiteFooter locale={locale} />
     </main>
   );
 }

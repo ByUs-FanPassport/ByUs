@@ -145,8 +145,9 @@ describe("benefit screens", () => {
         new Response(JSON.stringify({ benefits: [benefit] })),
       );
     render(<BenefitsScreen locale="ko" />);
-    expect(screen.getAllByRole("link", { name: "MY" })).toHaveLength(2);
-    for (const currentLink of screen.getAllByRole("link", { name: "MY" })) {
+    const currentMyLinks = screen.getAllByRole("link", { name: "MY" }).filter((link) => link.hasAttribute("aria-current"));
+    expect(currentMyLinks).toHaveLength(2);
+    for (const currentLink of currentMyLinks) {
       expect(currentLink).toHaveAttribute("aria-current", "page");
     }
     expect(

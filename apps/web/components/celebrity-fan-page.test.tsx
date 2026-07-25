@@ -17,7 +17,7 @@ describe("published celebrity fan page", () => {
 
   it("renders the minimum fan-hub hierarchy and intent-preserving guest action", () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    expect(screen.getByRole("link", { name: "ByUs 홈" })).toHaveAttribute("href", "/?locale=ko");
+    expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "KARA 팬페이지 섹션" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Notice" })).toBeInTheDocument();

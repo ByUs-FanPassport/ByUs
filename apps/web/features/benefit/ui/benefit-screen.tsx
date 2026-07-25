@@ -3,7 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
-import { FanAppBottomNavigation, FanAppHeader } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -172,23 +172,6 @@ function formatDate(value: string, locale: BenefitLocale) {
   }).format(new Date(value));
 }
 
-function Header({
-  locale,
-  celebrity,
-  currentPath = "/benefits",
-}: {
-  locale: BenefitLocale;
-  celebrity?: string;
-  currentPath?: string;
-}) {
-  return (
-    <>
-      <FanAppHeader locale={locale} />
-      <FanAppBottomNavigation locale={locale} />
-    </>
-  );
-}
-
 function StateBadge({
   state,
   locale,
@@ -335,11 +318,8 @@ export function BenefitsScreen({
   }
 
   return (
-    <div className={styles.page} data-fan-surface lang={locale}>
-      <a className={styles.skipLink} href="#benefit-content">
-        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-      </a>
-      <Header locale={locale} celebrity={selected || undefined} />
+    <FanAppFrame locale={locale} mainId="benefit-content">
+      <div className={styles.page}>
       <main className={styles.main} id="benefit-content" tabIndex={-1}>
         <div className={styles.listHeading}>
           <div>
@@ -424,7 +404,8 @@ export function BenefitsScreen({
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </FanAppFrame>
   );
 }
 
@@ -649,15 +630,8 @@ export function BenefitDetailScreen({
         </div>
       </main>
     ) : (
-      <div className={styles.page} data-fan-surface lang={locale}>
-        <a className={styles.skipLink} href="#benefit-content">
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-        </a>
-        <Header
-          locale={locale}
-          celebrity={celebrity}
-          currentPath={`/benefits/${benefitId}`}
-        />
+      <FanAppFrame locale={locale} mainId="benefit-content">
+        <div className={styles.page}>
         <main className={styles.detailMain} id="benefit-content" tabIndex={-1} aria-busy="true">
           <div className={styles.detailSkeleton}>
             <i />
@@ -666,7 +640,8 @@ export function BenefitDetailScreen({
             <i />
           </div>
         </main>
-      </div>
+        </div>
+      </FanAppFrame>
     );
   if (view.kind === "error")
     return presentation === "overlay" ? (
@@ -686,15 +661,8 @@ export function BenefitDetailScreen({
         </section>
       </main>
     ) : (
-      <div className={styles.page} data-fan-surface lang={locale}>
-        <a className={styles.skipLink} href="#benefit-content">
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-        </a>
-        <Header
-          locale={locale}
-          celebrity={celebrity}
-          currentPath={`/benefits/${benefitId}`}
-        />
+      <FanAppFrame locale={locale} mainId="benefit-content">
+        <div className={styles.page}>
         <main className={styles.detailMain} id="benefit-content" tabIndex={-1}>
           <section
             className={styles.message}
@@ -713,7 +681,8 @@ export function BenefitDetailScreen({
             </Link>
           </section>
         </main>
-      </div>
+        </div>
+      </FanAppFrame>
     );
   const benefit = view.benefit;
   const deliveredClaim = claim ?? ownedApplication?.claim ?? null;
@@ -849,17 +818,11 @@ export function BenefitDetailScreen({
   );
   if (presentation === "overlay") return detailContent;
   return (
-    <div className={styles.page} data-fan-surface lang={locale}>
-      <a className={styles.skipLink} href="#benefit-content">
-        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-      </a>
-      <Header
-        locale={locale}
-        celebrity={celebrity}
-        currentPath={`/benefits/${benefitId}`}
-      />
+    <FanAppFrame locale={locale} mainId="benefit-content">
+      <div className={styles.page}>
       {detailContent}
-    </div>
+      </div>
+    </FanAppFrame>
   );
 }
 

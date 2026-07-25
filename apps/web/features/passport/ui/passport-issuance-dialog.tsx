@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, RotateCcw } from "lucide-react";
 
 import { AuthIntentLink } from "@/components/auth-intent-link";
+import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import styles from "./passport-issuance-dialog.module.css";
 
@@ -58,25 +59,21 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
   }).format(new Date(issuance.firstStamp.issuedAt));
 
   return (
-    <main
-      className={styles.screen}
-      data-fan-surface
-      lang="ko"
-      aria-labelledby="passport-issuance-title"
-    >
-      <div className={styles.frame}>
-        <header className={styles.header}>
-          <Link className={styles.wordmark} href="/" aria-label="ByUs 홈">
-            <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
-          </Link>
+    <FocusFlowFrame
+      locale="ko"
+      headerActions={
+        <div className={styles.headerActions}>
           <div className={styles.progress} role="progressbar" aria-label="발급 과정 완료" aria-valuemin={1} aria-valuemax={4} aria-valuenow={4}>
             <span>4 / 4</span><i aria-hidden="true" />
           </div>
           <Link className={styles.skip} href={`/passports/${issuance.passport.id}` as Route}>
             건너뛰기
           </Link>
-        </header>
-
+        </div>
+      }
+    >
+    <main className={styles.screen} aria-labelledby="passport-issuance-title">
+      <div className={styles.frame}>
         <div className={styles.content}>
           <section className={styles.passport} aria-labelledby="passport-issuance-title">
             <Image
@@ -132,6 +129,7 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
         )}
       </div>
     </main>
+    </FocusFlowFrame>
   );
 }
 
@@ -172,8 +170,9 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
 
   if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} />;
   return (
-    <main className={styles.screen} data-fan-surface lang="ko">
-      <div className={styles.state} role="status" aria-live="polite" aria-busy={state.kind === "loading"}>
+    <FocusFlowFrame locale="ko">
+      <main className={styles.screen}>
+        <div className={styles.state} role="status" aria-live="polite" aria-busy={state.kind === "loading"}>
         {state.kind === "loading" ? (
           <><h1>발급된 Passport 확인 중</h1><p>이미 완료된 팬 인증 결과를 안전하게 불러오고 있어요.</p></>
         ) : state.kind === "auth" ? (
@@ -190,7 +189,8 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
             <Link href={`/passports/${passportId}` as Route}>Passport 열기<ArrowRight aria-hidden="true" /></Link>
           </>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </FocusFlowFrame>
   );
 }

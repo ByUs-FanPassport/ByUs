@@ -8,6 +8,17 @@ const getAccessToken = vi.fn();
 let authenticated = true;
 let ready = true;
 let query = "returnTo=%2Fc%2Fkara%2Fverify%3Fstep%3Dintro%23fan-verify&intent=passport&entity=kara&locale=ko";
+const celebrity = {
+  slug: "kara",
+  locale: "ko",
+  name: "KARA",
+  summary: "KARA summary",
+  image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" },
+  themes: [],
+  socialLinks: [],
+  displayOrder: 0,
+  fanCount: 12_800_000,
+} as const;
 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready, authenticated, getAccessToken }),
@@ -31,23 +42,23 @@ describe("FAN-005 profile onboarding", () => {
 
   it("requires authentication and preserves the sanitized continuation context", async () => {
     authenticated = false;
-    const { rerender } = render(<ProfileOnboardingScreen />);
+    const { rerender } = render(<ProfileOnboardingScreen celebrity={celebrity} />);
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
       "/login?returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fc%252Fkara%252Fverify%253Fstep%253Dintro%2523fan-verify%26locale%3Dko%26intent%3Dpassport%26entity%3Dkara&locale=ko&intent=passport&entity=kara",
     ));
     query = "returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fonboarding%252Fprofile%26locale%3Dko&locale=ko";
-    rerender(<ProfileOnboardingScreen />);
+    rerender(<ProfileOnboardingScreen celebrity={celebrity} />);
     expect(replace).toHaveBeenCalledTimes(1);
   });
 
   it("skips the setup screen when the authenticated user already has a profile", async () => {
     vi.mocked(fetch).mockResolvedValue(Response.json({ profile: { completed: true, nickname: "Kamilia" } }));
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro#fan-verify"));
   });
 
   it("updates the owner preview live and enables save only for a valid 2-16 character nickname", async () => {
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     expect(screen.getByLabelText("프로필 설정 · 1 / 1")).toBeInTheDocument();
     const save = screen.getByRole("button", { name: "닉네임 저장" });
@@ -60,6 +71,9 @@ describe("FAN-005 profile onboarding", () => {
 
     fireEvent.change(input, { target: { value: "John 팬" } });
     expect(screen.getByText("John 팬")).toBeInTheDocument();
+    expect(screen.getByText("팬 인증 완료 후 발급")).toBeInTheDocument();
+    expect(screen.queryByText("Fan Score")).not.toBeInTheDocument();
+    expect(screen.queryByText("Stamps")).not.toBeInTheDocument();
     expect(screen.getByLabelText("6/16자")).toBeInTheDocument();
     expect(screen.getByText("사용 가능한 형식이에요. 저장할 때 중복 여부를 확인합니다.")).toBeInTheDocument();
     expect(save).toBeEnabled();
@@ -73,7 +87,7 @@ describe("FAN-005 profile onboarding", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(Response.json({ profile: { completed: false, nickname: null } }))
       .mockResolvedValueOnce(Response.json({ error: { code } }, { status: code === "NICKNAME_TAKEN" ? 409 : 400 }));
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     fireEvent.change(input, { target: { value: "Kamilia" } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
@@ -86,7 +100,7 @@ describe("FAN-005 profile onboarding", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(Response.json({ profile: { completed: false, nickname: null } }))
       .mockRejectedValueOnce(new Error("network"));
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     fireEvent.change(input, { target: { value: "Kamilia" } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
@@ -99,7 +113,7 @@ describe("FAN-005 profile onboarding", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(Response.json({ profile: { completed: false, nickname: null } }))
       .mockResolvedValueOnce(Response.json({ error: { code: "PROFILE_ALREADY_COMPLETED" } }, { status: 409 }));
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     fireEvent.change(input, { target: { value: "Kamilia" } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
@@ -110,7 +124,7 @@ describe("FAN-005 profile onboarding", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(Response.json({ profile: { completed: false, nickname: null } }))
       .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "John" } }));
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     fireEvent.change(input, { target: { value: "  John  " } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
@@ -124,16 +138,16 @@ describe("FAN-005 profile onboarding", () => {
   });
 
   it("renders complete English copy without changing the continuation", async () => {
-    query = "returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Den%23fan-code&intent=reserve&entity=kara-nualeaf&locale=en";
-    render(<ProfileOnboardingScreen />);
-    expect(await screen.findByRole("heading", { name: "Choose the nickname shown in fan activities." })).toBeInTheDocument();
-    expect(screen.getByText("Only this nickname is public. Your email and Google account details are never shown.")).toBeInTheDocument();
+    query = "returnTo=%2Fc%2Fkara%2Fverify%3Fstep%3Dintro%23fan-verify&intent=passport&entity=kara&locale=en";
+    render(<ProfileOnboardingScreen celebrity={{ ...celebrity, locale: "en" }} />);
+    expect(await screen.findByRole("heading", { name: "Choose a nickname for your KARA fan verification." })).toBeInTheDocument();
+    expect(screen.getByText("After verification, it will appear in your KARA Fan Passport and activity history.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "EN" })).toHaveAttribute("aria-current", "page");
   });
 
   it("restores an unsaved nickname after reload or locale navigation", async () => {
     sessionStorage.setItem("byus:profile-nickname-draft", "Kamilia");
-    render(<ProfileOnboardingScreen />);
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     await waitFor(() => expect(input).toHaveValue("Kamilia"));
     expect(screen.getByRole("button", { name: "닉네임 저장" })).toBeEnabled();

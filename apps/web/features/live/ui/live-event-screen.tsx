@@ -41,13 +41,7 @@ import {
   readAuthIntent,
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FanHeader } from "@/components/fan-shell/fan-header";
-import { fanNavigationItems } from "@/components/fan-shell/fan-app-shell";
-import {
-  FanBottomNavigation,
-  FanLocaleLink,
-  FanPrimaryNavigation,
-} from "@/components/fan-shell/fan-navigation";
+import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -260,37 +254,6 @@ function googleCalendarUrl(data: LiveEventResponse["live"]) {
     details: `${data.description}\n\n${data.brand.name}`,
   });
   return `https://calendar.google.com/calendar/render?${query.toString()}`;
-}
-
-function liveNavigationItems(slug: string, locale: Locale) {
-  return fanNavigationItems(locale, `/live/${slug}`);
-}
-
-function LiveHeader({ locale, slug }: { locale: Locale; slug: string }) {
-  const otherLocale = locale === "ko" ? "en" : "ko";
-  return (
-    <FanHeader
-      brandAriaLabel="ByUs home"
-      brandClassName={styles.wordmark}
-      className={styles.header}
-      innerClassName={styles.headerInner}
-    >
-      <FanPrimaryNavigation
-        activeItemClassName={styles.activeNav}
-        className={styles.desktopNav}
-        ariaLabel={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
-        items={liveNavigationItems(slug, locale)}
-      />
-      <FanLocaleLink
-        className={styles.locale}
-        href={`/live/${slug}?locale=${otherLocale}` as Route}
-        lang={otherLocale}
-        hrefLang={otherLocale}
-      >
-        {locale === "ko" ? "KO / EN" : "EN / KO"}
-      </FanLocaleLink>
-    </FanHeader>
-  );
 }
 
 function ReservationDialog({
@@ -732,11 +695,8 @@ export function LiveEventScreen({
 
   if (view.kind === "loading") {
     return (
-      <div className={styles.page} data-fan-surface lang={locale}>
-        <a className={styles.skipLink} href="#live-detail-main">
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-        </a>
-        <LiveHeader locale={locale} slug={slug} />
+      <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
+        <div className={styles.page}>
         <main
           id="live-detail-main"
           tabIndex={-1}
@@ -747,16 +707,14 @@ export function LiveEventScreen({
           <div />
           <div />
         </main>
-      </div>
+        </div>
+      </FanAppFrame>
     );
   }
   if (view.kind === "error") {
     return (
-      <div className={styles.page} data-fan-surface lang={locale}>
-        <a className={styles.skipLink} href="#live-detail-main">
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-        </a>
-        <LiveHeader locale={locale} slug={slug} />
+      <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
+        <div className={styles.page}>
         <main id="live-detail-main" className={styles.error} tabIndex={-1} role="alert">
           <Radio aria-hidden="true" />
           <h1>{view.notFound ? c.notFound : c.loadError}</h1>
@@ -768,7 +726,8 @@ export function LiveEventScreen({
           )}
           <Link href={`/?locale=${locale}` as Route}>{c.nav[0]}</Link>
         </main>
-      </div>
+        </div>
+      </FanAppFrame>
     );
   }
 
@@ -788,7 +747,6 @@ export function LiveEventScreen({
   const calendarUrl = googleCalendarUrl(live);
   const primaryClass =
     primaryAction === "reserve" ? styles.spectrumAction : styles.primaryAction;
-  const bottomNavItems = liveNavigationItems(slug, locale);
   const attendanceError =
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
@@ -864,11 +822,8 @@ export function LiveEventScreen({
     );
 
   return (
-    <div className={styles.page} data-fan-surface lang={locale}>
-      <a className={styles.skipLink} href="#live-detail-main">
-        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
-      </a>
-      <LiveHeader locale={locale} slug={slug} />
+    <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
+      <div className={styles.page}>
       <main id="live-detail-main" className={styles.main} tabIndex={-1}>
         <Link className={styles.back} href="/">
           <ArrowLeft aria-hidden="true" />
@@ -1155,12 +1110,7 @@ export function LiveEventScreen({
           onClose={() => setShowConfirmation(false)}
         />
       )}
-      <FanBottomNavigation
-        activeItemClassName={styles.bottomActive}
-        className={styles.bottomNav}
-        ariaLabel={locale === "ko" ? "하단 메뉴" : "Bottom navigation"}
-        items={bottomNavItems}
-      />
-    </div>
+      </div>
+    </FanAppFrame>
   );
 }

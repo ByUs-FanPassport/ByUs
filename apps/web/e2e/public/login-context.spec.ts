@@ -24,5 +24,5 @@ test("direct FAN-004 access keeps the standalone fallback", async ({ page }) => 
 
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "홈으로 돌아가기", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ByUs 홈으로 돌아가기", exact: true })).toBeVisible();
 });

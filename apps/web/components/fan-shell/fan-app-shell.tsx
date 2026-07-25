@@ -12,6 +12,7 @@ import {
   FanPrimaryNavigation,
   type FanNavigationItem,
 } from "./fan-navigation";
+import { FanSiteFooter } from "./fan-site-footer";
 import styles from "./fan-app-shell.module.css";
 
 export type FanLocale = "ko" | "en";
@@ -73,11 +74,14 @@ function mobileLabel(section: FanSection, locale: FanLocale) {
 export function FanAppHeader({
   locale,
   actions,
+  currentPath,
 }: {
   locale: FanLocale;
   actions?: ReactNode;
+  currentPath?: string;
 }) {
-  const pathname = useBrowserPathname();
+  const browserPathname = useBrowserPathname();
+  const pathname = currentPath ?? browserPathname;
   const items = fanNavigationItems(locale, pathname);
   const nextLocale = locale === "ko" ? "en" : "ko";
 
@@ -110,8 +114,9 @@ export function FanAppHeader({
   );
 }
 
-export function FanAppBottomNavigation({ locale }: { locale: FanLocale }) {
-  const pathname = useBrowserPathname();
+export function FanAppBottomNavigation({ locale, currentPath }: { locale: FanLocale; currentPath?: string }) {
+  const browserPathname = useBrowserPathname();
+  const pathname = currentPath ?? browserPathname;
   const items = fanNavigationItems(locale, pathname).map((item) => ({
     ...item,
     icon: icons[item.id as FanSection],
@@ -134,12 +139,14 @@ export function FanAppFrame({
   actions,
   className,
   mainId,
+  currentPath,
 }: {
   locale: FanLocale;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
   mainId?: string;
+  currentPath?: string;
 }) {
   return (
     <div
@@ -152,9 +159,10 @@ export function FanAppFrame({
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
       ) : null}
-      <FanAppHeader locale={locale} actions={actions} />
+      <FanAppHeader locale={locale} actions={actions} currentPath={currentPath} />
       {children}
-      <FanAppBottomNavigation locale={locale} />
+      <FanSiteFooter locale={locale} />
+      <FanAppBottomNavigation locale={locale} currentPath={currentPath} />
     </div>
   );
 }

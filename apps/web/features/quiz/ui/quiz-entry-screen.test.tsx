@@ -7,10 +7,12 @@ import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 
 const getAccessToken = vi.fn();
 const push = vi.fn();
+const replace = vi.fn();
+const router = { push, replace };
 let privyState = { ready: true, authenticated: true };
 
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ...privyState, getAccessToken }) }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const attemptId = "11111111-1111-4111-8111-111111111111";
 const intro = { celebrity: { slug: "kara", name: "KARA" }, quiz: { availability: "available", totalQuestions: 3, passThreshold: 2 } };
@@ -28,14 +30,18 @@ describe("QuizEntryScreen", () => {
     privyState = { ready: true, authenticated: true };
     getAccessToken.mockResolvedValue("privy-token");
     push.mockReset();
+    replace.mockReset();
     sessionStorage.clear();
     window.history.replaceState({}, "", "/c/kara/verify");
   });
 
   it("loads the public intro and starts the server-owned attempt before navigating", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(Response.json({ intro }))
-      .mockResolvedValueOnce(Response.json({ result: { kind: "attempt", attempt: { id: attemptId, status: "open", score: null, submittedAt: null }, questions } }));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/profile") return Response.json({ profile: { completed: true } });
+      if (url.includes("/api/public/")) return Response.json({ intro });
+      return Response.json({ result: { kind: "attempt", attempt: { id: attemptId, status: "open", score: null, submittedAt: null }, questions } });
+    });
 
     render(<QuizEntryScreen slug="kara" />);
     expect(await screen.findByRole("heading", { name: /KARA를 향한/ })).toBeInTheDocument();
@@ -45,8 +51,8 @@ describe("QuizEntryScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 시작하기" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith(`/c/kara/verify/questions?attempt=${attemptId}`));
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/public/celebrities/kara/quiz?locale=ko", expect.objectContaining({ method: "GET", cache: "no-store" }));
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/celebrities/kara/quiz/attempts?locale=ko", expect.objectContaining({ method: "POST", headers: { authorization: "Bearer privy-token" } }));
+    expect(fetchMock).toHaveBeenCalledWith("/api/public/celebrities/kara/quiz?locale=ko", expect.objectContaining({ method: "GET", cache: "no-store" }));
+    expect(fetchMock).toHaveBeenCalledWith("/api/celebrities/kara/quiz/attempts?locale=ko", expect.objectContaining({ method: "POST", headers: { authorization: "Bearer privy-token" } }));
   });
 
   it("preserves the canonical entry route through login", async () => {
@@ -60,18 +66,22 @@ describe("QuizEntryScreen", () => {
     const intent = createAuthIntent({ sourcePath: "/c/kara/verify", sourceQuery: "", actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: "kara" });
     persistAuthIntent(sessionStorage, intent);
     window.history.replaceState({}, "", `/c/kara/verify?authIntent=${intent.id}`);
-    vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(Response.json({ intro }))
-      .mockResolvedValueOnce(Response.json({ result: { kind: "holder", passportId: "22222222-2222-4222-8222-222222222222" } }));
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/profile") return Response.json({ profile: { completed: true } });
+      if (url.includes("/api/public/")) return Response.json({ intro });
+      return Response.json({ result: { kind: "holder", passportId: "22222222-2222-4222-8222-222222222222" } });
+    });
 
     render(<QuizEntryScreen slug="kara" />);
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/passports/22222222-2222-4222-8222-222222222222"));
     expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it("renders an honest unavailable state without starting an attempt", async () => {
+    privyState = { ready: true, authenticated: false };
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ intro: { ...intro, quiz: { ...intro.quiz, availability: "unavailable" } } }));
     render(<QuizEntryScreen slug="kara" />);
     expect(await screen.findByRole("heading", { name: "아직 팬 인증 퀴즈가 준비되지 않았어요." })).toBeInTheDocument();
@@ -79,7 +89,21 @@ describe("QuizEntryScreen", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("redirects an authenticated user without a profile to contextual onboarding", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/profile") return Response.json({ profile: { completed: false } });
+      return Response.json({ intro });
+    });
+    render(<QuizEntryScreen slug="kara" />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/onboarding/profile?returnTo=%2Fc%2Fkara%2Fverify&locale=ko&intent=passport&entity=kara",
+    ));
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining("/quiz/attempts"), expect.anything());
+  });
+
   it("shows a retryable error when the public contract cannot be loaded", async () => {
+    privyState = { ready: true, authenticated: false };
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ error: { code: "NOT_FOUND" } }, { status: 404 }));
     render(<QuizEntryScreen slug="kara" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("현재 참여할 수 있는 팬 인증 퀴즈가 없어요.");

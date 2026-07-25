@@ -20,8 +20,8 @@ describe("public legal pages", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "이용약관" })).toBeInTheDocument();
     expect(screen.getByText(/대한민국 법률에 따라 해석됩니다/)).toBeInTheDocument();
-    const legalNavigation = screen.getByRole("navigation", { name: "법적 문서" });
-    expect(within(legalNavigation).getByRole("link", { name: "개인정보처리방침" })).toHaveAttribute("href", "/privacy");
-    expect(within(legalNavigation).getByRole("link", { name: "이용약관" })).toHaveAttribute("href", "/terms");
+    const legalNavigation = screen.getByRole("navigation", { name: "ByUs 하단 메뉴" });
+    expect(within(legalNavigation).getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy");
+    expect(within(legalNavigation).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms");
   });
 });

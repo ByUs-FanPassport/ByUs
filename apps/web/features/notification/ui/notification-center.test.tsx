@@ -83,8 +83,9 @@ describe("FAN-019 Notification Center", () => {
     });
     expect(link).toHaveAttribute("href", "/live/kara-live");
     expect(screen.getByText("읽지 않음")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "MY" })).toHaveLength(2);
-    for (const currentLink of screen.getAllByRole("link", { name: "MY" })) {
+    const currentMyLinks = screen.getAllByRole("link", { name: "MY" }).filter((link) => link.hasAttribute("aria-current"));
+    expect(currentMyLinks).toHaveLength(2);
+    for (const currentLink of currentMyLinks) {
       expect(currentLink).toHaveAttribute("aria-current", "page");
     }
     expect(link).toHaveAttribute("data-read-state", "unread");

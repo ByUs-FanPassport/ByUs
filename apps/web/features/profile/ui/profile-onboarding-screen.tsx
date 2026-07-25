@@ -1,33 +1,34 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
+import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FocusFlowHeader } from "@/components/fan-shell/focus-flow-header";
+import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
 import styles from "./profile-onboarding-screen.module.css";
 
 type ScreenState = "checking" | "empty" | "typing" | "valid" | "duplicate" | "prohibited" | "invalid" | "saving" | "saved" | "network";
 
 type Copy = {
-  home: string; language: string; heading: string; subtitle: string; preview: string; passport: string;
+  home: string; language: string; heading: (name: string) => string; subtitle: (name: string) => string; preview: string;
   progress: string;
-  owner: string; placeholderOwner: string; tier: string; score: string; stamps: string; issuance: string;
-  issuanceValue: string; field: string; counter: (count: number) => string; rule: string; privacy: string;
+  verification: string; pending: string; owner: string; placeholderOwner: string; issuance: string;
+  field: string; counter: (count: number) => string; rule: string; privacy: string;
   save: string; saving: string; saved: string; back: string; checking: string; empty: string; typing: string;
   valid: string; duplicate: string; prohibited: string; invalid: string; network: string; auth: string;
 };
 
 const copy: Record<"ko" | "en", Copy> = {
   ko: {
-    home: "ByUs 홈", language: "언어", heading: "팬 활동에 표시할 닉네임을 정해 주세요.",
-    subtitle: "Passport와 참여 기록에 사용할 공개 이름이에요.", preview: "Passport 소유자 미리보기",
+    home: "ByUs 홈", language: "언어", heading: (name) => `${name} 팬 인증에 사용할 닉네임을 정해 주세요.`,
+    subtitle: (name) => `팬 인증을 통과하면 ${name} Fan Passport와 활동 기록에 표시돼요.`, preview: "발급 예정 Fan Passport 미리보기",
     progress: "프로필 설정 · 1 / 1",
-    passport: "KARA FAN PASSPORT", owner: "소유자", placeholderOwner: "닉네임",
-    tier: "레벨", score: "Fan Score", stamps: "Stamps", issuance: "발급",
-    issuanceValue: "팬 인증 완료 후 기록", field: "닉네임", counter: (count) => `${count}/16자`,
+    verification: "팬 인증 준비", pending: "발급 예정", owner: "공개 이름", placeholderOwner: "닉네임",
+    issuance: "팬 인증 완료 후 발급", field: "닉네임", counter: (count) => `${count}/16자`,
     rule: "한글, 영문, 숫자, 공백, 밑줄, 하이픈을 사용해 2–16자로 입력해 주세요.",
     privacy: "입력한 닉네임만 공개되며 이메일과 Google 계정 정보는 표시되지 않아요.",
     save: "닉네임 저장", saving: "저장 중…", saved: "저장 완료", back: "이전으로",
@@ -40,12 +41,11 @@ const copy: Record<"ko" | "en", Copy> = {
     auth: "로그인 후 닉네임 설정을 이어갈 수 있어요.",
   },
   en: {
-    home: "ByUs home", language: "Language", heading: "Choose the nickname shown in fan activities.",
-    subtitle: "This public name will appear in your Passport and activity history.", preview: "Passport owner preview",
+    home: "ByUs home", language: "Language", heading: (name) => `Choose a nickname for your ${name} fan verification.`,
+    subtitle: (name) => `After verification, it will appear in your ${name} Fan Passport and activity history.`, preview: "Fan Passport preview before issuance",
     progress: "Profile setup · 1 / 1",
-    passport: "KARA FAN PASSPORT", owner: "Owner", placeholderOwner: "Nickname",
-    tier: "Level", score: "Fan Score", stamps: "Stamps", issuance: "Issued",
-    issuanceValue: "Recorded after fan verification", field: "Nickname", counter: (count) => `${count}/16 characters`,
+    verification: "Fan verification", pending: "Pending issuance", owner: "Public name", placeholderOwner: "Nickname",
+    issuance: "Issued after fan verification", field: "Nickname", counter: (count) => `${count}/16 characters`,
     rule: "Use 2–16 Korean or Latin letters, numbers, spaces, underscores, or hyphens.",
     privacy: "Only this nickname is public. Your email and Google account details are never shown.",
     save: "Save nickname", saving: "Saving…", saved: "Saved", back: "Go back",
@@ -77,7 +77,7 @@ async function jsonBody(response: Response) {
   catch { return {}; }
 }
 
-export function ProfileOnboardingScreen() {
+export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCelebrity }) {
   const { replace } = useRouter();
   const searchParams = useSearchParams();
   const { ready, authenticated, getAccessToken } = usePrivy();
@@ -155,11 +155,15 @@ export function ProfileOnboardingScreen() {
     else setState(isLocallyValid(value, locale) ? "valid" : "typing");
   }, [locale]);
 
+  const focusNickname = () => {
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!localValid || state === "saving" || state === "saved") {
       setState(nickname ? "invalid" : "empty");
-      inputRef.current?.focus();
+      focusNickname();
       return;
     }
 
@@ -190,7 +194,7 @@ export function ProfileOnboardingScreen() {
         }
         else if (code === "INVALID_NICKNAME") setState("invalid");
         else setState("network");
-        inputRef.current?.focus();
+        focusNickname();
         return;
       }
       const savedNickname = body.profile?.nickname ?? normalized;
@@ -201,7 +205,7 @@ export function ProfileOnboardingScreen() {
       window.setTimeout(() => replace(returnTo as Route), completionDelay);
     } catch {
       setState("network");
-      inputRef.current?.focus();
+      focusNickname();
     }
   };
 
@@ -211,28 +215,53 @@ export function ProfileOnboardingScreen() {
   const displayOwner = normalized || t.placeholderOwner;
 
   return (
-    <div className={styles.page} data-fan-surface data-state={state} lang={locale}>
-      <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner}>
+    <FocusFlowFrame
+      locale={locale}
+      mainId="profile-onboarding-main"
+      showFooter
+      headerActions={
         <nav className={styles.locale} aria-label={t.language}>
           <Link aria-current={locale === "ko" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "ko" }) as Route}>KO</Link>
           <span aria-hidden="true">/</span>
           <Link aria-current={locale === "en" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "en" }) as Route}>EN</Link>
         </nav>
-      </FocusFlowHeader>
+      }
+    >
 
-      <main className={styles.main}>
+      <main className={styles.main} id="profile-onboarding-main" tabIndex={-1} data-state={state}>
         <section className={styles.intro} aria-labelledby="profile-heading">
           <p className={styles.progress} aria-label={t.progress}>{t.progress}</p>
-          <h1 id="profile-heading">{t.heading}</h1><p>{t.subtitle}</p>
+          <h1 id="profile-heading">{t.heading(celebrity.name)}</h1><p>{t.subtitle(celebrity.name)}</p>
         </section>
 
         <div className={styles.composition}>
           <section className={styles.preview} aria-label={t.preview} aria-live="polite">
-            <div className={styles.passportHead}><span>BYUS · KARA</span><strong>{t.passport}</strong></div>
+            <div className={styles.celebrityContext}>
+              <div className={styles.celebrityImage}>
+                <Image
+                  src={celebrity.image.url}
+                  alt={celebrity.image.alt}
+                  fill
+                  sizes="72px"
+                  style={{ objectPosition: celebrity.image.position }}
+                />
+              </div>
+              <div><span>{t.verification}</span><strong>{celebrity.name}</strong></div>
+              <em>{t.pending}</em>
+            </div>
+            <div className={styles.passportArtwork}>
+              <Image
+                src="/images/guest-home/passport-open-blank-9-transparent.png"
+                alt=""
+                width={1536}
+                height={1024}
+                sizes="(min-width: 768px) 420px, calc(100vw - 80px)"
+                priority
+              />
+            </div>
             <dl>
               <div className={styles.ownerRow}><dt>{t.owner}</dt><dd>{displayOwner}</dd></div>
-              <div><dt>{t.tier}</dt><dd>—</dd></div><div><dt>{t.score}</dt><dd>0</dd></div><div><dt>{t.stamps}</dt><dd>0</dd></div>
-              <div><dt>{t.issuance}</dt><dd>{t.issuanceValue}</dd></div>
+              <div><dt>{locale === "ko" ? "상태" : "Status"}</dt><dd>{t.issuance}</dd></div>
             </dl>
           </section>
 
@@ -251,6 +280,6 @@ export function ProfileOnboardingScreen() {
           </form>
         </div>
       </main>
-    </div>
+    </FocusFlowFrame>
   );
 }

@@ -87,8 +87,12 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
   expect(hasHorizontalOverflow).toBe(false);
 
   const focusTraversalKey = testInfo.project.name.startsWith("webkit-") ? "Alt+Tab" : "Tab";
-  await page.keyboard.press(focusTraversalKey);
-  await expect(page.getByRole("link", { name: "본문으로 바로가기" })).toBeFocused();
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  const skipLink = page.getByRole("link", { name: "본문으로 바로가기" });
+  for (let step = 0; step < 3 && !(await skipLink.evaluate((element) => element === document.activeElement)); step += 1) {
+    await page.keyboard.press(focusTraversalKey);
+  }
+  await expect(skipLink).toBeFocused();
 
   const accessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

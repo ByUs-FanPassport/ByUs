@@ -1,0 +1,55 @@
+.frame {
+  min-height: 100svh;
+  background: #fff;
+  color: oklch(18% 0 0);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.frame *,
+.frame *::before,
+.frame *::after {
+  box-sizing: border-box;
+}
+
+.header {
+  border-bottom: 1px solid oklch(93% 0 0);
+}
+
+.headerInner {
+  max-width: 1440px;
+  padding-inline: 16px;
+}
+
+.skipLink {
+  position: fixed;
+  z-index: 60;
+  top: 8px;
+  left: 16px;
+  min-height: 44px;
+  padding: 11px 16px;
+  transform: translateY(-160%);
+  border-radius: 12px;
+  background: oklch(18% 0 0);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (min-width: 48rem) {
+  .headerInner {
+    padding-inline: 32px;
+  }
+}
+
+@media (min-width: 80rem) {
+  .headerInner {
+    padding-inline: 40px;
+  }
+}

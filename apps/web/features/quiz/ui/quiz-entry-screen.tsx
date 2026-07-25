@@ -11,7 +11,8 @@ import { parseQuizStartProjection } from "../domain/quiz-attempt";
 import { parsePublicQuizIntro, type PublicQuizIntro } from "../domain/quiz-intro";
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FocusFlowBrand } from "@/components/fan-shell/focus-flow-brand";
+import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { appendLoginContext, sanitizeAuthIntentId } from "@/components/login-intent";
 import styles from "./quiz-entry-screen.module.css";
 
 type ScreenState =
@@ -46,6 +47,7 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [screen, setScreen] = useState<ScreenState>({ kind: "loading" });
   const [starting, setStarting] = useState(false);
+  const [profileState, setProfileState] = useState<"idle" | "checking" | "complete" | "error">("idle");
   const [startError, setStartError] = useState<string | null>(null);
   const requestGeneration = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
@@ -71,8 +73,46 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
     return () => { requestGeneration.current += 1; };
   }, [loadIntro]);
 
+  useEffect(() => {
+    if (!ready || !authenticated) {
+      setProfileState("idle");
+      return;
+    }
+    const controller = new AbortController();
+    setProfileState("checking");
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new QuizEntryError("UNAUTHENTICATED");
+        const response = await fetch("/api/me/profile", {
+          headers: { authorization: `Bearer ${token}` },
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const body = await response.json().catch(() => null) as { profile?: { completed?: boolean } } | null;
+        if (!response.ok || !body?.profile) throw new QuizEntryError("PROFILE_UNAVAILABLE");
+        if (body.profile.completed) {
+          setProfileState("complete");
+          return;
+        }
+        const authIntent = sanitizeAuthIntentId(new URLSearchParams(window.location.search).get("authIntent"));
+        const returnTo = `/c/${slug}/verify${authIntent ? `?authIntent=${authIntent}` : ""}`;
+        router.replace(appendLoginContext("/onboarding/profile", {
+          returnTo,
+          intent: "passport",
+          entity: slug,
+          locale: "ko",
+          authIntent,
+        }) as Route);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") setProfileState("error");
+      }
+    })();
+    return () => controller.abort();
+  }, [authenticated, getAccessToken, ready, router, slug]);
+
   const start = useCallback(async () => {
-    if (!ready || !authenticated || starting) return;
+    if (!ready || !authenticated || profileState !== "complete" || starting) return;
     setStarting(true);
     setStartError(null);
     try {
@@ -103,21 +143,21 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
       setStartError(errorMessage(error));
       setStarting(false);
     }
-  }, [authenticated, getAccessToken, ready, router, slug, starting]);
+  }, [authenticated, getAccessToken, profileState, ready, router, slug, starting]);
 
   useEffect(() => {
-    if (!authenticated || screen.kind !== "ready" || screen.intro.quiz.availability !== "available") return;
+    if (!authenticated || profileState !== "complete" || screen.kind !== "ready" || screen.intro.quiz.availability !== "available") return;
     const intentId = new URLSearchParams(window.location.search).get("authIntent");
     if (!intentId || resumedIntentRef.current === intentId) return;
     const intent = readAuthIntent(window.sessionStorage, intentId);
     if (intent?.actionType !== "START_FAN_VERIFICATION" || intent.targetType !== "celebrity" || intent.targetId !== slug) return;
     resumedIntentRef.current = intentId;
     void start();
-  }, [authenticated, screen, slug, start]);
+  }, [authenticated, profileState, screen, slug, start]);
 
   return (
-    <main className={styles.page} data-fan-surface lang="ko">
-      <FocusFlowBrand />
+    <FocusFlowFrame locale="ko">
+      <main className={styles.page}>
       <div className={styles.shell}>
         {screen.kind === "loading" && (
           <div className={styles.loading} role="status" aria-label="팬 인증 정보 불러오는 중">
@@ -149,6 +189,10 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
             </ul>
             {!ready ? (
               <button className={styles.primaryAction} type="button" disabled>로그인 확인 중…</button>
+            ) : authenticated && profileState === "checking" ? (
+              <button className={styles.primaryAction} type="button" disabled>프로필 확인 중…</button>
+            ) : authenticated && profileState === "error" ? (
+              <button className={styles.primaryAction} type="button" disabled>프로필을 확인하지 못했어요.</button>
             ) : authenticated ? (
               <button className={styles.primaryAction} type="button" disabled={starting} aria-busy={starting} onClick={() => void start()}>{starting ? "팬 인증 시작 중…" : "팬 인증 시작하기"}<ArrowRight aria-hidden="true" /></button>
             ) : (
@@ -159,6 +203,7 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
           </section>
         )}
       </div>
-    </main>
+      </main>
+    </FocusFlowFrame>
   );
 }

@@ -132,13 +132,11 @@ describe("Privy login page", () => {
     }));
   });
 
-  it("detours only an authenticated user without a profile before restoring the exact intent", async () => {
+  it("restores a non-verification intent without forcing profile onboarding", async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
     render(<LoginPage />);
     onComplete?.();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith(
-      "/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf&locale=ko&intent=reserve",
-    ));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
   });
 
   it("does not nest an existing onboarding return path", async () => {
@@ -146,18 +144,28 @@ describe("Privy login page", () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
     render(<LoginPage />);
     onComplete?.();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith(
-      "/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf&locale=ko",
-    ));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/?locale=ko"));
   });
 
-  it("preserves the durable intent identifier through profile onboarding", async () => {
+  it("preserves a non-verification durable intent while returning to its source", async () => {
     query = "returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Dko%26authIntent%3D11111111-1111-4111-8111-111111111111%23fan-code&intent=attendance&entity=kara-nualeaf&authIntent=11111111-1111-4111-8111-111111111111";
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
     render(<LoginPage />);
     onComplete?.();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith(expect.stringContaining("authIntent=11111111-1111-4111-8111-111111111111")));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/live/kara-nualeaf?locale=ko&authIntent=11111111-1111-4111-8111-111111111111#fan-code",
+    ));
     expect(screen.queryByText(/Fan Code 출석 인증을 이어갑니다/)).not.toBeInTheDocument();
+  });
+
+  it("inserts profile onboarding only for a fan verification intent", async () => {
+    query = "returnTo=%2Fc%2Fkara%2Fverify&intent=passport&entity=kara&locale=ko";
+    vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
+    render(<LoginPage />);
+    onComplete?.();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/onboarding/profile?returnTo=%2Fc%2Fkara%2Fverify&locale=ko&intent=passport&entity=kara",
+    ));
   });
 
   it("keeps the contextual login open and recoverable after an OAuth error", async () => {

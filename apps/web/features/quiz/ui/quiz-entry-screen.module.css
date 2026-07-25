@@ -1,6 +1,6 @@
-.page { min-height:100svh; background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+.page { min-height:calc(100svh - 68px); background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
-.shell { display:grid; width:min(100%,760px); min-height:100svh; margin-inline:auto; padding:88px 16px 40px; place-items:center; }
+.shell { display:grid; width:min(100%,760px); min-height:calc(100svh - 68px); margin-inline:auto; padding:40px 16px; place-items:center; }
 .entry { width:100%; }
 .returnLink { display:inline-flex; min-height:44px; align-items:center; gap:8px; margin-bottom:28px; color:oklch(48% 0 0); font-size:14px; font-weight:650; text-decoration:none; }
 .returnLink svg { width:18px; height:18px; }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { usePrivy } from "@privy-io/react-auth";
@@ -9,6 +8,7 @@ import { Check, Info, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
+import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import styles from "./quiz-result-screen.module.css";
 
 interface QuizResultScreenProps {
@@ -29,15 +29,8 @@ async function parseJson(response: Response): Promise<unknown> {
   return response.json();
 }
 
-function ResultHeader() {
-  return (
-    <header className={styles.header}>
-      <Link className={styles.wordmark} href="/" aria-label="ByUs 홈">
-        <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
-      </Link>
-      <nav aria-label="언어"><strong>KO</strong><span aria-hidden="true" /><span>EN</span></nav>
-    </header>
-  );
+function ResultFrame({ children }: { children: React.ReactNode }) {
+  return <FocusFlowFrame locale="ko"><main className={styles.page}>{children}</main></FocusFlowFrame>;
 }
 
 export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebrityName = "최애" }: QuizResultScreenProps) {
@@ -114,12 +107,11 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   const resultReturnTo = `/c/${celebritySlug}/verify/result?${resultQuery.toString()}`;
 
   if (view.kind === "loading") {
-    return <main className={styles.page} data-fan-surface lang="ko"><ResultHeader /><div className={styles.skeleton} aria-label="퀴즈 결과 불러오는 중" /></main>;
+    return <ResultFrame><div className={styles.skeleton} aria-label="퀴즈 결과 불러오는 중" /></ResultFrame>;
   }
   if (view.kind === "unauthenticated") {
     return (
-      <main className={styles.page} data-fan-surface lang="ko">
-        <ResultHeader />
+      <ResultFrame>
         <section className={styles.error}>
           <h1>로그인이 필요해요.</h1>
           <p>팬 인증 결과와 발급된 Passport를 안전하게 확인하려면 로그인해 주세요.</p>
@@ -127,27 +119,25 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
             로그인하고 결과 확인하기
           </Link>
         </section>
-      </main>
+      </ResultFrame>
     );
   }
   if (view.kind === "error") {
     return (
-      <main className={styles.page} data-fan-surface lang="ko">
-        <ResultHeader />
+      <ResultFrame>
         <section className={styles.error} role="alert">
           <h1>결과 정보를 확인할 수 없어요.</h1>
           <p>퀴즈 결과 링크를 다시 확인하거나 팬페이지에서 새로 시작해 주세요.</p>
           <Link href={`/c/${celebritySlug}`}>{celebrityName} 팬페이지로 돌아가기</Link>
         </section>
-      </main>
+      </ResultFrame>
     );
   }
 
   const { attempt } = view.projection;
   const passed = attempt.status === "passed";
   return (
-    <main className={styles.page} data-fan-surface lang="ko">
-      <ResultHeader />
+    <ResultFrame>
       <section className={styles.result}>
         <p className={styles.completion} aria-label="팬 인증 3단계 중 3단계 완료">팬 인증 · 3 / 3</p>
         <div className={styles.resultIcon} aria-hidden="true">
@@ -177,6 +167,6 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
         {!passed && <p className={styles.note}><Info aria-hidden="true" />재도전 횟수와 시간 제한은 없습니다.</p>}
         {actionError && <p ref={actionErrorRef} className={styles.actionError} role="alert" tabIndex={-1}>{actionError}</p>}
       </section>
-    </main>
+    </ResultFrame>
   );
 }

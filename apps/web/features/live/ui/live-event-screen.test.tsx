@@ -94,7 +94,7 @@ describe("LiveEventScreen", () => {
 
     await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
-    const bottom = screen.getByRole("navigation", { name: "하단 메뉴" });
+    const bottom = screen.getByRole("navigation", { name: "모바일 주요 메뉴" });
     expect(within(primary).getByRole("link", { name: "LIVE" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -103,7 +103,7 @@ describe("LiveEventScreen", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "KO / EN" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute(
       "href",
       "/live/kara-nualeaf?locale=en",
     );

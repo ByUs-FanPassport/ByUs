@@ -11,7 +11,7 @@ import {
   Radio,
   Settings2,
 } from "lucide-react";
-import { FanAppBottomNavigation, FanAppHeader } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -191,16 +191,12 @@ export function NotificationCenter() {
             ? ko.failed
             : null;
   return (
-    <div className={styles.page} data-fan-surface lang={locale}>
-      <a className={styles.skipLink} href="#notification-content">
-        본문으로 바로가기
-      </a>
-      <FanAppHeader locale={locale} actions={
+    <FanAppFrame locale={locale} mainId="notification-content" actions={
         <Link className={styles.settingsLink} href={`/settings?locale=${locale}`} aria-label="알림 설정 열기">
           <Settings2 aria-hidden="true" />
         </Link>
-      } />
-
+      }>
+      <div className={styles.page}>
       <main className={styles.content} id="notification-content" tabIndex={-1}>
       <header className={styles.pageHeading}>
         <div>
@@ -328,8 +324,7 @@ export function NotificationCenter() {
         </div>
       )}
       </main>
-
-      <FanAppBottomNavigation locale={locale} />
-    </div>
+      </div>
+    </FanAppFrame>
   );
 }
