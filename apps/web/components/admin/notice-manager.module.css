@@ -1,0 +1,41 @@
+.manager { margin-top:48px; padding:28px; border:1px solid #dedede; border-radius:16px; background:#fff; }
+.manager > header { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:24px; }
+.manager header p,.manager header h2 { margin:0; }
+.manager header p { color:#666; font-size:12px; font-weight:700; }
+.manager header h2 { margin-top:4px; font-size:24px; letter-spacing:-.03em; }
+.manager button { min-height:44px; border:1px solid #d8d8d8; border-radius:10px; background:#fff; color:#161616; font:inherit; font-weight:700; cursor:pointer; }
+.manager > header > button { padding:0 16px; background:#161616; color:#fff; }
+.layout { display:grid; gap:20px; }
+.list { display:grid; align-content:start; gap:8px; }
+.list button { display:grid; justify-items:start; gap:4px; padding:10px 12px; text-align:left; }
+.list button[aria-pressed="true"] { border-color:#161616; background:#f7f7f7; }
+.list span { color:#666; font-size:12px; }
+.editor { min-width:0; }
+.language { display:flex; gap:8px; margin-bottom:16px; }
+.language button { width:52px; }
+.language button[aria-pressed="true"] { background:#161616; color:#fff; }
+.fields { display:grid; gap:12px; }
+.fields label:not(.pin) { display:grid; gap:6px; font-size:13px; font-weight:700; }
+.fields input { min-height:44px; padding:0 12px; border:1px solid #d8d8d8; border-radius:10px; font:inherit; }
+.pin { display:flex; min-height:44px; align-items:center; gap:8px; font-size:13px; font-weight:700; }
+.pin input { width:18px; min-height:auto; height:18px; }
+.pin svg { width:16px; height:16px; }
+.toolbar { display:flex; flex-wrap:wrap; margin-top:20px; border:1px solid #ddd; border-bottom:0; border-radius:10px 10px 0 0; overflow:hidden; }
+.toolbar button { width:44px; border:0; border-right:1px solid #eee; border-radius:0; }
+.toolbar button:disabled { color:#aaa; cursor:not-allowed; }
+.toolbar svg,.actions svg { width:17px; height:17px; }
+.body { min-height:320px; padding:20px; border:1px solid #ddd; border-radius:0 0 10px 10px; }
+.body :global(.tiptap) { min-height:278px; outline:none; line-height:1.7; }
+.body :global(.tiptap img) { max-width:100%; height:auto; border-radius:12px; }
+.preview { margin-top:20px; padding:20px; border:1px solid #ddd; border-radius:12px; background:#fafafa; }
+.preview h3,.preview h4 { margin:0; }
+.preview h3 { color:#666; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+.preview h4 { margin-top:12px; font-size:22px; letter-spacing:-.03em; }
+.message { color:#555; font-size:13px; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.actions button { display:inline-flex; align-items:center; gap:8px; padding:0 14px; }
+.manager :is(button,input,.tiptap):focus-visible { outline:3px solid #161616; outline-offset:3px; }
+@media (min-width:64rem) {
+  .layout { grid-template-columns:280px minmax(0,1fr); }
+  .fields { grid-template-columns:1fr 2fr auto; align-items:end; }
+}

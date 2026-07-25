@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
+import { NoticeManager } from "./notice-manager";
 import styles from "./admin.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
 type Loc = { name: string; summary: string; imageAlt: string };
@@ -524,6 +525,15 @@ function CelebrityCms({
           </form>
         </section>
       </div>
+      {current && (
+        <NoticeManager
+          key={current.id}
+          celebrityId={current.id}
+          celebrityName={current.localizations[locale]?.name || current.slug}
+          role={role}
+          locale={locale}
+        />
+      )}
     </AdminOperationsShell>
   );
 }

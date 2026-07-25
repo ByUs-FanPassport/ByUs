@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let authenticated = false;
 const getAccessToken = vi.fn();
+const routerPush = vi.fn();
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken }) }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: routerPush }) }));
 import { CelebrityFanPage } from "./celebrity-fan-page";
 
 const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
@@ -13,27 +14,44 @@ const changha = { slug: "changha", locale: "ko", name: "Changha", summary: "Chan
 const upcomingLive = { slug: "kara-nualeaf", celebritySlug: "kara", locale: "ko", title: "KARA × NUALEAF LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } as const;
 
 describe("published celebrity fan page", () => {
-  beforeEach(() => { authenticated = false; getAccessToken.mockReset(); vi.unstubAllGlobals(); });
+  beforeEach(() => { authenticated = false; getAccessToken.mockReset(); routerPush.mockReset(); vi.unstubAllGlobals(); });
 
-  it("renders the minimum fan-hub hierarchy and intent-preserving guest action", () => {
+  it("renders the four-tab fan hub with a persistent Hero and the Home panel", () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "KARA 팬페이지 섹션" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Notice" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "LIVE 및 활동" })).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: "KARA 팬페이지 메뉴" })).toBeInTheDocument();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["홈", "공지", "LIVE", "혜택"]);
+    expect(screen.getByRole("tab", { name: "홈" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "KARA Profile" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /LIVE 자세히 보기/ })).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
+    expect(screen.getByRole("link", { name: "LIVE 자세히 보기" })).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
     expect(screen.getAllByRole("link", { name: /팬 인증하기/ })[0]).toHaveAttribute("href", expect.stringContaining("intent=passport"));
     expect(screen.getByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).toBeInTheDocument();
   });
 
-  it("renders honest empty states for missing Notice, LIVE, and SNS data", () => {
+  it("renders honest Home empty states for missing LIVE and SNS data", () => {
     render(<CelebrityFanPage celebrity={changha} locale="ko" upcomingLive={null} />);
-    expect(screen.getByText("등록된 Notice가 아직 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("예정된 LIVE가 아직 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("공개된 LIVE가 아직 없어요.")).toBeInTheDocument();
     expect(screen.getByText("공개된 SNS 링크가 아직 없어요.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /LIVE 자세히 보기/ })).not.toBeInTheDocument();
+  });
+
+  it("loads the selected Notice tab and keeps locale in detail links", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ notices: [{ slug: "opening", title: "공식 오픈 안내", pinned: true, publishedAt: "2026-07-25T10:00:00.000Z" }] }),
+    }));
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} initialTab="notice" />);
+    expect(screen.getByRole("tab", { name: "공지" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("link", { name: /공식 오픈 안내/ })).toHaveAttribute("href", "/c/kara/notices/opening?locale=ko");
+  });
+
+  it("moves between URL-backed tabs with arrow keys", () => {
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    fireEvent.keyDown(screen.getByRole("tab", { name: "홈" }), { key: "ArrowRight" });
+    expect(routerPush).toHaveBeenCalledWith("/c/kara?tab=notice&locale=ko");
+    fireEvent.keyDown(screen.getByRole("tab", { name: "홈" }), { key: "End" });
+    expect(routerPush).toHaveBeenLastCalledWith("/c/kara?tab=benefits&locale=ko");
   });
 
   it("renders only supplied official SNS links with accessible external-link names", () => {
@@ -50,9 +68,7 @@ describe("published celebrity fan page", () => {
     );
     expect(document.querySelector("main")).toHaveAttribute("id", "celebrity-detail-main");
     expect(
-      screen.getByRole("link", {
-        name: "LIVE 자세히 보기: KARA × NUALEAF LIVE",
-      }),
+      screen.getByRole("link", { name: "LIVE 자세히 보기" }),
     ).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
   });
 
