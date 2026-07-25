@@ -225,7 +225,15 @@
 .summaryOutlineAction svg { width: 16px; height: 16px; }
 .summaryEmpty { display: grid; justify-items: center; gap: 12px; padding-block: 8px; text-align: center; }
 .summaryEmpty > svg { width: 40px; height: 40px; color: var(--muted); stroke-width: 1.4; }
+.emptyPassportPreview {
+  display: block;
+  width: min(80%, 280px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%));
+}
 .summaryEmpty p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.emptyPassportHint { color: var(--muted); font-size: 13px; font-weight: 550; line-height: 1.5; }
 .summaryEmpty .summaryTextLink, .summaryEmpty .summaryOutlineAction { margin-top: 0; }
 .personalizationState {
   display: grid;

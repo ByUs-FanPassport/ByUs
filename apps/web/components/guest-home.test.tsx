@@ -458,6 +458,17 @@ describe("canonical 03 guest home", () => {
     fireEvent.click(retryButtons[0]);
 
     expect(await screen.findAllByText("아직 발급된 Passport가 없어요.")).toHaveLength(2);
+    expect(screen.getAllByText("팬 인증 완료 후 발급돼요.")).toHaveLength(2);
+    const passportPreviews = screen.getAllByRole("img", {
+      name: "발급 전 Fan Passport 미리보기",
+    });
+    expect(passportPreviews).toHaveLength(2);
+    passportPreviews.forEach((preview) => {
+      expect(preview).toHaveAttribute(
+        "src",
+        expect.stringContaining("passport-open-blank-9-transparent.png"),
+      );
+    });
     expect(screen.getAllByText("예약한 LIVE가 없어요.")).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /팬 인증할 최애 찾기/ })).toHaveLength(2);
   });
