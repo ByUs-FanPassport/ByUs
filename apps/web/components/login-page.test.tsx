@@ -53,9 +53,17 @@ describe("Privy login page", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: /Google로 계속하기/ }));
     expect(login).toHaveBeenCalledWith({ loginMethods: ["google"] });
-    expect(screen.getByText("로그인 후 선택한 라이브 예약 화면으로 돌아갑니다.")).toBeInTheDocument();
+    expect(screen.queryByText(/Embedded Wallet과 Fan Passport/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/로그인 후 .* 돌아갑니다/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Test Account 이메일/ })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "최애와 함께한 순간을 기록하세요." }).closest("[data-fan-surface]")).toHaveAttribute("lang", "ko");
+    expect(screen.getByText("© 2026 Sallylab Inc.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms");
+    expect(document.querySelector("picture[data-decorative-background] img")).toHaveAttribute("alt", "");
+    expect(screen.getByRole("img", { name: "펼쳐진 Fan Passport" })).toBeInTheDocument();
+    expect(document.querySelector("[data-login-layout='passport-gateway']")).toBeInTheDocument();
+    expect(screen.getByText("YOUR FAN PASSPORT")).toBeInTheDocument();
   });
 
   it("uses Privy's email OTP UI only when the non-production Test Account path is enabled", () => {
@@ -69,14 +77,17 @@ describe("Privy login page", () => {
     render(<LoginPage presentation="overlay" />);
 
     const dialog = await screen.findByRole("dialog", { name: "최애와 함께한 순간을 기록하세요." });
-    expect(dialog).toHaveAttribute("aria-describedby", "login-description");
+    expect(dialog).not.toHaveAttribute("aria-describedby");
     expect(screen.getByRole("heading", { name: "최애와 함께한 순간을 기록하세요." }).closest("[data-fan-surface]")).toHaveAttribute("lang", "ko");
     const closeButton = screen.getByRole("button", { name: "로그인 창 닫기" });
     await waitFor(() => expect(closeButton).toHaveFocus());
 
     fireEvent.keyDown(document, { key: "Escape" });
     expect(back).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("link", { name: "홈으로 돌아가기" })).not.toBeInTheDocument();
+    expect(screen.queryByText("© 2026 Sallylab Inc.")).not.toBeInTheDocument();
+    expect(document.querySelector("picture")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "펼쳐진 Fan Passport" })).not.toBeInTheDocument();
+    expect(document.querySelector("[data-login-layout='passport-gateway']")).not.toBeInTheDocument();
   });
 
   it("uses the shared bottom-sheet presentation on mobile viewports", async () => {
@@ -146,7 +157,7 @@ describe("Privy login page", () => {
     render(<LoginPage />);
     onComplete?.();
     await waitFor(() => expect(replace).toHaveBeenCalledWith(expect.stringContaining("authIntent=11111111-1111-4111-8111-111111111111")));
-    expect(screen.getByText("로그인 후 입력한 Fan Code 출석 인증을 이어갑니다.")).toBeInTheDocument();
+    expect(screen.queryByText(/Fan Code 출석 인증을 이어갑니다/)).not.toBeInTheDocument();
   });
 
   it("keeps the contextual login open and recoverable after an OAuth error", async () => {

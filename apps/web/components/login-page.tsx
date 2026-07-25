@@ -1,7 +1,7 @@
 "use client";
 
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +11,13 @@ import { ArrowRight, GoogleMark } from "./icons";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 import { BottomSheet, Dialog } from "./ui/overlay/accessible-overlay";
 import styles from "./login-page.module.css";
+
+const loginBackground = {
+  desktop: "/images/login/spectrum-light.webp",
+  mobile: "/images/login/spectrum-light-mobile.webp",
+} as const;
+
+const passportPreview = "/images/guest-home/passport-open-blank-9-transparent.png";
 
 type LoginPageProps = {
   presentation?: "standalone" | "overlay";
@@ -94,17 +101,22 @@ export function LoginPage({
     if (error) errorRef.current?.focus();
   }, [error]);
 
-  const context = intent === "reserve"
-    ? "로그인 후 선택한 라이브 예약 화면으로 돌아갑니다."
-    : intent === "attendance"
-      ? "로그인 후 입력한 Fan Code 출석 인증을 이어갑니다."
-      : intent === "survey"
-        ? "로그인 후 참여 가능한 LIVE 후기 화면으로 돌아갑니다."
-        : intent === "benefit-claim" || intent === "benefit-application"
-          ? "로그인 후 선택한 혜택의 수령 과정을 이어갑니다."
-    : intent === "passport"
-      ? "로그인 후 Fan Passport 발급을 이어갑니다."
-      : "로그인 후 보고 있던 화면으로 돌아갑니다.";
+  const desktopBackground = getImageProps({
+    alt: "",
+    src: loginBackground.desktop,
+    width: 1536,
+    height: 1024,
+    quality: 78,
+    sizes: "100vw",
+  }).props;
+  const mobileBackground = getImageProps({
+    alt: "",
+    src: loginBackground.mobile,
+    width: 768,
+    height: 1024,
+    quality: 76,
+    sizes: "100vw",
+  }).props;
 
   const content = (
     <div className={styles.contents} data-fan-surface lang={locale}>
@@ -124,14 +136,12 @@ export function LoginPage({
         </div>
         <div className={styles.copy}>
           <h1 id="login-heading">최애와 함께한 순간을 기록하세요.</h1>
-          <p id="login-description">Google 계정 하나로 로그인하고, 나만의 Embedded Wallet과 Fan Passport를 안전하게 이어갈 수 있어요.</p>
         </div>
         <button
           className={styles.googleButton}
           type="button"
           disabled={!ready || authenticated}
           aria-busy={authenticated}
-          aria-describedby="login-context"
           onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}
         >
           <GoogleMark /><span>{ready ? "Google로 계속하기" : "로그인 준비 중"}</span><ArrowRight />
@@ -153,9 +163,7 @@ export function LoginPage({
             <p>Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요.</p>
           </div>
         )}
-        <p id="login-context" className={styles.context}>{context}</p>
         {error && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
-        {presentation === "standalone" && <Link className={styles.backLink} href="/">홈으로 돌아가기</Link>}
     </div>
   );
 
@@ -166,7 +174,6 @@ export function LoginPage({
         open
         onClose={() => router.back()}
         labelledBy="login-heading"
-        describedBy="login-description"
         initialFocusRef={closeButtonRef}
         backdropClassName={styles.modalBackdrop}
         contentClassName={`${styles.panel} ${styles.modalPanel}`}
@@ -179,9 +186,43 @@ export function LoginPage({
 
   return (
     <main className={styles.page} data-fan-surface lang={locale}>
-      <section className={styles.panel} aria-labelledby="login-heading" aria-describedby="login-description">
-        {content}
-      </section>
+      <picture className={styles.background} data-decorative-background>
+        <source media="(max-width: 47.999rem)" srcSet={mobileBackground.srcSet} />
+        <img {...desktopBackground} alt="" />
+      </picture>
+      <div className={styles.authStage}>
+        <section
+          className={styles.gatewayPanel}
+          aria-labelledby="login-heading"
+          data-login-layout="passport-gateway"
+        >
+          <div className={styles.passportVisual}>
+            <span className={styles.passportLabel}>YOUR FAN PASSPORT</span>
+            <div className={styles.passportArtwork}>
+              <Image
+                className={styles.passportImage}
+                src={passportPreview}
+                alt="펼쳐진 Fan Passport"
+                width={1536}
+                height={1024}
+                sizes="(min-width: 768px) 390px, 1px"
+                priority
+              />
+            </div>
+          </div>
+          <div className={styles.loginColumn}>
+            {content}
+          </div>
+        </section>
+      </div>
+      <footer className={styles.footer}>
+        <span>© 2026 Sallylab Inc.</span>
+        <nav aria-label="법적 고지">
+          <Link href="/privacy" aria-label="개인정보처리방침 열기">개인정보처리방침</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms" aria-label="이용약관 열기">이용약관</Link>
+        </nav>
+      </footer>
     </main>
   );
 }

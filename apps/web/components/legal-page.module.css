@@ -1,0 +1,176 @@
+.page {
+  min-height: 100svh;
+  background: #fff;
+  color: oklch(18% 0 0);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.header {
+  border-bottom: 1px solid oklch(93% 0 0);
+}
+
+.headerInner {
+  max-width: 960px;
+  padding-inline: 24px;
+}
+
+.homeLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  color: oklch(42% 0 0);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.homeLink svg {
+  width: 17px;
+  height: 17px;
+}
+
+.homeLink:focus-visible,
+.footer a:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
+
+.main {
+  width: min(calc(100% - 40px), 760px);
+  margin-inline: auto;
+  padding-block: 64px 80px;
+}
+
+.intro {
+  padding-bottom: 32px;
+  border-bottom: 1px solid oklch(90% 0 0);
+}
+
+.intro > p:first-child {
+  margin: 0 0 12px;
+  color: oklch(45% 0 0);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.intro h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 850;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+
+.intro span {
+  display: block;
+  margin-top: 12px;
+  color: oklch(45% 0 0);
+  font-size: 13px;
+}
+
+.intro > p:last-child {
+  max-width: 65ch;
+  margin: 20px 0 0;
+  color: oklch(38% 0 0);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.document {
+  display: grid;
+  gap: 40px;
+  padding-top: 40px;
+}
+
+.document section {
+  display: grid;
+  gap: 12px;
+}
+
+.document h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 820;
+  letter-spacing: -.025em;
+  line-height: 1.35;
+}
+
+.document h3 {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.document p,
+.document li {
+  margin: 0;
+  color: oklch(34% 0 0);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.document ul,
+.document ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.document a {
+  color: oklch(38% .16 300);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.footer {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 20px;
+  border-top: 1px solid oklch(93% 0 0);
+  color: oklch(45% 0 0);
+  font-size: 13px;
+}
+
+.footer nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: inherit;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+@media (max-width: 47.999rem) {
+  .headerInner {
+    padding-inline: 20px;
+  }
+
+  .main {
+    padding-block: 40px 56px;
+  }
+
+  .intro h1 {
+    font-size: 26px;
+  }
+
+  .document {
+    gap: 32px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 0;
+    padding-block: 12px;
+  }
+}
