@@ -7,6 +7,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatKoreanLiveDate, GuestHome } from "./guest-home";
 import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
 
+const privy = vi.hoisted(() => ({
+  ready: true,
+  authenticated: false,
+  getAccessToken: vi.fn<() => Promise<string | null>>().mockResolvedValue("token"),
+}));
+
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: () => privy,
+}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ push: vi.fn() }),
@@ -31,6 +41,9 @@ const defaultProps = { celebrities, locale: "ko" as const };
 
 describe("canonical 03 guest home", () => {
   afterEach(() => {
+    privy.ready = true;
+    privy.authenticated = false;
+    privy.getAccessToken.mockReset().mockResolvedValue("token");
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -278,10 +291,10 @@ describe("canonical 03 guest home", () => {
   it("lets desktop users collapse and restore the context panel without removing mobile actions", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    const toggle = screen.getByRole("button", { name: "로그인 및 Passport 영역 접기" });
+    const toggle = screen.getByRole("button", { name: "팬 활동 영역 접기" });
     fireEvent.click(toggle);
     expect(screen.queryByRole("complementary", { name: "로그인 전 팬 활동" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "로그인 및 Passport 영역 펼치기" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "팬 활동 영역 펼치기" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
   });
 
@@ -369,5 +382,116 @@ describe("canonical 03 guest home", () => {
     fireEvent.mouseLeave(carousel);
     act(() => vi.advanceTimersByTime(6_000));
     expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
+  });
+
+  it("does not flash guest actions while authentication is still loading", () => {
+    privy.ready = false;
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+
+    expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
+  });
+
+  it("renders the authenticated Passport-first state from the MY summary", async () => {
+    privy.authenticated = true;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        summary: {
+          profile: { nickname: "카밀리아" },
+          passports: [{
+            id: "11111111-1111-4111-8111-111111111111",
+            celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+            issuedAt: "2026-07-21T00:00:00.000Z",
+            stampCount: 2,
+            score: { level: "Silver" },
+            display: { level: "실버" },
+            stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 },
+            stamps: [
+              { type: "knowledge", issuedAt: "2026-07-21T00:00:00.000Z" },
+              { type: "reservation", issuedAt: "2026-07-22T00:00:00.000Z" },
+            ],
+          }],
+          reservations: [{
+            id: "22222222-2222-4222-8222-222222222222",
+            slug: "kara-live",
+            title: "KARA LIVE",
+            startsAt: "2026-07-31T11:00:00.000Z",
+            status: "scheduled",
+            celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+          }],
+          availableBenefitCount: 0,
+          unreadNotificationCount: 0,
+        },
+      }),
+    }));
+
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+
+    expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: "KARA Fan Passport, 실버, Stamp 2개" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /KARA Fan Passport 상세 보기, 실버, Stamp 2개/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
+  });
+
+  it("shows truthful authenticated empty states and retries summary failures", async () => {
+    privy.authenticated = true;
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, json: async () => ({}) })
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          summary: {
+            profile: { nickname: null },
+            passports: [],
+            reservations: [],
+            availableBenefitCount: 0,
+            unreadNotificationCount: 0,
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    const retryButtons = await screen.findAllByRole("button", { name: "다시 시도" });
+    fireEvent.click(retryButtons[0]);
+
+    expect(await screen.findAllByText("아직 발급된 Passport가 없어요.")).toHaveLength(2);
+    expect(screen.getAllByText("예약한 LIVE가 없어요.")).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /팬 인증할 최애 찾기/ })).toHaveLength(2);
+  });
+
+  it("limits Passport artwork to the latest nine actual stamps while announcing the total", async () => {
+    privy.authenticated = true;
+    const stamps = Array.from({ length: 10 }, (_, index) => ({
+      type: (["knowledge", "reservation", "attendance", "survey"] as const)[index % 4],
+      issuedAt: `2026-07-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+    }));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        summary: {
+          profile: { nickname: "Fan" },
+          passports: [{
+            id: "11111111-1111-4111-8111-111111111111",
+            celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" },
+            issuedAt: "2026-07-21T00:00:00.000Z",
+            stampCount: 10,
+            score: { level: "Gold" },
+            display: { level: "골드" },
+            stampSummary: { knowledge: 3, reservation: 3, attendance: 2, survey: 2, total: 10 },
+            stamps,
+          }],
+          reservations: [],
+          availableBenefitCount: 0,
+          unreadNotificationCount: 0,
+        },
+      }),
+    }));
+
+    const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    expect(await screen.findAllByRole("img", { name: "KARA Fan Passport, 골드, Stamp 10개, 최근 9개 표시" })).toHaveLength(2);
+    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
   });
 });

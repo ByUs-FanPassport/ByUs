@@ -143,6 +143,120 @@
 .passportFooter > a span { flex: 1; text-align: center; }
 .passportFooter > a svg { width: 16px; height: 16px; }
 
+.mobilePersonalization { margin-top: 24px; }
+.signedInSummary {
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+  border-radius: 16px;
+  background: var(--canvas);
+  box-shadow: var(--card-shadow);
+}
+.signedInGreeting { padding: 20px; border-bottom: 1px solid var(--card-line); }
+.signedInGreeting h2 { margin: 0; font-size: 18px; font-weight: 850; letter-spacing: -.03em; line-height: 1.3; text-wrap: balance; }
+.summarySection { padding: 20px; }
+.summarySection + .summarySection { border-top: 1px solid var(--card-line); }
+.summarySectionHeader { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.summarySectionHeader > span { font-size: 14px; font-weight: 800; }
+.summarySectionHeader > small { display: grid; min-width: 24px; height: 24px; place-items: center; border-radius: 999rem; background: var(--surface-soft); color: var(--muted); font-size: 12px; font-weight: 750; }
+.ownedPassportLink { display: grid; min-width: 0; gap: 12px; border-radius: 12px; }
+.ownedPassportLink h3 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; text-wrap: balance; }
+.ownedPassportArtwork { position: relative; overflow: hidden; width: 100%; aspect-ratio: 3 / 2; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.ownedPassportArtwork > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.passportIdentityOverlay {
+  position: absolute;
+  top: 36%;
+  left: 22%;
+  display: grid;
+  width: 26%;
+  min-width: 0;
+  gap: 3px;
+  color: oklch(38% 0.02 65);
+  line-height: 1.15;
+}
+.passportIdentityOverlay span { overflow: hidden; font-size: clamp(6px, .62vw, 9px); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.passportIdentityOverlay strong { overflow: hidden; font-size: clamp(6px, .7vw, 10px); font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+.passportStampGrid {
+  position: absolute;
+  top: 22%;
+  left: 59%;
+  display: grid;
+  width: 33%;
+  height: 56%;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.passportStampSlot { display: grid; place-items: center; }
+.passportStampSlot img { display: block; width: 78%; height: 78%; object-fit: contain; }
+.passportValue { color: var(--muted); font-size: 13px; font-weight: 650; line-height: 1.5; text-align: center; }
+.summaryTextLink {
+  display: flex;
+  width: max-content;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  color: var(--muted) !important;
+  font-size: 14px;
+  font-weight: 650;
+}
+.summaryTextLink svg { width: 16px; height: 16px; }
+.reservationSummary { display: grid; grid-template-columns: 56px minmax(0,1fr); align-items: center; gap: 12px; }
+.reservationSummary > img { display: block; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+.reservationSummary > div { min-width: 0; }
+.reservationSummary :is(span,h3,time) { display: block; margin: 0; }
+.reservationSummary span { color: var(--muted); font-size: 12px; font-weight: 650; }
+.reservationSummary h3 { overflow: hidden; margin-block: 3px; font-size: 15px; font-weight: 750; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+.reservationSummary time { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.summaryOutlineAction {
+  display: flex;
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-inline: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 750;
+  transition: background-color 160ms cubic-bezier(.2,0,0,1);
+}
+.summaryOutlineAction svg { width: 16px; height: 16px; }
+.summaryEmpty { display: grid; justify-items: center; gap: 12px; padding-block: 8px; text-align: center; }
+.summaryEmpty > svg { width: 40px; height: 40px; color: var(--muted); stroke-width: 1.4; }
+.summaryEmpty p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.summaryEmpty .summaryTextLink, .summaryEmpty .summaryOutlineAction { margin-top: 0; }
+.personalizationState {
+  display: grid;
+  min-height: 180px;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid var(--card-line);
+  border-radius: 16px;
+  background: var(--canvas);
+  box-shadow: var(--card-shadow);
+  text-align: center;
+}
+.personalizationState :is(strong,span) { max-width: 34ch; }
+.personalizationState strong { font-size: 16px; font-weight: 800; }
+.personalizationState span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.personalizationState button {
+  min-height: 44px;
+  padding-inline: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--canvas);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.stateSkeleton { width: 72%; height: 12px; border-radius: 999rem; background: var(--surface-soft); }
+
 .bottomNav { position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--line); background: var(--canvas); }
 .bottomNav a { display: flex; min-width: 0; min-height: var(--bottom-nav-height); align-items: center; justify-content: center; flex-direction: column; gap: 4px; color: var(--muted); font-size: 11px; font-weight: 650; }
 .bottomNav .bottomNavActive { position: relative; color: var(--ink); font-weight: 800; }
@@ -176,7 +290,7 @@
   .panelOpen { grid-template-columns: minmax(0,1fr) 360px; gap: 24px; }
   .panelClosed { grid-template-columns: minmax(0,1fr); }
   .contextPanel { position: sticky; top: calc(var(--header-height) + 32px); display: block; align-self: start; margin-top: 76px; }
-  .mobileContextActions, .bottomNav { display: none; }
+  .mobileContextActions, .mobilePersonalization, .bottomNav { display: none; }
 }
 
 @media (min-width: 80rem) {
@@ -192,6 +306,8 @@
   .celebrityMediaBox:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
   .mobileContextActions a:hover, .googleButton:hover, .passportFooter > a:hover { background: linear-gradient(var(--surface-soft), var(--surface-soft)) padding-box, var(--spectrum-hover) border-box; }
   .passportReferenceCard:hover .passportAsset img { transform: translateY(-6px); }
+  .ownedPassportLink:hover .ownedPassportArtwork { transform: translateY(-6px); }
+  .summaryOutlineAction:hover, .personalizationState button:hover { background: var(--surface-soft); }
 }
 
 @media (prefers-reduced-motion: reduce) {

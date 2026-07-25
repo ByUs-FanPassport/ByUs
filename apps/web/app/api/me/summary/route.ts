@@ -39,14 +39,21 @@ export async function GET(request: Request): Promise<Response> {
         now,
       })),
     );
+    const sortedPassports = [...passports]
+      .sort((left, right) => Date.parse(right.issuedAt) - Date.parse(left.issuedAt));
+    const representativePassport = sortedPassports[0]
+      ? await passportDependencies.repository.findPassport({
+          id: sortedPassports[0].id,
+          appUserId: fan.appUserId,
+          locale,
+        })
+      : null;
     const activeReservations = [...catalog.liveNow, ...catalog.upcoming]
       .filter((item): item is NonNullable<typeof item> => item !== null && item.viewer.reservation !== null)
       .sort((left, right) => Date.parse(left.live.startsAt) - Date.parse(right.live.startsAt));
     const result = mySummarySchema.parse({
       profile: { nickname: profile.nickname },
-      passports: [...passports]
-        .sort((left, right) => Date.parse(right.issuedAt) - Date.parse(left.issuedAt))
-        .map((passport) => ({
+      passports: sortedPassports.map((passport) => ({
           id: passport.id,
           celebrity: {
             slug: passport.celebrity.slug,
@@ -55,6 +62,15 @@ export async function GET(request: Request): Promise<Response> {
           },
           issuedAt: passport.issuedAt,
           stampCount: passport.stampSummary.total,
+          score: { level: passport.score.level },
+          display: { level: passport.display.level },
+          stampSummary: passport.stampSummary,
+          stamps: passport.id === representativePassport?.id
+            ? representativePassport.stamps.map((stamp) => ({
+                type: stamp.type,
+                issuedAt: stamp.issuedAt,
+              }))
+            : [],
         })),
       reservations: activeReservations.map((item) => ({
         id: item.live.id,
