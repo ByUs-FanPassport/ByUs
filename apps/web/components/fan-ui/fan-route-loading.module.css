@@ -1,0 +1,14 @@
+.page {
+  display: grid;
+  min-height: 50vh;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.overlay {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  padding: 24px;
+}
+

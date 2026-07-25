@@ -95,6 +95,7 @@ const copy = {
       not_selected: "이번 혜택의 선정이 완료되었어요",
     },
     delivered: "혜택이 안전하게 전달되었어요",
+    text: "혜택 내용",
     code: "혜택 코드",
     open: "혜택 열기",
     copy: "코드 복사",
@@ -148,6 +149,7 @@ const copy = {
       not_selected: "Selection for this benefit is complete",
     },
     delivered: "Your benefit was delivered securely",
+    text: "Benefit details",
     code: "Benefit code",
     open: "Open benefit",
     copy: "Copy code",
@@ -751,6 +753,11 @@ export function BenefitDetailScreen({
                   {c.open}
                   <ExternalLink aria-hidden="true" />
                 </a>
+              ) : deliveredClaim.deliveryType === "text" ? (
+                <div className={styles.deliveredText}>
+                  <span>{c.text}</span>
+                  <p>{deliveredClaim.deliveryValue}</p>
+                </div>
               ) : (
                 <div className={styles.secret}>
                   <span>{c.code}</span>

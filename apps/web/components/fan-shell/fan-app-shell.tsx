@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import { BookOpen, Heart, Home, Radio } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { Languages } from "../icons";
 import { FanHeader } from "./fan-header";
@@ -18,10 +19,30 @@ import styles from "./fan-app-shell.module.css";
 export type FanLocale = "ko" | "en";
 export type FanSection = "home" | "live" | "favorites" | "my";
 
-function useBrowserPathname() {
-  const [pathname, setPathname] = useState("/");
-  useEffect(() => setPathname(window.location.pathname), []);
-  return pathname;
+function useBrowserHash() {
+  const [hash, setHash] = useState("");
+
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
+
+  return hash;
+}
+
+export function localeSwitchHref(
+  pathname: string,
+  search: string,
+  locale: FanLocale,
+  hash = "",
+): Route {
+  const nextSearch = new URLSearchParams(search);
+  nextSearch.set("locale", locale);
+  const query = nextSearch.toString();
+  const normalizedHash = hash && !hash.startsWith("#") ? `#${hash}` : hash;
+  return `${pathname}${query ? `?${query}` : ""}${normalizedHash}` as Route;
 }
 
 export function activeFanSection(pathname: string): FanSection {
@@ -80,10 +101,18 @@ export function FanAppHeader({
   actions?: ReactNode;
   currentPath?: string;
 }) {
-  const browserPathname = useBrowserPathname();
+  const browserPathname = usePathname() || "/";
+  const searchParams = useSearchParams();
+  const browserHash = useBrowserHash();
   const pathname = currentPath ?? browserPathname;
   const items = fanNavigationItems(locale, pathname);
   const nextLocale = locale === "ko" ? "en" : "ko";
+  const languageHref = localeSwitchHref(
+    pathname,
+    searchParams?.toString() ?? "",
+    nextLocale,
+    browserHash,
+  );
 
   return (
     <FanHeader
@@ -103,7 +132,7 @@ export function FanAppHeader({
       <div className={styles.actions}>
         <Link
           className={styles.language}
-          href={`${pathname}?locale=${nextLocale}` as Route}
+          href={languageHref}
           aria-label={locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English"}
         >
           <Languages aria-hidden="true" />
@@ -117,7 +146,7 @@ export function FanAppHeader({
 export { FanContentContainer } from "./fan-content-container";
 
 export function FanAppBottomNavigation({ locale, currentPath }: { locale: FanLocale; currentPath?: string }) {
-  const browserPathname = useBrowserPathname();
+  const browserPathname = usePathname() || "/";
   const pathname = currentPath ?? browserPathname;
   const items = fanNavigationItems(locale, pathname).map((item) => ({
     ...item,

@@ -22,7 +22,7 @@
 
 .skipLink {
   position: fixed;
-  z-index: 60;
+  z-index: var(--z-tooltip);
   top: 8px;
   left: 16px;
   min-height: 44px;

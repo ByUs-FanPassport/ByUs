@@ -194,6 +194,7 @@ export function LoginPage({
     <main className={styles.page} data-fan-surface lang={locale}>
       <picture className={styles.background} data-decorative-background>
         <source media="(max-width: 47.999rem)" srcSet={mobileBackground.srcSet} />
+        {/* impeccable-disable-next-line broken-image: src is provided by getImageProps */}
         <img {...desktopBackground} alt="" />
       </picture>
       <div className={styles.authStage}>

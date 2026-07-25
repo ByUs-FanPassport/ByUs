@@ -8,6 +8,7 @@ import { Check, Info, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
+import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import styles from "./quiz-result-screen.module.css";
 
@@ -16,6 +17,7 @@ interface QuizResultScreenProps {
   passportId: string | null;
   celebritySlug: string;
   celebrityName?: string;
+  locale: FanLocale;
 }
 
 type ViewState =
@@ -29,17 +31,91 @@ async function parseJson(response: Response): Promise<unknown> {
   return response.json();
 }
 
-function ResultFrame({ children }: { children: React.ReactNode }) {
-  return <FocusFlowFrame locale="ko"><main className={styles.page}>{children}</main></FocusFlowFrame>;
+const copy = {
+  ko: {
+    favorite: "최애",
+    loginTitle: "로그인이 필요해요.",
+    loginBody: "팬 인증 결과와 발급된 Passport를 안전하게 확인하려면 로그인해 주세요.",
+    login: "로그인하고 결과 확인하기",
+    errorTitle: "결과 정보를 확인할 수 없어요.",
+    errorBody: "퀴즈 결과 링크를 다시 확인하거나 팬페이지에서 새로 시작해 주세요.",
+    fanPage: (name: string) => `${name} 팬페이지로 돌아가기`,
+    completionAria: "팬 인증 3단계 중 3단계 완료",
+    completion: "팬 인증 · 3 / 3",
+    passed: (name: string) => `${name} Official Fan 인증 완료`,
+    failed: "조금만 더 알아보고 다시 도전해 볼까요?",
+    score: (score: number) => `3문항 중 ${score}문항을 맞혔어요.`,
+    passedHelper: (name: string) => `팬 인증이 완료되어 ${name} 팬 Passport가 발급되었어요.`,
+    passedActionHelper: "버튼을 누르면 첫 Stamp와 Passport를 확인할 수 있어요.",
+    issued: "발급 완료",
+    earned: "적립 완료",
+    applied: "반영 완료",
+    fanScore: "팬 점수 +1",
+    receivePassport: "Passport 받기",
+    failedHelper: "정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.",
+    retrying: "새 문항 준비 중",
+    retry: "다시 도전",
+    retryNote: "재도전 횟수와 시간 제한은 없습니다.",
+    retryError: "새 퀴즈를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  },
+  en: {
+    favorite: "your favorite",
+    loginTitle: "Sign in required",
+    loginBody: "Sign in to securely view your fan verification result and issued Passport.",
+    login: "Sign in to view result",
+    errorTitle: "We couldn't verify this result.",
+    errorBody: "Check the quiz result link or start again from the fan page.",
+    fanPage: (name: string) => `Back to ${name} fan page`,
+    completionAria: "Fan verification step 3 of 3 complete",
+    completion: "Fan verification · 3 / 3",
+    passed: (name: string) => `${name} Official Fan verification complete`,
+    failed: "Almost there. Ready to try again?",
+    score: (score: number) => `You answered ${score} of 3 questions correctly.`,
+    passedHelper: (name: string) => `Your ${name} Fan Passport was issued after verification.`,
+    passedActionHelper: "Open it to see your first Stamp and Passport.",
+    issued: "Issued",
+    earned: "Earned",
+    applied: "Applied",
+    fanScore: "Fan Score +1",
+    receivePassport: "Open Passport",
+    failedHelper: "Answers and explanations aren't shown. You can retry with new questions.",
+    retrying: "Preparing new questions",
+    retry: "Try again",
+    retryNote: "There is no retry count or time limit.",
+    retryError: "We couldn't start a new quiz. Please try again in a moment.",
+  },
+} as const;
+
+function withLocale(path: string, locale: FanLocale): Route {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}locale=${locale}` as Route;
 }
 
-export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebrityName = "최애" }: QuizResultScreenProps) {
+function ResultFrame({ children, locale }: { children: React.ReactNode; locale: FanLocale }) {
+  return (
+    <FocusFlowFrame locale={locale} mainId="fan-verification-result-main">
+      <main className={styles.page} id="fan-verification-result-main" tabIndex={-1}>
+        {children}
+      </main>
+    </FocusFlowFrame>
+  );
+}
+
+export function QuizResultScreen({
+  attemptId,
+  passportId,
+  celebritySlug,
+  celebrityName,
+  locale,
+}: QuizResultScreenProps) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [view, setView] = useState<ViewState>({ kind: "loading" });
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
   const actionErrorRef = useRef<HTMLParagraphElement>(null);
+  const t = copy[locale];
+  const displayName = celebrityName ?? t.favorite;
 
   useEffect(() => {
     if (actionError) actionErrorRef.current?.focus();
@@ -60,7 +136,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
       try {
         const token = await getAccessToken();
         if (!token) throw new Error("missing access token");
-        const body = await parseJson(await fetch(`/api/quiz-attempts/${attemptId}?locale=ko`, {
+        const body = await parseJson(await fetch(`/api/quiz-attempts/${attemptId}?locale=${locale}`, {
           method: "GET",
           headers: { authorization: `Bearer ${token}` },
           cache: "no-store",
@@ -76,7 +152,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
       }
     })();
     return () => { active = false; };
-  }, [attemptId, authenticated, getAccessToken, passportId, ready]);
+  }, [attemptId, authenticated, getAccessToken, locale, passportId, ready]);
 
   async function retry() {
     if (actionPending) return;
@@ -85,18 +161,18 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
     try {
       const token = await getAccessToken();
       if (!token) throw new Error("missing access token");
-      const body = await parseJson(await fetch(`/api/celebrities/${celebritySlug}/quiz/attempts?locale=ko`, {
+      const body = await parseJson(await fetch(`/api/celebrities/${celebritySlug}/quiz/attempts?locale=${locale}`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
       })) as { result?: unknown };
       const result = parseQuizStartProjection(body.result);
       if (result.kind === "holder") {
-        router.push(`/passports/${result.passportId}` as Route);
+        router.push(withLocale(`/passports/${result.passportId}`, locale));
       } else {
-        router.push(`/c/${celebritySlug}/verify/questions?attempt=${result.attempt.id}` as Route);
+        router.push(withLocale(`/c/${celebritySlug}/verify/questions?attempt=${result.attempt.id}`, locale));
       }
     } catch {
-      setActionError("새 퀴즈를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      setActionError(t.retryError);
       setActionPending(false);
     }
   }
@@ -104,19 +180,20 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   const resultQuery = new URLSearchParams();
   if (attemptId) resultQuery.set("attempt", attemptId);
   if (passportId) resultQuery.set("passport", passportId);
+  resultQuery.set("locale", locale);
   const resultReturnTo = `/c/${celebritySlug}/verify/result?${resultQuery.toString()}`;
 
   if (view.kind === "loading") {
-    return <ResultFrame><div className={styles.skeleton} aria-label="퀴즈 결과 불러오는 중" /></ResultFrame>;
+    return <ResultFrame locale={locale}><div className={styles.skeleton} aria-label={locale === "ko" ? "퀴즈 결과 불러오는 중" : "Loading quiz result"} /></ResultFrame>;
   }
   if (view.kind === "unauthenticated") {
     return (
-      <ResultFrame>
+      <ResultFrame locale={locale}>
         <section className={styles.error}>
-          <h1>로그인이 필요해요.</h1>
-          <p>팬 인증 결과와 발급된 Passport를 안전하게 확인하려면 로그인해 주세요.</p>
-          <Link className={styles.loginAction} href={`/login?returnTo=${encodeURIComponent(resultReturnTo)}&intent=passport` as Route}>
-            로그인하고 결과 확인하기
+          <h1>{t.loginTitle}</h1>
+          <p>{t.loginBody}</p>
+          <Link className={styles.loginAction} href={`/login?returnTo=${encodeURIComponent(resultReturnTo)}&locale=${locale}&intent=passport` as Route}>
+            {t.login}
           </Link>
         </section>
       </ResultFrame>
@@ -124,47 +201,58 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   }
   if (view.kind === "error") {
     return (
-      <ResultFrame>
+      <ResultFrame locale={locale}>
         <section className={styles.error} role="alert">
-          <h1>결과 정보를 확인할 수 없어요.</h1>
-          <p>퀴즈 결과 링크를 다시 확인하거나 팬페이지에서 새로 시작해 주세요.</p>
-          <Link href={`/c/${celebritySlug}`}>{celebrityName} 팬페이지로 돌아가기</Link>
+          <h1>{t.errorTitle}</h1>
+          <p>{t.errorBody}</p>
+          <Link href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
         </section>
       </ResultFrame>
     );
   }
 
   const { attempt } = view.projection;
+  if (attempt.status === "open") {
+    return (
+      <ResultFrame locale={locale}>
+        <section className={styles.error} role="alert">
+          <h1>{t.errorTitle}</h1>
+          <p>{t.errorBody}</p>
+          <Link href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
+        </section>
+      </ResultFrame>
+    );
+  }
   const passed = attempt.status === "passed";
   return (
-    <ResultFrame>
+    <ResultFrame locale={locale}>
       <section className={styles.result}>
-        <p className={styles.completion} aria-label="팬 인증 3단계 중 3단계 완료">팬 인증 · 3 / 3</p>
+        <p className={styles.completion} aria-label={t.completionAria}>{t.completion}</p>
         <div className={styles.resultIcon} aria-hidden="true">
           {passed ? <Check /> : <RefreshCw />}
         </div>
-        <h1>{passed ? `${celebrityName} Official Fan 인증 완료` : "조금만 더 알아보고 다시 도전해 볼까요?"}</h1>
-        <p className={passed ? styles.scorePass : styles.score}>{`3문항 중 ${attempt.score}문항을 맞혔어요.`}</p>
+        <h1>{passed ? t.passed(displayName) : t.failed}</h1>
+        <p className={passed ? styles.scorePass : styles.score}>{t.score(attempt.score)}</p>
         {passed ? (
           <>
-            <p className={styles.helper}>팬 인증이 완료되어 {celebrityName} 팬 Passport가 발급되었어요.<br />버튼을 누르면 첫 Stamp와 Passport를 확인할 수 있어요.</p>
+            <p className={styles.helper}>{t.passedHelper(displayName)}<br />{t.passedActionHelper}</p>
             <div className={styles.rewards}>
-              <div><span>Passport</span><strong>{celebrityName} Passport</strong><small>발급 완료</small></div>
-              <div><span>Stamp</span><strong>Knowledge Stamp</strong><small>적립 완료</small></div>
-              <div><span>Score</span><strong>팬 점수 +1</strong><small>반영 완료</small></div>
+              <div><span>Passport</span><strong>{displayName} Passport</strong><small>{t.issued}</small></div>
+              <div><span>Stamp</span><strong>Knowledge Stamp</strong><small>{t.earned}</small></div>
+              <div><span>Score</span><strong>{t.fanScore}</strong><small>{t.applied}</small></div>
             </div>
-            <Link className={styles.primary} href={`/passports/${passportId}/issuance` as Route}>Passport 받기</Link>
+            <Link className={styles.primary} href={withLocale(`/passports/${passportId}/issuance`, locale)}>{t.receivePassport}</Link>
           </>
         ) : (
           <>
-            <p className={styles.helper}>정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.</p>
+            <p className={styles.helper}>{t.failedHelper}</p>
             <button className={styles.primary} type="button" disabled={actionPending} aria-busy={actionPending} onClick={() => void retry()}>
-              {actionPending ? "새 문항 준비 중" : "다시 도전"}
+              {actionPending ? t.retrying : t.retry}
             </button>
           </>
         )}
-        <Link className={styles.secondary} href={`/c/${celebritySlug}`}>{celebrityName} 팬페이지로 돌아가기</Link>
-        {!passed && <p className={styles.note}><Info aria-hidden="true" />재도전 횟수와 시간 제한은 없습니다.</p>}
+        <Link className={styles.secondary} href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
+        {!passed && <p className={styles.note}><Info aria-hidden="true" />{t.retryNote}</p>}
         {actionError && <p ref={actionErrorRef} className={styles.actionError} role="alert" tabIndex={-1}>{actionError}</p>}
       </section>
     </ResultFrame>

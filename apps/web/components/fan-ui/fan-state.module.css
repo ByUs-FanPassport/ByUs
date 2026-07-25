@@ -1,0 +1,82 @@
+.state {
+  display: grid;
+  width: min(100%, 560px);
+  min-height: 280px;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  margin-inline: auto;
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.state > svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  color: oklch(42% 0 0);
+  stroke-width: 1.5;
+}
+
+.state h2,
+.state p {
+  margin: 0;
+}
+
+.state h2 {
+  color: oklch(18% 0 0);
+  font-size: 20px;
+  font-weight: 850;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.state p {
+  max-width: 54ch;
+  color: oklch(46% 0 0);
+  font-size: 14px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  width: min(100%, 320px);
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.loadingBar {
+  position: relative;
+  width: min(100%, 240px);
+  height: 6px;
+  overflow: hidden;
+  margin-top: 12px;
+  border-radius: 999rem;
+  background: oklch(94% 0 0);
+}
+
+.loadingBar::after {
+  position: absolute;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: oklch(18% 0 0);
+  content: "";
+  animation: fan-state-progress 1.1s cubic-bezier(0.2, 0, 0, 1) infinite alternate;
+}
+
+@keyframes fan-state-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(240%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingBar::after {
+    width: 100%;
+    animation: none;
+    transform: none;
+  }
+}

@@ -12,6 +12,7 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ...authState, getAccessToken }),
 }));
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/notifications",
   useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("./push-subscription", () => ({ enablePushNotifications }));
@@ -118,9 +119,9 @@ describe("FAN-019 Notification Center", () => {
     expect(
       await screen.findByRole("heading", { name: "로그인 후 알림을 확인해 주세요." }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "로그인하기" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Google로 계속하기" })).toHaveAttribute(
       "href",
-      "/login?returnTo=%2Fnotifications",
+      "/login?returnTo=%2Fnotifications%3Flocale%3Dko&locale=ko",
     );
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -156,6 +157,6 @@ describe("FAN-019 Notification Center", () => {
     fireEvent.click(
       screen.getAllByRole("button", { name: "브라우저 알림 켜기" })[0],
     );
-    expect(await screen.findByRole("status")).toHaveTextContent(message);
+    expect(await screen.findByText(message)).toBeInTheDocument();
   });
 });

@@ -13,6 +13,7 @@ import {
   parseQuizSubmitProjection,
   type QuizAttemptProjection,
 } from "../domain/quiz-attempt";
+import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import styles from "./quiz-questions-screen.module.css";
 
@@ -29,6 +30,72 @@ class QuizUiError extends Error {
   }
 }
 
+const copy = {
+  ko: {
+    sessionExpired: "로그인이 만료되었어요. 다시 로그인한 뒤 이어서 참여해 주세요.",
+    closed: "이미 제출된 퀴즈예요. 결과 화면에서 인증 결과를 확인해 주세요.",
+    wallet: "Passport를 발급할 지갑을 준비하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    incomplete: "저장되지 않은 답변이 있어요. 세 문항을 다시 확인해 주세요.",
+    unavailable: "현재 참여할 수 있는 팬 인증 퀴즈가 없어요.",
+    loadError: "퀴즈 정보를 안전하게 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+    loadingAria: "팬 인증 퀴즈 불러오는 중",
+    loading: "팬 인증 퀴즈를 불러오고 있어요.",
+    loginTitle: "로그인이 필요해요.",
+    loginBody: "팬 인증 답변을 안전하게 저장하고 이어서 참여하려면 로그인해 주세요.",
+    login: "로그인하고 계속하기",
+    errorTitle: "퀴즈를 불러오지 못했어요.",
+    retry: "다시 시도",
+    exit: "인증을 나가고 팬페이지로 돌아가기",
+    eyebrow: "팬 인증 퀴즈",
+    title: "최애를 얼마나 알고 있나요?",
+    progress: "팬 인증 진행률",
+    progressValue: (current: number, total: number) => `총 ${total}문항 중 ${current}번째`,
+    saving: "답변 저장 중…",
+    saved: "답변 저장 완료",
+    select: "답을 선택해 주세요.",
+    retryAnswer: "답을 다시 선택해 주세요.",
+    navigation: "퀴즈 문항 이동",
+    previous: "이전 질문",
+    submitting: "결과 확인 중…",
+    submit: "팬 인증 결과 확인",
+    next: "다음 질문",
+  },
+  en: {
+    sessionExpired: "Your sign-in expired. Sign in again to continue.",
+    closed: "This quiz was already submitted. Check the result screen for your verification status.",
+    wallet: "We couldn't prepare a wallet for your Passport. Please try again in a moment.",
+    incomplete: "Some answers weren't saved. Review all three questions.",
+    unavailable: "This fan verification quiz is not available right now.",
+    loadError: "We couldn't load the quiz securely. Please try again in a moment.",
+    loadingAria: "Loading fan verification quiz",
+    loading: "Loading your fan verification quiz.",
+    loginTitle: "Sign in required",
+    loginBody: "Sign in to save your fan verification answers and continue securely.",
+    login: "Sign in to continue",
+    errorTitle: "We couldn't load the quiz.",
+    retry: "Try again",
+    exit: "Exit verification and return to the fan page",
+    eyebrow: "Fan verification quiz",
+    title: "How well do you know your favorite?",
+    progress: "Fan verification progress",
+    progressValue: (current: number, total: number) => `Question ${current} of ${total}`,
+    saving: "Saving answer…",
+    saved: "Answer saved",
+    select: "Choose an answer.",
+    retryAnswer: "Choose the answer again.",
+    navigation: "Quiz question navigation",
+    previous: "Previous question",
+    submitting: "Checking result…",
+    submit: "View verification result",
+    next: "Next question",
+  },
+} as const;
+
+function withLocale(path: string, locale: FanLocale): Route {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}locale=${locale}` as Route;
+}
+
 async function readJson(response: Response): Promise<unknown> {
   const body = await response.json().catch(() => null);
   if (!response.ok) {
@@ -38,22 +105,23 @@ async function readJson(response: Response): Promise<unknown> {
   return body;
 }
 
-function errorMessage(error: unknown): string {
+function errorMessage(error: unknown, locale: FanLocale): string {
+  const t = copy[locale];
   if (error instanceof QuizUiError) {
-    if (error.code === "UNAUTHENTICATED") return "로그인이 만료되었어요. 다시 로그인한 뒤 이어서 참여해 주세요.";
-    if (error.code === "ATTEMPT_CLOSED") return "이미 제출된 퀴즈예요. 결과 화면에서 인증 결과를 확인해 주세요.";
-    if (error.code === "WALLET_REQUIRED") return "Passport를 발급할 지갑을 준비하지 못했어요. 잠시 후 다시 시도해 주세요.";
-    if (error.code === "ATTEMPT_INCOMPLETE") return "저장되지 않은 답변이 있어요. 세 문항을 다시 확인해 주세요.";
-    if (error.code === "QUIZ_UNAVAILABLE" || error.code === "NOT_FOUND") return "현재 참여할 수 있는 팬 인증 퀴즈가 없어요.";
+    if (error.code === "UNAUTHENTICATED") return t.sessionExpired;
+    if (error.code === "ATTEMPT_CLOSED") return t.closed;
+    if (error.code === "WALLET_REQUIRED") return t.wallet;
+    if (error.code === "ATTEMPT_INCOMPLETE") return t.incomplete;
+    if (error.code === "QUIZ_UNAVAILABLE" || error.code === "NOT_FOUND") return t.unavailable;
   }
-  return "퀴즈 정보를 안전하게 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
+  return t.loadError;
 }
 
 function authorization(token: string): HeadersInit {
   return { authorization: `Bearer ${token}` };
 }
 
-export function QuizQuestionsScreen({ slug }: { slug: string }) {
+export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: FanLocale }) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [screen, setScreen] = useState<ScreenState>({ kind: "loading" });
@@ -63,12 +131,14 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
   const [operationError, setOperationError] = useState<string | null>(null);
   const requestGeneration = useRef(0);
   const operationErrorRef = useRef<HTMLDivElement>(null);
+  const t = copy[locale];
 
   const resultPath = useCallback((attemptId: string, passportId?: string) => {
     const query = new URLSearchParams({ attempt: attemptId });
     if (passportId) query.set("passport", passportId);
+    query.set("locale", locale);
     return `/c/${slug}/verify/result?${query.toString()}` as Route;
-  }, [slug]);
+  }, [locale, slug]);
 
   const load = useCallback(async () => {
     const generation = ++requestGeneration.current;
@@ -77,7 +147,7 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
     try {
       const token = await getAccessToken();
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
-      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=ko`, {
+      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}`, {
         method: "POST",
         headers: authorization(token),
         cache: "no-store",
@@ -86,7 +156,7 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
       const result = parseQuizStartProjection(body.result);
       if (generation !== requestGeneration.current) return;
       if (result.kind === "holder") {
-        router.replace(`/passports/${result.passportId}` as Route);
+        router.replace(withLocale(`/passports/${result.passportId}`, locale));
         return;
       }
       if (result.attempt.status !== "open") {
@@ -97,9 +167,9 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
       const firstUnanswered = result.questions.findIndex((question) => question.selectedOptionId === null);
       setQuestionIndex(firstUnanswered === -1 ? 0 : firstUnanswered);
     } catch (error) {
-      if (generation === requestGeneration.current) setScreen({ kind: "error", message: errorMessage(error) });
+      if (generation === requestGeneration.current) setScreen({ kind: "error", message: errorMessage(error, locale) });
     }
-  }, [getAccessToken, resultPath, router, slug]);
+  }, [getAccessToken, locale, resultPath, router, slug]);
 
   useEffect(() => {
     if (!ready || !authenticated) return;
@@ -125,7 +195,7 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
     try {
       const token = await getAccessToken();
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
-      const response = await fetch(`/api/quiz-attempts/${projection.attempt.id}/answers?locale=ko`, {
+      const response = await fetch(`/api/quiz-attempts/${projection.attempt.id}/answers?locale=${locale}`, {
         method: "PUT",
         headers: { ...authorization(token), "content-type": "application/json" },
         body: JSON.stringify({ questionId, selectedOptionId }),
@@ -135,11 +205,11 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
       const nextProjection = parseQuizAttemptProjection(body.attempt);
       setScreen({ kind: "ready", projection: nextProjection });
     } catch (error) {
-      setOperationError(errorMessage(error));
+      setOperationError(errorMessage(error, locale));
     } finally {
       setSavingQuestionId(null);
     }
-  }, [getAccessToken, projection, savingQuestionId, submitPending]);
+  }, [getAccessToken, locale, projection, savingQuestionId, submitPending]);
 
   const submit = useCallback(async () => {
     if (!projection || !allAnswered || savingQuestionId || submitPending) return;
@@ -159,22 +229,22 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
         ? resultPath(result.attempt.id, result.issuance.passportId)
         : resultPath(result.attempt.id));
     } catch (error) {
-      setOperationError(errorMessage(error));
+      setOperationError(errorMessage(error, locale));
       setSubmitPending(false);
     }
-  }, [allAnswered, getAccessToken, projection, resultPath, router, savingQuestionId, submitPending]);
+  }, [allAnswered, getAccessToken, locale, projection, resultPath, router, savingQuestionId, submitPending]);
 
   if (!ready || (authenticated && screen.kind === "loading")) {
-    return <QuizFrame><div className={styles.loading} role="status" aria-label="팬 인증 퀴즈 불러오는 중"><span /><span /><span /><p>팬 인증 퀴즈를 불러오고 있어요.</p></div></QuizFrame>;
+    return <QuizFrame locale={locale}><div className={styles.loading} role="status" aria-label={t.loadingAria}><span /><span /><span /><p>{t.loading}</p></div></QuizFrame>;
   }
 
   if (!authenticated) {
-    const returnTo = `/c/${slug}/verify/questions`;
-    return <QuizFrame><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">로그인이 필요해요.</h1><p>팬 인증 답변을 안전하게 저장하고 이어서 참여하려면 로그인해 주세요.</p><Link className={styles.primaryAction} href={`/login?returnTo=${encodeURIComponent(returnTo)}&intent=passport` as Route}>로그인하고 계속하기 <ArrowRight /></Link></section></QuizFrame>;
+    const returnTo = withLocale(`/c/${slug}/verify/questions`, locale);
+    return <QuizFrame locale={locale}><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">{t.loginTitle}</h1><p>{t.loginBody}</p><Link className={styles.primaryAction} href={`/login?returnTo=${encodeURIComponent(returnTo)}&locale=${locale}&intent=passport` as Route}>{t.login} <ArrowRight aria-hidden="true" /></Link></section></QuizFrame>;
   }
 
   if (screen.kind === "error") {
-    return <QuizFrame><section className={styles.message} role="alert"><h1>퀴즈를 불러오지 못했어요.</h1><p>{screen.message}</p><button className={styles.secondaryAction} type="button" onClick={() => void load()}><RotateCcw /> 다시 시도</button></section></QuizFrame>;
+    return <QuizFrame locale={locale}><section className={styles.message} role="alert"><h1>{t.errorTitle}</h1><p>{screen.message}</p><button className={styles.secondaryAction} type="button" onClick={() => void load()}><RotateCcw aria-hidden="true" /> {t.retry}</button></section></QuizFrame>;
   }
 
   if (!question || !projection) return null;
@@ -185,17 +255,17 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
   const totalQuestions = projection.questions.length;
 
   return (
-    <QuizFrame>
+    <QuizFrame locale={locale}>
       <section className={styles.quiz} aria-labelledby="question-heading">
-        <Link className={styles.exitLink} href={`/c/${slug}` as Route}><ArrowLeft aria-hidden="true" />인증을 나가고 팬페이지로 돌아가기</Link>
+        <Link className={styles.exitLink} href={withLocale(`/c/${slug}`, locale)}><ArrowLeft aria-hidden="true" />{t.exit}</Link>
         <header className={styles.quizHeader}>
-          <div><p>팬 인증 퀴즈</p><h1>최애를 얼마나 알고 있나요?</h1></div>
-          <strong aria-label={`총 ${totalQuestions}문항 중 ${questionIndex + 1}번째`}>{questionIndex + 1} / {totalQuestions}</strong>
+          <div><p>{t.eyebrow}</p><h1>{t.title}</h1></div>
+          <strong aria-label={t.progressValue(questionIndex + 1, totalQuestions)}>{questionIndex + 1} / {totalQuestions}</strong>
         </header>
         <div
           className={styles.progress}
           role="progressbar"
-          aria-label="팬 인증 진행률"
+          aria-label={t.progress}
           aria-valuemin={1}
           aria-valuemax={totalQuestions}
           aria-valuenow={questionIndex + 1}
@@ -216,15 +286,15 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
           </fieldset>
         </form>
         <div className={styles.saveStatus} aria-live="polite">
-          {isSaving ? "답변 저장 중…" : question.selectedOptionId ? "답변 저장 완료" : "답을 선택해 주세요."}
+          {isSaving ? t.saving : question.selectedOptionId ? t.saved : t.select}
         </div>
-        {operationError && <div ref={operationErrorRef} className={styles.inlineError} role="alert" tabIndex={-1}><p>{operationError} 답을 다시 선택해 주세요.</p></div>}
-        <nav className={styles.navigation} aria-label="퀴즈 문항 이동">
-          <button className={styles.previous} type="button" disabled={questionIndex === 0 || Boolean(savingQuestionId) || submitPending} onClick={() => setQuestionIndex((index) => index - 1)}><ArrowLeft /> 이전 질문</button>
+        {operationError && <div ref={operationErrorRef} className={styles.inlineError} role="alert" tabIndex={-1}><p>{operationError} {t.retryAnswer}</p></div>}
+        <nav className={styles.navigation} aria-label={t.navigation}>
+          <button className={styles.previous} type="button" disabled={questionIndex === 0 || Boolean(savingQuestionId) || submitPending} onClick={() => setQuestionIndex((index) => index - 1)}><ArrowLeft aria-hidden="true" /> {t.previous}</button>
           {isLast ? (
-            <button className={styles.submit} type="button" disabled={!allAnswered || Boolean(savingQuestionId) || submitPending} onClick={() => void submit()}>{submitPending ? "결과 확인 중…" : "팬 인증 결과 확인"}<ArrowRight /></button>
+            <button className={styles.submit} type="button" disabled={!allAnswered || Boolean(savingQuestionId) || submitPending} onClick={() => void submit()}>{submitPending ? t.submitting : t.submit}<ArrowRight aria-hidden="true" /></button>
           ) : (
-            <button className={styles.next} type="button" disabled={!canContinue} onClick={() => setQuestionIndex((index) => index + 1)}>다음 질문 <ArrowRight /></button>
+            <button className={styles.next} type="button" disabled={!canContinue} onClick={() => setQuestionIndex((index) => index + 1)}>{t.next} <ArrowRight aria-hidden="true" /></button>
           )}
         </nav>
       </section>
@@ -232,6 +302,12 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
   );
 }
 
-function QuizFrame({ children }: { children: React.ReactNode }) {
-  return <FocusFlowFrame locale="ko"><main className={styles.page}><div className={styles.shell}>{children}</div></main></FocusFlowFrame>;
+function QuizFrame({ children, locale }: { children: React.ReactNode; locale: FanLocale }) {
+  return (
+    <FocusFlowFrame locale={locale} mainId="fan-verification-questions-main">
+      <main className={styles.page} id="fan-verification-questions-main" tabIndex={-1}>
+        <div className={styles.shell}>{children}</div>
+      </main>
+    </FocusFlowFrame>
+  );
 }

@@ -5,8 +5,30 @@
 
 .sticky {
   position: sticky;
-  z-index: 20;
+  z-index: var(--z-sticky-header);
   top: 0;
+}
+
+.skipLink {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  top: 8px;
+  left: 16px;
+  min-height: 44px;
+  padding: 11px 16px;
+  transform: translateY(-160%);
+  border-radius: 12px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid #fff;
+  outline-offset: 2px;
 }
 
 .inner {

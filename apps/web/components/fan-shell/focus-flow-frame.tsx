@@ -27,7 +27,12 @@ export function FocusFlowFrame({
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
       ) : null}
-      <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner} sticky={stickyHeader}>
+      <FocusFlowHeader
+        className={styles.header}
+        innerClassName={styles.headerInner}
+        locale={locale}
+        sticky={stickyHeader}
+      >
         {headerActions ?? <span />}
       </FocusFlowHeader>
       {children}

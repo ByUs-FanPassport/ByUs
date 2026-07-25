@@ -12,6 +12,9 @@ import {
   Settings2,
 } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
+import { FanState } from "@/components/fan-ui/fan-state";
+import { GoogleMark } from "@/components/icons";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -234,45 +237,34 @@ export function NotificationCenter() {
         </button>
       </section>
       {state.kind === "loading" && (
-        <div
-          className={`${styles.message} ${styles.loading}`}
-          aria-busy="true"
-          aria-live="polite"
-          role="status"
-        >
-          <span className={styles.loadingIcon} aria-hidden="true" />
-          <p>알림을 불러오는 중입니다.</p>
-        </div>
+        <FanState kind="loading" title="알림을 불러오는 중입니다." />
       )}
       {state.kind === "auth" && (
-        <div className={styles.message}>
-          <Bell aria-hidden="true" />
-          <h2>{ko.signIn}</h2>
-          <p>로그인하면 읽지 않은 소식과 예약한 LIVE 알림을 이어서 볼 수 있어요.</p>
-          <Link className={styles.messageAction} href="/login?returnTo=%2Fnotifications">
-            로그인하기
-          </Link>
-        </div>
+        <FanState
+          kind="auth"
+          icon={<Bell aria-hidden="true" />}
+          title={ko.signIn}
+          description="로그인하면 읽지 않은 소식과 예약한 LIVE 알림을 이어서 볼 수 있어요."
+          actions={<FanAction variant="service" fullWidth href={`/login?returnTo=%2Fnotifications%3Flocale%3D${locale}&locale=${locale}`}><GoogleMark /><span>Google로 계속하기</span></FanAction>}
+        />
       )}
       {state.kind === "error" && (
-        <div className={styles.message} role="alert">
-          <Bell aria-hidden="true" />
-          <h2>알림을 불러오지 못했습니다.</h2>
-          <p>연결을 확인한 뒤 다시 시도해 주세요.</p>
-          <button type="button" onClick={load}>
-            {ko.retry}
-          </button>
-        </div>
+        <FanState
+          kind="error"
+          icon={<Bell aria-hidden="true" />}
+          title="알림을 불러오지 못했습니다."
+          description="연결을 확인한 뒤 다시 시도해 주세요."
+          actions={<FanAction variant="neutral" fullWidth onClick={load}>{ko.retry}</FanAction>}
+        />
       )}
       {state.kind === "ready" && state.items.length === 0 && (
-        <div className={styles.empty}>
-          <Radio aria-hidden="true" />
-          <h2>{ko.empty}</h2>
-          <p>{ko.emptyHelp}</p>
-          <Link className={styles.messageAction} href={`/live?locale=${locale}` as Route}>
-            다가오는 LIVE 보기
-          </Link>
-        </div>
+        <FanState
+          kind="empty"
+          icon={<Radio aria-hidden="true" />}
+          title={ko.empty}
+          description={ko.emptyHelp}
+          actions={<Link className={fanActionClassName("neutral", { fullWidth: true })} href={`/live?locale=${locale}` as Route}>다가오는 LIVE 보기</Link>}
+        />
       )}
       {state.kind === "ready" && state.items.length > 0 && (
         <div className={styles.layout}>

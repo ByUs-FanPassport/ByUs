@@ -13,6 +13,7 @@ export const benefitStateSchema = z.enum([
 export type BenefitState = z.infer<typeof benefitStateSchema>;
 
 export const benefitDeliveryTypeSchema = z.enum([
+  "text",
   "shared_code",
   "unique_code",
   "external_url",

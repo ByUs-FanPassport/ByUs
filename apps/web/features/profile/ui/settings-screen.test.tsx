@@ -19,7 +19,11 @@ const getAccessToken = vi.fn().mockResolvedValue("access-token");
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated: true, getAccessToken }),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => router }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+  usePathname: () => "/settings",
+  useSearchParams: () => new URLSearchParams("locale=ko"),
+}));
 vi.mock("../../notification/ui/push-subscription", () => ({
   enablePushNotifications,
 }));

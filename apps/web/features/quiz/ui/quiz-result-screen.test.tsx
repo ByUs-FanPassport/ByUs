@@ -50,13 +50,13 @@ describe("QuizResultScreen", () => {
 
   it("preserves the exact pass result destination when authentication is required", async () => {
     authenticated = false;
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
-    const returnTo = `/c/kara/verify/result?attempt=${attemptId}&passport=${passportId}`;
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
+    const returnTo = `/c/kara/verify/result?attempt=${attemptId}&passport=${passportId}&locale=ko`;
     expect(screen.getByRole("heading", { name: "로그인이 필요해요." })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
     expect(screen.getByRole("link", { name: "로그인하고 결과 확인하기" })).toHaveAttribute(
       "href",
-      `/login?returnTo=${encodeURIComponent(returnTo)}&intent=passport`,
+      `/login?returnTo=${encodeURIComponent(returnTo)}&locale=ko&intent=passport`,
     );
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -64,7 +64,7 @@ describe("QuizResultScreen", () => {
   it("links the terminal pass to the recoverable, GET-only issuance route", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
 
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
 
     expect(await screen.findByRole("heading", { name: "KARA Official Fan 인증 완료" })).toBeInTheDocument();
     expect(screen.getByLabelText("팬 인증 3단계 중 3단계 완료")).toHaveTextContent("3 / 3");
@@ -73,7 +73,7 @@ describe("QuizResultScreen", () => {
 
     expect(screen.getByRole("link", { name: "Passport 받기" })).toHaveAttribute(
       "href",
-      `/passports/${passportId}/issuance`,
+      `/passports/${passportId}/issuance?locale=ko`,
     );
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST" && String(init))).toBe(false);
@@ -87,12 +87,12 @@ describe("QuizResultScreen", () => {
         result: { kind: "attempt", ...terminalAttempt("failed", 1).attempt, attempt: { id: nextAttemptId, status: "open", score: null, submittedAt: null } },
       }));
 
-    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" celebrityName="KARA" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
     expect(await screen.findByRole("heading", { name: "조금만 더 알아보고 다시 도전해 볼까요?" })).toBeInTheDocument();
     expect(screen.getByText("정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "다시 도전" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith(`/c/kara/verify/questions?attempt=${nextAttemptId}`));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/c/kara/verify/questions?attempt=${nextAttemptId}&locale=ko`));
     expect(fetch).toHaveBeenLastCalledWith(
       "/api/celebrities/kara/quiz/attempts?locale=ko",
       expect.objectContaining({ method: "POST", headers: { authorization: "Bearer access-token" } }),
@@ -101,8 +101,33 @@ describe("QuizResultScreen", () => {
 
   it("does not render a pass result when the terminal status contradicts its passport query", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("failed", 1)));
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("결과 정보를 확인할 수 없어요.");
     expect(screen.queryByRole("button", { name: "Passport 받기" })).not.toBeInTheDocument();
+  });
+
+  it("renders English result copy and preserves the English locale", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
+
+    render(
+      <QuizResultScreen
+        attemptId={attemptId}
+        passportId={passportId}
+        celebritySlug="katseye"
+        celebrityName="KATSEYE"
+        locale="en"
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "KATSEYE Official Fan verification complete" })).toBeInTheDocument();
+    expect(screen.getByText("You answered 2 of 3 questions correctly.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Passport" })).toHaveAttribute(
+      "href",
+      `/passports/${passportId}/issuance?locale=en`,
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/quiz-attempts/${attemptId}?locale=en`,
+      expect.objectContaining({ method: "GET", headers: { authorization: "Bearer access-token" } }),
+    );
   });
 });

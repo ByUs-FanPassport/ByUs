@@ -159,6 +159,17 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
+  useEffect(() => {
+    if (
+      state === "duplicate"
+      || state === "prohibited"
+      || state === "invalid"
+      || state === "network"
+    ) {
+      inputRef.current?.focus();
+    }
+  }, [state]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!localValid || state === "saving" || state === "saved") {

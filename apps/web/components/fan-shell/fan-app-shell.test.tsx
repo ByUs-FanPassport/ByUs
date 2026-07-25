@@ -1,14 +1,28 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   activeFanSection,
   FanAppFrame,
   FanContentContainer,
   fanNavigationItems,
+  localeSwitchHref,
 } from "./fan-app-shell";
 
+let pathname = "/";
+let search = "";
+vi.mock("next/navigation", () => ({
+  usePathname: () => pathname,
+  useSearchParams: () => new URLSearchParams(search),
+}));
+
 describe("fan app shell navigation", () => {
+  beforeEach(() => {
+    pathname = "/";
+    search = "";
+    window.history.replaceState(null, "", "/");
+  });
+
   it.each([
     ["/", "home"],
     ["/live", "live"],
@@ -42,6 +56,55 @@ describe("fan app shell navigation", () => {
       "FAVORITES",
       "MY",
     ]);
+  });
+
+  it("derives the active destination from the current route on the first render", () => {
+    pathname = "/live/kara-byus-live";
+    search = "locale=ko";
+
+    render(
+      <FanAppFrame locale="ko">
+        <main>LIVE 본문</main>
+      </FanAppFrame>,
+    );
+
+    const currentLinks = screen
+      .getAllByRole("link", { name: "LIVE" })
+      .filter((link) => link.hasAttribute("aria-current"));
+    expect(currentLinks).toHaveLength(2);
+    for (const current of currentLinks) {
+      expect(current).toHaveAttribute("aria-current", "page");
+    }
+    expect(screen.getAllByRole("link", { name: "HOME" })[0]).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
+
+  it("changes only locale while preserving route query and hash", () => {
+    expect(
+      localeSwitchHref(
+        "/c/kara",
+        "tab=notice&locale=ko&source=home",
+        "en",
+        "#latest",
+      ),
+    ).toBe("/c/kara?tab=notice&locale=en&source=home#latest");
+  });
+
+  it("preserves non-locale query parameters in the rendered language action", () => {
+    pathname = "/c/kara";
+    search = "tab=benefits&locale=ko&source=home";
+
+    render(
+      <FanAppFrame locale="ko">
+        <main>혜택 본문</main>
+      </FanAppFrame>,
+    );
+
+    expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute(
+      "href",
+      "/c/kara?tab=benefits&locale=en&source=home",
+    );
   });
 
   it("connects an optional skip link to the screen main landmark", () => {

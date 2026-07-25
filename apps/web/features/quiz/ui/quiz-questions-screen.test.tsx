@@ -69,10 +69,10 @@ describe("FAN-007 quiz questions", () => {
 
   it("uses the canonical ByUs wordmark in an accessible home link", () => {
     privyState = { ready: true, authenticated: false };
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
 
     const home = screen.getByRole("link", { name: "ByUs 홈" });
-    expect(home).toHaveAttribute("href", "/");
+    expect(home).toHaveAttribute("href", "/?locale=ko");
     expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute(
       "src",
       "/images/guest-home/byus-wordmark.svg",
@@ -83,12 +83,12 @@ describe("FAN-007 quiz questions", () => {
     const restored = attempt([ids.o11, null, null]);
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => json({ result: { kind: "attempt", ...restored } }));
 
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
 
     expect(await screen.findByRole("group", { name: "공식 팬덤명은?" })).toBeInTheDocument();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "팬 인증 진행률" })).toHaveAttribute("aria-valuenow", "2");
-    expect(screen.getByRole("link", { name: "인증을 나가고 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara");
+    expect(screen.getByRole("link", { name: "인증을 나가고 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.queryByText("KARA의 데뷔곡은?")).not.toBeInTheDocument();
     const options = screen.getAllByRole("radio");
     expect(options.map((option) => option.getAttribute("value"))).toEqual([ids.o21, ids.o22]);
@@ -105,7 +105,7 @@ describe("FAN-007 quiz questions", () => {
       .mockImplementationOnce(() => json({ result: { kind: "attempt", ...open } }))
       .mockImplementationOnce(() => json({ attempt: saved }));
 
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
     const next = await screen.findByRole("button", { name: "다음 질문" });
     expect(next).toBeDisabled();
 
@@ -131,14 +131,14 @@ describe("FAN-007 quiz questions", () => {
         issuance: { passportId: ids.passport, stampId: ids.stamp, scorePoints: 1 },
       } }));
 
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
     await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
     fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
     fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
-      `/c/kara/verify/result?attempt=${ids.attempt}&passport=${ids.passport}`,
+      `/c/kara/verify/result?attempt=${ids.attempt}&passport=${ids.passport}&locale=ko`,
     ));
   });
 
@@ -151,13 +151,13 @@ describe("FAN-007 quiz questions", () => {
         issuance: null,
       } }));
 
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
     await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
     fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
     fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith(`/c/kara/verify/result?attempt=${ids.attempt}`));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(`/c/kara/verify/result?attempt=${ids.attempt}&locale=ko`));
   });
 
   it("sends an existing Passport holder directly to the owner-scoped detail", async () => {
@@ -165,29 +165,50 @@ describe("FAN-007 quiz questions", () => {
       result: { kind: "holder", passportId: ids.passport },
     }));
 
-    render(<QuizQuestionsScreen slug="kara" />);
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith(`/passports/${ids.passport}`));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(`/passports/${ids.passport}?locale=ko`));
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows authenticated loading, login, retry, and safe invalid-response states", async () => {
     privyState = { ready: false, authenticated: false };
-    const { rerender } = render(<QuizQuestionsScreen slug="kara" />);
+    const { rerender } = render(<QuizQuestionsScreen locale="ko" slug="kara" />);
     expect(screen.getByRole("status", { name: "팬 인증 퀴즈 불러오는 중" })).toBeInTheDocument();
 
     privyState = { ready: true, authenticated: false };
-    rerender(<QuizQuestionsScreen slug="kara" />);
+    rerender(<QuizQuestionsScreen locale="ko" slug="kara" />);
     expect(screen.getByRole("link", { name: "로그인하고 계속하기" })).toHaveAttribute(
       "href",
-      "/login?returnTo=%2Fc%2Fkara%2Fverify%2Fquestions&intent=passport",
+      "/login?returnTo=%2Fc%2Fkara%2Fverify%2Fquestions%3Flocale%3Dko&locale=ko&intent=passport",
     );
 
     privyState = { ready: true, authenticated: true };
     vi.spyOn(globalThis, "fetch").mockImplementation(() => json({ result: { kind: "attempt", ...attempt(), isCorrect: true } }));
-    rerender(<QuizQuestionsScreen slug="kara" />);
+    rerender(<QuizQuestionsScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("퀴즈 정보를 안전하게 불러오지 못했어요");
     expect(screen.queryByText(/isCorrect/i)).not.toBeInTheDocument();
     expect(within(screen.getByRole("alert")).getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+
+  it("keeps English copy and locale through the question API and navigation", async () => {
+    const englishAttempt = attempt();
+    englishAttempt.questions[0].prompt = "Which song introduced KATSEYE?";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => json({
+      result: { kind: "attempt", ...englishAttempt },
+    }));
+
+    render(<QuizQuestionsScreen locale="en" slug="katseye" />);
+
+    expect(await screen.findByRole("heading", { name: "How well do you know your favorite?" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Which song introduced KATSEYE?" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Exit verification and return to the fan page" })).toHaveAttribute(
+      "href",
+      "/c/katseye?locale=en",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/celebrities/katseye/quiz/attempts?locale=en",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

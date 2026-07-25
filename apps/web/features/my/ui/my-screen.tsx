@@ -1,14 +1,17 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, CalendarDays, Gift, LogIn, RotateCcw, Settings } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, CalendarDays, Gift, RotateCcw, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { AuthIntentLink } from "@/components/auth-intent-link";
+import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
+import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
+import { FanState } from "@/components/fan-ui/fan-state";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import styles from "./my-screen.module.css";
 
@@ -92,17 +95,22 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
     <FanAppFrame locale={locale} mainId="my-content">
       <FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
         <header className={styles.heading}><h1>{t.title}</h1></header>
-        {!ready ? <p className={styles.state} role="status">{t.loading}</p>
+        {!ready ? <FanState kind="loading" title={t.loading} />
           : !authenticated ? (
             <section className={styles.guest}>
               <BookOpen aria-hidden="true" /><h2>{t.guestTitle}</h2><p>{t.guestBody}</p>
-              <AuthIntentLink locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}>
-                <LogIn /><span>{t.login}</span><ArrowRight />
+              <AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}>
+                <GoogleMark /><span>{t.login}</span><ArrowRight aria-hidden="true" />
               </AuthIntentLink>
             </section>
-          ) : state.status === "loading" ? <p className={styles.state} role="status">{t.loading}</p>
+          ) : state.status === "loading" ? <FanState kind="loading" title={t.loading} />
             : state.status === "error" ? (
-              <section className={styles.state} role="alert"><p>{t.error}</p><button type="button" onClick={() => setRequestKey((value) => value + 1)}><RotateCcw aria-hidden="true" />{t.retry}</button></section>
+              <FanState
+                kind="error"
+                title={t.error}
+                description={locale === "ko" ? "연결을 확인한 뒤 다시 시도해 주세요." : "Check your connection and try again."}
+                actions={<FanAction variant="neutral" fullWidth onClick={() => setRequestKey((value) => value + 1)}><RotateCcw aria-hidden="true" />{t.retry}</FanAction>}
+              />
             ) : <Dashboard summary={state.summary} locale={locale} />}
       </FanContentContainer>
     </FanAppFrame>
