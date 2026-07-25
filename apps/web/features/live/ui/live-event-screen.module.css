@@ -48,79 +48,9 @@
   background: rgb(255 255 255 / 96%);
 }
 
-.headerInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: min(1360px, calc(100% - 80px));
-  height: 100%;
-  margin: 0 auto;
-}
-
-.wordmark,
-.locale {
-  display: inline-flex;
-  min-width: 88px;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-}
-
-.wordmark {
-  justify-content: flex-start;
-}
-.wordmark img {
-  width: 80px;
-  height: auto;
-}
-
-.desktopNav {
-  display: flex;
-  height: 44px;
-  align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  border: 1px solid oklch(90% 0 0);
-  border-radius: 999rem;
-  transform: translateY(-1px);
-}
-
-.desktopNav a {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  padding: 0 16px;
-  border-radius: 999rem;
-  color: oklch(48% 0 0);
-  font-size: 14px;
-  font-weight: 650;
-  text-decoration: none;
-  transition:
-    color 160ms cubic-bezier(0.2, 0, 0, 1),
-    background 160ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.desktopNav a:hover {
-  background: oklch(97.5% 0 0);
-  color: oklch(18% 0 0);
-}
-.desktopNav .activeNav {
-  color: oklch(18% 0 0);
-  font-weight: 800;
-}
-
-.locale {
-  border: 0;
-  color: oklch(18% 0 0);
-  font-size: 13px;
-  font-weight: 750;
-  text-decoration: none;
-}
-
 .main {
-  width: min(1360px, calc(100% - 80px));
-  margin: 0 auto;
-  padding: 28px 0 96px;
+  padding-top: 28px;
+  padding-bottom: 96px;
 }
 
 .back {
@@ -821,10 +751,9 @@
 
 .loading {
   display: grid;
-  width: min(1360px, calc(100% - 80px));
   grid-template-columns: 2fr 1fr;
   gap: 32px;
-  margin: 48px auto;
+  margin-block: 48px;
 }
 .loading div {
   min-height: 520px;
@@ -891,11 +820,6 @@
 }
 
 @media (max-width: 1023px) {
-  .headerInner,
-  .main,
-  .loading {
-    width: min(704px, calc(100% - 64px));
-  }
   .heroGrid {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -920,11 +844,6 @@
 }
 
 @media (max-width: 767px) {
-  .headerInner,
-  .main,
-  .loading {
-    width: calc(100% - 32px);
-  }
   .desktopNav {
     display: none;
   }

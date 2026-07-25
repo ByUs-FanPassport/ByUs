@@ -3,7 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
-import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -320,7 +320,7 @@ export function BenefitsScreen({
   return (
     <FanAppFrame locale={locale} mainId="benefit-content">
       <div className={styles.page}>
-      <main className={styles.main} id="benefit-content" tabIndex={-1}>
+      <FanContentContainer as="main" className={styles.main} id="benefit-content" tabIndex={-1}>
         <div className={styles.listHeading}>
           <div>
             <h1>{c.title}</h1>
@@ -403,7 +403,7 @@ export function BenefitsScreen({
             ))}
           </div>
         )}
-      </main>
+      </FanContentContainer>
       </div>
     </FanAppFrame>
   );
@@ -621,31 +621,31 @@ export function BenefitDetailScreen({
 
   if (view.kind === "loading")
     return presentation === "overlay" ? (
-      <main className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale} aria-busy="true">
+      <FanContentContainer as="main" className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale} aria-busy="true">
         <div className={styles.detailSkeleton}>
           <i />
           <i />
           <i />
           <i />
         </div>
-      </main>
+      </FanContentContainer>
     ) : (
       <FanAppFrame locale={locale} mainId="benefit-content">
         <div className={styles.page}>
-        <main className={styles.detailMain} id="benefit-content" tabIndex={-1} aria-busy="true">
+        <FanContentContainer as="main" className={styles.detailMain} id="benefit-content" tabIndex={-1} aria-busy="true">
           <div className={styles.detailSkeleton}>
             <i />
             <i />
             <i />
             <i />
           </div>
-        </main>
+        </FanContentContainer>
         </div>
       </FanAppFrame>
     );
   if (view.kind === "error")
     return presentation === "overlay" ? (
-      <main className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale}>
+      <FanContentContainer as="main" className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale}>
         <section
           className={styles.message}
           role={view.notFound ? "status" : "alert"}
@@ -659,11 +659,11 @@ export function BenefitDetailScreen({
             </button>
           )}
         </section>
-      </main>
+      </FanContentContainer>
     ) : (
       <FanAppFrame locale={locale} mainId="benefit-content">
         <div className={styles.page}>
-        <main className={styles.detailMain} id="benefit-content" tabIndex={-1}>
+        <FanContentContainer as="main" className={styles.detailMain} id="benefit-content" tabIndex={-1}>
           <section
             className={styles.message}
             role={view.notFound ? "status" : "alert"}
@@ -680,7 +680,7 @@ export function BenefitDetailScreen({
               {c.back}
             </Link>
           </section>
-        </main>
+        </FanContentContainer>
         </div>
       </FanAppFrame>
     );
@@ -695,7 +695,7 @@ export function BenefitDetailScreen({
           ? c.sold_out
           : c.expired;
   const detailContent = (
-    <main
+    <FanContentContainer as="main"
       className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`}
       data-fan-surface
       lang={locale}
@@ -814,7 +814,7 @@ export function BenefitDetailScreen({
           </p>
         )}
       </article>
-    </main>
+    </FanContentContainer>
   );
   if (presentation === "overlay") return detailContent;
   return (

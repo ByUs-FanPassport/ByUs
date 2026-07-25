@@ -1,4 +1,4 @@
-.main { width: min(100% - 32px,1180px); margin-inline:auto; padding:40px 0 96px; }
+.main { padding-top:40px; padding-bottom:96px; }
 .intro { max-width:720px; margin-bottom:40px; }
 .intro h1 { margin:0; font-size:20px; font-weight:850; letter-spacing:-.03em; line-height:1.2; text-wrap:balance; }
 .intro p { max-width:65ch; margin:12px 0 0; color:oklch(48% 0 0); font-size:15px; line-height:1.6; text-wrap:pretty; }
@@ -29,7 +29,7 @@
 .retry { display:flex; min-height:44px; align-items:center; gap:8px; margin:-24px 0 32px; padding:0 14px; border:1px solid oklch(84% 0 0); border-radius:12px; background:#fff; color:oklch(18% 0 0); font:inherit; font-size:14px; font-weight:750; cursor:pointer; }
 .retry svg { width:17px; }
 @media (min-width:48rem) {
-  .main { width:min(100% - 64px,1180px); padding-top:64px; }
+  .main { padding-top:64px; }
   .intro h1,.groupHeading h2 { font-size:24px; }
   .row { grid-template-columns:64px minmax(0,1fr) auto; gap:16px; min-height:112px; padding:16px 20px; }
   .row > img { width:64px; height:64px; }

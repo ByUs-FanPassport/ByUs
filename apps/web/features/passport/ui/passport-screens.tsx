@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, Rotat
 import Image from "next/image";
 import Link from "next/link";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -75,7 +75,7 @@ function safeExplorerUrl(hash: string): string | null {
 
 function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
   if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`} data-fan-surface lang={locale}><main className={styles.overlayMain}>{children}</main></div>;
-  return <FanAppFrame locale={locale} mainId="passport-content"><div className={styles.app}><main className={styles.main} id="passport-content" tabIndex={-1}>{children}</main></div></FanAppFrame>;
+  return <FanAppFrame locale={locale} mainId="passport-content"><div className={styles.app}><FanContentContainer as="main" className={styles.main} id="passport-content" tabIndex={-1}>{children}</FanContentContainer></div></FanAppFrame>;
 }
 
 function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} role="status" aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }

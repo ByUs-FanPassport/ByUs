@@ -10,43 +10,8 @@
     system-ui,
     sans-serif;
 }
-.header {
-  position: sticky;
-  z-index: 10;
-  top: 0;
-  background: rgb(255 255 255/0.94);
-}
-.header > div {
-  width: min(100% - 48px, 960px);
-  height: 68px;
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.header a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: inherit;
-  font-size: 14px;
-  font-weight: 750;
-  text-decoration: none;
-}
-.header a svg {
-  width: 19px;
-}
-.wordmark {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-}
-.main {
-  width: min(100% - 48px, 720px);
-  margin: auto;
-  padding: 56px 0 96px;
-}
+.main { padding-top:56px; padding-bottom:96px; }
+.main > * { max-width:720px; }
 .intro {
   margin-bottom: 40px;
 }

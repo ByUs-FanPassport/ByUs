@@ -8,7 +8,7 @@ import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FanAppFrame, type FanLocale } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import styles from "./my-screen.module.css";
 
@@ -90,7 +90,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
 
   return (
     <FanAppFrame locale={locale} mainId="my-content">
-      <main className={styles.main} id="my-content" tabIndex={-1}>
+      <FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
         <header className={styles.heading}><h1>{t.title}</h1></header>
         {!ready ? <p className={styles.state} role="status">{t.loading}</p>
           : !authenticated ? (
@@ -104,7 +104,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
             : state.status === "error" ? (
               <section className={styles.state} role="alert"><p>{t.error}</p><button type="button" onClick={() => setRequestKey((value) => value + 1)}><RotateCcw aria-hidden="true" />{t.retry}</button></section>
             ) : <Dashboard summary={state.summary} locale={locale} />}
-      </main>
+      </FanContentContainer>
     </FanAppFrame>
   );
 }

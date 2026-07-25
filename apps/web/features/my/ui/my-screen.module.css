@@ -1,4 +1,4 @@
-.main { width:min(100% - 32px,1180px); margin-inline:auto; padding:48px 0 96px; }
+.main { padding-top:48px; padding-bottom:96px; }
 .heading { margin-bottom:32px; }
 .heading h1 { margin:0; font-size:20px; font-weight:850; letter-spacing:-.03em; line-height:1.2; text-wrap:balance; }
 .guest,.state { display:grid; min-height:360px; place-content:center; justify-items:center; padding:40px 20px; border:1px solid oklch(93% 0 0); border-radius:16px; text-align:center; }
@@ -31,7 +31,7 @@
 .utilities span { font-size:15px; font-weight:750; }
 .utilities strong { font-size:18px; }
 @media (min-width:48rem) {
-  .main { width:min(100% - 64px,1180px); padding-top:64px; }
+  .main { padding-top:64px; }
   .heading h1 { font-size:24px; }
   .passportList { grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
   .dashboard { grid-template-columns:minmax(0,1.5fr) minmax(300px,.7fr); column-gap:40px; }

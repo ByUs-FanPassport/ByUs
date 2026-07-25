@@ -41,7 +41,7 @@ import {
   readAuthIntent,
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -697,7 +697,7 @@ export function LiveEventScreen({
     return (
       <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
         <div className={styles.page}>
-        <main
+        <FanContentContainer as="main"
           id="live-detail-main"
           tabIndex={-1}
           className={styles.loading}
@@ -706,7 +706,7 @@ export function LiveEventScreen({
         >
           <div />
           <div />
-        </main>
+        </FanContentContainer>
         </div>
       </FanAppFrame>
     );
@@ -715,7 +715,7 @@ export function LiveEventScreen({
     return (
       <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
         <div className={styles.page}>
-        <main id="live-detail-main" className={styles.error} tabIndex={-1} role="alert">
+        <FanContentContainer as="main" id="live-detail-main" className={styles.error} tabIndex={-1} role="alert">
           <Radio aria-hidden="true" />
           <h1>{view.notFound ? c.notFound : c.loadError}</h1>
           <p>{c.loadErrorHelper}</p>
@@ -725,7 +725,7 @@ export function LiveEventScreen({
             </button>
           )}
           <Link href={`/?locale=${locale}` as Route}>{c.nav[0]}</Link>
-        </main>
+        </FanContentContainer>
         </div>
       </FanAppFrame>
     );
@@ -824,7 +824,7 @@ export function LiveEventScreen({
   return (
     <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
       <div className={styles.page}>
-      <main id="live-detail-main" className={styles.main} tabIndex={-1}>
+      <FanContentContainer as="main" id="live-detail-main" className={styles.main} tabIndex={-1}>
         <Link className={styles.back} href="/">
           <ArrowLeft aria-hidden="true" />
           {c.back}
@@ -1101,7 +1101,7 @@ export function LiveEventScreen({
             </Link>
           </aside>
         </div>
-      </main>
+      </FanContentContainer>
       {showConfirmation && (
         <ReservationDialog
           data={data}

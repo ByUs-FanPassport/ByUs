@@ -30,68 +30,6 @@
   transform: translateY(0);
 }
 
-.serviceHeader {
-  position: sticky;
-  z-index: 10;
-  top: 0;
-  height: 68px;
-  background: rgb(255 255 255 / 96%);
-}
-
-.serviceHeaderInner {
-  display: flex;
-  width: min(1180px, calc(100% - 48px));
-  height: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 0 auto;
-}
-
-.brand {
-  display: inline-flex;
-  width: 88px;
-  min-height: 44px;
-  align-items: center;
-}
-
-.brand img {
-  display: block;
-  width: 80px;
-  height: auto;
-}
-
-.desktopNav {
-  display: flex;
-  height: 44px;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-  padding: 0 4px;
-  border: 1px solid #dedee1;
-  border-radius: 999rem;
-  transform: translateY(-1px);
-}
-
-.desktopNav a {
-  display: inline-flex;
-  min-width: 64px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border-radius: 999rem;
-  color: #66666b;
-  font-size: 14px;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.desktopNav .activeNav {
-  background: #f7f7f8;
-  color: #171719;
-  font-weight: 800;
-}
-
 .settingsLink {
   display: inline-grid;
   width: 44px;
@@ -109,9 +47,8 @@
 
 .content {
   box-sizing: border-box;
-  width: min(1180px, calc(100% - 48px));
-  margin: 0 auto;
-  padding: 56px 0 96px;
+  padding-top: 56px;
+  padding-bottom: 96px;
 }
 
 .pageHeading {

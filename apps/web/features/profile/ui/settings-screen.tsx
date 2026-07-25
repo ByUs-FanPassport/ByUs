@@ -12,7 +12,7 @@ import {
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import {
   enablePushNotifications,
 } from "../../notification/ui/push-subscription";
@@ -416,24 +416,24 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   if (!ready || state === "loading")
     return (
-      <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1} aria-busy="true">
+      <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1} aria-busy="true">
         <span className={styles.spinner} />
         {t.loading}
-      </main></FanAppFrame>
+      </FanContentContainer></FanAppFrame>
     );
-  if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</main></FanAppFrame>;
+  if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</FanContentContainer></FanAppFrame>;
   if (state === "error" || !settings || !preferences)
     return (
-      <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1}>
+      <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>
         <p>{t.unavailable}</p>
         <button onClick={() => void load()}>{t.retry}</button>
-      </main></FanAppFrame>
+      </FanContentContainer></FanAppFrame>
     );
 
   return (
     <FanAppFrame locale={locale} mainId="settings-content">
     <div className={styles.page}>
-      <main className={styles.main} id="settings-content" tabIndex={-1}>
+      <FanContentContainer as="main" className={styles.main} id="settings-content" tabIndex={-1}>
         <div className={styles.intro}>
           <h1>{t.title}</h1>
           <span>{t.subtitle}</span>
@@ -678,7 +678,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         >
           {message}
         </p>
-      </main>
+      </FanContentContainer>
     </div>
     </FanAppFrame>
   );

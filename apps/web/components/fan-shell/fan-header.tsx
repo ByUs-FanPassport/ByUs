@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Route } from "next";
 
 import { FanWordmarkLink } from "./fan-wordmark-link";
+import { FanContentContainer } from "./fan-content-container";
 
 type FanHeaderProps = {
   brandAriaLabel?: string;
@@ -22,14 +23,14 @@ export function FanHeader({
 }: FanHeaderProps) {
   return (
     <header className={className}>
-      <div className={innerClassName}>
+      <FanContentContainer className={innerClassName}>
         <FanWordmarkLink
           ariaLabel={brandAriaLabel}
           className={brandClassName}
           href={brandHref}
         />
         {children}
-      </div>
+      </FanContentContainer>
     </header>
   );
 }

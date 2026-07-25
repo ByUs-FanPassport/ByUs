@@ -11,7 +11,7 @@ import {
   Radio,
   Settings2,
 } from "lucide-react";
-import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -197,7 +197,7 @@ export function NotificationCenter() {
         </Link>
       }>
       <div className={styles.page}>
-      <main className={styles.content} id="notification-content" tabIndex={-1}>
+      <FanContentContainer as="main" className={styles.content} id="notification-content" tabIndex={-1}>
       <header className={styles.pageHeading}>
         <div>
           <h1>{ko.title}</h1>
@@ -323,7 +323,7 @@ export function NotificationCenter() {
           </aside>
         </div>
       )}
-      </main>
+      </FanContentContainer>
       </div>
     </FanAppFrame>
   );

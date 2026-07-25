@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { activeFanSection, FanAppFrame, fanNavigationItems } from "./fan-app-shell";
+import {
+  activeFanSection,
+  FanAppFrame,
+  FanContentContainer,
+  fanNavigationItems,
+} from "./fan-app-shell";
 
 describe("fan app shell navigation", () => {
   it.each([
@@ -56,5 +61,27 @@ describe("fan app shell navigation", () => {
       "lang",
       "ko",
     );
+  });
+
+  it("uses one shared content-container contract for header, main, and footer", () => {
+    render(
+      <FanAppFrame locale="ko" mainId="screen-main">
+        <FanContentContainer as="main" id="screen-main">
+          화면 본문
+        </FanContentContainer>
+      </FanAppFrame>,
+    );
+
+    expect(screen.getByRole("banner").firstElementChild).toHaveAttribute(
+      "data-fan-content-container",
+    );
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-fan-content-container",
+    );
+
+    const footerContainers = screen
+      .getByRole("contentinfo")
+      .querySelectorAll("[data-fan-content-container]");
+    expect(footerContainers).toHaveLength(2);
   });
 });

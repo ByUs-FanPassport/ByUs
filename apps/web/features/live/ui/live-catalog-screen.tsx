@@ -7,7 +7,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useState } from "react";
 
-import { FanAppFrame, type FanLocale } from "@/components/fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
 import styles from "./live-catalog-screen.module.css";
 
@@ -203,7 +203,7 @@ export function LiveCatalogScreen({
   const total = catalog.liveNow.length + catalog.upcoming.length + catalog.replay.length;
   return (
     <FanAppFrame locale={locale} mainId="live-catalog-main">
-      <main className={styles.main} id="live-catalog-main" tabIndex={-1}>
+      <FanContentContainer as="main" className={styles.main} id="live-catalog-main" tabIndex={-1}>
         <header className={styles.intro}>
           <h1>{t.title}</h1>
           <p>{t.intro}</p>
@@ -216,7 +216,7 @@ export function LiveCatalogScreen({
             <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} />
           </>
         )}
-      </main>
+      </FanContentContainer>
     </FanAppFrame>
   );
 }

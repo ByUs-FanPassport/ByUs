@@ -7,7 +7,7 @@ import type { Route } from "next";
 import { useEffect, useState } from "react";
 import { ArrowRight, Book, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
-import { FanAppFrame } from "./fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import styles from "./celebrity-fan-page.module.css";
 
@@ -63,7 +63,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive }: { celebrit
 
   return (
     <FanAppFrame locale={locale} mainId="celebrity-detail-main">
-    <main id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
+    <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
       <section className={styles.hero} aria-labelledby="celebrity-heading">
         <Image src={celebrity.image.url} alt={celebrity.image.alt} fill sizes="(min-width: 1024px) 1200px, 100vw" priority style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
         <div className={styles.scrim} aria-hidden="true" />
@@ -102,7 +102,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive }: { celebrit
           {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
         </aside>
       </div>
-    </main>
+    </FanContentContainer>
     </FanAppFrame>
   );
 }

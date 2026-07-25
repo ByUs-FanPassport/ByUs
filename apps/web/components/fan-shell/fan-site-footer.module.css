@@ -3,7 +3,7 @@
   --footer-muted: oklch(44% 0 0);
   --footer-line: oklch(91.5% 0 0);
   width: 100%;
-  padding: 64px 20px 24px;
+  padding: 64px 0 24px;
   border-top: 1px solid var(--footer-line);
   background: #fff;
   color: var(--footer-ink);
@@ -12,8 +12,6 @@
 
 .inner {
   display: grid;
-  width: min(100%, 1360px);
-  margin-inline: auto;
   gap: 48px;
 }
 
@@ -88,12 +86,11 @@
 
 .legal {
   display: flex;
-  width: min(100%, 1360px);
   min-height: 68px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin: 48px auto 0;
+  margin-top: 48px;
   padding-top: 16px;
   border-top: 1px solid var(--footer-line);
   color: var(--footer-muted);
@@ -108,7 +105,7 @@
 
 @media (min-width: 48rem) {
   .footer {
-    padding: 80px 32px 24px;
+    padding: 80px 0 24px;
   }
 
   .inner {
@@ -118,12 +115,6 @@
 
   .navigation {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 80rem) {
-  .footer {
-    padding-inline: 40px;
   }
 }
 

@@ -114,6 +114,8 @@ export function FanAppHeader({
   );
 }
 
+export { FanContentContainer } from "./fan-content-container";
+
 export function FanAppBottomNavigation({ locale, currentPath }: { locale: FanLocale; currentPath?: string }) {
   const browserPathname = useBrowserPathname();
   const pathname = currentPath ?? browserPathname;

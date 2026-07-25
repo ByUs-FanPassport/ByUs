@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { FanLocale } from "./fan-app-shell";
+import { FanContentContainer } from "./fan-content-container";
 import styles from "./fan-site-footer.module.css";
 
 const copy = {
@@ -44,7 +45,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
   const t = copy[locale];
   return (
     <footer className={styles.footer} data-fan-site-footer>
-      <div className={styles.inner}>
+      <FanContentContainer className={styles.inner}>
         <div className={styles.brandColumn}>
           <Link className={styles.brand} href={fanHref("/", locale)} aria-label={locale === "ko" ? "ByUs 홈" : "ByUs home"}>
             <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} />
@@ -76,11 +77,11 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <Link href="/terms" aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
           </section>
         </nav>
-      </div>
+      </FanContentContainer>
 
-      <div className={styles.legal}>
+      <FanContentContainer className={styles.legal}>
         <span>© 2026 Sallylab Inc.</span>
-      </div>
+      </FanContentContainer>
     </footer>
   );
 }

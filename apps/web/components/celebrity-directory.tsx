@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "./icons";
-import { FanAppFrame } from "./fan-shell/fan-app-shell";
+import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import styles from "./celebrity-directory.module.css";
 
@@ -102,7 +102,7 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
 
   return (
     <FanAppFrame locale={locale} mainId="celebrity-directory-content">
-    <main className={styles.page} id="celebrity-directory-content" tabIndex={-1}>
+    <FanContentContainer as="main" className={styles.page} id="celebrity-directory-content" tabIndex={-1}>
       <section className={styles.content} aria-labelledby="directory-heading">
         <div className={styles.intro}><h1 id="directory-heading">{t.heading}</h1><p>{t.intro}</p></div>
         {celebrities.length === 0 ? (
@@ -137,7 +137,7 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
           )}
         </>}
       </section>
-    </main>
+    </FanContentContainer>
     </FanAppFrame>
   );
 }
