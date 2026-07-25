@@ -42,11 +42,11 @@ import {
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanHeader } from "@/components/fan-shell/fan-header";
+import { fanNavigationItems } from "@/components/fan-shell/fan-app-shell";
 import {
   FanBottomNavigation,
   FanLocaleLink,
   FanPrimaryNavigation,
-  type FanNavigationItem,
 } from "@/components/fan-shell/fan-navigation";
 import {
   createLiveAttendanceResponseSchema,
@@ -117,7 +117,7 @@ const copy = {
       verify_fan: "팬 인증하고 예약하기",
       reserve: "라이브 예약하기",
       reserved: "예약 완료",
-      watch_live: "YouTube LIVE 입장",
+      watch_live: "YouTube에서 LIVE 시청하기",
       reservation_closed: "예약 마감",
       live_ended: "종료된 LIVE",
       live_cancelled: "취소된 LIVE",
@@ -132,7 +132,8 @@ const copy = {
     notFound: "공개된 LIVE를 찾을 수 없어요.",
     retry: "다시 불러오기",
     calendar: "Google Calendar에 추가",
-    watch: "YouTube LIVE 입장",
+    watch: "YouTube에서 LIVE 시청하기",
+    newWindow: "새 창",
     reservedTitle: "예약이 완료되었습니다",
     reservedHelper: "일정을 저장하고 LIVE가 시작되면 다시 만나요.",
     stampIssued: "Reservation Stamp 적립 완료",
@@ -203,6 +204,7 @@ const copy = {
     retry: "Try again",
     calendar: "Add to Google Calendar",
     watch: "Watch on YouTube",
+    newWindow: "new window",
     reservedTitle: "Your reservation is complete",
     reservedHelper: "Save the date and come back when the LIVE begins.",
     stampIssued: "Reservation Stamp earned",
@@ -210,14 +212,6 @@ const copy = {
     close: "Close reservation confirmation",
   },
 } as const;
-
-const liveNavigationIds = [
-  "home",
-  "celebrities",
-  "live",
-  "passports",
-  "benefits",
-] as const;
 
 type AttendanceState =
   | { kind: "idle" }
@@ -252,6 +246,10 @@ function formatRange(start: string, end: string, locale: Locale) {
   return `${formatDateTime(start, locale)} — ${formatDateTime(end, locale)}`;
 }
 
+function externalActionLabel(action: string, target: string, locale: Locale) {
+  return `${action}: ${target}, ${copy[locale].newWindow}`;
+}
+
 function googleCalendarUrl(data: LiveEventResponse["live"]) {
   const compact = (iso: string) =>
     new Date(iso).toISOString().replaceAll(/[-:]/g, "").replace(".000", "");
@@ -264,24 +262,8 @@ function googleCalendarUrl(data: LiveEventResponse["live"]) {
   return `https://calendar.google.com/calendar/render?${query.toString()}`;
 }
 
-function navigationHref(index: number, slug: string, locale: Locale): Route {
-  if (index === 0) return "/";
-  if (index === 1) return "/celebrities";
-  if (index === 2) return `/live/${slug}?locale=${locale}` as Route;
-  if (index === 3) return "/passports" as Route;
-  return "/benefits" as Route;
-}
-
-function liveNavigationItems(
-  slug: string,
-  locale: Locale,
-): readonly FanNavigationItem[] {
-  return copy[locale].nav.map((label, index) => ({
-    id: liveNavigationIds[index],
-    href: navigationHref(index, slug, locale),
-    isCurrent: index === 2,
-    label,
-  }));
+function liveNavigationItems(slug: string, locale: Locale) {
+  return fanNavigationItems(locale, `/live/${slug}`);
 }
 
 function LiveHeader({ locale, slug }: { locale: Locale; slug: string }) {
@@ -389,6 +371,7 @@ function ReservationDialog({
         href={googleCalendarUrl(data.live)}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={externalActionLabel(c.calendar, data.live.title, locale)}
       >
         <CalendarDays aria-hidden="true" />
         {c.calendar}
@@ -750,8 +733,13 @@ export function LiveEventScreen({
   if (view.kind === "loading") {
     return (
       <div className={styles.page}>
+        <a className={styles.skipLink} href="#live-detail-main">
+          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+        </a>
         <LiveHeader locale={locale} slug={slug} />
         <main
+          id="live-detail-main"
+          tabIndex={-1}
           className={styles.loading}
           aria-busy="true"
           aria-label={locale === "ko" ? "LIVE 불러오는 중" : "Loading LIVE"}
@@ -765,8 +753,11 @@ export function LiveEventScreen({
   if (view.kind === "error") {
     return (
       <div className={styles.page}>
+        <a className={styles.skipLink} href="#live-detail-main">
+          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+        </a>
         <LiveHeader locale={locale} slug={slug} />
-        <main className={styles.error} role="alert">
+        <main id="live-detail-main" className={styles.error} tabIndex={-1} role="alert">
           <Radio aria-hidden="true" />
           <h1>{view.notFound ? c.notFound : c.loadError}</h1>
           <p>{c.loadErrorHelper}</p>
@@ -775,7 +766,7 @@ export function LiveEventScreen({
               {c.retry}
             </button>
           )}
-          <Link href="/">{c.nav[0]}</Link>
+          <Link href={`/?locale=${locale}` as Route}>{c.nav[0]}</Link>
         </main>
       </div>
     );
@@ -797,7 +788,7 @@ export function LiveEventScreen({
   const calendarUrl = googleCalendarUrl(live);
   const primaryClass =
     primaryAction === "reserve" ? styles.spectrumAction : styles.primaryAction;
-  const bottomNavItems = liveNavigationItems(slug, locale).slice(0, 4);
+  const bottomNavItems = liveNavigationItems(slug, locale);
   const attendanceError =
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
@@ -847,6 +838,7 @@ export function LiveEventScreen({
         href={live.watch.url}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={externalActionLabel(actionLabel, live.title, locale)}
         onClick={rememberWatchReturn}
       >
         <Play aria-hidden="true" />
@@ -873,8 +865,11 @@ export function LiveEventScreen({
 
   return (
     <div className={styles.page}>
+      <a className={styles.skipLink} href="#live-detail-main">
+        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+      </a>
       <LiveHeader locale={locale} slug={slug} />
-      <main className={styles.main}>
+      <main id="live-detail-main" className={styles.main} tabIndex={-1}>
         <Link className={styles.back} href="/">
           <ArrowLeft aria-hidden="true" />
           {c.back}
@@ -931,6 +926,7 @@ export function LiveEventScreen({
                 href={calendarUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={externalActionLabel(c.calendar, live.title, locale)}
               >
                 <CalendarDays aria-hidden="true" />
                 {c.calendar}
@@ -944,6 +940,7 @@ export function LiveEventScreen({
                   href={live.watch.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={externalActionLabel(c.watch, live.title, locale)}
                   onClick={rememberWatchReturn}
                 >
                   <Play aria-hidden="true" />
@@ -1139,7 +1136,11 @@ export function LiveEventScreen({
             </div>
             <Link
               href={`/c/${live.celebrity.slug}` as Route}
-              aria-label={`${live.celebrity.name} fan page`}
+              aria-label={
+                locale === "ko"
+                  ? `팬페이지 보기: ${live.celebrity.name}`
+                  : `View fan page: ${live.celebrity.name}`
+              }
             >
               <ArrowRight aria-hidden="true" />
             </Link>

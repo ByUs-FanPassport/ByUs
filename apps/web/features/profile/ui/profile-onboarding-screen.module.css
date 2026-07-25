@@ -8,6 +8,7 @@
 .locale span { color:oklch(70% 0 0); }
 .main { width:min(100% - 32px,1120px); margin-inline:auto; padding:48px 0 120px; }
 .intro { display:grid; gap:10px; margin-bottom:32px; }
+.intro .progress { margin:0; color:oklch(48% 0 0); font-size:13px; font-weight:750; line-height:1.5; }
 .intro h1 { max-width:19ch; margin:0; font-size:28px; font-weight:850; line-height:1.18; letter-spacing:-.035em; text-wrap:balance; }
 .intro p { margin:0; color:oklch(48% 0 0); font-size:14px; font-weight:550; line-height:1.55; text-wrap:pretty; }
 .composition { display:grid; gap:24px; }

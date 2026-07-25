@@ -31,10 +31,13 @@ describe("FAN-005 profile onboarding", () => {
 
   it("requires authentication and preserves the sanitized continuation context", async () => {
     authenticated = false;
-    render(<ProfileOnboardingScreen />);
+    const { rerender } = render(<ProfileOnboardingScreen />);
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
       "/login?returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fc%252Fkara%252Fverify%253Fstep%253Dintro%2523fan-verify%26locale%3Dko%26intent%3Dpassport%26entity%3Dkara&locale=ko&intent=passport&entity=kara",
     ));
+    query = "returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fonboarding%252Fprofile%26locale%3Dko&locale=ko";
+    rerender(<ProfileOnboardingScreen />);
+    expect(replace).toHaveBeenCalledTimes(1);
   });
 
   it("skips the setup screen when the authenticated user already has a profile", async () => {
@@ -46,6 +49,7 @@ describe("FAN-005 profile onboarding", () => {
   it("updates the owner preview live and enables save only for a valid 2-16 character nickname", async () => {
     render(<ProfileOnboardingScreen />);
     const input = await screen.findByRole("textbox", { name: "닉네임" });
+    expect(screen.getByLabelText("프로필 설정 · 1 / 1")).toBeInTheDocument();
     const save = screen.getByRole("button", { name: "닉네임 저장" });
     await waitFor(() => expect(input).toHaveFocus());
     expect(save).toBeDisabled();

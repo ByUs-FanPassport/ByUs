@@ -201,7 +201,7 @@ export function NotificationCenter() {
         </Link>
       } />
 
-      <main className={styles.content} id="notification-content">
+      <main className={styles.content} id="notification-content" tabIndex={-1}>
       <header className={styles.pageHeading}>
         <div>
           <h1>{ko.title}</h1>

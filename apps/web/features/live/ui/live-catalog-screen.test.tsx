@@ -37,9 +37,9 @@ describe("LIVE catalog", () => {
       replay: [{ ...base, live: { ...base.live, id: "22222222-2222-4222-8222-222222222222", slug: "kara-replay", effectiveStatus: "ended", watch: { ...base.live.watch, available: true, mode: "replay" } }, primaryAction: "live_ended" }],
     }} />);
 
-    expect(screen.getByRole("heading", { name: "모든 LIVE" })).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "지금 LIVE" })).getByRole("link", { name: /라이브 입장하기/ })).toHaveAttribute("href", base.live.watch.url);
-    expect(within(screen.getByRole("region", { name: "다가오는 LIVE" })).getByRole("link", { name: /라이브 예약하기/ })).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    expect(screen.getByRole("heading", { name: "전체 LIVE" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "지금 LIVE 중" })).getByRole("link", { name: /LIVE 시청하기/ })).toHaveAttribute("href", base.live.watch.url);
+    expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ })).toHaveAttribute("href", "/live/kara-live?locale=ko");
     expect(within(screen.getByRole("region", { name: "다시보기" })).getByRole("link", { name: /다시보기/ })).toHaveAttribute("href", base.live.watch.url);
   });
 });

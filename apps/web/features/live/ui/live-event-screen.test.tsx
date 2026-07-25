@@ -95,11 +95,11 @@ describe("LiveEventScreen", () => {
     await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
     const bottom = screen.getByRole("navigation", { name: "하단 메뉴" });
-    expect(within(primary).getByRole("link", { name: "라이브" })).toHaveAttribute(
+    expect(within(primary).getByRole("link", { name: "LIVE" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(within(bottom).getByRole("link", { name: "라이브" })).toHaveAttribute(
+    expect(within(bottom).getByRole("link", { name: "LIVE" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -234,11 +234,33 @@ describe("LiveEventScreen", () => {
     watchPayload.live.watch = { available: true, url: "https://youtube.com/live/abc123" };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(watchPayload), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    const watch = await screen.findByRole("link", { name: /YouTube LIVE 입장/ });
+    const watch = await screen.findByRole("link", { name: /YouTube에서 LIVE 시청하기/ });
     expect(watch).toHaveAttribute("target", "_blank");
     expect(watch).toHaveAttribute("rel", "noopener noreferrer");
+    expect(watch).toHaveAccessibleName(
+      "YouTube에서 LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
+    );
     fireEvent.click(watch);
     await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe("/live/kara-nualeaf?locale=ko#fan-code"));
+  });
+
+  it("connects the skip link and gives secondary external actions contextual names", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(payload("reserved", true)), { status: 200 }),
+    );
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    expect(screen.getByRole("link", { name: "본문으로 바로가기" })).toHaveAttribute(
+      "href",
+      "#live-detail-main",
+    );
+    expect(document.querySelector("main")).toHaveAttribute("id", "live-detail-main");
+    expect(
+      screen.getByRole("link", {
+        name: "Google Calendar에 추가: KARA × NUALEAF LIVE, 새 창",
+      }),
+    ).toHaveAttribute("target", "_blank");
   });
 
   it("posts the normalized Fan Code with an idempotency header and shows Attendance Stamp +3", async () => {

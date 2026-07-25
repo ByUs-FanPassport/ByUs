@@ -24,12 +24,13 @@ function formatLiveDate(value: string, locale: ContentLocale) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    hour12: locale !== "ko",
     timeZone: "Asia/Seoul",
   }).format(new Date(value));
 }
 
 const copy = {
-  ko: { home: "홈으로", heading: "당신의 최애", intro: "ByUs에서 만날 수 있는 공식 셀럽을 둘러보세요.", search: "셀럽 검색", searchPlaceholder: "이름으로 찾아보세요", sort: "정렬", defaultSort: "기본순", nameSort: "이름순", liveSort: "LIVE 예정 우선", passportOnly: "내 Passport만", count: "명의 셀럽", guestFilter: "Passport 보유 필터는 로그인 후 사용할 수 있어요.", loadingPassport: "내 Passport를 확인하고 있어요.", retryPrefix: "내 Passport를 확인하지 못했어요.", retry: "다시 시도", noPublished: "지금 공개된 셀럽이 없어요.", noPublishedHelp: "새로운 최애가 공개되면 이곳에서 바로 만날 수 있어요.", back: "오늘의 LIVE로 돌아가기", ownedEmpty: "보유한 Passport와 일치하는 셀럽이 없어요.", searchEmpty: "검색 결과가 없어요.", ownedHelp: "필터를 해제하면 다른 공식 셀럽도 둘러볼 수 있어요.", searchHelp: "다른 이름으로 검색하거나 필터를 초기화해 보세요.", reset: "필터 초기화", list: "공개 셀럽 목록", owned: "Passport 보유", fanPage: "팬페이지 보기", fanPageMove: "팬페이지로 이동", liveSoon: "LIVE 예정", livePreparing: "다음 LIVE 준비 중" },
+  ko: { home: "홈으로", heading: "최애 찾기", intro: "ByUs에서 만날 수 있는 공식 셀럽을 둘러보세요.", search: "셀럽 검색", searchPlaceholder: "이름으로 검색", sort: "정렬", defaultSort: "추천순", nameSort: "이름순", liveSort: "LIVE 예정 우선", passportOnly: "내 Passport만", count: "명의 셀럽", guestFilter: "내 Passport만 보려면 로그인해 주세요.", loadingPassport: "내 Passport를 확인하고 있어요.", retryPrefix: "내 Passport를 확인하지 못했어요.", retry: "다시 시도", noPublished: "지금 공개된 셀럽이 없어요.", noPublishedHelp: "새로운 셀럽이 공개되면 이곳에서 바로 만날 수 있어요.", back: "LIVE 둘러보기", ownedEmpty: "내 Passport와 일치하는 셀럽이 없어요.", searchEmpty: "검색 결과가 없어요.", ownedHelp: "필터를 해제하면 다른 공식 셀럽도 볼 수 있어요.", searchHelp: "다른 이름으로 검색하거나 필터를 초기화해 보세요.", reset: "필터 초기화", list: "공개 셀럽 목록", owned: "Passport 보유", fanPage: "팬페이지 보기", fanPageMove: "팬페이지로 이동", liveSoon: "LIVE 예정", livePreparing: "다음 LIVE 준비 중" },
   en: { home: "Home", heading: "Find your favorite", intro: "Browse the official celebrities available on ByUs.", search: "Search celebrities", searchPlaceholder: "Search by name", sort: "Sort", defaultSort: "Featured order", nameSort: "Name", liveSort: "Upcoming LIVE first", passportOnly: "My Passports only", count: " celebrities", guestFilter: "Sign in to filter by the Passports you own.", loadingPassport: "Checking your Passports.", retryPrefix: "We couldn't check your Passports.", retry: "Try again", noPublished: "No celebrities are published yet.", noPublishedHelp: "New official celebrities will appear here when published.", back: "Back to today's LIVE", ownedEmpty: "No celebrities match your Passports.", searchEmpty: "No search results.", ownedHelp: "Turn off the filter to browse other official celebrities.", searchHelp: "Try another name or clear the filters.", reset: "Clear filters", list: "Published celebrity list", owned: "Passport owned", fanPage: "fan page", fanPageMove: "open fan page", liveSoon: "LIVE upcoming", livePreparing: "Next LIVE in preparation" },
 } as const;
 
@@ -100,8 +101,8 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
   const passportFilterDisabled = passportState.status !== "ready";
 
   return (
-    <FanAppFrame locale={locale}>
-    <main className={styles.page}>
+    <FanAppFrame locale={locale} mainId="celebrity-directory-content">
+    <main className={styles.page} id="celebrity-directory-content" tabIndex={-1}>
       <section className={styles.content} aria-labelledby="directory-heading">
         <div className={styles.intro}><h1 id="directory-heading">{t.heading}</h1><p>{t.intro}</p></div>
         {celebrities.length === 0 ? (
@@ -127,9 +128,9 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
                 return <article className={styles.card} key={celebrity.slug}>
                   <Link className={styles.media} href={`/c/${celebrity.slug}${localeQuery}`} aria-label={`${celebrity.name} ${t.fanPage}`}>
                     <Image src={celebrity.image.url} alt={celebrity.image.alt} width={640} height={800} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
-                    {ownsPassport ? <span className={styles.passportBadge}>{t.owned}</span> : null}
+                    {ownsPassport ? <span className={styles.passportBadge}><span aria-hidden="true">✓</span>{t.owned}</span> : null}
                   </Link>
-                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p>{celebrity.upcomingLive ? `${formatLiveDate(celebrity.upcomingLive.startsAt, locale)} ${t.liveSoon}` : t.livePreparing}</p></div><Link href={`/c/${celebrity.slug}${localeQuery}`} aria-label={`${celebrity.name} ${t.fanPageMove}`}><ArrowRight /></Link></div>
+                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p><span className={styles.statusDot} data-live={Boolean(celebrity.upcomingLive)} aria-hidden="true" />{celebrity.upcomingLive ? `${formatLiveDate(celebrity.upcomingLive.startsAt, locale)} · ${t.liveSoon}` : t.livePreparing}</p></div><Link href={`/c/${celebrity.slug}${localeQuery}`} aria-label={`${t.fanPageMove}: ${celebrity.name}`}><ArrowRight aria-hidden="true" /></Link></div>
                 </article>;
               })}
             </div>

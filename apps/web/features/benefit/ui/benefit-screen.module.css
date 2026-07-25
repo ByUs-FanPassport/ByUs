@@ -3,6 +3,24 @@
   background: #fff;
   color: oklch(18% 0 0);
 }
+.skipLink {
+  position: fixed;
+  z-index: 30;
+  top: 8px;
+  left: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: oklch(18% 0 0);
+  color: #fff;
+  font-weight: 750;
+  line-height: 44px;
+  text-decoration: none;
+  transform: translateY(-72px);
+}
+.skipLink:focus {
+  transform: translateY(0);
+}
 .header {
   position: sticky;
   top: 0;
@@ -75,7 +93,7 @@
 .listHeading h1,
 .detailIntro h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 24px;
   line-height: 1.15;
   letter-spacing: -0.035em;
   text-wrap: balance;
@@ -507,6 +525,10 @@
   }
 }
 @media (max-width: 767px) {
+  .listHeading h1,
+  .detailIntro h1 {
+    font-size: 20px;
+  }
   .overlayBackdrop {
     align-items: flex-end;
   }

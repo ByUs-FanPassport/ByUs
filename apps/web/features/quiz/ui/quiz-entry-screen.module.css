@@ -2,6 +2,8 @@
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
 .shell { display:grid; width:min(100%,760px); min-height:100svh; margin-inline:auto; padding:88px 16px 40px; place-items:center; }
 .entry { width:100%; }
+.returnLink { display:inline-flex; min-height:44px; align-items:center; gap:8px; margin-bottom:28px; color:oklch(48% 0 0); font-size:14px; font-weight:650; text-decoration:none; }
+.returnLink svg { width:18px; height:18px; }
 .entry header p,.entry header h1,.description,.facts,.note,.message h1,.message p,.loading p,.inlineError { margin:0; }
 .entry header p { margin-bottom:10px; color:oklch(45% .22 315); font-size:13px; font-weight:800; }
 .entry header h1 { max-width:18ch; font-size:32px; font-weight:850; letter-spacing:-.035em; line-height:1.18; text-wrap:balance; }

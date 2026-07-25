@@ -405,7 +405,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
           <div className={styles.completeMark}><Check aria-hidden="true" /></div>
           <h1>{c.completeTitle}</h1>
           <p>{c.completeBody}</p>
-          <Image className={styles.stampArtwork} src="/images/stamps/kara-survey-stamp.png" alt={locale === "ko" ? "KARA Survey Stamp" : "KARA Survey Stamp"} width={360} height={360} priority />
+          <Image className={styles.stampArtwork} src="/images/stamps/kara-survey-stamp.png" alt={locale === "ko" ? "설문 참여 Stamp" : "Survey Stamp"} width={360} height={360} priority />
           <div className={styles.rewards}>
             <strong>{c.score}</strong>
             <span><Stamp aria-hidden="true" />{c.stamp}</span>
@@ -444,7 +444,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
 
         {Object.keys(errors).length > 0 && <div ref={errorSummaryRef} className={styles.errorSummary} role="alert">{c.answerRequired}</div>}
 
-        <form onSubmit={(event) => { event.preventDefault(); void submit(); }} noValidate>
+        <form onSubmit={(event) => { event.preventDefault(); void submit(); }} noValidate aria-busy={submitPending}>
           <ol className={styles.questions}>
             {data.survey.questions.map((question, index) => {
               const answer = answerLookup.get(question.id);

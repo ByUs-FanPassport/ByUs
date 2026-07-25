@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { QuizResultScreen } from "../../../../../features/quiz/ui/quiz-result-screen";
+import { createPublishedContentRepositoryFromEnvironment } from "../../../../../server/content/published-content-repository";
 
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
 const uuidSchema = z.uuid();
@@ -22,10 +23,12 @@ export default async function QuizResultPage({
   if (!parsedSlug.success) {
     notFound();
   }
+  const celebrity = await createPublishedContentRepositoryFromEnvironment().findBySlug("ko", parsedSlug.data);
 
   return (
     <QuizResultScreen
       celebritySlug={parsedSlug.data}
+      celebrityName={celebrity?.name ?? "최애"}
       attemptId={parsedAttempt.success ? parsedAttempt.data : null}
       passportId={parsedPassport?.success ? parsedPassport.data : null}
     />

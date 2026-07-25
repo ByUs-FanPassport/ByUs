@@ -128,6 +128,16 @@ describe("Privy login page", () => {
     ));
   });
 
+  it("does not nest an existing onboarding return path", async () => {
+    query = "returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Flive%252Fkara-nualeaf%26locale%3Dko&locale=ko";
+    vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
+    render(<LoginPage />);
+    onComplete?.();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf&locale=ko",
+    ));
+  });
+
   it("preserves the durable intent identifier through profile onboarding", async () => {
     query = "returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Dko%26authIntent%3D11111111-1111-4111-8111-111111111111%23fan-code&intent=attendance&entity=kara-nualeaf&authIntent=11111111-1111-4111-8111-111111111111";
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
@@ -140,7 +150,9 @@ describe("Privy login page", () => {
   it("keeps the contextual login open and recoverable after an OAuth error", async () => {
     render(<LoginPage presentation="overlay" />);
     onError?.();
-    expect(await screen.findByRole("alert")).toHaveTextContent("로그인을 완료하지 못했어요");
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("로그인을 완료하지 못했어요");
+    await waitFor(() => expect(alert).toHaveFocus());
     expect(screen.getByRole("dialog")).toBeVisible();
     expect(replace).not.toHaveBeenCalled();
   });

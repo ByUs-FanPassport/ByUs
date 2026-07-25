@@ -62,13 +62,13 @@ describe("published celebrity directory", () => {
   it("keeps the Passport filter unavailable for guests with an explanation", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
     expect(screen.getByRole("checkbox", { name: "내 Passport만" })).toBeDisabled();
-    expect(screen.getByText("Passport 보유 필터는 로그인 후 사용할 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByText("내 Passport만 보려면 로그인해 주세요.")).toBeInTheDocument();
   });
 
   it("teaches the user what happens next when no published rows exist", () => {
     render(<CelebrityDirectory celebrities={[]} locale="ko" />);
     expect(screen.getByRole("status")).toHaveTextContent("지금 공개된 셀럽이 없어요.");
-    expect(screen.getByRole("link", { name: "오늘의 LIVE로 돌아가기" })).toHaveAttribute("href", "/?locale=ko");
+    expect(screen.getByRole("link", { name: "LIVE 둘러보기" })).toHaveAttribute("href", "/?locale=ko");
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 

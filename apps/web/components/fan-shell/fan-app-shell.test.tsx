@@ -1,6 +1,7 @@
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { activeFanSection, fanNavigationItems } from "./fan-app-shell";
+import { activeFanSection, FanAppFrame, fanNavigationItems } from "./fan-app-shell";
 
 describe("fan app shell navigation", () => {
   it.each([
@@ -36,5 +37,20 @@ describe("fan app shell navigation", () => {
       "FAVORITES",
       "MY",
     ]);
+  });
+
+  it("connects an optional skip link to the screen main landmark", () => {
+    render(
+      <FanAppFrame locale="ko" mainId="screen-main">
+        <main id="screen-main" tabIndex={-1}>화면 본문</main>
+      </FanAppFrame>,
+    );
+
+    expect(screen.getByRole("link", { name: "본문으로 바로가기" })).toHaveAttribute(
+      "href",
+      "#screen-main",
+    );
+    expect(screen.getByRole("main")).toHaveAttribute("id", "screen-main");
+    expect(screen.getByRole("main")).toHaveAttribute("tabindex", "-1");
   });
 });

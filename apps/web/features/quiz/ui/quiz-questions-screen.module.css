@@ -2,6 +2,8 @@
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
 .shell { display:grid; width:min(100%,760px); min-height:100svh; margin-inline:auto; padding:88px 16px 40px; place-items:center; }
 .quiz { width:100%; }
+.exitLink { display:inline-flex; min-height:44px; align-items:center; gap:8px; margin-bottom:24px; color:oklch(48% 0 0); font-size:14px; font-weight:650; text-decoration:none; }
+.exitLink svg { width:18px; height:18px; }
 .quizHeader { display:flex; align-items:end; justify-content:space-between; gap:24px; }
 .quizHeader p,.quizHeader h1,.message h1,.message p,.loading p,.inlineError p { margin:0; }
 .quizHeader p { margin-bottom:6px; color:oklch(45% .22 315); font-size:13px; font-weight:800; }
@@ -32,6 +34,7 @@
 .navigation button:disabled { cursor:not-allowed; opacity:.38; }
 .page :is(a,button):focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 .inlineError { padding:12px 16px; border-radius:12px; background:oklch(96% .025 20); color:oklch(38% .16 20); font-size:13px; font-weight:650; }
+.inlineError:focus { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 .message { display:grid; width:min(100%,520px); justify-items:start; gap:12px; padding:32px 24px; border:1px solid oklch(93% 0 0); border-radius:16px; }
 .message h1 { font-size:24px; font-weight:850; letter-spacing:-.03em; }
 .message p { max-width:48ch; color:oklch(48% 0 0); font-size:14px; line-height:1.6; }

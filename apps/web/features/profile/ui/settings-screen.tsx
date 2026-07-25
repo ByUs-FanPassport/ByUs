@@ -416,26 +416,25 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   if (!ready || state === "loading")
     return (
-      <FanAppFrame locale={locale}><main className={styles.center} aria-busy="true">
+      <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1} aria-busy="true">
         <span className={styles.spinner} />
         {t.loading}
       </main></FanAppFrame>
     );
-  if (!authenticated) return <FanAppFrame locale={locale}><main className={styles.center}>{t.auth}</main></FanAppFrame>;
+  if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</main></FanAppFrame>;
   if (state === "error" || !settings || !preferences)
     return (
-      <FanAppFrame locale={locale}><main className={styles.center}>
+      <FanAppFrame locale={locale} mainId="settings-content"><main className={styles.center} id="settings-content" tabIndex={-1}>
         <p>{t.unavailable}</p>
         <button onClick={() => void load()}>{t.retry}</button>
       </main></FanAppFrame>
     );
 
   return (
-    <FanAppFrame locale={locale}>
+    <FanAppFrame locale={locale} mainId="settings-content">
     <div className={styles.page}>
-      <main className={styles.main}>
+      <main className={styles.main} id="settings-content" tabIndex={-1}>
         <div className={styles.intro}>
-          <p>FAN-020</p>
           <h1>{t.title}</h1>
           <span>{t.subtitle}</span>
         </div>

@@ -39,6 +39,7 @@ describe("QuizEntryScreen", () => {
 
     render(<QuizEntryScreen slug="kara" />);
     expect(await screen.findByRole("heading", { name: /KARA를 향한/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara");
     const home = screen.getByRole("link", { name: "ByUs 홈" });
     expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute("src", "/images/guest-home/byus-wordmark.svg");
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 시작하기" }));

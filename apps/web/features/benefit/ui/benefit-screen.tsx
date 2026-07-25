@@ -336,8 +336,11 @@ export function BenefitsScreen({
 
   return (
     <div className={styles.page}>
+      <a className={styles.skipLink} href="#benefit-content">
+        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+      </a>
       <Header locale={locale} celebrity={selected || undefined} />
-      <main className={styles.main}>
+      <main className={styles.main} id="benefit-content" tabIndex={-1}>
         <div className={styles.listHeading}>
           <div>
             <h1>{c.title}</h1>
@@ -647,12 +650,15 @@ export function BenefitDetailScreen({
       </main>
     ) : (
       <div className={styles.page}>
+        <a className={styles.skipLink} href="#benefit-content">
+          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+        </a>
         <Header
           locale={locale}
           celebrity={celebrity}
           currentPath={`/benefits/${benefitId}`}
         />
-        <main className={styles.detailMain} aria-busy="true">
+        <main className={styles.detailMain} id="benefit-content" tabIndex={-1} aria-busy="true">
           <div className={styles.detailSkeleton}>
             <i />
             <i />
@@ -681,12 +687,15 @@ export function BenefitDetailScreen({
       </main>
     ) : (
       <div className={styles.page}>
+        <a className={styles.skipLink} href="#benefit-content">
+          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+        </a>
         <Header
           locale={locale}
           celebrity={celebrity}
           currentPath={`/benefits/${benefitId}`}
         />
-        <main className={styles.detailMain}>
+        <main className={styles.detailMain} id="benefit-content" tabIndex={-1}>
           <section
             className={styles.message}
             role={view.notFound ? "status" : "alert"}
@@ -717,7 +726,7 @@ export function BenefitDetailScreen({
           ? c.sold_out
           : c.expired;
   const detailContent = (
-    <main className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`}>
+    <main className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`} id={presentation === "page" ? "benefit-content" : undefined}>
       {presentation === "page" && (
         <Link
           className={styles.back}
@@ -763,6 +772,7 @@ export function BenefitDetailScreen({
                   href={deliveredClaim.deliveryValue}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`${c.open}: ${benefit.title}, ${locale === "ko" ? "새 창" : "new window"}`}
                 >
                   {c.open}
                   <ExternalLink aria-hidden="true" />
@@ -835,6 +845,9 @@ export function BenefitDetailScreen({
   if (presentation === "overlay") return detailContent;
   return (
     <div className={styles.page}>
+      <a className={styles.skipLink} href="#benefit-content">
+        {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+      </a>
       <Header
         locale={locale}
         celebrity={celebrity}

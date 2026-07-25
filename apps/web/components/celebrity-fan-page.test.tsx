@@ -38,8 +38,22 @@ describe("published celebrity fan page", () => {
 
   it("renders only supplied official SNS links with accessible external-link names", () => {
     render(<CelebrityFanPage celebrity={{ ...kara, socialLinks: [{ platform: "youtube", url: "https://www.youtube.com/@official" }] }} locale="ko" upcomingLive={upcomingLive} />);
-    expect(screen.getByRole("link", { name: "KARA YouTube 새 창에서 열기" })).toHaveAttribute("href", "https://www.youtube.com/@official");
+    expect(screen.getByRole("link", { name: "YouTube 열기: KARA, 새 창" })).toHaveAttribute("href", "https://www.youtube.com/@official");
     expect(screen.queryByText("공개된 SNS 링크가 아직 없어요.")).not.toBeInTheDocument();
+  });
+
+  it("connects the fan shell skip link to the celebrity detail and labels LIVE actions by target", () => {
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    expect(screen.getByRole("link", { name: "본문으로 바로가기" })).toHaveAttribute(
+      "href",
+      "#celebrity-detail-main",
+    );
+    expect(document.querySelector("main")).toHaveAttribute("id", "celebrity-detail-main");
+    expect(
+      screen.getByRole("link", {
+        name: "LIVE 자세히 보기: KARA × NUALEAF LIVE",
+      }),
+    ).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
   });
 
   it("switches both primary actions to the existing Passport as soon as ownership resolves", async () => {

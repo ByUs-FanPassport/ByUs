@@ -50,7 +50,7 @@ describe("QuizResultScreen", () => {
 
   it("preserves the exact pass result destination when authentication is required", async () => {
     authenticated = false;
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
     const returnTo = `/c/kara/verify/result?attempt=${attemptId}&passport=${passportId}`;
     expect(screen.getByRole("heading", { name: "로그인이 필요해요." })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
@@ -64,9 +64,10 @@ describe("QuizResultScreen", () => {
   it("links the terminal pass to the recoverable, GET-only issuance route", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
 
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
 
     expect(await screen.findByRole("heading", { name: "KARA Official Fan 인증 완료" })).toBeInTheDocument();
+    expect(screen.getByLabelText("팬 인증 3단계 중 3단계 완료")).toHaveTextContent("3 / 3");
     expect(screen.getByText("3문항 중 2문항을 맞혔어요.")).toBeInTheDocument();
     expect(screen.queryByText(/정답과 해설/)).not.toBeInTheDocument();
 
@@ -86,7 +87,7 @@ describe("QuizResultScreen", () => {
         result: { kind: "attempt", ...terminalAttempt("failed", 1).attempt, attempt: { id: nextAttemptId, status: "open", score: null, submittedAt: null } },
       }));
 
-    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" celebrityName="KARA" />);
     expect(await screen.findByRole("heading", { name: "조금만 더 알아보고 다시 도전해 볼까요?" })).toBeInTheDocument();
     expect(screen.getByText("정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.")).toBeInTheDocument();
 
@@ -100,7 +101,7 @@ describe("QuizResultScreen", () => {
 
   it("does not render a pass result when the terminal status contradicts its passport query", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("failed", 1)));
-    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" />);
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("결과 정보를 확인할 수 없어요.");
     expect(screen.queryByRole("button", { name: "Passport 받기" })).not.toBeInTheDocument();
   });

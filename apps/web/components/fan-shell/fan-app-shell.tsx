@@ -133,14 +133,21 @@ export function FanAppFrame({
   children,
   actions,
   className,
+  mainId,
 }: {
   locale: FanLocale;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
+  mainId?: string;
 }) {
   return (
     <div className={[styles.frame, className].filter(Boolean).join(" ")}>
+      {mainId ? (
+        <a className={styles.skipLink} href={`#${mainId}`}>
+          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+        </a>
+      ) : null}
       <FanAppHeader locale={locale} actions={actions} />
       {children}
       <FanAppBottomNavigation locale={locale} />

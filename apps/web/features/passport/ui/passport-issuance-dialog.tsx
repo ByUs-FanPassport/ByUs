@@ -67,8 +67,8 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
           <Link className={styles.wordmark} href="/" aria-label="ByUs 홈">
             <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={80} height={30} priority />
           </Link>
-          <div className={styles.progress} aria-label="발급 과정 4단계 중 3단계">
-            <span>3 / 4</span><i aria-hidden="true" />
+          <div className={styles.progress} role="progressbar" aria-label="발급 과정 완료" aria-valuemin={1} aria-valuemax={4} aria-valuenow={4}>
+            <span>4 / 4</span><i aria-hidden="true" />
           </div>
           <Link className={styles.skip} href={`/passports/${issuance.passport.id}` as Route}>
             건너뛰기
@@ -85,7 +85,7 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
               priority
             />
             <div className={styles.identity}>
-              <h2 id="passport-issuance-title">{issuance.celebrity.name} 팬 Passport 발급 완료</h2>
+              <h2 id="passport-issuance-title">{issuance.celebrity.name} Fan Passport 발급 완료</h2>
               <p>팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.</p>
               <dl>
                 <div><dt>Celebrity</dt><dd>{issuance.celebrity.name}</dd></div>
@@ -113,7 +113,7 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
             )}
           </section>
 
-          <aside className={styles.summary} aria-live="polite">
+          <aside className={styles.summary} aria-live="polite" aria-atomic="true">
             <div>
               <span>팬 점수</span>
               <strong><s>0</s> <b aria-label="에서">→</b> {stage >= 2 ? issuance.score.points : 0}</strong>
@@ -171,7 +171,7 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
   if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} />;
   return (
     <main className={styles.screen}>
-      <div className={styles.state} aria-live="polite">
+      <div className={styles.state} role="status" aria-live="polite" aria-busy={state.kind === "loading"}>
         {state.kind === "loading" ? (
           <><h1>발급된 Passport 확인 중</h1><p>이미 완료된 팬 인증 결과를 안전하게 불러오고 있어요.</p></>
         ) : state.kind === "auth" ? (

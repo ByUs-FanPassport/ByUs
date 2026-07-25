@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Check, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -139,7 +139,8 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
         )}
         {screen.kind === "ready" && screen.intro.quiz.availability === "available" && (
           <section className={styles.entry} aria-labelledby="quiz-entry-heading">
-            <header><p>Official Fan 인증</p><h1 id="quiz-entry-heading">{screen.intro.celebrity.name}를 향한<br />나의 팬심을 확인해 보세요.</h1></header>
+            <Link className={styles.returnLink} href={`/c/${slug}` as Route}><ArrowLeft aria-hidden="true" />{screen.intro.celebrity.name} 팬페이지로 돌아가기</Link>
+            <header><p>팬 인증 · 시작 전</p><h1 id="quiz-entry-heading">{screen.intro.celebrity.name}를 향한<br />나의 팬심을 확인해 보세요.</h1></header>
             <p className={styles.description}>간단한 퀴즈를 통과하면 첫 Knowledge Stamp와 Fan Passport를 받을 수 있어요.</p>
             <ul className={styles.facts}>
               <li><Check aria-hidden="true" /><span><strong>{screen.intro.quiz.totalQuestions}문항</strong>으로 팬심 확인</span></li>
@@ -149,11 +150,11 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
             {!ready ? (
               <button className={styles.primaryAction} type="button" disabled>로그인 확인 중…</button>
             ) : authenticated ? (
-              <button className={styles.primaryAction} type="button" disabled={starting} onClick={() => void start()}>{starting ? "팬 인증 시작 중…" : "팬 인증 시작하기"}<ArrowRight /></button>
+              <button className={styles.primaryAction} type="button" disabled={starting} aria-busy={starting} onClick={() => void start()}>{starting ? "팬 인증 시작 중…" : "팬 인증 시작하기"}<ArrowRight aria-hidden="true" /></button>
             ) : (
               <AuthIntentLink className={styles.primaryAction} locale="ko" input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: "", actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>로그인하고 시작하기 <ArrowRight /></AuthIntentLink>
             )}
-            {startError && <p className={styles.inlineError} role="alert">{startError}</p>}
+            {startError && <p className={styles.inlineError} role="alert" tabIndex={-1}>{startError}</p>}
             <p className={styles.note}>이미 시작한 인증이 있다면 저장된 문항부터 이어서 진행됩니다.</p>
           </section>
         )}

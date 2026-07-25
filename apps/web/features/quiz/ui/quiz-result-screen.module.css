@@ -8,6 +8,7 @@
 .header nav span[aria-hidden] { width:1px; height:22px; background:oklch(90% 0 0); }
 .result,.error { display:grid; width:min(calc(100% - 32px),690px); justify-items:center; margin:56px auto; padding:48px 64px; border:1px solid oklch(90% 0 0); border-radius:16px; text-align:center; }
 .resultIcon { display:grid; width:88px; height:88px; place-items:center; margin-bottom:28px; border:2px solid oklch(18% 0 0); border-radius:50%; }
+.completion { margin:0 0 16px; color:oklch(48% 0 0); font-size:13px; font-weight:750; line-height:1.5; }
 .resultIcon svg { width:42px; height:42px; stroke-width:1.8; }
 .result h1,.error h1 { max-width:22ch; margin:0; font-size:30px; font-weight:850; letter-spacing:-.035em; line-height:1.25; text-wrap:balance; }
 .score,.scorePass { margin:14px 0 0; font-size:16px; font-weight:650; }
@@ -25,6 +26,7 @@
 .note { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:32px 0 0; padding-top:20px; border-top:1px solid oklch(90% 0 0); color:oklch(48% 0 0); font-size:13px; }
 .note svg { width:16px; }
 .actionError { margin:16px 0 0; color:#a61b27; font-size:13px; line-height:1.5; }
+.actionError:focus { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 .error { gap:12px; }
 .error p { max-width:48ch; margin:0; color:oklch(48% 0 0); font-size:14px; line-height:1.5; }
 .error a { display:flex; min-height:44px; align-items:center; margin-top:12px; color:oklch(18% 0 0); font-weight:750; }

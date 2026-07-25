@@ -48,25 +48,22 @@
   padding: 56px 0 96px;
 }
 .intro {
-  margin-bottom: 48px;
-}
-.intro > p {
-  margin: 0 0 8px;
-  color: oklch(48% 0 0);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  margin-bottom: 40px;
 }
 .intro h1 {
   margin: 0 0 10px;
-  font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 .intro > span {
+  display: block;
+  max-width: 65ch;
   color: oklch(48% 0 0);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 .section {
   padding: 24px 0;
@@ -391,7 +388,7 @@
     margin-bottom: 36px;
   }
   .intro h1 {
-    font-size: 32px;
+    font-size: 20px;
   }
   .valueRow,
   .walletValue,

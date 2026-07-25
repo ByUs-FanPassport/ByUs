@@ -131,7 +131,7 @@ describe("LiveSurveyScreen", () => {
     resolveSubmit(jsonResponse({ response: { status: "submitted", submittedAt: "2026-07-21T03:00:00.000Z", activityId: "3251919c-484a-4277-b81c-21e3905c61e4", scorePoints: 2, stamp: { id: "015c5177-0010-489f-857b-0ea31a986f48", businessStatus: "issued", mintStatus: "queued" } } }));
     expect(await screen.findByRole("heading", { name: "설문 참여가 완료되었습니다" })).toBeInTheDocument();
     expect(screen.getByText("Fan Score +2")).toBeInTheDocument();
-    expect(screen.getByAltText("KARA Survey Stamp")).toHaveAttribute("src", expect.stringContaining("kara-survey-stamp.png"));
+    expect(screen.getByAltText("설문 참여 Stamp")).toHaveAttribute("src", expect.stringContaining("kara-survey-stamp.png"));
     expect(container.querySelector('[class*="stampArtwork"]')).toBeInTheDocument();
   });
 

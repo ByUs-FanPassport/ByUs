@@ -62,6 +62,7 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
   const [submitPending, setSubmitPending] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
   const requestGeneration = useRef(0);
+  const operationErrorRef = useRef<HTMLDivElement>(null);
 
   const resultPath = useCallback((attemptId: string, passportId?: string) => {
     const query = new URLSearchParams({ attempt: attemptId });
@@ -112,6 +113,10 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
     () => projection?.questions.every((item) => item.selectedOptionId !== null) ?? false,
     [projection],
   );
+
+  useEffect(() => {
+    if (operationError) operationErrorRef.current?.focus();
+  }, [operationError]);
 
   const saveAnswer = useCallback(async (questionId: string, selectedOptionId: string) => {
     if (!projection || savingQuestionId || submitPending) return;
@@ -177,15 +182,24 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
   const isSaving = savingQuestionId === question.id;
   const isLast = questionIndex === projection.questions.length - 1;
   const canContinue = question.selectedOptionId !== null && !savingQuestionId && !submitPending;
+  const totalQuestions = projection.questions.length;
 
   return (
     <QuizFrame>
       <section className={styles.quiz} aria-labelledby="question-heading">
+        <Link className={styles.exitLink} href={`/c/${slug}` as Route}><ArrowLeft aria-hidden="true" />인증을 나가고 팬페이지로 돌아가기</Link>
         <header className={styles.quizHeader}>
-          <div><p>팬 인증 퀴즈</p><h1>KARA를 얼마나 알고 있나요?</h1></div>
-          <strong aria-label={`총 3문항 중 ${questionIndex + 1}번째`}>{questionIndex + 1} / 3</strong>
+          <div><p>팬 인증 퀴즈</p><h1>최애를 얼마나 알고 있나요?</h1></div>
+          <strong aria-label={`총 ${totalQuestions}문항 중 ${questionIndex + 1}번째`}>{questionIndex + 1} / {totalQuestions}</strong>
         </header>
-        <div className={styles.progress} aria-hidden="true"><span style={{ transform: `scaleX(${(questionIndex + 1) / 3})` }} /></div>
+        <div
+          className={styles.progress}
+          role="progressbar"
+          aria-label="팬 인증 진행률"
+          aria-valuemin={1}
+          aria-valuemax={totalQuestions}
+          aria-valuenow={questionIndex + 1}
+        ><span aria-hidden="true" style={{ transform: `scaleX(${(questionIndex + 1) / totalQuestions})` }} /></div>
         <form className={styles.question} onSubmit={(event) => event.preventDefault()}>
           <fieldset disabled={Boolean(savingQuestionId) || submitPending}>
             <legend id="question-heading">{question.prompt}</legend>
@@ -204,7 +218,7 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
         <div className={styles.saveStatus} aria-live="polite">
           {isSaving ? "답변 저장 중…" : question.selectedOptionId ? "답변 저장 완료" : "답을 선택해 주세요."}
         </div>
-        {operationError && <div className={styles.inlineError} role="alert"><p>{operationError} 답을 다시 선택해 주세요.</p></div>}
+        {operationError && <div ref={operationErrorRef} className={styles.inlineError} role="alert" tabIndex={-1}><p>{operationError} 답을 다시 선택해 주세요.</p></div>}
         <nav className={styles.navigation} aria-label="퀴즈 문항 이동">
           <button className={styles.previous} type="button" disabled={questionIndex === 0 || Boolean(savingQuestionId) || submitPending} onClick={() => setQuestionIndex((index) => index - 1)}><ArrowLeft /> 이전 질문</button>
           {isLast ? (

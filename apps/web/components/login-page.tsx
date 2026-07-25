@@ -41,6 +41,7 @@ export function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const mobilePresentation = useMobileLoginPresentation();
   const returnTo = useMemo(() => sanitizeReturnTo(searchParams.get("returnTo")), [searchParams]);
   const intent = useMemo(() => sanitizeIntent(searchParams.get("intent")), [searchParams]);
@@ -61,9 +62,12 @@ export function LoginPage({
         });
         if (!response.ok) throw new Error("Session synchronization failed");
         const body = await response.json() as { profile?: { completed?: boolean } };
+        const returnPathname = new URL(returnTo, "https://byus.local").pathname;
         const destination = body.profile?.completed
           ? returnTo
-          : appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent });
+          : returnPathname === "/onboarding/profile"
+            ? returnTo
+            : appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent });
         router.replace(destination as Route);
       } catch {
         synchronizationRef.current = null;
@@ -85,6 +89,10 @@ export function LoginPage({
   useEffect(() => {
     if (ready && authenticated) void synchronizeSession();
   }, [authenticated, ready, synchronizeSession]);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   const context = intent === "reserve"
     ? "로그인 후 선택한 라이브 예약 화면으로 돌아갑니다."
@@ -118,7 +126,14 @@ export function LoginPage({
           <h1 id="login-heading">최애와 함께한 순간을 기록하세요.</h1>
           <p id="login-description">Google 계정 하나로 로그인하고, 나만의 Embedded Wallet과 Fan Passport를 안전하게 이어갈 수 있어요.</p>
         </div>
-        <button className={styles.googleButton} type="button" disabled={!ready || authenticated} onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}>
+        <button
+          className={styles.googleButton}
+          type="button"
+          disabled={!ready || authenticated}
+          aria-busy={authenticated}
+          aria-describedby="login-context"
+          onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}
+        >
           <GoogleMark /><span>{ready ? "Google로 계속하기" : "로그인 준비 중"}</span><ArrowRight />
         </button>
         {testAccountLoginEnabled && (
@@ -138,8 +153,8 @@ export function LoginPage({
             <p>Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요.</p>
           </div>
         )}
-        <p className={styles.context}>{context}</p>
-        {error && <p className={styles.error} role="alert">{error}</p>}
+        <p id="login-context" className={styles.context}>{context}</p>
+        {error && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
         {presentation === "standalone" && <Link className={styles.backLink} href="/">홈으로 돌아가기</Link>}
     </>
   );

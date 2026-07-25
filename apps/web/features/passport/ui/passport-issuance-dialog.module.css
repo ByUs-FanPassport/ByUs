@@ -5,7 +5,7 @@
 .wordmark { display:flex; width:88px; height:44px; align-items:center; }
 .wordmark img { display:block; width:80px; height:30px; }
 .progress { display:grid; width:min(38vw,520px); justify-items:center; gap:10px; padding-top:4px; font-size:14px; font-weight:750; }
-.progress i { display:block; width:100%; height:4px; background:linear-gradient(to right,oklch(18% 0 0) 75%,oklch(90% 0 0) 75%); }
+.progress i { display:block; width:100%; height:4px; background:oklch(18% 0 0); }
 .skip { display:flex; min-width:88px; min-height:44px; align-items:center; justify-content:center; padding-inline:18px; border:1px solid oklch(76% 0 0); border-radius:10px; background:#fff; color:oklch(18% 0 0); font-weight:700; text-decoration:none; }
 .content { display:grid; grid-template-columns:minmax(0,3fr) minmax(240px,1fr); align-items:center; gap:40px; width:min(100%,1320px); margin:40px auto 24px; }
 .passport { position:relative; aspect-ratio:3/2; overflow:hidden; border-radius:16px; filter:drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); }

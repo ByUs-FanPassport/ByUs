@@ -89,8 +89,8 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
   }, [ready, authenticated, load, requestKey]);
 
   return (
-    <FanAppFrame locale={locale}>
-      <main className={styles.main}>
+    <FanAppFrame locale={locale} mainId="my-content">
+      <main className={styles.main} id="my-content" tabIndex={-1}>
         <header className={styles.heading}><h1>{t.title}</h1></header>
         {!ready ? <p className={styles.state} role="status">{t.loading}</p>
           : !authenticated ? (
@@ -102,7 +102,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
             </section>
           ) : state.status === "loading" ? <p className={styles.state} role="status">{t.loading}</p>
             : state.status === "error" ? (
-              <section className={styles.state} role="alert"><p>{t.error}</p><button onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button></section>
+              <section className={styles.state} role="alert"><p>{t.error}</p><button type="button" onClick={() => setRequestKey((value) => value + 1)}><RotateCcw aria-hidden="true" />{t.retry}</button></section>
             ) : <Dashboard summary={state.summary} locale={locale} />}
       </main>
     </FanAppFrame>
@@ -119,7 +119,7 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
         {summary.passports.length ? <div className={styles.passportList}>{summary.passports.slice(0, 3).map((passport) => (
           <Link href={`/passports/${passport.id}?locale=${locale}` as Route} key={passport.id}>
             <Image src={passport.celebrity.image} alt="" width={64} height={64} />
-            <div><strong>{passport.celebrity.name} Fan Passport</strong><span>{passport.stampCount} {t.stamps}</span></div><ArrowRight />
+            <div><strong>{passport.celebrity.name} Fan Passport</strong><span>{passport.stampCount} {t.stamps}</span></div><ArrowRight aria-hidden="true" />
           </Link>
         ))}</div> : <div className={styles.empty}><span>{t.noPassport}</span><Link href={`/celebrities?locale=${locale}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
       </section>
@@ -129,14 +129,14 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
           <Link href={`/live/${reservation.slug}?locale=${locale}` as Route} key={reservation.id}>
             <Image src={reservation.celebrity.image} alt="" width={56} height={56} />
             <div><strong>{reservation.title}</strong><span>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(reservation.startsAt))}</span></div>
-            <CalendarDays />
+            <CalendarDays aria-hidden="true" />
           </Link>
         ))}</div> : <div className={styles.empty}><span>{t.noReservation}</span><Link href={`/live?locale=${locale}` as Route}>{t.findLive}<ArrowRight /></Link></div>}
       </section>
       <nav className={styles.utilities} aria-label={locale === "ko" ? "MY 바로가기" : "MY shortcuts"}>
-        <Link href={`/benefits?locale=${locale}` as Route}><Gift /><span>{t.benefits}</span><strong>{summary.availableBenefitCount}</strong></Link>
-        <Link href={`/notifications?locale=${locale}` as Route}><Bell /><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link>
-        <Link href={`/settings?locale=${locale}` as Route}><Settings /><span>{t.settings}</span><ArrowRight /></Link>
+        <Link href={`/benefits?locale=${locale}` as Route}><Gift aria-hidden="true" /><span>{t.benefits}</span><strong>{summary.availableBenefitCount}</strong></Link>
+        <Link href={`/notifications?locale=${locale}` as Route}><Bell aria-hidden="true" /><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link>
+        <Link href={`/settings?locale=${locale}` as Route}><Settings aria-hidden="true" /><span>{t.settings}</span><ArrowRight aria-hidden="true" /></Link>
       </nav>
     </div>
   );

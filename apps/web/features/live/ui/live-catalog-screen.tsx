@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, CalendarDays, Play, Radio, RotateCcw } from "lucide-react";
+import { ArrowRight, CalendarDays, Play, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -19,21 +19,21 @@ type Catalog = {
 
 const copy = {
   ko: {
-    title: "모든 LIVE",
-    intro: "지금 함께하거나, 다음 만남을 예약하고, 지나간 순간을 다시 만나보세요.",
-    liveNow: "지금 LIVE",
-    liveNowSub: "지금 바로 입장할 수 있는 방송이에요.",
-    upcoming: "다가오는 LIVE",
-    upcomingSub: "일정을 확인하고 미리 예약해 보세요.",
+    title: "전체 LIVE",
+    intro: "지금 진행 중인 LIVE에 참여하고, 예정된 LIVE를 예약하거나 다시보기를 시청해 보세요.",
+    liveNow: "지금 LIVE 중",
+    liveNowSub: "지금 바로 시청할 수 있어요.",
+    upcoming: "예정된 LIVE",
+    upcomingSub: "일정을 확인하고 LIVE를 예약해 보세요.",
     replay: "다시보기",
-    replaySub: "종료된 LIVE의 공개 영상을 다시 만나요.",
-    emptyAll: "현재 공개된 LIVE가 없습니다.",
+    replaySub: "종료된 LIVE의 공개 영상을 다시 시청할 수 있어요.",
+    emptyAll: "현재 공개된 LIVE가 없어요.",
     emptyLive: "현재 진행 중인 LIVE가 없어요.",
     emptyUpcoming: "예정된 LIVE가 없어요.",
     emptyReplay: "공개된 다시보기가 없어요.",
-    enter: "라이브 입장하기",
+    enter: "LIVE 시청하기",
     reserve: "라이브 예약하기",
-    reserved: "예약 완료",
+    reserved: "예약 확인하기",
     watch: "다시보기",
     retry: "내 예약 상태 다시 불러오기",
   },
@@ -59,14 +59,28 @@ const copy = {
 } as const;
 
 function dateRange(item: LiveEventResponse, locale: FanLocale) {
+  const startsAt = new Date(item.live.startsAt);
+  const endsAt = new Date(item.live.endsAt);
   const formatter = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     month: "short",
     day: "numeric",
-    hour: "numeric",
+    hour: locale === "ko" ? "2-digit" : "numeric",
     minute: "2-digit",
+    hour12: locale !== "ko",
     timeZone: "Asia/Seoul",
   });
-  return `${formatter.format(new Date(item.live.startsAt))} – ${formatter.format(new Date(item.live.endsAt))}`;
+  const sameDay = startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })
+    === endsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+  if (sameDay) {
+    const endTime = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+      hour: locale === "ko" ? "2-digit" : "numeric",
+      minute: "2-digit",
+      hour12: locale !== "ko",
+      timeZone: "Asia/Seoul",
+    }).format(endsAt);
+    return `${formatter.format(startsAt)}–${endTime}`;
+  }
+  return `${formatter.format(startsAt)} – ${formatter.format(endsAt)}`;
 }
 
 function action(item: LiveEventResponse, locale: FanLocale) {
@@ -75,6 +89,12 @@ function action(item: LiveEventResponse, locale: FanLocale) {
   if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true };
   if (item.viewer.reservation) return { label: t.reserved, icon: <CalendarDays />, external: false };
   return { label: t.reserve, icon: <CalendarDays />, external: false };
+}
+
+function statusLabel(item: LiveEventResponse, locale: FanLocale) {
+  if (item.live.effectiveStatus === "live") return locale === "ko" ? "LIVE 진행 중" : "LIVE now";
+  if (item.live.effectiveStatus === "scheduled") return locale === "ko" ? "LIVE 예정" : "Upcoming";
+  return locale === "ko" ? "다시보기" : "Replay";
 }
 
 function LiveGroup({
@@ -96,7 +116,9 @@ function LiveGroup({
     <section className={styles.group} aria-labelledby={`${id}-heading`}>
       <div className={styles.groupHeading}>
         <div><h2 id={`${id}-heading`}>{title}</h2><p>{subtitle}</p></div>
-        <span>{items.length}</span>
+        <span aria-label={`${title} ${items.length}${locale === "ko" ? "개" : ""}`}>
+          {locale === "ko" ? `총 ${items.length}개` : `${items.length} total`}
+        </span>
       </div>
       {items.length ? (
         <div className={styles.list}>
@@ -107,9 +129,18 @@ function LiveGroup({
               : `/live/${item.live.slug}?locale=${locale}`;
             return (
               <article className={styles.row} key={item.live.id}>
-                <Image src={item.live.celebrity.image} alt="" width={80} height={80} />
+                <Image src={item.live.celebrity.image} alt="" width={64} height={64} />
                 <div className={styles.details}>
-                  <span>{item.live.celebrity.name} · {item.live.brand.name}</span>
+                  <div className={styles.meta}>
+                    <span>{item.live.celebrity.name} · {item.live.brand.name}</span>
+                    <span>
+                      <span
+                        aria-hidden="true"
+                        className={item.live.effectiveStatus === "live" ? styles.liveDot : styles.statusDot}
+                      />
+                      {statusLabel(item, locale)}
+                    </span>
+                  </div>
                   <h3><Link href={`/live/${item.live.slug}?locale=${locale}` as Route}>{item.live.title}</Link></h3>
                   <p>{dateRange(item, locale)}</p>
                 </div>
@@ -118,8 +149,12 @@ function LiveGroup({
                   href={href as Route}
                   target={currentAction.external ? "_blank" : undefined}
                   rel={currentAction.external ? "noreferrer" : undefined}
+                  aria-label={`${currentAction.label}: ${item.live.title}${currentAction.external ? locale === "ko" ? ", 새 창" : ", new tab" : ""}`}
                 >
-                  {currentAction.icon}<span>{currentAction.label}</span><ArrowRight />
+                  <span className={styles.actionIcon} aria-hidden="true">{currentAction.icon}</span>
+                  <span className={styles.actionLabel}>{currentAction.label}</span>
+                  {currentAction.external ? <span className={styles.srOnly}>새 창</span> : null}
+                  <ArrowRight aria-hidden="true" />
                 </Link>
               </article>
             );
@@ -167,10 +202,9 @@ export function LiveCatalogScreen({
 
   const total = catalog.liveNow.length + catalog.upcoming.length + catalog.replay.length;
   return (
-    <FanAppFrame locale={locale}>
-      <main className={styles.main}>
+    <FanAppFrame locale={locale} mainId="live-catalog-main">
+      <main className={styles.main} id="live-catalog-main" tabIndex={-1}>
         <header className={styles.intro}>
-          <Radio aria-hidden="true" />
           <h1>{t.title}</h1>
           <p>{t.intro}</p>
         </header>

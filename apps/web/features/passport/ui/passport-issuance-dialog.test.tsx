@@ -31,9 +31,10 @@ describe("PassportIssuanceCeremony", () => {
 
   it("can skip state motion and reaches the authoritative Passport detail route", () => {
     render(<PassportIssuanceCeremony issuance={aggregate} />);
-    expect(screen.getByRole("main", { name: "KARA 팬 Passport 발급 완료" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "KARA Fan Passport 발급 완료" })).toBeInTheDocument();
     expect(screen.getByText("팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
+    expect(screen.getByRole("progressbar", { name: "발급 과정 완료" })).toHaveAttribute("aria-valuenow", "4");
     expect(screen.getByRole("link", { name: "건너뛰기" })).toHaveAttribute("href", `/passports/${aggregate.passport.id}`);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.getAllByText("팬 인증 스탬프 획득")).toHaveLength(2);
@@ -78,7 +79,7 @@ describe("PassportIssuanceCeremony", () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json({ issuance: aggregate }));
     render(<PassportIssuanceScreen passportId={aggregate.passport.id} />);
 
-    expect(await screen.findByRole("main", { name: "KARA 팬 Passport 발급 완료" })).toBeInTheDocument();
+    expect(await screen.findByRole("main", { name: "KARA Fan Passport 발급 완료" })).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       `/api/passports/${aggregate.passport.id}/issuance?locale=ko`,
       expect.objectContaining({ method: "GET", headers: { authorization: "Bearer access-token" } }),

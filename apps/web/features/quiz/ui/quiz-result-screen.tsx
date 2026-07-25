@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, Info, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
 import styles from "./quiz-result-screen.module.css";
@@ -15,6 +15,7 @@ interface QuizResultScreenProps {
   attemptId: string | null;
   passportId: string | null;
   celebritySlug: string;
+  celebrityName?: string;
 }
 
 type ViewState =
@@ -39,12 +40,17 @@ function ResultHeader() {
   );
 }
 
-export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizResultScreenProps) {
+export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebrityName = "최애" }: QuizResultScreenProps) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [view, setView] = useState<ViewState>({ kind: "loading" });
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
+  const actionErrorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (actionError) actionErrorRef.current?.focus();
+  }, [actionError]);
 
   useEffect(() => {
     if (!ready) return;
@@ -102,7 +108,6 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
     }
   }
 
-  const celebrityName = celebritySlug.replaceAll("-", " ").toUpperCase();
   const resultQuery = new URLSearchParams();
   if (attemptId) resultQuery.set("attempt", attemptId);
   if (passportId) resultQuery.set("passport", passportId);
@@ -144,6 +149,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
     <main className={styles.page}>
       <ResultHeader />
       <section className={styles.result}>
+        <p className={styles.completion} aria-label="팬 인증 3단계 중 3단계 완료">팬 인증 · 3 / 3</p>
         <div className={styles.resultIcon} aria-hidden="true">
           {passed ? <Check /> : <RefreshCw />}
         </div>
@@ -162,14 +168,14 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug }: QuizR
         ) : (
           <>
             <p className={styles.helper}>정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.</p>
-            <button className={styles.primary} type="button" disabled={actionPending} onClick={() => void retry()}>
+            <button className={styles.primary} type="button" disabled={actionPending} aria-busy={actionPending} onClick={() => void retry()}>
               {actionPending ? "새 문항 준비 중" : "다시 도전"}
             </button>
           </>
         )}
         <Link className={styles.secondary} href={`/c/${celebritySlug}`}>{celebrityName} 팬페이지로 돌아가기</Link>
         {!passed && <p className={styles.note}><Info aria-hidden="true" />재도전 횟수와 시간 제한은 없습니다.</p>}
-        {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
+        {actionError && <p ref={actionErrorRef} className={styles.actionError} role="alert" tabIndex={-1}>{actionError}</p>}
       </section>
     </main>
   );

@@ -75,16 +75,16 @@ function safeExplorerUrl(hash: string): string | null {
 
 function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
   if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`}><main className={styles.overlayMain}>{children}</main></div>;
-  return <FanAppFrame locale={locale}><div className={styles.app}><main className={styles.main}>{children}</main></div></FanAppFrame>;
+  return <FanAppFrame locale={locale} mainId="passport-content"><div className={styles.app}><main className={styles.main} id="passport-content" tabIndex={-1}>{children}</main></div></FanAppFrame>;
 }
 
-function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
+function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} role="status" aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
 
 function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocale; kind: "auth" | "missing" | "network"; retry: () => void; returnTo: string }) {
   const c = copy[locale]; const missing = kind === "missing";
   const source = new URL(returnTo, "https://byus.local");
   const targetId = source.pathname.split("/").filter(Boolean).at(-1) ?? "collection";
-  return <section className={styles.state} aria-labelledby="state-title"><CircleHelp /><h1 id="state-title">{missing ? c.notFound : c.loadError}</h1><p>{missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
+  return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{missing ? c.notFound : c.loadError}</h1><p>{missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
 }
 
 function useOwnedApi<T>(url: string, parse: (value: unknown) => T, authReady: boolean, authenticated: boolean, getAccessToken: () => Promise<string | null>) {
@@ -117,8 +117,8 @@ export function PassportCollectionScreen() {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
   const fetcher = useOwnedApi(`/api/passports?locale=${locale}`, parseCollection, auth.ready, auth.authenticated, auth.getAccessToken);
   return <Frame locale={locale}><PageHeading title={c.passports} subtitle={c.passportsSub} />
-    {fetcher.state.status === "loading" ? <Skeleton /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty}><BookOpen /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight /></Link></section> : <>
-      <section className={styles.collection} aria-label="Passport collection">{fetcher.state.data.map((passport) => <Link className={styles.passportCard} key={passport.id} href={withLocale(`/passports/${passport.id}`, locale)}>
+    {fetcher.state.status === "loading" ? <Skeleton /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
+      <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <Link className={styles.passportCard} key={passport.id} href={withLocale(`/passports/${passport.id}`, locale)}>
         <div className={styles.cardMedia}><Image src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectPosition: passport.celebrity.image.position }} /></div>
         <div className={styles.cardTop}><div><h2>{passport.celebrity.name}</h2><p>{c.issued} {date(passport.issuedAt, locale)}</p></div><ArrowRight /></div>
         <div className={styles.cardFacts}><span><strong>{passport.display.level}</strong><small>LEVEL</small></span><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div>
@@ -133,7 +133,7 @@ function StampArtwork({ type, label, empty = false }: { type: StampType; label: 
 
 function DigitalDisclosure({ mint, locale }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale }) {
   const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(mint.txHash) : null;
-  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer">{c.explorer}<ArrowRight /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
+  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer" aria-label={`${c.explorer}: ${locale === "ko" ? "새 창" : "new window"}`}>{c.explorer}<ArrowRight aria-hidden="true" /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
 export function PassportDetailScreen({ id }: { id: string }) {

@@ -13,6 +13,7 @@ type ScreenState = "checking" | "empty" | "typing" | "valid" | "duplicate" | "pr
 
 type Copy = {
   home: string; language: string; heading: string; subtitle: string; preview: string; passport: string;
+  progress: string;
   owner: string; placeholderOwner: string; tier: string; score: string; stamps: string; issuance: string;
   issuanceValue: string; field: string; counter: (count: number) => string; rule: string; privacy: string;
   save: string; saving: string; saved: string; back: string; checking: string; empty: string; typing: string;
@@ -23,6 +24,7 @@ const copy: Record<"ko" | "en", Copy> = {
   ko: {
     home: "ByUs 홈", language: "언어", heading: "팬 활동에 표시할 닉네임을 정해 주세요.",
     subtitle: "Passport와 참여 기록에 사용할 공개 이름이에요.", preview: "Passport 소유자 미리보기",
+    progress: "프로필 설정 · 1 / 1",
     passport: "KARA FAN PASSPORT", owner: "소유자", placeholderOwner: "닉네임",
     tier: "레벨", score: "Fan Score", stamps: "Stamps", issuance: "발급",
     issuanceValue: "팬 인증 완료 후 기록", field: "닉네임", counter: (count) => `${count}/16자`,
@@ -40,6 +42,7 @@ const copy: Record<"ko" | "en", Copy> = {
   en: {
     home: "ByUs home", language: "Language", heading: "Choose the nickname shown in fan activities.",
     subtitle: "This public name will appear in your Passport and activity history.", preview: "Passport owner preview",
+    progress: "Profile setup · 1 / 1",
     passport: "KARA FAN PASSPORT", owner: "Owner", placeholderOwner: "Nickname",
     tier: "Level", score: "Fan Score", stamps: "Stamps", issuance: "Issued",
     issuanceValue: "Recorded after fan verification", field: "Nickname", counter: (count) => `${count}/16 characters`,
@@ -79,6 +82,7 @@ export function ProfileOnboardingScreen() {
   const searchParams = useSearchParams();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const inputRef = useRef<HTMLInputElement>(null);
+  const loginRedirectedRef = useRef(false);
   const [nickname, setNickname] = useState("");
   const [state, setState] = useState<ScreenState>("checking");
   const rawReturnTo = searchParams.get("returnTo");
@@ -102,9 +106,13 @@ export function ProfileOnboardingScreen() {
   useEffect(() => {
     if (!ready) return;
     if (!authenticated) {
-      replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+      if (!loginRedirectedRef.current) {
+        loginRedirectedRef.current = true;
+        replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+      }
       return;
     }
+    loginRedirectedRef.current = false;
 
     const controller = new AbortController();
     setState("checking");
@@ -117,7 +125,10 @@ export function ProfileOnboardingScreen() {
         });
         const body = await jsonBody(response);
         if (response.status === 401) {
-          replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+          if (!loginRedirectedRef.current) {
+            loginRedirectedRef.current = true;
+            replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+          }
           return;
         }
         if (!response.ok) throw new Error("profile unavailable");
@@ -162,7 +173,10 @@ export function ProfileOnboardingScreen() {
       });
       const body = await jsonBody(response);
       if (response.status === 401) {
-        replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+        if (!loginRedirectedRef.current) {
+          loginRedirectedRef.current = true;
+          replace(appendLoginContext("/login", { ...context, returnTo: currentOnboardingPath }) as Route);
+        }
         return;
       }
       if (!response.ok) {
@@ -208,6 +222,7 @@ export function ProfileOnboardingScreen() {
 
       <main className={styles.main}>
         <section className={styles.intro} aria-labelledby="profile-heading">
+          <p className={styles.progress} aria-label={t.progress}>{t.progress}</p>
           <h1 id="profile-heading">{t.heading}</h1><p>{t.subtitle}</p>
         </section>
 
@@ -221,7 +236,7 @@ export function ProfileOnboardingScreen() {
             </dl>
           </section>
 
-          <form className={styles.form} onSubmit={submit} noValidate>
+          <form className={styles.form} onSubmit={submit} noValidate aria-busy={state === "checking" || state === "saving"}>
             <div className={styles.fieldHead}><label htmlFor="nickname">{t.field}</label><span aria-label={t.counter(count)}>{count}/16</span></div>
             <input ref={inputRef} id="nickname" name="nickname" value={nickname} onChange={(event) => updateNickname(event.target.value)}
               maxLength={32} autoComplete="nickname" enterKeyHint="done" aria-invalid={invalid} aria-describedby="nickname-status nickname-rules nickname-privacy"
