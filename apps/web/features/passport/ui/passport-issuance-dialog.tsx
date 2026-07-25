@@ -60,6 +60,8 @@ export function PassportIssuanceCeremony({ issuance }: PassportIssuanceCeremonyP
   return (
     <main
       className={styles.screen}
+      data-fan-surface
+      lang="ko"
       aria-labelledby="passport-issuance-title"
     >
       <div className={styles.frame}>
@@ -170,7 +172,7 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
 
   if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} />;
   return (
-    <main className={styles.screen}>
+    <main className={styles.screen} data-fan-surface lang="ko">
       <div className={styles.state} role="status" aria-live="polite" aria-busy={state.kind === "loading"}>
         {state.kind === "loading" ? (
           <><h1>발급된 Passport 확인 중</h1><p>이미 완료된 팬 인증 결과를 안전하게 불러오고 있어요.</p></>

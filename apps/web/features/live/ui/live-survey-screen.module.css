@@ -30,7 +30,7 @@
 .question fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .question legend { display: flex; width: 100%; align-items: center; gap: 12px; padding: 0; font-size: 18px; font-weight: 800; line-height: 1.45; letter-spacing: -.02em; }
 .question legend .number { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: oklch(18% 0 0); color: #fff; font-size: 12px; }
-.questionText { min-width: 0; overflow-wrap: anywhere; }
+.questionText { min-width: 0; }
 .question legend small { flex: 0 0 auto; margin-left: auto; color: oklch(43% 0 0); font-size: 12px; font-weight: 650; }
 .hint { margin: 10px 0 20px 40px; color: oklch(43% 0 0); font-size: 13px; line-height: 1.5; }
 .options { display: flex; flex-direction: column; gap: 10px; }

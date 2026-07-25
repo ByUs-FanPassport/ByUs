@@ -74,7 +74,7 @@ function safeExplorerUrl(hash: string): string | null {
 }
 
 function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
-  if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`}><main className={styles.overlayMain}>{children}</main></div>;
+  if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`} data-fan-surface lang={locale}><main className={styles.overlayMain}>{children}</main></div>;
   return <FanAppFrame locale={locale} mainId="passport-content"><div className={styles.app}><main className={styles.main} id="passport-content" tabIndex={-1}>{children}</main></div></FanAppFrame>;
 }
 
@@ -133,7 +133,7 @@ function StampArtwork({ type, label, empty = false }: { type: StampType; label: 
 
 function DigitalDisclosure({ mint, locale }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale }) {
   const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(mint.txHash) : null;
-  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer" aria-label={`${c.explorer}: ${locale === "ko" ? "새 창" : "new window"}`}>{c.explorer}<ArrowRight aria-hidden="true" /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
+  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong data-wrap-anywhere>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer" aria-label={`${c.explorer}: ${locale === "ko" ? "새 창" : "new window"}`}>{c.explorer}<ArrowRight aria-hidden="true" /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
 export function PassportDetailScreen({ id }: { id: string }) {

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "./login-page";
 
@@ -55,6 +55,7 @@ describe("Privy login page", () => {
     expect(login).toHaveBeenCalledWith({ loginMethods: ["google"] });
     expect(screen.getByText("로그인 후 선택한 라이브 예약 화면으로 돌아갑니다.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Test Account 이메일/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "최애와 함께한 순간을 기록하세요." }).closest("[data-fan-surface]")).toHaveAttribute("lang", "ko");
   });
 
   it("uses Privy's email OTP UI only when the non-production Test Account path is enabled", () => {
@@ -69,6 +70,7 @@ describe("Privy login page", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "최애와 함께한 순간을 기록하세요." });
     expect(dialog).toHaveAttribute("aria-describedby", "login-description");
+    expect(screen.getByRole("heading", { name: "최애와 함께한 순간을 기록하세요." }).closest("[data-fan-surface]")).toHaveAttribute("lang", "ko");
     const closeButton = screen.getByRole("button", { name: "로그인 창 닫기" });
     await waitFor(() => expect(closeButton).toHaveFocus());
 
@@ -149,7 +151,9 @@ describe("Privy login page", () => {
 
   it("keeps the contextual login open and recoverable after an OAuth error", async () => {
     render(<LoginPage presentation="overlay" />);
-    onError?.();
+    await act(async () => {
+      onError?.();
+    });
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("로그인을 완료하지 못했어요");
     await waitFor(() => expect(alert).toHaveFocus());

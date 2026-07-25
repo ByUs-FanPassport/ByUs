@@ -355,14 +355,14 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   const liveHref = `/live/${slug}?locale=${locale}` as Route;
 
   if (view.kind === "loading" && !conflict) {
-    return <div className={styles.page}><Header slug={slug} locale={locale} /><main className={styles.loading} aria-busy="true" aria-label={c.loading}><div /><div /><div /></main></div>;
+    return <div className={styles.page} data-fan-surface lang={locale}><Header slug={slug} locale={locale} /><main className={styles.loading} aria-busy="true" aria-label={c.loading}><div /><div /><div /></main></div>;
   }
 
   if (view.kind === "error") {
     const notFound = view.code === "SURVEY_NOT_FOUND";
     const authenticationRequired = view.code === "AUTHENTICATION_REQUIRED";
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <Header slug={slug} locale={locale} />
         <main className={styles.state} role="alert">
           <RotateCcw aria-hidden="true" />
@@ -385,7 +385,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
 
   if (!data.eligibility.completedAttendance) {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <Header slug={slug} locale={locale} />
         <main className={styles.state}>
           <div className={styles.stateIcon}><Stamp aria-hidden="true" /></div>
@@ -399,7 +399,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
 
   if (data.response?.status === "submitted") {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <Header slug={slug} locale={locale} />
         <main className={styles.complete}>
           <div className={styles.completeMark}><Check aria-hidden="true" /></div>
@@ -418,7 +418,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-fan-surface lang={locale}>
       <Header slug={slug} locale={locale} />
       <main className={styles.main}>
         <Link className={styles.back} href={liveHref}><ArrowLeft aria-hidden="true" />{c.back}</Link>

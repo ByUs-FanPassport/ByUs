@@ -142,7 +142,11 @@ export function FanAppFrame({
   mainId?: string;
 }) {
   return (
-    <div className={[styles.frame, className].filter(Boolean).join(" ")}>
+    <div
+      className={[styles.frame, className].filter(Boolean).join(" ")}
+      data-fan-surface
+      lang={locale}
+    >
       {mainId ? (
         <a className={styles.skipLink} href={`#${mainId}`}>
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}

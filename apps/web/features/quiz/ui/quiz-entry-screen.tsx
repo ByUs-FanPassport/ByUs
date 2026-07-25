@@ -116,7 +116,7 @@ export function QuizEntryScreen({ slug }: { slug: string }) {
   }, [authenticated, screen, slug, start]);
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-fan-surface lang="ko">
       <FocusFlowBrand />
       <div className={styles.shell}>
         {screen.kind === "loading" && (

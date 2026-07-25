@@ -191,7 +191,7 @@ export function NotificationCenter() {
             ? ko.failed
             : null;
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-fan-surface lang={locale}>
       <a className={styles.skipLink} href="#notification-content">
         본문으로 바로가기
       </a>

@@ -70,3 +70,25 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/*
+ * Korean wrapping contract for public fan surfaces.
+ * Admin screens intentionally do not opt in to data-fan-surface.
+ */
+[data-fan-surface]:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+[data-fan-surface] :where(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+[data-fan-surface] :where(p, li, blockquote) {
+  text-wrap: pretty;
+}
+
+[data-fan-surface] [data-wrap-anywhere] {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}

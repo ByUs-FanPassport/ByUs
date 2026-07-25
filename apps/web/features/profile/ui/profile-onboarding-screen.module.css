@@ -19,7 +19,7 @@
 .preview dl { display:grid; gap:0; margin:12px 0 0; }
 .preview dl div { display:grid; grid-template-columns:112px 1fr; min-height:48px; align-items:center; border-bottom:1px solid oklch(93% 0 0); }
 .preview dt { color:oklch(48% 0 0); font-size:13px; font-weight:600; }
-.preview dd { min-width:0; margin:0; overflow-wrap:anywhere; font-size:14px; font-weight:750; }
+.preview dd { min-width:0; margin:0; font-size:14px; font-weight:750; }
 .preview .ownerRow { min-height:76px; }
 .ownerRow dd { font-size:24px; font-weight:850; letter-spacing:-.03em; }
 .form { align-self:start; display:grid; gap:14px; padding:24px 0; }

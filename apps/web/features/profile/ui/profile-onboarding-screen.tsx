@@ -211,7 +211,7 @@ export function ProfileOnboardingScreen() {
   const displayOwner = normalized || t.placeholderOwner;
 
   return (
-    <div className={styles.page} data-state={state}>
+    <div className={styles.page} data-fan-surface data-state={state} lang={locale}>
       <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner}>
         <nav className={styles.locale} aria-label={t.language}>
           <Link aria-current={locale === "ko" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "ko" }) as Route}>KO</Link>

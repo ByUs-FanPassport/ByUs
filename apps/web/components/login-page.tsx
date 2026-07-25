@@ -107,7 +107,7 @@ export function LoginPage({
       : "로그인 후 보고 있던 화면으로 돌아갑니다.";
 
   const content = (
-    <>
+    <div className={styles.contents} data-fan-surface lang={locale}>
         <div className={styles.panelHeader}>
           <Link className={styles.brand} href="/" aria-label="ByUs 홈으로 돌아가기"><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
           {presentation === "overlay" && (
@@ -156,7 +156,7 @@ export function LoginPage({
         <p id="login-context" className={styles.context}>{context}</p>
         {error && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
         {presentation === "standalone" && <Link className={styles.backLink} href="/">홈으로 돌아가기</Link>}
-    </>
+    </div>
   );
 
   if (presentation === "overlay") {
@@ -178,7 +178,7 @@ export function LoginPage({
   }
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-fan-surface lang={locale}>
       <section className={styles.panel} aria-labelledby="login-heading" aria-describedby="login-description">
         {content}
       </section>

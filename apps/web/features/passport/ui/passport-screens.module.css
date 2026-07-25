@@ -199,7 +199,6 @@
 }
 .cardTop h2,
 .cardTop p {
-  overflow-wrap: anywhere;
   margin: 0;
 }
 .cardTop h2 {
@@ -587,7 +586,6 @@
   gap: 3px;
 }
 .timeline strong {
-  overflow-wrap: anywhere;
   font-size: 14px;
 }
 .timeline time {
@@ -664,7 +662,6 @@
 }
 .disclosure strong {
   max-width: 60%;
-  overflow-wrap: anywhere;
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;

@@ -114,11 +114,11 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   const resultReturnTo = `/c/${celebritySlug}/verify/result?${resultQuery.toString()}`;
 
   if (view.kind === "loading") {
-    return <main className={styles.page}><ResultHeader /><div className={styles.skeleton} aria-label="퀴즈 결과 불러오는 중" /></main>;
+    return <main className={styles.page} data-fan-surface lang="ko"><ResultHeader /><div className={styles.skeleton} aria-label="퀴즈 결과 불러오는 중" /></main>;
   }
   if (view.kind === "unauthenticated") {
     return (
-      <main className={styles.page}>
+      <main className={styles.page} data-fan-surface lang="ko">
         <ResultHeader />
         <section className={styles.error}>
           <h1>로그인이 필요해요.</h1>
@@ -132,7 +132,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   }
   if (view.kind === "error") {
     return (
-      <main className={styles.page}>
+      <main className={styles.page} data-fan-surface lang="ko">
         <ResultHeader />
         <section className={styles.error} role="alert">
           <h1>결과 정보를 확인할 수 없어요.</h1>
@@ -146,7 +146,7 @@ export function QuizResultScreen({ attemptId, passportId, celebritySlug, celebri
   const { attempt } = view.projection;
   const passed = attempt.status === "passed";
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-fan-surface lang="ko">
       <ResultHeader />
       <section className={styles.result}>
         <p className={styles.completion} aria-label="팬 인증 3단계 중 3단계 완료">팬 인증 · 3 / 3</p>

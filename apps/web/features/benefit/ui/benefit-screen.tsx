@@ -335,7 +335,7 @@ export function BenefitsScreen({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-fan-surface lang={locale}>
       <a className={styles.skipLink} href="#benefit-content">
         {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
       </a>
@@ -640,7 +640,7 @@ export function BenefitDetailScreen({
 
   if (view.kind === "loading")
     return presentation === "overlay" ? (
-      <main className={`${styles.detailMain} ${styles.overlayMain}`} aria-busy="true">
+      <main className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale} aria-busy="true">
         <div className={styles.detailSkeleton}>
           <i />
           <i />
@@ -649,7 +649,7 @@ export function BenefitDetailScreen({
         </div>
       </main>
     ) : (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <a className={styles.skipLink} href="#benefit-content">
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
@@ -670,7 +670,7 @@ export function BenefitDetailScreen({
     );
   if (view.kind === "error")
     return presentation === "overlay" ? (
-      <main className={`${styles.detailMain} ${styles.overlayMain}`}>
+      <main className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale}>
         <section
           className={styles.message}
           role={view.notFound ? "status" : "alert"}
@@ -686,7 +686,7 @@ export function BenefitDetailScreen({
         </section>
       </main>
     ) : (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <a className={styles.skipLink} href="#benefit-content">
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
@@ -726,7 +726,12 @@ export function BenefitDetailScreen({
           ? c.sold_out
           : c.expired;
   const detailContent = (
-    <main className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`} id={presentation === "page" ? "benefit-content" : undefined}>
+    <main
+      className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`}
+      data-fan-surface
+      lang={locale}
+      id={presentation === "page" ? "benefit-content" : undefined}
+    >
       {presentation === "page" && (
         <Link
           className={styles.back}
@@ -780,7 +785,7 @@ export function BenefitDetailScreen({
               ) : (
                 <div className={styles.secret}>
                   <span>{c.code}</span>
-                  <code>{deliveredClaim.deliveryValue}</code>
+                  <code data-wrap-anywhere>{deliveredClaim.deliveryValue}</code>
                   <button
                     type="button"
                     onClick={() => void copyCode(deliveredClaim.deliveryValue)}
@@ -844,7 +849,7 @@ export function BenefitDetailScreen({
   );
   if (presentation === "overlay") return detailContent;
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-fan-surface lang={locale}>
       <a className={styles.skipLink} href="#benefit-content">
         {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
       </a>

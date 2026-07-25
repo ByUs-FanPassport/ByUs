@@ -52,5 +52,9 @@ describe("fan app shell navigation", () => {
     );
     expect(screen.getByRole("main")).toHaveAttribute("id", "screen-main");
     expect(screen.getByRole("main")).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("main").closest("[data-fan-surface]")).toHaveAttribute(
+      "lang",
+      "ko",
+    );
   });
 });

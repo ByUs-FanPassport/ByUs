@@ -233,5 +233,5 @@ export function QuizQuestionsScreen({ slug }: { slug: string }) {
 }
 
 function QuizFrame({ children }: { children: React.ReactNode }) {
-  return <main className={styles.page}><FocusFlowBrand /><div className={styles.shell}>{children}</div></main>;
+  return <main className={styles.page} data-fan-surface lang="ko"><FocusFlowBrand /><div className={styles.shell}>{children}</div></main>;
 }

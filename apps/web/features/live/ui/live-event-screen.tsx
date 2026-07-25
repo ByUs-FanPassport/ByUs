@@ -732,7 +732,7 @@ export function LiveEventScreen({
 
   if (view.kind === "loading") {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <a className={styles.skipLink} href="#live-detail-main">
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
@@ -752,7 +752,7 @@ export function LiveEventScreen({
   }
   if (view.kind === "error") {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-fan-surface lang={locale}>
         <a className={styles.skipLink} href="#live-detail-main">
           {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
         </a>
@@ -864,7 +864,7 @@ export function LiveEventScreen({
     );
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-fan-surface lang={locale}>
       <a className={styles.skipLink} href="#live-detail-main">
         {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
       </a>
