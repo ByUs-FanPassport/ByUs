@@ -6,7 +6,10 @@ import { passportLocaleSchema, type PassportLocale } from "../../features/passpo
 import type { AuthorizedFan } from "../fan-auth/fan-auth-gate";
 import type { PassportReadRepository } from "./passport-read-repository";
 
-export interface PassportReadRouteDependencies { authorize(authorization: string): Promise<AuthorizedFan>; repository: PassportReadRepository }
+export interface PassportReadRouteDependencies {
+  authorize(authorization: string): Promise<AuthorizedFan>;
+  repository: PassportReadRepository;
+}
 const idSchema = z.uuid();
 const headers = { "cache-control": "no-store", vary: "Authorization" } as const;
 
@@ -34,7 +37,15 @@ export function createPassportDetailHandler(dependencies: PassportReadRouteDepen
     const parsed = idSchema.safeParse(input.passportId); const selectedLocale = locale(request);
     if (!parsed.success || !selectedLocale) return error(404, "NOT_FOUND");
     const fan = await owner(request, dependencies); if (fan instanceof Response) return fan;
-    try { const passport = await dependencies.repository.findPassport({ id: parsed.data, appUserId: fan.appUserId, locale: selectedLocale }); return passport ? Response.json({ passport }, { headers }) : error(404, "NOT_FOUND"); }
+    try {
+      const passport = await dependencies.repository.findPassport({
+        id: parsed.data,
+        appUserId: fan.appUserId,
+        locale: selectedLocale,
+      });
+      if (!passport) return error(404, "NOT_FOUND");
+      return Response.json({ passport }, { headers });
+    }
     catch { return error(503, "PASSPORTS_UNAVAILABLE"); }
   };
 }
@@ -48,4 +59,3 @@ export function createStampDetailHandler(dependencies: PassportReadRouteDependen
     catch { return error(503, "STAMPS_UNAVAILABLE"); }
   };
 }
-

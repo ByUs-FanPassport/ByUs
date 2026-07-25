@@ -12,6 +12,20 @@ import {
 const key = "11111111-1111-4111-8111-111111111111";
 const questionId = "22222222-2222-4222-8222-222222222222";
 const answers = [{ questionId, rating: 5 }];
+const completion = {
+  passportId: "33333333-3333-4333-8333-333333333333",
+  earnedStamp: {
+    id: questionId,
+    type: "survey" as const,
+    issuedAt: "2026-07-21T12:00:00.000Z",
+    businessStatus: "issued" as const,
+    mintStatus: "queued" as const,
+  },
+  scoreDelta: 2,
+  updatedScore: 10,
+  updatedLevel: "Gold" as const,
+  leveledUp: true,
+};
 
 function request(method: string, body?: unknown): Request {
   return new Request("https://byus.example/api/live-events/kara-live/survey?locale=ko", {
@@ -23,7 +37,12 @@ function request(method: string, body?: unknown): Request {
 
 describe("live survey handlers", () => {
   it("returns the localized owner projection without public caching", async () => {
-    const result = { survey: { id: key, version: 1, questions: [] }, eligibility: { completedAttendance: true }, response: null };
+    const result = {
+      survey: { id: key, version: 1, questions: [] },
+      eligibility: { completedAttendance: true },
+      response: null,
+      completion: null,
+    };
     const get = vi.fn().mockResolvedValue(result);
     const run = createGetLiveSurveyHandler({ authorize: async () => ({ appUserId: "owner" }), repository: { get, saveDraft: vi.fn(), submit: vi.fn() } });
     const response = await run(request("GET"), { slug: "kara-live" });
@@ -39,7 +58,16 @@ describe("live survey handlers", () => {
   ] as const)("derives owner and accepts only canonical %s payload", async (method, factory, operation) => {
     const mutation = vi.fn().mockResolvedValue(operation === "saveDraft"
       ? { response: { status: "draft", revision: 1, answers, updatedAt: "2026-07-21T12:00:00.000Z" } }
-      : { response: { status: "submitted", submittedAt: "2026-07-21T12:00:00.000Z", activityId: key, scorePoints: 2, stamp: { id: questionId, businessStatus: "issued", mintStatus: "queued" } } });
+      : {
+        response: {
+          status: "submitted",
+          submittedAt: "2026-07-21T12:00:00.000Z",
+          activityId: key,
+          scorePoints: 2,
+          stamp: { id: questionId, businessStatus: "issued", mintStatus: "queued" },
+        },
+        completion,
+      });
     const repository = { get: vi.fn(), saveDraft: vi.fn(), submit: vi.fn(), [operation]: mutation };
     const run = factory({ authorize: async () => ({ appUserId: "owner" }), repository });
     const payload = operation === "saveDraft" ? { idempotencyKey: key, expectedRevision: 0, answers } : { idempotencyKey: key, answers };

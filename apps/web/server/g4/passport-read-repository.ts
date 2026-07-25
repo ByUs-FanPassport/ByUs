@@ -2,9 +2,10 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { parsePassportCollection, type PassportCollection } from "../../features/passport/domain/passport-collection";
-import { parsePassportDetail, type PassportDetail } from "../../features/passport/domain/passport-detail";
+import { parsePassportDetailRecord, type PassportDetail } from "../../features/passport/domain/passport-detail";
 import { passportLocaleSchema, type PassportLocale } from "../../features/passport/domain/passport-read-model";
 import { parseStampDetail, type StampDetail } from "../../features/passport/domain/stamp-detail";
+import { attachPassportGrowth } from "./passport-growth";
 
 export interface PassportReadRepository {
   findCollection(input: { appUserId: string; locale: PassportLocale }): Promise<PassportCollection>;
@@ -41,7 +42,7 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
     if (error) throw new Error("Passport detail query failed");
     const row = oneRow(data);
     if (row === null) return null;
-    try { return parsePassportDetail(row, locale); }
+    try { return attachPassportGrowth(parsePassportDetailRecord(row, locale)); }
     catch { throw new Error("Passport detail projection is invalid"); }
   }
 

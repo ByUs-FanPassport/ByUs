@@ -7,6 +7,20 @@ const idempotencyKey = "22222222-2222-4222-8222-222222222222";
 const stampId = "33333333-3333-4333-8333-333333333333";
 const questionId = "44444444-4444-4444-8444-444444444444";
 const answers = [{ questionId, rating: 5 }];
+const completion = {
+  passportId: "66666666-6666-4666-8666-666666666666",
+  earnedStamp: {
+    id: stampId,
+    type: "survey",
+    issuedAt: "2026-07-21T12:00:00.000Z",
+    businessStatus: "issued",
+    mintStatus: "queued",
+  },
+  scoreDelta: 2,
+  updatedScore: 10,
+  updatedLevel: "Gold",
+  leveledUp: true,
+};
 
 describe("SupabaseLiveSurveyRepository", () => {
   it("calls the owner-scoped draft RPC without caller-controlled identity", async () => {
@@ -18,7 +32,16 @@ describe("SupabaseLiveSurveyRepository", () => {
   });
 
   it("derives all Survey issuance identifiers on the server", async () => {
-    const data = { response: { status: "submitted", submittedAt: "2026-07-21T12:00:00.000Z", activityId: "55555555-5555-4555-8555-555555555555", scorePoints: 2, stamp: { id: stampId, businessStatus: "issued", mintStatus: "queued" } } };
+    const data = {
+      response: {
+        status: "submitted",
+        submittedAt: "2026-07-21T12:00:00.000Z",
+        activityId: "55555555-5555-4555-8555-555555555555",
+        scorePoints: 2,
+        stamp: { id: stampId, businessStatus: "issued", mintStatus: "queued" },
+      },
+      completion,
+    };
     const rpc = vi.fn().mockResolvedValue({ data, error: null });
     const repository = new SupabaseLiveSurveyRepository({ rpc }, () => stampId);
     expect(await repository.submit({ appUserId, slug: "kara-live", idempotencyKey, answers })).toEqual(data);

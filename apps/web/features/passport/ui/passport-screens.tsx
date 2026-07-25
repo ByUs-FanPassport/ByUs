@@ -1,23 +1,27 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, RotateCcw, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
 import type { PassportCollection } from "../domain/passport-collection";
 import type { PassportDetail } from "../domain/passport-detail";
-import type { PassportLocale } from "../domain/passport-read-model";
+import { levelLabel, stampTypeLabel, type PassportLocale } from "../domain/passport-read-model";
 import type { StampDetail } from "../domain/stamp-detail";
+import {
+  PassportStampCanvas,
+  StampArtwork,
+  type PassportStampType,
+} from "./passport-stamp-artwork";
 import styles from "./passport-screens.module.css";
 
 type Loadable<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: "auth" | "missing" | "network" };
-type StampType = "knowledge" | "reservation" | "attendance" | "survey";
 
 const copy = {
   ko: {
@@ -26,9 +30,10 @@ const copy = {
     retry: "다시 불러오기", loadError: "기록을 불러오지 못했어요.", loadErrorBody: "잠시 후 다시 시도해 주세요. 이미 저장된 기록은 사라지지 않아요.", login: "로그인하고 내 기록 보기",
     issued: "발급", score: "Fan Score", stamps: "Stamp", digital: "디지털 발급", pending: "안전하게 발급을 준비하고 있어요", complete: "디지털 발급이 완료됐어요", needsHelp: "발급 상태를 확인하고 있어요",
     detailSub: "함께한 활동과 Stamp를 한곳에서 확인하세요.", stampBook: "Stamp Book", activity: "최근 활동", noActivity: "아직 활동 기록이 없어요.", noActivityBody: "팬 인증과 라이브 참여를 시작하면 이곳에 차곡차곡 남아요.",
-    slot: { knowledge: "팬 인증", reservation: "라이브 예약", attendance: "라이브 출석", survey: "후기 참여" }, emptySlot: "다음 순간을 기다리는 중", earned: "받은 Stamp 보기",
+    emptySlot: "다음 순간을 기다리는 중", earned: "받은 Stamp 보기",
     points: "점", digitalInfo: "디지털 발급 정보", token: "Token ID", transaction: "거래 기록", explorer: "발급 기록 확인", noFacts: "발급이 완료되면 확인 정보가 표시돼요.",
     stampDetail: "Stamp 상세", stampDetailSub: "이 Stamp가 남긴 순간을 확인하세요.", earnedOn: "받은 날", activityDate: "활동한 날", reward: "Fan Score", backPassport: "Passport로 돌아가기", notFound: "기록을 찾을 수 없어요.", notFoundBody: "삭제되었거나 내 소유의 기록이 아닐 수 있어요.",
+    nextLevel: "다음 Level", levelMax: "최고 Level에 도달했어요.", remaining: "점 남음", nextBenefit: "다음 혜택", benefitReady: "지금 받을 수 있어요.", benefitLocked: "조건을 달성하면 받을 수 있어요.", viewBenefit: "혜택 확인하기", relatedActivity: "관련 활동", currentScore: "현재", requiredScore: "필요", opensAt: "공개",
   },
   en: {
     passports: "My Passports", passportsSub: "Collect the moments you shared with your favorite artists.", discover: "Discover artists", open: "Open Passport",
@@ -36,18 +41,12 @@ const copy = {
     retry: "Try again", loadError: "We couldn’t load your records.", loadErrorBody: "Please try again shortly. Your saved records are safe.", login: "Sign in to view my records",
     issued: "Issued", score: "Fan Score", stamps: "Stamps", digital: "Digital issuance", pending: "Your digital edition is being prepared", complete: "Digital issuance is complete", needsHelp: "We’re checking the issuance status",
     detailSub: "See your activities and Stamps in one place.", stampBook: "Stamp Book", activity: "Recent activity", noActivity: "No activity yet", noActivityBody: "Fan verification and LIVE participation will appear here.",
-    slot: { knowledge: "Fan Verification", reservation: "Live Reservation", attendance: "Live Attendance", survey: "Survey" }, emptySlot: "Waiting for your next moment", earned: "View earned Stamp",
+    emptySlot: "Waiting for your next moment", earned: "View earned Stamp",
     points: "pts", digitalInfo: "Digital issuance details", token: "Token ID", transaction: "Transaction", explorer: "View issuance record", noFacts: "Details will appear after issuance is complete.",
     stampDetail: "Stamp details", stampDetailSub: "See the moment recorded by this Stamp.", earnedOn: "Issued", activityDate: "Activity date", reward: "Fan Score", backPassport: "Back to Passport", notFound: "Record not found", notFoundBody: "It may not exist or may not belong to your account.",
+    nextLevel: "Next Level", levelMax: "You reached the highest Level.", remaining: "pts remaining", nextBenefit: "Next benefit", benefitReady: "Available now", benefitLocked: "Complete the conditions to unlock it.", viewBenefit: "View benefit", relatedActivity: "Related activity", currentScore: "Current", requiredScore: "Required", opensAt: "Opens",
   },
 } as const;
-
-const stampAsset: Partial<Record<StampType, string>> = {
-  knowledge: "/images/stamps/kara-verification-stamp.png",
-  reservation: "/images/stamps/kara-reservation-stamp.png",
-  attendance: "/images/stamps/kara-attendance-stamp.png",
-  survey: "/images/stamps/kara-survey-stamp.png",
-};
 
 function localeFrom(value: string | null): PassportLocale { return value === "en" ? "en" : "ko"; }
 function withLocale(path: string, locale: PassportLocale): Route { return `${path}?locale=${locale}` as Route; }
@@ -59,6 +58,27 @@ function issuanceText(status: string, locale: PassportLocale) {
   if (status === "minted") return c.complete;
   if (status === "permanent_failure") return c.needsHelp;
   return c.pending;
+}
+
+function missingConditionText(
+  condition: NonNullable<PassportDetail["nextBenefit"]>["missingConditions"][number],
+  locale: PassportLocale,
+): string {
+  const c = copy[locale];
+  switch (condition.type) {
+    case "score":
+      return `${c.score}: ${c.currentScore} ${condition.current} / ${c.requiredScore} ${condition.required}`;
+    case "level":
+      return `${c.nextLevel}: ${levelLabel(locale, condition.required)}`;
+    case "stamp":
+      return `Stamp: ${stampTypeLabel(locale, condition.required)}`;
+    case "activity":
+      return locale === "ko"
+        ? `활동: ${stampTypeLabel(locale, condition.required)}`
+        : `Activity: ${stampTypeLabel(locale, condition.required)}`;
+    case "opens_at":
+      return `${c.opensAt}: ${date(condition.at, locale)}`;
+  }
 }
 
 function safeExplorerUrl(hash: string): string | null {
@@ -127,10 +147,6 @@ export function PassportCollectionScreen() {
   </Frame>;
 }
 
-function StampArtwork({ type, label, empty = false }: { type: StampType; label: string; empty?: boolean }) {
-  const asset = stampAsset[type]; return <div className={empty ? styles.emptyArtwork : styles.stampArtwork}>{empty || !asset ? <><Star /><span>{label}</span></> : <Image src={asset} alt={`${label} Stamp`} width={420} height={420} />}</div>;
-}
-
 function DigitalDisclosure({ mint, locale }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale }) {
   const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(mint.txHash) : null;
   return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong data-wrap-anywhere>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer" aria-label={`${c.explorer}: ${locale === "ko" ? "새 창" : "new window"}`}>{c.explorer}<ArrowRight aria-hidden="true" /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
@@ -143,12 +159,15 @@ export function PassportDetailScreen({ id }: { id: string }) {
 }
 
 function PassportDetailView({ passport, locale }: { passport: PassportDetail; locale: PassportLocale }) {
-  const c = copy[locale]; const byType = useMemo(() => new Map(passport.stamps.map((stamp) => [stamp.type, stamp])), [passport.stamps]); const slots: StampType[] = ["knowledge", "reservation", "attendance", "survey"];
+  const c = copy[locale];
+  const stamps = [...passport.stamps].sort((left, right) => left.issuedAt.localeCompare(right.issuedAt) || left.id.localeCompare(right.id));
   const activities = [...passport.activities].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id));
+  const nextLevel = passport.progress.nextLevel ? levelLabel(locale, passport.progress.nextLevel) : null;
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
-    <section className={styles.passportHero}><div className={styles.passportVisual}><Image src="/images/guest-home/passport-open-empty.png" alt={`${passport.celebrity.name} Fan Passport`} width={1536} height={1024} /></div><div className={styles.identity}><Image src={passport.celebrity.image.url} alt="" width={72} height={72} style={{ objectPosition: passport.celebrity.image.position }} /><div><span>{passport.celebrity.name}</span><strong>{passport.display.level}</strong><small>{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
-    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div><div className={styles.stampGrid}>{slots.map((type) => { const stamp = byType.get(type); return stamp ? <Link key={type} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><StampArtwork type={type} label={c.slot[type]} /><strong>{c.slot[type]}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link> : <div key={type} className={styles.stampSlot} data-empty="true"><StampArtwork type={type} label={c.slot[type]} empty /><strong>{c.slot[type]}</strong><span>{c.emptySlot}</span></div>; })}</div></section>
-    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.display.type}</strong><time dateTime={item.occurredAt}>{date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
+    <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stamps} totalCount={passport.stampSummary.total} locale={locale} priority /></div><div className={styles.identity}><Image src={passport.celebrity.image.url} alt="" width={72} height={72} style={{ objectPosition: passport.celebrity.image.position }} /><div><span>{passport.celebrity.name}</span><strong>{passport.owner.nickname ?? passport.display.level}</strong><small>{passport.owner.nickname ? `${passport.display.level} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div><div className={styles.levelProgress}><div><strong>{passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span></div><progress aria-label={passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
+    {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
+    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div>{stamps.length ? <div className={styles.stampGrid}>{stamps.map((stamp) => { const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
+    <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.context.live ? item.context.live.linkable ? <Link href={withLocale(`/live/${item.context.live.slug}`, locale)}>{item.context.live.title}</Link> : item.context.live.title : item.display.type}</strong><time dateTime={item.occurredAt}>{item.display.type} · {date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <DigitalDisclosure mint={passport.mint} locale={locale} /></>;
 }
 
@@ -160,7 +179,7 @@ export function StampDetailScreen({ id, presentation = "page", onClose }: { id: 
 
 function StampDetailView({ stamp, locale, onClose }: { stamp: StampDetail; locale: PassportLocale; onClose?: () => void }) {
   const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={onClose ? <button className={styles.back} type="button" onClick={onClose} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button> : <Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
-    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><StampArtwork type={stamp.type} label={stamp.display.type} /><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} /></aside></div></>;
+    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><div className={styles.stampArtwork}><StampArtwork type={stamp.type as PassportStampType} locale={locale} label={stamp.display.type} /></div><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{stamp.activity.context.live ? stamp.activity.context.live.linkable ? <Link href={withLocale(`/live/${stamp.activity.context.live.slug}`, locale)}>{stamp.activity.context.live.title}</Link> : stamp.activity.context.live.title : stamp.display.type}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} /></aside></div></>;
 }
 
 function useMobileDetail() {

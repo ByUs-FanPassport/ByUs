@@ -18,6 +18,20 @@ const result = {
       mintStatus: "queued" as const,
     },
   },
+  completion: {
+    passportId: "55555555-5555-4555-8555-555555555555",
+    earnedStamp: {
+      id: "44444444-4444-4444-8444-444444444444",
+      type: "reservation" as const,
+      issuedAt: "2026-07-21T12:00:00.000Z",
+      businessStatus: "issued" as const,
+      mintStatus: "queued" as const,
+    },
+    scoreDelta: 1,
+    updatedScore: 5,
+    updatedLevel: "Silver" as const,
+    leveledUp: true,
+  },
 };
 
 function request(body: unknown = { idempotencyKey }, authorization = "Bearer token") {

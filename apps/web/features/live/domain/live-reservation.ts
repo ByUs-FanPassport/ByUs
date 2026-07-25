@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { liveReservationSummarySchema } from "./live-event";
+import { fanActivityCompletionSchema } from "./fan-activity-completion";
 
 export const createLiveReservationRequestSchema = z
   .object({ idempotencyKey: z.string().uuid() })
@@ -8,6 +9,19 @@ export const createLiveReservationRequestSchema = z
 
 export const createLiveReservationResponseSchema = z.object({
   reservation: liveReservationSummarySchema,
+  completion: fanActivityCompletionSchema,
+}).strict().superRefine((value, context) => {
+  if (
+    value.completion.earnedStamp.type !== "reservation"
+    || value.completion.earnedStamp.id !== value.reservation.stamp.id
+    || value.completion.earnedStamp.mintStatus !== value.reservation.stamp.mintStatus
+    || value.completion.scoreDelta !== 1
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "reservation completion is inconsistent",
+    });
+  }
 });
 
 export type CreateLiveReservationRequest = z.infer<
@@ -33,8 +47,23 @@ const atomicReservationResultSchema = z
       "permanent_failure",
       "minted",
     ]),
+    completion: fanActivityCompletionSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((result, context) => {
+    if (
+      result.completion.passportId !== result.passportId
+      || result.completion.earnedStamp.id !== result.stampId
+      || result.completion.earnedStamp.type !== "reservation"
+      || result.completion.earnedStamp.mintStatus !== result.stampMintStatus
+      || result.completion.scoreDelta !== result.scorePoints
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "atomic reservation completion is inconsistent",
+      });
+    }
+  });
 
 export function projectAtomicReservationResult(value: unknown): CreateLiveReservationResponse {
   const result = atomicReservationResultSchema.parse(value);
@@ -48,5 +77,6 @@ export function projectAtomicReservationResult(value: unknown): CreateLiveReserv
         mintStatus: result.stampMintStatus,
       },
     },
+    completion: result.completion,
   });
 }

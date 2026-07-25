@@ -28,11 +28,26 @@ const reservation = {
     mintStatus: "queued",
   },
 };
+const reservationCompletion = {
+  passportId: "33333333-3333-4333-8333-333333333333",
+  earnedStamp: {
+    id: reservation.stamp.id,
+    type: "reservation",
+    issuedAt: reservation.createdAt,
+    businessStatus: "issued",
+    mintStatus: "queued",
+  },
+  scoreDelta: 1,
+  updatedScore: 5,
+  updatedLevel: "Silver",
+  leveledUp: true,
+};
 
 const attendanceResult = {
   attendance: {
     id: "22222222-2222-4222-8222-222222222222",
     liveEventId: "819b52d9-62c3-450c-b3dc-78d84d2238c6",
+    passportId: "33333333-3333-4333-8333-333333333333",
     attendedAt: "2026-07-24T12:10:00.000Z",
     scorePoints: 3,
     stamp: {
@@ -40,6 +55,20 @@ const attendanceResult = {
       businessStatus: "issued",
       mintStatus: "queued",
     },
+  },
+  completion: {
+    passportId: "33333333-3333-4333-8333-333333333333",
+    earnedStamp: {
+      id: "44444444-4444-4444-8444-444444444444",
+      type: "attendance",
+      issuedAt: "2026-07-24T12:10:00.000Z",
+      businessStatus: "issued",
+      mintStatus: "queued",
+    },
+    scoreDelta: 3,
+    updatedScore: 8,
+    updatedLevel: "Silver",
+    leveledUp: false,
   },
 };
 
@@ -187,13 +216,19 @@ describe("LiveEventScreen", () => {
   it("posts one idempotent reservation, refreshes the projection, and opens FAN-014", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify(payload()), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ reservation }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ reservation, completion: reservationCompletion }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(payload("reserved", true)), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     fireEvent.click(await screen.findByRole("button", { name: /라이브 예약하기/ }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "예약이 완료되었습니다" })).toBeInTheDocument();
-    expect(screen.getByText("Reservation Stamp 적립 완료")).toBeInTheDocument();
+    expect(screen.getByText("라이브 예약 Stamp")).toBeInTheDocument();
+    expect(screen.getByText("총점 5")).toBeInTheDocument();
+    expect(screen.getByText("레벨 상승 · 실버")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Passport에서 확인하기" })).toHaveAttribute(
+      "href",
+      "/passports/33333333-3333-4333-8333-333333333333?locale=ko",
+    );
     const request = fetchMock.mock.calls[1];
     expect(request[0]).toBe("/api/live-events/819b52d9-62c3-450c-b3dc-78d84d2238c6/reservation");
     expect(request[1]).toEqual(expect.objectContaining({
@@ -210,7 +245,7 @@ describe("LiveEventScreen", () => {
     query = `locale=ko&authIntent=${intent.id}`;
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify(payload()), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ reservation }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ reservation, completion: reservationCompletion }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(payload("reserved", true)), { status: 200 }));
 
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
@@ -278,6 +313,8 @@ describe("LiveEventScreen", () => {
 
     expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
     expect(screen.getByText("Attendance Stamp와 Fan Score +3이 기록되었습니다.")).toBeInTheDocument();
+    expect(screen.getByText("총점 8")).toBeInTheDocument();
+    expect(screen.getByText("실버")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /설문 참여/ })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=ko");
     expect(fetchMock.mock.calls[1][0]).toBe("/api/live-events/kara-nualeaf/attendance");
     expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({

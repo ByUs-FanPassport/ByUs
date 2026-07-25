@@ -17,6 +17,23 @@ const ids = {
   text: "f4742cc2-85c2-4e16-9df1-4a05b1d21346",
   option1: "90339735-90b4-4e85-8707-d2037a6d35f9",
   option2: "62aac40d-dc92-4029-a579-a3bb97fa9132",
+  passport: "33333333-3333-4333-8333-333333333333",
+  stamp: "015c5177-0010-489f-857b-0ea31a986f48",
+};
+
+const surveyCompletion = {
+  passportId: ids.passport,
+  earnedStamp: {
+    id: ids.stamp,
+    type: "survey",
+    issuedAt: "2026-07-21T03:00:00.000Z",
+    businessStatus: "issued",
+    mintStatus: "queued",
+  },
+  scoreDelta: 2,
+  updatedScore: 10,
+  updatedLevel: "Gold",
+  leveledUp: true,
 };
 
 function payload(options?: { attendance?: boolean; status?: "draft" | "submitted"; revision?: number }) {
@@ -38,6 +55,7 @@ function payload(options?: { attendance?: boolean; status?: "draft" | "submitted
       answers: options.status === "draft" ? [{ questionId: ids.single, selectedOptionIds: [ids.option1] }] : [],
       submittedAt: options.status === "submitted" ? "2026-07-21T03:00:00.000Z" : null,
     } : null,
+    completion: options?.status === "submitted" ? surveyCompletion : null,
   };
 }
 
@@ -128,11 +146,30 @@ describe("LiveSurveyScreen", () => {
     fireEvent.click(submit);
     fireEvent.click(submit);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    resolveSubmit(jsonResponse({ response: { status: "submitted", submittedAt: "2026-07-21T03:00:00.000Z", activityId: "3251919c-484a-4277-b81c-21e3905c61e4", scorePoints: 2, stamp: { id: "015c5177-0010-489f-857b-0ea31a986f48", businessStatus: "issued", mintStatus: "queued" } } }));
-    expect(await screen.findByRole("heading", { name: "설문 참여가 완료되었습니다" })).toBeInTheDocument();
+    resolveSubmit(jsonResponse({
+      response: {
+        status: "submitted",
+        submittedAt: "2026-07-21T03:00:00.000Z",
+        activityId: "3251919c-484a-4277-b81c-21e3905c61e4",
+        scorePoints: 2,
+        stamp: {
+          id: ids.stamp,
+          businessStatus: "issued",
+          mintStatus: "queued",
+        },
+      },
+      completion: surveyCompletion,
+    }));
+    expect(await screen.findByRole("heading", { level: 1, name: "설문 참여가 완료되었습니다" })).toBeInTheDocument();
     expect(screen.getByText("Fan Score +2")).toBeInTheDocument();
-    expect(screen.getByAltText("설문 참여 Stamp")).toHaveAttribute("src", expect.stringContaining("kara-survey-stamp.png"));
-    expect(container.querySelector('[class*="stampArtwork"]')).toBeInTheDocument();
+    expect(screen.getByText("총점 10")).toBeInTheDocument();
+    expect(screen.getByText("레벨 상승 · 골드")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Passport에서 확인하기" })).toHaveAttribute(
+      "href",
+      `/passports/${ids.passport}?locale=ko`,
+    );
+    expect(screen.getByRole("img", { name: "후기 참여 Stamp" })).toHaveAttribute("data-stamp-type", "survey");
+    expect(container.querySelector('[data-stamp-type="survey"]')).toBeInTheDocument();
   });
 
   it("reconciles an already-submitted response instead of showing a false failure", async () => {

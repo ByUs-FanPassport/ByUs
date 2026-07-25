@@ -11,9 +11,24 @@ const result = {
   attendance: {
     id: "22222222-2222-4222-8222-222222222222",
     liveEventId: "33333333-3333-4333-8333-333333333333",
+    passportId: "55555555-5555-4555-8555-555555555555",
     attendedAt: "2026-07-21T12:00:00.000Z",
     scorePoints: 3 as const,
     stamp: { id: "44444444-4444-4444-8444-444444444444", businessStatus: "issued" as const, mintStatus: "queued" as const },
+  },
+  completion: {
+    passportId: "55555555-5555-4555-8555-555555555555",
+    earnedStamp: {
+      id: "44444444-4444-4444-8444-444444444444",
+      type: "attendance" as const,
+      issuedAt: "2026-07-21T12:00:00.000Z",
+      businessStatus: "issued" as const,
+      mintStatus: "queued" as const,
+    },
+    scoreDelta: 3,
+    updatedScore: 8,
+    updatedLevel: "Silver" as const,
+    leveledUp: false,
   },
 };
 

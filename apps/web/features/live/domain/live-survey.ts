@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { fanActivityCompletionSchema } from "./fan-activity-completion";
+
 export const liveSurveyLocaleSchema = z.enum(["ko", "en"]);
 export type LiveSurveyLocale = z.infer<typeof liveSurveyLocaleSchema>;
 
@@ -66,7 +68,26 @@ export const liveSurveyResponseSchema = z.object({
     answers: z.array(surveyAnswerSchema),
     submittedAt: z.string().datetime({ offset: true }).nullable(),
   }).strict()),
-}).strict();
+  completion: fanActivityCompletionSchema.nullable(),
+}).strict().superRefine((value, context) => {
+  const submitted = value.response?.status === "submitted";
+  if (submitted !== (value.completion !== null)) {
+    context.addIssue({
+      code: "custom",
+      message: "submitted survey completion is inconsistent",
+    });
+  }
+  if (
+    value.completion
+    && (value.completion.earnedStamp.type !== "survey"
+      || value.completion.scoreDelta !== 2)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "survey completion is inconsistent",
+    });
+  }
+});
 
 export const saveLiveSurveyDraftResponseSchema = z.object({
   response: z.object({
@@ -89,7 +110,20 @@ export const submitLiveSurveyResponseSchema = z.object({
       mintStatus: z.enum(["queued", "processing", "retryable", "permanent_failure", "minted"]),
     }).strict(),
   }).strict(),
-}).strict();
+  completion: fanActivityCompletionSchema,
+}).strict().superRefine((value, context) => {
+  if (
+    value.completion.earnedStamp.id !== value.response.stamp.id
+    || value.completion.earnedStamp.type !== "survey"
+    || value.completion.earnedStamp.mintStatus !== value.response.stamp.mintStatus
+    || value.completion.scoreDelta !== value.response.scorePoints
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "survey completion is inconsistent",
+    });
+  }
+});
 
 export type SurveyAnswer = z.infer<typeof surveyAnswerSchema>;
 export type LiveSurveyResponse = z.infer<typeof liveSurveyResponseSchema>;

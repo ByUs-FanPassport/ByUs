@@ -84,6 +84,20 @@ describe("benefit repository", () => {
     ).resolves.toMatchObject({ benefits: [{ deliveryType: "external_url" }] });
   });
 
+  it("preserves supported text delivery without exposing its value in the catalog", async () => {
+    const repository = new DefaultBenefitRepository(
+      source({ getPublished: vi.fn(async () => [{ ...raw, deliveryType: "text" }]) }),
+    );
+    await expect(
+      repository.list({
+        celebritySlug: "kara",
+        locale: "ko",
+        appUserId: "owner",
+        now: new Date("2026-07-21T12:00:00Z"),
+      }),
+    ).resolves.toMatchObject({ benefits: [{ deliveryType: "text" }] });
+  });
+
   it("returns opaque null when benefit is absent or unpublished", async () => {
     const repository = new DefaultBenefitRepository(
       source({ findCelebritySlug: vi.fn(async () => null) }),

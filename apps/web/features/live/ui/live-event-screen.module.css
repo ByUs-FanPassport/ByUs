@@ -504,78 +504,10 @@
 }
 
 .attendanceSuccess {
-  display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  gap: 32px;
-  align-items: center;
-}
-.attendanceStampWrap {
-  position: relative;
-}
-.attendanceStamp {
   display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%));
-  animation: stamp-arrive 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.attendanceStampWrap span {
-  position: absolute;
-  right: 4px;
-  bottom: 12px;
-  display: grid;
-  min-width: 52px;
-  height: 52px;
-  place-items: center;
-  border-radius: 999rem;
-  background: oklch(18% 0 0);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 850;
-  animation: score-arrive 360ms 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.attendanceSuccessCopy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.attendanceSuccessCopy .attendanceEyebrow {
-  margin-bottom: 8px;
-  color: oklch(18% 0 0);
-  font-size: 13px;
-  font-weight: 800;
-}
-.attendanceSuccessCopy h2 {
-  margin-bottom: 8px;
-  font-size: 24px;
-}
-.attendanceSuccessCopy .replayNote {
-  margin-top: 8px;
-  font-size: 13px;
 }
 .surveyAction {
   margin-top: 20px;
-}
-
-@keyframes stamp-arrive {
-  from {
-    opacity: 0;
-    transform: scale(0.88) rotate(-3deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0);
-  }
-}
-@keyframes score-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .identity {
@@ -715,7 +647,6 @@
 .stampArtwork {
   display: block;
   width: min(240px, 70%);
-  height: auto;
   margin: 8px auto;
   filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%));
 }
@@ -910,28 +841,6 @@
   .attendanceAction,
   .surveyAction {
     width: 100%;
-  }
-  .attendanceSuccess {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    text-align: center;
-  }
-  .attendanceStampWrap {
-    width: min(220px, 72%);
-    margin: 0 auto;
-  }
-  .attendanceSuccessCopy {
-    align-items: stretch;
-  }
-  .attendanceSuccessCopy .attendanceEyebrow {
-    text-align: center;
-  }
-  .attendanceSuccessCopy h2 {
-    font-size: 22px;
-    text-align: center;
-  }
-  .attendanceSuccessCopy > p {
-    text-align: center;
   }
   .identity {
     grid-template-columns: 56px minmax(0, 1fr) 44px;

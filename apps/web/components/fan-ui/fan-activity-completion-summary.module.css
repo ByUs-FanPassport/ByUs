@@ -1,0 +1,102 @@
+.summary {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+}
+
+.artwork {
+  position: relative;
+  width: 100%;
+  filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%));
+}
+
+.points {
+  position: absolute;
+  right: -2px;
+  bottom: 8px;
+  display: grid;
+  min-width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 4px solid #fff;
+  border-radius: 999rem;
+  background: oklch(18% 0 0);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.content {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: oklch(43% 0 0);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.content h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 850;
+  letter-spacing: -.03em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.description,
+.note {
+  margin: 0;
+  color: oklch(40% 0 0);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metrics span {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid oklch(88% 0 0);
+  border-radius: 999rem;
+  color: oklch(28% 0 0);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (max-width: 47.999rem) {
+  .summary {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .artwork {
+    width: min(184px, 62%);
+    margin-inline: auto;
+  }
+
+  .metrics,
+  .actions {
+    justify-content: center;
+  }
+}

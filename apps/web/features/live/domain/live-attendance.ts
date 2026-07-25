@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { fanActivityCompletionSchema } from "./fan-activity-completion";
+
 const fanCodeSchema = z.string().min(1).max(64);
 
 export const createLiveAttendanceRequestSchema = z.object({ code: fanCodeSchema }).strict();
@@ -29,12 +31,27 @@ const atomicAttendanceResultSchema = z.object({
   attendedAt: z.string().datetime({ offset: true }),
   scorePoints: z.literal(3),
   stampMintStatus: mintStatusSchema,
-}).strict();
+  completion: fanActivityCompletionSchema,
+}).strict().superRefine((result, context) => {
+  if (
+    result.completion.passportId !== result.passportId
+    || result.completion.earnedStamp.id !== result.stampId
+    || result.completion.earnedStamp.type !== "attendance"
+    || result.completion.earnedStamp.mintStatus !== result.stampMintStatus
+    || result.completion.scoreDelta !== result.scorePoints
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "atomic attendance completion is inconsistent",
+    });
+  }
+});
 
 export const createLiveAttendanceResponseSchema = z.object({
   attendance: z.object({
     id: z.string().uuid(),
     liveEventId: z.string().uuid(),
+    passportId: z.string().uuid(),
     attendedAt: z.string().datetime({ offset: true }),
     scorePoints: z.literal(3),
     stamp: z.object({
@@ -43,7 +60,21 @@ export const createLiveAttendanceResponseSchema = z.object({
       mintStatus: mintStatusSchema,
     }).strict(),
   }).strict(),
-}).strict();
+  completion: fanActivityCompletionSchema,
+}).strict().superRefine((result, context) => {
+  if (
+    result.completion.passportId !== result.attendance.passportId
+    || result.completion.earnedStamp.id !== result.attendance.stamp.id
+    || result.completion.earnedStamp.type !== "attendance"
+    || result.completion.earnedStamp.mintStatus !== result.attendance.stamp.mintStatus
+    || result.completion.scoreDelta !== result.attendance.scorePoints
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "attendance completion is inconsistent",
+    });
+  }
+});
 
 export type CreateLiveAttendanceResponse = z.infer<typeof createLiveAttendanceResponseSchema>;
 
@@ -53,6 +84,7 @@ export function projectAtomicAttendanceResult(value: unknown): CreateLiveAttenda
     attendance: {
       id: result.attendanceId,
       liveEventId: result.liveEventId,
+      passportId: result.passportId,
       attendedAt: result.attendedAt,
       scorePoints: result.scorePoints,
       stamp: {
@@ -61,5 +93,6 @@ export function projectAtomicAttendanceResult(value: unknown): CreateLiveAttenda
         mintStatus: result.stampMintStatus,
       },
     },
+    completion: result.completion,
   });
 }

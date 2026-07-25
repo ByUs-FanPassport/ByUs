@@ -16,6 +16,20 @@ const rpcResult = {
   attendedAt: "2026-07-21T12:00:00.000Z",
   scorePoints: 3,
   stampMintStatus: "queued",
+  completion: {
+    passportId: "66666666-6666-4666-8666-666666666666",
+    earnedStamp: {
+      id: stampId,
+      type: "attendance",
+      issuedAt: "2026-07-21T12:00:00.000Z",
+      businessStatus: "issued",
+      mintStatus: "queued",
+    },
+    scoreDelta: 3,
+    updatedScore: 8,
+    updatedLevel: "Silver",
+    leveledUp: false,
+  },
 };
 
 describe("SupabaseLiveAttendanceRepository", () => {
@@ -34,6 +48,7 @@ describe("SupabaseLiveAttendanceRepository", () => {
       p_stamp_issuance_id: expect.stringMatching(/^0x[0-9a-f]{64}$/),
     });
     expect(result.attendance).toMatchObject({ id: rpcResult.attendanceId, scorePoints: 3 });
+    expect(result.completion).toEqual(rpcResult.completion);
     expect(result).not.toHaveProperty("code");
   });
 

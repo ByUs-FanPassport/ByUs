@@ -5,7 +5,16 @@ import { createPassportCollectionHandler, createPassportDetailHandler, createSta
 
 const passportId = "10000000-0000-4000-8000-000000000001";
 const stampId = "20000000-0000-4000-8000-000000000001";
-function dependencies() { return { authorize: vi.fn().mockResolvedValue({ appUserId: "owner" }), repository: { findCollection: vi.fn().mockResolvedValue([{ id: passportId }]), findPassport: vi.fn().mockResolvedValue({ id: passportId }), findStamp: vi.fn().mockResolvedValue({ id: stampId }) } }; }
+function dependencies() {
+  return {
+    authorize: vi.fn().mockResolvedValue({ appUserId: "owner" }),
+    repository: {
+      findCollection: vi.fn().mockResolvedValue([{ id: passportId }]),
+      findPassport: vi.fn().mockResolvedValue({ id: passportId, celebrity: { slug: "katseye" }, progress: { currentScore: 1, currentLevel: "Bronze" }, stamps: [], activities: [], nextBenefit: null }),
+      findStamp: vi.fn().mockResolvedValue({ id: stampId }),
+    },
+  };
+}
 function request(path: string, token = "Bearer token") { return new Request(`https://byus.kr${path}`, { headers: { authorization: token } }); }
 
 describe("G4 owner read HTTP handlers", () => {
@@ -15,7 +24,7 @@ describe("G4 owner read HTTP handlers", () => {
     const detail = await createPassportDetailHandler(deps)(request(`/api/passports/${passportId}`), { passportId });
     const stamp = await createStampDetailHandler(deps)(request(`/api/stamps/${stampId}`), { stampId });
     expect(await collection.json()).toStrictEqual({ passports: [{ id: passportId }] });
-    expect(await detail.json()).toStrictEqual({ passport: { id: passportId } });
+    expect(await detail.json()).toMatchObject({ passport: { id: passportId, nextBenefit: null } });
     expect(await stamp.json()).toStrictEqual({ stamp: { id: stampId } });
     expect(collection.headers.get("cache-control")).toBe("no-store"); expect(collection.headers.get("vary")).toBe("Authorization");
     expect(deps.repository.findCollection).toHaveBeenCalledWith({ appUserId: "owner", locale: "en" });
@@ -41,5 +50,26 @@ describe("G4 owner read HTTP handlers", () => {
     const failed = dependencies(); failed.repository.findStamp.mockRejectedValue(new Error("service key"));
     const unavailable = await createStampDetailHandler(failed)(request(`/api/stamps/${stampId}`), { stampId });
     expect(unavailable.status).toBe(503); expect(await unavailable.json()).toStrictEqual({ error: { code: "STAMPS_UNAVAILABLE" } });
+  });
+
+  it("returns the authoritative next benefit from the single owner read", async () => {
+    const deps = dependencies();
+    deps.repository.findPassport.mockResolvedValue({
+      id: passportId,
+      celebrity: { slug: "katseye" },
+      progress: { currentScore: 1, currentLevel: "Bronze" },
+      stamps: [],
+      activities: [],
+      nextBenefit: {
+      id: "30000000-0000-4000-8000-000000000001", slug: "welcome-wallpaper", title: "Welcome wallpaper",
+        eligibilityLabel: "Bronze", allocationMode: "direct_claim", applicationStatus: null,
+        minimumScore: 0, minimumLevel: "Bronze", requiredStampType: null, requiredActivityType: null,
+        state: "eligible", missingConditions: [],
+      },
+    });
+    const response = await createPassportDetailHandler(deps)(request(`/api/passports/${passportId}`), { passportId });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ passport: { nextBenefit: { slug: "welcome-wallpaper", state: "eligible", missingConditions: [] } } });
+    expect(deps.repository.findPassport).toHaveBeenCalledTimes(1);
   });
 });

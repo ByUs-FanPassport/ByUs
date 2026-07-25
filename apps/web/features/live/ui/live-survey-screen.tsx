@@ -2,7 +2,6 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Check, RotateCcw, Save, Stamp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -17,6 +16,8 @@ import {
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowHeader } from "@/components/fan-shell/focus-flow-header";
+import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import styles from "./live-survey-screen.module.css";
 
 type Locale = "ko" | "en";
@@ -134,10 +135,16 @@ function errorCode(value: unknown): string {
     : "SURVEY_UNAVAILABLE";
 }
 
-function Header({ slug, locale }: { slug: string; locale: Locale }) {
+function Header({ slug, locale, mainId }: { slug: string; locale: Locale; mainId: string }) {
   const other = locale === "ko" ? "en" : "ko";
   return (
-    <FocusFlowHeader className={styles.header} innerClassName={styles.headerInner} sticky>
+    <FocusFlowHeader
+      className={styles.header}
+      innerClassName={styles.headerInner}
+      locale={locale}
+      mainId={mainId}
+      sticky
+    >
         <Link
           className={styles.locale}
           href={`/live/${slug}/survey?locale=${other}` as Route}
@@ -355,7 +362,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   const liveHref = `/live/${slug}?locale=${locale}` as Route;
 
   if (view.kind === "loading" && !conflict) {
-    return <div className={styles.page} data-fan-surface lang={locale}><Header slug={slug} locale={locale} /><main className={styles.loading} aria-busy="true" aria-label={c.loading}><div /><div /><div /></main></div>;
+    return <div className={styles.page} data-fan-surface lang={locale}><Header slug={slug} locale={locale} mainId="live-survey-main" /><main className={styles.loading} id="live-survey-main" tabIndex={-1} aria-busy="true" aria-label={c.loading}><div /><div /><div /></main></div>;
   }
 
   if (view.kind === "error") {
@@ -363,8 +370,8 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
     const authenticationRequired = view.code === "AUTHENTICATION_REQUIRED";
     return (
       <div className={styles.page} data-fan-surface lang={locale}>
-        <Header slug={slug} locale={locale} />
-        <main className={styles.state} role="alert">
+        <Header slug={slug} locale={locale} mainId="live-survey-main" />
+        <main className={styles.state} id="live-survey-main" tabIndex={-1} role="alert">
           <RotateCcw aria-hidden="true" />
           <h1>{notFound ? c.notFound : authenticationRequired ? c.signIn : c.loadError}</h1>
           {authenticationRequired ? (
@@ -386,8 +393,8 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   if (!data.eligibility.completedAttendance) {
     return (
       <div className={styles.page} data-fan-surface lang={locale}>
-        <Header slug={slug} locale={locale} />
-        <main className={styles.state}>
+        <Header slug={slug} locale={locale} mainId="live-survey-main" />
+        <main className={styles.state} id="live-survey-main" tabIndex={-1}>
           <div className={styles.stateIcon}><Stamp aria-hidden="true" /></div>
           <h1>{c.attendanceTitle}</h1>
           <p>{c.attendanceBody}</p>
@@ -398,20 +405,30 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   }
 
   if (data.response?.status === "submitted") {
+    const completion = data.completion;
+    if (!completion) return null;
     return (
       <div className={styles.page} data-fan-surface lang={locale}>
-        <Header slug={slug} locale={locale} />
-        <main className={styles.complete}>
-          <div className={styles.completeMark}><Check aria-hidden="true" /></div>
-          <h1>{c.completeTitle}</h1>
-          <p>{c.completeBody}</p>
-          <Image className={styles.stampArtwork} src="/images/stamps/kara-survey-stamp.png" alt={locale === "ko" ? "설문 참여 Stamp" : "Survey Stamp"} width={360} height={360} priority />
-          <div className={styles.rewards}>
-            <strong>{c.score}</strong>
-            <span><Stamp aria-hidden="true" />{c.stamp}</span>
-          </div>
-          {data.response.submittedAt && <time dateTime={data.response.submittedAt}>{c.submittedAt} · {new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(data.response.submittedAt))}</time>}
-          <Link className={styles.primary} href={liveHref}>{c.returnLive}</Link>
+        <Header slug={slug} locale={locale} mainId="live-survey-main" />
+        <main className={styles.complete} id="live-survey-main" tabIndex={-1}>
+          <FanActivityCompletionSummary
+            locale={locale}
+            stampType="survey"
+            title={c.completeTitle}
+            description={c.completeBody}
+            headingLevel={1}
+            scoreDelta={completion.scoreDelta}
+            updatedScore={completion.updatedScore}
+            updatedLevel={levelLabel(locale, completion.updatedLevel)}
+            leveledUp={completion.leveledUp}
+            passportHref={`/passports/${completion.passportId}?locale=${locale}`}
+            note={
+              data.response.submittedAt
+                ? `${c.submittedAt} · ${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(data.response.submittedAt))}`
+                : undefined
+            }
+            primaryAction={<Link className={styles.primary} href={liveHref}>{c.returnLive}</Link>}
+          />
         </main>
       </div>
     );
@@ -419,8 +436,8 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
 
   return (
     <div className={styles.page} data-fan-surface lang={locale}>
-      <Header slug={slug} locale={locale} />
-      <main className={styles.main}>
+      <Header slug={slug} locale={locale} mainId="live-survey-main" />
+      <main className={styles.main} id="live-survey-main" tabIndex={-1}>
         <Link className={styles.back} href={liveHref}><ArrowLeft aria-hidden="true" />{c.back}</Link>
         <header className={styles.intro}>
           <div>

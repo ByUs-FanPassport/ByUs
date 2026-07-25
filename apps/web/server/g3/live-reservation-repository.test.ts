@@ -17,6 +17,20 @@ const rpcResult = {
   reservedAt: "2026-07-21T12:00:00.000Z",
   scorePoints: 1,
   stampMintStatus: "queued",
+  completion: {
+    passportId: "66666666-6666-4666-8666-666666666666",
+    earnedStamp: {
+      id: stampId,
+      type: "reservation",
+      issuedAt: "2026-07-21T12:00:00.000Z",
+      businessStatus: "issued",
+      mintStatus: "queued",
+    },
+    scoreDelta: 1,
+    updatedScore: 5,
+    updatedLevel: "Silver",
+    leveledUp: true,
+  },
 };
 
 describe("SupabaseLiveReservationRepository", () => {
@@ -33,7 +47,14 @@ describe("SupabaseLiveReservationRepository", () => {
       p_stamp_operation_key: `byus:stamp:v1:${stampId}`,
       p_stamp_issuance_id: expect.stringMatching(/^0x[0-9a-f]{64}$/),
     });
-    expect(result).toEqual({ reservation: { id: rpcResult.reservationId, createdAt: rpcResult.reservedAt, stamp: { id: stampId, businessStatus: "issued", mintStatus: "queued" } } });
+    expect(result).toEqual({
+      reservation: {
+        id: rpcResult.reservationId,
+        createdAt: rpcResult.reservedAt,
+        stamp: { id: stampId, businessStatus: "issued", mintStatus: "queued" },
+      },
+      completion: rpcResult.completion,
+    });
   });
 
   it("supports exact replay through the same RPC contract", async () => {

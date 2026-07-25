@@ -12,11 +12,12 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/passports", useRouter: 
 const celebrity = { slug: "kara", name: "KARA", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA", position: "center" } };
 const mint = { status: "minted", txHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", tokenId: "42" };
 const passport = { id: "11111111-1111-4111-8111-111111111111", owner: { nickname: null }, celebrity, businessStatus: "issued", mint, issuedAt: "2026-07-21T00:00:00.000Z", score: { points: 5, level: "Silver" }, stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 }, display: { level: "실버", mintStatus: "발급 완료" } };
+const context = { sourceType: "quiz_pass", sourceId: "88888888-8888-4888-8888-888888888888", live: null };
 const stamps = [
-  { id: "22222222-2222-4222-8222-222222222222", type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", activityId: "44444444-4444-4444-8444-444444444444", display: { type: "팬 인증", mintStatus: "발급 완료" } },
-  { id: "33333333-3333-4333-8333-333333333333", type: "reservation", businessStatus: "issued", mint, issuedAt: "2026-07-21T00:00:00.000Z", activityId: "55555555-5555-4555-8555-555555555555", display: { type: "라이브 예약", mintStatus: "발급 완료" } },
+  { id: "22222222-2222-4222-8222-222222222222", type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", activityId: "44444444-4444-4444-8444-444444444444", context, display: { type: "팬 인증", mintStatus: "발급 완료" } },
+  { id: "33333333-3333-4333-8333-333333333333", type: "reservation", businessStatus: "issued", mint, issuedAt: "2026-07-21T00:00:00.000Z", activityId: "55555555-5555-4555-8555-555555555555", context: { sourceType: "live_reservation", sourceId: "99999999-9999-4999-8999-999999999999", live: { slug: "kara-live", title: "KARA LIVE", linkable: true } }, display: { type: "라이브 예약", mintStatus: "발급 완료" } },
 ];
-const stampDetail = { id: stamps[0].id, type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", passport: { id: passport.id }, owner: { nickname: null }, celebrity, activity: { id: stamps[0].activityId, type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, display: { type: "팬 인증" } }, display: { type: "팬 인증", mintStatus: "발급 완료" } };
+const stampDetail = { id: stamps[0].id, type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", passport: { id: passport.id }, owner: { nickname: null }, celebrity, activity: { id: stamps[0].activityId, type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, context, display: { type: "팬 인증" } }, display: { type: "팬 인증", mintStatus: "발급 완료" } };
 
 describe("passport fan screens", () => {
   beforeEach(() => {
@@ -38,21 +39,94 @@ describe("passport fan screens", () => {
     expect(screen.getByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
   });
 
-  it("renders four semantic slots, newest activity first, and separate score and stamp totals", async () => {
+  it("renders each actual Stamp, newest activity first, and separate score and stamp totals", async () => {
     const activities = [
-      { id: "66666666-6666-4666-8666-666666666666", type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, stampId: stamps[0].id, display: { type: "팬 인증" } },
-      { id: "77777777-7777-4777-8777-777777777777", type: "reservation", occurredAt: "2026-07-21T00:00:00.000Z", points: 1, stampId: stamps[1].id, display: { type: "라이브 예약" } },
+      { id: "66666666-6666-4666-8666-666666666666", type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, stampId: stamps[0].id, context, display: { type: "팬 인증" } },
+      { id: "77777777-7777-4777-8777-777777777777", type: "reservation", occurredAt: "2026-07-21T00:00:00.000Z", points: 1, stampId: stamps[1].id, context: stamps[1].context, display: { type: "라이브 예약" } },
     ];
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passport: { ...passport, stamps, activities } }), { status: 200 })));
-    render(<PassportDetailScreen id={passport.id} />);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passport: { ...passport, stamps, activities, progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false }, nextBenefit: null } }), { status: 200 })));
+    const { container } = render(<PassportDetailScreen id={passport.id} />);
     expect(await screen.findByRole("heading", { name: "KARA Fan Passport" })).toBeInTheDocument();
-    expect(screen.getAllByText("라이브 출석")).toHaveLength(2);
-    expect(screen.getAllByText("후기 참여")).toHaveLength(2);
-    expect(screen.getAllByText("다음 순간을 기다리는 중")).toHaveLength(2);
+    expect(screen.queryByText("다음 순간을 기다리는 중")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /받은 Stamp 보기/ })).toHaveLength(2);
+    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(2);
     const timeline = screen.getByRole("list");
     expect(timeline.children[0]).toHaveTextContent("라이브 예약");
+    expect(timeline.children[0]).toHaveTextContent("KARA LIVE");
     expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("5");
     expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("2");
+  });
+
+  it("preserves an archived LIVE title without exposing a dead detail link", async () => {
+    const archivedContext = {
+      sourceType: "live_reservation",
+      sourceId: "99999999-9999-4999-8999-999999999998",
+      live: { slug: "archived-live", title: "지난 KARA LIVE", linkable: false },
+    };
+    const activities = [{
+      id: "77777777-7777-4777-8777-777777777778",
+      type: "reservation",
+      occurredAt: "2026-07-21T00:00:00.000Z",
+      points: 1,
+      stampId: stamps[1].id,
+      context: archivedContext,
+      display: { type: "라이브 예약" },
+    }];
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      passport: {
+        ...passport,
+        stamps: [{ ...stamps[1], context: archivedContext }],
+        activities,
+        progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false },
+        nextBenefit: null,
+      },
+    })));
+    render(<PassportDetailScreen id={passport.id} />);
+
+    expect(await screen.findByText("지난 KARA LIVE")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "지난 KARA LIVE" })).not.toBeInTheDocument();
+  });
+
+  it("renders the authoritative owner, Level progress and next locked benefit", async () => {
+    const detail = {
+      ...passport,
+      owner: { nickname: "눈부신팬" },
+      stamps,
+      activities: [],
+      progress: {
+        currentScore: 5,
+        currentLevel: "Silver",
+        nextLevel: "Gold",
+        nextThreshold: 10,
+        remainingPoints: 5,
+        percent: 50,
+        maxed: false,
+      },
+      nextBenefit: {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        slug: "special-wallpaper",
+        title: "스페셜 디지털 배경화면",
+        state: "locked",
+        eligibilityLabel: "Fan Score 10점 달성",
+        minimumScore: 10,
+        minimumLevel: "Gold",
+        requiredStampType: null,
+        requiredActivityType: null,
+        missingConditions: [{ type: "score", current: 5, required: 10 }],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passport: detail })));
+    render(<PassportDetailScreen id={passport.id} />);
+
+    expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "다음 Level: 골드" })).toHaveAttribute("value", "50");
+    expect(screen.getByText("5 점 남음")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "다음 혜택: 스페셜 디지털 배경화면" })).toBeInTheDocument();
+    expect(screen.getByText("Fan Score: 현재 5 / 필요 10")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /혜택 확인하기/ })).toHaveAttribute(
+      "href",
+      `/benefits/${detail.nextBenefit.id}?locale=ko`,
+    );
   });
 
   it("keeps chain facts collapsed, masks the transaction and never invents wallet data", async () => {
@@ -65,6 +139,29 @@ describe("passport fan screens", () => {
     expect(screen.getByText("0xaaaaaa…aaaaaa")).toBeInTheDocument();
     expect(screen.queryByText(/wallet/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "발급 기록 확인" })).not.toBeInTheDocument();
+  });
+
+  it("keeps archived LIVE context in Stamp facts without a public link", async () => {
+    const archivedStamp = {
+      ...stampDetail,
+      activity: {
+        ...stampDetail.activity,
+        type: "reservation",
+        context: {
+          sourceType: "live_reservation",
+          sourceId: "99999999-9999-4999-8999-999999999998",
+          live: { slug: "archived-live", title: "지난 KARA LIVE", linkable: false },
+        },
+        display: { type: "라이브 예약" },
+      },
+      type: "reservation",
+      display: { ...stampDetail.display, type: "라이브 예약" },
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: archivedStamp })));
+    render(<StampDetailScreen id={stampDetail.id} />);
+
+    expect(await screen.findByText("지난 KARA LIVE")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "지난 KARA LIVE" })).not.toBeInTheDocument();
   });
 
   it("renders an intercepted Stamp in an accessible adaptive overlay and closes with history", async () => {

@@ -14,6 +14,20 @@ const result = {
   reservedAt: "2026-07-21T12:00:00.000Z",
   scorePoints: 1,
   stampMintStatus: "queued",
+  completion: {
+    passportId: "33333333-3333-4333-8333-333333333333",
+    earnedStamp: {
+      id: "55555555-5555-4555-8555-555555555555",
+      type: "reservation",
+      issuedAt: "2026-07-21T12:00:00.000Z",
+      businessStatus: "issued",
+      mintStatus: "queued",
+    },
+    scoreDelta: 1,
+    updatedScore: 5,
+    updatedLevel: "Silver",
+    leveledUp: true,
+  },
 };
 
 describe("live reservation transport contract", () => {
@@ -31,12 +45,17 @@ describe("live reservation transport contract", () => {
         createdAt: result.reservedAt,
         stamp: { id: result.stampId, businessStatus: "issued", mintStatus: "queued" },
       },
+      completion: result.completion,
     });
-    expect(JSON.stringify(response)).not.toMatch(/passport|activity|points|liveEvent|wallet|payload/i);
+    expect(JSON.stringify(response)).not.toMatch(/activity|liveEvent|wallet|payload/i);
   });
 
   it("rejects incomplete or semantically invalid atomic results", () => {
     expect(() => projectAtomicReservationResult({ ...result, scorePoints: 0 })).toThrow();
     expect(() => projectAtomicReservationResult({ ...result, internal: "leak" })).toThrow();
+    expect(() => projectAtomicReservationResult({
+      ...result,
+      completion: { ...result.completion, scoreDelta: 2 },
+    })).toThrow();
   });
 });

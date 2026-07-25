@@ -75,7 +75,7 @@
 .state p, .complete > p { max-width: 52ch; margin: 12px 0 0; color: oklch(43% 0 0); font-size: 15px; line-height: 1.65; }
 .state button, .state > a:not(.primary) { display: inline-flex; min-width: 200px; min-height: 48px; align-items: center; justify-content: center; margin-top: 20px; border: 0; border-radius: 12px; background: oklch(18% 0 0); color: #fff; font-weight: 750; text-decoration: none; cursor: pointer; }
 .state > a:not(.primary) { margin-top: 8px; background: #fff; color: oklch(18% 0 0); }
-.stampArtwork { width: min(260px, 70%); height: auto; margin: 20px auto 8px; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); }
+.stampArtwork { width: min(220px, 64%); margin: 20px auto 8px; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); }
 .rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .rewards strong, .rewards span { display: inline-flex; min-height: 40px; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid oklch(90% 0 0); border-radius: 999rem; font-size: 13px; }
 .rewards span svg { width: 16px; }

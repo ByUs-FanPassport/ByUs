@@ -36,10 +36,25 @@ describe("live attendance contract", () => {
       attendedAt: "2026-07-21T12:00:00.000Z",
       scorePoints: 3,
       stampMintStatus: "queued",
+      completion: {
+        passportId: "33333333-3333-4333-8333-333333333333",
+        earnedStamp: {
+          id: "55555555-5555-4555-8555-555555555555",
+          type: "attendance",
+          issuedAt: "2026-07-21T12:00:00.000Z",
+          businessStatus: "issued",
+          mintStatus: "queued",
+        },
+        scoreDelta: 3,
+        updatedScore: 8,
+        updatedLevel: "Silver",
+        leveledUp: false,
+      },
     })).toEqual({
       attendance: {
         id: "11111111-1111-4111-8111-111111111111",
         liveEventId: "22222222-2222-4222-8222-222222222222",
+        passportId: "33333333-3333-4333-8333-333333333333",
         attendedAt: "2026-07-21T12:00:00.000Z",
         scorePoints: 3,
         stamp: {
@@ -47,6 +62,20 @@ describe("live attendance contract", () => {
           businessStatus: "issued",
           mintStatus: "queued",
         },
+      },
+      completion: {
+        passportId: "33333333-3333-4333-8333-333333333333",
+        earnedStamp: {
+          id: "55555555-5555-4555-8555-555555555555",
+          type: "attendance",
+          issuedAt: "2026-07-21T12:00:00.000Z",
+          businessStatus: "issued",
+          mintStatus: "queued",
+        },
+        scoreDelta: 3,
+        updatedScore: 8,
+        updatedLevel: "Silver",
+        leveledUp: false,
       },
     });
   });

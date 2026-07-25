@@ -5,8 +5,73 @@ export type PassportLocale = z.infer<typeof passportLocaleSchema>;
 
 export const stampTypeSchema = z.enum(["knowledge", "reservation", "attendance", "survey"]);
 export const activityTypeSchema = stampTypeSchema;
+export const activitySourceTypeSchema = z.enum([
+  "quiz_pass",
+  "live_reservation",
+  "live_attendance",
+  "live_survey_response",
+]);
 export const mintStatusSchema = z.enum(["queued", "processing", "retryable", "permanent_failure", "minted"]);
 export const levelSchema = z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]);
+export type PassportLevel = z.infer<typeof levelSchema>;
+export type PassportStampType = z.infer<typeof stampTypeSchema>;
+
+export const ACTIVITY_SOURCE_BY_TYPE = {
+  knowledge: "quiz_pass",
+  reservation: "live_reservation",
+  attendance: "live_attendance",
+  survey: "live_survey_response",
+} as const satisfies Record<
+  PassportStampType,
+  z.infer<typeof activitySourceTypeSchema>
+>;
+
+export const passportActivityContextSchema = z.object({
+  sourceType: activitySourceTypeSchema,
+  sourceId: z.uuid(),
+  live: z.object({
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120),
+    title: z.string().trim().min(1).max(160),
+    linkable: z.boolean(),
+  }).strict().nullable(),
+}).strict().superRefine((value, context) => {
+  if (value.sourceType === "quiz_pass" && value.live !== null) {
+    context.addIssue({ code: "custom", message: "Quiz activity cannot contain LIVE context" });
+  }
+  if (value.sourceType !== "quiz_pass" && value.live === null) {
+    context.addIssue({ code: "custom", message: "LIVE activity lacks source context" });
+  }
+});
+
+export const STAMP_METADATA = {
+  knowledge: {
+    label: { ko: "팬 인증", en: "Fan Verification" },
+    shortLabel: { ko: "인증", en: "VERIFY" },
+    inkToken: "oklch(45% 0.14 24)",
+  },
+  reservation: {
+    label: { ko: "라이브 예약", en: "Live Reservation" },
+    shortLabel: { ko: "예약", en: "RESERVE" },
+    inkToken: "oklch(46% 0.13 290)",
+  },
+  attendance: {
+    label: { ko: "라이브 출석", en: "Live Attendance" },
+    shortLabel: { ko: "출석", en: "ATTEND" },
+    inkToken: "oklch(43% 0.12 235)",
+  },
+  survey: {
+    label: { ko: "후기 참여", en: "Survey" },
+    shortLabel: { ko: "후기", en: "SURVEY" },
+    inkToken: "oklch(43% 0.11 155)",
+  },
+} as const satisfies Record<
+  PassportStampType,
+  {
+    label: Record<PassportLocale, string>;
+    shortLabel: Record<PassportLocale, string>;
+    inkToken: string;
+  }
+>;
 
 const safeImageUrl = z.string().min(1).refine((value) => {
   if (value.startsWith("/") && !value.startsWith("//")) return true;
@@ -53,7 +118,7 @@ export const stampSummarySchema = z.object({
 
 export const basePassportSchema = z.object({
   id: z.uuid(),
-  owner: z.object({ nickname: z.null() }).strict(),
+  owner: z.object({ nickname: z.string().trim().min(2).max(16).nullable() }).strict(),
   celebrity: celebritySchema,
   businessStatus: z.literal("issued"),
   mint: mintFactsSchema,
@@ -65,17 +130,15 @@ export const basePassportSchema = z.object({
 const labels = {
   ko: {
     levels: { Bronze: "브론즈", Silver: "실버", Gold: "골드", Platinum: "플래티넘", Diamond: "다이아몬드" },
-    stamps: { knowledge: "팬 인증", reservation: "라이브 예약", attendance: "라이브 출석", survey: "후기 참여" },
     mint: { queued: "발급 대기", processing: "발급 중", retryable: "발급 재시도 중", permanent_failure: "발급 확인 필요", minted: "발급 완료" },
   },
   en: {
     levels: { Bronze: "Bronze", Silver: "Silver", Gold: "Gold", Platinum: "Platinum", Diamond: "Diamond" },
-    stamps: { knowledge: "Fan Verification", reservation: "Live Reservation", attendance: "Live Attendance", survey: "Survey" },
     mint: { queued: "Issuance queued", processing: "Issuing", retryable: "Retrying issuance", permanent_failure: "Issuance needs attention", minted: "Issued" },
   },
 } as const;
 
 export function levelLabel(locale: PassportLocale, level: z.infer<typeof levelSchema>): string { return labels[locale].levels[level]; }
-export function stampTypeLabel(locale: PassportLocale, type: z.infer<typeof stampTypeSchema>): string { return labels[locale].stamps[type]; }
+export function stampTypeLabel(locale: PassportLocale, type: PassportStampType): string { return STAMP_METADATA[type].label[locale]; }
+export function stampShortLabel(locale: PassportLocale, type: PassportStampType): string { return STAMP_METADATA[type].shortLabel[locale]; }
 export function mintStatusLabel(locale: PassportLocale, status: z.infer<typeof mintStatusSchema>): string { return labels[locale].mint[status]; }
-

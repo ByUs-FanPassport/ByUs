@@ -42,6 +42,7 @@ import {
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -49,6 +50,8 @@ import {
   type CreateLiveAttendanceResponse,
 } from "@/features/live/domain/live-attendance";
 import { createLiveReservationResponseSchema } from "@/features/live/domain/live-reservation";
+import type { FanActivityCompletion } from "@/features/live/domain/fan-activity-completion";
+import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import {
   enablePushNotifications,
   type PushEnableResult,
@@ -258,11 +261,13 @@ function googleCalendarUrl(data: LiveEventResponse["live"]) {
 
 function ReservationDialog({
   data,
+  completion,
   locale,
   onClose,
   getAccessToken,
 }: {
   data: LiveEventResponse;
+  completion: FanActivityCompletion;
   locale: Locale;
   onClose: () => void;
   getAccessToken: () => Promise<string | null>;
@@ -291,7 +296,6 @@ function ReservationDialog({
       ref={dialogRef}
       className={styles.dialog}
       aria-labelledby="reservation-title"
-      aria-describedby="reservation-helper"
     >
       <button
         ref={closeRef}
@@ -302,11 +306,18 @@ function ReservationDialog({
       >
         <X aria-hidden="true" />
       </button>
-      <div className={styles.dialogStatus} aria-hidden="true">
-        <Check />
-      </div>
-      <h2 id="reservation-title">{c.reservedTitle}</h2>
-      <p id="reservation-helper">{c.reservedHelper}</p>
+      <FanActivityCompletionSummary
+        locale={locale}
+        stampType="reservation"
+        title={c.reservedTitle}
+        description={c.reservedHelper}
+        headingId="reservation-title"
+        scoreDelta={completion.scoreDelta}
+        updatedScore={completion.updatedScore}
+        updatedLevel={levelLabel(locale, completion.updatedLevel)}
+        leveledUp={completion.leveledUp}
+        passportHref={`/passports/${completion.passportId}?locale=${locale}`}
+      />
       <div className={styles.dialogEvent}>
         <strong>{data.live.title}</strong>
         <span>
@@ -314,21 +325,6 @@ function ReservationDialog({
           {formatDateTime(data.live.startsAt, locale)}
         </span>
       </div>
-      <Image
-        className={styles.stampArtwork}
-        src="/images/stamps/kara-reservation-stamp.png"
-        alt={
-          locale === "ko"
-            ? `${data.live.celebrity.name} 예약 Stamp`
-            : `${data.live.celebrity.name} Reservation Stamp`
-        }
-        width={360}
-        height={360}
-      />
-      <p className={styles.stampState}>
-        <Stamp aria-hidden="true" />
-        {c.stampIssued}
-      </p>
       <a
         className={styles.dialogSecondary}
         href={googleCalendarUrl(data.live)}
@@ -403,6 +399,8 @@ export function LiveEventScreen({
   const [reservePending, setReservePending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [reservationCompletion, setReservationCompletion] =
+    useState<FanActivityCompletion | null>(null);
   const [fanCode, setFanCode] = useState("");
   const [attendance, setAttendance] = useState<AttendanceState>({
     kind: "idle",
@@ -517,7 +515,9 @@ export function LiveEventScreen({
           });
         throw new Error("reservation failed");
       }
-      createLiveReservationResponseSchema.parse(await response.json());
+      const reservationResult = createLiveReservationResponseSchema.parse(
+        await response.json(),
+      );
       const refreshed = await fetch(
         `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
         {
@@ -532,6 +532,7 @@ export function LiveEventScreen({
         throw new Error("reservation not projected");
       window.sessionStorage.removeItem(storageKey);
       setView({ kind: "ready", data });
+      setReservationCompletion(reservationResult.completion);
       setShowConfirmation(true);
     } catch {
       setActionError(c.reserveError);
@@ -943,34 +944,30 @@ export function LiveEventScreen({
                   role="status"
                   aria-live="polite"
                 >
-                  <div
-                    className={styles.attendanceStampWrap}
-                    aria-hidden="true"
-                  >
-                    <Image
-                      className={styles.attendanceStamp}
-                      src="/images/stamps/kara-attendance-stamp.png"
-                      alt=""
-                      width={320}
-                      height={320}
-                    />
-                    <span>+3</span>
-                  </div>
-                  <div className={styles.attendanceSuccessCopy}>
-                    <p className={styles.attendanceEyebrow}>Attendance Stamp</p>
-                    <h2 id="fan-code-title">{c.attendance.successTitle}</h2>
-                    <p>{c.attendance.successHelper}</p>
-                    {attendance.replayed && (
-                      <p className={styles.replayNote}>{c.attendance.replay}</p>
+                  <FanActivityCompletionSummary
+                    locale={locale}
+                    stampType="attendance"
+                    title={c.attendance.successTitle}
+                    description={c.attendance.successHelper}
+                    scoreDelta={attendance.result.completion.scoreDelta}
+                    updatedScore={attendance.result.completion.updatedScore}
+                    updatedLevel={levelLabel(
+                      locale,
+                      attendance.result.completion.updatedLevel,
                     )}
-                    <Link
-                      className={styles.surveyAction}
-                      href={`/live/${slug}/survey?locale=${locale}` as Route}
-                    >
-                      {c.attendance.survey}
-                      <ArrowRight aria-hidden="true" />
-                    </Link>
-                  </div>
+                    leveledUp={attendance.result.completion.leveledUp}
+                    passportHref={`/passports/${attendance.result.completion.passportId}?locale=${locale}`}
+                    note={attendance.replayed ? c.attendance.replay : undefined}
+                    primaryAction={
+                      <Link
+                        className={styles.surveyAction}
+                        href={`/live/${slug}/survey?locale=${locale}` as Route}
+                      >
+                        {c.attendance.survey}
+                        <ArrowRight aria-hidden="true" />
+                      </Link>
+                    }
+                  />
                 </div>
               ) : (
                 <div className={styles.fanCodeContent}>
@@ -1102,9 +1099,10 @@ export function LiveEventScreen({
           </aside>
         </div>
       </FanContentContainer>
-      {showConfirmation && (
+      {showConfirmation && reservationCompletion && (
         <ReservationDialog
           data={data}
+          completion={reservationCompletion}
           locale={locale}
           getAccessToken={getAccessToken}
           onClose={() => setShowConfirmation(false)}

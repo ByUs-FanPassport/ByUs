@@ -337,7 +337,7 @@
 .passportHero {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: repeat(4, auto);
   gap: 20px 32px;
   align-items: center;
   padding: 32px;
@@ -348,12 +348,11 @@
     0 4px 8px oklch(18% 0 0 / 3%);
 }
 .passportVisual {
-  grid-row: 1/4;
+  grid-row: 1/5;
 }
 .passportVisual img {
   display: block;
   width: 100%;
-  filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%));
 }
 .identity {
   display: flex;
@@ -410,6 +409,106 @@
   color: var(--muted);
   font-size: 12px;
 }
+.levelProgress {
+  display: grid;
+  gap: 10px;
+}
+.levelProgress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.levelProgress strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+.levelProgress span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: right;
+}
+.levelProgress progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999rem;
+  background: var(--line);
+  color: var(--ink);
+  appearance: none;
+}
+.levelProgress progress::-webkit-progress-bar {
+  border-radius: 999rem;
+  background: var(--line);
+}
+.levelProgress progress::-webkit-progress-value {
+  border-radius: 999rem;
+  background: var(--ink);
+}
+.levelProgress progress::-moz-progress-bar {
+  border-radius: 999rem;
+  background: var(--ink);
+}
+.nextBenefit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  margin-top: 20px;
+  padding: 24px;
+  border: 1px solid var(--micro);
+  border-radius: 12px;
+}
+.nextBenefit > div {
+  min-width: 0;
+}
+.nextBenefit span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+.nextBenefit h2,
+.nextBenefit p {
+  margin: 0;
+}
+.nextBenefit h2 {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.nextBenefit p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nextBenefit ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 0;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  list-style: none;
+}
+.nextBenefit a {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.nextBenefit a svg {
+  width: 18px;
+}
 .section {
   margin-top: 64px;
 }
@@ -449,31 +548,13 @@
   border-radius: 16px;
   text-align: center;
 }
-.stampArtwork,
-.emptyArtwork {
+.stampArtwork {
   display: grid;
   width: 100%;
   aspect-ratio: 1;
   place-items: center;
   border-radius: 12px;
   background: #f6f6f5;
-}
-.stampArtwork img {
-  width: 86%;
-  height: 86%;
-  object-fit: contain;
-}
-.emptyArtwork {
-  gap: 8px;
-  border: 1px dashed var(--line);
-  color: var(--muted);
-}
-.emptyArtwork svg {
-  width: 30px;
-  stroke-width: 1.4;
-}
-.emptyArtwork span {
-  font-size: 12px;
 }
 .stampSlot > strong {
   margin-top: 14px;
@@ -522,6 +603,11 @@
 }
 .timeline strong {
   font-size: 14px;
+}
+.timeline strong a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
 }
 .timeline time {
   color: var(--muted);
@@ -690,6 +776,10 @@
   font-size: 13px;
   font-weight: 750;
 }
+.stampFacts dd a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .stampFacts .disclosure {
   margin-top: 24px;
 }
@@ -762,6 +852,14 @@
   }
   .stampGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .nextBenefit {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+  .nextBenefit a {
+    width: max-content;
   }
   .stampSlot {
     min-height: 250px;
