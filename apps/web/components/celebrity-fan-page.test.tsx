@@ -6,11 +6,16 @@ let authenticated = false;
 const getAccessToken = vi.fn();
 const routerPush = vi.fn();
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken }) }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: routerPush }) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/c/kara",
+  useRouter: () => ({ push: routerPush }),
+  useSearchParams: () => new URLSearchParams("tab=home&locale=ko"),
+}));
 import { CelebrityFanPage } from "./celebrity-fan-page";
 
 const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
 const changha = { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 1, fanCount: 1_450_000 } as const;
+const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
 const upcomingLive = { slug: "kara-nualeaf", celebritySlug: "kara", locale: "ko", title: "KARA × NUALEAF LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } as const;
 
 describe("published celebrity fan page", () => {
@@ -32,8 +37,21 @@ describe("published celebrity fan page", () => {
   it("renders honest Home empty states for missing LIVE and SNS data", () => {
     render(<CelebrityFanPage celebrity={changha} locale="ko" upcomingLive={null} />);
     expect(screen.getByText("공개된 LIVE가 아직 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("공개된 SNS 링크가 아직 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("공개된 채널 링크가 아직 없어요.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /LIVE 자세히 보기/ })).not.toBeInTheDocument();
+  });
+
+  it("uses one responsive art-directed KATSEYE hero image", () => {
+    const { container } = render(
+      <CelebrityFanPage celebrity={katseye} locale="ko" upcomingLive={null} />,
+    );
+    const picture = container.querySelector("picture");
+    expect(picture?.querySelectorAll("img")).toHaveLength(1);
+    expect(picture?.querySelector("source")).toHaveAttribute(
+      "media",
+      "(min-width: 48rem)",
+    );
+    expect(screen.getByAltText("KATSEYE portrait")).toBeInTheDocument();
   });
 
   it("loads the selected Notice tab and keeps locale in detail links", async () => {
@@ -43,7 +61,42 @@ describe("published celebrity fan page", () => {
     }));
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} initialTab="notice" />);
     expect(screen.getByRole("tab", { name: "공지" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("ByUs가 전하는 KARA 소식을 확인하세요.")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: /공식 오픈 안내/ })).toHaveAttribute("href", "/c/kara/notices/opening?locale=ko");
+  });
+
+  it("flattens the grouped LIVE catalog before filtering by celebrity", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        catalog: {
+          liveNow: [],
+          upcoming: [{
+            live: {
+              slug: "kara-upcoming",
+              title: "KARA 다음 LIVE",
+              startsAt: "2026-08-24T11:00:00.000Z",
+              effectiveStatus: "scheduled",
+              celebrity: { slug: "kara" },
+            },
+          }, {
+            live: {
+              slug: "changha-upcoming",
+              title: "다른 셀럽 LIVE",
+              startsAt: "2026-08-25T11:00:00.000Z",
+              effectiveStatus: "scheduled",
+              celebrity: { slug: "changha" },
+            },
+          }],
+          replay: [],
+        },
+      }),
+    }));
+
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} initialTab="live" />);
+
+    expect(await screen.findByRole("heading", { name: "KARA 다음 LIVE" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "다른 셀럽 LIVE" })).not.toBeInTheDocument();
   });
 
   it("moves between URL-backed tabs with arrow keys", () => {

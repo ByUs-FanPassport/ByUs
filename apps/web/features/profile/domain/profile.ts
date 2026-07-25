@@ -16,7 +16,7 @@ export type FanProfile = z.infer<typeof fanProfileSchema>;
 const allowedNickname = /^[A-Za-z0-9가-힣]+$/u;
 const prohibitedNicknameEntries = [
   "admin", "administrator", "system", "operator", "official",
-  "관리자", "운영자", "공식", "byus", "바이어스", "kara", "카라",
+  "관리자", "운영자", "공식", "byus", "바이어스", "kara", "카라", "katseye", "캣츠아이",
   "fuck", "shit", "bitch", "시발", "씨발", "병신",
 ] as const;
 
@@ -43,4 +43,3 @@ export function normalizeNickname(input: string): { nickname: string; normalized
   }
   return { nickname, normalized };
 }
-

@@ -1,0 +1,120 @@
+{
+  "datasetKey": "katseye-public-assets-v1",
+  "downloadedAt": "2026-07-26T00:00:00+09:00",
+  "license": {
+    "name": "Creative Commons Attribution 4.0 International",
+    "shortName": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "sources": [
+    {
+      "title": "KATSEYE at Wango Tango 2025",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Katseye_at_Wango_Tango_2025.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Katseye_at_Wango_Tango_2025.jpg",
+      "author": "Warmtoned",
+      "sha256": "42b82d94e99281275bab6fa3b3035de2f0872a862b1d95ea6265b5aa4e1b2a2d",
+      "derivatives": [
+        {
+          "path": "/images/celebrities/katseye/hero-mobile.webp",
+          "width": 960,
+          "height": 1200,
+          "bytes": 174654,
+          "sha256": "b5bc234f6c18c8575db58fea96b80d5f49d1db4a58ea6dd9b093235600a65c15",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "4:5",
+            "gravity": "center"
+          },
+          "changes": "center crop to 4:5, resize, WebP conversion"
+        },
+        {
+          "path": "/images/celebrities/katseye/card.webp",
+          "width": 800,
+          "height": 1000,
+          "bytes": 126594,
+          "sha256": "62d429010509a8b54845f2c409fcd143b7a5e87be790920925cb0e3f86781b20",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "4:5",
+            "gravity": "center"
+          },
+          "changes": "center crop to 4:5, resize, WebP conversion"
+        },
+        {
+          "path": "/images/celebrities/katseye/profile.webp",
+          "width": 400,
+          "height": 400,
+          "bytes": 28758,
+          "sha256": "3e686f0972b556de22a1299919df6c7341c5288a62da639b541a5074132e0bb3",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "1:1",
+            "gravity": "center"
+          },
+          "changes": "center crop to 1:1, resize, WebP conversion"
+        },
+        {
+          "path": "/images/celebrities/katseye/live-upcoming-2.webp",
+          "width": 1280,
+          "height": 720,
+          "bytes": 126504,
+          "sha256": "da7d9de4e793808f92cbce02c0a3e941c61dd630d7d5d974b6655a207388c7be",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "16:9",
+            "gravity": "center"
+          },
+          "changes": "center crop to 16:9, resize, WebP conversion"
+        }
+      ]
+    },
+    {
+      "title": "KATSEYE in Seattle",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Katseye_in_Seattle.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Katseye_in_Seattle.jpg",
+      "author": "David Lee",
+      "sha256": "542db3254710a5f865475bcd0b1721caa8b795886765774ed202c7dd75e3309a",
+      "derivatives": [
+        {
+          "path": "/images/celebrities/katseye/hero-desktop.webp",
+          "width": 2400,
+          "height": 1200,
+          "bytes": 243646,
+          "sha256": "f6da67e17b1dff6b7776f2f9d4939c748f2cb225fb5a0c584a13a22a58ad17a4",
+          "encoder": "cwebp 1.6.0, -q 76 -m 6 -sharp_yuv",
+          "crop": {
+            "aspectRatio": "2:1",
+            "gravity": "center"
+          },
+          "changes": "center crop to 2:1, resize, WebP conversion with cwebp 1.6.0"
+        },
+        {
+          "path": "/images/celebrities/katseye/live-upcoming-1.webp",
+          "width": 1280,
+          "height": 720,
+          "bytes": 114896,
+          "sha256": "1a0eabae2118fb50b4cb61364a487bc3a0459d7e621b7dc55ce3fe44c18ef8ad",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "16:9",
+            "gravity": "center"
+          },
+          "changes": "center crop to 16:9, resize, WebP conversion"
+        },
+        {
+          "path": "/images/celebrities/katseye/live-replay.webp",
+          "width": 1280,
+          "height": 720,
+          "bytes": 114896,
+          "sha256": "1a0eabae2118fb50b4cb61364a487bc3a0459d7e621b7dc55ce3fe44c18ef8ad",
+          "encoder": "WebP VP8 lossy; encoder metadata unavailable",
+          "crop": {
+            "aspectRatio": "16:9",
+            "gravity": "center"
+          },
+          "changes": "center crop to 16:9, resize, WebP conversion"
+        }
+      ]
+    }
+  ]
+}

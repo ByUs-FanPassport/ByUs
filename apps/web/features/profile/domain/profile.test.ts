@@ -11,7 +11,7 @@ describe("FAN-005 profile domain", () => {
     (nickname) => expect(() => normalizeNickname(nickname)).toThrowError(expect.objectContaining({ reason: "invalid" })),
   );
 
-  it.each(["ByUsFan", "KARA짱", "관리자1", "officialFan", "씨발팬"])(
+  it.each(["ByUsFan", "KARA짱", "KATSEYEFan", "캣츠아이팬", "관리자1", "officialFan", "씨발팬"])(
     "rejects prohibited nickname %j",
     (nickname) => expect(() => normalizeNickname(nickname)).toThrowError(expect.objectContaining({ reason: "prohibited" })),
   );

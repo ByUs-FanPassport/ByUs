@@ -19,6 +19,7 @@ const copy = {
     contact: "문의하기",
     privacy: "개인정보처리방침",
     terms: "이용약관",
+    credits: "이미지 출처",
     nav: "ByUs 하단 메뉴",
   },
   en: {
@@ -33,6 +34,7 @@ const copy = {
     contact: "Contact",
     privacy: "Privacy Policy",
     terms: "Terms of Use",
+    credits: "Image credits",
     nav: "ByUs footer navigation",
   },
 } as const;
@@ -75,6 +77,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <a href="mailto:biz@sallylab.io">{t.contact}</a>
             <Link href="/privacy" aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
             <Link href="/terms" aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
+            <Link href={fanHref("/credits", locale)} aria-label={locale === "ko" ? "이미지 출처 열기" : "Open image credits"}>{t.credits}</Link>
           </section>
         </nav>
       </FanContentContainer>
