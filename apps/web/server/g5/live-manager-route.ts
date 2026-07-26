@@ -77,6 +77,15 @@ const command = z.discriminatedUnion("action", [
     effectiveUntil: z.union([instant, z.literal("")]).optional(),
     reason: z.string().trim().min(1).max(1000),
   }),
+  z.object({
+    action: z.enum([
+      "preview_publish",
+      "preview_unpublish",
+      "preview_archive",
+    ]),
+    id: uuid,
+    reason: z.string().trim().min(10).max(1000).optional(),
+  }),
 ]);
 
 function json(body: unknown, status: number) {
@@ -168,7 +177,7 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
           parsed.reason,
         );
         deps.invalidatePublicContent();
-      } else {
+      } else if (parsed.action === "override") {
         const overrideId = await deps.repository.override(
           actor,
           correlationId,
@@ -177,6 +186,26 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
         );
         deps.invalidatePublicContent();
         return json({ overrideId }, 201);
+      } else {
+        if (!parsed.action.startsWith("preview_")) {
+          throw new Error("unsupported preview command");
+        }
+        const previewAction = parsed.action.replace(
+          "preview_",
+          "",
+        ) as "publish" | "unpublish" | "archive";
+        const reason = "reason" in parsed ? parsed.reason : undefined;
+        if (previewAction === "archive" && !reason) {
+          return json({ error: { code: "INVALID_REQUEST" } }, 400);
+        }
+        await deps.repository.previewStatus(
+          actor,
+          correlationId,
+          parsed.id,
+          previewAction,
+          reason,
+        );
+        deps.invalidatePublicContent();
       }
       return json({ ok: true }, 200);
     } catch (error) {

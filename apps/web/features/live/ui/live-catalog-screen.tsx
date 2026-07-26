@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
 import styles from "./live-catalog-screen.module.css";
+import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
 type Catalog = {
   liveNow: readonly LiveEventResponse[];
@@ -133,13 +134,16 @@ function LiveGroup({
                 <div className={styles.details}>
                   <div className={styles.meta}>
                     <span>{item.live.celebrity.name} · {item.live.brand.name}</span>
-                    <span>
-                      <span
-                        aria-hidden="true"
-                        className={item.live.effectiveStatus === "live" ? styles.liveDot : styles.statusDot}
+                    {item.live.effectiveStatus === "live" ||
+                    item.live.effectiveStatus === "scheduled" ? (
+                      <LiveStatusIndicator
+                        className={styles.catalogStatus}
+                        locale={locale}
+                        status={item.live.effectiveStatus}
                       />
-                      {statusLabel(item, locale)}
-                    </span>
+                    ) : (
+                      <span>{statusLabel(item, locale)}</span>
+                    )}
                   </div>
                   <h3><Link href={`/live/${item.live.slug}?locale=${locale}` as Route}>{item.live.title}</Link></h3>
                   <p>{dateRange(item, locale)}</p>

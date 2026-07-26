@@ -59,6 +59,12 @@ export interface LiveEventRecord {
     productContext: string;
   };
   overrides: readonly LiveStatusOverride[];
+  preview?: {
+    kind: "artist_teaser" | "event_highlight";
+    durationMs: number;
+    landscapeVideoUrl: string;
+    landscapePosterUrl: string;
+  } | null;
 }
 
 export interface LiveViewerRecord {
@@ -186,6 +192,16 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
           mode: effectiveStatus === "live" ? "live" : effectiveStatus === "ended" ? "replay" : "unavailable",
           url: watchUrl,
         },
+        preview: record.preview
+          ? {
+              kind: record.preview.kind,
+              durationMs: record.preview.durationMs,
+              landscape: {
+                videoUrl: record.preview.landscapeVideoUrl,
+                posterUrl: record.preview.landscapePosterUrl,
+              },
+            }
+          : null,
       },
       viewer,
       primaryAction: deriveLivePrimaryAction({
@@ -232,13 +248,20 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
     if (eventError) throw new Error("Published live event lookup failed");
     if (!event) return null;
 
-    const [localizationResult, celebrityResult, brandResult, overridesResult] = await Promise.all([
+    const [localizationResult, celebrityResult, brandResult, overridesResult, previewResult] = await Promise.all([
       this.database.from("live_event_localizations").select("title, summary, hero_alt").eq("live_event_id", event.id).eq("locale", locale).maybeSingle(),
       this.database.from("celebrities").select("id, slug, image_url, celebrity_localizations!inner(name)").eq("id", event.celebrity_id).eq("status", "published").eq("celebrity_localizations.locale", locale).maybeSingle(),
       this.database.from("brands").select("slug, logo_url, website_url, brand_localizations!inner(name, description)").eq("id", event.brand_id).eq("status", "published").eq("brand_localizations.locale", locale).maybeSingle(),
       this.database.from("live_status_overrides").select("effective_status, effective_from, effective_until, created_at").eq("live_event_id", event.id),
+      this.database
+        .from("live_event_previews")
+        .select("kind, duration_ms, landscape_video_url, landscape_poster_url")
+        .eq("live_event_id", event.id)
+        .eq("publication_status", "published")
+        .is("archived_at", null)
+        .maybeSingle(),
     ]);
-    if (localizationResult.error || celebrityResult.error || brandResult.error || overridesResult.error) {
+    if (localizationResult.error || celebrityResult.error || brandResult.error || overridesResult.error || previewResult.error) {
       throw new Error("Published live event projection failed");
     }
     const localization = localizationResult.data;
@@ -282,6 +305,14 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
         effectiveUntil: override.effective_until,
         createdAt: override.created_at,
       })),
+      preview: previewResult.data
+        ? {
+            kind: previewResult.data.kind,
+            durationMs: previewResult.data.duration_ms,
+            landscapeVideoUrl: previewResult.data.landscape_video_url,
+            landscapePosterUrl: previewResult.data.landscape_poster_url,
+          }
+        : null,
     };
   }
 

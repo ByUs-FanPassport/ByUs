@@ -1,0 +1,45 @@
+.status {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  color: oklch(48% 0 0);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999rem;
+  background: oklch(48% 0 0);
+}
+
+.status[data-live-status="live"] {
+  color: oklch(24% 0 0);
+}
+
+.status[data-live-status="live"] .dot {
+  background: #e11d48;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status[data-live-status="live"] .dot {
+    animation: none;
+  }
+}

@@ -115,6 +115,47 @@ describe("LiveEventScreen", () => {
     expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
   });
 
+  it("renders a poster-first landscape Preview with an accessible playback control", async () => {
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    );
+    const basePayload = payload();
+    const withPreview = {
+      ...basePayload,
+      live: {
+        ...basePayload.live,
+        preview: {
+          kind: "artist_teaser",
+          durationMs: 4_000,
+          landscape: {
+            videoUrl: "https://assets.example/kara-landscape.mp4",
+            posterUrl: "https://assets.example/kara-landscape.webp",
+          },
+        },
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(withPreview), { status: 200 }),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const video = await screen.findByTestId("active-preview-video");
+    expect(video).toHaveAttribute(
+      "poster",
+      "https://assets.example/kara-landscape.webp",
+    );
+    expect(
+      screen.getByRole("button", { name: "Preview 일시정지" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps LIVE current across desktop and mobile navigation and preserves locale switching", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(payload()), { status: 200 }),

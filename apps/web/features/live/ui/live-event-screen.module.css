@@ -112,7 +112,8 @@
   letter-spacing: 0.04em;
 }
 
-.status[data-status="live"] {
+.status[data-status="live"],
+.status[data-live-status="live"] {
   border-color: oklch(18% 0 0);
   background: oklch(18% 0 0);
   color: #fff;
@@ -194,6 +195,12 @@
   transition:
     transform 160ms cubic-bezier(0.2, 0, 0, 1),
     background 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.page .primaryAction,
+.page .spectrumAction,
+.page .dialogPrimary {
+  color: #fff;
 }
 
 .spectrumAction {

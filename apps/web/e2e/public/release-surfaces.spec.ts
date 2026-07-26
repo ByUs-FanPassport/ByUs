@@ -8,9 +8,13 @@ const repoRoot = path.resolve(__dirname, "../../../..");
 
 const surfaces = [
   { screen: "FAN-002", name: "celebrity-directory", path: "/celebrities" },
-  { screen: "FAN-003", name: "celebrity-fan-page", path: "/c/kara" },
+  { screen: "FAN-003", name: "celebrity-fan-page", path: "/c/katseye" },
   { screen: "FAN-004", name: "fan-login", path: "/login" },
-  { screen: "FAN-017", name: "benefit-catalog", path: "/benefits?locale=ko&celebrity=kara" },
+  {
+    screen: "FAN-017",
+    name: "benefit-catalog",
+    path: "/benefits?locale=ko&celebrity=katseye",
+  },
   { screen: "ADM-001", name: "admin-login", path: "/admin/login" },
 ] as const;
 

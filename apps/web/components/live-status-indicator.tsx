@@ -1,0 +1,28 @@
+import type { EffectiveLiveStatus } from "../features/live/domain/live-event";
+import styles from "./live-status-indicator.module.css";
+
+const labels = {
+  ko: { live: "LIVE 진행중", scheduled: "LIVE 예정" },
+  en: { live: "LIVE NOW", scheduled: "UPCOMING LIVE" },
+} as const;
+
+export function LiveStatusIndicator({
+  status,
+  locale,
+  className,
+}: {
+  status: Extract<EffectiveLiveStatus, "live" | "scheduled">;
+  locale: "ko" | "en";
+  className?: string;
+}) {
+  return (
+    <span
+      className={`${styles.status} ${className ?? ""}`}
+      data-live-status={status}
+      data-live-state={status}
+    >
+      <span className={styles.dot} aria-hidden="true" />
+      {labels[locale][status]}
+    </span>
+  );
+}

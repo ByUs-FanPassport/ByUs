@@ -4,6 +4,7 @@ import {
   createGoogleCalendarUrl,
   deriveEffectiveLiveStatus,
   deriveLivePrimaryAction,
+  liveEventResponseSchema,
   parseExactYouTubeUrl,
   type LiveViewer,
 } from "./live-event";
@@ -50,5 +51,65 @@ describe("live event domain", () => {
     expect(result.origin).toBe("https://calendar.google.com");
     expect(result.searchParams.get("dates")).toBe("20260724T110000Z/20260724T120000Z");
     expect(result.searchParams.get("details")).toContain("https://byus.example/live/kara-move-again");
+  });
+
+  it("accepts a published landscape preview and rejects unsafe or out-of-range media", () => {
+    const response = {
+      live: {
+        id: "819b52d9-62c3-450c-b3dc-78d84d2238c6",
+        slug: "katseye-live",
+        effectiveStatus: "scheduled",
+        startsAt: "2026-08-01T11:00:00.000Z",
+        endsAt: "2026-08-01T12:00:00.000Z",
+        reservationOpensAt: "2026-07-27T00:00:00.000Z",
+        reservationClosesAt: "2026-08-01T11:00:00.000Z",
+        title: "KATSEYE LIVE",
+        description: "함께 만나요.",
+        productContext: "ByUs LIVE",
+        heroImage: { url: "/hero.webp", alt: "KATSEYE" },
+        celebrity: { slug: "katseye", name: "KATSEYE", image: "/card.webp" },
+        brand: { slug: "byus", name: "ByUs", logo: "/logo.svg", websiteUrl: null },
+        watch: { available: false, mode: "unavailable", url: "https://youtube.com/live/abc123" },
+        preview: {
+          kind: "artist_teaser",
+          durationMs: 4_000,
+          landscape: {
+            videoUrl: "https://assets.example/live-previews/live/sha/landscape.mp4",
+            posterUrl: "https://assets.example/live-previews/live/sha/landscape-poster.webp",
+          },
+        },
+      },
+      viewer: { authenticated: false, passport: "missing", reservation: null },
+      primaryAction: "sign_in_to_reserve",
+    };
+
+    expect(liveEventResponseSchema.parse(response).live.preview?.durationMs).toBe(4_000);
+    expect(() =>
+      liveEventResponseSchema.parse({
+        ...response,
+        live: {
+          ...response.live,
+          preview: {
+            ...response.live.preview,
+            durationMs: 6_000,
+          },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      liveEventResponseSchema.parse({
+        ...response,
+        live: {
+          ...response.live,
+          preview: {
+            ...response.live.preview,
+            landscape: {
+              ...response.live.preview.landscape,
+              videoUrl: "javascript:alert(1)",
+            },
+          },
+        },
+      }),
+    ).toThrow();
   });
 });

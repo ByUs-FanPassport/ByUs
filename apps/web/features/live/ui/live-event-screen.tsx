@@ -43,6 +43,8 @@ import {
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { ActivePreviewVideo } from "@/components/active-preview-video";
+import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -839,6 +841,18 @@ export function LiveEventScreen({
               sizes="(min-width: 1024px) 66vw, 100vw"
               priority
             />
+            {live.preview ? (
+              <ActivePreviewVideo
+                id={live.id}
+                mode="detail"
+                locale={locale}
+                preview={{
+                  videoUrl: live.preview.landscape.videoUrl,
+                  posterUrl: live.preview.landscape.posterUrl,
+                  durationMs: live.preview.durationMs,
+                }}
+              />
+            ) : null}
           </div>
           <aside
             className={styles.actionRail}
@@ -846,9 +860,18 @@ export function LiveEventScreen({
               locale === "ko" ? "LIVE 예약 정보" : "LIVE reservation details"
             }
           >
-            <span className={styles.status} data-status={live.effectiveStatus}>
-              {statusLabel}
-            </span>
+            {live.effectiveStatus === "live" ||
+            live.effectiveStatus === "scheduled" ? (
+              <LiveStatusIndicator
+                className={styles.status}
+                locale={locale}
+                status={live.effectiveStatus}
+              />
+            ) : (
+              <span className={styles.status} data-status={live.effectiveStatus}>
+                {statusLabel}
+              </span>
+            )}
             <div>
               <p className={styles.brand}>{live.brand.name}</p>
               <h1>{live.title}</h1>

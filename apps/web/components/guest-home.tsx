@@ -13,6 +13,11 @@ import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame } from "./fan-shell/fan-app-shell";
 import { LiveHeroCarousel } from "./live-hero-carousel";
 import { PassportStampCanvas } from "../features/passport/ui/passport-stamp-artwork";
+import {
+  ActivePreviewCoordinator,
+  ActivePreviewVideo,
+} from "./active-preview-video";
+import { LiveStatusIndicator } from "./live-status-indicator";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
@@ -201,15 +206,17 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
   const [panelOpen, setPanelOpen] = useState(true);
   const personalization = useHomePersonalization(locale);
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
+  const firstPreviewId =
+    celebrities.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
+      ?.slug ?? null;
 
   return (
     <FanAppFrame
       locale={locale}
+      mainId="main-content"
       actions={<button className={styles.panelToggle} type="button" aria-label={panelOpen ? t.panelClose : t.panelOpen} aria-expanded={panelOpen} aria-controls="guest-context-panel" onClick={() => setPanelOpen((value) => !value)}><Menu /></button>}
     >
     <div className={styles.page} data-fan-pulse-home data-candidate="03">
-      <a className={styles.skipLink} href="#main-content">{t.skip}</a>
-
       <div className={`${styles.shell} ${panelOpen ? styles.panelOpen : styles.panelClosed}`}>
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
@@ -235,19 +242,31 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="celebrities-heading">{t.favorites}</h2><p>{t.favoritesSub}</p></div><Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link></div>
+            <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             <div className={styles.celebrityRail} aria-label={t.celebrityList}>
               {celebrities.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
-                const isLiveNow = celebrityLive?.effectiveStatus === "live";
                 return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
                   <Link className={styles.celebrityMediaBox} href={`/c/${celebrity.slug}${localeQuery}` as Route} aria-label={`${celebrity.name} ${t.detail}`}>
-                    <Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+                    {celebrityLive?.preview ? (
+                      <ActivePreviewVideo
+                        id={celebrity.slug}
+                        mode="card"
+                        preview={{
+                          videoUrl: celebrityLive.preview.square.videoUrl,
+                          posterUrl: celebrityLive.preview.square.posterUrl,
+                          durationMs: celebrityLive.preview.durationMs,
+                        }}
+                      />
+                    ) : (
+                      <Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+                    )}
                   </Link>
                   <div className={styles.celebrityInfo}>
                     <div className={styles.celebrityMetaRow}>
                       <h3>{celebrity.name}</h3>
-                      {celebrityLive ? <p className={styles.celebrityLiveStatus} data-live-state={celebrityLive.effectiveStatus}><span className={`${styles.liveDot} ${isLiveNow ? styles.liveDotActive : ""}`} aria-hidden="true" />{isLiveNow ? t.liveNow : t.liveUpcoming}</p> : null}
+                      {celebrityLive ? <LiveStatusIndicator status={celebrityLive.effectiveStatus} locale={locale} className={styles.celebrityLiveStatus} /> : null}
                     </div>
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
@@ -260,6 +279,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
               )})}
               {celebrities.length === 0 ? <p role="status">{t.noCelebrities}</p> : null}
             </div>
+            </ActivePreviewCoordinator>
           </section>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">

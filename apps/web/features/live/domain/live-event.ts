@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { livePreviewKindSchema } from "./live-preview";
 
 export const liveLocaleSchema = z.enum(["ko", "en"]);
 export type LiveLocale = z.infer<typeof liveLocaleSchema>;
@@ -43,6 +44,15 @@ const safeAssetUrl = z.string().min(1).refine((value) => {
   }
 }, "unsafe asset URL");
 
+const publishedLandscapePreviewSchema = z.object({
+  kind: livePreviewKindSchema,
+  durationMs: z.number().int().min(3_000).max(5_000),
+  landscape: z.object({
+    videoUrl: safeAssetUrl,
+    posterUrl: safeAssetUrl,
+  }),
+});
+
 export const publicLiveEventSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -71,6 +81,7 @@ export const publicLiveEventSchema = z.object({
     mode: z.enum(["live", "replay", "unavailable"]).optional(),
     url: z.string().url().startsWith("https://"),
   }),
+  preview: publishedLandscapePreviewSchema.nullable().optional(),
 });
 
 export const liveReservationSummarySchema = z.object({

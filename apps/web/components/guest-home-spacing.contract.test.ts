@@ -6,6 +6,10 @@ const css = readFileSync(
   resolve(process.cwd(), "components/guest-home.module.css"),
   "utf8",
 );
+const liveStatusCss = readFileSync(
+  resolve(process.cwd(), "components/live-status-indicator.module.css"),
+  "utf8",
+);
 
 function declarationBlock(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -39,8 +43,8 @@ describe("guest home compact icon-only action spacing", () => {
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,
     );
-    expect(css).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.liveDotActive\s*\{\s*animation:\s*none/,
+    expect(liveStatusCss).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.status\[data-live-status="live"\]\s+\.dot\s*\{[^}]*animation:\s*none/,
     );
   });
 

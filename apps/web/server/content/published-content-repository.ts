@@ -86,7 +86,7 @@ export class SupabasePublishedContentRepository
     const { data, error } = await this.client
       .from("published_celebrity_live_summaries")
       .select(
-        "slug,celebrity_slug,locale,title,starts_at,effective_status",
+        "slug,celebrity_slug,locale,title,starts_at,effective_status,preview_kind,preview_duration_ms,preview_square_video_url,preview_square_poster_url",
       )
       .eq("locale", locale)
       .order("starts_at", { ascending: true });

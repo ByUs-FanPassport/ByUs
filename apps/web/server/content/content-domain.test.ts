@@ -88,6 +88,12 @@ describe("published content boundary", () => {
         title: "KARA LIVE",
         starts_at: "2026-07-24T11:00:00.000+00:00",
         effective_status: "scheduled",
+        preview_kind: "artist_teaser",
+        preview_duration_ms: 4_000,
+        preview_square_video_url:
+          "https://assets.example/live-previews/live/sha/square.mp4",
+        preview_square_poster_url:
+          "https://assets.example/live-previews/live/sha/square-poster.webp",
       }),
     ).toEqual({
       slug: "kara-live",
@@ -96,6 +102,15 @@ describe("published content boundary", () => {
       title: "KARA LIVE",
       startsAt: "2026-07-24T11:00:00.000+00:00",
       effectiveStatus: "scheduled",
+      preview: {
+        kind: "artist_teaser",
+        durationMs: 4_000,
+        square: {
+          videoUrl: "https://assets.example/live-previews/live/sha/square.mp4",
+          posterUrl:
+            "https://assets.example/live-previews/live/sha/square-poster.webp",
+        },
+      },
     });
     expect(() =>
       parsePublishedCelebrityLive({

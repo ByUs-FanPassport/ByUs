@@ -16,8 +16,7 @@
 .meta { display:flex; min-width:0; align-items:center; gap:8px; }
 .meta > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .meta > span:last-child { display:inline-flex; flex:none; align-items:center; gap:5px; color:oklch(32% 0 0); font-weight:700; }
-.statusDot,.liveDot { width:6px; height:6px; border-radius:50%; background:oklch(62% 0 0); }
-.liveDot { background:oklch(62% .24 20); animation:live-pulse 1.6s ease-in-out infinite; }
+.catalogStatus { min-height:0; font-size:13px; }
 .details h3 { overflow:hidden; margin:5px 0; font-size:16px; font-weight:800; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
 .details p { margin:0; }
 .action { display:flex; width:44px; height:44px; align-items:center; justify-content:center; border:1px solid oklch(84% 0 0); border-radius:12px; font-size:14px; font-weight:800; touch-action:manipulation; }
@@ -38,5 +37,3 @@
   .action > svg:last-child { margin-left:auto; }
 }
 @media (hover:hover) and (pointer:fine) { .action:hover,.retry:hover { border-color:oklch(65% 0 0); background:oklch(98% 0 0); } .details h3 a:hover { text-decoration:underline; text-underline-offset:3px; } }
-@keyframes live-pulse { 50% { opacity:.35; } }
-@media (prefers-reduced-motion:reduce) { .liveDot { animation:none; } }

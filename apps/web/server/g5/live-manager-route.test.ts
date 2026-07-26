@@ -24,6 +24,7 @@ function deps(
       publication: vi.fn(async () => undefined),
       archive: vi.fn(async () => undefined),
       override: vi.fn(async () => "44444444-4444-4444-8444-444444444444"),
+      previewStatus: vi.fn(async () => undefined),
       ...overrides,
     },
   };
@@ -63,6 +64,38 @@ describe("ADM-005 live manager route", () => {
     );
     expect(response.status).toBe(403);
     expect(d.repository.publication).not.toHaveBeenCalled();
+  });
+
+  it("publishes a validated Preview through the audited repository command", async () => {
+    const previewStatus = vi.fn(async () => undefined);
+    const d = deps({ previewStatus });
+    const response = await createPostLiveManagerHandler(d)(
+      new Request("https://byus.test/api/admin/lives", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer secret",
+          "content-type": "application/json",
+          "x-correlation-id": "55555555-5555-4555-8555-555555555555",
+        },
+        body: JSON.stringify({
+          action: "preview_publish",
+          id: "33333333-3333-4333-8333-333333333333",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(previewStatus).toHaveBeenCalledWith(
+      {
+        appUserId: actor.appUserId,
+        allowlistId: actor.allowlistId,
+      },
+      "55555555-5555-4555-8555-555555555555",
+      "33333333-3333-4333-8333-333333333333",
+      "publish",
+      undefined,
+    );
+    expect(d.invalidatePublicContent).toHaveBeenCalled();
   });
   it("passes a trusted correlation and actor to publication", async () => {
     const d = deps();

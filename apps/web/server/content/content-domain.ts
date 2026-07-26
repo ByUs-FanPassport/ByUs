@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { livePreviewKindSchema } from "../../features/live/domain/live-preview";
 
 const slugSchema = z
   .string()
@@ -55,6 +56,10 @@ const publishedCelebrityLiveRowSchema = z.object({
   title: z.string().trim().min(1).max(160),
   starts_at: z.string().datetime({ offset: true }),
   effective_status: z.enum(["scheduled", "live"]),
+  preview_kind: livePreviewKindSchema.nullable().optional(),
+  preview_duration_ms: z.number().int().min(3_000).max(5_000).nullable().optional(),
+  preview_square_video_url: httpsOrRootRelativeUrl.nullable().optional(),
+  preview_square_poster_url: httpsOrRootRelativeUrl.nullable().optional(),
 });
 
 export type ContentLocale = z.infer<typeof localeSchema>;
@@ -82,6 +87,11 @@ export type PublishedCelebrityLive = Readonly<{
   title: string;
   startsAt: string;
   effectiveStatus: "scheduled" | "live";
+  preview?: Readonly<{
+    kind: "artist_teaser" | "event_highlight";
+    durationMs: number;
+    square: Readonly<{ videoUrl: string; posterUrl: string }>;
+  }> | null;
 }>;
 
 export function parsePublishedCelebritySlug(value: unknown): PublishedCelebritySlug {
@@ -111,6 +121,23 @@ export function parsePublishedCelebrityLive(
   value: unknown,
 ): PublishedCelebrityLive {
   const row = publishedCelebrityLiveRowSchema.parse(value);
+  const previewValues = [
+    row.preview_kind,
+    row.preview_duration_ms,
+    row.preview_square_video_url,
+    row.preview_square_poster_url,
+  ];
+  const hasPreview = previewValues.every(
+    (previewValue) => previewValue !== null && previewValue !== undefined,
+  );
+  if (
+    previewValues.some(
+      (previewValue) => previewValue !== null && previewValue !== undefined,
+    ) &&
+    !hasPreview
+  ) {
+    throw new Error("Published LIVE preview projection is incomplete");
+  }
   return {
     slug: row.slug,
     celebritySlug: row.celebrity_slug,
@@ -118,5 +145,15 @@ export function parsePublishedCelebrityLive(
     title: row.title,
     startsAt: row.starts_at,
     effectiveStatus: row.effective_status,
+    preview: hasPreview
+      ? {
+          kind: row.preview_kind!,
+          durationMs: row.preview_duration_ms!,
+          square: {
+            videoUrl: row.preview_square_video_url!,
+            posterUrl: row.preview_square_poster_url!,
+          },
+        }
+      : null,
   };
 }

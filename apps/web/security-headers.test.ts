@@ -32,6 +32,13 @@ describe("response security headers", () => {
     expect(csp).not.toContain("connect-src *");
   });
 
+  it("allows published LIVE preview media from Supabase Storage", () => {
+    const csp = header("Content-Security-Policy");
+
+    expect(csp).toContain("media-src 'self' blob: https://*.supabase.co");
+    expect(csp).not.toContain("media-src *");
+  });
+
   it("sets MIME, referrer, capability, and cross-origin isolation policies", () => {
     expect(header("X-Content-Type-Options")).toBe("nosniff");
     expect(header("Referrer-Policy")).toBe("strict-origin-when-cross-origin");

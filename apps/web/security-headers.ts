@@ -33,7 +33,9 @@ const contentSecurityPolicy = [
   ].join(" "),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "media-src 'self' blob:",
+  // Published LIVE previews are rights-reviewed derivatives served from the
+  // public cms-assets bucket. Keep the exception limited to Supabase Storage.
+  "media-src 'self' blob: https://*.supabase.co",
 ].join("; ");
 
 export const responseSecurityHeaders: ResponseHeader[] = [

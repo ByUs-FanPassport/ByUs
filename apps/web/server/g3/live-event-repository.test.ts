@@ -112,6 +112,40 @@ describe("DefaultLiveEventRepository", () => {
     expect(JSON.stringify(result)).not.toMatch(/fan.?code|actor|reason|wallet|job.?payload/i);
   });
 
+  it("projects only the published landscape Preview contract", async () => {
+    const result = await new DefaultLiveEventRepository(
+      source({
+        findPublishedEvent: async () => ({
+          ...event,
+          preview: {
+            kind: "artist_teaser",
+            durationMs: 4_000,
+            landscapeVideoUrl:
+              "https://assets.example/live-previews/live/sha/landscape.mp4",
+            landscapePosterUrl:
+              "https://assets.example/live-previews/live/sha/landscape-poster.webp",
+          },
+        }),
+      }),
+    ).findPublishedBySlug({
+      slug: event.slug,
+      locale: "ko",
+      appUserId: null,
+      now: new Date("2026-07-21T00:00:00Z"),
+    });
+
+    expect(result?.live.preview).toEqual({
+      kind: "artist_teaser",
+      durationMs: 4_000,
+      landscape: {
+        videoUrl:
+          "https://assets.example/live-previews/live/sha/landscape.mp4",
+        posterUrl:
+          "https://assets.example/live-previews/live/sha/landscape-poster.webp",
+      },
+    });
+  });
+
   it("returns owner passport and reservation summary without chain job details", async () => {
     const reservation = {
       id: "33333333-3333-4333-8333-333333333333",

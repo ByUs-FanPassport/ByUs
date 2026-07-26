@@ -39,7 +39,9 @@
     "security:audit:baseline": "node scripts/verify-npm-audit-baseline.mjs",
     "security:tree": "npm ls @aws-sdk/client-secrets-manager fast-xml-parser axios ws postcss uuid --all",
     "security:verify": "node scripts/verify-security-dependencies.mjs",
-    "security:ws-canary": "node scripts/verify-websocket-canary.mjs"
+    "security:ws-canary": "node scripts/verify-websocket-canary.mjs",
+    "media:prepare-live-preview": "node scripts/prepare-live-preview.mjs",
+    "test:media-preview": "node --test scripts/live-preview-pipeline.contract.test.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

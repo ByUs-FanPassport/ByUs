@@ -289,6 +289,49 @@ describe("canonical 03 guest home", () => {
     expect(within(changhaCard!).queryByText(/LIVE/)).not.toBeInTheDocument();
   });
 
+  it("uses a published square Preview only inside the matching favorite card", () => {
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    );
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
+      {
+        slug: "kara-live",
+        celebritySlug: "kara",
+        locale: "ko",
+        title: "KARA LIVE",
+        startsAt: "2026-07-24T11:00:00.000Z",
+        effectiveStatus: "scheduled",
+        preview: {
+          kind: "artist_teaser",
+          durationMs: 4_000,
+          square: {
+            videoUrl: "https://assets.example/kara-square.mp4",
+            posterUrl: "https://assets.example/kara-square.webp",
+          },
+        },
+      },
+    ]} />);
+
+    const videos = screen.getAllByTestId("active-preview-video");
+    expect(videos).toHaveLength(1);
+    expect(videos[0]).toHaveAttribute(
+      "poster",
+      "https://assets.example/kara-square.webp",
+    );
+    expect(videos[0]).toHaveAttribute(
+      "src",
+      "https://assets.example/kara-square.mp4",
+    );
+    expect(screen.getByRole("img", { name: "Elina portrait" })).toBeInTheDocument();
+  });
+
   it("lets desktop users collapse and restore the context panel without removing mobile actions", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 

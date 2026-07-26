@@ -24,12 +24,6 @@
 .page :is(a, button):focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .page svg { flex: none; width: 20px; height: 20px; stroke-width: 1.8; }
 
-.skipLink {
-  position: fixed; z-index: 100; top: 12px; left: 12px; transform: translateY(-200%);
-  min-height: 44px; padding: 12px 16px; border-radius: 12px; background: var(--ink); color: #fff !important; font-weight: 700;
-}
-.skipLink:focus { transform: translateY(0); }
-
 .header { position: sticky; z-index: 40; top: 0; height: var(--header-height); padding-block: 12px; background: var(--canvas); }
 .headerInner { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; width: min(100%, 1440px); height: 100%; margin-inline: auto; padding-inline: 16px; }
 .brand { display: inline-flex; width: 88px; min-height: 44px; align-items: center; }
@@ -92,24 +86,19 @@
 .celebrityRail { display: grid; grid-auto-columns: min(82vw, 288px); grid-auto-flow: column; gap: 16px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: inline mandatory; scrollbar-width: none; }
 .celebrityRail::-webkit-scrollbar { display: none; }
 .celebrityCard { min-width: 0; scroll-snap-align: start; }
-.celebrityMediaBox { display: grid; aspect-ratio: 1; padding: 16.75%; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
+.celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; padding: 16.75%; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
+.celebrityMediaBox > [data-preview-mode="card"] { inset: 16.75%; border-radius: 4px; }
 .celebrityMediaBox img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 .celebrityInfo { display: grid; min-width: 0; gap: 4px; padding-top: 12px; }
 .celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .celebrityInfo h3, .celebrityInfo p { min-width: 0; margin: 0; font-size: 13px; font-weight: 400; line-height: 1.35; }
 .celebrityInfo h3 { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
 .celebrityLiveStatus { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--ink); white-space: nowrap; }
-.liveDot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--muted); }
-.liveDotActive { background: #ef2b51; animation: live-dot-pulse 1.2s cubic-bezier(.2,0,0,1) infinite; }
 .fanCount { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .socialLinks { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 0; margin-left: auto; }
 .socialLink { display: inline-flex; width: 44px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 999rem; color: var(--muted) !important; transition: background 160ms cubic-bezier(.2,0,0,1); }
 .socialLink img { display: block; width: 20px; height: 20px; }
 
-@keyframes live-dot-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .28; }
-}
 
 .liveList { display: grid; gap: 12px; }
 .liveRow { display: grid; grid-template-columns: 56px minmax(0,1fr) 44px; gap: 12px; align-items: center; min-height: 104px; padding: 16px; border: 1px solid var(--card-line); border-radius: 12px; background: var(--canvas); box-shadow: var(--card-shadow); }
@@ -293,7 +282,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liveDotActive { animation: none; }
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
   .heroCarousel[data-reduced-motion="true"] .heroTrack { display: grid; transform: none !important; will-change: auto; }
   .heroCarousel[data-reduced-motion="true"] .heroCard { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 150ms ease !important; }

@@ -9,6 +9,13 @@ export type LiveManagerRepository = {
   publication(actor: LiveManagerActor, correlationId: string, id: string, published: boolean): Promise<void>;
   archive(actor: LiveManagerActor, correlationId: string, id: string, reason: string): Promise<void>;
   override(actor: LiveManagerActor, correlationId: string, id: string, input: Record<string, unknown>): Promise<string>;
+  previewStatus(
+    actor: LiveManagerActor,
+    correlationId: string,
+    id: string,
+    action: "publish" | "unpublish" | "archive",
+    reason?: string,
+  ): Promise<void>;
 };
 
 type RpcClient = Pick<SupabaseClient, "rpc">;
@@ -63,6 +70,17 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
         p_effective_until: input.effectiveUntil || null, p_reason: input.reason,
       });
       return String(assert(data, error));
+    },
+    async previewStatus(actor, correlationId, id, action, reason) {
+      const { error } = await db.rpc("set_admin_live_preview_status", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: id,
+        p_action: action,
+        p_reason: reason ?? null,
+      });
+      assert(null, error);
     },
   };
 }

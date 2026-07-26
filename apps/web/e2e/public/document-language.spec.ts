@@ -29,12 +29,12 @@ test("unknown celebrity is an HTML 404 while a published celebrity remains avail
   expect(unknown.status()).toBe(404);
   expect(unknown.headers()["content-type"]).toContain("text/html");
 
-  const published = await request.get("/c/kara?locale=en");
+  const published = await request.get("/c/katseye?locale=en");
   expect(published.status()).toBe(200);
   expect(published.headers()["content-type"]).toContain("text/html");
   expect(await published.text()).toMatch(/<html[^>]+lang="en"/);
 
-  const localeLess = await request.get("/c/kara", {
+  const localeLess = await request.get("/c/katseye", {
     headers: { cookie: "byus_locale=en" },
   });
   expect(localeLess.status()).toBe(200);
