@@ -19,6 +19,40 @@
 .identity dl div { padding-bottom:10px; border-bottom:1px solid oklch(90% 0 0); }
 .identity dt { color:oklch(48% 0 0); font-size:12px; }
 .identity dd { margin:5px 0 0; font-size:16px; font-weight:750; }
+.stampMoment {
+  position:absolute;
+  z-index:2;
+  top:31.33%;
+  left:64.5%;
+  display:block;
+  width:28%;
+  pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+.stampImpact {
+  display:grid;
+  width:100%;
+  place-items:center;
+  filter:drop-shadow(0 4px 6px rgb(52 10 12 / 12%));
+}
+.stampImpact > span { width:100%; max-width:none; }
+.stampMoment[data-state="impact"] .stampImpact { animation:stamp-impact 240ms cubic-bezier(.2,0,0,1) both; }
+.stampMoment[data-state="settling"] .stampImpact { animation:stamp-settle 240ms cubic-bezier(.2,0,0,1) both; }
+.stampMomentMeta {
+  position:absolute;
+  top:calc(100% + 8px);
+  left:50%;
+  display:grid;
+  width:max-content;
+  max-width:150%;
+  justify-items:center;
+  gap:4px;
+  text-align:center;
+  transform:translateX(-50%);
+}
+.stampMomentMeta strong { color:#b4242d; font-size:15px; font-weight:850; line-height:1.3; }
+.stampMomentMeta span { color:oklch(48% 0 0); font-size:12px; font-weight:650; line-height:1.4; }
+.stampMoment[data-state="settling"] .stampMomentMeta { animation:stamp-meta-out 160ms cubic-bezier(.2,0,0,1) both; }
 .summary { display:grid; gap:0; align-self:stretch; align-content:center; }
 .summary > div { display:grid; justify-items:center; gap:22px; padding:36px 20px; border:1px solid oklch(90% 0 0); border-radius:12px 12px 0 0; }
 .summary > div > span { font-size:20px; font-weight:800; }
@@ -37,6 +71,19 @@
 .state p { color:oklch(48% 0 0); line-height:1.6; }
 .state button + a { background:#fff; color:oklch(18% 0 0); box-shadow:inset 0 0 0 1px oklch(76% 0 0); }
 .state svg { width:18px; }
+@keyframes stamp-impact {
+  from { opacity:0; transform:scale(1.12); }
+  72% { opacity:1; transform:scale(.96); }
+  to { opacity:1; transform:scale(1); }
+}
+@keyframes stamp-settle {
+  from { opacity:1; transform:scale(1); }
+  to { opacity:0; transform:scale(.3); }
+}
+@keyframes stamp-meta-out {
+  from { opacity:1; transform:translate(-50%,0); }
+  to { opacity:0; transform:translate(-50%,-4px); }
+}
 @media (max-width:767px) {
   .frame { padding:12px 16px 0; }
   .headerActions { gap:8px; }
@@ -48,6 +95,10 @@
   .identity dl { gap:7px; margin-top:12px; }
   .identity dt { font-size:10px; }
   .identity dd { margin-top:2px; font-size:12px; }
+  .stampMoment { width:30%; }
+  .stampMomentMeta { top:calc(100% + 4px); }
+  .stampMomentMeta strong { font-size:10px; }
+  .stampMomentMeta span { font-size:8px; }
   .summary { grid-template-columns:1fr 1fr; }
   .summary > div { border-radius:12px 0 0 12px; }
   .summary > div > span { font-size:15px; }
@@ -64,4 +115,7 @@
     padding:12px 16px max(12px,env(safe-area-inset-bottom));
     border-top:1px solid oklch(90% 0 0);
   }
+}
+@media (prefers-reduced-motion:reduce) {
+  .stampMoment :is(.stampImpact,.stampMomentMeta) { animation-duration:.01ms !important; }
 }

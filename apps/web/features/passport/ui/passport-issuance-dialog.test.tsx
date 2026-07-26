@@ -74,6 +74,37 @@ describe("PassportIssuanceCeremony", () => {
     vi.useRealTimers();
   });
 
+  it("restores the large data-driven Stamp impact before settling the record into the first Passport slot", () => {
+    vi.useFakeTimers();
+    const { container } = render(<PassportIssuanceCeremony issuance={aggregate} />);
+
+    expect(container.querySelector("[data-issuance-stamp-moment]")).toBeNull();
+    expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(0);
+
+    act(() => {
+      vi.advanceTimersByTime(450);
+    });
+    const impact = container.querySelector("[data-issuance-stamp-moment]");
+    expect(impact).toHaveAttribute("data-state", "impact");
+    expect(impact).toHaveTextContent("인증");
+    expect(impact).toHaveTextContent("KARA");
+    expect(impact).toHaveTextContent("+1");
+    expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(0);
+
+    act(() => {
+      vi.advanceTimersByTime(450);
+    });
+    expect(container.querySelector("[data-issuance-stamp-moment]")).toHaveAttribute("data-state", "settling");
+    expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(1);
+
+    act(() => {
+      vi.advanceTimersByTime(450);
+    });
+    expect(container.querySelector("[data-issuance-stamp-moment]")).toBeNull();
+    expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
   it("keeps Passport access available when the base artwork fails", () => {
     const { container } = render(<PassportIssuanceCeremony issuance={aggregate} />);
     const passportImage = container.querySelector('img[src*="passport-open-blank-9-transparent"]');

@@ -12,7 +12,7 @@ import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import { levelLabel, type PassportLocale } from "../domain/passport-read-model";
-import { PassportStampCanvas } from "./passport-stamp-artwork";
+import { PassportStampCanvas, StampArtwork } from "./passport-stamp-artwork";
 import styles from "./passport-issuance-dialog.module.css";
 
 interface PassportIssuanceCeremonyProps { issuance: IssuanceAggregate }
@@ -91,6 +91,11 @@ export function PassportIssuanceCeremony({
   const t = copy[locale];
   const progress = stage + 1;
   const level = levelLabel(locale, "Bronze");
+  const stampDate = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(issuance.firstStamp.issuedAt));
   const passportHref = withLocale(`/passports/${issuance.passport.id}`, locale);
   const skipRef = useRef<HTMLButtonElement>(null);
   const openPassportRef = useRef<HTMLAnchorElement>(null);
@@ -170,10 +175,30 @@ export function PassportIssuanceCeremony({
               level={level}
               stamps={[{ type: issuance.firstStamp.type, issuedAt: issuance.firstStamp.issuedAt }]}
               totalCount={1}
-              revealCount={stage >= 1 ? 1 : 0}
+              revealCount={stage >= 2 ? 1 : 0}
               locale={locale}
               priority
             />
+            {stage >= 1 && stage < 3 ? (
+              <div
+                className={styles.stampMoment}
+                data-issuance-stamp-moment
+                data-state={stage === 1 ? "impact" : "settling"}
+                aria-hidden="true"
+              >
+                <div className={styles.stampImpact}>
+                  <StampArtwork
+                    type={issuance.firstStamp.type}
+                    locale={locale}
+                    decorative
+                  />
+                </div>
+                <div className={styles.stampMomentMeta}>
+                  <strong>{t.stampEarned}</strong>
+                  <span>{issuance.celebrity.name} · {stampDate} · +{issuance.score.points}</span>
+                </div>
+              </div>
+            ) : null}
             <div className={styles.identity}>
               <h1 id="passport-issuance-title">{t.completeTitle(issuance.celebrity.name)}</h1>
               <p>{t.completeBody}</p>
