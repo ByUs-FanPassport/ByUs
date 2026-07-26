@@ -30,6 +30,7 @@ const ownedPassport = {
   issuedAt: "2026-07-24T11:00:00.000Z",
   score: { points: 8, level: "Silver" },
   stampSummary: { knowledge: 1, reservation: 1, attendance: 1, survey: 0, total: 3 },
+  display: { level: "실버", mintStatus: "발급 완료" },
 } as const;
 
 function stubHubFetch({

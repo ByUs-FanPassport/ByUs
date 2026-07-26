@@ -39,6 +39,17 @@ describe("passport fan screens", () => {
     expect(screen.getByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
   });
 
+  it("fails closed when the Passport collection API DTO is malformed", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      passports: [{ ...passport, display: undefined }],
+    }), { status: 200 })));
+
+    render(<PassportCollectionScreen />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("기록을 불러오지 못했어요.");
+    expect(screen.getByRole("button", { name: "다시 불러오기" })).toBeInTheDocument();
+  });
+
   it("renders each actual Stamp, newest activity first, and separate score and stamp totals", async () => {
     const activities = [
       { id: "66666666-6666-4666-8666-666666666666", type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, stampId: stamps[0].id, context, display: { type: "팬 인증" } },

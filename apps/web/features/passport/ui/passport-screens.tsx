@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
-import type { PassportCollection } from "../domain/passport-collection";
+import { parsePassportCollectionResponse } from "../domain/passport-collection";
 import type { PassportDetail } from "../domain/passport-detail";
 import { levelLabel, stampTypeLabel, type PassportLocale } from "../domain/passport-read-model";
 import type { StampDetail } from "../domain/stamp-detail";
@@ -129,7 +129,7 @@ function PageHeading({ title, subtitle, back }: { title: string; subtitle: strin
 
 function DigitalStatus({ status, locale }: { status: string; locale: PassportLocale }) { return <span className={styles.digitalStatus} data-complete={status === "minted"}><span aria-hidden="true">{status === "minted" ? <Check /> : <Sparkles />}</span>{issuanceText(status, locale)}</span>; }
 
-const parseCollection = (body: unknown) => (body as { passports: PassportCollection }).passports;
+const parseCollection = (body: unknown) => parsePassportCollectionResponse(body).passports;
 const parsePassport = (body: unknown) => (body as { passport: PassportDetail }).passport;
 const parseStamp = (body: unknown) => (body as { stamp: StampDetail }).stamp;
 

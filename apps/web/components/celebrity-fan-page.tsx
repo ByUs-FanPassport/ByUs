@@ -11,7 +11,10 @@ import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { FanAction } from "./fan-ui/fan-action";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
-import { parsePassportCollection } from "../features/passport/domain/passport-collection";
+import {
+  parsePassportCollectionResponse,
+  type PassportCollectionResponse,
+} from "../features/passport/domain/passport-collection";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
 import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
@@ -19,7 +22,7 @@ import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
 import styles from "./celebrity-fan-page.module.css";
 
 export type CelebrityFanTab = "home" | "notice" | "live" | "benefits";
-type OwnedPassport = ReturnType<typeof parsePassportCollection>[number];
+type OwnedPassport = PassportCollectionResponse["passports"][number];
 type PassportState =
   | Readonly<{ status: "guest" | "loading" | "none" }>
   | Readonly<{ status: "owned"; passport: OwnedPassport }>
@@ -79,9 +82,8 @@ function formatDate(value: string, locale: ContentLocale) {
     dateStyle: "medium", timeStyle: "short", hour12: locale !== "ko", timeZone: "Asia/Seoul",
   }).format(new Date(value));
 }
-function findOwnedPassport(value: unknown, slug: string, locale: ContentLocale): OwnedPassport | null {
-  if (!value || typeof value !== "object" || !("passports" in value) || !Array.isArray(value.passports)) throw new Error("Invalid Passport collection");
-  return parsePassportCollection(value.passports, locale).find((item) => item.celebrity.slug === slug) ?? null;
+function findOwnedPassport(value: unknown, slug: string): OwnedPassport | null {
+  return parsePassportCollectionResponse(value).passports.find((item) => item.celebrity.slug === slug) ?? null;
 }
 
 function isLiveEventResponse(item: unknown): item is LiveEventResponse {
@@ -140,7 +142,7 @@ export function CelebrityFanPage({
         if (!token) throw new Error("Missing access token");
         const response = await fetch(`/api/passports?locale=${locale}`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
         if (!response.ok) throw new Error("Passport request failed");
-        const passport = findOwnedPassport(await response.json(), celebrity.slug, locale);
+        const passport = findOwnedPassport(await response.json(), celebrity.slug);
         setPassportState(passport ? { status: "owned", passport } : { status: "none" });
       } catch { if (!controller.signal.aborted) setPassportState({ status: "error" }); }
     })();

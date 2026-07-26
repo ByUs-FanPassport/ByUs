@@ -8,6 +8,41 @@ const publishedCelebrityFixtures = [
   { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000, upcomingLive: null },
   { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000, upcomingLive: null },
 ] as const;
+const ownedPassport = {
+  id: "11111111-1111-4111-8111-111111111111",
+  owner: { nickname: "Jewel_KAT" },
+  celebrity: {
+    slug: "kara",
+    name: "KARA",
+    image: {
+      url: "/images/guest-home/kara-card.jpg",
+      alt: "KARA portrait",
+      position: "center",
+    },
+  },
+  businessStatus: "issued",
+  mint: {
+    status: "queued",
+    txHash: null,
+    tokenId: null,
+  },
+  issuedAt: "2026-07-26T00:00:00.000Z",
+  score: {
+    points: 1,
+    level: "Bronze",
+  },
+  stampSummary: {
+    knowledge: 1,
+    reservation: 0,
+    attendance: 0,
+    survey: 0,
+    total: 1,
+  },
+  display: {
+    level: "브론즈",
+    mintStatus: "발급 대기",
+  },
+} as const;
 
 let authenticated = false;
 const getAccessToken = vi.fn();
@@ -48,7 +83,10 @@ describe("published celebrity directory", () => {
   it("uses the authenticated Passport projection for filtering and ownership badges", async () => {
     authenticated = true;
     getAccessToken.mockResolvedValue("token");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ passports: [{ id: "passport-1", celebrity: { slug: "kara" } }] }) }));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ passports: [ownedPassport] }),
+    }));
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
     await waitFor(() => expect(screen.getByText("Passport 보유")).toBeInTheDocument());
     const filter = screen.getByRole("checkbox", { name: "내 Passport만" });
@@ -57,6 +95,22 @@ describe("published celebrity directory", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith("/api/passports?locale=ko", expect.objectContaining({ headers: { Authorization: "Bearer token" } }));
+  });
+
+  it("keeps the Passport filter unavailable when the API DTO is malformed", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        passports: [{ ...ownedPassport, display: undefined }],
+      }),
+    }));
+
+    render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("내 Passport를 확인하지 못했어요.");
+    expect(screen.getByRole("checkbox", { name: "내 Passport만" })).toBeDisabled();
   });
 
   it("keeps the Passport filter unavailable for guests with an explanation", () => {

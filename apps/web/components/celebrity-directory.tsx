@@ -8,9 +8,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "./icons";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
+import { parsePassportCollectionResponse } from "../features/passport/domain/passport-collection";
 import styles from "./celebrity-directory.module.css";
 
-type PassportRecord = Readonly<{ celebrity?: Readonly<{ slug?: unknown }> }>;
 type PassportState =
   | Readonly<{ status: "guest" | "loading" }>
   | Readonly<{ status: "ready"; slugs: ReadonlySet<string> }>
@@ -35,14 +35,7 @@ const copy = {
 } as const;
 
 function passportSlugs(value: unknown): ReadonlySet<string> {
-  if (!value || typeof value !== "object" || !("passports" in value) || !Array.isArray(value.passports)) {
-    throw new Error("Invalid Passport collection");
-  }
-  return new Set(
-    (value.passports as PassportRecord[])
-      .map((passport) => passport.celebrity?.slug)
-      .filter((slug): slug is string => typeof slug === "string"),
-  );
+  return new Set(parsePassportCollectionResponse(value).passports.map((passport) => passport.celebrity.slug));
 }
 
 export function CelebrityDirectory({ celebrities, locale }: { celebrities: readonly DirectoryCelebrity[]; locale: ContentLocale }) {
