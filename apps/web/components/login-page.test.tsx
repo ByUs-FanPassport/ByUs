@@ -10,10 +10,11 @@ let onComplete: (() => void) | undefined;
 let onError: (() => void) | undefined;
 const getAccessToken = vi.fn();
 let authenticated = false;
+let ready = true;
 let query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated, getAccessToken }),
+  usePrivy: () => ({ ready, authenticated, getAccessToken }),
   useLogin: (callbacks: { onComplete?: () => void; onError?: () => void }) => {
     onComplete = callbacks.onComplete;
     onError = callbacks.onError;
@@ -43,6 +44,7 @@ describe("Privy login page", () => {
     });
     login.mockClear(); replace.mockClear(); back.mockClear();
     authenticated = false;
+    ready = true;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
     getAccessToken.mockResolvedValue("privy-access-token");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ profile: { completed: true, nickname: "John" } }));
@@ -64,6 +66,15 @@ describe("Privy login page", () => {
     expect(screen.getByRole("img", { name: "펼쳐진 Fan Passport" })).toBeInTheDocument();
     expect(document.querySelector("[data-login-layout='passport-gateway']")).toBeInTheDocument();
     expect(screen.getByText("YOUR FAN PASSPORT")).toBeInTheDocument();
+  });
+
+  it("shows only a neutral loading state while Privy restores authentication", () => {
+    ready = false;
+    render(<LoginPage />);
+
+    expect(screen.getByText("로그인 상태를 확인하고 있어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Google로 계속하기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "최애와 함께한 순간을 기록하세요." })).not.toBeInTheDocument();
   });
 
   it("uses Privy's email OTP UI only when the non-production Test Account path is enabled", () => {
@@ -123,6 +134,8 @@ describe("Privy login page", () => {
     render(<LoginPage />);
 
     await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(screen.getByText("로그인 상태를 연결하고 있어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Google로 계속하기/ })).not.toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
     finishSync?.(Response.json({ profile: { completed: true, nickname: "John" } }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
@@ -130,6 +143,24 @@ describe("Privy login page", () => {
       method: "POST",
       headers: { authorization: "Bearer privy-access-token" },
     }));
+  });
+
+  it("keeps an authenticated session error recoverable without showing Google login", async () => {
+    authenticated = true;
+    vi.mocked(globalThis.fetch)
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "John" } }));
+
+    render(<LoginPage />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("로그인 정보를 안전하게 연결하지 못했어요.");
+    expect(screen.queryByRole("button", { name: /Google로 계속하기/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(alert.parentElement).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("restores a non-verification intent without forcing profile onboarding", async () => {

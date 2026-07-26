@@ -137,6 +137,27 @@ describe("published celebrity fan page", () => {
     expect(screen.queryByRole("link", { name: /팬 인증하기/ })).not.toBeInTheDocument();
   });
 
+  it("starts fan verification directly for an authenticated non-holder without opening login", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ passports: [] }),
+    }));
+    const randomUUID = vi.spyOn(globalThis.crypto, "randomUUID")
+      .mockReturnValue("11111111-1111-4111-8111-111111111111");
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    const actions = await screen.findAllByRole("link", { name: /팬 인증하기/ });
+    fireEvent.click(actions[0]);
+
+    expect(routerPush).toHaveBeenCalledWith(
+      "/c/kara/verify?tab=home&locale=ko&authIntent=11111111-1111-4111-8111-111111111111",
+    );
+    expect(routerPush).not.toHaveBeenCalledWith(expect.stringContaining("/login"));
+    randomUUID.mockRestore();
+  });
+
   it("keeps ownership failures recoverable instead of silently showing the wrong CTA", async () => {
     authenticated = true;
     getAccessToken.mockResolvedValue("token");

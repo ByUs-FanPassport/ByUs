@@ -12,6 +12,8 @@ import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeInten
 import { BottomSheet, Dialog } from "./ui/overlay/accessible-overlay";
 import { FanSiteFooter } from "./fan-shell/fan-site-footer";
 import { readAuthIntent } from "./auth-intent";
+import { FanAction } from "./fan-ui/fan-action";
+import { FanState } from "./fan-ui/fan-state";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -25,6 +27,40 @@ type LoginPageProps = {
   presentation?: "standalone" | "overlay";
   testAccountLoginEnabled?: boolean;
 };
+
+function loginSessionCopy({
+  locale,
+  ready,
+  error,
+}: {
+  locale: "ko" | "en";
+  ready: boolean;
+  error: boolean;
+}): { title: string; description?: string } {
+  if (error) {
+    return locale === "ko"
+      ? {
+          title: "로그인 정보를 안전하게 연결하지 못했어요.",
+          description: "잠시 후 다시 시도해 주세요.",
+        }
+      : {
+          title: "We couldn't connect your sign-in.",
+          description: "Please try again in a moment.",
+        };
+  }
+  if (!ready) {
+    return {
+      title: locale === "ko"
+        ? "로그인 상태를 확인하고 있어요."
+        : "Checking your sign-in.",
+    };
+  }
+  return {
+    title: locale === "ko"
+      ? "로그인 상태를 연결하고 있어요."
+      : "Connecting your sign-in.",
+  };
+}
 
 function useMobileLoginPresentation() {
   const [mobile, setMobile] = useState(false);
@@ -51,6 +87,7 @@ export function LoginPage({
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const sessionErrorRef = useRef<HTMLDivElement>(null);
   const mobilePresentation = useMobileLoginPresentation();
   const returnTo = useMemo(() => sanitizeReturnTo(searchParams.get("returnTo")), [searchParams]);
   const intent = useMemo(() => sanitizeIntent(searchParams.get("intent")), [searchParams]);
@@ -104,8 +141,83 @@ export function LoginPage({
   }, [authenticated, ready, synchronizeSession]);
 
   useEffect(() => {
-    if (error) errorRef.current?.focus();
-  }, [error]);
+    if (!error) return;
+    if (authenticated) {
+      sessionErrorRef.current?.focus();
+      return;
+    }
+    errorRef.current?.focus();
+  }, [authenticated, error]);
+
+  const retrySessionSynchronization = useCallback(() => {
+    setError(null);
+    void synchronizeSession();
+  }, [synchronizeSession]);
+
+  const showsSessionState = !ready || authenticated;
+  const sessionCopy = loginSessionCopy({
+    locale,
+    ready,
+    error: error !== null,
+  });
+  const sessionState = (
+    <div className={styles.sessionContents} data-fan-surface lang={locale}>
+      {presentation === "overlay" ? (
+        <div className={styles.panelHeader}>
+          <button
+            ref={closeButtonRef}
+            className={styles.closeButton}
+            type="button"
+            aria-label={locale === "ko" ? "로그인 창 닫기" : "Close sign-in"}
+            onClick={() => router.back()}
+          >
+            <X aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+      <div
+        id="login-session-heading"
+        ref={error ? sessionErrorRef : undefined}
+        tabIndex={error ? -1 : undefined}
+      >
+        <FanState
+          kind={error ? "error" : "loading"}
+          title={sessionCopy.title}
+          description={sessionCopy.description}
+          actions={error ? (
+            <FanAction variant="neutral" onClick={retrySessionSynchronization}>
+              {locale === "ko" ? "다시 시도" : "Try again"}
+            </FanAction>
+          ) : undefined}
+        />
+      </div>
+    </div>
+  );
+
+  if (showsSessionState) {
+    if (presentation === "overlay") {
+      const Overlay = mobilePresentation ? BottomSheet : Dialog;
+      return (
+        <Overlay
+          open
+          onClose={() => router.back()}
+          labelledBy="login-session-heading"
+          initialFocusRef={closeButtonRef}
+          backdropClassName={styles.modalBackdrop}
+          contentClassName={`${styles.panel} ${styles.modalPanel}`}
+          closeOnBackdrop
+        >
+          {sessionState}
+        </Overlay>
+      );
+    }
+
+    return (
+      <main className={styles.sessionPage} data-fan-surface lang={locale}>
+        {sessionState}
+      </main>
+    );
+  }
 
   const desktopBackground = getImageProps({
     alt: "",

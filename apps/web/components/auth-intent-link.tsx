@@ -1,13 +1,16 @@
 "use client";
 
+import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 import {
+  authIntentReturnTo,
   buildAuthLoginHref,
   createAuthIntent,
   legacyIntentForAction,
   persistAuthIntent,
+  type AuthIntent,
   type CreateAuthIntentInput,
 } from "./auth-intent";
 import { rememberOverlayTrigger } from "./ui/overlay/focus-return";
@@ -21,6 +24,37 @@ function fallbackHref(input: CreateAuthIntentInput, locale: "ko" | "en"): string
     entity: input.targetId,
   });
   return `/login?${query.toString()}`;
+}
+
+type AuthIntentNavigationState = Readonly<{
+  ready: boolean;
+  authenticated: boolean;
+}>;
+
+function sourceHref(input: CreateAuthIntentInput): string {
+  return `${input.sourcePath}${input.sourceQuery}${input.returnAnchor ?? ""}`;
+}
+
+export function resolveAuthIntentHref(
+  input: CreateAuthIntentInput,
+  locale: "ko" | "en",
+  state: AuthIntentNavigationState,
+): string | undefined {
+  if (!state.ready) return undefined;
+  return state.authenticated
+    ? sourceHref(input)
+    : fallbackHref(input, locale);
+}
+
+export function resolveAuthIntentDestination(
+  intent: AuthIntent,
+  locale: "ko" | "en",
+  state: AuthIntentNavigationState,
+): string | null {
+  if (!state.ready) return null;
+  return state.authenticated
+    ? authIntentReturnTo(intent)
+    : buildAuthLoginHref(intent, locale);
 }
 
 export function AuthIntentLink({
@@ -39,19 +73,41 @@ export function AuthIntentLink({
   focusKey?: string;
 }) {
   const router = useRouter();
-  const href = fallbackHref(input, locale);
+  const { ready, authenticated } = usePrivy();
+  const authState = { ready, authenticated };
+  const href = resolveAuthIntentHref(input, locale, authState);
 
   function begin(event: MouseEvent<HTMLAnchorElement>) {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (event.defaultPrevented) return;
+    if (!ready) {
+      event.preventDefault();
+      return;
+    }
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    event.preventDefault();
     const intent = createAuthIntent(input);
     persistAuthIntent(window.sessionStorage, intent);
     rememberOverlayTrigger(
       event.currentTarget,
       focusKey ? `[data-overlay-focus-key="${focusKey}"]` : undefined,
     );
-    event.preventDefault();
-    router.push(buildAuthLoginHref(intent, locale) as Route);
+    const destination = resolveAuthIntentDestination(intent, locale, authState);
+    if (destination) router.push(destination as Route);
   }
 
-  return <a className={className} href={href} aria-label={ariaLabel} data-overlay-focus-key={focusKey} onClick={begin}>{children}</a>;
+  return (
+    <a
+      className={className}
+      href={href}
+      role="link"
+      aria-label={ariaLabel}
+      aria-busy={!ready || undefined}
+      aria-disabled={!ready || undefined}
+      data-overlay-focus-key={focusKey}
+      onClick={begin}
+    >
+      {children}
+    </a>
+  );
 }
