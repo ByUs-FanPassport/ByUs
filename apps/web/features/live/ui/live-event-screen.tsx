@@ -849,6 +849,13 @@ export function LiveEventScreen({
         <span>{actionLabel}</span>
       </p>
     );
+  const hasPrimaryActionControl =
+    primaryAction === "sign_in_to_reserve" ||
+    primaryAction === "verify_fan" ||
+    primaryAction === "reserve" ||
+    (primaryAction === "watch_live" &&
+      live.watch.available &&
+      Boolean(live.watch.url));
 
   return (
     <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
@@ -924,7 +931,14 @@ export function LiveEventScreen({
                 </dd>
               </div>
             </dl>
-            {primaryControl}
+            {hasPrimaryActionControl ? (
+              <div
+                className={styles.primaryActionSlot}
+                data-live-primary-action-slot
+              >
+                {primaryControl}
+              </div>
+            ) : primaryControl}
             {viewer.reservation && (
               <a
                 className={styles.calendarAction}

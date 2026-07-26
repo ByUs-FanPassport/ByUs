@@ -110,7 +110,10 @@ describe("LiveEventScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload()), { status: 200 }));
     const { container } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     expect(await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "LIVE 예약하기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "LIVE 예약하기" }))
+      .toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(screen.getByRole("button", { name: "LIVE 예약하기" })
+      .closest("[data-live-primary-action-slot]")).not.toBeNull();
     expect(container.querySelectorAll('[data-fan-action-emphasis="primary"]')).toHaveLength(1);
     expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
   });
@@ -187,6 +190,7 @@ describe("LiveEventScreen", () => {
     expect(link.getAttribute("href")).toContain("intent=reserve");
     expect(link.getAttribute("href")).toContain(encodeURIComponent("/live/kara-nualeaf?locale=ko"));
     expect(link).toHaveAccessibleDescription("LIVE를 예약하려면 먼저 로그인해 주세요.");
+    expect(link.closest("[data-live-primary-action-slot]")).not.toBeNull();
   });
 
   it("keeps a guest Fan Code outside the intent payload and resumes through an exact stored action", async () => {
@@ -254,6 +258,8 @@ describe("LiveEventScreen", () => {
       .toHaveAttribute("href", "/c/kara/verify?locale=ko");
     expect(screen.getByRole("link", { name: "팬 인증하기" }))
       .toHaveAccessibleDescription("예약하려면 KARA Fan Passport가 필요해요.");
+    expect(screen.getByRole("link", { name: "팬 인증하기" })
+      .closest("[data-live-primary-action-slot]")).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -304,6 +310,7 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     expect(await screen.findByRole("status")).toHaveTextContent("예약 완료");
     expect(screen.queryByRole("button", { name: /예약 완료/ })).not.toBeInTheDocument();
+    expect(document.querySelector("[data-live-primary-action-slot]")).toBeNull();
     expect(screen.getByRole("link", { name: /Google Calendar에 추가/ })).toHaveAttribute("target", "_blank");
     expect(screen.queryByText(/취소하기/)).not.toBeInTheDocument();
   });
@@ -323,6 +330,7 @@ describe("LiveEventScreen", () => {
       "LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
     );
     expect(watch).toHaveAccessibleDescription("YouTube 새 창에서 열려요.");
+    expect(watch.closest("[data-live-primary-action-slot]")).not.toBeNull();
     fireEvent.click(watch);
     await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe("/live/kara-nualeaf?locale=ko#fan-code"));
   });

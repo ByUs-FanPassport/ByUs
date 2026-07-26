@@ -207,6 +207,13 @@
   flex-direction: column;
 }
 
+.primaryActionSlot {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
 .actionLeading,
 .actionTrailing {
   position: absolute;
