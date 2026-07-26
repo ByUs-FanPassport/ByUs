@@ -477,7 +477,9 @@ describe("canonical 03 guest home", () => {
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("img", { name: "KARA Fan Passport, 실버, Stamp 2개" })).toHaveLength(2);
+    expect(screen.getAllByRole("img", {
+      name: /^KARA Fan Passport, 실버, Stamp 2개,/,
+    })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /KARA Fan Passport 상세 보기, 실버, Stamp 2개/ })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
@@ -549,7 +551,9 @@ describe("canonical 03 guest home", () => {
     }));
 
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
-    expect(await screen.findAllByRole("img", { name: "KARA Fan Passport, 골드, 전체 10개 중 최근 9개 표시" })).toHaveLength(2);
+    expect(await screen.findAllByRole("img", {
+      name: /^KARA Fan Passport, 골드, 전체 10개 중 최근 9개 표시,/,
+    })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
   });
 });

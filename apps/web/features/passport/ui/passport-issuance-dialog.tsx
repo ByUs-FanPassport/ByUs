@@ -5,14 +5,14 @@ import type { Route } from "next";
 import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, Copy as CopyIcon, RotateCcw } from "lucide-react";
 
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import { levelLabel, type PassportLocale } from "../domain/passport-read-model";
-import { PassportStampCanvas, StampArtwork } from "./passport-stamp-artwork";
+import { PassportStampCanvas, VerificationSealArtwork } from "./passport-stamp-artwork";
 import styles from "./passport-issuance-dialog.module.css";
 
 interface PassportIssuanceCeremonyProps { issuance: IssuanceAggregate }
@@ -24,6 +24,11 @@ const copy = {
     completeTitle: (name: string) => `${name} Fan Passport 발급 완료`,
     completeBody: "팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.",
     score: "팬 점수",
+    level: "Level",
+    fanId: "Fan ID",
+    copyFanId: "전체 Fan ID 복사",
+    copiedFanId: "Fan ID를 복사했어요.",
+    copyFanIdFailed: "Fan ID를 복사하지 못했어요.",
     stampEarned: "팬 인증 Stamp 획득",
     open: "Passport 열기",
     waiting: "Passport에 첫 기록을 남기고 있어요.",
@@ -46,6 +51,11 @@ const copy = {
     completeTitle: (name: string) => `${name} Fan Passport issued`,
     completeBody: "Fan verification is complete. Your first Stamp and Passport have been issued.",
     score: "Fan Score",
+    level: "Level",
+    fanId: "Fan ID",
+    copyFanId: "Copy full Fan ID",
+    copiedFanId: "Fan ID copied.",
+    copyFanIdFailed: "Couldn’t copy the Fan ID.",
     stampEarned: "Fan Verification Stamp earned",
     open: "Open Passport",
     waiting: "Adding your first record to the Passport.",
@@ -83,6 +93,10 @@ function issuanceStatus(issuance: IssuanceAggregate, locale: PassportLocale): st
   return t.mintPreparing;
 }
 
+function shortPassportId(value: string): string {
+  return `${value.slice(0, 8)}…${value.slice(-4)}`.toUpperCase();
+}
+
 export function PassportIssuanceCeremony({
   issuance,
   locale = "ko",
@@ -100,6 +114,16 @@ export function PassportIssuanceCeremony({
   const skipRef = useRef<HTMLButtonElement>(null);
   const openPassportRef = useRef<HTMLAnchorElement>(null);
   const focusOpenOnCompletionRef = useRef(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+
+  const copyPassportId = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(issuance.passport.id);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
+  }, [issuance.passport.id]);
 
   const completePresentation = useCallback((focusOpenPassport = false) => {
     focusOpenOnCompletionRef.current = focusOpenPassport;
@@ -169,53 +193,91 @@ export function PassportIssuanceCeremony({
     >
       <div className={styles.frame}>
         <div className={styles.content}>
-          <section className={styles.passport} aria-labelledby="passport-issuance-title">
-            <PassportStampCanvas
-              celebrityName={issuance.celebrity.name}
-              level={level}
-              stamps={[{ type: issuance.firstStamp.type, issuedAt: issuance.firstStamp.issuedAt }]}
-              totalCount={1}
-              revealCount={stage >= 2 ? 1 : 0}
-              locale={locale}
-              priority
-            />
-            {stage >= 1 && stage < 3 ? (
-              <div
-                className={styles.stampMoment}
-                data-issuance-stamp-moment
-                data-state={stage === 1 ? "impact" : "settling"}
-                aria-hidden="true"
-              >
-                <div className={styles.stampImpact}>
-                  <StampArtwork
-                    type={issuance.firstStamp.type}
-                    locale={locale}
-                    decorative
-                  />
-                </div>
-                <div className={styles.stampMomentMeta}>
-                  <strong>{t.stampEarned}</strong>
-                  <span>{issuance.celebrity.name} · {stampDate} · +{issuance.score.points}</span>
-                </div>
-              </div>
-            ) : null}
-            <div className={styles.identity}>
+          <div className={styles.visualColumn}>
+            <header className={styles.ceremonyIntro}>
               <h1 id="passport-issuance-title">{t.completeTitle(issuance.celebrity.name)}</h1>
               <p>{t.completeBody}</p>
-              <dl>
-                <div><dt>Celebrity</dt><dd>{issuance.celebrity.name}</dd></div>
-                <div><dt>Tier</dt><dd>{level}</dd></div>
-              </dl>
-            </div>
-          </section>
+            </header>
+            <section className={styles.passport} aria-label={`${issuance.celebrity.name} Fan Passport`}>
+              <PassportStampCanvas
+                celebrityName={issuance.celebrity.name}
+                level={level}
+                stamps={[{
+                  type: issuance.firstStamp.type,
+                  issuedAt: issuance.firstStamp.issuedAt,
+                  points: issuance.score.points,
+                }]}
+                totalCount={1}
+                revealCount={stage >= 2 ? 1 : 0}
+                locale={locale}
+                priority
+              />
+              <div className={styles.passportFields}>
+                <span
+                  className={styles.starValue}
+                  aria-label={`STAR: ${issuance.celebrity.name}`}
+                  title={issuance.celebrity.name}
+                  data-passport-field="star"
+                >
+                  {issuance.celebrity.name}
+                </span>
+                <span
+                  className={styles.issueDateValue}
+                  aria-label={`DATE OF ISSUE: ${stampDate}`}
+                  data-passport-field="issue-date"
+                >
+                  {stampDate}
+                </span>
+                <span
+                  className={styles.fanIdValue}
+                  aria-label={`FAN ID: ${issuance.passport.id}`}
+                  data-wrap-anywhere
+                  data-passport-field="fan-id"
+                >
+                  {shortPassportId(issuance.passport.id)}
+                </span>
+              </div>
+              {stage >= 1 && stage < 3 ? (
+                <div
+                  className={styles.stampMoment}
+                  data-issuance-stamp-moment
+                  data-state={stage === 1 ? "impact" : "settling"}
+                >
+                  <div className={styles.stampImpact}>
+                    <VerificationSealArtwork
+                      celebrityName={issuance.celebrity.name}
+                      issuedAt={issuance.firstStamp.issuedAt}
+                      points={issuance.score.points}
+                      locale={locale}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          </div>
 
           <aside className={styles.summary} aria-live="polite" aria-atomic="true">
-            <div>
+            <div className={styles.scoreSummary}>
               <span>{t.score}</span>
               <strong><s>0</s> <b aria-label={locale === "ko" ? "에서" : "to"}>→</b> {stage >= 2 ? issuance.score.points : 0}</strong>
             </div>
-            <p>{stage >= 1 ? t.stampEarned : t.waiting}</p>
+            <p className={styles.stampStatus}>{stage >= 1 ? t.stampEarned : t.waiting}</p>
+            <dl className={styles.summaryFacts}>
+              <div><dt>{t.level}</dt><dd>{level}</dd></div>
+              <div>
+                <dt>{t.fanId}</dt>
+                <dd>
+                  <button type="button" onClick={() => void copyPassportId()} aria-label={t.copyFanId}>
+                    <span data-wrap-anywhere>{shortPassportId(issuance.passport.id)}</span>
+                    {copyStatus === "copied" ? <Check aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
+                  </button>
+                </dd>
+              </div>
+            </dl>
             <span className={styles.mintStatus}>{issuanceStatus(issuance, locale)}</span>
+            <span className={styles.copyResult} aria-live="polite">
+              {copyStatus === "copied" ? t.copiedFanId : copyStatus === "failed" ? t.copyFanIdFailed : ""}
+            </span>
           </aside>
         </div>
 

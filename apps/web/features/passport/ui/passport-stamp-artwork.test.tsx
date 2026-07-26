@@ -1,8 +1,15 @@
 import "@testing-library/jest-dom/vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { PassportStampCanvas, StampArtwork, type PassportStampRecord } from "./passport-stamp-artwork";
+import {
+  PassportStampCanvas,
+  StampArtwork,
+  VerificationSealArtwork,
+  type PassportStampRecord,
+} from "./passport-stamp-artwork";
 import { STAMP_METADATA, stampTypeLabel } from "../domain/passport-read-model";
 
 describe("Passport Stamp artwork", () => {
@@ -15,6 +22,34 @@ describe("Passport Stamp artwork", () => {
     expect(screen.getByText("인증")).toBeInTheDocument();
     expect(container.querySelector("img")).toBeNull();
     expect(container.innerHTML).not.toMatch(/kara|nualeaf/i);
+  });
+
+  it("keeps the reusable vintage frame transparent and free of baked product data", () => {
+    const frame = readFileSync(
+      join(process.cwd(), "public/images/stamps/vintage-seal-frame.svg"),
+      "utf8",
+    );
+
+    expect(frame).toContain('viewBox="0 0 256 256"');
+    expect(frame).not.toMatch(/kara|katseye|nualeaf|verified|2026|\+1/i);
+    expect(frame).not.toMatch(/<rect[^>]+fill=["']#fff/i);
+  });
+
+  it("renders a localized, data-driven verification seal above the shared frame", () => {
+    render(
+      <VerificationSealArtwork
+        celebrityName="KATSEYE"
+        issuedAt="2026-07-26T08:00:00.000Z"
+        points={1}
+        locale="ko"
+      />,
+    );
+
+    const seal = screen.getByRole("img", { name: /KATSEYE 팬 인증 Stamp.*1점 획득/ });
+    expect(seal).toHaveTextContent("팬 인증");
+    expect(seal).toHaveTextContent("VERIFIED");
+    expect(seal).toHaveTextContent("2026.07.26");
+    expect(seal).toHaveTextContent("+1");
   });
 
   it("uses the shared domain labels, short labels, and ink tokens for every Stamp", () => {
@@ -49,7 +84,7 @@ describe("Passport Stamp artwork", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Elina Fan Passport, 브론즈, Stamp 3개" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^Elina Fan Passport, 브론즈, Stamp 3개,/ })).toBeInTheDocument();
     expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(3);
   });
 
@@ -69,7 +104,7 @@ describe("Passport Stamp artwork", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Elina Fan Passport, 실버, 전체 10개 중 최근 9개 표시" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^Elina Fan Passport, 실버, 전체 10개 중 최근 9개 표시,/ })).toBeInTheDocument();
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(9);
     expect(container.querySelector('[data-passport-stamp="knowledge"]')).toBeNull();
     expect(container.querySelectorAll('[data-passport-stamp="reservation"]')).toHaveLength(9);

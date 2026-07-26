@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <mask id="distress">
+    <rect width="256" height="256" fill="#fff"/>
+    <g fill="#000" opacity=".9">
+      <path d="M22 42h24v3H22zM67 29h13v4H67zM98 51h34v3H98zM157 34h19v4h-19zM204 49h27v3h-27z"/>
+      <path d="M39 78h16v3H39zM81 69h30v4H81zM144 75h22v3h-22zM187 66h35v4h-35z"/>
+      <path d="M18 112h31v4H18zM63 106h18v3H63zM104 116h26v4h-26zM159 103h36v3h-36zM216 119h21v4h-21z"/>
+      <path d="M34 145h28v3H34zM78 153h36v4H78zM137 141h17v3h-17zM180 151h31v4H180z"/>
+      <path d="M25 190h21v4H25zM59 178h34v3H59zM119 193h27v4H119zM166 180h19v3H166zM202 196h33v4h-33z"/>
+      <path d="M51 220h28v3H51zM97 211h16v4H97zM145 225h36v3H145zM200 213h19v4H200z"/>
+      <circle cx="55" cy="58" r="2"/><circle cx="122" cy="32" r="2"/><circle cx="181" cy="57" r="2"/>
+      <circle cx="31" cy="132" r="2"/><circle cx="92" cy="134" r="2"/><circle cx="150" cy="125" r="2"/><circle cx="222" cy="140" r="2"/>
+      <circle cx="70" cy="203" r="2"/><circle cx="132" cy="216" r="2"/><circle cx="190" cy="203" r="2"/>
+    </g>
+  </mask>
+  <rect width="256" height="256" fill="#fff" mask="url(#distress)"/>
+</svg>

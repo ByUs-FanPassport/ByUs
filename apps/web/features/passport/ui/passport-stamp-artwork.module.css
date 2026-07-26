@@ -33,23 +33,65 @@
 }
 
 .stamp {
+  --stamp-accent: oklch(33% 0.08 255);
   display: grid;
+  position: relative;
   width: min(100%, 220px);
   aspect-ratio: 1;
   place-items: center;
-  border: 2px solid var(--stamp-ink);
   border-radius: 50%;
   color: var(--stamp-ink);
-  background: #fff;
-  box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 4px var(--stamp-ink);
+  isolation: isolate;
+}
+
+.frame,
+.verificationFrame {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  mask: url("/images/stamps/vintage-seal-frame.svg") center / contain no-repeat;
+  -webkit-mask: url("/images/stamps/vintage-seal-frame.svg") center / contain no-repeat;
+}
+
+.accentDots,
+.verificationDots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.accentDots i,
+.verificationDots i {
+  position: absolute;
+  top: 48.5%;
+  width: 3.8%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--stamp-accent);
+  transform: translateY(-50%);
+}
+
+.accentDots i:first-child,
+.verificationDots i:first-child {
+  left: 19%;
+}
+
+.accentDots i:last-child,
+.verificationDots i:last-child {
+  right: 19%;
 }
 
 .inner {
   display: grid;
+  position: relative;
+  z-index: 1;
   width: 68%;
   place-items: center;
-  gap: 8px;
+  gap: 6px;
+  color: var(--stamp-ink);
   text-align: center;
+  mask: url("/images/stamps/vintage-seal-distress-mask.svg") center / cover;
+  -webkit-mask: url("/images/stamps/vintage-seal-distress-mask.svg") center / cover;
 }
 
 .inner svg {
@@ -66,8 +108,6 @@
 
 .stamp[data-compact="true"] {
   width: 76%;
-  border-width: 1px;
-  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px var(--stamp-ink);
 }
 
 .stamp[data-compact="true"] .inner {
@@ -76,6 +116,64 @@
 
 .stamp[data-compact="true"] .inner span {
   font-size: clamp(3px, 0.42vw, 7px);
+}
+
+.verificationSeal {
+  --stamp-ink: #b4242d;
+  --stamp-accent: #243b66;
+  display: grid;
+  position: relative;
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  place-items: center;
+  color: var(--stamp-ink);
+  filter: drop-shadow(0 4px 6px rgb(52 10 12 / 12%));
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+.verificationCopy {
+  display: grid;
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  place-items: center;
+  color: var(--stamp-ink);
+  text-align: center;
+  mask: url("/images/stamps/vintage-seal-distress-mask.svg") center / cover;
+  -webkit-mask: url("/images/stamps/vintage-seal-distress-mask.svg") center / cover;
+}
+
+.verificationTitle {
+  font-size: clamp(20px, 10cqi, 40px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.verificationCopy strong {
+  margin-top: 4%;
+  font-size: clamp(13px, 6.5cqi, 26px);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.verificationDate {
+  margin-top: 8%;
+  color: var(--stamp-accent);
+  font-size: clamp(10px, 4.5cqi, 18px);
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.verificationCopy b {
+  margin-top: 4%;
+  color: var(--stamp-accent);
+  font-size: clamp(13px, 6cqi, 24px);
+  font-weight: 900;
+  line-height: 1;
 }
 
 .assetError {

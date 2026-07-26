@@ -32,6 +32,10 @@ describe("PassportIssuanceCeremony", () => {
       configurable: true,
       value: vi.fn(() => ({ matches: false })),
     });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
   });
 
   it("can skip state motion and then reaches the locale-preserving Passport detail route", () => {
@@ -86,8 +90,9 @@ describe("PassportIssuanceCeremony", () => {
     });
     const impact = container.querySelector("[data-issuance-stamp-moment]");
     expect(impact).toHaveAttribute("data-state", "impact");
-    expect(impact).toHaveTextContent("인증");
-    expect(impact).toHaveTextContent("KARA");
+    expect(screen.getByRole("img", { name: /KARA 팬 인증 Stamp.*1점 획득/ })).toBeInTheDocument();
+    expect(impact).toHaveTextContent("팬 인증");
+    expect(impact).toHaveTextContent("VERIFIED");
     expect(impact).toHaveTextContent("+1");
     expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(0);
 
@@ -102,6 +107,40 @@ describe("PassportIssuanceCeremony", () => {
     });
     expect(container.querySelector("[data-issuance-stamp-moment]")).toBeNull();
     expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
+  it("keeps completion copy outside the Passport artwork and maps values to its printed fields", () => {
+    const { container } = render(<PassportIssuanceCeremony issuance={aggregate} />);
+
+    const title = screen.getByRole("heading", { name: "KARA Fan Passport 발급 완료" });
+    const passport = container.querySelector("section[aria-label='KARA Fan Passport']");
+    expect(passport).not.toContainElement(title);
+    expect(container.querySelector("[data-passport-field='star']")).toHaveTextContent("KARA");
+    expect(container.querySelector("[data-passport-field='issue-date']")).toHaveTextContent("2026");
+    expect(container.querySelector("[data-passport-field='fan-id']")).toHaveTextContent("20000000…0002");
+  });
+
+  it("copies the full Passport ID while showing only the stable shortened value", async () => {
+    render(<PassportIssuanceCeremony issuance={aggregate} />);
+
+    expect(screen.getAllByText("20000000…0002")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "전체 Fan ID 복사" }));
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(aggregate.passport.id));
+    expect(screen.getByText("Fan ID를 복사했어요.")).toBeInTheDocument();
+  });
+
+  it("localizes the verification seal without baking Korean copy into English", () => {
+    vi.useFakeTimers();
+    render(<PassportIssuanceCeremony issuance={aggregate} locale="en" />);
+    act(() => {
+      vi.advanceTimersByTime(450);
+    });
+
+    const seal = screen.getByRole("img", { name: /KARA Fan Verification Stamp.*1 point earned/ });
+    expect(seal).toHaveTextContent("FAN");
+    expect(seal).toHaveTextContent("VERIFIED");
+    expect(seal).not.toHaveTextContent("팬 인증");
     vi.useRealTimers();
   });
 
