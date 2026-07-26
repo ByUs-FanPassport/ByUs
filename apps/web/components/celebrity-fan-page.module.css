@@ -22,16 +22,9 @@
 .sectionNav a { display:inline-flex; min-width:max-content; min-height:44px; flex:1; align-items:center; justify-content:center; padding:0 16px; border-radius:999rem; color:oklch(40% 0 0); font-size:14px; font-weight:700; text-decoration:none; transition:background-color 160ms cubic-bezier(.2,0,0,1); }
 .sectionNav a[aria-selected="true"] { background:oklch(96.5% 0 0); color:oklch(18% 0 0); box-shadow:inset 0 -2px 0 oklch(18% 0 0); font-weight:800; }
 .tabPanel { min-height:320px; padding-block:48px 88px; }
-.homeGrid { display:grid; gap:32px; }
 .homeAside { display:grid; align-content:start; gap:16px; }
-.nextLive { display:grid; gap:12px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
-.nextLive h2,.nextLive h3,.nextLive p { margin:0; }
-.nextLive h2 { font-size:20px; font-weight:850; letter-spacing:-.03em; }
-.nextLive h3 { font-size:17px; font-weight:800; }
-.nextLive p { display:flex; align-items:center; gap:8px; color:oklch(48% 0 0); font-size:13px; }
-.nextLive p svg { width:16px; height:16px; }
-.nextLive > a,.sectionHeading > a { display:inline-flex; min-height:44px; align-items:center; gap:8px; color:oklch(30% 0 0); font-size:14px; font-weight:750; text-decoration:none; }
-.nextLive > a svg,.sectionHeading > a svg { width:16px; height:16px; }
+.sectionHeading > a { display:inline-flex; min-height:44px; align-items:center; gap:8px; color:oklch(30% 0 0); font-size:14px; font-weight:750; text-decoration:none; }
+.sectionHeading > a svg { width:16px; height:16px; }
 .sectionHeading > div { display:grid; gap:6px; }
 .noticeList,.liveList { display:grid; gap:12px; }
 .noticeList > a { display:flex; min-height:76px; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; border:1px solid oklch(93% 0 0); border-radius:12px; color:oklch(18% 0 0); text-decoration:none; }
@@ -48,7 +41,7 @@
 .benefitGrid p { color:oklch(42% 0 0); font-size:14px; line-height:1.55; }
 .benefitGrid small { align-self:end; color:oklch(48% 0 0); font-size:13px; }
 .benefitGrid svg { position:absolute; right:20px; bottom:20px; width:18px; height:18px; }
-.hubLayout { display:grid; gap:48px; padding-block:64px 88px; }
+.hubLayout { display:grid; gap:48px; }
 .mainColumn { display:grid; min-width:0; gap:64px; }
 .contentSection { scroll-margin-top:152px; }
 .sectionHeading { display:grid; gap:6px; margin-bottom:20px; }
@@ -65,18 +58,21 @@
 .liveCopy p svg,.liveCopy span svg { width:16px; height:16px; }
 .liveCopy h3 { font-size:22px; font-weight:850; letter-spacing:-.03em; line-height:1.15; }
 .liveCopy span { display:flex; align-items:center; gap:8px; color:oklch(48% 0 0); font-size:14px; }
-.passportCopy > a { display:flex; width:min(100%,320px); min-height:52px; align-items:center; justify-content:space-between; padding-inline:20px; border-radius:999rem; text-decoration:none; font-size:15px; font-weight:800; }
-.passportCopy > a svg { width:16px; height:16px; }
-.passportSection { display:grid; gap:24px; align-items:center; }
-.passportImage img { display:block; width:100%; height:auto; filter:drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); }
-.passportCopy { display:grid; justify-items:start; gap:12px; }
-.passportCopy h2,.passportCopy p { margin:0; }
-.passportCopy h2 { font-size:24px; font-weight:850; letter-spacing:-.03em; }
-.passportCopy p { max-width:48ch; color:oklch(48% 0 0); font-size:15px; line-height:1.6; }
-.page .passportCopy > a { margin-top:8px; border:1px solid transparent; background:linear-gradient(#fff,#fff) padding-box,linear-gradient(125deg,oklch(68% .22 18),oklch(62% .25 340),oklch(56% .22 285)) border-box; color:oklch(45% .22 315); }
-.passportCopy > a span { flex:1; text-align:center; }
-.passportCopy > button { min-height:48px; padding:0 16px; border:1px solid oklch(82% 0 0); border-radius:12px; background:#fff; color:oklch(18% 0 0); font:inherit; font-weight:750; cursor:pointer; }
-.passportLoading { color:oklch(48% 0 0); font-size:14px; }
+.passportSummary { display:grid; align-content:start; gap:16px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.passportSummary h2 { margin:0; font-size:20px; font-weight:850; letter-spacing:-.025em; }
+.passportStatus { display:grid; gap:6px; color:oklch(48% 0 0); font-size:14px; line-height:1.55; }
+.passportStatus strong,.passportStatus p { margin:0; }
+.passportStatus strong { color:oklch(24% 0 0); font-size:16px; font-weight:800; }
+.passportStatus > span { width:max-content; padding:4px 8px; border:1px solid oklch(78% .12 315); border-radius:999rem; color:oklch(42% .19 315); font-size:12px; font-weight:800; }
+.passportError { display:grid; gap:12px; color:oklch(34% 0 0); font-size:14px; line-height:1.5; }
+.passportError button { min-height:44px; padding:0 14px; border:1px solid oklch(82% 0 0); border-radius:12px; background:#fff; color:oklch(18% 0 0); font:inherit; font-weight:750; cursor:pointer; }
+.passportFacts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:0; border-block:1px solid oklch(93% 0 0); }
+.passportFacts > div { display:grid; min-width:0; gap:5px; padding:14px 8px; text-align:center; }
+.passportFacts > div + div { border-left:1px solid oklch(93% 0 0); }
+.passportFacts dt { color:oklch(48% 0 0); font-size:11px; font-weight:700; }
+.passportFacts dd { overflow:hidden; margin:0; color:oklch(18% 0 0); font-size:17px; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
+.passportTextLink { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:12px; color:oklch(30% 0 0); font-size:14px; font-weight:750; text-decoration:none; }
+.passportTextLink svg { width:16px; height:16px; }
 .profilePanel { scroll-margin-top:152px; display:grid; align-content:start; gap:12px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
 .profilePortrait { width:88px; height:88px; overflow:hidden; border-radius:50%; background:#f6f6f5; }
 .profilePortrait img { width:100%; height:100%; object-fit:cover; }
@@ -96,20 +92,17 @@
   .heroCopy h1 { font-size:56px; }
   .heroAction { right:40px; bottom:40px; left:auto; width:300px; }
   .liveSection { grid-template-columns:minmax(0,1fr) auto; align-items:center; padding:32px; }
-  .passportSection { grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr); gap:48px; }
   .sectionHeading { grid-template-columns:minmax(0,1fr) auto; align-items:end; }
   .benefitGrid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .benefitGrid.homeBenefitGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:47.99rem) {
   .heroCopy h1 { font-size:32px; }
   .liveSection { border-inline:0; border-radius:0; box-shadow:none; }
-  .passportCopy h2 { font-size:20px; line-height:1.2; }
 }
 @media (min-width:64rem) {
   .hubLayout { grid-template-columns:minmax(0,1fr) 320px; align-items:start; gap:48px; }
   .homeAside { position:sticky; top:148px; align-self:start; }
-  .homeGrid { grid-template-columns:minmax(0,1fr) 320px; align-items:start; gap:48px; }
-  .homeGrid .passportSection { grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr); }
 }
 @media (hover:hover) and (pointer:fine) {
   .directoryLink:hover { color:oklch(45% .22 315); }

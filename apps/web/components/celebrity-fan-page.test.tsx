@@ -17,11 +17,57 @@ const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary"
 const changha = { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 1, fanCount: 1_450_000 } as const;
 const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
 const upcomingLive = { slug: "kara-nualeaf", celebritySlug: "kara", locale: "ko", title: "KARA × NUALEAF LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } as const;
+const ownedPassport = {
+  id: "8a6c0050-4c52-4e0f-b73a-e2f4aab48b85",
+  owner: { nickname: "Jewel_KAT" },
+  celebrity: {
+    slug: "kara",
+    name: "KARA",
+    image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" },
+  },
+  businessStatus: "issued",
+  mint: { status: "minted", txHash: `0x${"a".repeat(64)}`, tokenId: "1" },
+  issuedAt: "2026-07-24T11:00:00.000Z",
+  score: { points: 8, level: "Silver" },
+  stampSummary: { knowledge: 1, reservation: 1, attendance: 1, survey: 0, total: 3 },
+} as const;
+
+function stubHubFetch({
+  notices = [],
+  benefits = [],
+  passports = [],
+}: {
+  notices?: unknown[];
+  benefits?: unknown[];
+  passports?: unknown[];
+} = {}) {
+  const request = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/notices")) {
+      return { ok: true, json: async () => ({ notices }) };
+    }
+    if (url.includes("/api/benefits")) {
+      return { ok: true, json: async () => ({ benefits }) };
+    }
+    if (url.includes("/api/passports")) {
+      return { ok: true, json: async () => ({ passports }) };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal("fetch", request);
+  return request;
+}
 
 describe("published celebrity fan page", () => {
-  beforeEach(() => { authenticated = false; getAccessToken.mockReset(); routerPush.mockReset(); vi.unstubAllGlobals(); });
+  beforeEach(() => {
+    authenticated = false;
+    getAccessToken.mockReset();
+    routerPush.mockReset();
+    vi.unstubAllGlobals();
+    stubHubFetch();
+  });
 
-  it("renders the four-tab fan hub with a persistent Hero and the Home panel", () => {
+  it("renders the four-tab editorial hub without a decorative empty Passport", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
@@ -29,16 +75,53 @@ describe("published celebrity fan page", () => {
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["홈", "공지", "LIVE", "혜택"]);
     expect(screen.getByRole("tab", { name: "홈" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "KARA Profile" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "최근 공지" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "다음 LIVE" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "팬 혜택" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 Fan Passport" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "LIVE 자세히 보기" })).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
-    expect(screen.getAllByRole("link", { name: /팬 인증하기/ })[0]).toHaveAttribute("href", expect.stringContaining("intent=passport"));
-    expect(screen.getByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /팬 인증하기/ }))
+      .toHaveAttribute("href", expect.stringContaining("intent=passport"));
+    expect(screen.getByRole("link", { name: /팬 인증하기/ }))
+      .toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(document.querySelectorAll('main [data-fan-action-emphasis="primary"]')).toHaveLength(1);
+    expect(screen.queryByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).not.toBeInTheDocument();
+    expect(await screen.findByText("등록된 공지가 아직 없어요.")).toBeInTheDocument();
   });
 
-  it("renders honest Home empty states for missing LIVE and SNS data", () => {
+  it("renders honest Home empty states for missing public hub data", async () => {
     render(<CelebrityFanPage celebrity={changha} locale="ko" upcomingLive={null} />);
     expect(screen.getByText("공개된 LIVE가 아직 없어요.")).toBeInTheDocument();
     expect(screen.getByText("공개된 채널 링크가 아직 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("등록된 공지가 아직 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("공개된 혜택이 아직 없어요.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /LIVE 자세히 보기/ })).not.toBeInTheDocument();
+  });
+
+  it("limits Home previews while reusing the Notice and Benefit data requests", async () => {
+    const request = stubHubFetch({
+      notices: [
+        { slug: "pinned", title: "고정 공지", pinned: true, publishedAt: "2026-07-25T10:00:00.000Z" },
+        { slug: "latest", title: "새로운 공지", pinned: false, publishedAt: "2026-07-24T10:00:00.000Z" },
+        { slug: "older", title: "이전 공지", pinned: false, publishedAt: "2026-07-23T10:00:00.000Z" },
+      ],
+      benefits: [
+        { id: "benefit-1", title: "첫 혜택", summary: "첫 설명", eligibilityLabel: "팬 인증", state: "eligible" },
+        { id: "benefit-2", title: "두 번째 혜택", summary: "두 번째 설명", eligibilityLabel: "5점", state: "locked" },
+        { id: "benefit-3", title: "세 번째 혜택", summary: "세 번째 설명", eligibilityLabel: "10점", state: "locked" },
+      ],
+    });
+
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    expect(await screen.findByRole("link", { name: /고정 공지/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /새로운 공지/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /이전 공지/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "첫 혜택" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "두 번째 혜택" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "세 번째 혜택" })).not.toBeInTheDocument();
+    expect(request.mock.calls.filter(([input]) => String(input).includes("/notices"))).toHaveLength(1);
+    expect(request.mock.calls.filter(([input]) => String(input).includes("/api/benefits"))).toHaveLength(1);
   });
 
   it("uses one responsive art-directed KATSEYE hero image", () => {
@@ -55,10 +138,9 @@ describe("published celebrity fan page", () => {
   });
 
   it("loads the selected Notice tab and keeps locale in detail links", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ notices: [{ slug: "opening", title: "공식 오픈 안내", pinned: true, publishedAt: "2026-07-25T10:00:00.000Z" }] }),
-    }));
+    stubHubFetch({
+      notices: [{ slug: "opening", title: "공식 오픈 안내", pinned: true, publishedAt: "2026-07-25T10:00:00.000Z" }],
+    });
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} initialTab="notice" />);
     expect(screen.getByRole("tab", { name: "공지" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("ByUs가 전하는 KARA 소식을 확인하세요.")).toBeInTheDocument();
@@ -125,31 +207,38 @@ describe("published celebrity fan page", () => {
     ).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
   });
 
-  it("switches both primary actions to the existing Passport as soon as ownership resolves", async () => {
+  it("switches the Hero primary and compact Passport link as soon as ownership resolves", async () => {
     authenticated = true;
     getAccessToken.mockResolvedValue("token");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ passports: [{ id: "8a6c0050-4c52-4e0f-b73a-e2f4aab48b85", celebrity: { slug: "kara" } }] }) }));
+    stubHubFetch({ passports: [ownedPassport] });
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    await waitFor(() => expect(screen.getAllByRole("link", { name: /Passport 열기/ })).toHaveLength(2));
-    for (const action of screen.getAllByRole("link", { name: /Passport 열기/ })) {
-      expect(action).toHaveAttribute("href", "/passports/8a6c0050-4c52-4e0f-b73a-e2f4aab48b85?locale=ko");
-    }
+    await waitFor(() => expect(screen.getByRole("link", { name: "Passport 열기" })).toHaveAttribute(
+      "href",
+      "/passports/8a6c0050-4c52-4e0f-b73a-e2f4aab48b85?locale=ko",
+    ));
+    expect(screen.getByRole("link", { name: "Passport 열기" }))
+      .toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(document.querySelectorAll('main [data-fan-action-emphasis="primary"]')).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Passport 상세 보기" })).toHaveAttribute(
+      "href",
+      "/passports/8a6c0050-4c52-4e0f-b73a-e2f4aab48b85?locale=ko",
+    );
+    expect(screen.getByText("실버")).toBeInTheDocument();
+    expect(screen.getByText("8")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /팬 인증하기/ })).not.toBeInTheDocument();
   });
 
   it("starts fan verification directly for an authenticated non-holder without opening login", async () => {
     authenticated = true;
     getAccessToken.mockResolvedValue("token");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ passports: [] }),
-    }));
+    stubHubFetch({ passports: [] });
     const randomUUID = vi.spyOn(globalThis.crypto, "randomUUID")
       .mockReturnValue("11111111-1111-4111-8111-111111111111");
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
 
-    const actions = await screen.findAllByRole("link", { name: /팬 인증하기/ });
-    fireEvent.click(actions[0]);
+    const action = await screen.findByRole("link", { name: /팬 인증하기/ });
+    fireEvent.click(action);
 
     expect(routerPush).toHaveBeenCalledWith(
       "/c/kara/verify?tab=home&locale=ko&authIntent=11111111-1111-4111-8111-111111111111",
@@ -161,23 +250,35 @@ describe("published celebrity fan page", () => {
   it("keeps ownership failures recoverable instead of silently showing the wrong CTA", async () => {
     authenticated = true;
     getAccessToken.mockResolvedValue("token");
-    const request = vi.fn().mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({ ok: true, json: async () => ({ passports: [] }) });
+    let passportAttempts = 0;
+    const request = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/passports")) {
+        passportAttempts += 1;
+        return passportAttempts === 1
+          ? { ok: false }
+          : { ok: true, json: async () => ({ passports: [] }) };
+      }
+      if (url.includes("/notices")) return { ok: true, json: async () => ({ notices: [] }) };
+      if (url.includes("/api/benefits")) return { ok: true, json: async () => ({ benefits: [] }) };
+      throw new Error(`Unexpected request: ${url}`);
+    });
     vi.stubGlobal("fetch", request);
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Passport 상태를 확인하지 못했어요."));
-    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
-    await waitFor(() => expect(screen.getAllByRole("link", { name: /팬 인증하기/ })).toHaveLength(2));
-    expect(request).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.getAllByText("Passport 상태를 확인하지 못했어요.")).toHaveLength(2));
+    fireEvent.click(screen.getAllByRole("button", { name: "다시 시도" })[0]);
+    await waitFor(() => expect(screen.getAllByRole("link", { name: /팬 인증하기/ })).toHaveLength(1));
+    expect(passportAttempts).toBe(2);
   });
 
   it("uses English published content and keeps locale on LIVE and verification paths", () => {
     const englishCelebrity = { ...kara, locale: "en" as const, name: "KARA EN", summary: "English CMS summary" };
     const englishLive = { ...upcomingLive, locale: "en" as const, title: "Published English LIVE" };
     render(<CelebrityFanPage celebrity={englishCelebrity} locale="en" upcomingLive={englishLive} />);
-    expect(screen.getAllByText("English CMS summary")).toHaveLength(2);
+    expect(screen.getByText("English CMS summary")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Published English LIVE" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /View LIVE details/ })).toHaveAttribute("href", "/live/kara-nualeaf?locale=en");
-    expect(screen.getAllByRole("link", { name: /Verify fandom/ })[0]).toHaveAttribute("href", expect.stringContaining("locale=en"));
+    expect(screen.getByRole("link", { name: /Verify fandom/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
   });
 
 });

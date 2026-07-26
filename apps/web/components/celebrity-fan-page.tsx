@@ -5,12 +5,13 @@ import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { FanAction } from "./fan-ui/fan-action";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
+import { parsePassportCollection } from "../features/passport/domain/passport-collection";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
 import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
@@ -18,10 +19,10 @@ import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
 import styles from "./celebrity-fan-page.module.css";
 
 export type CelebrityFanTab = "home" | "notice" | "live" | "benefits";
-type OwnedPassport = Readonly<{ id?: unknown; celebrity?: Readonly<{ slug?: unknown }> }>;
+type OwnedPassport = ReturnType<typeof parsePassportCollection>[number];
 type PassportState =
   | Readonly<{ status: "guest" | "loading" | "none" }>
-  | Readonly<{ status: "owned"; id: string }>
+  | Readonly<{ status: "owned"; passport: OwnedPassport }>
   | Readonly<{ status: "error" }>;
 type AsyncState<T> =
   | Readonly<{ status: "idle" | "loading" }>
@@ -38,12 +39,18 @@ const copy = {
     retry: "다시 시도", checking: "Passport 상태 확인 중", verify: "팬 인증하기", sections: "팬페이지 메뉴",
     tabs: { home: "홈", notice: "공지", live: "LIVE", benefits: "혜택" },
     noNotice: "등록된 공지가 아직 없어요.", noNoticeHelp: "새 소식이 공개되면 이곳에서 확인할 수 있어요.",
-    noticeError: "공지를 불러오지 못했어요.", pinned: "고정", liveHeading: "LIVE", liveHelp: "공개된 LIVE와 다시보기를 확인하세요.",
+    noticeError: "공지를 불러오지 못했어요.", pinned: "고정", latestNotice: "최근 공지", allNotices: "전체 공지 보기",
+    latestNoticeHelp: (name: string) => `ByUs가 전하는 ${name}의 최신 소식이에요.`,
+    liveHeading: "LIVE", liveHelp: "공개된 LIVE와 다시보기를 확인하세요.", homeLiveHelp: "가장 가까운 LIVE 일정을 확인하세요.",
     liveDetails: "LIVE 자세히 보기", noLive: "공개된 LIVE가 아직 없어요.", noLiveHelp: "새로운 일정이 공개되면 이곳에 표시돼요.",
-    benefitHeading: "혜택", benefitHelp: "함께한 활동으로 열리는 혜택을 확인하세요.", benefitError: "혜택을 불러오지 못했어요.",
-    noBenefits: "공개된 혜택이 아직 없어요.", allBenefits: "전체 혜택 보기", passportAlt: "모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport",
-    passportHelp: "팬 인증부터 LIVE 참여까지, 함께한 순간을 하나씩 기록해 보세요.", checkingLong: "Passport 상태를 확인하고 있어요.",
-    checkAgain: "Passport 상태 다시 확인", profile: "Profile", officialSns: "채널", newWindow: "새 창",
+    benefitHeading: "혜택", fanBenefits: "팬 혜택", benefitHelp: "함께한 활동으로 열리는 혜택을 확인하세요.",
+    homeBenefitHelp: "팬 활동으로 열리는 혜택을 미리 확인하세요.", benefitError: "혜택을 불러오지 못했어요.",
+    noBenefits: "공개된 혜택이 아직 없어요.", noBenefitsHelp: "새 혜택이 공개되면 이곳에서 확인할 수 있어요.", allBenefits: "전체 혜택 보기",
+    myPassport: "내 Fan Passport", beforeVerification: "팬 인증 전",
+    beforeVerificationHelp: (name: string) => `${name} 팬 인증을 완료하면 Passport에 활동 기록이 쌓여요.`,
+    passportDetails: "Passport 상세 보기", level: "등급", score: "팬 점수", stamps: "Stamp", profile: "Profile",
+    profileHelp: (name: string) => `${name}의 공개 채널을 확인하세요.`,
+    officialSns: "채널", newWindow: "새 창",
     noSns: "공개된 채널 링크가 아직 없어요.", noSnsHelp: "채널이 등록되면 이곳에 표시돼요.", nextLive: "다음 LIVE",
   },
   en: {
@@ -51,12 +58,18 @@ const copy = {
     retry: "Try again", checking: "Checking Passport status", verify: "Verify fandom", sections: "fan page menu",
     tabs: { home: "Home", notice: "Notice", live: "LIVE", benefits: "Benefits" },
     noNotice: "No Notice has been published yet.", noNoticeHelp: "New updates from ByUs will appear here.",
-    noticeError: "We couldn't load Notices.", pinned: "Pinned", liveHeading: "LIVE", liveHelp: "Explore published LIVE events and replays.",
+    noticeError: "We couldn't load Notices.", pinned: "Pinned", latestNotice: "Latest notices", allNotices: "View all notices",
+    latestNoticeHelp: (name: string) => `See the latest ${name} updates from ByUs.`,
+    liveHeading: "LIVE", liveHelp: "Explore published LIVE events and replays.", homeLiveHelp: "See the nearest upcoming LIVE schedule.",
     liveDetails: "View LIVE details", noLive: "No LIVE has been published yet.", noLiveHelp: "New schedules will appear here.",
-    benefitHeading: "Benefits", benefitHelp: "Discover benefits unlocked by your fan activities.", benefitError: "We couldn't load benefits.",
-    noBenefits: "No benefit has been published yet.", allBenefits: "View all benefits", passportAlt: "Opened Fan Passport with empty Stamp spaces",
-    passportHelp: "Record every moment, from fan verification to LIVE participation.", checkingLong: "Checking your Passport status.",
-    checkAgain: "Check Passport status again", profile: "Profile", officialSns: "Channels", newWindow: "new window",
+    benefitHeading: "Benefits", fanBenefits: "Fan benefits", benefitHelp: "Discover benefits unlocked by your fan activities.",
+    homeBenefitHelp: "Preview benefits unlocked by fan activities.", benefitError: "We couldn't load benefits.",
+    noBenefits: "No benefit has been published yet.", noBenefitsHelp: "New benefits will appear here.", allBenefits: "View all benefits",
+    myPassport: "My Fan Passport", beforeVerification: "Before fan verification",
+    beforeVerificationHelp: (name: string) => `Complete ${name} fan verification to start recording activity in your Passport.`,
+    passportDetails: "View Passport details", level: "Level", score: "Fan Score", stamps: "Stamps", profile: "Profile",
+    profileHelp: (name: string) => `Explore ${name}'s published channels.`,
+    officialSns: "Channels", newWindow: "new window",
     noSns: "No channel links are published yet.", noSnsHelp: "Channels will appear here.", nextLive: "Next LIVE",
   },
 } as const;
@@ -66,10 +79,9 @@ function formatDate(value: string, locale: ContentLocale) {
     dateStyle: "medium", timeStyle: "short", hour12: locale !== "ko", timeZone: "Asia/Seoul",
   }).format(new Date(value));
 }
-function findOwnedPassport(value: unknown, slug: string): string | null {
+function findOwnedPassport(value: unknown, slug: string, locale: ContentLocale): OwnedPassport | null {
   if (!value || typeof value !== "object" || !("passports" in value) || !Array.isArray(value.passports)) throw new Error("Invalid Passport collection");
-  const passport = (value.passports as OwnedPassport[]).find((item) => item.celebrity?.slug === slug);
-  return passport && typeof passport.id === "string" ? passport.id : null;
+  return parsePassportCollection(value.passports, locale).find((item) => item.celebrity.slug === slug) ?? null;
 }
 
 function isLiveEventResponse(item: unknown): item is LiveEventResponse {
@@ -128,15 +140,15 @@ export function CelebrityFanPage({
         if (!token) throw new Error("Missing access token");
         const response = await fetch(`/api/passports?locale=${locale}`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
         if (!response.ok) throw new Error("Passport request failed");
-        const id = findOwnedPassport(await response.json(), celebrity.slug);
-        setPassportState(id ? { status: "owned", id } : { status: "none" });
+        const passport = findOwnedPassport(await response.json(), celebrity.slug, locale);
+        setPassportState(passport ? { status: "owned", passport } : { status: "none" });
       } catch { if (!controller.signal.aborted) setPassportState({ status: "error" }); }
     })();
     return () => controller.abort();
   }, [authenticated, celebrity.slug, getAccessToken, locale, ready, requestKey]);
 
   useEffect(() => {
-    if (activeTab === "notice" && noticeState.status === "idle") {
+    if ((activeTab === "home" || activeTab === "notice") && noticeState.status === "idle") {
       setNoticeState({ status: "loading" });
       fetch(`/api/public/celebrities/${celebrity.slug}/notices?locale=${locale}`)
         .then((response) => { if (!response.ok) throw new Error(); return response.json(); })
@@ -155,7 +167,7 @@ export function CelebrityFanPage({
         }))
         .catch(() => setLiveState({ status: "error" }));
     }
-    if (activeTab === "benefits" && benefitState.status === "idle") {
+    if ((activeTab === "home" || activeTab === "benefits") && benefitState.status === "idle") {
       setBenefitState({ status: "loading" });
       void (async () => {
         try {
@@ -179,14 +191,6 @@ export function CelebrityFanPage({
       : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
     router.push(tabHref(tabs[target]));
   }
-  const passportAction = useMemo(() => passportState.status === "owned"
-    ? <Link href={`/passports/${passportState.id}${localeQuery}`}><span>{t.openPassport}</span><ArrowRight /></Link>
-    : passportState.status === "error"
-      ? <button type="button" onClick={() => setRequestKey((key) => key + 1)}>{t.checkAgain}</button>
-      : passportState.status === "loading"
-        ? <span className={styles.passportLoading} role="status">{t.checkingLong}</span>
-        : <AuthIntentLink focusKey="celebrity-passport-verification" locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?tab=home&locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}><span>{t.verify}</span><ArrowRight /></AuthIntentLink>,
-  [celebrity.slug, locale, localeQuery, passportState, t]);
   const katseyeHero = hasKatseyePresentation
     ? {
         desktop: getImageProps({
@@ -229,10 +233,10 @@ export function CelebrityFanPage({
           <div className={styles.scrim} aria-hidden="true" />
           <div className={styles.heroCopy}><p>{t.official}</p><h1 id="celebrity-heading">{celebrity.name}</h1><span>{celebrity.summary}</span></div>
           <div className={styles.heroAction}>
-            {passportState.status === "owned" ? <Link href={`/passports/${passportState.id}${localeQuery}`}><span>{t.openPassport}</span><ArrowRight /></Link>
+            {passportState.status === "owned" ? <Link data-fan-action-emphasis="primary" href={`/passports/${passportState.passport.id}${localeQuery}`}><span>{t.openPassport}</span><ArrowRight /></Link>
               : passportState.status === "error" ? <div className={styles.ctaError} role="alert"><span>{t.passportError}</span><button type="button" onClick={() => setRequestKey((key) => key + 1)}>{t.retry}</button></div>
               : passportState.status === "loading" ? <span className={styles.ctaLoading} role="status">{t.checking}</span>
-              : <AuthIntentLink focusKey="celebrity-hero-verification" locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?tab=${activeTab}&locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}><span>{t.verify}</span><ArrowRight /></AuthIntentLink>}
+              : <AuthIntentLink emphasis="primary" focusKey="celebrity-hero-verification" locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?tab=${activeTab}&locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}><span>{t.verify}</span><ArrowRight /></AuthIntentLink>}
           </div>
         </section>
 
@@ -241,26 +245,86 @@ export function CelebrityFanPage({
         </nav>
 
         <section id={`celebrity-${activeTab}-panel`} role="tabpanel" className={styles.tabPanel}>
-          {activeTab === "home" && <div className={styles.homeGrid}>
-            <section className={styles.passportSection} aria-labelledby="passport-title">
-              <div className={styles.passportImage}><Image src="/images/guest-home/passport-open-empty.png" alt={t.passportAlt} width={1536} height={1024} /></div>
-              <div className={styles.passportCopy}><h2 id="passport-title">{celebrity.name} Fan Passport</h2><p>{t.passportHelp}</p>{passportAction}</div>
-            </section>
+          {activeTab === "home" && <div className={styles.hubLayout}>
+            <div className={styles.mainColumn}>
+              <TabSection
+                title={t.latestNotice}
+                help={t.latestNoticeHelp(celebrity.name)}
+                action={<Link href={tabHref("notice")}>{t.allNotices}<ArrowRight /></Link>}
+              >
+                <NoticeContent
+                  state={noticeState}
+                  celebritySlug={celebrity.slug}
+                  locale={locale}
+                  limit={2}
+                  copy={{ error: t.noticeError, empty: t.noNotice, emptyHelp: t.noNoticeHelp, pinned: t.pinned }}
+                />
+              </TabSection>
+
+              <TabSection title={t.nextLive} help={t.homeLiveHelp}>
+                {upcomingLive
+                  ? <div className={styles.liveSection}>
+                      <div className={styles.liveCopy}>
+                        <p><Radio />{upcomingLive.effectiveStatus}</p>
+                        <h3>{upcomingLive.title}</h3>
+                        <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
+                      </div>
+                      <FanAction variant="neutral" href={`/live/${upcomingLive.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction>
+                    </div>
+                  : <Empty title={t.noLive} help={t.noLiveHelp} />}
+              </TabSection>
+
+              <TabSection
+                title={t.fanBenefits}
+                help={t.homeBenefitHelp}
+                action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}
+              >
+                <BenefitContent
+                  state={benefitState}
+                  celebritySlug={celebrity.slug}
+                  locale={locale}
+                  limit={2}
+                  className={styles.homeBenefitGrid}
+                  copy={{ error: t.benefitError, empty: t.noBenefits, emptyHelp: t.noBenefitsHelp }}
+                />
+              </TabSection>
+            </div>
             <div className={styles.homeAside}>
+              <section className={styles.passportSummary} aria-labelledby="passport-summary-title">
+                <h2 id="passport-summary-title">{t.myPassport}</h2>
+                <PassportSummary
+                  state={passportState}
+                  celebrityName={celebrity.name}
+                  localeQuery={localeQuery}
+                  labels={{
+                    checking: t.checking,
+                    error: t.passportError,
+                    retry: t.retry,
+                    beforeVerification: t.beforeVerification,
+                    beforeVerificationHelp: t.beforeVerificationHelp(celebrity.name),
+                    level: t.level,
+                    score: t.score,
+                    stamps: t.stamps,
+                    details: t.passportDetails,
+                  }}
+                  onRetry={() => setRequestKey((key) => key + 1)}
+                />
+              </section>
               <section className={styles.profilePanel} aria-labelledby="profile-title">
                 <div className={styles.profilePortrait}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
-                <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{celebrity.summary}</p>
+                <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
                 {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
               </section>
-              <section className={styles.nextLive}><h2>{t.nextLive}</h2>{upcomingLive ? <><h3>{upcomingLive.title}</h3><p><Clock />{formatDate(upcomingLive.startsAt, locale)}</p><Link href={`/live/${upcomingLive.slug}${localeQuery}`}>{t.liveDetails}<ArrowRight /></Link></> : <div className={styles.inlineEmpty}><strong>{t.noLive}</strong><span>{t.noLiveHelp}</span></div>}</section>
             </div>
           </div>}
 
           {activeTab === "notice" && <TabSection title={t.tabs.notice} help={locale === "ko" ? `ByUs가 전하는 ${celebrity.name} 소식을 확인하세요.` : `Explore ${celebrity.name} updates from ByUs.`}>
-            {noticeState.status !== "ready"
-              ? noticeState.status === "error" ? <ErrorState text={t.noticeError} /> : <Loading locale={locale} />
-              : noticeState.data.length === 0 ? <Empty title={t.noNotice} help={t.noNoticeHelp} />
-              : <div className={styles.noticeList}>{noticeState.data.map((notice: Notice) => <Link key={notice.slug} href={`/c/${celebrity.slug}/notices/${notice.slug}?locale=${locale}`}><span>{notice.pinned && <em>{t.pinned}</em>}<strong>{notice.title}</strong><small>{formatDate(notice.publishedAt, locale)}</small></span><ArrowRight /></Link>)}</div>}
+            <NoticeContent
+              state={noticeState}
+              celebritySlug={celebrity.slug}
+              locale={locale}
+              copy={{ error: t.noticeError, empty: t.noNotice, emptyHelp: t.noNoticeHelp, pinned: t.pinned }}
+            />
           </TabSection>}
 
           {activeTab === "live" && <TabSection title={t.liveHeading} help={t.liveHelp}>
@@ -271,10 +335,12 @@ export function CelebrityFanPage({
           </TabSection>}
 
           {activeTab === "benefits" && <TabSection title={t.benefitHeading} help={t.benefitHelp} action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}>
-            {benefitState.status !== "ready"
-              ? benefitState.status === "error" ? <ErrorState text={t.benefitError} /> : <Loading locale={locale} />
-              : benefitState.data.length === 0 ? <Empty title={t.noBenefits} help={t.noNoticeHelp} />
-              : <div className={styles.benefitGrid}>{benefitState.data.map((benefit: Benefit) => <Link key={benefit.id} href={`/benefits/${benefit.id}?locale=${locale}&celebrity=${celebrity.slug}`}><span>{benefit.state}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{benefit.eligibilityLabel}</small><ArrowRight /></Link>)}</div>}
+            <BenefitContent
+              state={benefitState}
+              celebritySlug={celebrity.slug}
+              locale={locale}
+              copy={{ error: t.benefitError, empty: t.noBenefits, emptyHelp: t.noBenefitsHelp }}
+            />
           </TabSection>}
         </section>
       </FanContentContainer>
@@ -285,6 +351,88 @@ export function CelebrityFanPage({
 function TabSection({ title, help, action, children }: { title: string; help: string; action?: ReactNode; children: ReactNode }) {
   return <section className={styles.contentSection}><div className={styles.sectionHeading}><div><h2>{title}</h2><p>{help}</p></div>{action}</div>{children}</section>;
 }
+
+function NoticeContent({
+  state, celebritySlug, locale, limit, copy: labels,
+}: {
+  state: AsyncState<Notice[]>;
+  celebritySlug: string;
+  locale: ContentLocale;
+  limit?: number;
+  copy: Readonly<{ error: string; empty: string; emptyHelp: string; pinned: string }>;
+}) {
+  if (state.status !== "ready") return state.status === "error" ? <ErrorState text={labels.error} /> : <Loading locale={locale} />;
+  if (state.data.length === 0) return <Empty title={labels.empty} help={labels.emptyHelp} />;
+  const notices = limit ? state.data.slice(0, limit) : state.data;
+  return <div className={styles.noticeList}>{notices.map((notice) => (
+    <Link key={notice.slug} href={`/c/${celebritySlug}/notices/${notice.slug}?locale=${locale}`}>
+      <span>{notice.pinned && <em>{labels.pinned}</em>}<strong>{notice.title}</strong><small>{formatDate(notice.publishedAt, locale)}</small></span>
+      <ArrowRight />
+    </Link>
+  ))}</div>;
+}
+
+function BenefitContent({
+  state, celebritySlug, locale, limit, className, copy: labels,
+}: {
+  state: AsyncState<Benefit[]>;
+  celebritySlug: string;
+  locale: ContentLocale;
+  limit?: number;
+  className?: string;
+  copy: Readonly<{ error: string; empty: string; emptyHelp: string }>;
+}) {
+  if (state.status !== "ready") return state.status === "error" ? <ErrorState text={labels.error} /> : <Loading locale={locale} />;
+  if (state.data.length === 0) return <Empty title={labels.empty} help={labels.emptyHelp} />;
+  const benefits = limit ? state.data.slice(0, limit) : state.data;
+  return <div className={`${styles.benefitGrid} ${className ?? ""}`.trim()}>{benefits.map((benefit) => (
+    <Link key={benefit.id} href={`/benefits/${benefit.id}?locale=${locale}&celebrity=${celebritySlug}`}>
+      <span>{benefit.state}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{benefit.eligibilityLabel}</small><ArrowRight />
+    </Link>
+  ))}</div>;
+}
+
+function PassportSummary({
+  state, celebrityName, localeQuery, labels, onRetry,
+}: {
+  state: PassportState;
+  celebrityName: string;
+  localeQuery: string;
+  labels: Readonly<{
+    checking: string;
+    error: string;
+    retry: string;
+    beforeVerification: string;
+    beforeVerificationHelp: string;
+    level: string;
+    score: string;
+    stamps: string;
+    details: string;
+  }>;
+  onRetry: () => void;
+}) {
+  if (state.status === "loading") return <div className={styles.passportStatus} role="status">{labels.checking}</div>;
+  if (state.status === "error") {
+    return <div className={styles.passportError} role="alert"><strong>{labels.error}</strong><button type="button" onClick={onRetry}>{labels.retry}</button></div>;
+  }
+  if (state.status !== "owned") {
+    return <div className={styles.passportStatus}><strong>{labels.beforeVerification}</strong><p>{labels.beforeVerificationHelp}</p></div>;
+  }
+  const { passport } = state;
+  return <>
+    <div className={styles.passportStatus}>
+      <span>{passport.display.mintStatus}</span>
+      <strong>{celebrityName} Fan Passport</strong>
+    </div>
+    <dl className={styles.passportFacts}>
+      <div><dt>{labels.level}</dt><dd>{passport.display.level}</dd></div>
+      <div><dt>{labels.score}</dt><dd>{passport.score.points}</dd></div>
+      <div><dt>{labels.stamps}</dt><dd>{passport.stampSummary.total}</dd></div>
+    </dl>
+    <Link className={styles.passportTextLink} href={`/passports/${passport.id}${localeQuery}`}>{labels.details}<ArrowRight /></Link>
+  </>;
+}
+
 function Loading({ locale }: { locale: ContentLocale }) { return <div className={styles.inlineEmpty} role="status">{locale === "ko" ? "불러오는 중이에요." : "Loading."}</div>; }
 function ErrorState({ text }: { text: string }) { return <div className={styles.inlineEmpty} role="alert"><strong>{text}</strong></div>; }
 function Empty({ title, help }: { title: string; help: string }) { return <div className={styles.inlineEmpty} role="status"><strong>{title}</strong><span>{help}</span></div>; }
