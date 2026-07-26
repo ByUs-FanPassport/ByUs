@@ -404,7 +404,7 @@ insert into public.live_events (
     'ca75e1e0-0000-4000-8000-000000000001',
     '42595553-0000-4000-8000-000000000001',
     'draft',
-    'ended',
+    'scheduled',
     '2026-06-27T11:00:00Z',
     '2026-06-27T12:00:00Z',
     '2026-06-01T00:00:00Z',
@@ -599,7 +599,7 @@ insert into public.benefit_delivery_vault (
   (
     'ca75e1e0-0000-4000-8000-000000004002',
     'external_link',
-    'https://www.youtube.com/@katseyeworld/videos'
+    'https://www.youtube.com/watch?v=bYg6aMDQ_TA'
   ),
   (
     'ca75e1e0-0000-4000-8000-000000004003',
