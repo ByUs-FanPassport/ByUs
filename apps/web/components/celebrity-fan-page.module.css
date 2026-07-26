@@ -107,7 +107,7 @@
 }
 @media (min-width:64rem) {
   .hubLayout { grid-template-columns:minmax(0,1fr) 320px; align-items:start; gap:48px; }
-  .profilePanel { position:sticky; top:148px; }
+  .homeAside { position:sticky; top:148px; align-self:start; }
   .homeGrid { grid-template-columns:minmax(0,1fr) 320px; align-items:start; gap:48px; }
   .homeGrid .passportSection { grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr); }
 }
