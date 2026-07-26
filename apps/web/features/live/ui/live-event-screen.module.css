@@ -434,7 +434,6 @@
   border-color: oklch(45% 0.18 25);
 }
 .fanCodeControl button,
-.attendanceAction,
 .surveyAction {
   display: inline-flex;
   min-height: 52px;
@@ -457,12 +456,10 @@
     transform 160ms cubic-bezier(0.2, 0, 0, 1);
 }
 .fanCodeControl button:hover,
-.attendanceAction:hover,
 .surveyAction:hover {
   background: oklch(25% 0 0);
 }
 .fanCodeControl button:active,
-.attendanceAction:active,
 .surveyAction:active {
   transform: translateY(1px);
 }
@@ -472,9 +469,10 @@
   cursor: not-allowed;
 }
 .attendanceAction {
+  width: min(90%, 320px);
   align-self: flex-start;
+  margin-inline-start: auto;
 }
-.attendanceAction svg,
 .surveyAction svg {
   width: 18px;
   height: 18px;
@@ -845,8 +843,10 @@
     grid-template-columns: 1fr;
   }
   .fanCodeControl button,
-  .attendanceAction,
   .surveyAction {
+    width: 100%;
+  }
+  .attendanceAction {
     width: 100%;
   }
   .identity {

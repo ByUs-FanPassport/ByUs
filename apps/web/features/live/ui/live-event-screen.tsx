@@ -42,6 +42,7 @@ import {
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import { FanAction } from "@/components/fan-ui/fan-action";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
@@ -88,7 +89,7 @@ const copy = {
       pending: "출석 확인 중",
       signIn: "로그인하고 출석 인증하기",
       passport: "Fan Passport 발급 후 참여할 수 있어요.",
-      issuePassport: "Fan Passport 발급하기",
+      issuePassport: "Fan Passport 발급받기",
       beforeLive: "Fan Code는 LIVE 시작 후 입력할 수 있어요.",
       invalid:
         "Fan Code가 올바르지 않아요. LIVE에서 공개된 코드를 다시 확인해 주세요.",
@@ -160,7 +161,7 @@ const copy = {
       pending: "Checking attendance",
       signIn: "Sign in to verify attendance",
       passport: "Create a Fan Passport before joining.",
-      issuePassport: "Create Fan Passport",
+      issuePassport: "Get Fan Passport",
       beforeLive: "You can enter the Fan Code once the LIVE starts.",
       invalid:
         "That Fan Code isn’t valid. Check the code shared during the LIVE.",
@@ -1006,13 +1007,14 @@ export function LiveEventScreen({
                   {authenticated && viewer.passport === "missing" ? (
                     <div className={styles.attendanceGate}>
                       <p>{c.attendance.passport}</p>
-                      <Link
+                      <FanAction
                         className={styles.attendanceAction}
                         href={`/c/${live.celebrity.slug}/verify` as Route}
+                        variant="passport"
                       >
-                        {c.attendance.issuePassport}
+                        <span>{c.attendance.issuePassport}</span>
                         <ArrowRight aria-hidden="true" />
-                      </Link>
+                      </FanAction>
                     </div>
                   ) : authenticated && live.effectiveStatus === "scheduled" ? (
                     <p className={styles.attendanceNotice}>

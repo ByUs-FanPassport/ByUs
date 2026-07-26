@@ -4,7 +4,12 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import styles from "./fan-action.module.css";
 
-export type FanActionVariant = "primary" | "neutral" | "text" | "service";
+export type FanActionVariant =
+  | "primary"
+  | "neutral"
+  | "text"
+  | "service"
+  | "passport";
 
 export function fanActionClassName(
   variant: FanActionVariant,

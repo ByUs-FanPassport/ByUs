@@ -412,9 +412,24 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
 
     expect(await screen.findByText("Fan Passport 발급 후 참여할 수 있어요.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Fan Passport 발급하기" }))
+    expect(screen.getByRole("link", { name: "Fan Passport 발급받기" }))
       .toHaveAttribute("href", "/c/kara/verify");
     expect(screen.queryByRole("textbox", { name: "Fan Code 입력" })).not.toBeInTheDocument();
+  });
+
+  it("uses the shared English Passport action copy for the attendance gate", async () => {
+    const missingPassport = payload("verify_fan", false);
+    missingPassport.live.effectiveStatus = "ended";
+    missingPassport.viewer.passport = "missing";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(missingPassport), { status: 200 }),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
+
+    expect(await screen.findByText("Create a Fan Passport before joining.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Get Fan Passport" }))
+      .toHaveAttribute("href", "/c/kara/verify");
   });
 
   it("QA-ATT-006 keeps Fan Code attendance available after the LIVE has ended", async () => {

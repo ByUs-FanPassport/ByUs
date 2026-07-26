@@ -26,4 +26,17 @@ describe("FanAction", () => {
     fireEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it("renders the shared Passport context action as a link", () => {
+    render(
+      <FanAction href="/c/katseye/verify" variant="passport">
+        <span>Fan Passport 발급받기</span>
+        <span aria-hidden="true">→</span>
+      </FanAction>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Fan Passport 발급받기" }),
+    ).toHaveAttribute("href", "/c/katseye/verify");
+  });
 });
