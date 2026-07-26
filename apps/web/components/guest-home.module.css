@@ -89,12 +89,12 @@
 .celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; padding: 16.75%; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .celebrityMediaBox > [data-preview-mode="card"] { inset: 16.75%; border-radius: 4px; }
 .celebrityMediaBox img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.celebrityInfo { display: grid; min-width: 0; gap: 4px; padding-top: 12px; }
+.celebrityInfo { display: grid; min-width: 0; gap: 4px; padding-top: 8px; }
 .celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .celebrityInfo h3, .celebrityInfo p { min-width: 0; margin: 0; font-size: 13px; font-weight: 400; line-height: 1.35; }
 .celebrityInfo h3 { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
-.celebrityLiveStatus { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--ink); white-space: nowrap; }
-.fanCount { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.celebrityMetaRow .celebrityLiveStatus { display: inline-flex; min-height: 0; align-items: center; justify-content: flex-end; gap: 6px; color: var(--ink); white-space: nowrap; }
+.fanCount { align-self: start; overflow: hidden; padding-top: 4px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .socialLinks { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 0; margin-left: auto; }
 .socialLink { display: inline-flex; width: 44px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 999rem; color: var(--muted) !important; transition: background 160ms cubic-bezier(.2,0,0,1); }
 .socialLink img { display: block; width: 20px; height: 20px; }

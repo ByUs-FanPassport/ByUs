@@ -36,10 +36,20 @@ describe("guest home compact icon-only action spacing", () => {
   });
 
   it("uses two regular-weight metadata rows and disables live animation for reduced motion", () => {
-    expect(declarationBlock(".celebrityInfo")).toMatch(/\bgap:\s*4px\b/);
+    const info = declarationBlock(".celebrityInfo");
+    const status = declarationBlock(
+      ".celebrityMetaRow .celebrityLiveStatus",
+    );
+    const fanCount = declarationBlock(".fanCount");
+
+    expect(info).toMatch(/\bgap:\s*4px\b/);
+    expect(info).toMatch(/\bpadding-top:\s*8px\b/);
     expect(declarationBlock(".celebrityMetaRow")).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
+    expect(status).toMatch(/\bmin-height:\s*0\b/);
+    expect(fanCount).toMatch(/\balign-self:\s*start\b/);
+    expect(fanCount).toMatch(/\bpadding-top:\s*4px\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,
     );
