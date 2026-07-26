@@ -1,6 +1,13 @@
+"use client";
+
 import type { Route } from "next";
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import {
+  useId,
+  type ButtonHTMLAttributes,
+  type MouseEventHandler,
+  type ReactNode,
+} from "react";
 
 import styles from "./fan-action.module.css";
 
@@ -29,10 +36,25 @@ type FanActionProps = Readonly<{
   fullWidth?: boolean;
   className?: string;
   ariaLabel?: string;
+  ariaDescribedBy?: string;
+  leadingIcon?: ReactNode;
+  trailingIcon?: ReactNode;
+  helperText?: ReactNode;
 }> & (
-  | Readonly<{ href: string; onClick?: never; type?: never; disabled?: never }>
+  | Readonly<{
+      href: string;
+      external?: boolean;
+      target?: "_blank";
+      rel?: string;
+      onClick?: MouseEventHandler<HTMLAnchorElement>;
+      type?: never;
+      disabled?: never;
+    }>
   | Readonly<{
       href?: never;
+      external?: never;
+      target?: never;
+      rel?: never;
       onClick?: ButtonHTMLAttributes<HTMLButtonElement>["onClick"];
       type?: "button" | "submit";
       disabled?: boolean;
@@ -46,28 +68,77 @@ export function FanAction({
   fullWidth,
   className,
   ariaLabel,
+  ariaDescribedBy,
+  leadingIcon,
+  trailingIcon,
+  helperText,
   ...props
 }: FanActionProps) {
+  const generatedHelperId = useId();
+  const helperId = helperText ? generatedHelperId : undefined;
+  const describedBy = [ariaDescribedBy, helperId].filter(Boolean).join(" ") || undefined;
   const actionClassName = fanActionClassName(variant, { fullWidth, className });
+  const content = (
+    <>
+      {leadingIcon ? <span className={styles.leading} aria-hidden="true">{leadingIcon}</span> : null}
+      <span className={styles.label}>{children}</span>
+      {trailingIcon ? <span className={styles.trailing} aria-hidden="true">{trailingIcon}</span> : null}
+    </>
+  );
+
+  let control: ReactNode;
   if ("href" in props && props.href) {
-    return (
-      <Link className={actionClassName} href={props.href as Route} aria-label={ariaLabel}>
-        {children}
+    const linkProps = props as Extract<FanActionProps, { href: string }>;
+    const commonProps = {
+      className: actionClassName,
+      "aria-label": ariaLabel,
+      "aria-describedby": describedBy,
+      "data-fan-action-emphasis": variant === "primary" ? "primary" : undefined,
+      "data-has-leading": leadingIcon ? "true" : undefined,
+      "data-has-trailing": trailingIcon ? "true" : undefined,
+      onClick: linkProps.onClick,
+    } as const;
+
+    control = linkProps.external ? (
+      <a
+        {...commonProps}
+        href={linkProps.href}
+        target={linkProps.target ?? "_blank"}
+        rel={linkProps.rel ?? "noopener noreferrer"}
+      >
+        {content}
+      </a>
+    ) : (
+      <Link {...commonProps} href={linkProps.href as Route}>
+        {content}
       </Link>
+    );
+  } else {
+    const buttonProps = props as Extract<FanActionProps, { href?: never }>;
+    control = (
+      <button
+        className={actionClassName}
+        type={buttonProps.type ?? "button"}
+        onClick={buttonProps.onClick}
+        disabled={buttonProps.disabled}
+        aria-busy={buttonProps.ariaBusy}
+        aria-label={ariaLabel}
+        aria-describedby={describedBy}
+        data-fan-action-emphasis={variant === "primary" ? "primary" : undefined}
+        data-has-leading={leadingIcon ? "true" : undefined}
+        data-has-trailing={trailingIcon ? "true" : undefined}
+      >
+        {content}
+      </button>
     );
   }
 
-  const buttonProps = props as Extract<FanActionProps, { href?: never }>;
+  if (!helperText) return control;
+
   return (
-    <button
-      className={actionClassName}
-      type={buttonProps.type ?? "button"}
-      onClick={buttonProps.onClick}
-      disabled={buttonProps.disabled}
-      aria-busy={buttonProps.ariaBusy}
-      aria-label={ariaLabel}
-    >
-      {children}
-    </button>
+    <div className={styles.actionBlock}>
+      {control}
+      <p className={styles.helper} id={helperId}>{helperText}</p>
+    </div>
   );
 }

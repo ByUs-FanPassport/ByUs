@@ -9,6 +9,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import { levelLabel, type PassportLocale } from "../domain/passport-read-model";
 import { PassportStampCanvas } from "./passport-stamp-artwork";
@@ -195,7 +196,7 @@ export function PassportIssuanceCeremony({
 
         <div className={styles.actionRail} aria-live="polite">
           {stage >= 3 ? (
-            <Link ref={openPassportRef} className={styles.openPassport} href={passportHref}>
+            <Link ref={openPassportRef} className={fanActionClassName("passport", { className: styles.openPassport })} href={passportHref}>
               <span>{t.open}</span><ArrowRight aria-hidden="true" />
             </Link>
           ) : (
@@ -257,14 +258,14 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
           <>
             <h1>{t.authTitle}</h1>
             <p>{t.authBody}</p>
-            <AuthIntentLink locale={locale} input={{ sourcePath: `/passports/${passportId}/issuance`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: passportId }}>{t.authAction}</AuthIntentLink>
+            <AuthIntentLink className={fanActionClassName("primary")} emphasis="primary" locale={locale} input={{ sourcePath: `/passports/${passportId}/issuance`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: passportId }}>{t.authAction}</AuthIntentLink>
           </>
         ) : (
           <>
             <h1>{t.errorTitle}</h1>
             <p>{t.errorBody}</p>
-            <button type="button" onClick={() => void load()}><RotateCcw aria-hidden="true" />{t.retry}</button>
-            <Link href={withLocale(`/passports/${passportId}`, locale)}>{t.open}<ArrowRight aria-hidden="true" /></Link>
+            <FanAction variant="neutral" onClick={() => void load()} leadingIcon={<RotateCcw />}>{t.retry}</FanAction>
+            <FanAction variant="passport" href={withLocale(`/passports/${passportId}`, locale)} trailingIcon={<ArrowRight />}>{t.open}</FanAction>
           </>
         )}
         </div>

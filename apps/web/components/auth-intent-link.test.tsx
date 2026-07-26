@@ -123,4 +123,26 @@ describe("AuthIntentLink", () => {
     );
     expect(push).not.toHaveBeenCalledWith(expect.stringContaining("/login"));
   });
+
+  it("exposes the shared primary emphasis and helper relationship", () => {
+    render(
+      <>
+        <AuthIntentLink
+          locale="ko"
+          input={input}
+          emphasis="primary"
+          ariaDescribedBy="fan-action-help"
+        >
+          로그인하기
+        </AuthIntentLink>
+        <p id="fan-action-help">LIVE를 예약하려면 먼저 로그인해 주세요.</p>
+      </>,
+    );
+
+    const link = screen.getByRole("link", { name: "로그인하기" });
+    expect(link).toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(link).toHaveAccessibleDescription(
+      "LIVE를 예약하려면 먼저 로그인해 주세요.",
+    );
+  });
 });

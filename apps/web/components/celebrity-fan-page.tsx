@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from
 import { ArrowRight, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
+import { FanAction } from "./fan-ui/fan-action";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
@@ -266,7 +267,7 @@ export function CelebrityFanPage({
             {liveState.status !== "ready"
               ? liveState.status === "error" ? <ErrorState text={t.noLiveHelp} /> : <Loading locale={locale} />
               : liveState.data.length === 0 ? <Empty title={t.noLive} help={t.noLiveHelp} />
-              : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><p><Radio /> {live.effectiveStatus}</p><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><Link className={styles.liveAction} href={`/live/${live.slug}${localeQuery}`}><span><Play /> {t.liveDetails}</span><ArrowRight /></Link></div>)}</div>}
+              : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><p><Radio /> {live.effectiveStatus}</p><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
           </TabSection>}
 
           {activeTab === "benefits" && <TabSection title={t.benefitHeading} help={t.benefitHelp} action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}>

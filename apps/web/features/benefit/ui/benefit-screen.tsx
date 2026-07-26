@@ -20,6 +20,7 @@ import { z } from "zod";
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
+import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 
 import {
   benefitCatalogItemSchema,
@@ -776,7 +777,8 @@ export function BenefitDetailScreen({
           </section>
         ) : !authenticated && benefit.state !== "sold_out" && benefit.state !== "expired" ? (
           <AuthIntentLink
-            className={styles.claimButton}
+            className={fanActionClassName("primary")}
+            emphasis="primary"
             locale={locale}
             input={{
               sourcePath: `/benefits/${benefitId}`,
@@ -787,7 +789,6 @@ export function BenefitDetailScreen({
             }}
           >
             {c.signIn}
-            <ArrowRight aria-hidden="true" />
           </AuthIntentLink>
         ) : benefit.allocationMode === "application_selection" &&
           (application?.status ?? benefit.applicationStatus) ? (
@@ -798,17 +799,17 @@ export function BenefitDetailScreen({
             ]}
           </div>
         ) : benefit.state === "eligible" ? (
-          <button
-            className={styles.claimButton}
-            type="button"
+          <FanAction
+            variant="primary"
             disabled={pending}
+            ariaBusy={pending}
             onClick={() => void (benefit.allocationMode === "application_selection" ? applyForBenefit() : claimBenefit())}
+            trailingIcon={<ArrowRight />}
           >
             {pending
               ? benefit.allocationMode === "application_selection" ? c.applying : c.claiming
               : benefit.allocationMode === "application_selection" ? c.apply : c.claim}
-            <ArrowRight aria-hidden="true" />
-          </button>
+          </FanAction>
         ) : (
           <div className={styles.unavailable} role="status">
             <LockKeyhole aria-hidden="true" />

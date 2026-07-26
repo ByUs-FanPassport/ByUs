@@ -13,6 +13,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import { FanAction } from "@/components/fan-ui/fan-action";
 import { getNicknameFormat } from "../domain/nickname-format";
 import {
   enablePushNotifications,
@@ -501,13 +502,14 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 >
                   {t.cancel}
                 </button>
-                <button
-                  className={styles.primary}
+                <FanAction
+                  variant="primary"
                   disabled={saving || !getNicknameFormat(nickname).valid}
                   type="submit"
+                  ariaBusy={saving}
                 >
                   {saving ? t.saving : t.save}
-                </button>
+                </FanAction>
               </div>
             </form>
           )}

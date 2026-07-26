@@ -17,6 +17,7 @@ import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowHeader } from "@/components/fan-shell/focus-flow-header";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import styles from "./live-survey-screen.module.css";
 
@@ -376,7 +377,8 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
           <h1>{notFound ? c.notFound : authenticationRequired ? c.signIn : c.loadError}</h1>
           {authenticationRequired ? (
             <AuthIntentLink
-              className={styles.primary}
+              className={fanActionClassName("primary")}
+              emphasis="primary"
               locale={locale}
               input={{ sourcePath: `/live/${slug}/survey`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_SURVEY", targetType: "survey", targetId: slug }}
             >{c.signIn}</AuthIntentLink>
@@ -398,7 +400,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
           <div className={styles.stateIcon}><Stamp aria-hidden="true" /></div>
           <h1>{c.attendanceTitle}</h1>
           <p>{c.attendanceBody}</p>
-          <Link className={styles.primary} href={`${liveHref}#fan-code` as Route}>{c.attendanceAction}</Link>
+          <FanAction variant="primary" href={`${liveHref}#fan-code` as Route}>{c.attendanceAction}</FanAction>
         </main>
       </div>
     );
@@ -427,7 +429,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
                 ? `${c.submittedAt} · ${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(data.response.submittedAt))}`
                 : undefined
             }
-            primaryAction={<Link className={styles.primary} href={liveHref}>{c.returnLive}</Link>}
+            primaryAction={<FanAction variant="primary" href={liveHref}>{c.returnLive}</FanAction>}
           />
         </main>
       </div>
@@ -489,7 +491,9 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
             })}
           </ol>
           {submitError && <p className={styles.submitError} role="alert">{submitError}</p>}
-          <button className={styles.submit} type="submit" disabled={submitPending || Boolean(conflict)} aria-busy={submitPending}>{submitPending ? c.submitting : c.submit}</button>
+          <FanAction variant="primary" type="submit" disabled={submitPending || Boolean(conflict)} ariaBusy={submitPending}>
+            {submitPending ? c.submitting : c.submit}
+          </FanAction>
         </form>
       </main>
     </div>

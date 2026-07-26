@@ -21,7 +21,7 @@ The system is an image-first fan utility: editorial artist imagery creates emoti
 
 ## Color
 
-Use a White and Near Black shell with a `single-gradient-highlight` strategy. Reserve the filled pink-to-violet Spectrum Relay for the primary live-reservation CTA. The Google and Passport context actions may reuse the relay only as a 1px outline with a high-contrast solid service-color label; neutral utility surfaces must not compete with artist photography.
+Use a White and Near Black shell with a `single-gradient-highlight` strategy. Reserve the filled pink-to-violet Spectrum Relay for the current surface's single most important next action. The Google and Passport context actions may reuse the relay only as a 1px outline with a high-contrast solid service-color label; neutral utility surfaces must not compete with artist photography.
 
 ## Typography
 
@@ -37,11 +37,11 @@ Use 12px controls, 16px collections, and a 20px hero with 1px neutral hairlines 
 
 ## Interaction
 
-Maintain 44px minimum targets, a 3px Near Black `focus-visible` outline, 160ms control feedback, and 240ms object or layout transitions. Adjacent icon-only actions use 20×20px visible icons inside separate 44×44px targets with no inter-target gap; never overlap or shrink the targets to achieve visual density. Collapse transitions for reduced-motion users.
+Maintain 44px minimum targets, a 3px Near Black `focus-visible` outline, 160ms control feedback, and 240ms object or layout transitions. Adjacent icon-only actions use 20×20px visible icons inside separate 44×44px targets with no inter-target gap; Home celebrity social links use optically centered 24×24px brand marks inside the same separate 44×44px targets. Never overlap or shrink the targets to achieve visual density. Collapse transitions for reduced-motion users.
 
 ## Locked Contract
 
-Preserve the Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel behavior. The global fan information architecture is `HOME · LIVE · 최애 · MY` on desktop and mobile: HOME routes to `/`, LIVE to `/live`, 최애 to `/celebrities`, and MY to `/my`. Passport, benefits, notifications, and settings are MY sub-surfaces and keep MY active. Focused login, onboarding, verification, attendance, and survey flows may use the compact Focus Header. The hero remains the sole dominant visual surface and the reservation CTA remains the only gradient-filled action.
+Preserve the Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel behavior. The global fan information architecture is `HOME · LIVE · 최애 · MY` on desktop and mobile: HOME routes to `/`, LIVE to `/live`, 최애 to `/celebrities`, and MY to `/my`. Passport, benefits, notifications, and settings are MY sub-surfaces and keep MY active. Focused login, onboarding, verification, attendance, and survey flows may use the compact Focus Header. The hero remains the sole dominant visual surface, while the active surface's one most important next action may use the gradient-filled Primary treatment.
 
 The Home hero is an ordered carousel of every published LIVE whose effective status is active or scheduled. Active LIVE events come first; scheduled events follow by nearest start time, then creation time and slug for deterministic ties. With more than one item it advances horizontally every 6 seconds and exposes separate circular previous/next controls inset 8px from both image edges plus a thin segmented indicator centered 20px below the image; every interactive target remains 44px. At 1280px and wider, the information block uses 64px left padding and 48px on the other sides, preserving clear space after the previous control; mobile positioning remains unchanged. Hover, keyboard focus, and pointer interaction temporarily pause playback. Reduced-motion users receive no autoplay or large translation and navigate with a short opacity transition. A single item renders without carousel controls, and the truthful empty state remains when no eligible LIVE exists.
 
@@ -72,7 +72,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | Structural line | Hairline | `oklch(90% 0 0)` | Navigation capsule and bottom navigation dividers |
 | Card line | Micro Hairline | `oklch(93% 0 0)` | Cards, artist media fields, social buttons, live rows |
 | Strong line | Warm Gray | `oklch(76% 0 0)` | Reserved for stronger internal guides; use sparingly |
-| Primary action | Spectrum Relay | `linear-gradient(125deg, oklch(68% 0.22 18), oklch(62% 0.25 340), oklch(56% 0.22 285))` | Only the hero's “라이브 예약하기” CTA |
+| Primary action | Spectrum Relay | `linear-gradient(125deg, oklch(68% 0.22 18), oklch(62% 0.25 340), oklch(56% 0.22 285))` | The current visible surface's single most important next action |
 | Action text | On Action White | `#FFFFFF` | Text and icons on the gradient CTA |
 | Status accent | Live Pink Line | `rgb(255 95 191 / 78%)` | UPCOMING status outline only |
 | Service outline | Spectrum Relay | Same gradient as Primary action | 1px border on Google and Passport context actions only |
@@ -81,7 +81,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Primary
 
 - The interface is monochrome-first. White and Near Black define the product shell.
-- The Spectrum Relay is a conversion signal, not a decorative background. It appears once as a filled action; the two approved context actions may reuse it as a restrained 1px outline.
+- The Spectrum Relay is a conversion signal, not a decorative background. It appears at most once as a filled action in each active main or inert-isolated overlay; the two approved context actions may reuse it as a restrained 1px outline.
 - Photography may be colorful, but no colored surface should be introduced merely to balance an image.
 
 ### Interactive
@@ -165,12 +165,12 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 ### Buttons and Links
 
-- Primary CTA: 320px maximum width, 52px minimum height, full pill radius, Spectrum Relay fill, white text, play icon left and arrow right. Hero labels follow the effective action: `라이브 입장하기` / `Enter LIVE` for `watch_live`, `라이브 예약하기` / `Reserve LIVE` for `sign_in_to_reserve`, and `LIVE 상세보기` / `View LIVE details` otherwise.
+- Primary CTA: at most one visible per active main or inert-isolated overlay; some surfaces need none. Use a 320px maximum width, 52px minimum height, full pill radius, Spectrum Relay fill, White text, Pretendard Variable 15px/800, optically centered label, and optional 18px leading/trailing icons. Labels are short verbs describing the immediate next action. Put necessary preconditions or destination details in helper copy 8px below at 13px/550 and connect it with `aria-describedby`.
 - Google login: 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, authentic multicolor G mark, centered label.
 - Passport CTA: label `Fan Passport 발급받기`; 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, centered label and right arrow.
 - Favorite-card metadata: use two `minmax(0, 1fr) auto` rows, 12px below the media field and 4px apart. Row one places the regular-weight artist name at left and the current LIVE state at right. Row two places the compact operator-managed fan count at left and up to three icon-only social links at right. All visible metadata text uses `13px/400`; use color, not font weight, for hierarchy.
 - LIVE state: show a blinking red dot plus `LIVE 진행중` / `LIVE NOW` only for an active LIVE, a static muted dot plus `LIVE 예정` / `UPCOMING LIVE` for a scheduled LIVE, and no status when neither exists. Disable dot animation for reduced-motion users.
-- Celebrity social controls: align the icon group to the far right of the second metadata row. Use 20×20px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
+- Celebrity social controls: align the icon group to the far right of the second metadata row. Use optically centered 24×24px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
 - Mobile/tablet context actions: below 1024px, replace the hidden desktop side panel with a regular in-flow action section immediately after the Hero. Keep both `Google로 계속하기` and `Fan Passport 발급받기` visible, 52px high, full-pill, Spectrum-outline controls; use one column on mobile and two columns from 768px.
 - Text links: minimum 44px interaction height, 14px/650, Muted Ink, unboxed chevron treatment.
 - Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
@@ -276,7 +276,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 - Let one strong artist image lead each viewport.
 - Keep utility surfaces white and separate them with hairlines and micro-shadows.
-- Use the Spectrum Relay only for the screen's single primary conversion action.
+- Use the Spectrum Relay only for the active surface's single primary next action. A page may have no Primary; repeated card actions and secondary exploration stay Neutral or Text.
 - Keep title and explanatory subtitle together as a reusable section-heading pair.
 - Preserve 44px minimum interaction targets and visible keyboard focus.
 - Use real social brand marks and face-legible, high-quality artist photography.

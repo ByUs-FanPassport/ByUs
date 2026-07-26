@@ -110,8 +110,8 @@ describe("LiveEventScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload()), { status: 200 }));
     const { container } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     expect(await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /라이브 예약하기/ })).toBeInTheDocument();
-    expect(container.querySelectorAll('[class*="spectrumAction"]')).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "LIVE 예약하기" })).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-fan-action-emphasis="primary"]')).toHaveLength(1);
     expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
   });
 
@@ -183,9 +183,10 @@ describe("LiveEventScreen", () => {
     authenticated = false;
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload("sign_in_to_reserve")), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    const link = await screen.findByRole("link", { name: /로그인하고 예약하기/ });
+    const link = await screen.findByRole("link", { name: "로그인하기" });
     expect(link.getAttribute("href")).toContain("intent=reserve");
     expect(link.getAttribute("href")).toContain(encodeURIComponent("/live/kara-nualeaf?locale=ko"));
+    expect(link).toHaveAccessibleDescription("LIVE를 예약하려면 먼저 로그인해 주세요.");
   });
 
   it("keeps a guest Fan Code outside the intent payload and resumes through an exact stored action", async () => {
@@ -249,8 +250,10 @@ describe("LiveEventScreen", () => {
 
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
 
-    expect(await screen.findByRole("link", { name: /팬 인증하고 예약하기/ }))
-      .toHaveAttribute("href", "/c/kara/verify");
+    expect(await screen.findByRole("link", { name: "팬 인증하기" }))
+      .toHaveAttribute("href", "/c/kara/verify?locale=ko");
+    expect(screen.getByRole("link", { name: "팬 인증하기" }))
+      .toHaveAccessibleDescription("예약하려면 KARA Fan Passport가 필요해요.");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -260,7 +263,7 @@ describe("LiveEventScreen", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ reservation, completion: reservationCompletion }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(payload("reserved", true)), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    fireEvent.click(await screen.findByRole("button", { name: /라이브 예약하기/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "예약이 완료되었습니다" })).toBeInTheDocument();
     expect(screen.getByText("라이브 예약 Stamp")).toBeInTheDocument();
@@ -299,7 +302,8 @@ describe("LiveEventScreen", () => {
   it("shows reserved state and Calendar as a secondary action without cancellation", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload("reserved", true)), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    expect(await screen.findByRole("button", { name: /예약 완료/ })).toBeDisabled();
+    expect(await screen.findByRole("status")).toHaveTextContent("예약 완료");
+    expect(screen.queryByRole("button", { name: /예약 완료/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Google Calendar에 추가/ })).toHaveAttribute("target", "_blank");
     expect(screen.queryByText(/취소하기/)).not.toBeInTheDocument();
   });
@@ -310,12 +314,15 @@ describe("LiveEventScreen", () => {
     watchPayload.live.watch = { available: true, url: "https://youtube.com/live/abc123" };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(watchPayload), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    const watch = await screen.findByRole("link", { name: /YouTube에서 LIVE 시청하기/ });
+    const watch = await screen.findByRole("link", {
+      name: "LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
+    });
     expect(watch).toHaveAttribute("target", "_blank");
     expect(watch).toHaveAttribute("rel", "noopener noreferrer");
     expect(watch).toHaveAccessibleName(
-      "YouTube에서 LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
+      "LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
     );
+    expect(watch).toHaveAccessibleDescription("YouTube 새 창에서 열려요.");
     fireEvent.click(watch);
     await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe("/live/kara-nualeaf?locale=ko#fan-code"));
   });
@@ -413,7 +420,7 @@ describe("LiveEventScreen", () => {
 
     expect(await screen.findByText("Fan Passport 발급 후 참여할 수 있어요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Fan Passport 발급받기" }))
-      .toHaveAttribute("href", "/c/kara/verify");
+      .toHaveAttribute("href", "/c/kara/verify?locale=ko");
     expect(screen.queryByRole("textbox", { name: "Fan Code 입력" })).not.toBeInTheDocument();
   });
 
@@ -429,7 +436,7 @@ describe("LiveEventScreen", () => {
 
     expect(await screen.findByText("Create a Fan Passport before joining.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Get Fan Passport" }))
-      .toHaveAttribute("href", "/c/kara/verify");
+      .toHaveAttribute("href", "/c/kara/verify?locale=en");
   });
 
   it("QA-ATT-006 keeps Fan Code attendance available after the LIVE has ended", async () => {

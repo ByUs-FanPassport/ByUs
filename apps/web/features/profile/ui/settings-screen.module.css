@@ -138,11 +138,6 @@
   justify-content: flex-end;
   gap: 8px;
 }
-.renameForm .primary {
-  padding: 0 18px;
-  background: oklch(18% 0 0);
-  color: #fff;
-}
 .segmented {
   margin: 20px 0 0 58px;
   display: grid;

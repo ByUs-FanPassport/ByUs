@@ -15,6 +15,7 @@ import {
 } from "../domain/quiz-attempt";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./quiz-questions-screen.module.css";
 
 type ScreenState =
@@ -240,7 +241,7 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
 
   if (!authenticated) {
     const returnTo = withLocale(`/c/${slug}/verify/questions`, locale);
-    return <QuizFrame locale={locale}><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">{t.loginTitle}</h1><p>{t.loginBody}</p><Link className={styles.primaryAction} href={`/login?returnTo=${encodeURIComponent(returnTo)}&locale=${locale}&intent=passport` as Route}>{t.login} <ArrowRight aria-hidden="true" /></Link></section></QuizFrame>;
+    return <QuizFrame locale={locale}><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">{t.loginTitle}</h1><p>{t.loginBody}</p><FanAction variant="primary" href={`/login?returnTo=${encodeURIComponent(returnTo)}&locale=${locale}&intent=passport` as Route} trailingIcon={<ArrowRight />}>{t.login}</FanAction></section></QuizFrame>;
   }
 
   if (screen.kind === "error") {
@@ -292,9 +293,9 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
         <nav className={styles.navigation} aria-label={t.navigation}>
           <button className={styles.previous} type="button" disabled={questionIndex === 0 || Boolean(savingQuestionId) || submitPending} onClick={() => setQuestionIndex((index) => index - 1)}><ArrowLeft aria-hidden="true" /> {t.previous}</button>
           {isLast ? (
-            <button className={styles.submit} type="button" disabled={!allAnswered || Boolean(savingQuestionId) || submitPending} onClick={() => void submit()}>{submitPending ? t.submitting : t.submit}<ArrowRight aria-hidden="true" /></button>
+            <FanAction variant="primary" disabled={!allAnswered || Boolean(savingQuestionId) || submitPending} ariaBusy={submitPending} onClick={() => void submit()} trailingIcon={<ArrowRight />}>{submitPending ? t.submitting : t.submit}</FanAction>
           ) : (
-            <button className={styles.next} type="button" disabled={!canContinue} onClick={() => setQuestionIndex((index) => index + 1)}>{t.next} <ArrowRight aria-hidden="true" /></button>
+            <FanAction variant="primary" disabled={!canContinue} onClick={() => setQuestionIndex((index) => index + 1)} trailingIcon={<ArrowRight />}>{t.next}</FanAction>
           )}
         </nav>
       </section>

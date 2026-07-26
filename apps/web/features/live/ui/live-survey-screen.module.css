@@ -56,9 +56,6 @@
 .fieldError, .submitError { margin: 10px 0 0; color: oklch(42% .17 25); font-size: 13px; font-weight: 700; line-height: 1.5; }
 .errorSummary { margin-bottom: 20px; padding: 12px 16px; border: 1px solid oklch(48% .17 25); border-radius: 12px; color: oklch(42% .17 25); font-size: 14px; font-weight: 700; }
 .submitError { margin-top: 20px; text-align: center; }
-.submit, .primary { display: flex; width: min(360px, 100%); min-height: 52px; align-items: center; justify-content: center; margin: 32px auto 0; border: 0; border-radius: 12px; background: oklch(18% 0 0); color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; cursor: pointer; transition: background 160ms cubic-bezier(.2, 0, 0, 1), transform 160ms cubic-bezier(.2, 0, 0, 1); }
-.submit:hover, .primary:hover { background: oklch(25% 0 0); }
-.submit:disabled { background: oklch(90% 0 0); color: oklch(43% 0 0); cursor: not-allowed; }
 
 .conflict { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; padding: 20px; border: 1px solid oklch(65% .12 75); border-radius: 12px; background: oklch(98% .015 75); }
 .conflict h2 { margin: 0; font-size: 16px; font-weight: 800; }
@@ -73,8 +70,7 @@
 .stateIcon svg, .completeMark svg { width: 24px; }
 .state h1, .complete h1 { margin: 0; font-size: 26px; font-weight: 850; line-height: 1.2; letter-spacing: -.03em; text-wrap: balance; }
 .state p, .complete > p { max-width: 52ch; margin: 12px 0 0; color: oklch(43% 0 0); font-size: 15px; line-height: 1.65; }
-.state button, .state > a:not(.primary) { display: inline-flex; min-width: 200px; min-height: 48px; align-items: center; justify-content: center; margin-top: 20px; border: 0; border-radius: 12px; background: oklch(18% 0 0); color: #fff; font-weight: 750; text-decoration: none; cursor: pointer; }
-.state > a:not(.primary) { margin-top: 8px; background: #fff; color: oklch(18% 0 0); }
+.state button, .state > a { display: inline-flex; min-width: 200px; min-height: 48px; align-items: center; justify-content: center; margin-top: 20px; border: 1px solid oklch(90% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font-weight: 750; text-decoration: none; cursor:pointer; }
 .stampArtwork { width: min(220px, 64%); margin: 20px auto 8px; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); }
 .rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .rewards strong, .rewards span { display: inline-flex; min-height: 40px; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid oklch(90% 0 0); border-radius: 999rem; font-size: 13px; }

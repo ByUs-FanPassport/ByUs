@@ -42,7 +42,10 @@ import {
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
-import { FanAction } from "@/components/fan-ui/fan-action";
+import {
+  FanAction,
+  fanActionClassName,
+} from "@/components/fan-ui/fan-action";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
@@ -113,14 +116,19 @@ const copy = {
     ],
     action: {
       reservation_upcoming: "예약 오픈 전",
-      sign_in_to_reserve: "로그인하고 예약하기",
-      verify_fan: "팬 인증하고 예약하기",
-      reserve: "라이브 예약하기",
+      sign_in_to_reserve: "로그인하기",
+      verify_fan: "팬 인증하기",
+      reserve: "LIVE 예약하기",
       reserved: "예약 완료",
-      watch_live: "YouTube에서 LIVE 시청하기",
+      watch_live: "LIVE 시청하기",
       reservation_closed: "예약 마감",
       live_ended: "종료된 LIVE",
       live_cancelled: "취소된 LIVE",
+    },
+    actionHelper: {
+      signIn: "LIVE를 예약하려면 먼저 로그인해 주세요.",
+      verifyFan: "예약하려면 {celebrity} Fan Passport가 필요해요.",
+      watch: "YouTube 새 창에서 열려요.",
     },
     reservationPeriod: "예약 기간",
     eventTime: "LIVE 일정",
@@ -184,14 +192,19 @@ const copy = {
     ],
     action: {
       reservation_upcoming: "Reservations open soon",
-      sign_in_to_reserve: "Sign in to reserve",
-      verify_fan: "Verify fan status to reserve",
-      reserve: "Reserve this LIVE",
+      sign_in_to_reserve: "Sign in",
+      verify_fan: "Verify fan status",
+      reserve: "Reserve LIVE",
       reserved: "Reserved",
-      watch_live: "Watch on YouTube",
+      watch_live: "Watch LIVE",
       reservation_closed: "Reservations closed",
       live_ended: "LIVE ended",
       live_cancelled: "LIVE cancelled",
+    },
+    actionHelper: {
+      signIn: "Sign in first to reserve this LIVE.",
+      verifyFan: "A {celebrity} Fan Passport is required to reserve.",
+      watch: "Opens YouTube in a new window.",
     },
     reservationPeriod: "Reservation period",
     eventTime: "LIVE schedule",
@@ -375,13 +388,9 @@ function ReservationDialog({
                 : "Could not save notification settings."}
         </p>
       )}
-      <button
-        className={styles.dialogPrimary}
-        type="button"
-        onClick={() => dialogRef.current?.close()}
-      >
+      <FanAction variant="primary" onClick={() => dialogRef.current?.close()}>
         {c.continue}
-      </button>
+      </FanAction>
     </dialog>
   );
 }
@@ -749,8 +758,15 @@ export function LiveEventScreen({
     ? c.reservePending
     : c.action[primaryAction];
   const calendarUrl = googleCalendarUrl(live);
-  const primaryClass =
-    primaryAction === "reserve" ? styles.spectrumAction : styles.primaryAction;
+  const primaryHelper =
+    primaryAction === "sign_in_to_reserve"
+      ? c.actionHelper.signIn
+      : primaryAction === "verify_fan"
+        ? c.actionHelper.verifyFan.replace("{celebrity}", live.celebrity.name)
+        : primaryAction === "watch_live"
+          ? c.actionHelper.watch
+          : null;
+  const primaryHelperId = primaryHelper ? "live-primary-action-helper" : undefined;
   const attendanceError =
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
@@ -768,61 +784,70 @@ export function LiveEventScreen({
 
   const primaryControl =
     primaryAction === "sign_in_to_reserve" ? (
-      <AuthIntentLink
-        className={primaryClass}
-        locale={locale}
-        input={{
-          sourcePath: `/live/${slug}`,
-          sourceQuery: `?locale=${locale}`,
-          actionType: "RESERVE_LIVE",
-          targetType: "live_event",
-          targetId: slug,
-        }}
-      >
-        <TicketCheck aria-hidden="true" />
-        {actionLabel}
-        <ArrowRight aria-hidden="true" />
-      </AuthIntentLink>
+      <div className={styles.primaryActionBlock}>
+        <AuthIntentLink
+          className={fanActionClassName("primary", { fullWidth: true })}
+          emphasis="primary"
+          locale={locale}
+          ariaDescribedBy={primaryHelperId}
+          input={{
+            sourcePath: `/live/${slug}`,
+            sourceQuery: `?locale=${locale}`,
+            actionType: "RESERVE_LIVE",
+            targetType: "live_event",
+            targetId: slug,
+          }}
+        >
+          <span className={styles.actionLeading} aria-hidden="true"><TicketCheck /></span>
+          <span>{actionLabel}</span>
+          <span className={styles.actionTrailing} aria-hidden="true"><ArrowRight /></span>
+        </AuthIntentLink>
+        <p id={primaryHelperId} className={styles.actionHelper}>{primaryHelper}</p>
+      </div>
     ) : primaryAction === "verify_fan" ? (
-      <Link
-        className={primaryClass}
-        href={`/c/${live.celebrity.slug}/verify` as Route}
+      <FanAction
+        href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
+        variant="primary"
+        fullWidth
+        helperText={primaryHelper}
+        leadingIcon={<TicketCheck />}
+        trailingIcon={<ArrowRight />}
       >
-        <TicketCheck aria-hidden="true" />
         {actionLabel}
-        <ArrowRight aria-hidden="true" />
-      </Link>
+      </FanAction>
     ) : primaryAction === "watch_live" &&
       live.watch.available &&
       live.watch.url ? (
-      <a
-        className={primaryClass}
+      <FanAction
         href={live.watch.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={externalActionLabel(actionLabel, live.title, locale)}
+        external
+        variant="primary"
+        fullWidth
+        helperText={primaryHelper}
+        leadingIcon={<Play />}
+        trailingIcon={<ExternalLink />}
+        ariaLabel={externalActionLabel(actionLabel, live.title, locale)}
         onClick={rememberWatchReturn}
       >
-        <Play aria-hidden="true" />
         {actionLabel}
-        <ExternalLink aria-hidden="true" />
-      </a>
+      </FanAction>
     ) : primaryAction === "reserve" ? (
-      <button
-        className={primaryClass}
-        type="button"
+      <FanAction
+        variant="primary"
+        fullWidth
         disabled={reservePending}
+        ariaBusy={reservePending}
         onClick={() => void reserve()}
+        leadingIcon={<TicketCheck />}
+        trailingIcon={<ArrowRight />}
       >
-        <TicketCheck aria-hidden="true" />
         {actionLabel}
-        <ArrowRight aria-hidden="true" />
-      </button>
+      </FanAction>
     ) : (
-      <button className={primaryClass} type="button" disabled>
+      <p className={styles.actionStatus} role="status">
         <LockKeyhole aria-hidden="true" />
-        {actionLabel}
-      </button>
+        <span>{actionLabel}</span>
+      </p>
     );
 
   return (
@@ -983,13 +1008,13 @@ export function LiveEventScreen({
                     passportHref={`/passports/${attendance.result.completion.passportId}?locale=${locale}`}
                     note={attendance.replayed ? c.attendance.replay : undefined}
                     primaryAction={
-                      <Link
-                        className={styles.surveyAction}
+                      <FanAction
+                        variant="primary"
                         href={`/live/${slug}/survey?locale=${locale}` as Route}
+                        trailingIcon={<ArrowRight />}
                       >
                         {c.attendance.survey}
-                        <ArrowRight aria-hidden="true" />
-                      </Link>
+                      </FanAction>
                     }
                   />
                 </div>
@@ -1009,11 +1034,11 @@ export function LiveEventScreen({
                       <p>{c.attendance.passport}</p>
                       <FanAction
                         className={styles.attendanceAction}
-                        href={`/c/${live.celebrity.slug}/verify` as Route}
+                        href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
                         variant="passport"
+                        trailingIcon={<ArrowRight />}
                       >
-                        <span>{c.attendance.issuePassport}</span>
-                        <ArrowRight aria-hidden="true" />
+                        {c.attendance.issuePassport}
                       </FanAction>
                     </div>
                   ) : authenticated && live.effectiveStatus === "scheduled" ? (

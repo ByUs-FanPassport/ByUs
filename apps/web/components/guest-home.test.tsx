@@ -116,7 +116,10 @@ describe("canonical 03 guest home", () => {
       expect.stringContaining("passport-open-blank-9-transparent.png"),
     );
     expect(screen.queryByText("로그인하고 내 Passport 확인하기")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /라이브 예약하기/ })).toHaveAttribute("href", "/login?returnTo=%2Flive%2Fadmin-created-live%3Flocale%3Dko&locale=ko&intent=reserve&entity=admin-created-live");
+    expect(screen.getByRole("link", { name: /라이브 예약하기/ }))
+      .toHaveAttribute("href", "/login?returnTo=%2Flive%2Fadmin-created-live%3Flocale%3Dko&locale=ko&intent=reserve&entity=admin-created-live");
+    expect(screen.getByRole("link", { name: /라이브 예약하기/ }))
+      .toHaveAttribute("data-fan-action-emphasis", "primary");
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
   });
 

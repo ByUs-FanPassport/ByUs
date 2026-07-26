@@ -97,7 +97,7 @@
 .fanCount { align-self: start; overflow: hidden; padding-top: 4px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .socialLinks { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 0; margin-left: auto; }
 .socialLink { display: inline-flex; width: 44px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 999rem; color: var(--muted) !important; transition: background 160ms cubic-bezier(.2,0,0,1); }
-.socialLink img { display: block; width: 20px; height: 20px; }
+.socialLink img { display: block; width: 24px; height: 24px; }
 
 
 .liveList { display: grid; gap: 12px; }

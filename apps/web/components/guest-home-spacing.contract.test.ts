@@ -24,15 +24,15 @@ describe("guest home compact icon-only action spacing", () => {
     expect(declarationBlock(".socialLinks")).toMatch(/\bgap:\s*0\b/);
   });
 
-  it("keeps social actions accessible while using 20px brand marks", () => {
+  it("keeps social actions accessible while using denser 24px brand marks", () => {
     const target = declarationBlock(".socialLink");
     const icon = declarationBlock(".socialLink img");
 
     expect(target).toMatch(/\bwidth:\s*44px\b/);
     expect(target).toMatch(/\bmin-width:\s*44px\b/);
     expect(target).toMatch(/\bmin-height:\s*44px\b/);
-    expect(icon).toMatch(/\bwidth:\s*20px\b/);
-    expect(icon).toMatch(/\bheight:\s*20px\b/);
+    expect(icon).toMatch(/\bwidth:\s*24px\b/);
+    expect(icon).toMatch(/\bheight:\s*24px\b/);
   });
 
   it("uses two regular-weight metadata rows and disables live animation for reduced motion", () => {

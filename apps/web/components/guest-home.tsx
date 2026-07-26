@@ -271,7 +271,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
-                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={16} height={16} aria-hidden="true" /></a>)}
+                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={24} height={24} aria-hidden="true" /></a>)}
                       </div>
                     </div>
                   </div>

@@ -63,6 +63,8 @@ export function AuthIntentLink({
   className,
   children,
   ariaLabel,
+  ariaDescribedBy,
+  emphasis,
   focusKey,
 }: {
   input: CreateAuthIntentInput;
@@ -70,6 +72,8 @@ export function AuthIntentLink({
   className?: string;
   children: ReactNode;
   ariaLabel?: string;
+  ariaDescribedBy?: string;
+  emphasis?: "primary";
   focusKey?: string;
 }) {
   const router = useRouter();
@@ -102,8 +106,10 @@ export function AuthIntentLink({
       href={href}
       role="link"
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       aria-busy={!ready || undefined}
       aria-disabled={!ready || undefined}
+      data-fan-action-emphasis={emphasis}
       data-overlay-focus-key={focusKey}
       onClick={begin}
     >

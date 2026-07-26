@@ -7,6 +7,7 @@ import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { FanAction } from "@/components/fan-ui/fan-action";
 import { getNicknameFormat } from "../domain/nickname-format";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
@@ -276,7 +277,9 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
             <p id="nickname-rules" className={styles.rule}>{t.rule}</p>
             <p id="nickname-privacy" className={styles.privacy}>{t.privacy}</p>
             <div className={styles.actions}>
-              <button className={styles.primary} type="submit" disabled={!canSave}>{state === "saving" ? t.saving : state === "saved" ? t.saved : t.save}</button>
+              <FanAction variant="primary" type="submit" disabled={!canSave} ariaBusy={state === "saving"}>
+                {state === "saving" ? t.saving : state === "saved" ? t.saved : t.save}
+              </FanAction>
               <Link className={styles.secondary} href={returnTo as Route}>{t.back}</Link>
             </div>
           </form>

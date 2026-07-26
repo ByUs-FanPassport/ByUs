@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./quiz-result-screen.module.css";
 
 interface QuizResultScreenProps {
@@ -192,9 +193,9 @@ export function QuizResultScreen({
         <section className={styles.error}>
           <h1>{t.loginTitle}</h1>
           <p>{t.loginBody}</p>
-          <Link className={styles.loginAction} href={`/login?returnTo=${encodeURIComponent(resultReturnTo)}&locale=${locale}&intent=passport` as Route}>
+          <FanAction className={styles.resultAction} variant="primary" href={`/login?returnTo=${encodeURIComponent(resultReturnTo)}&locale=${locale}&intent=passport` as Route}>
             {t.login}
-          </Link>
+          </FanAction>
         </section>
       </ResultFrame>
     );
@@ -241,14 +242,16 @@ export function QuizResultScreen({
               <div><span>Stamp</span><strong>Knowledge Stamp</strong><small>{t.earned}</small></div>
               <div><span>Score</span><strong>{t.fanScore}</strong><small>{t.applied}</small></div>
             </div>
-            <Link className={styles.primary} href={withLocale(`/passports/${passportId}/issuance`, locale)}>{t.receivePassport}</Link>
+            <FanAction className={styles.resultAction} variant="primary" href={withLocale(`/passports/${passportId}/issuance`, locale)}>
+              {t.receivePassport}
+            </FanAction>
           </>
         ) : (
           <>
             <p className={styles.helper}>{t.failedHelper}</p>
-            <button className={styles.primary} type="button" disabled={actionPending} aria-busy={actionPending} onClick={() => void retry()}>
+            <FanAction className={styles.resultAction} variant="primary" disabled={actionPending} ariaBusy={actionPending} onClick={() => void retry()}>
               {actionPending ? t.retrying : t.retry}
-            </button>
+            </FanAction>
           </>
         )}
         <Link className={styles.secondary} href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>

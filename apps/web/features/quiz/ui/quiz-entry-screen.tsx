@@ -12,6 +12,7 @@ import { parsePublicQuizIntro, type PublicQuizIntro } from "../domain/quiz-intro
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { appendLoginContext, sanitizeAuthIntentId } from "@/components/login-intent";
 import styles from "./quiz-entry-screen.module.css";
@@ -265,15 +266,17 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
               <li><Check aria-hidden="true" /><span>{t.saved}</span></li>
             </ul>
             {!ready ? (
-              <button className={styles.primaryAction} type="button" disabled>{t.authChecking}</button>
+              <p className={styles.actionStatus} role="status">{t.authChecking}</p>
             ) : authenticated && profileState === "checking" ? (
-              <button className={styles.primaryAction} type="button" disabled>{t.profileChecking}</button>
+              <p className={styles.actionStatus} role="status">{t.profileChecking}</p>
             ) : authenticated && profileState === "error" ? (
-              <button className={styles.primaryAction} type="button" disabled>{t.profileError}</button>
+              <p className={styles.actionStatus} role="alert">{t.profileError}</p>
             ) : authenticated ? (
-              <button className={styles.primaryAction} type="button" disabled={starting} aria-busy={starting} onClick={() => void start()}>{starting ? t.starting : t.start}<ArrowRight aria-hidden="true" /></button>
+              <FanAction className={styles.entryAction} variant="primary" disabled={starting} ariaBusy={starting} onClick={() => void start()} trailingIcon={<ArrowRight />}>
+                {starting ? t.starting : t.start}
+              </FanAction>
             ) : (
-              <AuthIntentLink className={styles.primaryAction} locale={locale} input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>{t.login} <ArrowRight aria-hidden="true" /></AuthIntentLink>
+              <AuthIntentLink className={fanActionClassName("primary", { className: styles.entryAction })} emphasis="primary" locale={locale} input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>{t.login}</AuthIntentLink>
             )}
             {startError && <p className={styles.inlineError} role="alert" tabIndex={-1}>{startError}</p>}
             <p className={styles.note}>{t.note}</p>

@@ -29,13 +29,12 @@
 .mintStatus { padding:24px 16px; border:1px solid oklch(90% 0 0); border-top:0; border-radius:0 0 12px 12px; text-align:center; font-size:14px; font-weight:700; }
 .actionRail { display:grid; width:100%; min-height:68px; place-items:center; padding:8px 16px; background:#fff; }
 .actionStatus { color:oklch(48% 0 0); font-size:14px; font-weight:650; line-height:1.5; text-align:center; }
-.openPassport { display:flex; width:min(100%,610px); min-height:52px; align-items:center; justify-content:center; gap:10px; margin:0 auto; border-radius:999rem; background:oklch(18% 0 0); color:#fff; text-decoration:none; font-size:16px; font-weight:800; }
+.openPassport { margin:0 auto; }
 .openPassport svg { width:18px; }
 .screen :is(button,a):focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 .state { display:grid; width:min(calc(100% - 32px),560px); min-height:calc(100dvh - 68px); place-content:center; justify-items:center; gap:16px; margin:auto; text-align:center; }
 .state h1,.state p { margin:0; }
 .state p { color:oklch(48% 0 0); line-height:1.6; }
-.state :is(a,button) { display:flex; min-height:48px; align-items:center; justify-content:center; gap:8px; padding:0 22px; border:0; border-radius:999rem; background:oklch(18% 0 0); color:#fff; font:inherit; font-weight:800; text-decoration:none; cursor:pointer; }
 .state button + a { background:#fff; color:oklch(18% 0 0); box-shadow:inset 0 0 0 1px oklch(76% 0 0); }
 .state svg { width:18px; }
 @media (max-width:767px) {

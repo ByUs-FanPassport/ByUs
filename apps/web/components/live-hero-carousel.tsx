@@ -231,6 +231,7 @@ export function LiveHeroCarousel({
                 {featuredLive.primaryAction === "sign_in_to_reserve" ? (
                   <AuthIntentLink
                     className={styles.primaryButton}
+                    emphasis="primary"
                     locale={locale}
                     input={{
                       sourcePath: detailHref,
@@ -243,7 +244,7 @@ export function LiveHeroCarousel({
                     <span><Play />{heroActionLabel}</span><ArrowRight />
                   </AuthIntentLink>
                 ) : (
-                  <Link className={styles.primaryButton} href={`${detailHref}?locale=${locale}` as Route}>
+                  <Link data-fan-action-emphasis="primary" className={styles.primaryButton} href={`${detailHref}?locale=${locale}` as Route}>
                     <span><Play />{heroActionLabel}</span><ArrowRight />
                   </Link>
                 )}
