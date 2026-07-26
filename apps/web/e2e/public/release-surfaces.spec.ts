@@ -25,6 +25,74 @@ test("the removed image credits route returns 404", async ({ page }) => {
   }
 });
 
+test("the intercepted benefit detail stays within its adaptive overlay", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/benefits?locale=ko&celebrity=katseye", {
+    waitUntil: "domcontentloaded",
+  });
+  const trigger = page
+    .getByRole("link", { name: /혜택 자세히 보기/ })
+    .first();
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "혜택 상세" });
+  await expect(dialog).toBeVisible();
+  const metrics = await dialog.evaluate((element) => {
+    const main = element.querySelector("main");
+    if (!(main instanceof HTMLElement)) {
+      throw new Error("The benefit overlay main landmark is missing");
+    }
+    const dialogRect = element.getBoundingClientRect();
+    const mainRect = main.getBoundingClientRect();
+    return {
+      variant: element.getAttribute("data-variant"),
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      dialog: {
+        left: dialogRect.left,
+        top: dialogRect.top,
+        right: dialogRect.right,
+        bottom: dialogRect.bottom,
+        width: dialogRect.width,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      },
+      main: {
+        left: mainRect.left,
+        right: mainRect.right,
+        clientWidth: main.clientWidth,
+        scrollWidth: main.scrollWidth,
+      },
+    };
+  });
+
+  expect(metrics.dialog.scrollWidth).toBeLessThanOrEqual(metrics.dialog.clientWidth);
+  expect(metrics.main.scrollWidth).toBeLessThanOrEqual(metrics.main.clientWidth);
+  expect(metrics.dialog.left).toBeGreaterThanOrEqual(0);
+  expect(metrics.dialog.top).toBeGreaterThanOrEqual(0);
+  expect(metrics.dialog.right).toBeLessThanOrEqual(metrics.viewport.width);
+  expect(metrics.dialog.bottom).toBeLessThanOrEqual(metrics.viewport.height);
+  expect(metrics.main.left).toBeGreaterThanOrEqual(metrics.dialog.left);
+  expect(metrics.main.right).toBeLessThanOrEqual(metrics.dialog.right);
+
+  if (metrics.viewport.width >= 768) {
+    expect(metrics.variant).toBe("drawer");
+    expect(metrics.dialog.width).toBe(620);
+  } else {
+    expect(metrics.variant).toBe("bottom-sheet");
+    expect(metrics.dialog.width).toBe(metrics.viewport.width);
+  }
+
+  const accessibility = await new AxeBuilder({ page })
+    .include('[role="dialog"]')
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
+
 for (const surface of surfaces) {
   test(`${surface.screen} ${surface.name} is responsive and accessible`, async ({ page }, testInfo) => {
     const browserErrors = observeBrowserErrors(page);

@@ -12,10 +12,18 @@
 }
 
 .backdrop [data-overlay-content] {
+  box-sizing: border-box;
+  min-width: 0;
   max-width: 100%;
   max-height: 100dvh;
   overscroll-behavior: contain;
   animation: overlay-content-in var(--motion-layout) cubic-bezier(.2, .8, .2, 1);
+}
+
+.backdrop [data-overlay-content] *,
+.backdrop [data-overlay-content] *::before,
+.backdrop [data-overlay-content] *::after {
+  box-sizing: border-box;
 }
 
 .backdrop [data-variant="drawer"] {
