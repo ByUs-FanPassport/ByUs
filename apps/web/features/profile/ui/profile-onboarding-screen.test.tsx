@@ -77,6 +77,10 @@ describe("FAN-005 profile onboarding", () => {
     expect(screen.getByLabelText("6/16자")).toBeInTheDocument();
     expect(screen.getByText("사용 가능한 형식이에요. 저장할 때 중복 여부를 확인합니다.")).toBeInTheDocument();
     expect(save).toBeEnabled();
+
+    fireEvent.change(input, { target: { value: "Jewel_KAT" } });
+    expect(screen.getByLabelText("9/16자")).toBeInTheDocument();
+    expect(save).toBeEnabled();
   });
 
   it.each([

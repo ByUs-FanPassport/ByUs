@@ -6,12 +6,20 @@ describe("FAN-005 profile domain", () => {
     expect(normalizeNickname("  Ｆａｎ１２  ")).toEqual({ nickname: "Fan12", normalized: "fan12" });
   });
 
-  it.each(["a", "a".repeat(17), "fan name", "fan_name", "fan\u200b", "fan\u202e", "가나다🙂"])(
+  it.each([
+    ["Jewel_KAT", "jewel_kat"],
+    ["John 팬", "john 팬"],
+    ["fan-name", "fan-name"],
+  ])("accepts supported separators in %j", (nickname, normalized) => {
+    expect(normalizeNickname(nickname)).toEqual({ nickname, normalized });
+  });
+
+  it.each(["a", "a".repeat(17), "fan\tname", "fan\nname", "fan\u200b", "fan\u202e", "가나다🙂"])(
     "rejects invalid or abnormal nickname %j",
     (nickname) => expect(() => normalizeNickname(nickname)).toThrowError(expect.objectContaining({ reason: "invalid" })),
   );
 
-  it.each(["ByUsFan", "KARA짱", "KATSEYEFan", "캣츠아이팬", "관리자1", "officialFan", "씨발팬"])(
+  it.each(["ByUsFan", "By_Us", "KARA짱", "KATSEYEFan", "KAT_SEYE", "캣츠아이팬", "관리자1", "officialFan", "씨발팬"])(
     "rejects prohibited nickname %j",
     (nickname) => expect(() => normalizeNickname(nickname)).toThrowError(expect.objectContaining({ reason: "prohibited" })),
   );

@@ -302,6 +302,32 @@ describe("FAN-020 settings", () => {
     expect(screen.getByText("0x1234…cdef")).toBeInTheDocument();
   });
 
+  it("uses the shared separator-aware nickname format before PUT", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    const save = screen.getByRole("button", { name: "저장" });
+
+    fireEvent.change(input, { target: { value: "J" } });
+    expect(save).toBeDisabled();
+
+    fireEvent.change(input, { target: { value: "  Ｊｅｗｅｌ＿ＫＡＴ  " } });
+    expect(screen.getByLabelText("9/16")).toBeInTheDocument();
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/me/nickname",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({ nickname: "Jewel_KAT" }),
+        }),
+      ),
+    );
+  });
+
   it("persists language and integrates the notification preference contract", async () => {
     render(<SettingsScreen locale="ko" />);
     await screen.findByRole("heading", { name: "설정" });

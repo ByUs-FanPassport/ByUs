@@ -7,6 +7,7 @@ import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
+import { getNicknameFormat } from "../domain/nickname-format";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
 import styles from "./profile-onboarding-screen.module.css";
@@ -59,18 +60,7 @@ const copy: Record<"ko" | "en", Copy> = {
   },
 };
 
-const allowedNickname = /^[\p{Script=Hangul}\p{Script=Latin}\p{Number} _-]+$/u;
 const draftStorageKey = "byus:profile-nickname-draft";
-
-function graphemeCount(value: string, locale: "ko" | "en") {
-  return [...new Intl.Segmenter(locale, { granularity: "grapheme" }).segment(value)].length;
-}
-
-function isLocallyValid(value: string, locale: "ko" | "en") {
-  const normalized = value.normalize("NFKC").trim();
-  const length = graphemeCount(normalized, locale);
-  return length >= 2 && length <= 16 && allowedNickname.test(normalized);
-}
 
 async function jsonBody(response: Response) {
   try { return await response.json() as { profile?: { completed?: boolean; nickname?: string | null }; error?: { code?: string; details?: { reason?: string } } }; }
@@ -97,9 +87,10 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
   const locale = useMemo(() => sanitizeLocale(rawLocale), [rawLocale]);
   const context = useMemo(() => ({ returnTo, intent, entity, locale, authIntent }), [authIntent, entity, intent, locale, returnTo]);
   const t = copy[locale];
-  const normalized = nickname.normalize("NFKC").trim();
-  const count = graphemeCount(nickname, locale);
-  const localValid = isLocallyValid(nickname, locale);
+  const nicknameFormat = getNicknameFormat(nickname);
+  const normalized = nicknameFormat.nickname;
+  const count = nicknameFormat.length;
+  const localValid = nicknameFormat.valid;
 
   const currentOnboardingPath = appendLoginContext("/onboarding/profile", context);
 
@@ -139,21 +130,21 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         }
         const draft = sessionStorage.getItem(draftStorageKey) ?? "";
         setNickname(draft);
-        setState(draft ? isLocallyValid(draft, locale) ? "valid" : "typing" : "empty");
+        setState(draft ? getNicknameFormat(draft).valid ? "valid" : "typing" : "empty");
         requestAnimationFrame(() => inputRef.current?.focus());
       } catch (error) {
         if ((error as Error).name !== "AbortError") setState("network");
       }
     })();
     return () => controller.abort();
-  }, [authenticated, context, currentOnboardingPath, getAccessToken, locale, ready, replace, returnTo]);
+  }, [authenticated, context, currentOnboardingPath, getAccessToken, ready, replace, returnTo]);
 
   const updateNickname = useCallback((value: string) => {
     setNickname(value);
     sessionStorage.setItem(draftStorageKey, value);
     if (!value) setState("empty");
-    else setState(isLocallyValid(value, locale) ? "valid" : "typing");
-  }, [locale]);
+    else setState(getNicknameFormat(value).valid ? "valid" : "typing");
+  }, []);
 
   const focusNickname = () => {
     requestAnimationFrame(() => inputRef.current?.focus());

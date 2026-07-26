@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getNicknameFormat } from "./nickname-format";
 
 export const NICKNAME_CATALOG_VERSION = "fan-nickname-v1" as const;
 
@@ -13,7 +14,6 @@ export const fanProfileSchema = z.object({
 
 export type FanProfile = z.infer<typeof fanProfileSchema>;
 
-const allowedNickname = /^[A-Za-z0-9가-힣]+$/u;
 const prohibitedNicknameEntries = [
   "admin", "administrator", "system", "operator", "official",
   "관리자", "운영자", "공식", "byus", "바이어스", "kara", "카라", "katseye", "캣츠아이",
@@ -29,17 +29,22 @@ export class NicknameValidationError extends Error {
   }
 }
 
-/** Mirrors the database boundary: trim ordinary form spaces, then apply NFKC. */
+/** Mirrors the database boundary and adds the versioned prohibited-name check. */
 export function normalizeNickname(input: string): { nickname: string; normalized: string } {
-  const nickname = input.replace(/^ +| +$/g, "").normalize("NFKC");
-  const length = Array.from(nickname).length;
-  if (length < 2 || length > 16 || !allowedNickname.test(nickname)) {
+  const format = getNicknameFormat(input);
+  if (!format.valid) {
     throw new NicknameValidationError("invalid");
   }
 
-  const normalized = nickname.toLowerCase();
-  if (prohibitedNicknameEntries.some((entry) => normalized.includes(entry))) {
+  const prohibitedCandidate = format.normalized.replace(/[ _-]+/g, "");
+  if (
+    prohibitedNicknameEntries.some(
+      (entry) =>
+        format.normalized.includes(entry)
+        || prohibitedCandidate.includes(entry),
+    )
+  ) {
     throw new NicknameValidationError("prohibited");
   }
-  return { nickname, normalized };
+  return { nickname: format.nickname, normalized: format.normalized };
 }

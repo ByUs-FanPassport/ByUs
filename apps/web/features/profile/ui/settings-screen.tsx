@@ -13,6 +13,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import { getNicknameFormat } from "../domain/nickname-format";
 import {
   enablePushNotifications,
 } from "../../notification/ui/push-subscription";
@@ -80,7 +81,7 @@ const copy = {
     save: "저장",
     saving: "저장 중…",
     cancel: "취소",
-    nicknameRule: "2–16자, 한글·영문·숫자를 사용할 수 있어요.",
+    nicknameRule: "한글, 영문, 숫자, 공백, 밑줄, 하이픈을 사용해 2–16자로 입력해 주세요.",
     language: "언어",
     languageHelp: "선택한 언어는 이 브라우저에 저장됩니다.",
     korean: "한국어",
@@ -136,7 +137,7 @@ const copy = {
     save: "Save",
     saving: "Saving…",
     cancel: "Cancel",
-    nicknameRule: "Use 2–16 Korean or Latin letters and numbers.",
+    nicknameRule: "Use 2–16 Korean or Latin letters, numbers, spaces, underscores, or hyphens.",
     language: "Language",
     languageHelp: "Your selection is saved in this browser.",
     korean: "한국어",
@@ -294,6 +295,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   async function rename(event: FormEvent) {
     event.preventDefault();
+    const nicknameFormat = getNicknameFormat(nickname);
+    if (!nicknameFormat.valid) {
+      setMessage(t.invalid);
+      nicknameRef.current?.focus();
+      return;
+    }
     setSaving(true);
     setMessage("");
     try {
@@ -302,7 +309,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const response = await fetch("/api/me/nickname", {
         method: "PUT",
         headers: { ...authHeaders(token), "content-type": "application/json" },
-        body: JSON.stringify({ nickname }),
+        body: JSON.stringify({ nickname: nicknameFormat.nickname }),
       });
       const body = (await response.json()) as {
         profile?: { nickname: string };
@@ -469,12 +476,20 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 ref={nicknameRef}
                 id="settings-nickname"
                 value={nickname}
-                onChange={(event) => setNickname(event.target.value)}
-                maxLength={16}
+                onChange={(event) => {
+                  setNickname(event.target.value);
+                  setMessage("");
+                }}
+                maxLength={32}
                 autoComplete="nickname"
                 aria-describedby="nickname-rule settings-message"
               />
-              <small id="nickname-rule">{t.nicknameRule}</small>
+              <span className={styles.nicknameRule}>
+                <small id="nickname-rule">{t.nicknameRule}</small>
+                <small aria-label={`${getNicknameFormat(nickname).length}/16`}>
+                  {getNicknameFormat(nickname).length}/16
+                </small>
+              </span>
               <div>
                 <button
                   type="button"
@@ -488,7 +503,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 </button>
                 <button
                   className={styles.primary}
-                  disabled={saving}
+                  disabled={saving || !getNicknameFormat(nickname).valid}
                   type="submit"
                 >
                   {saving ? t.saving : t.save}

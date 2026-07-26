@@ -35,8 +35,34 @@ describe("FAN-005 profile routes", () => {
   });
 
   it.each([
-    [{ nickname: "fan name" }, "INVALID_NICKNAME"],
+    ["Jewel_KAT", "Jewel_KAT"],
+    ["John 팬", "John 팬"],
+    ["fan-name", "fan-name"],
+  ])("persists the supported nickname %j", async (input, nickname) => {
+    const dependencies = {
+      authorize: vi.fn().mockResolvedValue({ appUserId: "user-1" }),
+      repository: {
+        get: vi.fn(),
+        setNickname: vi.fn().mockResolvedValue({
+          completed: true,
+          nickname,
+        }),
+      },
+    };
+    const response = await createPostNicknameHandler(dependencies)(
+      request("POST", { nickname: input }),
+    );
+    expect(response.status).toBe(200);
+    expect(dependencies.repository.setNickname).toHaveBeenCalledWith({
+      appUserId: "user-1",
+      nickname,
+    });
+  });
+
+  it.each([
+    [{ nickname: "fan\nname" }, "INVALID_NICKNAME"],
     [{ nickname: "KARAFan" }, "NICKNAME_PROHIBITED"],
+    [{ nickname: "KAT_SEYE" }, "NICKNAME_PROHIBITED"],
     [{ nickname: "fan", extra: true }, "INVALID_NICKNAME"],
   ] as const)("rejects invalid body %o with %s", async (body, code) => {
     const dependencies = {

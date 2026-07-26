@@ -121,6 +121,18 @@
   font-size: 12px;
   line-height: 1.5;
 }
+.nicknameRule {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.nicknameRule small:first-child {
+  max-width: 54ch;
+}
+.nicknameRule small:last-child {
+  flex: 0 0 auto;
+}
 .renameForm > div {
   display: flex;
   justify-content: flex-end;
