@@ -256,7 +256,7 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
   const totalQuestions = projection.questions.length;
 
   return (
-    <QuizFrame locale={locale}>
+    <QuizFrame locale={locale} topAligned>
       <section className={styles.quiz} aria-labelledby="question-heading">
         <Link className={styles.exitLink} href={withLocale(`/c/${slug}`, locale)}><ArrowLeft aria-hidden="true" />{t.exit}</Link>
         <header className={styles.quizHeader}>
@@ -303,11 +303,24 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
   );
 }
 
-function QuizFrame({ children, locale }: { children: React.ReactNode; locale: FanLocale }) {
+function QuizFrame({
+  children,
+  locale,
+  topAligned = false,
+}: {
+  children: React.ReactNode;
+  locale: FanLocale;
+  topAligned?: boolean;
+}) {
   return (
     <FocusFlowFrame locale={locale} mainId="fan-verification-questions-main">
       <main className={styles.page} id="fan-verification-questions-main" tabIndex={-1}>
-        <div className={styles.shell}>{children}</div>
+        <div
+          className={topAligned ? `${styles.shell} ${styles.shellTopAligned}` : styles.shell}
+          data-content-alignment={topAligned ? "top" : "center"}
+        >
+          {children}
+        </div>
       </main>
     </FocusFlowFrame>
   );

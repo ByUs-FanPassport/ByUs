@@ -45,6 +45,8 @@ describe("QuizEntryScreen", () => {
 
     render(<QuizEntryScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("heading", { name: /KARA를 향한/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /KARA를 향한/ })
+      .closest('[data-content-alignment="top"]')).not.toBeNull();
     expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     const home = screen.getByRole("link", { name: "ByUs 홈" });
     expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute("src", "/images/guest-home/byus-wordmark.svg");
@@ -85,6 +87,8 @@ describe("QuizEntryScreen", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ intro: { ...intro, quiz: { ...intro.quiz, availability: "unavailable" } } }));
     render(<QuizEntryScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("heading", { name: "아직 팬 인증 퀴즈가 준비되지 않았어요." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "아직 팬 인증 퀴즈가 준비되지 않았어요." })
+      .closest('[data-content-alignment="center"]')).not.toBeNull();
     expect(screen.getByRole("link", { name: "팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -107,6 +111,8 @@ describe("QuizEntryScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ error: { code: "NOT_FOUND" } }, { status: 404 }));
     render(<QuizEntryScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("현재 참여할 수 있는 팬 인증 퀴즈가 없어요.");
+    expect(screen.getByRole("alert")
+      .closest('[data-content-alignment="center"]')).not.toBeNull();
     expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 

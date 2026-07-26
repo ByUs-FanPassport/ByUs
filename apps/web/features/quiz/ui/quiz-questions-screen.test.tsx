@@ -86,6 +86,8 @@ describe("FAN-007 quiz questions", () => {
     render(<QuizQuestionsScreen locale="ko" slug="kara" />);
 
     expect(await screen.findByRole("group", { name: "공식 팬덤명은?" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "공식 팬덤명은?" })
+      .closest('[data-content-alignment="top"]')).not.toBeNull();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "팬 인증 진행률" })).toHaveAttribute("aria-valuenow", "2");
     expect(screen.getByRole("link", { name: "인증을 나가고 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
@@ -175,6 +177,8 @@ describe("FAN-007 quiz questions", () => {
     privyState = { ready: false, authenticated: false };
     const { rerender } = render(<QuizQuestionsScreen locale="ko" slug="kara" />);
     expect(screen.getByRole("status", { name: "팬 인증 퀴즈 불러오는 중" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "팬 인증 퀴즈 불러오는 중" })
+      .closest('[data-content-alignment="center"]')).not.toBeNull();
 
     privyState = { ready: true, authenticated: false };
     rerender(<QuizQuestionsScreen locale="ko" slug="kara" />);
@@ -182,11 +186,15 @@ describe("FAN-007 quiz questions", () => {
       "href",
       "/login?returnTo=%2Fc%2Fkara%2Fverify%2Fquestions%3Flocale%3Dko&locale=ko&intent=passport",
     );
+    expect(screen.getByRole("link", { name: "로그인하고 계속하기" })
+      .closest('[data-content-alignment="center"]')).not.toBeNull();
 
     privyState = { ready: true, authenticated: true };
     vi.spyOn(globalThis, "fetch").mockImplementation(() => json({ result: { kind: "attempt", ...attempt(), isCorrect: true } }));
     rerender(<QuizQuestionsScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("퀴즈 정보를 안전하게 불러오지 못했어요");
+    expect(screen.getByRole("alert")
+      .closest('[data-content-alignment="center"]')).not.toBeNull();
     expect(screen.queryByText(/isCorrect/i)).not.toBeInTheDocument();
     expect(within(screen.getByRole("alert")).getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });

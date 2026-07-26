@@ -1,6 +1,7 @@
 .page { min-height:calc(100svh - 68px); background:#fff; color:oklch(18% 0 0); font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .page *,.page *::before,.page *::after { box-sizing:border-box; }
 .shell { display:grid; width:min(100%,760px); min-height:calc(100svh - 68px); margin-inline:auto; padding:40px 16px; place-items:center; }
+.shellTopAligned { align-content:start; align-items:start; padding-top:32px; }
 .quiz { width:100%; }
 .exitLink { display:inline-flex; min-height:44px; align-items:center; gap:8px; margin-bottom:24px; color:oklch(48% 0 0); font-size:14px; font-weight:650; text-decoration:none; }
 .exitLink svg { width:18px; height:18px; }
@@ -43,6 +44,6 @@
 .loading span { height:56px; border-radius:12px; background:oklch(97.5% 0 0); animation:pulse 1.2s ease-in-out infinite alternate; }
 .loading p { grid-column:1/-1; margin-top:8px; color:oklch(48% 0 0); font-size:14px; text-align:center; }
 @keyframes pulse { to { background:oklch(93% 0 0); } }
-@media (min-width:48rem) { .shell { padding-inline:32px; } .quizHeader h1 { font-size:24px; } .question legend { font-size:36px; } }
+@media (min-width:48rem) { .shell { padding-inline:32px; } .shellTopAligned { padding-top:64px; } .quizHeader h1 { font-size:24px; } .question legend { font-size:36px; } }
 @media (hover:hover) and (pointer:fine) { .option:hover { background:oklch(97.5% 0 0); } .previous:hover,.secondaryAction:hover { background:oklch(97.5% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }

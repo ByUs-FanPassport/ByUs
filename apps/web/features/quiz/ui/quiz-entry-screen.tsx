@@ -223,10 +223,17 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
     void start();
   }, [authenticated, profileState, screen, slug, start]);
 
+  const topAligned =
+    screen.kind === "ready" &&
+    screen.intro.quiz.availability === "available";
+
   return (
     <FocusFlowFrame locale={locale} mainId="fan-verification-intro-main">
       <main className={styles.page} id="fan-verification-intro-main" tabIndex={-1}>
-      <div className={styles.shell}>
+      <div
+        className={topAligned ? `${styles.shell} ${styles.shellTopAligned}` : styles.shell}
+        data-content-alignment={topAligned ? "top" : "center"}
+      >
         {screen.kind === "loading" && (
           <div className={styles.loading} role="status" aria-label={t.loadingAria}>
             <span /><span /><span /><p>{t.loading}</p>
