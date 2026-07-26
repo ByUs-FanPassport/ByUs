@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -17,15 +17,8 @@ const tool = readFileSync(
   fileURLToPath(new URL("./katseye-public-dataset.mjs", import.meta.url)),
   "utf8",
 );
-const creditsPage = readFileSync(
-  fileURLToPath(new URL("../apps/web/app/credits/page.tsx", import.meta.url)),
-  "utf8",
-);
-const attributionModule = readFileSync(
-  fileURLToPath(
-    new URL("../apps/web/app/credits/katseye-attribution.ts", import.meta.url),
-  ),
-  "utf8",
+const creditsPagePath = fileURLToPath(
+  new URL("../apps/web/app/credits/page.tsx", import.meta.url),
 );
 const attributionPath = fileURLToPath(
   new URL(
@@ -228,12 +221,9 @@ test("verify hashes a deterministic stored dataset snapshot", () => {
   );
 });
 
-test("credits render only from the validated attribution manifest", () => {
-  assert.match(attributionModule, /attributionSchema\.parse\(rawAttribution\)/);
-  assert.match(attributionModule, /Derivative paths must be unique/);
-  assert.match(creditsPage, /katseyeAttribution\.sources\.map/);
-  assert.doesNotMatch(creditsPage, /const sources =/);
-  assert.doesNotMatch(creditsPage, /Warmtoned|David Lee/);
+test("the public credits page is removed while attribution records remain internal", () => {
+  assert.equal(existsSync(creditsPagePath), false);
+  assert.ok(attribution.sources.length > 0);
 });
 
 test("attribution records exact derivative hashes, dimensions, bytes, encoder, and crop", () => {

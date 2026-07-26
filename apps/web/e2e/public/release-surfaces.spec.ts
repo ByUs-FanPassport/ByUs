@@ -14,6 +14,13 @@ const surfaces = [
   { screen: "ADM-001", name: "admin-login", path: "/admin/login" },
 ] as const;
 
+test("the removed image credits route returns 404", async ({ page }) => {
+  for (const path of ["/credits", "/credits?locale=en"]) {
+    const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(404);
+  }
+});
+
 for (const surface of surfaces) {
   test(`${surface.screen} ${surface.name} is responsive and accessible`, async ({ page }, testInfo) => {
     const browserErrors = observeBrowserErrors(page);

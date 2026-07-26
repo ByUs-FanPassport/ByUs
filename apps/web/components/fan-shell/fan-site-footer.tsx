@@ -16,10 +16,8 @@ const copy = {
     passports: "Fan Passport",
     benefits: "혜택",
     notifications: "알림",
-    contact: "문의하기",
     privacy: "개인정보처리방침",
     terms: "이용약관",
-    credits: "이미지 출처",
     nav: "ByUs 하단 메뉴",
   },
   en: {
@@ -31,10 +29,8 @@ const copy = {
     passports: "Fan Passport",
     benefits: "Benefits",
     notifications: "Notifications",
-    contact: "Contact",
     privacy: "Privacy Policy",
     terms: "Terms of Use",
-    credits: "Image credits",
     nav: "ByUs footer navigation",
   },
 } as const;
@@ -53,9 +49,6 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} />
           </Link>
           <p>{t.tagline}</p>
-          <a className={styles.contact} href="mailto:biz@sallylab.io" aria-label={`${t.contact}: biz@sallylab.io`}>
-            biz@sallylab.io
-          </a>
         </div>
 
         <nav className={styles.navigation} aria-label={t.nav}>
@@ -74,10 +67,8 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           </section>
           <section>
             <h2>{t.guide}</h2>
-            <a href="mailto:biz@sallylab.io">{t.contact}</a>
             <Link href="/privacy" aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
             <Link href="/terms" aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
-            <Link href={fanHref("/credits", locale)} aria-label={locale === "ko" ? "이미지 출처 열기" : "Open image credits"}>{t.credits}</Link>
           </section>
         </nav>
       </FanContentContainer>

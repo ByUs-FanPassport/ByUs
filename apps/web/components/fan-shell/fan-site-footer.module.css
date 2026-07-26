@@ -45,16 +45,6 @@
   text-wrap: pretty;
 }
 
-.contact {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  color: var(--footer-ink);
-  font-size: 14px;
-  font-weight: 750;
-  text-underline-offset: 4px;
-}
-
 .navigation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -136,8 +126,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .navigation a:hover,
-  .legal a:hover,
-  .contact:hover {
+  .legal a:hover {
     color: var(--footer-ink);
   }
 }
