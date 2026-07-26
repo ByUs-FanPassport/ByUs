@@ -28,7 +28,7 @@ const featuredLive = {
     id: "819b52d9-62c3-450c-b3dc-78d84d2238c6", slug: "admin-created-live", effectiveStatus: "scheduled" as const,
     startsAt: "2026-07-24T11:00:00.000Z", endsAt: "2026-07-24T12:00:00.000Z", reservationOpensAt: "2026-07-20T00:00:00.000Z", reservationClosesAt: "2026-07-24T11:00:00.000Z",
     title: "관리자가 등록한 LIVE", description: "설명", productContext: "제품", heroImage: { url: "/images/guest-home/kara-hero.png", alt: "관리자 LIVE" },
-    celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/brand.png", websiteUrl: null }, watch: { available: false, url: "https://youtube.com/live/abc" },
+    celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg", fanCount: 12_800_000 }, brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/brand.png", websiteUrl: null }, watch: { available: false, url: "https://youtube.com/live/abc" },
   },
   viewer: { authenticated: false, passport: "missing" as const, reservation: null }, primaryAction: "sign_in_to_reserve" as const,
 };
@@ -221,6 +221,7 @@ describe("canonical 03 guest home", () => {
           slug: "elina",
           name: "Elina",
           image: "/images/guest-home/elina-card.jpg",
+          fanCount: 3_200_000,
         },
       },
     };
@@ -236,6 +237,7 @@ describe("canonical 03 guest home", () => {
           slug: "changha",
           name: "Changha",
           image: "/images/guest-home/changha-card.jpg",
+          fanCount: 1_450_000,
         },
       },
     };

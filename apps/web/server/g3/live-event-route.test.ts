@@ -19,7 +19,12 @@ const payload = {
     description: "함께 시청해요",
     productContext: "여름 뷰티",
     heroImage: { url: "/hero.jpg", alt: "KARA" },
-    celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" },
+    celebrity: {
+      slug: "kara",
+      name: "KARA",
+      image: "/kara.jpg",
+      fanCount: 12_800_000,
+    },
     brand: {
       slug: "meriq",
       name: "Meriq",

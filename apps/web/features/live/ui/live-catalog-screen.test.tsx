@@ -21,7 +21,12 @@ const base = {
     description: "LIVE",
     productContext: "Brand",
     heroImage: { url: "/images/live.jpg", alt: "KARA LIVE" },
-    celebrity: { slug: "kara", name: "KARA", image: "/images/kara.jpg" },
+    celebrity: {
+      slug: "kara",
+      name: "KARA",
+      image: "/images/kara.jpg",
+      fanCount: 12_800_000,
+    },
     brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/logo.svg", websiteUrl: null },
     watch: { available: false, mode: "unavailable" as const, url: "https://youtube.com/live/abc" },
   },

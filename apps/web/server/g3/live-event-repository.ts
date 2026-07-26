@@ -50,7 +50,13 @@ export interface LiveEventRecord {
   title: string;
   description: string;
   heroAlt: string;
-  celebrity: { id: string; slug: string; name: string; image: string };
+  celebrity: {
+    id: string;
+    slug: string;
+    name: string;
+    image: string;
+    fanCount: number;
+  };
   brand: {
     slug: string;
     name: string;
@@ -180,6 +186,7 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
           slug: record.celebrity.slug,
           name: record.celebrity.name,
           image: record.celebrity.image,
+          fanCount: record.celebrity.fanCount,
         },
         brand: {
           slug: record.brand.slug,
@@ -250,7 +257,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
 
     const [localizationResult, celebrityResult, brandResult, overridesResult, previewResult] = await Promise.all([
       this.database.from("live_event_localizations").select("title, summary, hero_alt").eq("live_event_id", event.id).eq("locale", locale).maybeSingle(),
-      this.database.from("celebrities").select("id, slug, image_url, celebrity_localizations!inner(name)").eq("id", event.celebrity_id).eq("status", "published").eq("celebrity_localizations.locale", locale).maybeSingle(),
+      this.database.from("celebrities").select("id, slug, image_url, fan_count, celebrity_localizations!inner(name)").eq("id", event.celebrity_id).eq("status", "published").eq("celebrity_localizations.locale", locale).maybeSingle(),
       this.database.from("brands").select("slug, logo_url, website_url, brand_localizations!inner(name, description)").eq("id", event.brand_id).eq("status", "published").eq("brand_localizations.locale", locale).maybeSingle(),
       this.database.from("live_status_overrides").select("effective_status, effective_from, effective_until, created_at").eq("live_event_id", event.id),
       this.database
@@ -291,6 +298,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
         slug: celebrity.slug,
         name: celebrityLocalization.name,
         image: celebrity.image_url,
+        fanCount: celebrity.fan_count,
       },
       brand: {
         slug: brand.slug,

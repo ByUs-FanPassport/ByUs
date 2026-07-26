@@ -49,6 +49,7 @@ import {
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
+import { formatFanCount } from "@/components/fan-ui/fan-count";
 import {
   createLiveAttendanceResponseSchema,
   isNormalizedFanCodeValid,
@@ -132,6 +133,7 @@ const copy = {
     },
     reservationPeriod: "예약 기간",
     eventTime: "LIVE 일정",
+    timeZone: "기준 시간 KST (GMT+9)",
     reservePending: "예약 처리 중",
     reserveError:
       "예약을 완료하지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요.",
@@ -208,6 +210,7 @@ const copy = {
     },
     reservationPeriod: "Reservation period",
     eventTime: "LIVE schedule",
+    timeZone: "Time zone KST (GMT+9)",
     reservePending: "Reserving",
     reserveError:
       "We couldn’t complete your reservation. Check the status and try again.",
@@ -251,7 +254,6 @@ function formatDateTime(iso: string, locale: Locale) {
     weekday: "short",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
   }).format(new Date(iso));
 }
 
@@ -905,32 +907,34 @@ export function LiveEventScreen({
                 {statusLabel}
               </span>
             )}
-            <div>
-              <p className={styles.brand}>{live.brand.name}</p>
+            <div className={styles.titleGroup}>
               <h1>{live.title}</h1>
             </div>
-            <dl className={styles.schedule}>
-              <div>
-                <dt>
-                  <CalendarDays aria-hidden="true" />
-                  {c.eventTime}
-                </dt>
-                <dd>{formatDateTime(live.startsAt, locale)}</dd>
-              </div>
-              <div>
-                <dt>
-                  <Clock3 aria-hidden="true" />
-                  {c.reservationPeriod}
-                </dt>
-                <dd>
-                  {formatRange(
-                    live.reservationOpensAt,
-                    live.reservationClosesAt,
-                    locale,
-                  )}
-                </dd>
-              </div>
-            </dl>
+            <div className={styles.scheduleGroup}>
+              <dl className={styles.schedule}>
+                <div>
+                  <dt>
+                    <CalendarDays aria-hidden="true" />
+                    {c.eventTime}
+                  </dt>
+                  <dd>{formatDateTime(live.startsAt, locale)}</dd>
+                </div>
+                <div>
+                  <dt>
+                    <Clock3 aria-hidden="true" />
+                    {c.reservationPeriod}
+                  </dt>
+                  <dd>
+                    {formatRange(
+                      live.reservationOpensAt,
+                      live.reservationClosesAt,
+                      locale,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <p className={styles.timeZone}>{c.timeZone}</p>
+            </div>
             {hasPrimaryActionControl ? (
               <div
                 className={styles.primaryActionSlot}
@@ -1148,7 +1152,7 @@ export function LiveEventScreen({
             <Image src={live.celebrity.image} alt="" width={64} height={64} />
             <div>
               <span>{live.celebrity.name}</span>
-              <strong>{live.brand.name}</strong>
+              <strong>{formatFanCount(live.celebrity.fanCount)}</strong>
             </div>
             <Link
               href={`/c/${live.celebrity.slug}` as Route}

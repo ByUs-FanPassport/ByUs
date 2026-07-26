@@ -12,9 +12,9 @@
 .heroCopy h1 { font-size:40px; font-weight:850; letter-spacing:-.04em; line-height:1; text-wrap:balance; }
 .heroCopy span { max-width:48ch; color:rgb(255 255 255 / 90%); font-size:14px; font-weight:550; line-height:1.55; }
 .heroAction { position:absolute; z-index:2; right:24px; bottom:24px; left:24px; }
-.page .heroAction > a { display:flex; width:100%; min-height:52px; align-items:center; justify-content:space-between; padding:0 20px; border-radius:999rem; background:linear-gradient(125deg,oklch(68% .22 18),oklch(62% .25 340),oklch(56% .22 285)); color:#fff; font-size:15px; font-weight:800; text-decoration:none; box-shadow:0 5px 8px rgb(58 18 55 / 22%); }
+.page .heroAction > a { display:flex; width:100%; min-height:48px; align-items:center; justify-content:space-between; padding:0 20px; border-radius:999rem; background:linear-gradient(125deg,oklch(68% .22 18),oklch(62% .25 340),oklch(56% .22 285)); color:#fff; font-size:15px; font-weight:800; text-decoration:none; box-shadow:0 5px 8px rgb(58 18 55 / 22%); }
 .heroAction svg { width:18px; height:18px; }
-.ctaLoading { display:flex; min-height:52px; align-items:center; justify-content:center; border:1px solid rgb(255 255 255 / 64%); border-radius:999rem; background:rgb(20 20 22 / 58%); color:#fff; font-size:14px; font-weight:700; }
+.ctaLoading { display:flex; min-height:48px; align-items:center; justify-content:center; border:1px solid rgb(255 255 255 / 64%); border-radius:999rem; background:rgb(20 20 22 / 58%); color:#fff; font-size:14px; font-weight:700; }
 .ctaError { display:flex; min-height:52px; align-items:center; justify-content:space-between; gap:12px; padding:4px 6px 4px 16px; border-radius:14px; background:rgb(255 255 255 / 96%); color:oklch(25% 0 0); font-size:13px; font-weight:650; }
 .ctaError button { min-height:44px; padding:0 14px; border:1px solid oklch(82% 0 0); border-radius:10px; background:#fff; color:inherit; font:inherit; font-weight:750; cursor:pointer; }
 .sectionNav { position:sticky; z-index:calc(var(--z-sticky-header) - 1); top:var(--fan-header-height); display:flex; width:100%; min-height:56px; align-items:center; gap:4px; overflow-x:auto; margin-top:16px; padding:6px; border:1px solid oklch(90% 0 0); border-radius:999rem; background:rgb(255 255 255 / 96%); box-shadow:0 1px 2px oklch(18% 0 0 / .05); scrollbar-width:none; }

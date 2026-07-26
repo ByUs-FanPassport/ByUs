@@ -18,13 +18,10 @@ import {
   ActivePreviewVideo,
 } from "./active-preview-video";
 import { LiveStatusIndicator } from "./live-status-indicator";
+import { formatFanCount } from "./fan-ui/fan-count";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
-const fanCountFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
 
 type HomePersonalizationState =
   | { status: "auth-loading" }
@@ -51,10 +48,6 @@ export function formatKoreanLiveDate(value: string) {
 function formatLiveDate(value: string, locale: ContentLocale) {
   if (locale === "ko") return formatKoreanLiveDate(value);
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value));
-}
-
-export function formatFanCount(value: number) {
-  return `${fanCountFormatter.format(value)} Fans`;
 }
 
 function useHomePersonalization(locale: ContentLocale) {

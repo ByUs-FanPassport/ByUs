@@ -86,7 +86,12 @@ function payload(primaryAction = "reserve", withReservation = false) {
       description: "KARA와 함께하는 특별한 LIVE를 준비했어요.",
       productContext: "Official Photocard 응모 가능",
       heroImage: { url: "/images/live/kara-hero-group.jpg", alt: "KARA 멤버 다섯 명" },
-      celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+      celebrity: {
+        slug: "kara",
+        name: "KARA",
+        image: "/images/guest-home/kara-card.jpg",
+        fanCount: 12_800_000,
+      },
       brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/brand.png", websiteUrl: "https://example.com" },
       watch: { available: false, url: "https://youtube.com/live/abc123" },
     },
@@ -116,6 +121,11 @@ describe("LiveEventScreen", () => {
       .closest("[data-live-primary-action-slot]")).not.toBeNull();
     expect(container.querySelectorAll('[data-fan-action-emphasis="primary"]')).toHaveLength(1);
     expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
+    expect(screen.getByText("12.8M Fans")).toBeInTheDocument();
+    const schedule = screen.getByLabelText("LIVE 예약 정보");
+    expect(within(schedule).getByText("기준 시간 KST (GMT+9)")).toBeInTheDocument();
+    expect(within(schedule).getAllByText(/GMT\+9/)).toHaveLength(1);
+    expect(within(schedule).queryByText("NUALEAF", { selector: "p" })).not.toBeInTheDocument();
   });
 
   it("renders a poster-first landscape Preview with an accessible playback control", async () => {

@@ -68,7 +68,7 @@
 
 .primary {
   width: min(100%, 320px);
-  min-height: 52px;
+  min-height: 48px;
   border-color: transparent;
   border-radius: 999rem;
   background: linear-gradient(

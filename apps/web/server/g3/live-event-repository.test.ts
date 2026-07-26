@@ -18,7 +18,13 @@ const event: LiveEventRecord = {
   title: "KARA LIVE — Move Again",
   description: "YouTube에서 함께 시청해요.",
   heroAlt: "KARA 라이브",
-  celebrity: { id: "22222222-2222-4222-8222-222222222222", slug: "kara", name: "KARA", image: "/images/kara.jpg" },
+  celebrity: {
+    id: "22222222-2222-4222-8222-222222222222",
+    slug: "kara",
+    name: "KARA",
+    image: "/images/kara.jpg",
+    fanCount: 12_800_000,
+  },
   brand: { slug: "meriq", name: "Meriq", logo: "/images/meriq.svg", websiteUrl: "https://meriq.example", productContext: "여름 뷰티 루틴" },
   overrides: [],
 };
@@ -105,7 +111,13 @@ describe("DefaultLiveEventRepository", () => {
   it("returns only the public localized projection for a guest", async () => {
     const result = await new DefaultLiveEventRepository(source()).findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
     expect(result).toMatchObject({
-      live: { slug: event.slug, effectiveStatus: "scheduled", productContext: "여름 뷰티 루틴", watch: { available: false } },
+      live: {
+        slug: event.slug,
+        effectiveStatus: "scheduled",
+        productContext: "여름 뷰티 루틴",
+        celebrity: { fanCount: 12_800_000 },
+        watch: { available: false },
+      },
       viewer: { authenticated: false, passport: "missing", reservation: null },
       primaryAction: "sign_in_to_reserve",
     });

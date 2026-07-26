@@ -69,6 +69,7 @@ export const publicLiveEventSchema = z.object({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     name: z.string().trim().min(1).max(120),
     image: safeAssetUrl,
+    fanCount: z.number().int().min(0),
   }),
   brand: z.object({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),

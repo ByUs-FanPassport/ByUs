@@ -60,7 +60,7 @@
 .heroDate { overflow: hidden; color: rgb(255 255 255 / 84%); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .heroContent h2 { max-width: 15ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1.02; text-wrap: balance; }
 .heroCountdown { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 750 14px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.primaryButton { display: flex; width: min(320px, 100%); min-height: 52px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
+.primaryButton { display: flex; width: min(320px, 100%); min-height: 48px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
 .primaryButton span { display: inline-flex; align-items: center; gap: 8px; }
 .primaryButton svg { width: 16px; height: 16px; }
 .carouselControls { position: absolute; z-index: 3; inset: 0; pointer-events: none; }

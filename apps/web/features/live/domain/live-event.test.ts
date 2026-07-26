@@ -67,7 +67,12 @@ describe("live event domain", () => {
         description: "함께 만나요.",
         productContext: "ByUs LIVE",
         heroImage: { url: "/hero.webp", alt: "KATSEYE" },
-        celebrity: { slug: "katseye", name: "KATSEYE", image: "/card.webp" },
+        celebrity: {
+          slug: "katseye",
+          name: "KATSEYE",
+          image: "/card.webp",
+          fanCount: 6_800_000,
+        },
         brand: { slug: "byus", name: "ByUs", logo: "/logo.svg", websiteUrl: null },
         watch: { available: false, mode: "unavailable", url: "https://youtube.com/live/abc123" },
         preview: {
