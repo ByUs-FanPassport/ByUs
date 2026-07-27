@@ -5,6 +5,8 @@ import { PassportCollectionScreen, PassportDetailScreen, StampDetailOverlay, Sta
 const getAccessToken = vi.fn(async () => "access-token");
 const push = vi.fn();
 const back = vi.fn();
+const explorerBaseUrl = "https://sepolia-explorer.giwa.io";
+const maskedHash = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
 let locale = "ko";
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: true, getAccessToken }) }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/passports", useRouter: () => ({ push, back }), useSearchParams: () => new URLSearchParams(`locale=${locale}`) }));
@@ -23,7 +25,6 @@ describe("passport fan screens", () => {
   beforeEach(() => {
     locale = "ko";
     vi.clearAllMocks();
-    delete process.env.NEXT_PUBLIC_BLOCKCHAIN_EXPLORER_TX_BASE;
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
       value: vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
@@ -56,7 +57,7 @@ describe("passport fan screens", () => {
       { id: "77777777-7777-4777-8777-777777777777", type: "reservation", occurredAt: "2026-07-21T00:00:00.000Z", points: 1, stampId: stamps[1].id, context: stamps[1].context, display: { type: "라이브 예약" } },
     ];
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passport: { ...passport, stamps, activities, progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false }, nextBenefit: null } }), { status: 200 })));
-    const { container } = render(<PassportDetailScreen id={passport.id} />);
+    const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     expect(await screen.findByRole("heading", { name: "KARA Fan Passport" })).toBeInTheDocument();
     expect(screen.queryByText("다음 순간을 기다리는 중")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /받은 Stamp 보기/ })).toHaveLength(2);
@@ -92,7 +93,7 @@ describe("passport fan screens", () => {
         nextBenefit: null,
       },
     })));
-    render(<PassportDetailScreen id={passport.id} />);
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("지난 KARA LIVE")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "지난 KARA LIVE" })).not.toBeInTheDocument();
@@ -127,7 +128,7 @@ describe("passport fan screens", () => {
       },
     };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passport: detail })));
-    render(<PassportDetailScreen id={passport.id} />);
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "다음 Level: 골드" })).toHaveAttribute("value", "50");
@@ -140,16 +141,85 @@ describe("passport fan screens", () => {
     );
   });
 
-  it("keeps chain facts collapsed, masks the transaction and never invents wallet data", async () => {
+  it("links the masked Stamp transaction to the validated GIWA Sepolia Explorer URL", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
-    render(<StampDetailScreen id={stampDetail.id} />);
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
     const summary = await screen.findByText("디지털 발급 정보");
     const disclosure = summary.closest("details");
     expect(disclosure).not.toHaveAttribute("open");
     fireEvent.click(summary);
-    expect(screen.getByText("0xaaaaaa…aaaaaa")).toBeInTheDocument();
+    const transactionLink = screen.getByRole("link", {
+      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+    });
+    expect(transactionLink).toHaveTextContent("0xaaaaaa…aaaaaa");
+    expect(transactionLink).not.toHaveTextContent(mint.txHash);
+    expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
+    expect(transactionLink).toHaveAttribute("target", "_blank");
+    expect(transactionLink).toHaveAttribute("rel", "noreferrer");
     expect(screen.queryByText(/wallet/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "발급 기록 확인" })).not.toBeInTheDocument();
+  });
+
+  it("uses the same Explorer transaction-link contract on Passport details", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      passport: {
+        ...passport,
+        stamps: [],
+        activities: [],
+        progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false },
+        nextBenefit: null,
+      },
+    })));
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
+
+    const summary = await screen.findByText("디지털 발급 정보");
+    fireEvent.click(summary);
+    expect(screen.getByRole("link", {
+      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+    })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
+  });
+
+  it.each([
+    {
+      name: "an insecure Explorer URL",
+      explorer: "http://sepolia-explorer.giwa.io",
+      transactionHash: mint.txHash,
+    },
+    {
+      name: "an invalid transaction hash",
+      explorer: explorerBaseUrl,
+      transactionHash: "0x1234",
+    },
+  ])("renders the transaction as text without an external link for $name", async ({ explorer, transactionHash }) => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      stamp: { ...stampDetail, mint: { ...mint, txHash: transactionHash } },
+    })));
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorer} />);
+
+    fireEvent.click(await screen.findByText("디지털 발급 정보"));
+    expect(screen.getByText(maskedHash(transactionHash))).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /GIWA Sepolia Explorer/ })).not.toBeInTheDocument();
+  });
+
+  it("renders no transaction link when the transaction hash is null", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      stamp: { ...stampDetail, mint: { ...mint, txHash: null } },
+    })));
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    fireEvent.click(await screen.findByText("디지털 발급 정보"));
+    expect(screen.queryByText("거래 기록")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /GIWA Sepolia Explorer/ })).not.toBeInTheDocument();
+  });
+
+  it("provides an English transaction-link name with the full hash and new-tab purpose", async () => {
+    locale = "en";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: stampDetail })));
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    fireEvent.click(await screen.findByText("Digital issuance details"));
+    expect(screen.getByRole("link", {
+      name: `Transaction ${mint.txHash}, open in GIWA Sepolia Explorer in a new tab`,
+    })).toHaveTextContent("0xaaaaaa…aaaaaa");
   });
 
   it("keeps archived LIVE context in Stamp facts without a public link", async () => {
@@ -169,7 +239,7 @@ describe("passport fan screens", () => {
       display: { ...stampDetail.display, type: "라이브 예약" },
     };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: archivedStamp })));
-    render(<StampDetailScreen id={stampDetail.id} />);
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("지난 KARA LIVE")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "지난 KARA LIVE" })).not.toBeInTheDocument();
@@ -177,9 +247,13 @@ describe("passport fan screens", () => {
 
   it("renders an intercepted Stamp in an accessible adaptive overlay and closes with history", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
-    render(<StampDetailOverlay id={stampDetail.id} />);
+    render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByRole("dialog", { name: "Stamp 상세" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("디지털 발급 정보"));
+    expect(screen.getByRole("link", {
+      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+    })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
     const close = await screen.findByRole("button", { name: "상세 닫기" });
     fireEvent.click(close);
     expect(back).toHaveBeenCalledTimes(1);
@@ -191,7 +265,7 @@ describe("passport fan screens", () => {
       value: vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
     });
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
-    render(<StampDetailOverlay id={stampDetail.id} />);
+    render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
     const overlay = await screen.findByRole("dialog", { name: "Stamp 상세" });
     await waitFor(() => expect(overlay).toHaveAttribute("data-variant", "bottom-sheet"));

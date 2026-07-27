@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, ExternalLink, RotateCcw, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AuthIntentLink } from "@/components/auth-intent-link";
@@ -81,15 +81,20 @@ function missingConditionText(
   }
 }
 
-function safeExplorerUrl(hash: string): string | null {
-  const configured = process.env.NEXT_PUBLIC_BLOCKCHAIN_EXPLORER_TX_BASE;
-  if (!configured || !/^0x[0-9a-fA-F]{64}$/.test(hash)) return null;
+function safeExplorerUrl(baseUrl: string, txHash: string): string | null {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(txHash)) return null;
   try {
-    const base = new URL(configured);
-    if (base.protocol !== "https:" || base.username || base.password || base.search || base.hash) return null;
-    const normalized = base.toString().endsWith("/") ? base.toString() : `${base.toString()}/`;
-    const target = new URL(encodeURIComponent(hash), normalized);
-    return target.origin === base.origin && target.href.startsWith(normalized) ? target.href : null;
+    const base = new URL(baseUrl);
+    if (
+      base.protocol !== "https:" ||
+      base.pathname !== "/" ||
+      base.username ||
+      base.password ||
+      base.search ||
+      base.hash
+    ) return null;
+    const target = new URL(`/tx/${txHash}`, base);
+    return target.origin === base.origin && target.pathname === `/tx/${txHash}` ? target.href : null;
   } catch { return null; }
 }
 
@@ -147,18 +152,24 @@ export function PassportCollectionScreen() {
   </Frame>;
 }
 
-function DigitalDisclosure({ mint, locale }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale }) {
-  const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(mint.txHash) : null;
-  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{mint.txHash ? <p><span>{c.transaction}</span><strong data-wrap-anywhere>{maskHash(mint.txHash)}</strong></p> : null}{explorer ? <a href={explorer} target="_blank" rel="noreferrer" aria-label={`${c.explorer}: ${locale === "ko" ? "새 창" : "new window"}`}>{c.explorer}<ArrowRight aria-hidden="true" /></a> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
+function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale; explorerBaseUrl: string }) {
+  const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(explorerBaseUrl, mint.txHash) : null;
+  const transaction = mint.txHash ? maskHash(mint.txHash) : null;
+  const explorerLabel = mint.txHash
+    ? locale === "ko"
+      ? `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`
+      : `Transaction ${mint.txHash}, open in GIWA Sepolia Explorer in a new tab`
+    : "";
+  return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{transaction ? <p><span>{c.transaction}</span>{explorer ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{transaction}</strong><ExternalLink aria-hidden="true" /></a> : <strong data-wrap-anywhere>{transaction}</strong>}</p> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
-export function PassportDetailScreen({ id }: { id: string }) {
+export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
   const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedApi(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <PassportDetailView passport={fetcher.state.data} locale={locale} />}</Frame>;
+  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} />}</Frame>;
 }
 
-function PassportDetailView({ passport, locale }: { passport: PassportDetail; locale: PassportLocale }) {
+function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: PassportDetail; locale: PassportLocale; explorerBaseUrl: string }) {
   const c = copy[locale];
   const stamps = [...passport.stamps].sort((left, right) => left.issuedAt.localeCompare(right.issuedAt) || left.id.localeCompare(right.id));
   const activities = [...passport.activities].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id));
@@ -172,18 +183,18 @@ function PassportDetailView({ passport, locale }: { passport: PassportDetail; lo
     {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
     <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div>{stampRecords.length ? <div className={styles.stampGrid}>{stampRecords.map((stamp) => { const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.context.live ? item.context.live.linkable ? <Link href={withLocale(`/live/${item.context.live.slug}`, locale)}>{item.context.live.title}</Link> : item.context.live.title : item.display.type}</strong><time dateTime={item.occurredAt}>{item.display.type} · {date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
-    <DigitalDisclosure mint={passport.mint} locale={locale} /></>;
+    <DigitalDisclosure mint={passport.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>;
 }
 
-export function StampDetailScreen({ id, presentation = "page", onClose }: { id: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
+export function StampDetailScreen({ id, explorerBaseUrl, presentation = "page", onClose }: { id: string; explorerBaseUrl: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
   const fetcher = useOwnedApi(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} onClose={onClose} />}</Frame>;
+  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} />}</Frame>;
 }
 
-function StampDetailView({ stamp, locale, onClose }: { stamp: StampDetail; locale: PassportLocale; onClose?: () => void }) {
+function StampDetailView({ stamp, locale, explorerBaseUrl, onClose }: { stamp: StampDetail; locale: PassportLocale; explorerBaseUrl: string; onClose?: () => void }) {
   const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={onClose ? <button className={styles.back} type="button" onClick={onClose} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button> : <Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
-    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><div className={styles.stampArtwork}><StampArtwork type={stamp.type as PassportStampType} locale={locale} label={stamp.display.type} celebrityName={stamp.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.activity.points} /></div><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{stamp.activity.context.live ? stamp.activity.context.live.linkable ? <Link href={withLocale(`/live/${stamp.activity.context.live.slug}`, locale)}>{stamp.activity.context.live.title}</Link> : stamp.activity.context.live.title : stamp.display.type}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} /></aside></div></>;
+    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><div className={styles.stampArtwork}><StampArtwork type={stamp.type as PassportStampType} locale={locale} label={stamp.display.type} celebrityName={stamp.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.activity.points} /></div><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{stamp.activity.context.live ? stamp.activity.context.live.linkable ? <Link href={withLocale(`/live/${stamp.activity.context.live.slug}`, locale)}>{stamp.activity.context.live.title}</Link> : stamp.activity.context.live.title : stamp.display.type}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></aside></div></>;
 }
 
 function useMobileDetail() {
@@ -199,13 +210,13 @@ function useMobileDetail() {
   return mobile;
 }
 
-export function StampDetailOverlay({ id }: { id: string }) {
+export function StampDetailOverlay({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const router = useRouter();
   const mobile = useMobileDetail();
   const close = useCallback(() => router.back(), [router]);
   const Overlay = mobile ? BottomSheet : Drawer;
   return <Overlay open onClose={close} labelledBy="stamp-detail-overlay-title" closeOnBackdrop backdropClassName={styles.detailBackdrop} contentClassName={styles.detailOverlay}>
     <h1 className={styles.visuallyHidden} id="stamp-detail-overlay-title">Stamp 상세</h1>
-    <StampDetailScreen id={id} presentation="overlay" onClose={close} />
+    <StampDetailScreen id={id} explorerBaseUrl={explorerBaseUrl} presentation="overlay" onClose={close} />
   </Overlay>;
 }

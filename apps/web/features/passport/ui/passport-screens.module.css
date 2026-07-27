@@ -687,16 +687,37 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
 }
-.disclosure a {
+.transactionLink {
   display: flex;
   min-height: 44px;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
-.disclosure a svg {
+.transactionLink:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+.transactionLink strong {
+  max-width: none;
+}
+.transactionLink svg {
   width: 16px;
+  height: 16px;
+  flex: none;
+  stroke-width: 1.75;
+}
+@media (hover: hover) and (pointer: fine) {
+  .transactionLink:hover {
+    text-decoration-thickness: 2px;
+  }
 }
 .stampDetailLayout {
   display: grid;
