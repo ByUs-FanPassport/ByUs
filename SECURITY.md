@@ -1,87 +1,42 @@
-# Security dependency policy
+# Security Policy
 
-Last reviewed: 2026-07-21  
-Owner: ByUs engineering (repository maintainers)
+Security and fan privacy are part of the ByUs product boundary. Please report potential vulnerabilities privately and allow the maintainers time to investigate before any public disclosure.
 
-## Enforced dependency constraints
+## Supported version
 
-- Node.js is fixed to 24.13.1 for lock-file and release verification.
-- `@aws-sdk/client-secrets-manager` is pinned to `3.1091.0`; the vulnerable
-  `fast-xml-parser` dependency must not be present.
-- Axios is pinned to `1.18.1` only below `@coinbase/cdp-sdk`.
-- Vulnerable `ws` 8.x releases are overridden to `8.21.1`. Existing 7.x paths
-  are intentionally left on their own major version.
-- `npm audit fix --force` is prohibited because it proposes breaking
-  downgrades of Next.js and Privy.
+Security fixes are applied to the current `main` branch and the production version deployed from it.
 
-Run the durable checks with:
+## Report a vulnerability
 
-```sh
-npm run security:verify
-npm run security:tree
-npm run security:audit
-```
+Use the repository's [private vulnerability reporting form](https://github.com/ByUs-FanPassport/ByUs/security/advisories/new).
 
-## Time-limited accepted risks
+Do not open a public issue for a suspected vulnerability. Include:
 
-### Next.js bundled PostCSS
+- the affected component and route;
+- reproduction steps or a proof of concept;
+- the expected and observed result;
+- the potential security or privacy impact;
+- any suggested mitigation;
+- a safe way to contact you for follow-up.
 
-- Advisory: [GHSA-qx2v-qp2m-jg93](https://github.com/advisories/GHSA-qx2v-qp2m-jg93)
-- Affected path: `next@16.2.10 -> postcss@8.4.31`
-- Severity recorded by npm: moderate
-- Required attacker capability: provide CSS that the application processes
-  with PostCSS and later inserts into a `<style>` context.
-- ByUs exposure: no application path accepts raw CSS, selectors, rules, style
-  tags, or PostCSS input from users, CMS records, or external URLs. Repository
-  controlled CSS is the only production input.
-- Compensating controls: no raw CSS ingestion; no `dangerouslySetInnerHTML` or
-  runtime stylesheet construction in service code; production builds use
-  repository-controlled sources.
-- Resolution: track a Next.js release that bundles PostCSS `>=8.5.10`; do not
-  override Next.js internals or downgrade Next.js.
-- Review date: 2026-08-20 or the next Next.js release, whichever comes first.
-- Expiration date: 2026-08-20.
-- Owner: ByUs engineering.
+Do not include real fan personal data, production credentials, private keys, session tokens, or destructive payloads in the report.
 
-### MetaMask transitive UUID
+## Response process
 
-- Advisory: [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq)
-- Affected path: `Privy -> x402 -> wagmi -> connectors -> MetaMask -> uuid`
-- Severity recorded by npm: moderate
-- Required attacker capability: reach UUID v3, v5, or v6 with an
-  attacker-controlled output buffer and invalid offset.
-- ByUs exposure: service code does not import the npm `uuid` package and does
-  not invoke UUID v3, v5, or v6. The only application UUID generation uses
-  Node `crypto.randomUUID()` or PostgreSQL `gen_random_uuid()`.
-- Compensating controls: Google-only Privy login and Privy embedded wallets;
-  no ByUs API forwards request buffers into MetaMask UUID functions.
-- Resolution: track upstream MetaMask, Wagmi, and Privy releases. Do not apply
-  a global UUID major-version override.
-- Review date: 2026-08-20 or the next Privy release, whichever comes first.
-- Expiration date: 2026-08-20.
-- Owner: ByUs engineering.
+The maintainers will:
 
-## Verification record
+1. acknowledge the report;
+2. reproduce and assess the issue;
+3. coordinate a fix and validation plan;
+4. agree on a disclosure timeline with the reporter when appropriate.
 
-On 2026-07-21 under Node.js 24.13.1 and npm 11.18.0:
+## Security boundaries
 
-- clean `npm ci` completed;
-- web and Worker type checks passed;
-- 164 tracked service tests passed (128 web and 36 Worker); 9 additional tests
-  from the local ignored prototype also passed;
-- Worker TypeScript and Lambda bundle builds passed;
-- Next.js production build passed;
-- `fast-xml-parser`, vulnerable Axios, and vulnerable `ws` 8.x paths were absent;
-- a `ws@8.21.1` canary completed connect, message, clean close, and reconnect;
-- the remaining production audit result was 12 moderate findings, limited to
-  the two accepted-risk groups above.
+- Browser sessions are authenticated with Privy and verified again by the server-side BFF.
+- Private Supabase tables and owner-scoped projections are accessed server-side.
+- Passport and Stamp metadata deliberately excludes fan PII.
+- Relayer, Supabase service-role, and IPFS credentials are restricted to server or worker environments.
+- Credential minting is database-first, asynchronous, leased, and idempotent.
+- Both credential contracts are soulbound and use separate mint, pause, and delayed admin controls.
 
-The current product configuration does not expose Coinbase Wallet,
-WalletConnect pairing, external-wallet message signing, or external-wallet
-transaction signing. Authentication regression coverage therefore verifies
-Google-only Privy login, access-token session synchronization, embedded-wallet
-creation/visibility, identity mapping, and session restoration. The `ws`
-canary covers the transitive server runtime with repeated connect, close, and
-reconnect cycles plus RSS and unhandled-rejection observation; a real
-WalletConnect pairing/signing canary becomes mandatory before any external
-wallet connector is enabled.
+For the public architecture and privacy model, see the [ByUs Developer Documentation](https://github.com/ByUs-FanPassport/ByUs---GitBook).
