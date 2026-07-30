@@ -112,7 +112,7 @@ infrastructure/aws    Worker runtime infrastructure
 scripts               Build, security, media, deployment, and verification tools
 ```
 
-`apps/web` is the production application. `apps/fan-web` is a local design workbench and is not part of the production runtime.
+`apps/web` is the production application.
 
 ## Quick start
 
@@ -166,6 +166,7 @@ Please read [SECURITY.md](SECURITY.md) before reporting a vulnerability.
 
 ## Documentation
 
+- [Pitch deck (PDF)](https://docs.google.com/presentation/d/10a9xoaRKJhAXzbBOguwKFM-wmOPlmRg9gy_EFRr0rss/export/pdf)
 - [Developer documentation source](https://github.com/ByUs-FanPassport/ByUs---GitBook)
 - [Product journey](https://github.com/ByUs-FanPassport/ByUs---GitBook/blob/main/getting-started/product-journey.md)
 - [Architecture overview](https://github.com/ByUs-FanPassport/ByUs---GitBook/blob/main/architecture/overview.md)
