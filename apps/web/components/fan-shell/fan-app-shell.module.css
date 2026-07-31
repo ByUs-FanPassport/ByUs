@@ -18,9 +18,14 @@
 .headerInner { box-sizing:border-box; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; height: 100%; }
 .brand { display: inline-flex; width: 88px; min-height: 44px; align-items: center; }
 .desktopNav { display: none; }
-.actions { display: flex; align-items: center; }
+.actions { display: flex; min-height: 44px; align-items: center; gap: 0; }
 .language { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; }
-.language svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.language svg {
+  width: 24px;
+  height: 24px;
+  transform: translateY(-.25px);
+  stroke-width: 1.8;
+}
 .bottomNavigation {
   position: fixed; z-index: var(--z-bottom-nav); right: 0; bottom: 0; left: 0;
   display: grid; grid-template-columns: repeat(4,1fr);

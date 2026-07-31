@@ -173,7 +173,9 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Celebrity social controls: align the icon group to the far right of the second metadata row. Use optically centered 24×24px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
 - Mobile/tablet context actions: below 1024px, replace the hidden desktop side panel with a regular in-flow action section immediately after the Hero. Keep both `Google로 계속하기` and `Fan Passport 발급받기` visible, 52px high, full-pill, Spectrum-outline controls; use one column on mobile and two columns from 768px.
 - Text links: minimum 44px interaction height, 14px/650, Muted Ink, unboxed chevron treatment.
-- Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
+- Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. The Header language switch is the deliberate exception: use a 24×24px visible glyph inside the same 44×44px target. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
+- Repeated LIVE-row actions: keep them Neutral rather than Primary. At desktop use a 184×48px outlined pill with a 14px/750 centered label and balanced 18px leading/trailing icons; below 768px reduce the same action to a separate 44×44px icon target.
+- LIVE detail action rail: treat its title as a Page heading, not a Hero overlay title. Use 24px/800 on desktop and 20px/800 on mobile, 14px/550 schedule labels, 14px/750 schedule values, 24px between information groups, and 8px between the Primary and its 13px/550 helper.
 - Avoid parallel primary actions. The hero ends at “라이브 예약하기”; detailed information belongs downstream.
 
 ### Cards and Containers
@@ -268,6 +270,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Use borders before shadows and micro-shadows before floating elevation.
 - The hero is visually dominant without an external shadow.
 - Image objects may use a soft drop-shadow, but their containing surface remains White.
+- Footer: keep navigation links at 13px/550 inside full 44px targets. Use 48px top and 16px bottom padding on desktop, 40px top and 16px bottom padding on mobile, and create hierarchy with grouped whitespace rather than taller link rows.
 - No glassmorphism, backdrop blur, ambient colored glow, or broad decorative shadow was observed.
 
 ## 7. Do's and Don'ts
@@ -338,11 +341,11 @@ Build a white, image-first K-pop fan product with Pretendard typography, a domin
 
 ### Example Component Prompts
 
-- Hero: “Create a 2:1 desktop live hero with full-bleed high-resolution artist photography, a restrained left-and-bottom black scrim, an outlined UPCOMING rail, 48px white event title, monospace countdown, and one 320×52px spectrum-gradient reservation pill.”
+- Hero: “Create a 2:1 desktop live hero with full-bleed high-resolution artist photography, a restrained left-and-bottom black scrim, a clearly defined outlined UPCOMING rail, 48px white event title, monospace countdown, and one 320×48px spectrum-gradient reservation pill.”
 - Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; center square portraits at 66.5% of each field, then add two regular-weight metadata rows: artist/LIVE state and compact fan count/three 44px social controls.”
-- Navigation: “Create a 64px sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Hide the pill below 768px.”
+- Navigation: “Create a 64px sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 768px.”
 - Passport: “Create a quiet White Passport utility card with a 20px/850 title, 14px subtitle, fully opened identity-and-stamp asset, centered two-line lifecycle copy, and a 90%-width 52px outlined login CTA.”
-- Live row: “Create a 112px White live row with a 64px circular artist avatar, compact title/date stack, right-aligned booking meta, and a 44px chevron target; reduce to 104px and hide booking meta on mobile.”
+- Live row: “Create a 112px White live row with a 64px circular artist avatar, compact 15px/750 title and 13px/400 metadata stack, plus a right-aligned 184×48px Neutral booking pill. Below 768px use a 44px icon-only action without turning repeated rows into Primary buttons.”
 
 ### Ready-to-Use Prompt
 

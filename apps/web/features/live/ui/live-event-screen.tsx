@@ -807,44 +807,56 @@ export function LiveEventScreen({
         <p id={primaryHelperId} className={styles.actionHelper}>{primaryHelper}</p>
       </div>
     ) : primaryAction === "verify_fan" ? (
-      <FanAction
-        href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
-        variant="primary"
-        fullWidth
-        helperText={primaryHelper}
-        leadingIcon={<TicketCheck />}
-        trailingIcon={<ArrowRight />}
-      >
-        {actionLabel}
-      </FanAction>
+      <div className={styles.primaryActionBlock}>
+        <FanAction
+          href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
+          variant="primary"
+          fullWidth
+          ariaDescribedBy={primaryHelperId}
+          leadingIcon={<TicketCheck />}
+          trailingIcon={<ArrowRight />}
+        >
+          {actionLabel}
+        </FanAction>
+        <p id={primaryHelperId} className={styles.actionHelper}>
+          {primaryHelper}
+        </p>
+      </div>
     ) : primaryAction === "watch_live" &&
       live.watch.available &&
       live.watch.url ? (
-      <FanAction
-        href={live.watch.url}
-        external
-        variant="primary"
-        fullWidth
-        helperText={primaryHelper}
-        leadingIcon={<Play />}
-        trailingIcon={<ExternalLink />}
-        ariaLabel={externalActionLabel(actionLabel, live.title, locale)}
-        onClick={rememberWatchReturn}
-      >
-        {actionLabel}
-      </FanAction>
+      <div className={styles.primaryActionBlock}>
+        <FanAction
+          href={live.watch.url}
+          external
+          variant="primary"
+          fullWidth
+          ariaDescribedBy={primaryHelperId}
+          leadingIcon={<Play />}
+          trailingIcon={<ExternalLink />}
+          ariaLabel={externalActionLabel(actionLabel, live.title, locale)}
+          onClick={rememberWatchReturn}
+        >
+          {actionLabel}
+        </FanAction>
+        <p id={primaryHelperId} className={styles.actionHelper}>
+          {primaryHelper}
+        </p>
+      </div>
     ) : primaryAction === "reserve" ? (
-      <FanAction
-        variant="primary"
-        fullWidth
-        disabled={reservePending}
-        ariaBusy={reservePending}
-        onClick={() => void reserve()}
-        leadingIcon={<TicketCheck />}
-        trailingIcon={<ArrowRight />}
-      >
-        {actionLabel}
-      </FanAction>
+      <div className={styles.primaryActionBlock}>
+        <FanAction
+          variant="primary"
+          fullWidth
+          disabled={reservePending}
+          ariaBusy={reservePending}
+          onClick={() => void reserve()}
+          leadingIcon={<TicketCheck />}
+          trailingIcon={<ArrowRight />}
+        >
+          {actionLabel}
+        </FanAction>
+      </div>
     ) : (
       <p className={styles.actionStatus} role="status">
         <LockKeyhole aria-hidden="true" />

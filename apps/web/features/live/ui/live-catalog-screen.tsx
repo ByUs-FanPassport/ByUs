@@ -131,7 +131,15 @@ function LiveGroup({
             return (
               <article className={styles.row} key={item.live.id}>
                 <Image src={item.live.celebrity.image} alt="" width={64} height={64} />
-                <div className={styles.details}>
+                <Link
+                  className={styles.details}
+                  href={`/live/${item.live.slug}?locale=${locale}` as Route}
+                  aria-label={
+                    locale === "ko"
+                      ? `${item.live.title} 상세 보기`
+                      : `View ${item.live.title} details`
+                  }
+                >
                   <div className={styles.meta}>
                     <span>{item.live.celebrity.name} · {item.live.brand.name}</span>
                     {item.live.effectiveStatus === "live" ||
@@ -145,11 +153,12 @@ function LiveGroup({
                       <span>{statusLabel(item, locale)}</span>
                     )}
                   </div>
-                  <h3><Link href={`/live/${item.live.slug}?locale=${locale}` as Route}>{item.live.title}</Link></h3>
+                  <h3>{item.live.title}</h3>
                   <p>{dateRange(item, locale)}</p>
-                </div>
+                </Link>
                 <Link
                   className={styles.action}
+                  data-fan-action-emphasis="neutral"
                   href={href as Route}
                   target={currentAction.external ? "_blank" : undefined}
                   rel={currentAction.external ? "noreferrer" : undefined}

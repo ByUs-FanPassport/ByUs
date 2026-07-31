@@ -37,24 +37,56 @@ describe("guest home compact icon-only action spacing", () => {
 
   it("uses two regular-weight metadata rows and disables live animation for reduced motion", () => {
     const info = declarationBlock(".celebrityInfo");
+    const metaRow = declarationBlock(".celebrityMetaRow");
     const status = declarationBlock(
       ".celebrityMetaRow .celebrityLiveStatus",
     );
     const fanCount = declarationBlock(".fanCount");
 
     expect(info).toMatch(/\bgap:\s*4px\b/);
-    expect(info).toMatch(/\bpadding-top:\s*8px\b/);
-    expect(declarationBlock(".celebrityMetaRow")).toMatch(
+    expect(info).toMatch(/\bpadding:\s*12px\s+4px\s+0\b/);
+    expect(metaRow).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
+    expect(metaRow).toMatch(/\balign-items:\s*center\b/);
     expect(status).toMatch(/\bmin-height:\s*0\b/);
-    expect(fanCount).toMatch(/\balign-self:\s*start\b/);
-    expect(fanCount).toMatch(/\bpadding-top:\s*4px\b/);
+    expect(fanCount).toMatch(/\balign-self:\s*center\b/);
+    expect(fanCount).not.toMatch(/\bpadding-top\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,
     );
     expect(liveStatusCss).toMatch(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.status\[data-live-status="live"\]\s+\.dot\s*\{[^}]*animation:\s*none/,
+    );
+  });
+
+  it("keeps the hero status outline visible without adding a filled surface", () => {
+    const status = declarationBlock(".liveStatus");
+
+    expect(status).toMatch(
+      /\bborder:\s*1px\s+solid\s+rgb\(255\s+95\s+191\s*\/\s*92%\)/,
+    );
+    expect(status).not.toMatch(/\bbackground(?:-color)?:/);
+  });
+
+  it("uses a quieter hierarchy in the signed-in Passport summary", () => {
+    expect(declarationBlock(".signedInGreeting h2")).toMatch(
+      /\bfont-weight:\s*800\b/,
+    );
+    expect(declarationBlock(".summarySectionHeader > span")).toMatch(
+      /\bfont-weight:\s*650\b/,
+    );
+
+    const title = declarationBlock(".ownedPassportLink h3");
+    expect(title).toMatch(/\bfont-size:\s*18px\b/);
+    expect(title).toMatch(/\bfont-weight:\s*750\b/);
+
+    const value = declarationBlock(".passportValue");
+    expect(value).toMatch(/\bfont-size:\s*13px\b/);
+    expect(value).toMatch(/\bfont-weight:\s*550\b/);
+
+    expect(declarationBlock(".summaryTextLink")).toMatch(
+      /\bfont-weight:\s*650\b/,
     );
   });
 

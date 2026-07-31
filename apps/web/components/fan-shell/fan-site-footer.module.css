@@ -3,7 +3,7 @@
   --footer-muted: oklch(44% 0 0);
   --footer-line: oklch(91.5% 0 0);
   width: 100%;
-  padding: 64px 0 24px;
+  padding: 40px 0 16px;
   border-top: 1px solid var(--footer-line);
   background: #fff;
   color: var(--footer-ink);
@@ -12,14 +12,14 @@
 
 .inner {
   display: grid;
-  gap: 48px;
+  gap: 32px;
 }
 
 .brandColumn {
   display: grid;
   align-content: start;
   justify-items: start;
-  gap: 16px;
+  gap: 12px;
 }
 
 .brand {
@@ -41,25 +41,27 @@
   color: var(--footer-muted);
   font-size: 14px;
   font-weight: 550;
-  line-height: 1.65;
+  line-height: 1.55;
   text-wrap: pretty;
 }
 
 .navigation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 32px 24px;
+  gap: 24px 16px;
 }
 
 .navigation section {
   display: grid;
   align-content: start;
+  row-gap: 0;
 }
 
 .navigation h2 {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0 0 4px;
+  font-size: 13px;
   font-weight: 800;
+  line-height: 1.35;
   letter-spacing: -.01em;
 }
 
@@ -69,19 +71,20 @@
   min-height: 44px;
   align-items: center;
   color: var(--footer-muted);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 550;
+  line-height: 1.35;
   text-decoration: none;
 }
 
 .legal {
   display: flex;
-  min-height: 68px;
+  min-height: 44px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-top: 48px;
-  padding-top: 16px;
+  margin-top: 24px;
+  padding-top: 12px;
   border-top: 1px solid var(--footer-line);
   color: var(--footer-muted);
   font-size: 13px;
@@ -95,12 +98,12 @@
 
 @media (min-width: 48rem) {
   .footer {
-    padding: 80px 0 24px;
+    padding: 48px 0 16px;
   }
 
   .inner {
     grid-template-columns: minmax(240px, 1.2fr) minmax(420px, 1.8fr);
-    gap: 64px;
+    gap: 48px;
   }
 
   .navigation {
@@ -110,7 +113,7 @@
 
 @media (max-width: 47.999rem) {
   .footer {
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
   .legal {
@@ -118,8 +121,8 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-    margin-top: 32px;
-    padding-top: 20px;
+    margin-top: 24px;
+    padding-top: 12px;
   }
 
 }

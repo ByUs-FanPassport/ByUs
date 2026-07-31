@@ -132,6 +132,7 @@ export function FanAppHeader({
       <div className={styles.actions}>
         <Link
           className={styles.language}
+          data-fan-language-action
           href={languageHref}
           aria-label={locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English"}
         >

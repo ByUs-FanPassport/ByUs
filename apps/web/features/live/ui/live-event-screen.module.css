@@ -97,7 +97,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 0;
-  padding: 36px 32px;
+  padding: 32px;
   border: 1px solid oklch(93% 0 0);
   border-radius: 16px;
   box-shadow:
@@ -112,6 +112,7 @@
   border-radius: 999rem;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.2;
   letter-spacing: 0.04em;
 }
 
@@ -132,18 +133,19 @@
 }
 
 .actionRail h1 {
-  max-width: 15ch;
+  max-width: 100%;
   margin: 0;
-  font-size: 36px;
-  font-weight: 850;
-  line-height: 1.14;
-  letter-spacing: -0.04em;
-  overflow-wrap: break-word;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
   text-wrap: balance;
 }
 
 .scheduleGroup {
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
 .schedule {
@@ -156,34 +158,41 @@
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);
   gap: 16px;
+  align-items: start;
 }
 .schedule dt {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
   gap: 8px;
+  min-width: 0;
   color: oklch(48% 0 0);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .schedule dt svg {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
+  margin-top: 1px;
 }
 .schedule dd {
   min-width: 0;
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 750;
   line-height: 1.5;
-  overflow-wrap: break-word;
-  word-break: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  font-variant-numeric: tabular-nums;
 }
 
 .timeZone {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: oklch(48% 0 0);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 550;
   line-height: 1.5;
   text-align: end;
@@ -223,6 +232,7 @@
   display: flex;
   width: min(100%, 320px);
   flex-direction: column;
+  align-items: stretch;
 }
 
 .primaryActionSlot {
@@ -230,7 +240,7 @@
   width: 100%;
   min-width: 0;
   justify-content: center;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 
 .actionLeading,
@@ -256,9 +266,9 @@
 }
 
 .actionHelper {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: oklch(48% 0 0);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 550;
   line-height: 1.5;
   text-align: center;
@@ -268,12 +278,12 @@
 .actionStatus {
   display: flex;
   min-height: 44px;
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   align-items: center;
   gap: 8px;
   color: oklch(43% 0 0);
   font-size: 14px;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .actionStatus svg {
@@ -795,7 +805,7 @@
     aspect-ratio: 2 / 1;
   }
   .actionRail {
-    padding: 28px;
+    padding: 24px;
   }
   .contentGrid {
     grid-template-columns: 1fr;
@@ -831,7 +841,7 @@
     box-shadow: none;
   }
   .actionRail h1 {
-    font-size: 32px;
+    font-size: 20px;
   }
   .schedule div {
     grid-template-columns: 92px minmax(0, 1fr);

@@ -44,7 +44,14 @@ describe("LIVE catalog", () => {
 
     expect(screen.getByRole("heading", { name: "전체 LIVE" })).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "지금 LIVE 중" })).getByRole("link", { name: /LIVE 시청하기/ })).toHaveAttribute("href", base.live.watch.url);
-    expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ })).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    const reserveAction = within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ });
+    expect(reserveAction).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "neutral");
+    expect(within(reserveAction).getByText("라이브 예약하기")).toBeInTheDocument();
+    expect(within(reserveAction).getByText("라이브 예약하기").previousElementSibling).toHaveAttribute("aria-hidden", "true");
+    expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", {
+      name: "KARA × NUALEAF LIVE 상세 보기",
+    })).toHaveAttribute("href", "/live/kara-live?locale=ko");
     expect(within(screen.getByRole("region", { name: "다시보기" })).getByRole("link", { name: /다시보기/ })).toHaveAttribute("href", base.live.watch.url);
   });
 });
