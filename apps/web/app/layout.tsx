@@ -5,6 +5,7 @@ import { DocumentLocale } from "../components/document-locale";
 import { ByUsPrivyProvider } from "../components/privy-provider";
 import { PwaRegistration } from "../components/pwa-registration";
 import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
+import { BYUS_BRAND_ICONS } from "./brand-icons";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
         ? "Keep every moment with your favorite in your Fan Passport."
         : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
     manifest: "/manifest.webmanifest",
+    icons: BYUS_BRAND_ICONS,
     appleWebApp: { capable: true, title: "ByUs", statusBarStyle: "default" },
     openGraph: { locale: locale === "en" ? "en_US" : "ko_KR" },
   };

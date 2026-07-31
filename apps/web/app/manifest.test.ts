@@ -16,6 +16,17 @@ describe("PWA-001 install contract", () => {
     );
   });
 
+  it("uses the approved B Spark application icon files", () => {
+    const approvedIcon = readFileSync(
+      resolve(process.cwd(), "../../design/brand/app-icon-512.png"),
+    );
+    const publishedIcon = readFileSync(
+      resolve(process.cwd(), "public/byus-app-icon-512.png"),
+    );
+
+    expect(publishedIcon).toEqual(approvedIcon);
+  });
+
   it("uses one root service worker for both install shell and notifications", () => {
     const worker = readFileSync(resolve(process.cwd(), "public/sw.js"), "utf8");
     const pushHelper = readFileSync(
