@@ -24,15 +24,16 @@ describe("guest home compact icon-only action spacing", () => {
     expect(declarationBlock(".socialLinks")).toMatch(/\bgap:\s*0\b/);
   });
 
-  it("keeps social actions accessible while using denser 24px brand marks", () => {
+  it("keeps social actions accessible while using quiet 20px brand marks", () => {
     const target = declarationBlock(".socialLink");
     const icon = declarationBlock(".socialLink img");
 
     expect(target).toMatch(/\bwidth:\s*44px\b/);
     expect(target).toMatch(/\bmin-width:\s*44px\b/);
+    expect(target).toMatch(/\bheight:\s*44px\b/);
     expect(target).toMatch(/\bmin-height:\s*44px\b/);
-    expect(icon).toMatch(/\bwidth:\s*24px\b/);
-    expect(icon).toMatch(/\bheight:\s*24px\b/);
+    expect(icon).toMatch(/\bwidth:\s*20px\b/);
+    expect(icon).toMatch(/\bheight:\s*20px\b/);
   });
 
   it("uses two regular-weight metadata rows and disables live animation for reduced motion", () => {
@@ -44,13 +45,15 @@ describe("guest home compact icon-only action spacing", () => {
     const fanCount = declarationBlock(".fanCount");
 
     expect(info).toMatch(/\bgap:\s*4px\b/);
-    expect(info).toMatch(/\bpadding:\s*12px\s+4px\s+0\b/);
+    expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
     expect(metaRow).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
     expect(metaRow).toMatch(/\balign-items:\s*center\b/);
-    expect(status).toMatch(/\bmin-height:\s*0\b/);
-    expect(fanCount).toMatch(/\balign-self:\s*center\b/);
+    expect(status).toMatch(/\bmin-height:\s*20px\b/);
+    expect(status).toMatch(/\bgap:\s*4px\b/);
+    expect(fanCount).toMatch(/\bmin-height:\s*44px\b/);
+    expect(fanCount).toMatch(/\balign-items:\s*center\b/);
     expect(fanCount).not.toMatch(/\bpadding-top\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,
