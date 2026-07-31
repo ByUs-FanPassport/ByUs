@@ -21,7 +21,7 @@ The system is an image-first fan utility: editorial artist imagery creates emoti
 
 ## Color
 
-Use a White and Near Black shell with a `single-gradient-highlight` strategy. Reserve the filled pink-to-violet Spectrum Relay for the current surface's single most important next action. The Google and Passport context actions may reuse the relay only as a 1px outline with a high-contrast solid service-color label; neutral utility surfaces must not compete with artist photography.
+Use a White and Near Black shell with a `single-gradient-highlight` strategy. Reserve the filled pink-to-violet Spectrum Relay for the current surface's single most important next action. Google, Passport, and repeated LIVE-row context actions may reuse the relay as a 1px outline with a high-contrast solid Spectrum Ink label; neutral utility surfaces must not compete with artist photography.
 
 ## Typography
 
@@ -49,13 +49,13 @@ The Home hero is an ordered carousel of every published LIVE whose effective sta
 
 Fan Pulse Spectrum is a bright, image-first fan utility interface. A full-color KARA hero supplies nearly all of the page's visual intensity; the surrounding product UI stays white, neutral, and deliberately quiet. The composition pairs editorial entertainment imagery with disciplined product surfaces: generous whitespace, black display type, hairline borders, short micro-shadows, and one pink-to-violet conversion accent. The result should feel like a polished global fan platform rather than a promotional microsite or a dense dashboard.
 
-The page uses asymmetry only at desktop scale. The main content owns the visual narrative while a narrower sticky context panel handles logged-out actions. Below 1024px, that panel disappears and the experience becomes a single-column feed with a fixed four-item bottom navigation. Color is concentrated in photography and the primary reservation action; utility cards do not compete with the hero.
+The page uses asymmetry only at desktop scale. The main content owns the visual narrative while a narrower sticky context panel handles logged-out actions. Below 1024px, that panel disappears and the experience becomes a single-column feed with a fixed four-item bottom navigation. Color is concentrated in photography, the primary reservation action, and restrained Spectrum outlines on repeated LIVE-row actions; utility cards do not compete with the hero.
 
 ### Key Characteristics
 
 - Image-first editorial hierarchy with one dominant 2:1 desktop hero.
 - White canvas, near-black text, soft neutral surfaces, and almost invisible borders.
-- One controlled pink-to-violet gradient reserved for the primary conversion CTA.
+- One controlled pink-to-violet filled gradient reserved for the primary conversion CTA; repeated LIVE-row actions may reuse the same relay only as a 1px outline.
 - Rounded but not bubbly: 12px controls, 16px collections, 20px hero, full pills only for status and primary action.
 - Large negative space between sections; dense information is organized inside compact rows rather than scattered labels.
 - Product utility and fandom emotion remain separate: photography carries emotion, cards carry tasks.
@@ -75,13 +75,13 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | Primary action | Spectrum Relay | `linear-gradient(125deg, oklch(68% 0.22 18), oklch(62% 0.25 340), oklch(56% 0.22 285))` | The current visible surface's single most important next action |
 | Action text | On Action White | `#FFFFFF` | Text and icons on the gradient CTA |
 | Status accent | Live Pink Line | `rgb(255 95 191 / 78%)` | UPCOMING status outline only |
-| Service outline | Spectrum Relay | Same gradient as Primary action | 1px border on Google and Passport context actions only |
-| Service action text | Spectrum Ink | `oklch(45% 0.22 315)` | Solid accessible label and arrow on outlined service actions |
+| Highlight outline | Spectrum Relay | Same gradient as Primary action | 1px border on Google, Passport, and repeated LIVE-row context actions |
+| Highlight action text | Spectrum Ink | `oklch(45% 0.22 315)` | Solid accessible label, icon, and arrow on outlined highlight actions |
 
 ### Primary
 
 - The interface is monochrome-first. White and Near Black define the product shell.
-- The Spectrum Relay is a conversion signal, not a decorative background. It appears at most once as a filled action in each active main or inert-isolated overlay; the two approved context actions may reuse it as a restrained 1px outline.
+- The Spectrum Relay is a conversion signal, not a decorative background. It appears at most once as a filled action in each active main or inert-isolated overlay. Google, Passport, and repeated LIVE-row actions may reuse it as a restrained 1px outline, but every action within the same repeated collection uses the same outline treatment.
 - Photography may be colorful, but no colored surface should be introduced merely to balance an image.
 
 ### Interactive
@@ -89,7 +89,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Default interactive text inherits Near Black or Muted Ink according to hierarchy.
 - `:focus-visible` uses a 3px Near Black outline with a 3px offset.
 - Fine-pointer hover feedback runs for 160ms with `cubic-bezier(0.2, 0, 0, 1)`.
-- The gradient CTA darkens all three stops on hover; neutral controls shift toward `oklch(97.5% 0 0)`.
+- The gradient CTA darkens all three stops on hover; outlined Spectrum actions receive a faint Spectrum-tinted White surface while preserving their outline; neutral controls shift toward `oklch(97.5% 0 0)`.
 
 ### Neutral Scale
 
@@ -174,7 +174,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Mobile/tablet context actions: below 1024px, replace the hidden desktop side panel with a regular in-flow action section immediately after the Hero. Keep both `Google로 계속하기` and `Fan Passport 발급받기` visible, 52px high, full-pill, Spectrum-outline controls; use one column on mobile and two columns from 768px.
 - Text links: minimum 44px interaction height, 14px/650, Muted Ink, unboxed chevron treatment.
 - Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. The Header language switch is the deliberate exception: use a 24×24px visible glyph inside the same 44×44px target. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
-- Repeated LIVE-row actions: keep them Neutral rather than Primary. At desktop use a 184×48px outlined pill with a 14px/750 centered label and balanced 18px leading/trailing icons; below 768px reduce the same action to a separate 44×44px icon target.
+- Repeated LIVE-row actions: use the highlighted Secondary treatment rather than Primary or Neutral. Apply the same White fill, 1px Spectrum Relay outline, and Spectrum Ink label/icons to every action in the collection regardless of reservation or replay state. At desktop use a 184×48px outlined pill with a 14px/750 centered label and balanced 18px leading/trailing icons; below 768px reduce the same action to a separate 44×44px icon target.
 - LIVE detail action rail: treat its title as a Page heading, not a Hero overlay title. Use 24px/800 on desktop and 20px/800 on mobile, 14px/550 schedule labels, 14px/750 schedule values, 24px between information groups, and 8px between the Primary and its 13px/550 helper.
 - Avoid parallel primary actions. The hero ends at “라이브 예약하기”; detailed information belongs downstream.
 
@@ -279,7 +279,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 - Let one strong artist image lead each viewport.
 - Keep utility surfaces white and separate them with hairlines and micro-shadows.
-- Use the Spectrum Relay only for the active surface's single primary next action. A page may have no Primary; repeated card actions and secondary exploration stay Neutral or Text.
+- Use the filled Spectrum Relay only for the active surface's single primary next action. A page may have no filled Primary. Repeated LIVE-row actions use the approved Spectrum-outline Secondary treatment consistently; other repeated card actions and secondary exploration stay Neutral or Text.
 - Keep title and explanatory subtitle together as a reusable section-heading pair.
 - Preserve 44px minimum interaction targets and visible keyboard focus.
 - Use real social brand marks and face-legible, high-quality artist photography.
@@ -337,7 +337,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 ### Quick Summary
 
-Build a white, image-first K-pop fan product with Pretendard typography, a dominant full-color editorial hero, and only one pink-to-violet gradient CTA. Keep all utility surfaces neutral with 1px hairlines, 12–16px radii, and short two-layer micro-shadows. Use 64px section spacing and strong but compact heading/subtitle pairs. On wide screens, split the page into a large content column and a narrow sticky logged-out context panel. Below 1024px remove that panel; below 768px switch to horizontal snap cards and fixed bottom navigation.
+Build a white, image-first K-pop fan product with Pretendard typography, a dominant full-color editorial hero, and only one pink-to-violet filled gradient CTA. Repeated LIVE-row actions may reuse that relay as a consistent 1px outline; keep all other utility surfaces neutral with 1px hairlines, 12/16/20px radii, and short two-layer micro-shadows. Use 64px section spacing and strong but compact heading/subtitle pairs. On wide screens, split the page into a large content column and a narrow sticky logged-out context panel. Below 1024px remove that panel; below 768px switch to horizontal snap cards and fixed bottom navigation.
 
 ### Example Component Prompts
 
@@ -345,11 +345,11 @@ Build a white, image-first K-pop fan product with Pretendard typography, a domin
 - Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; center square portraits at 66.5% of each field, then add two regular-weight metadata rows: artist/LIVE state and compact fan count/three 44px social controls.”
 - Navigation: “Create a 64px sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 768px.”
 - Passport: “Create a quiet White Passport utility card with a 20px/850 title, 14px subtitle, fully opened identity-and-stamp asset, centered two-line lifecycle copy, and a 90%-width 52px outlined login CTA.”
-- Live row: “Create a 112px White live row with a 64px circular artist avatar, compact 15px/750 title and 13px/400 metadata stack, plus a right-aligned 184×48px Neutral booking pill. Below 768px use a 44px icon-only action without turning repeated rows into Primary buttons.”
+- Live row: “Create a 112px White live row with a 64px circular artist avatar, compact 15px/750 title and 13px/400 metadata stack, plus a right-aligned 184×48px Spectrum-outline Secondary booking pill. Apply the same outline treatment to every action in the collection. Below 768px use a 44px icon-only action without turning repeated rows into filled Primary buttons.”
 
 ### Ready-to-Use Prompt
 
-Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and exactly one Spectrum Relay primary CTA. Use a wide content column plus sticky context panel at desktop, a single column below 1024px, and horizontal snap or fixed bottom navigation patterns below 768px. Do not introduce dark cards, extra gradients, glassmorphism, nested cards, or decorative color surfaces.
+Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and exactly one filled Spectrum Relay primary CTA. Repeated LIVE-row actions may use the same relay as a consistent 1px outline. Use a wide content column plus sticky context panel at desktop, a single column below 1024px, and horizontal snap or fixed bottom navigation patterns below 768px. Do not introduce dark cards, extra filled or decorative gradients, glassmorphism, nested cards, or decorative color surfaces.
 
 ### Iteration Guide
 

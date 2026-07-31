@@ -19,7 +19,7 @@
 .catalogStatus { min-height:0; font-size:13px; }
 .details h3 { overflow:hidden; margin:0; font-size:15px; font-weight:750; letter-spacing:-.02em; line-height:1.35; text-overflow:ellipsis; white-space:nowrap; }
 .details p { margin:0; }
-.action { display:grid; width:44px; height:44px; place-items:center; border:1px solid oklch(76% 0 0); border-radius:12px; background:#fff; color:oklch(18% 0 0); font-size:14px; font-weight:750; line-height:1; text-decoration:none; touch-action:manipulation; transition:border-color 160ms cubic-bezier(.2,0,0,1),background-color 160ms cubic-bezier(.2,0,0,1); }
+.action { display:grid; width:44px; height:44px; place-items:center; border:1px solid transparent; border-radius:12px; background:linear-gradient(#fff,#fff) padding-box,var(--color-primary-action) border-box; color:oklch(45% .22 315); font-size:14px; font-weight:750; line-height:1; text-decoration:none; touch-action:manipulation; transition:color 160ms cubic-bezier(.2,0,0,1); }
 .action svg { width:20px; height:20px; stroke-width:1.9; }
 .actionIcon { display:grid; place-items:center; }
 .actionLabel,.action > svg:last-child { display:none; }
@@ -38,7 +38,7 @@
   .actionLabel,.action > svg:last-child { display:inline-flex; }
   .actionLabel { min-width:0; align-items:center; justify-content:center; white-space:nowrap; }
 }
-@media (hover:hover) and (pointer:fine) { .action:hover,.retry:hover { border-color:oklch(52% 0 0); background:oklch(97.5% 0 0); } .details:hover h3 { text-decoration:underline; text-underline-offset:3px; } }
-.action:active { border-color:oklch(32% 0 0); background:oklch(94% 0 0); }
+@media (hover:hover) and (pointer:fine) { .action:hover { background:linear-gradient(oklch(98% .012 315),oklch(98% .012 315)) padding-box,linear-gradient(125deg,oklch(62% .22 18),oklch(56% .25 340),oklch(50% .22 285)) border-box; color:oklch(39% .22 315); } .retry:hover { border-color:oklch(52% 0 0); background:oklch(97.5% 0 0); } .details:hover h3 { text-decoration:underline; text-underline-offset:3px; } }
+.action:active { background:linear-gradient(oklch(96.5% .018 315),oklch(96.5% .018 315)) padding-box,linear-gradient(125deg,oklch(58% .22 18),oklch(52% .25 340),oklch(46% .22 285)) border-box; color:oklch(34% .22 315); }
 .details:focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }
 .action:focus-visible { outline:3px solid oklch(18% 0 0); outline-offset:3px; }

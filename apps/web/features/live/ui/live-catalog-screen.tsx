@@ -158,7 +158,7 @@ function LiveGroup({
                 </Link>
                 <Link
                   className={styles.action}
-                  data-fan-action-emphasis="neutral"
+                  data-fan-action-emphasis="secondary"
                   href={href as Route}
                   target={currentAction.external ? "_blank" : undefined}
                   rel={currentAction.external ? "noreferrer" : undefined}

@@ -36,7 +36,7 @@ const base = {
 
 describe("LIVE catalog", () => {
   it("renders the three product states with canonical details", () => {
-    render(<LiveCatalogScreen locale="ko" initialCatalog={{
+    const { container } = render(<LiveCatalogScreen locale="ko" initialCatalog={{
       liveNow: [{ ...base, live: { ...base.live, effectiveStatus: "live", watch: { ...base.live.watch, available: true, mode: "live" } }, primaryAction: "watch_live" }],
       upcoming: [base],
       replay: [{ ...base, live: { ...base.live, id: "22222222-2222-4222-8222-222222222222", slug: "kara-replay", effectiveStatus: "ended", watch: { ...base.live.watch, available: true, mode: "replay" } }, primaryAction: "live_ended" }],
@@ -46,12 +46,14 @@ describe("LIVE catalog", () => {
     expect(within(screen.getByRole("region", { name: "지금 LIVE 중" })).getByRole("link", { name: /LIVE 시청하기/ })).toHaveAttribute("href", base.live.watch.url);
     const reserveAction = within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ });
     expect(reserveAction).toHaveAttribute("href", "/live/kara-live?locale=ko");
-    expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "neutral");
+    expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "secondary");
     expect(within(reserveAction).getByText("라이브 예약하기")).toBeInTheDocument();
     expect(within(reserveAction).getByText("라이브 예약하기").previousElementSibling).toHaveAttribute("aria-hidden", "true");
     expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", {
       name: "KARA × NUALEAF LIVE 상세 보기",
     })).toHaveAttribute("href", "/live/kara-live?locale=ko");
     expect(within(screen.getByRole("region", { name: "다시보기" })).getByRole("link", { name: /다시보기/ })).toHaveAttribute("href", base.live.watch.url);
+    expect(container.querySelectorAll('article [data-fan-action-emphasis="secondary"]')).toHaveLength(3);
+    expect(container.querySelectorAll('article [data-fan-action-emphasis="primary"]')).toHaveLength(0);
   });
 });
