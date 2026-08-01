@@ -28,8 +28,14 @@ describe("LIVE detail information hierarchy contract", () => {
 
   it("keeps stable schedule columns on desktop and mobile", () => {
     expect(declarationBlock(".schedule")).toContain("gap: 16px");
+    expect(declarationBlock(".scheduleGroup")).toContain(
+      "--schedule-label-width: 112px",
+    );
+    expect(declarationBlock(".scheduleGroup")).toContain(
+      "--schedule-column-gap: 16px",
+    );
     expect(declarationBlock(".schedule div")).toContain(
-      "grid-template-columns: 112px minmax(0, 1fr)",
+      "grid-template-columns: var(--schedule-label-width) minmax(0, 1fr)",
     );
     expect(declarationBlock(".schedule dt")).toContain("font-size: 14px");
     expect(declarationBlock(".schedule dt")).toContain("font-weight: 550");
@@ -43,12 +49,18 @@ describe("LIVE detail information hierarchy contract", () => {
       "font-variant-numeric: tabular-nums",
     );
     expect(css).toMatch(
-      /@media\s*\(max-width:\s*767px\)[\s\S]*?\.schedule div\s*\{[\s\S]*?grid-template-columns:\s*92px minmax\(0,\s*1fr\)/,
+      /@media\s*\(max-width:\s*767px\)[\s\S]*?\.scheduleGroup\s*\{[\s\S]*?--schedule-label-width:\s*92px[\s\S]*?--schedule-column-gap:\s*12px/,
     );
     expect(css).toMatch(
       /@media\s*\(max-width:\s*767px\)[\s\S]*?\.actionRail h1\s*\{[\s\S]*?font-size:\s*20px/,
     );
-    expect(declarationBlock(".timeZone")).toContain("margin: 8px 0 0");
+    expect(declarationBlock(".timeZone")).toContain(
+      "margin-block: 8px 0",
+    );
+    expect(declarationBlock(".timeZone")).toContain(
+      "margin-inline: calc(var(--schedule-label-width) + var(--schedule-column-gap)) 0",
+    );
+    expect(declarationBlock(".timeZone")).toContain("text-align: start");
     expect(declarationBlock(".timeZone")).toContain("font-size: 13px");
   });
 });

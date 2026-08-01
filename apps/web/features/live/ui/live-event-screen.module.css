@@ -145,6 +145,8 @@
 }
 
 .scheduleGroup {
+  --schedule-label-width: 112px;
+  --schedule-column-gap: 16px;
   margin-top: 24px;
 }
 
@@ -156,8 +158,8 @@
 }
 .schedule div {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: var(--schedule-label-width) minmax(0, 1fr);
+  gap: var(--schedule-column-gap);
   align-items: start;
 }
 .schedule dt {
@@ -190,12 +192,13 @@
 }
 
 .timeZone {
-  margin: 8px 0 0;
+  margin-block: 8px 0;
+  margin-inline: calc(var(--schedule-label-width) + var(--schedule-column-gap)) 0;
   color: oklch(48% 0 0);
   font-size: 13px;
   font-weight: 550;
   line-height: 1.5;
-  text-align: end;
+  text-align: start;
 }
 
 .calendarAction,
@@ -843,9 +846,9 @@
   .actionRail h1 {
     font-size: 20px;
   }
-  .schedule div {
-    grid-template-columns: 92px minmax(0, 1fr);
-    gap: 12px;
+  .scheduleGroup {
+    --schedule-label-width: 92px;
+    --schedule-column-gap: 12px;
   }
   .contentGrid {
     margin-top: 48px;
