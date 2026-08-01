@@ -19,8 +19,8 @@ describe("FanSiteFooter", () => {
     const navigation = within(footer).getByRole("navigation", { name: "ByUs 하단 메뉴" });
     expect(within(navigation).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", "/live?locale=ko");
     expect(within(navigation).getByRole("link", { name: "Fan Passport" })).toHaveAttribute("href", "/passports?locale=ko");
-    expect(within(navigation).getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy");
-    expect(within(navigation).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms");
+    expect(within(navigation).getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy?locale=ko");
+    expect(within(navigation).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms?locale=ko");
     expect(within(navigation).queryByRole("link", { name: "문의하기" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "이미지 출처 열기" })).not.toBeInTheDocument();
     expect(footer).not.toHaveTextContent("biz@sallylab.io");
@@ -33,8 +33,8 @@ describe("FanSiteFooter", () => {
 
     const navigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
     expect(within(navigation).getByRole("link", { name: "Favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
-    expect(within(navigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy");
-    expect(within(navigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms");
+    expect(within(navigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
+    expect(within(navigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
     expect(within(navigation).queryByRole("link", { name: "Contact" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open image credits" })).not.toBeInTheDocument();
   });

@@ -1,3 +1,9 @@
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .homeLink {
   display: inline-flex;
   min-height: 44px;
@@ -7,6 +13,31 @@
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+}
+
+.languageLink {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: oklch(18% 0 0);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background-color 160ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.languageLink svg {
+  width: 24px;
+  height: 24px;
+}
+
+.languageLink:hover {
+  background: oklch(97.5% 0 0);
+}
+
+.languageLink:focus-visible {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
 }
 
 .homeLink svg {

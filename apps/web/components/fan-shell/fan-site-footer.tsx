@@ -67,8 +67,8 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           </section>
           <section>
             <h2>{t.guide}</h2>
-            <Link href="/privacy" aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
-            <Link href="/terms" aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
+            <Link href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
+            <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
           </section>
         </nav>
       </FanContentContainer>

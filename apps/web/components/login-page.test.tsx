@@ -60,8 +60,8 @@ describe("Privy login page", () => {
     expect(screen.queryByRole("button", { name: /Test Account 이메일/ })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "최애와 함께한 순간을 기록하세요." }).closest("[data-fan-surface]")).toHaveAttribute("lang", "ko");
     expect(screen.getByText("© 2026 Sallylab Inc.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy?locale=ko");
+    expect(screen.getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms?locale=ko");
     expect(document.querySelector("picture[data-decorative-background] img")).toHaveAttribute("alt", "");
     expect(screen.getByRole("img", { name: "펼쳐진 Fan Passport" })).toBeInTheDocument();
     expect(document.querySelector("[data-login-layout='passport-gateway']")).toBeInTheDocument();
