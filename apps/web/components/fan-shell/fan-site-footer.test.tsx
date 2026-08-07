@@ -23,7 +23,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms?locale=ko");
     expect(within(navigation).getByRole("heading", { name: "소셜" })).toBeInTheDocument();
     const telegram = within(navigation).getByRole("link", { name: "ByUs Telegram 채널 열기, 새 창" });
-    expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_giwa");
+    expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
     expect(telegram).not.toHaveTextContent("Telegram");
@@ -44,7 +44,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(within(navigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
     expect(within(navigation).getByRole("heading", { name: "Social" })).toBeInTheDocument();
-    expect(within(navigation).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_giwa");
+    expect(within(navigation).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(within(navigation).queryByRole("link", { name: "Contact" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open image credits" })).not.toBeInTheDocument();
   });
