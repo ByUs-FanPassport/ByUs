@@ -148,7 +148,4 @@
     color: var(--footer-ink);
   }
 
-  .navigation .socialLink:hover {
-    background: oklch(97.5% 0 0);
-  }
 }
