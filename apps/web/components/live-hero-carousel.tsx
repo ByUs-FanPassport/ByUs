@@ -211,6 +211,7 @@ export function LiveHeroCarousel({
                 src={featuredLive.live.heroImage.url}
                 alt={featuredLive.live.heroImage.alt}
                 fill
+                unoptimized={featuredLive.live.heroImage.url.startsWith("https://")}
                 sizes="(min-width: 1024px) 66vw, 100vw"
                 priority={index === 0}
               />

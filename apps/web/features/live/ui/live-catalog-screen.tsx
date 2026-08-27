@@ -130,7 +130,13 @@ function LiveGroup({
               : `/live/${item.live.slug}?locale=${locale}`;
             return (
               <article className={styles.row} key={item.live.id}>
-                <Image src={item.live.celebrity.image} alt="" width={64} height={64} />
+                <Image
+                  src={item.live.celebrity.image}
+                  alt=""
+                  width={64}
+                  height={64}
+                  unoptimized={item.live.celebrity.image.startsWith("https://")}
+                />
                 <Link
                   className={styles.details}
                   href={`/live/${item.live.slug}?locale=${locale}` as Route}

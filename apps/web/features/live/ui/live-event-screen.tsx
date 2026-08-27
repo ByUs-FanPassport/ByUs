@@ -887,6 +887,7 @@ export function LiveEventScreen({
               fill
               sizes="(min-width: 1024px) 66vw, 100vw"
               priority
+              unoptimized={live.heroImage.url.startsWith("https://")}
             />
             {live.preview ? (
               <ActivePreviewVideo
@@ -1161,7 +1162,13 @@ export function LiveEventScreen({
             </section>
           </div>
           <aside className={styles.identity}>
-            <Image src={live.celebrity.image} alt="" width={64} height={64} />
+            <Image
+              src={live.celebrity.image}
+              alt=""
+              width={64}
+              height={64}
+              unoptimized={live.celebrity.image.startsWith("https://")}
+            />
             <div>
               <span>{live.celebrity.name}</span>
               <strong>{formatFanCount(live.celebrity.fanCount)}</strong>

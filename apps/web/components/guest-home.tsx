@@ -166,7 +166,7 @@ function AuthenticatedHomeSummary({
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>
         {reservation ? (
           <div className={styles.reservationSummary}>
-            <Image src={reservation.celebrity.image} alt="" width={56} height={56} />
+            <Image src={reservation.celebrity.image} alt="" width={56} height={56} unoptimized={reservation.celebrity.image.startsWith("https://")} />
             <div><span>{reservation.celebrity.name}</span><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time></div>
             <Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link>
           </div>
@@ -282,7 +282,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                 const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
                 return (
                   <article className={styles.liveRow} key={featuredLive.live.id}>
-                    <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} ${locale === "ko" ? "프로필" : "profile"}`} width={64} height={64} />
+                    <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} ${locale === "ko" ? "프로필" : "profile"}`} width={64} height={64} unoptimized={featuredLive.live.celebrity.image.startsWith("https://")} />
                     <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
                     <div className={styles.liveMeta}><span>{statusLabel}</span></div>
                     <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>
