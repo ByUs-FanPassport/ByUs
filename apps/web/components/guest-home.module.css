@@ -86,9 +86,9 @@
 .celebrityRail { display: grid; grid-auto-columns: min(82vw, 288px); grid-auto-flow: column; gap: 16px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: inline mandatory; scrollbar-width: none; }
 .celebrityRail::-webkit-scrollbar { display: none; }
 .celebrityCard { min-width: 0; scroll-snap-align: start; }
-.celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; padding: 16.75%; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
+.celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; overflow: hidden; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .celebrityMediaBox > [data-preview-mode="card"] { inset: 16.75%; border-radius: 4px; }
-.celebrityMediaBox img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.celebrityMediaBox img { position: absolute; inset: 16.75%; display: block; width: 66.5%; height: 66.5%; object-fit: cover; border-radius: 4px; }
 .celebrityInfo { display: grid; min-width: 0; gap: 4px; padding: 12px 12px 0; }
 .celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .celebrityMetaRow:first-child { min-height: 20px; }
