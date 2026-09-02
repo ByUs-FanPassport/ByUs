@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertPiiFree, renderMetadata } from "../src/metadata.js";
-import type { BlockchainJob, PassportPayloadV1, StampPayloadV1 } from "../src/domain.js";
+import type { BlockchainJob, PassportPayloadV1, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
 
 const payload: PassportPayloadV1 = {
   recipient: `0x${"1".repeat(40)}`,
@@ -40,5 +40,18 @@ describe("credential metadata", () => {
     const stampJob = { ...job, entityType: "stamp" as const, payload: stampPayload };
     expect(renderMetadata(stampJob, stampPayload, "ipfs://bafy-assets/credentials/v1").image)
       .toBe(`ipfs://bafy-assets/credentials/v1/stamp/${stampType.toLowerCase()}/kara.png`);
+  });
+
+  it("represents Reaction independently while reusing the generic mint metadata pipeline", () => {
+    const reactionPayload: ReactionPayloadV1 = {
+      recipient: payload.recipient,
+      celebritySlug: "kara",
+      issuanceId: payload.passportId,
+      reactionType: "FirstReaction",
+    };
+    const reactionJob = { ...job, entityType: "reaction" as const, payload: reactionPayload };
+    const metadata = renderMetadata(reactionJob, reactionPayload, "ipfs://bafy-assets/credentials/v1");
+    expect(metadata.name).toBe("ByUs First Reaction");
+    expect(metadata.image).toBe("ipfs://bafy-assets/credentials/v1/reaction/first/kara.png");
   });
 });

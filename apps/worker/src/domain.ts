@@ -26,11 +26,17 @@ export const stampPayloadV1Schema = basePayload.extend({
   stampType: z.enum(["Knowledge", "Reservation", "Attendance", "Survey"]),
 }).strict();
 
+export const reactionPayloadV1Schema = basePayload.extend({
+  issuanceId: bytes32Schema,
+  reactionType: z.literal("FirstReaction"),
+}).strict();
+
 export type PreparedSubmission = z.infer<typeof preparedSubmissionSchema>;
 export type PassportPayloadV1 = z.infer<typeof passportPayloadV1Schema>;
 export type StampPayloadV1 = z.infer<typeof stampPayloadV1Schema>;
-export type JobPayload = PassportPayloadV1 | StampPayloadV1;
-export type EntityType = "passport" | "stamp";
+export type ReactionPayloadV1 = z.infer<typeof reactionPayloadV1Schema>;
+export type JobPayload = PassportPayloadV1 | StampPayloadV1 | ReactionPayloadV1;
+export type EntityType = "passport" | "stamp" | "reaction";
 
 export interface BlockchainJob {
   id: string;
@@ -50,9 +56,9 @@ export function parseJobPayload(job: BlockchainJob): JobPayload {
   if (job.payloadVersion !== 1) {
     throw new WorkerError("UNSUPPORTED_PAYLOAD_VERSION", `Unsupported payload version: ${job.payloadVersion}`, false);
   }
-  return job.entityType === "passport"
-    ? passportPayloadV1Schema.parse(job.payload)
-    : stampPayloadV1Schema.parse(job.payload);
+  if (job.entityType === "passport") return passportPayloadV1Schema.parse(job.payload);
+  if (job.entityType === "reaction") return reactionPayloadV1Schema.parse(job.payload);
+  return stampPayloadV1Schema.parse(job.payload);
 }
 
 export class WorkerError extends Error {

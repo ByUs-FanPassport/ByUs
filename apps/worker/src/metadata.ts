@@ -8,10 +8,14 @@ const forbiddenKeys = new Set(["email", "nickname", "realName", "personalName", 
 export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBaseUri: string): MetadataDocument {
   const credential = job.entityType === "passport"
     ? "Fan Passport"
-    : `${(payload as Extract<JobPayload, { stampType: string }>).stampType} Stamp`;
+    : job.entityType === "reaction"
+      ? "First Reaction"
+      : `${(payload as Extract<JobPayload, { stampType: string }>).stampType} Stamp`;
   const assetPath = job.entityType === "passport"
     ? `passport/${payload.celebritySlug}.png`
-    : `stamp/${(payload as Extract<JobPayload, { stampType: string }>).stampType.toLowerCase()}/${payload.celebritySlug}.png`;
+    : job.entityType === "reaction"
+      ? `reaction/first/${payload.celebritySlug}.png`
+      : `stamp/${(payload as Extract<JobPayload, { stampType: string }>).stampType.toLowerCase()}/${payload.celebritySlug}.png`;
   const document: MetadataDocument = {
     schema: "https://byus.kr/schemas/credential-metadata-v1.json",
     version: 1,
