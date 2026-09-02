@@ -162,7 +162,7 @@ begin
   if found then return jsonb_build_object('reactionId',existing.id,'status',existing.business_status,
     'mintStatus',existing.mint_status,'blockchainJobId',existing.blockchain_job_id,'created',false,
     'passportExists',exists(select 1 from public.fan_passports p where p.app_user_id=p_app_user_id and p.celebrity_id=p_celebrity_id)); end if;
-  select c.slug into slug from public.celebrities c where c.id=p_celebrity_id and c.publication_status='published' and c.archived_at is null for key share;
+  select c.slug into slug from public.celebrities c where c.id=p_celebrity_id and c.status='published' and c.archived_at is null for key share;
   if not found then raise exception 'P2_CREATOR_NOT_FOUND' using errcode='P0002'; end if;
   select w.address into recipient from public.user_wallets w where w.app_user_id=p_app_user_id and w.chain_id=91342
     and w.provider='privy' and w.wallet_type='embedded' for key share;

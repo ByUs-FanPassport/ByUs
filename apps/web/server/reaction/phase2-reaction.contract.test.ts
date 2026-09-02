@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260902020000_phase2_reaction_domain.sql"), "utf8");
+const readSql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260902141000_get_owned_reaction.sql"), "utf8");
 
 describe("Phase 2 Reaction database contract", () => {
   it("owns one immutable reaction and one reaction job per fan and creator", () => {
@@ -19,5 +20,18 @@ describe("Phase 2 Reaction database contract", () => {
     expect(rpc).not.toContain("insert into public.fan_passports");
     expect(rpc).not.toContain("fan_score_ledger");
     expect(rpc).not.toContain("post_fan_ticket_entry");
+  });
+
+  it("uses the canonical celebrity publication column", () => {
+    expect(sql).toContain("c.status='published'");
+    expect(sql).not.toContain("c.publication_status");
+  });
+
+  it("provides an owned read model for persistent creator-page completion", () => {
+    expect(readSql).toContain("get_owned_reaction");
+    expect(readSql).toContain("r.app_user_id=p_app_user_id");
+    expect(readSql).toContain("c.slug=p_celebrity_slug");
+    expect(readSql).toContain("'created',false");
+    expect(readSql).toContain("grant execute on function public.get_owned_reaction(uuid,text) to service_role");
   });
 });

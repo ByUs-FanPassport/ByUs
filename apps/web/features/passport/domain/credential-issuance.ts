@@ -5,7 +5,7 @@ const uuidSchema = z.uuid();
 const celebritySlugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
 const recipientSchema = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const operationKeySchema = z.string().regex(
-  /^byus:(?:passport:v1:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:[a-z0-9]+(?:-[a-z0-9]+)*|stamp:v1:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/,
+  /^byus:(?:passport:v1:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:[a-z0-9]+(?:-[a-z0-9]+)*|(?:stamp|reaction):v1:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/,
 );
 
 export type BlockchainQueueStatus =

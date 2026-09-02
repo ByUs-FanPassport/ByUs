@@ -18,7 +18,9 @@ export function ReactionAction({ slug, locale }: { slug: string; locale: "ko" | 
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [state, setState] = useState<"idle" | "working" | "done" | "error">("idle");
   const [result, setResult] = useState<ReactionResult | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const resumed = useRef(false);
+  const checkedExisting = useRef(false);
   const t = copy[locale];
 
   const react = useCallback(async () => {
@@ -33,6 +35,7 @@ export function ReactionAction({ slug, locale }: { slug: string; locale: "ko" | 
       const parsed = reactionResultSchema.parse(body);
       setResult(parsed);
       setState("done");
+      setShowModal(!parsed.passportExists);
     } catch { setState("error"); }
   }, [authenticated, getAccessToken, ready, slug, state]);
 
@@ -46,6 +49,25 @@ export function ReactionAction({ slug, locale }: { slug: string; locale: "ko" | 
     void react();
   }, [authenticated, react, slug]);
 
+  useEffect(() => {
+    if (!ready || !authenticated || state !== "idle" || checkedExisting.current) return;
+    checkedExisting.current = true;
+    let active = true;
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) return;
+        const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/reactions`, { headers: { authorization: `Bearer ${token}` } });
+        if (!response.ok) return;
+        const body = await response.json();
+        if (body?.reaction === null) return;
+        const parsed = reactionResultSchema.safeParse(body?.reaction);
+        if (active && parsed.success) { setResult(parsed.data); setState("done"); }
+      } catch { /* Keep the action available when the read-only status check is unavailable. */ }
+    })();
+    return () => { active = false; };
+  }, [authenticated, getAccessToken, ready, slug, state]);
+
   const verificationHref = result ? `/c/${slug}/verify?locale=${locale}&source=reaction&reactionId=${result.reactionId}` : `/c/${slug}/verify?locale=${locale}`;
   return <section className={styles.card} id="first-reaction" aria-labelledby="first-reaction-title">
     <div><p>FIRST REACTION</p><h2 id="first-reaction-title">{t.title}</h2><span>{t.body}</span></div>
@@ -53,6 +75,6 @@ export function ReactionAction({ slug, locale }: { slug: string; locale: "ko" | 
       : !authenticated ? <AuthIntentLink focusKey="first-reaction" locale={locale} input={{ sourcePath: `/c/${slug}`, sourceQuery: `?locale=${locale}`, actionType: "CREATE_REACTION", targetType: "celebrity", targetId: slug, returnAnchor: "#first-reaction" }}>{t.action}</AuthIntentLink>
       : <button type="button" onClick={() => void react()} disabled={state === "working" || state === "done"}>{state === "working" ? t.working : state === "done" ? t.done : t.action}</button>}
     {state === "error" && <p role="alert" className={styles.error}>{t.error}</p>}
-    {state === "done" && result && !result.passportExists && <div className={styles.backdrop} role="presentation"><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="reaction-modal-title"><h2 id="reaction-modal-title">{t.modalTitle}</h2><p>{t.modalBody}</p><Link href={verificationHref as Route}>{t.passport}</Link><button type="button" onClick={() => setResult({ ...result, passportExists: true })}>{t.later}</button></div></div>}
+    {state === "done" && result && showModal && <div className={styles.backdrop} role="presentation"><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="reaction-modal-title"><h2 id="reaction-modal-title">{t.modalTitle}</h2><p>{t.modalBody}</p><Link href={verificationHref as Route}>{t.passport}</Link><button type="button" onClick={() => setShowModal(false)}>{t.later}</button></div></div>}
   </section>;
 }

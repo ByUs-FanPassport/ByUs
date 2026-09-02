@@ -31,3 +31,18 @@ export function createPostReactionHandler(deps: ReactionRouteDependencies) {
     }
   };
 }
+
+export function createGetReactionHandler(deps: ReactionRouteDependencies) {
+  return async (request: Request, input: { celebritySlug: string }): Promise<Response> => {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.celebritySlug)) return json({ error: { code: "CREATOR_NOT_FOUND" } }, 404);
+    let owner;
+    try { owner = await deps.authorize(request.headers.get("authorization")); }
+    catch (error) {
+      if (error instanceof FanAuthUnavailableError) return json({ error: { code: "REACTION_UNAVAILABLE" } }, 503);
+      if (error instanceof AuthError) return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status);
+      return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, 401);
+    }
+    try { return json({ reaction: await deps.repository.find({ appUserId: owner.appUserId, celebritySlug: input.celebritySlug }) }, 200); }
+    catch { return json({ error: { code: "REACTION_UNAVAILABLE" } }, 503); }
+  };
+}

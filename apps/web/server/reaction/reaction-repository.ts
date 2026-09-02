@@ -18,6 +18,7 @@ interface RpcClient {
 
 export interface ReactionRepository {
   react(input: { appUserId: string; celebritySlug: string }): Promise<ReactionResult>;
+  find(input: { appUserId: string; celebritySlug: string }): Promise<ReactionResult | null>;
 }
 
 const failureMap: Readonly<Record<string, ReactionFailureCode>> = {
@@ -45,6 +46,18 @@ export class SupabaseReactionRepository implements ReactionRepository {
       const marker = Object.keys(failureMap).find((candidate) => error.message?.includes(candidate));
       throw new ReactionRepositoryError(marker ? failureMap[marker] : "REACTION_UNAVAILABLE");
     }
+    const parsed = reactionResultSchema.safeParse(data);
+    if (!parsed.success) throw new ReactionRepositoryError("REACTION_UNAVAILABLE");
+    return parsed.data;
+  }
+
+  async find(input: { appUserId: string; celebritySlug: string }): Promise<ReactionResult | null> {
+    const { data, error } = await this.client.rpc("get_owned_reaction", {
+      p_app_user_id: input.appUserId,
+      p_celebrity_slug: input.celebritySlug,
+    });
+    if (error) throw new ReactionRepositoryError("REACTION_UNAVAILABLE");
+    if (data === null) return null;
     const parsed = reactionResultSchema.safeParse(data);
     if (!parsed.success) throw new ReactionRepositoryError("REACTION_UNAVAILABLE");
     return parsed.data;
