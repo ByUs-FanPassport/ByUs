@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { AuthError } from "../../features/auth/domain/auth-errors";
+import { REWARD_POLICY_V2 } from "../../features/rewards/domain/reward-policy";
 import type { AdminSession } from "../admin/admin-session-gate";
 import type { LiveManagerRepository } from "./live-manager-repository";
 import { adminCorrelationId } from "./blockchain-job-route";
@@ -63,6 +64,19 @@ const save = z
   });
 const command = z.discriminatedUnion("action", [
   save,
+  z.object({
+    action: z.literal("save_reward_settings"),
+    liveEventId: uuid,
+    expectedRevision: z.number().int().min(0),
+    missionScore: z.number().int().min(REWARD_POLICY_V2.mission.minimumScore).max(REWARD_POLICY_V2.mission.maximumScore),
+    missionTicket: z.number().int().min(REWARD_POLICY_V2.mission.minimumTicket).max(REWARD_POLICY_V2.mission.maximumTicket),
+    journeyBonusTicket: z.number().int().min(REWARD_POLICY_V2.journey.minimumCompletionTicket).max(REWARD_POLICY_V2.journey.maximumCompletionTicket),
+  }),
+  z.object({
+    action: z.literal("publish_reward_settings"),
+    liveEventId: uuid,
+    expectedRevision: z.number().int().positive(),
+  }),
   z.object({ action: z.enum(["publish", "unpublish"]), id: uuid }),
   z.object({
     action: z.literal("archive"),
@@ -161,6 +175,10 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
           { id: await deps.repository.save(actor, correlationId, parsed) },
           parsed.id ? 200 : 201,
         );
+      if (parsed.action === "save_reward_settings")
+        return json(await deps.repository.saveRewardSettings(actor, correlationId, parsed), 200);
+      if (parsed.action === "publish_reward_settings")
+        return json(await deps.repository.publishRewardSettings(actor, correlationId, parsed), 200);
       if (parsed.action === "publish" || parsed.action === "unpublish") {
         await deps.repository.publication(
           actor,
@@ -211,7 +229,7 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       const conflict =
-        /not found|immutable|transition|overlap|published|requires|draft/i.test(
+        /not found|immutable|transition|overlap|published|requires|draft|stale/i.test(
           message,
         );
       return json(

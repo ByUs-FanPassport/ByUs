@@ -16,6 +16,8 @@ export type LiveManagerRepository = {
     action: "publish" | "unpublish" | "archive",
     reason?: string,
   ): Promise<void>;
+  saveRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
+  publishRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
 };
 
 type RpcClient = Pick<SupabaseClient, "rpc">;
@@ -29,10 +31,17 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
   const db = client ?? createClient(config.url, config.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   return {
     async read(actor) {
-      const { data, error } = await db.rpc("get_admin_live_manager", {
+      const args = {
         p_actor_app_user_id: actor.appUserId, p_actor_admin_allowlist_id: actor.allowlistId, p_live_event_id: null,
-      });
-      return assert(data, error) as Record<string, unknown>;
+      };
+      const [manager, settings] = await Promise.all([
+        db.rpc("get_admin_live_manager", args),
+        db.rpc("get_admin_live_reward_settings", args),
+      ]);
+      return {
+        ...(assert(manager.data, manager.error) as Record<string, unknown>),
+        rewardSettings: assert(settings.data, settings.error),
+      };
     },
     async save(actor, correlationId, input) {
       const { data, error } = await db.rpc("save_admin_live_draft", {
@@ -81,6 +90,30 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
         p_reason: reason ?? null,
       });
       assert(null, error);
+    },
+    async saveRewardSettings(actor, correlationId, input) {
+      const { data, error } = await db.rpc("save_admin_live_reward_settings", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_expected_revision: input.expectedRevision,
+        p_mission_score: input.missionScore,
+        p_mission_ticket: input.missionTicket,
+        p_journey_bonus_ticket: input.journeyBonusTicket,
+      });
+      const result = assert(data, error) as { revisionId: string; revision: number };
+      return result;
+    },
+    async publishRewardSettings(actor, correlationId, input) {
+      const { data, error } = await db.rpc("publish_admin_live_reward_settings", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_expected_revision: input.expectedRevision,
+      });
+      return assert(data, error) as { revisionId: string; revision: number };
     },
   };
 }

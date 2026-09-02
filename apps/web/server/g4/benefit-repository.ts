@@ -18,6 +18,12 @@ import {
   type BenefitListResponse,
   type BenefitLocale,
 } from "../../features/benefit/domain/benefit";
+import { FAN_TIERS } from "../../features/rewards/domain/reward-policy";
+
+const fanScoreAndTierSchema = z.object({
+  score: z.number().int(),
+  effectiveTier: z.enum(FAN_TIERS),
+});
 
 const rawBenefitSchema = benefitCatalogItemSchema
   .omit({ state: true, applicationStatus: true })
@@ -328,7 +334,7 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
       };
     const [
       passportResult,
-      scoreResult,
+      scoreAndTierResult,
       stampsResult,
       activitiesResult,
       claimsResult,
@@ -341,11 +347,10 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
         .eq("celebrity_id", celebrity.id)
         .eq("business_status", "issued")
         .maybeSingle(),
-      this.database
-        .from("fan_score_ledger")
-        .select("points")
-        .eq("app_user_id", appUserId)
-        .eq("celebrity_id", celebrity.id),
+      this.database.rpc("get_fan_score_and_effective_tier", {
+        p_app_user_id: appUserId,
+        p_celebrity_id: celebrity.id,
+      }),
       this.database
         .from("stamps")
         .select("stamp_type")
@@ -369,32 +374,22 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
     ]);
     if (
       passportResult.error ||
-      scoreResult.error ||
+      scoreAndTierResult.error ||
       stampsResult.error ||
       activitiesResult.error ||
       claimsResult.error ||
       applicationsResult.error
     )
       throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
-    const score = (scoreResult.data ?? []).reduce(
-      (sum, row) => sum + row.points,
-      0,
-    );
-    const level =
-      score >= 35
-        ? "Diamond"
-        : score >= 20
-          ? "Platinum"
-          : score >= 10
-            ? "Gold"
-            : score >= 5
-              ? "Silver"
-              : "Bronze";
+    const scoreAndTier = fanScoreAndTierSchema.safeParse(scoreAndTierResult.data);
+    if (!scoreAndTier.success) {
+      throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
+    }
     return {
       authenticated: true,
       hasPassport: passportResult.data !== null,
-      score,
-      level,
+      score: scoreAndTier.data.score,
+      level: scoreAndTier.data.effectiveTier,
       stampTypes: new Set(
         (stampsResult.data ?? []).map((row) => row.stamp_type),
       ),

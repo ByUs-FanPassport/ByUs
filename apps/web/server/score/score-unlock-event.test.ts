@@ -3,13 +3,21 @@ import { crossedFanLevels, isFanProgressEventType } from "./score-unlock-event";
 
 describe("SCORE-006 domain policy", () => {
   it("returns every newly crossed level in order", () => {
-    expect(crossedFanLevels(4, 35)).toEqual([
+    expect(crossedFanLevels(14, 250)).toEqual([
       "Silver",
       "Gold",
       "Platinum",
       "Diamond",
     ]);
-    expect(crossedFanLevels(9, 20)).toEqual(["Gold", "Platinum"]);
+    expect(crossedFanLevels(49, 120)).toEqual(["Gold", "Platinum"]);
+  });
+
+  it.each([
+    [0, 14, []], [14, 15, ["Silver"]], [15, 49, []],
+    [49, 50, ["Gold"]], [50, 119, []], [119, 120, ["Platinum"]],
+    [120, 249, []], [249, 250, ["Diamond"]],
+  ] as const)("applies Tier v2 boundary %i -> %i", (before, after, expected) => {
+    expect(crossedFanLevels(before, after)).toEqual(expected);
   });
 
   it("does not classify score decreases or unchanged scores as upgrades", () => {

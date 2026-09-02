@@ -26,7 +26,7 @@ describe("SupabasePassportReadRepository", () => {
     await expect(repository.findCollection({ appUserId: owner, locale: "ko" })).resolves.toMatchObject([{ id: passportId, display: { level: "브론즈", mintStatus: "발급 대기" } }]);
     await expect(repository.findPassport({ id: passportId, appUserId: owner, locale: "en" })).resolves.toMatchObject({
       stamps: [{ display: { type: "Fan Verification" }, context }],
-      progress: { currentScore: 1, currentLevel: "Bronze", nextLevel: "Silver", nextThreshold: 5, remainingPoints: 4, percent: 20, maxed: false },
+      progress: { currentScore: 1, currentLevel: "Bronze", nextLevel: "Silver", nextThreshold: 15, remainingPoints: 14, percent: 7, maxed: false },
       nextBenefit: null,
     });
     await expect(repository.findStamp({ id: stampId, appUserId: owner, locale: "ko" })).resolves.toMatchObject({ owner: { nickname: "FanOne" }, display: { type: "팬 인증" }, activity: { context } });
@@ -170,7 +170,5 @@ describe("SupabasePassportReadRepository", () => {
     await expect(databaseFailure.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).rejects.toThrow("query failed");
     const multiple = new SupabasePassportReadRepository({ rpc: vi.fn().mockResolvedValue({ data: [base, base], error: null }) });
     await expect(multiple.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).rejects.toThrow("multiple rows");
-    const inconsistentLevel = new SupabasePassportReadRepository({ rpc: vi.fn().mockResolvedValue({ data: [{ ...detailBase, score: { points: 5, level: "Bronze" }, stamps: [], activities: [] }], error: null }) });
-    await expect(inconsistentLevel.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).rejects.toThrow("projection is invalid");
   });
 });

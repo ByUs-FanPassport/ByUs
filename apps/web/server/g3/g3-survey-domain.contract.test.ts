@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260721074500_g3_survey_domain.sql"), "utf8");
+const rewardSql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260902014000_phase1_survey_reward_binding.sql"), "utf8");
 
 function definition(name: string): string {
   const start = sql.indexOf(`create function public.${name}`);
@@ -55,6 +56,30 @@ describe("G3 survey database contract", () => {
     expect(submit).toContain("'survey', 'live_survey_response'");
     expect(submit).toContain("response_record.celebrity_id, 2");
     expect(submit).toContain("'stampType', 'Survey'");
+  });
+
+  it("binds survey versions to immutable reward snapshots and supports zero-score issuance", () => {
+    const responseIndex = rewardSql.indexOf("create index if not exists live_survey_responses_survey_idx");
+    const firstResponseBearingScan = rewardSql.indexOf("from public.live_survey_responses");
+
+    expect(responseIndex).toBeGreaterThan(-1);
+    expect(rewardSql).toContain("on public.live_survey_responses(survey_id)");
+    expect(firstResponseBearingScan).toBeGreaterThan(responseIndex);
+    expect(rewardSql).toContain("live_survey_reward_setting_bindings");
+    expect(rewardSql).toContain("policy_version, lifecycle_status, mission_score");
+    expect(rewardSql).toContain("1, 'published', 2");
+    expect(rewardSql).toContain("bind_published_live_survey_reward_settings");
+    expect(rewardSql).toContain("reward_setting.mission_score > 0");
+    expect(rewardSql).toContain("coalesce(score.points, 0)");
+    expect(rewardSql).toContain("left join public.fan_score_ledger score");
+    expect(rewardSql).toContain("freeze_live_reward_settings_on_issuance");
+  });
+
+  it("uses the bound score exactly once and preserves stored replay results", () => {
+    expect(rewardSql.match(/insert into public\.fan_score_ledger/g)).toHaveLength(1);
+    expect(rewardSql).toContain("reward_setting.mission_score");
+    expect(rewardSql).toContain("return existing.result");
+    expect(rewardSql).not.toContain("response_record.celebrity_id, 2");
   });
 
   it("serializes draft and submit replay and rejects cross-operation key reuse", () => {

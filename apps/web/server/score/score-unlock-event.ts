@@ -1,15 +1,19 @@
-export const FAN_LEVEL_THRESHOLDS = [
-  { name: "Silver", score: 5 },
-  { name: "Gold", score: 10 },
-  { name: "Platinum", score: 20 },
-  { name: "Diamond", score: 35 },
-] as const;
+import { REWARD_POLICY_V2, type FanTier } from "../../features/rewards/domain/reward-policy";
 
-export type UpgradedFanLevel = (typeof FAN_LEVEL_THRESHOLDS)[number]["name"];
+export const FAN_LEVEL_POLICY_VERSION = REWARD_POLICY_V2.version;
+export type UpgradedFanLevel = Exclude<FanTier, "Bronze">;
+export const FAN_LEVEL_THRESHOLDS: ReadonlyArray<{
+  name: UpgradedFanLevel;
+  score: number;
+}> = REWARD_POLICY_V2.tiers.slice(1).map(
+  ({ name, minimumScore }) => ({ name, score: minimumScore }),
+) as ReadonlyArray<{ name: UpgradedFanLevel; score: number }>;
+
 export type FanProgressEventType = "level_up" | "benefit_unlocked";
 
 export type LevelUpPayload = {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  policyVersion: typeof FAN_LEVEL_POLICY_VERSION;
   celebrityId: string;
   previousScore: number;
   currentScore: number;
@@ -18,7 +22,8 @@ export type LevelUpPayload = {
 };
 
 export type BenefitUnlockedPayload = {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  policyVersion: typeof FAN_LEVEL_POLICY_VERSION;
   celebrityId: string;
   benefitId: string;
   benefitSlug: string;

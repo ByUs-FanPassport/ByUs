@@ -25,6 +25,8 @@ function deps(
       archive: vi.fn(async () => undefined),
       override: vi.fn(async () => "44444444-4444-4444-8444-444444444444"),
       previewStatus: vi.fn(async () => undefined),
+      saveRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
+      publishRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
       ...overrides,
     },
   };
@@ -64,6 +66,58 @@ describe("ADM-005 live manager route", () => {
     );
     expect(response.status).toBe(403);
     expect(d.repository.publication).not.toHaveBeenCalled();
+  });
+
+  it("saves bounded reward settings with an optimistic revision", async () => {
+    const saveRewardSettings = vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 }));
+    const d = deps({ saveRewardSettings });
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST",
+      headers: { authorization: "Bearer secret", "content-type": "application/json", "x-correlation-id": "55555555-5555-4555-8555-555555555555" },
+      body: JSON.stringify({ action: "save_reward_settings", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 1, missionScore: 3, missionTicket: 2, journeyBonusTicket: 5 }),
+    }));
+    expect(response.status).toBe(200);
+    expect(saveRewardSettings).toHaveBeenCalledWith(
+      { appUserId: actor.appUserId, allowlistId: actor.allowlistId },
+      "55555555-5555-4555-8555-555555555555",
+      expect.objectContaining({ expectedRevision: 1, missionScore: 3, missionTicket: 2, journeyBonusTicket: 5 }),
+    );
+    expect(await response.json()).toEqual({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 });
+  });
+
+  it("rejects reward values outside policy bounds", async () => {
+    const d = deps();
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST", headers: { authorization: "Bearer secret", "content-type": "application/json" },
+      body: JSON.stringify({ action: "save_reward_settings", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 0, missionScore: 4, missionTicket: 1, journeyBonusTicket: 3 }),
+    }));
+    expect(response.status).toBe(400);
+    expect(d.repository.saveRewardSettings).not.toHaveBeenCalled();
+  });
+
+  it("publishes one immutable reward revision", async () => {
+    const publishRewardSettings = vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 1 }));
+    const d = deps({ publishRewardSettings });
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST", headers: { authorization: "Bearer secret", "content-type": "application/json" },
+      body: JSON.stringify({ action: "publish_reward_settings", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 1 }),
+    }));
+    expect(response.status).toBe(200);
+    expect(publishRewardSettings).toHaveBeenCalledOnce();
+  });
+
+  it("maps a stale reward revision to a conflict", async () => {
+    const d = deps({
+      saveRewardSettings: vi.fn(async () => {
+        throw new Error("stale reward settings revision");
+      }),
+    });
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST", headers: { authorization: "Bearer secret", "content-type": "application/json" },
+      body: JSON.stringify({ action: "save_reward_settings", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 1, missionScore: 1, missionTicket: 1, journeyBonusTicket: 3 }),
+    }));
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: { code: "LIVE_COMMAND_REJECTED" } });
   });
 
   it("publishes a validated Preview through the audited repository command", async () => {

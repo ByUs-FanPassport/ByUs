@@ -9,6 +9,10 @@ const sql = readFileSync(
   ),
   "utf8",
 );
+const rewardSql = readFileSync(
+  resolve(process.cwd(), "../../supabase/migrations/20260902014000_phase1_survey_reward_binding.sql"),
+  "utf8",
+);
 
 function fn(name: string): string {
   const start = sql.indexOf(`create function public.${name}`);
@@ -110,5 +114,11 @@ describe("G5 ADM-010 Fan Operations contract", () => {
     expect(sql).toContain(
       "grant execute on function public.admin_adjust_fan_score(",
     );
+  });
+
+  it("keeps fan detail compatible with configured zero-score Survey activities", () => {
+    expect(rewardSql).toContain("coalesce(score.points, 0)");
+    expect(rewardSql).toContain("left join public.fan_score_ledger score");
+    expect(rewardSql).toContain("'scorePoints'");
   });
 });
