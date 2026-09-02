@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const authActionTypeSchema = z.enum([
+  "CREATE_REACTION",
   "START_FAN_VERIFICATION",
   "RESERVE_LIVE",
   "SUBMIT_FAN_CODE",
@@ -69,6 +70,7 @@ export const authIntentSchema = z
   .strict()
   .superRefine((value, context) => {
     const expectedTargetByAction: Record<AuthActionType, AuthIntent["targetType"]> = {
+      CREATE_REACTION: "celebrity",
       START_FAN_VERIFICATION: "celebrity",
       RESERVE_LIVE: "live_event",
       SUBMIT_FAN_CODE: "live_event",
@@ -77,7 +79,9 @@ export const authIntentSchema = z
       APPLY_BENEFIT: "benefit",
       OPEN_PASSPORT: "passport",
     };
-    const expectedPath = value.actionType === "START_FAN_VERIFICATION"
+    const expectedPath = value.actionType === "CREATE_REACTION"
+      ? `/c/${value.targetId}`
+      : value.actionType === "START_FAN_VERIFICATION"
       ? `/c/${value.targetId}/verify`
       : value.actionType === "RESERVE_LIVE" || value.actionType === "SUBMIT_FAN_CODE"
         ? `/live/${value.targetId}`
@@ -119,6 +123,7 @@ export const AUTH_INTENT_MAX_AGE_MS = 30 * 60 * 1000;
 export const AUTH_INTENT_STORAGE_PREFIX = "byus:auth-intent:v1:";
 
 const legacyIntentByAction: Record<AuthActionType, string> = {
+  CREATE_REACTION: "reaction",
   START_FAN_VERIFICATION: "passport",
   RESERVE_LIVE: "reserve",
   SUBMIT_FAN_CODE: "attendance",

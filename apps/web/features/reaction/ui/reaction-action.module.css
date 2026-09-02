@@ -1,0 +1,5 @@
+.card{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 28px;border:1px solid var(--color-border,#ddd);border-radius:20px;background:var(--color-surface,#fff)}
+.card>div:first-child{display:grid;gap:6px}.card h2,.card p{margin:0}.card>div>p{font-size:12px;letter-spacing:.12em;font-weight:800}.card span{font-size:15px;color:var(--color-text-muted,#666)}
+.card>a,.card>button,.modal a,.modal button{min-height:44px;border:0;border-radius:999px;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;background:#111;color:#fff;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}.card>button:disabled{opacity:.64;cursor:default}.error{color:#b42318;font-size:14px}
+.backdrop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.5)}.modal{width:min(420px,100%);display:grid;gap:16px;padding:28px;border-radius:24px;background:#fff;color:#111}.modal h2,.modal p{margin:0}.modal button{background:#eee;color:#222}
+@media(max-width:640px){.card{align-items:stretch;flex-direction:column;padding:20px}.card>a,.card>button{width:100%}}

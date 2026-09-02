@@ -20,6 +20,7 @@ import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-deskto
 import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
 import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
 import styles from "./celebrity-fan-page.module.css";
+import { ReactionAction } from "../features/reaction/ui/reaction-action";
 
 export type CelebrityFanTab = "home" | "notice" | "live" | "benefits";
 type OwnedPassport = PassportCollectionResponse["passports"][number];
@@ -245,6 +246,8 @@ export function CelebrityFanPage({
         <nav className={styles.sectionNav} aria-label={`${celebrity.name} ${t.sections}`} role="tablist">
           {tabs.map((tab, index) => <Link key={tab} href={tabHref(tab)} role="tab" aria-selected={activeTab === tab} aria-controls={`celebrity-${tab}-panel`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => tabKeyDown(event, index)}>{t.tabs[tab]}</Link>)}
         </nav>
+
+        {activeTab === "home" && <ReactionAction slug={celebrity.slug} locale={locale} />}
 
         <section id={`celebrity-${activeTab}-panel`} role="tabpanel" className={styles.tabPanel}>
           {activeTab === "home" && <div className={styles.hubLayout}>
