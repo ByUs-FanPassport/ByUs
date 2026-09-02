@@ -42,7 +42,7 @@ const copy = {
     fanPage: (name?: string) => name ? `${name} 팬페이지로 돌아가기` : "팬페이지로 돌아가기",
     eyebrow: "팬 인증 · 시작 전",
     title: (name: string) => `${name}를 향한\n나의 팬심을 확인해 보세요.`,
-    description: "간단한 퀴즈를 통과하면 첫 Knowledge Stamp와 Fan Passport를 받을 수 있어요.",
+    description: "간단한 퀴즈를 통과하면 첫 팬 인증 Stamp와 Fan Passport를 받을 수 있어요.",
     questionCount: (count: number) => `${count}문항`,
     questionCountTail: "으로 팬심 확인",
     passThreshold: (count: number) => `${count}문항 이상`,
@@ -52,6 +52,7 @@ const copy = {
     profileChecking: "프로필 확인 중…",
     profileError: "프로필을 확인하지 못했어요.",
     starting: "팬 인증 시작 중…",
+    cooldown: "잠깐 숨 고르기! 1분 뒤 새 문제로 다시 만나요.",
     start: "팬 인증 시작하기",
     login: "로그인하고 시작하기",
     note: "이미 시작한 인증이 있다면 저장된 문항부터 이어서 진행됩니다.",
@@ -69,7 +70,7 @@ const copy = {
     fanPage: (name?: string) => name ? `Back to ${name} fan page` : "Back to fan page",
     eyebrow: "Fan verification · Before you begin",
     title: (name: string) => `See how well you know\n${name}.`,
-    description: "Pass a short quiz to receive your first Knowledge Stamp and Fan Passport.",
+    description: "Pass a short quiz to receive your first Fan Verification Stamp and Fan Passport.",
     questionCount: (count: number) => `${count} questions`,
     questionCountTail: " about your favorite",
     passThreshold: (count: number) => `At least ${count} correct`,
@@ -79,6 +80,7 @@ const copy = {
     profileChecking: "Checking profile…",
     profileError: "We couldn't check your profile.",
     starting: "Starting fan verification…",
+    cooldown: "Quick breather! Fresh questions will be ready in a minute.",
     start: "Start fan verification",
     login: "Sign in to start",
     note: "If you already started, you'll continue from your saved questions.",
@@ -101,6 +103,7 @@ async function readJson(response: Response): Promise<unknown> {
 function errorMessage(error: unknown, locale: FanLocale): string {
   const t = copy[locale];
   if (error instanceof QuizEntryError) {
+    if (error.code === "VERIFICATION_COOLDOWN") return t.cooldown;
     if (error.code === "UNAUTHENTICATED") return t.sessionExpired;
     if (error.code === "NOT_FOUND" || error.code === "QUIZ_UNAVAILABLE") return t.unavailable;
   }
@@ -186,7 +189,10 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
     try {
       const token = await getAccessToken();
       if (!token) throw new QuizEntryError("UNAUTHENTICATED");
-      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}`, {
+      const current = new URLSearchParams(window.location.search);
+      const attribution = current.get("source") === "reaction" && current.get("reactionId")
+        ? `&source=reaction&reactionId=${encodeURIComponent(current.get("reactionId")!)}` : "";
+      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}${attribution}`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",

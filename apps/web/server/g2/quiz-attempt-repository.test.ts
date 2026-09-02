@@ -40,10 +40,12 @@ describe("SupabaseQuizAttemptRepository", () => {
       locale: "ko",
     });
 
-    expect(rpc).toHaveBeenCalledWith("start_owned_quiz_attempt", {
+    expect(rpc).toHaveBeenCalledWith("start_owned_quiz_attempt_v2", {
       p_app_user_id: "60000000-0000-4000-8000-000000000001",
       p_celebrity_slug: "kara",
       p_idempotency_key: "70000000-0000-4000-8000-000000000001",
+      p_source_type: null,
+      p_source_id: null,
     });
     expect(result).toEqual({
       kind: "attempt",

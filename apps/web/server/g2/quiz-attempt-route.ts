@@ -48,6 +48,8 @@ function mappedFailure(error: unknown): Response {
         return errorResponse(409, "ATTEMPT_CLOSED");
       case "WALLET_REQUIRED":
         return errorResponse(409, "WALLET_REQUIRED");
+      case "COOLDOWN":
+        return response({ error: { code: "VERIFICATION_COOLDOWN", retryAfter: error.retryAfter } }, 429);
       case "NOT_FOUND":
         return errorResponse(404, "NOT_FOUND");
       case "UNAVAILABLE":
@@ -100,11 +102,17 @@ export function createStartQuizAttemptHandler(dependencies: StartDependencies) {
 
     try {
       const fan = await authorized(request, dependencies);
+      const query = new URL(request.url).searchParams;
+      const sourceType = query.get("source") === "reaction" ? "reaction" as const : undefined;
+      const sourceId = sourceType && uuidSchema.safeParse(query.get("reactionId")).success ? query.get("reactionId")! : undefined;
+      if (query.has("source") && (!sourceType || !sourceId)) return errorResponse(400, "INVALID_REQUEST");
       const result = await dependencies.repository.start({
         appUserId: fan.appUserId,
         celebritySlug: slug,
         idempotencyKey: (dependencies.createId ?? randomUUID)(),
         locale,
+        sourceType,
+        sourceId,
       });
       return response({ result }, 200);
     } catch (error) {

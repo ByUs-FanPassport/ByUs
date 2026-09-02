@@ -21,11 +21,12 @@ export type QuizRepositoryErrorCode =
   | "ATTEMPT_INCOMPLETE"
   | "ATTEMPT_CLOSED"
   | "WALLET_REQUIRED"
+  | "COOLDOWN"
   | "NOT_FOUND"
   | "UNAVAILABLE";
 
 export class QuizRepositoryError extends Error {
-  constructor(readonly code: QuizRepositoryErrorCode) {
+  constructor(readonly code: QuizRepositoryErrorCode, readonly retryAfter: string | null = null) {
     super(code);
     this.name = "QuizRepositoryError";
   }
@@ -37,6 +38,8 @@ export interface QuizAttemptRepository {
     celebritySlug: string;
     idempotencyKey: string;
     locale: ContentLocale;
+    sourceType?: "reaction";
+    sourceId?: string;
   }): Promise<QuizStartProjection>;
   findOwned(input: {
     appUserId: string;
@@ -63,7 +66,7 @@ interface RpcError {
 interface RpcClient {
   rpc(
     name: string,
-    parameters: Record<string, string>,
+    parameters: Record<string, string | null>,
   ): PromiseLike<{ data: unknown; error: RpcError | null }>;
 }
 
@@ -128,6 +131,9 @@ const submitContextSchema = z
 
 function mappedError(error: RpcError): QuizRepositoryError {
   const message = error.message ?? "";
+  if (message.includes("G2_VERIFICATION_COOLDOWN:")) {
+    return new QuizRepositoryError("COOLDOWN", message.split("G2_VERIFICATION_COOLDOWN:")[1]?.trim() ?? null);
+  }
   const mappings: ReadonlyArray<readonly [string, QuizRepositoryErrorCode]> = [
     ["G2_QUIZ_UNAVAILABLE", "QUIZ_UNAVAILABLE"],
     ["G2_ATTEMPT_CLOSED", "ATTEMPT_CLOSED"],
@@ -170,7 +176,7 @@ export class SupabaseQuizAttemptRepository implements QuizAttemptRepository {
     private readonly createId: () => string = randomUUID,
   ) {}
 
-  private async call(name: string, parameters: Record<string, string>): Promise<unknown> {
+  private async call(name: string, parameters: Record<string, string | null>): Promise<unknown> {
     const { data, error } = await this.client.rpc(name, parameters);
     if (error) throw mappedError(error);
     return data;
@@ -181,11 +187,15 @@ export class SupabaseQuizAttemptRepository implements QuizAttemptRepository {
     celebritySlug: string;
     idempotencyKey: string;
     locale: ContentLocale;
+    sourceType?: "reaction";
+    sourceId?: string;
   }): Promise<QuizStartProjection> {
-    const data = await this.call("start_owned_quiz_attempt", {
+    const data = await this.call("start_owned_quiz_attempt_v2", {
       p_app_user_id: input.appUserId,
       p_celebrity_slug: input.celebritySlug,
       p_idempotency_key: input.idempotencyKey,
+      p_source_type: input.sourceType ?? null,
+      p_source_id: input.sourceId ?? null,
     });
     if (data === null) throw new QuizRepositoryError("NOT_FOUND");
     try {

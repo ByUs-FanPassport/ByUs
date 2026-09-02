@@ -239,7 +239,7 @@ export function QuizResultScreen({
             <p className={styles.helper}>{t.passedHelper(displayName)}<br />{t.passedActionHelper}</p>
             <div className={styles.rewards}>
               <div><span>Passport</span><strong>{displayName} Passport</strong><small>{t.issued}</small></div>
-              <div><span>Stamp</span><strong>Knowledge Stamp</strong><small>{t.earned}</small></div>
+              <div><span>Stamp</span><strong>{locale === "ko" ? "팬 인증 Stamp" : "Fan Verification Stamp"}</strong><small>{t.earned}</small></div>
               <div><span>Score</span><strong>{t.fanScore}</strong><small>{t.applied}</small></div>
             </div>
             <FanAction className={styles.resultAction} variant="primary" href={withLocale(`/passports/${passportId}/issuance`, locale)}>

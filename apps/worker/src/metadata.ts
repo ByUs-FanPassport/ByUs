@@ -10,7 +10,9 @@ export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBas
     ? "Fan Passport"
     : job.entityType === "reaction"
       ? "First Reaction"
-      : `${(payload as Extract<JobPayload, { stampType: string }>).stampType} Stamp`;
+      : (payload as Extract<JobPayload, { stampType: string }>).stampType === "Knowledge"
+        ? "Fan Verification Stamp"
+        : `${(payload as Extract<JobPayload, { stampType: string }>).stampType} Stamp`;
   const assetPath = job.entityType === "passport"
     ? `passport/${payload.celebritySlug}.png`
     : job.entityType === "reaction"
