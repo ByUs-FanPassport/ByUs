@@ -9,6 +9,10 @@ const sql = readFileSync(
   ),
   "utf8",
 );
+const ticketSql = readFileSync(
+  resolve(process.cwd(), "../../supabase/migrations/20260902023000_phase2_reservation_ticket.sql"),
+  "utf8",
+);
 
 function definition(name: string): string {
   const start = sql.indexOf(`create function public.${name}`);
@@ -20,6 +24,12 @@ function definition(name: string): string {
 
 describe("G3 atomic live reservation database contract", () => {
   const reserve = definition("reserve_owned_live_event(");
+
+  it("credits one canonical Reservation Ticket inside the insert transaction", () => {
+    expect(ticketSql).toContain("after insert on public.live_reservations");
+    expect(ticketSql).toContain("'live_reservation',new.id,new.id,policy_version");
+    expect(ticketSql).toContain("post_fan_ticket_entry");
+  });
 
   it("exposes one service-role-only SECURITY DEFINER mutation boundary", () => {
     expect(reserve).toContain("security definer");
