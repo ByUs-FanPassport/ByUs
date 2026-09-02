@@ -95,6 +95,8 @@ const copy = {
       passport: "Fan Passport 발급 후 참여할 수 있어요.",
       issuePassport: "Fan Passport 발급받기",
       beforeLive: "Fan Code는 LIVE 시작 후 입력할 수 있어요.",
+      notOpen: "아직 출석 인증 시간이 아니에요.",
+      attendanceEnded: "출석 인증 시간이 종료되었어요.",
       invalid:
         "Fan Code가 올바르지 않아요. LIVE에서 공개된 코드를 다시 확인해 주세요.",
       format: "영문과 숫자로 4자 이상 입력해 주세요.",
@@ -103,7 +105,7 @@ const copy = {
         "지금은 출석을 확인할 수 없어요. 잠시 후 다시 시도해 주세요.",
       wallet: "Passport 준비가 끝나지 않았어요. 잠시 후 다시 시도해 주세요.",
       successTitle: "LIVE 출석을 남겼어요",
-      successHelper: "Attendance Stamp와 Fan Score +3이 기록되었습니다.",
+      successHelper: "Attendance Stamp, Fan Score +3, Ticket +2가 기록되었습니다.",
       replay: "이미 완료한 출석 기록을 안전하게 확인했어요.",
       survey: "설문 참여하고 다음 Stamp 받기",
     },
@@ -173,6 +175,8 @@ const copy = {
       passport: "Create a Fan Passport before joining.",
       issuePassport: "Get Fan Passport",
       beforeLive: "You can enter the Fan Code once the LIVE starts.",
+      notOpen: "Attendance verification is not open yet.",
+      attendanceEnded: "Attendance verification has ended.",
       invalid:
         "That Fan Code isn’t valid. Check the code shared during the LIVE.",
       format: "Enter at least 4 letters or numbers.",
@@ -180,7 +184,7 @@ const copy = {
       unavailable: "Attendance can’t be verified right now. Try again shortly.",
       wallet: "Your Passport is still getting ready. Try again shortly.",
       successTitle: "Your LIVE attendance is recorded",
-      successHelper: "You earned an Attendance Stamp and +3 Fan Score.",
+      successHelper: "You earned an Attendance Stamp, +3 Fan Score, and +2 Tickets.",
       replay: "Your completed attendance record was safely retrieved.",
       survey: "Take the survey for your next Stamp",
     },
@@ -773,6 +777,10 @@ export function LiveEventScreen({
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
         ? c.attendance.invalid
+        : attendance.code === "ATTENDANCE_NOT_OPEN"
+          ? c.attendance.notOpen
+          : attendance.code === "ATTENDANCE_ENDED"
+            ? c.attendance.attendanceEnded
         : attendance.code === "FORMAT"
           ? c.attendance.format
           : attendance.code === "WALLET_NOT_READY"

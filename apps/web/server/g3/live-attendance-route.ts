@@ -22,6 +22,8 @@ const failures: Readonly<Record<LiveAttendanceFailureCode, { code: string; statu
   LIVE_NOT_FOUND: { code: "LIVE_NOT_FOUND", status: 404 },
   PASSPORT_REQUIRED: { code: "PASSPORT_REQUIRED", status: 403 },
   ATTENDANCE_CODE_INVALID: { code: "ATTENDANCE_CODE_INVALID", status: 422 },
+  ATTENDANCE_NOT_OPEN: { code: "ATTENDANCE_NOT_OPEN", status: 409 },
+  ATTENDANCE_ENDED: { code: "ATTENDANCE_ENDED", status: 409 },
   ATTENDANCE_RATE_LIMITED: { code: "ATTENDANCE_RATE_LIMITED", status: 429 },
   WALLET_NOT_READY: { code: "WALLET_NOT_READY", status: 409 },
   IDEMPOTENCY_KEY_CONFLICT: { code: "IDEMPOTENCY_KEY_CONFLICT", status: 409 },

@@ -378,7 +378,7 @@ describe("LiveEventScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
 
     expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
-    expect(screen.getByText("Attendance Stamp와 Fan Score +3이 기록되었습니다.")).toBeInTheDocument();
+    expect(screen.getByText("Attendance Stamp, Fan Score +3, Ticket +2가 기록되었습니다.")).toBeInTheDocument();
     expect(screen.getByText("총점 8")).toBeInTheDocument();
     expect(screen.getByText("실버")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /설문 참여/ })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=ko");

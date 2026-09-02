@@ -36,7 +36,6 @@ const save = z
         /^https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?|live\/|embed\/)|youtu\.be\/)/,
       ),
     heroUrl: z.string().min(2).max(2000),
-    fanCode: z.string().min(4).max(72).optional().default(""),
     titleKo: z.string().trim().min(1).max(160),
     summaryKo: z.string().trim().min(1).max(1200),
     heroAltKo: z.string().trim().min(1).max(300),
@@ -55,12 +54,6 @@ const save = z
         path: ["startsAt"],
         message: "INVALID_SCHEDULE",
       });
-    if (!value.id && !value.fanCode)
-      ctx.addIssue({
-        code: "custom",
-        path: ["fanCode"],
-        message: "FAN_CODE_REQUIRED",
-      });
   });
 const command = z.discriminatedUnion("action", [
   save,
@@ -78,6 +71,12 @@ const command = z.discriminatedUnion("action", [
     expectedRevision: z.number().int().positive(),
   }),
   z.object({ action: z.enum(["publish", "unpublish"]), id: uuid }),
+  z.object({
+    action: z.literal("generate_attendance_code"),
+    liveEventId: uuid,
+    validFrom: instant,
+    validUntil: instant,
+  }).refine((value) => Date.parse(value.validFrom) < Date.parse(value.validUntil), { message: "INVALID_WINDOW" }),
   z.object({
     action: z.literal("archive"),
     id: uuid,
@@ -170,11 +169,12 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
       allowlistId: admin.allowlistId,
     };
     try {
-      if (parsed.action === "save")
-        return json(
-          { id: await deps.repository.save(actor, correlationId, parsed) },
-          parsed.id ? 200 : 201,
-        );
+      if (parsed.action === "save") {
+        const saved = await deps.repository.save(actor, correlationId, parsed);
+        return json(saved, parsed.id ? 200 : 201);
+      }
+      if (parsed.action === "generate_attendance_code")
+        return json(await deps.repository.generateAttendanceCode(actor, correlationId, parsed), 200);
       if (parsed.action === "save_reward_settings")
         return json(await deps.repository.saveRewardSettings(actor, correlationId, parsed), 200);
       if (parsed.action === "publish_reward_settings")

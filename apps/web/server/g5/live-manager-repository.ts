@@ -5,7 +5,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export type LiveManagerActor = { appUserId: string; allowlistId: string };
 export type LiveManagerRepository = {
   read(actor: LiveManagerActor): Promise<Record<string, unknown>>;
-  save(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<string>;
+  save(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ id: string; fanCode?: string }>;
+  generateAttendanceCode(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ fanCode: string; validFrom: string; validUntil: string }>;
   publication(actor: LiveManagerActor, correlationId: string, id: string, published: boolean): Promise<void>;
   archive(actor: LiveManagerActor, correlationId: string, id: string, reason: string): Promise<void>;
   override(actor: LiveManagerActor, correlationId: string, id: string, input: Record<string, unknown>): Promise<string>;
@@ -34,28 +35,47 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
       const args = {
         p_actor_app_user_id: actor.appUserId, p_actor_admin_allowlist_id: actor.allowlistId, p_live_event_id: null,
       };
-      const [manager, settings] = await Promise.all([
+      const [manager, settings, attendance] = await Promise.all([
         db.rpc("get_admin_live_manager", args),
         db.rpc("get_admin_live_reward_settings", args),
+        db.rpc("get_admin_live_attendance_settings", args),
       ]);
+      const managerResult = assert(manager.data, manager.error) as Record<string, unknown>;
+      const attendanceRows = assert(attendance.data, attendance.error) as Array<Record<string, unknown>>;
+      const attendanceByLive = new Map(attendanceRows.map((row) => [row.liveEventId, row]));
       return {
-        ...(assert(manager.data, manager.error) as Record<string, unknown>),
+        ...managerResult,
+        lives: ((managerResult.lives ?? []) as Array<Record<string, unknown>>).map((live) => ({
+          ...live,
+          attendanceValidFrom: attendanceByLive.get(live.id)?.validFrom ?? live.startsAt,
+          attendanceValidUntil: attendanceByLive.get(live.id)?.validUntil ?? live.endsAt,
+        })),
         rewardSettings: assert(settings.data, settings.error),
       };
     },
     async save(actor, correlationId, input) {
-      const { data, error } = await db.rpc("save_admin_live_draft", {
+      const { data, error } = await db.rpc("save_admin_live_draft_v2", {
         p_actor_app_user_id: actor.appUserId, p_actor_admin_allowlist_id: actor.allowlistId,
         p_correlation_id: correlationId, p_live_event_id: input.id ?? null, p_slug: input.slug,
         p_celebrity_id: input.celebrityId, p_brand_id: input.brandId,
         p_starts_at: input.startsAt, p_ends_at: input.endsAt,
         p_reservation_opens_at: input.reservationOpensAt, p_reservation_closes_at: input.reservationClosesAt,
         p_youtube_url: input.youtubeUrl, p_hero_url: input.heroUrl,
-        p_fan_code_plaintext: input.fanCode || null,
         p_title_ko: input.titleKo, p_summary_ko: input.summaryKo, p_hero_alt_ko: input.heroAltKo,
         p_title_en: input.titleEn, p_summary_en: input.summaryEn, p_hero_alt_en: input.heroAltEn,
       });
-      return String(assert(data, error));
+      return assert(data, error) as { id: string; fanCode?: string };
+    },
+    async generateAttendanceCode(actor, correlationId, input) {
+      const { data, error } = await db.rpc("generate_admin_live_attendance_code", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_valid_from: input.validFrom,
+        p_valid_until: input.validUntil,
+      });
+      return assert(data, error) as { fanCode: string; validFrom: string; validUntil: string };
     },
     async publication(actor, correlationId, id, published) {
       const { error } = await db.rpc("set_admin_live_publication", {

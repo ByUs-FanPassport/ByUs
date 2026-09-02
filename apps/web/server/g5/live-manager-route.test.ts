@@ -20,7 +20,8 @@ function deps(
     invalidatePublicContent: vi.fn(),
     repository: {
       read: vi.fn(async () => ({ lives: [], celebrities: [], brands: [] })),
-      save: vi.fn(async () => "33333333-3333-4333-8333-333333333333"),
+      save: vi.fn(async () => ({ id: "33333333-3333-4333-8333-333333333333" })),
+      generateAttendanceCode: vi.fn(async () => ({ fanCode: "AB12CD", validFrom: "2026-09-02T10:00:00Z", validUntil: "2026-09-02T11:00:00Z" })),
       publication: vi.fn(async () => undefined),
       archive: vi.fn(async () => undefined),
       override: vi.fn(async () => "44444444-4444-4444-8444-444444444444"),
