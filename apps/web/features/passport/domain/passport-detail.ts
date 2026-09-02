@@ -22,6 +22,11 @@ export const passportDetailRecordSchema = basePassportSchema.extend({
   stamps: z.array(stampSchema),
   activities: z.array(activitySchema),
   nextBenefit: z.unknown(),
+  firstReaction: z.object({
+    reactionId: z.uuid(), stampId: z.uuid(), activityId: z.uuid(),
+    reactionType: z.literal("FirstReaction"), mintStatus: z.string(),
+    txHash: z.string().nullable(), issuedAt: z.iso.datetime({ offset: true }),
+  }).strict().nullable().optional().default(null),
 }).strict().superRefine((passport, context) => {
   for (const stamp of passport.stamps) {
     if (stamp.context.sourceType !== ACTIVITY_SOURCE_BY_TYPE[stamp.type]) {

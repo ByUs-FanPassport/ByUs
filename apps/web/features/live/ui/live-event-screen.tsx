@@ -964,6 +964,9 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
+            <FanAction variant="neutral" href={`/live/${slug}/missions?locale=${locale}` as Route} trailingIcon={<ArrowRight />}>
+              {locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}
+            </FanAction>
             {viewer.reservation && (
               <a
                 className={styles.calendarAction}

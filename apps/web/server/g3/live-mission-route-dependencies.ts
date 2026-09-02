@@ -1,0 +1,14 @@
+import "server-only";
+import { createClient } from "@supabase/supabase-js";
+import { createPrivyNodeAccessVerifier } from "../auth/privy-node-verifier";
+import { loadServerEnv } from "../config/env";
+import { authorizeFanRequest } from "../fan-auth/fan-auth-gate";
+import { createSupabaseFanAuthRepository } from "../fan-auth/supabase-fan-auth-repository";
+import { createLiveMissionRepository } from "./live-mission-repository";
+export function createLiveMissionDependencies(){
+  const env=loadServerEnv(); const database=createClient(env.SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+  const verifier=createPrivyNodeAccessVerifier({appId:env.PRIVY_APP_ID,appSecret:env.PRIVY_APP_SECRET,appEnvironment:env.PRIVY_APP_ENVIRONMENT,testAccountLoginEnabled:env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED});
+  const fan=createSupabaseFanAuthRepository({url:env.SUPABASE_URL,serviceRoleKey:env.SUPABASE_SERVICE_ROLE_KEY},database);
+  return {authorize:(authorization:string|null)=>authorizeFanRequest({authorization,verifier,repository:fan}),repository:createLiveMissionRepository({url:env.SUPABASE_URL,serviceRoleKey:env.SUPABASE_SERVICE_ROLE_KEY})};
+}
+

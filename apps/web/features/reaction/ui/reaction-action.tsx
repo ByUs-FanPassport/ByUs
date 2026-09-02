@@ -2,6 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
+import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthIntentLink } from "../../../components/auth-intent-link";
 import { consumeAuthIntent, readAuthIntent } from "../../../components/auth-intent";
@@ -52,6 +53,6 @@ export function ReactionAction({ slug, locale }: { slug: string; locale: "ko" | 
       : !authenticated ? <AuthIntentLink focusKey="first-reaction" locale={locale} input={{ sourcePath: `/c/${slug}`, sourceQuery: `?locale=${locale}`, actionType: "CREATE_REACTION", targetType: "celebrity", targetId: slug, returnAnchor: "#first-reaction" }}>{t.action}</AuthIntentLink>
       : <button type="button" onClick={() => void react()} disabled={state === "working" || state === "done"}>{state === "working" ? t.working : state === "done" ? t.done : t.action}</button>}
     {state === "error" && <p role="alert" className={styles.error}>{t.error}</p>}
-    {state === "done" && result && !result.passportExists && <div className={styles.backdrop} role="presentation"><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="reaction-modal-title"><h2 id="reaction-modal-title">{t.modalTitle}</h2><p>{t.modalBody}</p><Link href={verificationHref}>{t.passport}</Link><button type="button" onClick={() => setResult({ ...result, passportExists: true })}>{t.later}</button></div></div>}
+    {state === "done" && result && !result.passportExists && <div className={styles.backdrop} role="presentation"><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="reaction-modal-title"><h2 id="reaction-modal-title">{t.modalTitle}</h2><p>{t.modalBody}</p><Link href={verificationHref as Route}>{t.passport}</Link><button type="button" onClick={() => setResult({ ...result, passportExists: true })}>{t.later}</button></div></div>}
   </section>;
 }
