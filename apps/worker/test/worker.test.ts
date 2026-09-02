@@ -66,10 +66,12 @@ class FakeChain implements ChainPort {
   broadcastCount = 0;
   events: string[] = [];
   broadcastError: Error | null = null;
+  preparedJobs: Array<{ entityType: string; payload: JobPayload; metadataUri: string }> = [];
   async findExisting(): Promise<MintReceipt | null> { return this.existing; }
-  async prepare(_type: "passport" | "stamp", _payload: JobPayload, _uri: string): Promise<PreparedSubmission> {
+  async prepare(entityType: "passport" | "stamp" | "reaction", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
     this.prepareCount += 1;
     this.events.push("prepare");
+    this.preparedJobs.push({ entityType, payload, metadataUri });
     return { txHash, signedTransaction };
   }
   async broadcast(): Promise<string> {
@@ -145,6 +147,66 @@ describe("MintWorker", () => {
     expect(chain.prepareCount).toBe(0);
     expect(chain.broadcastCount).toBe(0);
   });
+
+  it("decodes a first-reaction job through the full pre-broadcast pipeline", async () => {
+    const reactionPayload = {
+      recipient: `0x${"1".repeat(40)}`,
+      celebritySlug: "kara",
+      issuanceId: `0x${"3".repeat(64)}`,
+      reactionType: "FirstReaction" as const,
+    };
+    const reactionJob: BlockchainJob = {
+      ...job(reactionPayload),
+      entityType: "reaction",
+      operationKey: "reaction:first:3ff058e6-8865-46c5-ae01-94a93f1dbe3c",
+    };
+    const queue = new FakeQueue([reactionJob]);
+    const metadata = new FakeMetadata();
+    const chain = new FakeChain();
+
+    await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
+
+    expect(chain.preparedJobs).toEqual([{
+      entityType: "reaction",
+      payload: reactionPayload,
+      metadataUri: "ipfs://bafy-metadata",
+    }]);
+    expect(metadata.documents[0]).toMatchObject({
+      name: "ByUs First Reaction",
+      image: "ipfs://bafy-assets/credentials/v1/reaction/first/kara.png",
+    });
+    expect(queue.prepared).toHaveLength(1);
+    expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
+  });
+
+  it.each(["Attendance", "Survey"] as const)(
+    "decodes a %s Stamp job through the full pre-broadcast pipeline",
+    async (stampType) => {
+      const stampPayload = {
+        recipient: `0x${"1".repeat(40)}`,
+        celebritySlug: "kara",
+        issuanceId: `0x${"4".repeat(64)}`,
+        stampType,
+      };
+      const stampJob: BlockchainJob = {
+        ...job(stampPayload),
+        entityType: "stamp",
+        operationKey: `stamp:${stampType.toLowerCase()}:3ff058e6-8865-46c5-ae01-94a93f1dbe3c`,
+      };
+      const queue = new FakeQueue([stampJob]);
+      const chain = new FakeChain();
+
+      await expect(worker(queue, new FakeMetadata(), chain).runOnce()).resolves.toBe(1);
+
+      expect(chain.preparedJobs).toEqual([{
+        entityType: "stamp",
+        payload: stampPayload,
+        metadataUri: "ipfs://bafy-metadata",
+      }]);
+      expect(queue.prepared).toHaveLength(1);
+      expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
+    },
+  );
 
   it("does not resubmit when completion observes a stale lease", async () => {
     const queue = new FakeQueue([job({ ...basePayload, workerSubmission: { txHash, signedTransaction } })]);

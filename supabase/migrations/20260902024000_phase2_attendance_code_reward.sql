@@ -9,6 +9,9 @@ update public.live_events
 set attendance_valid_from = starts_at,
     attendance_valid_until = ends_at;
 
+-- Flush deferred content-integrity triggers before changing column nullability.
+set constraints all immediate;
+
 alter table public.live_events
   alter column attendance_valid_from set not null,
   alter column attendance_valid_until set not null,

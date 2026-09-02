@@ -6,6 +6,7 @@ const question = z.object({ id: z.string().uuid(), text: z.string().min(1), medi
 export const liveMissionSchema = z.object({
   id: z.string().uuid(), type: z.enum(["quiz", "survey", "vote"]), version: z.number().int().positive(),
   title: z.string().min(1), description: z.string(), attendanceRequired: z.boolean(), completed: z.boolean(),
+  visibleFrom: z.iso.datetime({ offset: true }), visibleUntil: z.iso.datetime({ offset: true }),
   questions: z.array(question).min(1),
 }).strict();
 export const liveMissionListSchema = z.array(liveMissionSchema);
@@ -18,4 +19,3 @@ export const liveMissionCompletionSchema = z.object({ mission: z.object({
   correctness: z.boolean().nullable(), scorePoints: z.number().int().min(0).max(3), ticketAmount: z.number().int().min(0).max(2),
   stamp: z.object({ id: z.string().uuid(), businessStatus: z.string(), mintStatus: z.string() }).strict(),
 }).strict() }).strict();
-

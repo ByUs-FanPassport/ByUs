@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest";
 const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260902024000_phase2_attendance_code_reward.sql"), "utf8");
 
 describe("Phase 2 attendance code and reward contract", () => {
+  it("flushes deferred LIVE triggers before hardening backfilled columns", () => {
+    expect(sql.indexOf("set constraints all immediate")).toBeGreaterThan(sql.indexOf("update public.live_events"));
+    expect(sql.indexOf("set constraints all immediate")).toBeLessThan(sql.indexOf("alter column attendance_valid_from set not null"));
+  });
   it("generates six unbiased uppercase alphanumeric characters and never audits plaintext", () => {
     expect(sql).toContain("while length(result) < 6");
     expect(sql).toContain("if sample < 252");

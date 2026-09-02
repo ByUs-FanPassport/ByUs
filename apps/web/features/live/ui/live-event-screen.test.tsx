@@ -482,7 +482,8 @@ describe("LiveEventScreen", () => {
     fireEvent.change(input, { target: { value: "KARA2026" } });
     fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/1:00 후 다시 시도/);
+    const alert = await screen.findByRole("alert");
+    await waitFor(() => expect(alert).toHaveTextContent(/1:00 후 다시 시도/));
     expect(input).toBeDisabled();
   });
 
