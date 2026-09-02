@@ -41,7 +41,10 @@ describe("ByUs LIVE brand migration contract", () => {
     expect(sql).not.toContain("'kara-nualeaf-live'");
   });
 
-  it("fails closed unless each expected Production record is updated exactly once", () => {
+  it("skips absent optional Production records but fails closed when present records drift", () => {
+    expect(sql.match(/if not exists \(/g)).toHaveLength(2);
+    expect(sql.match(/where id = '287acc82-fb93-4492-8f27-15886f199d1e'/g)).toHaveLength(2);
+    expect(sql.match(/where id = '091e2c9c-3599-4571-934e-019b59875731'/g)).toHaveLength(2);
     expect(sql.match(/unexpected production live record/g)).toHaveLength(2);
     expect(sql.match(/unexpected production localization count/g)).toHaveLength(
       2,

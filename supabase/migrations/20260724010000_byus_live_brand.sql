@@ -48,6 +48,14 @@ do $$
 declare
   affected integer;
 begin
+  if not exists (
+    select 1
+    from public.live_events
+    where id = '287acc82-fb93-4492-8f27-15886f199d1e'
+  ) then
+    return;
+  end if;
+
   update public.live_events
   set
     slug = 'elina-byus-live',
@@ -85,6 +93,14 @@ do $$
 declare
   affected integer;
 begin
+  if not exists (
+    select 1
+    from public.live_events
+    where id = '091e2c9c-3599-4571-934e-019b59875731'
+  ) then
+    return;
+  end if;
+
   update public.live_events
   set
     slug = 'changha-byus-live',
