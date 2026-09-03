@@ -1,0 +1,3 @@
+import{afterEach,expect,it,vi}from"vitest";import{KakaoSender}from"../src/adapters/kakao-sender.js";
+const job={id:"delivery",notificationId:"n",planId:"p",channel:"kakao" as const,sequence:1 as const,templateKey:"live:reserved",locale:"ko" as const,destination:"test:kakao",payload:{title:"t",detail:"d",deepLink:"/my"},attemptCount:1,leaseOwner:"w",leaseExpiresAt:"2099-01-01T00:00:00Z"};afterEach(()=>vi.unstubAllGlobals());
+it("normalizes permanent provider rejection without leaking destination",async()=>{vi.stubGlobal("fetch",vi.fn(async()=>new Response("no",{status:400})));await expect(new KakaoSender({url:"https://kakao.test/send",token:"x".repeat(16)}).send(job)).rejects.toMatchObject({code:"KAKAO_REJECTED",retryable:false});});

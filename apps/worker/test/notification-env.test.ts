@@ -35,4 +35,12 @@ describe("notification worker secrets", () => {
       }),
     ).toThrow();
   });
+  it("allows the required Dev test sink but never a Production test sink",()=>{
+    expect(parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"test_sink",NOTIFICATION_EXTERNAL_ENVIRONMENT:"dev"})).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"test_sink"});
+    expect(()=>parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"test_sink",NOTIFICATION_EXTERNAL_ENVIRONMENT:"prod"})).toThrow();
+  });
+  it("requires all sandbox provider endpoints and tokens in provider mode",()=>{
+    expect(()=>parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider"})).toThrow();
+    expect(parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider",EMAIL_PROVIDER_URL:"https://email.test/send",EMAIL_PROVIDER_TOKEN:"e".repeat(16),KAKAO_PROVIDER_URL:"https://kakao.test/send",KAKAO_PROVIDER_TOKEN:"k".repeat(16)})).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"provider"});
+  });
 });
