@@ -7,6 +7,7 @@ import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import styles from "./benefit-manager.module.css";
+import type { BenefitDrawResult } from "@/features/benefit/domain/weighted-draw";
 type Loc = {
   title: string;
   summary: string;
@@ -164,6 +165,7 @@ const copy = {
     campaignSave: "캠페인 초안 저장",
     campaignPublish: "캠페인 발행",
     campaignNoLimit: "혜택별 응모 한도 (비우면 제한 없음)",
+    draw: "추첨 실행",
     select: "선정",
     reject: "미선정",
     used: "사용 처리",
@@ -190,6 +192,7 @@ const copy = {
     campaignSave: "Save campaign draft",
     campaignPublish: "Publish campaign",
     campaignNoLimit: "Per-Benefit entry limit (blank means unlimited)",
+    draw: "Execute draw",
     select: "Select",
     reject: "Not selected",
     used: "Mark used",
@@ -266,6 +269,7 @@ function BenefitManager({
   const [data, setData] = useState<Data | null>(null),
     [form, setForm] = useState(blank),
     [campaign, setCampaign] = useState(blankCampaign),
+    [draws, setDraws] = useState<Record<string, BenefitDrawResult>>({}),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
     [codes, setCodes] = useState("");
@@ -367,6 +371,31 @@ function BenefitManager({
       ),
     }));
   }
+  async function drawCampaign(campaignId: string) {
+    if (pending) return;
+    try {
+      setPending(true);
+      setError("");
+      const token = await getAccessToken();
+      if (!token) throw new Error();
+      const response = await fetch(`/api/admin/benefit-campaigns/${campaignId}/draw`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          "x-correlation-id": crypto.randomUUID(),
+        },
+        body: JSON.stringify({ idempotencyKey: crypto.randomUUID() }),
+      });
+      if (!response.ok) throw new Error();
+      const result = (await response.json()) as BenefitDrawResult;
+      setDraws((current) => ({ ...current, [campaignId]: result }));
+    } catch {
+      setError(t.failure);
+    } finally {
+      setPending(false);
+    }
+  }
   async function archive() {
     if (
       selected &&
@@ -417,6 +446,14 @@ function BenefitManager({
                 <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
                   {item.liveEventId} · {item.status}
                 </button>
+                {item.status === "published" && (
+                  <button disabled={!canWrite || pending} type="button" onClick={() => void drawCampaign(item.id)}>
+                    {t.draw}
+                  </button>
+                )}
+                {draws[item.id] && (
+                  <small>{draws[item.id].candidateCount} candidates · {draws[item.id].winners.length} winners · {draws[item.id].seedHash}</small>
+                )}
               </li>
             ))}
           </ul>
