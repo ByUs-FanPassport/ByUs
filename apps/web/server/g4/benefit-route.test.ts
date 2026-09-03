@@ -9,6 +9,7 @@ import {
   createPostBenefitClaimHandler,
   createPostBenefitApplicationHandler,
   createGetOwnedBenefitApplicationHandler,
+  createPostBenefitEntryHandler,
   type BenefitRouteDependencies,
 } from "./benefit-route";
 
@@ -30,6 +31,7 @@ const benefit = {
   requiredStampType: "knowledge" as const,
   requiredActivityType: "knowledge" as const,
   state: "eligible" as const,
+  entry: null,
 };
 function dependencies(
   repository: Partial<BenefitRepository> = {},
@@ -52,6 +54,18 @@ function dependencies(
         replayed: false,
       })),
       application: vi.fn(async () => null),
+      enter: vi.fn(async () => ({
+        entryId: "44444444-4444-4444-8444-444444444444",
+        benefitId,
+        campaignId: "55555555-5555-4555-8555-555555555555",
+        ticketAmount: 2,
+        benefitTicketTotal: 5,
+        perFanTicketLimit: null,
+        remainingBenefitTickets: null,
+        ticketLedgerId: "66666666-6666-4666-8666-666666666666",
+        resultingBalance: 20,
+        replayed: false,
+      })),
       ...repository,
     },
     authorize: vi.fn(async () => ({ appUserId: "owner" })),
@@ -233,5 +247,37 @@ describe("benefit routes", () => {
         )
       ).status,
     ).toBe(404);
+  });
+  it("enters a positive Ticket amount using only the canonical owner", async () => {
+    const deps = dependencies();
+    const response = await createPostBenefitEntryHandler(deps)(
+      new Request(`https://byus.test/api/benefits/${benefitId}/entries`, {
+        method: "POST",
+        headers: { authorization: "Bearer token", "content-type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "77777777-7777-4777-8777-777777777777",
+          ticketAmount: 2,
+        }),
+      }),
+      { benefitId },
+    );
+    expect(response.status).toBe(200);
+    expect(deps.repository.enter).toHaveBeenCalledWith(expect.objectContaining({
+      appUserId: "owner",
+      benefitId,
+      ticketAmount: 2,
+    }));
+    const invalid = await createPostBenefitEntryHandler(deps)(
+      new Request(`https://byus.test/api/benefits/${benefitId}/entries`, {
+        method: "POST",
+        headers: { authorization: "Bearer token", "content-type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: "77777777-7777-4777-8777-777777777777",
+          ticketAmount: 0,
+        }),
+      }),
+      { benefitId },
+    );
+    expect(invalid.status).toBe(400);
   });
 });

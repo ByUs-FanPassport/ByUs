@@ -19,6 +19,11 @@ import {
   type BenefitLocale,
 } from "../../features/benefit/domain/benefit";
 import { FAN_TIERS } from "../../features/rewards/domain/reward-policy";
+import {
+  benefitEntryResultSchema,
+  benefitEntryStateSchema,
+  type BenefitEntryResult,
+} from "../../features/benefit/domain/benefit-entry";
 
 const fanScoreAndTierSchema = z.object({
   score: z.number().int(),
@@ -44,6 +49,8 @@ export type BenefitFailureCode =
   | "BENEFIT_EXPIRED"
   | "BENEFIT_CLAIM_LIMIT_REACHED"
   | "IDEMPOTENCY_KEY_CONFLICT"
+  | "BENEFIT_ENTRY_LIMIT_REACHED"
+  | "INSUFFICIENT_TICKETS"
   | "BENEFIT_UNAVAILABLE";
 
 export class BenefitRepositoryError extends Error {
@@ -82,6 +89,13 @@ export interface BenefitRepository {
     benefitId: string;
     appUserId: string;
   }): Promise<BenefitOwnedApplicationResponse | null>;
+  enter(input: {
+    benefitId: string;
+    appUserId: string;
+    idempotencyKey: string;
+    ticketAmount: number;
+    now: Date;
+  }): Promise<BenefitEntryResult>;
 }
 
 export interface BenefitDataSource {
@@ -111,6 +125,14 @@ export interface BenefitDataSource {
     benefitId: string;
     appUserId: string;
   }): Promise<unknown>;
+  entryState(input: { benefitId: string; appUserId: string | null }): Promise<unknown>;
+  enter(input: {
+    benefitId: string;
+    appUserId: string;
+    idempotencyKey: string;
+    ticketAmount: number;
+    now: Date;
+  }): Promise<unknown>;
 }
 
 export class DefaultBenefitRepository implements BenefitRepository {
@@ -132,10 +154,22 @@ export class DefaultBenefitRepository implements BenefitRepository {
     const viewer = input.appUserId
       ? await this.source.getEligibility(input.appUserId, input.celebritySlug)
       : null;
+    const entryStates = await Promise.all(
+      raw.map((item) =>
+        this.source.entryState({
+          benefitId: item.id,
+          appUserId: input.appUserId,
+        }),
+      ),
+    );
     return {
-      benefits: raw.map(({ available, ...item }) =>
+      benefits: raw.map(({ available, ...item }, index) =>
         benefitCatalogItemSchema.parse({
           ...item,
+          entry:
+            entryStates[index] === null
+              ? null
+              : benefitEntryStateSchema.parse(entryStates[index]),
           applicationStatus:
             viewer?.benefitApplicationStatuses?.get(item.id) ?? null,
           state: deriveBenefitState({ ...item, available }, viewer, input.now),
@@ -229,12 +263,27 @@ export class DefaultBenefitRepository implements BenefitRepository {
       throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
     }
   }
+
+  async enter(input: {
+    benefitId: string;
+    appUserId: string;
+    idempotencyKey: string;
+    ticketAmount: number;
+    now: Date;
+  }): Promise<BenefitEntryResult> {
+    try {
+      return benefitEntryResultSchema.parse(await this.source.enter(input));
+    } catch (error) {
+      if (error instanceof BenefitRepositoryError) throw error;
+      throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
+    }
+  }
 }
 
 interface RpcClient {
   rpc(
     name: string,
-    parameters: Record<string, string>,
+    parameters: Record<string, unknown>,
   ): PromiseLike<{ data: unknown; error: { message?: string } | null }>;
 }
 
@@ -266,6 +315,11 @@ const rpcFailureMarkers: ReadonlyArray<readonly [string, BenefitFailureCode]> =
     ],
     ["application benefit unavailable", "BENEFIT_NOT_FOUND"],
     ["application window closed", "BENEFIT_EXPIRED"],
+    ["PHASE4_BENEFIT_ENTRY_IDEMPOTENCY_CONFLICT", "IDEMPOTENCY_KEY_CONFLICT"],
+    ["PHASE4_BENEFIT_ENTRY_LIMIT_REACHED", "BENEFIT_ENTRY_LIMIT_REACHED"],
+    ["PHASE1_TICKET_NEGATIVE_BALANCE", "INSUFFICIENT_TICKETS"],
+    ["PHASE4_BENEFIT_ENTRY_WINDOW_CLOSED", "BENEFIT_EXPIRED"],
+    ["PHASE4_BENEFIT_ENTRY_UNAVAILABLE", "BENEFIT_NOT_FOUND"],
   ];
 
 function mapClaimFailure(message = ""): BenefitRepositoryError {
@@ -451,6 +505,36 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
       { p_benefit_id: input.benefitId, p_app_user_id: input.appUserId },
     );
     if (error) throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
+    return data;
+  }
+
+  async entryState(input: {
+    benefitId: string;
+    appUserId: string | null;
+  }): Promise<unknown> {
+    const { data, error } = await this.database.rpc(
+      "get_owned_benefit_entry_state",
+      { p_benefit_id: input.benefitId, p_app_user_id: input.appUserId },
+    );
+    if (error) throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
+    return data;
+  }
+
+  async enter(input: {
+    benefitId: string;
+    appUserId: string;
+    idempotencyKey: string;
+    ticketAmount: number;
+    now: Date;
+  }): Promise<unknown> {
+    const { data, error } = await this.database.rpc("enter_owned_benefit", {
+      p_app_user_id: input.appUserId,
+      p_benefit_id: input.benefitId,
+      p_idempotency_key: input.idempotencyKey,
+      p_ticket_amount: input.ticketAmount,
+      p_now: input.now.toISOString(),
+    });
+    if (error) throw mapClaimFailure(error.message);
     return data;
   }
 }

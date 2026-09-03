@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { benefitEntryStateSchema } from "./benefit-entry";
 
 export const benefitLocaleSchema = z.enum(["ko", "en"]);
 export type BenefitLocale = z.infer<typeof benefitLocaleSchema>;
@@ -53,6 +54,7 @@ export const benefitCatalogItemSchema = z.object({
     .enum(["knowledge", "reservation", "attendance", "survey"])
     .nullable(),
   state: benefitStateSchema,
+  entry: benefitEntryStateSchema.nullable().default(null),
 });
 export type BenefitCatalogItem = z.infer<typeof benefitCatalogItemSchema>;
 

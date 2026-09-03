@@ -247,6 +247,51 @@ describe("benefit screens", () => {
       idempotencyKey: expect.any(String),
     });
   });
+  it("enters campaign Tickets once on rapid clicks and refreshes balance and history", async () => {
+    let resolveEntry!: (response: Response) => void;
+    const entryResponse = new Promise<Response>((resolve) => { resolveEntry = resolve; });
+    const campaignBenefit = {
+      ...benefit,
+      entry: {
+        campaignId: "55555555-5555-4555-8555-555555555555",
+        creatorTicketBalance: 25,
+        enteredTickets: 3,
+        perFanTicketLimit: null,
+        remainingBenefitTickets: null,
+        entryOpensAt: "2020-01-01T00:00:00.000Z",
+        entryClosesAt: "2099-01-01T00:00:00.000Z",
+        canEnter: true,
+        entries: [],
+      },
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ benefit: campaignBenefit })))
+      .mockImplementationOnce(() => entryResponse);
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    const amount = await screen.findByRole("spinbutton", { name: "응모할 Ticket 수" });
+    fireEvent.change(amount, { target: { value: "2" } });
+    const button = screen.getByRole("button", { name: "Ticket으로 응모하기" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    resolveEntry(new Response(JSON.stringify({
+      entryId: "44444444-4444-4444-8444-444444444444",
+      benefitId: benefit.id,
+      campaignId: "55555555-5555-4555-8555-555555555555",
+      ticketAmount: 2,
+      benefitTicketTotal: 5,
+      perFanTicketLimit: null,
+      remainingBenefitTickets: null,
+      ticketLedgerId: "66666666-6666-4666-8666-666666666666",
+      resultingBalance: 23,
+      replayed: false,
+    })));
+    expect(await screen.findByText(/2 Ticket/)).toBeInTheDocument();
+    expect(screen.getByText("23")).toBeInTheDocument();
+    const call = fetchMock.mock.calls[1];
+    expect(call[0]).toContain("/entries");
+    expect(JSON.parse(String(call[1]?.body))).toMatchObject({ ticketAmount: 2 });
+  });
   it("automatically resumes one matching benefit claim after login", async () => {
     const intent = createAuthIntent({ sourcePath: `/benefits/${benefit.id}`, sourceQuery: "?locale=ko", actionType: "CLAIM_BENEFIT", targetType: "benefit", targetId: benefit.id });
     persistAuthIntent(sessionStorage, intent);

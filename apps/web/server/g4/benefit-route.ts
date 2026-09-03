@@ -5,6 +5,7 @@ import {
   claimBenefitRequestSchema,
   parseBenefitLocale,
 } from "../../features/benefit/domain/benefit";
+import { enterBenefitRequestSchema } from "../../features/benefit/domain/benefit-entry";
 import { FanAuthUnavailableError } from "../fan-auth/fan-auth-gate";
 import {
   BenefitRepositoryError,
@@ -154,8 +155,55 @@ const claimFailures = {
   BENEFIT_EXPIRED: ["BENEFIT_EXPIRED", 409],
   BENEFIT_CLAIM_LIMIT_REACHED: ["BENEFIT_CLAIM_LIMIT_REACHED", 409],
   IDEMPOTENCY_KEY_CONFLICT: ["IDEMPOTENCY_KEY_CONFLICT", 409],
+  BENEFIT_ENTRY_LIMIT_REACHED: ["BENEFIT_ENTRY_LIMIT_REACHED", 409],
+  INSUFFICIENT_TICKETS: ["INSUFFICIENT_TICKETS", 409],
   BENEFIT_UNAVAILABLE: ["BENEFIT_UNAVAILABLE", 503],
 } as const;
+
+export function createPostBenefitEntryHandler(
+  dependencies: BenefitRouteDependencies,
+) {
+  return async function POST(
+    request: Request,
+    input: { benefitId: string },
+  ): Promise<Response> {
+    if (!uuidPattern.test(input.benefitId))
+      return json({ error: { code: "BENEFIT_NOT_FOUND" } }, 404, true);
+    if (!(request.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json"))
+      return json({ error: { code: "INVALID_REQUEST" } }, 400, true);
+    let body;
+    try {
+      body = enterBenefitRequestSchema.parse(await request.json());
+    } catch {
+      return json({ error: { code: "INVALID_REQUEST" } }, 400, true);
+    }
+    let owner;
+    try {
+      owner = await dependencies.authorize(request.headers.get("authorization"));
+    } catch (error) {
+      if (error instanceof FanAuthUnavailableError)
+        return json({ error: { code: "BENEFIT_UNAVAILABLE" } }, 503, true);
+      if (error instanceof AuthError)
+        return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status, true);
+      return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, 401, true);
+    }
+    try {
+      return json(await dependencies.repository.enter({
+        benefitId: input.benefitId,
+        appUserId: owner.appUserId,
+        idempotencyKey: body.idempotencyKey,
+        ticketAmount: body.ticketAmount,
+        now: dependencies.now(),
+      }), 200, true);
+    } catch (error) {
+      if (error instanceof BenefitRepositoryError) {
+        const [code, status] = claimFailures[error.code];
+        return json({ error: { code } }, status, true);
+      }
+      return json({ error: { code: "BENEFIT_UNAVAILABLE" } }, 503, true);
+    }
+  };
+}
 
 export function createPostBenefitClaimHandler(
   dependencies: BenefitRouteDependencies,

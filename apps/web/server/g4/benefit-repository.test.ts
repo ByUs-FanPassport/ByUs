@@ -52,6 +52,19 @@ function source(overrides: Partial<BenefitDataSource> = {}): BenefitDataSource {
       replayed: false,
     })),
     application: vi.fn(async () => null),
+    entryState: vi.fn(async () => null),
+    enter: vi.fn(async () => ({
+      entryId: "44444444-4444-4444-8444-444444444444",
+      benefitId: id,
+      campaignId: "55555555-5555-4555-8555-555555555555",
+      ticketAmount: 2,
+      benefitTicketTotal: 5,
+      perFanTicketLimit: null,
+      remainingBenefitTickets: null,
+      ticketLedgerId: "66666666-6666-4666-8666-666666666666",
+      resultingBalance: 20,
+      replayed: false,
+    })),
     ...overrides,
   };
 }
@@ -243,5 +256,35 @@ describe("benefit repository", () => {
     await expect(
       unsafe.application({ benefitId: id, appUserId: "owner" }),
     ).rejects.toEqual(expect.objectContaining({ code: "BENEFIT_UNAVAILABLE" }));
+  });
+  it("projects campaign entry state and parses an atomic entry result", async () => {
+    const repository = new DefaultBenefitRepository(
+      source({
+        entryState: vi.fn(async () => ({
+          campaignId: "55555555-5555-4555-8555-555555555555",
+          creatorTicketBalance: 25,
+          enteredTickets: 3,
+          perFanTicketLimit: null,
+          remainingBenefitTickets: null,
+          entryOpensAt: "2026-07-21T00:00:00.000Z",
+          entryClosesAt: "2026-07-22T00:00:00.000Z",
+          canEnter: true,
+          entries: [],
+        })),
+      }),
+    );
+    await expect(repository.list({
+      celebritySlug: "kara",
+      locale: "ko",
+      appUserId: "owner",
+      now: new Date("2026-07-21T12:00:00Z"),
+    })).resolves.toMatchObject({ benefits: [{ entry: { enteredTickets: 3 } }] });
+    await expect(repository.enter({
+      benefitId: id,
+      appUserId: "owner",
+      idempotencyKey: "77777777-7777-4777-8777-777777777777",
+      ticketAmount: 2,
+      now: new Date("2026-07-21T12:00:00Z"),
+    })).resolves.toMatchObject({ benefitTicketTotal: 5, resultingBalance: 20 });
   });
 });

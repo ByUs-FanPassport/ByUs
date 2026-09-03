@@ -35,6 +35,10 @@ import {
   type BenefitState,
 } from "../domain/benefit";
 import styles from "./benefit-screen.module.css";
+import {
+  benefitEntryResultSchema,
+  type BenefitEntryResult,
+} from "../domain/benefit-entry";
 
 export type BenefitLocale = "ko" | "en";
 
@@ -95,6 +99,15 @@ const copy = {
       selected: "혜택 대상자로 선정되었어요",
       not_selected: "이번 혜택의 선정이 완료되었어요",
     },
+    enter: "Ticket으로 응모하기",
+    entering: "응모 처리 중",
+    tickets: "보유 Creator Ticket",
+    enteredTickets: "이 혜택에 응모한 Ticket",
+    entryLimit: "혜택별 응모 한도",
+    noEntryLimit: "제한 없음",
+    entryAmount: "응모할 Ticket 수",
+    entryHistory: "응모 이력",
+    entryError: "응모하지 못했어요. Ticket 잔액과 응모 기간을 확인해 주세요.",
     delivered: "혜택이 안전하게 전달되었어요",
     text: "혜택 내용",
     code: "혜택 코드",
@@ -149,6 +162,15 @@ const copy = {
       selected: "You were selected for this benefit",
       not_selected: "Selection for this benefit is complete",
     },
+    enter: "Enter with Tickets",
+    entering: "Entering",
+    tickets: "Creator Tickets available",
+    enteredTickets: "Tickets entered for this Benefit",
+    entryLimit: "Per-Benefit entry limit",
+    noEntryLimit: "No limit",
+    entryAmount: "Tickets to enter",
+    entryHistory: "Entry history",
+    entryError: "Entry failed. Check your Ticket balance and entry window.",
     delivered: "Your benefit was delivered securely",
     text: "Benefit details",
     code: "Benefit code",
@@ -444,6 +466,8 @@ export function BenefitDetailScreen({
   const [ownedApplication, setOwnedApplication] =
     useState<BenefitOwnedApplicationResponse | null>(null);
   const [actionError, setActionError] = useState(false);
+  const [entryAmount, setEntryAmount] = useState("1");
+  const [entryResult, setEntryResult] = useState<BenefitEntryResult | null>(null);
   const [copied, setCopied] = useState(false);
   const claimRef = useRef<Promise<void> | null>(null);
   const resumedIntentRef = useRef<string | null>(null);
@@ -601,6 +625,59 @@ export function BenefitDetailScreen({
     claimRef.current = operation;
     await operation;
   }, [benefitId, getAccessToken, pending, view]);
+  const enterBenefit = useCallback(async () => {
+    if (view.kind !== "ready" || !view.benefit.entry || pending || claimRef.current) return;
+    const currentEntry = view.benefit.entry;
+    const ticketAmount = Number(entryAmount);
+    if (!Number.isInteger(ticketAmount) || ticketAmount <= 0) return;
+    const operation = (async () => {
+      setPending(true);
+      setActionError(false);
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error();
+        const keyName = `byus:benefit-entry:${benefitId}`;
+        let idempotencyKey = sessionStorage.getItem(keyName);
+        if (!idempotencyKey) {
+          idempotencyKey = crypto.randomUUID();
+          sessionStorage.setItem(keyName, idempotencyKey);
+        }
+        const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}/entries`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify({ idempotencyKey, ticketAmount }),
+        });
+        if (!response.ok) throw new Error();
+        const result = benefitEntryResultSchema.parse(await response.json());
+        setEntryResult(result);
+        sessionStorage.removeItem(keyName);
+        setView({
+          kind: "ready",
+          benefit: {
+            ...view.benefit,
+            entry: {
+              ...currentEntry,
+              creatorTicketBalance: result.resultingBalance,
+              enteredTickets: result.benefitTicketTotal,
+              remainingBenefitTickets: result.remainingBenefitTickets,
+              entries: [{
+                entryId: result.entryId,
+                ticketAmount: result.ticketAmount,
+                enteredAt: new Date().toISOString(),
+              }, ...currentEntry.entries],
+            },
+          },
+        });
+      } catch {
+        setActionError(true);
+      } finally {
+        setPending(false);
+        claimRef.current = null;
+      }
+    })();
+    claimRef.current = operation;
+    await operation;
+  }, [benefitId, entryAmount, getAccessToken, pending, view]);
 
   useEffect(() => {
     if (!authenticated || view.kind !== "ready" || view.benefit.state !== "eligible") return;
@@ -609,7 +686,8 @@ export function BenefitDetailScreen({
     const intent = readAuthIntent(window.sessionStorage, intentId);
     if (!intent || intent.targetType !== "benefit" || intent.targetId !== benefitId) return;
     resumedIntentRef.current = intentId;
-    if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.allocationMode === "direct_claim") void claimBenefit();
+    if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.entry) consumeAuthIntent(window.sessionStorage, intentId);
+    else if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.allocationMode === "direct_claim") void claimBenefit();
     if (intent.actionType === "APPLY_BENEFIT" && view.benefit.allocationMode === "application_selection") void applyForBenefit();
   }, [applyForBenefit, authenticated, benefitId, claimBenefit, view]);
   async function copyCode(value: string) {
@@ -739,7 +817,76 @@ export function BenefitDetailScreen({
             </dl>
           </section>
         </div>
-        {deliveredClaim ? (
+        {!authenticated && benefit.entry ? (
+          <AuthIntentLink
+            className={fanActionClassName("primary")}
+            emphasis="primary"
+            locale={locale}
+            input={{
+              sourcePath: `/benefits/${benefitId}`,
+              sourceQuery: `?locale=${locale}${celebrity ? `&celebrity=${encodeURIComponent(celebrity)}` : ""}`,
+              actionType: "CLAIM_BENEFIT",
+              targetType: "benefit",
+              targetId: benefitId,
+            }}
+          >
+            {c.signIn}
+          </AuthIntentLink>
+        ) : benefit.entry ? (
+          <section className={styles.delivery} aria-live="polite">
+            <TicketCheck aria-hidden="true" />
+            <div>
+              <h2>{c.enter}</h2>
+              <dl className={styles.period}>
+                <div><dt>{c.tickets}</dt><dd>{benefit.entry.creatorTicketBalance}</dd></div>
+                <div><dt>{c.enteredTickets}</dt><dd>{benefit.entry.enteredTickets}</dd></div>
+                <div><dt>{c.entryLimit}</dt><dd>{benefit.entry.perFanTicketLimit ?? c.noEntryLimit}</dd></div>
+              </dl>
+              <label>
+                <span>{c.entryAmount}</span>
+                <input
+                  aria-label={c.entryAmount}
+                  type="number"
+                  min={1}
+                  max={Math.min(
+                    benefit.entry.creatorTicketBalance,
+                    benefit.entry.remainingBenefitTickets ?? Number.MAX_SAFE_INTEGER,
+                  )}
+                  step={1}
+                  value={entryAmount}
+                  onChange={(event) => setEntryAmount(event.target.value)}
+                />
+              </label>
+              <FanAction
+                variant="primary"
+                disabled={
+                  pending ||
+                  !Number.isInteger(Number(entryAmount)) ||
+                  benefit.entry.creatorTicketBalance < Number(entryAmount) ||
+                  Number(entryAmount) <= 0 ||
+                  !benefit.entry.canEnter ||
+                  (benefit.entry.remainingBenefitTickets !== null &&
+                    benefit.entry.remainingBenefitTickets < Number(entryAmount))
+                }
+                ariaBusy={pending}
+                onClick={() => void enterBenefit()}
+                trailingIcon={<ArrowRight />}
+              >
+                {pending ? c.entering : c.enter}
+              </FanAction>
+              {(entryResult || benefit.entry.entries.length > 0) && (
+                <div>
+                  <h3>{c.entryHistory}</h3>
+                  <ul>
+                    {benefit.entry.entries.map((entry) => (
+                      <li key={entry.entryId}>{entry.ticketAmount} Ticket · {formatDate(entry.enteredAt, locale)}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : deliveredClaim ? (
           <section className={styles.delivery} aria-live="polite">
             <Check aria-hidden="true" />
             <div>
@@ -818,7 +965,7 @@ export function BenefitDetailScreen({
         )}
         {actionError && (
           <p className={styles.actionError} role="alert">
-            {benefit.allocationMode === "application_selection" ? c.applyError : c.claimError}
+            {benefit.entry ? c.entryError : benefit.allocationMode === "application_selection" ? c.applyError : c.claimError}
           </p>
         )}
       </article>
