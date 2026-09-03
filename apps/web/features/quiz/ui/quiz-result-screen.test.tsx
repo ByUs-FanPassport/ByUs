@@ -99,6 +99,27 @@ describe("QuizResultScreen", () => {
     );
   });
 
+  it("explains the server-authoritative cooldown instead of showing a generic retry failure", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json(terminalAttempt("failed", 1)))
+      .mockResolvedValueOnce(Response.json({
+        error: {
+          code: "VERIFICATION_COOLDOWN",
+          retryAfter: "2026-07-21T05:01:00.000Z",
+        },
+      }, { status: 429 }));
+
+    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
+
+    expect(await screen.findByText("3번 연속 실패하면 1분 뒤 다시 도전할 수 있어요.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "다시 도전" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "3번 연속 실패했어요. 서버 시간을 기준으로 1분 뒤 다시 시도해 주세요.",
+    );
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("does not render a pass result when the terminal status contradicts its passport query", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("failed", 1)));
     render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" />);

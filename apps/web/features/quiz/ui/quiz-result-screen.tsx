@@ -27,9 +27,25 @@ type ViewState =
   | { kind: "error" }
   | { kind: "ready"; projection: QuizAttemptProjection };
 
+type ApiErrorBody = { error?: { code?: string; retryAfter?: string | null } };
+
+class QuizResultRequestError extends Error {
+  constructor(readonly code: string, readonly retryAfter: string | null = null) {
+    super(code);
+    this.name = "QuizResultRequestError";
+  }
+}
+
 async function parseJson(response: Response): Promise<unknown> {
-  if (!response.ok) throw new Error("request failed");
-  return response.json();
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = (body as ApiErrorBody | null)?.error;
+    throw new QuizResultRequestError(
+      error?.code ?? "QUIZ_UNAVAILABLE",
+      typeof error?.retryAfter === "string" ? error.retryAfter : null,
+    );
+  }
+  return body;
 }
 
 const copy = {
@@ -56,7 +72,8 @@ const copy = {
     failedHelper: "정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.",
     retrying: "새 문항 준비 중",
     retry: "다시 도전",
-    retryNote: "재도전 횟수와 시간 제한은 없습니다.",
+    retryNote: "3번 연속 실패하면 1분 뒤 다시 도전할 수 있어요.",
+    cooldown: "3번 연속 실패했어요. 서버 시간을 기준으로 1분 뒤 다시 시도해 주세요.",
     retryError: "새 퀴즈를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.",
   },
   en: {
@@ -82,7 +99,8 @@ const copy = {
     failedHelper: "Answers and explanations aren't shown. You can retry with new questions.",
     retrying: "Preparing new questions",
     retry: "Try again",
-    retryNote: "There is no retry count or time limit.",
+    retryNote: "After 3 consecutive failures, you can try again in 1 minute.",
+    cooldown: "You've had 3 consecutive failures. Please retry in 1 minute based on server time.",
     retryError: "We couldn't start a new quiz. Please try again in a moment.",
   },
 } as const;
@@ -172,8 +190,12 @@ export function QuizResultScreen({
       } else {
         router.push(withLocale(`/c/${celebritySlug}/verify/questions?attempt=${result.attempt.id}`, locale));
       }
-    } catch {
-      setActionError(t.retryError);
+    } catch (error) {
+      setActionError(
+        error instanceof QuizResultRequestError && error.code === "VERIFICATION_COOLDOWN"
+          ? t.cooldown
+          : t.retryError,
+      );
       setActionPending(false);
     }
   }
