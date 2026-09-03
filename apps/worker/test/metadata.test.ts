@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertPiiFree, renderMetadata } from "../src/metadata.js";
-import type { BlockchainJob, PassportPayloadV1, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
+import type { BlockchainJob, CollectiblePayloadV1, PassportPayloadV1, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
 
 const payload: PassportPayloadV1 = {
   recipient: `0x${"1".repeat(40)}`,
@@ -53,5 +53,20 @@ describe("credential metadata", () => {
     const metadata = renderMetadata(reactionJob, reactionPayload, "ipfs://bafy-assets/credentials/v1");
     expect(metadata.name).toBe("ByUs First Reaction");
     expect(metadata.image).toBe("ipfs://bafy-assets/credentials/v1/reaction/first/kara.png");
+  });
+
+  it("represents a Collectible independently with public LIVE identity", () => {
+    const collectiblePayload: CollectiblePayloadV1 = {
+      recipient: payload.recipient,
+      celebritySlug: "kara",
+      liveSlug: "kara-september-live",
+      claimId: "3ff058e6-8865-46c5-ae01-94a93f1dbe3c",
+      metadataVersion: 1,
+    };
+    const collectibleJob = { ...job, entityType: "collectible" as const, payload: collectiblePayload };
+    const metadata = renderMetadata(collectibleJob, collectiblePayload, "ipfs://bafy-assets/credentials/v1");
+    expect(metadata.name).toBe("ByUs Digital Collectible");
+    expect(metadata.image).toBe("ipfs://bafy-assets/credentials/v1/collectible/kara/kara-september-live.png");
+    expect(JSON.stringify(metadata)).not.toContain(collectiblePayload.claimId);
   });
 });

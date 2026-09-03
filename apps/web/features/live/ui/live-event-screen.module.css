@@ -950,6 +950,31 @@
   }
 }
 
+.collectible {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 48px;
+  padding: 24px;
+  border: 1px solid oklch(88% 0.03 285);
+  border-radius: 20px;
+  background: linear-gradient(135deg, oklch(98% 0.015 285), white);
+}
+
+.collectible h2,
+.collectible p { margin: 0; }
+.collectible p { margin-top: 8px; color: oklch(38% 0 0); }
+.collectible small { display: block; margin-top: 8px; color: oklch(52% 0 0); }
+.collectible > svg { width: 28px; height: 28px; color: oklch(52% 0.18 285); }
+.collectibleEyebrow { display: block; margin-bottom: 6px; color: oklch(48% 0.18 285); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.collectible .actionError { grid-column: 1 / -1; }
+
+@media (max-width: 600px) {
+  .collectible { grid-template-columns: 1fr; }
+  .collectible button { width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page *,
   .page *::before,

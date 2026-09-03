@@ -121,6 +121,15 @@ while IFS= read -r migration; do
     | psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" >/dev/null
 done < <(find "$ROOT_DIR/supabase/migrations" -maxdepth 1 -type f -name '*.sql' | sort)
 
+if [[ -n "${BYUS_CLEAN_DB_ASSERTION_FILE:-}" ]]; then
+  psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" \
+    -f "$BYUS_CLEAN_DB_ASSERTION_FILE"
+fi
+if [[ -n "${BYUS_CLEAN_DB_SHELL_ASSERTION_FILE:-}" ]]; then
+  PGHOST="$SOCKET_DIR" PGPORT="$PG_PORT" PGDATABASE="$DATABASE" \
+    bash "$BYUS_CLEAN_DB_SHELL_ASSERTION_FILE"
+fi
+
 psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" <<'SQL'
 do $$
 begin

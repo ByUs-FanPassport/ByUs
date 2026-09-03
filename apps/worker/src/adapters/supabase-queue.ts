@@ -25,12 +25,12 @@ function dbError(operation: string, error: { message: string; code?: string }): 
 }
 
 export class SupabaseQueueAdapter implements QueuePort {
-  constructor(private readonly client: SupabaseClient) {}
+  constructor(private readonly client: SupabaseClient, private readonly supportedEntityTypes?: readonly string[]) {}
 
-  static create(url: string, serviceRoleKey: string): SupabaseQueueAdapter {
+  static create(url: string, serviceRoleKey: string, supportedEntityTypes?: readonly string[]): SupabaseQueueAdapter {
     return new SupabaseQueueAdapter(createClient(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    }));
+    }), supportedEntityTypes);
   }
 
   async claim(workerId: string, batchSize: number, leaseSeconds: number): Promise<BlockchainJob[]> {
@@ -38,6 +38,7 @@ export class SupabaseQueueAdapter implements QueuePort {
       p_worker_id: workerId,
       p_batch_size: batchSize,
       p_lease_seconds: leaseSeconds,
+      ...(this.supportedEntityTypes ? { p_entity_types: [...this.supportedEntityTypes] } : {}),
     });
     if (error) throw dbError("claim_blockchain_jobs", error);
     return ((data ?? []) as Row[]).map(mapRow);

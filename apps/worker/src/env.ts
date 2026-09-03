@@ -22,11 +22,18 @@ const envSchema = z.object({
   BYUS_PASSPORT_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   BYUS_STAMP_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   GIWA_DEPLOYMENT_BLOCK: z.coerce.bigint().nonnegative(),
-}).strict();
+  BYUS_COLLECTIBLE_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional(),
+  GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: z.coerce.bigint().nonnegative().optional(),
+}).strict().superRefine((value, context) => {
+  if ((value.BYUS_COLLECTIBLE_CONTRACT_ADDRESS === undefined) !== (value.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK === undefined)) {
+    context.addIssue({ code: "custom", message: "Collectible contract address and deployment block must be configured together" });
+  }
+});
 
 export type WorkerEnv = z.infer<typeof envSchema>;
 
 export function parseEnv(source: NodeJS.ProcessEnv): WorkerEnv {
-  const known = Object.fromEntries(Object.keys(envSchema.shape).map((key) => [key, source[key]]));
+  const knownKeys = ["WORKER_ENABLED", "WORKER_ID", "WORKER_BATCH_SIZE", "WORKER_LEASE_SECONDS", "WORKER_POLL_INTERVAL_MS", "WORKER_RECEIPT_POLL_ATTEMPTS", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "PINATA_JWT", "PINATA_API_URL", "METADATA_ASSET_BASE_URI", "GIWA_RPC_URL", "GIWA_CHAIN_ID", "GIWA_RELAYER_PRIVATE_KEY", "BYUS_PASSPORT_CONTRACT_ADDRESS", "BYUS_STAMP_CONTRACT_ADDRESS", "GIWA_DEPLOYMENT_BLOCK", "BYUS_COLLECTIBLE_CONTRACT_ADDRESS", "GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK"] as const;
+  const known = Object.fromEntries(knownKeys.map((key) => [key, source[key]]));
   return envSchema.parse(known);
 }

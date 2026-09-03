@@ -58,6 +58,7 @@ import {
 } from "@/features/live/domain/live-attendance";
 import { createLiveReservationResponseSchema } from "@/features/live/domain/live-reservation";
 import type { FanActivityCompletion } from "@/features/live/domain/fan-activity-completion";
+import { collectibleClaimSchema, type CollectibleOwnedState } from "@/features/collectible/domain/collectible";
 import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import {
   enablePushNotifications,
@@ -407,7 +408,7 @@ export function LiveEventScreen({
   locale: Locale;
 }) {
   const c = copy[locale];
-  const { ready: authReady, authenticated, getAccessToken } = usePrivy();
+  const { ready: authReady, authenticated, getAccessToken, user } = usePrivy();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -422,6 +423,9 @@ export function LiveEventScreen({
     kind: "idle",
   });
   const [retrySeconds, setRetrySeconds] = useState(0);
+  const [collectible, setCollectible] = useState<CollectibleOwnedState | null>(null);
+  const [collectiblePending, setCollectiblePending] = useState(false);
+  const [collectibleError, setCollectibleError] = useState<string | null>(null);
   const fanCodeRef = useRef<HTMLElement>(null);
   const fanCodeInputRef = useRef<HTMLInputElement>(null);
   const attendanceKeyRef = useRef<string | null>(null);
@@ -445,10 +449,9 @@ export function LiveEventScreen({
         setView({ kind: "error", notFound: response.status === 404 });
         return;
       }
-      setView({
-        kind: "ready",
-        data: liveEventResponseSchema.parse(await response.json()),
-      });
+      const data = liveEventResponseSchema.parse(await response.json());
+      setCollectible(data.viewer.collectible ?? null);
+      setView({ kind: "ready", data });
     } catch {
       setView({ kind: "error", notFound: false });
     }
@@ -457,6 +460,24 @@ export function LiveEventScreen({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const claimCollectible = useCallback(async () => {
+    if (!collectible?.eligible || collectiblePending) return;
+    setCollectiblePending(true); setCollectibleError(null);
+    try {
+      const token = await getAccessToken(); if (!token) throw new Error();
+      const storageKey = `byus:collectible-claim:${slug}:${user?.id ?? "unknown-owner"}`;
+      const idempotencyKey = window.sessionStorage.getItem(storageKey) ?? window.crypto.randomUUID();
+      window.sessionStorage.setItem(storageKey, idempotencyKey);
+      const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/collectible`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ idempotencyKey }) });
+      if (!response.ok) throw new Error();
+      const result = await response.json() as { claim?: unknown };
+      const claim = collectibleClaimSchema.parse(result.claim);
+      window.sessionStorage.removeItem(storageKey);
+      setCollectible({ ...collectible, eligible: false, claim });
+    } catch { setCollectibleError(locale === "ko" ? "Collectible을 받지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요." : "Could not claim the Collectible. Check the status and try again."); }
+    finally { setCollectiblePending(false); }
+  }, [collectible, collectiblePending, getAccessToken, locale, slug, user]);
 
   useEffect(() => {
     if (view.kind !== "ready" || window.location.hash !== "#fan-code") return;
@@ -1020,6 +1041,28 @@ export function LiveEventScreen({
                 ))}
               </ol>
             </section>
+            {authenticated && collectible ? (
+              <section className={styles.collectible} aria-labelledby="collectible-title">
+                <div>
+                  <span className={styles.collectibleEyebrow}>{locale === "ko" ? "Journey 보상" : "Journey reward"}</span>
+                  <h2 id="collectible-title">{locale === "ko" ? "Digital Collectible" : "Digital Collectible"}</h2>
+                  <p>{collectible.claim
+                    ? collectible.claim.mint.status === "minted"
+                      ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : `Minted · Token #${collectible.claim.mint.tokenId}`
+                      : locale === "ko" ? "Claim 완료 · 온체인 발급을 준비 중이에요." : "Claimed · On-chain mint is being prepared."
+                    : collectible.eligible
+                      ? locale === "ko" ? "Journey를 완료했어요. 종료 후 48시간 안에 받아보세요." : "Journey complete. Claim within 48 hours after the LIVE."
+                      : locale === "ko" ? "Journey 완료와 LIVE 종료 후 받을 수 있어요." : "Available after completing the Journey and the LIVE ends."}</p>
+                  <small>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(collectible.claimWindow.until))}{locale === "ko" ? "까지" : " deadline"}</small>
+                </div>
+                {!collectible.claim && collectible.eligible ? (
+                  <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
+                    {collectiblePending ? (locale === "ko" ? "Claim 처리 중" : "Claiming") : (locale === "ko" ? "Collectible 받기" : "Claim Collectible")}
+                  </FanAction>
+                ) : collectible.claim ? <Check aria-label={locale === "ko" ? "Claim 완료" : "Claim complete"} /> : <LockKeyhole aria-hidden="true" />}
+                {collectibleError ? <p className={styles.actionError} role="alert">{collectibleError}</p> : null}
+              </section>
+            ) : null}
             <section
               ref={fanCodeRef}
               id="fan-code"

@@ -29,4 +29,10 @@ describe("worker environment", () => {
   it("rejects mutable HTTPS metadata assets", () => {
     expect(() => parseEnv({ ...valid, METADATA_ASSET_BASE_URI: "https://assets.byus.kr/v1" })).toThrow("immutable ipfs");
   });
+
+  it("requires Collectible address and deployment block as a pair", () => {
+    expect(() => parseEnv({ ...valid, BYUS_COLLECTIBLE_CONTRACT_ADDRESS: `0x${"4".repeat(40)}` })).toThrow("Collectible");
+    const env = parseEnv({ ...valid, BYUS_COLLECTIBLE_CONTRACT_ADDRESS: `0x${"4".repeat(40)}`, GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: "200" });
+    expect(env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK).toBe(200n);
+  });
 });

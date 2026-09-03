@@ -31,12 +31,19 @@ export const reactionPayloadV1Schema = basePayload.extend({
   reactionType: z.literal("FirstReaction"),
 }).strict();
 
+export const collectiblePayloadV1Schema = basePayload.extend({
+  liveSlug: publicSlugSchema,
+  claimId: z.string().uuid(),
+  metadataVersion: z.literal(1),
+}).strict();
+
 export type PreparedSubmission = z.infer<typeof preparedSubmissionSchema>;
 export type PassportPayloadV1 = z.infer<typeof passportPayloadV1Schema>;
 export type StampPayloadV1 = z.infer<typeof stampPayloadV1Schema>;
 export type ReactionPayloadV1 = z.infer<typeof reactionPayloadV1Schema>;
-export type JobPayload = PassportPayloadV1 | StampPayloadV1 | ReactionPayloadV1;
-export type EntityType = "passport" | "stamp" | "reaction";
+export type CollectiblePayloadV1 = z.infer<typeof collectiblePayloadV1Schema>;
+export type JobPayload = PassportPayloadV1 | StampPayloadV1 | ReactionPayloadV1 | CollectiblePayloadV1;
+export type EntityType = "passport" | "stamp" | "reaction" | "collectible";
 
 export interface BlockchainJob {
   id: string;
@@ -58,7 +65,9 @@ export function parseJobPayload(job: BlockchainJob): JobPayload {
   }
   if (job.entityType === "passport") return passportPayloadV1Schema.parse(job.payload);
   if (job.entityType === "reaction") return reactionPayloadV1Schema.parse(job.payload);
-  return stampPayloadV1Schema.parse(job.payload);
+  if (job.entityType === "stamp") return stampPayloadV1Schema.parse(job.payload);
+  if (job.entityType === "collectible") return collectiblePayloadV1Schema.parse(job.payload);
+  throw new WorkerError("UNSUPPORTED_ENTITY_TYPE", `Unsupported entity type: ${String(job.entityType)}`, false);
 }
 
 export class WorkerError extends Error {

@@ -6,7 +6,9 @@ import type { WorkerEnv } from "./env.js";
 import { MintWorker } from "./worker.js";
 
 export async function runWorkerOnce(env: WorkerEnv): Promise<number> {
-  const queue = SupabaseQueueAdapter.create(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  const collectibleEnabled = Boolean(env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS && env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK !== undefined);
+  const queue = SupabaseQueueAdapter.create(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY,
+    collectibleEnabled ? ["passport", "stamp", "reaction", "collectible"] : ["passport", "stamp", "reaction"]);
   const metadata = new PinataMetadataAdapter(env.PINATA_API_URL, env.PINATA_JWT);
   const chain = new ViemChainAdapter({
     rpcUrl: env.GIWA_RPC_URL,
@@ -15,6 +17,12 @@ export async function runWorkerOnce(env: WorkerEnv): Promise<number> {
     passportAddress: env.BYUS_PASSPORT_CONTRACT_ADDRESS as Address,
     stampAddress: env.BYUS_STAMP_CONTRACT_ADDRESS as Address,
     deploymentBlock: env.GIWA_DEPLOYMENT_BLOCK,
+    ...(env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS && env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK !== undefined
+      ? {
+          collectibleAddress: env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS as Address,
+          collectibleDeploymentBlock: env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK,
+        }
+      : {}),
   });
   const clock = { sleep: (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)) };
   return new MintWorker(queue, metadata, chain, clock, {

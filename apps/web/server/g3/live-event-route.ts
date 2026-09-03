@@ -5,9 +5,11 @@ import { parseLiveLocale } from "../../features/live/domain/live-event";
 import { FanAuthUnavailableError } from "../fan-auth/fan-auth-gate";
 import type { LiveEventRepository } from "./live-event-repository";
 import { publicContentCacheHeaders } from "../cache/public-content-cache";
+import type { CollectibleRepository } from "../collectible/collectible-repository";
 
 export interface LiveEventRouteDependencies {
   repository: Pick<LiveEventRepository, "findPublishedBySlug">;
+  collectibleRepository?: Pick<CollectibleRepository, "getOwned">;
   authorize(authorization: string): Promise<{ appUserId: string }>;
   now(): Date;
 }
@@ -75,6 +77,11 @@ export function createGetLiveEventHandler(
         now: dependencies.now(),
       });
       if (!result) return response("LIVE_NOT_FOUND", 404, appUserId !== null);
+      if (appUserId && dependencies.collectibleRepository) {
+        try {
+          result.viewer.collectible = await dependencies.collectibleRepository.getOwned({ appUserId, liveSlug: input.slug });
+        } catch { /* A feature read must not take down the canonical LIVE detail. */ }
+      }
       return Response.json(result, {
         status: 200,
         headers: appUserId

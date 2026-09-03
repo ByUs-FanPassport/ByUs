@@ -37,13 +37,26 @@ export class MintWorker {
 
   private async process(job: BlockchainJob): Promise<void> {
     const payload = parseJobPayload(job);
-    const existing = await this.chain.findExisting(job.entityType, payload);
-    if (existing) {
-      await this.queue.complete(job, existing.txHash, existing.tokenId);
-      return;
+    let submission = payload.workerSubmission;
+    if (submission) {
+      const preparedReceipt = await this.chain.receipt(submission.txHash, job.entityType, payload, submission);
+      if (preparedReceipt) {
+        await this.queue.complete(job, preparedReceipt.txHash, preparedReceipt.tokenId);
+        return;
+      }
+      const existing = await this.chain.findExisting(job.entityType, payload);
+      if (existing) {
+        await this.queue.complete(job, existing.txHash, existing.tokenId);
+        return;
+      }
+    } else {
+      const existing = await this.chain.findExisting(job.entityType, payload);
+      if (existing) {
+        await this.queue.complete(job, existing.txHash, existing.tokenId);
+        return;
+      }
     }
 
-    let submission = payload.workerSubmission;
     if (!submission) {
       if (job.txHash) {
         throw new WorkerError("MISSING_SIGNED_TRANSACTION", `Job ${job.id} has tx_hash but no recoverable signed transaction; awaiting chain reconciliation`, true);
@@ -59,7 +72,7 @@ export class MintWorker {
       throw new WorkerError("TRANSACTION_HASH_MISMATCH", `Broadcast hash ${broadcastHash} did not match prepared hash ${submission.txHash}`, false);
     }
     for (let attempt = 0; attempt < this.options.receiptPollAttempts; attempt += 1) {
-      const receipt = await this.chain.receipt(submission.txHash);
+      const receipt = await this.chain.receipt(submission.txHash, job.entityType, payload, submission);
       if (receipt) {
         await this.queue.complete(job, receipt.txHash, receipt.tokenId);
         return;

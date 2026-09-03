@@ -86,4 +86,23 @@ describe("AWS Lambda worker entrypoint", () => {
     ).rejects.toThrow(SyntaxError);
     expect(runWorker).not.toHaveBeenCalled();
   });
+
+  it("rejects a stale or manually edited Production secret that enables Collectible", async () => {
+    const runWorker = vi.fn();
+    const handler = createLambdaHandler({
+      loadSecret: vi.fn().mockResolvedValue(JSON.stringify({
+        ...JSON.parse(validSecret),
+        BYUS_COLLECTIBLE_CONTRACT_ADDRESS: `0x${"4".repeat(40)}`,
+        GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: "200",
+      })),
+      runWorker,
+    }, {
+      WORKER_ENABLED: "true",
+      WORKER_ENVIRONMENT: "prod",
+      WORKER_SECRET_ID: "byus/worker/prod",
+    });
+
+    await expect(handler({ source: "byus.supabase-cron", environment: "prod" })).rejects.toThrow("Dev-only");
+    expect(runWorker).not.toHaveBeenCalled();
+  });
 });

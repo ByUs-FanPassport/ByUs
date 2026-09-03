@@ -31,7 +31,7 @@ export interface ChainPort {
   findExisting(entityType: EntityType, payload: JobPayload): Promise<MintReceipt | null>;
   prepare(entityType: EntityType, payload: JobPayload, metadataUri: string): Promise<PreparedMint>;
   broadcast(signedTransaction: string): Promise<string>;
-  receipt(txHash: string): Promise<MintReceipt | null>;
+  receipt(txHash: string, entityType: EntityType, payload: JobPayload, submission: PreparedSubmission): Promise<MintReceipt | null>;
 }
 
 export interface ClockPort {

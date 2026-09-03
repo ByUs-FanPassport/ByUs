@@ -33,6 +33,15 @@ describe("SupabaseQueueAdapter", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it("declares Collectible capability only when configured", async () => {
+    const rpc = vi.fn(async () => ({ data: [row], error: null }));
+    const adapter = new SupabaseQueueAdapter({ rpc } as unknown as SupabaseClient, ["passport", "stamp", "reaction", "collectible"]);
+    await adapter.claim("worker-test", 5, 120);
+    expect(rpc).toHaveBeenCalledWith("claim_blockchain_jobs", expect.objectContaining({
+      p_entity_types: ["passport", "stamp", "reaction", "collectible"],
+    }));
+  });
+
   it("records prepared bytes only through the lease-checked RPC", async () => {
     const rpc = vi.fn(async () => ({
       data: { ...row, tx_hash: txHash, payload: { ...row.payload, workerSubmission: { txHash, signedTransaction } } },

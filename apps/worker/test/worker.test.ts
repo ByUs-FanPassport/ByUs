@@ -68,7 +68,7 @@ class FakeChain implements ChainPort {
   broadcastError: Error | null = null;
   preparedJobs: Array<{ entityType: string; payload: JobPayload; metadataUri: string }> = [];
   async findExisting(): Promise<MintReceipt | null> { return this.existing; }
-  async prepare(entityType: "passport" | "stamp" | "reaction", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
+  async prepare(entityType: "passport" | "stamp" | "reaction" | "collectible", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
     this.prepareCount += 1;
     this.events.push("prepare");
     this.preparedJobs.push({ entityType, payload, metadataUri });
@@ -131,9 +131,22 @@ describe("MintWorker", () => {
 
     expect(firstChain.prepareCount).toBe(1);
     expect(resumedChain.prepareCount).toBe(0);
-    expect(resumedChain.broadcastCount).toBe(1);
+    expect(resumedChain.broadcastCount).toBe(0);
     expect(metadata.documents).toHaveLength(1);
     expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
+  });
+
+  it("falls back to canonical chain reconciliation when a prepared receipt is unavailable", async () => {
+    const queue = new FakeQueue([job({ ...basePayload, workerSubmission: { txHash, signedTransaction } })]);
+    const chain = new FakeChain();
+    chain.receiptResult = null;
+    chain.existing = { txHash, tokenId: 12n };
+
+    await worker(queue, new FakeMetadata(), chain).runOnce();
+
+    expect(queue.completed).toEqual([{ txHash, tokenId: 12n }]);
+    expect(chain.prepareCount).toBe(0);
+    expect(chain.broadcastCount).toBe(0);
   });
 
   it("reconciles an already minted credential without pinning or submitting a duplicate", async () => {
@@ -177,6 +190,24 @@ describe("MintWorker", () => {
     });
     expect(queue.prepared).toHaveLength(1);
     expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
+  });
+
+  it("decodes a Collectible job through its explicit pipeline", async () => {
+    const collectiblePayload = {
+      recipient: `0x${"1".repeat(40)}`,
+      celebritySlug: "kara",
+      liveSlug: "kara-september-live",
+      claimId: "3ff058e6-8865-46c5-ae01-94a93f1dbe3c",
+      metadataVersion: 1 as const,
+    };
+    const collectibleJob: BlockchainJob = {
+      ...job(collectiblePayload), entityType: "collectible",
+      operationKey: "byus:collectible:v1:3ff058e6-8865-46c5-ae01-94a93f1dbe3c",
+    };
+    const queue = new FakeQueue([collectibleJob]); const metadata = new FakeMetadata(); const chain = new FakeChain();
+    await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
+    expect(chain.preparedJobs).toEqual([{ entityType: "collectible", payload: collectiblePayload, metadataUri: "ipfs://bafy-metadata" }]);
+    expect(metadata.documents[0]).toMatchObject({ name: "ByUs Digital Collectible" });
   });
 
   it.each(["Attendance", "Survey"] as const)(

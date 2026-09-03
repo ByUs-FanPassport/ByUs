@@ -38,6 +38,10 @@ export function createLambdaHandler(
 
     const secretText = await dependencies.loadSecret(lambdaEnvironment.WORKER_SECRET_ID);
     const secret = JSON.parse(secretText) as Record<string, unknown>;
+    if (lambdaEnvironment.WORKER_ENVIRONMENT === "prod"
+      && (secret.BYUS_COLLECTIBLE_CONTRACT_ADDRESS !== undefined || secret.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK !== undefined)) {
+      throw new Error("Collectible worker configuration is Dev-only until Production deployment is approved");
+    }
     const env = parseEnv({ ...secret, WORKER_ENABLED: "true" } as NodeJS.ProcessEnv);
     const claimed = await dependencies.runWorker(env);
     return { enabled: true, claimed };

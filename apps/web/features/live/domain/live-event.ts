@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { livePreviewKindSchema } from "./live-preview";
+import { collectibleOwnedStateSchema } from "../../collectible/domain/collectible";
 
 export const liveLocaleSchema = z.enum(["ko", "en"]);
 export type LiveLocale = z.infer<typeof liveLocaleSchema>;
@@ -108,6 +109,7 @@ export const liveViewerSchema = z.object({
   authenticated: z.boolean(),
   passport: z.enum(["active", "missing"]),
   reservation: liveReservationSummarySchema.nullable(),
+  collectible: collectibleOwnedStateSchema.optional(),
 });
 
 export const liveEventResponseSchema = z.object({

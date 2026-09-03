@@ -104,6 +104,21 @@ describe("GET live event handler", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 
+  it("embeds the owner Collectible projection without a second client request", async () => {
+    const result = structuredClone(payload) as LiveEventResponse;
+    const findPublishedBySlug = vi.fn().mockResolvedValue(result);
+    const collectibleState = {
+      eligible: false,
+      claimWindow: { from: "2026-07-24T12:00:00.000Z", until: "2026-07-26T12:00:00.000Z" },
+      claim: null,
+    };
+    const collectibleRepository = { getOwned: vi.fn().mockResolvedValue(collectibleState) };
+    const run = createGetLiveEventHandler({ repository: { findPublishedBySlug }, collectibleRepository, authorize: async () => ({ appUserId: "user-1" }), now: () => new Date() });
+    const response = await run(new Request("https://byus.example/api/live-events/kara-move-again", { headers: { authorization: "Bearer token" } }), { slug: "kara-move-again" });
+    expect((await response.json()).viewer.collectible).toEqual(collectibleState);
+    expect(collectibleRepository.getOwned).toHaveBeenCalledWith({ appUserId: "user-1", liveSlug: "kara-move-again" });
+  });
+
   it("rejects an invalid supplied session instead of silently downgrading it", async () => {
     const target = handler({
       authorizeError: new AuthError("AUTHENTICATION_REQUIRED", 401, "invalid"),

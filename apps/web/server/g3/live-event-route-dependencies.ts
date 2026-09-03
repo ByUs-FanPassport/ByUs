@@ -6,6 +6,7 @@ import { createPrivyNodeAccessVerifier } from "../auth/privy-node-verifier";
 import { loadServerEnv } from "../config/env";
 import { authorizeFanRequest } from "../fan-auth/fan-auth-gate";
 import { createSupabaseFanAuthRepository } from "../fan-auth/supabase-fan-auth-repository";
+import { createCollectibleRepositoryFromEnvironment, type CollectibleRpcClient } from "../collectible/collectible-repository";
 import { createLiveEventRepositoryFromEnvironment } from "./live-event-repository";
 import type { LiveEventRepository } from "./live-event-repository";
 import type { LiveEventRouteDependencies } from "./live-event-route";
@@ -35,6 +36,10 @@ export function createLiveEventRouteDependencies(): LiveEventRouteDependencies &
       url: environment.SUPABASE_URL,
       serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
     }),
+    collectibleRepository: createCollectibleRepositoryFromEnvironment({
+      url: environment.SUPABASE_URL,
+      serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
+    }, database as unknown as CollectibleRpcClient),
     authorize: (authorization) =>
       authorizeFanRequest({ authorization, verifier, repository: fanRepository }),
     now: () => new Date(),

@@ -10,6 +10,8 @@ export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBas
     ? "Fan Passport"
     : job.entityType === "reaction"
       ? "First Reaction"
+      : job.entityType === "collectible"
+        ? "Digital Collectible"
       : (payload as Extract<JobPayload, { stampType: string }>).stampType === "Knowledge"
         ? "Fan Verification Stamp"
         : `${(payload as Extract<JobPayload, { stampType: string }>).stampType} Stamp`;
@@ -17,6 +19,8 @@ export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBas
     ? `passport/${payload.celebritySlug}.png`
     : job.entityType === "reaction"
       ? `reaction/first/${payload.celebritySlug}.png`
+      : job.entityType === "collectible"
+        ? `collectible/${payload.celebritySlug}/${(payload as Extract<JobPayload, { liveSlug: string }>).liveSlug}.png`
       : `stamp/${(payload as Extract<JobPayload, { stampType: string }>).stampType.toLowerCase()}/${payload.celebritySlug}.png`;
   const document: MetadataDocument = {
     schema: "https://byus.kr/schemas/credential-metadata-v1.json",

@@ -18,6 +18,14 @@ function required(name) {
 const prefix = environment === "dev" ? "SUPABASE_DEV" : "SUPABASE_PROD";
 const pinataPrefix = environment === "dev" ? "PINATA_DEV" : "PINATA_PROD";
 const secretName = `byus/worker/${environment}`;
+const collectibleAddress = process.env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS;
+const collectibleDeploymentBlock = process.env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK;
+if (Boolean(collectibleAddress) !== Boolean(collectibleDeploymentBlock)) {
+  throw new Error("BYUS_COLLECTIBLE_CONTRACT_ADDRESS and GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK must be configured together");
+}
+if (environment === "prod" && collectibleAddress) {
+  throw new Error("Collectible chain configuration is Dev-only until a separate Production approval");
+}
 const secret = {
   WORKER_ENABLED: "true",
   WORKER_ID: `byus-worker-${environment}-01`,
@@ -36,6 +44,10 @@ const secret = {
   BYUS_PASSPORT_CONTRACT_ADDRESS: required("BYUS_PASSPORT_CONTRACT_ADDRESS"),
   BYUS_STAMP_CONTRACT_ADDRESS: required("BYUS_STAMP_CONTRACT_ADDRESS"),
   GIWA_DEPLOYMENT_BLOCK: required("GIWA_DEPLOYMENT_BLOCK"),
+  ...(collectibleAddress && collectibleDeploymentBlock ? {
+    BYUS_COLLECTIBLE_CONTRACT_ADDRESS: collectibleAddress,
+    GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: collectibleDeploymentBlock,
+  } : {}),
 };
 
 const client = new SecretsManagerClient({ region: required("AWS_REGION") });
