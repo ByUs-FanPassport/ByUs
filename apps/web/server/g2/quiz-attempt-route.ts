@@ -22,6 +22,7 @@ interface StartDependencies extends QuizAttemptHandlerDependencies {
 }
 
 const uuidSchema = z.uuid();
+const sourceTypeSchema = z.enum(["creator_page", "live", "benefit", "reaction"]);
 const responseHeaders = { "cache-control": "no-store", vary: "Authorization" } as const;
 
 function response(body: unknown, status: number): Response {
@@ -50,6 +51,8 @@ function mappedFailure(error: unknown): Response {
         return errorResponse(409, "WALLET_REQUIRED");
       case "COOLDOWN":
         return response({ error: { code: "VERIFICATION_COOLDOWN", retryAfter: error.retryAfter } }, 429);
+      case "ATTRIBUTION_INVALID":
+        return errorResponse(400, "INVALID_REQUEST");
       case "NOT_FOUND":
         return errorResponse(404, "NOT_FOUND");
       case "UNAVAILABLE":
@@ -82,6 +85,29 @@ async function authorized(
   return dependencies.authorize(request.headers.get("authorization") ?? "");
 }
 
+function attributionFrom(query: URLSearchParams):
+  | { sourceType: z.infer<typeof sourceTypeSchema>; sourceId: string }
+  | null
+  | undefined {
+  const sources = query.getAll("source");
+  const sourceIds = query.getAll("sourceId");
+  const reactionIds = query.getAll("reactionId");
+  if (sources.length === 0 && sourceIds.length === 0 && reactionIds.length === 0) return undefined;
+  if (sources.length !== 1 || sourceIds.length > 1 || reactionIds.length > 1) return null;
+
+  const parsedSource = sourceTypeSchema.safeParse(sources[0]);
+  if (!parsedSource.success) return null;
+  const sourceType = parsedSource.data;
+  const sourceId = sourceIds[0];
+  const reactionId = reactionIds[0];
+  if (reactionId && sourceType !== "reaction") return null;
+  if (sourceId && reactionId && sourceId !== reactionId) return null;
+
+  const canonicalSourceId = sourceId ?? reactionId;
+  if (!canonicalSourceId || !uuidSchema.safeParse(canonicalSourceId).success) return null;
+  return { sourceType, sourceId: canonicalSourceId };
+}
+
 export function createStartQuizAttemptHandler(dependencies: StartDependencies) {
   return async function POST(
     request: Request,
@@ -103,16 +129,14 @@ export function createStartQuizAttemptHandler(dependencies: StartDependencies) {
     try {
       const fan = await authorized(request, dependencies);
       const query = new URL(request.url).searchParams;
-      const sourceType = query.get("source") === "reaction" ? "reaction" as const : undefined;
-      const sourceId = sourceType && uuidSchema.safeParse(query.get("reactionId")).success ? query.get("reactionId")! : undefined;
-      if (query.has("source") && (!sourceType || !sourceId)) return errorResponse(400, "INVALID_REQUEST");
+      const attribution = attributionFrom(query);
+      if (attribution === null) return errorResponse(400, "INVALID_REQUEST");
       const result = await dependencies.repository.start({
         appUserId: fan.appUserId,
         celebritySlug: slug,
         idempotencyKey: (dependencies.createId ?? randomUUID)(),
         locale,
-        sourceType,
-        sourceId,
+        ...(attribution ?? {}),
       });
       return response({ result }, 200);
     } catch (error) {

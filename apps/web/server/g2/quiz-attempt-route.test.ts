@@ -16,6 +16,7 @@ const appUserId = "60000000-0000-4000-8000-000000000001";
 const attemptId = "20000000-0000-4000-8000-000000000001";
 const questionId = "00000000-0000-4000-8000-000000000001";
 const optionId = "10000000-0000-4000-8001-000000000001";
+const sourceId = "80000000-0000-4000-8000-000000000001";
 const projection = {
   attempt: { id: attemptId, status: "open" as const, score: null, submittedAt: null },
   questions: [1, 2, 3].map((position) => ({
@@ -83,6 +84,73 @@ describe("authenticated quiz attempt HTTP boundary", () => {
       locale: "ko",
     });
     expect(await response.json()).toEqual({ result: { kind: "attempt", ...projection } });
+  });
+
+  it.each(["creator_page", "live", "benefit", "reaction"] as const)(
+    "persists %s attribution through the canonical sourceId query contract",
+    async (sourceType) => {
+      const repo = repository();
+      const handler = createStartQuizAttemptHandler({
+        authorize,
+        repository: repo,
+        createId: () => "70000000-0000-4000-8000-000000000001",
+      });
+
+      const response = await handler(
+        new Request(
+          `https://byus.kr/api/celebrities/kara/quiz/attempts?locale=ko&source=${sourceType}&sourceId=${sourceId}`,
+          { method: "POST", headers },
+        ),
+        { celebritySlug: "kara" },
+      );
+
+      expect(response.status).toBe(200);
+      expect(repo.start).toHaveBeenCalledWith({
+        appUserId,
+        celebritySlug: "kara",
+        idempotencyKey: "70000000-0000-4000-8000-000000000001",
+        locale: "ko",
+        sourceType,
+        sourceId,
+      });
+    },
+  );
+
+  it("keeps reactionId as a strict deprecated alias of sourceId", async () => {
+    const legacyRepo = repository();
+    const legacyResponse = await createStartQuizAttemptHandler({
+      authorize,
+      repository: legacyRepo,
+    })(
+      new Request(
+        `https://byus.kr/api/celebrities/kara/quiz/attempts?source=reaction&reactionId=${sourceId}`,
+        { method: "POST", headers },
+      ),
+      { celebritySlug: "kara" },
+    );
+    expect(legacyResponse.status).toBe(200);
+    expect(legacyRepo.start).toHaveBeenCalledWith(expect.objectContaining({
+      sourceType: "reaction",
+      sourceId,
+    }));
+
+    for (const query of [
+      `source=reaction&sourceId=${sourceId}&reactionId=90000000-0000-4000-8000-000000000001`,
+      `source=live&sourceId=${sourceId}&reactionId=${sourceId}`,
+      "source=benefit",
+      `source=unsupported&sourceId=${sourceId}`,
+    ]) {
+      const repo = repository();
+      const response = await createStartQuizAttemptHandler({ authorize, repository: repo })(
+        new Request(`https://byus.kr/api/celebrities/kara/quiz/attempts?${query}`, {
+          method: "POST",
+          headers,
+        }),
+        { celebritySlug: "kara" },
+      );
+      expect(response.status).toBe(400);
+      expect(repo.start).not.toHaveBeenCalled();
+    }
   });
 
   it("rejects any start or submit body before a mutation dependency is called", async () => {
@@ -228,6 +296,7 @@ describe("authenticated quiz attempt HTTP boundary", () => {
     ["ATTEMPT_INCOMPLETE", 409, "ATTEMPT_INCOMPLETE"],
     ["ATTEMPT_CLOSED", 409, "ATTEMPT_CLOSED"],
     ["WALLET_REQUIRED", 409, "WALLET_REQUIRED"],
+    ["ATTRIBUTION_INVALID", 400, "INVALID_REQUEST"],
     ["NOT_FOUND", 404, "NOT_FOUND"],
     ["UNAVAILABLE", 503, "QUIZ_UNAVAILABLE"],
   ] as const)("maps repository %s to a stable public response", async (code, status, publicCode) => {

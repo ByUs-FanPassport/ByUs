@@ -34,6 +34,7 @@ const copy = {
     points: "점", digitalInfo: "디지털 발급 정보", token: "Token ID", transaction: "거래 기록", explorer: "발급 기록 확인", noFacts: "발급이 완료되면 확인 정보가 표시돼요.",
     stampDetail: "Stamp 상세", stampDetailSub: "이 Stamp가 남긴 순간을 확인하세요.", earnedOn: "받은 날", activityDate: "활동한 날", reward: "Fan Score", backPassport: "Passport로 돌아가기", notFound: "기록을 찾을 수 없어요.", notFoundBody: "삭제되었거나 내 소유의 기록이 아닐 수 있어요.",
     nextLevel: "다음 Level", levelMax: "최고 Level에 도달했어요.", remaining: "점 남음", nextBenefit: "다음 혜택", benefitReady: "지금 받을 수 있어요.", benefitLocked: "조건을 달성하면 받을 수 있어요.", viewBenefit: "혜택 확인하기", relatedActivity: "관련 활동", currentScore: "현재", requiredScore: "필요", opensAt: "공개",
+    firstReaction: "첫 반응", firstReactionDate: "첫 마음을 남긴 날", firstReactionTransaction: "첫 반응 거래 기록",
   },
   en: {
     passports: "My Passports", passportsSub: "Collect the moments you shared with your favorite artists.", discover: "Discover artists", open: "Open Passport",
@@ -45,6 +46,7 @@ const copy = {
     points: "pts", digitalInfo: "Digital issuance details", token: "Token ID", transaction: "Transaction", explorer: "View issuance record", noFacts: "Details will appear after issuance is complete.",
     stampDetail: "Stamp details", stampDetailSub: "See the moment recorded by this Stamp.", earnedOn: "Issued", activityDate: "Activity date", reward: "Fan Score", backPassport: "Back to Passport", notFound: "Record not found", notFoundBody: "It may not exist or may not belong to your account.",
     nextLevel: "Next Level", levelMax: "You reached the highest Level.", remaining: "pts remaining", nextBenefit: "Next benefit", benefitReady: "Available now", benefitLocked: "Complete the conditions to unlock it.", viewBenefit: "View benefit", relatedActivity: "Related activity", currentScore: "Current", requiredScore: "Required", opensAt: "Opens",
+    firstReaction: "First Reaction", firstReactionDate: "First reaction recorded", firstReactionTransaction: "First Reaction transaction",
   },
 } as const;
 
@@ -163,6 +165,33 @@ function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: 
   return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{transaction ? <p><span>{c.transaction}</span>{explorer ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{transaction}</strong><ExternalLink aria-hidden="true" /></a> : <strong data-wrap-anywhere>{transaction}</strong>}</p> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
+function FirstReactionHistory({ firstReaction, locale, explorerBaseUrl }: {
+  firstReaction: NonNullable<PassportDetail["firstReaction"]>;
+  locale: PassportLocale;
+  explorerBaseUrl: string;
+}) {
+  const c = copy[locale];
+  const explorer = firstReaction.mintStatus === "minted" && firstReaction.txHash
+    ? safeExplorerUrl(explorerBaseUrl, firstReaction.txHash)
+    : null;
+  const explorerLabel = firstReaction.txHash
+    ? locale === "ko"
+      ? `${c.firstReactionTransaction} ${firstReaction.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`
+      : `${c.firstReactionTransaction} ${firstReaction.txHash}, open in GIWA Sepolia Explorer in a new tab`
+    : "";
+  return <section className={styles.section} aria-labelledby="first-reaction-title">
+    <div className={styles.sectionHeading}><h2 id="first-reaction-title">{c.firstReaction}</h2></div>
+    <ol className={styles.timeline}><li>
+      <span className={styles.timelineDot} />
+      <div><strong>{c.firstReactionDate}</strong><time dateTime={firstReaction.issuedAt}>{date(firstReaction.issuedAt, locale)}</time></div>
+      <div>
+        <DigitalStatus status={firstReaction.mintStatus} locale={locale} />
+        {explorer && firstReaction.txHash ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{maskHash(firstReaction.txHash)}</strong><ExternalLink aria-hidden="true" /></a> : null}
+      </div>
+    </li></ol>
+  </section>;
+}
+
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
   const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedApi(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
@@ -181,6 +210,7 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
     <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stampRecords} totalCount={passport.stampSummary.total} locale={locale} priority /></div><div className={styles.identity}><Image src={passport.celebrity.image.url} alt="" width={72} height={72} style={{ objectPosition: passport.celebrity.image.position }} /><div><span>{passport.celebrity.name}</span><strong>{passport.owner.nickname ?? passport.display.level}</strong><small>{passport.owner.nickname ? `${passport.display.level} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div><div className={styles.levelProgress}><div><strong>{passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span></div><progress aria-label={passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
     {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
+    {passport.firstReaction ? <FirstReactionHistory firstReaction={passport.firstReaction} locale={locale} explorerBaseUrl={explorerBaseUrl} /> : null}
     <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div>{stampRecords.length ? <div className={styles.stampGrid}>{stampRecords.map((stamp) => { const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <section className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.context.live ? item.context.live.linkable ? <Link href={withLocale(`/live/${item.context.live.slug}`, locale)}>{item.context.live.title}</Link> : item.context.live.title : item.display.type}</strong><time dateTime={item.occurredAt}>{item.display.type} · {date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <DigitalDisclosure mint={passport.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>;

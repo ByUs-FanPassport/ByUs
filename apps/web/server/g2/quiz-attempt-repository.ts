@@ -22,6 +22,7 @@ export type QuizRepositoryErrorCode =
   | "ATTEMPT_CLOSED"
   | "WALLET_REQUIRED"
   | "COOLDOWN"
+  | "ATTRIBUTION_INVALID"
   | "NOT_FOUND"
   | "UNAVAILABLE";
 
@@ -32,13 +33,15 @@ export class QuizRepositoryError extends Error {
   }
 }
 
+export type QuizVerificationSourceType = "creator_page" | "live" | "benefit" | "reaction";
+
 export interface QuizAttemptRepository {
   start(input: {
     appUserId: string;
     celebritySlug: string;
     idempotencyKey: string;
     locale: ContentLocale;
-    sourceType?: "reaction";
+    sourceType?: QuizVerificationSourceType;
     sourceId?: string;
   }): Promise<QuizStartProjection>;
   findOwned(input: {
@@ -139,6 +142,7 @@ function mappedError(error: RpcError): QuizRepositoryError {
     ["G2_ATTEMPT_CLOSED", "ATTEMPT_CLOSED"],
     ["G2_ATTEMPT_INCOMPLETE", "ATTEMPT_INCOMPLETE"],
     ["G2_WALLET_NOT_READY", "WALLET_REQUIRED"],
+    ["G2_ATTRIBUTION_INVALID", "ATTRIBUTION_INVALID"],
     ["G2_ATTEMPT_NOT_FOUND", "NOT_FOUND"],
     ["G2_ANSWER_SELECTION_INVALID", "NOT_FOUND"],
     ["G2_USER_UNAVAILABLE", "NOT_FOUND"],
@@ -187,7 +191,7 @@ export class SupabaseQuizAttemptRepository implements QuizAttemptRepository {
     celebritySlug: string;
     idempotencyKey: string;
     locale: ContentLocale;
-    sourceType?: "reaction";
+    sourceType?: QuizVerificationSourceType;
     sourceId?: string;
   }): Promise<QuizStartProjection> {
     const data = await this.call("start_owned_quiz_attempt_v2", {

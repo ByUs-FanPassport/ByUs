@@ -9,6 +9,13 @@ const sql = readFileSync(
   ),
   "utf8",
 );
+const attributionClosureSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260903010500_phase2_attribution_and_read_close.sql",
+  ),
+  "utf8",
+);
 
 function tableDefinition(table: string): string {
   const startMarker = `create table public.${table} (`;
@@ -184,5 +191,28 @@ describe("G2 identity and verification migration contract", () => {
     expect(sql).toContain("from public.fan_activities");
     expect(sql).toContain("from public.blockchain_jobs");
     expect(sql).toContain("create trigger celebrities_preserve_referenced_slug");
+  });
+
+  it("closes four-source attribution with DB-authoritative immutable snapshots", () => {
+    expect(attributionClosureSql).toContain(
+      "source_type in ('creator_page', 'live', 'benefit', 'reaction')",
+    );
+    expect(attributionClosureSql).toContain("new.source_id <> new.celebrity_id");
+    expect(attributionClosureSql).toMatch(
+      /public\.live_events l[\s\S]*l\.id = new\.source_id[\s\S]*l\.celebrity_id = new\.celebrity_id/,
+    );
+    expect(attributionClosureSql).toMatch(
+      /public\.benefits b[\s\S]*b\.id = new\.source_id[\s\S]*b\.celebrity_id = new\.celebrity_id/,
+    );
+    expect(attributionClosureSql).toMatch(
+      /public\.fan_reactions r[\s\S]*r\.id = new\.source_id[\s\S]*r\.app_user_id = new\.app_user_id[\s\S]*r\.celebrity_id = new\.celebrity_id/,
+    );
+    expect(attributionClosureSql).toContain("G2_ATTRIBUTION_CONFLICT");
+    expect(attributionClosureSql).toContain("G2_ATTRIBUTION_IMMUTABLE");
+    expect(attributionClosureSql).toContain("declare v_celebrity_id uuid");
+    expect(attributionClosureSql).toContain("s.celebrity_id=v_celebrity_id");
+    expect(attributionClosureSql).toContain("v_attempt_id:=(result->'attempt'->>'id')::uuid");
+    expect(attributionClosureSql).toContain("before update or delete on public.quiz_verification_attributions");
+    expect(attributionClosureSql).toContain("before update or delete on public.quiz_pass_attributions");
   });
 });

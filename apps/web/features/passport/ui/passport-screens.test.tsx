@@ -69,6 +69,69 @@ describe("passport fan screens", () => {
     expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("2");
   });
 
+  it("renders a pending First Reaction as relationship history without a transaction link or Stamp count", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      passport: {
+        ...passport,
+        stamps: [],
+        activities: [],
+        stampSummary: { knowledge: 0, reservation: 0, attendance: 0, survey: 0, total: 0 },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
+        nextBenefit: null,
+        firstReaction: {
+          reactionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+          stampId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
+          activityId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3",
+          reactionType: "FirstReaction",
+          mintStatus: "queued",
+          txHash: null,
+          issuedAt: "2026-07-19T00:00:00.000Z",
+        },
+      },
+    })));
+
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByRole("heading", { name: "첫 반응" })).toBeInTheDocument();
+    expect(screen.getByText("첫 마음을 남긴 날")).toBeInTheDocument();
+    expect(screen.getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
+    expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("0");
+    expect(screen.queryByRole("link", { name: /첫 반응 거래 기록/ })).not.toBeInTheDocument();
+  });
+
+  it("links a minted First Reaction to its validated transaction without adding a normal Stamp", async () => {
+    const firstReactionTx = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      passport: {
+        ...passport,
+        stamps: [],
+        activities: [],
+        stampSummary: { knowledge: 0, reservation: 0, attendance: 0, survey: 0, total: 0 },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
+        nextBenefit: null,
+        firstReaction: {
+          reactionId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          stampId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+          activityId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb3",
+          reactionType: "FirstReaction",
+          mintStatus: "minted",
+          txHash: firstReactionTx,
+          issuedAt: "2026-07-19T00:00:00.000Z",
+        },
+      },
+    })));
+
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
+
+    expect(await screen.findByRole("heading", { name: "첫 반응" })).toBeInTheDocument();
+    const transactionLink = screen.getByRole("link", {
+      name: `첫 반응 거래 기록 ${firstReactionTx}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+    });
+    expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
+    expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
+    expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("0");
+  });
+
   it("preserves an archived LIVE title without exposing a dead detail link", async () => {
     const archivedContext = {
       sourceType: "live_reservation",

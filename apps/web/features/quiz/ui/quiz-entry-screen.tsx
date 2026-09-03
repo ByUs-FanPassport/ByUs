@@ -164,8 +164,12 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
           setProfileState("complete");
           return;
         }
-        const authIntent = sanitizeAuthIntentId(new URLSearchParams(window.location.search).get("authIntent"));
+        const current = new URLSearchParams(window.location.search);
+        const authIntent = sanitizeAuthIntentId(current.get("authIntent"));
         const returnQuery = new URLSearchParams({ locale });
+        for (const key of ["source", "sourceId", "reactionId"] as const) {
+          for (const value of current.getAll(key)) returnQuery.append(key, value);
+        }
         if (authIntent) returnQuery.set("authIntent", authIntent);
         const returnTo = `/c/${slug}/verify?${returnQuery.toString()}`;
         router.replace(appendLoginContext("/onboarding/profile", {
@@ -190,9 +194,11 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
       const token = await getAccessToken();
       if (!token) throw new QuizEntryError("UNAUTHENTICATED");
       const current = new URLSearchParams(window.location.search);
-      const attribution = current.get("source") === "reaction" && current.get("reactionId")
-        ? `&source=reaction&reactionId=${encodeURIComponent(current.get("reactionId")!)}` : "";
-      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}${attribution}`, {
+      const attemptQuery = new URLSearchParams({ locale });
+      for (const key of ["source", "sourceId", "reactionId"] as const) {
+        for (const value of current.getAll(key)) attemptQuery.append(key, value);
+      }
+      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?${attemptQuery.toString()}`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",

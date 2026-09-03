@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACTIVITY_SOURCE_BY_TYPE, activityTypeSchema, basePassportSchema, levelLabel, mintFactsSchema, mintStatusLabel, passportActivityContextSchema, stampTypeLabel, stampTypeSchema, type PassportLocale } from "./passport-read-model";
+import { ACTIVITY_SOURCE_BY_TYPE, activityTypeSchema, basePassportSchema, levelLabel, mintFactsSchema, mintStatusLabel, mintStatusSchema, passportActivityContextSchema, stampTypeLabel, stampTypeSchema, type PassportLocale } from "./passport-read-model";
 
 const stampSchema = z.object({
   id: z.uuid(),
@@ -24,7 +24,7 @@ export const passportDetailRecordSchema = basePassportSchema.extend({
   nextBenefit: z.unknown(),
   firstReaction: z.object({
     reactionId: z.uuid(), stampId: z.uuid(), activityId: z.uuid(),
-    reactionType: z.literal("FirstReaction"), mintStatus: z.string(),
+    reactionType: z.literal("FirstReaction"), mintStatus: mintStatusSchema,
     txHash: z.string().nullable(), issuedAt: z.iso.datetime({ offset: true }),
   }).strict().nullable().optional().default(null),
 }).strict().superRefine((passport, context) => {

@@ -57,6 +57,28 @@ describe("QuizEntryScreen", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/celebrities/kara/quiz/attempts?locale=ko", expect.objectContaining({ method: "POST", headers: { authorization: "Bearer privy-token" } }));
   });
 
+  it.each(["creator_page", "live", "benefit", "reaction"] as const)(
+    "forwards canonical %s attribution to the server-owned attempt",
+    async (source) => {
+      const sourceId = "88888888-8888-4888-8888-888888888888";
+      window.history.replaceState({}, "", `/c/kara/verify?source=${source}&sourceId=${sourceId}`);
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+        const url = String(input);
+        if (url === "/api/me/profile") return Response.json({ profile: { completed: true } });
+        if (url.includes("/api/public/")) return Response.json({ intro });
+        return Response.json({ result: { kind: "attempt", attempt: { id: attemptId, status: "open", score: null, submittedAt: null }, questions } });
+      });
+
+      render(<QuizEntryScreen locale="ko" slug="kara" />);
+      fireEvent.click(await screen.findByRole("button", { name: "팬 인증 시작하기" }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+        `/api/celebrities/kara/quiz/attempts?locale=ko&source=${source}&sourceId=${sourceId}`,
+        expect.objectContaining({ method: "POST" }),
+      ));
+    },
+  );
+
   it("preserves the canonical entry route through login", async () => {
     privyState = { ready: true, authenticated: false };
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ intro }));
@@ -104,6 +126,22 @@ describe("QuizEntryScreen", () => {
       "/onboarding/profile?returnTo=%2Fc%2Fkara%2Fverify%3Flocale%3Dko&locale=ko&intent=passport&entity=kara",
     ));
     expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining("/quiz/attempts"), expect.anything());
+  });
+
+  it("preserves verification attribution through contextual profile onboarding", async () => {
+    const sourceId = "88888888-8888-4888-8888-888888888888";
+    window.history.replaceState({}, "", `/c/kara/verify?source=live&sourceId=${sourceId}`);
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input) === "/api/me/profile") return Response.json({ profile: { completed: false } });
+      return Response.json({ intro });
+    });
+
+    render(<QuizEntryScreen locale="ko" slug="kara" />);
+
+    const returnTo = `/c/kara/verify?locale=ko&source=live&sourceId=${sourceId}`;
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      `/onboarding/profile?returnTo=${encodeURIComponent(returnTo)}&locale=ko&intent=passport&entity=kara`,
+    ));
   });
 
   it("shows a retryable error when the public contract cannot be loaded", async () => {
