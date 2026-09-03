@@ -18,6 +18,62 @@ command -v initdb >/dev/null
 command -v pg_ctl >/dev/null
 command -v psql >/dev/null
 
+# Release-critical forward migrations are deliberately enumerated.  The replay
+# still applies every repository migration below, while this guard makes a
+# missing or accidentally renamed PPT migration fail before PostgreSQL starts.
+REQUIRED_PPT_MIGRATIONS=(
+  20260902010000_phase1_reward_policy.sql
+  20260902011000_phase1_tier_cutover.sql
+  20260902012000_phase1_ticket_ledger.sql
+  20260902013000_phase1_live_reward_settings.sql
+  20260902014000_phase1_survey_reward_binding.sql
+  20260902015000_activate_reward_policy_v2.sql
+  20260902020000_phase2_reaction_domain.sql
+  20260902021000_phase2_reaction_passport_attachment.sql
+  20260902022000_phase2_verification_reward_cooldown.sql
+  20260902023000_phase2_reservation_ticket.sql
+  20260902024000_phase2_attendance_code_reward.sql
+  20260902025000_phase2_mission_generalization.sql
+  20260902026000_phase2_first_reaction_read.sql
+  20260903010000_cross_phase_event_instrumentation.sql
+  20260903010500_phase2_attribution_and_read_close.sql
+  20260903015000_phase2_mission_option_display_mode.sql
+  20260903016600_phase3_live_provider_calendar.sql
+  20260903016700_phase3_live_calendar.sql
+  20260903016800_phase3_live_schedule_revisions.sql
+  20260903016900_phase3_live_journey.sql
+  20260903016910_phase3_journey_admin_read_volatility_fix.sql
+  20260903017000_phase3_collectible_claim.sql
+  20260903020000_phase4_benefit_economy_schema.sql
+  20260903020500_phase4_benefit_entry_rpc.sql
+  20260903021000_phase4_weighted_benefit_draw.sql
+  20260903022000_phase4_benefit_fulfillment_privacy.sql
+  20260903022500_phase4_recipient_purge.sql
+  20260903023000_phase4_my_reward_read.sql
+  20260903030000_phase5_notification_channels.sql
+  20260903030050_phase5_kakao_connection_state.sql
+  20260903030100_phase5_external_delivery_plan.sql
+  20260903030150_phase5_live_notification_kinds.sql
+  20260903030200_phase5_live_reminder_revision.sql
+  20260903030250_phase5_action_required_notification_kinds.sql
+  20260903030300_phase5_action_required_notifications.sql
+  20260903031000_phase5_my_fan_activity.sql
+  20260903031100_phase5_notification_delivery_monitor.sql
+  20260903031200_phase5_notification_monitor_volatility_fix.sql
+  20260903040000_phase6_platform_analytics.sql
+  20260903040100_phase6_platform_aggregates.sql
+  20260903041000_phase6_live_analytics.sql
+  20260903041100_phase6_live_attribution_fix.sql
+  20260903041200_phase6_product_event_projections.sql
+  20260903041300_phase6_recipient_purge_monitor.sql
+)
+for required_migration in "${REQUIRED_PPT_MIGRATIONS[@]}"; do
+  if [[ ! -f "$ROOT_DIR/supabase/migrations/$required_migration" ]]; then
+    echo "Missing release-critical migration: $required_migration" >&2
+    exit 1
+  fi
+done
+
 initdb -D "$DATA_DIR" --no-locale -E UTF8 >/dev/null
 mkdir -p "$SOCKET_DIR"
 pg_ctl -D "$DATA_DIR" -o "-p $PG_PORT -k $SOCKET_DIR" -l "$WORK_DIR/postgres.log" start >/dev/null
@@ -157,6 +213,11 @@ begin
       and pg_get_constraintdef(oid) like '%app_user_id, celebrity_id, source_type, source_id%'
   ) then
     raise exception 'clean replay is missing canonical Ticket source uniqueness';
+  end if;
+  if to_regprocedure('public.read_admin_platform_analytics(uuid,uuid,timestamptz,timestamptz,timestamptz)') is null
+    or to_regprocedure('public.read_admin_live_analytics(uuid,uuid,uuid,timestamptz,timestamptz,timestamptz)') is null
+    or to_regprocedure('public.read_admin_recipient_purge_status(uuid,uuid,timestamptz)') is null then
+    raise exception 'clean replay is missing a Phase 6 guarded read model';
   end if;
 end;
 $$;
