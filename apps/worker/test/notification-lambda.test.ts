@@ -42,4 +42,40 @@ describe("notification Lambda", () => {
     ).rejects.toThrow("mismatch");
     expect(loadSecret).not.toHaveBeenCalled();
   });
+
+  it("runs maintenance independently without entering notification processing", async () => {
+    const runWorker = vi.fn(async () => 99);
+    const runMaintenance = vi.fn(async () => ({
+      success: true,
+      deletedCount: 2,
+      notificationJobsProcessed: 0,
+      durationMs: 12,
+      lastSuccessAt: "2026-09-04T00:00:00.000Z",
+      lastError: null,
+    }));
+    const emitMaintenanceMetric = vi.fn();
+    const handler = createNotificationLambdaHandler(
+      { loadSecret: vi.fn(async () => secret), runWorker, runMaintenance, emitMaintenanceMetric },
+      {
+        NOTIFICATION_WORKER_ENABLED: "false",
+        NOTIFICATION_WORKER_ENVIRONMENT: "dev",
+        NOTIFICATION_WORKER_SECRET_ID: "byus/notification/dev",
+        BENEFIT_MAINTENANCE_ENABLED: "true",
+      },
+    );
+    await expect(handler({
+      source: "byus.maintenance-cron",
+      environment: "dev",
+      mode: "maintenance",
+    })).resolves.toMatchObject({
+      enabled: true,
+      mode: "maintenance",
+      success: true,
+      deletedCount: 2,
+      lastError: null,
+    });
+    expect(runMaintenance).toHaveBeenCalledOnce();
+    expect(runWorker).not.toHaveBeenCalled();
+    expect(emitMaintenanceMetric).toHaveBeenCalledOnce();
+  });
 });

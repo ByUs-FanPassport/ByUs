@@ -23,6 +23,16 @@ describe("notification AWS deployment contract", () => {
     expect(script).toContain("aws events put-targets");
     expect(vercel).not.toHaveProperty("crons");
   });
+  it("deploys Benefit maintenance as an independent daily function and alarm", () => {
+    expect(script).toContain('maintenance_function_name="byus-benefit-maintenance-${environment}"');
+    expect(script).toContain("byus.maintenance-cron");
+    expect(script).toContain('mode:"maintenance"');
+    expect(script).toContain("--timeout 120");
+    expect(script).toContain("rate(1 day)");
+    expect(script).toContain("ByUs/Maintenance");
+    expect(script).toContain("put-metric-alarm");
+    expect(script).toContain("BENEFIT_MAINTENANCE_ENABLED");
+  });
   it("is fail closed for account, region, enablement and secret existence", () => {
     expect(script).toContain("AWS account mismatch");
     expect(script).toContain("AWS region must be ap-northeast-2");

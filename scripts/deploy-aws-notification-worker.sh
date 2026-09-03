@@ -31,6 +31,11 @@ function_name="byus-notification-worker-${environment}"
 secret_name="byus/notification/${environment}"
 rule_name="byus-notification-worker-${environment}-every-minute"
 target_id="byus-notification-worker-${environment}"
+maintenance_enabled="${BENEFIT_MAINTENANCE_ENABLED:-$enabled}"
+maintenance_function_name="byus-benefit-maintenance-${environment}"
+maintenance_rule_name="byus-benefit-maintenance-${environment}-daily"
+maintenance_target_id="byus-benefit-maintenance-${environment}"
+maintenance_alarm_name="byus-benefit-maintenance-${environment}-failures"
 statement_id=""
 trust_policy="${repo_root}/infrastructure/aws/worker/lambda-trust-policy.json"
 secret_policy_template="${repo_root}/infrastructure/aws/worker/${environment}-notification-secrets-policy.json"
@@ -42,8 +47,8 @@ npm run build:lambda --workspace @byus/worker >/dev/null
 node --check "$bundle"
 
 if [[ "$mode" == "--dry-run" ]]; then
-  printf 'validated notification deployment: environment=%s enabled=%s profile=%s account=%s function=%s rule=%s schedule=%s secret=%s\n' \
-    "$environment" "$enabled" "$profile" "$expected_account" "$function_name" "$rule_name" 'rate(1 minute)' "$secret_name"
+  printf 'validated notification deployment: environment=%s enabled=%s profile=%s account=%s function=%s rule=%s schedule=%s secret=%s maintenance_function=%s maintenance_enabled=%s maintenance_rule=%s maintenance_schedule=%s maintenance_timeout=%s\n' \
+    "$environment" "$enabled" "$profile" "$expected_account" "$function_name" "$rule_name" 'rate(1 minute)' "$secret_name" "$maintenance_function_name" "$maintenance_enabled" "$maintenance_rule_name" 'rate(1 day)' '120'
   exit 0
 fi
 
@@ -72,7 +77,7 @@ aws iam put-role-policy --profile "$profile" --role-name "$role_name" --policy-n
 aws iam wait role-exists --profile "$profile" --role-name "$role_name"
 role_arn="$(aws iam get-role --profile "$profile" --role-name "$role_name" --query 'Role.Arn' --output text)"
 
-lambda_environment="Variables={NOTIFICATION_WORKER_ENABLED=${enabled},NOTIFICATION_WORKER_ENVIRONMENT=${environment},NOTIFICATION_WORKER_SECRET_ID=${secret_name}}"
+lambda_environment="Variables={NOTIFICATION_WORKER_ENABLED=${enabled},BENEFIT_MAINTENANCE_ENABLED=false,NOTIFICATION_WORKER_ENVIRONMENT=${environment},NOTIFICATION_WORKER_SECRET_ID=${secret_name}}"
 create_notification_lambda() {
   local attempt=1
   local max_attempts=12
@@ -117,5 +122,32 @@ fi
 FUNCTION_ARN="$function_arn" TARGET_ID="$target_id" TARGET_ENVIRONMENT="$environment" node -e 'const input=JSON.stringify({source:"byus.notification-cron",environment:process.env.TARGET_ENVIRONMENT});process.stdout.write(JSON.stringify([{Id:process.env.TARGET_ID,Arn:process.env.FUNCTION_ARN,Input:input}]))' >"${package_dir}/event-target.json"
 aws events put-targets --profile "$profile" --region "$region" --rule "$rule_name" --targets "file://${package_dir}/event-target.json" >/dev/null
 
+# The maintenance schedule uses the same reviewed binary but a separate Lambda
+# function, timeout, concurrency boundary, invocation mode, metric, and alarm.
+maintenance_lambda_environment="Variables={NOTIFICATION_WORKER_ENABLED=false,BENEFIT_MAINTENANCE_ENABLED=${maintenance_enabled},NOTIFICATION_WORKER_ENVIRONMENT=${environment},NOTIFICATION_WORKER_SECRET_ID=${secret_name}}"
+if aws lambda get-function --profile "$profile" --region "$region" --function-name "$maintenance_function_name" >/dev/null 2>&1; then
+  aws lambda update-function-code --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --zip-file "fileb://${package_file}" >/dev/null
+  aws lambda wait function-updated-v2 --profile "$profile" --region "$region" --function-name "$maintenance_function_name"
+  aws lambda update-function-configuration --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --runtime nodejs24.x --handler index.handler --timeout 120 --memory-size 256 --environment "$maintenance_lambda_environment" >/dev/null
+else
+  aws lambda create-function --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --runtime nodejs24.x --architectures arm64 --role "$role_arn" --handler index.handler --zip-file "fileb://${package_file}" --timeout 120 --memory-size 256 --environment "$maintenance_lambda_environment" >/dev/null
+fi
+aws lambda wait function-active-v2 --profile "$profile" --region "$region" --function-name "$maintenance_function_name"
+aws lambda put-function-concurrency --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --reserved-concurrent-executions 1 >/dev/null
+maintenance_function_arn="$(aws lambda get-function-configuration --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --query FunctionArn --output text)"
+maintenance_rule_state="DISABLED"; [[ "$maintenance_enabled" == "true" ]] && maintenance_rule_state="ENABLED"
+maintenance_rule_arn="$(aws events put-rule --profile "$profile" --region "$region" --name "$maintenance_rule_name" --schedule-expression 'rate(1 day)' --state "$maintenance_rule_state" --query RuleArn --output text)"
+maintenance_statement_id="AllowEventBridgeBenefitMaintenance${environment^}"
+maintenance_policy=""
+if aws lambda get-policy --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --query Policy --output text >"${package_dir}/maintenance-lambda-policy.txt" 2>/dev/null; then maintenance_policy="$(<"${package_dir}/maintenance-lambda-policy.txt")"; fi
+if [[ "$maintenance_policy" != *"${maintenance_statement_id}"* ]]; then
+  aws lambda add-permission --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --statement-id "$maintenance_statement_id" --action lambda:InvokeFunction --principal events.amazonaws.com --source-arn "$maintenance_rule_arn" >/dev/null
+fi
+FUNCTION_ARN="$maintenance_function_arn" TARGET_ID="$maintenance_target_id" TARGET_ENVIRONMENT="$environment" node -e 'const input=JSON.stringify({source:"byus.maintenance-cron",environment:process.env.TARGET_ENVIRONMENT,mode:"maintenance"});process.stdout.write(JSON.stringify([{Id:process.env.TARGET_ID,Arn:process.env.FUNCTION_ARN,Input:input,RetryPolicy:{MaximumEventAgeInSeconds:3600,MaximumRetryAttempts:2}}]))' >"${package_dir}/maintenance-event-target.json"
+aws events put-targets --profile "$profile" --region "$region" --rule "$maintenance_rule_name" --targets "file://${package_dir}/maintenance-event-target.json" >/dev/null
+aws cloudwatch put-metric-alarm --profile "$profile" --region "$region" --alarm-name "$maintenance_alarm_name" --namespace 'ByUs/Maintenance' --metric-name Failures --dimensions "Name=Environment,Value=${environment}" 'Name=Mode,Value=recipient-purge' --statistic Sum --period 86400 --evaluation-periods 1 --datapoints-to-alarm 1 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold --treat-missing-data notBreaching >/dev/null
+
 aws lambda get-function-configuration --profile "$profile" --region "$region" --function-name "$function_name" --query '{FunctionName:FunctionName,Runtime:Runtime,State:State,Enabled:Environment.Variables.NOTIFICATION_WORKER_ENABLED,Environment:Environment.Variables.NOTIFICATION_WORKER_ENVIRONMENT}'
 aws events describe-rule --profile "$profile" --region "$region" --name "$rule_name" --query '{Name:Name,State:State,ScheduleExpression:ScheduleExpression}'
+aws lambda get-function-configuration --profile "$profile" --region "$region" --function-name "$maintenance_function_name" --query '{FunctionName:FunctionName,Runtime:Runtime,State:State,NotificationEnabled:Environment.Variables.NOTIFICATION_WORKER_ENABLED,MaintenanceEnabled:Environment.Variables.BENEFIT_MAINTENANCE_ENABLED,Timeout:Timeout}'
+aws events describe-rule --profile "$profile" --region "$region" --name "$maintenance_rule_name" --query '{Name:Name,State:State,ScheduleExpression:ScheduleExpression}'

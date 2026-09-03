@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ByUs notification delivery and independently scheduled Benefit maintenance
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prod]
+  WorkerRoleArn:
+    Type: String
+  SecretId:
+    Type: String
+  CodeBucket:
+    Type: String
+  CodeKey:
+    Type: String
+  NotificationEnabled:
+    Type: String
+    AllowedValues: ["true", "false"]
+  MaintenanceEnabled:
+    Type: String
+    AllowedValues: ["true", "false"]
+Resources:
+  NotificationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub byus-notification-worker-${Environment}
+      Runtime: nodejs24.x
+      Architectures: [arm64]
+      Handler: index.handler
+      Timeout: 60
+      MemorySize: 256
+      Role: !Ref WorkerRoleArn
+      Code: { S3Bucket: !Ref CodeBucket, S3Key: !Ref CodeKey }
+      Environment:
+        Variables:
+          NOTIFICATION_WORKER_ENABLED: !Ref NotificationEnabled
+          BENEFIT_MAINTENANCE_ENABLED: "false"
+          NOTIFICATION_WORKER_ENVIRONMENT: !Ref Environment
+          NOTIFICATION_WORKER_SECRET_ID: !Ref SecretId
+  BenefitMaintenanceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub byus-benefit-maintenance-${Environment}
+      Runtime: nodejs24.x
+      Architectures: [arm64]
+      Handler: index.handler
+      Timeout: 120
+      MemorySize: 256
+      ReservedConcurrentExecutions: 1
+      Role: !Ref WorkerRoleArn
+      Code: { S3Bucket: !Ref CodeBucket, S3Key: !Ref CodeKey }
+      Environment:
+        Variables:
+          NOTIFICATION_WORKER_ENABLED: "false"
+          BENEFIT_MAINTENANCE_ENABLED: !Ref MaintenanceEnabled
+          NOTIFICATION_WORKER_ENVIRONMENT: !Ref Environment
+          NOTIFICATION_WORKER_SECRET_ID: !Ref SecretId
+  BenefitMaintenanceSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub byus-benefit-maintenance-${Environment}-daily
+      ScheduleExpression: rate(1 day)
+      State: ENABLED
+      Targets:
+        - Id: !Sub byus-benefit-maintenance-${Environment}
+          Arn: !GetAtt BenefitMaintenanceFunction.Arn
+          Input: !Sub '{"source":"byus.maintenance-cron","environment":"${Environment}","mode":"maintenance"}'
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 2
+  BenefitMaintenancePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BenefitMaintenanceFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BenefitMaintenanceSchedule.Arn
+  BenefitMaintenanceFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub byus-benefit-maintenance-${Environment}-failures
+      Namespace: ByUs/Maintenance
+      MetricName: Failures
+      Dimensions:
+        - Name: Environment
+          Value: !Ref Environment
+        - Name: Mode
+          Value: recipient-purge
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
