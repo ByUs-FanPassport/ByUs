@@ -2,6 +2,19 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export type BenefitAdminActor = { appUserId: string; allowlistId: string };
+export type BenefitCampaignDraft = {
+  id?: string | null;
+  liveEventId: string;
+  entryOpensAt: string;
+  entryClosesAt: string;
+  benefits: Array<{
+    benefitId: string;
+    priority: number;
+    perFanTicketLimit: number | null;
+    winnerQuantity?: number;
+  }>;
+  expectedRevision: number | null;
+};
 export type BenefitAdminRepository = {
   read(actor: BenefitAdminActor): Promise<Record<string, unknown>>;
   save(
@@ -9,6 +22,17 @@ export type BenefitAdminRepository = {
     correlationId: string,
     input: Record<string, unknown>,
   ): Promise<string>;
+  saveCampaign(
+    actor: BenefitAdminActor,
+    correlationId: string,
+    input: BenefitCampaignDraft,
+  ): Promise<string>;
+  publishCampaign(
+    actor: BenefitAdminActor,
+    correlationId: string,
+    id: string,
+    expectedRevision: number,
+  ): Promise<void>;
   codes(
     actor: BenefitAdminActor,
     correlationId: string,
@@ -68,7 +92,15 @@ export function createSupabaseBenefitAdminRepository(
         "get_admin_benefit_manager",
         actorArgs(a),
       );
-      return result(data, error) as Record<string, unknown>;
+      const manager = result(data, error) as Record<string, unknown>;
+      const campaignsResponse = await db.rpc(
+        "get_admin_benefit_campaigns",
+        actorArgs(a),
+      );
+      return {
+        ...manager,
+        campaigns: result(campaignsResponse.data, campaignsResponse.error),
+      };
     },
     async save(a, c, i) {
       const { data, error } = await db.rpc("save_admin_benefit_draft", {
@@ -99,6 +131,28 @@ export function createSupabaseBenefitAdminRepository(
         p_delivery_secret: i.deliverySecret || null,
       });
       return String(result(data, error));
+    },
+    async saveCampaign(a, c, i) {
+      const { data, error } = await db.rpc("save_admin_benefit_campaign", {
+        ...actorArgs(a),
+        p_correlation_id: c,
+        p_campaign_id: i.id || null,
+        p_expected_revision: i.expectedRevision,
+        p_live_event_id: i.liveEventId,
+        p_entry_opens_at: i.entryOpensAt,
+        p_entry_closes_at: i.entryClosesAt,
+        p_benefits: i.benefits,
+      });
+      return String(result(data, error));
+    },
+    async publishCampaign(a, c, id, expectedRevision) {
+      const { error } = await db.rpc("publish_admin_benefit_campaign", {
+        ...actorArgs(a),
+        p_correlation_id: c,
+        p_campaign_id: id,
+        p_expected_revision: expectedRevision,
+      });
+      result(null, error);
     },
     async codes(a, c, id, expectedRevision, codes) {
       const { data, error } = await db.rpc("upload_admin_benefit_codes", {

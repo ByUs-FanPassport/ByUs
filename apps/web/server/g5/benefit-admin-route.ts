@@ -58,8 +58,43 @@ const save = z
         message: "APPLICATION_LIMIT_ONE",
       });
   });
+const campaignBenefit = z
+  .object({
+    benefitId: uuid,
+    priority: z.number().int().positive(),
+    perFanTicketLimit: z.number().int().positive().nullable(),
+    winnerQuantity: z.number().int().positive().optional().default(1),
+  })
+  .strict();
+const saveCampaign = z
+  .object({
+    action: z.literal("save_campaign"),
+    id: uuid.nullable().optional(),
+    expectedRevision: z.number().int().positive().nullable(),
+    liveEventId: uuid,
+    entryOpensAt: instant,
+    entryClosesAt: instant,
+    benefits: z.array(campaignBenefit).min(1).max(100),
+  })
+  .strict()
+  .superRefine((v, c) => {
+    if ((v.id == null) !== (v.expectedRevision == null))
+      c.addIssue({ code: "custom", message: "CAMPAIGN_REVISION_SHAPE" });
+    if (new Date(v.entryOpensAt) >= new Date(v.entryClosesAt))
+      c.addIssue({ code: "custom", path: ["entryClosesAt"], message: "CAMPAIGN_WINDOW" });
+    if (new Set(v.benefits.map((b) => b.benefitId)).size !== v.benefits.length)
+      c.addIssue({ code: "custom", path: ["benefits"], message: "DUPLICATE_BENEFIT" });
+    if (new Set(v.benefits.map((b) => b.priority)).size !== v.benefits.length)
+      c.addIssue({ code: "custom", path: ["benefits"], message: "DUPLICATE_PRIORITY" });
+  });
 const command = z.discriminatedUnion("action", [
   save,
+  saveCampaign,
+  z.object({
+    action: z.literal("publish_campaign"),
+    id: uuid,
+    expectedRevision: z.number().int().positive(),
+  }).strict(),
   z.object({
     action: z.literal("codes"),
     id: uuid,
@@ -147,6 +182,15 @@ export function createPostBenefitAdminHandler(d: BenefitAdminDependencies) {
           { id: await d.repository.save(actor, c, p) },
           p.id ? 200 : 201,
         );
+      if (p.action === "save_campaign")
+        return json(
+          { id: await d.repository.saveCampaign(actor, c, p) },
+          p.id ? 200 : 201,
+        );
+      if (p.action === "publish_campaign") {
+        await d.repository.publishCampaign(actor, c, p.id, p.expectedRevision);
+        return json({ ok: true }, 200);
+      }
       if (p.action === "codes")
         return json(
           await d.repository.codes(actor, c, p.id, p.expectedRevision, p.codes),

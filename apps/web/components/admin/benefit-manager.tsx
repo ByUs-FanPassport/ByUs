@@ -51,11 +51,41 @@ type Benefit = {
 };
 type Data = {
   benefits: Benefit[];
+  campaigns: Campaign[];
   celebrities: Array<{
     id: string;
     nameKo: string;
     nameEn: string;
     status: string;
+  }>;
+};
+type CampaignItem = {
+  benefitId: string;
+  priority: number;
+  perFanTicketLimit: number | null;
+  winnerQuantity: number;
+};
+type Campaign = {
+  id: string;
+  liveEventId: string;
+  status: "draft" | "published";
+  entryOpensAt: string;
+  entryClosesAt: string;
+  revision: number;
+  publishedAt: string | null;
+  benefits: CampaignItem[];
+};
+type CampaignForm = {
+  id: string;
+  revision: number;
+  liveEventId: string;
+  entryOpensAt: string;
+  entryClosesAt: string;
+  benefits: Array<{
+    benefitId: string;
+    priority: string;
+    perFanTicketLimit: string;
+    winnerQuantity: string;
   }>;
 };
 type Form = {
@@ -108,6 +138,14 @@ const blank: Form = {
   eligibilityEn: "",
   deliveryEn: "",
 };
+const blankCampaign: CampaignForm = {
+  id: "",
+  revision: 1,
+  liveEventId: "",
+  entryOpensAt: "",
+  entryClosesAt: "",
+  benefits: [{ benefitId: "", priority: "1", perFanTicketLimit: "", winnerQuantity: "1" }],
+};
 const copy = {
   ko: {
     title: "혜택 관리",
@@ -122,6 +160,10 @@ const copy = {
     clearCodes: "코드 전체 삭제",
     apps: "신청 및 선정",
     claims: "수령 및 사용 이력",
+    campaigns: "LIVE 혜택 캠페인",
+    campaignSave: "캠페인 초안 저장",
+    campaignPublish: "캠페인 발행",
+    campaignNoLimit: "혜택별 응모 한도 (비우면 제한 없음)",
     select: "선정",
     reject: "미선정",
     used: "사용 처리",
@@ -144,6 +186,10 @@ const copy = {
     clearCodes: "Clear all codes",
     apps: "Applications and selection",
     claims: "Claims and usage",
+    campaigns: "LIVE Benefit campaigns",
+    campaignSave: "Save campaign draft",
+    campaignPublish: "Publish campaign",
+    campaignNoLimit: "Per-Benefit entry limit (blank means unlimited)",
     select: "Select",
     reject: "Not selected",
     used: "Mark used",
@@ -184,6 +230,21 @@ function formFor(b: Benefit): Form {
     deliveryEn: b.localizations.en.deliveryLabel,
   };
 }
+function campaignFormFor(c: Campaign): CampaignForm {
+  return {
+    id: c.id,
+    revision: c.revision,
+    liveEventId: c.liveEventId,
+    entryOpensAt: local(c.entryOpensAt),
+    entryClosesAt: local(c.entryClosesAt),
+    benefits: c.benefits.map((b) => ({
+      benefitId: b.benefitId,
+      priority: String(b.priority),
+      perFanTicketLimit: b.perFanTicketLimit?.toString() ?? "",
+      winnerQuantity: String(b.winnerQuantity),
+    })),
+  };
+}
 export function AuthorizedBenefitManager() {
   const locale: AdminLocale =
       useSearchParams().get("lang") === "en" ? "en" : "ko",
@@ -204,6 +265,7 @@ function BenefitManager({
     canWrite = role !== "viewer";
   const [data, setData] = useState<Data | null>(null),
     [form, setForm] = useState(blank),
+    [campaign, setCampaign] = useState(blankCampaign),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
     [codes, setCodes] = useState("");
@@ -229,7 +291,8 @@ function BenefitManager({
   );
   const refresh = useCallback(async () => {
     try {
-      setData((await request()) as Data);
+      const next = (await request()) as Omit<Data, "campaigns"> & { campaigns?: Campaign[] };
+      setData({ ...next, campaigns: next.campaigns ?? [] });
       setError("");
     } catch {
       setCodes("");
@@ -279,6 +342,31 @@ function BenefitManager({
       requiredActivityType: form.requiredActivityType || null,
     });
   }
+  async function submitCampaign(e: React.FormEvent) {
+    e.preventDefault();
+    await cmd({
+      action: "save_campaign",
+      id: campaign.id || null,
+      expectedRevision: campaign.id ? campaign.revision : null,
+      liveEventId: campaign.liveEventId,
+      entryOpensAt: instant(campaign.entryOpensAt),
+      entryClosesAt: instant(campaign.entryClosesAt),
+      benefits: campaign.benefits.map((b) => ({
+        benefitId: b.benefitId,
+        priority: Number(b.priority),
+        perFanTicketLimit: b.perFanTicketLimit ? Number(b.perFanTicketLimit) : null,
+        winnerQuantity: Number(b.winnerQuantity),
+      })),
+    });
+  }
+  function setCampaignItem(index: number, key: keyof CampaignForm["benefits"][number], value: string) {
+    setCampaign((current) => ({
+      ...current,
+      benefits: current.benefits.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [key]: value } : item,
+      ),
+    }));
+  }
   async function archive() {
     if (
       selected &&
@@ -320,6 +408,42 @@ function BenefitManager({
       {!data ? (
         <div className={styles.skeleton} aria-busy="true" />
       ) : (
+        <>
+        <section className={styles.history} aria-busy={pending}>
+          <h2>{t.campaigns} · {data.campaigns.length}</h2>
+          <ul className={styles.rows}>
+            {data.campaigns.map((item) => (
+              <li key={item.id}>
+                <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
+                  {item.liveEventId} · {item.status}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <form onSubmit={submitCampaign}>
+            <fieldset disabled={!canWrite || pending || Boolean(campaign.id && data.campaigns.find((c) => c.id === campaign.id)?.status === "published")}>
+              <legend>{t.campaigns}</legend>
+              <div className={styles.grid}>
+                <Field label="LIVE event ID" value={campaign.liveEventId} set={(liveEventId) => setCampaign((c) => ({ ...c, liveEventId }))} />
+                <Field type="datetime-local" label="Entry opens (UTC)" value={campaign.entryOpensAt} set={(entryOpensAt) => setCampaign((c) => ({ ...c, entryOpensAt }))} />
+                <Field type="datetime-local" label="Entry closes (UTC)" value={campaign.entryClosesAt} set={(entryClosesAt) => setCampaign((c) => ({ ...c, entryClosesAt }))} />
+              </div>
+              {campaign.benefits.map((item, index) => (
+                <div className={styles.grid} key={`${index}-${item.benefitId}`}>
+                  <Select label="Benefit" value={item.benefitId} set={(v) => setCampaignItem(index, "benefitId", v)} options={[["", "Select"], ...data.benefits.map((b) => [b.id, b.localizations[locale].title])]} />
+                  <Field type="number" label="Priority" value={item.priority} set={(v) => setCampaignItem(index, "priority", v)} />
+                  <Field required={false} type="number" label={t.campaignNoLimit} value={item.perFanTicketLimit} set={(v) => setCampaignItem(index, "perFanTicketLimit", v)} />
+                  <Field type="number" label="Winner quantity" value={item.winnerQuantity} set={(v) => setCampaignItem(index, "winnerQuantity", v)} />
+                </div>
+              ))}
+              <div className={styles.actions}>
+                <button type="button" onClick={() => setCampaign((c) => ({ ...c, benefits: [...c.benefits, { benefitId: "", priority: String(c.benefits.length + 1), perFanTicketLimit: "", winnerQuantity: "1" }] }))}>+ Benefit</button>
+                <button type="submit"><Save aria-hidden="true" />{t.campaignSave}</button>
+                {campaign.id && <button type="button" onClick={() => void cmd({ action: "publish_campaign", id: campaign.id, expectedRevision: campaign.revision })}>{t.campaignPublish}</button>}
+              </div>
+            </fieldset>
+          </form>
+        </section>
         <div className={styles.layout}>
           <section className={styles.list}>
             <h2>
@@ -656,6 +780,7 @@ function BenefitManager({
             )}
           </section>
         </div>
+        </>
       )}
     </AdminOperationsShell>
   );
@@ -665,17 +790,19 @@ function Field({
   value,
   set,
   type = "text",
+  required,
 }: {
   label: string;
   value: string;
   set(v: string): void;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <label>
       <span>{label}</span>
       <input
-        required={!label.includes("blank") && !label.includes("Private")}
+        required={required ?? (!label.includes("blank") && !label.includes("Private"))}
         type={type}
         value={value}
         onChange={(e) => set(e.target.value)}

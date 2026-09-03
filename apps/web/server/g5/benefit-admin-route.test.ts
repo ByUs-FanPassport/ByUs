@@ -16,6 +16,8 @@ function deps(role: "admin" | "operator" | "viewer" = "admin") {
     invalidatePublicContent: vi.fn(),
     repository: {
       read: vi.fn().mockResolvedValue({ benefits: [], celebrities: [] }),
+      saveCampaign: vi.fn().mockResolvedValue("55555555-5555-4555-8555-555555555555"),
+      publishCampaign: vi.fn(),
       save: vi.fn().mockResolvedValue("33333333-3333-4333-8333-333333333333"),
       codes: vi.fn().mockResolvedValue({ addedCount: 2, duplicateCount: 1 }),
       clearCodes: vi.fn().mockResolvedValue({ removedCount: 2 }),
@@ -54,6 +56,52 @@ describe("benefit admin route", () => {
     expect(r.status).toBe(403);
     expect(d.repository.state).not.toHaveBeenCalled();
     expect(d.invalidatePublicContent).not.toHaveBeenCalled();
+  });
+  it("validates and saves a campaign without inventing a global fan cap", async () => {
+    const d = deps();
+    const body = {
+      action: "save_campaign",
+      id: null,
+      expectedRevision: null,
+      liveEventId: "33333333-3333-4333-8333-333333333333",
+      entryOpensAt: "2026-09-04T00:00:00Z",
+      entryClosesAt: "2026-09-05T00:00:00Z",
+      benefits: [
+        {
+          benefitId: "66666666-6666-4666-8666-666666666666",
+          priority: 1,
+          perFanTicketLimit: null,
+        },
+      ],
+    };
+    const r = await createPostBenefitAdminHandler(d)(req(body));
+    expect(r.status).toBe(201);
+    expect(d.repository.saveCampaign).toHaveBeenCalledWith(
+      expect.anything(),
+      "44444444-4444-4444-8444-444444444444",
+      expect.not.objectContaining({ perFanTicketLimit: expect.anything() }),
+    );
+  });
+
+  it("rejects a non-positive per-Benefit Ticket limit", async () => {
+    const d = deps();
+    const r = await createPostBenefitAdminHandler(d)(
+      req({
+        action: "save_campaign",
+        id: null,
+        expectedRevision: null,
+        liveEventId: "33333333-3333-4333-8333-333333333333",
+        entryOpensAt: "2026-09-04T00:00:00Z",
+        entryClosesAt: "2026-09-05T00:00:00Z",
+        benefits: [{
+          benefitId: "66666666-6666-4666-8666-666666666666",
+          priority: 1,
+          perFanTicketLimit: 0,
+        }],
+      }),
+    );
+    expect(r.status).toBe(400);
+    expect(d.repository.saveCampaign).not.toHaveBeenCalled();
   });
   it("invalidates public content only after a successful publication command", async () => {
     const d = deps();
