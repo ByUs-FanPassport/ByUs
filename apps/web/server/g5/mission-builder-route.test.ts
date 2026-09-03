@@ -13,8 +13,8 @@ const base = {
   visibleFrom: "2026-09-02T10:00:00.000Z",
   visibleUntil: "2026-09-02T11:00:00.000Z",
   questions: [{ position: 1, text: { ko: "질문", en: "Question" }, media: null, correctPosition: null, options: [
-    { position: 1, label: { ko: "가", en: "A" }, media: null },
-    { position: 2, label: { ko: "나", en: "B" }, media: null },
+    { position: 1, label: { ko: "가", en: "A" }, displayMode: "text" as const, media: null },
+    { position: 2, label: { ko: "나", en: "B" }, displayMode: "text" as const, media: null },
   ] }],
 };
 const deps = {
@@ -66,6 +66,38 @@ describe("Mission builder route", () => {
       }),
     }), { liveEventId: live });
     expect(response.status).toBe(422);
+    expect(deps.repository.write).not.toHaveBeenCalled();
+  });
+
+  it("accepts a visually media-only option while retaining its localized accessible label", async () => {
+    const response = await createPostMissionBuilderHandler(deps)(new Request("https://byus.test", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        ...base,
+        questions: [{ ...base.questions[0], options: [
+          { position: 1, label: { ko: "파란 무대", en: "Blue stage" }, displayMode: "media", media: { type: "image", url: "https://byus.test/blue.webp" } },
+          base.questions[0].options[1],
+        ] }],
+      }),
+    }), { liveEventId: live });
+    expect(response.status).toBe(201);
+    expect(deps.repository.write).toHaveBeenCalledWith(expect.objectContaining({
+      command: expect.objectContaining({ questions: [expect.objectContaining({ options: [expect.objectContaining({ displayMode: "media" }), expect.anything()] })] }),
+    }));
+  });
+
+  it("rejects media presentation without media and label-less option payloads", async () => {
+    for (const invalid of [
+      { ...base.questions[0].options[0], displayMode: "media" },
+      { ...base.questions[0].options[0], label: { ko: "", en: "" } },
+    ]) {
+      const response = await createPostMissionBuilderHandler(deps)(new Request("https://byus.test", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+          ...base,
+          questions: [{ ...base.questions[0], options: [invalid, base.questions[0].options[1]] }],
+        }),
+      }), { liveEventId: live });
+      expect(response.status).toBe(422);
+    }
     expect(deps.repository.write).not.toHaveBeenCalled();
   });
 });

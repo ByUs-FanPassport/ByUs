@@ -6,7 +6,7 @@ import styles from "./survey-builder.module.css";
 
 type MissionType = "quiz" | "survey" | "vote";
 type MediaType = "" | "image" | "video";
-type OptionDraft = { labelKo: string; labelEn: string; mediaType: MediaType; mediaUrl: string };
+type OptionDraft = { labelKo: string; labelEn: string; displayMode: "text" | "media" | "text_media"; mediaType: MediaType; mediaUrl: string };
 type QuestionDraft = {
   textKo: string;
   textEn: string;
@@ -16,7 +16,7 @@ type QuestionDraft = {
   options: OptionDraft[];
 };
 type MissionStatistics = { missionId: string; type: MissionType; title: string; visibleFrom: string; visibleUntil: string; totalParticipants: number; correctCount: number; incorrectCount: number; questions: { questionId: string; text: string; options: { optionId: string; label: string; optionCount: number }[] }[] };
-const option = (): OptionDraft => ({ labelKo: "", labelEn: "", mediaType: "", mediaUrl: "" });
+const option = (): OptionDraft => ({ labelKo: "", labelEn: "", displayMode: "text", mediaType: "", mediaUrl: "" });
 const question = (): QuestionDraft => ({ textKo: "", textEn: "", mediaType: "", mediaUrl: "", correctIndex: 0, options: [option(), option()] });
 const media = (type: MediaType, url: string) => type && url ? { type, url } : null;
 
@@ -57,7 +57,7 @@ export function MissionBuilder({ liveEventId }: { liveEventId: string }) {
         questions: questions.map((item, questionIndex) => ({
           position: questionIndex + 1, text: { ko: item.textKo, en: item.textEn }, media: media(item.mediaType, item.mediaUrl),
           correctPosition: type === "quiz" ? item.correctIndex + 1 : null,
-          options: item.options.map((value, optionIndex) => ({ position: optionIndex + 1, label: { ko: value.labelKo, en: value.labelEn }, media: media(value.mediaType, value.mediaUrl) })),
+          options: item.options.map((value, optionIndex) => ({ position: optionIndex + 1, label: { ko: value.labelKo, en: value.labelEn }, displayMode: value.displayMode, media: media(value.mediaType, value.mediaUrl) })),
         })),
       });
       setCreated(result.missionId); setMessage("Mission draft created"); await loadStatistics();
@@ -65,12 +65,12 @@ export function MissionBuilder({ liveEventId }: { liveEventId: string }) {
   }
   async function update() {
     try {
-      await command({ command: "update", missionId: created, type, attendanceRequirement, visibleFrom: new Date(visibleFrom).toISOString(), visibleUntil: new Date(visibleUntil).toISOString(), title: { ko: titleKo, en: titleEn }, description: { ko: descriptionKo, en: descriptionEn }, questions: questions.map((item, questionIndex) => ({ position: questionIndex + 1, text: { ko: item.textKo, en: item.textEn }, media: media(item.mediaType, item.mediaUrl), correctPosition: type === "quiz" ? item.correctIndex + 1 : null, options: item.options.map((value, optionIndex) => ({ position: optionIndex + 1, label: { ko: value.labelKo, en: value.labelEn }, media: media(value.mediaType, value.mediaUrl) })) })) });
+      await command({ command: "update", missionId: created, type, attendanceRequirement, visibleFrom: new Date(visibleFrom).toISOString(), visibleUntil: new Date(visibleUntil).toISOString(), title: { ko: titleKo, en: titleEn }, description: { ko: descriptionKo, en: descriptionEn }, questions: questions.map((item, questionIndex) => ({ position: questionIndex + 1, text: { ko: item.textKo, en: item.textEn }, media: media(item.mediaType, item.mediaUrl), correctPosition: type === "quiz" ? item.correctIndex + 1 : null, options: item.options.map((value, optionIndex) => ({ position: optionIndex + 1, label: { ko: value.labelKo, en: value.labelEn }, displayMode: value.displayMode, media: media(value.mediaType, value.mediaUrl) })) })) });
       setMessage("Mission draft updated"); await loadStatistics();
     } catch { setMessage("Mission could not be updated"); }
   }
   async function publish() { try { await command({ command: "publish", missionId: created }); setMessage("Mission published"); await loadStatistics(); } catch { setMessage("Mission could not be published"); } }
-  const incomplete = !titleKo || !titleEn || !visibleFrom || !visibleUntil || Date.parse(visibleFrom) >= Date.parse(visibleUntil) || questions.some(item => !item.textKo || !item.textEn || item.options.some(value => !value.labelKo || !value.labelEn || Boolean(value.mediaType) !== Boolean(value.mediaUrl)) || Boolean(item.mediaType) !== Boolean(item.mediaUrl));
+  const incomplete = !titleKo || !titleEn || !visibleFrom || !visibleUntil || Date.parse(visibleFrom) >= Date.parse(visibleUntil) || questions.some(item => !item.textKo || !item.textEn || item.options.some(value => !value.labelKo || !value.labelEn || Boolean(value.mediaType) !== Boolean(value.mediaUrl) || (value.displayMode === "text") !== !value.mediaType) || Boolean(item.mediaType) !== Boolean(item.mediaUrl));
 
   return <main className={styles.page}>
     <header><p>ADM · Mission Builder</p><h1>Quiz · Survey · Vote</h1></header><p role="status">{message}</p>
@@ -89,6 +89,7 @@ export function MissionBuilder({ liveEventId }: { liveEventId: string }) {
         {type === "quiz" && <label><span>Correct</span><input type="radio" name={`correct-${questionIndex}`} checked={item.correctIndex === optionIndex} onChange={() => updateQuestion(questionIndex, { correctIndex: optionIndex })}/></label>}
         <Text label={`선택지 ${optionIndex + 1}`} value={value.labelKo} set={labelKo => updateOption(questionIndex, optionIndex, { labelKo })}/>
         <Text label={`Option ${optionIndex + 1}`} value={value.labelEn} set={labelEn => updateOption(questionIndex, optionIndex, { labelEn })}/>
+        <label><span>Display</span><select value={value.displayMode} onChange={event=>updateOption(questionIndex,optionIndex,{displayMode:event.target.value as OptionDraft["displayMode"]})}><option value="text">Text</option><option value="media">Media only</option><option value="text_media">Text + media</option></select></label>
         <MediaFields type={value.mediaType} url={value.mediaUrl} set={(mediaType, mediaUrl) => updateOption(questionIndex, optionIndex, { mediaType, mediaUrl })}/>
         {item.options.length > 2 && <button type="button" onClick={() => updateQuestion(questionIndex, { options: item.options.filter((_, index) => index !== optionIndex), correctIndex: 0 })}>Remove option</button>}
       </div>)}

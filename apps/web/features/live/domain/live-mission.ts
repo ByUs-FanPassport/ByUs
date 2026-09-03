@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 const media = z.object({ type: z.enum(["image", "video"]), url: z.string().url() }).strict().nullable();
-const option = z.object({ id: z.string().uuid(), label: z.string().min(1), media }).strict();
+const option = z.object({ id: z.string().uuid(), label: z.string().min(1), displayMode: z.enum(["text", "media", "text_media"]), media }).strict().refine(
+  (value) => (value.displayMode === "text") === (value.media === null),
+  { message: "Mission option presentation and media must agree" },
+);
 const question = z.object({ id: z.string().uuid(), text: z.string().min(1), media, options: z.array(option).min(2) }).strict();
 export const liveMissionSchema = z.object({
   id: z.string().uuid(), type: z.enum(["quiz", "survey", "vote"]), version: z.number().int().positive(),

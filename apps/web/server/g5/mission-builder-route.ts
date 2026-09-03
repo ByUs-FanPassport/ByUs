@@ -5,14 +5,14 @@ import { AuthError } from "../../features/auth/domain/auth-errors";
 import type { AdminSession } from "../admin/admin-session-gate";
 
 const media=z.object({type:z.enum(["image","video"]),url:z.string().url()}).nullable().optional();
-const option=z.object({position:z.number().int().positive(),label:z.object({ko:z.string().min(1),en:z.string().min(1)}),media});
+const option=z.object({position:z.number().int().positive(),label:z.object({ko:z.string().min(1),en:z.string().min(1)}),displayMode:z.enum(["text","media","text_media"]),media});
 const question=z.object({position:z.number().int().positive(),text:z.object({ko:z.string().min(1),en:z.string().min(1)}),media,correctPosition:z.number().int().positive().nullable(),options:z.array(option).min(2)});
 const missionSettings=z.object({type:z.enum(["quiz","survey","vote"]),attendanceRequirement:z.enum(["required","not_required"]),title:z.object({ko:z.string().min(1),en:z.string().min(1)}),description:z.object({ko:z.string(),en:z.string()}),visibleFrom:z.iso.datetime({offset:true}),visibleUntil:z.iso.datetime({offset:true}),questions:z.array(question).min(1)});
 const validWindow=(value:{visibleFrom:string;visibleUntil:string})=>Date.parse(value.visibleFrom)<Date.parse(value.visibleUntil);
 const createCommand=missionSettings.extend({command:z.literal("create")}).refine(validWindow,{message:"visibility window must increase"});
 const updateCommand=missionSettings.extend({command:z.literal("update"),missionId:z.string().uuid()}).refine(validWindow,{message:"visibility window must increase"});
 const command=z.union([createCommand,updateCommand,z.object({command:z.literal("publish"),missionId:z.string().uuid()})]);
-const hasInvalidMissionGraph=(value:z.infer<typeof createCommand>|z.infer<typeof updateCommand>)=>value.questions.some((q,index)=>q.position!==index+1||q.options.some((o,i)=>o.position!==i+1)||(value.type==="quiz")!==(q.correctPosition!==null));
+const hasInvalidMissionGraph=(value:z.infer<typeof createCommand>|z.infer<typeof updateCommand>)=>value.questions.some((q,index)=>q.position!==index+1||q.options.some((o,i)=>o.position!==i+1||(o.displayMode==="text")!==!o.media)||(value.type==="quiz")!==(q.correctPosition!==null));
 
 export type MissionBuilderRepository={write(input:{actor:AdminSession;liveEventId:string;command:z.infer<typeof command>;correlationId:string}):Promise<unknown>;statistics(input:{actor:AdminSession;liveEventId:string}):Promise<unknown>;};
 type Dependencies={authorize(input:{authorization:string;correlationId:string}):Promise<AdminSession>;repository:MissionBuilderRepository};
