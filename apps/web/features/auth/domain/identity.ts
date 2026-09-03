@@ -8,6 +8,8 @@ export interface PrivyIdentityInput {
 export interface CanonicalPrivyIdentity {
   privyUserId: string;
   verifiedEmail: string;
+  /** True only when the verified address came from a current Privy Google link. */
+  googleLinked?: boolean;
 }
 
 export interface CanonicalWallet {

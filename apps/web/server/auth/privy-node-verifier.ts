@@ -134,6 +134,7 @@ export function createPrivyNodeAccessVerifier(
       return {
         privyUserId: claims.user_id,
         verifiedEmail: verifiedFanEmail(user, config),
+        googleLinked: latestVerifiedGoogleEmail(user) !== null,
       };
     },
   };
@@ -187,7 +188,10 @@ export function createPrivyNodeSessionResolver(
             privyUserId: user.id,
             verifiedEmail: verifiedFanEmail(user, config),
           });
-          return { identity, wallet };
+          return {
+            identity: { ...identity, googleLinked: latestVerifiedGoogleEmail(user) !== null },
+            wallet,
+          };
         }
         if (attempt < attempts) await sleep(delayMs);
       }

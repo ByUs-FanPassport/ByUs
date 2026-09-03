@@ -33,6 +33,7 @@ export const notificationPreferencesSchema = z.object({
   browserSubscription: z.enum(["subscribed", "unsubscribed"]),
 });
 export type NotificationItem = z.infer<typeof notificationItemSchema>;
+export type ExternalNotificationChannelKind = "email" | "kakao";
 export type NotificationPreferences = z.infer<
   typeof notificationPreferencesSchema
 >;

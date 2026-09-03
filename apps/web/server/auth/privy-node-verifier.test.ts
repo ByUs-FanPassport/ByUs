@@ -32,6 +32,7 @@ describe("@privy-io/node server adapter", () => {
     await expect(verifier.verify("access-token")).resolves.toEqual({
       privyUserId: "did:privy:user-1",
       verifiedEmail: "fan@example.com",
+      googleLinked: true,
     });
     expect(getUser).toHaveBeenCalledWith("did:privy:user-1");
   });
@@ -77,6 +78,7 @@ describe("@privy-io/node server adapter", () => {
     }, client).verify("access-token")).resolves.toEqual({
       privyUserId: "did:privy:test-1",
       verifiedEmail: "test-8129@privy.io",
+      googleLinked: false,
     });
     await expect(createPrivyNodeAccessVerifier({
       appId: "app-1",
@@ -86,6 +88,7 @@ describe("@privy-io/node server adapter", () => {
     }, client).verify("access-token")).resolves.toEqual({
       privyUserId: "did:privy:test-1",
       verifiedEmail: null,
+      googleLinked: false,
     });
   });
 
@@ -184,6 +187,7 @@ describe("@privy-io/node server adapter", () => {
       identity: {
         privyUserId: "did:privy:user-1",
         verifiedEmail: "fan@example.com",
+        googleLinked: true,
       },
       wallet: {
         chainId: 91342,

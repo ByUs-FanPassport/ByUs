@@ -4,7 +4,7 @@ import { syncAuthenticatedSession } from "./session-sync";
 describe("syncAuthenticatedSession", () => {
   it("persists only a resolver-verified identity and embedded wallet", async () => {
     const resolved = {
-      identity: { privyUserId: "did:privy:user-1", verifiedEmail: "biz@sallylab.io" },
+      identity: { privyUserId: "did:privy:user-1", verifiedEmail: "biz@sallylab.io", googleLinked: true },
       wallet: { chainId: 91342, address: "0x82162619589cfe3e0dcc58c43dfbf121844f8e9c" },
     };
     const resolver = { resolve: vi.fn().mockResolvedValue(resolved) };
