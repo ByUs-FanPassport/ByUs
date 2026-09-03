@@ -39,6 +39,10 @@ import {
   benefitEntryResultSchema,
   type BenefitEntryResult,
 } from "../domain/benefit-entry";
+import {
+  pageViewIdempotencyKey,
+  recordProductEventV1,
+} from "@/features/analytics/client/product-event-client";
 
 export type BenefitLocale = "ko" | "en";
 
@@ -502,10 +506,26 @@ export function BenefitDetailScreen({
         setOwnedApplication(owned);
       } else setOwnedApplication(null);
       setView({ kind: "ready", benefit: body.benefit });
+      void recordProductEventV1(
+        {
+          eventName: "benefit_page_view",
+          celebrityId: null,
+          liveEventId: null,
+          missionId: null,
+          benefitId: body.benefit.id,
+          source: "fan.benefit.detail",
+          idempotencyKey: pageViewIdempotencyKey(
+            "benefit_page_view",
+            `/benefits/${body.benefit.id}`,
+          ),
+          properties: { presentation: presentation ?? "page" },
+        },
+        token,
+      );
     } catch {
       setView({ kind: "error", notFound: false });
     }
-  }, [authenticated, benefitId, getAccessToken, locale, ready]);
+  }, [authenticated, benefitId, getAccessToken, locale, presentation, ready]);
   useEffect(() => {
     void load();
   }, [load]);

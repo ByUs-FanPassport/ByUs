@@ -2,12 +2,14 @@
 
 import {
   BarChart3,
+  Bell,
   Blocks,
   CalendarClock,
   ChevronRight,
   CircleAlert,
   Database,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -133,6 +135,13 @@ const copy = {
     warningJobs: "실패 또는 재시도 중인 작업이 있습니다.",
     auditReady: "최근 감사 기록을 조회할 수 있습니다.",
     partial: "일부 운영 데이터를 불러오지 못했습니다.",
+    notificationTitle: "외부 알림 전송",
+    notificationHealthy: "실패한 외부 알림이 없습니다.",
+    notificationWarning: "최종 실패한 외부 알림을 확인하세요.",
+    purgeTitle: "수신자 정보 파기",
+    purgeCadence: "실행 주기",
+    purgeSuccess: "최근 성공",
+    purgeError: "최근 오류",
   },
   en: {
     overview: "Operations",
@@ -179,6 +188,13 @@ const copy = {
     warningJobs: "Some jobs are failed or retrying.",
     auditReady: "Recent audit records are available.",
     partial: "Some operations data could not be loaded.",
+    notificationTitle: "External notification delivery",
+    notificationHealthy: "No external notifications are in final failure.",
+    notificationWarning: "Review final failed external notifications.",
+    purgeTitle: "Recipient data purge",
+    purgeCadence: "Cadence",
+    purgeSuccess: "Last success",
+    purgeError: "Latest error",
   },
 } as const;
 
@@ -222,6 +238,8 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
   const [state, setState] = useState<
     LoadState<{
       jobs: { failed: number; retrying: number } | null;
+      notifications: { failed: number; pending: number } | null;
+      purge: { state: "never_run" | "healthy" | "overdue" | "error"; cadenceHours: 24; lastRunAt: string | null; lastSuccessAt: string | null; lastErrorCode: string | null; deletedCount: number | null; source: string } | null;
       auditCount: number | null;
       errors: string[];
     }>
@@ -229,7 +247,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setState({ status: "loading" });
-      const [jobsResult, auditResult] = await Promise.allSettled([
+      const [jobsResult, auditResult, notificationResult, purgeResult] = await Promise.allSettled([
         authorizedJson<{ jobs: Array<{ status?: string }> }>(
           "/api/admin/blockchain-jobs?limit=100",
           getAccessToken,
@@ -237,6 +255,16 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
         ),
         authorizedJson<{ items: unknown[] }>(
           "/api/admin/audit-logs?limit=10",
+          getAccessToken,
+          signal,
+        ),
+        authorizedJson<{ counts: { failed: number; pending: number } }>(
+          "/api/admin/notification-deliveries?limit=1",
+          getAccessToken,
+          signal,
+        ),
+        authorizedJson<{ state: "never_run" | "healthy" | "overdue" | "error"; cadenceHours: 24; lastRunAt: string | null; lastSuccessAt: string | null; lastErrorCode: string | null; deletedCount: number | null; source: string }>(
+          "/api/admin/maintenance/recipient-purge",
           getAccessToken,
           signal,
         ),
@@ -257,7 +285,9 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
         auditResult.status === "fulfilled"
           ? auditResult.value.items.length
           : null;
-      const errors = [jobsResult, auditResult].flatMap((result) =>
+      const notifications = notificationResult.status === "fulfilled" ? notificationResult.value.counts : null;
+      const purge = purgeResult.status === "fulfilled" ? purgeResult.value : null;
+      const errors = [jobsResult, auditResult, notificationResult, purgeResult].flatMap((result) =>
         result.status === "rejected"
           ? [
               result.reason instanceof Error
@@ -268,7 +298,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
       );
       setState({
         status: "ready",
-        data: { jobs, auditCount, errors },
+        data: { jobs, notifications, purge, auditCount, errors },
         refreshedAt: new Date().toISOString(),
       });
     },
@@ -366,7 +396,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
                       <dd>{ready.data.jobs.retrying}</dd>
                     </div>
                   </dl>
-                  <Link href={"/admin/blockchain-jobs" as Route}>
+                  <Link href={"/admin/blockchain-jobs?status=FAILED" as Route}>
                     {t.jobs}
                     <ChevronRight aria-hidden="true" />
                   </Link>
@@ -381,6 +411,22 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
                 </div>
               </section>
             )}
+            <section className={ready.data.notifications?.failed ? styles.warning : styles.operation}>
+              <Bell aria-hidden="true" />
+              <div>
+                <h2>{t.notificationTitle}</h2>
+                <p>{ready.data.notifications === null ? t.unavailable : ready.data.notifications.failed ? t.notificationWarning : t.notificationHealthy}</p>
+                {ready.data.notifications && <dl><div><dt>FAILED</dt><dd>{ready.data.notifications.failed}</dd></div><div><dt>PENDING</dt><dd>{ready.data.notifications.pending}</dd></div></dl>}
+                <Link href={"/admin/notifications?status=failed" as Route}>{locale === "ko" ? "알림 전송" : "Notification delivery"}<ChevronRight aria-hidden="true" /></Link>
+              </div>
+            </section>
+            <section className={ready.data.purge && ["error", "overdue", "never_run"].includes(ready.data.purge.state) ? styles.warning : styles.operation}>
+              <Trash2 aria-hidden="true" />
+              <div>
+                <h2>{t.purgeTitle}</h2>
+                {ready.data.purge ? <><p>{ready.data.purge.state} · {ready.data.purge.source}</p><dl><div><dt>{t.purgeCadence}</dt><dd>{ready.data.purge.cadenceHours}h</dd></div><div><dt>{t.purgeSuccess}</dt><dd>{ready.data.purge.lastSuccessAt ? new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(new Date(ready.data.purge.lastSuccessAt)) : "—"}</dd></div><div><dt>{t.purgeError}</dt><dd>{ready.data.purge.lastErrorCode ?? "—"}</dd></div></dl></> : <p>{t.unavailable}</p>}
+              </div>
+            </section>
             <section className={styles.operation}>
               <Database aria-hidden="true" />
               <div>

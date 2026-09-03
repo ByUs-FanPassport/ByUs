@@ -4,6 +4,10 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  pageViewIdempotencyKey,
+  recordProductEventV1,
+} from "@/features/analytics/client/product-event-client";
 import type { Route } from "next";
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, Clock, Play, Radio } from "./icons";
@@ -131,6 +135,29 @@ export function CelebrityFanPage({
   const [benefitState, setBenefitState] = useState<AsyncState<Benefit[]>>({ status: "idle" });
   const activeTab = initialTab ?? "home";
   const hasKatseyePresentation = celebrity.slug === "katseye";
+
+  useEffect(() => {
+    if (!ready) return;
+    void (async () => {
+      const token = authenticated ? await getAccessToken() : null;
+      await recordProductEventV1(
+        {
+          eventName: "creator_page_view",
+          celebrityId: null,
+          liveEventId: null,
+          missionId: null,
+          benefitId: null,
+          source: "fan.creator.detail",
+          idempotencyKey: pageViewIdempotencyKey(
+            "creator_page_view",
+            `/c/${celebrity.slug}`,
+          ),
+          properties: { celebritySlug: celebrity.slug },
+        },
+        token,
+      );
+    })();
+  }, [authenticated, celebrity.slug, getAccessToken, ready]);
 
   useEffect(() => {
     if (!ready) return;

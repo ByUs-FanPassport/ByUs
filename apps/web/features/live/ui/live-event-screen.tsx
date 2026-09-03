@@ -64,6 +64,10 @@ import {
   enablePushNotifications,
   type PushEnableResult,
 } from "@/features/notification/ui/push-subscription";
+import {
+  pageViewIdempotencyKey,
+  recordProductEventV1,
+} from "@/features/analytics/client/product-event-client";
 import styles from "./live-event-screen.module.css";
 
 type Locale = "ko" | "en";
@@ -452,6 +456,22 @@ export function LiveEventScreen({
       const data = liveEventResponseSchema.parse(await response.json());
       setCollectible(data.viewer.collectible ?? null);
       setView({ kind: "ready", data });
+      void recordProductEventV1(
+        {
+          eventName: "live_page_view",
+          celebrityId: null,
+          liveEventId: data.live.id,
+          missionId: null,
+          benefitId: null,
+          source: "fan.live.detail",
+          idempotencyKey: pageViewIdempotencyKey(
+            "live_page_view",
+            `/live/${data.live.id}`,
+          ),
+          properties: { provider: data.live.watch.provider },
+        },
+        token,
+      );
     } catch {
       setView({ kind: "error", notFound: false });
     }
@@ -588,6 +608,26 @@ export function LiveEventScreen({
         liveId: view.kind === "ready" ? view.data.live.id : null,
       }),
     );
+    if (view.kind === "ready") {
+      void getAccessToken().then((token) =>
+        recordProductEventV1(
+          {
+            eventName: "live_cta_click",
+            celebrityId: null,
+            liveEventId: view.data.live.id,
+            missionId: null,
+            benefitId: null,
+            source: "fan.live.watch_cta",
+            idempotencyKey: `cta:live:${view.data.live.id}:${window.crypto.randomUUID()}`,
+            properties: {
+              provider: view.data.live.watch.provider,
+              liveEventId: view.data.live.id,
+            },
+          },
+          token,
+        ),
+      );
+    }
   }
 
   const submitAttendance = useCallback(async (rawCode: string) => {
