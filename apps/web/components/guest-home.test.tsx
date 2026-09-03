@@ -455,6 +455,7 @@ describe("canonical 03 guest home", () => {
             stampCount: 2,
             score: { level: "Silver" },
             display: { level: "실버" },
+            progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
             stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 },
             stamps: [
               { type: "knowledge", issuedAt: "2026-07-21T00:00:00.000Z" },
@@ -542,6 +543,7 @@ describe("canonical 03 guest home", () => {
             stampCount: 10,
             score: { level: "Gold" },
             display: { level: "골드" },
+            progress: { currentScore: 50, currentLevel: "Gold", nextLevel: "Platinum", nextThreshold: 120, remainingPoints: 70, percent: 42, maxed: false },
             stampSummary: { knowledge: 3, reservation: 3, attendance: 2, survey: 2, total: 10 },
             stamps,
           }],

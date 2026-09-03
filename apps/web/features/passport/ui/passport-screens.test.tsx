@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/passports", useRouter: 
 
 const celebrity = { slug: "kara", name: "KARA", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA", position: "center" } };
 const mint = { status: "minted", txHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", tokenId: "42" };
-const passport = { id: "11111111-1111-4111-8111-111111111111", owner: { nickname: null }, celebrity, businessStatus: "issued", mint, issuedAt: "2026-07-21T00:00:00.000Z", score: { points: 5, level: "Silver" }, stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 }, display: { level: "실버", mintStatus: "발급 완료" } };
+const passport = { id: "11111111-1111-4111-8111-111111111111", owner: { nickname: null }, celebrity, businessStatus: "issued", mint, issuedAt: "2026-07-21T00:00:00.000Z", score: { points: 15, level: "Silver" }, stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 }, display: { level: "실버", mintStatus: "발급 완료" } };
 const context = { sourceType: "quiz_pass", sourceId: "88888888-8888-4888-8888-888888888888", live: null };
 const stamps = [
   { id: "22222222-2222-4222-8222-222222222222", type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", activityId: "44444444-4444-4444-8444-444444444444", context, display: { type: "팬 인증", mintStatus: "발급 완료" } },
@@ -36,7 +36,7 @@ describe("passport fan screens", () => {
     render(<PassportCollectionScreen />);
     expect(await screen.findByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /KARA/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
-    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("5");
+    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("15");
     expect(screen.getByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
   });
 
@@ -56,7 +56,7 @@ describe("passport fan screens", () => {
       { id: "66666666-6666-4666-8666-666666666666", type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, stampId: stamps[0].id, context, display: { type: "팬 인증" } },
       { id: "77777777-7777-4777-8777-777777777777", type: "reservation", occurredAt: "2026-07-21T00:00:00.000Z", points: 1, stampId: stamps[1].id, context: stamps[1].context, display: { type: "라이브 예약" } },
     ];
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passport: { ...passport, stamps, activities, progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false }, nextBenefit: null } }), { status: 200 })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passport: { ...passport, stamps, activities, progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false }, nextBenefit: null } }), { status: 200 })));
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     expect(await screen.findByRole("heading", { name: "KARA Fan Passport" })).toBeInTheDocument();
     expect(screen.queryByText("다음 순간을 기다리는 중")).not.toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("passport fan screens", () => {
     const timeline = screen.getByRole("list");
     expect(timeline.children[0]).toHaveTextContent("라이브 예약");
     expect(timeline.children[0]).toHaveTextContent("KARA LIVE");
-    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("5");
+    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("15");
     expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("2");
   });
 
@@ -89,7 +89,7 @@ describe("passport fan screens", () => {
         ...passport,
         stamps: [{ ...stamps[1], context: archivedContext }],
         activities,
-        progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
         nextBenefit: null,
       },
     })));
@@ -106,12 +106,12 @@ describe("passport fan screens", () => {
       stamps,
       activities: [],
       progress: {
-        currentScore: 5,
+        currentScore: 15,
         currentLevel: "Silver",
         nextLevel: "Gold",
-        nextThreshold: 10,
-        remainingPoints: 5,
-        percent: 50,
+        nextThreshold: 50,
+        remainingPoints: 35,
+        percent: 30,
         maxed: false,
       },
       nextBenefit: {
@@ -119,22 +119,22 @@ describe("passport fan screens", () => {
         slug: "special-wallpaper",
         title: "스페셜 디지털 배경화면",
         state: "locked",
-        eligibilityLabel: "Fan Score 10점 달성",
-        minimumScore: 10,
+        eligibilityLabel: "Fan Score 50점 달성",
+        minimumScore: 50,
         minimumLevel: "Gold",
         requiredStampType: null,
         requiredActivityType: null,
-        missingConditions: [{ type: "score", current: 5, required: 10 }],
+        missingConditions: [{ type: "score", current: 15, required: 50 }],
       },
     };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passport: detail })));
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "다음 Level: 골드" })).toHaveAttribute("value", "50");
-    expect(screen.getByText("5 점 남음")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "다음 Level: 골드" })).toHaveAttribute("value", "30");
+    expect(screen.getByText("35 점 남음")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "다음 혜택: 스페셜 디지털 배경화면" })).toBeInTheDocument();
-    expect(screen.getByText("Fan Score: 현재 5 / 필요 10")).toBeInTheDocument();
+    expect(screen.getByText("Fan Score: 현재 15 / 필요 50")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /혜택 확인하기/ })).toHaveAttribute(
       "href",
       `/benefits/${detail.nextBenefit.id}?locale=ko`,
@@ -165,7 +165,7 @@ describe("passport fan screens", () => {
         ...passport,
         stamps: [],
         activities: [],
-        progress: { currentScore: 5, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 10, remainingPoints: 5, percent: 50, maxed: false },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
         nextBenefit: null,
       },
     })));

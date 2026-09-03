@@ -13,6 +13,7 @@ import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/f
 import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
 import { FanState } from "@/components/fan-ui/fan-state";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
+import { levelLabel } from "../../passport/domain/passport-read-model";
 import styles from "./my-screen.module.css";
 
 const copy = {
@@ -31,6 +32,8 @@ const copy = {
     noPassport: "아직 발급된 Passport가 없어요.",
     findFavorite: "팬 인증할 최애 찾기",
     stamps: "Stamp",
+    maxLevel: "최고 Level에 도달했어요.",
+    remaining: "점 남음",
     reservations: "예약한 LIVE",
     noReservation: "예정된 예약이 없어요.",
     findLive: "LIVE 둘러보기",
@@ -53,6 +56,8 @@ const copy = {
     noPassport: "You don’t have a Passport yet.",
     findFavorite: "Find a favorite to verify",
     stamps: "Stamps",
+    maxLevel: "Highest Level reached.",
+    remaining: "pts remaining",
     reservations: "Reserved LIVE",
     noReservation: "No upcoming reservations.",
     findLive: "Browse LIVE",
@@ -127,7 +132,13 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
         {summary.passports.length ? <div className={styles.passportList}>{summary.passports.slice(0, 3).map((passport) => (
           <Link href={`/passports/${passport.id}?locale=${locale}` as Route} key={passport.id}>
             <Image src={passport.celebrity.image} alt="" width={64} height={64} />
-            <div><strong>{passport.celebrity.name} Fan Passport</strong><span>{passport.stampCount} {t.stamps}</span></div><ArrowRight aria-hidden="true" />
+            <div>
+              <strong>{passport.celebrity.name} Fan Passport</strong>
+              <span>{passport.progress.maxed
+                ? `${passport.display.level} · ${t.maxLevel}`
+                : `${passport.display.level} → ${levelLabel(locale, passport.progress.nextLevel!)} · ${passport.progress.remainingPoints}${locale === "ko" ? "" : " "}${t.remaining}`}</span>
+              <span>{passport.stampCount} {t.stamps}</span>
+            </div><ArrowRight aria-hidden="true" />
           </Link>
         ))}</div> : <div className={styles.empty}><span>{t.noPassport}</span><Link href={`/celebrities?locale=${locale}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
       </section>

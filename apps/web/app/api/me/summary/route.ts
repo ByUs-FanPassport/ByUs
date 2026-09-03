@@ -3,6 +3,7 @@ import { mySummarySchema } from "@/features/my/domain/my-summary";
 import { loadServerEnv } from "@/server/config/env";
 import { createBenefitRouteDependencies } from "@/server/g4/benefit-route-dependencies";
 import { createPassportReadRouteDependencies } from "@/server/g4/passport-read-route-dependencies";
+import { derivePassportProgress } from "@/server/g4/passport-growth";
 import { createLiveEventRouteDependencies } from "@/server/g3/live-event-route-dependencies";
 import { createNotificationRouteDependencies } from "@/server/notification/notification-route-dependencies";
 import { createSupabaseProfileRepository } from "@/server/profile/profile-repository";
@@ -64,6 +65,7 @@ export async function GET(request: Request): Promise<Response> {
           stampCount: passport.stampSummary.total,
           score: { level: passport.score.level },
           display: { level: passport.display.level },
+          progress: derivePassportProgress(passport.score.points, passport.score.level),
           stampSummary: passport.stampSummary,
           stamps: passport.id === representativePassport?.id
             ? representativePassport.stamps.map((stamp) => ({

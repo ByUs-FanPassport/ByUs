@@ -13,6 +13,7 @@ describe("MY summary contract", () => {
         stampCount: 2,
         score: { level: "Silver" },
         display: { level: "실버" },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
         stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 },
         stamps: [
           { type: "knowledge", issuedAt: "2026-07-21T00:00:00.000Z" },
@@ -32,6 +33,7 @@ describe("MY summary contract", () => {
         stampCount: 2,
         score: { level: "Silver" },
         display: { level: "실버" },
+        progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
         stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 },
         stamps: [
           { type: "knowledge", issuedAt: "2026-07-21T00:00:00.000Z" },

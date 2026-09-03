@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passportProgressSchema } from "../../passport/domain/passport-detail";
 import { levelSchema, stampSummarySchema, stampTypeSchema } from "../../passport/domain/passport-read-model";
 
 const safeImageUrl = z.string().min(1).refine((value) => value.startsWith("/") || value.startsWith("https://"));
@@ -12,6 +13,7 @@ export const mySummarySchema = z.object({
     stampCount: z.number().int().nonnegative(),
     score: z.object({ level: levelSchema }),
     display: z.object({ level: z.string().trim().min(1) }),
+    progress: passportProgressSchema,
     stampSummary: stampSummarySchema,
     stamps: z.array(z.object({
       type: stampTypeSchema,
