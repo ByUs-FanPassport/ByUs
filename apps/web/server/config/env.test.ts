@@ -99,6 +99,12 @@ describe("server environment", () => {
     });
   });
 
+  it("keeps Kakao fail-closed in test sink and requires complete provider configuration", () => {
+    expect(parseServerEnv(validEnv)).toMatchObject({ KAKAO_OAUTH_MODE: "test_sink" });
+    expect(() => parseServerEnv({ ...validEnv, KAKAO_OAUTH_MODE: "provider" })).toThrowError(/KAKAO_OAUTH_MODE/);
+    expect(parseServerEnv({ ...validEnv, KAKAO_OAUTH_MODE: "provider", KAKAO_CLIENT_ID: "client", KAKAO_CLIENT_SECRET: "secret", KAKAO_REDIRECT_URI: "https://dev.byus.test/api/me/connected-accounts/kakao/callback" })).toMatchObject({ KAKAO_OAUTH_MODE: "provider" });
+  });
+
   it("accepts localhost with Production data and the demo Privy Development app", () => {
     expect(parseServerEnv({
       ...validEnv,

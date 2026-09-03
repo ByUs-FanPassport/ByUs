@@ -104,6 +104,11 @@ const serverEnvSchema = publicEnvSchema
     BYUS_PASSPORT_CONTRACT_ADDRESS: evmAddress,
     BYUS_STAMP_CONTRACT_ADDRESS: evmAddress,
     BYUS_RELAYER_ADDRESS: evmAddress,
+    KAKAO_OAUTH_MODE: z.enum(["test_sink", "provider"]).default("test_sink"),
+    KAKAO_CLIENT_ID: z.string().trim().min(1).optional(),
+    KAKAO_CLIENT_SECRET: z.string().trim().min(1).optional(),
+    KAKAO_REDIRECT_URI: z.string().trim().refine(isSecureAppUrl, "must be HTTPS, except localhost").optional(),
+    KAKAO_TEST_SINK_SECRET: z.string().min(16).optional(),
   })
   .superRefine((value, context) => {
     if (value.PRIVY_APP_ID !== value.NEXT_PUBLIC_PRIVY_APP_ID) {
@@ -155,6 +160,9 @@ const serverEnvSchema = publicEnvSchema
           path: ["PRIVY_TEST_ACCOUNT_LOGIN_ENABLED"],
         });
       }
+    }
+    if (value.KAKAO_OAUTH_MODE === "provider" && (!value.KAKAO_CLIENT_ID || !value.KAKAO_CLIENT_SECRET || !value.KAKAO_REDIRECT_URI)) {
+      context.addIssue({ code: "custom", message: "provider mode requires Kakao credentials and redirect URI", path: ["KAKAO_OAUTH_MODE"] });
     }
   });
 

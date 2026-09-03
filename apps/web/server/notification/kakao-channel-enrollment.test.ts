@@ -1,0 +1,8 @@
+import {describe,expect,it,vi} from "vitest";
+vi.mock("server-only",()=>({}));
+import {signTestSinkKakaoEnrollment,SupabaseKakaoChannelEnrollmentRepository,TestSinkKakaoEnrollmentPort} from "./kakao-channel-enrollment";
+const secret="phase5-test-secret-value"; const fixture={appUserId:"owner",connectedSubject:"subject",recipientKey:"test:kakao:recipient",label:"테스트 카카오",nonce:"n1"};
+describe("Kakao test-sink destination enrollment",()=>{
+ it("requires a signed owner-bound proof and returns a server-verified destination",async()=>{const proof=signTestSinkKakaoEnrollment(secret,fixture);await expect(new TestSinkKakaoEnrollmentPort(secret).verifyDestination({appUserId:"owner",connectedSubject:"subject",verificationProof:proof})).resolves.toMatchObject({canonicalRecipientKey:"test:kakao:recipient"});await expect(new TestSinkKakaoEnrollmentPort(secret).verifyDestination({appUserId:"other",connectedSubject:"subject",verificationProof:proof})).rejects.toThrow("owner mismatch");});
+ it("persists only a proof hash in operational enrollment arguments",async()=>{const channel={id:"40000000-0000-4000-8000-000000000001",kind:"kakao",status:"eligible",consented:true,destinationLabel:"테스트 카카오",verifiedAt:"2026-09-04T00:00:00.000Z"};const rpc=vi.fn().mockResolvedValue({data:channel,error:null});const repo=new SupabaseKakaoChannelEnrollmentRepository({rpc});await repo.enroll({appUserId:"owner",proof:"signed-proof",recipientKey:"test:kakao:recipient",label:"테스트 카카오",consentVersion:"2026-09-v1"});expect(rpc).toHaveBeenCalledWith("enroll_owned_kakao_notification_channel",expect.objectContaining({p_proof_hash:expect.stringMatching(/^[0-9a-f]{64}$/)}));});
+});
