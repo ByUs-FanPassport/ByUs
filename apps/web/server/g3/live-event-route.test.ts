@@ -31,7 +31,7 @@ const payload = {
       logo: "/meriq.svg",
       websiteUrl: null,
     },
-    watch: { available: false, url: "https://www.youtube.com/watch?v=abc" },
+    watch: { available: false, provider: "youtube", url: "https://www.youtube.com/watch?v=abc" },
   },
   viewer: { authenticated: false, passport: "missing", reservation: null },
   primaryAction: "sign_in_to_reserve",

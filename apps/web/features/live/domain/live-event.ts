@@ -12,6 +12,14 @@ export const effectiveLiveStatusSchema = z.enum([
 ]);
 export type EffectiveLiveStatus = z.infer<typeof effectiveLiveStatusSchema>;
 
+export const EXTERNAL_LIVE_PROVIDERS = [
+  "youtube",
+  "instagram",
+  "tiktok",
+] as const;
+export const externalLiveProviderSchema = z.enum(EXTERNAL_LIVE_PROVIDERS);
+export type ExternalLiveProvider = z.infer<typeof externalLiveProviderSchema>;
+
 export const livePrimaryActionSchema = z.enum([
   "reservation_upcoming",
   "sign_in_to_reserve",
@@ -80,6 +88,7 @@ export const publicLiveEventSchema = z.object({
   watch: z.object({
     available: z.boolean(),
     mode: z.enum(["live", "replay", "unavailable"]).optional(),
+    provider: externalLiveProviderSchema.default("youtube"),
     url: z.string().url().startsWith("https://"),
   }),
   preview: publishedLandscapePreviewSchema.nullable().optional(),
@@ -170,7 +179,10 @@ export function parseLiveLocale(value: string): LiveLocale {
   return liveLocaleSchema.parse(value);
 }
 
-export function parseExactYouTubeUrl(value: string): string {
+export function parseExternalLiveUrl(
+  provider: ExternalLiveProvider,
+  value: string,
+): string {
   const url = new URL(value);
   if (
     url.protocol !== "https:" ||
@@ -178,19 +190,30 @@ export function parseExactYouTubeUrl(value: string): string {
     url.password ||
     url.port ||
     url.hash
-  ) throw new Error("unsafe YouTube URL");
+  ) throw new Error("unsafe external LIVE URL");
 
   const host = url.hostname.toLowerCase();
-  if (host === "youtu.be") {
+  const allowedHosts: Record<ExternalLiveProvider, readonly string[]> = {
+    youtube: ["youtube.com", "www.youtube.com", "youtu.be"],
+    instagram: ["instagram.com", "www.instagram.com"],
+    tiktok: ["tiktok.com", "www.tiktok.com"],
+  };
+  if (!allowedHosts[provider].includes(host)) {
+    throw new Error("provider URL mismatch");
+  }
+
+  if (provider === "youtube" && host === "youtu.be") {
     if (!/^\/[A-Za-z0-9_-]+$/.test(url.pathname)) throw new Error("unsafe YouTube URL");
-  } else if (host === "youtube.com" || host === "www.youtube.com") {
+  } else if (provider === "youtube") {
     const watchId = url.pathname === "/watch" ? url.searchParams.get("v") : null;
     const pathId = /^\/(?:live|embed)\/([A-Za-z0-9_-]+)$/.exec(url.pathname)?.[1];
     if (!watchId?.match(/^[A-Za-z0-9_-]+$/) && !pathId) throw new Error("unsafe YouTube URL");
-  } else {
-    throw new Error("unsafe YouTube URL");
   }
   return url.toString();
+}
+
+export function parseExactYouTubeUrl(value: string): string {
+  return parseExternalLiveUrl("youtube", value);
 }
 
 function compactCalendarTimestamp(value: string): string {

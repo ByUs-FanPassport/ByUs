@@ -28,7 +28,7 @@ const base = {
       fanCount: 12_800_000,
     },
     brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/logo.svg", websiteUrl: null },
-    watch: { available: false, mode: "unavailable" as const, url: "https://youtube.com/live/abc" },
+    watch: { available: false, mode: "unavailable" as const, provider: "youtube" as const, url: "https://youtube.com/live/abc" },
   },
   viewer: { authenticated: false, passport: "missing" as const, reservation: null },
   primaryAction: "sign_in_to_reserve" as const,

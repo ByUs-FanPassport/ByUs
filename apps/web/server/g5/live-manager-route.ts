@@ -3,6 +3,10 @@ import "server-only";
 import { z } from "zod";
 import { AuthError } from "../../features/auth/domain/auth-errors";
 import { REWARD_POLICY_V2 } from "../../features/rewards/domain/reward-policy";
+import {
+  externalLiveProviderSchema,
+  parseExternalLiveUrl,
+} from "../../features/live/domain/live-event";
 import type { AdminSession } from "../admin/admin-session-gate";
 import type { LiveManagerRepository } from "./live-manager-repository";
 import { adminCorrelationId } from "./blockchain-job-route";
@@ -29,12 +33,8 @@ const save = z
     endsAt: instant,
     reservationOpensAt: instant,
     reservationClosesAt: instant,
-    youtubeUrl: z
-      .string()
-      .url()
-      .regex(
-        /^https:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?|live\/|embed\/)|youtu\.be\/)/,
-      ),
+    liveProvider: externalLiveProviderSchema,
+    externalLiveUrl: z.string().url(),
     heroUrl: z.string().min(2).max(2000),
     titleKo: z.string().trim().min(1).max(160),
     summaryKo: z.string().trim().min(1).max(1200),
@@ -54,6 +54,15 @@ const save = z
         path: ["startsAt"],
         message: "INVALID_SCHEDULE",
       });
+    try {
+      parseExternalLiveUrl(value.liveProvider, value.externalLiveUrl);
+    } catch {
+      ctx.addIssue({
+        code: "custom",
+        path: ["externalLiveUrl"],
+        message: "INVALID_EXTERNAL_LIVE_URL",
+      });
+    }
   });
 const command = z.discriminatedUnion("action", [
   save,
@@ -170,7 +179,13 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
     };
     try {
       if (parsed.action === "save") {
-        const saved = await deps.repository.save(actor, correlationId, parsed);
+        const saved = await deps.repository.save(actor, correlationId, {
+          ...parsed,
+          externalLiveUrl: parseExternalLiveUrl(
+            parsed.liveProvider,
+            parsed.externalLiveUrl,
+          ),
+        });
         return json(saved, parsed.id ? 200 : 201);
       }
       if (parsed.action === "generate_attendance_code")

@@ -13,6 +13,8 @@ const event: LiveEventRecord = {
   endsAt: "2026-07-24T12:00:00.000Z",
   reservationOpensAt: "2026-07-20T00:00:00.000Z",
   reservationClosesAt: "2026-07-24T11:00:00.000Z",
+  liveProvider: "youtube",
+  externalLiveUrl: "https://www.youtube.com/watch?v=abc_DEF-1",
   youtubeUrl: "https://www.youtube.com/watch?v=abc_DEF-1",
   heroUrl: "/images/live/kara.jpg",
   title: "KARA LIVE — Move Again",
@@ -116,12 +118,40 @@ describe("DefaultLiveEventRepository", () => {
         effectiveStatus: "scheduled",
         productContext: "여름 뷰티 루틴",
         celebrity: { fanCount: 12_800_000 },
-        watch: { available: false },
+        watch: { available: false, provider: "youtube" },
       },
       viewer: { authenticated: false, passport: "missing", reservation: null },
       primaryAction: "sign_in_to_reserve",
     });
     expect(JSON.stringify(result)).not.toMatch(/fan.?code|actor|reason|wallet|job.?payload/i);
+  });
+
+  it.each([
+    ["youtube", "https://www.youtube.com/watch?v=abc_DEF-1"],
+    ["instagram", "https://www.instagram.com/example/live/"],
+    ["tiktok", "https://www.tiktok.com/@artist/live"],
+  ] as const)("projects a validated %s external LIVE target", async (liveProvider, externalLiveUrl) => {
+    const result = await new DefaultLiveEventRepository(
+      source({
+        findPublishedEvent: async () => ({
+          ...event,
+          liveProvider,
+          externalLiveUrl,
+        }),
+      }),
+    ).findPublishedBySlug({
+      slug: event.slug,
+      locale: "ko",
+      appUserId: null,
+      now: new Date("2026-07-24T11:30:00Z"),
+    });
+
+    expect(result?.live.watch).toMatchObject({
+      available: true,
+      mode: "live",
+      provider: liveProvider,
+      url: externalLiveUrl,
+    });
   });
 
   it("projects only the published landscape Preview contract", async () => {

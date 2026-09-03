@@ -178,7 +178,7 @@ describe("ADM-005 live manager route", () => {
     );
     expect(d.invalidatePublicContent).toHaveBeenCalledOnce();
   });
-  it("rejects a non-YouTube URL and invalid reservation ordering", async () => {
+  it("rejects a provider URL mismatch", async () => {
     const d = deps();
     const response = await createPostLiveManagerHandler(d)(
       new Request("https://byus.test/api/admin/lives", {
@@ -194,9 +194,10 @@ describe("ADM-005 live manager route", () => {
           brandId: actor.allowlistId,
           startsAt: "2026-07-21T10:00:00Z",
           endsAt: "2026-07-21T11:00:00Z",
-          reservationOpensAt: "2026-07-21T09:30:00Z",
+          reservationOpensAt: "2026-07-21T08:00:00Z",
           reservationClosesAt: "2026-07-21T09:00:00Z",
-          youtubeUrl: "https://example.com/watch",
+          liveProvider: "tiktok",
+          externalLiveUrl: "https://www.youtube.com/watch?v=abc123",
           heroUrl: "/hero.jpg",
           fanCode: "1234",
           titleKo: "제목",
@@ -210,6 +211,114 @@ describe("ADM-005 live manager route", () => {
     );
     expect(response.status).toBe(400);
     expect(d.repository.save).not.toHaveBeenCalled();
+  });
+  it("rejects invalid reservation ordering with a valid provider URL", async () => {
+    const d = deps();
+    const response = await createPostLiveManagerHandler(d)(
+      new Request("https://byus.test/api/admin/lives", {
+        method: "POST",
+        headers: { authorization: "Bearer secret", "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: "test",
+          celebrityId: actor.appUserId,
+          brandId: actor.allowlistId,
+          startsAt: "2026-07-21T10:00:00Z",
+          endsAt: "2026-07-21T11:00:00Z",
+          reservationOpensAt: "2026-07-21T09:30:00Z",
+          reservationClosesAt: "2026-07-21T09:00:00Z",
+          liveProvider: "youtube",
+          externalLiveUrl: "https://www.youtube.com/watch?v=abc123",
+          heroUrl: "/hero.jpg",
+          titleKo: "제목",
+          summaryKo: "요약",
+          heroAltKo: "이미지",
+          titleEn: "Title",
+          summaryEn: "Summary",
+          heroAltEn: "Image",
+        }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(d.repository.save).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["youtube", "https://www.youtube.com/watch?v=abc123"],
+    ["instagram", "https://www.instagram.com/example/live/"],
+    ["tiktok", "https://www.tiktok.com/@artist/live"],
+  ])("accepts a validated %s LIVE provider target", async (liveProvider, externalLiveUrl) => {
+    const save = vi.fn(async () => ({ id: "33333333-3333-4333-8333-333333333333" }));
+    const d = deps({ save });
+    const response = await createPostLiveManagerHandler(d)(
+      new Request("https://byus.test/api/admin/lives", {
+        method: "POST",
+        headers: { authorization: "Bearer secret", "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: "test",
+          celebrityId: actor.appUserId,
+          brandId: actor.allowlistId,
+          startsAt: "2026-07-21T10:00:00Z",
+          endsAt: "2026-07-21T11:00:00Z",
+          reservationOpensAt: "2026-07-21T08:00:00Z",
+          reservationClosesAt: "2026-07-21T09:00:00Z",
+          liveProvider,
+          externalLiveUrl,
+          heroUrl: "/hero.jpg",
+          titleKo: "제목",
+          summaryKo: "요약",
+          heroAltKo: "이미지",
+          titleEn: "Title",
+          summaryEn: "Summary",
+          heroAltEn: "Image",
+        }),
+      }),
+    );
+    expect(response.status).toBe(201);
+    expect(save).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(String),
+      expect.objectContaining({ liveProvider, externalLiveUrl }),
+    );
+  });
+
+  it("canonicalizes an accepted external URL before persistence", async () => {
+    const save = vi.fn(async () => ({ id: "33333333-3333-4333-8333-333333333333" }));
+    const d = deps({ save });
+    const response = await createPostLiveManagerHandler(d)(
+      new Request("https://byus.test/api/admin/lives", {
+        method: "POST",
+        headers: { authorization: "Bearer secret", "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: "test",
+          celebrityId: actor.appUserId,
+          brandId: actor.allowlistId,
+          startsAt: "2026-07-21T10:00:00Z",
+          endsAt: "2026-07-21T11:00:00Z",
+          reservationOpensAt: "2026-07-21T08:00:00Z",
+          reservationClosesAt: "2026-07-21T09:00:00Z",
+          liveProvider: "instagram",
+          externalLiveUrl: "HTTPS://WWW.INSTAGRAM.COM/example/live",
+          heroUrl: "/hero.jpg",
+          titleKo: "제목",
+          summaryKo: "요약",
+          heroAltKo: "이미지",
+          titleEn: "Title",
+          summaryEn: "Summary",
+          heroAltEn: "Image",
+        }),
+      }),
+    );
+    expect(response.status).toBe(201);
+    expect(save).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(String),
+      expect.objectContaining({
+        externalLiveUrl: "https://www.instagram.com/example/live",
+      }),
+    );
   });
   it("invalidates public content after an effective-status override succeeds", async () => {
     const d = deps();

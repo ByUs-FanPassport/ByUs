@@ -54,13 +54,15 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
       };
     },
     async save(actor, correlationId, input) {
-      const { data, error } = await db.rpc("save_admin_live_draft_v2", {
+      const { data, error } = await db.rpc("save_admin_live_draft_v3", {
         p_actor_app_user_id: actor.appUserId, p_actor_admin_allowlist_id: actor.allowlistId,
         p_correlation_id: correlationId, p_live_event_id: input.id ?? null, p_slug: input.slug,
         p_celebrity_id: input.celebrityId, p_brand_id: input.brandId,
         p_starts_at: input.startsAt, p_ends_at: input.endsAt,
         p_reservation_opens_at: input.reservationOpensAt, p_reservation_closes_at: input.reservationClosesAt,
-        p_youtube_url: input.youtubeUrl, p_hero_url: input.heroUrl,
+        p_live_provider: input.liveProvider,
+        p_external_live_url: input.externalLiveUrl,
+        p_hero_url: input.heroUrl,
         p_title_ko: input.titleKo, p_summary_ko: input.summaryKo, p_hero_alt_ko: input.heroAltKo,
         p_title_en: input.titleEn, p_summary_en: input.summaryEn, p_hero_alt_en: input.heroAltEn,
       });

@@ -6,8 +6,9 @@ import {
   deriveEffectiveLiveStatus,
   deriveLivePrimaryAction,
   liveEventResponseSchema,
-  parseExactYouTubeUrl,
+  parseExternalLiveUrl,
   type EffectiveLiveStatus,
+  type ExternalLiveProvider,
   type LiveEventResponse,
   type LiveLocale,
   type LiveReservationSummary,
@@ -45,6 +46,8 @@ export interface LiveEventRecord {
   endsAt: string;
   reservationOpensAt: string;
   reservationClosesAt: string;
+  liveProvider: ExternalLiveProvider;
+  externalLiveUrl: string;
   youtubeUrl: string;
   heroUrl: string;
   title: string;
@@ -168,7 +171,10 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       overrides: record.overrides,
       now: input.now,
     });
-    const watchUrl = parseExactYouTubeUrl(record.youtubeUrl);
+    const watchUrl = parseExternalLiveUrl(
+      record.liveProvider,
+      record.externalLiveUrl,
+    );
     const response: LiveEventResponse = {
       live: {
         id: record.id,
@@ -197,6 +203,7 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
         watch: {
           available: effectiveStatus === "live" || effectiveStatus === "ended",
           mode: effectiveStatus === "live" ? "live" : effectiveStatus === "ended" ? "replay" : "unavailable",
+          provider: record.liveProvider,
           url: watchUrl,
         },
         preview: record.preview
@@ -248,7 +255,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
   async findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null> {
     const { data: event, error: eventError } = await this.database
       .from("live_events")
-      .select("id, slug, celebrity_id, brand_id, content_status, starts_at, ends_at, reservation_opens_at, reservation_closes_at, youtube_url, approved_hero_url")
+      .select("id, slug, celebrity_id, brand_id, content_status, starts_at, ends_at, reservation_opens_at, reservation_closes_at, live_provider, external_live_url, youtube_url, approved_hero_url")
       .eq("slug", slug)
       .eq("publication_status", "published")
       .maybeSingle();
@@ -288,6 +295,8 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
       endsAt: event.ends_at,
       reservationOpensAt: event.reservation_opens_at,
       reservationClosesAt: event.reservation_closes_at,
+      liveProvider: event.live_provider ?? "youtube",
+      externalLiveUrl: event.external_live_url ?? event.youtube_url,
       youtubeUrl: event.youtube_url,
       heroUrl: event.approved_hero_url,
       title: localization.title,

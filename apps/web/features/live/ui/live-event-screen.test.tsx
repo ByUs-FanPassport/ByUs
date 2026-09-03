@@ -93,7 +93,7 @@ function payload(primaryAction = "reserve", withReservation = false) {
         fanCount: 12_800_000,
       },
       brand: { slug: "nualeaf", name: "NUALEAF", logo: "/images/brand.png", websiteUrl: "https://example.com" },
-      watch: { available: false, url: "https://youtube.com/live/abc123" },
+      watch: { available: false, provider: "youtube", url: "https://youtube.com/live/abc123" },
     },
     viewer: { authenticated, passport: "active", reservation: withReservation ? reservation : null },
     primaryAction,
@@ -325,21 +325,21 @@ describe("LiveEventScreen", () => {
     expect(screen.queryByText(/취소하기/)).not.toBeInTheDocument();
   });
 
-  it("opens YouTube safely and stores the exact fan-code return route", async () => {
+  it("opens an external LIVE safely and stores the exact fan-code return route", async () => {
     const watchPayload = payload("watch_live", true);
     watchPayload.live.effectiveStatus = "live";
-    watchPayload.live.watch = { available: true, url: "https://youtube.com/live/abc123" };
+    watchPayload.live.watch = { available: true, provider: "instagram", url: "https://www.instagram.com/example/live/" };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(watchPayload), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     const watch = await screen.findByRole("link", {
-      name: "LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
+      name: "LIVE 보러가기: KARA × NUALEAF LIVE, 새 창",
     });
     expect(watch).toHaveAttribute("target", "_blank");
     expect(watch).toHaveAttribute("rel", "noopener noreferrer");
     expect(watch).toHaveAccessibleName(
-      "LIVE 시청하기: KARA × NUALEAF LIVE, 새 창",
+      "LIVE 보러가기: KARA × NUALEAF LIVE, 새 창",
     );
-    expect(watch).toHaveAccessibleDescription("YouTube 새 창에서 열려요.");
+    expect(watch).toHaveAccessibleDescription("외부 LIVE가 새 창에서 열려요.");
     expect(watch.closest("[data-live-primary-action-slot]")).not.toBeNull();
     fireEvent.click(watch);
     await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe("/live/kara-nualeaf?locale=ko#fan-code"));
@@ -367,7 +367,7 @@ describe("LiveEventScreen", () => {
   it("posts the normalized Fan Code with an idempotency header and shows Attendance Stamp +3", async () => {
     const livePayload = payload("watch_live");
     livePayload.live.effectiveStatus = "live";
-    livePayload.live.watch = { available: true, url: "https://youtube.com/live/abc123" };
+    livePayload.live.watch = { available: true, provider: "youtube", url: "https://youtube.com/live/abc123" };
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify(livePayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(attendanceResult), { status: 200 }));

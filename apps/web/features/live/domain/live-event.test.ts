@@ -5,6 +5,7 @@ import {
   deriveEffectiveLiveStatus,
   deriveLivePrimaryAction,
   liveEventResponseSchema,
+  parseExternalLiveUrl,
   parseExactYouTubeUrl,
   type LiveViewer,
 } from "./live-event";
@@ -46,6 +47,39 @@ describe("live event domain", () => {
     expect(() => parseExactYouTubeUrl("https://youtube.com:444/watch?v=abc")).toThrow();
   });
 
+  it("validates provider-specific external LIVE URLs", () => {
+    expect(
+      parseExternalLiveUrl(
+        "instagram",
+        "https://www.instagram.com/example/live/",
+      ),
+    ).toContain("instagram.com");
+    expect(
+      parseExternalLiveUrl("tiktok", "https://www.tiktok.com/@artist/live"),
+    ).toContain("tiktok.com");
+    expect(() =>
+      parseExternalLiveUrl("tiktok", "https://youtube.com/watch?v=x"),
+    ).toThrow("provider URL mismatch");
+    expect(() =>
+      parseExternalLiveUrl("youtube", "javascript:alert(1)"),
+    ).toThrow();
+    expect(() =>
+      parseExternalLiveUrl("instagram", "https://user@instagram.com/live"),
+    ).toThrow();
+    expect(() =>
+      parseExternalLiveUrl("tiktok", "https://tiktok.com:444/@artist/live"),
+    ).toThrow();
+    expect(() =>
+      parseExternalLiveUrl("instagram", "https://instagram.com/live#fragment"),
+    ).toThrow();
+    expect(() =>
+      parseExternalLiveUrl("youtube", "https://youtube.com/watch?foo=bar"),
+    ).toThrow();
+    expect(() =>
+      parseExternalLiveUrl("youtube", "https://youtube.com/live/id/extra"),
+    ).toThrow();
+  });
+
   it("builds a calendar URL containing UTC dates and canonical ByUs live URL", () => {
     const result = new URL(createGoogleCalendarUrl({ canonicalAppUrl: "https://byus.example", liveSlug: "kara-move-again", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00Z", endsAt: "2026-07-24T12:00:00Z", description: "함께 시청해요" }));
     expect(result.origin).toBe("https://calendar.google.com");
@@ -74,7 +108,7 @@ describe("live event domain", () => {
           fanCount: 6_800_000,
         },
         brand: { slug: "byus", name: "ByUs", logo: "/logo.svg", websiteUrl: null },
-        watch: { available: false, mode: "unavailable", url: "https://youtube.com/live/abc123" },
+        watch: { available: false, mode: "unavailable", provider: "youtube", url: "https://youtube.com/live/abc123" },
         preview: {
           kind: "artist_teaser",
           durationMs: 4_000,
