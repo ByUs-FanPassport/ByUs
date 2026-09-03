@@ -25,4 +25,27 @@ describe("ADM-005 Phase 1 reward settings UI contract", () => {
     expect(source).toContain('selected.effectiveStatus === "ended"');
     expect(source).toContain("Mission Ticket 지급은 다음 Phase에서 연결됩니다.");
   });
+
+  it("uses explicit KST conversions and labels for every datetime-local control", () => {
+    expect(source).toContain("toKstDateTimeLocal");
+    expect(source).toContain("kstDateTimeLocalToInstant");
+    for (const field of [
+      "reservationOpensAt", "reservationClosesAt", "startsAt", "endsAt",
+      "attendanceValidFrom", "attendanceValidUntil", "effectiveFrom", "effectiveUntil",
+    ]) expect(source).toContain(field);
+    expect(source).not.toContain("(UTC)");
+    expect(source).not.toContain("UTC 기준 ISO 시각");
+    expect(source).toContain("KST");
+  });
+
+  it("uses audited optimistic rescheduling for published LIVE while retaining draft-only save", () => {
+    expect(source).toContain('action: "reschedule"');
+    expect(source).toContain("expectedRevision:selected.scheduleRevision");
+    expect(source).toContain("reason:");
+    expect(source).toContain('action: "save"');
+    expect(source).toContain('selected.publicationStatus === "draft"');
+    expect(source).toContain("selected.everPublishedAt");
+    expect(source).toContain("validFrom: selected.attendanceValidFrom");
+    expect(source).toContain("disabled={Boolean(selected.everPublishedAt)}");
+  });
 });

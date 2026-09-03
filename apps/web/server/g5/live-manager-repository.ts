@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { LiveScheduleRevision } from "../../features/live/domain/live-schedule";
 
 export type LiveManagerActor = { appUserId: string; allowlistId: string };
 export type LiveManagerRepository = {
@@ -19,6 +20,7 @@ export type LiveManagerRepository = {
   ): Promise<void>;
   saveRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
   publishRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
+  reschedule(actor: LiveManagerActor, correlationId: string, input: LiveScheduleRevision): Promise<{ revisionId: string; revision: number }>;
 };
 
 type RpcClient = Pick<SupabaseClient, "rpc">;
@@ -134,6 +136,23 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
         p_correlation_id: correlationId,
         p_live_event_id: input.liveEventId,
         p_expected_revision: input.expectedRevision,
+      });
+      return assert(data, error) as { revisionId: string; revision: number };
+    },
+    async reschedule(actor, correlationId, input) {
+      const { data, error } = await db.rpc("reschedule_admin_live", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_expected_revision: input.expectedRevision,
+        p_reason: input.reason,
+        p_reservation_opens_at: input.reservationOpensAt,
+        p_reservation_closes_at: input.reservationClosesAt,
+        p_starts_at: input.startsAt,
+        p_ends_at: input.endsAt,
+        p_attendance_valid_from: input.attendanceValidFrom,
+        p_attendance_valid_until: input.attendanceValidUntil,
       });
       return assert(data, error) as { revisionId: string; revision: number };
     },

@@ -7,6 +7,10 @@ import {
   externalLiveProviderSchema,
   parseExternalLiveUrl,
 } from "../../features/live/domain/live-event";
+import {
+  isLiveWindowOrdered,
+  liveScheduleRevisionSchema,
+} from "../../features/live/domain/live-schedule";
 import type { AdminSession } from "../admin/admin-session-gate";
 import type { LiveManagerRepository } from "./live-manager-repository";
 import { adminCorrelationId } from "./blockchain-job-route";
@@ -44,11 +48,7 @@ const save = z
     heroAltEn: z.string().trim().min(1).max(300),
   })
   .superRefine((value, ctx) => {
-    const open = Date.parse(value.reservationOpensAt),
-      close = Date.parse(value.reservationClosesAt),
-      start = Date.parse(value.startsAt),
-      end = Date.parse(value.endsAt);
-    if (!(open < close && close <= start && start < end))
+    if (!isLiveWindowOrdered(value))
       ctx.addIssue({
         code: "custom",
         path: ["startsAt"],
@@ -64,8 +64,12 @@ const save = z
       });
     }
   });
+const reschedule = liveScheduleRevisionSchema.safeExtend({
+  action: z.literal("reschedule"),
+});
 const command = z.discriminatedUnion("action", [
   save,
+  reschedule,
   z.object({
     action: z.literal("save_reward_settings"),
     liveEventId: uuid,
@@ -194,6 +198,15 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
         return json(await deps.repository.saveRewardSettings(actor, correlationId, parsed), 200);
       if (parsed.action === "publish_reward_settings")
         return json(await deps.repository.publishRewardSettings(actor, correlationId, parsed), 200);
+      if (parsed.action === "reschedule") {
+        const revision = await deps.repository.reschedule(
+          actor,
+          correlationId,
+          parsed,
+        );
+        deps.invalidatePublicContent();
+        return json(revision, 200);
+      }
       if (parsed.action === "publish" || parsed.action === "unpublish") {
         await deps.repository.publication(
           actor,
@@ -244,7 +257,7 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       const conflict =
-        /not found|immutable|transition|overlap|published|requires|draft|stale/i.test(
+        /not found|immutable|transition|overlap|published|requires|draft|stale|started|ended|cancelled|archived|attendance history|status override|effectively scheduled|unchanged/i.test(
           message,
         );
       return json(

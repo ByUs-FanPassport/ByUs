@@ -28,6 +28,7 @@ function deps(
       previewStatus: vi.fn(async () => undefined),
       saveRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
       publishRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
+      reschedule: vi.fn(async () => ({ revisionId: "77777777-7777-4777-8777-777777777777", revision: 3 })),
       ...overrides,
     },
   };
@@ -342,4 +343,86 @@ describe("ADM-005 live manager route", () => {
     expect(response.status).toBe(201);
     expect(d.invalidatePublicContent).toHaveBeenCalledOnce();
   });
+
+  it("passes an audited optimistic schedule revision with trusted actor and correlation", async () => {
+    const reschedule = vi.fn(async () => ({
+      revisionId: "77777777-7777-4777-8777-777777777777",
+      revision: 3,
+    }));
+    const d = deps({ reschedule });
+    const correlationId = "55555555-5555-4555-8555-555555555555";
+    const payload = {
+      action: "reschedule",
+      liveEventId: "33333333-3333-4333-8333-333333333333",
+      expectedRevision: 2,
+      reason: "Artist travel requires a later broadcast window",
+      reservationOpensAt: "2026-09-09T01:00:00.000Z",
+      reservationClosesAt: "2026-09-10T09:00:00.000Z",
+      startsAt: "2026-09-10T10:00:00.000Z",
+      endsAt: "2026-09-10T11:00:00.000Z",
+      attendanceValidFrom: "2026-09-10T09:55:00.000Z",
+      attendanceValidUntil: "2026-09-10T11:05:00.000Z",
+    };
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST",
+      headers: { authorization: "Bearer secret", "content-type": "application/json", "x-correlation-id": correlationId },
+      body: JSON.stringify(payload),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(reschedule).toHaveBeenCalledWith(
+      { appUserId: actor.appUserId, allowlistId: actor.allowlistId },
+      correlationId,
+      expect.objectContaining({ ...payload, action: "reschedule" }),
+    );
+    expect(d.invalidatePublicContent).toHaveBeenCalledOnce();
+    expect(await response.json()).toEqual({ revisionId: "77777777-7777-4777-8777-777777777777", revision: 3 });
+  });
+
+  it.each([
+    ["missing expected revision", { expectedRevision: undefined }],
+    ["zero expected revision", { expectedRevision: 0 }],
+    ["blank reason", { reason: "   " }],
+    ["invalid LIVE window", { endsAt: "2026-09-10T10:00:00.000Z" }],
+    ["invalid attendance window", { attendanceValidUntil: "2026-09-10T09:55:00.000Z" }],
+  ])("rejects a reschedule with %s before the repository boundary", async (_case, override) => {
+    const d = deps();
+    const body = {
+      action: "reschedule",
+      liveEventId: "33333333-3333-4333-8333-333333333333",
+      expectedRevision: 2,
+      reason: "Artist travel requires a later broadcast window",
+      reservationOpensAt: "2026-09-09T01:00:00.000Z",
+      reservationClosesAt: "2026-09-10T09:00:00.000Z",
+      startsAt: "2026-09-10T10:00:00.000Z",
+      endsAt: "2026-09-10T11:00:00.000Z",
+      attendanceValidFrom: "2026-09-10T09:55:00.000Z",
+      attendanceValidUntil: "2026-09-10T11:05:00.000Z",
+      ...override,
+    };
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST", headers: { authorization: "Bearer secret", "content-type": "application/json" }, body: JSON.stringify(body),
+    }));
+    expect(response.status).toBe(400);
+    expect(d.repository.reschedule).not.toHaveBeenCalled();
+  });
+
+  it.each(["stale schedule revision", "LIVE has started", "LIVE has ended", "LIVE is cancelled", "LIVE is archived", "attendance history exists", "incompatible status override"])(
+    "maps repository rejection '%s' to a conflict",
+    async (message) => {
+      const d = deps({ reschedule: vi.fn(async () => { throw new Error(message); }) });
+      const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+        method: "POST", headers: { authorization: "Bearer secret", "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "reschedule", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 2,
+          reason: "Artist travel requires a later broadcast window", reservationOpensAt: "2026-09-09T01:00:00.000Z",
+          reservationClosesAt: "2026-09-10T09:00:00.000Z", startsAt: "2026-09-10T10:00:00.000Z",
+          endsAt: "2026-09-10T11:00:00.000Z", attendanceValidFrom: "2026-09-10T09:55:00.000Z",
+          attendanceValidUntil: "2026-09-10T11:05:00.000Z",
+        }),
+      }));
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({ error: { code: "LIVE_COMMAND_REJECTED" } });
+    },
+  );
 });
