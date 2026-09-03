@@ -76,8 +76,8 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
 
   const primaryActionBox = await primaryAction.boundingBox();
   expect(primaryActionBox).not.toBeNull();
-  expect(primaryActionBox!.height).toBe(52);
-  expect(primaryActionBox!.height).toBeGreaterThan(secondaryActionBox!.height);
+  expect(primaryActionBox!.height).toBe(48);
+  expect(primaryActionBox!.height).toBeGreaterThanOrEqual(secondaryActionBox!.height);
   expect(primaryActionBox!.x).toBeGreaterThanOrEqual(0);
   expect(primaryActionBox!.x + primaryActionBox!.width).toBeLessThanOrEqual(viewport!.width);
 

@@ -234,6 +234,7 @@ export function LiveHeroCarousel({
                     className={styles.primaryButton}
                     emphasis="primary"
                     locale={locale}
+                    pendingHref={`${detailHref}?locale=${locale}`}
                     input={{
                       sourcePath: detailHref,
                       sourceQuery: `?locale=${locale}`,

@@ -66,6 +66,7 @@ export function AuthIntentLink({
   ariaDescribedBy,
   emphasis,
   focusKey,
+  pendingHref,
 }: {
   input: CreateAuthIntentInput;
   locale: "ko" | "en";
@@ -75,16 +76,17 @@ export function AuthIntentLink({
   ariaDescribedBy?: string;
   emphasis?: "primary";
   focusKey?: string;
+  pendingHref?: string;
 }) {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
   const authState = { ready, authenticated };
-  const href = resolveAuthIntentHref(input, locale, authState);
+  const href = ready ? resolveAuthIntentHref(input, locale, authState) : pendingHref;
 
   function begin(event: MouseEvent<HTMLAnchorElement>) {
     if (event.defaultPrevented) return;
     if (!ready) {
-      event.preventDefault();
+      if (!pendingHref) event.preventDefault();
       return;
     }
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -108,7 +110,7 @@ export function AuthIntentLink({
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedBy}
       aria-busy={!ready || undefined}
-      aria-disabled={!ready || undefined}
+      aria-disabled={(!ready && !pendingHref) || undefined}
       data-fan-action-emphasis={emphasis}
       data-overlay-focus-key={focusKey}
       onClick={begin}

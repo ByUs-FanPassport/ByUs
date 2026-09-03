@@ -9,7 +9,7 @@ test("document language follows direct load, client navigation, reload, and hist
   await page.getByRole("link", { name: "언어 선택, 현재 한국어" }).click();
   await expect(page).toHaveURL(/locale=en/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "en_US");
+  await expect(page.locator('meta[property="og:locale"][content="en_US"]')).toHaveCount(1);
 
   await page.goBack({ waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/locale=ko/);

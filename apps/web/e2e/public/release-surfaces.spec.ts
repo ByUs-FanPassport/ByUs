@@ -102,6 +102,9 @@ for (const surface of surfaces) {
     expect(response?.status()).toBeLessThan(400);
     await expect(page.locator('main[aria-busy="true"]')).toHaveCount(0);
     await expect(page.getByRole("main")).toBeVisible();
+    if (surface.screen === "FAN-004") {
+      await expect(page.getByRole("button", { name: "Google로 계속하기" })).toBeVisible({ timeout: 10_000 });
+    }
 
     const viewport = page.viewportSize();
     expect(viewport?.width).toBe(testInfo.project.name.endsWith("-360") ? 360 : 1440);

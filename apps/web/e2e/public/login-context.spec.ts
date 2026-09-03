@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("FAN-004 opens over the initiating fan page and restores it on Escape", async ({ page }) => {
   await page.goto("/c/katseye");
   const trigger = page
-    .getByRole("region", { name: "KATSEYE Fan Passport" })
+    .getByRole("region", { name: "KATSEYE" })
     .getByRole("link", { name: "팬 인증하기" });
   await trigger.click();
 

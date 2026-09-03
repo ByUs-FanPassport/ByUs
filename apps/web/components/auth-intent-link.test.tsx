@@ -104,6 +104,23 @@ describe("AuthIntentLink", () => {
     expect(sessionStorage).toHaveLength(0);
   });
 
+  it("allows an explicitly safe source fallback while Privy restores", () => {
+    ready = false;
+    render(
+      <AuthIntentLink locale="ko" input={input} pendingHref="/c/kara?locale=ko">
+        KARA 상세보기
+      </AuthIntentLink>,
+    );
+
+    const link = screen.getByRole("link", { name: "KARA 상세보기" });
+    expect(link).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(link).toHaveAttribute("aria-busy", "true");
+    expect(link).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(link);
+    expect(push).not.toHaveBeenCalled();
+    expect(sessionStorage).toHaveLength(0);
+  });
+
   it("routes an authenticated action directly with its durable intent", () => {
     authenticated = true;
     render(
