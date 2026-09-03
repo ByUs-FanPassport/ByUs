@@ -42,7 +42,7 @@ export const credentialMintStatusSchema = z.enum([
 ]);
 
 const isoTimestamp = z.string().datetime({ offset: true });
-const safeAssetUrl = z.string().min(1).refine((value) => {
+export const safeAssetUrlSchema = z.string().min(1).refine((value) => {
   if (value.startsWith("/") && !value.startsWith("//")) return true;
   try {
     const url = new URL(value);
@@ -56,8 +56,8 @@ const publishedLandscapePreviewSchema = z.object({
   kind: livePreviewKindSchema,
   durationMs: z.number().int().min(3_000).max(5_000),
   landscape: z.object({
-    videoUrl: safeAssetUrl,
-    posterUrl: safeAssetUrl,
+    videoUrl: safeAssetUrlSchema,
+    posterUrl: safeAssetUrlSchema,
   }),
 });
 
@@ -72,17 +72,17 @@ export const publicLiveEventSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1200),
   productContext: z.string().trim().min(1).max(1000),
-  heroImage: z.object({ url: safeAssetUrl, alt: z.string().trim().min(1).max(300) }),
+  heroImage: z.object({ url: safeAssetUrlSchema, alt: z.string().trim().min(1).max(300) }),
   celebrity: z.object({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     name: z.string().trim().min(1).max(120),
-    image: safeAssetUrl,
+    image: safeAssetUrlSchema,
     fanCount: z.number().int().min(0),
   }),
   brand: z.object({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     name: z.string().trim().min(1).max(120),
-    logo: safeAssetUrl,
+    logo: safeAssetUrlSchema,
     websiteUrl: z.string().url().startsWith("https://").nullable(),
   }),
   watch: z.object({

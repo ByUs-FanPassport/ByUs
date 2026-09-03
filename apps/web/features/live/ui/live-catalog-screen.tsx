@@ -37,6 +37,7 @@ const copy = {
     reserved: "예약 확인하기",
     watch: "다시보기",
     retry: "내 예약 상태 다시 불러오기",
+    calendar: "LIVE 캘린더",
   },
   en: {
     title: "All LIVE events",
@@ -56,6 +57,7 @@ const copy = {
     reserved: "Reserved",
     watch: "Watch replay",
     retry: "Reload my reservation status",
+    calendar: "LIVE calendar",
   },
 } as const;
 
@@ -227,6 +229,10 @@ export function LiveCatalogScreen({
           <h1>{t.title}</h1>
           <p>{t.intro}</p>
         </header>
+        <Link className={styles.calendarLink} href={`/live/calendar?locale=${locale}` as Route}>
+          <CalendarDays aria-hidden="true" />
+          {t.calendar}
+        </Link>
         {failed ? <button className={styles.retry} onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button> : null}
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
