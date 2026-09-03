@@ -1,8 +1,3 @@
-alter type public.notification_kind add value if not exists 'benefit_won';
-alter type public.notification_kind add value if not exists 'recipient_information_required';
-alter type public.notification_kind add value if not exists 'fulfillment_meaningful_update';
-alter type public.notification_kind add value if not exists 'collectible_claim_available';
-alter type public.notification_kind add value if not exists 'collectible_claim_expiring';
 alter table public.fan_notifications drop constraint fan_notifications_source_shape;
 alter table public.fan_notifications add constraint fan_notifications_source_shape check(
  (kind in('live_reserved','live_24h','live_10m','live_changed','live_cancelled','survey_reminder','collectible_claim_available','collectible_claim_expiring')and live_event_id is not null and benefit_id is null)

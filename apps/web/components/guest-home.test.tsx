@@ -448,29 +448,10 @@ describe("canonical 03 guest home", () => {
       json: async () => ({
         summary: {
           profile: { nickname: "카밀리아" },
-          passports: [{
-            id: "11111111-1111-4111-8111-111111111111",
-            celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
-            issuedAt: "2026-07-21T00:00:00.000Z",
-            stampCount: 2,
-            score: { level: "Silver" },
-            display: { level: "실버" },
-            progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
-            stampSummary: { knowledge: 1, reservation: 1, attendance: 0, survey: 0, total: 2 },
-            stamps: [
-              { type: "knowledge", issuedAt: "2026-07-21T00:00:00.000Z" },
-              { type: "reservation", issuedAt: "2026-07-22T00:00:00.000Z" },
-            ],
-          }],
-          reservations: [{
-            id: "22222222-2222-4222-8222-222222222222",
-            slug: "kara-live",
-            title: "KARA LIVE",
-            startsAt: "2026-07-31T11:00:00.000Z",
-            status: "scheduled",
-            celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
-          }],
-          availableBenefitCount: 0,
+          creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: null }],
+          live: { upcoming: [{ id: "22222222-2222-4222-8222-222222222222", slug: "kara-live", title: "KARA LIVE", startsAt: "2026-07-31T11:00:00.000Z", effectiveStatus: "scheduled", attended: false }], history: [] },
+          rewards: { availableCount: 0, entries: 0, items: [] },
+          collection: { passportCount: 1, stampCount: 2, collectibleCount: 0, recent: [] },
           unreadNotificationCount: 0,
         },
       }),
@@ -480,10 +461,8 @@ describe("canonical 03 guest home", () => {
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("img", {
-      name: /^KARA Fan Passport, 실버, Stamp 2개,/,
-    })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: /KARA Fan Passport 상세 보기, 실버, Stamp 2개/ })).toHaveLength(2);
+    expect(screen.getAllByRole("heading", { name: "KARA Fan Passport" })).toHaveLength(2);
+    expect(screen.getAllByText("Silver · 15 Score")).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
 
@@ -495,11 +474,9 @@ describe("canonical 03 guest home", () => {
         ok: true,
         json: async () => ({
           summary: {
-            profile: { nickname: null },
-            passports: [],
-            reservations: [],
-            availableBenefitCount: 0,
-            unreadNotificationCount: 0,
+            profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] },
+            rewards: { availableCount: 0, entries: 0, items: [] },
+            collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
           },
         }),
       });
@@ -525,39 +502,14 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: /팬 인증할 최애 찾기/ })).toHaveLength(2);
   });
 
-  it("limits Passport artwork to the latest nine actual stamps while announcing the total", async () => {
+  it("keeps the authenticated home summary bounded while full collection detail stays in MY", async () => {
     privy.authenticated = true;
-    const stamps = Array.from({ length: 10 }, (_, index) => ({
-      type: (["knowledge", "reservation", "attendance", "survey"] as const)[index % 4],
-      issuedAt: `2026-07-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
-    }));
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        summary: {
-          profile: { nickname: "Fan" },
-          passports: [{
-            id: "11111111-1111-4111-8111-111111111111",
-            celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" },
-            issuedAt: "2026-07-21T00:00:00.000Z",
-            stampCount: 10,
-            score: { level: "Gold" },
-            display: { level: "골드" },
-            progress: { currentScore: 50, currentLevel: "Gold", nextLevel: "Platinum", nextThreshold: 120, remainingPoints: 70, percent: 42, maxed: false },
-            stampSummary: { knowledge: 3, reservation: 3, attendance: 2, survey: 2, total: 10 },
-            stamps,
-          }],
-          reservations: [],
-          availableBenefitCount: 0,
-          unreadNotificationCount: 0,
-        },
-      }),
-    }));
-
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ summary: {
+      profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
+      live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 10, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    } }) }));
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
-    expect(await screen.findAllByRole("img", {
-      name: /^KARA Fan Passport, 골드, 전체 10개 중 최근 9개 표시,/,
-    })).toHaveLength(2);
-    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
-  });
-});
+    expect(await screen.findAllByText("Gold · 50 Score")).toHaveLength(2);
+    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(0);
+    expect(screen.getAllByRole("link", { name: /전체 Passport 보기/ })).toHaveLength(2);
+  });});

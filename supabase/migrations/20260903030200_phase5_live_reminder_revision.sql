@@ -1,7 +1,4 @@
 -- Revision-aware reservation communication without changing the canonical 24h/10m schedule.
-alter type public.notification_kind add value if not exists 'live_reserved';
-alter type public.notification_kind add value if not exists 'live_changed';
-alter type public.notification_kind add value if not exists 'live_cancelled';
 alter table public.fan_notifications add column superseded_at timestamptz,add column superseded_by_revision integer;
 alter table public.fan_notifications drop constraint fan_notifications_source_shape;
 alter table public.fan_notifications add constraint fan_notifications_source_shape check(
