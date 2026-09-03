@@ -85,7 +85,13 @@ export function projectNotificationRow(
     locale === "ko" ? "새 혜택" : "New benefit",
   );
   const copy =
-    kind === "live_24h"
+    kind === "live_reserved"
+      ? [locale === "ko" ? `${liveTitle} 예약이 완료됐어요` : `${liveTitle} is reserved`, locale === "ko" ? "예약한 LIVE 알림을 보내드릴게요." : "We'll remind you about this LIVE."]
+      : kind === "live_changed"
+        ? [locale === "ko" ? `${liveTitle} 일정이 변경됐어요` : `${liveTitle} schedule changed`, locale === "ko" ? "변경된 일정을 확인해 주세요." : "Review the updated schedule."]
+        : kind === "live_cancelled"
+          ? [locale === "ko" ? `${liveTitle}가 취소됐어요` : `${liveTitle} was cancelled`, locale === "ko" ? "예약한 LIVE가 취소되었습니다." : "Your reserved LIVE was cancelled."]
+          : kind === "live_24h"
       ? [
           locale === "ko"
             ? `${liveTitle}, 24시간 전이에요`

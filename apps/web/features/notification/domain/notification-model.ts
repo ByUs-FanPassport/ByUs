@@ -3,6 +3,9 @@ import { z } from "zod";
 export const notificationKindSchema = z.enum([
   "live_24h",
   "live_10m",
+  "live_reserved",
+  "live_changed",
+  "live_cancelled",
   "survey_reminder",
   "benefit_available",
   "level_up",
