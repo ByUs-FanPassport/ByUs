@@ -1,0 +1,28 @@
+-- One owner-scoped operational snapshot for the unified MY hub.
+create function public.get_owned_my_fan_activity(p_app_user_id uuid,p_locale public.content_locale,p_as_of timestamptz default pg_catalog.now())returns jsonb language sql stable security definer set search_path='' as $$
+with active_policy as materialized(select policy_version from public.reward_policy_activation where singleton),relationships as materialized(
+ select celebrity_id,'passport'::text relationship from public.fan_passports where app_user_id=p_app_user_id
+ union select celebrity_id,'first_reaction_only' from public.fan_reactions r where app_user_id=p_app_user_id and not exists(select 1 from public.fan_passports p where p.app_user_id=r.app_user_id and p.celebrity_id=r.celebrity_id)
+),creator_rows as materialized(
+ select c.id celebrity_id,c.slug,l.name,c.image_url,r.relationship,p.id passport_id,coalesce(s.score,0)score,
+ public.get_fan_effective_tier_for_score(p_app_user_id,c.id,coalesce(s.score,0),(select policy_version from active_policy))tier,
+ public.get_fan_ticket_balance(p_app_user_id,c.id)ticket_balance,fr.completed_at,fr.tx_hash
+ from relationships r join public.celebrities c on c.id=r.celebrity_id join public.celebrity_localizations l on l.celebrity_id=c.id and l.locale=p_locale
+ left join public.fan_passports p on p.app_user_id=p_app_user_id and p.celebrity_id=c.id
+ left join lateral(select sum(points)::integer score from public.fan_score_ledger x where x.app_user_id=p_app_user_id and x.celebrity_id=c.id)s on true
+ left join public.fan_reactions fr on fr.app_user_id=p_app_user_id and fr.celebrity_id=c.id
+),live_rows as materialized(
+ select e.id,e.slug,l.title,e.starts_at,public.live_effective_status_at(e.id,p_as_of)::text status,exists(select 1 from public.live_attendances a where a.app_user_id=p_app_user_id and a.live_event_id=e.id)attended
+ from public.live_reservations r join public.live_events e on e.id=r.live_event_id join public.live_event_localizations l on l.live_event_id=e.id and l.locale=p_locale where r.app_user_id=p_app_user_id
+),rewards as materialized(select public.get_owned_benefit_rewards(p_app_user_id)items)
+select jsonb_build_object(
+ 'profile',jsonb_build_object('nickname',(select nickname from public.user_profiles where app_user_id=p_app_user_id)),
+ 'creators',coalesce((select jsonb_agg(jsonb_build_object('celebrity',jsonb_build_object('slug',x.slug,'name',x.name,'image',x.image_url),'relationship',x.relationship,'passport',case when x.passport_id is null then null else jsonb_build_object('id',x.passport_id,'tier',x.tier,'score',x.score,'remainingToNextTier',coalesce((select greatest(m.minimum_score-x.score,0)from public.reward_policy_tier_milestones m where m.policy_version=(select policy_version from active_policy)and m.tier_rank>public.fan_level_rank(x.tier)order by m.tier_rank limit 1),0))end,'ticketBalance',x.ticket_balance,'firstReaction',case when x.completed_at is null then null else jsonb_build_object('completedAt',x.completed_at,'txHash',x.tx_hash)end)order by x.name,x.celebrity_id)from creator_rows x),'[]'::jsonb),
+ 'live',jsonb_build_object('upcoming',coalesce((select jsonb_agg(jsonb_build_object('id',x.id,'slug',x.slug,'title',x.title,'startsAt',x.starts_at,'effectiveStatus',x.status,'attended',x.attended)order by x.starts_at,x.id)from live_rows x where x.status in('scheduled','live')),'[]'::jsonb),'history',coalesce((select jsonb_agg(jsonb_build_object('id',x.id,'slug',x.slug,'title',x.title,'startsAt',x.starts_at,'effectiveStatus',x.status,'attended',x.attended)order by x.starts_at desc,x.id desc)from live_rows x where x.status in('ended','cancelled')),'[]'::jsonb)),
+ 'rewards',jsonb_build_object('availableCount',(select count(*)from jsonb_array_elements((select items from rewards))r where r->>'winnerId'is not null and r->>'status'not in('digital_delivered','shipping_completed','pickup_completed')),'entries',(select count(*)from public.benefit_ticket_entries where app_user_id=p_app_user_id),'items',(select items from rewards)),
+ 'collection',jsonb_build_object('passportCount',(select count(*)from public.fan_passports where app_user_id=p_app_user_id),'stampCount',(select count(*)from public.stamps where app_user_id=p_app_user_id),'collectibleCount',(select count(*)from public.live_collectible_claims where app_user_id=p_app_user_id),'recent',coalesce((select jsonb_agg(z.item order by z.occurred_at desc,z.id desc)from(select * from(select s.id,s.issued_at occurred_at,jsonb_build_object('kind','stamp','id',s.id,'title',cl.name||' Stamp','occurredAt',s.issued_at,'href','/passports/'||s.passport_id::text)item from public.stamps s join public.celebrities c on c.id=s.celebrity_id join public.celebrity_localizations cl on cl.celebrity_id=c.id and cl.locale=p_locale where s.app_user_id=p_app_user_id union all select cc.id,cc.claimed_at,jsonb_build_object('kind','collectible','id',cc.id,'title',ll.title||' Collectible','occurredAt',cc.claimed_at,'href','/live/'||le.slug)from public.live_collectible_claims cc join public.live_events le on le.id=cc.live_event_id join public.live_event_localizations ll on ll.live_event_id=le.id and ll.locale=p_locale where cc.app_user_id=p_app_user_id)all_recent order by occurred_at desc,id desc limit 12)z),'[]'::jsonb)),
+ 'unreadNotificationCount',(select count(*)from public.fan_notifications where app_user_id=p_app_user_id and read_at is null and scheduled_for<=p_as_of and superseded_at is null)
+)
+$$;
+revoke all on function public.get_owned_my_fan_activity(uuid,public.content_locale,timestamptz) from public,anon,authenticated;
+grant execute on function public.get_owned_my_fan_activity(uuid,public.content_locale,timestamptz) to service_role;

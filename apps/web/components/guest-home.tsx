@@ -12,7 +12,6 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame } from "./fan-shell/fan-app-shell";
 import { LiveHeroCarousel } from "./live-hero-carousel";
-import { PassportStampCanvas } from "../features/passport/ui/passport-stamp-artwork";
 import {
   ActivePreviewCoordinator,
   ActivePreviewVideo,
@@ -104,79 +103,22 @@ function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
   );
 }
 
-function AuthenticatedHomeSummary({
-  locale,
-  summary,
-  placement,
-}: {
-  locale: ContentLocale;
-  summary: MySummary;
-  placement: "desktop" | "mobile";
-}) {
+function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile" }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
-  const passport = summary.passports[0] ?? null;
-  const reservation = summary.reservations[0] ?? null;
+  const creator = summary.creators.find((item) => item.passport !== null) ?? summary.creators[0] ?? null;
+  const reservation = summary.live.upcoming[0] ?? null;
   const headingId = `signed-in-home-heading-${placement}`;
-
   return (
     <section className={styles.signedInSummary} aria-labelledby={headingId}>
-      <div className={styles.signedInGreeting}>
-        <h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2>
-      </div>
-
+      <div className={styles.signedInGreeting}><h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2></div>
       <div className={styles.summarySection}>
-        <div className={styles.summarySectionHeader}>
-          <span>{t.myPassport}</span>
-          {summary.passports.length > 1 ? <small>{summary.passports.length}</small> : null}
-        </div>
-        {passport ? (
-          <>
-            <Link className={styles.ownedPassportLink} href={`/passports/${passport.id}${localeQuery}` as Route} aria-label={`${passport.celebrity.name} Fan Passport ${locale === "ko" ? "상세 보기" : "details"}, ${passport.display.level}, ${t.stamps} ${passport.stampSummary.total}${locale === "ko" ? "개" : ""}`}>
-              <h3>{passport.celebrity.name} Fan Passport</h3>
-              <PassportStampCanvas
-                celebrityName={passport.celebrity.name}
-                className={styles.ownedPassportArtwork}
-                level={passport.display.level}
-                locale={locale}
-                stamps={passport.stamps}
-                totalCount={passport.stampSummary.total}
-              />
-              <strong className={styles.passportValue}>{passport.display.level} · {t.stamps} {passport.stampSummary.total}{locale === "ko" ? "개" : ""}</strong>
-            </Link>
-            <Link className={styles.summaryTextLink} href={`/passports${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link>
-          </>
-        ) : (
-          <div className={styles.summaryEmpty}>
-            <Image
-              className={styles.emptyPassportPreview}
-              src="/images/guest-home/passport-open-blank-9-transparent.png"
-              alt={t.passportPreview}
-              width={1536}
-              height={1024}
-            />
-            <p>{t.noPassport}</p>
-            <span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span>
-            <Link className={styles.summaryOutlineAction} href={`/celebrities${localeQuery}` as Route}>{t.findFavorite}<ArrowRight /></Link>
-          </div>
-        )}
+        <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{summary.creators.length > 1 ? <small>{summary.creators.length}</small> : null}</div>
+        {creator ? <><Link className={styles.ownedPassportLink} href={(creator.passport ? `/passports/${creator.passport.id}` : `/celebrities/${creator.celebrity.slug}`) + localeQuery as Route}><Image src={creator.celebrity.image} alt="" width={96} height={96} /><h3>{creator.celebrity.name} Fan Passport</h3><strong className={styles.passportValue}>{creator.passport ? `${creator.passport.tier} · ${creator.passport.score} Score` : "First Reaction"}</strong></Link><Link className={styles.summaryTextLink} href={`/my${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link></> : <div className={styles.summaryEmpty}><Image className={styles.emptyPassportPreview} src="/images/guest-home/passport-open-blank-9-transparent.png" alt={t.passportPreview} width={1536} height={1024}/><p>{t.noPassport}</p><span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span><Link className={styles.summaryOutlineAction} href={`/celebrities${localeQuery}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
       </div>
-
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>
-        {reservation ? (
-          <div className={styles.reservationSummary}>
-            <Image src={reservation.celebrity.image} alt="" width={56} height={56} unoptimized={reservation.celebrity.image.startsWith("https://")} />
-            <div><span>{reservation.celebrity.name}</span><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time></div>
-            <Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link>
-          </div>
-        ) : (
-          <div className={styles.summaryEmpty}>
-            <CalendarHeart aria-hidden="true" />
-            <p>{t.noReservation}</p>
-            <Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link>
-          </div>
-        )}
+        {reservation ? <div className={styles.reservationSummary}><CalendarHeart aria-hidden="true"/><div><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time></div><Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link></div> : <div className={styles.summaryEmpty}><CalendarHeart aria-hidden="true"/><p>{t.noReservation}</p><Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link></div>}
       </div>
     </section>
   );
