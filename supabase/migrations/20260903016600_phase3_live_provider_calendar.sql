@@ -9,6 +9,10 @@ update public.live_events
 set external_live_url = youtube_url
 where external_live_url is null;
 
+-- Supabase applies migrations transactionally; flush deferred content-integrity
+-- triggers from the backfill before changing the table definition.
+set constraints all immediate;
+
 alter table public.live_events
   alter column external_live_url set not null,
   drop constraint live_events_youtube_url_allowlist;
