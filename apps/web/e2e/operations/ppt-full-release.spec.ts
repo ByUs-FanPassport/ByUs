@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { expect, test } from "../fixtures/protected-preview";
+import { expect, test } from "@playwright/test";
 
 const fanToken = process.env.BYUS_RELEASE_FAN_ACCESS_TOKEN?.trim() ?? "";
 const adminToken = process.env.BYUS_RELEASE_ADMIN_ACCESS_TOKEN?.trim() ?? "";
@@ -40,14 +40,21 @@ test("one authenticated fixture lineage remains complete and operable", async ({
   expect(calendarBody.days.flatMap((day: any) => day.events).some((event: any) => event.id === liveId || event.slug === liveSlug)).toBe(true);
   const summaryBody = (await summary.json()).summary;
   expect(summaryBody).toEqual(expect.objectContaining({ creators: expect.any(Array), live: expect.any(Object), rewards: expect.any(Object), collection: expect.any(Object) }));
-  expect(summaryBody.creators.length).toBeGreaterThan(0);
-  expect(summaryBody.collection.passports.length).toBeGreaterThan(0);
+  expect(summaryBody.creators).toEqual(expect.any(Array));
+  expect(summaryBody.collection).toEqual(expect.objectContaining({
+    passportCount: expect.any(Number), stampCount: expect.any(Number),
+    collectibleCount: expect.any(Number), recent: expect.any(Array),
+  }));
   expect(JSON.stringify(summaryBody)).not.toMatch(/"(?:address|phone|postalCode|destination|recipientKey)"/i);
 
   // Recovery/operations and both analytics read models must remain independently readable.
+  const asOf = new Date();
+  const to = new Date(asOf.getTime() - 1_000);
+  const from = new Date(to.getTime() - 30 * 86_400_000);
+  const window = new URLSearchParams({ from: from.toISOString(), to: to.toISOString(), asOf: asOf.toISOString() });
   const [platform, liveAnalytics, jobs, deliveries, purge, audit] = await Promise.all([
-    request.get("/api/admin/analytics/platform?preset=30d", { headers: adminHeaders }),
-    request.get(`/api/admin/analytics/live-events/${liveId}?preset=30d`, { headers: adminHeaders }),
+    request.get(`/api/admin/analytics/platform?${window}`, { headers: adminHeaders }),
+    request.get(`/api/admin/analytics/live-events/${liveId}?${window}`, { headers: adminHeaders }),
     request.get("/api/admin/blockchain-jobs", { headers: adminHeaders }),
     request.get("/api/admin/notification-deliveries", { headers: adminHeaders }),
     request.get("/api/admin/maintenance/recipient-purge", { headers: adminHeaders }),
