@@ -26,8 +26,8 @@ export const notificationItemSchema = z.object({
   kind: notificationKindSchema,
   title: z.string().min(1),
   detail: z.string().min(1),
-  createdAt: z.iso.datetime(),
-  readAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+  readAt: z.iso.datetime({ offset: true }).nullable(),
   deepLink: safeNotificationPathSchema,
 });
 export const notificationCollectionSchema = z.object({

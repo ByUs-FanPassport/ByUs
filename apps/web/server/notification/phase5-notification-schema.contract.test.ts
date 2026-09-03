@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260903030000_phase5_notification_channels.sql"), "utf8");
+const conflictFix = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260904081500_phase5_notification_email_conflict_tolerance.sql"), "utf8");
 
 describe("Phase 5 notification connection schema", () => {
   it("separates account facts, channel eligibility, and raw destinations", () => {
@@ -22,5 +23,11 @@ describe("Phase 5 notification connection schema", () => {
     expect(sql).toContain("p_google_connected");
     expect(sql).toContain("set_owned_notification_channel_consent");
     expect(sql).not.toMatch(/delete from public\.fan_notification_(?:channels|consent_audits)/);
+  });
+  it("keeps login available when a verified email destination belongs to another Privy owner", () => {
+    expect(conflictFix).toContain("pg_advisory_xact_lock");
+    expect(conflictFix).toContain("v_existing_owner <> p_app_user_id");
+    expect(conflictFix).toContain("return true");
+    expect(conflictFix).not.toMatch(/delete from public\.fan_notification_(?:channels|channel_private)/);
   });
 });

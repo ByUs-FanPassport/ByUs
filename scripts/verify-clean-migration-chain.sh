@@ -67,6 +67,7 @@ REQUIRED_PPT_MIGRATIONS=(
   20260903041200_phase6_product_event_projections.sql
   20260903041300_phase6_recipient_purge_monitor.sql
   20260903041400_phase6_product_event_json_validation_fix.sql
+  20260904081500_phase5_notification_email_conflict_tolerance.sql
 )
 for required_migration in "${REQUIRED_PPT_MIGRATIONS[@]}"; do
   if [[ ! -f "$ROOT_DIR/supabase/migrations/$required_migration" ]]; then
