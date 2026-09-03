@@ -2,6 +2,11 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import {
+  analyticsWindowSchema,
+  integerMetricSchema,
+  type AnalyticsQuery as BaseAnalyticsQuery,
+} from "../../features/analytics/domain/admin-analytics";
 
 const uuid = z.string().uuid();
 const availableIntegerMetric = z
@@ -36,12 +41,7 @@ const notApplicableMetric = z
     source: z.string().nullable(),
   })
   .passthrough();
-export const metricEnvelopeSchema = z.union([
-  availableIntegerMetric,
-  unavailableMetric,
-  notApplicableMetric,
-  suppressedMetric,
-]);
+export const metricEnvelopeSchema = integerMetricSchema;
 const bucketValue = z.object({
   bronze: z.number().int().nonnegative(),
   silver: z.number().int().nonnegative(),
@@ -97,12 +97,7 @@ const surveyAggregateMetric = z.union([
   notApplicableMetric,
   suppressedMetric,
 ]);
-const windowSchema = z.object({
-  from: z.string().datetime({ offset: true }),
-  to: z.string().datetime({ offset: true }),
-  semantics: z.literal("[from,to)"),
-  asOf: z.string().datetime({ offset: true }),
-});
+const windowSchema = analyticsWindowSchema;
 
 export const creatorAnalyticsSchema = z.object({
   scope: z.object({ celebrityId: uuid, liveEventId: uuid.nullable() }),
@@ -138,22 +133,18 @@ export const brandAnalyticsSchema = z.object({
 
 export type CreatorAnalytics = z.infer<typeof creatorAnalyticsSchema>;
 export type BrandAnalytics = z.infer<typeof brandAnalyticsSchema>;
-export interface AnalyticsQuery {
-  liveEventId?: string;
-  from: string;
-  to: string;
-  asOf: string;
-}
+export interface LegacyAnalyticsQuery extends BaseAnalyticsQuery { liveEventId?: string }
+export type AnalyticsQuery = LegacyAnalyticsQuery;
 export interface AnalyticsRepository {
   readCreator(
-    input: AnalyticsQuery & {
+    input: LegacyAnalyticsQuery & {
       adminAppUserId: string;
       adminAllowlistId: string;
       celebrityId: string;
     },
   ): Promise<CreatorAnalytics>;
   readBrand(
-    input: AnalyticsQuery & {
+    input: LegacyAnalyticsQuery & {
       adminAppUserId: string;
       adminAllowlistId: string;
       brandId: string;
@@ -187,7 +178,7 @@ export class SupabaseAnalyticsRepository implements AnalyticsRepository {
     return parsed.data;
   }
   readCreator(
-    input: AnalyticsQuery & {
+    input: LegacyAnalyticsQuery & {
       adminAppUserId: string;
       adminAllowlistId: string;
       celebrityId: string;
@@ -208,7 +199,7 @@ export class SupabaseAnalyticsRepository implements AnalyticsRepository {
     );
   }
   readBrand(
-    input: AnalyticsQuery & {
+    input: LegacyAnalyticsQuery & {
       adminAppUserId: string;
       adminAllowlistId: string;
       brandId: string;

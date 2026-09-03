@@ -12,6 +12,7 @@ const window = {
   to: "2026-08-01T00:00:00.000Z",
   semantics: "[from,to)",
   asOf: "2026-08-01T00:00:00.000Z",
+  timeZone: "Asia/Seoul",
 };
 const available = (value: unknown, source: string) => ({
   state: "available",
