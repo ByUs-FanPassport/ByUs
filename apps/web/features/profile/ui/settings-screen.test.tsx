@@ -43,6 +43,16 @@ let preferences: {
   benefitNotifications: true,
   browserSubscription: "unsubscribed",
 };
+const connections = {
+  accounts: [
+    { provider: "google", status: "connected", connectedAt: "2026-09-03T00:00:00.000Z", disconnectedAt: null },
+    { provider: "kakao", status: "connected", connectedAt: "2026-09-03T00:00:00.000Z", disconnectedAt: null },
+  ],
+  channels: [
+    { id: "11111111-1111-4111-8111-111111111111", kind: "email", status: "eligible", consented: false, destinationLabel: "k***@example.com", verifiedAt: "2026-09-03T00:00:00.000Z" },
+    { id: "22222222-2222-4222-8222-222222222222", kind: "kakao", status: "eligible", consented: true, destinationLabel: "Kakao ••••1234", verifiedAt: "2026-09-03T00:00:00.000Z" },
+  ],
+} as const;
 
 function setBrowserCapabilities({
   permission = "default",
@@ -105,12 +115,26 @@ describe("FAN-020 settings", () => {
         });
       if (url === "/api/notifications/preferences")
         return Response.json({ preferences });
+      if (url === "/api/me/notification-channels" && init?.method === "PATCH")
+        return Response.json({ channel: { ...connections.channels[0], ...JSON.parse(String(init.body)), id: connections.channels[0].id } });
+      if (url === "/api/me/notification-channels")
+        return Response.json({ connections });
       if (url === "/api/me/nickname")
         return Response.json({
           profile: { completed: true, nickname: "Melody" },
         });
       throw new Error(`Unexpected URL ${url}`);
     });
+  });
+
+  it("separates read-only connections from consented delivery channels", async () => {
+    render(<SettingsScreen locale="ko" />);
+    expect(await screen.findByText("Google · 로그인에서 확인됨 (읽기 전용)")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Kakao 연결 해제" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Email 수신" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Kakao 수신" })).toBeChecked();
+    fireEvent.click(screen.getByRole("switch", { name: "Email 수신" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels", expect.objectContaining({ method: "PATCH" })));
   });
 
   it("maps every browser permission capability without requesting permission", () => {

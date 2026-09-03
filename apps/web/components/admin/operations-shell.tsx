@@ -10,8 +10,8 @@ import styles from "./operations.module.css";
 export type AdminLocale = "ko" | "en";
 
 const copy = {
-  ko: { menu: "관리자 메뉴", overview: "개요", celebrities: "셀럽 콘텐츠", lives: "라이브", benefits: "혜택", analytics: "분석", fans: "팬 운영", jobs: "블록체인 작업", audit: "감사 로그", language: "English", environment: "운영" },
-  en: { menu: "Admin menu", overview: "Overview", celebrities: "Celebrity content", lives: "Lives", benefits: "Benefits", analytics: "Analytics", fans: "Fan operations", jobs: "Blockchain jobs", audit: "Audit log", language: "한국어", environment: "Operations" },
+  ko: { menu: "관리자 메뉴", overview: "개요", celebrities: "셀럽 콘텐츠", lives: "라이브", benefits: "혜택", analytics: "분석", fans: "팬 운영", jobs: "블록체인 작업", notifications: "알림 전송", audit: "감사 로그", language: "English", environment: "운영" },
+  en: { menu: "Admin menu", overview: "Overview", celebrities: "Celebrity content", lives: "Lives", benefits: "Benefits", analytics: "Analytics", fans: "Fan operations", jobs: "Blockchain jobs", notifications: "Notification delivery", audit: "Audit log", language: "한국어", environment: "Operations" },
 } as const;
 
 export function AdminOperationsShell({ locale, children }: { locale: AdminLocale; children: ReactNode }) {
@@ -62,6 +62,7 @@ export function AdminOperationsShell({ locale, children }: { locale: AdminLocale
       <Link className={isSectionActive("/admin/dashboard") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/dashboard") ? "page" : undefined} href={(locale === "en" ? "/admin/dashboard?view=creator&lang=en" : "/admin/dashboard?view=creator") as Route}>{t.analytics}</Link>
       <Link className={isSectionActive("/admin/fans") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/fans") ? "page" : undefined} href={(locale === "en" ? "/admin/fans?lang=en" : "/admin/fans") as Route}>{t.fans}</Link>
       <Link className={isSectionActive("/admin/blockchain-jobs") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/blockchain-jobs") ? "page" : undefined} href={(locale === "en" ? "/admin/blockchain-jobs?lang=en" : "/admin/blockchain-jobs") as Route}>{t.jobs}</Link>
+      <Link className={isSectionActive("/admin/notifications") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/notifications") ? "page" : undefined} href={(locale === "en" ? "/admin/notifications?lang=en" : "/admin/notifications") as Route}>{t.notifications}</Link>
       <Link className={isSectionActive("/admin/audit") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/audit") ? "page" : undefined} href={(locale === "en" ? "/admin/audit?lang=en" : "/admin/audit") as Route}>{t.audit}</Link>
     </nav>
   );

@@ -19,6 +19,7 @@ import {
   enablePushNotifications,
 } from "../../notification/ui/push-subscription";
 import styles from "./settings-screen.module.css";
+import type { NotificationConnections } from "../../notification/domain/connected-account";
 
 type Locale = "ko" | "en";
 type PreferenceKey =
@@ -89,6 +90,13 @@ const copy = {
     english: "English",
     notifications: "알림",
     notificationHelp: "받고 싶은 소식만 선택할 수 있어요.",
+    connections: "연결 및 수신 채널",
+    googleReadOnly: "Google · 로그인에서 확인됨 (읽기 전용)",
+    kakaoConnect: "Kakao 연결",
+    kakaoDisconnect: "Kakao 연결 해제",
+    emailChannel: "Email 수신",
+    kakaoChannel: "Kakao 수신",
+    needsEnrollment: "연결 후 수신 대 확인이 필요해요.",
     live: "LIVE 시작 알림",
     survey: "설문 참여 알림",
     benefit: "혜택 오픈 알림",
@@ -145,6 +153,13 @@ const copy = {
     english: "English",
     notifications: "Notifications",
     notificationHelp: "Choose only the updates you want.",
+    connections: "Connections and delivery channels",
+    googleReadOnly: "Google · verified at sign-in (read-only)",
+    kakaoConnect: "Connect Kakao",
+    kakaoDisconnect: "Disconnect Kakao",
+    emailChannel: "Email delivery",
+    kakaoChannel: "Kakao delivery",
+    needsEnrollment: "Verify a destination after connecting.",
     live: "LIVE start reminders",
     survey: "Survey reminders",
     benefit: "Benefit alerts",
@@ -196,6 +211,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [settings, setSettings] = useState<SettingsSummary | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
+  const [connections, setConnections] = useState<NotificationConnections | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState("");
@@ -218,11 +234,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const token = await getAccessToken();
       if (!token) throw new Error("token");
       const headers = authHeaders(token);
-      const [settingsResponse, preferenceResponse] = await Promise.all([
+      const [settingsResponse, preferenceResponse, connectionResponse] = await Promise.all([
         fetch("/api/me/settings", { headers, cache: "no-store" }),
         fetch("/api/notifications/preferences", { headers, cache: "no-store" }),
+        fetch("/api/me/notification-channels", { headers, cache: "no-store" }),
       ]);
-      if (!settingsResponse.ok || !preferenceResponse.ok)
+      if (!settingsResponse.ok || !preferenceResponse.ok || !connectionResponse.ok)
         throw new Error("response");
       const settingsBody = (await settingsResponse.json()) as {
         settings: SettingsSummary;
@@ -230,9 +247,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const preferenceBody = (await preferenceResponse.json()) as {
         preferences: Preferences;
       };
+      const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections };
       setSettings(settingsBody.settings);
       setNickname(settingsBody.settings.nickname);
       setPreferences(preferenceBody.preferences);
+      setConnections(connectionBody.connections);
       setState("ready");
     } catch {
       setState("error");
@@ -367,6 +386,37 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     }
   }
 
+  async function updateChannel(channelId: string, consented: boolean) {
+    if (!connections) return;
+    const previous = connections;
+    setConnections({ ...connections, channels: connections.channels.map((channel) => channel.id === channelId ? { ...channel, consented } : channel) });
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("token");
+      const response = await fetch("/api/me/notification-channels", { method: "PATCH", headers: { ...authHeaders(token), "content-type": "application/json" }, body: JSON.stringify({ channelId, consented, consentVersion: "phase5-v1" }) });
+      const body = await response.json() as { channel?: NotificationConnections["channels"][number] };
+      if (!response.ok || !body.channel) throw new Error("save");
+      setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? body.channel! : channel) } : current);
+      setMessage(t.saved);
+    } catch { setConnections(previous); setMessage(t.failed); }
+  }
+
+  async function toggleKakao(connected: boolean) {
+    try {
+      const token = await getAccessToken(); if (!token) throw new Error("token");
+      if (connected) {
+        const response = await fetch("/api/me/connected-accounts/kakao", { method: "DELETE", headers: authHeaders(token) });
+        if (!response.ok) throw new Error("disconnect");
+        await load();
+      } else {
+        const response = await fetch("/api/me/connected-accounts/kakao/start", { method: "POST", headers: authHeaders(token) });
+        const body = await response.json() as { authorizationUrl?: string };
+        if (!response.ok || !body.authorizationUrl) throw new Error("connect");
+        window.location.assign(body.authorizationUrl);
+      }
+    } catch { setMessage(t.failed); }
+  }
+
   async function install() {
     if (!installPrompt) return;
     setInstallState("pending");
@@ -430,7 +480,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       </FanContentContainer></FanAppFrame>
     );
   if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</FanContentContainer></FanAppFrame>;
-  if (state === "error" || !settings || !preferences)
+  if (state === "error" || !settings || !preferences || !connections)
     return (
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>
         <p>{t.unavailable}</p>
@@ -630,6 +680,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                   : t.browserConnect}
               </button>
             )}
+          </div>
+          <div className={styles.channelControls}>
+            <h3>{t.connections}</h3>
+            {connections.accounts.some((account) => account.provider === "google" && account.status === "connected") && <p>{t.googleReadOnly}</p>}
+            {(() => { const connected = connections.accounts.some((account) => account.provider === "kakao" && account.status === "connected"); return <button type="button" onClick={() => void toggleKakao(connected)}>{connected ? t.kakaoDisconnect : t.kakaoConnect}</button>; })()}
+            {connections.channels.map((channel) => <label key={channel.id}><span><strong>{channel.kind === "email" ? t.emailChannel : t.kakaoChannel}</strong><small>{channel.destinationLabel}{channel.status === "needs_verification" ? ` · ${t.needsEnrollment}` : ""}</small></span><input type="checkbox" role="switch" aria-label={channel.kind === "email" ? t.emailChannel : t.kakaoChannel} checked={channel.consented} disabled={channel.status !== "eligible"} onChange={(event) => void updateChannel(channel.id, event.target.checked)} /></label>)}
           </div>
         </section>
 
