@@ -16,6 +16,20 @@ const attributionClosureSql = readFileSync(
   ),
   "utf8",
 );
+const legacyPassportReconciliationSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260903013500_g2_submit_legacy_recipient_case_fix.sql",
+  ),
+  "utf8",
+);
+const firstReactionProjectionFixSql = readFileSync(
+  resolve(
+    process.cwd(),
+    "../../supabase/migrations/20260903014000_first_reaction_activity_projection_fix.sql",
+  ),
+  "utf8",
+);
 
 function tableDefinition(table: string): string {
   const startMarker = `create table public.${table} (`;
@@ -214,5 +228,44 @@ describe("G2 identity and verification migration contract", () => {
     expect(attributionClosureSql).toContain("v_attempt_id:=(result->'attempt'->>'id')::uuid");
     expect(attributionClosureSql).toContain("before update or delete on public.quiz_verification_attributions");
     expect(attributionClosureSql).toContain("before update or delete on public.quiz_pass_attributions");
+  });
+
+  it("reconciles an exact completed legacy Passport job without minting a duplicate", () => {
+    expect(legacyPassportReconciliationSql).toContain(
+      "(job_record.payload - 'workerSubmission') - 'recipient' <> expected_payload - 'recipient'",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "lower(job_record.payload ->> 'recipient') is distinct from lower(expected_payload ->> 'recipient')",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "job_record.status <> 'COMPLETED'",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "v_passport_id := job_record.entity_id",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "v_passport_job_id := job_record.id",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "when recovered_passport_job then 'minted'::public.credential_mint_status",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "when recovered_passport_job then job_record.tx_hash",
+    );
+    expect(legacyPassportReconciliationSql).toContain(
+      "when recovered_passport_job then job_record.token_id",
+    );
+  });
+
+  it("keeps First Reaction separate from score-bearing Passport activities", () => {
+    expect(firstReactionProjectionFixSql).toContain(
+      "activity.value ->> 'type' <> 'first_reaction'",
+    );
+    expect(firstReactionProjectionFixSql).toContain(
+      "jsonb_build_object('firstReaction'",
+    );
+    expect(firstReactionProjectionFixSql).toContain(
+      "public.get_owned_passport_detail_before_first_reaction",
+    );
   });
 });
