@@ -91,6 +91,42 @@ describe("LiveManagerRepository", () => {
     expect(source).toContain('db.rpc("save_admin_live_draft_v3"');
   });
 
+  it("reads and writes revision-aware Journey requirements through dedicated RPCs", async () => {
+    const rpc = vi.fn(async (name: string) => ({
+      data: name === "get_admin_live_manager" ? { lives: [] } : [],
+      error: null,
+    }));
+    const repository = createSupabaseLiveManagerRepository(
+      { url: "https://supabase.example", serviceRoleKey: "test" },
+      { rpc } as never,
+    ) as unknown as {
+      read(actor: { appUserId: string; allowlistId: string }): Promise<Record<string, unknown>>;
+      saveJourneyRequirements(actor: { appUserId: string; allowlistId: string }, correlationId: string, input: Record<string, unknown>): Promise<unknown>;
+      publishJourneyRequirements(actor: { appUserId: string; allowlistId: string }, correlationId: string, input: Record<string, unknown>): Promise<unknown>;
+    };
+    const actor = { appUserId: "11111111-1111-4111-8111-111111111111", allowlistId: "22222222-2222-4222-8222-222222222222" };
+    const input = {
+      liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 1,
+      requirePassport: true, requireReservation: false, requireAttendance: true, bonusTicketAmount: 3,
+      missions: [{ missionId: "88888888-8888-4888-8888-888888888888", version: 2 }],
+    };
+
+    await repository.read(actor);
+    await repository.saveJourneyRequirements(actor, "55555555-5555-4555-8555-555555555555", input);
+    await repository.publishJourneyRequirements(actor, "55555555-5555-4555-8555-555555555555", input);
+
+    expect(rpc).toHaveBeenCalledWith("get_admin_live_journey_requirements", expect.objectContaining({ p_actor_app_user_id: actor.appUserId }));
+    expect(rpc).toHaveBeenCalledWith("save_admin_live_journey_requirement", expect.objectContaining({
+      p_expected_revision: 1,
+      p_require_passport: true,
+      p_require_reservation: false,
+      p_require_attendance: true,
+      p_bonus_ticket_amount: 3,
+      p_missions: input.missions,
+    }));
+    expect(rpc).toHaveBeenCalledWith("publish_admin_live_journey_requirement", expect.objectContaining({ p_expected_revision: 1 }));
+  });
+
   it("defines an append-only, locked schedule revision contract that preserves reservations", () => {
     const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260903016800_phase3_live_schedule_revisions.sql"), "utf8");
     expect(sql).toContain("live_schedule_revisions");

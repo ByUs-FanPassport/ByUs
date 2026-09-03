@@ -4,6 +4,15 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { LiveScheduleRevision } from "../../features/live/domain/live-schedule";
 
 export type LiveManagerActor = { appUserId: string; allowlistId: string };
+export type JourneyRequirementInput = {
+  liveEventId: string;
+  expectedRevision: number;
+  requirePassport: boolean;
+  requireReservation: boolean;
+  requireAttendance: boolean;
+  bonusTicketAmount: number;
+  missions: Array<{ missionId: string; version: number }>;
+};
 export type LiveManagerRepository = {
   read(actor: LiveManagerActor): Promise<Record<string, unknown>>;
   save(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ id: string; fanCode?: string }>;
@@ -21,6 +30,8 @@ export type LiveManagerRepository = {
   saveRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
   publishRewardSettings(actor: LiveManagerActor, correlationId: string, input: Record<string, unknown>): Promise<{ revisionId: string; revision: number }>;
   reschedule(actor: LiveManagerActor, correlationId: string, input: LiveScheduleRevision): Promise<{ revisionId: string; revision: number }>;
+  saveJourneyRequirements(actor: LiveManagerActor, correlationId: string, input: JourneyRequirementInput): Promise<{ revisionId: string; revision: number }>;
+  publishJourneyRequirements(actor: LiveManagerActor, correlationId: string, input: Pick<JourneyRequirementInput, "liveEventId" | "expectedRevision">): Promise<{ revisionId: string; revision: number }>;
 };
 
 type RpcClient = Pick<SupabaseClient, "rpc">;
@@ -37,10 +48,11 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
       const args = {
         p_actor_app_user_id: actor.appUserId, p_actor_admin_allowlist_id: actor.allowlistId, p_live_event_id: null,
       };
-      const [manager, settings, attendance] = await Promise.all([
+      const [manager, settings, attendance, journeyRequirements] = await Promise.all([
         db.rpc("get_admin_live_manager", args),
         db.rpc("get_admin_live_reward_settings", args),
         db.rpc("get_admin_live_attendance_settings", args),
+        db.rpc("get_admin_live_journey_requirements", args),
       ]);
       const managerResult = assert(manager.data, manager.error) as Record<string, unknown>;
       const attendanceRows = assert(attendance.data, attendance.error) as Array<Record<string, unknown>>;
@@ -53,6 +65,7 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
           attendanceValidUntil: attendanceByLive.get(live.id)?.validUntil ?? live.endsAt,
         })),
         rewardSettings: assert(settings.data, settings.error),
+        journeyRequirements: assert(journeyRequirements.data, journeyRequirements.error),
       };
     },
     async save(actor, correlationId, input) {
@@ -153,6 +166,31 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
         p_ends_at: input.endsAt,
         p_attendance_valid_from: input.attendanceValidFrom,
         p_attendance_valid_until: input.attendanceValidUntil,
+      });
+      return assert(data, error) as { revisionId: string; revision: number };
+    },
+    async saveJourneyRequirements(actor, correlationId, input) {
+      const { data, error } = await db.rpc("save_admin_live_journey_requirement", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_expected_revision: input.expectedRevision,
+        p_require_passport: input.requirePassport,
+        p_require_reservation: input.requireReservation,
+        p_require_attendance: input.requireAttendance,
+        p_bonus_ticket_amount: input.bonusTicketAmount,
+        p_missions: input.missions,
+      });
+      return assert(data, error) as { revisionId: string; revision: number };
+    },
+    async publishJourneyRequirements(actor, correlationId, input) {
+      const { data, error } = await db.rpc("publish_admin_live_journey_requirement", {
+        p_actor_app_user_id: actor.appUserId,
+        p_actor_admin_allowlist_id: actor.allowlistId,
+        p_correlation_id: correlationId,
+        p_live_event_id: input.liveEventId,
+        p_expected_revision: input.expectedRevision,
       });
       return assert(data, error) as { revisionId: string; revision: number };
     },

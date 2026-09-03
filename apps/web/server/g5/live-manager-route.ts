@@ -2,6 +2,10 @@ import "server-only";
 
 import { z } from "zod";
 import { AuthError } from "../../features/auth/domain/auth-errors";
+import {
+  hasDuplicateJourneyMissionIds,
+  journeyMissionRequirementSelectionSchema,
+} from "../../features/journey/domain/journey";
 import { REWARD_POLICY_V2 } from "../../features/rewards/domain/reward-policy";
 import {
   externalLiveProviderSchema,
@@ -67,9 +71,33 @@ const save = z
 const reschedule = liveScheduleRevisionSchema.safeExtend({
   action: z.literal("reschedule"),
 });
+const saveJourneyRequirements = z.object({
+  action: z.literal("save_journey_requirements"),
+  liveEventId: uuid,
+  expectedRevision: z.number().int().min(0),
+  requirePassport: z.boolean(),
+  requireReservation: z.boolean(),
+  requireAttendance: z.boolean(),
+  bonusTicketAmount: z.number().int().min(REWARD_POLICY_V2.journey.minimumCompletionTicket).max(REWARD_POLICY_V2.journey.maximumCompletionTicket),
+  missions: z.array(journeyMissionRequirementSelectionSchema).max(100),
+}).strict().superRefine((value, ctx) => {
+  if (!(value.requirePassport || value.requireReservation || value.requireAttendance || value.missions.length > 0)) {
+    ctx.addIssue({ code: "custom", path: ["missions"], message: "EMPTY_JOURNEY_REQUIREMENTS" });
+  }
+  if (hasDuplicateJourneyMissionIds(value.missions)) {
+    ctx.addIssue({ code: "custom", path: ["missions"], message: "DUPLICATE_JOURNEY_MISSION" });
+  }
+});
+const publishJourneyRequirements = z.object({
+  action: z.literal("publish_journey_requirements"),
+  liveEventId: uuid,
+  expectedRevision: z.number().int().positive(),
+}).strict();
 const command = z.discriminatedUnion("action", [
   save,
   reschedule,
+  saveJourneyRequirements,
+  publishJourneyRequirements,
   z.object({
     action: z.literal("save_reward_settings"),
     liveEventId: uuid,
@@ -198,6 +226,13 @@ export function createPostLiveManagerHandler(deps: LiveManagerDependencies) {
         return json(await deps.repository.saveRewardSettings(actor, correlationId, parsed), 200);
       if (parsed.action === "publish_reward_settings")
         return json(await deps.repository.publishRewardSettings(actor, correlationId, parsed), 200);
+      if (parsed.action === "save_journey_requirements")
+        return json(await deps.repository.saveJourneyRequirements(actor, correlationId, parsed), 200);
+      if (parsed.action === "publish_journey_requirements") {
+        const revision = await deps.repository.publishJourneyRequirements(actor, correlationId, parsed);
+        deps.invalidatePublicContent();
+        return json(revision, 200);
+      }
       if (parsed.action === "reschedule") {
         const revision = await deps.repository.reschedule(
           actor,

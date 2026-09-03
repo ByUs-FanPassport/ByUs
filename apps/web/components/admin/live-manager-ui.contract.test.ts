@@ -48,4 +48,19 @@ describe("ADM-005 Phase 1 reward settings UI contract", () => {
     expect(source).toContain("validFrom: selected.attendanceValidFrom");
     expect(source).toContain("disabled={Boolean(selected.everPublishedAt)}");
   });
+
+  it("edits and publishes non-empty revision-aware Journey requirements", () => {
+    expect(source).toContain('action:"save_journey_requirements"');
+    expect(source).toContain('action:"publish_journey_requirements"');
+    expect(source).toContain("expectedRevision:journey.latest.revision");
+    expect(source).toContain("requirePassport");
+    expect(source).toContain("requireReservation");
+    expect(source).toContain("requireAttendance");
+    expect(source).toContain("journey?.published");
+    expect(source).toContain("journey.publishedReward.bonusTicketAmount");
+    expect(source).not.toContain("bonusTicketAmount:reward.journeyBonusTicket");
+    expect(source).toContain("disabled={!selectable && !checked}");
+    expect(source).toContain("mission.lifecycleStatus");
+    expect(source).toContain("mission.version");
+  });
 });

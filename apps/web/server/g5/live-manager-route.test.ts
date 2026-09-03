@@ -29,6 +29,8 @@ function deps(
       saveRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
       publishRewardSettings: vi.fn(async () => ({ revisionId: "66666666-6666-4666-8666-666666666666", revision: 2 })),
       reschedule: vi.fn(async () => ({ revisionId: "77777777-7777-4777-8777-777777777777", revision: 3 })),
+      saveJourneyRequirements: vi.fn(async () => ({ revisionId: "88888888-8888-4888-8888-888888888888", revision: 1 })),
+      publishJourneyRequirements: vi.fn(async () => ({ revisionId: "88888888-8888-4888-8888-888888888888", revision: 2 })),
       ...overrides,
     },
   };
@@ -120,6 +122,71 @@ describe("ADM-005 live manager route", () => {
     }));
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: { code: "LIVE_COMMAND_REJECTED" } });
+  });
+
+  it("saves strict non-empty Journey requirements with optimistic revision", async () => {
+    const saveJourneyRequirements = vi.fn(async () => ({ revisionId: "77777777-7777-4777-8777-777777777777", revision: 2 }));
+    const d = deps({ saveJourneyRequirements } as never);
+    const payload = {
+      action: "save_journey_requirements",
+      liveEventId: "33333333-3333-4333-8333-333333333333",
+      expectedRevision: 1,
+      requirePassport: true,
+      requireReservation: false,
+      requireAttendance: true,
+      bonusTicketAmount: 3,
+      missions: [{ missionId: "88888888-8888-4888-8888-888888888888", version: 2 }],
+    };
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST",
+      headers: { authorization: "Bearer secret", "content-type": "application/json", "x-correlation-id": "55555555-5555-4555-8555-555555555555" },
+      body: JSON.stringify(payload),
+    }));
+    expect(response.status).toBe(200);
+    expect(saveJourneyRequirements).toHaveBeenCalledWith(
+      { appUserId: actor.appUserId, allowlistId: actor.allowlistId },
+      "55555555-5555-4555-8555-555555555555",
+      expect.objectContaining(payload),
+    );
+  });
+
+  it.each([
+    ["empty requirements", { requirePassport: false, requireReservation: false, requireAttendance: false, missions: [] }],
+    ["unversioned Mission", { missions: [{ missionId: "88888888-8888-4888-8888-888888888888", version: 0 }] }],
+    ["duplicate Mission identity", { missions: [{ missionId: "88888888-8888-4888-8888-888888888888", version: 1 }, { missionId: "88888888-8888-4888-8888-888888888888", version: 2 }] }],
+    ["content mutation", { titleKo: "must not pass" }],
+  ])("rejects Journey %s before the repository boundary", async (_case, override) => {
+    const saveJourneyRequirements = vi.fn();
+    const d = deps({ saveJourneyRequirements } as never);
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST",
+      headers: { authorization: "Bearer secret", "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "save_journey_requirements",
+        liveEventId: "33333333-3333-4333-8333-333333333333",
+        expectedRevision: 1,
+        requirePassport: true,
+        requireReservation: false,
+        requireAttendance: false,
+        bonusTicketAmount: 3,
+        missions: [],
+        ...override,
+      }),
+    }));
+    expect(response.status).toBe(400);
+    expect(saveJourneyRequirements).not.toHaveBeenCalled();
+  });
+
+  it("publishes one Journey requirement revision", async () => {
+    const publishJourneyRequirements = vi.fn(async () => ({ revisionId: "77777777-7777-4777-8777-777777777777", revision: 2 }));
+    const d = deps({ publishJourneyRequirements } as never);
+    const response = await createPostLiveManagerHandler(d)(new Request("https://byus.test/api/admin/lives", {
+      method: "POST",
+      headers: { authorization: "Bearer secret", "content-type": "application/json" },
+      body: JSON.stringify({ action: "publish_journey_requirements", liveEventId: "33333333-3333-4333-8333-333333333333", expectedRevision: 2 }),
+    }));
+    expect(response.status).toBe(200);
+    expect(publishJourneyRequirements).toHaveBeenCalledOnce();
   });
 
   it("publishes a validated Preview through the audited repository command", async () => {
