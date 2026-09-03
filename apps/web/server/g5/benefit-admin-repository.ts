@@ -12,6 +12,7 @@ export type BenefitCampaignDraft = {
     priority: number;
     perFanTicketLimit: number | null;
     winnerQuantity?: number;
+    fulfillmentMethod?: "digital" | "physical_shipping" | "on_site_pickup";
   }>;
   expectedRevision: number | null;
 };

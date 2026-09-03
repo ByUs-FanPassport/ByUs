@@ -37,6 +37,7 @@ create table public.live_benefit_campaign_items (
   priority integer not null check (priority > 0),
   per_fan_ticket_limit integer,
   winner_quantity integer not null default 1 check (winner_quantity > 0),
+  fulfillment_method public.benefit_fulfillment_method not null default 'digital',
   created_at timestamptz not null default pg_catalog.now(),
   unique (campaign_id, benefit_id),
   unique (campaign_id, priority),
@@ -214,9 +215,19 @@ begin
     'id',c.id,'liveEventId',c.live_event_id,'status',c.status,
     'entryOpensAt',c.entry_opens_at,'entryClosesAt',c.entry_closes_at,
     'revision',c.revision,'publishedAt',c.published_at,
+    'draw',(select jsonb_build_object(
+      'drawId',d.id,'seedHash',d.seed_hash,'algorithm',d.algorithm,'executedAt',d.executed_at,
+      'candidateCount',(select count(*) from public.benefit_draw_candidates dc where dc.draw_id=d.id),
+      'winners',coalesce((select jsonb_agg(jsonb_build_object(
+        'winnerId',w.id,'benefitId',w.benefit_id,'appUserId',w.app_user_id,
+        'method',f.method,'status',f.status,'revision',f.revision
+      ) order by w.selected_at,w.id) from public.benefit_draw_winners w
+        join public.benefit_fulfillments f on f.winner_id=w.id where w.draw_id=d.id),'[]'::jsonb)
+    ) from public.benefit_draws d where d.campaign_id=c.id),
     'benefits',coalesce((select jsonb_agg(jsonb_build_object(
       'benefitId',i.benefit_id,'priority',i.priority,
       'perFanTicketLimit',i.per_fan_ticket_limit,'winnerQuantity',i.winner_quantity
+      ,'fulfillmentMethod',i.fulfillment_method
     ) order by i.priority,i.benefit_id) from public.live_benefit_campaign_items i
       where i.campaign_id=c.id),'[]'::jsonb)
   ) order by c.created_at desc,c.id desc),'[]'::jsonb) into v_result
@@ -248,7 +259,7 @@ begin
     raise exception 'campaign benefits required';
   end if;
   select count(*) into v_count from jsonb_to_recordset(p_benefits)
-    as x("benefitId" uuid,"priority" integer,"perFanTicketLimit" integer,"winnerQuantity" integer)
+    as x("benefitId" uuid,"priority" integer,"perFanTicketLimit" integer,"winnerQuantity" integer,"fulfillmentMethod" public.benefit_fulfillment_method)
     where x."priority" is null or x."priority" <= 0
       or (x."perFanTicketLimit" is not null and x."perFanTicketLimit" <= 0)
       or coalesce(x."winnerQuantity",1) <= 0;
@@ -273,10 +284,10 @@ begin
   end if;
 
   insert into public.live_benefit_campaign_items(
-    campaign_id,benefit_id,priority,per_fan_ticket_limit,winner_quantity
-  ) select v_id,x."benefitId",x."priority",x."perFanTicketLimit",coalesce(x."winnerQuantity",1)
+    campaign_id,benefit_id,priority,per_fan_ticket_limit,winner_quantity,fulfillment_method
+  ) select v_id,x."benefitId",x."priority",x."perFanTicketLimit",coalesce(x."winnerQuantity",1),coalesce(x."fulfillmentMethod",'digital')
     from jsonb_to_recordset(p_benefits)
-      as x("benefitId" uuid,"priority" integer,"perFanTicketLimit" integer,"winnerQuantity" integer);
+      as x("benefitId" uuid,"priority" integer,"perFanTicketLimit" integer,"winnerQuantity" integer,"fulfillmentMethod" public.benefit_fulfillment_method);
 
   insert into public.audit_logs(
     actor_app_user_id,actor_admin_allowlist_id,action,entity_type,entity_id,

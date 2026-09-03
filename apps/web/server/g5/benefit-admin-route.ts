@@ -64,6 +64,7 @@ const campaignBenefit = z
     priority: z.number().int().positive(),
     perFanTicketLimit: z.number().int().positive().nullable(),
     winnerQuantity: z.number().int().positive().optional().default(1),
+    fulfillmentMethod: z.enum(["digital", "physical_shipping", "on_site_pickup"]).optional().default("digital"),
   })
   .strict();
 const saveCampaign = z

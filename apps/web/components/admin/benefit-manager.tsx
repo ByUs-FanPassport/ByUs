@@ -65,6 +65,7 @@ type CampaignItem = {
   priority: number;
   perFanTicketLimit: number | null;
   winnerQuantity: number;
+  fulfillmentMethod: "digital" | "physical_shipping" | "on_site_pickup";
 };
 type Campaign = {
   id: string;
@@ -75,6 +76,21 @@ type Campaign = {
   revision: number;
   publishedAt: string | null;
   benefits: CampaignItem[];
+  draw: null | {
+    drawId: string;
+    seedHash: string;
+    algorithm: string;
+    executedAt: string;
+    candidateCount: number;
+    winners: Array<{
+      winnerId: string;
+      benefitId: string;
+      appUserId: string;
+      method: string;
+      status: string;
+      revision: number;
+    }>;
+  };
 };
 type CampaignForm = {
   id: string;
@@ -87,6 +103,7 @@ type CampaignForm = {
     priority: string;
     perFanTicketLimit: string;
     winnerQuantity: string;
+    fulfillmentMethod: string;
   }>;
 };
 type Form = {
@@ -145,7 +162,7 @@ const blankCampaign: CampaignForm = {
   liveEventId: "",
   entryOpensAt: "",
   entryClosesAt: "",
-  benefits: [{ benefitId: "", priority: "1", perFanTicketLimit: "", winnerQuantity: "1" }],
+  benefits: [{ benefitId: "", priority: "1", perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital" }],
 };
 const copy = {
   ko: {
@@ -245,6 +262,7 @@ function campaignFormFor(c: Campaign): CampaignForm {
       priority: String(b.priority),
       perFanTicketLimit: b.perFanTicketLimit?.toString() ?? "",
       winnerQuantity: String(b.winnerQuantity),
+      fulfillmentMethod: b.fulfillmentMethod,
     })),
   };
 }
@@ -270,6 +288,7 @@ function BenefitManager({
     [form, setForm] = useState(blank),
     [campaign, setCampaign] = useState(blankCampaign),
     [draws, setDraws] = useState<Record<string, BenefitDrawResult>>({}),
+    [winnerDetails, setWinnerDetails] = useState<Record<string, Record<string, unknown>>>({}),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
     [codes, setCodes] = useState("");
@@ -360,6 +379,7 @@ function BenefitManager({
         priority: Number(b.priority),
         perFanTicketLimit: b.perFanTicketLimit ? Number(b.perFanTicketLimit) : null,
         winnerQuantity: Number(b.winnerQuantity),
+        fulfillmentMethod: b.fulfillmentMethod,
       })),
     });
   }
@@ -390,11 +410,46 @@ function BenefitManager({
       if (!response.ok) throw new Error();
       const result = (await response.json()) as BenefitDrawResult;
       setDraws((current) => ({ ...current, [campaignId]: result }));
+      await refresh();
     } catch {
       setError(t.failure);
     } finally {
       setPending(false);
     }
+  }
+  async function readWinner(winnerId: string, reveal: boolean) {
+    try {
+      setPending(true);
+      const token = await getAccessToken();
+      if (!token) throw new Error();
+      const response = await fetch(`/api/admin/benefit-winners/${winnerId}?reveal=${reveal}`, {
+        headers: { authorization: `Bearer ${token}`, "x-correlation-id": crypto.randomUUID() },
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error();
+      const detail = await response.json() as Record<string, unknown>;
+      setWinnerDetails((current) => ({ ...current, [winnerId]: detail }));
+    } catch { setError(t.failure); } finally { setPending(false); }
+  }
+  async function transitionWinner(winnerId: string, expectedRevision: number) {
+    const toStatus = window.prompt("Next fulfillment status");
+    const operatorMemo = window.prompt("Operator memo (10+ chars)");
+    if (!toStatus || !operatorMemo) return;
+    try {
+      setPending(true);
+      const token = await getAccessToken();
+      if (!token) throw new Error();
+      const carrier = toStatus === "shipping_in_transit" ? window.prompt("Carrier") ?? "" : undefined;
+      const trackingNumber = toStatus === "shipping_in_transit" ? window.prompt("Tracking number") ?? "" : undefined;
+      const response = await fetch(`/api/admin/benefit-winners/${winnerId}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json", "x-correlation-id": crypto.randomUUID() },
+        body: JSON.stringify({ expectedRevision, toStatus, operatorMemo, carrier, trackingNumber }),
+      });
+      if (!response.ok) throw new Error();
+      await refresh();
+      await readWinner(winnerId, false);
+    } catch { setError(t.failure); } finally { setPending(false); }
   }
   async function archive() {
     if (
@@ -454,6 +509,15 @@ function BenefitManager({
                 {draws[item.id] && (
                   <small>{draws[item.id].candidateCount} candidates · {draws[item.id].winners.length} winners · {draws[item.id].seedHash}</small>
                 )}
+                {item.draw?.winners.map((winner) => (
+                  <div key={winner.winnerId}>
+                    <small>{winner.benefitId} · {winner.method} · {winner.status}</small>
+                    <button type="button" disabled={pending} onClick={() => void readWinner(winner.winnerId, false)}>Masked recipient</button>
+                    <button type="button" disabled={!canWrite || pending} onClick={() => void readWinner(winner.winnerId, true)}>Reveal + audit</button>
+                    <button type="button" disabled={!canWrite || pending} onClick={() => void transitionWinner(winner.winnerId, winner.revision)}>Advance status</button>
+                    {winnerDetails[winner.winnerId] && <pre>{JSON.stringify(winnerDetails[winner.winnerId])}</pre>}
+                  </div>
+                ))}
               </li>
             ))}
           </ul>
@@ -471,10 +535,11 @@ function BenefitManager({
                   <Field type="number" label="Priority" value={item.priority} set={(v) => setCampaignItem(index, "priority", v)} />
                   <Field required={false} type="number" label={t.campaignNoLimit} value={item.perFanTicketLimit} set={(v) => setCampaignItem(index, "perFanTicketLimit", v)} />
                   <Field type="number" label="Winner quantity" value={item.winnerQuantity} set={(v) => setCampaignItem(index, "winnerQuantity", v)} />
+                  <Select label="Fulfillment" value={item.fulfillmentMethod} set={(v) => setCampaignItem(index, "fulfillmentMethod", v)} options={[["digital", "Digital"], ["physical_shipping", "Physical shipping"], ["on_site_pickup", "On-site pickup"]]} />
                 </div>
               ))}
               <div className={styles.actions}>
-                <button type="button" onClick={() => setCampaign((c) => ({ ...c, benefits: [...c.benefits, { benefitId: "", priority: String(c.benefits.length + 1), perFanTicketLimit: "", winnerQuantity: "1" }] }))}>+ Benefit</button>
+                <button type="button" onClick={() => setCampaign((c) => ({ ...c, benefits: [...c.benefits, { benefitId: "", priority: String(c.benefits.length + 1), perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital" }] }))}>+ Benefit</button>
                 <button type="submit"><Save aria-hidden="true" />{t.campaignSave}</button>
                 {campaign.id && <button type="button" onClick={() => void cmd({ action: "publish_campaign", id: campaign.id, expectedRevision: campaign.revision })}>{t.campaignPublish}</button>}
               </div>

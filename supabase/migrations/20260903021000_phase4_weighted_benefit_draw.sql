@@ -128,11 +128,16 @@ begin
   end loop;
 
   insert into public.benefit_fulfillments(winner_id,method,status)
-    select w.id,'digital','ready' from public.benefit_draw_winners w where w.draw_id=v_draw_id;
+    select w.id,i.fulfillment_method,
+      case when i.fulfillment_method='digital' then 'ready'::public.benefit_fulfillment_status
+           else 'information_required'::public.benefit_fulfillment_status end
+    from public.benefit_draw_winners w
+    join public.live_benefit_campaign_items i on i.campaign_id=w.campaign_id and i.benefit_id=w.benefit_id
+    where w.draw_id=v_draw_id;
   insert into public.benefit_fulfillment_events(
     fulfillment_id,from_status,to_status,actor_app_user_id,
     actor_admin_allowlist_id,correlation_id,created_at
-  ) select f.id,null,'ready',p_actor_app_user_id,p_actor_admin_allowlist_id,p_correlation_id,p_now
+  ) select f.id,null,f.status,p_actor_app_user_id,p_actor_admin_allowlist_id,p_correlation_id,p_now
     from public.benefit_fulfillments f join public.benefit_draw_winners w on w.id=f.winner_id
     where w.draw_id=v_draw_id;
 

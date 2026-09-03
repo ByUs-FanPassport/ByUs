@@ -1,0 +1,2 @@
+import {createBenefitFulfillmentRouteDependencies} from "../../../../../../server/g4/benefit-fulfillment-route-dependencies";import {createPostOwnedBenefitRecipientHandler} from "../../../../../../server/g4/benefit-fulfillment-route";
+export const dynamic="force-dynamic";export async function POST(request:Request,context:{params:Promise<{winnerId:string}>}){const{winnerId}=await context.params;return createPostOwnedBenefitRecipientHandler(createBenefitFulfillmentRouteDependencies())(request,{winnerId});}
