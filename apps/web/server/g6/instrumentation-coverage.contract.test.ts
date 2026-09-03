@@ -5,6 +5,7 @@ import { PRODUCT_EVENT_NAMES } from "../../features/analytics/domain/product-eve
 
 const root = resolve(process.cwd(), "../..");
 const migration = readFileSync(resolve(root, "supabase/migrations/20260903041200_phase6_product_event_projections.sql"), "utf8");
+const validationFix = readFileSync(resolve(root, "supabase/migrations/20260903041400_phase6_product_event_json_validation_fix.sql"), "utf8");
 const client = readFileSync(resolve(process.cwd(), "features/analytics/client/product-event-client.ts"), "utf8");
 const live = readFileSync(resolve(process.cwd(), "features/live/ui/live-event-screen.tsx"), "utf8");
 const creator = readFileSync(resolve(process.cwd(), "components/celebrity-fan-page.tsx"), "utf8");
@@ -29,5 +30,9 @@ describe("Phase 6 instrumentation coverage", () => {
     expect(client).toContain("anonymousSessionId()");
     expect(live).toContain("provider: data.live.watch.provider");
     expect(live).toContain("live_cta_click");
+  });
+  it("uses an executable PostgreSQL object-key count for bounded properties", () => {
+    expect(validationFix).toContain("pg_catalog.jsonb_object_keys(p_properties)");
+    expect(validationFix).not.toContain("jsonb_object_length(");
   });
 });

@@ -29,6 +29,7 @@ const releaseMigrations = [
   "20260903040000_phase6_platform_analytics.sql", "20260903040100_phase6_platform_aggregates.sql",
   "20260903041000_phase6_live_analytics.sql", "20260903041100_phase6_live_attribution_fix.sql",
   "20260903041200_phase6_product_event_projections.sql", "20260903041300_phase6_recipient_purge_monitor.sql",
+  "20260903041400_phase6_product_event_json_validation_fix.sql",
 ] as const;
 
 describe("full PPT release inventory", () => {
