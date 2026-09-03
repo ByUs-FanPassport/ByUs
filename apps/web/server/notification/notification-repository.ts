@@ -85,7 +85,9 @@ export function projectNotificationRow(
     locale === "ko" ? "새 혜택" : "New benefit",
   );
   const copy =
-    kind === "live_reserved"
+    ["benefit_won","recipient_information_required","fulfillment_meaningful_update","collectible_claim_available","collectible_claim_expiring"].includes(kind)
+      ? [text(payload.title, locale === "ko" ? "확인이 필요해요" : "Action required"), text(payload.detail, locale === "ko" ? "자세한 내용을 확인해 주세요." : "Review the details.")]
+      : kind === "live_reserved"
       ? [locale === "ko" ? `${liveTitle} 예약이 완료됐어요` : `${liveTitle} is reserved`, locale === "ko" ? "예약한 LIVE 알림을 보내드릴게요." : "We'll remind you about this LIVE."]
       : kind === "live_changed"
         ? [locale === "ko" ? `${liveTitle} 일정이 변경됐어요` : `${liveTitle} schedule changed`, locale === "ko" ? "변경된 일정을 확인해 주세요." : "Review the updated schedule."]

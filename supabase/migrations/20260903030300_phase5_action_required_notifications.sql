@@ -1,0 +1,38 @@
+alter type public.notification_kind add value if not exists 'benefit_won';
+alter type public.notification_kind add value if not exists 'recipient_information_required';
+alter type public.notification_kind add value if not exists 'fulfillment_meaningful_update';
+alter type public.notification_kind add value if not exists 'collectible_claim_available';
+alter type public.notification_kind add value if not exists 'collectible_claim_expiring';
+alter table public.fan_notifications drop constraint fan_notifications_source_shape;
+alter table public.fan_notifications add constraint fan_notifications_source_shape check(
+ (kind in('live_reserved','live_24h','live_10m','live_changed','live_cancelled','survey_reminder','collectible_claim_available','collectible_claim_expiring')and live_event_id is not null and benefit_id is null)
+ or(kind in('benefit_available','benefit_unlocked','benefit_won','recipient_information_required','fulfillment_meaningful_update')and benefit_id is not null and live_event_id is null));
+
+create function public.insert_action_required_notification(p_app_user_id uuid,p_kind public.notification_kind,p_source_key text,p_live_event_id uuid,p_benefit_id uuid,p_deep_link text,p_payload jsonb,p_scheduled_for timestamptz default pg_catalog.now())returns uuid language plpgsql security definer set search_path='' as $$declare v_id uuid;begin
+ insert into public.fan_notifications(app_user_id,kind,source_key,live_event_id,benefit_id,scheduled_for,deep_link,payload)
+ values(p_app_user_id,p_kind,p_source_key,p_live_event_id,p_benefit_id,p_scheduled_for,p_deep_link,p_payload)on conflict(app_user_id,source_key)do update set source_key=excluded.source_key returning id into v_id;return v_id;end $$;
+
+create function public.phase5_notify_benefit_winner()returns trigger language plpgsql security definer set search_path='' as $$begin
+ perform public.insert_action_required_notification(new.app_user_id,'benefit_won','benefit_won:'||new.id::text||':1',null,new.benefit_id,'/benefits/'||new.benefit_id::text,jsonb_build_object('title','Benefit 당첨','detail','당첨된 Benefit을 확인해 주세요.'),new.selected_at);return new;end $$;
+create trigger phase5_notify_benefit_winner after insert on public.benefit_draw_winners for each row execute function public.phase5_notify_benefit_winner();
+
+create function public.phase5_notify_fulfillment_created()returns trigger language plpgsql security definer set search_path='' as $$declare v public.benefit_draw_winners%rowtype;begin select * into strict v from public.benefit_draw_winners where id=new.winner_id;if new.status='information_required'then perform public.insert_action_required_notification(v.app_user_id,'recipient_information_required','recipient_information_required:'||new.winner_id::text||':'||new.revision::text,null,v.benefit_id,'/benefits/'||v.benefit_id::text,jsonb_build_object('title','수령 정보 필요','detail','Benefit 수령 정보를 입력해 주세요.'),new.created_at);elsif new.status='digital_delivered'then perform public.insert_action_required_notification(v.app_user_id,'fulfillment_meaningful_update','fulfillment_meaningful_update:'||new.id::text||':'||new.revision::text,null,v.benefit_id,'/benefits/'||v.benefit_id::text,jsonb_build_object('title','Benefit 전달 완료','detail','디지털 Benefit을 확인해 주세요.'),new.created_at);end if;return new;end $$;
+create trigger phase5_notify_fulfillment_created after insert on public.benefit_fulfillments for each row execute function public.phase5_notify_fulfillment_created();
+
+create function public.phase5_notify_fulfillment_update()returns trigger language plpgsql security definer set search_path='' as $$declare v_winner public.benefit_draw_winners%rowtype;v_f public.benefit_fulfillments%rowtype;begin
+ if new.to_status not in('shipping_in_transit','shipping_completed','pickup_available','pickup_completed','digital_delivered')then return new;end if;select * into strict v_f from public.benefit_fulfillments where id=new.fulfillment_id;select * into strict v_winner from public.benefit_draw_winners where id=v_f.winner_id;
+ perform public.insert_action_required_notification(v_winner.app_user_id,'fulfillment_meaningful_update','fulfillment_meaningful_update:'||new.fulfillment_id::text||':'||new.id::text,null,v_winner.benefit_id,'/benefits/'||v_winner.benefit_id::text,jsonb_build_object('title','Benefit 진행 상태 변경','detail','최신 수령 상태를 확인해 주세요.'),new.created_at);return new;end $$;
+create trigger phase5_notify_fulfillment_update after insert on public.benefit_fulfillment_events for each row execute function public.phase5_notify_fulfillment_update();
+
+create function public.phase5_notify_collectible_available()returns trigger language plpgsql security definer set search_path='' as $$declare r record;begin
+ for r in select c.app_user_id,l.slug,rr.claim_window_duration_hours from public.live_journey_completions c join public.live_journey_requirement_revisions rr on rr.id=c.requirement_revision_id join public.live_events l on l.id=c.live_event_id where c.live_event_id=new.live_event_id loop
+  perform public.insert_action_required_notification(r.app_user_id,'collectible_claim_available','collectible_claim_available:'||new.live_event_id::text||':'||new.schedule_revision::text,new.live_event_id,null,'/live/'||r.slug,jsonb_build_object('title','Collectible 수령 가능','detail','기간 안에 Collectible을 받아 주세요.'),new.opens_at);
+ end loop;return new;end $$;
+create trigger phase5_notify_collectible_available after insert on public.live_collectible_claim_windows for each row execute function public.phase5_notify_collectible_available();
+
+create function public.enqueue_collectible_claim_expiry_notifications(p_now timestamptz default pg_catalog.now())returns integer language plpgsql security definer set search_path='' as $$declare v_count integer;begin
+ with due as(select c.app_user_id,c.live_event_id,l.slug,w.schedule_revision,w.opens_at+pg_catalog.make_interval(hours=>rr.claim_window_duration_hours)until_at from public.live_journey_completions c join public.live_journey_requirement_revisions rr on rr.id=c.requirement_revision_id join public.live_collectible_claim_windows w on w.live_event_id=c.live_event_id join public.live_events l on l.id=c.live_event_id where p_now>=w.opens_at+pg_catalog.make_interval(hours=>rr.claim_window_duration_hours)-interval '6 hours'and p_now<w.opens_at+pg_catalog.make_interval(hours=>rr.claim_window_duration_hours)and not exists(select 1 from public.live_collectible_claims x where x.app_user_id=c.app_user_id and x.live_event_id=c.live_event_id)),inserted as(insert into public.fan_notifications(app_user_id,kind,source_key,live_event_id,scheduled_for,deep_link,payload)select app_user_id,'collectible_claim_expiring','collectible_claim_expiring:'||live_event_id::text||':'||until_at::text,live_event_id,p_now,'/live/'||slug,jsonb_build_object('title','Collectible 수령 마감 임박','detail','수령 기간이 곧 끝나요.')from due on conflict(app_user_id,source_key)do nothing returning 1)select count(*)into v_count from inserted;return v_count;end $$;
+
+revoke all on function public.insert_action_required_notification(uuid,public.notification_kind,text,uuid,uuid,text,jsonb,timestamptz),public.enqueue_collectible_claim_expiry_notifications(timestamptz) from public,anon,authenticated;
+grant execute on function public.insert_action_required_notification(uuid,public.notification_kind,text,uuid,uuid,text,jsonb,timestamptz),public.enqueue_collectible_claim_expiry_notifications(timestamptz) to service_role;
+revoke all on function public.phase5_notify_benefit_winner(),public.phase5_notify_fulfillment_created(),public.phase5_notify_fulfillment_update(),public.phase5_notify_collectible_available() from public,anon,authenticated,service_role;
