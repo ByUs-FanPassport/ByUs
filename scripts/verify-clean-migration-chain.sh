@@ -179,6 +179,9 @@ while IFS= read -r migration; do
     | psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" >/dev/null
 done < <(find "$ROOT_DIR/supabase/migrations" -maxdepth 1 -type f -name '*.sql' | sort)
 
+PGHOST="$SOCKET_DIR" PGPORT="$PG_PORT" PGDATABASE="$DATABASE" \
+  bash "$ROOT_DIR/scripts/verify-phase5-notification-email-conflict.sh"
+
 if [[ -n "${BYUS_CLEAN_DB_ASSERTION_FILE:-}" ]]; then
   psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" \
     -f "$BYUS_CLEAN_DB_ASSERTION_FILE"
