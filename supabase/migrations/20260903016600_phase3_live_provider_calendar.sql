@@ -5,13 +5,17 @@ alter table public.live_events
   add column live_provider public.social_platform not null default 'youtube',
   add column external_live_url text;
 
+-- Archived LIVE rows remain immutable to application writes. Temporarily
+-- bypass the lifecycle trigger only for this transactional schema backfill.
+alter table public.live_events disable trigger live_events_enforce_lifecycle;
 update public.live_events
 set external_live_url = youtube_url
 where external_live_url is null;
 
 -- Supabase applies migrations transactionally; flush deferred content-integrity
--- triggers from the backfill before changing the table definition.
+-- triggers before restoring lifecycle protection or changing the table.
 set constraints all immediate;
+alter table public.live_events enable trigger live_events_enforce_lifecycle;
 
 alter table public.live_events
   alter column external_live_url set not null,

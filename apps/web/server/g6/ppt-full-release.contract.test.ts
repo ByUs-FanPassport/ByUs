@@ -56,6 +56,7 @@ describe("full PPT release inventory", () => {
 
   it("binds all product events, guarded reads, routes and deployment integrity proof", () => {
     const sql = releaseMigrations.map((name) => read(`supabase/migrations/${name}`)).join("\n");
+    const providerBackfill = read("supabase/migrations/20260903016600_phase3_live_provider_calendar.sql");
     const routeInventory = [
       "apps/web/app/api/events/route.ts",
       "apps/web/app/api/admin/analytics/platform/route.ts",
@@ -66,6 +67,8 @@ describe("full PPT release inventory", () => {
     ];
     for (const eventName of PRODUCT_EVENT_NAMES) expect(sql + read("apps/web/features/analytics/domain/product-event.ts")).toContain(eventName);
     for (const rpc of ["read_admin_platform_analytics", "read_admin_live_analytics", "read_admin_recipient_purge_status"]) expect(sql).toContain(rpc);
+    expect(providerBackfill.indexOf("disable trigger live_events_enforce_lifecycle")).toBeLessThan(providerBackfill.indexOf("update public.live_events"));
+    expect(providerBackfill.indexOf("set constraints all immediate")).toBeLessThan(providerBackfill.indexOf("enable trigger live_events_enforce_lifecycle"));
     for (const route of routeInventory) expect(existsSync(resolve(root, route)), route).toBe(true);
     expect(existsSync(resolve(root, "apps/web/e2e/operations/ppt-full-release.spec.ts"))).toBe(true);
     expect(existsSync(resolve(root, "apps/web/server/g6/deployment-fingerprint-route.test.ts"))).toBe(true);
