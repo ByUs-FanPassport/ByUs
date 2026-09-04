@@ -13,11 +13,13 @@ describe("Phase 2 attendance code and reward contract", () => {
   it("backfills archived LIVE rows without leaving lifecycle protection disabled", () => {
     const disable = sql.indexOf("disable trigger live_events_enforce_lifecycle");
     const backfill = sql.indexOf("update public.live_events");
+    const flush = sql.indexOf("set constraints all immediate");
     const enable = sql.indexOf("enable trigger live_events_enforce_lifecycle");
 
     expect(disable).toBeGreaterThan(-1);
     expect(disable).toBeLessThan(backfill);
-    expect(backfill).toBeLessThan(enable);
+    expect(backfill).toBeLessThan(flush);
+    expect(flush).toBeLessThan(enable);
   });
   it("generates six unbiased uppercase alphanumeric characters and never audits plaintext", () => {
     expect(sql).toContain("while length(result) < 6");

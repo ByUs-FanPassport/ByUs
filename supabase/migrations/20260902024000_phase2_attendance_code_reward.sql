@@ -12,10 +12,11 @@ alter table public.live_events disable trigger live_events_enforce_lifecycle;
 update public.live_events
 set attendance_valid_from = starts_at,
     attendance_valid_until = ends_at;
-alter table public.live_events enable trigger live_events_enforce_lifecycle;
 
--- Flush deferred content-integrity triggers before changing column nullability.
+-- Flush deferred content-integrity triggers before restoring the lifecycle
+-- trigger or changing column nullability.
 set constraints all immediate;
+alter table public.live_events enable trigger live_events_enforce_lifecycle;
 
 alter table public.live_events
   alter column attendance_valid_from set not null,
