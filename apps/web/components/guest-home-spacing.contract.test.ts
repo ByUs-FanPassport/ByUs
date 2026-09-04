@@ -99,10 +99,19 @@ describe("guest home compact icon-only action spacing", () => {
     expect(controls).toMatch(/\bmin-width:\s*44px\b/);
     expect(controls).toMatch(/\bheight:\s*44px\b/);
     expect(declarationBlock(".carouselDots")).toMatch(/\bbottom:\s*-42px\b/);
+    expect(declarationBlock(".carouselDots")).toMatch(
+      /\bwidth:\s*min\(var\(--carousel-width\),\s*100%\)/,
+    );
+    expect(declarationBlock(".carouselControls .carouselDot")).toMatch(
+      /\bmin-width:\s*24px\b/,
+    );
     expect(declarationBlock(".carouselPrevious")).toMatch(/\bleft:\s*8px\b/);
     expect(declarationBlock(".carouselNext")).toMatch(/\bright:\s*8px\b/);
     expect(declarationBlock(".carouselDot[aria-current=\"true\"] span")).toMatch(
       /\bbackground:\s*var\(--ink\)/,
+    );
+    expect(declarationBlock(".carouselDot[aria-current=\"true\"] span")).toMatch(
+      /\bwidth:\s*22px\b/,
     );
     expect(declarationBlock(".heroTrack")).toMatch(
       /\btransition:\s*transform\s+240ms\s+cubic-bezier\(\.2,\s*0,\s*0,\s*1\)/,

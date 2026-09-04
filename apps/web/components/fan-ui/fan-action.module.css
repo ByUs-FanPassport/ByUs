@@ -36,6 +36,12 @@
   text-wrap: balance;
 }
 
+.action > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
 .leading,
 .trailing {
   position: absolute;

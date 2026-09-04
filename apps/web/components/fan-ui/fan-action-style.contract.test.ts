@@ -37,6 +37,14 @@ describe("shared fan action style contract", () => {
     expect(serviceRule).toContain('"Google Sans"');
   });
 
+  it("constrains direct SVG marks inside action links", () => {
+    const directIconRule = actionCss.match(/\.action\s*>\s*svg\s*\{([\s\S]*?)\n\}/)?.[1];
+
+    expect(directIconRule).toContain("width: 18px");
+    expect(directIconRule).toContain("height: 18px");
+    expect(directIconRule).toContain("flex: none");
+  });
+
   it("keeps the shell anchor reset weaker than action classes", () => {
     expect(shellCss).toContain(":where(.frame) a { color: inherit;");
     expect(shellCss).not.toMatch(/(?:^|\n)\.frame a\s*\{/);

@@ -13,7 +13,7 @@ import styles from "./guest-home.module.css";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-const BANKSY_CAMPAIGN_IMAGE = "/images/guest-home/banksy-exhibition-campaign.png";
+const BANKSY_CAMPAIGN_IMAGE = "/images/guest-home/banksy-exhibition-campaign.webp";
 
 const carouselCopy = {
   ko: {
@@ -295,7 +295,7 @@ export function LiveHeroCarousel({
           </button>
           <div
             className={styles.carouselDots}
-            style={{ "--carousel-count": total } as CSSProperties}
+            style={{ "--carousel-width": `${total * 32}px` } as CSSProperties}
           >
             {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "banksy-campaign"].map((key, index) => (
               <button

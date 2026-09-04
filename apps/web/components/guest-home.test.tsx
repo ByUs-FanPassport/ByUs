@@ -130,6 +130,9 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("heading", { name: "엘리나와 함께 만나는 뱅크시" })).toBeInTheDocument();
     expect(screen.getByText("9월 18일 금요일 · 오후 5시")).toBeInTheDocument();
     expect(screen.getByText("11월 전시 종료까지")).toBeInTheDocument();
+    expect(screen.getByRole("img", {
+      name: "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
+    })).toHaveAttribute("src", expect.stringContaining("banksy-exhibition-campaign.webp"));
     expect(screen.getByRole("link", { name: /이벤트 살펴보기/ })).toHaveAttribute("href", "/c/elina?locale=ko");
   });
 

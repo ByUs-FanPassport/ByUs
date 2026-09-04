@@ -71,10 +71,10 @@
 .carouselControls > button svg { position: relative; z-index: 1; width: 16px; height: 16px; }
 .carouselPrevious { left: 8px; }
 .carouselNext { right: 8px; }
-.carouselDots { position: absolute; bottom: -42px; left: 50%; display: flex; width: min(calc(var(--carousel-count) * 44px), 100%); height: 44px; align-items: center; justify-content: center; transform: translateX(-50%); pointer-events: auto; }
-.carouselControls .carouselDot { position: relative; display: grid; width: 44px; min-width: 0; max-width: 44px; height: 44px; flex: 1 1 44px; padding: 0; place-items: center; border: 0; background: transparent; cursor: pointer; }
-.carouselDot span { position: relative; width: 28px; max-width: 72%; height: 4px; border-radius: 999rem; background: var(--line); transform: scaleX(.64); transition: background-color 160ms cubic-bezier(.2,0,0,1), transform 160ms cubic-bezier(.2,0,0,1); }
-.carouselDot[aria-current="true"] span { background: var(--ink); transform: scaleX(1); }
+.carouselDots { position: absolute; bottom: -42px; left: 50%; display: flex; width: min(var(--carousel-width), 100%); height: 44px; align-items: center; justify-content: center; transform: translateX(-50%); pointer-events: auto; }
+.carouselControls .carouselDot { position: relative; display: grid; width: 32px; min-width: 24px; height: 44px; flex: 0 1 32px; padding: 0; place-items: center; border: 0; background: transparent; cursor: pointer; }
+.carouselDot span { position: relative; width: 6px; height: 6px; border-radius: 999rem; background: var(--line); transition: width 160ms cubic-bezier(.2,0,0,1), background-color 160ms cubic-bezier(.2,0,0,1); }
+.carouselDot[aria-current="true"] span { width: 22px; background: var(--ink); }
 .carouselAnnouncement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 .campaignAd { position: relative; display: flex; min-height: 216px; overflow: hidden; align-items: flex-end; margin-top: 16px; border-radius: 16px; background: var(--ink); color: #fff !important; box-shadow: var(--card-shadow); }
