@@ -33,14 +33,44 @@ const ownedPassport = {
   display: { level: "실버", mintStatus: "발급 완료" },
 } as const;
 
+function currentCalendarMonth() {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric", month: "2-digit", timeZone: "Asia/Seoul",
+  }).format(new Date());
+}
+
+function adjacentTestMonth(month: string, offset: -1 | 1) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const date = new Date(Date.UTC(year!, monthNumber! - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function calendarPayload(events: unknown[] = [], month = currentCalendarMonth()) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const dayCount = new Date(Date.UTC(year!, monthNumber!, 0)).getUTCDate();
+  return {
+    month,
+    timeZone: "Asia/Seoul",
+    days: Array.from({ length: dayCount }, (_, index) => {
+      const date = `${month}-${String(index + 1).padStart(2, "0")}`;
+      return {
+        date,
+        events: events.filter((event) => String((event as { startsAt: string }).startsAt).slice(0, 10) === date),
+      };
+    }),
+  };
+}
+
 function stubHubFetch({
   notices = [],
   benefits = [],
   passports = [],
+  calendarEvents = [],
 }: {
   notices?: unknown[];
   benefits?: unknown[];
   passports?: unknown[];
+  calendarEvents?: unknown[];
 } = {}) {
   const request = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -52,6 +82,10 @@ function stubHubFetch({
     }
     if (url.includes("/api/passports")) {
       return { ok: true, json: async () => ({ passports }) };
+    }
+    if (url.includes("/api/live-events/calendar")) {
+      const requestedMonth = new URL(url, "http://localhost").searchParams.get("month") ?? currentCalendarMonth();
+      return { ok: true, json: async () => calendarPayload(calendarEvents, requestedMonth) };
     }
     throw new Error(`Unexpected request: ${url}`);
   });
@@ -86,8 +120,112 @@ describe("published celebrity fan page", () => {
     expect(screen.getByRole("link", { name: /팬 인증하기/ }))
       .toHaveAttribute("data-fan-action-emphasis", "primary");
     expect(document.querySelectorAll('main [data-fan-action-emphasis="primary"]')).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "KARA LIVE 일정" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "캘린더 크게 보기" })).toHaveAttribute(
+      "href",
+      `/live/calendar?month=${currentCalendarMonth()}&locale=ko&celebrity=kara`,
+    );
     expect(screen.queryByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).not.toBeInTheDocument();
     expect(await screen.findByText("등록된 공지가 아직 없어요.")).toBeInTheDocument();
+  });
+
+  it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {
+    const month = currentCalendarMonth();
+    stubHubFetch({
+      calendarEvents: [{
+        id: "11111111-1111-4111-8111-111111111111",
+        slug: "kara-calendar-live",
+        startsAt: `${month}-12T11:00:00.000Z`,
+        effectiveStatus: "scheduled",
+        title: "KARA 캘린더 LIVE",
+        celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+        reservationState: null,
+        hasBenefit: null,
+      }, {
+        id: "22222222-2222-4222-8222-222222222222",
+        slug: "changha-calendar-live",
+        startsAt: `${month}-13T11:00:00.000Z`,
+        effectiveStatus: "scheduled",
+        title: "다른 셀럽 캘린더 LIVE",
+        celebrity: { name: "Changha", image: "/images/guest-home/changha-card.jpg" },
+        reservationState: null,
+        hasBenefit: null,
+      }],
+    });
+
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    expect(await screen.findByRole("link", { name: "12일 KARA 캘린더 LIVE, 예약 상태 미확인" })).toHaveAttribute(
+      "href",
+      "/live/kara-calendar-live?locale=ko",
+    );
+    expect(screen.queryByLabelText(/다른 셀럽 캘린더 LIVE/)).not.toBeInTheDocument();
+  });
+
+  it("moves between mini-calendar months and refreshes the full-calendar destination", async () => {
+    const request = stubHubFetch();
+    const current = currentCalendarMonth();
+    const nextMonth = adjacentTestMonth(current, 1);
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`다음 달:.*${Number(nextMonth.slice(5))}월`) }));
+
+    expect(screen.getByRole("link", { name: "캘린더 크게 보기" })).toHaveAttribute(
+      "href",
+      `/live/calendar?month=${nextMonth}&locale=ko&celebrity=kara`,
+    );
+    await waitFor(() => expect(request).toHaveBeenCalledWith(
+      `/api/live-events/calendar?month=${nextMonth}&locale=ko`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ));
+  });
+
+  it("loads personalized reservation state and distinguishes reserved LIVE dates", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    const month = currentCalendarMonth();
+    const request = stubHubFetch({
+      passports: [ownedPassport],
+      calendarEvents: [{
+        id: "33333333-3333-4333-8333-333333333333",
+        slug: "kara-reserved-live",
+        startsAt: `${month}-18T11:00:00.000Z`,
+        effectiveStatus: "scheduled",
+        title: "예약한 KARA LIVE",
+        celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+        reservationState: "reserved",
+        hasBenefit: false,
+      }],
+    });
+
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    expect(await screen.findByRole("link", { name: "18일 예약한 KARA LIVE, 예약 완료" }))
+      .toHaveAttribute("data-reservation", "reserved");
+    expect(request).toHaveBeenCalledWith(
+      `/api/live-events/calendar?month=${month}&locale=ko`,
+      expect.objectContaining({ headers: { Authorization: "Bearer token" } }),
+    );
+  });
+
+  it("opens the nearest upcoming LIVE month instead of an empty current month", async () => {
+    const request = stubHubFetch();
+    const current = currentCalendarMonth();
+    const nextMonth = adjacentTestMonth(current, 1);
+    render(<CelebrityFanPage
+      celebrity={kara}
+      locale="ko"
+      upcomingLive={{ ...upcomingLive, startsAt: `${nextMonth}-01T11:00:00.000Z` }}
+    />);
+
+    expect(screen.getByRole("link", { name: "캘린더 크게 보기" })).toHaveAttribute(
+      "href",
+      `/live/calendar?month=${nextMonth}&locale=ko&celebrity=kara`,
+    );
+    await waitFor(() => expect(request).toHaveBeenCalledWith(
+      `/api/live-events/calendar?month=${nextMonth}&locale=ko`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ));
   });
 
   it("renders honest Home empty states for missing public hub data", async () => {
@@ -225,8 +363,8 @@ describe("published celebrity fan page", () => {
       "/passports/8a6c0050-4c52-4e0f-b73a-e2f4aab48b85?locale=ko",
     );
     expect(screen.getByText("실버")).toBeInTheDocument();
-    expect(screen.getByText("8")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("8", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.getByText("3", { selector: "dd" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /팬 인증하기/ })).not.toBeInTheDocument();
   });
 
@@ -272,14 +410,18 @@ describe("published celebrity fan page", () => {
     expect(passportAttempts).toBe(2);
   });
 
-  it("uses English published content and keeps locale on LIVE and verification paths", () => {
+  it("uses English state-aware content and keeps locale on LIVE and verification paths", async () => {
     const englishCelebrity = { ...kara, locale: "en" as const, name: "KARA EN", summary: "English CMS summary" };
     const englishLive = { ...upcomingLive, locale: "en" as const, title: "Published English LIVE" };
     render(<CelebrityFanPage celebrity={englishCelebrity} locale="en" upcomingLive={englishLive} />);
-    expect(screen.getByText("English CMS summary")).toBeInTheDocument();
+    expect(screen.getByText("Take the quiz, verify your fandom, and begin your KARA EN Fan Passport journey.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Published English LIVE" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /View LIVE details/ })).toHaveAttribute("href", "/live/kara-nualeaf?locale=en");
-    expect(screen.getByRole("link", { name: /Verify fandom/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
+    expect(screen.getByRole("link", { name: /verify fandom/i })).toHaveAttribute("href", expect.stringContaining("locale=en"));
+    expect(await screen.findByRole("link", { name: "Open full calendar" })).toHaveAttribute(
+      "href",
+      `/live/calendar?month=${currentCalendarMonth()}&locale=en&celebrity=kara`,
+    );
   });
 
 });

@@ -10,11 +10,15 @@ import {
 } from "@/features/analytics/client/product-event-client";
 import type { Route } from "next";
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowRight, Clock, Play, Radio } from "./icons";
+import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { FanAction } from "./fan-ui/fan-action";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
+import {
+  liveCalendarMonthSchema,
+  type LiveCalendarDay,
+} from "../features/live/domain/live-calendar";
 import {
   parsePassportCollectionResponse,
   type PassportCollectionResponse,
@@ -44,7 +48,7 @@ const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagra
 const copy = {
   ko: {
     official: "BYUS FAN PAGE", openPassport: "Passport 열기", passportError: "Passport 상태를 확인하지 못했어요.",
-    retry: "다시 시도", checking: "Passport 상태 확인 중", verify: "팬 인증하기", sections: "팬페이지 메뉴",
+    retry: "다시 시도", checking: "Passport 상태 확인 중", verify: "퀴즈 풀고 팬 인증하기", sections: "팬페이지 메뉴",
     tabs: { home: "홈", notice: "공지", live: "LIVE", benefits: "혜택" },
     noNotice: "등록된 공지가 아직 없어요.", noNoticeHelp: "새 소식이 공개되면 이곳에서 확인할 수 있어요.",
     noticeError: "공지를 불러오지 못했어요.", pinned: "고정", latestNotice: "최근 공지", allNotices: "전체 공지 보기",
@@ -60,6 +64,11 @@ const copy = {
     profileHelp: (name: string) => `${name}의 공개 채널을 확인하세요.`,
     officialSns: "채널", newWindow: "새 창",
     noSns: "공개된 채널 링크가 아직 없어요.", noSnsHelp: "채널이 등록되면 이곳에 표시돼요.", nextLive: "다음 LIVE",
+    ownedHeroHelp: (name: string) => `${name}와 함께한 순간과 다음 LIVE 일정을 확인해 보세요.`,
+    verificationHeroHelp: (name: string) => `퀴즈로 팬 인증을 완료하고 ${name} Fan Passport 여정을 시작해 보세요.`,
+    calendarTitle: "LIVE 일정", calendarOpen: "캘린더 크게 보기", calendarLoading: "LIVE 일정 확인 중", calendarError: "일정을 불러오지 못했어요.",
+    previousMonth: "이전 달", nextMonth: "다음 달", reserved: "예약 완료", notReserved: "미예약", reservationUnknown: "예약 상태 미확인",
+    weekdays: ["일", "월", "화", "수", "목", "금", "토"],
   },
   en: {
     official: "BYUS FAN PAGE", openPassport: "Open Passport", passportError: "We couldn't check your Passport status.",
@@ -79,6 +88,11 @@ const copy = {
     profileHelp: (name: string) => `Explore ${name}'s published channels.`,
     officialSns: "Channels", newWindow: "new window",
     noSns: "No channel links are published yet.", noSnsHelp: "Channels will appear here.", nextLive: "Next LIVE",
+    ownedHeroHelp: (name: string) => `Revisit your ${name} moments and see the next LIVE schedule.`,
+    verificationHeroHelp: (name: string) => `Take the quiz, verify your fandom, and begin your ${name} Fan Passport journey.`,
+    calendarTitle: "LIVE schedule", calendarOpen: "Open full calendar", calendarLoading: "Checking LIVE schedule", calendarError: "We couldn't load the schedule.",
+    previousMonth: "Previous month", nextMonth: "Next month", reserved: "Reserved", notReserved: "Not reserved", reservationUnknown: "Reservation unknown",
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   },
 } as const;
 
@@ -86,6 +100,45 @@ function formatDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     dateStyle: "medium", timeStyle: "short", hour12: locale !== "ko", timeZone: "Asia/Seoul",
   }).format(new Date(value));
+}
+
+function currentKstDate(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Seoul",
+  }).format(now);
+}
+
+function kstMonthForInstant(value: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric", month: "2-digit", timeZone: "Asia/Seoul",
+  }).format(new Date(value));
+}
+
+function miniCalendarMonthLabel(month: string, locale: ContentLocale) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    year: "numeric", month: "long", timeZone: "Asia/Seoul",
+  }).format(new Date(Date.UTC(year!, monthNumber! - 1, 15)));
+}
+
+function adjacentCalendarMonth(month: string, offset: -1 | 1) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const adjacent = new Date(Date.UTC(year!, monthNumber! - 1 + offset, 1));
+  return `${adjacent.getUTCFullYear()}-${String(adjacent.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function calendarWeekday(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day!)).getUTCDay();
+}
+
+function emptyCalendarDays(month: string): LiveCalendarDay[] {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const dayCount = new Date(Date.UTC(year!, monthNumber!, 0)).getUTCDate();
+  return Array.from({ length: dayCount }, (_, index) => ({
+    date: `${month}-${String(index + 1).padStart(2, "0")}`,
+    events: [],
+  }));
 }
 function findOwnedPassport(value: unknown, slug: string): OwnedPassport | null {
   return parsePassportCollectionResponse(value).passports.find((item) => item.celebrity.slug === slug) ?? null;
@@ -114,6 +167,122 @@ export function flattenLiveCatalog(value: unknown): LiveEventResponse[] {
   return ["liveNow", "upcoming", "replay"]
     .flatMap((key) => Array.isArray(catalog[key]) ? catalog[key] : [])
     .filter(isLiveEventResponse);
+}
+
+function HeroMiniCalendar({
+  celebrity,
+  locale,
+  upcomingLive,
+}: {
+  celebrity: PublishedCelebrity;
+  locale: ContentLocale;
+  upcomingLive: PublishedCelebrityLive | null;
+}) {
+  const { ready, authenticated, getAccessToken } = usePrivy();
+  const t = copy[locale];
+  const today = currentKstDate();
+  const currentMonth = today.slice(0, 7);
+  const upcomingMonth = upcomingLive ? kstMonthForInstant(upcomingLive.startsAt) : null;
+  const initialMonth = upcomingMonth && upcomingMonth >= currentMonth ? upcomingMonth : currentMonth;
+  const [month, setMonth] = useState(initialMonth);
+  const [state, setState] = useState<AsyncState<LiveCalendarDay[]>>({ status: "loading" });
+
+  useEffect(() => {
+    setMonth(initialMonth);
+  }, [initialMonth]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const controller = new AbortController();
+    setState({ status: "loading" });
+    void (async () => {
+      try {
+        const token = authenticated ? await getAccessToken() : null;
+        const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${locale}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Calendar request failed");
+        const calendar = liveCalendarMonthSchema.parse(await response.json());
+        setState({
+          status: "ready",
+          data: calendar.days.map((day) => ({
+            ...day,
+            events: day.events.filter((event) => event.celebrity.name === celebrity.name),
+          })),
+        });
+      } catch {
+        if (!controller.signal.aborted) setState({ status: "error" });
+      }
+    })();
+    return () => controller.abort();
+  }, [authenticated, celebrity.name, getAccessToken, locale, month, ready]);
+
+  const days = state.status === "ready" ? state.data : emptyCalendarDays(month);
+  const firstWeekday = calendarWeekday(days[0]?.date ?? `${month}-01`);
+  const previousMonth = adjacentCalendarMonth(month, -1);
+  const nextMonth = adjacentCalendarMonth(month, 1);
+
+  return (
+    <section className={styles.heroCalendar} aria-labelledby={`${celebrity.slug}-mini-calendar-title`} aria-busy={state.status === "loading"}>
+      <div className={styles.calendarHeading}>
+        <h2 id={`${celebrity.slug}-mini-calendar-title`}>{celebrity.name} {t.calendarTitle}</h2>
+        <div className={styles.calendarMonthNavigation}>
+          <button type="button" onClick={() => setMonth(previousMonth)} aria-label={`${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}`}><ChevronLeft /></button>
+          <time dateTime={month}>{miniCalendarMonthLabel(month, locale)}</time>
+          <button type="button" onClick={() => setMonth(nextMonth)} aria-label={`${t.nextMonth}: ${miniCalendarMonthLabel(nextMonth, locale)}`}><ChevronRight /></button>
+        </div>
+      </div>
+      <div className={styles.calendarWeekdays} aria-hidden="true">
+        {t.weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+      </div>
+      <div className={styles.calendarDays}>
+        {days.map((day, index) => {
+          const dayNumber = Number(day.date.slice(-2));
+          const firstEvent = day.events[0];
+          const style = index === 0 ? { gridColumnStart: firstWeekday + 1 } : undefined;
+          if (firstEvent) {
+            const reservationState = firstEvent.reservationState ?? "unknown";
+            const reservationLabel = reservationState === "reserved"
+              ? t.reserved
+              : reservationState === "not_reserved" ? t.notReserved : t.reservationUnknown;
+            const eventLabel = locale === "ko"
+              ? `${dayNumber}일 ${firstEvent.title}, ${reservationLabel}${day.events.length > 1 ? ` 외 ${day.events.length - 1}개` : ""}`
+              : `${dayNumber}, ${firstEvent.title}, ${reservationLabel}${day.events.length > 1 ? ` and ${day.events.length - 1} more` : ""}`;
+            return (
+              <Link
+                className={styles.calendarEventDay}
+                data-reservation={reservationState}
+                data-today={day.date === today ? "true" : undefined}
+                href={`/live/${firstEvent.slug}?locale=${locale}` as Route}
+                key={day.date}
+                style={style}
+                aria-label={eventLabel}
+              >
+                <time dateTime={day.date}>{dayNumber}</time>
+                <span aria-hidden="true">{day.events.length > 1 ? day.events.length : ""}</span>
+              </Link>
+            );
+          }
+          return (
+            <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} key={day.date} style={style}>
+              <time dateTime={day.date}>{dayNumber}</time>
+            </span>
+          );
+        })}
+      </div>
+      {state.status !== "ready" ? <p className={styles.calendarMessage} role={state.status === "error" ? "alert" : "status"}>
+        {state.status === "loading" ? t.calendarLoading : t.calendarError}
+      </p> : null}
+      <div className={styles.calendarFooter}>
+        <div className={styles.calendarLegend} aria-label={locale === "ko" ? "예약 상태 범례" : "Reservation legend"}>
+          <span><i data-state="reserved" aria-hidden="true" />{t.reserved}</span>
+          <span><i data-state="not_reserved" aria-hidden="true" />{t.notReserved}</span>
+        </div>
+        <Link href={`/live/calendar?month=${month}&locale=${locale}&celebrity=${celebrity.slug}` as Route}>{t.calendarOpen}<ArrowRight /></Link>
+      </div>
+    </section>
+  );
 }
 
 export function CelebrityFanPage({
@@ -241,34 +410,44 @@ export function CelebrityFanPage({
         }).props,
       }
     : null;
+  const heroHelp = passportState.status === "owned"
+    ? t.ownedHeroHelp(celebrity.name)
+    : passportState.status === "guest" || passportState.status === "none"
+      ? t.verificationHeroHelp(celebrity.name)
+      : celebrity.summary;
 
   return (
     <FanAppFrame locale={locale} mainId="celebrity-detail-main">
       <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
-        <section className={styles.hero} aria-labelledby="celebrity-heading">
-          {katseyeHero ? (
-            <picture className={styles.heroPicture}>
-              <source
-                media="(min-width: 48rem)"
-                srcSet={katseyeHero.desktop.srcSet}
-                sizes={katseyeHero.desktop.sizes}
-              />
-              {/* next/image getImageProps keeps both art-directed sources optimized. */}
-              {/* impeccable-disable-next-line broken-image: src is provided by getImageProps */}
-              <img {...katseyeHero.mobile} alt={celebrity.image.alt} />
-            </picture>
-          ) : (
-            <Image src={celebrity.image.url} alt={celebrity.image.alt} fill sizes="(min-width: 1024px) 1360px, 100vw" priority style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
-          )}
-          <div className={styles.scrim} aria-hidden="true" />
-          <div className={styles.heroCopy}><p>{t.official}</p><h1 id="celebrity-heading">{celebrity.name}</h1><span>{celebrity.summary}</span></div>
-          <div className={styles.heroAction}>
-            {passportState.status === "owned" ? <Link data-fan-action-emphasis="primary" href={`/passports/${passportState.passport.id}${localeQuery}`}><span>{t.openPassport}</span><ArrowRight /></Link>
-              : passportState.status === "error" ? <div className={styles.ctaError} role="alert"><span>{t.passportError}</span><button type="button" onClick={() => setRequestKey((key) => key + 1)}>{t.retry}</button></div>
-              : passportState.status === "loading" ? <span className={styles.ctaLoading} role="status">{t.checking}</span>
-              : <AuthIntentLink emphasis="primary" focusKey="celebrity-hero-verification" locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?tab=${activeTab}&locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}><span>{t.verify}</span><ArrowRight /></AuthIntentLink>}
-          </div>
-        </section>
+        <div className={styles.heroStage}>
+          <section className={styles.hero} aria-labelledby="celebrity-heading">
+            {katseyeHero ? (
+              <picture className={styles.heroPicture}>
+                <source
+                  media="(min-width: 48rem)"
+                  srcSet={katseyeHero.desktop.srcSet}
+                  sizes={katseyeHero.desktop.sizes}
+                />
+                {/* next/image getImageProps keeps both art-directed sources optimized. */}
+                {/* impeccable-disable-next-line broken-image: src is provided by getImageProps */}
+                <img {...katseyeHero.mobile} alt={celebrity.image.alt} />
+              </picture>
+            ) : (
+              <Image src={celebrity.image.url} alt={celebrity.image.alt} fill sizes="(min-width: 1024px) 1360px, 100vw" priority style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+            )}
+            <div className={styles.scrim} aria-hidden="true" />
+            <div className={styles.heroContent}>
+              <div className={styles.heroCopy}><p>{t.official}</p><h1 id="celebrity-heading">{celebrity.name}</h1><span>{heroHelp}</span></div>
+              <div className={styles.heroAction}>
+                {passportState.status === "owned" ? <Link data-fan-action-emphasis="primary" href={`/passports/${passportState.passport.id}${localeQuery}`}><span>{t.openPassport}</span><ArrowRight /></Link>
+                  : passportState.status === "error" ? <div className={styles.ctaError} role="alert"><span>{t.passportError}</span><button type="button" onClick={() => setRequestKey((key) => key + 1)}>{t.retry}</button></div>
+                  : passportState.status === "loading" ? <span className={styles.ctaLoading} role="status">{t.checking}</span>
+                  : <AuthIntentLink emphasis="primary" focusKey="celebrity-hero-verification" locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?tab=${activeTab}&locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}><span>{t.verify}</span><ArrowRight /></AuthIntentLink>}
+              </div>
+            </div>
+          </section>
+          <HeroMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
+        </div>
 
         <nav className={styles.sectionNav} aria-label={`${celebrity.name} ${t.sections}`} role="tablist">
           {tabs.map((tab, index) => <Link key={tab} href={tabHref(tab)} role="tab" aria-selected={activeTab === tab} aria-controls={`celebrity-${tab}-panel`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => tabKeyDown(event, index)}>{t.tabs[tab]}</Link>)}

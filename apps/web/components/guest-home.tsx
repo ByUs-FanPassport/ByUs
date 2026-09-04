@@ -27,6 +27,7 @@ import { stampTypeSchema } from "../features/passport/domain/passport-read-model
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
+const UPCOMING_LIVE_PAGE_SIZE = 3;
 
 type HomePersonalizationState =
   | { status: "auth-loading" }
@@ -55,8 +56,8 @@ const passportPreviewResponseSchema = z.object({
 }).loose();
 
 const copy = {
-  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 Fan Passport", allPassports: "전체 Passport 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
-  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
+  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 Fan Passport", allPassports: "전체 Passport 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
+  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
 } as const;
 
 export function formatKoreanLiveDate(value: string) {
@@ -227,11 +228,21 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
   const [panelOpen, setPanelOpen] = useState(true);
+  const [upcomingPage, setUpcomingPage] = useState(0);
   const personalization = useHomePersonalization(locale);
+  const upcomingPageCount = Math.max(1, Math.ceil(featuredLives.length / UPCOMING_LIVE_PAGE_SIZE));
+  const visibleFeaturedLives = featuredLives.slice(
+    upcomingPage * UPCOMING_LIVE_PAGE_SIZE,
+    (upcomingPage + 1) * UPCOMING_LIVE_PAGE_SIZE,
+  );
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
   const firstPreviewId =
     celebrities.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
       ?.slug ?? null;
+
+  useEffect(() => {
+    setUpcomingPage((currentPage) => Math.min(currentPage, upcomingPageCount - 1));
+  }, [upcomingPageCount]);
 
   return (
     <FanAppFrame
@@ -306,9 +317,9 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           </section>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
-            <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="upcoming-heading">{t.upcoming}</h2><p>{t.upcomingSub}</p></div></div>
-            <div className={styles.liveList}>
-              {featuredLives.length > 0 ? featuredLives.map((featuredLive) => {
+            <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="upcoming-heading">{t.upcoming}</h2><p>{t.upcomingSub}</p></div><Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link></div>
+            <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
+              {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
                 const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
                 return (
                   <article className={styles.liveRow} key={featuredLive.live.id}>
@@ -320,6 +331,13 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                 );
               }) : <p>{t.noLive}</p>}
             </div>
+            {upcomingPageCount > 1 ? (
+              <nav className={styles.livePagination} aria-label={t.upcoming}>
+                <button type="button" aria-label={t.previousLivePage} disabled={upcomingPage === 0} onClick={() => setUpcomingPage((page) => Math.max(0, page - 1))}><ChevronLeft /></button>
+                <span aria-live="polite" aria-atomic="true">{upcomingPage + 1} / {upcomingPageCount}</span>
+                <button type="button" aria-label={t.nextLivePage} disabled={upcomingPage === upcomingPageCount - 1} onClick={() => setUpcomingPage((page) => Math.min(upcomingPageCount - 1, page + 1))}><ChevronRight /></button>
+              </nav>
+            ) : null}
           </section>
         </main>
 

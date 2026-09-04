@@ -200,7 +200,7 @@ describe("canonical 03 guest home", () => {
     ).toHaveAttribute("href", "/?locale=ko");
   });
 
-  it("renders every active and scheduled featured LIVE in the upcoming list", () => {
+  it("renders the first three active and scheduled LIVE events", () => {
     const activeLive = {
       ...featuredLive,
       live: {
@@ -268,6 +268,44 @@ describe("canonical 03 guest home", () => {
         name: "Changha 예정 LIVE 상세 보기",
       }),
     ).toHaveAttribute("href", "/live/changha-live?locale=ko");
+  });
+
+  it("paginates the upcoming LIVE preview without hiding the full catalog link", () => {
+    const lives = Array.from({ length: 7 }, (_, index) => ({
+      ...featuredLive,
+      live: {
+        ...featuredLive.live,
+        id: `00000000-0000-4000-8000-00000000000${index + 1}`,
+        slug: `upcoming-live-${index + 1}`,
+        title: `다가오는 LIVE ${index + 1}`,
+        startsAt: `2026-10-${String(index + 1).padStart(2, "0")}T11:00:00.000Z`,
+      },
+    }));
+
+    render(<GuestHome {...defaultProps} featuredLives={lives} />);
+
+    const upcoming = screen.getByRole("heading", { name: "다가오는 LIVE" }).closest("section");
+    expect(upcoming).not.toBeNull();
+    const preview = within(upcoming!);
+    const previous = preview.getByRole("button", { name: "이전 LIVE 목록" });
+    const next = preview.getByRole("button", { name: "다음 LIVE 목록" });
+
+    expect(preview.getAllByRole("article")).toHaveLength(3);
+    expect(preview.getByText("다가오는 LIVE 1")).toBeInTheDocument();
+    expect(preview.getByText("1 / 3")).toBeInTheDocument();
+    expect(previous).toBeDisabled();
+    expect(preview.getByRole("link", { name: /전체 라이브/ })).toHaveAttribute("href", "/live?locale=ko");
+
+    fireEvent.click(next);
+    expect(preview.getByText("다가오는 LIVE 4")).toBeInTheDocument();
+    expect(preview.getByText("2 / 3")).toBeInTheDocument();
+    expect(previous).not.toBeDisabled();
+
+    fireEvent.click(next);
+    expect(preview.getAllByRole("article")).toHaveLength(1);
+    expect(preview.getByText("다가오는 LIVE 7")).toBeInTheDocument();
+    expect(preview.getByText("3 / 3")).toBeInTheDocument();
+    expect(next).toBeDisabled();
   });
 
   it("renders two regular-weight metadata rows with compact fans, live state, and icon-only social controls", () => {

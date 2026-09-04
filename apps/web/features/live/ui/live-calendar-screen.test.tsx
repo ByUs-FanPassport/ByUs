@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { LiveCalendarScreen } from "./live-calendar-screen";
@@ -49,6 +49,26 @@ const events = [
     reservationState: null,
     hasBenefit: null,
   },
+  {
+    id: "55555555-5555-4555-8555-555555555555",
+    slug: "kara-after-talk",
+    startsAt: "2026-09-15T13:00:00.000Z",
+    effectiveStatus: "scheduled" as const,
+    title: "KARA AFTER TALK",
+    celebrity: { name: "KARA", image: "/images/kara.jpg" },
+    reservationState: "not_reserved" as const,
+    hasBenefit: false,
+  },
+  {
+    id: "66666666-6666-4666-8666-666666666666",
+    slug: "elina-after-party",
+    startsAt: "2026-09-15T14:00:00.000Z",
+    effectiveStatus: "scheduled" as const,
+    title: "ELINA AFTER PARTY",
+    celebrity: { name: "ELINA", image: "/images/elina.jpg" },
+    reservationState: "not_reserved" as const,
+    hasBenefit: false,
+  },
 ];
 
 const calendar = {
@@ -57,7 +77,7 @@ const calendar = {
   days: Array.from({ length: 30 }, (_, index) => {
     const date = `2026-09-${String(index + 1).padStart(2, "0")}`;
     const eventsForDay = date === "2026-09-15"
-      ? events.slice(0, 2)
+      ? [events[0]!, events[1]!, events[4]!, events[5]!]
       : date === "2026-09-16"
         ? events.slice(2, 3)
         : date === "2026-09-17"
@@ -67,9 +87,33 @@ const calendar = {
   }),
 };
 
+const celebrities = [
+  { slug: "kara", name: "KARA", image: "/images/kara.jpg" },
+  { slug: "elina", name: "ELINA", image: "/images/elina.jpg" },
+];
+
+const eventMetadata = [
+  { eventSlug: "kara-live", celebritySlug: "kara", platforms: ["youtube", "instagram"] as const },
+  { eventSlug: "elina-live", celebritySlug: "elina", platforms: ["tiktok"] as const },
+  { eventSlug: "ended-live", celebritySlug: "kara", platforms: ["youtube"] as const },
+  { eventSlug: "cancelled-live", celebritySlug: "elina", platforms: ["instagram"] as const },
+  { eventSlug: "kara-after-talk", celebritySlug: "kara", platforms: ["youtube"] as const },
+  { eventSlug: "elina-after-party", celebritySlug: "elina", platforms: ["instagram"] as const },
+];
+
+function renderCalendar(locale: "ko" | "en" = "ko", initialCelebritySlugs: readonly string[] = []) {
+  return render(<LiveCalendarScreen
+    locale={locale}
+    initialCalendar={calendar}
+    celebrities={celebrities}
+    eventMetadata={eventMetadata}
+    initialCelebritySlugs={initialCelebritySlugs}
+  />);
+}
+
 describe("LIVE calendar screen", () => {
   it("renders every status and multiple Creators on one KST date with detail links", () => {
-    const { container } = render(<LiveCalendarScreen locale="ko" initialCalendar={calendar} />);
+    const { container } = renderCalendar();
 
     expect(screen.getByRole("heading", { name: /2026.*9월/ })).toBeInTheDocument();
     const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
@@ -80,13 +124,13 @@ describe("LIVE calendar screen", () => {
     expect(screen.getByText("종료")).toBeInTheDocument();
     expect(screen.getByText("취소")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /KARA LIVE.*상세/ })).toHaveAttribute("href", "/live/kara-live?locale=ko");
-    expect(container.querySelector('[style*="--first-weekday"]')).toHaveStyle("--first-weekday: 3");
+    expect(container.querySelectorAll('[data-outside-month="true"]')).toHaveLength(5);
     expect(screen.getByRole("group", { name: /2026년 9월 1일/ })).not.toHaveAttribute("data-first-column");
     expect(screen.getByRole("group", { name: /2026년 9월 6일/ })).toHaveAttribute("data-first-column", "true");
   });
 
   it("does not invent a Benefit badge for null/false and shows it only for true", () => {
-    render(<LiveCalendarScreen locale="ko" initialCalendar={calendar} />);
+    renderCalendar();
     const kara = screen.getByRole("article", { name: "KARA LIVE" });
     const elina = screen.getByRole("article", { name: "ELINA LIVE" });
     const ended = screen.getByRole("article", { name: "ENDED LIVE" });
@@ -96,10 +140,58 @@ describe("LIVE calendar screen", () => {
   });
 
   it("keeps unknown, reserved, and not-reserved states distinct and links back to the catalog", () => {
-    render(<LiveCalendarScreen locale="en" initialCalendar={calendar} />);
+    renderCalendar("en");
     expect(screen.getByRole("link", { name: /All LIVE/i })).toHaveAttribute("href", "/live?locale=en");
     expect(within(screen.getByRole("article", { name: "KARA LIVE" })).queryByText(/reserved/i)).not.toBeInTheDocument();
     expect(within(screen.getByRole("article", { name: "ELINA LIVE" })).getByText("Reserved")).toBeInTheDocument();
     expect(within(screen.getByRole("article", { name: "ENDED LIVE" })).getByText("Not reserved")).toBeInTheDocument();
+  });
+
+  it("preserves a creator entry filter, supports multi-select, and can return to every schedule", () => {
+    renderCalendar("ko", ["kara"]);
+
+    expect(screen.getByRole("button", { name: "KARA" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("article", { name: "KARA LIVE" })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: "ELINA LIVE" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /다음 달/ })).toHaveAttribute(
+      "href",
+      "/live/calendar?month=2026-10&locale=ko&celebrity=kara",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "ELINA" }));
+    expect(screen.getByRole("article", { name: "ELINA LIVE" })).toBeInTheDocument();
+    expect(screen.getByText("2명 선택")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "전체 셀럽 일정" }));
+    expect(screen.getByRole("button", { name: "전체 셀럽 일정" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("전체 보기")).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "KARA LIVE" })).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "ELINA LIVE" })).toBeInTheDocument();
+  });
+
+  it("renders every platform icon for a simulcast-capable calendar event", () => {
+    renderCalendar();
+    expect(within(screen.getByRole("article", { name: "KARA LIVE" })).getByLabelText(
+      "송출 플랫폼: YouTube, Instagram",
+    )).toBeInTheDocument();
+    expect(within(screen.getByRole("article", { name: "ELINA LIVE" })).getByLabelText(
+      "송출 플랫폼: TikTok",
+    )).toBeInTheDocument();
+  });
+
+  it("keeps crowded dates compact until the fan asks to reveal every LIVE", () => {
+    renderCalendar();
+    const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
+
+    expect(within(day).getAllByRole("article")).toHaveLength(2);
+    const disclosure = within(day).getByRole("button", { name: "+2개 더보기" });
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(disclosure);
+    expect(within(day).getAllByRole("article")).toHaveLength(4);
+    expect(within(day).getByRole("button", { name: "접기" })).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(within(day).getByRole("button", { name: "접기" }));
+    expect(within(day).getAllByRole("article")).toHaveLength(2);
   });
 });
