@@ -5,9 +5,14 @@ alter table public.live_events
   add column attendance_valid_from timestamptz,
   add column attendance_valid_until timestamptz;
 
+-- Archived LIVE rows are immutable to application writes, but schema backfills
+-- still need to populate new required columns. Keep the lifecycle trigger
+-- disabled only for this transactional backfill and restore it immediately.
+alter table public.live_events disable trigger live_events_enforce_lifecycle;
 update public.live_events
 set attendance_valid_from = starts_at,
     attendance_valid_until = ends_at;
+alter table public.live_events enable trigger live_events_enforce_lifecycle;
 
 -- Flush deferred content-integrity triggers before changing column nullability.
 set constraints all immediate;

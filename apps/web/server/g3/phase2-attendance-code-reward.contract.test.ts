@@ -9,6 +9,16 @@ describe("Phase 2 attendance code and reward contract", () => {
     expect(sql.indexOf("set constraints all immediate")).toBeGreaterThan(sql.indexOf("update public.live_events"));
     expect(sql.indexOf("set constraints all immediate")).toBeLessThan(sql.indexOf("alter column attendance_valid_from set not null"));
   });
+
+  it("backfills archived LIVE rows without leaving lifecycle protection disabled", () => {
+    const disable = sql.indexOf("disable trigger live_events_enforce_lifecycle");
+    const backfill = sql.indexOf("update public.live_events");
+    const enable = sql.indexOf("enable trigger live_events_enforce_lifecycle");
+
+    expect(disable).toBeGreaterThan(-1);
+    expect(disable).toBeLessThan(backfill);
+    expect(backfill).toBeLessThan(enable);
+  });
   it("generates six unbiased uppercase alphanumeric characters and never audits plaintext", () => {
     expect(sql).toContain("while length(result) < 6");
     expect(sql).toContain("if sample < 252");
