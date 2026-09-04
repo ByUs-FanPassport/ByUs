@@ -5,7 +5,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Book, CalendarHeart, ChevronRight, GoogleMark, Menu } from "./icons";
+import { z } from "zod";
+import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Menu } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import { mySummarySchema, type MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -18,6 +19,11 @@ import {
 } from "./active-preview-video";
 import { LiveStatusIndicator } from "./live-status-indicator";
 import { formatFanCount } from "./fan-ui/fan-count";
+import {
+  PassportStampCanvas,
+  type PassportStampRecord,
+} from "../features/passport/ui/passport-stamp-artwork";
+import { stampTypeSchema } from "../features/passport/domain/passport-read-model";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
@@ -28,6 +34,25 @@ type HomePersonalizationState =
   | { status: "authenticated-loading" }
   | { status: "authenticated-error" }
   | { status: "authenticated-ready"; summary: MySummary };
+
+type PassportPreviewState =
+  | { status: "loading" | "error"; stamps: readonly PassportStampRecord[]; totalCount: 0 }
+  | { status: "ready"; stamps: readonly PassportStampRecord[]; totalCount: number };
+
+const passportPreviewResponseSchema = z.object({
+  passport: z.object({
+    stamps: z.array(z.object({
+      id: z.uuid(),
+      type: stampTypeSchema,
+      issuedAt: z.iso.datetime({ offset: true }),
+    }).loose()),
+    activities: z.array(z.object({
+      stampId: z.uuid().nullable(),
+      points: z.number().int(),
+    }).loose()),
+    stampSummary: z.object({ total: z.number().int().nonnegative() }).loose(),
+  }).loose(),
+}).loose();
 
 const copy = {
   ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 Fan Passport", allPassports: "전체 Passport 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
@@ -94,6 +119,44 @@ function useHomePersonalization(locale: ContentLocale) {
   };
 }
 
+function usePassportPreview(passportId: string | null, locale: ContentLocale): PassportPreviewState {
+  const { getAccessToken } = usePrivy();
+  const [state, setState] = useState<PassportPreviewState>({ status: "loading", stamps: [], totalCount: 0 });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!passportId) {
+      setState({ status: "error", stamps: [], totalCount: 0 });
+      return () => controller.abort();
+    }
+
+    setState({ status: "loading", stamps: [], totalCount: 0 });
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error("access token unavailable");
+        const response = await fetch(`/api/passports/${encodeURIComponent(passportId)}?locale=${locale}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("passport preview unavailable");
+        const parsed = passportPreviewResponseSchema.parse(await response.json());
+        const pointsByStamp = new Map(parsed.passport.activities.flatMap((activity) => activity.stampId ? [[activity.stampId, activity.points] as const] : []));
+        setState({
+          status: "ready",
+          stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })),
+          totalCount: parsed.passport.stampSummary.total,
+        });
+      } catch {
+        if (!controller.signal.aborted) setState({ status: "error", stamps: [], totalCount: 0 });
+      }
+    })();
+    return () => controller.abort();
+  }, [getAccessToken, locale, passportId]);
+
+  return state;
+}
+
 function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
   return (
     <section className={styles.personalizationState} role="status" aria-live="polite">
@@ -106,15 +169,40 @@ function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
 function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile" }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
-  const creator = summary.creators.find((item) => item.passport !== null) ?? summary.creators[0] ?? null;
+  const passportCreators = summary.creators.filter((item) => item.passport !== null);
+  const [activePassportIndex, setActivePassportIndex] = useState(0);
+  const creator = passportCreators[activePassportIndex] ?? null;
+  const passportPreview = usePassportPreview(creator?.passport?.id ?? null, locale);
   const reservation = summary.live.upcoming[0] ?? null;
   const headingId = `signed-in-home-heading-${placement}`;
+  const passportCount = passportCreators.length;
+  const selectPassport = (index: number) => setActivePassportIndex((index + passportCount) % passportCount);
   return (
     <section className={styles.signedInSummary} aria-labelledby={headingId}>
       <div className={styles.signedInGreeting}><h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2></div>
       <div className={styles.summarySection}>
-        <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{summary.creators.length > 1 ? <small>{summary.creators.length}</small> : null}</div>
-        {creator ? <><Link className={styles.ownedPassportLink} href={(creator.passport ? `/passports/${creator.passport.id}` : `/celebrities/${creator.celebrity.slug}`) + localeQuery as Route}><Image src={creator.celebrity.image} alt="" width={96} height={96} /><h3>{creator.celebrity.name} Fan Passport</h3><strong className={styles.passportValue}>{creator.passport ? `${creator.passport.tier} · ${creator.passport.score} Score` : "First Reaction"}</strong></Link><Link className={styles.summaryTextLink} href={`/my${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link></> : <div className={styles.summaryEmpty}><Image className={styles.emptyPassportPreview} src="/images/guest-home/passport-open-blank-9-transparent.png" alt={t.passportPreview} width={1536} height={1024}/><p>{t.noPassport}</p><span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span><Link className={styles.summaryOutlineAction} href={`/celebrities${localeQuery}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
+        <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 1 ? <small>{passportCount}</small> : null}</div>
+        {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : "Passport carousel"} aria-label={t.myPassport}>
+          <Link className={styles.ownedPassportLink} href={`/passports/${creator.passport.id}${localeQuery}` as Route} aria-label={`${creator.celebrity.name} Fan Passport, ${creator.passport.tier}, ${creator.passport.score} Score`}>
+            <span className={styles.ownedPassportArtwork}>
+              <PassportStampCanvas
+                celebrityName={creator.celebrity.name}
+                level={creator.passport.tier}
+                stamps={passportPreview.stamps}
+                totalCount={passportPreview.totalCount}
+                locale={locale}
+                priority={placement === "desktop"}
+              />
+            </span>
+            <h3>{creator.celebrity.name} Fan Passport</h3>
+            <strong className={styles.passportValue}>{creator.passport.tier} · {creator.passport.score} Score</strong>
+          </Link>
+          {passportCount > 1 ? <div className={styles.passportControls} aria-label={locale === "ko" ? "Fan Passport 선택" : "Choose a Fan Passport"}>
+            <button type="button" onClick={() => selectPassport(activePassportIndex - 1)} aria-label={locale === "ko" ? "이전 Fan Passport" : "Previous Fan Passport"}><ChevronLeft /></button>
+            <div className={styles.passportDots}>{passportCreators.map((item, index) => <button key={item.passport?.id ?? item.celebrity.slug} type="button" aria-current={index === activePassportIndex ? "true" : undefined} aria-label={`${item.celebrity.name} Fan Passport`} onClick={() => selectPassport(index)}><span /></button>)}</div>
+            <button type="button" onClick={() => selectPassport(activePassportIndex + 1)} aria-label={locale === "ko" ? "다음 Fan Passport" : "Next Fan Passport"}><ChevronRight /></button>
+          </div> : null}
+        </div><Link className={styles.summaryTextLink} href={`/passports${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link></> : <div className={styles.summaryEmpty}><Image className={styles.emptyPassportPreview} src="/images/guest-home/passport-open-blank-9-transparent.png" alt={t.passportPreview} width={1536} height={1024}/><p>{t.noPassport}</p><span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span><Link className={styles.summaryOutlineAction} href={`/celebrities${localeQuery}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
       </div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>

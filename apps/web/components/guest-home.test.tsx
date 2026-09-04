@@ -466,6 +466,34 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
 
+  it("restores the Passport artwork and lets fans page through multiple celebrity Passports", async () => {
+    privy.authenticated = true;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ summary: {
+      profile: { nickname: "카밀리아" },
+      creators: [
+        { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
+        { celebrity: { slug: "katseye", name: "KATSEYE", image: "/katseye.jpg" }, relationship: "passport", passport: { id: "22222222-2222-4222-8222-222222222222", tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: null },
+        { celebrity: { slug: "reaction-only", name: "Reaction Only", image: "/reaction.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
+      ],
+      live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 2, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    } }) }));
+
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+
+    const carousels = await screen.findAllByRole("group", { name: "내 Fan Passport" });
+    expect(carousels).toHaveLength(2);
+    carousels.forEach((carousel) => {
+      expect(carousel.querySelector("img")).toHaveAttribute("src", expect.stringContaining("passport-open-blank-9-transparent.png"));
+      expect(within(carousel).getByRole("button", { name: "KATSEYE Fan Passport" })).not.toHaveAttribute("aria-current");
+    });
+    expect(screen.queryByRole("heading", { name: "Reaction Only Fan Passport" })).not.toBeInTheDocument();
+
+    fireEvent.click(within(carousels[0]).getByRole("button", { name: "다음 Fan Passport" }));
+    expect(screen.getAllByRole("heading", { name: "KARA Fan Passport" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "KATSEYE Fan Passport" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: /전체 Passport 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
+  });
+
   it("shows truthful authenticated empty states and retries summary failures", async () => {
     privy.authenticated = true;
     const fetchMock = vi.fn()
@@ -502,14 +530,28 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: /팬 인증할 최애 찾기/ })).toHaveLength(2);
   });
 
-  it("keeps the authenticated home summary bounded while full collection detail stays in MY", async () => {
+  it("shows actual Passport stamps on Home while keeping the artwork bounded to the latest nine", async () => {
     privy.authenticated = true;
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ summary: {
+    const stamps = Array.from({ length: 10 }, (_, index) => ({
+      id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+      type: index % 2 === 0 ? "knowledge" : "reservation",
+      issuedAt: `2026-08-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+    }));
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      if (String(input).startsWith("/api/passports/")) return { ok: true, json: async () => ({ passport: {
+        stamps,
+        activities: stamps.map((stamp) => ({ stampId: stamp.id, points: 1 })),
+        stampSummary: { total: 10 },
+      } }) };
+      return { ok: true, json: async () => ({ summary: {
       profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 10, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
-    } }) }));
+      } }) };
+    }));
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     expect(await screen.findAllByText("Gold · 50 Score")).toHaveLength(2);
-    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(0);
+    expect(await screen.findAllByRole("img", { name: /전체 10개 중 최근 9개 표시/ })).toHaveLength(2);
+    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
+    expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /전체 Passport 보기/ })).toHaveLength(2);
   });});
