@@ -123,6 +123,16 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
   });
 
+  it("adds the Banksy campaign as one slide in the LIVE hero", () => {
+    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "2번째 LIVE 보기" }));
+    expect(screen.getByRole("heading", { name: "엘리나와 함께 만나는 뱅크시" })).toBeInTheDocument();
+    expect(screen.getByText("9월 18일 금요일 · 오후 5시")).toBeInTheDocument();
+    expect(screen.getByText("11월 전시 종료까지")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /이벤트 살펴보기/ })).toHaveAttribute("href", "/c/elina?locale=ko");
+  });
+
   it("localizes the nine-empty-stamp Passport image description", () => {
     render(
       <GuestHome
@@ -498,9 +508,10 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "엘리나와 함께 만나는 뱅크시" })).toHaveAttribute("href", "/c/elina?locale=ko");
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { name: "KARA Fan Passport" })).toHaveLength(2);
-    expect(screen.getAllByText("Silver · 15 Score")).toHaveLength(2);
+    expect(screen.getAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(2);
+    expect(screen.getAllByText("실버 · 15점")).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
 
@@ -518,18 +529,18 @@ describe("canonical 03 guest home", () => {
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    const carousels = await screen.findAllByRole("group", { name: "내 Fan Passport" });
+    const carousels = await screen.findAllByRole("group", { name: "내 패스포트" });
     expect(carousels).toHaveLength(2);
     carousels.forEach((carousel) => {
       expect(carousel.querySelector("img")).toHaveAttribute("src", expect.stringContaining("passport-open-blank-9-transparent.png"));
-      expect(within(carousel).getByRole("button", { name: "KATSEYE Fan Passport" })).not.toHaveAttribute("aria-current");
+      expect(within(carousel).getByRole("button", { name: "KATSEYE 패스포트" })).not.toHaveAttribute("aria-current");
     });
     expect(screen.queryByRole("heading", { name: "Reaction Only Fan Passport" })).not.toBeInTheDocument();
 
-    fireEvent.click(within(carousels[0]).getByRole("button", { name: "다음 Fan Passport" }));
-    expect(screen.getAllByRole("heading", { name: "KARA Fan Passport" })).toHaveLength(1);
-    expect(screen.getAllByRole("heading", { name: "KATSEYE Fan Passport" })).toHaveLength(1);
-    expect(screen.getAllByRole("link", { name: /전체 Passport 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
+    fireEvent.click(within(carousels[0]).getByRole("button", { name: "다음 패스포트" }));
+    expect(screen.getAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "KATSEYE 패스포트" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
   });
 
   it("shows truthful authenticated empty states and retries summary failures", async () => {
@@ -587,9 +598,9 @@ describe("canonical 03 guest home", () => {
       } }) };
     }));
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
-    expect(await screen.findAllByText("Gold · 50 Score")).toHaveLength(2);
+    expect(await screen.findAllByText("골드 · 50점")).toHaveLength(2);
     expect(await screen.findAllByRole("img", { name: /전체 10개 중 최근 9개 표시/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
     expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: /전체 Passport 보기/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
   });});

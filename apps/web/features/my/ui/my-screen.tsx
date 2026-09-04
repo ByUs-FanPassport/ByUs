@@ -1,39 +1,169 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, CalendarDays, Gift, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, CalendarDays, Gift, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
 import { FanState } from "@/components/fan-ui/fan-state";
+import type { MyReward } from "../../benefit/domain/my-reward";
 import { levelLabel } from "../../passport/domain/passport-read-model";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import styles from "./my-screen.module.css";
 
 const copy = {
- ko:{title:"MY",guestTitle:"팬 활동을 한곳에서 이어가세요.",guestBody:"로그인하면 Creator, LIVE, Reward와 Collection을 한눈에 볼 수 있어요.",login:"Google로 계속하기",loading:"내 팬 활동을 불러오고 있어요.",error:"MY 정보를 불러오지 못했어요.",retry:"다시 시도",greeting:"님의 팬 활동",creators:"My Creators",creatorsHelp:"관계, Tier, Score와 Ticket을 확인하세요.",noCreators:"아직 연결된 Creator가 없어요.",findCreator:"Creator 찾기",live:"LIVE",upcoming:"다가오는 예약",history:"지난 LIVE",noLive:"예약한 LIVE가 없어요.",browseLive:"LIVE 둘러보기",rewards:"Rewards",available:"사용할 수 있는 Reward",entries:"응모 Ticket",noRewards:"아직 Reward 이력이 없어요.",collection:"Collection",passports:"Passports",stamps:"Stamps",collectibles:"Collectibles",noCollection:"아직 수집한 항목이 없어요.",notifications:"읽지 않은 알림",settings:"알림 설정",tickets:"Tickets",firstReaction:"First Reaction"},
- en:{title:"MY",guestTitle:"Keep your fan activity together.",guestBody:"Sign in to see your Creators, LIVE, Rewards, and Collection at a glance.",login:"Continue with Google",loading:"Loading your fan activity.",error:"We couldn’t load MY.",retry:"Try again",greeting:"Your fan activity",creators:"My Creators",creatorsHelp:"See each relationship, Tier, Score, and Ticket balance.",noCreators:"No connected Creators yet.",findCreator:"Find Creators",live:"LIVE",upcoming:"Upcoming",history:"History",noLive:"No reserved LIVE events.",browseLive:"Browse LIVE",rewards:"Rewards",available:"Available Rewards",entries:"Entry Tickets",noRewards:"No Reward history yet.",collection:"Collection",passports:"Passports",stamps:"Stamps",collectibles:"Collectibles",noCollection:"Nothing collected yet.",notifications:"Unread alerts",settings:"Notification settings",tickets:"Tickets",firstReaction:"First Reaction"}
+  ko: {
+    title: "MY", profileSummary: "내 팬 활동", profileHelp: "최애와 함께한 기록을 한눈에 모았어요.",
+    guestTitle: "내 팬 활동을 한곳에 모아보세요.", guestBody: "로그인하면 최애, 예약한 LIVE, 받은 혜택과 수집 기록을 바로 확인할 수 있어요.",
+    login: "Google로 계속하기", loading: "팬 활동을 불러오는 중이에요.", error: "팬 활동을 불러오지 못했어요.", retry: "다시 시도",
+    overview: "활동 요약", creators: "내 최애", creatorsHelp: "최애별 Fan Passport와 보유 Ticket을 확인하세요.",
+    noCreators: "아직 등록한 최애가 없어요.", findCreator: "최애 찾기", live: "다가오는 LIVE", upcoming: "예약 완료",
+    history: "지난 LIVE", noLive: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", rewards: "받은 혜택",
+    available: "사용 가능한 혜택", entries: "응모 Ticket", noRewards: "아직 받은 혜택이 없어요.", collection: "최근 수집",
+    passports: "Fan Passport", stamps: "Stamp", collectibles: "Collectible", noCollection: "아직 수집한 기록이 없어요.",
+    notifications: "새 알림", settings: "알림 설정", tickets: "Ticket", firstReaction: "첫 반응",
+    allLive: "전체 LIVE 보기", allRewards: "혜택 전체 보기",
+  },
+  en: {
+    title: "MY", profileSummary: "My fan activity", profileHelp: "Your moments with every favorite, all in one place.",
+    guestTitle: "Keep your fan activity together.", guestBody: "Sign in to see your favorites, reserved LIVE events, rewards, and collection.",
+    login: "Continue with Google", loading: "Loading your fan activity.", error: "We couldn’t load your fan activity.", retry: "Try again",
+    overview: "Activity overview", creators: "My favorites", creatorsHelp: "Check each Fan Passport and Ticket balance.",
+    noCreators: "No favorites added yet.", findCreator: "Find favorites", live: "Upcoming LIVE", upcoming: "Reserved",
+    history: "Past LIVE", noLive: "No reserved LIVE events.", browseLive: "Browse LIVE", rewards: "My rewards",
+    available: "Available rewards", entries: "Entry Tickets", noRewards: "No rewards received yet.", collection: "Recent collection",
+    passports: "Fan Passports", stamps: "Stamps", collectibles: "Collectibles", noCollection: "Nothing collected yet.",
+    notifications: "New alerts", settings: "Notification settings", tickets: "Tickets", firstReaction: "First Reaction",
+    allLive: "View all LIVE", allRewards: "View all rewards",
+  },
 } as const;
 
-export function MyScreen({locale}:{locale:FanLocale}){
- const {ready,authenticated,getAccessToken}=usePrivy(); const [state,setState]=useState<{status:"loading"}|{status:"ready";summary:MySummary}|{status:"error"}>({status:"loading"}); const [requestKey,setRequestKey]=useState(0); const t=copy[locale];
- const load=useCallback(async(signal:AbortSignal)=>{const token=await getAccessToken();if(!token){setState({status:"error"});return;}const response=await fetch(`/api/me/summary?locale=${locale}`,{headers:{Authorization:`Bearer ${token}`},signal});if(!response.ok)throw new Error("summary failed");const body=await response.json() as {summary:unknown};setState({status:"ready",summary:mySummarySchema.parse(body.summary)});},[getAccessToken,locale]);
- useEffect(()=>{if(!ready||!authenticated)return;const controller=new AbortController();setState({status:"loading"});void load(controller.signal).catch(()=>{if(!controller.signal.aborted)setState({status:"error"});});return()=>controller.abort();},[ready,authenticated,load,requestKey]);
- return <FanAppFrame locale={locale} mainId="my-content"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}><header className={styles.heading}><h1>{t.title}</h1></header>{!ready?<FanState kind="loading" title={t.loading}/>:!authenticated?<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service",{fullWidth:true})} locale={locale} input={{sourcePath:"/my",sourceQuery:`?locale=${locale}`,actionType:"OPEN_PASSPORT",targetType:"passport",targetId:"collection"}}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section>:state.status==="loading"?<FanState kind="loading" title={t.loading}/>:state.status==="error"?<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={()=>setRequestKey(v=>v+1)}><RotateCcw/>{t.retry}</FanAction>}/>:<Dashboard summary={state.summary} locale={locale}/>}</FanContentContainer></FanAppFrame>;
+type ScreenState = { status: "loading" } | { status: "ready"; summary: MySummary } | { status: "error" };
+
+const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> = {
+  information_required: { ko: "정보 입력 필요", en: "Information required" },
+  ready: { ko: "준비 완료", en: "Ready" },
+  shipping_preparing: { ko: "배송 준비 중", en: "Preparing shipment" },
+  shipping_in_transit: { ko: "배송 중", en: "In transit" },
+  shipping_completed: { ko: "배송 완료", en: "Delivered" },
+  pickup_available: { ko: "수령 가능", en: "Ready for pickup" },
+  pickup_completed: { ko: "수령 완료", en: "Picked up" },
+  digital_delivered: { ko: "지급 완료", en: "Delivered" },
+  not_selected: { ko: "미선정", en: "Not selected" },
+};
+
+export function MyScreen({ locale }: { locale: FanLocale }) {
+  const { ready, authenticated, getAccessToken } = usePrivy();
+  const [state, setState] = useState<ScreenState>({ status: "loading" });
+  const [requestKey, setRequestKey] = useState(0);
+  const t = copy[locale];
+  const load = useCallback(async (signal: AbortSignal) => {
+    const token = await getAccessToken();
+    if (!token) { setState({ status: "error" }); return; }
+    const response = await fetch(`/api/me/summary?locale=${locale}`, { headers: { Authorization: `Bearer ${token}` }, signal });
+    if (!response.ok) throw new Error("summary failed");
+    const body = await response.json() as { summary: unknown };
+    setState({ status: "ready", summary: mySummarySchema.parse(body.summary) });
+  }, [getAccessToken, locale]);
+
+  useEffect(() => {
+    if (!ready || !authenticated) return;
+    const controller = new AbortController();
+    setState({ status: "loading" });
+    void load(controller.signal).catch(() => { if (!controller.signal.aborted) setState({ status: "error" }); });
+    return () => controller.abort();
+  }, [ready, authenticated, load, requestKey]);
+
+  const heading = <header className={styles.pageHeading}><h1>{t.title}</h1></header>;
+  return <FanAppFrame locale={locale} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
+    {!ready ? <>{heading}<FanState kind="loading" title={t.loading} /></>
+      : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
+      : state.status === "loading" ? <>{heading}<FanState kind="loading" title={t.loading} /></>
+      : state.status === "error" ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={() => setRequestKey((value) => value + 1)}><RotateCcw/>{t.retry}</FanAction>} /></>
+      : <Dashboard summary={state.summary} locale={locale}/>}
+  </FanContentContainer></FanAppFrame>;
 }
 
-function Dashboard({summary,locale}:{summary:MySummary;locale:FanLocale}){const t=copy[locale];const fmt=(value:string)=>new Intl.DateTimeFormat(locale==="ko"?"ko-KR":"en-US",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Seoul"}).format(new Date(value));return <div className={styles.dashboard}>
- <div className={styles.topline}><h2>{summary.profile.nickname?`${summary.profile.nickname}${locale==="ko"?t.greeting:` · ${t.greeting}`}`:t.greeting}</h2><Link href={`/notifications?locale=${locale}` as Route}><Bell/><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link></div>
- <section className={styles.section}><SectionTitle title={t.creators} help={t.creatorsHelp}/>{summary.creators.length?<div className={styles.cards}>{summary.creators.map(c=><Link className={styles.creator} href={(c.passport?`/passports/${c.passport.id}`:`/celebrities/${c.celebrity.slug}`)+`?locale=${locale}` as Route} key={c.celebrity.slug}><Image src={c.celebrity.image} alt="" width={64} height={64}/><div><strong>{c.celebrity.name}</strong><span>{c.passport?`${levelLabel(locale,c.passport.tier)} · ${c.passport.score} Score · ${c.passport.remainingToNextTier} ${locale==="ko"?"점 남음":"pts left"}`:t.firstReaction}</span><span><Ticket/>{c.ticketBalance} {t.tickets}</span></div><ArrowRight/></Link>)}</div>:<Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}</section>
- <section className={styles.section}><SectionTitle title={t.live}/>{summary.live.upcoming.length?<div className={styles.rows}>{summary.live.upcoming.map(e=><Link href={`/live/${e.slug}?locale=${locale}` as Route} key={e.id}><CalendarDays/><div><strong>{e.title}</strong><span>{t.upcoming} · {fmt(e.startsAt)}</span></div><ArrowRight/></Link>)}</div>:<Empty text={t.noLive} href={`/live?locale=${locale}`} action={t.browseLive}/>} {summary.live.history.length>0&&<details className={styles.history}><summary>{t.history} ({summary.live.history.length})</summary>{summary.live.history.map(e=><Link href={`/live/${e.slug}?locale=${locale}` as Route} key={e.id}>{e.title}<span>{fmt(e.startsAt)}</span></Link>)}</details>}</section>
- <section className={styles.section}><SectionTitle title={t.rewards}/><div className={styles.metrics}><Link href={`/benefits?locale=${locale}` as Route}><Gift/><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><Ticket/><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>{summary.rewards.items.length?<div className={styles.rows}>{summary.rewards.items.slice(0,4).map(r=><Link href={`${r.benefitHref}?locale=${locale}` as Route} key={r.rewardResultId}><Gift/><div><strong>{r.title}</strong><span>{r.result==="won"?r.status:"Not selected"}</span></div><ArrowRight/></Link>)}</div>:<p className={styles.emptyText}>{t.noRewards}</p>}</section>
- <section className={styles.section}><SectionTitle title={t.collection}/><div className={styles.counts}><span><strong>{summary.collection.passportCount}</strong>{t.passports}</span><span><strong>{summary.collection.stampCount}</strong>{t.stamps}</span><span><strong>{summary.collection.collectibleCount}</strong>{t.collectibles}</span></div>{summary.collection.recent.length?<div className={styles.rows}>{summary.collection.recent.slice(0,4).map(i=><Link href={`${i.href}?locale=${locale}` as Route} key={`${i.kind}-${i.id}`}><Sparkles/><div><strong>{i.title}</strong><span>{fmt(i.occurredAt)}</span></div><ArrowRight/></Link>)}</div>:<p className={styles.emptyText}>{t.noCollection}</p>}</section>
- <Link className={styles.settings} href={`/settings?locale=${locale}` as Route}><Settings/><span>{t.settings}</span><ArrowRight/></Link>
- </div>}
-function SectionTitle({title,help}:{title:string;help?:string}){return <div className={styles.sectionTitle}><h2>{title}</h2>{help&&<p>{help}</p>}</div>}
-function Empty({text,href,action}:{text:string;href:string;action:string}){return <div className={styles.empty}><span>{text}</span><Link href={href as Route}>{action}<ArrowRight/></Link></div>}
+function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale }) {
+  const t = copy[locale];
+  const nickname = summary.profile.nickname?.trim() || null;
+  const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
+  const monogram = nickname?.charAt(0).toUpperCase() || "B";
+  const ticketBalance = summary.creators.reduce((total, creator) => total + creator.ticketBalance, 0);
+  const formatDate = (value: string) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(value));
+
+  return <div className={styles.dashboard}>
+    <header className={styles.profileHeader}>
+      <div className={styles.avatar} aria-hidden="true"><span>{monogram}</span><Sparkles/></div>
+      <div className={styles.profileCopy}><span>{t.title}</span><h1>{identity}</h1><p>{t.profileHelp}</p></div>
+      <Link className={styles.notificationLink} href={`/notifications?locale=${locale}` as Route}><Bell/><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link>
+    </header>
+
+    <section className={styles.overview} aria-labelledby="activity-overview-heading">
+      <h2 id="activity-overview-heading">{t.overview}</h2>
+      <div className={styles.overviewGrid}>
+        <Stat icon={<Star/>} value={summary.creators.length} label={t.creators}/>
+        <Stat icon={<BookOpen/>} value={summary.collection.passportCount} label={t.passports}/>
+        <Stat icon={<Sparkles/>} value={summary.collection.stampCount} label={t.stamps}/>
+        <Stat icon={<Ticket/>} value={ticketBalance} label={t.tickets}/>
+      </div>
+    </section>
+
+    <div className={styles.workspace}>
+      <div className={styles.primaryColumn}>
+        <section className={styles.section}>
+          <SectionTitle title={t.creators} help={t.creatorsHelp}/>
+          {summary.creators.length ? <div className={styles.creatorList}>{summary.creators.map((creator) =>
+            <Link className={styles.creator} href={((creator.passport ? `/passports/${creator.passport.id}` : `/celebrities/${creator.celebrity.slug}`) + `?locale=${locale}`) as Route} key={creator.celebrity.slug}>
+              <Image src={creator.celebrity.image} alt="" width={64} height={64}/>
+              <div><strong>{creator.celebrity.name}</strong><span>{creator.passport ? `${levelLabel(locale, creator.passport.tier)} · ${creator.passport.score} Score · ${creator.passport.remainingToNextTier} ${locale === "ko" ? "점 남음" : "pts left"}` : t.firstReaction}</span><span><Ticket/>{creator.ticketBalance} {t.tickets}</span></div><ArrowRight/>
+            </Link>)}</div> : <Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}
+        </section>
+
+        <section className={styles.section}>
+          <SectionTitle title={t.collection}/>
+          <div className={styles.collectionCounts}><span><strong>{summary.collection.passportCount}</strong>{t.passports}</span><span><strong>{summary.collection.stampCount}</strong>{t.stamps}</span><span><strong>{summary.collection.collectibleCount}</strong>{t.collectibles}</span></div>
+          {summary.collection.recent.length ? <div className={styles.rows}>{summary.collection.recent.slice(0, 4).map((item) =>
+            <Link href={`${item.href}?locale=${locale}` as Route} key={`${item.kind}-${item.id}`}><Sparkles/><div><strong>{item.title}</strong><span>{formatDate(item.occurredAt)}</span></div><ArrowRight/></Link>)}</div>
+            : <p className={styles.emptyText}>{t.noCollection}</p>}
+        </section>
+      </div>
+
+      <aside className={styles.activityRail} aria-label={locale === "ko" ? "다가오는 활동과 혜택" : "Upcoming activity and rewards"}>
+        <section className={styles.section}>
+          <SectionTitle title={t.live} href={`/live?locale=${locale}`} action={t.allLive}/>
+          {summary.live.upcoming.length ? <div className={styles.rows}>{summary.live.upcoming.map((event) =>
+            <Link href={`/live/${event.slug}?locale=${locale}` as Route} key={event.id}><CalendarDays/><div><strong>{event.title}</strong><span>{t.upcoming} · {formatDate(event.startsAt)}</span></div><ArrowRight/></Link>)}</div>
+            : <Empty text={t.noLive} href={`/live?locale=${locale}`} action={t.browseLive}/>}
+          {summary.live.history.length > 0 ? <details className={styles.history}><summary>{t.history} ({summary.live.history.length})</summary>{summary.live.history.map((event) => <Link href={`/live/${event.slug}?locale=${locale}` as Route} key={event.id}>{event.title}<span>{formatDate(event.startsAt)}</span></Link>)}</details> : null}
+        </section>
+
+        <section className={styles.section}>
+          <SectionTitle title={t.rewards} href={`/benefits?locale=${locale}`} action={t.allRewards}/>
+          <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><Gift/><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><Ticket/><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
+          {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) =>
+            <Link href={`${reward.benefitHref}?locale=${locale}` as Route} key={reward.rewardResultId}><Gift/><div><strong>{reward.title}</strong><span>{rewardStatusCopy[reward.status][locale]}</span></div><ArrowRight/></Link>)}</div>
+            : <p className={styles.emptyText}>{t.noRewards}</p>}
+        </section>
+      </aside>
+    </div>
+    <Link className={styles.settings} href={`/settings?locale=${locale}` as Route}><Settings/><span>{t.settings}</span><ArrowRight/></Link>
+  </div>;
+}
+
+function Stat({ icon, value, label }: { icon: ReactNode; value: number; label: string }) {
+  return <div className={styles.stat}>{icon}<strong>{value}</strong><span>{label}</span></div>;
+}
+
+function SectionTitle({ title, help, href, action }: { title: string; help?: string; href?: string; action?: string }) {
+  return <div className={styles.sectionTitle}><div><h2>{title}</h2>{help ? <p>{help}</p> : null}</div>{href && action ? <Link href={href as Route}>{action}<ArrowRight/></Link> : null}</div>;
+}
+
+function Empty({ text, href, action }: { text: string; href: string; action: string }) {
+  return <div className={styles.empty}><span>{text}</span><Link href={href as Route}>{action}<ArrowRight/></Link></div>;
+}

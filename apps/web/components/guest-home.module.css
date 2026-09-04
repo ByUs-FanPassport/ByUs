@@ -51,6 +51,7 @@
 .heroCarousel .heroCard { flex: 0 0 100%; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .heroCard { position: relative; display: flex; aspect-ratio: 4 / 5; overflow: hidden; align-items: flex-end; border-radius: 20px; background: var(--ink); color: #fff; }
 .heroCard > img { object-fit: cover; object-position: 51% center; }
+.campaignHeroCard > img { object-position: center; }
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 52%) 0%, rgb(10 10 12 / 24%) 28%, rgb(10 10 12 / 6%) 54%, transparent 76%), linear-gradient(to right, rgb(10 10 12 / 24%) 0%, rgb(10 10 12 / 6%) 38%, transparent 64%); }
 .heroContent { position: relative; z-index: 1; width: 100%; padding: 24px; text-shadow: 0 1px 3px rgb(10 10 12 / 62%); }
 .statusRail { display: flex; max-width: 320px; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -60,6 +61,7 @@
 .heroDate { overflow: hidden; color: rgb(255 255 255 / 84%); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .heroContent h2 { max-width: 15ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1.02; text-wrap: balance; }
 .heroCountdown { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 750 14px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.campaignHeroPeriod { margin: 12px 0 0; color: rgb(255 255 255 / 86%); font-size: 14px; font-weight: 650; }
 .primaryButton { display: flex; width: min(320px, 100%); min-height: 48px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
 .primaryButton span { display: inline-flex; align-items: center; gap: 8px; }
 .primaryButton svg { width: 16px; height: 16px; }
@@ -69,12 +71,20 @@
 .carouselControls > button svg { position: relative; z-index: 1; width: 16px; height: 16px; }
 .carouselPrevious { left: 8px; }
 .carouselNext { right: 8px; }
-.carouselDots { position: absolute; bottom: -42px; left: 50%; display: flex; width: 132px; height: 44px; align-items: center; justify-content: center; transform: translateX(-50%); pointer-events: auto; }
-.carouselDots::before { position: absolute; right: 8px; left: 8px; height: 4px; border-radius: 999rem; background: var(--line); content: ""; }
-.carouselControls .carouselDot { position: relative; display: grid; width: 44px; min-width: 44px; height: 44px; padding: 0; place-items: center; border: 0; background: transparent; cursor: pointer; }
-.carouselDot span { position: relative; width: 28px; height: 4px; border-radius: 999rem; background: transparent; transition: background-color 160ms cubic-bezier(.2,0,0,1); }
-.carouselDot[aria-current="true"] span { background: var(--ink); }
+.carouselDots { position: absolute; bottom: -42px; left: 50%; display: flex; width: min(calc(var(--carousel-count) * 44px), 100%); height: 44px; align-items: center; justify-content: center; transform: translateX(-50%); pointer-events: auto; }
+.carouselControls .carouselDot { position: relative; display: grid; width: 44px; min-width: 0; max-width: 44px; height: 44px; flex: 1 1 44px; padding: 0; place-items: center; border: 0; background: transparent; cursor: pointer; }
+.carouselDot span { position: relative; width: 28px; max-width: 72%; height: 4px; border-radius: 999rem; background: var(--line); transform: scaleX(.64); transition: background-color 160ms cubic-bezier(.2,0,0,1), transform 160ms cubic-bezier(.2,0,0,1); }
+.carouselDot[aria-current="true"] span { background: var(--ink); transform: scaleX(1); }
 .carouselAnnouncement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+.campaignAd { position: relative; display: flex; min-height: 216px; overflow: hidden; align-items: flex-end; margin-top: 16px; border-radius: 16px; background: var(--ink); color: #fff !important; box-shadow: var(--card-shadow); }
+.campaignAd > img { object-fit: cover; object-position: 64% center; transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.campaignAdOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 88%) 0%, rgb(10 10 12 / 30%) 68%, transparent 100%); }
+.campaignAdContent { position: relative; z-index: 1; display: grid; width: 100%; gap: 6px; padding: 20px; text-shadow: 0 1px 3px rgb(10 10 12 / 62%); }
+.campaignAdContent small { color: rgb(255 255 255 / 72%); font-size: 11px; font-weight: 750; letter-spacing: .06em; }
+.campaignAdContent strong { max-width: 18ch; font-size: 20px; font-weight: 850; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
+.campaignAdContent > span { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; color: rgb(255 255 255 / 82%); font-size: 12px; font-weight: 650; }
+.campaignAdContent svg { width: 16px; height: 16px; }
 
 .mobileContextActions { display: grid; gap: 12px; margin-top: 24px; padding: 16px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
 .mobileContextActions a, .googleButton, .passportFooter > a { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 12px; padding-inline: 16px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff, #fff) padding-box, var(--spectrum) border-box; color: var(--service-ink) !important; font-size: 14px; font-weight: 800; }
@@ -153,21 +163,35 @@
 .summarySection + .summarySection { border-top: 1px solid var(--card-line); }
 .summarySectionHeader { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .summarySectionHeader > span { font-size: 14px; font-weight: 650; }
-.summarySectionHeader > small { display: grid; min-width: 24px; height: 24px; place-items: center; border-radius: 999rem; background: var(--surface-soft); color: var(--muted); font-size: 12px; font-weight: 750; }
-.passportCarousel { display: grid; min-width: 0; gap: 4px; }
-.ownedPassportLink { display: grid; min-width: 0; gap: 10px; border-radius: 12px; text-align: center; }
-.ownedPassportLink h3 { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -.02em; line-height: 1.25; text-wrap: balance; }
-.ownedPassportArtwork { position: relative; overflow: hidden; width: 100%; aspect-ratio: 3 / 2; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.summarySectionHeader > small { display: grid; min-width: 30px; height: 24px; padding-inline: 8px; place-items: center; border-radius: 999rem; background: var(--surface-soft); color: var(--muted); font-size: 11px; font-weight: 750; }
+.passportCarousel { display: grid; min-width: 0; }
+.ownedPassportLink { display: grid; min-width: 0; gap: 5px; border-radius: 12px; text-align: center; }
+.ownedPassportLink h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; text-wrap: balance; }
+.ownedPassportArtwork { position: relative; overflow: hidden; width: min(88%, 300px); aspect-ratio: 3 / 2; justify-self: center; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); transition: transform 240ms cubic-bezier(.2,0,0,1); }
 .ownedPassportArtwork img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.passportValue { color: var(--muted); font-size: 13px; font-weight: 550; line-height: 1.5; text-align: center; }
-.passportControls { display: grid; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; margin-top: 4px; }
+.passportValue { color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.5; text-align: center; }
+.passportUtilityRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.passportUtilityRowSingle { justify-content: flex-end; }
+.passportControls { display: grid; width: min(176px, 100%); min-width: 0; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; }
 .passportControls > button, .passportDots button { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; transition: background-color 160ms cubic-bezier(.2,0,0,1), color 160ms cubic-bezier(.2,0,0,1); }
 .passportControls > button svg { width: 18px; height: 18px; }
 .passportDots { display: flex; min-width: 0; align-items: center; justify-content: center; overflow-x: auto; scrollbar-width: none; }
 .passportDots::-webkit-scrollbar { display: none; }
 .passportDots button { flex: 0 0 44px; width: 44px; }
-.passportDots button span { width: 7px; height: 7px; border-radius: 999rem; background: var(--line); transition: width 160ms cubic-bezier(.2,0,0,1), background-color 160ms cubic-bezier(.2,0,0,1); }
-.passportDots button[aria-current="true"] span { width: 22px; background: var(--ink); }
+.passportDots button span { width: 22px; height: 7px; border-radius: 999rem; background: var(--line); transform: scaleX(.32); transition: transform 160ms cubic-bezier(.2,0,0,1), background-color 160ms cubic-bezier(.2,0,0,1); }
+.passportDots button[aria-current="true"] span { background: var(--ink); transform: scaleX(1); }
+.passportCollectionLink {
+  display: flex;
+  min-height: 44px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted) !important;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.passportCollectionLink svg { width: 15px; height: 15px; }
 .summaryTextLink {
   display: flex;
   width: max-content;
@@ -297,6 +321,7 @@
   .passportReferenceCard:hover .passportAsset img { transform: translateY(-6px); }
   .ownedPassportLink:hover .ownedPassportArtwork { transform: translateY(-6px); }
   .summaryOutlineAction:hover, .personalizationState button:hover, .passportControls > button:hover, .passportDots button:hover { background: var(--surface-soft); color: var(--ink); }
+  .campaignAd:hover > img { transform: scale(1.025); }
 }
 
 @media (prefers-reduced-motion: reduce) {

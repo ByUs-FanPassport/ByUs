@@ -72,9 +72,9 @@ describe("benefit screens", () => {
       />,
     );
 
-    const dialog = await screen.findByRole("dialog", { name: "혜택 상세" });
+    const dialog = await screen.findByRole("dialog", { name: "혜택 정보" });
     expect(dialog).toHaveAttribute("data-variant", "drawer");
-    const close = screen.getByRole("button", { name: "혜택 상세 닫기" });
+    const close = screen.getByRole("button", { name: "혜택 정보 닫기" });
     await waitFor(() => expect(close).toHaveFocus());
     fireEvent.click(close);
     expect(routerBack).toHaveBeenCalledTimes(1);
@@ -122,8 +122,8 @@ describe("benefit screens", () => {
 
     render(<BenefitDetailOverlay benefitId={benefit.id} locale="ko" />);
     fireEvent.click(await screen.findByRole("button", { name: /혜택 수령하기/ }));
-    const dialog = screen.getByRole("dialog", { name: "혜택 상세" });
-    const close = screen.getByRole("button", { name: "혜택 상세 닫기" });
+    const dialog = screen.getByRole("dialog", { name: "혜택 정보" });
+    const close = screen.getByRole("button", { name: "혜택 정보 닫기" });
     await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "true"));
     expect(close).toBeDisabled();
     fireEvent.keyDown(document, { key: "Escape" });
@@ -202,6 +202,32 @@ describe("benefit screens", () => {
       "href",
       "/benefits?locale=ko&celebrity=kara",
     );
+  });
+  it("localizes known Korean benefit terms and presents the claim period as two scannable rows", async () => {
+    const expiredBenefit = {
+      ...benefit,
+      state: "expired" as const,
+      minimumLevel: "Bronze",
+      eligibilityLabel: "Survey Stamp 보유",
+      deliveryLabel: "공식 YouTube URL",
+      requiredStampType: "survey",
+      requiredActivityType: "survey",
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ benefit: expiredBenefit })),
+    );
+
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+
+    expect(await screen.findByText("설문 도장 보유")).toBeInTheDocument();
+    expect(screen.getByText("브론즈")).toBeInTheDocument();
+    expect(screen.getAllByText("설문")).toHaveLength(2);
+    expect(screen.getByText("공식 YouTube 링크")).toBeInTheDocument();
+    expect(screen.getByText("시작")).toBeInTheDocument();
+    expect(screen.getByText("마감")).toBeInTheDocument();
+    expect(
+      screen.getByText("이 혜택은 수령 기간이 끝났어요."),
+    ).toBeInTheDocument();
   });
   it("renders a useful empty state", async () => {
     vi.spyOn(globalThis, "fetch")

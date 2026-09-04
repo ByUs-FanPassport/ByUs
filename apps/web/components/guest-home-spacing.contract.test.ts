@@ -81,12 +81,12 @@ describe("guest home compact icon-only action spacing", () => {
     );
 
     const title = declarationBlock(".ownedPassportLink h3");
-    expect(title).toMatch(/\bfont-size:\s*18px\b/);
-    expect(title).toMatch(/\bfont-weight:\s*750\b/);
+    expect(title).toMatch(/\bfont-size:\s*16px\b/);
+    expect(title).toMatch(/\bfont-weight:\s*800\b/);
 
     const value = declarationBlock(".passportValue");
-    expect(value).toMatch(/\bfont-size:\s*13px\b/);
-    expect(value).toMatch(/\bfont-weight:\s*550\b/);
+    expect(value).toMatch(/\bfont-size:\s*12px\b/);
+    expect(value).toMatch(/\bfont-weight:\s*600\b/);
 
     expect(declarationBlock(".summaryTextLink")).toMatch(
       /\bfont-weight:\s*650\b/,

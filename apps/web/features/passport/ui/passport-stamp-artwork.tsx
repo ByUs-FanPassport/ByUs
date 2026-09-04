@@ -164,6 +164,7 @@ export function PassportStampCanvas({
   priority = false,
   revealCount,
   className,
+  loading = false,
 }: {
   celebrityName: string;
   level?: string;
@@ -173,8 +174,10 @@ export function PassportStampCanvas({
   priority?: boolean;
   revealCount?: number;
   className?: string;
+  loading?: boolean;
 }) {
   const [assetFailed, setAssetFailed] = useState(false);
+  const [assetLoaded, setAssetLoaded] = useState(false);
   const recentStamps = useMemo(() => sortRecentStamps(stamps), [stamps]);
   const visibleStamps = typeof revealCount === "number"
     ? recentStamps.slice(0, Math.max(0, Math.min(revealCount, recentStamps.length)))
@@ -205,12 +208,15 @@ export function PassportStampCanvas({
     recentLabel,
     ...visibleStampDescriptions,
   ].filter(Boolean).join(", ");
+  const isLoading = !assetFailed && (loading || !assetLoaded);
 
   return (
     <div
       className={[styles.canvas, className].filter(Boolean).join(" ")}
       role={assetFailed ? "group" : "img"}
       aria-label={description}
+      aria-busy={isLoading}
+      data-passport-ready={isLoading ? "false" : "true"}
       data-visible-stamps={visibleStamps.length}
       data-total-stamps={totalCount}
     >
@@ -228,7 +234,11 @@ export function PassportStampCanvas({
           height={1024}
           priority={priority}
           aria-hidden="true"
-          onError={() => setAssetFailed(true)}
+          onLoad={() => setAssetLoaded(true)}
+          onError={() => {
+            setAssetLoaded(false);
+            setAssetFailed(true);
+          }}
         />
       )}
       <span className={styles.grid} aria-hidden="true">
@@ -250,6 +260,15 @@ export function PassportStampCanvas({
           </span>
         ))}
       </span>
+      {isLoading ? (
+        <span className={styles.canvasSkeleton} aria-hidden="true">
+          <span className={styles.skeletonCover} />
+          <span className={styles.skeletonIdentity}><i /><i /><i /></span>
+          <span className={styles.skeletonStampGrid}>
+            {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+          </span>
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -79,11 +79,13 @@ const copy = {
       expired: "종료",
     },
     period: "수령 기간",
-    requirement: "수령 조건",
-    delivery: "제공 방식",
+    periodStart: "시작",
+    periodEnd: "마감",
+    requirement: "받으려면",
+    delivery: "받는 방법",
     score: "필요 팬 점수",
-    level: "필요 레벨",
-    stamp: "필요 Stamp",
+    level: "필요 등급",
+    stamp: "필요 도장",
     activity: "필요 활동",
     claim: "혜택 수령하기",
     signIn: "로그인하고 혜택 이어받기",
@@ -91,7 +93,7 @@ const copy = {
     locked: "조건을 달성하면 수령할 수 있어요",
     claimed: "이미 수령한 혜택이에요",
     sold_out: "준비된 혜택이 모두 소진되었어요",
-    expired: "수령 기간이 종료되었어요",
+    expired: "이 혜택은 수령 기간이 끝났어요.",
     claimError:
       "혜택을 수령하지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요.",
     apply: "혜택 신청하기",
@@ -142,6 +144,8 @@ const copy = {
       expired: "Ended",
     },
     period: "Claim period",
+    periodStart: "Opens",
+    periodEnd: "Closes",
     requirement: "Eligibility",
     delivery: "Delivery",
     score: "Fan score",
@@ -201,6 +205,20 @@ function formatDate(value: string, locale: BenefitLocale) {
   }).format(new Date(value));
 }
 
+function localizeBenefitValue(value: string, locale: BenefitLocale) {
+  if (locale !== "ko") return value;
+  const normalized = value.trim().toLowerCase();
+  const knownValues: Record<string, string> = {
+    bronze: "브론즈",
+    silver: "실버",
+    gold: "골드",
+    survey: "설문",
+    "survey stamp 보유": "설문 도장 보유",
+    "공식 youtube url": "공식 YouTube 링크",
+  };
+  return knownValues[normalized] ?? value;
+}
+
 function StateBadge({
   state,
   locale,
@@ -237,18 +255,18 @@ function RequirementList({
       </div>
       <div>
         <dt>{c.level}</dt>
-        <dd>{benefit.minimumLevel}</dd>
+        <dd>{localizeBenefitValue(benefit.minimumLevel, locale)}</dd>
       </div>
       {benefit.requiredStampType && (
         <div>
           <dt>{c.stamp}</dt>
-          <dd>{benefit.requiredStampType}</dd>
+          <dd>{localizeBenefitValue(benefit.requiredStampType, locale)}</dd>
         </div>
       )}
       {benefit.requiredActivityType && (
         <div>
           <dt>{c.activity}</dt>
-          <dd>{benefit.requiredActivityType}</dd>
+          <dd>{localizeBenefitValue(benefit.requiredActivityType, locale)}</dd>
         </div>
       )}
     </dl>
@@ -820,18 +838,27 @@ export function BenefitDetailScreen({
         <div className={styles.detailColumns}>
           <section>
             <h2>{c.requirement}</h2>
-            <p>{benefit.eligibilityLabel}</p>
+            <p>{localizeBenefitValue(benefit.eligibilityLabel, locale)}</p>
             <RequirementList benefit={benefit} locale={locale} />
           </section>
           <section>
             <h2>{c.delivery}</h2>
-            <p>{benefit.deliveryLabel}</p>
+            <p>{localizeBenefitValue(benefit.deliveryLabel, locale)}</p>
             <dl className={styles.period}>
               <div>
-                <dt>{c.period}</dt>
+                <dt>{c.periodStart}</dt>
                 <dd>
-                  {formatDate(benefit.claimOpensAt, locale)} —{" "}
-                  {formatDate(benefit.claimClosesAt, locale)}
+                  <time dateTime={benefit.claimOpensAt}>
+                    {formatDate(benefit.claimOpensAt, locale)}
+                  </time>
+                </dd>
+              </div>
+              <div>
+                <dt>{c.periodEnd}</dt>
+                <dd>
+                  <time dateTime={benefit.claimClosesAt}>
+                    {formatDate(benefit.claimClosesAt, locale)}
+                  </time>
                 </dd>
               </div>
             </dl>
@@ -1032,8 +1059,8 @@ export function BenefitDetailOverlay({ benefitId, locale, celebrity }: { benefit
       busy={busy}
     >
       <header className={styles.overlayHeader}>
-        <h2 id="benefit-overlay-title">{locale === "ko" ? "혜택 상세" : "Benefit details"}</h2>
-        <button type="button" aria-label={locale === "ko" ? "혜택 상세 닫기" : "Close benefit details"} data-autofocus disabled={busy} onClick={close}>
+        <h2 id="benefit-overlay-title">{locale === "ko" ? "혜택 정보" : "Benefit details"}</h2>
+        <button type="button" aria-label={locale === "ko" ? "혜택 정보 닫기" : "Close benefit details"} data-autofocus disabled={busy} onClick={close}>
           <X aria-hidden="true" />
         </button>
       </header>

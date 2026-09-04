@@ -50,10 +50,11 @@
 .calendarLegend i[data-state="not_reserved"] { border:1px solid oklch(50% .22 315); background:#fff; }
 .calendarFooter > a { display:inline-flex; min-height:44px; align-items:center; gap:8px; color:oklch(30% 0 0); font-size:13px; font-weight:750; text-decoration:none; }
 .calendarFooter svg { width:16px; height:16px; }
-.sectionNav { position:sticky; z-index:calc(var(--z-sticky-header) - 1); top:var(--fan-header-height); display:flex; width:100%; min-height:56px; align-items:center; gap:4px; overflow-x:auto; margin-top:16px; padding:6px; border:1px solid oklch(90% 0 0); border-radius:999rem; background:rgb(255 255 255 / 96%); box-shadow:0 1px 2px oklch(18% 0 0 / .05); scrollbar-width:none; }
+.sectionNav { position:sticky; z-index:calc(var(--z-sticky-header) - 1); top:var(--fan-header-height); display:flex; width:100%; min-height:56px; align-items:center; gap:0; overflow-x:auto; margin-top:24px; padding:0 8px; border-bottom:1px solid oklch(90% 0 0); background:#fff; scrollbar-width:none; }
 .sectionNav::-webkit-scrollbar { display:none; }
-.sectionNav a { display:inline-flex; min-width:max-content; min-height:44px; flex:1; align-items:center; justify-content:center; padding:0 16px; border-radius:999rem; color:oklch(40% 0 0); font-size:14px; font-weight:700; text-decoration:none; transition:background-color 160ms cubic-bezier(.2,0,0,1); }
-.sectionNav a[aria-selected="true"] { background:oklch(96.5% 0 0); color:oklch(18% 0 0); box-shadow:inset 0 -2px 0 oklch(18% 0 0); font-weight:800; }
+.sectionNav a { position:relative; display:inline-flex; min-width:max-content; min-height:56px; flex:1; align-items:center; justify-content:center; padding:0 16px; color:oklch(44% 0 0); font-size:14px; font-weight:700; text-decoration:none; transition:color 160ms cubic-bezier(.2,0,0,1); }
+.sectionNav a[aria-selected="true"] { color:oklch(18% 0 0); font-weight:850; }
+.sectionNav a[aria-selected="true"]::after { position:absolute; right:28%; bottom:-1px; left:28%; height:3px; border-radius:999rem 999rem 0 0; background:linear-gradient(90deg,oklch(66% .24 18),oklch(56% .22 285)); content:""; }
 .tabPanel { min-height:320px; padding-block:48px 88px; }
 .homeAside { display:grid; align-content:start; gap:16px; }
 .sectionHeading > a { display:inline-flex; min-height:44px; align-items:center; gap:8px; color:oklch(30% 0 0); font-size:14px; font-weight:750; text-decoration:none; }
@@ -66,25 +67,27 @@
 .noticeList small { color:oklch(48% 0 0); font-size:13px; }
 .noticeList em { width:max-content; padding:3px 7px; border:1px solid oklch(76% 0 0); border-radius:999rem; color:oklch(40% 0 0); font-size:11px; font-style:normal; font-weight:750; }
 .noticeList svg { width:18px; height:18px; flex:none; }
-.benefitGrid { display:grid; gap:16px; }
-.benefitGrid > a { position:relative; display:grid; min-height:200px; gap:10px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; color:oklch(18% 0 0); text-decoration:none; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.benefitGrid { display:grid; gap:12px; }
+.benefitGrid > a { position:relative; display:grid; min-height:176px; align-content:start; gap:9px; padding:22px; border:1px solid oklch(93% 0 0); border-radius:16px; background:#fff; color:oklch(18% 0 0); text-decoration:none; box-shadow:0 1px 2px oklch(18% 0 0 / .04),0 4px 10px oklch(18% 0 0 / .025); }
+.benefitGrid > a[data-state="expired"],.benefitGrid > a[data-state="sold_out"] { background:oklch(98.5% 0 0); box-shadow:none; }
 .benefitGrid h3,.benefitGrid p { margin:0; }
-.benefitGrid > a > span { color:oklch(45% .22 315); font-size:12px; font-weight:800; text-transform:uppercase; }
+.benefitGrid > a > span { width:max-content; padding:4px 8px; border-radius:999rem; background:oklch(96.5% 0 0); color:oklch(42% 0 0); font-size:11px; font-weight:800; }
+.benefitGrid > a[data-state="eligible"] > span { background:oklch(96% .04 315); color:oklch(43% .19 315); }
 .benefitGrid h3 { font-size:18px; font-weight:800; letter-spacing:-.02em; }
-.benefitGrid p { color:oklch(42% 0 0); font-size:14px; line-height:1.55; }
-.benefitGrid small { align-self:end; color:oklch(48% 0 0); font-size:13px; }
+.benefitGrid p { color:oklch(42% 0 0); font-size:14px; line-height:1.5; }
+.benefitGrid small { margin-top:auto; padding-top:8px; color:oklch(48% 0 0); font-size:13px; }
 .benefitGrid svg { position:absolute; right:20px; bottom:20px; width:18px; height:18px; }
 .hubLayout { display:grid; gap:48px; }
-.mainColumn { display:grid; min-width:0; gap:64px; }
+.mainColumn { display:grid; min-width:0; gap:52px; }
 .contentSection { scroll-margin-top:152px; }
-.sectionHeading { display:grid; gap:6px; margin-bottom:20px; }
+.sectionHeading { display:grid; gap:5px; margin-bottom:16px; }
 .sectionHeading h2,.sectionHeading p { margin:0; }
 .sectionHeading h2 { font-size:22px; font-weight:850; letter-spacing:-.03em; line-height:1.2; }
 .sectionHeading p { color:oklch(48% 0 0); font-size:14px; line-height:1.5; }
-.inlineEmpty { display:grid; min-height:112px; place-content:center; gap:8px; padding:24px 0; border-block:1px solid oklch(93% 0 0); text-align:center; }
+.inlineEmpty { display:grid; min-height:96px; align-content:center; gap:5px; padding:20px 22px; border:1px solid oklch(94% 0 0); border-radius:14px; background:oklch(98.5% 0 0); text-align:left; }
 .inlineEmpty strong { font-size:17px; font-weight:800; }
 .inlineEmpty span { color:oklch(48% 0 0); font-size:14px; line-height:1.55; }
-.liveSection { display:grid; gap:24px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.liveSection { display:grid; min-height:136px; gap:20px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
 .liveCopy { display:grid; gap:8px; }
 .liveCopy p,.liveCopy h3,.liveCopy span { margin:0; }
 .liveCopy p { display:flex; align-items:center; gap:8px; color:oklch(45% .22 315); font-size:12px; font-weight:800; letter-spacing:.04em; }
@@ -104,6 +107,10 @@
 .passportFacts > div + div { border-left:1px solid oklch(93% 0 0); }
 .passportFacts dt { color:oklch(48% 0 0); font-size:11px; font-weight:700; }
 .passportFacts dd { overflow:hidden; margin:0; color:oklch(18% 0 0); font-size:17px; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
+.passportFacts > div[data-passport-tier="bronze"] { background:oklch(96.5% .025 54); }
+.passportFacts > div[data-passport-tier="bronze"] dt { color:oklch(43% .055 48); }
+.passportTierValue { display:flex; align-items:center; justify-content:center; gap:6px; color:oklch(36% .085 43) !important; }
+.passportTierValue img { width:28px; height:28px; flex:0 0 auto; object-fit:contain; }
 .passportTextLink { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:12px; color:oklch(30% 0 0); font-size:14px; font-weight:750; text-decoration:none; }
 .passportTextLink svg { width:16px; height:16px; }
 .profilePanel { scroll-margin-top:152px; display:grid; align-content:start; gap:12px; padding:24px; border:1px solid oklch(93% 0 0); border-radius:16px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
@@ -125,7 +132,7 @@
   .heroCopy h1 { font-size:56px; }
   .heroAction { width:300px; }
   .heroCalendar { width:100%; max-width:480px; justify-self:end; }
-  .liveSection { grid-template-columns:minmax(0,1fr) auto; align-items:center; padding:32px; }
+  .liveSection { grid-template-columns:minmax(0,1fr) auto; align-items:center; padding:24px 28px; }
   .sectionHeading { grid-template-columns:minmax(0,1fr) auto; align-items:end; }
   .benefitGrid { grid-template-columns:repeat(3,minmax(0,1fr)); }
   .benefitGrid.homeBenefitGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -145,7 +152,7 @@
 }
 @media (hover:hover) and (pointer:fine) {
   .directoryLink:hover { color:oklch(45% .22 315); }
-  .sectionNav a:hover { background:oklch(97.5% 0 0); }
+  .sectionNav a:hover { color:oklch(18% 0 0); }
   .socialLinks a:hover { background:oklch(97.5% 0 0); }
   .calendarMonthNavigation button:hover { background:oklch(97.5% 0 0); }
   .calendarEventDay:hover { background:oklch(97% .025 315); }

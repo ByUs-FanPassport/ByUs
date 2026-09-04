@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, CalendarDays, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Play, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -17,6 +17,8 @@ type Catalog = {
   upcoming: readonly LiveEventResponse[];
   replay: readonly LiveEventResponse[];
 };
+
+const CATALOG_PAGE_SIZE = 4;
 
 const copy = {
   ko: {
@@ -34,7 +36,9 @@ const copy = {
     emptyReplay: "공개된 다시보기가 없어요.",
     enter: "LIVE 시청하기",
     reserve: "라이브 예약하기",
-    reserved: "예약 확인하기",
+    reserved: "예약 완료",
+    reservationLoading: "예약 상태 확인 중",
+    reservationUnknown: "예약 상태 확인 필요",
     watch: "다시보기",
     retry: "내 예약 상태 다시 불러오기",
     calendar: "LIVE 캘린더",
@@ -55,6 +59,8 @@ const copy = {
     enter: "Enter LIVE",
     reserve: "Reserve LIVE",
     reserved: "Reserved",
+    reservationLoading: "Checking reservation status",
+    reservationUnknown: "Reservation status unavailable",
     watch: "Watch replay",
     retry: "Reload my reservation status",
     calendar: "LIVE calendar",
@@ -88,10 +94,10 @@ function dateRange(item: LiveEventResponse, locale: FanLocale) {
 
 function action(item: LiveEventResponse, locale: FanLocale) {
   const t = copy[locale];
-  if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true };
-  if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true };
-  if (item.viewer.reservation) return { label: t.reserved, icon: <CalendarDays />, external: false };
-  return { label: t.reserve, icon: <CalendarDays />, external: false };
+  if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true, state: "watch" as const };
+  if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true, state: "watch" as const };
+  if (item.viewer.reservation) return { label: t.reserved, icon: <CircleCheck />, external: false, state: "reserved" as const };
+  return { label: t.reserve, icon: <CalendarDays />, external: false, state: "reserve" as const };
 }
 
 function statusLabel(item: LiveEventResponse, locale: FanLocale) {
@@ -107,6 +113,7 @@ function LiveGroup({
   empty,
   items,
   locale,
+  reservationStatus,
 }: {
   id: string;
   title: string;
@@ -114,7 +121,16 @@ function LiveGroup({
   empty: string;
   items: readonly LiveEventResponse[];
   locale: FanLocale;
+  reservationStatus: "loading" | "ready" | "error";
 }) {
+  const t = copy[locale];
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(items.length / CATALOG_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleItems = items.slice(
+    currentPage * CATALOG_PAGE_SIZE,
+    (currentPage + 1) * CATALOG_PAGE_SIZE,
+  );
   return (
     <section className={styles.group} aria-labelledby={`${id}-heading`}>
       <div className={styles.groupHeading}>
@@ -125,8 +141,9 @@ function LiveGroup({
       </div>
       {items.length ? (
         <div className={styles.list}>
-          {items.map((item) => {
+          {visibleItems.map((item) => {
             const currentAction = action(item, locale);
+            const awaitsReservation = item.live.effectiveStatus === "scheduled" && reservationStatus !== "ready";
             const href = currentAction.external
               ? item.live.watch.url
               : `/live/${item.live.slug}?locale=${locale}`;
@@ -164,24 +181,57 @@ function LiveGroup({
                   <h3>{item.live.title}</h3>
                   <p>{dateRange(item, locale)}</p>
                 </Link>
-                <Link
-                  className={styles.action}
-                  data-fan-action-emphasis="secondary"
-                  href={href as Route}
-                  target={currentAction.external ? "_blank" : undefined}
-                  rel={currentAction.external ? "noreferrer" : undefined}
-                  aria-label={`${currentAction.label}: ${item.live.title}${currentAction.external ? locale === "ko" ? ", 새 창" : ", new tab" : ""}`}
-                >
-                  <span className={styles.actionIcon} aria-hidden="true">{currentAction.icon}</span>
-                  <span className={styles.actionLabel}>{currentAction.label}</span>
-                  {currentAction.external ? <span className={styles.srOnly}>새 창</span> : null}
-                  <ArrowRight aria-hidden="true" />
-                </Link>
+                {awaitsReservation ? reservationStatus === "loading" ? (
+                  <span className={styles.actionSkeleton} role="status" aria-label={t.reservationLoading}>
+                    <span className={styles.srOnly}>{t.reservationLoading}</span>
+                  </span>
+                ) : (
+                  <span className={styles.actionUnavailable} role="status">
+                    <CalendarDays aria-hidden="true" />
+                    <span>{t.reservationUnknown}</span>
+                  </span>
+                ) : (
+                  <Link
+                    className={styles.action}
+                    data-action-state={currentAction.state}
+                    data-fan-action-emphasis={currentAction.state === "reserve" ? "primary" : "secondary"}
+                    href={href as Route}
+                    target={currentAction.external ? "_blank" : undefined}
+                    rel={currentAction.external ? "noreferrer" : undefined}
+                    aria-label={`${currentAction.label}: ${item.live.title}${currentAction.external ? locale === "ko" ? ", 새 창" : ", new tab" : ""}`}
+                  >
+                    <span className={styles.actionIcon} aria-hidden="true">{currentAction.icon}</span>
+                    <span className={styles.actionLabel}>{currentAction.label}</span>
+                    {currentAction.external ? <span className={styles.srOnly}>새 창</span> : null}
+                    <ArrowRight aria-hidden="true" />
+                  </Link>
+                )}
               </article>
             );
           })}
         </div>
       ) : <p className={styles.empty}>{empty}</p>}
+      {pageCount > 1 ? (
+        <nav className={styles.pagination} aria-label={locale === "ko" ? `${title} 페이지` : `${title} pages`}>
+          <button
+            type="button"
+            aria-label={locale === "ko" ? `${title} 이전 페이지` : `Previous ${title} page`}
+            disabled={currentPage === 0}
+            onClick={() => setPage((value) => Math.max(0, value - 1))}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <span aria-live="polite" aria-atomic="true">{currentPage + 1} / {pageCount}</span>
+          <button
+            type="button"
+            aria-label={locale === "ko" ? `${title} 다음 페이지` : `Next ${title} page`}
+            disabled={currentPage === pageCount - 1}
+            onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </nav>
+      ) : null}
     </section>
   );
 }
@@ -197,16 +247,27 @@ export function LiveCatalogScreen({
   const [catalog, setCatalog] = useState(initialCatalog);
   const [failed, setFailed] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
+  const [reservationStatus, setReservationStatus] = useState<"loading" | "ready" | "error">(
+    !ready || authenticated ? "loading" : "ready",
+  );
   const t = copy[locale];
 
   useEffect(() => {
-    if (!ready || !authenticated) return;
+    if (!ready) {
+      setReservationStatus("loading");
+      return;
+    }
+    if (!authenticated) {
+      setReservationStatus("ready");
+      return;
+    }
     const controller = new AbortController();
     setFailed(false);
+    setReservationStatus("loading");
     void (async () => {
       try {
         const token = await getAccessToken();
-        if (!token) return;
+        if (!token) throw new Error("access token unavailable");
         const response = await fetch(`/api/live-events?locale=${locale}`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
@@ -214,8 +275,12 @@ export function LiveCatalogScreen({
         if (!response.ok) throw new Error("catalog request failed");
         const body = await response.json() as { catalog: Catalog };
         setCatalog(body.catalog);
+        setReservationStatus("ready");
       } catch {
-        if (!controller.signal.aborted) setFailed(true);
+        if (!controller.signal.aborted) {
+          setFailed(true);
+          setReservationStatus("error");
+        }
       }
     })();
     return () => controller.abort();
@@ -236,9 +301,9 @@ export function LiveCatalogScreen({
         {failed ? <button className={styles.retry} onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button> : null}
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
-            <LiveGroup id="live-now" title={t.liveNow} subtitle={t.liveNowSub} empty={t.emptyLive} items={catalog.liveNow} locale={locale} />
-            <LiveGroup id="upcoming" title={t.upcoming} subtitle={t.upcomingSub} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} />
-            <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} />
+            {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} subtitle={t.liveNowSub} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} /> : null}
+            <LiveGroup id="upcoming" title={t.upcoming} subtitle={t.upcomingSub} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} />
+            <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} />
           </>
         )}
       </FanContentContainer>

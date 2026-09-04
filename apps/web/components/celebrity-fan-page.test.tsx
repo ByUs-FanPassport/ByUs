@@ -109,12 +109,16 @@ describe("published celebrity fan page", () => {
     expect(screen.getByRole("tablist", { name: "KARA 팬페이지 메뉴" })).toBeInTheDocument();
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["홈", "공지", "LIVE", "혜택"]);
     expect(screen.getByRole("tab", { name: "홈" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("heading", { name: "KARA Profile" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "최근 공지" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "다음 LIVE" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "좋아요 남기기" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /좋아요 남기기/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Reaction|반응/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "KARA 프로필" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "새 소식" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "다가오는 LIVE" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "팬 혜택" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "내 Fan Passport" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "LIVE 자세히 보기" })).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
+    expect(screen.getByRole("heading", { name: "내 패스포트" })).toBeInTheDocument();
+    expect(screen.getByText("LIVE 예정")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "LIVE 정보 보기" })).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
     expect(screen.getByRole("link", { name: /팬 인증하기/ }))
       .toHaveAttribute("href", expect.stringContaining("intent=passport"));
     expect(screen.getByRole("link", { name: /팬 인증하기/ }))
@@ -126,7 +130,8 @@ describe("published celebrity fan page", () => {
       `/live/calendar?month=${currentCalendarMonth()}&locale=ko&celebrity=kara`,
     );
     expect(screen.queryByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).not.toBeInTheDocument();
-    expect(await screen.findByText("등록된 공지가 아직 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 새로운 소식이 없어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "소식 전체 보기" })).not.toBeInTheDocument();
   });
 
   it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {
@@ -231,10 +236,10 @@ describe("published celebrity fan page", () => {
   it("renders honest Home empty states for missing public hub data", async () => {
     render(<CelebrityFanPage celebrity={changha} locale="ko" upcomingLive={null} />);
     expect(screen.getByText("공개된 LIVE가 아직 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("공개된 채널 링크가 아직 없어요.")).toBeInTheDocument();
-    expect(await screen.findByText("등록된 공지가 아직 없어요.")).toBeInTheDocument();
-    expect(await screen.findByText("공개된 혜택이 아직 없어요.")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /LIVE 자세히 보기/ })).not.toBeInTheDocument();
+    expect(screen.getByText("아직 등록된 공식 채널이 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 새로운 소식이 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 받을 수 있는 혜택이 없어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /LIVE 정보 보기/ })).not.toBeInTheDocument();
   });
 
   it("limits Home previews while reusing the Notice and Benefit data requests", async () => {
@@ -258,6 +263,8 @@ describe("published celebrity fan page", () => {
     expect(screen.queryByRole("link", { name: /이전 공지/ })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "첫 혜택" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "두 번째 혜택" })).toBeInTheDocument();
+    expect(screen.getByText("수령 가능")).toBeInTheDocument();
+    expect(screen.getByText("잠김")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "세 번째 혜택" })).not.toBeInTheDocument();
     expect(request.mock.calls.filter(([input]) => String(input).includes("/notices"))).toHaveLength(1);
     expect(request.mock.calls.filter(([input]) => String(input).includes("/api/benefits"))).toHaveLength(1);
@@ -342,7 +349,7 @@ describe("published celebrity fan page", () => {
     );
     expect(document.querySelector("main")).toHaveAttribute("id", "celebrity-detail-main");
     expect(
-      screen.getByRole("link", { name: "LIVE 자세히 보기" }),
+      screen.getByRole("link", { name: "LIVE 정보 보기" }),
     ).toHaveAttribute("href", "/live/kara-nualeaf?locale=ko");
   });
 
@@ -358,7 +365,7 @@ describe("published celebrity fan page", () => {
     expect(screen.getByRole("link", { name: "Passport 열기" }))
       .toHaveAttribute("data-fan-action-emphasis", "primary");
     expect(document.querySelectorAll('main [data-fan-action-emphasis="primary"]')).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "Passport 상세 보기" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "패스포트 자세히 보기" })).toHaveAttribute(
       "href",
       "/passports/8a6c0050-4c52-4e0f-b73a-e2f4aab48b85?locale=ko",
     );
@@ -366,6 +373,23 @@ describe("published celebrity fan page", () => {
     expect(screen.getByText("8", { selector: "dd" })).toBeInTheDocument();
     expect(screen.getByText("3", { selector: "dd" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /팬 인증하기/ })).not.toBeInTheDocument();
+  });
+
+  it("gives the Bronze passport tier a non-color medal cue", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    const bronzePassport = {
+      ...ownedPassport,
+      score: { ...ownedPassport.score, level: "Bronze" },
+      display: { ...ownedPassport.display, level: "브론즈" },
+    };
+    stubHubFetch({ passports: [bronzePassport] });
+
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    const tier = await screen.findByText("브론즈");
+    expect(tier.closest("div")).toHaveAttribute("data-passport-tier", "bronze");
+    expect(document.querySelector('[data-tier-medal="bronze"]')).toBeInTheDocument();
   });
 
   it("starts fan verification directly for an authenticated non-holder without opening login", async () => {

@@ -27,6 +27,7 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
 import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
 import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
+import bronzeTierMedal from "../public/images/passport/tiers/bronze.png";
 import styles from "./celebrity-fan-page.module.css";
 import { ReactionAction } from "../features/reaction/ui/reaction-action";
 
@@ -50,20 +51,20 @@ const copy = {
     official: "BYUS FAN PAGE", openPassport: "Passport 열기", passportError: "Passport 상태를 확인하지 못했어요.",
     retry: "다시 시도", checking: "Passport 상태 확인 중", verify: "퀴즈 풀고 팬 인증하기", sections: "팬페이지 메뉴",
     tabs: { home: "홈", notice: "공지", live: "LIVE", benefits: "혜택" },
-    noNotice: "등록된 공지가 아직 없어요.", noNoticeHelp: "새 소식이 공개되면 이곳에서 확인할 수 있어요.",
-    noticeError: "공지를 불러오지 못했어요.", pinned: "고정", latestNotice: "최근 공지", allNotices: "전체 공지 보기",
-    latestNoticeHelp: (name: string) => `ByUs가 전하는 ${name}의 최신 소식이에요.`,
-    liveHeading: "LIVE", liveHelp: "공개된 LIVE와 다시보기를 확인하세요.", homeLiveHelp: "가장 가까운 LIVE 일정을 확인하세요.",
-    liveDetails: "LIVE 자세히 보기", noLive: "공개된 LIVE가 아직 없어요.", noLiveHelp: "새로운 일정이 공개되면 이곳에 표시돼요.",
+    noNotice: "아직 새로운 소식이 없어요.", noNoticeHelp: "새 소식이 올라오면 이곳에서 확인할 수 있어요.",
+    noticeError: "소식을 불러오지 못했어요.", pinned: "고정", latestNotice: "새 소식", allNotices: "소식 전체 보기",
+    latestNoticeHelp: (name: string) => `${name}의 새로운 소식을 확인해 보세요.`,
+    liveHeading: "LIVE", liveHelp: "공개된 LIVE와 다시보기를 확인하세요.", homeLiveHelp: "가장 가까운 LIVE 일정을 확인해 보세요.",
+    liveDetails: "LIVE 정보 보기", noLive: "공개된 LIVE가 아직 없어요.", noLiveHelp: "새 일정이 공개되면 이곳에서 확인할 수 있어요.",
     benefitHeading: "혜택", fanBenefits: "팬 혜택", benefitHelp: "함께한 활동으로 열리는 혜택을 확인하세요.",
-    homeBenefitHelp: "팬 활동으로 열리는 혜택을 미리 확인하세요.", benefitError: "혜택을 불러오지 못했어요.",
-    noBenefits: "공개된 혜택이 아직 없어요.", noBenefitsHelp: "새 혜택이 공개되면 이곳에서 확인할 수 있어요.", allBenefits: "전체 혜택 보기",
-    myPassport: "내 Fan Passport", beforeVerification: "팬 인증 전",
-    beforeVerificationHelp: (name: string) => `${name} 팬 인증을 완료하면 Passport에 활동 기록이 쌓여요.`,
-    passportDetails: "Passport 상세 보기", level: "등급", score: "팬 점수", stamps: "Stamp", profile: "Profile",
-    profileHelp: (name: string) => `${name}의 공개 채널을 확인하세요.`,
+    homeBenefitHelp: "받을 수 있는 혜택과 필요한 조건을 확인해 보세요.", benefitError: "혜택을 불러오지 못했어요.",
+    noBenefits: "아직 받을 수 있는 혜택이 없어요.", noBenefitsHelp: "새 혜택이 열리면 이곳에서 확인할 수 있어요.", allBenefits: "혜택 전체 보기",
+    myPassport: "내 패스포트", beforeVerification: "팬 인증 전",
+    beforeVerificationHelp: (name: string) => `${name} 팬 인증을 마치면 패스포트에 활동 기록이 쌓여요.`,
+    passportDetails: "패스포트 자세히 보기", level: "등급", score: "팬 점수", stamps: "도장", profile: "프로필",
+    profileHelp: (name: string) => `${name} 공식 채널을 확인해 보세요.`,
     officialSns: "채널", newWindow: "새 창",
-    noSns: "공개된 채널 링크가 아직 없어요.", noSnsHelp: "채널이 등록되면 이곳에 표시돼요.", nextLive: "다음 LIVE",
+    noSns: "아직 등록된 공식 채널이 없어요.", noSnsHelp: "채널이 등록되면 이곳에서 확인할 수 있어요.", nextLive: "다가오는 LIVE",
     ownedHeroHelp: (name: string) => `${name}와 함께한 순간과 다음 LIVE 일정을 확인해 보세요.`,
     verificationHeroHelp: (name: string) => `퀴즈로 팬 인증을 완료하고 ${name} Fan Passport 여정을 시작해 보세요.`,
     calendarTitle: "LIVE 일정", calendarOpen: "캘린더 크게 보기", calendarLoading: "LIVE 일정 확인 중", calendarError: "일정을 불러오지 못했어요.",
@@ -100,6 +101,27 @@ function formatDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     dateStyle: "medium", timeStyle: "short", hour12: locale !== "ko", timeZone: "Asia/Seoul",
   }).format(new Date(value));
+}
+
+function localizedLiveStatus(status: string, locale: ContentLocale) {
+  if (locale === "en") return status === "scheduled" ? "Upcoming" : status === "live" ? "LIVE now" : "Ended";
+  return status === "scheduled" ? "LIVE 예정" : status === "live" ? "지금 LIVE 중" : "종료";
+}
+
+function localizedBenefitState(state: string, locale: ContentLocale) {
+  const labels = locale === "ko"
+    ? { locked: "잠김", eligible: "수령 가능", claimed: "수령 완료", sold_out: "소진", expired: "종료" }
+    : { locked: "Locked", eligible: "Eligible", claimed: "Claimed", sold_out: "Sold out", expired: "Ended" };
+  return labels[state as keyof typeof labels] ?? state;
+}
+
+function localizedEligibilityLabel(label: string, locale: ContentLocale) {
+  if (locale !== "ko") return label;
+  return label
+    .replaceAll("Knowledge Stamp", "퀴즈 도장")
+    .replaceAll("Reservation Stamp", "예약 도장")
+    .replaceAll("Attendance Stamp", "참여 도장")
+    .replaceAll("Survey Stamp", "설문 도장");
 }
 
 function currentKstDate(now = new Date()) {
@@ -461,7 +483,9 @@ export function CelebrityFanPage({
               <TabSection
                 title={t.latestNotice}
                 help={t.latestNoticeHelp(celebrity.name)}
-                action={<Link href={tabHref("notice")}>{t.allNotices}<ArrowRight /></Link>}
+                action={noticeState.status === "ready" && noticeState.data.length > 0
+                  ? <Link href={tabHref("notice")}>{t.allNotices}<ArrowRight /></Link>
+                  : undefined}
               >
                 <NoticeContent
                   state={noticeState}
@@ -476,7 +500,7 @@ export function CelebrityFanPage({
                 {upcomingLive
                   ? <div className={styles.liveSection}>
                       <div className={styles.liveCopy}>
-                        <p><Radio />{upcomingLive.effectiveStatus}</p>
+                        <p><Radio />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</p>
                         <h3>{upcomingLive.title}</h3>
                         <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
                       </div>
@@ -506,6 +530,7 @@ export function CelebrityFanPage({
                 <PassportSummary
                   state={passportState}
                   celebrityName={celebrity.name}
+                  locale={locale}
                   localeQuery={localeQuery}
                   labels={{
                     checking: t.checking,
@@ -542,7 +567,7 @@ export function CelebrityFanPage({
             {liveState.status !== "ready"
               ? liveState.status === "error" ? <ErrorState text={t.noLiveHelp} /> : <Loading locale={locale} />
               : liveState.data.length === 0 ? <Empty title={t.noLive} help={t.noLiveHelp} />
-              : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><p><Radio /> {live.effectiveStatus}</p><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
+              : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><p><Radio /> {localizedLiveStatus(live.effectiveStatus, locale)}</p><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
           </TabSection>}
 
           {activeTab === "benefits" && <TabSection title={t.benefitHeading} help={t.benefitHelp} action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}>
@@ -597,17 +622,18 @@ function BenefitContent({
   if (state.data.length === 0) return <Empty title={labels.empty} help={labels.emptyHelp} />;
   const benefits = limit ? state.data.slice(0, limit) : state.data;
   return <div className={`${styles.benefitGrid} ${className ?? ""}`.trim()}>{benefits.map((benefit) => (
-    <Link key={benefit.id} href={`/benefits/${benefit.id}?locale=${locale}&celebrity=${celebritySlug}`}>
-      <span>{benefit.state}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{benefit.eligibilityLabel}</small><ArrowRight />
+    <Link key={benefit.id} data-state={benefit.state} href={`/benefits/${benefit.id}?locale=${locale}&celebrity=${celebritySlug}`}>
+      <span>{localizedBenefitState(benefit.state, locale)}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{localizedEligibilityLabel(benefit.eligibilityLabel, locale)}</small><ArrowRight />
     </Link>
   ))}</div>;
 }
 
 function PassportSummary({
-  state, celebrityName, localeQuery, labels, onRetry,
+  state, celebrityName, locale, localeQuery, labels, onRetry,
 }: {
   state: PassportState;
   celebrityName: string;
+  locale: ContentLocale;
   localeQuery: string;
   labels: Readonly<{
     checking: string;
@@ -630,13 +656,28 @@ function PassportSummary({
     return <div className={styles.passportStatus}><strong>{labels.beforeVerification}</strong><p>{labels.beforeVerificationHelp}</p></div>;
   }
   const { passport } = state;
+  const tierKey = passport.score.level.toLowerCase();
   return <>
     <div className={styles.passportStatus}>
       <span>{passport.display.mintStatus}</span>
-      <strong>{celebrityName} Fan Passport</strong>
+      <strong>{locale === "ko" ? `${celebrityName} 패스포트` : `${celebrityName} Fan Passport`}</strong>
     </div>
     <dl className={styles.passportFacts}>
-      <div><dt>{labels.level}</dt><dd>{passport.display.level}</dd></div>
+      <div data-passport-tier={tierKey}>
+        <dt>{labels.level}</dt>
+        <dd className={styles.passportTierValue}>
+          {tierKey === "bronze" && (
+            <Image
+              src={bronzeTierMedal}
+              alt=""
+              width={32}
+              height={32}
+              data-tier-medal="bronze"
+            />
+          )}
+          <span>{passport.display.level}</span>
+        </dd>
+      </div>
       <div><dt>{labels.score}</dt><dd>{passport.score.points}</dd></div>
       <div><dt>{labels.stamps}</dt><dd>{passport.stampSummary.total}</dd></div>
     </dl>

@@ -119,7 +119,9 @@
 }
 .stateBadge[data-state="sold_out"],
 .stateBadge[data-state="expired"] {
-  border-style: dashed;
+  border-color: oklch(88% 0 0);
+  background: oklch(96.5% 0 0);
+  color: oklch(39% 0 0);
 }
 .message {
   max-width: 640px;
@@ -201,8 +203,8 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  min-height: 68px;
-  padding: 0 24px;
+  min-height: 72px;
+  padding: 0 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -212,7 +214,8 @@
 }
 .overlayHeader h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  letter-spacing: -0.025em;
   line-height: 1.25;
 }
 .overlayHeader button {
@@ -235,7 +238,7 @@
   outline-offset: 3px;
 }
 .detailMain.overlayMain {
-  padding: 40px 32px 64px;
+  padding: 28px 32px 56px;
 }
 .back {
   min-height: 44px;
@@ -255,12 +258,25 @@
   border-top: 1px solid oklch(85% 0 0);
   padding-top: 40px;
 }
+.overlayMain .detail {
+  border-top: 0;
+  padding-top: 0;
+}
 .detailIntro {
   min-width: 0;
   max-width: 720px;
 }
 .detailIntro .stateBadge {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+.overlayMain .detailIntro h1 {
+  font-size: 28px;
+  line-height: 1.2;
+}
+.overlayMain .detailIntro p {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.55;
 }
 .detailColumns {
   display: grid;
@@ -270,16 +286,27 @@
 }
 .detailColumns section {
   min-width: 0;
+  padding: 22px;
+  border: 1px solid oklch(89% 0 0);
+  border-radius: 16px;
+  background: oklch(99% 0 0);
 }
 .detailColumns h2 {
   margin: 0 0 12px;
   font-size: 16px;
 }
 .detailColumns section > p {
-  min-height: 48px;
-  margin: 0 0 22px;
+  min-height: 0;
+  margin: 0 0 18px;
   color: oklch(42% 0 0);
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1.55;
+}
+.overlayMain .detailColumns {
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 28px 0 20px;
 }
 .requirements,
 .period {
@@ -309,6 +336,9 @@
   font-weight: 750;
   overflow-wrap: break-word;
 }
+.period time {
+  white-space: nowrap;
+}
 .unavailable {
   min-height: 54px;
   width: max-content;
@@ -322,6 +352,13 @@
   color: oklch(40% 0 0);
   font-size: 14px;
   font-weight: 700;
+}
+.overlayMain .unavailable {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  border-color: oklch(90% 0 0);
+  background: oklch(97% 0 0);
 }
 .unavailable svg {
   width: 18px;
@@ -466,7 +503,7 @@
     padding: 0 16px;
   }
   .detailMain.overlayMain {
-    padding: 32px 16px 48px;
+    padding: 24px 16px 40px;
   }
   .headerInner {
     padding: 0 16px;
@@ -505,6 +542,14 @@
     grid-template-columns: 1fr;
     gap: 40px;
     margin: 44px 0;
+  }
+  .overlayMain .detailColumns {
+    gap: 10px;
+    margin: 24px 0 16px;
+  }
+  .detailColumns section {
+    padding: 18px;
+    border-radius: 14px;
   }
   .delivery {
     padding: 20px 16px;

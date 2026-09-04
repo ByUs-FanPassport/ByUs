@@ -14,6 +14,7 @@ export function ChevronLeft(props: IconProps) { return <Icon {...props}><path d=
 export function ChevronRight(props: IconProps) { return <Icon {...props}><path d="m9 18 6-6-6-6" /></Icon>; }
 export function Clock(props: IconProps) { return <Icon {...props}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>; }
 export function Home(props: IconProps) { return <Icon {...props}><path d="m3 11 9-8 9 8v9H3zM9 20v-6h6v6" /></Icon>; }
+export function Heart(props: IconProps) { return <Icon {...props}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" /></Icon>; }
 export function Languages(props: IconProps) {
   return (
     <Icon {...props} data-language-icon="ko-en">

@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { render, screen } from "@testing-library/react";
+import { act } from "react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,6 +14,24 @@ import {
 import { STAMP_METADATA, stampTypeLabel } from "../domain/passport-read-model";
 
 describe("Passport Stamp artwork", () => {
+  it("keeps the Passport skeleton visible until both data and the base artwork are ready", async () => {
+    const { container, rerender } = render(
+      <PassportStampCanvas celebrityName="KARA" stamps={[]} locale="ko" loading />,
+    );
+
+    const canvas = container.querySelector("[data-passport-ready]");
+    const image = container.querySelector("img");
+    expect(canvas).toHaveAttribute("data-passport-ready", "false");
+    expect(canvas).toHaveAttribute("aria-busy", "true");
+
+    await act(async () => fireEvent.load(image!));
+    expect(canvas).toHaveAttribute("data-passport-ready", "false");
+
+    rerender(<PassportStampCanvas celebrityName="KARA" stamps={[]} locale="ko" />);
+    expect(canvas).toHaveAttribute("data-passport-ready", "true");
+    expect(canvas).toHaveAttribute("aria-busy", "false");
+  });
+
   it("uses brand-neutral, text-labelled artwork rather than celebrity-specific image assets", () => {
     const { container } = render(
       <StampArtwork type="knowledge" locale="ko" />,

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale } from "../server/content/content-domain";
@@ -12,6 +13,7 @@ import styles from "./guest-home.module.css";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const BANKSY_CAMPAIGN_IMAGE = "/images/guest-home/banksy-exhibition-campaign.png";
 
 const carouselCopy = {
   ko: {
@@ -25,6 +27,12 @@ const carouselCopy = {
     details: "LIVE 상세보기",
     noneStatus: "공개된 LIVE 없음",
     noneTitle: "새로운 LIVE를 준비하고 있어요.",
+    campaignStatus: "SPECIAL EXHIBITION",
+    campaignDate: "9월 18일 금요일 · 오후 5시",
+    campaignTitle: "엘리나와 함께 만나는 뱅크시",
+    campaignPeriod: "11월 전시 종료까지",
+    campaignAction: "이벤트 살펴보기",
+    campaignAlt: "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
   },
   en: {
     label: "Featured LIVE events",
@@ -37,6 +45,12 @@ const carouselCopy = {
     details: "View LIVE details",
     noneStatus: "No published LIVE",
     noneTitle: "A new LIVE is in preparation.",
+    campaignStatus: "SPECIAL EXHIBITION",
+    campaignDate: "Friday, September 18 · 5:00 PM",
+    campaignTitle: "Meet Banksy with Elina",
+    campaignPeriod: "Through the exhibition's November close",
+    campaignAction: "Explore the event",
+    campaignAlt: "A contemporary museum with street-art works displayed in a dark concrete gallery",
   },
 } as const;
 
@@ -109,7 +123,7 @@ export function LiveHeroCarousel({
   locale: ContentLocale;
 }) {
   const t = carouselCopy[locale];
-  const total = featuredLives.length;
+  const total = featuredLives.length + 1;
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [interactionPaused, setInteractionPaused] = useState(false);
@@ -146,17 +160,6 @@ export function LiveHeroCarousel({
     const timer = window.setTimeout(() => goTo(activeIndex + 1, false), AUTOPLAY_INTERVAL_MS);
     return () => window.clearTimeout(timer);
   }, [activeIndex, goTo, interactionPaused, reducedMotion, timerRevision, total]);
-
-  if (total === 0) {
-    return (
-      <article className={styles.heroCard}>
-        <div className={styles.heroContent}>
-          <p className={styles.liveStatus}>{t.noneStatus}</p>
-          <h2>{t.noneTitle}</h2>
-        </div>
-      </article>
-    );
-  }
 
   const hasControls = total > 1;
 
@@ -254,6 +257,34 @@ export function LiveHeroCarousel({
               </article>
             );
           })}
+          <article
+            className={`${styles.heroCard} ${styles.campaignHeroCard}`}
+            aria-hidden={activeIndex !== featuredLives.length}
+            aria-roledescription="slide"
+            aria-label={t.position(total, total)}
+            inert={activeIndex !== featuredLives.length}
+            data-active={activeIndex === featuredLives.length ? "true" : "false"}
+          >
+            <Image
+              src={BANKSY_CAMPAIGN_IMAGE}
+              alt={t.campaignAlt}
+              fill
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              priority={featuredLives.length === 0}
+            />
+            <div className={styles.heroOverlay} aria-hidden="true" />
+            <div className={styles.heroContent}>
+              <div className={styles.statusRail}>
+                <p className={styles.liveStatus}>{t.campaignStatus}</p>
+                <p className={styles.heroDate}>{t.campaignDate}</p>
+              </div>
+              <h2>{t.campaignTitle}</h2>
+              <p className={styles.campaignHeroPeriod}>{t.campaignPeriod}</p>
+              <Link data-fan-action-emphasis="primary" className={styles.primaryButton} href={`/c/elina?locale=${locale}` as Route}>
+                <span>{t.campaignAction}</span><ArrowRight />
+              </Link>
+            </div>
+          </article>
         </div>
       </div>
 
@@ -262,15 +293,18 @@ export function LiveHeroCarousel({
           <button className={styles.carouselPrevious} type="button" aria-label={t.previous} onClick={() => goTo(activeIndex - 1, true)}>
             <ChevronLeft />
           </button>
-          <div className={styles.carouselDots}>
-            {featuredLives.map((featuredLive, index) => (
+          <div
+            className={styles.carouselDots}
+            style={{ "--carousel-count": total } as CSSProperties}
+          >
+            {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "banksy-campaign"].map((key, index) => (
               <button
                 type="button"
                 className={styles.carouselDot}
                 aria-label={t.goTo(index + 1)}
                 aria-current={index === activeIndex ? "true" : undefined}
                 onClick={() => goTo(index, true)}
-                key={featuredLive.live.slug}
+                key={key}
               >
                 <span aria-hidden="true" />
               </button>
