@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import useEmblaCarousel from "embla-carousel-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
@@ -124,12 +125,18 @@ export function LiveHeroCarousel({
 }) {
   const t = carouselCopy[locale];
   const total = featuredLives.length + 1;
+  const hasControls = total > 1;
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [interactionPaused, setInteractionPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [timerRevision, setTimerRevision] = useState(0);
   const [announcement, setAnnouncement] = useState("");
+  const [viewportRef, emblaApi] = useEmblaCarousel({
+    loop: hasControls,
+    duration: 24,
+    watchDrag: hasControls && !reducedMotion,
+  });
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -141,27 +148,39 @@ export function LiveHeroCarousel({
   }, []);
 
   useEffect(() => {
+    if (!emblaApi) return;
+    const syncActiveIndex = () => setActiveIndex(emblaApi.selectedScrollSnap());
+    syncActiveIndex();
+    emblaApi.on("select", syncActiveIndex);
+    emblaApi.on("reInit", syncActiveIndex);
+    return () => {
+      emblaApi.off("select", syncActiveIndex);
+      emblaApi.off("reInit", syncActiveIndex);
+    };
+  }, [emblaApi]);
+
+  useEffect(() => {
     if (activeIndex < total) return;
+    emblaApi?.scrollTo(0, true);
     setActiveIndex(0);
-  }, [activeIndex, total]);
+  }, [activeIndex, emblaApi, total]);
 
   const goTo = useCallback((index: number, manual: boolean) => {
     if (total < 1) return;
     const nextIndex = (index + total) % total;
-    setActiveIndex(nextIndex);
+    if (emblaApi) emblaApi.scrollTo(nextIndex, reducedMotion);
+    else setActiveIndex(nextIndex);
     if (manual) {
       setTimerRevision((value) => value + 1);
       setAnnouncement(t.position(nextIndex + 1, total));
     }
-  }, [t, total]);
+  }, [emblaApi, reducedMotion, t, total]);
 
   useEffect(() => {
     if (total <= 1 || interactionPaused || reducedMotion) return;
     const timer = window.setTimeout(() => goTo(activeIndex + 1, false), AUTOPLAY_INTERVAL_MS);
     return () => window.clearTimeout(timer);
   }, [activeIndex, goTo, interactionPaused, reducedMotion, timerRevision, total]);
-
-  const hasControls = total > 1;
 
   return (
     <div
@@ -184,11 +203,8 @@ export function LiveHeroCarousel({
       onPointerUp={() => setInteractionPaused(false)}
       onPointerCancel={() => setInteractionPaused(false)}
     >
-      <div className={styles.heroViewport}>
-        <div
-          className={styles.heroTrack}
-          style={{ transform: `translate3d(-${activeIndex * 100}%, 0, 0)` }}
-        >
+      <div className={styles.heroViewport} ref={viewportRef}>
+        <div className={styles.heroTrack}>
           {featuredLives.map((featuredLive, index) => {
           const isActive = index === activeIndex;
           const detailHref = `/live/${featuredLive.live.slug}`;

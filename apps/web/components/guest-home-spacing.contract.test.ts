@@ -6,6 +6,10 @@ const css = readFileSync(
   resolve(process.cwd(), "components/guest-home.module.css"),
   "utf8",
 );
+const heroCarouselSource = readFileSync(
+  resolve(process.cwd(), "components/live-hero-carousel.tsx"),
+  "utf8",
+);
 const liveStatusCss = readFileSync(
   resolve(process.cwd(), "components/live-status-indicator.module.css"),
   "utf8",
@@ -113,9 +117,10 @@ describe("guest home compact icon-only action spacing", () => {
     expect(declarationBlock(".carouselDot[aria-current=\"true\"] span")).toMatch(
       /\bwidth:\s*22px\b/,
     );
-    expect(declarationBlock(".heroTrack")).toMatch(
-      /\btransition:\s*transform\s+240ms\s+cubic-bezier\(\.2,\s*0,\s*0,\s*1\)/,
-    );
+    expect(declarationBlock(".heroViewport")).toMatch(/\btouch-action:\s*pan-y\s+pinch-zoom/);
+    expect(declarationBlock(".heroTrack")).not.toMatch(/\btransition:\s*transform/);
+    expect(heroCarouselSource).toContain('useEmblaCarousel({');
+    expect(heroCarouselSource).toContain('ref={viewportRef}');
     expect(css).toMatch(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.heroCarousel\[data-reduced-motion="true"\]\s+\.heroTrack\s*\{[^}]*transform:\s*none\s*!important/,
     );
