@@ -16,13 +16,13 @@ describe("celebrity home aside layout contract", () => {
     expect(baseAsideRule).toContain("gap:16px");
   });
 
-  it("sticks the complete desktop rail instead of the profile card", () => {
+  it("places Passport below the calendar without sticky overlap", () => {
     const desktopBlock = css.match(
       /@media \(min-width:64rem\)\s*\{([\s\S]*?)\n\}/,
     )?.[1];
 
     expect(desktopBlock).toContain(
-      ".homeAside { position:sticky; top:148px; align-self:start; }",
+      ".homeAside { grid-column:2; grid-row:3 / span 2; align-self:start; }",
     );
     expect(desktopBlock).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);
     expect(css).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);

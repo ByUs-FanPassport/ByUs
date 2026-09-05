@@ -92,3 +92,21 @@
 }
 @media(prefers-reduced-motion:reduce) {
 }
+
+/* The personal workspace uses one surface per section, not boxed rows inside cards. */
+.dashboard { gap:var(--space-8); }
+.section :is(.creatorList,.rows,.emptyText,.empty) { border:0; border-radius:0; }
+.section :is(.creator,.rows>a) { background:transparent; padding-inline:0; }
+.creator strong,.rows strong,.creator span,.rows span { white-space:normal; overflow-wrap:anywhere; }
+.overviewGrid { display:flex; flex-wrap:wrap; gap:12px 24px; border:0; }
+.stat { display:flex; min-height:44px; gap:8px; padding:0; border:0!important; }
+.stat strong { font-size:18px; }
+.stat span { font-size:13px; }
+.overview>h2 { font-size:16px; }
+.rewardMetrics { display:flex; flex-direction:column; border:0; }
+.rewardMetrics>a,.rewardMetrics>div { min-height:56px; border:0; }
+
+.guest { background:var(--color-surface); }
+.history .rows a { display:grid; }
+
+.workspace[data-has-rail="false"] { grid-template-columns:minmax(0,1fr); max-width:800px; }

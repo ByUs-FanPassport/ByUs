@@ -36,8 +36,8 @@ describe("passport fan screens", () => {
     render(<PassportCollectionScreen />);
     expect(await screen.findByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /KARA/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
-    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("15");
-    expect(screen.getByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
+    expect(screen.getByText("팬 점수").previousSibling).toHaveTextContent("15");
+    expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
   });
 
   it("fails closed when the Passport collection API DTO is malformed", async () => {
@@ -60,13 +60,13 @@ describe("passport fan screens", () => {
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     expect(await screen.findByRole("heading", { name: "KARA Fan Passport" })).toBeInTheDocument();
     expect(screen.queryByText("다음 순간을 기다리는 중")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /받은 Stamp 보기/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /받은 스탬프 보기/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(2);
     const timeline = screen.getByRole("list");
     expect(timeline.children[0]).toHaveTextContent("라이브 예약");
     expect(timeline.children[0]).toHaveTextContent("KARA LIVE");
-    expect(screen.getByText("Fan Score").previousSibling).toHaveTextContent("15");
-    expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("2");
+    expect(screen.getByText("팬 점수").previousSibling).toHaveTextContent("15");
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("2");
   });
 
   it("renders a pending First Reaction as relationship history without a transaction link or Stamp count", async () => {
@@ -95,7 +95,7 @@ describe("passport fan screens", () => {
     expect(await screen.findByRole("heading", { name: "첫 반응" })).toBeInTheDocument();
     expect(screen.getByText("첫 마음을 남긴 날")).toBeInTheDocument();
     expect(screen.getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
-    expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("0");
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
     expect(screen.queryByRole("link", { name: /첫 반응 거래 기록/ })).not.toBeInTheDocument();
   });
 
@@ -129,7 +129,7 @@ describe("passport fan screens", () => {
     });
     expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
     expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
-    expect(screen.getByText("Stamp").previousSibling).toHaveTextContent("0");
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
   });
 
   it("preserves an archived LIVE title without exposing a dead detail link", async () => {
@@ -194,10 +194,10 @@ describe("passport fan screens", () => {
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "다음 Level: 골드" })).toHaveAttribute("value", "30");
+    expect(screen.getByRole("progressbar", { name: "다음 등급: 골드" })).toHaveAttribute("value", "30");
     expect(screen.getByText("35 점 남음")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "다음 혜택: 스페셜 디지털 배경화면" })).toBeInTheDocument();
-    expect(screen.getByText("Fan Score: 현재 15 / 필요 50")).toBeInTheDocument();
+    expect(screen.getByText("팬 점수: 현재 15 / 필요 50")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /혜택 확인하기/ })).toHaveAttribute(
       "href",
       `/benefits/${detail.nextBenefit.id}?locale=ko`,
@@ -341,6 +341,6 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", fetchMock); render(<PassportCollectionScreen />);
     fireEvent.click(await screen.findByRole("button", { name: /다시 불러오기/ }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "아직 발급된 Passport가 없어요." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "아직 발급된 패스포트가 없어요." })).toBeInTheDocument();
   });
 });

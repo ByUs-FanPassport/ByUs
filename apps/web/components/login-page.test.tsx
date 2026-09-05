@@ -51,6 +51,13 @@ describe("Privy login page", () => {
     vi.mocked(globalThis.fetch).mockClear();
   });
 
+  it("returns a completed Google session to MY with locale and intent intact", async () => {
+    query = "returnTo=%2Fmy%3Flocale%3Dko%26authIntent%3D11111111-1111-4111-8111-111111111111&locale=ko&intent=passport&entity=collection";
+    render(<LoginPage />);
+    await act(async () => { await onComplete?.(); });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/my?locale=ko&authIntent=11111111-1111-4111-8111-111111111111"));
+  });
+
   it("starts the real Privy modal with Google as the only login method", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: /Google로 계속하기/ }));

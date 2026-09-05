@@ -455,3 +455,39 @@ claim that all screens or all local CSS have been migrated.
   deferred, not claimed complete by this visual pass.
 - No date-selection panel, month/list toggle, new reservation flow or API change
   is part of phase one. Validate 360/390/768/1024/1440px before promoting changes.
+
+## Utility surfaces and truthful copy (2026-09-05)
+
+The UI/copy guide is implemented as an opt-in extension, not a replacement of
+Fan Pulse Spectrum. `fan-ui/fan-surface` owns neutral utility canvases and static
+section cards; `--color-utility-canvas` and `--color-surface-focus` are shared
+roles. HOME, artist heroes and Passport artwork retain their existing treatment.
+Do not introduce a parallel hard-coded blue palette from the guide's example hexes.
+
+- Creator directory: maximum three equal-width columns, centered partial row,
+  two columns at 768px and one below; 4:3 media fields contain the full published
+  image instead of cropping portrait heads or group members; published positioning is retained.
+  Use published summaries only, no invented biographies or popular/recommended claims.
+  Default order remains the published order. Search, ordering and ownership filters stay.
+- MY: eligible reserved LIVE first (active before scheduled, then start time), one
+  leading event with other reservations in a disclosure. Owned creator records and
+  recent activity follow; totals appear once as a quiet summary. First-reaction-only
+  relationships remain distinct from owned Passports. Tier targets use FAN_TIERS;
+  remaining points come from the existing summary, not a new score calculation.
+- Passport collection cards stay at most 380px even for one record. Technical
+  issuance details remain on detail; successful issuance is not a list warning.
+- Korean labels use 패스포트, 팬 점수, 스탬프, 티켓 and 디지털 기념품 without merging
+  their underlying concepts. Authentication, failed reads and empty states differ.
+- Mission pages preserve a locale-aware LIVE return link, use the public LIVE title
+  when available, and distinguish loading/errors from an empty eligible list.
+  An empty eligible list does not prove the LIVE has no configured missions.
+
+Deferred pending evidence: creator biography editing, Fans metric provenance,
+contractual official/appearance claims, benefit claimability aggregation, detailed
+activity-type enrichment, and cross-site notification/benefit copy changes.
+These must not be inferred from the visual guide or added as fabricated data.
+
+Verification boundary: responsive public directory checks live in
+`e2e/public/ui-guide.spec.ts`; owned MY/Passport visual checks require a test
+account or isolated auth/API fixtures. Passing fixtures is not proof of a live
+production account or of benefit eligibility logic.

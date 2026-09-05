@@ -19,21 +19,22 @@ import {
   StampArtwork,
   type PassportStampType,
 } from "./passport-stamp-artwork";
+import { fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
 import styles from "./passport-screens.module.css";
 
 type Loadable<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: "auth" | "missing" | "network" };
 
 const copy = {
   ko: {
-    passports: "My Passports", passportsSub: "최애와 함께한 순간을 Passport로 모아보세요.", discover: "새 셀럽 찾기", open: "Passport 열기",
-    emptyTitle: "아직 발급된 Passport가 없어요.", emptyBody: "좋아하는 셀럽의 팬 인증을 완료하면 첫 기록이 시작돼요.", emptyAction: "팬 인증 가능한 셀럽 보기",
+    passports: "내 패스포트", passportsSub: "최애와 함께한 순간을 패스포트로 모아보세요.", discover: "최애 찾기", open: "패스포트 보기",
+    emptyTitle: "아직 발급된 패스포트가 없어요.", emptyBody: "좋아하는 크리에이터의 팬 인증을 완료하면 첫 기록이 시작돼요.", emptyAction: "팬 인증 가능한 크리에이터 보기",
     retry: "다시 불러오기", loadError: "기록을 불러오지 못했어요.", loadErrorBody: "잠시 후 다시 시도해 주세요. 이미 저장된 기록은 사라지지 않아요.", login: "로그인하고 내 기록 보기",
-    issued: "발급", score: "Fan Score", stamps: "Stamp", digital: "디지털 발급", pending: "안전하게 발급을 준비하고 있어요", complete: "디지털 발급이 완료됐어요", needsHelp: "발급 상태를 확인하고 있어요",
-    detailSub: "함께한 활동과 Stamp를 한곳에서 확인하세요.", stampBook: "Stamp Book", activity: "최근 활동", noActivity: "아직 활동 기록이 없어요.", noActivityBody: "팬 인증과 라이브 참여를 시작하면 이곳에 차곡차곡 남아요.",
-    emptySlot: "다음 순간을 기다리는 중", earned: "받은 Stamp 보기",
+    issued: "발급", score: "팬 점수", stamps: "스탬프", digital: "디지털 발급", pending: "안전하게 발급을 준비하고 있어요", complete: "디지털 발급이 완료됐어요", needsHelp: "발급 상태를 확인하고 있어요",
+    detailSub: "함께한 활동과 스탬프를 한곳에서 확인하세요.", stampBook: "스탬프 모음", activity: "최근 활동", noActivity: "아직 활동 기록이 없어요.", noActivityBody: "팬 인증과 라이브 참여를 시작하면 이곳에 차곡차곡 남아요.",
+    emptySlot: "다음 순간을 기다리는 중", earned: "받은 스탬프 보기",
     points: "점", digitalInfo: "디지털 발급 정보", token: "Token ID", transaction: "거래 기록", explorer: "발급 기록 확인", noFacts: "발급이 완료되면 확인 정보가 표시돼요.",
-    stampDetail: "Stamp 상세", stampDetailSub: "이 Stamp가 남긴 순간을 확인하세요.", earnedOn: "받은 날", activityDate: "활동한 날", reward: "Fan Score", backPassport: "Passport로 돌아가기", notFound: "기록을 찾을 수 없어요.", notFoundBody: "삭제되었거나 내 소유의 기록이 아닐 수 있어요.",
-    nextLevel: "다음 Level", levelMax: "최고 Level에 도달했어요.", remaining: "점 남음", nextBenefit: "다음 혜택", benefitReady: "지금 받을 수 있어요.", benefitLocked: "조건을 달성하면 받을 수 있어요.", viewBenefit: "혜택 확인하기", relatedActivity: "관련 활동", currentScore: "현재", requiredScore: "필요", opensAt: "공개",
+    stampDetail: "스탬프 상세", stampDetailSub: "이 스탬프가 남긴 순간을 확인하세요.", earnedOn: "받은 날", activityDate: "활동한 날", reward: "팬 점수", backPassport: "패스포트로 돌아가기", notFound: "기록을 찾을 수 없어요.", notFoundBody: "삭제되었거나 내 소유의 기록이 아닐 수 있어요.",
+    nextLevel: "다음 등급", levelMax: "최고 등급에 도달했어요.", remaining: "점 남음", nextBenefit: "다음 혜택", benefitReady: "지금 받을 수 있어요.", benefitLocked: "조건을 달성하면 받을 수 있어요.", viewBenefit: "혜택 확인하기", relatedActivity: "관련 활동", currentScore: "현재", requiredScore: "필요", opensAt: "공개",
     firstReaction: "첫 반응", firstReactionDate: "첫 마음을 남긴 날", firstReactionTransaction: "첫 반응 거래 기록",
   },
   en: {
@@ -100,9 +101,9 @@ function safeExplorerUrl(baseUrl: string, txHash: string): string | null {
   } catch { return null; }
 }
 
-function Frame({ locale, children, presentation = "page" }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay" }) {
+function Frame({ locale, children, presentation = "page", collection = false }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay"; collection?: boolean }) {
   if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`} data-fan-surface lang={locale}><main className={styles.overlayMain}>{children}</main></div>;
-  return <FanAppFrame locale={locale} mainId="passport-content"><div className={styles.app}><FanContentContainer as="main" className={styles.main} id="passport-content" tabIndex={-1}>{children}</FanContentContainer></div></FanAppFrame>;
+  return <FanAppFrame locale={locale} className={collection ? fanUtilityCanvasClassName : undefined} mainId="passport-content"><div className={`${styles.app} ${collection ? styles.collectionApp : ""}`}><FanContentContainer as="main" className={styles.main} id="passport-content" tabIndex={-1}>{children}</FanContentContainer></div></FanAppFrame>;
 }
 
 function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} role="status" aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
@@ -111,7 +112,7 @@ function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocal
   const c = copy[locale]; const missing = kind === "missing";
   const source = new URL(returnTo, "https://byus.local");
   const targetId = source.pathname.split("/").filter(Boolean).at(-1) ?? "collection";
-  return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{missing ? c.notFound : c.loadError}</h1><p>{missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
+  return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{kind === "auth" ? (locale === "ko" ? "로그인하고 내 패스포트를 확인하세요." : "Sign in to view your Passports.") : missing ? c.notFound : c.loadError}</h1><p>{kind === "auth" ? (locale === "ko" ? "팬 인증과 LIVE 참여로 남긴 기록을 한곳에서 볼 수 있어요." : "See your fan verification and LIVE participation records in one place.") : missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
 }
 
 function useOwnedApi<T>(url: string, parse: (value: unknown) => T, authReady: boolean, authenticated: boolean, getAccessToken: () => Promise<string | null>) {
@@ -143,13 +144,13 @@ const parseStamp = (body: unknown) => (body as { stamp: StampDetail }).stamp;
 export function PassportCollectionScreen() {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
   const fetcher = useOwnedApi(`/api/passports?locale=${locale}`, parseCollection, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale}><PageHeading title={c.passports} subtitle={c.passportsSub} />
+  return <Frame locale={locale} collection><PageHeading title={c.passports} subtitle={c.passportsSub} />
     {fetcher.state.status === "loading" ? <Skeleton /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
       <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <Link className={styles.passportCard} key={passport.id} href={withLocale(`/passports/${passport.id}`, locale)}>
         <div className={styles.cardMedia}><Image src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectPosition: passport.celebrity.image.position }} /></div>
-        <div className={styles.cardTop}><div><h2>{passport.celebrity.name}</h2><p>{c.issued} {date(passport.issuedAt, locale)}</p></div><ArrowRight /></div>
+        <div className={styles.cardTop}><div><h2>{passport.celebrity.name}</h2></div><ArrowRight /></div>
         <div className={styles.cardFacts}><span><strong>{passport.display.level}</strong><small>LEVEL</small></span><span><strong>{passport.score.points}</strong><small>{c.score}</small></span><span><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></span></div>
-        <DigitalStatus status={passport.mint.status} locale={locale} /><span className={styles.openLabel}>{c.open}</span>
+        {passport.mint.status !== "minted" ? <DigitalStatus status={passport.mint.status} locale={locale} /> : null}<span className={styles.openLabel}>{c.open}</span>
       </Link>)}</section><Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight /></Link></>}
   </Frame>;
 }

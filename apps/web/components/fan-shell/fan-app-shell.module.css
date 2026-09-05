@@ -1,9 +1,14 @@
 .frame {
+  /* Keep short pages full-height without fixing the footer over content. */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   --fan-ink: oklch(18% 0 0);
   --fan-muted: oklch(48% 0 0);
   --fan-line: oklch(90% 0 0);
   --fan-header-height: 68px;
   min-height: 100vh;
+  min-height: 100dvh;
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
   background: #fff;
   color: var(--fan-ink);
@@ -14,6 +19,9 @@
 .frame :is(a, button):focus-visible { outline: 3px solid var(--fan-ink); outline-offset: 3px; }
 .skipLink { position:fixed; z-index:var(--z-tooltip); top:8px; left:16px; min-height:44px; padding:11px 16px; transform:translateY(-160%); border-radius:12px; background:var(--fan-ink); color:#fff !important; font-size:14px; font-weight:750; }
 .skipLink:focus-visible { transform:translateY(0); }
+.frame > * { flex-shrink: 0; }
+.frame > [data-fan-site-footer] { margin-top: auto; }
+
 .header { position: sticky; z-index: var(--z-sticky-header); top: 0; height: var(--fan-header-height); padding-block: 12px; background: #fff; }
 .headerInner { box-sizing:border-box; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; height: 100%; }
 .brand { display: inline-flex; width: 88px; min-height: 44px; align-items: center; }

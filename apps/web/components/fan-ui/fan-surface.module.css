@@ -1,0 +1,5 @@
+/* Opt-in utility canvas; the editorial HOME and artist hero stay white. */
+.canvas { background: var(--color-utility-canvas); }
+.card { min-width:0; padding:var(--space-5); border:1px solid var(--color-line); border-radius:var(--radius-collection); background:var(--color-surface); }
+.card[data-tone="focus"] { border-color:var(--color-line); background:var(--color-surface-focus); }
+@media(min-width:48rem) { .card { padding:var(--space-6); } }

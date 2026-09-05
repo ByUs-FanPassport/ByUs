@@ -944,3 +944,11 @@
     background-position: 0 0;
   }
 }
+
+/* A single owned Passport keeps the same footprint as a collection of many. */
+.collectionApp { background:transparent; }
+.collection { grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),380px)); justify-content:start; gap:24px; }
+.passportCard { min-height:0; background:var(--color-surface); box-shadow:none; border-color:var(--color-line); }
+.cardFacts small { font-size:12px; }
+.cardTop h2 { overflow-wrap:anywhere; }
+.collectionApp :is(.state,.empty) { background:var(--color-surface); }

@@ -58,16 +58,16 @@ describe("published celebrity directory", () => {
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("KARA");
     expect(screen.getByRole("link", { name: "KARA 팬페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.getByText(/7월 24일.*LIVE 예정/)).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "셀럽 검색" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("published");
   });
 
   it("filters by name and teaches recovery from a zero-result filter", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-    fireEvent.change(screen.getByRole("searchbox", { name: "셀럽 검색" }), { target: { value: "Elina" } });
+    fireEvent.change(screen.getByRole("searchbox", { name: "이름으로 찾기" }), { target: { value: "Elina" } });
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Elina" })).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("searchbox", { name: "셀럽 검색" }), { target: { value: "없는 셀럽" } });
+    fireEvent.change(screen.getByRole("searchbox", { name: "이름으로 찾기" }), { target: { value: "없는 셀럽" } });
     expect(screen.getByRole("status")).toHaveTextContent("검색 결과가 없어요.");
     fireEvent.click(screen.getByRole("button", { name: "필터 초기화" }));
     expect(screen.getAllByRole("article")).toHaveLength(3);
@@ -88,8 +88,8 @@ describe("published celebrity directory", () => {
       json: async () => ({ passports: [ownedPassport] }),
     }));
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-    await waitFor(() => expect(screen.getByText("Passport 보유")).toBeInTheDocument());
-    const filter = screen.getByRole("checkbox", { name: "내 Passport만" });
+    await waitFor(() => expect(screen.getByText("패스포트 보유")).toBeInTheDocument());
+    const filter = screen.getByRole("checkbox", { name: "내 패스포트만" });
     expect(filter).toBeEnabled();
     fireEvent.click(filter);
     expect(screen.getAllByRole("article")).toHaveLength(1);
@@ -109,14 +109,14 @@ describe("published celebrity directory", () => {
 
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("내 Passport를 확인하지 못했어요.");
-    expect(screen.getByRole("checkbox", { name: "내 Passport만" })).toBeDisabled();
+    expect(await screen.findByRole("alert")).toHaveTextContent("내 패스포트를 확인하지 못했어요.");
+    expect(screen.getByRole("checkbox", { name: "내 패스포트만" })).toBeDisabled();
   });
 
   it("keeps the Passport filter unavailable for guests with an explanation", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-    expect(screen.getByRole("checkbox", { name: "내 Passport만" })).toBeDisabled();
-    expect(screen.getByText("내 Passport만 보려면 로그인해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "내 패스포트만" })).toBeDisabled();
+    expect(screen.getByText("내 패스포트만 보려면 로그인해 주세요.")).toBeInTheDocument();
   });
 
   it("teaches the user what happens next when no published rows exist", () => {

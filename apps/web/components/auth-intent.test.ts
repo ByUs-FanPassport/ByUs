@@ -84,3 +84,14 @@ describe("durable auth intent", () => {
     expect(storage.length).toBe(0);
   });
 });
+
+it("allows only the collection-view intent from the exact MY hub", () => {
+  const input = {sourcePath:"/my", sourceQuery:"?locale=ko", actionType:"OPEN_PASSPORT", targetType:"passport", targetId:"collection"} as const;
+  expect(createAuthIntent(input)).toMatchObject(input);
+  for (const sourcePath of ["/my/other", "/my/issuance", "/settings", "https://evil.example", "//evil.example"]) {
+    expect(() => createAuthIntent({...input, sourcePath})).toThrow();
+  }
+  expect(() => createAuthIntent({...input, targetId:"someone-else"})).toThrow();
+  expect(() => createAuthIntent({...input, actionType:"RESERVE_LIVE", targetType:"live_event"})).toThrow();
+  expect(() => createAuthIntent({...input, targetType:"benefit"})).toThrow();
+});

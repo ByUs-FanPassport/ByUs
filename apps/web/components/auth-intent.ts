@@ -95,7 +95,13 @@ export const authIntentSchema = z
     if (value.targetType !== expectedTargetByAction[value.actionType]) {
       context.addIssue({ code: "custom", path: ["targetType"], message: "Intent action and target type do not match" });
     }
-    if (value.sourcePath !== expectedPath && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
+    // MY is an entry point for viewing the owned collection, not for arbitrary
+    // Passport targets or other actions. Keep its exact post-login return path.
+    const isMyCollectionEntry = value.actionType === "OPEN_PASSPORT"
+      && value.targetType === "passport"
+      && value.targetId === "collection"
+      && value.sourcePath === "/my";
+    if (value.sourcePath !== expectedPath && !isMyCollectionEntry && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
       context.addIssue({ code: "custom", path: ["sourcePath"], message: "Intent action and source path do not match" });
     }
     if (value.draftPayload.draftRef && value.actionType !== "SUBMIT_FAN_CODE") {

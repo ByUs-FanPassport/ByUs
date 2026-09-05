@@ -1,5 +1,10 @@
 .frame {
+  /* Keep short pages full-height without fixing the footer over content. */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   min-height: 100svh;
+  min-height: 100dvh;
   background: #fff;
   color: oklch(18% 0 0);
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -10,6 +15,9 @@
 .frame *::after {
   box-sizing: border-box;
 }
+
+.frame > * { flex-shrink: 0; }
+.frame > [data-fan-site-footer] { margin-top: auto; }
 
 .header {
   border-bottom: 1px solid oklch(93% 0 0);

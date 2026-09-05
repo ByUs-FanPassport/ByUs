@@ -50,12 +50,12 @@ describe("unified MY hub", () => {
     expect(screen.getByText("최애와 함께한 기록을 한눈에 모았어요.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "활동 요약" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 최애" })).toBeInTheDocument();
-    expect(screen.getByText("실버 · 15 Score · 35 점 남음")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "다가오는 LIVE" })).toBeInTheDocument();
+    expect(screen.getByText("실버 · 팬 점수 15 · 골드까지 팬 점수 35점")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "최근 수집" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
     expect(screen.getByText("알림 설정").closest("a")).toHaveAttribute("href", "/settings?locale=ko");
   });
 
@@ -71,8 +71,16 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="ko" />);
 
     expect(await screen.findByText("아직 등록한 최애가 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("예약한 LIVE가 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("아직 받은 혜택이 없어요.")).toBeInTheDocument();
-    expect(screen.getByText("아직 수집한 기록이 없어요.")).toBeInTheDocument();
+    expect(screen.queryByText("예약한 LIVE가 없어요.")).not.toBeInTheDocument();
+    expect(screen.queryByText("아직 받은 혜택이 없어요.")).not.toBeInTheDocument();
+    expect(screen.queryByText("아직 수집한 기록이 없어요.")).not.toBeInTheDocument();
   });
+});
+
+it("places reserved LIVE before owned records and compact totals", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
+  render(<MyScreen locale="ko"/>);
+  const event=await screen.findByText("내 예약 LIVE");
+  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"내 최애"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

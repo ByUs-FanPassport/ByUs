@@ -6,6 +6,9 @@
   /* Canonical semantic foundation from the root DESIGN.md. */
   --color-canvas: #fff;
   --color-surface: #fff;
+  /* Opt-in collection / personal utility surfaces, not the editorial shell. */
+  --color-utility-canvas: oklch(97.5% 0 0);
+  --color-surface-focus: oklch(97% 0.012 315);
   --color-soft: oklch(97.5% 0 0);
   --color-ink: oklch(18% 0 0);
   --color-muted: oklch(48% 0 0);
