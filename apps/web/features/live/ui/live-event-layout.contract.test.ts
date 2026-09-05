@@ -2,65 +2,39 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync(
-  resolve(process.cwd(), "features/live/ui/live-event-screen.module.css"),
-  "utf8",
-);
+const css = readFileSync(resolve(process.cwd(), "features/live/ui/live-event-screen.module.css"), "utf8");
 
-function declarationBlock(selector: string): string {
+// Accept compact CSS and merge repeated rules in source order, as the cascade does.
+function declarations(selector: string): Record<string, string> {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return css.match(new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`))?.[1] ?? "";
+  const matches = css.matchAll(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]+)\\}`, "g"));
+  return Object.fromEntries([...matches].flatMap(match => match[1].split(";").flatMap(part => {
+    const colon = part.indexOf(":");
+    return colon < 0 ? [] : [[part.slice(0, colon).trim(), part.slice(colon + 1).trim()]];
+  })));
 }
 
 describe("LIVE detail information hierarchy contract", () => {
-  it("groups title, schedule, Primary, and helper with the approved rhythm", () => {
-    expect(declarationBlock(".titleGroup")).toContain("margin-top: 24px");
-    expect(declarationBlock(".actionRail h1")).toContain("font-size: 24px");
-    expect(declarationBlock(".actionRail h1")).toContain("font-weight: 800");
-    expect(declarationBlock(".actionRail h1")).toContain("line-height: 1.2");
-    expect(declarationBlock(".scheduleGroup")).toContain("margin-top: 24px");
-    expect(declarationBlock(".primaryActionSlot")).toContain("margin-top: 24px");
-    expect(declarationBlock(".actionHelper")).toContain("margin: 8px 0 0");
-    expect(declarationBlock(".actionHelper")).toContain("font-size: 13px");
-    expect(declarationBlock(".actionHelper")).toContain("font-weight: 550");
-    expect(css).not.toMatch(/(?:^|\n)\.brand\s*\{/);
+  it("groups schedule and full-width primary with token spacing and a quiet helper", () => {
+    expect(declarations(".titleGroup")).toMatchObject({ "margin-top": "var(--space-3)" });
+    expect(declarations(".scheduleGroup")).toMatchObject({ "margin-top": "var(--space-6)" });
+    expect(declarations(".primaryActionSlot")).toMatchObject({ "margin-top": "var(--space-4)" });
+    expect(declarations(".actionHelper")).toMatchObject({ "margin-top": "var(--space-3)", "font-weight": "400", "text-align": "start", "margin-bottom": "0" });
+    expect(css).toContain("--fan-action-max-width:100%");
   });
 
-  it("keeps stable schedule columns on desktop and mobile", () => {
-    expect(declarationBlock(".schedule")).toContain("gap: 16px");
-    expect(declarationBlock(".scheduleGroup")).toContain(
-      "--schedule-label-width: 112px",
-    );
-    expect(declarationBlock(".scheduleGroup")).toContain(
-      "--schedule-column-gap: 16px",
-    );
-    expect(declarationBlock(".schedule div")).toContain(
-      "grid-template-columns: var(--schedule-label-width) minmax(0, 1fr)",
-    );
-    expect(declarationBlock(".schedule dt")).toContain("font-size: 14px");
-    expect(declarationBlock(".schedule dt")).toContain("font-weight: 550");
-    expect(declarationBlock(".schedule dt")).toContain("line-height: 1.5");
-    expect(declarationBlock(".schedule dt")).toContain("overflow-wrap: anywhere");
-    expect(declarationBlock(".schedule dd")).toContain("font-size: 14px");
-    expect(declarationBlock(".schedule dd")).toContain("font-weight: 750");
-    expect(declarationBlock(".schedule dd")).toContain("line-height: 1.5");
-    expect(declarationBlock(".schedule dd")).toContain("overflow-wrap: anywhere");
-    expect(declarationBlock(".schedule dd")).toContain(
-      "font-variant-numeric: tabular-nums",
-    );
-    expect(css).toMatch(
-      /@media\s*\(max-width:\s*767px\)[\s\S]*?\.scheduleGroup\s*\{[\s\S]*?--schedule-label-width:\s*92px[\s\S]*?--schedule-column-gap:\s*12px/,
-    );
-    expect(css).toMatch(
-      /@media\s*\(max-width:\s*767px\)[\s\S]*?\.actionRail h1\s*\{[\s\S]*?font-size:\s*20px/,
-    );
-    expect(declarationBlock(".timeZone")).toContain(
-      "margin-block: 8px 0",
-    );
-    expect(declarationBlock(".timeZone")).toContain(
-      "margin-inline: calc(var(--schedule-label-width) + var(--schedule-column-gap)) 0",
-    );
-    expect(declarationBlock(".timeZone")).toContain("text-align: start");
-    expect(declarationBlock(".timeZone")).toContain("font-size: 13px");
+  it("stacks schedule labels and emphasizes event time over the deadline", () => {
+    expect(declarations(".schedule")).toMatchObject({ display: "grid", gap: "var(--space-4)" });
+    expect(declarations(".schedule > div")).toMatchObject({ display: "grid", gap: "var(--space-1)", "min-width": "0" });
+    expect(declarations(".schedule dt")).toMatchObject({ "font-size": "12px", "align-items": "center" });
+    expect(declarations(".schedule dd")).toMatchObject({ "font-size": "14px", "font-weight": "600", "overflow-wrap": "anywhere", "font-variant-numeric": "tabular-nums" });
+    expect(declarations(".schedule .eventSchedule dd")).toMatchObject({ "font-size": "20px", "font-weight": "750" });
+    expect(declarations(".reservationDetails summary")).toMatchObject({ "min-height": "var(--min-target)" });
+    expect(declarations(".timeZone")).toMatchObject({ margin: "0", "font-size": "12px" });
+  });
+
+  it("keeps the mission arrow aligned with its label at a fixed size", () => {
+    expect(declarations(".missionLinkContent")).toMatchObject({ display: "flex", "align-items": "center", gap: "var(--space-2)" });
+    expect(declarations(".missionLinkContent svg")).toMatchObject({ display: "block", width: "18px", height: "18px", flex: "none" });
   });
 });
