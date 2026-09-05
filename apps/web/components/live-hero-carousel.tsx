@@ -149,6 +149,25 @@ export function LiveHeroCarousel({
   }, []);
 
   useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    let inView = false;
+    const syncVisibility = () => {
+      root.dataset.motionVisible = String(inView && !document.hidden);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      syncVisibility();
+    });
+    observer.observe(root);
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!emblaApi) return;
     const syncActiveIndex = () => setActiveIndex(emblaApi.selectedScrollSnap());
     syncActiveIndex();
@@ -247,7 +266,12 @@ export function LiveHeroCarousel({
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
                 <div className={styles.statusRail}>
-                  <p className={styles.liveStatus}><Radio /> {statusLabel}</p>
+                  <p className={styles.liveStatus} data-upcoming={statusLabel === "UPCOMING" ? "true" : undefined}>
+                    {statusLabel === "UPCOMING" && <span className={styles.statusShimmer} aria-hidden="true">
+                      <span className={styles.statusShimmerSlide}><span className={styles.statusShimmerLight} /></span>
+                    </span>}
+                    <Radio /> <span className={styles.statusText}>{statusLabel}</span>
+                  </p>
                   <p className={styles.heroDate}>{formatLiveDate(featuredLive.live.startsAt, locale)}</p>
                 </div>
                 <h2>{formatHeroLiveTitle(featuredLive.live.celebrity.name)}</h2>

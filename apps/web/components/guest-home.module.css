@@ -56,6 +56,18 @@
 .statusRail { display: flex; max-width: 320px; align-items: center; gap: 12px; margin-bottom: 12px; }
 .statusRail p, .heroCountdown { margin: 0; }
 .liveStatus { display: inline-flex; flex: none; min-height: 28px; align-items: center; gap: 8px; padding-inline: 12px; border: 1px solid rgb(255 95 191 / 92%); border-radius: 999rem; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+/* Perimeter shimmer adapted from Magic UI Shimmer Button (MIT), default 3s rhythm. */
+.liveStatus[data-upcoming="true"] { position: relative; isolation: isolate; overflow: hidden; background: #17131a; border-color: rgb(255 95 191 / 55%); }
+.liveStatus[data-upcoming="true"]::before { content: ""; position: absolute; inset: .8px; z-index: 1; border-radius: inherit; background: #17131a; }
+.liveStatus[data-upcoming="true"] svg, .statusText { position: relative; z-index: 2; }
+.statusShimmer { position: absolute; inset: -1px; z-index: 0; container-type: size; filter: blur(2px); pointer-events: none; }
+.statusShimmerSlide { position: absolute; inset: 0; height: 100cqh; aspect-ratio: 1; animation: statusShimmerSlide 3s ease-in-out infinite alternate; animation-play-state: paused; }
+.statusShimmerLight { position: absolute; inset: -100%; background: conic-gradient(from 225deg, transparent 0, #fff1fa 90deg, transparent 90deg); animation: statusShimmerSpin 6s linear infinite; animation-play-state: paused; }
+.heroCarousel[data-motion-visible="true"] .heroCard[data-active="true"] .statusShimmerSlide,
+.heroCarousel[data-motion-visible="true"] .heroCard[data-active="true"] .statusShimmerLight { animation-play-state: running; }
+@keyframes statusShimmerSlide { to { transform: translate(calc(100cqw - 100%), 0); } }
+@keyframes statusShimmerSpin { 0% { transform: translateZ(0) rotate(0); } 15%, 35% { transform: translateZ(0) rotate(90deg); } 65%, 85% { transform: translateZ(0) rotate(270deg); } 100% { transform: translateZ(0) rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .statusShimmer { display: none; } .statusShimmerSlide, .statusShimmerLight { animation: none; } }
 .liveStatus svg, .heroCountdown svg { width: 16px; height: 16px; }
 .heroDate { overflow: hidden; color: rgb(255 255 255 / 84%); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .heroContent h2 { max-width: 15ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1.02; text-wrap: balance; }
