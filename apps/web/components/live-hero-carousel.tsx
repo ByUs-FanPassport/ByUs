@@ -117,6 +117,18 @@ function LiveCountdown({
   return <span aria-live="off">{value}</span>;
 }
 
+function HeroStatusBadge({ label, showRadio = false }: { label: string; showRadio?: boolean }) {
+  return (
+    <p className={styles.liveStatus} data-hero-status={label}>
+      <span className={styles.statusShimmer} aria-hidden="true">
+        <span className={styles.statusShimmerSlide}><span className={styles.statusShimmerLight} /></span>
+      </span>
+      {showRadio && <Radio />}
+      <span className={styles.statusText}>{label}</span>
+    </p>
+  );
+}
+
 export function LiveHeroCarousel({
   featuredLives,
   locale,
@@ -266,12 +278,7 @@ export function LiveHeroCarousel({
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
                 <div className={styles.statusRail}>
-                  <p className={styles.liveStatus} data-upcoming={statusLabel === "UPCOMING" ? "true" : undefined}>
-                    {statusLabel === "UPCOMING" && <span className={styles.statusShimmer} aria-hidden="true">
-                      <span className={styles.statusShimmerSlide}><span className={styles.statusShimmerLight} /></span>
-                    </span>}
-                    <Radio /> <span className={styles.statusText}>{statusLabel}</span>
-                  </p>
+                  <HeroStatusBadge label={statusLabel} showRadio />
                   <p className={styles.heroDate}>{formatLiveDate(featuredLive.live.startsAt, locale)}</p>
                 </div>
                 <h2>{formatHeroLiveTitle(featuredLive.live.celebrity.name)}</h2>
@@ -325,7 +332,7 @@ export function LiveHeroCarousel({
             <div className={styles.heroOverlay} aria-hidden="true" />
             <div className={styles.heroContent}>
               <div className={styles.statusRail}>
-                <p className={styles.liveStatus}>{t.campaignStatus}</p>
+                <HeroStatusBadge label={t.campaignStatus} />
                 <p className={styles.heroDate}>{t.campaignDate}</p>
               </div>
               <h2>{t.campaignTitle}</h2>
