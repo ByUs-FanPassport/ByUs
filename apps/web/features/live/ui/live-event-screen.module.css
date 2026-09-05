@@ -95,9 +95,9 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
-  padding: 32px;
+  padding: var(--space-6);
   border: 1px solid oklch(93% 0 0);
   border-radius: 16px;
   box-shadow:
@@ -106,26 +106,13 @@
 }
 
 .status {
-  align-self: flex-start;
-  padding: 6px 12px;
-  border: 1px solid rgb(255 95 191 / 78%);
-  border-radius: 999rem;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.04em;
-}
-
-.status[data-status="live"],
-.status[data-live-status="live"] {
-  border-color: oklch(18% 0 0);
-  background: oklch(18% 0 0);
-  color: #fff;
-}
-.status[data-status="ended"],
-.status[data-status="cancelled"] {
-  border-color: oklch(76% 0 0);
-  color: oklch(48% 0 0);
+  align-self:flex-start;
+  padding:0;
+  border:0;
+  color:var(--color-muted);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.5;
 }
 
 .titleGroup {
@@ -144,62 +131,22 @@
   text-wrap: balance;
 }
 
-.scheduleGroup {
-  --schedule-label-width: 112px;
-  --schedule-column-gap: 16px;
-  margin-top: 24px;
-}
-
-.schedule {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 0;
-}
-.schedule div {
-  display: grid;
-  grid-template-columns: var(--schedule-label-width) minmax(0, 1fr);
-  gap: var(--schedule-column-gap);
-  align-items: start;
-}
-.schedule dt {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  align-items: start;
-  gap: 8px;
-  min-width: 0;
-  color: oklch(48% 0 0);
-  font-size: 14px;
-  font-weight: 550;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.schedule dt svg {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  margin-top: 1px;
-}
-.schedule dd {
-  min-width: 0;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 750;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  word-break: keep-all;
-  font-variant-numeric: tabular-nums;
-}
-
-.timeZone {
-  margin-block: 8px 0;
-  margin-inline: calc(var(--schedule-label-width) + var(--schedule-column-gap)) 0;
-  color: oklch(48% 0 0);
-  font-size: 13px;
-  font-weight: 550;
-  line-height: 1.5;
-  text-align: start;
-}
+.scheduleGroup { margin-top:var(--space-6); }
+.schedule { display:grid; gap:var(--space-4); margin:0; }
+.schedule > div { display:grid; gap:var(--space-1); min-width:0; }
+.schedule dt { display:flex; align-items:center; gap:var(--space-2); color:var(--color-muted); font-size:12px; line-height:1.5; }
+.schedule dt svg { width:16px; height:16px; flex:none; }
+.schedule dd { min-width:0; margin:0; font-size:14px; font-weight:600; line-height:1.6; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.schedule .eventSchedule dd { font-size:20px; font-weight:750; line-height:1.5; }
+.scheduleMeta { margin-top:var(--space-3); }
+.timeZone { margin:0; color:var(--color-muted); font-size:12px; line-height:1.5; }
+.reservationDetails { font-size:12px; color:var(--color-muted); }
+.reservationDetails summary { width:fit-content; min-height:var(--min-target); align-content:center; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.reservationDetails summary:focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
+.reservationDetails dl { display:grid; gap:var(--space-2); margin:0; padding-bottom:var(--space-3); }
+.reservationDetails dl > div { display:grid; grid-template-columns:44px minmax(0,1fr); gap:var(--space-2); line-height:1.6; }
+.reservationDetails dd { margin:0; color:var(--color-ink); overflow-wrap:anywhere; }
+@media(hover:hover) { .reservationDetails summary:hover { color:var(--color-ink); } }
 
 .calendarAction,
 .watchAction,
@@ -846,10 +793,6 @@
   .actionRail h1 {
     font-size: 20px;
   }
-  .scheduleGroup {
-    --schedule-label-width: 92px;
-    --schedule-column-gap: 12px;
-  }
   .contentGrid {
     margin-top: 48px;
   }
@@ -985,3 +928,21 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Hallmark · component: reservation card · theme: Fan Pulse Spectrum
+ * Existing async/error/success flows retained; visual acceptance requires rendered QA.
+ * Schedule prioritizes event and close time; full period remains disclosed.
+ */
+.actionRail { border-color:var(--color-line); border-radius:var(--radius-collection); box-shadow:none; }
+.titleGroup { margin-top:var(--space-3); }
+.primaryActionSlot { margin-top:var(--space-4); }
+.primaryActionBlock { width:100%; --fan-action-max-width:100%; }
+.actionHelper { margin-top:var(--space-3); color:var(--color-muted); font-weight:400; text-align:start; }
+.missionLink { margin-top:var(--space-1); align-self:flex-start; padding-inline:0; }
+/* FanAction wraps children in its label: align this inline accessory explicitly. */
+.missionLinkContent { display:flex; align-items:center; gap:var(--space-2); }
+.missionLinkContent svg { display:block; width:18px; height:18px; flex:none; }
+.schedule .deadlineSchedule { display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-2); }
+.deadlineSchedule dt { align-items:center; }
+.scheduleMeta { margin-top:var(--space-2); }
+.actionHelper { margin-bottom:0; }

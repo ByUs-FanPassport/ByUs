@@ -264,8 +264,24 @@ function formatDateTime(iso: string, locale: Locale) {
   }).format(new Date(iso));
 }
 
-function formatRange(start: string, end: string, locale: Locale) {
-  return `${formatDateTime(start, locale)} — ${formatDateTime(end, locale)}`;
+// Compare calendar days in the same timezone used by the displayed LIVE schedule.
+export function formatReservationDeadline(closesAt: string, startsAt: string, locale: Locale) {
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+  if (day.format(new Date(closesAt)) !== day.format(new Date(startsAt))) {
+    return formatReservationDateTime(closesAt, locale);
+  }
+  const time = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    timeZone: "Asia/Seoul", hour: "numeric", minute: "2-digit", hour12: locale !== "ko",
+  }).format(new Date(closesAt));
+  return `${locale === "ko" ? "당일" : "Same day"} ${time}`;
+}
+
+/** Compact schedule keeps the year and KST explicit; no browser-timezone dependence. */
+export function formatReservationDateTime(iso: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    timeZone: "Asia/Seoul", year:"numeric", month:"short", day:"numeric",
+    weekday:"short", hour:"numeric", minute:"2-digit", hour12:locale !== "ko",
+  }).format(new Date(iso));
 }
 
 function externalActionLabel(action: string, target: string, locale: Locale) {
@@ -981,6 +997,7 @@ export function LiveEventScreen({
                 className={styles.status}
                 locale={locale}
                 status={live.effectiveStatus}
+                density="compact"
               />
             ) : (
               <span className={styles.status} data-status={live.effectiveStatus}>
@@ -992,28 +1009,25 @@ export function LiveEventScreen({
             </div>
             <div className={styles.scheduleGroup}>
               <dl className={styles.schedule}>
-                <div>
-                  <dt>
-                    <CalendarDays aria-hidden="true" />
-                    {c.eventTime}
-                  </dt>
-                  <dd>{formatDateTime(live.startsAt, locale)}</dd>
+                <div className={styles.eventSchedule}>
+                  <dt><CalendarDays aria-hidden="true" />{c.eventTime}</dt>
+                  <dd><time dateTime={live.startsAt}>{formatReservationDateTime(live.startsAt, locale)}</time></dd>
                 </div>
-                <div>
-                  <dt>
-                    <Clock3 aria-hidden="true" />
-                    {c.reservationPeriod}
-                  </dt>
-                  <dd>
-                    {formatRange(
-                      live.reservationOpensAt,
-                      live.reservationClosesAt,
-                      locale,
-                    )}
-                  </dd>
+                <div className={styles.deadlineSchedule}>
+                  <dt><Clock3 aria-hidden="true" />{locale === "ko" ? "예약 마감" : "Booking closes"}</dt>
+                  <dd><time dateTime={live.reservationClosesAt}>{formatReservationDeadline(live.reservationClosesAt, live.startsAt, locale)}</time></dd>
                 </div>
               </dl>
-              <p className={styles.timeZone}>{c.timeZone}</p>
+              <div className={styles.scheduleMeta}>
+                <p className={styles.timeZone}>{c.timeZone}</p>
+                <details className={styles.reservationDetails}>
+                  <summary>{locale === "ko" ? "예약 전체 기간" : "Full booking period"}</summary>
+                  <dl>
+                    <div><dt>{locale === "ko" ? "시작" : "Opens"}</dt><dd><time dateTime={live.reservationOpensAt}>{formatReservationDateTime(live.reservationOpensAt, locale)}</time></dd></div>
+                    <div><dt>{locale === "ko" ? "마감" : "Closes"}</dt><dd><time dateTime={live.reservationClosesAt}>{formatReservationDateTime(live.reservationClosesAt, locale)}</time></dd></div>
+                  </dl>
+                </details>
+              </div>
             </div>
             {hasPrimaryActionControl ? (
               <div
@@ -1023,8 +1037,8 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
-            <FanAction variant="neutral" href={`/live/${slug}/missions?locale=${locale}` as Route} trailingIcon={<ArrowRight />}>
-              {locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}
+            <FanAction variant="text" className={styles.missionLink} href={`/live/${slug}/missions?locale=${locale}` as Route}>
+              <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
             </FanAction>
             {viewer.reservation && (
               <a

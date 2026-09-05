@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LiveEventScreen } from "./live-event-screen";
+import { LiveEventScreen, formatReservationDateTime, formatReservationDeadline } from "./live-event-screen";
 import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 
 const getAccessToken = vi.fn(async () => "access-token");
@@ -124,6 +124,11 @@ describe("LiveEventScreen", () => {
     expect(screen.getByText("12.8M Fans")).toBeInTheDocument();
     const schedule = screen.getByLabelText("LIVE 예약 정보");
     expect(within(schedule).getByText("기준 시간 KST (GMT+9)")).toBeInTheDocument();
+    expect(within(schedule).getByText("예약 마감")).toBeInTheDocument();
+    const disclosure = within(schedule).getByText("예약 전체 기간").closest("details");
+    expect(disclosure).not.toHaveAttribute("open");
+    expect(disclosure?.querySelector('time[datetime="2026-07-20T00:00:00.000Z"]')).not.toBeNull();
+    expect(within(schedule).getByRole("link", { name:"LIVE 미션 보기" })).toHaveAttribute("href", "/live/kara-nualeaf/missions?locale=ko");
     expect(within(schedule).getAllByText(/GMT\+9/)).toHaveLength(1);
     expect(within(schedule).queryByText("NUALEAF", { selector: "p" })).not.toBeInTheDocument();
   });
@@ -508,4 +513,18 @@ describe("LiveEventScreen", () => {
       .toBe((fetchMock.mock.calls[2][1]?.headers as Record<string, string>)["idempotency-key"]);
     expect(sessionStorage.getItem("KARA2026")).toBeNull();
   });
+});
+
+
+it("formats booking details in KST with the actual year across midnight", () => {
+  expect(formatReservationDateTime("2026-12-31T15:30:00.000Z", "ko")).toContain("2027년 1월 1일");
+  expect(formatReservationDateTime("2026-12-31T15:30:00.000Z", "ko")).toContain("00:30");
+  expect(formatReservationDateTime("2026-12-31T15:30:00.000Z", "en")).toContain("2027");
+});
+
+it("shortens only same-KST-day deadlines and keeps other dates explicit", () => {
+  expect(formatReservationDeadline("2026-09-18T11:20:00Z", "2026-09-18T11:30:00Z", "ko")).toBe("당일 20:20");
+  expect(formatReservationDeadline("2026-09-18T11:20:00Z", "2026-09-18T11:30:00Z", "en")).toBe("Same day 8:20 PM");
+  expect(formatReservationDeadline("2026-12-31T14:50:00Z", "2026-12-31T15:30:00Z", "ko")).toContain("2026년 12월 31일");
+  expect(formatReservationDeadline("2026-12-31T23:50:00Z", "2027-01-01T00:30:00Z", "ko")).toBe("당일 08:50");
 });
