@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
+import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-catalog-screen.module.css";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
@@ -133,12 +134,11 @@ function LiveGroup({
   );
   return (
     <section className={styles.group} aria-labelledby={`${id}-heading`}>
-      <div className={styles.groupHeading}>
-        <div><h2 id={`${id}-heading`}>{title}</h2><p>{subtitle}</p></div>
+      <FanSectionHeader id={`${id}-heading`} title={title} description={subtitle} accessory={
         <span aria-label={`${title} ${items.length}${locale === "ko" ? "개" : ""}`}>
           {locale === "ko" ? `총 ${items.length}개` : `${items.length} total`}
         </span>
-      </div>
+      } />
       {items.length ? (
         <div className={styles.list}>
           {visibleItems.map((item) => {
@@ -291,7 +291,7 @@ export function LiveCatalogScreen({
     <FanAppFrame locale={locale} mainId="live-catalog-main">
       <FanContentContainer as="main" className={styles.main} id="live-catalog-main" tabIndex={-1}>
         <header className={styles.intro}>
-          <h1>{t.title}</h1>
+          <FanHeading as="h1">{t.title}</FanHeading>
           <p>{t.intro}</p>
         </header>
         <Link className={styles.calendarLink} href={`/live/calendar?locale=${locale}` as Route}>

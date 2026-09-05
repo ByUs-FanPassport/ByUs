@@ -47,6 +47,29 @@
   --z-alertdialog: 55;
   --z-tooltip: 60;
 
+  /* Fan UI owns these roles. Screens select variants, not ad-hoc sizes. */
+  --fan-heading-size: 20px;
+  --fan-heading-size-wide: 24px;
+  --fan-heading-weight: 850;
+  --fan-heading-editorial-weight: 800;
+  --fan-heading-tracking: -.03em;
+  --fan-heading-leading: 1.2;
+  --fan-personal-section-size: 22px;
+  --fan-personal-section-weight: 700;
+  --fan-metadata-size: 13px;
+  --fan-description-size: 14px;
+  --fan-description-leading: 1.5;
+  --fan-description-weight: 550;
+  --fan-section-heading-min-height: 56px;
+  --fan-action-primary-height: 48px;
+  --fan-action-service-height: 52px;
+  --fan-action-max-width: 320px;
+  --fan-action-icon-size: 18px;
+  --fan-action-label-size: 14px;
+  --fan-action-emphasis-size: 15px;
+  --fan-action-weight: 800;
+  --color-service-ink: oklch(45% 0.22 315);
+
   --min-target: 44px;
   --focus-width: 3px;
   --focus-offset: 3px;

@@ -394,3 +394,33 @@ Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scena
 - Observed: the browser reported no runtime page errors during extraction; console output contained only Vite and React development messages.
 - Inferred rule: color is intentionally budgeted—photography plus one primary gradient—because neutral utility surfaces preserve visual rest beside the hero.
 - Inferred rule: the side panel is contextual rather than foundational because it is removed entirely below 1024px without replacing the main content flow.
+
+## Shared fan UI implementation (2026-09-05)
+
+The current consolidation covers Home section headers, LIVE catalog headers,
+LIVE calendar page title, MY page/section headings, and shared FanAction controls.
+It preserves the incumbent rendered sizes and responsive breakpoints; it does not
+claim that all screens or all local CSS have been migrated.
+
+- `apps/web/app/globals.css` owns semantic `--fan-*` typography and action tokens,
+  alongside existing color, spacing, radius, focus, and motion tokens.
+- `FanHeading` separates semantic `as` (`h1` / `h2` / `h3`) from visual `variant`.
+  Standard headings are 20px / 24px at 48rem, weight 850. Editorial headings retain
+  weight 800. MY page headings retain their 40rem breakpoint and inherited leading;
+  personal section headings retain 22px / weight 700.
+- `FanSectionHeader` owns title, description, accessory, and their spacing.
+  `standard` and `editorial` preserve the 56px header / 20px bottom gap;
+  `personal` preserves the stacked-to-inline MY layout and 16px bottom gap.
+- Do not add local heading selectors or arbitrary style/className overrides to
+  these migrated roles. Add an intentional, reusable variant in the shared module
+  only when the existing roles cannot express the product requirement.
+- `FanAction` continues to own primary, neutral, text, service and passport
+  behavior. Its central dimensions remain 44px base, 48px primary, 52px service /
+  passport, and 18px icons. Existing service-specific typography is preserved.
+- Home hero typography, Passport artwork, profile identity, calendar controls and
+  non-migrated screens remain intentional separate owners, not silently normalized.
+- `fan-design-system.contract.test.ts` guards token resolution and migrated CSS
+  ownership; component tests guard heading semantics, optional content and links.
+  Run these checks plus the affected screen tests when changing shared properties.
+  Desktop/mobile rendering verification remains necessary; source checks alone do
+  not certify visual parity with production.

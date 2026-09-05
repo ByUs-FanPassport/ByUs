@@ -24,6 +24,7 @@ import {
   type PassportStampRecord,
 } from "../features/passport/ui/passport-stamp-artwork";
 import { stampTypeSchema } from "../features/passport/domain/passport-read-model";
+import { FanSectionHeader } from "./fan-ui/fan-heading";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
@@ -292,10 +293,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
       <div className={`${styles.shell} ${panelOpen ? styles.panelOpen : styles.panelClosed}`}>
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
-            <div className={styles.sectionHeadingRow}>
-              <div className={styles.sectionIntro}><h1 id="live-heading">{t.liveHeading}</h1><p>{t.liveSub}</p></div>
-              <Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>
-            </div>
+            <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
             <LiveHeroCarousel featuredLives={featuredLives} locale={locale} />
           </section>
 
@@ -313,7 +311,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           )}
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="celebrities-heading">{t.favorites}</h2><p>{t.favoritesSub}</p></div><Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link></div>
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link>} />
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             <div className={styles.celebrityRail} aria-label={t.celebrityList}>
               {celebrities.map((celebrity) => {
@@ -355,7 +353,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           </section>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
-            <div className={styles.sectionHeadingRow}><div className={styles.sectionIntro}><h2 id="upcoming-heading">{t.upcoming}</h2><p>{t.upcomingSub}</p></div><Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link></div>
+            <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
             <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
               {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
                 const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";

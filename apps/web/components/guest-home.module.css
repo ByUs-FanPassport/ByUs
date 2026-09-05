@@ -37,10 +37,6 @@
 .main { min-width: 0; }
 .heroSection, .contentSection { scroll-margin-top: calc(var(--header-height) + 16px); }
 .contentSection { margin-top: 64px; }
-.sectionHeadingRow { display: flex; min-height: 56px; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-.sectionIntro { display: grid; gap: 4px; min-width: 0; }
-.sectionHeadingRow :is(h1, h2) { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; text-wrap: balance; }
-.sectionIntro p { margin: 0; color: var(--muted); font-size: 14px; font-weight: 550; line-height: 1.5; text-wrap: pretty; }
 .textLink { display: inline-flex; flex: none; min-height: 44px; align-items: center; color: var(--muted) !important; font-size: 14px; font-weight: 650; }
 .textLink svg { width: 16px; height: 16px; }
 
@@ -282,7 +278,6 @@
   .desktopNav .activeNav { color: var(--ink); font-weight: 800; }
   .headerActions { min-height: 44px; padding-inline: 4px; border: 1px solid var(--line); border-radius: 999rem; }
   .shell { padding-top: 32px; }
-  .sectionHeadingRow :is(h1,h2) { font-size: 24px; }
   .heroViewport, .heroCard { aspect-ratio: 16 / 8; }
   .heroCarousel .heroCard { aspect-ratio: auto; }
   .heroContent { padding: 40px; }

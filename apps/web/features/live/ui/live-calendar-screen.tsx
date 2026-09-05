@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveCalendarMonth } from "../domain/live-calendar";
 import type { ExternalLiveProvider } from "../domain/live-event";
+import { FanHeading } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-calendar-screen.module.css";
 
 export type LiveCalendarCelebrityFilter = {
@@ -218,7 +219,7 @@ export function LiveCalendarScreen({
       <FanContentContainer as="main" className={styles.main} id="live-calendar-main" tabIndex={-1}>
         <header className={styles.intro}>
           <div>
-            <h1>{t.title}</h1>
+            <FanHeading as="h1">{t.title}</FanHeading>
             <p>{t.intro}</p>
           </div>
           <Link className={styles.catalogLink} href={`/live?locale=${locale}` as Route}>

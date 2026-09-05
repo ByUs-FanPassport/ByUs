@@ -28,10 +28,10 @@ describe("shared fan action style contract", () => {
     const passportRule = actionCss.match(/\.passport\s*\{([\s\S]*?)\n\}/)?.[1];
     const serviceRule = actionCss.match(/\.service\s*\{([\s\S]*?)\n\}/)?.[1];
 
-    expect(passportRule).toContain("min-height: 52px");
-    expect(passportRule).toContain("border-radius: 999rem");
+    expect(passportRule).toContain("min-height: var(--fan-action-service-height)");
+    expect(passportRule).toContain("border-radius: var(--radius-pill)");
     expect(passportRule).toContain("linear-gradient(#fff, #fff) padding-box");
-    expect(passportRule).toContain("color: oklch(45% 0.22 315)");
+    expect(passportRule).toContain("color: var(--color-service-ink)");
     expect(passportRule).toContain('"Pretendard Variable"');
     expect(passportRule).not.toContain('"Google Sans"');
     expect(serviceRule).toContain('"Google Sans"');
@@ -40,8 +40,8 @@ describe("shared fan action style contract", () => {
   it("constrains direct SVG marks inside action links", () => {
     const directIconRule = actionCss.match(/\.action\s*>\s*svg\s*\{([\s\S]*?)\n\}/)?.[1];
 
-    expect(directIconRule).toContain("width: 18px");
-    expect(directIconRule).toContain("height: 18px");
+    expect(directIconRule).toContain("width: var(--fan-action-icon-size)");
+    expect(directIconRule).toContain("height: var(--fan-action-icon-size)");
     expect(directIconRule).toContain("flex: none");
   });
 
@@ -57,11 +57,11 @@ describe("shared fan action style contract", () => {
     const homePrimaryRule = homeCss.match(/\.primaryButton\s*\{([\s\S]*?)\n\}/)?.[1];
     const celebrityPrimaryRule = celebrityCss.match(/\.heroAction\s*>\s*a\s*\{([\s\S]*?)\n\}/)?.[1];
 
-    expect(primaryRule).toMatch(/min-height:\s*48px/);
+    expect(primaryRule).toContain("min-height: var(--fan-action-primary-height)");
     expect(homePrimaryRule).toMatch(/min-height:\s*48px/);
     expect(celebrityPrimaryRule).toMatch(/min-height:\s*48px/);
-    expect(serviceRule).toMatch(/min-height:\s*52px/);
-    expect(passportRule).toMatch(/min-height:\s*52px/);
+    expect(serviceRule).toContain("min-height: var(--fan-action-service-height)");
+    expect(passportRule).toContain("min-height: var(--fan-action-service-height)");
     expect(designContract).toContain("48px minimum height");
     expect(designContract).toContain("Google login: 90% of card width, 52px minimum height");
     expect(designContract).toContain("Passport CTA:");

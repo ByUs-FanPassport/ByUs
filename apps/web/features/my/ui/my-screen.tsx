@@ -14,6 +14,7 @@ import { FanState } from "@/components/fan-ui/fan-state";
 import type { MyReward } from "../../benefit/domain/my-reward";
 import { levelLabel } from "../../passport/domain/passport-read-model";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
+import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import styles from "./my-screen.module.css";
 
 const copy = {
@@ -79,7 +80,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
     return () => controller.abort();
   }, [ready, authenticated, load, requestKey]);
 
-  const heading = <header className={styles.pageHeading}><h1>{t.title}</h1></header>;
+  const heading = <header className={styles.pageHeading}><FanHeading as="h1" variant="personal-page">{t.title}</FanHeading></header>;
   return <FanAppFrame locale={locale} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
     {!ready ? <>{heading}<FanState kind="loading" title={t.loading} /></>
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
@@ -161,7 +162,7 @@ function Stat({ icon, value, label }: { icon: ReactNode; value: number; label: s
 }
 
 function SectionTitle({ title, help, href, action }: { title: string; help?: string; href?: string; action?: string }) {
-  return <div className={styles.sectionTitle}><div><h2>{title}</h2>{help ? <p>{help}</p> : null}</div>{href && action ? <Link href={href as Route}>{action}<ArrowRight/></Link> : null}</div>;
+  return <FanSectionHeader variant="personal" title={title} description={help} accessory={href && action ? <Link href={href as Route}>{action}<ArrowRight/></Link> : null} />;
 }
 
 function Empty({ text, href, action }: { text: string; href: string; action: string }) {
