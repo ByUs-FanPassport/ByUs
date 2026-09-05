@@ -51,11 +51,11 @@ vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authent
 describe("published celebrity directory", () => {
   beforeEach(() => { authenticated = false; getAccessToken.mockReset(); vi.unstubAllGlobals(); });
 
-  it("preserves published order and exposes useful search and sort controls", () => {
+  it("prioritizes editorial leads and exposes useful search and sort controls", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getAllByRole("article")).toHaveLength(3);
-    expect(screen.getAllByRole("article")[0]).toHaveTextContent("KARA");
+    expect(screen.getAllByRole("article")[0]).toHaveTextContent("Elina");
     expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.getByText(/7월 24일.*LIVE 예정/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
@@ -143,4 +143,11 @@ it("uses one whole-card link and complete introductory sentence", () => {
   expect(link.querySelector("a")).toBeNull();
   expect(directoryIntroduction("엘리나는 노래와 뷰티를 공유합니다. 함께한 순간을 기록하세요.", "ko")).toBe("엘리나는 노래와 뷰티를 공유합니다.");
   expect(directoryIntroduction("A complete introduction without punctuation", "en")).toBe("A complete introduction without punctuation");
+});
+
+it("uses compact supporting cards only in unfiltered default discovery", () => {
+  const { container } = render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+  expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(1);
+  fireEvent.change(screen.getByRole("combobox", { name: "정렬" }), { target: { value: "name-asc" } });
+  expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(0);
 });

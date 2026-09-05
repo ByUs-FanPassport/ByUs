@@ -607,3 +607,16 @@ describe("canonical 03 guest home", () => {
     expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
   });});
+
+it("keeps three editorial lead cards and a growing compact roster without ranking labels", () => {
+  const base = defaultProps.celebrities[0];
+  const roster = ["elina", "changha", "yuna", "aryeom", "park-myung-ho", "ifewknow", "jung-jenny", "xin"].map((slug, index) => ({ ...base, slug, name: slug, displayOrder:index, fanCount:index * 100 }));
+  const { container } = render(<GuestHome celebrities={roster} featuredLives={[]} locale="ko" />);
+  expect(screen.getByRole("heading", { name:"함께 만날 크리에이터" })).toBeInTheDocument();
+  const section = container.querySelector("#celebrities")!;
+  expect(section.querySelectorAll("article")).toHaveLength(3);
+  for (const slug of roster.slice(3).map(c => c.slug)) {
+    expect(section.querySelector(`a[href="/c/${slug}?locale=ko"]`)).not.toBeNull();
+  }
+  expect(section.textContent).not.toMatch(/인기순|팔로워순|순위/);
+});

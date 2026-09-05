@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { isMainCreator, orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
@@ -269,6 +270,13 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
   const [panelOpen, setPanelOpen] = useState(true);
   const [upcomingPage, setUpcomingPage] = useState(0);
   const personalization = useHomePersonalization(locale);
+  const orderedCreators = orderCreatorsForDiscovery(celebrities);
+  const mainCreators = orderedCreators.filter(c => isMainCreator(c.slug));
+  const additionalCreators = orderedCreators.filter(c => !isMainCreator(c.slug));
+  // Preserve existing display for datasets without an editorial lead.
+  const hasSupportingRoster = mainCreators.length > 0 && orderedCreators.length > 3;
+  const leadCreators = hasSupportingRoster ? mainCreators : orderedCreators;
+  const supportingCreators = hasSupportingRoster ? additionalCreators : [];
   const upcomingPageCount = Math.max(1, Math.ceil(featuredLives.length / UPCOMING_LIVE_PAGE_SIZE));
   const visibleFeaturedLives = featuredLives.slice(
     upcomingPage * UPCOMING_LIVE_PAGE_SIZE,
@@ -276,7 +284,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
   );
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
   const firstPreviewId =
-    celebrities.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
+    leadCreators.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
       ?.slug ?? null;
 
   useEffect(() => {
@@ -314,7 +322,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
             <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link>} />
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             <div className={styles.celebrityRail} aria-label={t.celebrityList}>
-              {celebrities.map((celebrity) => {
+              {leadCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
                 return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
@@ -350,6 +358,15 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
               {celebrities.length === 0 ? <p role="status">{t.noCelebrities}</p> : null}
             </div>
             </ActivePreviewCoordinator>
+            {supportingCreators.length > 0 ? <div className={styles.discoveryGroup}>
+              <h3>{locale === "ko" ? "함께 만날 크리에이터" : "More creators to meet"}</h3>
+              <div className={styles.discoveryGrid}>
+                {supportingCreators.map(creator => <Link key={creator.slug} className={styles.discoveryCard} aria-label={`${creator.name} ${t.detail}`} href={`/c/${creator.slug}${localeQuery}` as Route}>
+                  <Image src={creator.image.url} alt={creator.image.alt} width={96} height={96} style={{objectPosition:creator.image.position}} unoptimized={creator.image.url.startsWith("https://")} />
+                  <span><strong>{creator.name}</strong><span>{locale === "ko" ? "만나보기" : "Meet creator"}</span></span><ArrowRight aria-hidden="true" />
+                </Link>)}
+              </div>
+            </div> : null}
           </section>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">

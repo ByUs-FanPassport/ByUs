@@ -517,3 +517,6 @@ production account or of benefit eligibility logic.
 MY notification preferences live beside unread notifications in the profile header,
 with visible labels and 44px targets. Mobile wraps the same utility group below
 the identity; no separate full-width settings row appears below activity records.
+
+### Growing creator roster
+The editorial main trio is centrally configured in `apps/web/server/content/creator-discovery.ts` (Elina, Changha, Yuna). Home retains their lead cards and places additional creators in a compact image-led group underneath. Default directory discovery uses the same ordering, with quieter supporting cards. No rank numbers, popularity labels, or aggregate audience comparisons. Additional creators use the verified individual-platform audience stored in CMS as an approximate order signal; do not sum platforms. Explicit directory sorts/search remain neutral. Personal MY records are not changed by editorial grouping. Keep original group photos intact (contain rather than cropping members).

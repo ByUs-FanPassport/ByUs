@@ -325,3 +325,18 @@
   .heroCarousel[data-reduced-motion="true"] .heroCard { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 150ms ease !important; }
   .heroCarousel[data-reduced-motion="true"] .heroCard[data-active="true"] { z-index: 1; opacity: 1; visibility: visible; }
 }
+
+/* Supporting roster grows independently from the three editorial lead cards. */
+.discoveryGroup { margin-top:var(--space-6); padding-top:var(--space-6); border-top:1px solid var(--color-line); }
+.discoveryGroup > h3 { margin:0 0 var(--space-4); font-size:18px; font-weight:750; }
+.discoveryGrid { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--space-4); }
+.discoveryCard { display:flex; align-items:center; gap:var(--space-3); min-width:0; color:inherit; text-decoration:none; border-radius:var(--radius-control); }
+.discoveryCard > img { width:96px; height:96px; object-fit:contain; border-radius:var(--radius-control); }
+.discoveryCard > span { display:grid; gap:var(--space-2); min-width:0; flex:1; }
+.discoveryCard strong { font-size:16px; overflow-wrap:anywhere; }
+.discoveryCard > span > span { color:var(--color-muted); font-size:12px; }
+.discoveryCard > svg { width:18px; height:18px; flex:none; }
+.discoveryCard:focus-visible { outline:3px solid var(--color-ink); outline-offset:4px; }
+@media(hover:hover) { .discoveryCard:hover { background:var(--color-soft); } }
+@media(min-width:48rem) { .discoveryGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(min-width:80rem) { .discoveryGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
