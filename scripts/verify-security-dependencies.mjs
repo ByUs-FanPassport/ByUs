@@ -36,7 +36,17 @@ if (packages.some(([path]) => path === "node_modules/fast-xml-parser"
   failures.push("fast-xml-parser must not be present in the dependency tree");
 }
 
+const patchedMinimums = { "@tiptap/core": "3.30.4", nanoid: "3.3.18", hono: "4.12.34", "@walletconnect/utils": "2.21.9" };
 for (const [path, metadata] of packages) {
+  for (const [name, minimum] of Object.entries(patchedMinimums)) {
+    if (path.endsWith(`/node_modules/${name}`) || path === `node_modules/${name}`) {
+      if (isBefore(metadata.version, minimum)) failures.push(`${path} requires at least ${minimum}`);
+    }
+  }
+  if (path.endsWith("/node_modules/decode-uri-component") || path === "node_modules/decode-uri-component") {
+    failures.push("vulnerable legacy URI decoder must not re-enter the wallet tree");
+  }
+
   if (path === "node_modules/axios" || path.endsWith("/node_modules/axios")) {
     if (isBefore(metadata.version, "1.18.1")) {
       failures.push(`${path} resolved to vulnerable axios ${metadata.version}`);
@@ -64,4 +74,4 @@ if (failures.length > 0) {
   throw new Error(`security dependency verification failed:\n- ${failures.join("\n- ")}`);
 }
 
-console.log("Security dependency verification passed: AWS XML, Axios, and ws constraints are safe.");
+console.log("Security dependency verification passed: AWS XML, Axios, ws, editor, and wallet patch constraints are safe.");

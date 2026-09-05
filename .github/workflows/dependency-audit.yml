@@ -30,3 +30,9 @@ jobs:
 
       - name: Enforce audit baseline
         run: npm run security:audit:baseline
+
+      - name: Verify patched dependency constraints
+        run: npm run security:verify
+
+      - name: Check editor and wallet patch regressions
+        run: node --test scripts/security-patch-regression.test.mjs

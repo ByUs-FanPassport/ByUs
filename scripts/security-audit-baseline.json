@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-23",
+  "capturedAt": "2026-09-05",
   "command": "npm audit --omit=dev --ignore-scripts --json",
   "maximum": {
     "critical": 0,
     "high": 0,
-    "moderate": 12
+    "moderate": 10
   },
   "allowedModerateVulnerabilities": [
     "@gemini-wallet/core",
@@ -15,12 +15,12 @@
     "@metamask/utils",
     "@privy-io/react-auth",
     "@wagmi/connectors",
-    "next",
-    "postcss",
     "uuid",
     "wagmi",
     "x402"
   ],
-  "allowedModerateAdvisories": [1117015, 1119441],
-  "trackingDocument": "docs/security/dependency-advisories-2026-07.md"
+  "allowedModerateAdvisories": [
+    1119441
+  ],
+  "trackingDocument": "docs/security/dependency-remediation-2026-09.md"
 }
