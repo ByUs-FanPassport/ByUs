@@ -321,7 +321,7 @@ describe("canonical 03 guest home", () => {
     expect(next).toBeDisabled();
   });
 
-  it("renders two regular-weight metadata rows with compact fans, live state, and icon-only social controls", () => {
+  it("renders two regular-weight metadata rows with compact fans, fan detail links, and icon-only social controls", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
       { slug: "kara-live", celebritySlug: "kara", locale: "ko", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "live" },
       { slug: "elina-live", celebritySlug: "elina", locale: "ko", title: "Elina LIVE", startsAt: "2026-07-25T11:00:00.000Z", effectiveStatus: "scheduled" },
@@ -336,13 +336,13 @@ describe("canonical 03 guest home", () => {
     expect(card.queryByText("YouTube")).not.toBeInTheDocument();
     expect(card.queryByText("TikTok")).not.toBeInTheDocument();
     expect(card.queryByText("Instagram")).not.toBeInTheDocument();
-    expect(card.queryByText("12.8M Fans")).not.toBeInTheDocument();
-    expect(card.getByText("LIVE 진행중")).toHaveAttribute("data-live-state", "live");
-    expect(screen.queryByText("3.2M Fans")).not.toBeInTheDocument();
-    expect(screen.getByText("LIVE 예정")).toHaveAttribute("data-live-state", "scheduled");
-    expect(screen.queryByText("1.5M Fans")).not.toBeInTheDocument();
+    expect(card.queryByText("12.8M Fans")).toBeInTheDocument();
+    expect(card.getByRole("link", { name: "KARA 입덕하기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.queryByText("3.2M Fans")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Elina 입덕하기" })).toHaveAttribute("href", "/c/elina?locale=ko");
+    expect(screen.queryByText("1.5M Fans")).toBeInTheDocument();
     const changhaCard = screen.getByRole("heading", { name: "Changha", level: 3 }).closest("article");
-    expect(within(changhaCard!).queryByText(/LIVE/)).not.toBeInTheDocument();
+    expect(within(changhaCard!).getByRole("link", { name: "Changha 입덕하기" })).toHaveAttribute("href", "/c/changha?locale=ko");
   });
 
   it("uses a published square Preview only inside the matching favorite card", () => {

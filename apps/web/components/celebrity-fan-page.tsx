@@ -9,7 +9,7 @@ import {
   recordProductEventV1,
 } from "@/features/analytics/client/product-event-client";
 import type { Route } from "next";
-import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
@@ -31,6 +31,7 @@ import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
 import bronzeTierMedal from "../public/images/passport/tiers/bronze.png";
 import styles from "./celebrity-fan-page.module.css";
 import { ReactionAction } from "../features/reaction/ui/reaction-action";
+import { creatorHeroImages } from "./fan-ui/creator-hero-images";
 
 export type CelebrityFanTab = "home" | "notice" | "live" | "benefits";
 type OwnedPassport = PassportCollectionResponse["passports"][number];
@@ -435,6 +436,11 @@ export function CelebrityFanPage({
         }).props,
       }
     : null;
+  const creatorHero = creatorHeroImages[celebrity.slug];
+  const responsiveHero = katseyeHero ?? (creatorHero?.mobileSrc ? {
+    desktop: getImageProps({ src: creatorHero.src, alt: celebrity.image.alt, fill: true, sizes: "(min-width: 1440px) 1360px, calc(100vw - 64px)", priority: true }).props,
+    mobile: getImageProps({ src: creatorHero.mobileSrc, alt: celebrity.image.alt, fill: true, sizes: "calc(100vw - 32px)", priority: true }).props,
+  } : null);
   const heroHelp = passportState.status === "owned"
     ? t.ownedHeroHelp(celebrity.name)
     : passportState.status === "guest" || passportState.status === "none"
@@ -445,20 +451,20 @@ export function CelebrityFanPage({
     <FanAppFrame locale={locale} mainId="celebrity-detail-main">
       <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
         <div className={styles.heroStage}>
-          <section className={styles.hero} aria-labelledby="celebrity-heading">
-            {katseyeHero ? (
+          <section className={styles.hero} data-dedicated-hero={creatorHero ? celebrity.slug : undefined} style={creatorHero ? { "--hero-desktop-position": creatorHero.desktopPosition, "--hero-mobile-position": creatorHero.mobilePosition, "--hero-desktop-fit": creatorHero.desktopFit ?? "cover", backgroundColor: creatorHero.background } as CSSProperties : undefined} aria-labelledby="celebrity-heading">
+            {responsiveHero ? (
               <picture className={styles.heroPicture}>
                 <source
                   media="(min-width: 48rem)"
-                  srcSet={katseyeHero.desktop.srcSet}
-                  sizes={katseyeHero.desktop.sizes}
+                  srcSet={responsiveHero.desktop.srcSet}
+                  sizes={responsiveHero.desktop.sizes}
                 />
                 {/* next/image getImageProps keeps both art-directed sources optimized. */}
                 {/* impeccable-disable-next-line broken-image: src is provided by getImageProps */}
-                <img {...katseyeHero.mobile} alt={celebrity.image.alt} />
+                <img {...responsiveHero.mobile} alt={celebrity.image.alt} />
               </picture>
             ) : (
-              <Image src={celebrity.image.url} alt={celebrity.image.alt} fill sizes="(min-width: 1024px) 1360px, 100vw" priority style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+              <Image src={creatorHero?.src ?? celebrity.image.url} alt={celebrity.image.alt} fill sizes={celebrity.slug === "ifewknow" ? "(max-width: 767px) calc(150vw - 48px), (min-width: 1440px) 1360px, calc(100vw - 64px)" : "(min-width: 1440px) 1360px, calc(100vw - 32px)"} priority style={creatorHero ? undefined : { objectPosition: celebrity.image.position }} unoptimized={!creatorHero && celebrity.image.url.startsWith("https://")} />
             )}
             <div className={styles.scrim} aria-hidden="true" />
             <div className={styles.heroContent}>
@@ -527,7 +533,7 @@ export function CelebrityFanPage({
                 />
               </TabSection>
               <section className={styles.profilePanel} aria-labelledby="profile-title">
-                <div className={styles.profilePortrait}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
+                <div className={styles.profilePortrait} data-creator={celebrity.slug}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.slug === "yuna" ? "50% 0%" : celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
                 <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
                 {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
               </section>

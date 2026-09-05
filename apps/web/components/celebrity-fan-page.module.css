@@ -187,3 +187,15 @@
 .profilePanel .socialLinks { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; border:0; }
 .profilePanel .socialLinks a { padding-inline:8px; }
 .profilePanel .socialEmpty { grid-column:1/-1; }
+
+.hero[data-dedicated-hero] img { object-position: var(--hero-mobile-position); }
+.hero[data-dedicated-hero="aryeom"] img,.hero[data-dedicated-hero="yuna"] img { object-fit:contain; object-position:50% 0%; }
+.hero[data-dedicated-hero="ifewknow"] img { transform: scale(1.5); transform-origin: 50% 62%; }
+/* Keep the tattooed forearms outside the visible portrait, with copy below the face. */
+.hero[data-dedicated-hero="park-myungho"] img { height:60% !important; clip-path:inset(0 0 25%); }
+@media (min-width: 768px) {
+  .hero[data-dedicated-hero] img { object-position: var(--hero-desktop-position); object-fit: var(--hero-desktop-fit); }
+  .hero[data-dedicated-hero="ifewknow"] img { transform: none; }
+  .hero[data-dedicated-hero="park-myungho"] img { height:100% !important; clip-path:none; }
+}
+.profilePortrait[data-creator="yuna"] img { transform: translateX(-4%) scale(.82); transform-origin: center; }

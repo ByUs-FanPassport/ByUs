@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import useEmblaCarousel from "embla-carousel-react";
@@ -11,6 +11,7 @@ import type { ContentLocale } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
+import { creatorHeroImages } from "./fan-ui/creator-hero-images";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -207,6 +208,11 @@ export function LiveHeroCarousel({
         <div className={styles.heroTrack}>
           {featuredLives.map((featuredLive, index) => {
           const isActive = index === activeIndex;
+          const creatorHero = featuredLive.live.celebrity.slug === "elina" ? creatorHeroImages.elina : undefined;
+          const creatorPicture = creatorHero ? {
+            desktop: getImageProps({ src: creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: "100vw", priority: index === 0 }).props,
+            mobile: getImageProps({ src: creatorHero.mobileSrc ?? creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: "100vw", priority: index === 0 }).props,
+          } : null;
           const detailHref = `/live/${featuredLive.live.slug}`;
           const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
           const heroActionLabel =
@@ -225,15 +231,19 @@ export function LiveHeroCarousel({
               aria-label={t.position(index + 1, total)}
               inert={!isActive}
               data-active={isActive ? "true" : "false"}
+              style={creatorHero ? { "--creator-hero-desktop-position": creatorHero.desktopPosition, "--creator-hero-mobile-position": creatorHero.mobilePosition } as CSSProperties : undefined}
             >
-              <Image
+              {creatorPicture ? <picture className={styles.heroCreatorPicture}>
+                <source media="(min-width: 48rem)" srcSet={creatorPicture.desktop.srcSet} sizes={creatorPicture.desktop.sizes} />
+                <img {...creatorPicture.mobile} alt={featuredLive.live.heroImage.alt} />
+              </picture> : <Image
                 src={featuredLive.live.heroImage.url}
                 alt={featuredLive.live.heroImage.alt}
                 fill
                 unoptimized={featuredLive.live.heroImage.url.startsWith("https://")}
                 sizes="(min-width: 1024px) 66vw, 100vw"
                 priority={index === 0}
-              />
+              />}
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
                 <div className={styles.statusRail}>

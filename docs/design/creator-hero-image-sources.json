@@ -1,0 +1,135 @@
+[
+  {
+    "slug": "changha",
+    "file": "apps/web/public/images/celebrities/changha/hero-source.jpg",
+    "sourcePage": "https://www.instagram.com/chang._.a/p/Dc0qbDbmW3E/",
+    "size": [
+      2160,
+      1620
+    ],
+    "sha256": "47dc872ee99400e49bed88461a986386133137cc148a8c95fbc1fcdc5f57f67c",
+    "composition": "landscape"
+  },
+  {
+    "slug": "elina-mobile",
+    "file": "apps/web/public/images/celebrities/elina/hero-source.jpg",
+    "sourcePage": "https://www.instagram.com/elina_4_22/p/DcqxxGUmSRi/",
+    "size": [
+      3072,
+      4096
+    ],
+    "sha256": "f9c8b42da1f1fbc9ae0f2c0d9942b3c2599080120971d119436d637179858417",
+    "composition": "portrait"
+  },
+  {
+    "slug": "yuna",
+    "file": "apps/web/public/images/celebrities/yuna/hero-beach.jpg",
+    "sourcePage": "https://www.instagram.com/yuna_1_27/p/DclRoZRDwKY/",
+    "size": [
+      2730,
+      1820
+    ],
+    "sha256": "7a129dcd3098aec03a25712fdc93c66e47d097be1487dcaeeba0daddece6fd49",
+    "composition": "landscape"
+  },
+  {
+    "slug": "xin",
+    "file": "apps/web/public/images/celebrities/xin/hero-concept.jpg",
+    "sourcePage": "https://artist.mnetplus.world/main/stg/xin-official/contents/6a61bfa8dce1856382909c0d",
+    "size": [
+      4096,
+      2730
+    ],
+    "sha256": "fc8ecc48def622d53973c047ba56d1752f0428e610371d09e01093fce0961125",
+    "composition": "landscape"
+  },
+  {
+    "slug": "xin-mobile",
+    "file": "apps/web/public/images/celebrities/xin/hero-concept-mobile.jpg",
+    "sourcePage": "https://artist.mnetplus.world/main/stg/xin-official/contents/6a61bfa8dce1856382909c0d",
+    "size": [
+      4032,
+      6048
+    ],
+    "sha256": "2df1243ebf3cce25f027a69b62d878b9ff3a1b8a1d8f689d5f9c2777723cccde",
+    "composition": "portrait"
+  },
+  {
+    "slug": "aryeom",
+    "file": "apps/web/public/images/celebrities/aryeom/hero-portrait.jpg",
+    "sourcePage": "https://www.instagram.com/aryeomii/p/DbnFeFtCXSa/",
+    "size": [
+      3072,
+      4096
+    ],
+    "sha256": "87928d544530767503684f9cc2c235c9590ac721af0324af896e642e82e8f86b",
+    "composition": "portrait"
+  },
+  {
+    "slug": "jenny-jeong",
+    "file": "apps/web/public/images/celebrities/jenny-jeong/hero-source.jpg",
+    "sourcePage": "https://www.instagram.com/jen2jen2_/p/Db2QkGek_rv/",
+    "size": [
+      3386,
+      2667
+    ],
+    "sha256": "4f45793a267639446076ccadf97d569bc1d03aea6cdd342ad9e2fa3351ddbeaa",
+    "composition": "landscape"
+  },
+  {
+    "slug": "ifewknow",
+    "file": "apps/web/public/images/celebrities/ifewknow/hero-studio.jpg",
+    "sourcePage": "https://www.tiktok.com/@ifewknow/photo/7646344009828306197",
+    "size": [
+      2160,
+      3240
+    ],
+    "sha256": "810e305ed222abf65bc2aee6e407551ae36b36788f81ab27da07c790ae545fdf",
+    "composition": "portrait"
+  },
+  {
+    "slug": "park-myungho",
+    "file": "apps/web/public/images/celebrities/park-myungho/hero-portrait.jpg",
+    "sourcePage": "https://www.instagram.com/myunghopark/",
+    "size": [
+      1440,
+      1800
+    ],
+    "sha256": "dcc87957756c27df39fed614b10e091866e7180081eeeafb259468b00f303e92",
+    "composition": "portrait",
+    "limitation": "Existing official portrait retained as banner source; suitable high-resolution landscape not found. Mobile visible area excludes tattooed forearms."
+  },
+  {
+    "slug": "changha-mobile",
+    "file": "apps/web/public/images/celebrities/changha/hero-mobile.jpg",
+    "sourcePage": "https://jkent.io/artist/changa",
+    "size": [
+      3567,
+      5351
+    ],
+    "sha256": "97992d13f5ab4595468ded09037b95fce15dd718c72e811c180b47cef5bdd1f3",
+    "composition": "portrait"
+  },
+  {
+    "slug": "yuna-mobile",
+    "file": "apps/web/public/images/celebrities/yuna/hero-studio-mobile.jpg",
+    "sourcePage": "https://jkent.io/artist/yuna",
+    "size": [
+      5304,
+      7952
+    ],
+    "sha256": "237606845345cd83ee857e86e6659958dc1422fd9a5b58e4176fef52be8416b5",
+    "composition": "portrait"
+  },
+  {
+    "slug": "elina",
+    "file": "apps/web/public/images/celebrities/elina/hero-beach.jpg",
+    "sourcePage": "https://www.instagram.com/elina_4_22/p/DcqxxGUmSRi/",
+    "size": [
+      2730,
+      1820
+    ],
+    "sha256": "96459119cf075aa2c45f9a0a112dee94a40c36ec1259ff83c3f89cb4e18a6544",
+    "composition": "landscape"
+  }
+]

@@ -47,6 +47,9 @@
 .heroCarousel .heroCard { flex: 0 0 100%; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .heroCard { position: relative; display: flex; aspect-ratio: 4 / 5; overflow: hidden; align-items: flex-end; border-radius: 20px; background: var(--ink); color: #fff; }
 .heroCard > img { object-fit: cover; object-position: 51% center; }
+.heroCreatorPicture { position:absolute; inset:0; }
+.heroCreatorPicture img { object-fit:cover; object-position:var(--creator-hero-mobile-position); }
+@media (min-width:48rem) { .heroCreatorPicture img { object-position:var(--creator-hero-desktop-position); } }
 .campaignHeroCard > img { object-position: center; }
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 52%) 0%, rgb(10 10 12 / 24%) 28%, rgb(10 10 12 / 6%) 54%, transparent 76%), linear-gradient(to right, rgb(10 10 12 / 24%) 0%, rgb(10 10 12 / 6%) 38%, transparent 64%); }
 .heroContent { position: relative; z-index: 1; width: 100%; padding: 24px; text-shadow: 0 1px 3px rgb(10 10 12 / 62%); }
@@ -89,19 +92,24 @@
 .passportAction span { flex: 1; text-align: center; }
 
 .favoriteSection { padding: 20px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
-.celebrityRail { display: grid; grid-auto-columns: min(82vw, 288px); grid-auto-flow: column; gap: 16px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: inline mandatory; scrollbar-width: none; }
+.celebrityRail { display: grid; grid-auto-columns: min(82vw, 288px, 100%); grid-auto-flow: column; gap: 16px; overflow-x: auto; padding-bottom: 0; scroll-snap-type: inline mandatory; scrollbar-width: none; }
 .celebrityRail::-webkit-scrollbar { display: none; }
 .celebrityCard { min-width: 0; scroll-snap-align: start; }
 .celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; overflow: hidden; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .celebrityMediaBox > [data-preview-mode="card"] { inset: 8%; border-radius: 4px; }
-.celebrityMediaBox img { position: absolute; inset: 8%; display: block; width: 84%; height: 84%; object-fit: contain; border-radius: 4px; }
+.celebrityPortrait { position: relative; display: block; width: min(84%, 240px); aspect-ratio: 1; overflow: hidden; border-radius: 4px; }
+.celebrityPortrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.celebrityPortrait[data-group-photo="true"] img { transform: scale(1.6); transform-origin: 50% 100%; }
 .celebrityInfo { display: grid; min-width: 0; gap: 4px; padding: 12px 12px 0; }
 .celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .celebrityMetaRow:first-child { min-height: 20px; }
 .celebrityMetaRow:last-child { min-height: 44px; }
 .celebrityInfo h3, .celebrityInfo p { min-width: 0; margin: 0; font-size: 13px; font-weight: 400; line-height: 1.35; }
 .celebrityInfo h3 { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
-.celebrityMetaRow .celebrityLiveStatus { display: inline-flex; min-height: 20px; align-items: center; justify-content: flex-end; gap: 4px; color: var(--ink); white-space: nowrap; }
+.celebrityFanLink { display: inline-flex; min-height: 24px; align-items: center; justify-content: flex-end; gap: 4px; border-radius: 4px; color: var(--ink); font-size: 13px; font-weight: 400; line-height: 1.35; text-decoration: none; white-space: nowrap; }
+.celebrityFanLink svg { width: 16px; height: 16px; flex: none; }
+.celebrityFanLink:hover { color: var(--muted); }
+.celebrityFanLink:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .socialLinks { display: flex; flex: none; height: 44px; align-items: center; justify-content: flex-end; gap: 0; margin-left: auto; }
 .socialLink { display: inline-flex; width: 44px; min-width: 44px; height: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 999rem; color: var(--muted) !important; transition: background 160ms cubic-bezier(.2,0,0,1); }
 .socialLink img { display: block; width: 20px; height: 20px; object-fit: contain; }
@@ -119,6 +127,7 @@
 .rowAction { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; }
 .livePagination { display: grid; width: fit-content; grid-template-columns: 44px minmax(64px, auto) 44px; align-items: center; margin: 16px auto 0; border: 1px solid var(--card-line); border-radius: 12px; background: var(--canvas); }
 .livePagination button { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; border: 0; border-radius: 11px; background: transparent; color: var(--ink); cursor: pointer; }
+.livePagination button svg { width: 18px; height: 18px; }
 .livePagination button:disabled { color: var(--muted); cursor: default; opacity: .35; }
 .livePagination span { min-width: 64px; color: var(--muted); font-size: 13px; font-weight: 750; font-variant-numeric: tabular-nums; text-align: center; }
 
@@ -283,7 +292,7 @@
   .heroContent h2 { font-size: 48px; }
   .mobileContextActions { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .favoriteSection { padding: 24px; }
-  .celebrityRail { grid-template-columns: repeat(3, minmax(0,1fr)); grid-auto-columns: auto; grid-auto-flow: row; overflow: visible; padding-bottom: 0; }
+  .celebrityRail { grid-auto-columns: calc((100% - 32px) / 3); padding-bottom: 0; }
   .liveList[data-paginated="true"] { min-height: calc(112px * 3 + 24px); }
   .liveRow { grid-template-columns: 64px minmax(0,1fr) 128px 44px; min-height: 112px; padding: 20px; }
   .liveAvatar { width: 64px; height: 64px; }
@@ -324,3 +333,18 @@
   .heroCarousel[data-reduced-motion="true"] .heroCard { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 150ms ease !important; }
   .heroCarousel[data-reduced-motion="true"] .heroCard[data-active="true"] { z-index: 1; opacity: 1; visibility: visible; }
 }
+
+.fanCount { color: var(--muted); white-space: nowrap; }
+
+.celebrityCarousel { position: relative; }
+.creatorControls { position: absolute; inset: 0; pointer-events: none; }
+.creatorControls button { position: absolute; top: calc((100% - 84px) / 2); display: grid; width: 44px; height: 44px; padding: 6px; place-items: center; transform: translateY(-50%); border: none; border-radius: 50%; background: transparent; color: #fff; cursor: pointer; pointer-events: auto; }
+.creatorControls button::before { content: ""; position: absolute; inset: 6px; border: 1px solid rgb(255 255 255 / 40%); border-radius: 50%; background: rgb(17 17 17 / 72%); }
+.creatorControls button:first-child { left: 0; }
+.creatorControls button:last-child { right: 0; }
+.creatorControls button svg { position: relative; width: 18px; height: 18px; }
+.creatorControls button:disabled { opacity: .3; cursor: default; }
+.creatorControls button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.celebrityPortrait[data-portrait="park-myungho"] img { transform: scale(1.9); transform-origin: 56% 14%; }
+.celebrityPortrait[data-portrait="ifewknow"] img { transform: scale(2.45); transform-origin: 48% 40%; }

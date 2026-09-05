@@ -44,9 +44,9 @@ describe("guest home compact icon-only action spacing", () => {
     const info = declarationBlock(".celebrityInfo");
     const metaRow = declarationBlock(".celebrityMetaRow");
     const status = declarationBlock(
-      ".celebrityMetaRow .celebrityLiveStatus",
+      ".celebrityFanLink",
     );
-    expect(css).not.toContain(".fanCount");
+    expect(declarationBlock(".fanCount")).toContain("var(--muted)");
 
     expect(info).toMatch(/\bgap:\s*4px\b/);
     expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
@@ -54,7 +54,7 @@ describe("guest home compact icon-only action spacing", () => {
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
     expect(metaRow).toMatch(/\balign-items:\s*center\b/);
-    expect(status).toMatch(/\bmin-height:\s*20px\b/);
+    expect(status).toMatch(/\bmin-height:\s*24px\b/);
     expect(status).toMatch(/\bgap:\s*4px\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,

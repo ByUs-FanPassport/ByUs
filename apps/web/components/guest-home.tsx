@@ -4,10 +4,10 @@ import Image from "next/image";
 import { orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
 import type { Route } from "next";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { z } from "zod";
-import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Menu } from "./icons";
+import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Heart, Menu } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import { mySummarySchema, type MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -18,7 +18,7 @@ import {
   ActivePreviewCoordinator,
   ActivePreviewVideo,
 } from "./active-preview-video";
-import { LiveStatusIndicator } from "./live-status-indicator";
+import { formatFanCount } from "./fan-ui/fan-count";
 import {
   PassportStampCanvas,
   type PassportStampRecord,
@@ -270,6 +270,33 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
   const [upcomingPage, setUpcomingPage] = useState(0);
   const personalization = useHomePersonalization(locale);
   const orderedCreators = orderCreatorsForDiscovery(celebrities);
+  const creatorRailRef = useRef<HTMLDivElement>(null);
+  const [creatorScroll, setCreatorScroll] = useState({ previous: false, next: false });
+  const updateCreatorScroll = useCallback(() => {
+    const rail = creatorRailRef.current;
+    const first = rail?.querySelector<HTMLElement>("article");
+    if (!rail || !first || rail.clientWidth === 0) return;
+    setCreatorScroll({ previous: rail.scrollLeft > 2, next: rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 2 });
+  }, []);
+  useEffect(() => {
+    const rail = creatorRailRef.current;
+    if (!rail) return;
+    updateCreatorScroll();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateCreatorScroll);
+    observer?.observe(rail);
+    window.addEventListener("resize", updateCreatorScroll);
+    return () => { observer?.disconnect(); window.removeEventListener("resize", updateCreatorScroll); };
+  }, [updateCreatorScroll, celebrities.length]);
+  const moveCreators = (direction: number) => {
+    const rail = creatorRailRef.current;
+    const card = rail?.querySelector<HTMLElement>("article");
+    if (!rail || !card) return;
+    const gap = Number.parseFloat(getComputedStyle(rail).columnGap) || 0;
+    const stride = card.getBoundingClientRect().width + gap;
+    const count = Math.max(1, Math.floor((rail.clientWidth + gap + 1) / stride));
+    rail.scrollBy({ left: direction * stride * count, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
+
   const upcomingPageCount = Math.max(1, Math.ceil(featuredLives.length / UPCOMING_LIVE_PAGE_SIZE));
   const visibleFeaturedLives = featuredLives.slice(
     upcomingPage * UPCOMING_LIVE_PAGE_SIZE,
@@ -314,7 +341,8 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link>} />
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
-            <div className={styles.celebrityRail} aria-label={t.celebrityList}>
+            <div className={styles.celebrityCarousel}>
+            <div id="home-creator-rail" ref={creatorRailRef} className={styles.celebrityRail} aria-label={t.celebrityList} onScroll={updateCreatorScroll}>
               {orderedCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
                 return (
@@ -331,15 +359,16 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                         }}
                       />
                     ) : (
-                      <Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+                      <span className={styles.celebrityPortrait} data-portrait={celebrity.slug} data-group-photo={celebrity.slug === "xin" ? "true" : undefined}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.slug === "park-myungho" ? "50% 0%" : celebrity.slug === "xin" ? "50% 100%" : celebrity.slug === "yuna" ? "50% 20%" : celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></span>
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
                     <div className={styles.celebrityMetaRow}>
                       <h3>{celebrity.name}</h3>
-                      {celebrityLive ? <LiveStatusIndicator status={celebrityLive.effectiveStatus} locale={locale} className={styles.celebrityLiveStatus} /> : null}
+                      <Link className={styles.celebrityFanLink} href={`/c/${celebrity.slug}${localeQuery}` as Route} aria-label={`${celebrity.name} ${locale === "ko" ? "입덕하기" : "Become a fan"}`}><Heart aria-hidden="true" /><span>{locale === "ko" ? "입덕하기" : "Become a fan"}</span></Link>
                     </div>
                     <div className={styles.celebrityMetaRow}>
+                      <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
                         {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>
@@ -348,6 +377,13 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                 </article>
               )})}
               {celebrities.length === 0 ? <p role="status">{t.noCelebrities}</p> : null}
+            </div>
+            {creatorScroll.previous || creatorScroll.next ? (
+              <nav className={styles.creatorControls} aria-label={locale === "ko" ? "최애 목록 이동" : "Browse creators"}>
+                <button type="button" aria-label={locale === "ko" ? "이전 최애" : "Previous creators"} aria-controls="home-creator-rail" disabled={!creatorScroll.previous} onClick={() => moveCreators(-1)}><ChevronLeft /></button>
+                <button type="button" aria-label={locale === "ko" ? "다음 최애" : "Next creators"} aria-controls="home-creator-rail" disabled={!creatorScroll.next} onClick={() => moveCreators(1)}><ChevronRight /></button>
+              </nav>
+            ) : null}
             </div>
             </ActivePreviewCoordinator>
 

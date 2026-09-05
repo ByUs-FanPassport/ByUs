@@ -25,6 +25,7 @@
 .header { position: sticky; z-index: var(--z-sticky-header); top: 0; height: var(--fan-header-height); padding-block: 12px; background: #fff; }
 .headerInner { box-sizing:border-box; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; height: 100%; }
 .brand { display: inline-flex; width: 88px; min-height: 44px; align-items: center; }
+.brand img { display: block; transform: translateY(2px); }
 .desktopNav { display: none; }
 .actions { display: flex; min-height: 44px; align-items: center; gap: 0; }
 .language { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; }
@@ -45,8 +46,9 @@
 .activeBottomItem { color: var(--fan-ink); font-weight: 800; }
 .activeBottomItem::before { position: absolute; top: 0; left: 50%; width: 32px; height: 2px; transform: translateX(-50%); border-radius: 999rem; background: var(--fan-ink); content: ""; }
 @media (min-width:48rem) {
+  .frame { --fan-header-height: 88px; }
   .headerInner { grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); }
-  .desktopNav { display: flex; min-height: 44px; align-items: center; gap: 4px; padding: 0; transform: translateY(-1px); border: 1px solid var(--fan-line); border-radius: 999rem; }
+  .desktopNav { display: flex; min-height: 44px; align-items: center; gap: 4px; padding: 0; border: 1px solid var(--fan-line); border-radius: 999rem; }
   .desktopNavItem { display: flex; min-width: 88px; min-height: 44px; align-items: center; justify-content: center; padding-inline: 16px; border-radius: 999rem; color: var(--fan-muted); font-size: 14px; font-weight: 650; }
   .activeNav { color: var(--fan-ink); font-weight: 850; }
   .actions { justify-self: end; }
