@@ -15,6 +15,13 @@ radius-scale: "12px / 16px / 20px / pill"
 
 # Design System: ByUs Fan Pulse Spectrum
 
+<!-- Maintenance note (2026-09-05): This document describes the Fan Pulse
+Spectrum foundation, not a verified 1:1 specification of every current byus.kr
+screen. Shared tokens and FanAction implement core rules; typography and layout
+also live in feature CSS modules. Check deployed source and rendered desktop /
+mobile states before claiming full alignment. Preserve intentional surface-specific
+differences when consolidating tokens and components. -->
+
 ## Intent
 
 The system is an image-first fan utility: editorial artist imagery creates emotion, while quiet product surfaces make reservation, login, discovery, and Passport tasks immediately understandable. The live rendered page is the source of truth for the detailed rules below.
