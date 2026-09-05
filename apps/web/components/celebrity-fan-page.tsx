@@ -482,9 +482,23 @@ export function CelebrityFanPage({
         <section id={`celebrity-${activeTab}-panel`} role="tabpanel" className={styles.tabPanel}>
           {activeTab === "home" && <div className={styles.hubLayout}>
             <div className={styles.mainColumn}>
+              <TabSection title={t.nextLive} help="">
+                {upcomingLive
+                  ? <div className={styles.liveSection}>
+                      <div className={styles.livePortrait}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={240} height={300} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></div>
+                      <div className={styles.liveCopy}>
+                        <p><Radio />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</p>
+                        <h3>{upcomingLive.title}</h3>
+                        <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
+                      </div>
+                      <FanAction variant="neutral" href={`/live/${upcomingLive.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction>
+                    </div>
+                  : <Empty title={t.noLive} help={t.noLiveHelp} />}
+              </TabSection>
+
               <TabSection
                 title={t.latestNotice}
-                help={t.latestNoticeHelp(celebrity.name)}
+                help=""
                 action={noticeState.status === "ready" && noticeState.data.length > 0
                   ? <Link href={tabHref("notice")}>{t.allNotices}<ArrowRight /></Link>
                   : undefined}
@@ -498,26 +512,9 @@ export function CelebrityFanPage({
                 />
               </TabSection>
 
-              <TabSection title={t.nextLive} help={t.homeLiveHelp}>
-                {upcomingLive
-                  ? <div className={styles.liveSection}>
-                      <div className={styles.liveCopy}>
-                        <p><Radio />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</p>
-                        <h3>{upcomingLive.title}</h3>
-                        <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
-                      </div>
-                      <FanAction variant="neutral" href={`/live/${upcomingLive.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction>
-                    </div>
-                  : <Empty title={t.noLive} help={t.noLiveHelp} />}
-              </TabSection>
-
-              <div className={styles.calendarSlot} data-celebrity-calendar-placement="content">
-                <CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
-              </div>
-
               <TabSection
                 title={t.fanBenefits}
-                help={t.homeBenefitHelp}
+                help=""
                 action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}
               >
                 <BenefitContent
@@ -529,8 +526,17 @@ export function CelebrityFanPage({
                   copy={{ error: t.benefitError, empty: t.noBenefits, emptyHelp: t.noBenefitsHelp }}
                 />
               </TabSection>
+              <section className={styles.profilePanel} aria-labelledby="profile-title">
+                <div className={styles.profilePortrait}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
+                <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
+                {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
+              </section>
             </div>
             <div className={styles.homeAside}>
+              <div className={styles.calendarSlot} data-celebrity-calendar-placement="content">
+                <CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
+              </div>
+
               <section className={styles.passportSummary} aria-labelledby="passport-summary-title">
                 <h2 id="passport-summary-title">{t.myPassport}</h2>
                 <PassportSummary
@@ -552,11 +558,7 @@ export function CelebrityFanPage({
                   onRetry={() => setRequestKey((key) => key + 1)}
                 />
               </section>
-              <section className={styles.profilePanel} aria-labelledby="profile-title">
-                <div className={styles.profilePortrait}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
-                <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
-                {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
-              </section>
+
             </div>
           </div>}
 
@@ -591,7 +593,7 @@ export function CelebrityFanPage({
 }
 
 function TabSection({ title, help, action, children }: { title: string; help: string; action?: ReactNode; children: ReactNode }) {
-  return <section className={styles.contentSection}><div className={styles.sectionHeading}><div><h2>{title}</h2><p>{help}</p></div>{action}</div>{children}</section>;
+  return <section className={styles.contentSection}><div className={styles.sectionHeading}><div><h2>{title}</h2>{help ? <p>{help}</p> : null}</div>{action}</div>{children}</section>;
 }
 
 function NoticeContent({

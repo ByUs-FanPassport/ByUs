@@ -143,7 +143,7 @@ describe("published celebrity fan page", () => {
     const nextLive = screen.getByRole("heading", { name: "다가오는 LIVE" });
     const benefits = screen.getByRole("heading", { name: "팬 혜택" });
     expect(nextLive.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(calendar.compareDocumentPosition(benefits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(benefits.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(container.querySelector('section[aria-labelledby="celebrity-heading"]')?.contains(calendar)).toBe(false);
     await screen.findByText("아직 새로운 소식이 없어요.");
   });

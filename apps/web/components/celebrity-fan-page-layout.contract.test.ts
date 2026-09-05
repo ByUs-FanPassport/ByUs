@@ -22,7 +22,7 @@ describe("celebrity home aside layout contract", () => {
     )?.[1];
 
     expect(desktopBlock).toContain(
-      ".homeAside { grid-column:2; grid-row:3 / span 2; align-self:start; }",
+      ".homeAside { align-self:start; }",
     );
     expect(desktopBlock).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);
     expect(css).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);

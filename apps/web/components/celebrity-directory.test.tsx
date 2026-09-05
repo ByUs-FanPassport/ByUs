@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CelebrityDirectory } from "./celebrity-directory";
+import { CelebrityDirectory, directoryIntroduction } from "./celebrity-directory";
 
 const publishedCelebrityFixtures = [
   { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000, upcomingLive: { slug: "kara-live", celebritySlug: "kara", locale: "ko", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } },
@@ -56,7 +56,7 @@ describe("published celebrity directory", () => {
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("KARA");
-    expect(screen.getByRole("link", { name: "KARA 팬페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.getByText(/7월 24일.*LIVE 예정/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("published");
@@ -131,6 +131,16 @@ describe("published celebrity directory", () => {
     render(<CelebrityDirectory celebrities={english} locale="en" />);
     expect(screen.getByRole("heading", { name: "Find your favorite" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Search celebrities" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "KARA fan page" })).toHaveAttribute("href", "/c/kara?locale=en");
+    expect(screen.getByRole("link", { name: "Meet KARA" })).toHaveAttribute("href", "/c/kara?locale=en");
   });
+});
+
+it("uses one whole-card link and complete introductory sentence", () => {
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko"/>);
+  const link = screen.getByRole("link", { name:"KARA 만나보기" });
+  expect(link.querySelector("img")).not.toBeNull();
+  expect(link.querySelector("h2")).toHaveTextContent("KARA");
+  expect(link.querySelector("a")).toBeNull();
+  expect(directoryIntroduction("엘리나는 노래와 뷰티를 공유합니다. 함께한 순간을 기록하세요.", "ko")).toBe("엘리나는 노래와 뷰티를 공유합니다.");
+  expect(directoryIntroduction("A complete introduction without punctuation", "en")).toBe("A complete introduction without punctuation");
 });

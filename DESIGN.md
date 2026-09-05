@@ -491,3 +491,29 @@ Verification boundary: responsive public directory checks live in
 `e2e/public/ui-guide.spec.ts`; owned MY/Passport visual checks require a test
 account or isolated auth/API fixtures. Passing fixtures is not proof of a live
 production account or of benefit eligibility logic.
+
+
+## Fan hub density refinement (2026-09-05)
+
+- Utility pages reuse the white `--color-canvas` via `--color-utility-canvas`;
+  gray remains a media or hover field, not an alternate whole-page theme.
+- Directory cards have one semantic link covering image, introduction, status,
+  and action. Korean actions use the creator name plus `만나보기`. Introductions
+  use the first complete published sentence; no line-clamp or invented biography.
+- MY uses `FanSurface appearance="plain"` for open sections rather than repeated
+  large boxes. Reserved LIVE stays first in DOM; owned creator imagery follows.
+  Recent activity occupies the desktop supporting column even with no rewards.
+  Without supporting content, primary sections share available width instead of
+  leaving a left-aligned 800px island. Mobile remains a linear task sequence.
+- MY LIVE uses truthful KST date tiles, not an inferred creator/event photo; its
+  DTO has no image association. Creator images belong only to owned creator rows.
+- Creator home leads with next LIVE plus creator-context portrait. News and
+  benefits retain their dedicated tabs, loading/error states, and compact home
+  empty states. Independent desktop columns prevent the calendar height from
+  stretching content rows. The calendar remains below the hero in the home tab.
+- These refinements do not modify published content, personal history, or access
+  rules. Verification of local rendering is not production deployment proof.
+
+MY notification preferences live beside unread notifications in the profile header,
+with visible labels and 44px targets. Mobile wraps the same utility group below
+the identity; no separate full-width settings row appears below activity records.

@@ -56,7 +56,10 @@ describe("unified MY hub", () => {
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
-    expect(screen.getByText("알림 설정").closest("a")).toHaveAttribute("href", "/settings?locale=ko");
+    const settings = screen.getByRole("link", { name:"알림 설정" });
+    expect(settings).toHaveAttribute("href", "/settings?locale=ko");
+    expect(settings.closest("header")).toContainElement(screen.getByRole("link", { name:/새 알림/ }));
+    expect(screen.getAllByRole("link", { name:"알림 설정" })).toHaveLength(1);
   });
 
   it("renders natural, explicit empty states", async () => {
@@ -83,4 +86,20 @@ it("places reserved LIVE before owned records and compact totals", async () => {
   const event=await screen.findByText("내 예약 LIVE");
   expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"내 최애"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+
+it("shows a date-led reserved event and moves recent records into the supporting column", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
+    ...summary,
+    live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-18T11:30:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] },
+    rewards: { availableCount:0, entries:0, items:[] },
+    collection: { ...summary.collection, recent:[{ id, kind:"stamp", title:"KARA Stamp", occurredAt:"2026-09-01T00:00:00.000Z", href:`/passports/${id}` }] },
+  } })));
+  const {container} = render(<MyScreen locale="ko"/>);
+  await screen.findByText("내 예약 LIVE");
+  expect(container.querySelector('time[datetime="2026-09-18T11:30:00.000Z"]')).toHaveTextContent("9월18");
+  expect(screen.getByText("KARA Stamp").closest("aside")).not.toBeNull();
+  expect(container.querySelector('[data-has-rail="true"]')).not.toBeNull();
+  expect(screen.getByText("KARA").closest("a")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
 });
