@@ -2,7 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
-import { isMainCreator, orderCreatorsForDiscovery } from "../server/content/creator-discovery";
+import { orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "./icons";
@@ -98,18 +98,17 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
     return orderCreatorsForDiscovery(filtered);
   }, [celebrities, locale, ownedOnly, passportState, query, sort]);
 
-  const groupedDiscovery = sort === "published" && !query.trim() && !ownedOnly && visibleCelebrities.some(c => isMainCreator(c.slug));
   const filtersActive = query.trim().length > 0 || ownedOnly;
   const passportFilterDisabled = passportState.status !== "ready";
 
-  const renderCreator = (celebrity: DirectoryCelebrity, supporting = false) => {
+  const renderCreator = (celebrity: DirectoryCelebrity) => {
     const ownsPassport = passportState.status === "ready" && passportState.slugs.has(celebrity.slug);
-    return (<article key={celebrity.slug} className={styles.card} data-supporting={supporting || undefined}>
+    return (<article key={celebrity.slug} className={styles.card}>
                   <Link className={styles.cardLink} href={`/c/${celebrity.slug}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `${t.fanPage} ${celebrity.name}`}><div className={styles.media}>
                     <Image src={celebrity.image.url} alt={celebrity.image.alt} width={640} height={800} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
                     {ownsPassport ? <span className={styles.passportBadge}><span aria-hidden="true">✓</span>{t.owned}</span> : null}
                   </div>
-                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p className={styles.creatorSummary}>{directoryIntroduction(celebrity.summary, locale)}</p>{!supporting || celebrity.upcomingLive ? <p><span className={styles.statusDot} data-live={Boolean(celebrity.upcomingLive)} aria-hidden="true" />{celebrity.upcomingLive ? `${formatLiveDate(celebrity.upcomingLive.startsAt, locale)} · ${celebrity.upcomingLive.effectiveStatus === "live" ? (locale === "ko" ? "LIVE 진행 중" : "LIVE now") : t.liveSoon}` : t.livePreparing}</p> : null}</div><span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span></div></Link>
+                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p className={styles.creatorSummary}>{directoryIntroduction(celebrity.summary, locale)}</p>{celebrity.upcomingLive ? <p><span className={styles.statusDot} data-live={Boolean(celebrity.upcomingLive)} aria-hidden="true" />{celebrity.upcomingLive ? `${formatLiveDate(celebrity.upcomingLive.startsAt, locale)} · ${celebrity.upcomingLive.effectiveStatus === "live" ? (locale === "ko" ? "LIVE 진행 중" : "LIVE now") : t.liveSoon}` : t.livePreparing}</p> : null}</div><span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span></div></Link>
                 </article>);
   };
 
@@ -136,13 +135,7 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
             <div className={styles.empty} role="status"><h2>{ownedOnly ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly ? t.ownedHelp : t.searchHelp}</p>{filtersActive ? <button type="button" onClick={() => { setQuery(""); setOwnedOnly(false); }}>{t.reset}</button> : null}</div>
           ) : (
             <div className={styles.grid} aria-label={t.list}>
-              {groupedDiscovery ? <>
-                <div className={styles.leadRow}>
-                  {visibleCelebrities.filter(c => isMainCreator(c.slug)).map(c => renderCreator(c))}
-                </div>
-                {visibleCelebrities.some(c => !isMainCreator(c.slug)) ? <h2 className={styles.discoveryHeading}>{locale === "ko" ? "함께 만날 크리에이터" : "More creators to meet"}</h2> : null}
-                {visibleCelebrities.filter(c => !isMainCreator(c.slug)).map(c => renderCreator(c, true))}
-              </> : visibleCelebrities.map(c => renderCreator(c))}
+              {visibleCelebrities.map(c => renderCreator(c))}
             </div>
           )}
         </>}

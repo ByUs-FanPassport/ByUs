@@ -55,7 +55,7 @@ describe("published celebrity directory", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getAllByRole("article")).toHaveLength(3);
-    expect(screen.getAllByRole("article")[0]).toHaveTextContent("Elina");
+    expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
     expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.getByText(/7월 24일.*LIVE 예정/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
@@ -145,9 +145,10 @@ it("uses one whole-card link and complete introductory sentence", () => {
   expect(directoryIntroduction("A complete introduction without punctuation", "en")).toBe("A complete introduction without punctuation");
 });
 
-it("uses compact supporting cards only in unfiltered default discovery", () => {
+it("keeps identical card treatment in default and sorted discovery", () => {
   const { container } = render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-  expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(1);
+  expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(0);
+  expect(new Set([...container.querySelectorAll("article")].map(a => a.className)).size).toBe(1);
   fireEvent.change(screen.getByRole("combobox", { name: "정렬" }), { target: { value: "name-asc" } });
   expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(0);
 });

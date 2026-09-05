@@ -336,11 +336,11 @@ describe("canonical 03 guest home", () => {
     expect(card.queryByText("YouTube")).not.toBeInTheDocument();
     expect(card.queryByText("TikTok")).not.toBeInTheDocument();
     expect(card.queryByText("Instagram")).not.toBeInTheDocument();
-    expect(card.getByText("12.8M Fans")).toBeInTheDocument();
+    expect(card.queryByText("12.8M Fans")).not.toBeInTheDocument();
     expect(card.getByText("LIVE 진행중")).toHaveAttribute("data-live-state", "live");
-    expect(screen.getByText("3.2M Fans")).toBeInTheDocument();
+    expect(screen.queryByText("3.2M Fans")).not.toBeInTheDocument();
     expect(screen.getByText("LIVE 예정")).toHaveAttribute("data-live-state", "scheduled");
-    expect(screen.getByText("1.5M Fans")).toBeInTheDocument();
+    expect(screen.queryByText("1.5M Fans")).not.toBeInTheDocument();
     const changhaCard = screen.getByRole("heading", { name: "Changha", level: 3 }).closest("article");
     expect(within(changhaCard!).queryByText(/LIVE/)).not.toBeInTheDocument();
   });
@@ -608,13 +608,15 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
   });});
 
-it("keeps three editorial lead cards and a growing compact roster without ranking labels", () => {
+it("uses identical cards for all creators with editorial ordering only", () => {
   const base = defaultProps.celebrities[0];
   const roster = ["elina", "changha", "yuna", "aryeom", "park-myung-ho", "ifewknow", "jung-jenny", "xin"].map((slug, index) => ({ ...base, slug, name: slug, displayOrder:index, fanCount:index * 100 }));
   const { container } = render(<GuestHome celebrities={roster} featuredLives={[]} locale="ko" />);
-  expect(screen.getByRole("heading", { name:"함께 만날 크리에이터" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name:"함께 만날 크리에이터" })).not.toBeInTheDocument();
   const section = container.querySelector("#celebrities")!;
-  expect(section.querySelectorAll("article")).toHaveLength(3);
+  expect(section.querySelectorAll("article")).toHaveLength(8);
+  expect([...section.querySelectorAll("article h3")].slice(0,3).map(h => h.textContent)).toEqual(["changha", "elina", "yuna"]);
+  expect(new Set([...section.querySelectorAll("article")].map(a => a.className)).size).toBe(1);
   for (const slug of roster.slice(3).map(c => c.slug)) {
     expect(section.querySelector(`a[href="/c/${slug}?locale=ko"]`)).not.toBeNull();
   }

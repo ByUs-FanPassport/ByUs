@@ -213,7 +213,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Image Treatment
 
 - Hero uses full-bleed high-resolution KARA photography with `object-fit: cover` and a slightly right-shifted focal position.
-- Favorite cards use a nested gallery composition: a square `#F6F6F5` field contains a square editorial portrait occupying about 66.5% of the field. Padding is `16.75%` on all sides.
+- Favorite cards use a nested gallery composition: a square `#F6F6F5` field contains a square editorial portrait occupying 84% of the field. Padding is `8%` on all sides; contain preserves group portraits.
 - Favorite portraits are direct, colorful, face-legible editorial crops: blue KARA group styling, warm gold Elina close-up, cool dark Changha close-up.
 - Upcoming LIVE avatars reuse the corresponding artist imagery in circular 64px desktop / 56px mobile crops.
 - Passport uses a transparent, fully opened identity-and-stamp-book asset with `object-fit: contain`; it is never shown as a closed burgundy cover.
@@ -519,4 +519,4 @@ with visible labels and 44px targets. Mobile wraps the same utility group below
 the identity; no separate full-width settings row appears below activity records.
 
 ### Growing creator roster
-The editorial main trio is centrally configured in `apps/web/server/content/creator-discovery.ts` (Elina, Changha, Yuna). Home retains their lead cards and places additional creators in a compact image-led group underneath. Default directory discovery uses the same ordering, with quieter supporting cards. No rank numbers, popularity labels, or aggregate audience comparisons. Additional creators use the verified individual-platform audience stored in CMS as an approximate order signal; do not sum platforms. Explicit directory sorts/search remain neutral. Personal MY records are not changed by editorial grouping. Keep original group photos intact (contain rather than cropping members).
+The editorial first three are centrally configured in `apps/web/server/content/creator-discovery.ts` (Changha, Elina, Yuna). Priority is conveyed only by order: all creators share the same card size, image treatment and information rules on each discovery surface. No secondary group heading, divider, compact tier or visible audience counts on home cards. Additional creators use individual-platform audience stored in CMS as an approximate order signal; do not sum platforms. Explicit directory sorts/search remain neutral. Keep group photos intact with contain. Personal MY records are unchanged.

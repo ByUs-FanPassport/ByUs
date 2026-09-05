@@ -1,7 +1,7 @@
 import type { PublishedCelebrity } from "./content-domain";
 
 /** Editorial leads are independent of audience size. Shared by all discovery surfaces. */
-export const MAIN_CREATOR_SLUGS: readonly string[] = ["elina", "changha", "yuna"];
+export const MAIN_CREATOR_SLUGS: readonly string[] = ["changha", "elina", "yuna"];
 
 export function isMainCreator(slug: string) {
   return MAIN_CREATOR_SLUGS.includes(slug);

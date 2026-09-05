@@ -4,7 +4,7 @@ const item = (slug: string, fanCount: number, displayOrder = 10) => ({ slug, fan
 describe("editorial creator discovery", () => {
   it("keeps the three leads ahead of even a larger new audience without mutating input", () => {
     const input = [item("new", 99_000_000), item("yuna", 3), item("changha", 21), item("elina", 12)];
-    expect(orderCreatorsForDiscovery(input).map(c => c.slug)).toEqual(["elina", "changha", "yuna", "new"]);
+    expect(orderCreatorsForDiscovery(input).map(c => c.slug)).toEqual(["changha", "elina", "yuna", "new"]);
     expect(input[0].slug).toBe("new");
   });
   it("orders additional creators by audience with stable editorial ties", () => {
@@ -20,6 +20,6 @@ it("supports thirteen creators without removing anyone or changing lead membersh
   const input = [item("elina", 1), item("changha", 2), item("yuna", 3), ...Array.from({length:10}, (_,i) => item(`new-${i}`, i * 100))];
   const result = orderCreatorsForDiscovery(input);
   expect(result).toHaveLength(13);
-  expect(result.slice(0,3).map(c=>c.slug)).toEqual(["elina","changha","yuna"]);
+  expect(result.slice(0,3).map(c=>c.slug)).toEqual(["changha","elina","yuna"]);
   expect(new Set(result.map(c=>c.slug)).size).toBe(13);
 });
