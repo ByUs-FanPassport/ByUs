@@ -1,13 +1,14 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
+import { CalendarDayNumber, CalendarMonthHeader } from "../../../components/fan-calendar/calendar-parts";
 import type { LiveCalendarMonth } from "../domain/live-calendar";
 import type { ExternalLiveProvider } from "../domain/live-event";
 import { FanHeading } from "../../../components/fan-ui/fan-heading";
@@ -138,6 +139,7 @@ export function LiveCalendarScreen({
   ]);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => new Set());
   const t = copy[locale];
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const previous = adjacentMonth(calendar.month, -1);
   const next = adjacentMonth(calendar.month, 1);
   const firstWeekday = calendarWeekday(
@@ -243,7 +245,7 @@ export function LiveCalendarScreen({
               aria-pressed={selectedCelebritySlugs.length === 0}
               onClick={() => selectCelebrities([])}
             >
-              {t.allCelebrities}
+              {selectedCelebritySlugs.length === 0 ? <Check aria-hidden="true" /> : null}{t.allCelebrities}
             </button>
             {celebrities.map((celebrity) => {
               const selected = selectedCelebritySet.has(celebrity.slug);
@@ -262,7 +264,7 @@ export function LiveCalendarScreen({
                   height={28}
                   unoptimized={celebrity.image.startsWith("https://")}
                 />
-                {celebrity.name}
+                {celebrity.name}{selectedCelebritySet.has(celebrity.slug) ? <Check aria-hidden="true" /> : null}
               </button>;
             })}
           </div>
@@ -274,25 +276,11 @@ export function LiveCalendarScreen({
         </section>
 
         <section className={styles.calendar} aria-labelledby="calendar-month-heading">
-          <div className={styles.monthNavigation}>
-            <Link
-              className={styles.monthControl}
-              href={calendarHref(previous, locale, selectedCelebritySlugs)}
-              aria-label={`${t.previous}: ${monthLabel(previous, locale)}`}
-            >
-              <ChevronLeft aria-hidden="true" />
-              <span>{t.previous}</span>
-            </Link>
-            <h2 id="calendar-month-heading">{monthLabel(calendar.month, locale)}</h2>
-            <Link
-              className={styles.monthControl}
-              href={calendarHref(next, locale, selectedCelebritySlugs)}
-              aria-label={`${t.next}: ${monthLabel(next, locale)}`}
-            >
-              <span>{t.next}</span>
-              <ChevronRight aria-hidden="true" />
-            </Link>
-          </div>
+          <CalendarMonthHeader
+            month={calendar.month} label={monthLabel(calendar.month, locale)} headingId="calendar-month-heading"
+            previous={{ href: calendarHref(previous, locale, selectedCelebritySlugs), label: `${t.previous}: ${monthLabel(previous, locale)}` }}
+            next={{ href: calendarHref(next, locale, selectedCelebritySlugs), label: `${t.next}: ${monthLabel(next, locale)}` }}
+          />
 
           {visibleEventCount === 0 ? <p className={styles.calendarEmpty}>{t.filteredEmpty}</p> : null}
 
@@ -323,7 +311,7 @@ export function LiveCalendarScreen({
                 aria-label={label}
               >
                 <header className={styles.dayHeading}>
-                  <time dateTime={day.date}>{Number(day.date.slice(-2))}</time>
+                  <CalendarDayNumber date={day.date} today={today} />
                   <span>{label}</span>
                 </header>
                 {day.events.length ? (
@@ -332,20 +320,26 @@ export function LiveCalendarScreen({
                     {visibleEvents.map((event) => {
                       const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
                       const platformNames = platforms.map((platform) => platformLabel[platform]);
-                      return <article className={styles.event} key={event.id} aria-label={event.title}>
-                        <Image
-                          src={event.celebrity.image}
-                          alt=""
-                          width={40}
-                          height={40}
-                          unoptimized={event.celebrity.image.startsWith("https://")}
-                        />
+                      return <article className={styles.event} key={event.id} aria-label={event.title} data-calendar-event-status={event.effectiveStatus}>
                         <Link
                           className={styles.eventLink}
                           href={`/live/${event.slug}?locale=${locale}` as Route}
                           aria-label={locale === "ko" ? `${event.title} 상세 보기` : `View ${event.title} details`}
                         >
+                          <span className={styles.eventMeta}>
+                            <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
+                            {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
+                            {event.hasBenefit === true ? <span className={styles.benefit}>Benefit</span> : null}
+                          </span>
+                          <strong>{event.title}</strong>
                           <span className={styles.eventTopline}>
+                            <Image
+                              src={event.celebrity.image}
+                              alt=""
+                              width={24}
+                              height={24}
+                              unoptimized={event.celebrity.image.startsWith("https://")}
+                            />
                             <span className={styles.creator}>{event.celebrity.name}</span>
                             {platforms.length > 0 ? <span
                               className={styles.platforms}
@@ -362,12 +356,6 @@ export function LiveCalendarScreen({
                             <span className={styles.status} data-status={event.effectiveStatus}>
                               {t.status[event.effectiveStatus]}
                             </span>
-                          </span>
-                          <strong>{event.title}</strong>
-                          <span className={styles.eventMeta}>
-                            <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
-                            {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
-                            {event.hasBenefit === true ? <span className={styles.benefit}>Benefit</span> : null}
                           </span>
                         </Link>
                       </article>;

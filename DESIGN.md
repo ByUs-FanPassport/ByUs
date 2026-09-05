@@ -432,3 +432,26 @@ claim that all screens or all local CSS have been migrated.
   tests on relevant pull requests and main pushes without production credentials.
   Repository branch-protection settings are separate; this workflow does not itself
   make the check mandatory for merges.
+
+
+### Calendar phase one ownership
+
+- `components/fan-calendar/calendar-parts.tsx` owns month controls, KST labels,
+  and the numeral-only today ring for full and embedded calendars. Callers keep
+  their existing links or local month state; these primitives do not own fetching.
+- `globals.css` owns `--fan-calendar-*` type roles. Metadata stays at 12px and
+  event titles at 14px; desktop density must not introduce 9px overrides.
+- The full calendar retains its mobile agenda, tablet two-column layout and
+  desktop seven-column month grid, multi-celebrity filters and inline +N expansion.
+  Titles use two lines; the full accessible detail-link title remains intact.
+- Celebrity calendar placement: outside the hero, after the upcoming LIVE section
+  in DOM/mobile order. At 1024px+, the same single instance occupies the 360px
+  right content rail above Passport. No duplicate hidden calendar or hero overlay.
+- The mini calendar preserves direct first-LIVE links and month/locale/celebrity
+  context in “open calendar.” Today is a numeral ring, not a reservation border.
+  Single-event reserved/unreserved/unknown states have distinct non-color markers
+  and a complete legend. Multiple-event dates show a neutral count rather than
+  borrowing the first LIVE's reservation state. Full multi-event selection is
+  deferred, not claimed complete by this visual pass.
+- No date-selection panel, month/list toggle, new reservation flow or API change
+  is part of phase one. Validate 360/390/768/1024/1440px before promoting changes.

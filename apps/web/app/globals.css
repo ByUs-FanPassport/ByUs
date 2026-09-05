@@ -70,6 +70,13 @@
   --fan-action-weight: 800;
   --color-service-ink: oklch(45% 0.22 315);
 
+  /* Full calendar and embedded widget share type; layout stays surface-specific. */
+  --fan-calendar-month-size: 20px;
+  --fan-calendar-month-compact-size: 16px;
+  --fan-calendar-day-size: 14px;
+  --fan-calendar-meta-size: 12px;
+  --fan-calendar-event-size: 14px;
+
   --min-target: 44px;
   --focus-width: 3px;
   --focus-offset: 3px;

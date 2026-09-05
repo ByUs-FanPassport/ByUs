@@ -10,9 +10,10 @@ import {
 } from "@/features/analytics/client/product-event-client";
 import type { Route } from "next";
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
+import { ArrowRight, Clock, Play, Radio } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
+import { CalendarDayNumber, CalendarMonthHeader } from "./fan-calendar/calendar-parts";
 import { FanAction } from "./fan-ui/fan-action";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import {
@@ -191,7 +192,7 @@ export function flattenLiveCatalog(value: unknown): LiveEventResponse[] {
     .filter(isLiveEventResponse);
 }
 
-function HeroMiniCalendar({
+function CelebrityMiniCalendar({
   celebrity,
   locale,
   upcomingLive,
@@ -249,12 +250,11 @@ function HeroMiniCalendar({
     <section className={styles.heroCalendar} aria-labelledby={`${celebrity.slug}-mini-calendar-title`} aria-busy={state.status === "loading"}>
       <div className={styles.calendarHeading}>
         <h2 id={`${celebrity.slug}-mini-calendar-title`}>{celebrity.name} {t.calendarTitle}</h2>
-        <div className={styles.calendarMonthNavigation}>
-          <button type="button" onClick={() => setMonth(previousMonth)} aria-label={`${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}`}><ChevronLeft /></button>
-          <time dateTime={month}>{miniCalendarMonthLabel(month, locale)}</time>
-          <button type="button" onClick={() => setMonth(nextMonth)} aria-label={`${t.nextMonth}: ${miniCalendarMonthLabel(nextMonth, locale)}`}><ChevronRight /></button>
-        </div>
       </div>
+      <CalendarMonthHeader month={month} label={miniCalendarMonthLabel(month, locale)} density="compact"
+        previous={{ onClick: () => setMonth(previousMonth), label: `${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}` }}
+        next={{ onClick: () => setMonth(nextMonth), label: `${t.nextMonth}: ${miniCalendarMonthLabel(nextMonth, locale)}` }}
+      />
       <div className={styles.calendarWeekdays} aria-hidden="true">
         {t.weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
       </div>
@@ -274,21 +274,22 @@ function HeroMiniCalendar({
             return (
               <Link
                 className={styles.calendarEventDay}
-                data-reservation={reservationState}
+                data-reservation={day.events.length > 1 ? "multiple" : reservationState}
+                data-multiple={day.events.length > 1 ? "true" : undefined}
                 data-today={day.date === today ? "true" : undefined}
                 href={`/live/${firstEvent.slug}?locale=${locale}` as Route}
                 key={day.date}
                 style={style}
                 aria-label={eventLabel}
               >
-                <time dateTime={day.date}>{dayNumber}</time>
+                <CalendarDayNumber date={day.date} today={today} />
                 <span aria-hidden="true">{day.events.length > 1 ? day.events.length : ""}</span>
               </Link>
             );
           }
           return (
             <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} key={day.date} style={style}>
-              <time dateTime={day.date}>{dayNumber}</time>
+              <CalendarDayNumber date={day.date} today={today} />
             </span>
           );
         })}
@@ -300,6 +301,8 @@ function HeroMiniCalendar({
         <div className={styles.calendarLegend} aria-label={locale === "ko" ? "예약 상태 범례" : "Reservation legend"}>
           <span><i data-state="reserved" aria-hidden="true" />{t.reserved}</span>
           <span><i data-state="not_reserved" aria-hidden="true" />{t.notReserved}</span>
+          <span><i data-state="unknown" aria-hidden="true" />{t.reservationUnknown}</span>
+          {days.some((day) => day.events.length > 1) ? <span>{locale === "ko" ? "숫자: 일정 수" : "Number: LIVE count"}</span> : null}
         </div>
         <Link href={`/live/calendar?month=${month}&locale=${locale}&celebrity=${celebrity.slug}` as Route}>{t.calendarOpen}<ArrowRight /></Link>
       </div>
@@ -468,7 +471,6 @@ export function CelebrityFanPage({
               </div>
             </div>
           </section>
-          <HeroMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
         </div>
 
         <nav className={styles.sectionNav} aria-label={`${celebrity.name} ${t.sections}`} role="tablist">
@@ -508,6 +510,10 @@ export function CelebrityFanPage({
                     </div>
                   : <Empty title={t.noLive} help={t.noLiveHelp} />}
               </TabSection>
+
+              <div className={styles.calendarSlot} data-celebrity-calendar-placement="content">
+                <CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
+              </div>
 
               <TabSection
                 title={t.fanBenefits}

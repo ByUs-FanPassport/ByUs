@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let authenticated = false;
@@ -134,6 +134,20 @@ describe("published celebrity fan page", () => {
     expect(screen.queryByRole("link", { name: "소식 전체 보기" })).not.toBeInTheDocument();
   });
 
+  it("places exactly one calendar after upcoming LIVE in the Home content, outside the hero", async () => {
+    const { container } = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    const calendar = screen.getByRole("region", { name: "KARA LIVE 일정" });
+    expect(screen.getAllByRole("region", { name: "KARA LIVE 일정" })).toHaveLength(1);
+    expect(calendar.closest('[data-celebrity-calendar-placement="content"]')).not.toBeNull();
+    expect(calendar.closest('[role="tabpanel"]')).toHaveAttribute("id", "celebrity-home-panel");
+    const nextLive = screen.getByRole("heading", { name: "다가오는 LIVE" });
+    const benefits = screen.getByRole("heading", { name: "팬 혜택" });
+    expect(nextLive.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(calendar.compareDocumentPosition(benefits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('section[aria-labelledby="celebrity-heading"]')?.contains(calendar)).toBe(false);
+    await screen.findByText("아직 새로운 소식이 없어요.");
+  });
+
   it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {
     const month = currentCalendarMonth();
     stubHubFetch({
@@ -165,6 +179,24 @@ describe("published celebrity fan page", () => {
       "/live/kara-calendar-live?locale=ko",
     );
     expect(screen.queryByLabelText(/다른 셀럽 캘린더 LIVE/)).not.toBeInTheDocument();
+  });
+
+  it("does not paint a multi-LIVE date with the first reservation state", async () => {
+    const month = currentCalendarMonth();
+    stubHubFetch({ calendarEvents: ["reserved", "not_reserved"].map((reservationState, index) => ({
+      id: index === 0 ? "11111111-1111-4111-8111-111111111111" : "22222222-2222-4222-8222-222222222222",
+      slug: index === 0 ? "kara-first-live" : "kara-second-live",
+      startsAt: `${month}-12T${index === 0 ? "11" : "12"}:00:00.000Z`,
+      effectiveStatus: "scheduled", title: index === 0 ? "첫 LIVE" : "두 번째 LIVE",
+      celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+      reservationState, hasBenefit: null,
+    })) });
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    const date = await screen.findByRole("link", { name: /12일 첫 LIVE.*외 1개/ });
+    expect(date).toHaveAttribute("href", "/live/kara-first-live?locale=ko");
+    expect(date).toHaveAttribute("data-reservation", "multiple");
+    expect(within(date).getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("숫자: 일정 수")).toBeInTheDocument();
   });
 
   it("moves between mini-calendar months and refreshes the full-calendar destination", async () => {
