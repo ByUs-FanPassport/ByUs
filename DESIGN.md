@@ -52,20 +52,6 @@ Preserve the Korean copy, artist identities, live data, Google login treatment, 
 
 The Home hero is an ordered carousel of every published LIVE whose effective status is active or scheduled. Active LIVE events come first; scheduled events follow by nearest start time, then creation time and slug for deterministic ties. With more than one item it advances horizontally every 6 seconds and exposes separate circular previous/next controls inset 8px from both image edges plus a thin segmented indicator centered 20px below the image; every interactive target remains 44px. At 1280px and wider, the information block uses 64px left padding and 48px on the other sides, preserving clear space after the previous control; mobile positioning remains unchanged. Hover, keyboard focus, and pointer interaction temporarily pause playback. Reduced-motion users receive no autoplay or large translation and navigate with a short opacity transition. A single item renders without carousel controls, and the truthful empty state remains when no eligible LIVE exists.
 
-### Home upcoming emphasis (slide 02, 2026-09-06)
-
-- The scheduled LIVE hero's UPCOMING outline uses the pulsating perimeter pattern
-  verified in [Magic UI Pulsating Button](https://magicui.design/docs/components/pulsating-button).
-  The existing pink outline remains; an outer ring expands from 0 to 6px and back
-  every 1.5 seconds, three times when the slide becomes active. Text stays fully
-  opaque and stationary. Inactive slides and reduced-motion users have no pulse.
-- UPCOMING is 13px inside a 32px badge. The D-day prefix is 24px and the remaining
-  clock is 18px, with tabular numerals and the existing countdown calculation.
-  Under 360px, the adjacent date can wrap so the complete start time stays visible.
-- This treatment belongs to scheduled hero slides only. LIVE status and the
-  exhibition campaign retain their own status treatment; reservation and routing
-  behavior remain unchanged.
-
 ## 1. Visual Theme & Atmosphere
 
 Fan Pulse Spectrum is a bright, image-first fan utility interface. A full-color KARA hero supplies nearly all of the page's visual intensity; the surrounding product UI stays white, neutral, and deliberately quiet. The composition pairs editorial entertainment imagery with disciplined product surfaces: generous whitespace, black display type, hairline borders, short micro-shadows, and one pink-to-violet conversion accent. The result should feel like a polished global fan platform rather than a promotional microsite or a dense dashboard.
