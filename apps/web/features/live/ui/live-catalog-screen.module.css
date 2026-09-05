@@ -10,7 +10,6 @@
 .meta { display:flex; min-width:0; align-items:center; gap:8px; }
 .meta > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .meta > span:last-child { display:inline-flex; flex:none; align-items:center; gap:5px; color:oklch(32% 0 0); font-weight:700; }
-.catalogStatus { min-height:0; font-size:13px; }
 .details h3 { overflow:hidden; margin:0; font-size:15px; font-weight:750; letter-spacing:-.02em; line-height:1.35; text-overflow:ellipsis; white-space:nowrap; }
 .details p { margin:0; }
 .action { display:grid; width:44px; height:44px; place-items:center; border:1px solid transparent; border-radius:12px; background:linear-gradient(#fff,#fff) padding-box,var(--color-primary-action) border-box; color:oklch(45% .22 315); font-size:14px; font-weight:750; line-height:1; text-decoration:none; touch-action:manipulation; transition:background-color 160ms cubic-bezier(.2,0,0,1),color 160ms cubic-bezier(.2,0,0,1),transform 160ms cubic-bezier(.2,0,0,1); }

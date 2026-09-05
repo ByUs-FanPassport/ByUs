@@ -10,14 +10,17 @@ export function LiveStatusIndicator({
   status,
   locale,
   className,
+  density = "comfortable",
 }: {
   status: Extract<EffectiveLiveStatus, "live" | "scheduled">;
   locale: "ko" | "en";
   className?: string;
+  density?: "comfortable" | "compact";
 }) {
   return (
     <span
       className={`${styles.status} ${className ?? ""}`}
+      data-density={density}
       data-live-status={status}
       data-live-state={status}
     >

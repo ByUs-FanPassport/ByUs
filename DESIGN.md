@@ -424,3 +424,11 @@ claim that all screens or all local CSS have been migrated.
   Run these checks plus the affected screen tests when changing shared properties.
   Desktop/mobile rendering verification remains necessary; source checks alone do
   not certify visual parity with production.
+
+- `LiveStatusIndicator` owns `density="comfortable" | "compact"`. Catalog rows
+  select compact density rather than overriding the shared badge's min-height in
+  a screen stylesheet; this keeps dev and production CSS ordering equivalent.
+- The `Fan design system` GitHub workflow runs the shared-role and migrated-screen
+  tests on relevant pull requests and main pushes without production credentials.
+  Repository branch-protection settings are separate; this workflow does not itself
+  make the check mandatory for merges.

@@ -170,7 +170,7 @@ function LiveGroup({
                     {item.live.effectiveStatus === "live" ||
                     item.live.effectiveStatus === "scheduled" ? (
                       <LiveStatusIndicator
-                        className={styles.catalogStatus}
+                        density="compact"
                         locale={locale}
                         status={item.live.effectiveStatus}
                       />

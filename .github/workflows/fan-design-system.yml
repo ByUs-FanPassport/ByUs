@@ -1,0 +1,43 @@
+name: Fan design system
+
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "DESIGN.md"
+      - "package*.json"
+      - ".github/workflows/fan-design-system.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "DESIGN.md"
+      - "package*.json"
+      - ".github/workflows/fan-design-system.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared-ui-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify shared roles and migrated screens
+        run: >-
+          npm run test --workspace @byus/web -- --maxWorkers=3
+          components/fan-ui
+          components/live-status-indicator.test.tsx
+          components/guest-home.test.tsx
+          features/my/ui/my-screen.test.tsx
+          features/live/ui

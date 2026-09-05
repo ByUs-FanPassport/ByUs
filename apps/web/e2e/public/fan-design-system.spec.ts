@@ -21,7 +21,12 @@ for (const route of ["/", "/live", "/live/calendar", "/my"]) {
       await expect(page.getByRole("link", { name: /Google/ })).toHaveCSS("min-height", "52px");
     }
     // Wait for hydration and visible artwork before capturing, not a loading skeleton.
-    if (route === "/live") await expect(page.locator('main [role="status"]')).toHaveCount(0);
+    if (route === "/live") {
+      await expect(page.locator('main [role="status"]')).toHaveCount(0);
+      const status = page.locator('[data-live-status][data-density="compact"]').first();
+      // Catalog may be empty as real schedules change; check geometry whenever present.
+      if (await status.count()) await expect(status).toHaveCSS("min-height", "0px");
+    }
     if (route === "/") await expect(page.getByRole("link", { name: "Google로 계속하기" }).first()).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     // Only the active slide is visible; clipped, lazy carousel images may have viewport bounds.
