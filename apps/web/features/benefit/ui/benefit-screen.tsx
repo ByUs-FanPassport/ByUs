@@ -21,6 +21,7 @@ import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
+import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 
 import {
   benefitCatalogItemSchema,
@@ -105,15 +106,15 @@ const copy = {
       selected: "혜택 대상자로 선정되었어요",
       not_selected: "이번 혜택의 선정이 완료되었어요",
     },
-    enter: "Ticket으로 응모하기",
+    enter: "응모권으로 응모하기",
     entering: "응모 처리 중",
-    tickets: "보유 Creator Ticket",
-    enteredTickets: "이 혜택에 응모한 Ticket",
+    tickets: "보유 응모권",
+    enteredTickets: "이 혜택의 응모 수",
     entryLimit: "혜택별 응모 한도",
     noEntryLimit: "제한 없음",
-    entryAmount: "응모할 Ticket 수",
+    entryAmount: "사용할 응모권 수",
     entryHistory: "응모 이력",
-    entryError: "응모하지 못했어요. Ticket 잔액과 응모 기간을 확인해 주세요.",
+    entryError: "응모하지 못했어요. 응모권 잔액과 응모 기간을 확인해 주세요.",
     delivered: "혜택이 안전하게 전달되었어요",
     text: "혜택 내용",
     code: "혜택 코드",
@@ -170,15 +171,15 @@ const copy = {
       selected: "You were selected for this benefit",
       not_selected: "Selection for this benefit is complete",
     },
-    enter: "Enter with Tickets",
+    enter: "Enter with raffle tickets",
     entering: "Entering",
-    tickets: "Creator Tickets available",
-    enteredTickets: "Tickets entered for this Benefit",
+    tickets: "Available raffle tickets",
+    enteredTickets: "Your entries for this benefit",
     entryLimit: "Per-Benefit entry limit",
     noEntryLimit: "No limit",
-    entryAmount: "Tickets to enter",
+    entryAmount: "Raffle tickets to use",
     entryHistory: "Entry history",
-    entryError: "Entry failed. Check your Ticket balance and entry window.",
+    entryError: "Entry failed. Check your raffle ticket balance and entry window.",
     delivered: "Your benefit was delivered securely",
     text: "Benefit details",
     code: "Benefit code",
@@ -881,9 +882,10 @@ export function BenefitDetailScreen({
           </AuthIntentLink>
         ) : benefit.entry ? (
           <section className={styles.delivery} aria-live="polite">
-            <TicketCheck aria-hidden="true" />
+            <FanMotionIcon name="ticket" size={24} />
             <div>
               <h2>{c.enter}</h2>
+              <p>{locale === "ko" ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요." : "Use this creator’s raffle tickets to enter for this benefit."}</p>
               <dl className={styles.period}>
                 <div><dt>{c.tickets}</dt><dd>{benefit.entry.creatorTicketBalance}</dd></div>
                 <div><dt>{c.enteredTickets}</dt><dd>{benefit.entry.enteredTickets}</dd></div>
@@ -926,7 +928,7 @@ export function BenefitDetailScreen({
                   <h3>{c.entryHistory}</h3>
                   <ul>
                     {benefit.entry.entries.map((entry) => (
-                      <li key={entry.entryId}>{entry.ticketAmount} Ticket · {formatDate(entry.enteredAt, locale)}</li>
+                      <li key={entry.entryId}>{entry.ticketAmount} {locale === "ko" ? "응모" : "entries"} · {formatDate(entry.enteredAt, locale)}</li>
                     ))}
                   </ul>
                 </div>

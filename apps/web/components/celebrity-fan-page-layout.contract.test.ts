@@ -21,9 +21,9 @@ describe("celebrity home aside layout contract", () => {
       /@media \(min-width:64rem\)\s*\{([\s\S]*?)\n\}/,
     )?.[1];
 
-    expect(desktopBlock).toContain(
-      ".homeAside { align-self:start; }",
-    );
+    const aside = desktopBlock?.match(/\.homeAside\s*\{([^}]*)\}/)?.[1];
+    expect(aside).toContain("align-self:start");
+    expect(aside).toContain("grid-row:1 / span 2");
     expect(desktopBlock).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);
     expect(css).not.toMatch(/\.profilePanel\s*\{[^}]*position:sticky/);
   });

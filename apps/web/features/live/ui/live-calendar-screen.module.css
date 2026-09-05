@@ -16,7 +16,7 @@
 .filterChip > img { width:24px; height:24px; border:1px solid oklch(100% 0 0 / .5); border-radius:50%; object-fit:cover; }
 .filterChip[data-selected="true"] { border-color:var(--color-service-ink); background:oklch(97% .025 315); color:var(--color-service-ink); }
 .filterChip > svg { width:16px; height:16px; flex:none; }
-.calendar { min-width:0; }
+.calendar { min-width:0; padding:20px; border:1px solid oklch(92% 0 0); border-radius:20px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0 / .04),0 10px 32px oklch(18% 0 0 / .035); }
 .weekdays { display:none; }
 .calendarEmpty { margin:0 0 16px; padding:14px 16px; border-radius:12px; background:oklch(97.5% 0 0); color:oklch(45% 0 0); font-size:13px; font-weight:650; text-align:center; }
 .days { display:grid; gap:16px; }
@@ -28,9 +28,12 @@
 .dayHeading span { color:oklch(48% 0 0); font-size:13px; font-weight:650; }
 .eventList { display:grid; gap:8px; }
 .eventDisclosure { display:flex; width:100%; min-height:44px; align-items:center; justify-content:center; margin-top:6px; padding:0 8px; border:0; border-top:1px solid oklch(91% 0 0); background:transparent; color:oklch(40% .16 315); font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
-.event { display:block; min-width:0; padding:12px; border-radius:12px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.event { display:block; min-width:0; overflow:hidden; border:1px solid oklch(89% .018 305); border-radius:10px; background:oklch(97.5% .025 305); box-shadow:none; }
+.event[data-calendar-event-tone="1"] { border-color:oklch(89% .025 20); background:oklch(97.5% .027 20); }
+.event[data-calendar-event-tone="2"] { border-color:oklch(89% .026 75); background:oklch(97.5% .03 75); }
+.event[data-calendar-event-tone="3"] { border-color:oklch(88.5% .025 235); background:oklch(97.2% .026 235); }
 .eventTopline > img { width:24px; height:24px; flex:none; border-radius:50%; object-fit:cover; }
-.eventLink { display:flex; flex-direction:column; min-width:0; gap:3px; border-radius:8px; color:inherit; text-decoration:none; }
+.eventLink { display:flex; min-width:0; min-height:44px; flex-direction:column; justify-content:center; gap:4px; padding:10px 12px; border-radius:9px; color:inherit; text-decoration:none; }
 .eventTopline,.eventMeta { display:flex; min-width:0; align-items:center; flex-wrap:wrap; gap:6px; }
 .creator,.eventMeta { color:oklch(48% 0 0); font-size:12px; line-height:1.4; }
 .creator { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -59,10 +62,10 @@
   .filters { grid-template-columns:minmax(210px,auto) minmax(0,1fr) 72px; }
   .weekdays { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border-bottom:1px solid oklch(90% 0 0); }
   .weekdays span { padding:10px 8px; color:oklch(48% 0 0); font-size:12px; font-weight:700; text-align:center; }
-  .days { grid-template-columns:repeat(7,minmax(0,1fr)); grid-auto-rows:minmax(128px,auto); gap:0; border-bottom:1px solid oklch(90% 0 0); }
+  .days { grid-template-columns:repeat(7,minmax(0,1fr)); grid-auto-rows:minmax(156px,auto); gap:0; border-bottom:1px solid oklch(90% 0 0); }
   .outsideDay { display:block; min-width:0; border-top:1px solid oklch(90% 0 0); border-left:1px solid oklch(93% 0 0); background:oklch(98.8% 0 0); }
   .outsideDay:nth-child(7n + 1) { border-left:0; }
-  .day { display:block; min-height:128px; padding:10px 8px 12px; border-top:1px solid oklch(90% 0 0); border-left:1px solid oklch(93% 0 0); }
+  .day { display:block; min-height:156px; padding:10px 8px 12px; border-top:1px solid oklch(90% 0 0); border-left:1px solid oklch(93% 0 0); }
   .day[data-empty="true"] { display:block; }
   .day:nth-child(7n + 1),.day:nth-child(7n) { background:oklch(99.2% .004 315); }
   .day[data-first-column="true"] { border-left:0; }
@@ -70,8 +73,7 @@
   .dayHeading { margin-bottom:8px; }
   .dayHeading span { position:absolute; width:1px; height:1px; overflow:hidden; margin:-1px; clip:rect(0 0 0 0); white-space:nowrap; }
   .eventList { gap:6px; }
-  .event { display:block; padding:8px; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 5px 14px oklch(18% 0 0 / .035); }
-  .eventLink { gap:2px; }
+  .eventLink { gap:3px; padding:8px; }
   .eventTopline { flex-wrap:wrap; }
   .creator { font-size:var(--fan-calendar-meta-size); }
   .status { min-height:18px; padding-inline:5px; font-size:var(--fan-calendar-meta-size); }
@@ -96,5 +98,8 @@
 /* Calendar hierarchy is shared through semantic type tokens, not tiny desktop overrides. */
 .weekdays span,.creator,.eventMeta { font-size:var(--fan-calendar-meta-size); }
 .creator { max-width:100%; }
-.event[data-calendar-event-status="ended"],.event[data-calendar-event-status="cancelled"] { background:var(--color-soft); box-shadow:none; }
-@media (max-width:47.99rem) { .intro { flex-direction:column; gap:var(--space-4); } }
+.event[data-calendar-event-status="ended"],.event[data-calendar-event-status="cancelled"] { border-color:var(--color-line); background:var(--color-soft); box-shadow:none; }
+@media (max-width:47.99rem) {
+  .intro { flex-direction:column; gap:var(--space-4); }
+  .calendar { margin-inline:-16px; padding:16px; border-inline:0; border-radius:0; box-shadow:none; }
+}

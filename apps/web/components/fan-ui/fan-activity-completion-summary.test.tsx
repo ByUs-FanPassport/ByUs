@@ -22,9 +22,11 @@ describe("FanActivityCompletionSummary", () => {
     );
 
     expect(screen.getByRole("img", { name: "라이브 출석 Stamp" })).toBeInTheDocument();
-    expect(screen.getByText("Fan Score +3")).toBeInTheDocument();
-    expect(screen.getByText("총점 5")).toBeInTheDocument();
-    expect(screen.getByText("레벨 상승 · 실버")).toBeInTheDocument();
+    const rewards = screen.getByText("Fan Score").closest("dl");
+    expect(rewards).toHaveTextContent("Fan Score+3");
+    expect(rewards).toHaveTextContent("총점5");
+    expect(rewards).toHaveTextContent("레벨상승 · 실버");
+    expect(screen.getAllByText("+3")).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Passport에서 확인하기" })).toHaveAttribute(
       "href",
       "/passports/passport-id?locale=ko",
@@ -57,6 +59,20 @@ describe("FanActivityCompletionSummary", () => {
     );
     expect(
       screen.getByRole("heading", { level: 2, name: "출석 완료" }),
+    ).toBeInTheDocument();
+
+    rerender(
+      <FanActivityCompletionSummary
+        locale="en"
+        stampType="knowledge"
+        title="Verification complete"
+        description="Added to your Passport."
+        scoreDelta={1}
+        headingLevel={3}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Verification complete" }),
     ).toBeInTheDocument();
   });
 });

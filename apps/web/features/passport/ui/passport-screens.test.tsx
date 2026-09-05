@@ -33,10 +33,13 @@ describe("passport fan screens", () => {
 
   it("renders only the owned issued collection and retains locale in canonical detail links", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passports: [passport] }), { status: 200 })));
-    render(<PassportCollectionScreen />);
+    const { container } = render(<PassportCollectionScreen />);
     expect(await screen.findByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /KARA/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
-    expect(screen.getByText("팬 점수").previousSibling).toHaveTextContent("15");
+    expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#activity`);
+    expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#stamp-book`);
+    expect(container.querySelector("#collection")).toBeInTheDocument();
+    expect(container.querySelector("a a")).toBeNull();
     expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
   });
 
@@ -62,6 +65,13 @@ describe("passport fan screens", () => {
     expect(screen.queryByText("다음 순간을 기다리는 중")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /받은 스탬프 보기/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(2);
+    expect(screen.getByLabelText("STAR: KARA")).toHaveTextContent("KARA");
+    expect(screen.getByLabelText(`FAN ID: ${passport.id}`)).toHaveTextContent("11111111…1111");
+    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", "#activity");
+    expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", "#stamp-book");
+    expect(container.querySelector("#activity")).toBeInTheDocument();
+    expect(container.querySelector("#stamp-book")).toBeInTheDocument();
     const timeline = screen.getByRole("list");
     expect(timeline.children[0]).toHaveTextContent("라이브 예약");
     expect(timeline.children[0]).toHaveTextContent("KARA LIVE");

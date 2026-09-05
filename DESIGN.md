@@ -450,6 +450,11 @@ claim that all screens or all local CSS have been migrated.
 - Celebrity calendar placement: outside the hero, after the upcoming LIVE section
   in DOM/mobile order. At 1024px+, the same single instance occupies the 360px
   right content rail above Passport. No duplicate hidden calendar or hero overlay.
+  The September 6 feedback extends this single-calendar placement to notice,
+  LIVE, and benefit tabs, including empty notice states. Tab navigation targets
+  the content below the hero and retains keyboard focus with a sticky-header offset.
+  Full-calendar event chips use soft pastel surfaces inspired by TimeTree/Amie;
+  the compact month and nearby schedule list follow the approved Fantastical reference.
 - The mini calendar preserves direct first-LIVE links and month/locale/celebrity
   context in “open calendar.” Today is a numeral ring, not a reservation border.
   Single-event reserved/unreserved/unknown states have distinct non-color markers
@@ -527,3 +532,30 @@ The editorial first three are centrally configured in `apps/web/server/content/c
 Home favorites preserve the existing portrait-card size and image/social treatment in a single horizontal snap rail at every breakpoint. Desktop shows three equal cards (Changha/Elina/Yuna first); mobile keeps the existing card width. Use banner-style circular arrows at the left/right media edges for viewport-sized movement, disabled at boundaries, synchronized with native touch/trackpad scrolling and resize, with reduced-motion support. Do not show the bottom page count or pagination capsule. Portraits use a 240 × 240 CSS-pixel square (shrinking only when needed inside narrower cards), object-fit cover with creator focal points; Xin uses a 1.6× bottom-centered crop within the same square, retaining all five members while reducing venue and crowd space. Directory remains a normal grid. Generated list/gallery concepts were not selected.
 
 Creator portrait selection and crop requirements: [프로필 사진 규약](docs/design/creator-profile-photo-guidelines.md). Visible tattoos are excluded from final profile crops; use another source if a complete face-preserving crop cannot remove them.
+
+### September 6 remaining feedback
+
+Passport collection photos use a more compact desktop crop. Fan Score and Stamp
+numbers link to the existing Passport activity ledger and Stamp Book with stable
+fragment targets. The Passport artwork carries its real STAR, issue date and
+short Fan ID; the creator portrait links to the creator fan page. MY totals link
+to their existing collections or in-page sections, and an unavailable collection
+must not receive a fabricated destination. Completion rewards use aligned plain
+text for earned score, total and level, without a duplicate floating score badge.
+
+Fan-facing unspent creator balances use 응모권 / Raffle tickets. Applied amounts
+use 응모 수 / Entries. Admission tickets and internal accounting identifiers retain
+their existing meaning. Balances remain creator-specific.
+
+Utility calendar, ticket, gift and radio icons use direct AnimateIcons Lucide
+imports. Hover and keyboard focus trigger one bounded cycle. Active radio may
+repeat a short cycle every seven seconds only while visible on a fine-pointer
+device. Reduced motion, hidden documents and offscreen icons remain static;
+all timers and observers are removed on unmount. Home hero shimmer is unchanged.
+
+LIVE mission entry uses a public visibility boolean, independent of owner
+completion or attendance. The read mirrors published, non-legacy, localized
+missions in the half-open visibility window. False disables entry with the inline
+reason 현재 참여 가능한 미션이 없어요. / No missions are available right now.
+Unknown read results retain a link to check the authenticated list and never
+claim there are no missions. No question or owner payload is exposed publicly.

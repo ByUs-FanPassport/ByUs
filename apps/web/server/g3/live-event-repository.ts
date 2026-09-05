@@ -85,6 +85,7 @@ export interface LiveEventDataSource {
   listPublishedSlugs(): Promise<readonly { slug: string; createdAt: string }[]>;
   findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null>;
   findViewer(appUserId: string, event: LiveEventRecord): Promise<LiveViewerRecord>;
+  findMissionsAvailable?(eventId: string, locale: LiveLocale, now: Date): Promise<boolean>;
 }
 
 export class DefaultLiveEventRepository implements LiveEventRepository {
@@ -156,6 +157,11 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
     const record = await this.source.findPublishedEvent(input.slug, input.locale);
     if (!record) return null;
 
+    let missionsAvailable: boolean | null = null;
+    try {
+      missionsAvailable = await this.source.findMissionsAvailable?.(record.id, input.locale, input.now) ?? null;
+    } catch { /* A failed auxiliary read must never mean no missions or hide the LIVE. */ }
+
     const owner = input.appUserId
       ? await this.source.findViewer(input.appUserId, record)
       : { hasPassport: false, reservation: null };
@@ -179,6 +185,7 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       live: {
         id: record.id,
         slug: record.slug,
+        missionsAvailable,
         effectiveStatus,
         startsAt: record.startsAt,
         endsAt: record.endsAt,
@@ -232,12 +239,30 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
 
 type DatabaseClient = Pick<SupabaseClient, "from">;
 
+/** Mirrors the public visibility predicates of get_owned_live_missions, without reading its private payload. */
+export async function readPublishedMissionAvailability(database: DatabaseClient, eventId: string, locale: LiveLocale, now: Date): Promise<boolean> {
+  const { count, error } = await database.from("live_surveys")
+    .select("id,live_survey_localizations!inner(locale)", { count: "exact", head: true })
+    .eq("live_event_id", eventId)
+    .eq("publication_status", "published")
+    .eq("legacy_contract", false)
+    .eq("live_survey_localizations.locale", locale)
+    .lte("visible_from", now.toISOString())
+    .gt("visible_until", now.toISOString());
+  if (error || typeof count !== "number") throw new Error("Mission availability lookup failed");
+  return count > 0;
+}
+
 function onlyRow<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 class SupabaseLiveEventDataSource implements LiveEventDataSource {
   constructor(private readonly database: DatabaseClient) {}
+
+  findMissionsAvailable(eventId: string, locale: LiveLocale, now: Date) {
+    return readPublishedMissionAvailability(this.database, eventId, locale, now);
+  }
 
   async listPublishedSlugs(): Promise<readonly { slug: string; createdAt: string }[]> {
     const { data, error } = await this.database

@@ -1,0 +1,3 @@
+.icon { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; vertical-align: middle; color: inherit; line-height: 0; }
+.icon > div { display: flex; width: 100%; height: 100%; }
+.icon svg { display: block; width: 100%; height: 100%; }

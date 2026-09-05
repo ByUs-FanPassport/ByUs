@@ -161,9 +161,9 @@ describe("LiveSurveyScreen", () => {
       completion: surveyCompletion,
     }));
     expect(await screen.findByRole("heading", { level: 1, name: "설문 참여가 완료되었습니다" })).toBeInTheDocument();
-    expect(screen.getByText("Fan Score +2")).toBeInTheDocument();
-    expect(screen.getByText("총점 10")).toBeInTheDocument();
-    expect(screen.getByText("레벨 상승 · 골드")).toBeInTheDocument();
+    expect(screen.getByText("Fan Score").parentElement).toHaveTextContent("+2");
+    expect(screen.getByText("총점").parentElement).toHaveTextContent("10");
+    expect(screen.getByText("상승 · 골드")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Passport에서 확인하기" })).toHaveAttribute(
       "href",
       `/passports/${ids.passport}?locale=ko`,

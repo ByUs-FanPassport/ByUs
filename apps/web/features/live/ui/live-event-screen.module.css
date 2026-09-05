@@ -559,7 +559,7 @@
 }
 
 .dialog {
-  width: min(520px, calc(100% - 32px));
+  width: min(640px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
   box-sizing: border-box;
   overflow: auto;
@@ -663,6 +663,9 @@
 }
 .dialogSecondary {
   margin-bottom: 10px;
+}
+.dialogPrimary {
+  --fan-action-max-width: 100%;
 }
 .dialogSecondary:disabled {
   border-color: oklch(88% 0 0);
@@ -935,7 +938,10 @@
  */
 .actionRail { border-color:var(--color-line); border-radius:var(--radius-collection); box-shadow:none; }
 .titleGroup { margin-top:var(--space-3); }
-.primaryActionSlot { margin-top:var(--space-4); }
+.scheduleGroup { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--color-line-subtle); }
+.schedule { gap:var(--space-3); }
+.schedule .eventSchedule dd { font-size:18px; line-height:1.45; }
+.primaryActionSlot { margin-top:var(--space-6); padding-top:var(--space-2); }
 .primaryActionBlock { width:100%; --fan-action-max-width:100%; }
 .actionHelper { margin-top:var(--space-3); color:var(--color-muted); font-weight:400; text-align:start; }
 .missionLink { margin-top:var(--space-1); align-self:flex-start; padding-inline:0; }

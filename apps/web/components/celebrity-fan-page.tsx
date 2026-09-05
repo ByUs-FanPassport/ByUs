@@ -10,11 +10,12 @@ import {
 } from "@/features/analytics/client/product-event-client";
 import type { Route } from "next";
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowRight, Clock, Play, Radio } from "./icons";
+import { ArrowRight, Clock, Play } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { CalendarDayNumber, CalendarMonthHeader } from "./fan-calendar/calendar-parts";
 import { FanAction } from "./fan-ui/fan-action";
+import { FanMotionIcon } from "./fan-ui/fan-motion-icon";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import {
   liveCalendarMonthSchema,
@@ -70,6 +71,7 @@ const copy = {
     ownedHeroHelp: (name: string) => `${name}와 함께한 순간과 다음 LIVE 일정을 확인해 보세요.`,
     verificationHeroHelp: (name: string) => `퀴즈로 팬 인증을 완료하고 ${name} Fan Passport 여정을 시작해 보세요.`,
     calendarTitle: "LIVE 일정", calendarOpen: "캘린더 크게 보기", calendarLoading: "LIVE 일정 확인 중", calendarError: "일정을 불러오지 못했어요.",
+    calendarUpcoming: "다가오는 일정", calendarUpcomingEmpty: "이 달에 예정된 LIVE가 없어요.",
     previousMonth: "이전 달", nextMonth: "다음 달", reserved: "예약 완료", notReserved: "미예약", reservationUnknown: "예약 상태 미확인",
     weekdays: ["일", "월", "화", "수", "목", "금", "토"],
   },
@@ -94,6 +96,7 @@ const copy = {
     ownedHeroHelp: (name: string) => `Revisit your ${name} moments and see the next LIVE schedule.`,
     verificationHeroHelp: (name: string) => `Take the quiz, verify your fandom, and begin your ${name} Fan Passport journey.`,
     calendarTitle: "LIVE schedule", calendarOpen: "Open full calendar", calendarLoading: "Checking LIVE schedule", calendarError: "We couldn't load the schedule.",
+    calendarUpcoming: "Upcoming", calendarUpcomingEmpty: "No upcoming LIVE this month.",
     previousMonth: "Previous month", nextMonth: "Next month", reserved: "Reserved", notReserved: "Not reserved", reservationUnknown: "Reservation unknown",
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   },
@@ -102,6 +105,16 @@ const copy = {
 function formatDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     dateStyle: "medium", timeStyle: "short", hour12: locale !== "ko", timeZone: "Asia/Seoul",
+  }).format(new Date(value));
+}
+
+function formatMiniCalendarDate(value: string, locale: ContentLocale) {
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    timeZone: "Asia/Seoul",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(value));
 }
 
@@ -246,11 +259,16 @@ function CelebrityMiniCalendar({
   const firstWeekday = calendarWeekday(days[0]?.date ?? `${month}-01`);
   const previousMonth = adjacentCalendarMonth(month, -1);
   const nextMonth = adjacentCalendarMonth(month, 1);
+  const upcomingEvents = days
+    .flatMap((day) => day.events)
+    .filter((event) => event.effectiveStatus === "live" || (event.effectiveStatus === "scheduled" && currentKstDate(new Date(event.startsAt)) >= today))
+    .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
+    .slice(0, 3);
 
   return (
     <section className={styles.heroCalendar} aria-labelledby={`${celebrity.slug}-mini-calendar-title`} aria-busy={state.status === "loading"}>
       <div className={styles.calendarHeading}>
-        <h2 id={`${celebrity.slug}-mini-calendar-title`}>{celebrity.name} {t.calendarTitle}</h2>
+        <h2 id={`${celebrity.slug}-mini-calendar-title`}><FanMotionIcon name="calendar" size={18} />{celebrity.name} {t.calendarTitle}</h2>
       </div>
       <CalendarMonthHeader month={month} label={miniCalendarMonthLabel(month, locale)} density="compact"
         previous={{ onClick: () => setMonth(previousMonth), label: `${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}` }}
@@ -298,6 +316,18 @@ function CelebrityMiniCalendar({
       {state.status !== "ready" ? <p className={styles.calendarMessage} role={state.status === "error" ? "alert" : "status"}>
         {state.status === "loading" ? t.calendarLoading : t.calendarError}
       </p> : null}
+      <div className={styles.calendarUpcoming}>
+        <h3>{t.calendarUpcoming}</h3>
+        {state.status === "ready" && upcomingEvents.length > 0 ? <ol>{upcomingEvents.map((event) => (
+          <li key={event.id} data-status={event.effectiveStatus}>
+            <Link href={`/live/${event.slug}?locale=${locale}` as Route}>
+              <time dateTime={event.startsAt}>{formatMiniCalendarDate(event.startsAt, locale)}</time>
+              <strong>{event.title}</strong>
+              <span>{localizedLiveStatus(event.effectiveStatus, locale)}</span>
+            </Link>
+          </li>
+        ))}</ol> : state.status === "ready" ? <p>{t.calendarUpcomingEmpty}</p> : null}
+      </div>
       <div className={styles.calendarFooter}>
         <div className={styles.calendarLegend} aria-label={locale === "ko" ? "예약 상태 범례" : "Reservation legend"}>
           <span><i data-state="reserved" aria-hidden="true" />{t.reserved}</span>
@@ -408,12 +438,14 @@ export function CelebrityFanPage({
     }
   }, [activeTab, authenticated, benefitState.status, celebrity.slug, getAccessToken, liveState.status, locale, noticeState.status]);
 
-  const tabHref = (tab: CelebrityFanTab) => `/c/${celebrity.slug}?tab=${tab}&locale=${locale}` as Route;
+  const tabHref = (tab: CelebrityFanTab) => `/c/${celebrity.slug}?tab=${tab}&locale=${locale}#celebrity-content` as Route;
   function tabKeyDown(event: KeyboardEvent<HTMLAnchorElement>, index: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     const target = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1
       : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    const targetTab = event.currentTarget.parentElement?.querySelectorAll<HTMLElement>('[role="tab"]')[target];
+    targetTab?.focus();
     router.push(tabHref(tabs[target]));
   }
   const katseyeHero = hasKatseyePresentation
@@ -485,15 +517,16 @@ export function CelebrityFanPage({
 
         {activeTab === "home" && <ReactionAction slug={celebrity.slug} locale={locale} />}
 
+        <div id="celebrity-content" className={styles.tabContentAnchor}>
         <section id={`celebrity-${activeTab}-panel`} role="tabpanel" className={styles.tabPanel}>
           {activeTab === "home" && <div className={styles.hubLayout}>
-            <div className={styles.mainColumn}>
+            <div className={styles.homePrimary}>
               <TabSection title={t.nextLive} help="">
                 {upcomingLive
                   ? <div className={styles.liveSection}>
                       <div className={styles.livePortrait}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={240} height={300} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></div>
                       <div className={styles.liveCopy}>
-                        <p><Radio />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</p>
+                        <div className={styles.liveStatus}><FanMotionIcon name="radio" size={16} active={upcomingLive.effectiveStatus === "live"} />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</div>
                         <h3>{upcomingLive.title}</h3>
                         <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
                       </div>
@@ -501,6 +534,37 @@ export function CelebrityFanPage({
                     </div>
                   : <Empty title={t.noLive} help={t.noLiveHelp} />}
               </TabSection>
+            </div>
+
+            <aside className={styles.homeAside} aria-label={locale === "ko" ? "팬 일정과 패스포트" : "Fan schedule and Passport"}>
+              <div className={styles.calendarSlot} data-celebrity-calendar-placement="content">
+                <CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
+              </div>
+
+              <section className={styles.passportSummary} aria-labelledby="passport-summary-title">
+                <h2 id="passport-summary-title">{t.myPassport}</h2>
+                <PassportSummary
+                  state={passportState}
+                  celebrityName={celebrity.name}
+                  locale={locale}
+                  localeQuery={localeQuery}
+                  labels={{
+                    checking: t.checking,
+                    error: t.passportError,
+                    retry: t.retry,
+                    beforeVerification: t.beforeVerification,
+                    beforeVerificationHelp: t.beforeVerificationHelp(celebrity.name),
+                    level: t.level,
+                    score: t.score,
+                    stamps: t.stamps,
+                    details: t.passportDetails,
+                  }}
+                  onRetry={() => setRequestKey((key) => key + 1)}
+                />
+              </section>
+            </aside>
+
+            <div className={styles.mainColumn}>
 
               <TabSection
                 title={t.latestNotice}
@@ -538,61 +602,43 @@ export function CelebrityFanPage({
                 {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
               </section>
             </div>
-            <div className={styles.homeAside}>
-              <div className={styles.calendarSlot} data-celebrity-calendar-placement="content">
-                <CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />
-              </div>
-
-              <section className={styles.passportSummary} aria-labelledby="passport-summary-title">
-                <h2 id="passport-summary-title">{t.myPassport}</h2>
-                <PassportSummary
-                  state={passportState}
-                  celebrityName={celebrity.name}
-                  locale={locale}
-                  localeQuery={localeQuery}
-                  labels={{
-                    checking: t.checking,
-                    error: t.passportError,
-                    retry: t.retry,
-                    beforeVerification: t.beforeVerification,
-                    beforeVerificationHelp: t.beforeVerificationHelp(celebrity.name),
-                    level: t.level,
-                    score: t.score,
-                    stamps: t.stamps,
-                    details: t.passportDetails,
-                  }}
-                  onRetry={() => setRequestKey((key) => key + 1)}
-                />
-              </section>
-
-            </div>
           </div>}
 
-          {activeTab === "notice" && <TabSection title={t.tabs.notice} help={locale === "ko" ? `ByUs가 전하는 ${celebrity.name} 소식을 확인하세요.` : `Explore ${celebrity.name} updates from ByUs.`}>
-            <NoticeContent
-              state={noticeState}
-              celebritySlug={celebrity.slug}
-              locale={locale}
-              copy={{ error: t.noticeError, empty: t.noNotice, emptyHelp: t.noNoticeHelp, pinned: t.pinned }}
-            />
-          </TabSection>}
+          {activeTab === "notice" && <div className={styles.tabLayout}>
+            <TabSection title={t.tabs.notice} help={locale === "ko" ? `ByUs가 전하는 ${celebrity.name} 소식을 확인하세요.` : `Explore ${celebrity.name} updates from ByUs.`}>
+              <NoticeContent
+                state={noticeState}
+                celebritySlug={celebrity.slug}
+                locale={locale}
+                copy={{ error: t.noticeError, empty: t.noNotice, emptyHelp: t.noNoticeHelp, pinned: t.pinned }}
+              />
+            </TabSection>
+            <div className={styles.calendarSlot} data-celebrity-calendar-placement="content"><CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /></div>
+          </div>}
 
-          {activeTab === "live" && <TabSection title={t.liveHeading} help={t.liveHelp}>
-            {liveState.status !== "ready"
-              ? liveState.status === "error" ? <ErrorState text={t.noLiveHelp} /> : <Loading locale={locale} />
-              : liveState.data.length === 0 ? <Empty title={t.noLive} help={t.noLiveHelp} />
-              : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><p><Radio /> {localizedLiveStatus(live.effectiveStatus, locale)}</p><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
-          </TabSection>}
+          {activeTab === "live" && <div className={styles.tabLayout}>
+            <TabSection title={t.liveHeading} help={t.liveHelp}>
+              {liveState.status !== "ready"
+                ? liveState.status === "error" ? <ErrorState text={t.noLiveHelp} /> : <Loading locale={locale} />
+                : liveState.data.length === 0 ? <Empty title={t.noLive} help={t.noLiveHelp} />
+                : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><div className={styles.liveStatus}><FanMotionIcon name="radio" size={16} active={live.effectiveStatus === "live"} /> {localizedLiveStatus(live.effectiveStatus, locale)}</div><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
+            </TabSection>
+            <div className={styles.calendarSlot} data-celebrity-calendar-placement="content"><CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /></div>
+          </div>}
 
-          {activeTab === "benefits" && <TabSection title={t.benefitHeading} help={t.benefitHelp} action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}>
-            <BenefitContent
-              state={benefitState}
-              celebritySlug={celebrity.slug}
-              locale={locale}
-              copy={{ error: t.benefitError, empty: t.noBenefits, emptyHelp: t.noBenefitsHelp }}
-            />
-          </TabSection>}
+          {activeTab === "benefits" && <div className={styles.tabLayout}>
+            <TabSection title={t.benefitHeading} help={t.benefitHelp} action={<Link href={`/benefits?locale=${locale}&celebrity=${celebrity.slug}`}>{t.allBenefits}<ArrowRight /></Link>}>
+              <BenefitContent
+                state={benefitState}
+                celebritySlug={celebrity.slug}
+                locale={locale}
+                copy={{ error: t.benefitError, empty: t.noBenefits, emptyHelp: t.noBenefitsHelp }}
+              />
+            </TabSection>
+            <div className={styles.calendarSlot} data-celebrity-calendar-placement="content"><CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /></div>
+          </div>}
         </section>
+        </div>
       </FanContentContainer>
     </FanAppFrame>
   );
@@ -637,7 +683,7 @@ function BenefitContent({
   const benefits = limit ? state.data.slice(0, limit) : state.data;
   return <div className={`${styles.benefitGrid} ${className ?? ""}`.trim()}>{benefits.map((benefit) => (
     <Link key={benefit.id} data-state={benefit.state} href={`/benefits/${benefit.id}?locale=${locale}&celebrity=${celebritySlug}`}>
-      <span>{localizedBenefitState(benefit.state, locale)}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{localizedEligibilityLabel(benefit.eligibilityLabel, locale)}</small><ArrowRight />
+      <span><FanMotionIcon name="gift" size={14} />{localizedBenefitState(benefit.state, locale)}</span><h3>{benefit.title}</h3><p>{benefit.summary}</p><small>{localizedEligibilityLabel(benefit.eligibilityLabel, locale)}</small><ArrowRight />
     </Link>
   ))}</div>;
 }

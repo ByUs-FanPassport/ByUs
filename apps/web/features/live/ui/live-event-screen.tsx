@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Bell,
-  CalendarDays,
   Check,
   Clock3,
   ExternalLink,
@@ -47,6 +46,7 @@ import {
   fanActionClassName,
 } from "@/components/fan-ui/fan-action";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import { formatFanCount } from "@/components/fan-ui/fan-count";
@@ -109,7 +109,7 @@ const copy = {
         "지금은 출석을 확인할 수 없어요. 잠시 후 다시 시도해 주세요.",
       wallet: "Passport 준비가 끝나지 않았어요. 잠시 후 다시 시도해 주세요.",
       successTitle: "LIVE 출석을 남겼어요",
-      successHelper: "Attendance Stamp, Fan Score +3, Ticket +2가 기록되었습니다.",
+      successHelper: "Attendance Stamp, Fan Score +3, 응모권 2장이 기록되었습니다.",
       replay: "이미 완료한 출석 기록을 안전하게 확인했어요.",
       survey: "설문 참여하고 다음 Stamp 받기",
     },
@@ -187,7 +187,7 @@ const copy = {
       unavailable: "Attendance can’t be verified right now. Try again shortly.",
       wallet: "Your Passport is still getting ready. Try again shortly.",
       successTitle: "Your LIVE attendance is recorded",
-      successHelper: "You earned an Attendance Stamp, +3 Fan Score, and +2 Tickets.",
+      successHelper: "You earned an Attendance Stamp, +3 Fan Score, and 2 raffle tickets.",
       replay: "Your completed attendance record was safely retrieved.",
       survey: "Take the survey for your next Stamp",
     },
@@ -362,7 +362,7 @@ function ReservationDialog({
       <div className={styles.dialogEvent}>
         <strong>{data.live.title}</strong>
         <span>
-          <CalendarDays aria-hidden="true" />
+          <FanMotionIcon name="calendar" />
           {formatDateTime(data.live.startsAt, locale)}
         </span>
       </div>
@@ -373,7 +373,7 @@ function ReservationDialog({
         rel="noopener noreferrer"
         aria-label={externalActionLabel(c.calendar, data.live.title, locale)}
       >
-        <CalendarDays aria-hidden="true" />
+        <FanMotionIcon name="calendar" />
         {c.calendar}
       </a>
       <button
@@ -413,7 +413,7 @@ function ReservationDialog({
                 : "Could not save notification settings."}
         </p>
       )}
-      <FanAction variant="primary" onClick={() => dialogRef.current?.close()}>
+      <FanAction variant="primary" className={styles.dialogPrimary} fullWidth onClick={() => dialogRef.current?.close()}>
         {c.continue}
       </FanAction>
     </dialog>
@@ -1010,7 +1010,7 @@ export function LiveEventScreen({
             <div className={styles.scheduleGroup}>
               <dl className={styles.schedule}>
                 <div className={styles.eventSchedule}>
-                  <dt><CalendarDays aria-hidden="true" />{c.eventTime}</dt>
+                  <dt><FanMotionIcon name="calendar" />{c.eventTime}</dt>
                   <dd><time dateTime={live.startsAt}>{formatReservationDateTime(live.startsAt, locale)}</time></dd>
                 </div>
                 <div className={styles.deadlineSchedule}>
@@ -1037,9 +1037,15 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
-            <FanAction variant="text" className={styles.missionLink} href={`/live/${slug}/missions?locale=${locale}` as Route}>
-              <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
-            </FanAction>
+            {live.missionsAvailable === false ? (
+              <FanAction variant="text" className={styles.missionLink} disabled helperText={locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}>
+                {locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}
+              </FanAction>
+            ) : (
+              <FanAction variant="text" className={styles.missionLink} href={`/live/${slug}/missions?locale=${locale}` as Route} helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}>
+                <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
+              </FanAction>
+            )}
             {viewer.reservation && (
               <a
                 className={styles.calendarAction}
@@ -1048,7 +1054,7 @@ export function LiveEventScreen({
                 rel="noopener noreferrer"
                 aria-label={externalActionLabel(c.calendar, live.title, locale)}
               >
-                <CalendarDays aria-hidden="true" />
+                <FanMotionIcon name="calendar" />
                 {c.calendar}
               </a>
             )}

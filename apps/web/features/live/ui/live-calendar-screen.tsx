@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { CalendarDays, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { CalendarDayNumber, CalendarMonthHeader } from "../../../components/fan-calendar/calendar-parts";
+import { FanMotionIcon } from "../../../components/fan-ui/fan-motion-icon";
 import type { LiveCalendarMonth } from "../domain/live-calendar";
 import type { ExternalLiveProvider } from "../domain/live-event";
 import { FanHeading } from "../../../components/fan-ui/fan-heading";
@@ -225,7 +226,7 @@ export function LiveCalendarScreen({
             <p>{t.intro}</p>
           </div>
           <Link className={styles.catalogLink} href={`/live?locale=${locale}` as Route}>
-            <CalendarDays aria-hidden="true" />
+            <FanMotionIcon name="calendar" size={18} />
             {t.catalog}
           </Link>
         </header>
@@ -320,7 +321,8 @@ export function LiveCalendarScreen({
                     {visibleEvents.map((event) => {
                       const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
                       const platformNames = platforms.map((platform) => platformLabel[platform]);
-                      return <article className={styles.event} key={event.id} aria-label={event.title} data-calendar-event-status={event.effectiveStatus}>
+                      const tone = [...event.slug].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
+                      return <article className={styles.event} key={event.id} aria-label={event.title} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
                         <Link
                           className={styles.eventLink}
                           href={`/live/${event.slug}?locale=${locale}` as Route}

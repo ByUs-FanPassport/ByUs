@@ -294,9 +294,9 @@ describe("benefit screens", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ benefit: campaignBenefit })))
       .mockImplementationOnce(() => entryResponse);
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
-    const amount = await screen.findByRole("spinbutton", { name: "응모할 Ticket 수" });
+    const amount = await screen.findByRole("spinbutton", { name: "사용할 응모권 수" });
     fireEvent.change(amount, { target: { value: "2" } });
-    const button = screen.getByRole("button", { name: "Ticket으로 응모하기" });
+    const button = screen.getByRole("button", { name: "응모권으로 응모하기" });
     fireEvent.click(button);
     fireEvent.click(button);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -312,7 +312,7 @@ describe("benefit screens", () => {
       resultingBalance: 23,
       replayed: false,
     })));
-    expect(await screen.findByText(/2 Ticket/)).toBeInTheDocument();
+    expect(await screen.findByText(/2 응모/)).toBeInTheDocument();
     expect(screen.getByText("23")).toBeInTheDocument();
     const call = fetchMock.mock.calls[1];
     expect(call[0]).toContain("/entries");

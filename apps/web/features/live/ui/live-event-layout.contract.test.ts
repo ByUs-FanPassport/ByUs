@@ -17,18 +17,18 @@ function declarations(selector: string): Record<string, string> {
 describe("LIVE detail information hierarchy contract", () => {
   it("groups schedule and full-width primary with token spacing and a quiet helper", () => {
     expect(declarations(".titleGroup")).toMatchObject({ "margin-top": "var(--space-3)" });
-    expect(declarations(".scheduleGroup")).toMatchObject({ "margin-top": "var(--space-6)" });
-    expect(declarations(".primaryActionSlot")).toMatchObject({ "margin-top": "var(--space-4)" });
+    expect(declarations(".scheduleGroup")).toMatchObject({ "margin-top": "var(--space-5)", "padding-top": "var(--space-4)" });
+    expect(declarations(".primaryActionSlot")).toMatchObject({ "margin-top": "var(--space-6)", "padding-top": "var(--space-2)" });
     expect(declarations(".actionHelper")).toMatchObject({ "margin-top": "var(--space-3)", "font-weight": "400", "text-align": "start", "margin-bottom": "0" });
     expect(css).toContain("--fan-action-max-width:100%");
   });
 
   it("stacks schedule labels and emphasizes event time over the deadline", () => {
-    expect(declarations(".schedule")).toMatchObject({ display: "grid", gap: "var(--space-4)" });
+    expect(declarations(".schedule")).toMatchObject({ display: "grid", gap: "var(--space-3)" });
     expect(declarations(".schedule > div")).toMatchObject({ display: "grid", gap: "var(--space-1)", "min-width": "0" });
     expect(declarations(".schedule dt")).toMatchObject({ "font-size": "12px", "align-items": "center" });
     expect(declarations(".schedule dd")).toMatchObject({ "font-size": "14px", "font-weight": "600", "overflow-wrap": "anywhere", "font-variant-numeric": "tabular-nums" });
-    expect(declarations(".schedule .eventSchedule dd")).toMatchObject({ "font-size": "20px", "font-weight": "750" });
+    expect(declarations(".schedule .eventSchedule dd")).toMatchObject({ "font-size": "18px", "font-weight": "750" });
     expect(declarations(".reservationDetails summary")).toMatchObject({ "min-height": "var(--min-target)" });
     expect(declarations(".timeZone")).toMatchObject({ margin: "0", "font-size": "12px" });
   });

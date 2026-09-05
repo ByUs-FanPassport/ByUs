@@ -103,7 +103,7 @@ describe("published celebrity fan page", () => {
   });
 
   it("renders the four-tab editorial hub without a decorative empty Passport", async () => {
-    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    const { container } = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
     expect(screen.getByRole("tablist", { name: "KARA 팬페이지 메뉴" })).toBeInTheDocument();
@@ -132,6 +132,7 @@ describe("published celebrity fan page", () => {
     expect(screen.queryByAltText("모든 Stamp 칸이 비어 있는 펼쳐진 Fan Passport")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 새로운 소식이 없어요.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "소식 전체 보기" })).not.toBeInTheDocument();
+    expect(container.querySelector("p [data-fan-motion]")).not.toBeInTheDocument();
   });
 
   it("places exactly one calendar after upcoming LIVE in the Home content, outside the hero", async () => {
@@ -143,7 +144,7 @@ describe("published celebrity fan page", () => {
     const nextLive = screen.getByRole("heading", { name: "다가오는 LIVE" });
     const benefits = screen.getByRole("heading", { name: "팬 혜택" });
     expect(nextLive.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(benefits.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(calendar.compareDocumentPosition(benefits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(container.querySelector('section[aria-labelledby="celebrity-heading"]')?.contains(calendar)).toBe(false);
     await screen.findByText("아직 새로운 소식이 없어요.");
   });
@@ -155,7 +156,7 @@ describe("published celebrity fan page", () => {
         id: "11111111-1111-4111-8111-111111111111",
         slug: "kara-calendar-live",
         startsAt: `${month}-12T11:00:00.000Z`,
-        effectiveStatus: "scheduled",
+        effectiveStatus: "live",
         title: "KARA 캘린더 LIVE",
         celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
         reservationState: null,
@@ -178,6 +179,8 @@ describe("published celebrity fan page", () => {
       "href",
       "/live/kara-calendar-live?locale=ko",
     );
+    expect(screen.getByRole("heading", { name: "다가오는 일정" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /KARA 캘린더 LIVE/ })).toHaveLength(2);
     expect(screen.queryByLabelText(/다른 셀럽 캘린더 LIVE/)).not.toBeInTheDocument();
   });
 
@@ -361,10 +364,29 @@ describe("published celebrity fan page", () => {
 
   it("moves between URL-backed tabs with arrow keys", () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    fireEvent.keyDown(screen.getByRole("tab", { name: "홈" }), { key: "ArrowRight" });
-    expect(routerPush).toHaveBeenCalledWith("/c/kara?tab=notice&locale=ko");
-    fireEvent.keyDown(screen.getByRole("tab", { name: "홈" }), { key: "End" });
-    expect(routerPush).toHaveBeenLastCalledWith("/c/kara?tab=benefits&locale=ko");
+    const homeTab = screen.getByRole("tab", { name: "홈" });
+    const noticeTab = screen.getByRole("tab", { name: "공지" });
+    expect(noticeTab).toHaveAttribute("href", "/c/kara?tab=notice&locale=ko#celebrity-content");
+    expect(document.getElementById("celebrity-content")).toBeInTheDocument();
+    fireEvent.keyDown(homeTab, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(noticeTab);
+    expect(routerPush).toHaveBeenCalledWith("/c/kara?tab=notice&locale=ko#celebrity-content");
+    fireEvent.keyDown(homeTab, { key: "End" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "혜택" }));
+    expect(routerPush).toHaveBeenLastCalledWith("/c/kara?tab=benefits&locale=ko#celebrity-content");
+  });
+
+  it.each([
+    ["home", "celebrity-home-panel"],
+    ["notice", "celebrity-notice-panel"],
+    ["live", "celebrity-live-panel"],
+    ["benefits", "celebrity-benefits-panel"],
+  ] as const)("renders one mini calendar in the active %s tab", async (initialTab, panelId) => {
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} initialTab={initialTab} />);
+    const calendars = screen.getAllByRole("region", { name: "KARA LIVE 일정" });
+    expect(calendars).toHaveLength(1);
+    expect(calendars[0]?.closest('[role="tabpanel"]')).toHaveAttribute("id", panelId);
+    await screen.findByRole("heading", { name: "다가오는 일정" });
   });
 
   it("renders only supplied official SNS links with accessible external-link names", () => {

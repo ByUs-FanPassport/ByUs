@@ -54,6 +54,13 @@ describe("unified MY hub", () => {
     expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
+    expect(screen.getAllByText("응모권").length).toBeGreaterThan(0);
+    expect(screen.getByText("응모")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^1\s*내 최애$/ })).toHaveAttribute("href", "#my-creators");
+    expect(screen.getByRole("link", { name: /^1\s*내 패스포트$/ })).toHaveAttribute("href", "/passports?locale=ko");
+    expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
+    expect(screen.getByRole("link", { name: /^4\s*응모권$/ })).toHaveAttribute("href", "#my-creators");
+    expect(screen.queryByRole("link", { name: /^0\s*디지털 기념품$/ })).not.toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
     const settings = screen.getByRole("link", { name:"알림 설정" });
@@ -77,6 +84,15 @@ describe("unified MY hub", () => {
     expect(screen.queryByText("예약한 LIVE가 없어요.")).not.toBeInTheDocument();
     expect(screen.queryByText("아직 받은 혜택이 없어요.")).not.toBeInTheDocument();
     expect(screen.queryByText("아직 수집한 기록이 없어요.")).not.toBeInTheDocument();
+  });
+
+  it("distinguishes unspent Raffle tickets from completed Entries in English", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
+    render(<MyScreen locale="en" />);
+
+    expect(await screen.findByText("Entries")).toBeInTheDocument();
+    expect(screen.getAllByText("Raffle tickets").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /^4\s*Raffle tickets$/ })).toHaveAttribute("href", "#my-creators");
   });
 });
 
@@ -102,4 +118,20 @@ it("shows a date-led reserved event and moves recent records into the supporting
   expect(screen.getByText("KARA Stamp").closest("aside")).not.toBeNull();
   expect(container.querySelector('[data-has-rail="true"]')).not.toBeNull();
   expect(screen.getByText("KARA").closest("a")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
+});
+
+it("links the collectible total only when a real recent collectible supplies a destination", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
+    ...summary,
+    collection: {
+      passportCount: 1,
+      stampCount: 2,
+      collectibleCount: 1,
+      recent: [{ id: benefitId, kind: "collectible", title: "KARA 디지털 기념품", occurredAt: "2026-09-01T00:00:00.000Z", href: `/passports/${id}` }],
+    },
+  } })));
+  render(<MyScreen locale="ko"/>);
+
+  expect(await screen.findByRole("link", { name: /^1\s*디지털 기념품$/ })).toHaveAttribute("href", "#my-collection");
+  expect(document.querySelector("#my-collection")).toHaveTextContent("KARA 디지털 기념품");
 });

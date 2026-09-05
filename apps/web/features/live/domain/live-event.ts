@@ -93,6 +93,8 @@ export const publicLiveEventSchema = z.object({
     url: z.string().url().startsWith("https://"),
   }),
   preview: publishedLandscapePreviewSchema.nullable().optional(),
+  // Public visibility only; personal completion/eligibility stays owner-scoped.
+  missionsAvailable: z.boolean().nullable().optional(),
 });
 
 export const liveReservationSummarySchema = z.object({

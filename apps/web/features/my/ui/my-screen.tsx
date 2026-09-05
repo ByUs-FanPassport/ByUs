@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, Gift, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, RotateCcw, Settings, Sparkles, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -11,6 +11,7 @@ import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
 import { FanState } from "@/components/fan-ui/fan-state";
+import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import type { MyReward } from "../../benefit/domain/my-reward";
 import { levelLabel } from "../../passport/domain/passport-read-model";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
@@ -24,24 +25,24 @@ const copy = {
     title: "MY", profileSummary: "내 팬 활동", profileHelp: "최애와 함께한 기록을 한눈에 모았어요.",
     guestTitle: "내 팬 활동을 한곳에 모아보세요.", guestBody: "로그인하면 최애, 예약한 LIVE, 받은 혜택과 수집 기록을 바로 확인할 수 있어요.",
     login: "Google로 계속하기", loading: "팬 활동을 불러오는 중이에요.", error: "팬 활동을 불러오지 못했어요.", retry: "다시 시도",
-    overview: "활동 요약", creators: "내 최애", creatorsHelp: "크리에이터별 패스포트와 팬 점수를 확인하세요.",
+    overview: "활동 요약", creators: "내 최애", creatorsHelp: "크리에이터별 패스포트와 응모권 잔액을 확인하세요.",
     noCreators: "아직 등록한 최애가 없어요.", findCreator: "최애 찾기", live: "다가오는 LIVE", upcoming: "예약 완료",
     history: "지난 LIVE", noLive: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", rewards: "받은 혜택",
-    available: "사용 가능한 혜택", entries: "응모 티켓", noRewards: "아직 받은 혜택이 없어요.", collection: "최근 활동",
+    available: "사용 가능한 혜택", entries: "응모", noRewards: "아직 받은 혜택이 없어요.", collection: "최근 활동",
     passports: "내 패스포트", stamps: "스탬프", collectibles: "디지털 기념품", noCollection: "아직 수집한 기록이 없어요.",
-    notifications: "새 알림", settings: "알림 설정", tickets: "티켓", firstReaction: "첫 반응",
+    notifications: "새 알림", settings: "알림 설정", tickets: "응모권", firstReaction: "첫 반응",
     allLive: "전체 LIVE 보기", allRewards: "혜택 전체 보기",
   },
   en: {
     title: "MY", profileSummary: "My fan activity", profileHelp: "Your moments with every favorite, all in one place.",
     guestTitle: "Keep your fan activity together.", guestBody: "Sign in to see your favorites, reserved LIVE events, rewards, and collection.",
     login: "Continue with Google", loading: "Loading your fan activity.", error: "We couldn’t load your fan activity.", retry: "Try again",
-    overview: "Activity overview", creators: "My favorites", creatorsHelp: "Check each Fan Passport and Ticket balance.",
+    overview: "Activity overview", creators: "My favorites", creatorsHelp: "Check each Fan Passport and Raffle ticket balance.",
     noCreators: "No favorites added yet.", findCreator: "Find favorites", live: "Upcoming LIVE", upcoming: "Reserved",
     history: "Past LIVE", noLive: "No reserved LIVE events.", browseLive: "Browse LIVE", rewards: "My rewards",
-    available: "Available rewards", entries: "Entry Tickets", noRewards: "No rewards received yet.", collection: "Recent collection",
+    available: "Available rewards", entries: "Entries", noRewards: "No rewards received yet.", collection: "Recent collection",
     passports: "Fan Passports", stamps: "Stamps", collectibles: "Collectibles", noCollection: "Nothing collected yet.",
-    notifications: "New alerts", settings: "Notification settings", tickets: "Tickets", firstReaction: "First Reaction",
+    notifications: "New alerts", settings: "Notification settings", tickets: "Raffle tickets", firstReaction: "First Reaction",
     allLive: "View all LIVE", allRewards: "View all rewards",
   },
 } as const;
@@ -101,6 +102,8 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
   const hasRail = summary.collection.recent.length > 0 || hasRewards || (!reservedLives.length && summary.live.history.length > 0);
   const ticketBalance = summary.creators.reduce((total, creator) => total + creator.ticketBalance, 0);
+  const visibleRecent = summary.collection.recent.slice(0, 3);
+  const hasVisibleCollectible = visibleRecent.some((item) => item.kind === "collectible");
   const formatDate = (value: string) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(value));
 
   return <div className={styles.dashboard}>
@@ -118,12 +121,12 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
     <div className={styles.workspace} data-has-rail={hasRail}>
       <div className={styles.primaryColumn}>
         {reservedLives.length > 0 ? <ReservedLiveSection events={reservedLives} history={summary.live.history} locale={locale}/> : null}
-        <FanSurface appearance="plain" className={styles.section}>
+        <FanSurface appearance="plain" className={styles.section} id="my-creators">
           <SectionTitle title={t.creators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
           {summary.creators.length ? <div className={styles.creatorList}>{summary.creators.map((creator) =>
             <Link className={styles.creator} href={((creator.passport ? `/passports/${creator.passport.id}` : `/c/${creator.celebrity.slug}`) + `?locale=${locale}`) as Route} key={creator.celebrity.slug}>
               <Image src={creator.celebrity.image} alt="" width={192} height={240}/>
-              <div><strong>{creator.celebrity.name}</strong><span>{creator.passport ? passportProgressLabel(creator.passport, locale) : t.firstReaction}</span><span><Ticket/>{creator.ticketBalance} {t.tickets}</span></div><ArrowRight/>
+              <div><strong>{creator.celebrity.name}</strong><span>{creator.passport ? passportProgressLabel(creator.passport, locale) : t.firstReaction}</span><span><FanMotionIcon name="ticket" size={16} active/>{creator.ticketBalance} {t.tickets}</span></div><ArrowRight/>
             </Link>)}</div> : <Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}
         </FanSurface>
 
@@ -131,20 +134,20 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
       </div>
 
       {hasRail ? <aside className={styles.activityRail} aria-label={locale === "ko" ? "다가오는 활동과 혜택" : "Upcoming activity and rewards"}>
-        {summary.collection.recent.length > 0 ? <FanSurface appearance="plain" className={styles.section}>
+        {summary.collection.recent.length > 0 ? <FanSurface appearance="plain" className={styles.section} id="my-collection">
           <SectionTitle title={t.collection}/>
 
-          {<div className={styles.rows}>{summary.collection.recent.slice(0, 3).map((item) =>
-            <Link href={`${item.href}?locale=${locale}` as Route} key={`${item.kind}-${item.id}`}><span className={styles.activityMark} aria-hidden="true">{item.kind === "stamp" ? <Sparkles/> : <Gift/>}</span><div><strong>{item.title}</strong><span>{formatDate(item.occurredAt)}</span></div><ArrowRight/></Link>)}</div>}
+          {<div className={styles.rows}>{visibleRecent.map((item) =>
+            <Link href={`${item.href}?locale=${locale}` as Route} key={`${item.kind}-${item.id}`}><span className={styles.activityMark} aria-hidden="true">{item.kind === "stamp" ? <Sparkles/> : <FanMotionIcon name="gift" size={20} active/>}</span><div><strong>{item.title}</strong><span>{formatDate(item.occurredAt)}</span></div><ArrowRight/></Link>)}</div>}
         </FanSurface> : null}
         {!reservedLives.length && summary.live.history.length > 0 ? <ReservedLiveSection events={reservedLives} history={summary.live.history} locale={locale}/> : null}
 
 
         {hasRewards ? <FanSurface appearance="plain" className={styles.section}>
           <SectionTitle title={t.rewards} href={`/benefits?locale=${locale}`} action={t.allRewards}/>
-          <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><Gift/><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><Ticket/><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
+          <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><FanMotionIcon name="gift" size={20} active/><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><FanMotionIcon name="ticket" size={20} active/><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
           {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) =>
-            <Link href={`${reward.benefitHref}?locale=${locale}` as Route} key={reward.rewardResultId}><Gift/><div><strong>{reward.title}</strong><span>{rewardStatusCopy[reward.status][locale]}</span></div><ArrowRight/></Link>)}</div>
+            <Link href={`${reward.benefitHref}?locale=${locale}` as Route} key={reward.rewardResultId}><FanMotionIcon name="gift" size={20} active/><div><strong>{reward.title}</strong><span>{rewardStatusCopy[reward.status][locale]}</span></div><ArrowRight/></Link>)}</div>
             : <p className={styles.emptyText}>{t.noRewards}</p>}
         </FanSurface> : null}
       </aside> : null}
@@ -152,18 +155,19 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
     <section className={styles.overview} aria-labelledby="activity-overview-heading">
       <h2 id="activity-overview-heading">{t.overview}</h2>
       <div className={styles.overviewGrid}>
-        <Stat icon={<Star/>} value={summary.creators.length} label={t.creators}/>
-        <Stat icon={<BookOpen/>} value={summary.collection.passportCount} label={t.passports}/>
-        <Stat icon={<Sparkles/>} value={summary.collection.stampCount} label={t.stamps}/>
-        <Stat icon={<Ticket/>} value={ticketBalance} label={t.tickets}/>
-        <Stat icon={<Gift/>} value={summary.collection.collectibleCount} label={t.collectibles}/>
+        <Stat icon={<Star/>} value={summary.creators.length} label={t.creators} href="#my-creators" kind="favorite"/>
+        <Stat icon={<BookOpen/>} value={summary.collection.passportCount} label={t.passports} href={`/passports?locale=${locale}`} kind="passport"/>
+        <Stat icon={<Sparkles/>} value={summary.collection.stampCount} label={t.stamps} href={`/passports?locale=${locale}#collection`} kind="stamp"/>
+        <Stat icon={<FanMotionIcon name="ticket" size={20} active/>} value={ticketBalance} label={t.tickets} href="#my-creators" kind="ticket"/>
+        <Stat icon={<FanMotionIcon name="gift" size={20} active/>} value={summary.collection.collectibleCount} label={t.collectibles} href={hasVisibleCollectible ? "#my-collection" : undefined} kind="collectible"/>
       </div>
     </section>
   </div>;
 }
 
-function Stat({ icon, value, label }: { icon: ReactNode; value: number; label: string }) {
-  return <div className={styles.stat}>{icon}<strong>{value}</strong><span>{label}</span></div>;
+function Stat({ icon, value, label, href, kind }: { icon: ReactNode; value: number; label: string; href?: string; kind: "favorite" | "passport" | "stamp" | "ticket" | "collectible" }) {
+  const content = <><div className={styles.statIcon} aria-hidden="true">{icon}</div><strong>{value}</strong><span>{label}</span></>;
+  return href ? <Link className={styles.stat} data-kind={kind} href={href as Route}>{content}</Link> : <div className={styles.stat} data-kind={kind}>{content}</div>;
 }
 
 function SectionTitle({ title, help, href, action }: { title: string; help?: string; href?: string; action?: string }) {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AuthError } from "../../features/auth/domain/auth-errors";
 import type { AdminSession } from "../admin/admin-session-gate";
 import {
   CmsError,
@@ -27,6 +28,8 @@ async function actor(request: Request, deps: CmsRouteDeps, id: string) {
   });
 }
 function failure(error: unknown) {
+  if (error instanceof AuthError)
+    return Response.json({ error: error.code }, { status: error.status });
   if (error instanceof z.ZodError)
     return Response.json(
       { error: "INVALID_REQUEST", issues: error.issues },
@@ -35,16 +38,7 @@ function failure(error: unknown) {
   if (error instanceof CmsError)
     return Response.json(
       { error: error.code, message: error.message },
-      {
-        status:
-          error.code === "NOT_FOUND"
-            ? 404
-            : error.code === "FORBIDDEN"
-              ? 403
-              : error.code === "INVALID"
-                ? 409
-                : 503,
-      },
+      { status: { NOT_FOUND: 404, FORBIDDEN: 403, INVALID: 409, UNAVAILABLE: 503 }[error.code] },
     );
   return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
 }

@@ -101,6 +101,21 @@ function payload(primaryAction = "reserve", withReservation = false) {
 }
 
 describe("LiveEventScreen", () => {
+  it.each([false, true, null])("keeps mission availability truthful: %s", async (available) => {
+    const response = payload();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, live: { ...response.live, missionsAvailable: available } }), { status: 200 }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    if (available === false) {
+      expect(screen.getByRole("button", { name: "LIVE 미션 보기" })).toBeDisabled();
+      expect(screen.getByText("현재 참여 가능한 미션이 없어요.")).toBeVisible();
+      expect(screen.queryByRole("link", { name: "LIVE 미션 보기" })).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByRole("link", { name: "LIVE 미션 보기" })).toHaveAttribute("href", "/live/kara-nualeaf/missions?locale=ko");
+      expect(screen.queryByText("현재 참여 가능한 미션이 없어요.")).not.toBeInTheDocument();
+      if (available === null) expect(screen.getByText("미션 목록에서 참여 가능 여부를 확인해 주세요.")).toBeVisible();
+    }
+  });
   beforeEach(() => {
     authenticated = true;
     query = "locale=ko";
@@ -288,8 +303,8 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "예약이 완료되었습니다" })).toBeInTheDocument();
     expect(screen.getByText("라이브 예약 Stamp")).toBeInTheDocument();
-    expect(screen.getByText("총점 5")).toBeInTheDocument();
-    expect(screen.getByText("레벨 상승 · 실버")).toBeInTheDocument();
+    expect(screen.getByText("총점").parentElement).toHaveTextContent("5");
+    expect(screen.getByText("상승 · 실버")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Passport에서 확인하기" })).toHaveAttribute(
       "href",
       "/passports/33333333-3333-4333-8333-333333333333?locale=ko",
@@ -383,8 +398,8 @@ describe("LiveEventScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "출석 인증하기" }));
 
     expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
-    expect(screen.getByText("Attendance Stamp, Fan Score +3, Ticket +2가 기록되었습니다.")).toBeInTheDocument();
-    expect(screen.getByText("총점 8")).toBeInTheDocument();
+    expect(screen.getByText("Attendance Stamp, Fan Score +3, 응모권 2장이 기록되었습니다.")).toBeInTheDocument();
+    expect(screen.getByText("총점").parentElement).toHaveTextContent("8");
     expect(screen.getByText("실버")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /설문 참여/ })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=ko");
     expect(fetchMock.mock.calls[1][0]).toBe("/api/live-events/kara-nualeaf/attendance");

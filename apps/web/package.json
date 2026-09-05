@@ -16,6 +16,7 @@
     "test:e2e:kara-nualeaf:public": "playwright test kara-nualeaf-live-benefit.spec.ts --grep=\"public shell\" --project=chromium-1440 --config=playwright.authenticated.config.ts"
   },
   "dependencies": {
+    "@animateicons/react": "0.5.0",
     "@privy-io/node": "0.26.0",
     "@privy-io/react-auth": "3.35.1",
     "@solana-program/memo": "0.10.0",

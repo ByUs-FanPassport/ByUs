@@ -45,7 +45,7 @@ describe("full PPT release inventory", () => {
   it("keeps every global invariant and required evidence field in the ledger", () => {
     const invariants = read("docs/plans/2026-09-03-global-invariant-ledger.md");
     const ledger = read("docs/plans/2026-09-03-verification-ledger.md");
-    for (const id of ["TIER-01", "REACTION-02", "ATTR-01", "JOURNEY-03", "COLLECT-02", "BEN-DRAW-03", "PII-03", "NOTIFY-05", "ANALYTICS-02", "EVENT-02", "EVIDENCE-01", "PROD-KNOWN-01"]) {
+    for (const id of ["TIER-01", "REACTION-02", "ATTR-01", "JOURNEY-03", "COLLECT-02", "BEN-DRAW-03", "PII-03", "NOTIFY-01", "NOTIFY-02", "NOTIFY-03", "NOTIFY-04", "ANALYTICS-02", "EVENT-02", "EVIDENCE-01", "PROD-KNOWN-01"]) {
       expect(invariants, id).toContain(`\`${id}\``);
     }
     for (const field of ["environment", "command_or_locator", "observed", "verified_at", "last_verified_commit"]) {

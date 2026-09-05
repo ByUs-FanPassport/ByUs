@@ -41,6 +41,18 @@ function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSour
 }
 
 describe("DefaultLiveEventRepository", () => {
+  it.each([false, true])("projects only the public mission availability %s", async (available) => {
+    const repository = new DefaultLiveEventRepository(source({ findMissionsAvailable: async () => available }));
+    const result = await repository.findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
+    expect(result?.live.missionsAvailable).toBe(available);
+    expect(result?.viewer.authenticated).toBe(false);
+  });
+  it("keeps the LIVE visible with unknown availability when the mission read fails", async () => {
+    const repository = new DefaultLiveEventRepository(source({ findMissionsAvailable: async () => { throw new Error("unavailable"); } }));
+    const result = await repository.findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
+    expect(result?.live.missionsAvailable).toBeNull();
+    expect(result?.live.title).toBe(event.title);
+  });
   it("uses all published slugs and the same effective projection for Home", async () => {
     const findPublishedEvent = vi.fn().mockResolvedValue(event);
     const repository = new DefaultLiveEventRepository(source({
