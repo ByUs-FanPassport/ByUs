@@ -114,7 +114,11 @@ function LiveCountdown({
       ? "--:--:--"
       : formatLiveCountdown(startsAt, now);
 
-  return <span aria-live="off">{value}</span>;
+  const [day, clock] = value.startsWith("D-") ? value.split(" ") : [];
+
+  return <span className={styles.countdownValue} aria-live="off">
+    {day ? <><strong className={styles.countdownDay}>{day}</strong>{" "}<span>{clock}</span></> : value}
+  </span>;
 }
 
 export function LiveHeroCarousel({
@@ -247,7 +251,7 @@ export function LiveHeroCarousel({
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
                 <div className={styles.statusRail}>
-                  <p className={styles.liveStatus}><Radio /> {statusLabel}</p>
+                  <p className={styles.liveStatus} data-upcoming={featuredLive.live.effectiveStatus === "scheduled" ? "true" : undefined}><Radio /> {statusLabel}</p>
                   <p className={styles.heroDate}>{formatLiveDate(featuredLive.live.startsAt, locale)}</p>
                 </div>
                 <h2>{formatHeroLiveTitle(featuredLive.live.celebrity.name)}</h2>

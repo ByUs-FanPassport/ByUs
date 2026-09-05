@@ -56,10 +56,22 @@
 .statusRail { display: flex; max-width: 320px; align-items: center; gap: 12px; margin-bottom: 12px; }
 .statusRail p, .heroCountdown { margin: 0; }
 .liveStatus { display: inline-flex; flex: none; min-height: 28px; align-items: center; gap: 8px; padding-inline: 12px; border: 1px solid rgb(255 95 191 / 92%); border-radius: 999rem; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+.liveStatus[data-upcoming="true"] { position: relative; min-height: 32px; font-size: 13px; }
+.liveStatus[data-upcoming="true"]::after { position: absolute; inset: -1px; border-radius: inherit; content: ""; pointer-events: none; }
+.heroCard[data-active="true"] .liveStatus[data-upcoming="true"]::after { animation: upcomingPulse 1.5s ease-in-out 3; }
+@keyframes upcomingPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 95 191 / 48%); }
+  50% { box-shadow: 0 0 0 6px rgb(255 95 191 / 48%); }
+}
 .liveStatus svg, .heroCountdown svg { width: 16px; height: 16px; }
 .heroDate { overflow: hidden; color: rgb(255 255 255 / 84%); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .heroContent h2 { max-width: 15ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1.02; text-wrap: balance; }
-.heroCountdown { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 750 14px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.heroCountdown { display: flex; align-items: center; gap: 10px; margin-top: 16px; font: 750 18px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.countdownValue { display: inline-flex; align-items: baseline; gap: 10px; line-height: 1.2; }
+.countdownDay { font-size: 24px; font-weight: 850; }
+@media (max-width: 22.49rem) {
+  .liveStatus[data-upcoming="true"] + .heroDate { white-space: normal; text-overflow: clip; line-height: 1.25; }
+}
 .campaignHeroPeriod { margin: 12px 0 0; color: rgb(255 255 255 / 86%); font-size: 14px; font-weight: 650; }
 .primaryButton { display: flex; width: min(320px, 100%); min-height: 48px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
 .primaryButton span { display: inline-flex; align-items: center; gap: 8px; }
@@ -328,6 +340,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .heroCard[data-active="true"] .liveStatus[data-upcoming="true"]::after { animation: none; }
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
   .heroCarousel[data-reduced-motion="true"] .heroTrack { display: grid; transform: none !important; will-change: auto; }
   .heroCarousel[data-reduced-motion="true"] .heroCard { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 150ms ease !important; }
