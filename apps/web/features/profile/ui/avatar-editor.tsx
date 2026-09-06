@@ -18,8 +18,9 @@ import {
   type AvatarCharacterId,
   type AvatarCrop,
 } from "../domain/avatar";
-import { notifyAvatarChanged } from "./avatar-events";
 import { Avatar as AvatarImage } from "./avatar";
+import { avatarEditorCopy } from "./avatar-editor-copy";
+import { notifyAvatarChanged } from "./avatar-events";
 import type { useAvatar } from "./use-avatar";
 import styles from "./avatar-editor.module.css";
 
@@ -31,66 +32,7 @@ type Pan = { x: number; y: number };
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const copy = {
-  ko: {
-    avatar: "프로필 이미지",
-    help: "캐릭터를 고르거나 내 사진을 사용할 수 있어요.",
-    change: "변경",
-    loading: "프로필 이미지를 불러오는 중",
-    loadError: "프로필 이미지를 불러오지 못했어요.",
-    retry: "다시 시도",
-    dialogTitle: "프로필 이미지 변경",
-    dialogHelp: "캐릭터 또는 사진을 선택한 뒤 저장해 주세요.",
-    characters: "캐릭터 선택",
-    choosePhoto: "사진 업로드",
-    replacePhoto: "다른 사진 선택",
-    photoHelp: "JPEG, PNG, WebP · 최대 4MB",
-    crop: "사진 위치 조정",
-    cropHelp: "사진을 드래그하거나 방향키로 위치를 맞추세요.",
-    zoom: "확대",
-    deletePhoto: "사진 삭제",
-    cancel: "취소",
-    save: "저장",
-    saving: "저장 중…",
-    invalidType: "JPEG, PNG 또는 WebP 파일을 선택해 주세요.",
-    tooLarge: "4MB 이하의 사진을 선택해 주세요.",
-    decodeFailed: "사진을 열지 못했어요. 다른 파일을 선택해 주세요.",
-    failed: "저장하지 못했어요. 선택한 내용을 유지했으니 다시 시도해 주세요.",
-    conflict: "다른 곳에서 프로필 이미지가 변경됐어요. 최신 상태를 확인한 뒤 다시 저장해 주세요.",
-    refreshFailed: "최신 상태를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.",
-    refresh: "최신 상태 다시 불러오기",
-    photoAlt: "조정할 프로필 사진",
-  },
-  en: {
-    avatar: "Profile image",
-    help: "Choose a character or use your own photo.",
-    change: "Change",
-    loading: "Loading profile image",
-    loadError: "We couldn't load your profile image.",
-    retry: "Try again",
-    dialogTitle: "Change profile image",
-    dialogHelp: "Choose a character or photo, then save.",
-    characters: "Choose a character",
-    choosePhoto: "Upload photo",
-    replacePhoto: "Choose another photo",
-    photoHelp: "JPEG, PNG, WebP · up to 4MB",
-    crop: "Adjust photo",
-    cropHelp: "Drag the photo or use the arrow keys to position it.",
-    zoom: "Zoom",
-    deletePhoto: "Delete photo",
-    cancel: "Cancel",
-    save: "Save",
-    saving: "Saving…",
-    invalidType: "Choose a JPEG, PNG, or WebP file.",
-    tooLarge: "Choose a photo up to 4MB.",
-    decodeFailed: "We couldn't open that photo. Choose another file.",
-    failed: "We couldn't save it. Your selection is still here, so try again.",
-    conflict: "Your profile image changed elsewhere. Review the latest version, then save again.",
-    refreshFailed: "We couldn't load the latest version. Check your connection and try again.",
-    refresh: "Reload latest version",
-    photoAlt: "Profile photo being adjusted",
-  },
-} as const;
+const copy = avatarEditorCopy;
 
 function clamp(value: number, min = -1, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -139,62 +81,8 @@ function characterLabel(id: AvatarCharacterId, locale: Locale) {
   return `${labels[color]} ${labels[shape]}`;
 }
 
-export function AvatarSettings({ locale, resource }: { locale: Locale; resource: AvatarResource }) {
-  const t = copy[locale];
-  const [open, setOpen] = useState(false);
-  const [editorOwner, setEditorOwner] = useState<string | null>(null);
-  const [editorSnapshot, setEditorSnapshot] = useState<{ avatar: Avatar; imageUrl: string | null } | null>(null);
-  const changeButtonRef = useRef<HTMLButtonElement>(null);
-  const state = resource.state;
-  const closeEditor = () => {
-    setOpen(false);
-    setEditorOwner(null);
-    setEditorSnapshot(null);
-    requestAnimationFrame(() => changeButtonRef.current?.focus());
-  };
-  useEffect(() => {
-    if (state.status === "ready") {
-      setEditorSnapshot({ avatar: state.avatar, imageUrl: state.imageUrl });
-    }
-  }, [state]);
-  useEffect(() => {
-    if (open && editorOwner && resource.ownerId !== editorOwner) closeEditor();
-  }, [editorOwner, open, resource.ownerId]);
-  return (
-    <div className={styles.settingsRow}>
-      <div className={styles.currentAvatar}>
-        {state.status === "ready" ? (
-          <AvatarImage avatar={state.avatar} imageUrl={state.imageUrl} label={t.avatar} size={64} />
-        ) : (
-          <span className={styles.loadingAvatar} aria-hidden="true" />
-        )}
-        <span>
-          <strong>{t.avatar}</strong>
-          <small>{state.status === "error" ? t.loadError : state.status === "loading" ? t.loading : t.help}</small>
-        </span>
-      </div>
-      {state.status === "ready" ? (
-        <button ref={changeButtonRef} type="button" onClick={() => {
-          setEditorOwner(resource.ownerId ?? null);
-          setEditorSnapshot({ avatar: state.avatar, imageUrl: state.imageUrl });
-          setOpen(true);
-        }}>{t.change}</button>
-      ) : state.status === "error" ? (
-        <button type="button" onClick={resource.refresh}>{t.retry}</button>
-      ) : null}
-      {open && editorSnapshot && editorOwner === resource.ownerId ? (
-        <AvatarEditor
-          locale={locale}
-          resource={resource}
-          avatar={editorSnapshot.avatar}
-          imageUrl={editorSnapshot.imageUrl}
-          refreshUnavailable={state.status === "error"}
-          onClose={closeEditor}
-        />
-      ) : null}
-    </div>
-  );
-}
+// Compatibility for existing callers; the settings entry point imports its lightweight module.
+export { AvatarSettings } from "./avatar-settings";
 
 export function AvatarEditor({
   locale,

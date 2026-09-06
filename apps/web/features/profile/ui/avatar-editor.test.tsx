@@ -52,7 +52,7 @@ describe("avatar editor", () => {
     vi.stubGlobal("fetch", fetcher);
     render(<AvatarEditor locale="ko" resource={avatarResource} avatar={metadata} imageUrl="blob:current" onClose={close} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "라벤더 요정" }));
+    fireEvent.click(await screen.findByRole("button", { name: "라벤더 요정" }));
     expect(screen.getByRole("img", { name: "프로필 이미지" })).toHaveAttribute("src", "/images/avatars/fairy-lavender.webp");
     expect(fetcher).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
@@ -119,7 +119,7 @@ describe("avatar editor", () => {
     vi.stubGlobal("fetch", fetcher);
     const view = render(<AvatarEditor locale="ko" resource={ownerAResource} avatar={metadata} imageUrl="blob:current" onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "라벤더 요정" }));
+    fireEvent.click(await screen.findByRole("button", { name: "라벤더 요정" }));
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
     expect(ownerAResource.getAccessToken).toHaveBeenCalledTimes(1);
 
@@ -175,7 +175,7 @@ describe("avatar editor", () => {
     const view = render(<AvatarSettings locale="ko" resource={avatarResource} />);
 
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
-    fireEvent.click(screen.getByRole("button", { name: "라벤더 요정" }));
+    fireEvent.click(await screen.findByRole("button", { name: "라벤더 요정" }));
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
     await screen.findByText("다른 곳에서 프로필 이미지가 변경됐어요. 최신 상태를 확인한 뒤 다시 저장해 주세요.");
     expect(avatarResource.refresh).toHaveBeenCalledTimes(1);

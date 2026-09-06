@@ -9,6 +9,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
+import { Pause } from "lucide-react";
+import { bypassImageOptimization, homeHeroSizes } from "./fan-ui/public-image-policy";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
 import { creatorHeroImages } from "./fan-ui/creator-hero-images";
@@ -20,6 +22,8 @@ const BANKSY_CAMPAIGN_IMAGE = "/images/guest-home/banksy-exhibition-campaign.web
 const carouselCopy = {
   ko: {
     label: "주요 LIVE",
+    pause: "자동 재생 정지",
+    resume: "자동 재생 시작",
     previous: "이전 LIVE",
     next: "다음 LIVE",
     goTo: (index: number) => `${index}번째 LIVE 보기`,
@@ -38,6 +42,8 @@ const carouselCopy = {
   },
   en: {
     label: "Featured LIVE events",
+    pause: "Pause autoplay",
+    resume: "Start autoplay",
     previous: "Previous LIVE",
     next: "Next LIVE",
     goTo: (index: number) => `View LIVE ${index}`,
@@ -92,21 +98,24 @@ export function formatHeroLiveTitle(celebrityName: string) {
   return `${celebrityName} LIVE`;
 }
 
-function LiveCountdown({
+export function LiveCountdown({
   effectiveStatus,
   startsAt,
+  active,
 }: {
   effectiveStatus: LiveEventResponse["live"]["effectiveStatus"];
   startsAt: string;
+  active: boolean;
 }) {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!active || effectiveStatus === "live") return;
     const update = () => setNow(Date.now());
     update();
     const timer = window.setInterval(update, 1_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [active, effectiveStatus, startsAt]);
 
   const value = effectiveStatus === "live"
     ? "LIVE NOW"
@@ -132,16 +141,23 @@ function HeroStatusBadge({ label, showRadio = false }: { label: string; showRadi
 export function LiveHeroCarousel({
   featuredLives,
   locale,
+  panelOpen = true,
 }: {
   featuredLives: readonly LiveEventResponse[];
   locale: ContentLocale;
+  panelOpen?: boolean;
 }) {
   const t = carouselCopy[locale];
   const total = featuredLives.length + 1;
   const hasControls = total > 1;
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [interactionPaused, setInteractionPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
+  const [pointerActive, setPointerActive] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [timerRevision, setTimerRevision] = useState(0);
   const [announcement, setAnnouncement] = useState("");
@@ -162,20 +178,28 @@ export function LiveHeroCarousel({
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || typeof IntersectionObserver === "undefined") return;
-    let inView = false;
+    if (!root) return;
+    let visible = typeof IntersectionObserver === "undefined";
     const syncVisibility = () => {
-      root.dataset.motionVisible = String(inView && !document.hidden);
+      setInView(visible);
+      setDocumentVisible(!document.hidden);
+      root.dataset.motionVisible = String(visible && !document.hidden);
     };
-    const observer = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
       syncVisibility();
     });
-    observer.observe(root);
+    observer?.observe(root);
+    syncVisibility();
     document.addEventListener("visibilitychange", syncVisibility);
+    const releasePointer = () => setPointerActive(false);
+    window.addEventListener("pointerup", releasePointer);
+    window.addEventListener("pointercancel", releasePointer);
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       document.removeEventListener("visibilitychange", syncVisibility);
+      window.removeEventListener("pointerup", releasePointer);
+      window.removeEventListener("pointercancel", releasePointer);
     };
   }, []);
 
@@ -208,11 +232,15 @@ export function LiveHeroCarousel({
     }
   }, [emblaApi, reducedMotion, t, total]);
 
+  const visible = inView && documentVisible;
+  const autoplayPaused = userPaused || hovered || focusWithin || pointerActive || !visible || reducedMotion;
+  const imageSizes = homeHeroSizes(panelOpen);
+
   useEffect(() => {
-    if (total <= 1 || interactionPaused || reducedMotion) return;
+    if (total <= 1 || autoplayPaused) return;
     const timer = window.setTimeout(() => goTo(activeIndex + 1, false), AUTOPLAY_INTERVAL_MS);
     return () => window.clearTimeout(timer);
-  }, [activeIndex, goTo, interactionPaused, reducedMotion, timerRevision, total]);
+  }, [activeIndex, goTo, autoplayPaused, timerRevision, total]);
 
   return (
     <div
@@ -223,17 +251,17 @@ export function LiveHeroCarousel({
       aria-label={t.label}
       data-reduced-motion={reducedMotion ? "true" : "false"}
       data-has-controls={hasControls ? "true" : "false"}
-      onMouseEnter={() => setInteractionPaused(true)}
-      onMouseLeave={() => setInteractionPaused(false)}
-      onFocusCapture={() => setInteractionPaused(true)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setFocusWithin(true)}
       onBlurCapture={(event) => {
         if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
-          setInteractionPaused(false);
+          setFocusWithin(false);
         }
       }}
-      onPointerDown={() => setInteractionPaused(true)}
-      onPointerUp={() => setInteractionPaused(false)}
-      onPointerCancel={() => setInteractionPaused(false)}
+      onPointerDown={() => setPointerActive(true)}
+      onPointerUp={() => setPointerActive(false)}
+      onPointerCancel={() => setPointerActive(false)}
     >
       <div className={styles.heroViewport} ref={viewportRef}>
         <div className={styles.heroTrack}>
@@ -241,8 +269,8 @@ export function LiveHeroCarousel({
           const isActive = index === activeIndex;
           const creatorHero = featuredLive.live.celebrity.slug === "elina" ? creatorHeroImages.elina : undefined;
           const creatorPicture = creatorHero ? {
-            desktop: getImageProps({ src: creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: "100vw", priority: index === 0 }).props,
-            mobile: getImageProps({ src: creatorHero.mobileSrc ?? creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: "100vw", priority: index === 0 }).props,
+            desktop: getImageProps({ src: creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: imageSizes, loading: index === 0 ? "eager" : "lazy", fetchPriority: index === 0 ? "high" : "auto" }).props,
+            mobile: getImageProps({ src: creatorHero.mobileSrc ?? creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: imageSizes, loading: index === 0 ? "eager" : "lazy", fetchPriority: index === 0 ? "high" : "auto" }).props,
           } : null;
           const detailHref = `/live/${featuredLive.live.slug}`;
           const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
@@ -271,9 +299,10 @@ export function LiveHeroCarousel({
                 src={featuredLive.live.heroImage.url}
                 alt={featuredLive.live.heroImage.alt}
                 fill
-                unoptimized={featuredLive.live.heroImage.url.startsWith("https://")}
-                sizes="(min-width: 1024px) 66vw, 100vw"
-                priority={index === 0}
+                unoptimized={bypassImageOptimization(featuredLive.live.heroImage.url)}
+                sizes={imageSizes}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
               />}
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
@@ -287,6 +316,7 @@ export function LiveHeroCarousel({
                   <LiveCountdown
                     effectiveStatus={featuredLive.live.effectiveStatus}
                     startsAt={featuredLive.live.startsAt}
+                    active={isActive && visible}
                   />
                 </p>
                 {featuredLive.primaryAction === "sign_in_to_reserve" ? (
@@ -326,8 +356,9 @@ export function LiveHeroCarousel({
               src={BANKSY_CAMPAIGN_IMAGE}
               alt={t.campaignAlt}
               fill
-              sizes="(min-width: 1024px) 66vw, 100vw"
-              priority={featuredLives.length === 0}
+              sizes={imageSizes}
+              loading={featuredLives.length === 0 ? "eager" : "lazy"}
+              fetchPriority={featuredLives.length === 0 ? "high" : "auto"}
             />
             <div className={styles.heroOverlay} aria-hidden="true" />
             <div className={styles.heroContent}>
@@ -352,7 +383,7 @@ export function LiveHeroCarousel({
           </button>
           <div
             className={styles.carouselDots}
-            style={{ "--carousel-width": `${total * 32}px` } as CSSProperties}
+            style={{ "--carousel-width": `${total * 32 + 44}px` } as CSSProperties}
           >
             {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "banksy-campaign"].map((key, index) => (
               <button
@@ -366,6 +397,10 @@ export function LiveHeroCarousel({
                 <span aria-hidden="true" />
               </button>
             ))}
+            <button className={styles.carouselPause} type="button" aria-label={userPaused ? t.resume : t.pause}
+              aria-pressed={userPaused} disabled={reducedMotion} onClick={() => setUserPaused((value) => !value)}>
+              {userPaused || reducedMotion ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+            </button>
           </div>
           <button className={styles.carouselNext} type="button" aria-label={t.next} onClick={() => goTo(activeIndex + 1, true)}>
             <ChevronRight />

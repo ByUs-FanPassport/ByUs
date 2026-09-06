@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { act } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatKoreanLiveDate, GuestHome } from "./guest-home";
 import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
@@ -12,7 +12,9 @@ const privy = vi.hoisted(() => ({
   ready: true,
   authenticated: false,
   getAccessToken: vi.fn<() => Promise<string | null>>().mockResolvedValue("token"),
+  user: { id: "owner-a" },
 }));
+const routerRefresh = vi.hoisted(() => vi.fn());
 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => privy,
@@ -21,7 +23,7 @@ vi.mock("@privy-io/react-auth", () => ({
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), refresh: routerRefresh }),
 }));
 
 const featuredLive = {
@@ -40,12 +42,17 @@ const celebrities = [
   { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000 },
 ] as const;
 const defaultProps = { celebrities, locale: "ko" as const };
+const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boolean = () => false) => ({
+  states: Object.fromEntries(slugs.map((slug) => [slug, { reacted: reacted(slug) }])),
+});
 
 describe("canonical 03 guest home", () => {
   afterEach(() => {
     privy.ready = true;
     privy.authenticated = false;
     privy.getAccessToken.mockReset().mockResolvedValue("token");
+    privy.user.id = "owner-a";
+    routerRefresh.mockReset();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -458,14 +465,14 @@ describe("canonical 03 guest home", () => {
     fireEvent.click(screen.getByRole("button", { name: "이전 LIVE" }));
     expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "1번째 LIVE 보기" })).toHaveAttribute("aria-current", "true");
-    expect(screen.queryByRole("button", { name: /자동 재생/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "자동 재생 정지" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("pauses automatic playback during hover and disables it for reduced motion", () => {
     vi.useFakeTimers();
     const secondLive = {
       ...featuredLive,
-      live: { ...featuredLive.live, slug: "elina-live", title: "Elina 예정 LIVE" },
+      live: { ...featuredLive.live, id: "919b52d9-62c3-450c-b3dc-78d84d2238c6", slug: "elina-live", title: "Elina 예정 LIVE" },
     };
     const mediaListeners = new Set<(event: MediaQueryListEvent) => void>();
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
@@ -528,16 +535,22 @@ describe("canonical 03 guest home", () => {
     };
     const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ summary: base }))
       .mockResolvedValue(Response.json({ summary: { ...base, profile: { nickname: "갱신" } } }));
-    vi.stubGlobal("fetch", (url: string) => url.includes("/reactions") ? Promise.resolve(Response.json({ reaction: null })) : fetcher(url));
+    vi.stubGlobal("fetch", (url: string) => url.includes("/creator-reactions")
+      ? Promise.resolve(Response.json(reactionStates(celebrities.map(({ slug }) => slug))))
+      : fetcher(url));
     render(<GuestHome {...defaultProps} featuredLives={[]} />);
     expect(await screen.findAllByRole("heading", { name: "이전님, 반가워요." })).toHaveLength(2);
-    await act(async () => { notifyFanActivityUpdated(undefined); });
+    await act(async () => { notifyFanActivityUpdated("owner-a"); });
     expect(await screen.findAllByRole("heading", { name: "갱신님, 반가워요." })).toHaveLength(2);
   });
 
   it("restores the Passport artwork and lets fans page through multiple celebrity Passports", async () => {
     privy.authenticated = true;
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ summary: {
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+      if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+      return Response.json({ summary: {
       profile: { nickname: "카밀리아" },
       creators: [
         { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
@@ -545,7 +558,8 @@ describe("canonical 03 guest home", () => {
         { celebrity: { slug: "reaction-only", name: "Reaction Only", image: "/reaction.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
       ],
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 2, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
-    } }) }));
+    } });
+    }));
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
@@ -558,9 +572,10 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("heading", { name: "Reaction Only Fan Passport" })).not.toBeInTheDocument();
 
     fireEvent.click(within(carousels[0]).getByRole("button", { name: "다음 패스포트" }));
-    expect(screen.getAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(1);
-    expect(screen.getAllByRole("heading", { name: "KATSEYE 패스포트" })).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: "KARA 패스포트" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "KATSEYE 패스포트" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
+    await act(async () => {});
   });
 
   it("shows truthful authenticated empty states and retries summary failures", async () => {
@@ -577,7 +592,9 @@ describe("canonical 03 guest home", () => {
           },
         }),
       });
-    vi.stubGlobal("fetch", (url: string) => url.includes("/reactions") ? Promise.resolve(Response.json({ reaction: null })) : fetchMock(url));
+    vi.stubGlobal("fetch", (url: string) => url.includes("/creator-reactions")
+      ? Promise.resolve(Response.json(reactionStates(celebrities.map(({ slug }) => slug))))
+      : fetchMock(url));
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     const retryButtons = await screen.findAllByRole("button", { name: "다시 시도" });
@@ -623,7 +640,126 @@ describe("canonical 03 guest home", () => {
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
     expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
-  });});
+  });
+
+  it("shares one reaction batch and one selected Passport detail between mobile and desktop", async () => {
+    privy.authenticated = true;
+    const passportId = "11111111-1111-4111-8111-111111111111";
+    const summary = {
+      profile: { nickname: "Fan" },
+      creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: passportId, tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
+      live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    };
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"));
+      if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+      return Response.json({ summary });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(2);
+    await screen.findByRole("link", { name: "KARA 입덕 완료" });
+    expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/creator-reactions"))).toHaveLength(1);
+    expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith(`/api/passports/${passportId}`))).toHaveLength(1);
+  });
+
+  it("aborts a previous owner reaction batch and ignores its late response", async () => {
+    privy.authenticated = true;
+    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    let resolveOld!: (response: Response) => void;
+    const oldBatch = new Promise<Response>((resolve) => { resolveOld = resolve; });
+    let batchCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
+      batchCount += 1;
+      if (batchCount === 1) return oldBatch;
+      return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+    }));
+    const view = render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    await act(async () => { privy.user.id = "owner-b"; view.rerender(<GuestHome {...defaultProps} featuredLives={[]} />); });
+    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
+    await act(async () => { resolveOld(Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"))); });
+    expect(screen.getByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
+  });
+
+  it("coalesces a burst of owner activity updates into one follow-up reaction batch", async () => {
+    privy.authenticated = true;
+    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    let resolveInitial!: (response: Response) => void;
+    const initial = new Promise<Response>((resolve) => { resolveInitial = resolve; });
+    let batchCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
+      batchCount += 1;
+      if (batchCount === 1) return initial;
+      return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+    }));
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    await act(async () => {
+      notifyFanActivityUpdated("owner-a", ["reactions"]);
+      notifyFanActivityUpdated("owner-a", ["reactions"]);
+      notifyFanActivityUpdated("owner-a", ["reactions"]);
+      resolveInitial(Response.json(reactionStates(celebrities.map(({ slug }) => slug))));
+    });
+    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).toBeInTheDocument();
+    await waitFor(() => expect(batchCount).toBe(2));
+  });
+
+  it("retains a successful reaction state when a background refresh fails", async () => {
+    privy.authenticated = true;
+    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    let batchCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
+      batchCount += 1;
+      if (batchCount > 1) return Response.json({ error: { code: "REACTION_UNAVAILABLE" } }, { status: 503 });
+      return Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"));
+    }));
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findByRole("link", { name: "KARA 입덕 완료" })).toHaveAttribute("data-reacted", "true");
+    act(() => notifyFanActivityUpdated("owner-a", ["reactions"]));
+    await waitFor(() => expect(batchCount).toBe(2));
+    expect(screen.getByRole("link", { name: "KARA 입덕 완료" })).toHaveAttribute("data-reacted", "true");
+  });
+
+  it("does not fetch private Home state until an authenticated owner id is known", async () => {
+    privy.authenticated = true;
+    privy.user.id = "";
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
+    await act(async () => {});
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("splits more than 50 Home creator badges into valid batch requests", async () => {
+    privy.authenticated = true;
+    const roster = Array.from({ length: 51 }, (_, index) => ({ ...celebrities[0], slug: `creator-${index}`, name: `Creator ${index}`, displayOrder: index }));
+    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    const batchUrls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (!url.startsWith("/api/me/creator-reactions")) return Response.json({ summary });
+      batchUrls.push(url);
+      const slugs = new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",");
+      return Response.json(reactionStates(slugs));
+    }));
+    render(<GuestHome celebrities={roster} featuredLives={[]} locale="ko" />);
+    expect(await screen.findByRole("link", { name: "Creator 50 입덕하기" })).toBeInTheDocument();
+    expect(batchUrls).toHaveLength(2);
+    expect(batchUrls.map((url) => new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",").length)).toEqual([50, 1]);
+  });
+
+  it("shows retry UI for failed LIVE data without presenting it as an empty LIVE list", () => {
+    render(<GuestHome {...defaultProps} featuredLives={[]} contentErrors={{ featuredLives: true }} />);
+    expect(screen.queryByText("현재 공개된 LIVE가 없습니다.")).not.toBeInTheDocument();
+    const buttons = screen.getAllByRole("button", { name: "다시 시도" });
+    fireEvent.click(buttons[0]);
+    expect(routerRefresh).toHaveBeenCalledTimes(1);
+  });
+});
 
 it("uses identical cards for all creators with editorial ordering only", () => {
   const base = defaultProps.celebrities[0];

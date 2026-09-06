@@ -1,5 +1,6 @@
-const CACHE_NAME = "byus-shell-v1";
-const PUBLIC_SHELL = ["/", "/manifest.webmanifest", "/byus-app-icon-192.png", "/byus-app-icon-512.png", "/images/guest-home/byus-wordmark.svg"];
+const CACHE_NAME = "byus-shell-v2";
+const OFFLINE_DOCUMENT = "/offline.html";
+const PUBLIC_SHELL = [OFFLINE_DOCUMENT, "/manifest.webmanifest", "/byus-app-icon-192.png", "/byus-app-icon-512.png", "/images/guest-home/byus-wordmark.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_SHELL)));
@@ -7,7 +8,9 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
+  event.waitUntil(caches.keys().then((keys) => Promise.all(
+    keys.filter((key) => key.startsWith("byus-shell-") && key !== CACHE_NAME).map((key) => caches.delete(key)),
+  )));
   self.clients.claim();
 });
 
@@ -15,11 +18,20 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || !PUBLIC_SHELL.includes(url.pathname)) return;
+  if (url.origin !== self.location.origin) return;
+  // RSC and personalized/API reads always go directly to the network.
+  if (request.headers.get("RSC") === "1" || url.searchParams.has("_rsc")) return;
+  if (request.mode === "navigate") {
+    event.respondWith(fetch(request).catch(async () =>
+      (await caches.match(OFFLINE_DOCUMENT)) || Response.error()));
+    return;
+  }
+  if (url.search || !PUBLIC_SHELL.includes(url.pathname)) return;
   event.respondWith(fetch(request).then((response) => {
-    if (response.ok) void caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+    if (response.ok) event.waitUntil(caches.open(CACHE_NAME)
+      .then((cache) => cache.put(request, response.clone())).catch(() => {}));
     return response;
-  }).catch(() => caches.match(request)));
+  }).catch(async () => (await caches.match(request)) || Response.error()));
 });
 
 self.addEventListener("push", (event) => {

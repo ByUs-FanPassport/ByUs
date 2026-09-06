@@ -25,7 +25,7 @@ import {
 } from "../../notification/ui/push-subscription";
 import styles from "./settings-screen.module.css";
 import type { NotificationConnections } from "../../notification/domain/connected-account";
-import { AvatarSettings } from "./avatar-editor";
+import { AvatarSettings } from "./avatar-settings";
 import { useAvatar } from "./use-avatar";
 
 type Locale = "ko" | "en";

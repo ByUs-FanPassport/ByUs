@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
+import { publicImageRemotePatterns } from "./components/fan-ui/public-image-policy";
 import { responseSecurityHeaders } from "./security-headers";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  images: { remotePatterns: publicImageRemotePatterns },
   poweredByHeader: false,
   typedRoutes: true,
   // Sharp 0.35 moved its entry point; Next 16's native dependency tracing

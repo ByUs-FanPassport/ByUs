@@ -77,7 +77,8 @@
   min-height: var(--fan-action-primary-height);
   border-color: transparent;
   border-radius: var(--radius-pill);
-  background: var(--color-primary-action);
+  /* Preserve brand hues while giving 15px white labels sufficient contrast. */
+  background: linear-gradient(rgb(0 0 0 / 18%), rgb(0 0 0 / 18%)), var(--color-primary-action);
   color: #fff;
   font-size: var(--fan-action-emphasis-size);
   box-shadow: 0 5px 8px rgb(58 18 55 / 22%);

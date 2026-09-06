@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { bypassImageOptimization, creatorCropScale } from "./public-image-policy";
 import type { PublishedCelebrity } from "../../server/content/content-domain";
 import styles from "./creator-portrait.module.css";
 
@@ -14,8 +15,8 @@ export function CreatorPortrait({ slug, image }: {
 
   return (
     <span className={styles.portrait} data-portrait={slug}>
-      <Image src={image.url} alt={image.alt} width={420} height={420}
-        style={{ objectPosition: position }} unoptimized={image.url.startsWith("https://")} />
+      <Image src={image.url} alt={image.alt} width={420} height={420} sizes={`${240 * creatorCropScale(slug)}px`}
+        style={{ objectPosition: position }} unoptimized={bypassImageOptimization(image.url)} />
     </span>
   );
 }

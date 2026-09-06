@@ -6,18 +6,17 @@ import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 import { LiveStatusIndicator } from "./live-status-indicator";
 
 import { CreatorPortrait } from "./fan-ui/creator-portrait";
-import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
+import { HomeOwnerProvider, useHomeOwner } from "./fan-ui/home-owner-provider";
 
 import Image from "next/image";
 import { orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { z } from "zod";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Menu } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
-import { mySummarySchema, type MySummary } from "../features/my/domain/my-summary";
+import type { MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame } from "./fan-shell/fan-app-shell";
@@ -31,38 +30,13 @@ import {
   PassportStampCanvas,
   type PassportStampRecord,
 } from "../features/passport/ui/passport-stamp-artwork";
-import { stampTypeSchema } from "../features/passport/domain/passport-read-model";
 import { FanSectionHeader } from "./fan-ui/fan-heading";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
 const UPCOMING_LIVE_PAGE_SIZE = 3;
 
-type HomePersonalizationState =
-  | { status: "auth-loading" }
-  | { status: "guest" }
-  | { status: "authenticated-loading" }
-  | { status: "authenticated-error" }
-  | { status: "authenticated-ready"; summary: MySummary };
-
-type PassportPreviewState =
-  | { status: "loading" | "error"; stamps: readonly PassportStampRecord[]; totalCount: 0 }
-  | { status: "ready"; stamps: readonly PassportStampRecord[]; totalCount: number };
-
-const passportPreviewResponseSchema = z.object({
-  passport: z.object({
-    stamps: z.array(z.object({
-      id: z.uuid(),
-      type: stampTypeSchema,
-      issuedAt: z.iso.datetime({ offset: true }),
-    }).loose()),
-    activities: z.array(z.object({
-      stampId: z.uuid().nullable(),
-      points: z.number().int(),
-    }).loose()),
-    stampSummary: z.object({ total: z.number().int().nonnegative() }).loose(),
-  }).loose(),
-}).loose();
+export type HomeContentErrors = { celebrities?: boolean; celebrityLives?: boolean; featuredLives?: boolean };
 
 const copy = {
   ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시", campaignTitle: "엘리나와 함께 만나는 뱅크시", campaignBody: "전시가 끝난 뒤, 팬들과 작품을 보고 이야기를 나누는 특별 LIVE를 준비했어요.", campaignDate: "9월 18일 금요일 · 오후 5시", campaignPeriod: "11월 전시 종료까지", campaignBenefit: "전시 티켓·굿즈 이벤트", campaignAction: "이벤트 살펴보기", campaignPartner: "JKENT × ByUs" },
@@ -100,39 +74,11 @@ function formatPassportValue(tier: string, score: number, locale: ContentLocale)
     : `${tier} · ${score} Score`;
 }
 
-const parseHomeSummary = (body: unknown) => mySummarySchema.parse((body as { summary?: unknown }).summary);
-
-function useHomePersonalization(locale: ContentLocale) {
-  const auth = usePrivy();
-  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseHomeSummary, auth);
-  const state: HomePersonalizationState = !auth.ready ? { status: "auth-loading" }
-    : !auth.authenticated ? { status: "guest" }
-    : resource.state.status === "loading" ? { status: "authenticated-loading" }
-    : resource.state.status === "error" ? { status: "authenticated-error" }
-    : { status: "authenticated-ready", summary: resource.state.data };
-  return { state, retry: resource.retry };
-}
-
-const parseHomePassportPreview = (body: unknown) => {
-  const parsed = passportPreviewResponseSchema.parse(body);
-  const pointsByStamp = new Map(parsed.passport.activities.flatMap((activity) => activity.stampId ? [[activity.stampId, activity.points] as const] : []));
-  return {
-    stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })),
-    totalCount: parsed.passport.stampSummary.total,
-  };
-};
-
-function usePassportPreview(passportId: string | null, locale: ContentLocale): PassportPreviewState {
-  const auth = usePrivy();
-  const resource = useOwnedFanResource(passportId ? `/api/passports/${encodeURIComponent(passportId)}?locale=${locale}` : null, parseHomePassportPreview, auth);
-  return resource.state.status === "ready" ? { status: "ready", ...resource.state.data }
-    : { status: resource.state.status, stamps: [], totalCount: 0 };
-}
-
 function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
   return (
-    <section className={styles.personalizationState} role="status" aria-live="polite">
+    <section className={`${styles.personalizationState} ${styles.personalizationLoading}`} role="status" aria-live="polite">
       <span className={styles.stateSkeleton} aria-hidden="true" />
+      <span className={styles.stateSkeletonShort} aria-hidden="true" />
       <span>{copy[locale].loading}</span>
     </section>
   );
@@ -155,16 +101,22 @@ function BanksyCampaignAd({ locale }: { locale: ContentLocale }) {
 }
 
 function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile" }) {
+  const owner = useHomeOwner();
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
   const passportCreators = summary.creators.filter((item) => item.passport !== null);
-  const [activePassportIndex, setActivePassportIndex] = useState(0);
+  const activePassportIndex = Math.max(0, passportCreators.findIndex((item) => item.passport?.id === owner.selectedPassportId));
   const creator = passportCreators[activePassportIndex] ?? null;
-  const passportPreview = usePassportPreview(creator?.passport?.id ?? null, locale);
+  const passportPreview = owner.passportPreview.status === "ready"
+    ? { status: "ready" as const, ...owner.passportPreview.data }
+    : { status: owner.passportPreview.status, stamps: [] as readonly PassportStampRecord[], totalCount: 0 };
   const reservation = summary.live.upcoming[0] ?? null;
   const headingId = `signed-in-home-heading-${placement}`;
   const passportCount = passportCreators.length;
-  const selectPassport = (index: number) => setActivePassportIndex((index + passportCount) % passportCount);
+  const selectPassport = (index: number) => {
+    const selected = passportCreators[(index + passportCount) % passportCount]?.passport;
+    if (selected) owner.selectPassport(selected.id);
+  };
   const passportTitle = creator ? formatPassportTitle(creator.celebrity.name, locale) : "";
   const passportValue = creator?.passport ? formatPassportValue(creator.passport.tier, creator.passport.score, locale) : "";
   return (
@@ -217,12 +169,25 @@ function PersonalizationError({ locale, retry }: { locale: ContentLocale; retry:
   );
 }
 
-export function GuestHome({ celebrities, celebrityLives = [], featuredLives, locale }: { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale }) {
+function ContentLoadError({ locale }: { locale: ContentLocale }) {
+  const router = useRouter();
+  return <div className={styles.personalizationState} role="alert"><strong>{copy[locale].retryTitle}</strong><span>{copy[locale].retryHelp}</span><button type="button" onClick={() => router.refresh()}>{copy[locale].retry}</button></div>;
+}
+
+type GuestHomeProps = { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale; contentErrors?: HomeContentErrors };
+
+export function GuestHome(props: GuestHomeProps) {
+  const creatorSlugs = props.celebrities.map((celebrity) => celebrity.slug);
+  return <HomeOwnerProvider creatorSlugs={creatorSlugs} locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
+}
+
+function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {} }: GuestHomeProps) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
   const [panelOpen, setPanelOpen] = useState(true);
   const [upcomingPage, setUpcomingPage] = useState(0);
-  const personalization = useHomePersonalization(locale);
+  const owner = useHomeOwner();
+  const personalization = { state: owner.personalization, retry: owner.retryPersonalization };
   const orderedCreators = orderCreatorsForDiscovery(celebrities);
   const creatorRailRef = useRef<HTMLDivElement>(null);
   const [creatorScroll, setCreatorScroll] = useState({ previous: false, next: false });
@@ -276,7 +241,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
             <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
-            <LiveHeroCarousel featuredLives={featuredLives} locale={locale} />
+            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel featuredLives={featuredLives} locale={locale} panelOpen={panelOpen} />}
           </section>
 
           {personalization.state.status === "guest" ? (
@@ -295,7 +260,8 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link>} />
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
-            <div className={styles.celebrityCarousel}>
+            {contentErrors.celebrities || contentErrors.celebrityLives ? <ContentLoadError locale={locale} /> : null}
+            {!contentErrors.celebrities ? <div className={styles.celebrityCarousel}>
             <div id="home-creator-rail" ref={creatorRailRef} className={styles.celebrityRail} aria-label={t.celebrityList} onScroll={updateCreatorScroll}>
               {orderedCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
@@ -338,14 +304,14 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                 <button type="button" aria-label={locale === "ko" ? "다음 최애" : "Next creators"} aria-controls="home-creator-rail" disabled={!creatorScroll.next} onClick={() => moveCreators(1)}><ChevronRight /></button>
               </nav>
             ) : null}
-            </div>
+            </div> : null}
             </ActivePreviewCoordinator>
 
           </section>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
             <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
-            <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
+            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
               {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
                 const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
                 return (
@@ -357,8 +323,8 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                   </article>
                 );
               }) : <p>{t.noLive}</p>}
-            </div>
-            {upcomingPageCount > 1 ? (
+            </div>}
+            {!contentErrors.featuredLives && upcomingPageCount > 1 ? (
               <nav className={styles.livePagination} aria-label={t.upcoming}>
                 <button type="button" aria-label={t.previousLivePage} disabled={upcomingPage === 0} onClick={() => setUpcomingPage((page) => Math.max(0, page - 1))}><ChevronLeft /></button>
                 <span aria-live="polite" aria-atomic="true">{upcomingPage + 1} / {upcomingPageCount}</span>

@@ -6,6 +6,7 @@ import { LiveStatusIndicator } from "./live-status-indicator";
 
 import { usePrivy } from "@privy-io/react-auth";
 import Image, { getImageProps } from "next/image";
+import { bypassImageOptimization } from "./fan-ui/public-image-policy";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -505,7 +506,7 @@ export function CelebrityFanPage({
                 <img {...responsiveHero.mobile} alt={celebrity.image.alt} />
               </picture>
             ) : (
-              <Image src={creatorHero?.src ?? celebrity.image.url} alt={celebrity.image.alt} fill sizes={celebrity.slug === "ifewknow" ? "(max-width: 767px) calc(150vw - 48px), (min-width: 1440px) 1360px, calc(100vw - 64px)" : "(min-width: 1440px) 1360px, calc(100vw - 32px)"} priority style={creatorHero ? undefined : { objectPosition: celebrity.image.position }} unoptimized={!creatorHero && celebrity.image.url.startsWith("https://")} />
+              <Image src={creatorHero?.src ?? celebrity.image.url} alt={celebrity.image.alt} fill sizes={celebrity.slug === "ifewknow" ? "(max-width: 767px) calc(150vw - 48px), (min-width: 1440px) 1360px, calc(100vw - 64px)" : "(min-width: 1440px) 1360px, calc(100vw - 32px)"} priority style={creatorHero ? undefined : { objectPosition: celebrity.image.position }} unoptimized={!creatorHero && bypassImageOptimization(celebrity.image.url)} />
             )}
             <div className={styles.scrim} aria-hidden="true" />
             <div className={styles.heroContent}>
