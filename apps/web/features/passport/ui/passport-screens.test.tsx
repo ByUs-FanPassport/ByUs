@@ -43,6 +43,24 @@ describe("passport fan screens", () => {
     expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
   });
 
+  it("loads HTTPS collection photos directly while retaining optimization for local photos", async () => {
+    const external = { ...passport, id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", celebrity: {
+      slug: "xin", name: "엑신", image: {
+        url: "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/xin/profile-f2ec8b19121877f6.jpg",
+        alt: "엑신 멤버들의 행사 단체 사진", position: "center bottom",
+      },
+    } };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passports: [external, passport] })));
+    render(<PassportCollectionScreen />);
+    const remotePhoto = await screen.findByRole("img", { name: external.celebrity.image.alt });
+    expect(remotePhoto).toHaveAttribute("src", external.celebrity.image.url);
+    expect(remotePhoto).not.toHaveAttribute("srcset");
+    expect(remotePhoto).toHaveStyle({ objectPosition: "center bottom" });
+    const localPhoto = screen.getByRole("img", { name: "KARA" });
+    expect(localPhoto.getAttribute("src")).toContain("/_next/image?");
+    expect(localPhoto.getAttribute("srcset")).toContain(encodeURIComponent(celebrity.image.url));
+  });
+
   it("fails closed when the Passport collection API DTO is malformed", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
       passports: [{ ...passport, display: undefined }],
