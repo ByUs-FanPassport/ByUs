@@ -898,26 +898,27 @@
 
 .collectible {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
   align-items: center;
   margin: 0 0 48px;
-  padding: 24px;
+  padding: 20px;
   border: 1px solid oklch(88% 0.03 285);
-  border-radius: 20px;
+  border-radius: 16px;
   background: linear-gradient(135deg, oklch(98% 0.015 285), white);
 }
 
 .collectible h2,
 .collectible p { margin: 0; }
-.collectible p { margin-top: 8px; color: oklch(38% 0 0); }
-.collectible small { display: block; margin-top: 8px; color: oklch(52% 0 0); }
-.collectible > svg { width: 28px; height: 28px; color: oklch(52% 0.18 285); }
-.collectibleEyebrow { display: block; margin-bottom: 6px; color: oklch(48% 0.18 285); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.collectibleHeading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); }
+.collectible h2 { min-width:0; font-size:20px; font-weight:800; line-height:1.3; }
+.collectible p { margin-top: 8px; color: oklch(38% 0 0); font-size:15px; line-height:1.65; }
+.collectible small { display: block; margin-top: 8px; color:var(--color-muted); font-size:12px; line-height:1.5; }
+.collectibleHeading > svg { width:20px; height:20px; flex:none; color: oklch(52% 0.18 285); }
+.collectible > button { justify-self:start; }
 .collectible .actionError { grid-column: 1 / -1; }
 
 @media (max-width: 600px) {
-  .collectible { grid-template-columns: 1fr; }
   .collectible button { width: 100%; }
 }
 
@@ -948,7 +949,7 @@
 /* FanAction wraps children in its label: align this inline accessory explicitly. */
 .missionLinkContent { display:flex; align-items:center; gap:var(--space-2); }
 .missionLinkContent svg { display:block; width:18px; height:18px; flex:none; }
-.schedule .deadlineSchedule { display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-2); }
-.deadlineSchedule dt { align-items:center; }
+.schedule .deadlineSchedule { grid-template-columns:max-content minmax(0,1fr); align-items:start; gap:var(--space-2); }
+.deadlineSchedule dt { font-size:14px; line-height:1.6; white-space:nowrap; }
 .scheduleMeta { margin-top:var(--space-2); }
 .actionHelper { margin-bottom:0; }

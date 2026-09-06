@@ -87,6 +87,7 @@ const copy = {
     introduction: "LIVE 소개",
     howTo: "참여 방법",
     benefit: "LIVE 혜택",
+    benefitIntro: "LIVE에 참여하고, 최애와 함께한 순간을 기록과 혜택으로 남겨보세요.",
     fanCode: "Fan Code",
     fanCodeHelper:
       "LIVE에서 공개된 Fan Code를 입력하면 예약 여부와 관계없이 출석을 남길 수 있어요.",
@@ -166,6 +167,7 @@ const copy = {
     introduction: "About this LIVE",
     howTo: "How to join",
     benefit: "LIVE benefit",
+    benefitIntro: "Join a LIVE and turn moments with your favorite creator into lasting records and benefits.",
     fanCode: "Fan Code",
     fanCodeHelper:
       "Enter the Fan Code shared during the LIVE to record attendance—no reservation required.",
@@ -1103,8 +1105,12 @@ export function LiveEventScreen({
             {authenticated && collectible ? (
               <section className={styles.collectible} aria-labelledby="collectible-title">
                 <div>
-                  <span className={styles.collectibleEyebrow}>{locale === "ko" ? "Journey 보상" : "Journey reward"}</span>
-                  <h2 id="collectible-title">{locale === "ko" ? "Digital Collectible" : "Digital Collectible"}</h2>
+                  <div className={styles.collectibleHeading}>
+                    <h2 id="collectible-title">Digital Collectible</h2>
+                    {collectible.claim
+                      ? <Check aria-label={locale === "ko" ? "Claim 완료" : "Claim complete"} />
+                      : !collectible.eligible ? <LockKeyhole aria-hidden="true" /> : null}
+                  </div>
                   <p>{collectible.claim
                     ? collectible.claim.mint.status === "minted"
                       ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : `Minted · Token #${collectible.claim.mint.tokenId}`
@@ -1118,7 +1124,7 @@ export function LiveEventScreen({
                   <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
                     {collectiblePending ? (locale === "ko" ? "Claim 처리 중" : "Claiming") : (locale === "ko" ? "Collectible 받기" : "Claim Collectible")}
                   </FanAction>
-                ) : collectible.claim ? <Check aria-label={locale === "ko" ? "Claim 완료" : "Claim complete"} /> : <LockKeyhole aria-hidden="true" />}
+                ) : null}
                 {collectibleError ? <p className={styles.actionError} role="alert">{collectibleError}</p> : null}
               </section>
             ) : null}
@@ -1269,7 +1275,7 @@ export function LiveEventScreen({
             </section>
             <section className={styles.section}>
               <h2>{c.benefit}</h2>
-              <p>{live.productContext}</p>
+              <p>{c.benefitIntro}</p>
             </section>
           </div>
           <aside className={styles.identity}>

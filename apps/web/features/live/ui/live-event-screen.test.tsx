@@ -101,6 +101,29 @@ function payload(primaryAction = "reserve", withReservation = false) {
 }
 
 describe("LiveEventScreen", () => {
+  it.each(["locked", "eligible", "claimed"] as const)("preserves the collectible %s state in the compact reward card", async (state) => {
+    const response = payload();
+    const collectible = {
+      eligible: state === "eligible",
+      claimWindow: { from: "2026-09-18T12:30:00Z", until: "2026-09-20T12:30:00Z" },
+      claim: state === "claimed" ? {
+        id: "11111111-1111-4111-8111-111111111111",
+        liveEventId: response.live.id,
+        journeyCompletionId: "22222222-2222-4222-8222-222222222222",
+        businessStatus: "claimed",
+        claimedAt: "2026-09-18T13:00:00Z",
+        mint: { status: "queued", txHash: null, tokenId: null },
+      } : null,
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, viewer: { ...response.viewer, collectible } }), { status: 200 }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const card = await screen.findByRole("region", { name: "Digital Collectible" });
+    const action = within(card).queryByRole("button", { name: "Collectible 받기" });
+    if (state === "eligible") expect(action).toBeEnabled();
+    else expect(action).not.toBeInTheDocument();
+    if (state === "locked") expect(within(card).getByText("Journey 완료와 LIVE 종료 후 받을 수 있어요.")).toBeVisible();
+    if (state === "claimed") expect(within(card).getByLabelText("Claim 완료")).toBeVisible();
+  });
   it.each([false, true, null])("keeps mission availability truthful: %s", async (available) => {
     const response = payload();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, live: { ...response.live, missionsAvailable: available } }), { status: 200 }));
@@ -135,7 +158,8 @@ describe("LiveEventScreen", () => {
     expect(screen.getByRole("button", { name: "LIVE 예약하기" })
       .closest("[data-live-primary-action-slot]")).not.toBeNull();
     expect(container.querySelectorAll('[data-fan-action-emphasis="primary"]')).toHaveLength(1);
-    expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(2);
+    expect(screen.getAllByText("Official Photocard 응모 가능")).toHaveLength(1);
+    expect(screen.getByText("LIVE에 참여하고, 최애와 함께한 순간을 기록과 혜택으로 남겨보세요.")).toBeInTheDocument();
     expect(screen.getByText("12.8M Fans")).toBeInTheDocument();
     const schedule = screen.getByLabelText("LIVE 예약 정보");
     expect(within(schedule).getByText("기준 시간 KST (GMT+9)")).toBeInTheDocument();
