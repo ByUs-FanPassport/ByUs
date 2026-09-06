@@ -15,7 +15,7 @@ export async function POST(request: Request): Promise<Response> {
       resolver: createPrivyNodeSessionResolver({
         appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET,
         appEnvironment: env.PRIVY_APP_ENVIRONMENT,
-        testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED,
+        testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: env.PRIVY_APPLE_LOGIN_ENABLED,
       }),
       repository: createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY }),
     });

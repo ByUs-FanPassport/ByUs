@@ -11,7 +11,9 @@ const prefix = sourceEnvironment === 'dev' ? 'DEV' : 'PROD';
 const values = {
   NEXT_PUBLIC_APP_URL: process.env.VERCEL_APP_URL,
   NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
+  NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: process.env.NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED ?? 'false',
   PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
+  PRIVY_APPLE_LOGIN_ENABLED: process.env.PRIVY_APPLE_LOGIN_ENABLED ?? 'false',
   PRIVY_APP_SECRET: process.env.PRIVY_APP_SECRET,
   SUPABASE_URL: process.env[`SUPABASE_${prefix}_URL`],
   SUPABASE_SERVICE_ROLE_KEY: process.env[`SUPABASE_${prefix}_SERVICE_ROLE_KEY`],

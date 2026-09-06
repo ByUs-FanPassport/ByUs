@@ -15,11 +15,13 @@ const validEnv = {
   NEXT_PUBLIC_PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
   NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "development",
   NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
+  NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: "false",
   NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   PRIVY_APP_ID: "cmrtb8b7z002w0cjsyo5it6g6",
   PRIVY_APP_SECRET: "privy-app-secret-value",
   BYUS_DATA_ENVIRONMENT: "development",
   PRIVY_APP_ENVIRONMENT: "development",
+  PRIVY_APPLE_LOGIN_ENABLED: "false",
   PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key-value",
@@ -35,13 +37,17 @@ describe("public environment", () => {
   it("keeps existing deployments backward-compatible and fail-closed", () => {
     const legacy = { ...validEnv } as Record<string, string>;
     delete legacy.NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT;
+    delete legacy.NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED;
     delete legacy.NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED;
     delete legacy.PRIVY_APP_ENVIRONMENT;
+    delete legacy.PRIVY_APPLE_LOGIN_ENABLED;
     delete legacy.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED;
     expect(parseServerEnv(legacy)).toMatchObject({
       NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "production",
+      NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: false,
       NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
       PRIVY_APP_ENVIRONMENT: "production",
+      PRIVY_APPLE_LOGIN_ENABLED: false,
       PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
     });
   });
@@ -52,6 +58,7 @@ describe("public environment", () => {
       NEXT_PUBLIC_PRIVY_APP_ID: validEnv.NEXT_PUBLIC_PRIVY_APP_ID,
       NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "development",
       NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
+      NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: false,
       NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: false,
     });
     expect(
@@ -134,6 +141,7 @@ describe("server environment", () => {
       (key) =>
         !key.startsWith("NEXT_PUBLIC_") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
+        key !== "PRIVY_APPLE_LOGIN_ENABLED" &&
         key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
     );
 
@@ -201,6 +209,22 @@ describe("server environment", () => {
       ...validEnv,
       NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
     })).toThrowError(/PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
+  });
+
+  it("enables Apple login only when matching client and server flags are explicit", () => {
+    expect(parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: "true",
+      PRIVY_APPLE_LOGIN_ENABLED: "true",
+    })).toMatchObject({
+      NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: true,
+      PRIVY_APPLE_LOGIN_ENABLED: true,
+    });
+
+    expect(() => parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: "true",
+    })).toThrowError(/PRIVY_APPLE_LOGIN_ENABLED/);
   });
 
   it.each([

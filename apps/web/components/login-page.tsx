@@ -7,7 +7,7 @@ import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { ArrowRight, GoogleMark } from "./icons";
+import { AppleMark, ArrowRight, GoogleMark } from "./icons";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
 import { BottomSheet, Dialog } from "./ui/overlay/accessible-overlay";
 import { FanSiteFooter } from "./fan-shell/fan-site-footer";
@@ -25,8 +25,11 @@ const passportPreview = "/images/guest-home/passport-open-blank-9-transparent.pn
 
 type LoginPageProps = {
   presentation?: "standalone" | "overlay";
+  appleLoginEnabled?: boolean;
   testAccountLoginEnabled?: boolean;
 };
+
+const VERIFIED_EMAIL_REQUIRED = "VERIFIED_EMAIL_REQUIRED";
 
 function loginSessionCopy({
   locale,
@@ -35,8 +38,19 @@ function loginSessionCopy({
 }: {
   locale: "ko" | "en";
   ready: boolean;
-  error: boolean;
+  error: string | null;
 }): { title: string; description?: string } {
+  if (error === VERIFIED_EMAIL_REQUIRED) {
+    return locale === "ko"
+      ? {
+          title: "이 계정에서 확인된 이메일을 찾을 수 없어요.",
+          description: "로그아웃한 뒤 이메일 공유가 가능한 계정으로 다시 로그인해 주세요.",
+        }
+      : {
+          title: "We couldn't find a verified email for this account.",
+          description: "Sign out, then choose an account that can share a verified email.",
+        };
+  }
   if (error) {
     return locale === "ko"
       ? {
@@ -78,11 +92,12 @@ function useMobileLoginPresentation() {
 
 export function LoginPage({
   presentation = "standalone",
+  appleLoginEnabled = false,
   testAccountLoginEnabled = false,
 }: LoginPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, logout } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -106,7 +121,13 @@ export function LoginPage({
           headers: { authorization: `Bearer ${token}` },
           cache: "no-store",
         });
-        if (!response.ok) throw new Error("Session synchronization failed");
+        if (!response.ok) {
+          const body = await response.json().catch(() => null) as { error?: { code?: string } } | null;
+          if (response.status === 403 && body?.error?.code === VERIFIED_EMAIL_REQUIRED) {
+            throw new Error(VERIFIED_EMAIL_REQUIRED);
+          }
+          throw new Error("Session synchronization failed");
+        }
         const body = await response.json() as { profile?: { completed?: boolean } };
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
         const storedIntent = typeof window === "undefined" ? null : readAuthIntent(window.sessionStorage, authIntent);
@@ -119,9 +140,13 @@ export function LoginPage({
             ? appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent })
             : safeReturnTo;
         router.replace(destination as Route);
-      } catch {
+      } catch (caught) {
         synchronizationRef.current = null;
-        setError("로그인 정보를 안전하게 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setError(
+          caught instanceof Error && caught.message === VERIFIED_EMAIL_REQUIRED
+            ? VERIFIED_EMAIL_REQUIRED
+            : "로그인 정보를 안전하게 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
+        );
       }
     })();
 
@@ -132,6 +157,8 @@ export function LoginPage({
     onError: () => setError(
       testAccountLoginEnabled
         ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
+        : appleLoginEnabled
+          ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
         : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.",
     ),
   });
@@ -154,11 +181,21 @@ export function LoginPage({
     void synchronizeSession();
   }, [synchronizeSession]);
 
+  const restartLogin = useCallback(async () => {
+    try {
+      await logout();
+      synchronizationRef.current = null;
+      setError(null);
+    } catch {
+      setError("로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
+  }, [logout]);
+
   const showsSessionState = !ready || authenticated;
   const sessionCopy = loginSessionCopy({
     locale,
     ready,
-    error: error !== null,
+    error,
   });
   const sessionState = (
     <div className={styles.sessionContents} data-fan-surface lang={locale}>
@@ -185,8 +222,13 @@ export function LoginPage({
           title={sessionCopy.title}
           description={sessionCopy.description}
           actions={error ? (
-            <FanAction variant="neutral" onClick={retrySessionSynchronization}>
-              {locale === "ko" ? "다시 시도" : "Try again"}
+            <FanAction
+              variant="neutral"
+              onClick={error === VERIFIED_EMAIL_REQUIRED ? restartLogin : retrySessionSynchronization}
+            >
+              {error === VERIFIED_EMAIL_REQUIRED
+                ? locale === "ko" ? "다른 계정으로 로그인" : "Sign in with another account"
+                : locale === "ko" ? "다시 시도" : "Try again"}
             </FanAction>
           ) : undefined}
         />
@@ -262,8 +304,23 @@ export function LoginPage({
           aria-busy={authenticated}
           onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}
         >
-          <GoogleMark /><span>{ready ? "Google로 계속하기" : "로그인 준비 중"}</span><ArrowRight />
+          <GoogleMark />
+          <span>{ready ? locale === "ko" ? "Google로 계속하기" : "Continue with Google" : "로그인 준비 중"}</span>
+          <ArrowRight />
         </button>
+        {appleLoginEnabled && (
+          <button
+            className={styles.appleButton}
+            type="button"
+            disabled={!ready || authenticated}
+            aria-busy={authenticated}
+            onClick={() => { setError(null); login({ loginMethods: ["apple"] }); }}
+          >
+            <AppleMark />
+            <span>{ready ? locale === "ko" ? "Apple로 계속하기" : "Continue with Apple" : "로그인 준비 중"}</span>
+            <ArrowRight />
+          </button>
+        )}
         {testAccountLoginEnabled && (
           <div className={styles.testAccountGroup} role="group" aria-label="개발 환경 Test Account 로그인">
             <span className={styles.divider}>개발 환경 Test Account</span>

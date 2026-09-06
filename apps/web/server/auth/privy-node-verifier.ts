@@ -44,6 +44,7 @@ export interface PrivyNodeServerConfig {
   appSecret: string;
   appEnvironment?: "development" | "production";
   testAccountLoginEnabled?: boolean;
+  appleLoginEnabled: boolean;
 }
 
 interface WalletVisibilityOptions {
@@ -84,6 +85,20 @@ function latestVerifiedGoogleEmail(user: PrivyUserShape): string | null {
   return account?.email ?? null;
 }
 
+function latestVerifiedAppleEmail(user: PrivyUserShape): string | null {
+  const account = user.linked_accounts
+    .filter(
+      (candidate) =>
+        candidate.type === "apple_oauth" &&
+        typeof candidate.email === "string" &&
+        typeof candidate.verified_at === "number" &&
+        candidate.verified_at > 0,
+    )
+    .sort((left, right) => (right.verified_at ?? 0) - (left.verified_at ?? 0))[0];
+
+  return account?.email ?? null;
+}
+
 function verifiedPrivyTestAccountEmail(user: PrivyUserShape): string | null {
   const account = user.linked_accounts
     .filter((candidate) => {
@@ -104,6 +119,10 @@ function verifiedPrivyTestAccountEmail(user: PrivyUserShape): string | null {
 function verifiedFanEmail(user: PrivyUserShape, config: PrivyNodeServerConfig): string | null {
   const googleEmail = latestVerifiedGoogleEmail(user);
   if (googleEmail) return googleEmail;
+  if (config.appleLoginEnabled) {
+    const appleEmail = latestVerifiedAppleEmail(user);
+    if (appleEmail) return appleEmail;
+  }
   if (!config.testAccountLoginEnabled) return null;
   if (config.appEnvironment !== "development") {
     throw new Error("Privy Test Account login requires a development Privy app");
@@ -187,9 +206,10 @@ export function createPrivyNodeSessionResolver(
           const identity = mapPrivyIdentity({
             privyUserId: user.id,
             verifiedEmail: verifiedFanEmail(user, config),
+            googleLinked: latestVerifiedGoogleEmail(user) !== null,
           });
           return {
-            identity: { ...identity, googleLinked: latestVerifiedGoogleEmail(user) !== null },
+            identity,
             wallet,
           };
         }

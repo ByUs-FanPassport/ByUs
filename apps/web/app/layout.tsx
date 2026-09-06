@@ -5,6 +5,7 @@ import { DocumentLocale } from "../components/document-locale";
 import { ByUsPrivyProvider } from "../components/privy-provider";
 import { PwaRegistration } from "../components/pwa-registration";
 import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
+import { readPublicPrivyAppleLoginPolicy } from "../components/privy-apple-login-policy";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
 import "./globals.css";
 
@@ -37,11 +38,13 @@ export default async function RootLayout({
   const locale = requestHeaders.get("x-byus-locale") === "en" ? "en" : "ko";
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
   const testAccountLoginEnabled = readPublicPrivyTestAccountPolicy();
+  const appleLoginEnabled = readPublicPrivyAppleLoginPolicy();
   return (
     <html lang={locale}>
       <body>
         <ByUsPrivyProvider
           appId={privyAppId}
+          appleLoginEnabled={appleLoginEnabled}
           testAccountLoginEnabled={testAccountLoginEnabled}
         >
           <PwaRegistration />

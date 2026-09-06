@@ -13,7 +13,7 @@ export function createPassportReadRouteDependencies(): PassportReadRouteDependen
   const verifier = createPrivyNodeAccessVerifier({
     appId: environment.PRIVY_APP_ID, appSecret: environment.PRIVY_APP_SECRET,
     appEnvironment: environment.PRIVY_APP_ENVIRONMENT,
-    testAccountLoginEnabled: environment.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED,
+    testAccountLoginEnabled: environment.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: environment.PRIVY_APPLE_LOGIN_ENABLED,
   });
   const fanRepository = createSupabaseFanAuthRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }, database);
   return {

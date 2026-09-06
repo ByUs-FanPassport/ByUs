@@ -9,12 +9,13 @@ const back = vi.fn();
 let onComplete: (() => void) | undefined;
 let onError: (() => void) | undefined;
 const getAccessToken = vi.fn();
+const logout = vi.fn();
 let authenticated = false;
 let ready = true;
 let query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready, authenticated, getAccessToken }),
+  usePrivy: () => ({ ready, authenticated, getAccessToken, logout }),
   useLogin: (callbacks: { onComplete?: () => void; onError?: () => void }) => {
     onComplete = callbacks.onComplete;
     onError = callbacks.onError;
@@ -47,6 +48,8 @@ describe("Privy login page", () => {
     ready = true;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
     getAccessToken.mockResolvedValue("privy-access-token");
+    logout.mockResolvedValue(undefined);
+    logout.mockClear();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ profile: { completed: true, nickname: "John" } }));
     vi.mocked(globalThis.fetch).mockClear();
   });
@@ -73,6 +76,22 @@ describe("Privy login page", () => {
     expect(screen.getByRole("img", { name: "펼쳐진 Fan Passport" })).toBeInTheDocument();
     expect(document.querySelector("[data-login-layout='passport-gateway']")).toBeInTheDocument();
     expect(screen.getByText("YOUR FAN PASSPORT")).toBeInTheDocument();
+  });
+
+  it("shows Apple only behind the readiness flag and starts the Apple method", () => {
+    const { rerender } = render(<LoginPage />);
+    expect(screen.queryByRole("button", { name: /Apple로 계속하기/ })).not.toBeInTheDocument();
+
+    rerender(<LoginPage appleLoginEnabled />);
+    fireEvent.click(screen.getByRole("button", { name: /Apple로 계속하기/ }));
+    expect(login).toHaveBeenLastCalledWith({ loginMethods: ["apple"] });
+  });
+
+  it("uses the official English Google and Apple labels", () => {
+    query = "locale=en";
+    render(<LoginPage appleLoginEnabled />);
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with Apple" })).toBeInTheDocument();
   });
 
   it("shows only a neutral loading state while Privy restores authentication", () => {
@@ -168,6 +187,24 @@ describe("Privy login page", () => {
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
     expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("lets an authenticated Apple user without email log out and reselect an account", async () => {
+    authenticated = true;
+    query = "returnTo=%2Fc%2Fkara%2Fverify&intent=passport&entity=kara&authIntent=11111111-1111-4111-8111-111111111111";
+    vi.mocked(globalThis.fetch).mockImplementation(async () => Response.json(
+      { error: { code: "VERIFIED_EMAIL_REQUIRED" } },
+      { status: 403 },
+    ));
+
+    render(<LoginPage appleLoginEnabled />);
+
+    expect(await screen.findByText("이 계정에서 확인된 이메일을 찾을 수 없어요.")).toBeInTheDocument();
+    expect(screen.getByText(/이메일 공유가 가능한 계정으로 다시 로그인/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "다른 계정으로 로그인" }));
+    await waitFor(() => expect(logout).toHaveBeenCalledOnce());
+    expect(replace).not.toHaveBeenCalled();
+    expect(query).toContain("authIntent=11111111-1111-4111-8111-111111111111");
   });
 
   it("restores a non-verification intent without forcing profile onboarding", async () => {

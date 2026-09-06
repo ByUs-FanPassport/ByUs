@@ -9,7 +9,7 @@ export function createBenefitAdminRouteDependencies() {
   const e = loadServerEnv(),
     verifier = createPrivyNodeAccessVerifier({
       appId: e.PRIVY_APP_ID,
-      appSecret: e.PRIVY_APP_SECRET,
+      appSecret: e.PRIVY_APP_SECRET, appEnvironment: e.PRIVY_APP_ENVIRONMENT, testAccountLoginEnabled: e.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: e.PRIVY_APPLE_LOGIN_ENABLED,
     }),
     sessions = createSupabaseAdminSessionRepository({
       url: e.SUPABASE_URL,

@@ -7,7 +7,7 @@ import {
 
 /**
  * Port implemented by the server-only @privy-io/node adapter. The adapter must
- * call verifyAccessToken and resolve the verified Google email for its user_id.
+ * call verifyAccessToken and resolve an allowed verified email for its user_id.
  */
 export interface PrivyAccessVerifier {
   verify(accessToken: string): Promise<PrivyIdentityInput>;

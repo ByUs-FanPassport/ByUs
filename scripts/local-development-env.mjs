@@ -47,7 +47,9 @@ export async function developmentLocalEnvironment() {
     NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: "development",
     BYUS_DATA_ENVIRONMENT: "development",
     NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: "development",
+    NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: "false",
     PRIVY_APP_ENVIRONMENT: "development",
+    PRIVY_APPLE_LOGIN_ENABLED: "false",
     NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
     PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   };

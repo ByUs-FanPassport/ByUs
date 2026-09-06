@@ -9,7 +9,7 @@ export function createContentCmsDependencies() {
   const e = loadServerEnv(),
     v = createPrivyNodeAccessVerifier({
       appId: e.PRIVY_APP_ID,
-      appSecret: e.PRIVY_APP_SECRET,
+      appSecret: e.PRIVY_APP_SECRET, appEnvironment: e.PRIVY_APP_ENVIRONMENT, testAccountLoginEnabled: e.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: e.PRIVY_APPLE_LOGIN_ENABLED,
     }),
     s = createSupabaseAdminSessionRepository({
       url: e.SUPABASE_URL,

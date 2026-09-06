@@ -18,11 +18,13 @@ describe("authenticatePrivyAccessToken", () => {
     const verify = vi.fn().mockResolvedValue({
       privyUserId: " did:privy:fan-123 ",
       verifiedEmail: "Fan@Example.COM",
+      googleLinked: true,
     });
 
     await expect(authenticatePrivyAccessToken("access-token", { verify })).resolves.toEqual({
       privyUserId: "did:privy:fan-123",
       verifiedEmail: "fan@example.com",
+      googleLinked: true,
     });
   });
 

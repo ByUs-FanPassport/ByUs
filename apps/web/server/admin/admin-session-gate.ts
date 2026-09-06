@@ -60,6 +60,13 @@ export async function authorizeAdminSession(input: {
     bearerToken(input.authorization),
     input.verifier,
   );
+  if (identity.googleLinked !== true) {
+    throw new AuthError(
+      "ADMIN_GOOGLE_REQUIRED",
+      403,
+      "Admin access requires a verified Google account",
+    );
+  }
   const user = requireActiveMatchingUser(
     await input.repository.findUserByPrivyId(identity.privyUserId),
     identity.verifiedEmail,

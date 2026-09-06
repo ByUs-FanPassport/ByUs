@@ -73,6 +73,7 @@ const publicEnvSchema = z
     NEXT_PUBLIC_PRIVY_APP_ID: z.string().trim().min(1),
     NEXT_PUBLIC_BYUS_DATA_ENVIRONMENT: dataEnvironment,
     NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
+    NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED: booleanFlag,
     NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
   })
   .superRefine((value, context) => {
@@ -95,6 +96,7 @@ const serverEnvSchema = publicEnvSchema
     PRIVY_APP_SECRET: z.string().trim().min(8),
     BYUS_DATA_ENVIRONMENT: dataEnvironment,
     PRIVY_APP_ENVIRONMENT: privyAppEnvironment,
+    PRIVY_APPLE_LOGIN_ENABLED: booleanFlag,
     PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
     SUPABASE_URL: httpsUrl,
     SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(16),
@@ -130,6 +132,16 @@ const serverEnvSchema = publicEnvSchema
         code: "custom",
         message: "must match NEXT_PUBLIC_PRIVY_APP_ENVIRONMENT",
         path: ["PRIVY_APP_ENVIRONMENT"],
+      });
+    }
+    if (
+      value.PRIVY_APPLE_LOGIN_ENABLED !==
+      value.NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "must match NEXT_PUBLIC_PRIVY_APPLE_LOGIN_ENABLED",
+        path: ["PRIVY_APPLE_LOGIN_ENABLED"],
       });
     }
     if (

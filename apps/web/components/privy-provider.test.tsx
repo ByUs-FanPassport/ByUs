@@ -24,4 +24,11 @@ describe("ByUs Privy provider policy", () => {
       }),
     }));
   });
+
+  it("adds Apple only when the readiness flag is enabled", () => {
+    render(<ByUsPrivyProvider appId="app-production" appleLoginEnabled><span>child</span></ByUsPrivyProvider>);
+    expect(provider).toHaveBeenLastCalledWith(expect.objectContaining({
+      config: expect.objectContaining({ loginMethods: ["google", "apple"] }),
+    }));
+  });
 });

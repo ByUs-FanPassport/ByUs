@@ -22,7 +22,7 @@ describe("@privy-io/node server adapter", () => {
       ],
     });
     const verifier = createPrivyNodeAccessVerifier(
-      { appId: "app-1", appSecret: "secret" },
+      { appId: "app-1", appSecret: "secret", appleLoginEnabled: false },
       {
         utils: () => ({ auth: () => ({ verifyAccessToken }) }),
         users: () => ({ _get: getUser }),
@@ -37,9 +37,75 @@ describe("@privy-io/node server adapter", () => {
     expect(getUser).toHaveBeenCalledWith("did:privy:user-1");
   });
 
+  it.each([
+    ["fan@example.com", "fan@example.com"],
+    ["fan.opaque@privaterelay.appleid.com", "fan.opaque@privaterelay.appleid.com"],
+  ])("accepts a verified Apple OAuth email, including relay addresses: %s", async (email, expected) => {
+    const verifier = createPrivyNodeAccessVerifier({
+      appId: "app-1",
+      appSecret: "secret",
+      appleLoginEnabled: true,
+    }, {
+      utils: () => ({ auth: () => ({ verifyAccessToken: vi.fn().mockResolvedValue({ app_id: "app-1", user_id: "did:privy:apple-1" }) }) }),
+      users: () => ({ _get: vi.fn().mockResolvedValue({
+        id: "did:privy:apple-1",
+        linked_accounts: [{ type: "apple_oauth", email, verified_at: 20 }],
+      }) }),
+    });
+
+    await expect(verifier.verify("access-token")).resolves.toEqual({
+      privyUserId: "did:privy:apple-1",
+      verifiedEmail: expected,
+      googleLinked: false,
+    });
+  });
+
+  it("keeps verified Google ahead of Apple and preserves Google provenance", async () => {
+    const verifier = createPrivyNodeAccessVerifier({
+      appId: "app-1",
+      appSecret: "secret",
+      appleLoginEnabled: true,
+    }, {
+      utils: () => ({ auth: () => ({ verifyAccessToken: vi.fn().mockResolvedValue({ app_id: "app-1", user_id: "did:privy:mixed-1" }) }) }),
+      users: () => ({ _get: vi.fn().mockResolvedValue({
+        id: "did:privy:mixed-1",
+        linked_accounts: [
+          { type: "apple_oauth", email: "apple@example.com", verified_at: 30 },
+          { type: "google_oauth", email: "google@example.com", verified_at: 10 },
+        ],
+      }) }),
+    });
+
+    await expect(verifier.verify("access-token")).resolves.toEqual({
+      privyUserId: "did:privy:mixed-1",
+      verifiedEmail: "google@example.com",
+      googleLinked: true,
+    });
+  });
+
+  it.each([
+    [{ type: "apple_oauth", email: null, verified_at: 20 }, true, "missing email"],
+    [{ type: "apple_oauth", email: "fan@example.com" }, true, "unverified email"],
+    [{ type: "apple_oauth", email: "fan@example.com", verified_at: 20 }, false, "disabled policy"],
+  ])("rejects Apple OAuth with %s when policy enabled=%s (%s)", async (linkedAccount, appleLoginEnabled, _reason) => {
+    const verifier = createPrivyNodeAccessVerifier({
+      appId: "app-1",
+      appSecret: "secret",
+      appleLoginEnabled,
+    }, {
+      utils: () => ({ auth: () => ({ verifyAccessToken: vi.fn().mockResolvedValue({ app_id: "app-1", user_id: "did:privy:apple-1" }) }) }),
+      users: () => ({ _get: vi.fn().mockResolvedValue({ id: "did:privy:apple-1", linked_accounts: [linkedAccount] }) }),
+    });
+
+    await expect(verifier.verify("access-token")).resolves.toMatchObject({
+      verifiedEmail: null,
+      googleLinked: false,
+    });
+  });
+
   it("rejects a provider response whose user does not match the token subject", async () => {
     const verifier = createPrivyNodeAccessVerifier(
-      { appId: "app-1", appSecret: "secret" },
+      { appId: "app-1", appSecret: "secret", appleLoginEnabled: false },
       {
         utils: () => ({
           auth: () => ({
@@ -72,7 +138,7 @@ describe("@privy-io/node server adapter", () => {
 
     await expect(createPrivyNodeAccessVerifier({
       appId: "app-1",
-      appSecret: "secret",
+      appSecret: "secret", appleLoginEnabled: false,
       appEnvironment: "development",
       testAccountLoginEnabled: true,
     }, client).verify("access-token")).resolves.toEqual({
@@ -82,7 +148,7 @@ describe("@privy-io/node server adapter", () => {
     });
     await expect(createPrivyNodeAccessVerifier({
       appId: "app-1",
-      appSecret: "secret",
+      appSecret: "secret", appleLoginEnabled: false,
       appEnvironment: "development",
       testAccountLoginEnabled: false,
     }, client).verify("access-token")).resolves.toEqual({
@@ -98,7 +164,7 @@ describe("@privy-io/node server adapter", () => {
   ])("rejects a %s as a Test Account identity", async (linkedAccount, _reason) => {
     const verifier = createPrivyNodeAccessVerifier({
       appId: "app-1",
-      appSecret: "secret",
+      appSecret: "secret", appleLoginEnabled: false,
       appEnvironment: "development",
       testAccountLoginEnabled: true,
     }, {
@@ -111,7 +177,7 @@ describe("@privy-io/node server adapter", () => {
   it("fails closed if Test Account policy is paired with a production Privy app", async () => {
     const verifier = createPrivyNodeAccessVerifier({
       appId: "app-1",
-      appSecret: "secret",
+      appSecret: "secret", appleLoginEnabled: false,
       appEnvironment: "production",
       testAccountLoginEnabled: true,
     }, {
@@ -175,7 +241,7 @@ describe("@privy-io/node server adapter", () => {
       });
     const sleep = vi.fn().mockResolvedValue(undefined);
     const resolver = createPrivyNodeSessionResolver(
-      { appId: "app-1", appSecret: "secret" },
+      { appId: "app-1", appSecret: "secret", appleLoginEnabled: false },
       {
         utils: () => ({ auth: () => ({ verifyAccessToken }) }),
         users: () => ({ _get: getUser }),
@@ -232,7 +298,7 @@ describe("@privy-io/node server adapter", () => {
       });
     const sleep = vi.fn().mockResolvedValue(undefined);
     const resolver = createPrivyNodeSessionResolver(
-      { appId: "app-1", appSecret: "secret" },
+      { appId: "app-1", appSecret: "secret", appleLoginEnabled: false },
       {
         utils: () => ({ auth: () => ({ verifyAccessToken: vi.fn().mockResolvedValue({ app_id: "app-1", user_id: "did:privy:user-1" }) }) }),
         users: () => ({ _get: getUser }),

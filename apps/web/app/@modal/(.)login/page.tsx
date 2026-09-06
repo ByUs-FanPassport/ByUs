@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { LoginPage } from "../../../components/login-page";
 import { readPublicPrivyTestAccountPolicy } from "../../../components/privy-test-account-policy";
+import { readPublicPrivyAppleLoginPolicy } from "../../../components/privy-apple-login-policy";
 import { FanRouteLoading } from "../../../components/fan-ui/fan-route-loading";
 
 export default async function LoginModalRoute({
@@ -16,6 +17,7 @@ export default async function LoginModalRoute({
     >
       <LoginPage
         presentation="overlay"
+        appleLoginEnabled={readPublicPrivyAppleLoginPolicy()}
         testAccountLoginEnabled={readPublicPrivyTestAccountPolicy()}
       />
     </Suspense>

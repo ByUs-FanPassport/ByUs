@@ -8,6 +8,7 @@ export type AuthErrorCode =
   | "WALLET_RELINK_REQUIRES_REVIEW"
   | "ADMIN_NOT_ALLOWLISTED"
   | "ADMIN_DISABLED"
+  | "ADMIN_GOOGLE_REQUIRED"
   | "ADMIN_EMAIL_MISMATCH";
 
 export class AuthError extends Error {

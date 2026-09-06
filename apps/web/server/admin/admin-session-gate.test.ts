@@ -28,6 +28,7 @@ const verifier = {
   verify: vi.fn().mockResolvedValue({
     privyUserId: "did:privy:admin",
     verifiedEmail: " Biz@SallyLab.IO ",
+    googleLinked: true,
   }),
 };
 
@@ -106,6 +107,27 @@ describe("authorizeAdminSession", () => {
       ).rejects.toMatchObject({ status: 403 });
       expect(repo.appendAuthorizationAudit).not.toHaveBeenCalled();
     }
+  });
+
+  it("denies an allowlisted Apple-only identity without querying the allowlist", async () => {
+    const repo = repository();
+    const appleOnlyVerifier = {
+      verify: vi.fn().mockResolvedValue({
+        privyUserId: "did:privy:admin",
+        verifiedEmail: "biz@sallylab.io",
+        googleLinked: false,
+      }),
+    };
+
+    await expect(authorizeAdminSession({
+      authorization: "Bearer token",
+      correlationId: "correlation",
+      verifier: appleOnlyVerifier,
+      repository: repo,
+    })).rejects.toMatchObject({ code: "ADMIN_GOOGLE_REQUIRED", status: 403 });
+    expect(repo.findUserByPrivyId).not.toHaveBeenCalled();
+    expect(repo.findActiveAdminByEmail).not.toHaveBeenCalled();
+    expect(repo.appendAuthorizationAudit).not.toHaveBeenCalled();
   });
 
   it("fails closed rather than returning a session when the redacted audit cannot be appended", async () => {

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { LoginPage } from "../../components/login-page";
 import { readPublicPrivyTestAccountPolicy } from "../../components/privy-test-account-policy";
+import { readPublicPrivyAppleLoginPolicy } from "../../components/privy-apple-login-policy";
 import { FanRouteLoading } from "../../components/fan-ui/fan-route-loading";
 
 export default async function LoginRoute({
@@ -12,7 +13,10 @@ export default async function LoginRoute({
   const locale = query.locale === "en" ? "en" : "ko";
   return (
     <Suspense fallback={<FanRouteLoading locale={locale} />}>
-      <LoginPage testAccountLoginEnabled={readPublicPrivyTestAccountPolicy()} />
+      <LoginPage
+        appleLoginEnabled={readPublicPrivyAppleLoginPolicy()}
+        testAccountLoginEnabled={readPublicPrivyTestAccountPolicy()}
+      />
     </Suspense>
   );
 }

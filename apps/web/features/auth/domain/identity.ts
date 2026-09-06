@@ -3,6 +3,8 @@ import { AuthError } from "./auth-errors";
 export interface PrivyIdentityInput {
   privyUserId: string;
   verifiedEmail: string | null;
+  /** True only when Privy currently reports a verified Google OAuth link. */
+  googleLinked?: boolean;
 }
 
 export interface CanonicalPrivyIdentity {
@@ -48,7 +50,11 @@ export function mapPrivyIdentity(input: PrivyIdentityInput): CanonicalPrivyIdent
       "A verified email is required for this account",
     );
   }
-  return { privyUserId, verifiedEmail: normalizeEmail(input.verifiedEmail) };
+  return {
+    privyUserId,
+    verifiedEmail: normalizeEmail(input.verifiedEmail),
+    ...(typeof input.googleLinked === "boolean" ? { googleLinked: input.googleLinked } : {}),
+  };
 }
 
 export function normalizeEvmAddress(value: string): string {

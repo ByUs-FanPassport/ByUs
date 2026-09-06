@@ -7,7 +7,7 @@ import { createSupabaseAdminSessionRepository } from "../admin/supabase-admin-se
 
 export function createDeploymentFingerprintDependencies() {
   const env = loadServerEnv();
-  const verifier = createPrivyNodeAccessVerifier({ appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET });
+  const verifier = createPrivyNodeAccessVerifier({ appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET, appEnvironment: env.PRIVY_APP_ENVIRONMENT, testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: env.PRIVY_APPLE_LOGIN_ENABLED });
   const repository = createSupabaseAdminSessionRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY });
   return {
     authorize: ({ authorization, correlationId }: { authorization: string; correlationId: string }) => authorizeAdminSession({ authorization, correlationId, verifier, repository }),
