@@ -17,6 +17,7 @@ import { useEffect, useState, type CSSProperties, type KeyboardEvent, type React
 import { ArrowRight, Clock, Play } from "./icons";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
+import { CalendarArt } from "./fan-calendar/calendar-art";
 import { CalendarDayNumber, CalendarMonthHeader } from "./fan-calendar/calendar-parts";
 import { FanAction } from "./fan-ui/fan-action";
 import { FanMotionIcon } from "./fan-ui/fan-motion-icon";
@@ -273,6 +274,7 @@ function CelebrityMiniCalendar({
       <div className={styles.calendarHeading}>
         <h2 id={`${celebrity.slug}-mini-calendar-title`}><FanMotionIcon name="calendar" size={18} />{celebrity.name} {t.calendarTitle}</h2>
       </div>
+      <CalendarArt month={month} compact celebrity={{ slug: celebrity.slug, name: celebrity.name, image: celebrity.image.url }} />
       <CalendarMonthHeader month={month} label={miniCalendarMonthLabel(month, locale)} density="compact"
         previous={{ onClick: () => setMonth(previousMonth), label: `${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}` }}
         next={{ onClick: () => setMonth(nextMonth), label: `${t.nextMonth}: ${miniCalendarMonthLabel(nextMonth, locale)}` }}

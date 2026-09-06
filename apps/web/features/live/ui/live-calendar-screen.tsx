@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarArt } from "@/components/fan-calendar/calendar-art";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
@@ -227,6 +228,7 @@ export function LiveCalendarScreen({
   return (
     <FanAppFrame locale={locale} mainId="live-calendar-main" currentPath="/live/calendar">
       <FanContentContainer as="main" className={styles.main} id="live-calendar-main" tabIndex={-1}>
+        <div className={styles.editorialHeader}>
         <header className={styles.intro}>
           <div>
             <FanHeading as="h1">{t.title}</FanHeading>
@@ -237,6 +239,10 @@ export function LiveCalendarScreen({
             {t.catalog}
           </Link>
         </header>
+        <CalendarArt month={calendar.month} celebrity={selectedCelebritySlugs.length === 1
+          ? celebrities.find((celebrity) => celebrity.slug === selectedCelebritySlugs[0])
+          : undefined} />
+        </div>
 
         <section className={styles.filters} aria-labelledby="calendar-filter-heading">
           <div className={styles.filterHeading}>
@@ -314,7 +320,6 @@ export function LiveCalendarScreen({
               ? <p className={styles.calendarEmpty}>{t.empty}</p> : null}
           </div>
 
-          {visibleEventCount === 0 ? <p className={styles.calendarEmpty}>{t.filteredEmpty}</p> : null}
 
           <div className={styles.weekdays} aria-hidden="true">
             {t.weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
@@ -340,6 +345,7 @@ export function LiveCalendarScreen({
               return <section
                 className={styles.day}
                 data-empty={day.events.length === 0 ? "true" : undefined}
+                data-upcoming-day={day.events.some((event) => event.effectiveStatus === "scheduled" || event.effectiveStatus === "live") ? "true" : undefined}
                 data-first-column={isFirstColumn ? "true" : undefined}
                 data-mobile-hidden={activeDate && activeDate !== day.date ? "true" : undefined}
                 key={day.date}
@@ -363,6 +369,7 @@ export function LiveCalendarScreen({
                           href={`/live/${event.slug}?locale=${locale}` as Route}
                           aria-label={locale === "ko" ? `${event.title} 상세 보기` : `View ${event.title} details`}
                         >
+                          <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={64} height={96} sizes="64px" />
                           <span className={styles.eventMeta}>
                             <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
                             {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
@@ -384,7 +391,7 @@ export function LiveCalendarScreen({
                                 key={platform}
                               />)}
                             </span> : null}
-                            {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
+                            {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
                           </span>
                         </Link>
                       </article>;

@@ -1,0 +1,115 @@
+.art { display:none; }
+@media (min-width:64rem) {
+  .art { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); align-items:center; min-width:0; height:330px; }
+  .month { position:relative; display:flex; height:320px; align-items:center; justify-content:center; }
+  .number { font-family:Georgia,'Times New Roman',serif; font-size:clamp(190px,18vw,260px); font-weight:400; line-height:1; letter-spacing:-.04em; color:#272322; }
+  .letter { position:absolute; bottom:45px; width:100%; height:102px; object-fit:contain; transform:rotate(-8deg); }
+  .year { position:absolute; bottom:9px; font-size:11px; letter-spacing:6px; color:#514741; }
+  .slot { height:320px; min-width:0; }
+  .composition { position:relative; display:flex; height:100%; align-items:center; justify-content:center; animation:paper-arrive 380ms cubic-bezier(.2,.7,.2,1); }
+  .brand { width:90%; height:230px; object-fit:contain; transform:rotate(-10deg); }
+  .star { position:absolute; top:28px; right:3px; width:34px; height:34px; }
+  .collage { position:relative; width:100%; height:100%; }
+  .card { position:absolute; top:49px; left:3%; width:49%; max-width:176px; aspect-ratio:1024/1536; transform:rotate(-12deg); box-shadow:0 7px 15px #4d322515; }
+  .card:nth-child(2) { top:39px; left:43%; transform:rotate(10deg); }
+  .collage[data-single="true"] .card { left:25%; top:38px; width:55%; max-width:182px; transform:rotate(-8deg); }
+  .frame { object-fit:fill; }
+  .photo { position:absolute; left:7.03%; top:9.24%; width:85.75%; height:69.92%; overflow:hidden; }
+  .photo img { object-fit:cover; }
+  .photo[data-group="true"] { background:#ebe4eb; }
+  .photo[data-group="true"] img { object-fit:contain; }
+  .name { position:absolute; bottom:8.4%; left:13%; max-width:76%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:italic 18px Georgia,'Times New Roman',serif; color:#4c3844; }
+}
+@keyframes paper-arrive { from { opacity:0; transform:translateY(13px) rotate(-2deg); } to { opacity:1; transform:translateY(0) rotate(0); } }
+@media (prefers-reduced-motion:reduce) { .composition { animation:paper-fade 120ms linear; } }
+@keyframes paper-fade { from { opacity:0; } to { opacity:1; } }
+@media (min-width:64rem) {
+  .frame { position:absolute; inset:0; background:#fffdf7; }
+  .tape { position:absolute; top:2%; left:30%; width:48%; height:8%; transform:rotate(-3deg); z-index:1; }
+  .cardStar { position:absolute; right:10%; bottom:9%; width:13px; height:13px; }
+  .card::after { position:absolute; bottom:6%; left:39%; width:37%; height:2px; border-radius:50%; background:#e9a7b8; transform:rotate(-4deg); content:""; }
+  .brand { width:79%; }
+  .card { animation:card-place 230ms cubic-bezier(.2,.7,.2,1) both; }
+  .card:nth-child(2) { animation-delay:35ms; }
+  .card:nth-child(3) { top:83px; left:26%; width:42%; transform:rotate(-3deg); animation-delay:65ms; z-index:2; }
+  .composition { animation:paper-fade 220ms ease-out; }
+  .composition[data-leaving="true"] { animation:paper-leave 130ms ease-in both; }
+  .art[data-compact="true"] { height:165px; grid-template-columns:1fr 1fr; gap:8px; }
+  .art[data-compact="true"] .month { height:160px; }
+  .art[data-compact="true"] .number { font-size:100px; }
+  .art[data-compact="true"] .letter { height:48px; bottom:29px; width:110%; }
+  .art[data-compact="true"] .year { bottom:12px; font-size:8px; letter-spacing:3px; }
+  .art[data-compact="true"] .slot { height:160px; }
+  .art[data-compact="true"] .card { top:23px; }
+  .art[data-compact="true"] .card:nth-child(2) { top:20px; }
+  .art[data-compact="true"] .card:nth-child(3) { top:39px; }
+  .art[data-compact="true"] .name { font-size:10px; }
+  .art[data-compact="true"] .star { width:20px; height:20px; top:0; }
+  .art[data-compact="true"] .cardStar { width:8px; height:8px; }
+}
+@keyframes card-place { from { opacity:0; translate:0 14px; rotate:-5deg; } to { opacity:1; translate:0 0; rotate:0deg; } }
+@keyframes paper-leave { to { opacity:0; transform:translateY(7px) scale(.96); } }
+@media (prefers-reduced-motion:reduce) {
+  .composition,.card { animation:paper-fade 100ms linear; }
+  .card:nth-child(2),.card:nth-child(3) { animation-delay:0ms; }
+  .composition[data-leaving="true"] { animation:none; }
+}
+@media (min-width:64rem) {
+  .collage[data-count="3"] .card { width:36%; left:0; top:58px; }
+  .collage[data-count="3"] .card:nth-child(2) { left:33%; top:38px; transform:rotate(5deg); }
+  .collage[data-count="3"] .card:nth-child(3) { left:64%; top:77px; transform:rotate(12deg); }
+}
+@font-face { font-family:'ByUs Calendar Bodoni'; src:url('/fonts/bodoni-moda-regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
+@media (min-width:64rem) {
+  .art:not([data-compact]) { position:absolute; top:0; left:32%; width:68%; height:290px; grid-template-columns:52% 48%; }
+  .art:not([data-compact]) .month { height:240px; display:block; }
+  .art:not([data-compact]) .number { position:absolute; top:0; left:0; font-family:'ByUs Calendar Bodoni',Didot,serif; font-size:200px; font-weight:400; line-height:1; letter-spacing:-.04em; color:#050505; }
+  .art:not([data-compact]) .letter { top:94px; bottom:auto; left:34%; width:65%; height:120px; transform:rotate(-4deg); }
+  .art:not([data-compact]) .year { display:none; }
+  .art:not([data-compact]) .slot { height:320px; align-self:start; margin-top:-17px; }
+  .art:not([data-compact]) .brand { width:75%; max-height:210px; }
+  .art:not([data-compact]) .collage[data-count="3"] .card { width:43%; left:0; top:18px; transform:rotate(-9deg); }
+  .art:not([data-compact]) .collage[data-count="3"] .card:nth-child(2) { width:40%; left:34%; top:5px; transform:rotate(5deg); }
+  .art:not([data-compact]) .collage[data-count="3"] .card:nth-child(3) { width:42%; left:60%; top:65px; transform:rotate(12deg); }
+  .art:not([data-compact]) .star { right:auto; left:-40px; top:44px; width:40px; height:40px; }
+  .art:not([data-compact]) .tape { width:58%; left:24%; height:10%; top:-2%; }
+}
+@media (min-width:64rem) and (max-width:79.99rem) {
+  .art:not([data-compact]) .number { font-size:150px; top:25px; }
+  .art:not([data-compact]) .letter { top:105px; left:29%; width:70%; height:90px; }
+}
+@media (min-width:80rem) {
+  .art:not([data-compact]) .number { font-size:180px; top:-4px; }
+  .art:not([data-compact]) .letter { top:72px; left:29%; width:70%; }
+}
+/* Decorative overlap must never intercept month navigation or filters. */
+.art { pointer-events:none; user-select:none; }
+@media (min-width:64rem) {
+  .art:not([data-compact]) .star { width:49px; height:49px; left:-54px; transform:rotate(-9deg); }
+}
+/* Keep the numeral and handwritten word together, regardless of viewport width. */
+@media (min-width:64rem) {
+  .art:not([data-compact]) .month { display:flex; align-items:center; justify-content:flex-start; align-self:start; height:240px; }
+  .art:not([data-compact]) .number { position:static; flex:none; font-size:180px; }
+  .art:not([data-compact]) .letter { position:static; flex:none; width:330px; height:auto; max-height:140px; margin-left:-8px; transform:translateY(34px) rotate(-4deg); }
+}
+@media (min-width:64rem) and (max-width:79.99rem) {
+  .art:not([data-compact]) .number { font-size:150px; }
+  .art:not([data-compact]) .letter { width:230px; margin-left:-12px; transform:translateY(29px) rotate(-4deg); }
+}
+@media (min-width:80rem) { .art:not([data-compact]) .letter { width:clamp(230px,calc(21.55vw - 30px),330px); } }
+/* Optical alignment with the month controls, without separating the lettering. */
+@media (min-width:80rem) {
+  .art:not([data-compact]) .month { transform:translateX(24px); }
+}
+@media (min-width:64rem) and (max-width:79.99rem) {
+  .art:not([data-compact]) .month { transform:translateX(12px); }
+}
+/* Share the navigation's centerline rather than applying a viewport-specific nudge. */
+@media (min-width:64rem) {
+  .art:not([data-compact]) .month { position:absolute; top:0; left:26.470588%; width:max-content; transform:translateX(-50%); }
+  .art:not([data-compact]) .slot { grid-column:2; }
+}
+@media (min-width:64rem) and (max-width:79.99rem) {
+  .art:not([data-compact]) .month { left:175px; }
+}
