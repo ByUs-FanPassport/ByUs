@@ -13,10 +13,10 @@ const row = {
 };
 describe("SupabaseNotificationQueue", () => {
   it("enqueues and backfills due notifications before claim", async () => {
-    const rpc = vi.fn(async () => ({ data: 3, error: null }));
+    const rpc = vi.fn(async () => ({ data: {scheduledNotifications: 2, collectibleExpiryNotifications: 1}, error: null }));
     const queue = new SupabaseNotificationQueue({ rpc } as never);
     expect(await queue.enqueueDue("2026-07-22T00:00:00.000Z")).toBe(3);
-    expect(rpc).toHaveBeenCalledWith("enqueue_due_fan_notifications", {
+    expect(rpc).toHaveBeenCalledWith("enqueue_due_notification_maintenance", {
       p_now: "2026-07-22T00:00:00.000Z",
     });
   });

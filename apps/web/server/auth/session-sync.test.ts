@@ -10,15 +10,15 @@ describe("syncAuthenticatedSession", () => {
     const resolver = { resolve: vi.fn().mockResolvedValue(resolved) };
     const profile = { completed: false, nickname: null } as const;
     const repository = { sync: vi.fn().mockResolvedValue(profile) };
-    await expect(syncAuthenticatedSession({ authorization: "Bearer token", chainId: 91342, resolver, repository })).resolves.toEqual(profile);
+    await expect(syncAuthenticatedSession({ authorization: "Bearer token", chainId: 91342, preferredLocale: "en", resolver, repository })).resolves.toEqual(profile);
     expect(resolver.resolve).toHaveBeenCalledWith("token", 91342);
-    expect(repository.sync).toHaveBeenCalledWith(resolved.identity, resolved.wallet);
+    expect(repository.sync).toHaveBeenCalledWith(resolved.identity, resolved.wallet, "en");
   });
 
   it("rejects a request without a bearer token before touching storage", async () => {
     const resolver = { resolve: vi.fn() };
     const repository = { sync: vi.fn() };
-    await expect(syncAuthenticatedSession({ authorization: "", chainId: 91342, resolver, repository }))
+    await expect(syncAuthenticatedSession({ authorization: "", chainId: 91342, preferredLocale: "ko", resolver, repository }))
       .rejects.toMatchObject({ code: "AUTHENTICATION_REQUIRED", status: 401 });
     expect(resolver.resolve).not.toHaveBeenCalled();
     expect(repository.sync).not.toHaveBeenCalled();

@@ -3,6 +3,10 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { nicknameSchema } from "../../features/profile/domain/nickname-schema";
+import {
+  preferredLocaleSchema,
+  type PreferredLocale,
+} from "../../features/profile/domain/preferred-locale";
 
 const profileRowSchema = z
   .object({ nickname: nicknameSchema })
@@ -13,14 +17,22 @@ const walletRowSchema = z
     address: z.string().regex(/^0x[0-9a-f]{40}$/),
   })
   .nullable();
+const appUserRowSchema = z
+  .object({ preferred_locale: preferredLocaleSchema.nullable() })
+  .nullable();
 
 export interface FanSettingsSummary {
   nickname: string;
+  preferredLocale: PreferredLocale;
   wallet: { chainId: number; maskedAddress: string } | null;
 }
 
 export interface SettingsRepository {
   get(appUserId: string): Promise<FanSettingsSummary>;
+  setPreferredLocale(
+    appUserId: string,
+    locale: PreferredLocale,
+  ): Promise<PreferredLocale>;
 }
 
 interface QueryResult {
@@ -36,6 +48,10 @@ interface QueryBuilder {
 }
 interface DatabaseClient {
   from(table: string): QueryBuilder;
+  rpc(
+    name: string,
+    parameters: Record<string, string | number | boolean>,
+  ): PromiseLike<QueryResult>;
 }
 
 function maskAddress(address: string): string {
@@ -46,7 +62,7 @@ export class SupabaseSettingsRepository implements SettingsRepository {
   constructor(private readonly database: DatabaseClient) {}
 
   async get(appUserId: string): Promise<FanSettingsSummary> {
-    const [profileResult, walletResult] = await Promise.all([
+    const [profileResult, walletResult, appUserResult] = await Promise.all([
       this.database
         .from("user_profiles")
         .select("nickname")
@@ -59,14 +75,22 @@ export class SupabaseSettingsRepository implements SettingsRepository {
         .order("chain_id", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      this.database
+        .from("app_users")
+        .select("preferred_locale")
+        .eq("id", appUserId)
+        .maybeSingle(),
     ]);
-    if (profileResult.error || walletResult.error)
+    if (profileResult.error || walletResult.error || appUserResult.error)
       throw new Error("SETTINGS_UNAVAILABLE");
     const profile = profileRowSchema.parse(profileResult.data);
     const wallet = walletRowSchema.parse(walletResult.data);
+    const appUser = appUserRowSchema.parse(appUserResult.data);
     if (!profile) throw new Error("PROFILE_REQUIRED");
+    if (!appUser) throw new Error("SETTINGS_UNAVAILABLE");
     return {
       nickname: profile.nickname,
+      preferredLocale: appUser.preferred_locale ?? "ko",
       wallet: wallet
         ? {
             chainId: wallet.chain_id,
@@ -74,6 +98,18 @@ export class SupabaseSettingsRepository implements SettingsRepository {
           }
         : null,
     };
+  }
+
+  async setPreferredLocale(
+    appUserId: string,
+    locale: PreferredLocale,
+  ): Promise<PreferredLocale> {
+    const result = await this.database.rpc("set_owned_preferred_locale", {
+      p_app_user_id: appUserId,
+      p_locale: locale,
+    });
+    if (result.error) throw new Error("SETTINGS_UNAVAILABLE");
+    return preferredLocaleSchema.parse(result.data);
   }
 }
 

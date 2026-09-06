@@ -1,3 +1,34 @@
-import{ExternalNotificationError}from"./external-notification-domain.js";
-import type{ExternalNotificationQueue,ExternalSenders}from"./external-notification-ports.js";
-export class ExternalNotificationWorker{constructor(private readonly queue:ExternalNotificationQueue,private readonly senders:ExternalSenders,private readonly options:{workerId:string;batchSize:number;leaseSeconds:number}){}async runOnce(){const jobs=await this.queue.claim(this.options.workerId,this.options.batchSize,this.options.leaseSeconds);for(const job of jobs){if(Date.parse(job.leaseExpiresAt)<=Date.now())continue;try{const result=await this.senders[job.channel].send(job);await this.queue.complete(job,result.providerMessageId);}catch(error){const failure=error instanceof ExternalNotificationError?error:new ExternalNotificationError("EXTERNAL_UNEXPECTED",true);await this.queue.fail(job,{code:failure.code,retryable:failure.retryable});}}return jobs.length;}}
+import { assertEmailTemplateEnabled } from "./email-template.js";
+import { ExternalNotificationError } from "./external-notification-domain.js";
+import type { ExternalNotificationQueue, ExternalSenders } from "./external-notification-ports.js";
+
+export class ExternalNotificationWorker {
+  constructor(
+    private readonly queue: ExternalNotificationQueue,
+    private readonly senders: ExternalSenders,
+    private readonly options: { workerId: string; batchSize: number; leaseSeconds: number },
+  ) {}
+
+  async runOnce() {
+    const jobs = await this.queue.claim(this.options.workerId, this.options.batchSize, this.options.leaseSeconds);
+    for (const job of jobs) {
+      if (Date.parse(job.leaseExpiresAt) <= Date.now()) continue;
+      try {
+        if (job.channel === "email") {
+          assertEmailTemplateEnabled(job.templateKey);
+          // A claim can wait behind another provider request. Recheck mutable
+          // consent and action state immediately before each email is rendered.
+          if (!await this.queue.revalidateEmail(job)) continue;
+        }
+        const result = await this.senders[job.channel].send(job);
+        await this.queue.complete(job, result.providerMessageId);
+      } catch (error) {
+        const failure = error instanceof ExternalNotificationError
+          ? error
+          : new ExternalNotificationError("EXTERNAL_UNEXPECTED", true);
+        await this.queue.fail(job, { code: failure.code, retryable: failure.retryable });
+      }
+    }
+    return jobs.length;
+  }
+}

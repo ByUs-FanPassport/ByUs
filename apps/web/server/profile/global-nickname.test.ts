@@ -51,8 +51,8 @@ describe("saved global display names remain readable", () => {
       };
       return builder;
     };
-    const settings = new SupabaseSettingsRepository({ from: (table) => query(table === "user_profiles" ? { nickname } : null) });
-    await expect(settings.get("owner-1")).resolves.toEqual({ nickname, wallet: null });
+    const settings = new SupabaseSettingsRepository({ from: (table) => query(table === "user_profiles" ? { nickname } : table === "app_users" ? { preferred_locale: "en" } : null), rpc: vi.fn() });
+    await expect(settings.get("owner-1")).resolves.toEqual({ nickname, preferredLocale: "en", wallet: null });
     expect(basePassportSchema.shape.owner.parse({ nickname })).toEqual({ nickname });
     expect(stampDetailRecordSchema.shape.owner.parse({ nickname })).toEqual({ nickname });
   });

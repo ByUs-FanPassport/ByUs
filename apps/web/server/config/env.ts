@@ -50,6 +50,10 @@ function isSecureAppUrl(value: string): boolean {
 }
 
 const httpsUrl = z.string().trim().refine(isHttpsUrl, "must be an HTTPS URL");
+const optionalNonEmptyString = z.preprocess(
+  (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.string().trim().min(1).optional(),
+);
 const booleanFlag = z.enum(["true", "false"]).default("false").transform((value) => value === "true");
 const privyAppEnvironment = z.enum(["development", "production"]).default("production");
 const dataEnvironment = z.enum(["development", "production"]);
@@ -107,10 +111,13 @@ const serverEnvSchema = publicEnvSchema
     BYUS_STAMP_CONTRACT_ADDRESS: evmAddress,
     BYUS_RELAYER_ADDRESS: evmAddress,
     KAKAO_OAUTH_MODE: z.enum(["test_sink", "provider"]).default("test_sink"),
-    KAKAO_CLIENT_ID: z.string().trim().min(1).optional(),
-    KAKAO_CLIENT_SECRET: z.string().trim().min(1).optional(),
-    KAKAO_REDIRECT_URI: z.string().trim().refine(isSecureAppUrl, "must be HTTPS, except localhost").optional(),
-    KAKAO_TEST_SINK_SECRET: z.string().min(16).optional(),
+    KAKAO_CLIENT_ID: optionalNonEmptyString,
+    KAKAO_CLIENT_SECRET: optionalNonEmptyString,
+    KAKAO_REDIRECT_URI: optionalNonEmptyString,
+    KAKAO_TEST_SINK_SECRET: z.preprocess(
+      (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.string().min(16).optional(),
+    ),
   })
   .superRefine((value, context) => {
     if (value.PRIVY_APP_ID !== value.NEXT_PUBLIC_PRIVY_APP_ID) {
@@ -175,6 +182,24 @@ const serverEnvSchema = publicEnvSchema
     }
     if (value.KAKAO_OAUTH_MODE === "provider" && (!value.KAKAO_CLIENT_ID || !value.KAKAO_CLIENT_SECRET || !value.KAKAO_REDIRECT_URI)) {
       context.addIssue({ code: "custom", message: "provider mode requires Kakao credentials and redirect URI", path: ["KAKAO_OAUTH_MODE"] });
+    }
+    if (value.KAKAO_REDIRECT_URI) {
+      try {
+        const appUrl = new URL(value.NEXT_PUBLIC_APP_URL);
+        const redirect = new URL(value.KAKAO_REDIRECT_URI);
+        if (!isSecureAppUrl(value.KAKAO_REDIRECT_URI) ||
+          redirect.origin !== appUrl.origin ||
+          redirect.pathname !== "/settings/kakao/callback" ||
+          redirect.search || redirect.hash) {
+          throw new Error("invalid Kakao redirect");
+        }
+      } catch {
+        context.addIssue({
+          code: "custom",
+          message: "must be the same-origin /settings/kakao/callback URL without query or hash",
+          path: ["KAKAO_REDIRECT_URI"],
+        });
+      }
     }
   });
 

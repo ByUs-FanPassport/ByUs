@@ -68,7 +68,74 @@ exact STS caller-account match before any AWS mutation. Dev and Prod may share
 an AWS account; function, role, rule, permission and secret names remain
 strictly environment-suffixed.
 EventBridge and the Notification Lambda are the canonical scheduler. Every
-invocation first runs `enqueue_due_fan_notifications(now)` (including delivery
-backfill), then claims and sends. Enqueue failure is fail-closed: no delivery is
+invocation first runs `enqueue_due_notification_maintenance(now)` (scheduled
+notifications, delivery backfill, and Collectible window/availability/expiry
+maintenance), then claims and sends. Enqueue failure is fail-closed: no delivery is
 claimed or pushed. The protected Web enqueue route is manual diagnostics only;
 runtime operation does not require a Vercel cron or `CRON_SECRET`.
+
+## SES notification email
+
+`NOTIFICATION_EXTERNAL_MODE=ses_email` uses the email-only, consent-aware
+`claim_email_notification_deliveries` RPC. Region and sender are fixed to
+`ap-northeast-2` and `notifications@byus.kr`; batch size must be at most 2.
+Deploying code does not enable external delivery: preserve `disabled` until the
+real-recipient automatic delivery is explicitly activated.
+
+The B poster template renders real text, one action link and a plain-text fallback.
+It supports Korean/English labels, KST dates, the selected B star/rule motif,
+separate large date/time rows and a 234px poster-frame/card overlap.
+The poster tail preserves the artist image without cropping. Outlook uses a
+non-overlapping fallback; the overlap was verified in an actual Naver web inbox. The SES sender embeds the original
+ByUs wordmark and published poster as INLINE CID attachments. This avoids the
+`Cross-Origin-Resource-Policy: same-origin` restriction on the website's images.
+Logo bytes in `src/email-logo.ts` must match the source wordmark under the web
+public assets; update both if branding changes.
+
+Posters are fetched only from the trusted site's `/images/` or the configured
+Supabase project's public `cms-assets` bucket. Redirects, URL credentials and query
+strings are rejected; requests have a 3-second timeout and 3 MiB streaming limit.
+JPEG, PNG and the CMS preview pipeline's WebP format have signature validation.
+A failed or unsupported poster uses the text artwork fallback. WebP rendering
+still depends on the receiving mail client. Pretendard is an optional webfont;
+system fonts remain necessary for clients that strip or do not load webfonts.
+
+### Trigger coverage and language
+
+Email supports `live_reserved`, `live_10m`, `live_changed`, `survey_reminder`,
+`benefit_available`, `benefit_unlocked`, `benefit_won`,
+`recipient_information_required`, `fulfillment_meaningful_update`,
+`collectible_claim_available`, `collectible_claim_expiring`, and `level_up`.
+The five fulfillment states have separate copy, yielding 16 scenarios / 32 KO-EN
+variants. `live_24h` and `live_cancelled` are excluded from direct, fallback, and
+already queued email; inbox, push, and Kakao retain those kinds.
+
+Apply `20260906150000_fan_email_trigger_lifecycle.sql` before the worker or web
+locale changes. First sign-in initializes a null `app_users.preferred_locale`
+from the app locale; Settings PATCH persists explicit subsequent choices.
+Existing unset users default to Korean. The delivery plan snapshots email locale,
+including Kakao-to-email fallback; Kakao keeps its existing Korean payload.
+The email renderer derives subject/body/CTA from kind and locale, not stored
+Korean notification copy. CMS titles use the requested locale, with existing
+content-localization fallback when that translation is absent.
+
+Claims and `revalidate_email_notification_delivery` check current consent,
+schedule, supersession, publication, survey/claim completion, and action state.
+Missing required fulfillment/level context or unsupported template keys fail
+permanently. Known excluded or no-longer-eligible jobs are terminally suppressed.
+A future scheduled job remains queued. Sent records are not rewritten.
+
+Regression verification:
+
+```sh
+BYUS_CLEAN_DB_ASSERTION_FILE="$PWD/scripts/verify-fan-email-trigger-lifecycle.sql" \
+  bash scripts/verify-clean-migration-chain.sh
+npm run test --workspace @byus/worker -- --no-file-parallelism
+```
+
+The lifecycle fixture exercises real reservation, scheduler, revision, winner,
+fulfillment, tier, and Collectible producers, including stale/completed/consent
+cases. Actual SES receipt evidence remains separate from test-sink records.
+SES has no idempotency token: a lost provider response or a completion-write
+failure can still cause duplicate delivery on retry; leases and source keys do
+not provide an exactly-once guarantee.

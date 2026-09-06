@@ -25,7 +25,14 @@ describe("fan design system ownership", () => {
       ["features/my/ui/my-screen", /\.sectionTitle|\.pageHeading\s+h1/],
     ] as const;
     for (const [path, obsolete] of migrated) {
-      expect(read(`${path}.module.css`), path).not.toMatch(obsolete);
+      const css = read(`${path}.module.css`);
+      // The approved desktop calendar artwork has its own display title.
+      // Its mobile heading remains owned by the shared FanHeading component.
+      if (path === "features/live/ui/live-calendar-screen") expect(css.indexOf("@media (min-width:64rem)")).toBeGreaterThan(0);
+      const sharedHeadingCss = path === "features/live/ui/live-calendar-screen"
+        ? css.slice(0, css.indexOf("@media (min-width:64rem)"))
+        : css;
+      expect(sharedHeadingCss, path).not.toMatch(obsolete);
       expect(read(`${path}.tsx`), path).toMatch(/import \{[^}]*Fan(?:Heading|SectionHeader)/);
     }
   });

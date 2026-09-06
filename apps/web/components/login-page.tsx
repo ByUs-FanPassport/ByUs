@@ -121,7 +121,11 @@ export function LoginPage({
         if (!token) throw new Error("Missing Privy access token");
         const response = await fetch("/api/auth/session", {
           method: "POST",
-          headers: { authorization: `Bearer ${token}` },
+          headers: {
+            authorization: `Bearer ${token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ locale }),
           cache: "no-store",
         });
         if (!response.ok) {

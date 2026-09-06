@@ -5,7 +5,12 @@ do $$
 declare
   creator_id uuid;
 begin
-  select id into strict creator_id from public.celebrities where slug = 'jenny-jeong';
+  select id into creator_id from public.celebrities where slug = 'jenny-jeong';
+  -- Jenny is editorial production data, not part of a fresh database seed.
+  if not found then
+    raise notice 'Jenny is not present; skipping CHZZK editorial link';
+    return;
+  end if;
   insert into public.celebrity_social_links (celebrity_id, platform, url, position, active)
   select creator_id, 'chzzk',
     'https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045',
