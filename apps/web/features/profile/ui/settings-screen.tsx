@@ -446,7 +446,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         if (!response.ok) throw new Error("disconnect");
         await load();
       } else {
-        const response = await fetch("/api/me/connected-accounts/kakao/start", { method: "POST", headers: authHeaders(token) });
+        const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}`, { method: "POST", headers: authHeaders(token) });
         const body = await response.json() as { authorizationUrl?: string };
         if (!response.ok || !body.authorizationUrl) throw new Error("connect");
         window.location.assign(body.authorizationUrl);

@@ -1,12 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { z } from "zod";
-
-export const kakaoConnectionCallbackSchema = z.object({
-  code: z.string().trim().min(1), state: z.string().trim().min(32),
-  error: z.string().trim().min(1).optional(),
-});
-
-export const safeKakaoReturnPathSchema = z.string().regex(/^\/(?:my|settings)(?:[/?#].*)?$/);
+export { kakaoConnectionCallbackSchema, safeKakaoReturnPathSchema } from "./kakao-connection-schema";
 
 export interface KakaoConnectionPort {
   authorizationUrl(input: { state: string; codeChallenge: string; redirectUri: string }): string;

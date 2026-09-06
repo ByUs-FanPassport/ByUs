@@ -29,6 +29,11 @@ const validEnv = {
   BYUS_PASSPORT_CONTRACT_ADDRESS: "0x1111111111111111111111111111111111111111",
   BYUS_STAMP_CONTRACT_ADDRESS: "0x2222222222222222222222222222222222222222",
   BYUS_RELAYER_ADDRESS: "0x3333333333333333333333333333333333333333",
+  KAKAO_OAUTH_MODE: "test_sink",
+  KAKAO_CLIENT_ID: "",
+  KAKAO_CLIENT_SECRET: "",
+  KAKAO_REDIRECT_URI: "",
+  KAKAO_TEST_SINK_SECRET: "",
 } as const;
 
 describe("public environment", () => {
@@ -102,7 +107,34 @@ describe("server environment", () => {
   it("keeps Kakao fail-closed in test sink and requires complete provider configuration", () => {
     expect(parseServerEnv(validEnv)).toMatchObject({ KAKAO_OAUTH_MODE: "test_sink" });
     expect(() => parseServerEnv({ ...validEnv, KAKAO_OAUTH_MODE: "provider" })).toThrowError(/KAKAO_OAUTH_MODE/);
-    expect(parseServerEnv({ ...validEnv, KAKAO_OAUTH_MODE: "provider", KAKAO_CLIENT_ID: "client", KAKAO_CLIENT_SECRET: "secret", KAKAO_REDIRECT_URI: "https://dev.byus.test/api/me/connected-accounts/kakao/callback" })).toMatchObject({ KAKAO_OAUTH_MODE: "provider" });
+    expect(parseServerEnv({ ...validEnv, NEXT_PUBLIC_APP_URL: "https://dev.byus.test", KAKAO_OAUTH_MODE: "provider", KAKAO_CLIENT_ID: "client", KAKAO_CLIENT_SECRET: "secret", KAKAO_REDIRECT_URI: "https://dev.byus.test/settings/kakao/callback" })).toMatchObject({ KAKAO_OAUTH_MODE: "provider" });
+  });
+
+  it.each([
+    "https://dev.byus.test/api/me/connected-accounts/kakao/callback",
+    "https://other.test/settings/kakao/callback",
+    "https://dev.byus.test/settings/kakao/callback?locale=ko",
+    "https://dev.byus.test/settings/kakao/callback#done",
+    "http://dev.byus.test/settings/kakao/callback",
+  ])("rejects an unsafe or obsolete Kakao browser callback: %s", (KAKAO_REDIRECT_URI) => {
+    expect(() => parseServerEnv({
+      ...validEnv,
+      NEXT_PUBLIC_APP_URL: "https://dev.byus.test",
+      KAKAO_OAUTH_MODE: "provider",
+      KAKAO_CLIENT_ID: "client",
+      KAKAO_CLIENT_SECRET: "secret",
+      KAKAO_REDIRECT_URI,
+    })).toThrowError(/KAKAO_REDIRECT_URI/);
+  });
+
+  it("accepts the exact localhost callback over HTTP", () => {
+    expect(parseServerEnv({
+      ...validEnv,
+      KAKAO_OAUTH_MODE: "provider",
+      KAKAO_CLIENT_ID: "client",
+      KAKAO_CLIENT_SECRET: "secret",
+      KAKAO_REDIRECT_URI: "http://localhost:3000/settings/kakao/callback",
+    })).toMatchObject({ KAKAO_REDIRECT_URI: "http://localhost:3000/settings/kakao/callback" });
   });
 
   it("accepts localhost with Production data and the demo Privy Development app", () => {
@@ -133,6 +165,7 @@ describe("server environment", () => {
     const serverKeys = Object.keys(validEnv).filter(
       (key) =>
         !key.startsWith("NEXT_PUBLIC_") &&
+        !key.startsWith("KAKAO_") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
         key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
     );
