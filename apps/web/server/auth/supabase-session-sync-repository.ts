@@ -1,6 +1,10 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { CanonicalPrivyIdentity, CanonicalWallet } from "../../features/auth/domain/identity";
+import {
+  preferredLocaleSchema,
+  type PreferredLocale,
+} from "../../features/profile/domain/preferred-locale";
 import { fanProfileSchema } from "../../features/profile/domain/profile";
 import type { SessionSyncRepository } from "./session-sync";
 
@@ -14,7 +18,11 @@ interface SessionSyncRpcClient {
 export class SupabaseSessionSyncRepository implements SessionSyncRepository {
   constructor(private readonly client: SessionSyncRpcClient) {}
 
-  async sync(identity: CanonicalPrivyIdentity, wallet: CanonicalWallet) {
+  async sync(
+    identity: CanonicalPrivyIdentity,
+    wallet: CanonicalWallet,
+    preferredLocale: PreferredLocale,
+  ) {
     const { data, error } = await this.client.rpc("sync_privy_identity", {
       p_privy_user_id: identity.privyUserId,
       p_verified_email: identity.verifiedEmail,
@@ -26,6 +34,13 @@ export class SupabaseSessionSyncRepository implements SessionSyncRepository {
     if (!row || typeof row !== "object" || !("app_user_id" in row) || typeof row.app_user_id !== "string") {
       throw new Error("Identity synchronization returned an invalid owner");
     }
+    const localeInitialization = await this.client.rpc("initialize_owned_preferred_locale", {
+      p_app_user_id: row.app_user_id,
+      p_locale: preferredLocale,
+    });
+    if (localeInitialization.error) throw new Error("Preferred locale initialization failed");
+    if (!preferredLocaleSchema.safeParse(localeInitialization.data).success)
+      throw new Error("Preferred locale initialization returned invalid data");
     const notificationProjection = await this.client.rpc("sync_owned_google_notification_channel", {
       p_app_user_id: row.app_user_id,
       p_privy_user_id: identity.privyUserId,

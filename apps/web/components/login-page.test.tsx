@@ -130,7 +130,11 @@ describe("Privy login page", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
     expect(fetch).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
       method: "POST",
-      headers: { authorization: "Bearer privy-access-token" },
+      headers: {
+        authorization: "Bearer privy-access-token",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ locale: "ko" }),
     }));
   });
 
@@ -148,7 +152,11 @@ describe("Privy login page", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
     expect(fetch).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
       method: "POST",
-      headers: { authorization: "Bearer privy-access-token" },
+      headers: {
+        authorization: "Bearer privy-access-token",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ locale: "ko" }),
     }));
   });
 

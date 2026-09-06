@@ -30,6 +30,7 @@ vi.mock("../../notification/ui/push-subscription", () => ({
 
 const settings = {
   nickname: "Kamilia",
+  preferredLocale: "ko" as const,
   wallet: { chainId: 91342, maskedAddress: "0x1234…cdef" },
 };
 let preferences: {
@@ -108,6 +109,10 @@ describe("FAN-020 settings", () => {
     document.cookie = "byus_locale=; Max-Age=0; Path=/";
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
+      if (url === "/api/me/settings" && init?.method === "PATCH")
+        return Response.json({
+          settings: { preferredLocale: JSON.parse(String(init.body)).preferredLocale },
+        });
       if (url === "/api/me/settings") return Response.json({ settings });
       if (url === "/api/notifications/preferences" && init?.method === "PATCH")
         return Response.json({
@@ -367,6 +372,43 @@ describe("FAN-020 settings", () => {
       ),
     );
     fireEvent.click(screen.getByRole("button", { name: "English" }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/me/settings",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ preferredLocale: "en" }),
+        }),
+      ),
+    );
     expect(replace).toHaveBeenCalledWith("/settings?locale=en");
+  });
+
+  it("keeps the current language and allows retry when locale persistence fails", async () => {
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url === "/api/me/settings" && init?.method === "PATCH")
+        return Response.json(
+          { error: { code: "SETTINGS_UNAVAILABLE" } },
+          { status: 503 },
+        );
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences")
+        return Response.json({ preferences });
+      if (url === "/api/me/notification-channels")
+        return Response.json({ connections });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    render(<SettingsScreen locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "English" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.");
+    expect(replace).not.toHaveBeenCalledWith("/settings?locale=en");
+    expect(screen.getByRole("button", { name: "English" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "한국어" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

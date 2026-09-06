@@ -1,0 +1,15 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ses:SendEmail",
+      "Resource": "arn:aws:ses:ap-northeast-2:200151116034:identity/byus.kr",
+      "Condition": {
+        "StringEquals": {
+          "ses:FromAddress": "notifications@byus.kr"
+        }
+      }
+    }
+  ]
+}

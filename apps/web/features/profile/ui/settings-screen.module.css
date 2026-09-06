@@ -147,6 +147,12 @@
   border-radius: 12px;
   background: oklch(97.5% 0 0);
 }
+.languageError {
+  margin: 10px 0 0 58px;
+  color: var(--color-error);
+  font-size: 13px;
+  line-height: 1.5;
+}
 .segmented button {
   min-height: 44px;
   border: 0;
@@ -366,6 +372,7 @@
   .walletValue,
   .renameForm,
   .segmented,
+  .languageError,
   .toggles,
   .support,
   .installState,

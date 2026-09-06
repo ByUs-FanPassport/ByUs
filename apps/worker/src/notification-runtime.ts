@@ -4,6 +4,7 @@ import type { NotificationWorkerEnv } from "./notification-env.js";
 import { NotificationWorker } from "./notification-worker.js";
 import { SupabaseExternalNotificationQueue } from "./adapters/supabase-external-notification-queue.js";
 import { NotificationTestSinkSender } from "./adapters/notification-test-sink.js";
+import { SesEmailSender } from "./adapters/ses-email-sender.js";
 import { EmailSender } from "./adapters/email-sender.js";
 import { KakaoSender } from "./adapters/kakao-sender.js";
 import { ExternalNotificationWorker } from "./external-notification-worker.js";
@@ -25,9 +26,10 @@ export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
     },
   ).runOnce();
   if(env.NOTIFICATION_EXTERNAL_MODE==="disabled")return push;
-  const queue=SupabaseExternalNotificationQueue.create(env.SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,env.NOTIFICATION_EXTERNAL_ENVIRONMENT);
+  const queue=SupabaseExternalNotificationQueue.create(env.SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,env.NOTIFICATION_EXTERNAL_ENVIRONMENT,env.NOTIFICATION_EXTERNAL_MODE==="ses_email");
   const sink=new NotificationTestSinkSender(queue);
-  const senders=env.NOTIFICATION_EXTERNAL_MODE==="test_sink"?{email:sink,kakao:sink}:{email:new EmailSender({url:env.EMAIL_PROVIDER_URL!,token:env.EMAIL_PROVIDER_TOKEN!}),kakao:new KakaoSender({url:env.KAKAO_PROVIDER_URL!,token:env.KAKAO_PROVIDER_TOKEN!})};
+  const ses=env.NOTIFICATION_EXTERNAL_MODE==="ses_email"?new SesEmailSender({region:env.SES_REGION!,fromEmail:env.SES_FROM_EMAIL!,storageOrigin:new URL(env.SUPABASE_URL).origin}):null;
+  const senders=env.NOTIFICATION_EXTERNAL_MODE==="test_sink"?{email:sink,kakao:sink}:ses?{email:ses,kakao:ses}:{email:new EmailSender({url:env.EMAIL_PROVIDER_URL!,token:env.EMAIL_PROVIDER_TOKEN!}),kakao:new KakaoSender({url:env.KAKAO_PROVIDER_URL!,token:env.KAKAO_PROVIDER_TOKEN!})};
   const external=await new ExternalNotificationWorker(queue,senders,{workerId:`${env.NOTIFICATION_WORKER_ID}:external`,batchSize:env.NOTIFICATION_WORKER_BATCH_SIZE,leaseSeconds:env.NOTIFICATION_WORKER_LEASE_SECONDS}).runOnce();
   return push+external;
 }

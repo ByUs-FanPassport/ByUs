@@ -26,6 +26,7 @@ type PreferenceKey =
   "liveReminders" | "surveyReminders" | "benefitNotifications";
 interface SettingsSummary {
   nickname: string;
+  preferredLocale: Locale;
   wallet: { chainId: number; maskedAddress: string } | null;
 }
 interface Preferences {
@@ -85,7 +86,7 @@ const copy = {
     cancel: "취소",
     nicknameRule: "한글, 영문, 숫자, 공백, 밑줄, 하이픈을 사용해 2–16자로 입력해 주세요.",
     language: "언어",
-    languageHelp: "선택한 언어는 이 브라우저에 저장됩니다.",
+    languageHelp: "앱과 자동 이메일에 사용할 언어를 선택하세요.",
     korean: "한국어",
     english: "English",
     notifications: "알림",
@@ -148,7 +149,7 @@ const copy = {
     cancel: "Cancel",
     nicknameRule: "Use 2–16 Korean or Latin letters, numbers, spaces, underscores, or hyphens.",
     language: "Language",
-    languageHelp: "Your selection is saved in this browser.",
+    languageHelp: "Choose the language for the app and automatic emails.",
     korean: "한국어",
     english: "English",
     notifications: "Notifications",
@@ -216,6 +217,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+  const [languageSaving, setLanguageSaving] = useState(false);
+  const [languageError, setLanguageError] = useState(false);
   const [message, setMessage] = useState("");
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
@@ -383,6 +386,40 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     } catch {
       setPreferences(previous);
       setMessage(t.failed);
+    }
+  }
+
+  async function updatePreferredLocale(nextLocale: Locale) {
+    if (!settings || languageSaving) return;
+    setLanguageError(false);
+    if (settings.preferredLocale === nextLocale) {
+      if (locale !== nextLocale)
+        router.replace(`/settings?locale=${nextLocale}` as Route);
+      return;
+    }
+    setLanguageSaving(true);
+    setMessage("");
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("token");
+      const response = await fetch("/api/me/settings", {
+        method: "PATCH",
+        headers: { ...authHeaders(token), "content-type": "application/json" },
+        body: JSON.stringify({ preferredLocale: nextLocale }),
+      });
+      const body = (await response.json()) as {
+        settings?: { preferredLocale?: Locale };
+      };
+      if (!response.ok || body.settings?.preferredLocale !== nextLocale)
+        throw new Error("save");
+      setSettings((current) =>
+        current ? { ...current, preferredLocale: nextLocale } : current,
+      );
+      router.replace(`/settings?locale=${nextLocale}` as Route);
+    } catch {
+      setLanguageError(true);
+    } finally {
+      setLanguageSaving(false);
     }
   }
 
@@ -579,20 +616,28 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             className={styles.segmented}
             role="group"
             aria-label={t.language}
+            aria-describedby={languageError ? "language-error" : undefined}
           >
             <button
-              aria-pressed={locale === "ko"}
-              onClick={() => router.replace("/settings?locale=ko" as Route)}
+              aria-pressed={settings.preferredLocale === "ko"}
+              disabled={languageSaving}
+              onClick={() => void updatePreferredLocale("ko")}
             >
               {t.korean}
             </button>
             <button
-              aria-pressed={locale === "en"}
-              onClick={() => router.replace("/settings?locale=en" as Route)}
+              aria-pressed={settings.preferredLocale === "en"}
+              disabled={languageSaving}
+              onClick={() => void updatePreferredLocale("en")}
             >
               {t.english}
             </button>
           </div>
+          {languageError && (
+            <p id="language-error" className={styles.languageError} role="alert">
+              {t.failed}
+            </p>
+          )}
         </section>
 
         <section

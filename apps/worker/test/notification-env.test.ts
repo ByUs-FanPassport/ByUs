@@ -12,6 +12,13 @@ const valid = {
   WEB_PUSH_VAPID_PRIVATE_KEY: "B".repeat(43),
 };
 describe("notification worker secrets", () => {
+  it("allows SES email without Kakao and requires the approved region and sender", () => {
+    const ses = {...valid, NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2", SES_REGION:"ap-northeast-2", SES_FROM_EMAIL:"notifications@byus.kr"};
+    expect(parseNotificationEnv(ses).NOTIFICATION_EXTERNAL_MODE).toBe("ses_email");
+    expect(() => parseNotificationEnv({...ses, NOTIFICATION_WORKER_BATCH_SIZE:"25"})).toThrow();
+    expect(() => parseNotificationEnv({...ses, SES_FROM_EMAIL:undefined})).toThrow();
+    expect(() => parseNotificationEnv({...ses, SES_REGION:"us-east-1"})).toThrow();
+  });
   it("accepts complete VAPID and queue configuration without exposing values", () => {
     expect(parseNotificationEnv(valid).NOTIFICATION_WORKER_ID).toBe(
       "notify-prod-1",

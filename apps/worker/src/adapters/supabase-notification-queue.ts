@@ -30,11 +30,15 @@ export class SupabaseNotificationQueue implements NotificationQueue {
   }
   async enqueueDue(now: string) {
     const { data, error } = await this.client.rpc(
-      "enqueue_due_fan_notifications",
+      "enqueue_due_notification_maintenance",
       { p_now: now },
     );
     if (error) throw new Error("notification enqueue failed");
-    return Number(data ?? 0);
+    const counts = data as { scheduledNotifications?: unknown; collectibleExpiryNotifications?: unknown } | null;
+    if (!counts || typeof counts.scheduledNotifications !== "number" || typeof counts.collectibleExpiryNotifications !== "number") {
+      throw new Error("notification maintenance returned invalid counts");
+    }
+    return counts.scheduledNotifications + counts.collectibleExpiryNotifications;
   }
   async claim(workerId: string, batchSize: number, leaseSeconds: number) {
     const { data, error } = await this.client.rpc(

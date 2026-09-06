@@ -8,8 +8,10 @@ describe("FAN-020 settings route", () => {
     const repository = {
       get: vi.fn().mockResolvedValue({
         nickname: "Kamilia",
+        preferredLocale: "en",
         wallet: { chainId: 91342, maskedAddress: "0x1234…cdef" },
       }),
+      setPreferredLocale: vi.fn(),
     };
     const response = await createGetSettingsHandler({
       authorize: vi.fn().mockResolvedValue({ appUserId: "user-1" }),
@@ -24,13 +26,14 @@ describe("FAN-020 settings route", () => {
     expect(await response.json()).toEqual({
       settings: {
         nickname: "Kamilia",
+        preferredLocale: "en",
         wallet: { chainId: 91342, maskedAddress: "0x1234…cdef" },
       },
     });
   });
 
   it("rejects unauthenticated requests without consulting storage", async () => {
-    const repository = { get: vi.fn() };
+    const repository = { get: vi.fn(), setPreferredLocale: vi.fn() };
     const response = await createGetSettingsHandler({
       authorize: vi
         .fn()
@@ -41,5 +44,50 @@ describe("FAN-020 settings route", () => {
     })(new Request("https://byus.kr/api/me/settings"));
     expect(response.status).toBe(401);
     expect(repository.get).not.toHaveBeenCalled();
+  });
+
+  it("persists an authenticated preferred locale", async () => {
+    const repository = {
+      get: vi.fn(),
+      setPreferredLocale: vi.fn().mockResolvedValue("en"),
+    };
+    const { createPatchSettingsHandler } = await import("./settings-route");
+    const response = await createPatchSettingsHandler({
+      authorize: vi.fn().mockResolvedValue({ appUserId: "user-1" }),
+      repository,
+    })(
+      new Request("https://byus.kr/api/me/settings", {
+        method: "PATCH",
+        headers: {
+          authorization: "Bearer valid",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ preferredLocale: "en" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(repository.setPreferredLocale).toHaveBeenCalledWith("user-1", "en");
+    expect(await response.json()).toEqual({
+      settings: { preferredLocale: "en" },
+    });
+  });
+
+  it.each(["fr", null, 1])("rejects invalid preferred locale %s", async (preferredLocale) => {
+    const repository = { get: vi.fn(), setPreferredLocale: vi.fn() };
+    const { createPatchSettingsHandler } = await import("./settings-route");
+    const response = await createPatchSettingsHandler({
+      authorize: vi.fn().mockResolvedValue({ appUserId: "user-1" }),
+      repository,
+    })(
+      new Request("https://byus.kr/api/me/settings", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ preferredLocale }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(repository.setPreferredLocale).not.toHaveBeenCalled();
   });
 });
