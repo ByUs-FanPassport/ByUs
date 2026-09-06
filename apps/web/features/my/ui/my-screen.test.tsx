@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyScreen } from "./my-screen";
 import { notifyFanActivityUpdated } from "../../../components/fan-ui/fan-activity-updates";
 
@@ -37,12 +37,30 @@ const summary = {
   unreadNotificationCount: 1,
 };
 const getAccessToken = vi.fn(async () => "token");
+const { avatarOwner } = vi.hoisted(() => ({ avatarOwner: { id: undefined as string | undefined } }));
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated: true, getAccessToken }),
+  usePrivy: () => ({ ready: true, authenticated: true, user: avatarOwner.id ? { id: avatarOwner.id } : undefined, getAccessToken }),
 }));
 
+afterEach(() => { avatarOwner.id = undefined; });
+
 describe("unified MY hub", () => {
+  it("renders the same catalog avatar in the profile header and links it to settings", async () => {
+    avatarOwner.id = "owner-a";
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) =>
+      String(input).startsWith("/api/me/avatar")
+        ? Response.json({ avatar: { initialCharacterId: "star-cream", characterId: "fairy-pink", source: "character", hasImage: false, revision: 1 } })
+        : Response.json({ summary }),
+    ));
+    render(<MyScreen locale="ko" />);
+
+    const link = await screen.findByRole("link", { name: "프로필 이미지 변경" });
+    expect(link).toHaveAttribute("href", "/settings?locale=ko");
+    expect(link.querySelector("img")).toHaveAttribute("src", "/images/avatars/fairy-pink.webp");
+    expect(link).not.toHaveTextContent("카");
+  });
+
   it("adds a newly recorded first-reaction relationship after the shared update without remounting", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [] } }))
       .mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [{ ...summary.creators[0], relationship: "first_reaction_only", passport: null }] } }));

@@ -14,6 +14,7 @@ import { FanSiteFooter } from "./fan-shell/fan-site-footer";
 import { readAuthIntent } from "./auth-intent";
 import { FanAction } from "./fan-ui/fan-action";
 import { FanState } from "./fan-ui/fan-state";
+import { useAvatarSessionReady } from "./avatar-session-bridge";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -97,7 +98,9 @@ export function LoginPage({
 }: LoginPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { ready, authenticated, getAccessToken, logout } = usePrivy();
+  const { ready, authenticated, getAccessToken, logout, user } = usePrivy();
+  const privyUserId = user?.id;
+  const markAvatarSessionReady = useAvatarSessionReady();
   const [error, setError] = useState<string | null>(null);
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -109,7 +112,7 @@ export function LoginPage({
   const entity = useMemo(() => sanitizeEntity(searchParams.get("entity")), [searchParams]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(searchParams.get("authIntent")), [searchParams]);
   const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
-  const synchronizeSession = useCallback(() => {
+  const synchronizeSession = useCallback((completedUserId?: string) => {
     if (synchronizationRef.current) return synchronizationRef.current;
 
     synchronizationRef.current = (async () => {
@@ -129,6 +132,8 @@ export function LoginPage({
           throw new Error("Session synchronization failed");
         }
         const body = await response.json() as { profile?: { completed?: boolean } };
+        const synchronizedUserId = completedUserId ?? privyUserId;
+        if (synchronizedUserId) markAvatarSessionReady(synchronizedUserId);
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
         const storedIntent = typeof window === "undefined" ? null : readAuthIntent(window.sessionStorage, authIntent);
         const continuesFanVerification = storedIntent?.actionType === "START_FAN_VERIFICATION"
@@ -151,9 +156,9 @@ export function LoginPage({
     })();
 
     return synchronizationRef.current;
-  }, [authIntent, entity, getAccessToken, intent, locale, returnTo, router]);
+  }, [authIntent, entity, getAccessToken, intent, locale, returnTo, router, privyUserId, markAvatarSessionReady]);
   const { login } = useLogin({
-    onComplete: synchronizeSession,
+    onComplete: ({ user: completedUser }) => synchronizeSession(completedUser.id),
     onError: () => setError(
       testAccountLoginEnabled
         ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
@@ -164,8 +169,8 @@ export function LoginPage({
   });
 
   useEffect(() => {
-    if (ready && authenticated) void synchronizeSession();
-  }, [authenticated, ready, synchronizeSession]);
+    if (ready && authenticated && privyUserId) void synchronizeSession();
+  }, [authenticated, ready, privyUserId, synchronizeSession]);
 
   useEffect(() => {
     if (!error) return;

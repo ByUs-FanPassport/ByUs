@@ -19,6 +19,8 @@ import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
 import { FanSurface, fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
+import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
+import { useAvatar } from "../../profile/ui/use-avatar";
 import styles from "./my-screen.module.css";
 
 const copy = {
@@ -32,6 +34,7 @@ const copy = {
     available: "사용 가능한 혜택", entries: "응모", noRewards: "아직 받은 혜택이 없어요.", collection: "최근 활동",
     passports: "내 패스포트", stamps: "스탬프", collectibles: "디지털 기념품", noCollection: "아직 수집한 기록이 없어요.",
     notifications: "새 알림", settings: "알림 설정", tickets: "응모권", firstReaction: "첫 반응",
+    avatarSettings: "프로필 이미지 변경",
     allLive: "전체 LIVE 보기", allRewards: "혜택 전체 보기",
   },
   en: {
@@ -44,6 +47,7 @@ const copy = {
     available: "Available rewards", entries: "Entries", noRewards: "No rewards received yet.", collection: "Recent collection",
     passports: "Fan Passports", stamps: "Stamps", collectibles: "Collectibles", noCollection: "Nothing collected yet.",
     notifications: "New alerts", settings: "Notification settings", tickets: "Raffle tickets", firstReaction: "First Reaction",
+    avatarSettings: "Change profile image",
     allLive: "View all LIVE", allRewards: "View all rewards",
   },
 } as const;
@@ -66,6 +70,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
   const auth = usePrivy();
   const { ready, authenticated } = auth;
   const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseSummaryResponse, auth);
+  const avatarResource = useAvatar();
   const state = resource.state;
   const t = copy[locale];
 
@@ -75,15 +80,14 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
       : state.status === "loading" ? <>{heading}<FanState kind="loading" title={t.loading} /></>
       : state.status === "error" ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={resource.retry}><RotateCcw/>{t.retry}</FanAction>} /></>
-      : <Dashboard summary={state.data} locale={locale}/>}
+      : <Dashboard summary={state.data} locale={locale} avatarResource={avatarResource}/>}
   </FanContentContainer></FanAppFrame>;
 }
 
-function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale }) {
+function Dashboard({ summary, locale, avatarResource }: { summary: MySummary; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar> }) {
   const t = copy[locale];
   const nickname = summary.profile.nickname?.trim() || null;
   const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
-  const monogram = nickname?.charAt(0).toUpperCase() || "B";
   const hasRewards = summary.rewards.items.length > 0 || summary.rewards.availableCount > 0 || summary.rewards.entries > 0;
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
   const hasRail = summary.collection.recent.length > 0 || hasRewards || (!reservedLives.length && summary.live.history.length > 0);
@@ -94,7 +98,11 @@ function Dashboard({ summary, locale }: { summary: MySummary; locale: FanLocale 
 
   return <div className={styles.dashboard}>
     <header className={styles.profileHeader}>
-      <div className={styles.avatar} aria-hidden="true"><span>{monogram}</span></div>
+      <Link className={styles.avatarLink} href={`/settings?locale=${locale}` as Route} aria-label={t.avatarSettings}>
+        {avatarResource.state.status === "ready"
+          ? <Avatar avatar={avatarResource.state.avatar} imageUrl={avatarResource.state.imageUrl} label={t.avatarSettings} size={64}/>
+          : <AvatarPlaceholder size={64}/>}
+      </Link>
       <div className={styles.profileCopy}><h1>{identity}</h1><p>{t.profileHelp}</p></div>
       <div className={styles.profileActions}>
         <Link className={styles.notificationLink} href={`/notifications?locale=${locale}` as Route}><Bell aria-hidden="true"/><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link>

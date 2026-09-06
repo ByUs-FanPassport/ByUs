@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import type { ReactNode } from "react";
+import { AvatarSessionBridge } from "./avatar-session-bridge";
 
 export function ByUsPrivyProvider({
   appId,
@@ -45,7 +46,7 @@ export function ByUsPrivyProvider({
         },
       }}
     >
-      {children}
+      <AvatarSessionBridge>{children}</AvatarSessionBridge>
     </PrivyProvider>
   );
 }

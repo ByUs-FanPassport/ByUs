@@ -25,6 +25,8 @@ import {
 } from "../../notification/ui/push-subscription";
 import styles from "./settings-screen.module.css";
 import type { NotificationConnections } from "../../notification/domain/connected-account";
+import { AvatarSettings } from "./avatar-editor";
+import { useAvatar } from "./use-avatar";
 
 type Locale = "ko" | "en";
 type PreferenceKey =
@@ -224,6 +226,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const router = useRouter();
   const { ready, authenticated, getAccessToken, logout } = usePrivy();
+  const avatarResource = useAvatar();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const logoutPending = useRef(false);
@@ -600,6 +603,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               <p id="nickname-help">{t.nicknameHelp}</p>
             </div>
           </div>
+          <AvatarSettings locale={locale} resource={avatarResource} />
           {!editing ? (
             <div className={styles.valueRow}>
               <strong dir="auto">{settings.nickname}</strong>

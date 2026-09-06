@@ -1,0 +1,74 @@
+.settingsRow {
+  margin: 20px 0 0 58px;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.currentAvatar { display: flex; min-width: 0; align-items: center; gap: 14px; }
+.currentAvatar > span:last-child { display: grid; min-width: 0; gap: 3px; }
+.currentAvatar strong { font-size: 14px; }
+.currentAvatar small { color: oklch(48% 0 0); font-size: 12px; line-height: 1.45; }
+.settingsRow > button { min-width: 60px; min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: oklch(45% 0.22 315); font-weight: 800; cursor: pointer; }
+.loadingAvatar { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%; background: oklch(97.5% 0 0); }
+
+.backdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(15 15 16 / 56%); }
+.dialog { width: min(100%, 720px); max-height: min(88vh, 820px); overflow-y: auto; padding: 24px; border-radius: 16px; background: #fff; box-shadow: 0 18px 60px rgb(15 15 16 / 24%); color: oklch(18% 0 0); }
+.dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.dialog h3, .dialog h4, .dialog p { margin: 0; }
+.dialog h3 { font-size: 20px; line-height: 1.3; letter-spacing: -0.025em; }
+.dialog header p, .photoHeading p { margin-top: 5px; color: oklch(48% 0 0); font-size: 13px; line-height: 1.5; }
+.close { width: 44px; height: 44px; display: grid; flex: 0 0 auto; place-items: center; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
+.close svg { width: 20px; }
+.editorBody { display: grid; grid-template-columns: minmax(250px, .85fr) minmax(280px, 1.15fr); gap: 28px; margin-top: 26px; }
+.editorBody h4 { margin-bottom: 12px; font-size: 14px; }
+.characterGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.characterGrid button { min-width: 0; aspect-ratio: 1; padding: 4px; border: 1px solid oklch(90% 0 0); border-radius: 12px; background: #fff; cursor: pointer; }
+.characterGrid button[aria-pressed="true"] { border-color: oklch(18% 0 0); box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px oklch(18% 0 0); }
+.characterGrid img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
+.photoSection { min-width: 0; }
+.photoHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.fileButton { min-height: 44px; display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; padding: 0 12px; border: 1px solid oklch(90% 0 0); border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; }
+.fileButton svg { width: 17px; }
+.fileButton input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.currentPreview { min-height: 280px; display: grid; place-items: center; margin-top: 16px; border-radius: 12px; background: oklch(97.5% 0 0); }
+.cropViewport { position: relative; width: min(100%, 280px); aspect-ratio: 1; overflow: hidden; margin: 16px auto 0; border-radius: 50%; background: oklch(93% 0 0); cursor: grab; touch-action: none; user-select: none; }
+.cropViewport:active { cursor: grabbing; }
+.cropViewport img { position: absolute; max-width: none; object-fit: fill; pointer-events: none; }
+.zoomControl { min-height: 44px; display: grid; grid-template-columns: auto minmax(0, 1fr) 44px; align-items: center; gap: 10px; margin-top: 14px; font-size: 12px; font-weight: 750; }
+.zoomControl input { width: 100%; accent-color: oklch(45% 0.22 315); }
+.zoomControl output { color: oklch(48% 0 0); font-variant-numeric: tabular-nums; text-align: right; }
+.dialog > footer { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 18px; border-top: 1px solid oklch(93% 0 0); }
+.dialog footer button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; font-weight: 800; cursor: pointer; }
+.dialog footer button:disabled, .close:disabled { cursor: wait; opacity: .55; }
+.dialog .deleteButton { color: oklch(42% .16 24); }
+.deleteButton svg { width: 17px; }
+.actions { display: flex; gap: 8px; }
+.dialog footer .saveButton { min-width: 88px; background: linear-gradient(125deg, oklch(68% .22 18), oklch(62% .25 340), oklch(56% .22 285)); color: #fff; }
+.error { min-height: 20px; margin-top: 8px !important; color: oklch(42% .16 24); font-size: 12px; line-height: 1.5; text-align: right; }
+.refreshError { min-height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: oklch(42% .16 24); font-size: 12px; line-height: 1.5; text-align: right; }
+.refreshError button { min-height: 44px; padding: 0 12px; border: 1px solid oklch(90% 0 0); border-radius: 10px; background: #fff; color: inherit; font-weight: 800; cursor: pointer; }
+.dialog button:focus-visible, .dialog label:has(input:focus-visible), .cropViewport:focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .settingsRow > button:hover, .close:hover, .dialog footer button:not(.saveButton):hover, .fileButton:hover { background: oklch(97.5% 0 0); }
+  .characterGrid button:hover { border-color: oklch(76% 0 0); }
+}
+
+@media (max-width: 767px) {
+  .settingsRow { margin-left: 0; }
+  .backdrop { align-items: end; padding: 0; }
+  .dialog { max-height: 94vh; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 16px 16px 0 0; }
+  .editorBody { grid-template-columns: 1fr; gap: 26px; }
+  .characterGrid { grid-template-columns: repeat(4, 1fr); }
+  .currentPreview { min-height: 220px; }
+  .dialog > footer { align-items: stretch; }
+  .dialog > footer, .actions { flex-wrap: wrap; }
+  .actions { margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog *, .settingsRow * { scroll-behavior: auto; transition: none !important; }
+}

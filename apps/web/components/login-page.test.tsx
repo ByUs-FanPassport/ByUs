@@ -6,18 +6,21 @@ import { LoginPage } from "./login-page";
 const login = vi.fn();
 const replace = vi.fn();
 const back = vi.fn();
-let onComplete: (() => void) | undefined;
+let onComplete: ((result?: { user: { id: string } }) => void) | undefined;
 let onError: (() => void) | undefined;
 const getAccessToken = vi.fn();
 const logout = vi.fn();
 let authenticated = false;
 let ready = true;
 let query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
+const markAvatarSessionReady = vi.fn();
+
+vi.mock("./avatar-session-bridge", () => ({ useAvatarSessionReady: () => markAvatarSessionReady }));
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready, authenticated, getAccessToken, logout }),
-  useLogin: (callbacks: { onComplete?: () => void; onError?: () => void }) => {
-    onComplete = callbacks.onComplete;
+  usePrivy: () => ({ ready, authenticated, getAccessToken, logout, user: authenticated ? { id: "restored-fan" } : null }),
+  useLogin: (callbacks: { onComplete?: (result: { user: { id: string } }) => void; onError?: () => void }) => {
+    onComplete = (result = { user: { id: "callback-fan" } }) => callbacks.onComplete?.(result);
     onError = callbacks.onError;
     return { login };
   },
@@ -44,6 +47,7 @@ describe("Privy login page", () => {
       })),
     });
     login.mockClear(); replace.mockClear(); back.mockClear();
+    markAvatarSessionReady.mockClear();
     authenticated = false;
     ready = true;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
@@ -59,6 +63,14 @@ describe("Privy login page", () => {
     render(<LoginPage />);
     await act(async () => { await onComplete?.(); });
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/my?locale=ko&authIntent=11111111-1111-4111-8111-111111111111"));
+  });
+
+  it("hands off the callback user even before usePrivy exposes authenticated user state", async () => {
+    render(<LoginPage />);
+    await act(async () => { await onComplete?.({ user: { id: "new-google-fan" } }); });
+    await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("new-google-fan"));
+    expect(authenticated).toBe(false);
+    expect(replace).toHaveBeenCalled();
   });
 
   it("starts the real Privy modal with Google as the only login method", () => {
