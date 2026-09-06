@@ -35,7 +35,7 @@ import { stampTypeSchema } from "../features/passport/domain/passport-read-model
 import { FanSectionHeader } from "./fan-ui/fan-heading";
 import styles from "./guest-home.module.css";
 
-const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
+const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
 const UPCOMING_LIVE_PAGE_SIZE = 3;
 
 type HomePersonalizationState =
@@ -324,7 +324,7 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
-                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
+                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale === "en" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>
                     </div>
                   </div>

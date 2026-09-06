@@ -639,3 +639,14 @@ it("uses identical cards for all creators with editorial ordering only", () => {
   }
   expect(section.textContent).not.toMatch(/인기순|팔로워순|순위/);
 });
+
+it("renders the verified CHZZK channel with its icon and keeps Instagram", () => {
+ const socialLinks = [{platform:"instagram" as const,url:"https://www.instagram.com/jen2jen2_/"},{platform:"chzzk" as const,url:"https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045"}];
+ render(<GuestHome {...defaultProps} featuredLives={[]} celebrities={[{...defaultProps.celebrities[0]!,slug:"jenny-jeong",name:"정제니",socialLinks}]} />);
+ const link=screen.getByRole("link",{name:"정제니 치지직 공식 채널"});
+ expect(link).toHaveAttribute("href",socialLinks[1]!.url);
+ expect(link).toHaveAttribute("target","_blank");
+ expect(link.querySelector("img")?.getAttribute("src")).toContain("chzzk.png");
+ expect(screen.getByRole("link",{name:"정제니 Instagram 공식 채널"})).toBeInTheDocument();
+ expect(screen.queryByRole("link",{name:/정제니 TikTok/})).not.toBeInTheDocument();
+});

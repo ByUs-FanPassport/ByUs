@@ -41,6 +41,8 @@ describe("content CMS", () => {
       socialLinks: [],
     };
     expect(celebrityPayload.parse({ ...base, fanCount: null }).fanCount).toBeNull();
+    const chzzk = { platform: "chzzk", url: "https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045", position: 1, active: true };
+    expect(celebrityPayload.parse({ ...base, fanCount: null, socialLinks: [chzzk] }).socialLinks).toEqual([chzzk]);
     expect(() => celebrityPayload.parse({ ...base, fanCount: -1 })).toThrow();
     expect(() => celebrityPayload.parse({ ...base, fanCount: 1.5 })).toThrow();
     expect(() => celebrityPayload.parse({ ...base, fanCount: "12800000" })).toThrow();

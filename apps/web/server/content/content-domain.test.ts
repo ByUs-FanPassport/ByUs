@@ -124,3 +124,8 @@ describe("published content boundary", () => {
     ).toThrow();
   });
 });
+
+it("accepts CHZZK alongside existing public social links", () => {
+ const social = {platform:"chzzk",url:"https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045"};
+ expect(parsePublishedCelebrity({...completeRow,social_links:[...completeRow.social_links,social]}).socialLinks).toEqual([...completeRow.social_links,social]);
+});

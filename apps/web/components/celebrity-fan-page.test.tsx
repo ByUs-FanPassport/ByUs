@@ -102,6 +102,21 @@ describe("published celebrity fan page", () => {
     stubHubFetch();
   });
 
+  it("renders Jenny's verified CHZZK channel alongside Instagram", async () => {
+    const socialLinks = [
+      { platform: "instagram" as const, url: "https://www.instagram.com/jen2jen2_/" },
+      { platform: "chzzk" as const, url: "https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045" },
+    ];
+    render(<CelebrityFanPage celebrity={{ ...kara, slug: "jenny-jeong", name: "정제니", socialLinks }} locale="ko" upcomingLive={null} />);
+    const link = await screen.findByRole("link", { name: "정제니 치지직 공식 채널" });
+    expect(link).toHaveAttribute("href", socialLinks[1]!.url);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer");
+    expect(link.querySelector("img")?.getAttribute("src")).toContain("chzzk.png");
+    expect(screen.getByRole("link", { name: /Instagram 열기: 정제니/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /TikTok/ })).not.toBeInTheDocument();
+  });
+
   it("renders the four-tab editorial hub without a decorative empty Passport", async () => {
     const { container } = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");

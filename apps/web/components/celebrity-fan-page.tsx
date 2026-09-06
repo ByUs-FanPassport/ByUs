@@ -53,7 +53,7 @@ type Notice = Readonly<{ slug: string; title: string; pinned: boolean; published
 type Benefit = Readonly<{ id: string; title: string; summary: string; eligibilityLabel: string; state: string }>;
 
 const tabs: CelebrityFanTab[] = ["home", "notice", "live", "benefits"];
-const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram" } as const;
+const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
 const copy = {
   ko: {
     official: "BYUS FAN PAGE", openPassport: "Passport 열기", passportError: "Passport 상태를 확인하지 못했어요.",
@@ -608,7 +608,7 @@ export function CelebrityFanPage({
               <section className={styles.profilePanel} aria-labelledby="profile-title">
                 <div className={styles.profilePortrait}><CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} size={64} /></div>
                 <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
-                {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
+                {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={social.platform === "chzzk" ? `${celebrity.name} ${locale === "ko" ? "치지직 공식 채널" : "CHZZK official channel"}` : `${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{social.platform === "chzzk" && locale === "en" ? "CHZZK" : socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
               </section>
             </div>
           </div>}

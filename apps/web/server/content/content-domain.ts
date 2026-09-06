@@ -31,7 +31,7 @@ const themeSchema = z.object({
 });
 
 const socialLinkSchema = z.object({
-  platform: z.enum(["youtube", "tiktok", "instagram"]),
+  platform: z.enum(["youtube", "tiktok", "instagram", "chzzk"]),
   url: httpsUrl,
 });
 
@@ -73,7 +73,7 @@ export type PublishedCelebrity = Readonly<{
   image: Readonly<{ url: string; alt: string; position: string }>;
   themes: readonly Readonly<{ slug: string; name: string }>[];
   socialLinks: readonly Readonly<{
-    platform: "youtube" | "tiktok" | "instagram";
+    platform: "youtube" | "tiktok" | "instagram" | "chzzk";
     url: string;
   }>[];
   displayOrder: number;

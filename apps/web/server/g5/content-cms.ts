@@ -31,7 +31,7 @@ export const celebrityPayload = z.object({
   socialLinks: z
     .array(
       z.object({
-        platform: z.enum(["youtube", "tiktok", "instagram"]),
+        platform: z.enum(["youtube", "tiktok", "instagram", "chzzk"]),
         url: z.string().url().startsWith("https://"),
         position: z.number().int().min(0),
         active: z.boolean(),

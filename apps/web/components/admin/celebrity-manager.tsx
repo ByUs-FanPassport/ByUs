@@ -12,7 +12,7 @@ import styles from "./admin.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
 type Loc = { name: string; summary: string; imageAlt: string };
 type Social = {
-  platform: "youtube" | "tiktok" | "instagram";
+  platform: "youtube" | "tiktok" | "instagram" | "chzzk";
   url: string;
   position: number;
   active: boolean;
@@ -393,7 +393,7 @@ function CelebrityCms({
               <h3 className={styles.cmsSubheading}>
                 {locale === "ko" ? "소셜 링크" : "Social links"}
               </h3>
-              {(["youtube", "tiktok", "instagram"] as const).map(
+              {(["youtube", "tiktok", "instagram", "chzzk"] as const).map(
                 (platform, position) => (
                   <label key={platform}>
                     <span>{platform}</span>
