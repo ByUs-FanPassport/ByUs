@@ -112,6 +112,32 @@ function renderCalendar(locale: "ko" | "en" = "ko", initialCelebritySlugs: reado
 }
 
 describe("LIVE calendar screen", () => {
+  it("selects a mobile date without removing the desktop month's events and can clear it", () => {
+    renderCalendar();
+    const date = screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ });
+    fireEvent.click(date);
+    expect(date).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).toHaveAttribute("data-mobile-hidden", "true");
+    expect(screen.getByRole("article", { name: "ENDED LIVE" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "전체 보기" }));
+    expect(date).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).not.toHaveAttribute("data-mobile-hidden");
+  });
+
+  it("updates mobile date counts with multi-creator filters and resets the date when filters change", () => {
+    renderCalendar();
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ }));
+    fireEvent.click(screen.getByRole("button", { name: "KARA" }));
+    expect(screen.getByRole("button", { name: /2026년 9월 15일.*2 LIVE/ })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("article", { name: "ELINA LIVE" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "ELINA" }));
+    expect(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ }));
+    expect(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "전체 셀럽 일정" }));
+    expect(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("renders every status and multiple Creators on one KST date with detail links", () => {
     const { container } = renderCalendar();
 

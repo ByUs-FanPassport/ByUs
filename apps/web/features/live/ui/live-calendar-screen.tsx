@@ -143,6 +143,8 @@ export function LiveCalendarScreen({
     ...initialCelebritySlugs,
   ]);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => new Set());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
   const t = copy[locale];
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const previous = adjacentMonth(calendar.month, -1);
@@ -211,6 +213,7 @@ export function LiveCalendarScreen({
       .map((celebrity) => celebrity.slug)
       .filter((slug) => next.includes(slug));
     setSelectedCelebritySlugs(ordered);
+    setSelectedDate(null);
     const href = calendarHref(calendar.month, locale, ordered);
     window.history.replaceState(window.history.state, "", href);
   }
@@ -281,13 +284,46 @@ export function LiveCalendarScreen({
             next={{ href: calendarHref(next, locale, selectedCelebritySlugs), label: `${t.next}: ${monthLabel(next, locale)}` }}
           />
 
+          <div className={styles.mobileCalendar} data-mobile-calendar>
+            <div className={styles.mobileWeekdays} aria-hidden="true">
+              {t.weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+            </div>
+            <div className={styles.mobileMonth} role="group" aria-label={monthLabel(calendar.month, locale)}>
+              {Array.from({ length: firstWeekday }, (_, index) => <span aria-hidden="true" key={`mobile-leading-${index}`} />)}
+              {visibleDays.map((day) => <button
+                type="button"
+                className={styles.mobileDay}
+                key={day.date}
+                data-calendar-date={day.date}
+                aria-label={`${dayLabel(day.date, locale)}, ${day.events.length} LIVE`}
+                aria-pressed={activeDate === day.date}
+                aria-controls="calendar-day-list"
+                onClick={() => setSelectedDate(activeDate === day.date ? null : day.date)}
+              >
+                <CalendarDayNumber date={day.date} today={today} />
+                <span className={styles.mobileDayEvents} aria-hidden="true">
+                  {Array.from({ length: Math.min(3, day.events.length) }, (_, index) => <i key={index} />)}
+                </span>
+              </button>)}
+            </div>
+            <div className={styles.mobileSelection}>
+              <span aria-live="polite">{activeDate ? dayLabel(activeDate, locale) : `${visibleEventCount} LIVE`}</span>
+              {activeDate ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? t.allSelected : "Show all"}</button> : null}
+            </div>
+            {activeDate && visibleEventCount > 0 && !visibleDays.find((day) => day.date === activeDate)?.events.length
+              ? <p className={styles.calendarEmpty}>{t.empty}</p> : null}
+          </div>
+
           {visibleEventCount === 0 ? <p className={styles.calendarEmpty}>{t.filteredEmpty}</p> : null}
 
           <div className={styles.weekdays} aria-hidden="true">
             {t.weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
           </div>
 
-          <div className={styles.days}>
+          <div className={styles.days} id="calendar-day-list"
+            data-mobile-empty={!visibleDays.some((day) => day.events.length > 0 && (!activeDate || day.date === activeDate)) ? "true" : undefined}
+            data-mobile-selected={activeDate ? "true" : undefined}
+          >
             {Array.from({ length: firstWeekday }, (_, index) => <span
               className={styles.outsideDay}
               data-outside-month="true"
@@ -305,6 +341,7 @@ export function LiveCalendarScreen({
                 className={styles.day}
                 data-empty={day.events.length === 0 ? "true" : undefined}
                 data-first-column={isFirstColumn ? "true" : undefined}
+                data-mobile-hidden={activeDate && activeDate !== day.date ? "true" : undefined}
                 key={day.date}
                 role="group"
                 aria-label={label}

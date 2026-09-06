@@ -18,6 +18,18 @@
 .filterChip > svg { width:16px; height:16px; flex:none; }
 .calendar { min-width:0; padding:20px; border:1px solid oklch(92% 0 0); border-radius:20px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0 / .04),0 10px 32px oklch(18% 0 0 / .035); }
 .weekdays { display:none; }
+.mobileCalendar { margin-bottom:var(--space-4); }
+.mobileWeekdays,.mobileMonth { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+.mobileWeekdays span { padding-block:var(--space-2); color:var(--color-muted); font-size:12px; text-align:center; }
+.mobileDay { display:flex; min-width:0; min-height:48px; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:4px 0; border:0; border-radius:var(--radius-control); background:transparent; color:var(--color-ink); font:inherit; cursor:pointer; }
+.mobileDay[aria-pressed="true"] time { background:var(--color-service-ink); color:white; }
+.mobileDayEvents { display:flex; height:4px; align-items:center; justify-content:center; gap:3px; }
+.mobileDayEvents i { width:4px; height:4px; border-radius:50%; background:var(--color-service-ink); }
+.mobileSelection { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--space-2); margin-top:var(--space-3); border-top:1px solid var(--color-line); color:var(--color-muted); font-size:13px; }
+.mobileSelection button { min-height:44px; padding:0 var(--space-2); border:0; background:transparent; color:var(--color-service-ink); font:inherit; font-weight:700; cursor:pointer; }
+.mobileDay:focus-visible,.mobileSelection button:focus-visible { outline:3px solid var(--color-focus); outline-offset:-3px; }
+@media (max-width:63.99rem) { .day[data-mobile-hidden="true"] { display:none; } }
+@media (max-width:47.99rem) { .mobileWeekdays,.mobileMonth { margin-inline:-12px; } }
 .calendarEmpty { margin:0 0 16px; padding:14px 16px; border-radius:12px; background:oklch(97.5% 0 0); color:oklch(45% 0 0); font-size:13px; font-weight:650; text-align:center; }
 .days { display:grid; gap:16px; }
 .outsideDay { display:none; }
@@ -59,6 +71,7 @@
   .day { border-top:1px solid oklch(90% 0 0); }
 }
 @media (min-width:64rem) {
+  .mobileCalendar { display:none; }
   .filters { grid-template-columns:minmax(210px,auto) minmax(0,1fr) 72px; }
   .weekdays { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border-bottom:1px solid oklch(90% 0 0); }
   .weekdays span { padding:10px 8px; color:oklch(48% 0 0); font-size:12px; font-weight:700; text-align:center; }
@@ -102,4 +115,41 @@
 @media (max-width:47.99rem) {
   .intro { flex-direction:column; gap:var(--space-4); }
   .calendar { margin-inline:-16px; padding:16px; border-inline:0; border-radius:0; box-shadow:none; }
+}
+
+/* Mobile reference: Weverse / Blip month overview above readable day cards. */
+@media (max-width:63.99rem) {
+  .main { padding-top:24px; }
+  .intro { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin-bottom:20px; }
+  .intro p { font-size:13px; }
+  .catalogLink { padding-inline:10px; font-size:12px; }
+  .filters { display:block; margin-bottom:12px; padding:0; border:0; border-radius:0; background:transparent; }
+  .filterHeading,.filterCount { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  .filterScroller { gap:6px; padding:4px 2px 8px; }
+  .filterChip { gap:6px; padding-inline:12px; border-color:var(--color-line); font-size:13px; font-weight:650; }
+  .filterChip[data-selected="true"] { border-color:var(--color-service-ink); background:var(--color-service-ink); color:white; }
+  .calendar { padding-top:8px; border:0; box-shadow:none; }
+  .mobileCalendar { margin-bottom:0; }
+  .mobileWeekdays span { padding-block:8px; font-size:12px; }
+  .mobileDay { min-height:48px; gap:2px; }
+  .mobileDay time { width:32px; height:32px; font-size:14px; font-weight:650; }
+  .mobileDay[aria-pressed="true"] time { border-color:var(--color-service-ink); font-weight:800; }
+  .mobileSelection { margin-top:16px; padding-block:4px; border-top:0; color:var(--color-ink); font-weight:700; }
+  .mobileSelection button { font-size:12px; }
+  .days { grid-template-columns:minmax(0,1fr); gap:24px; margin-inline:-16px; padding:20px 16px; background:var(--color-soft); border-radius:16px; }
+  .days[data-mobile-empty="true"] { display:none; }
+  .day { padding-top:0; border:0; }
+  .dayHeading { margin-bottom:10px; }
+  .days[data-mobile-selected="true"] .dayHeading { display:none; }
+  .dayHeading time { display:none; }
+  .dayHeading span { color:var(--color-ink); font-size:13px; font-weight:750; }
+  .eventList { gap:10px; }
+  .event[data-calendar-event-tone] { border:1px solid var(--color-line); border-radius:14px; background:var(--color-surface); }
+  .event[data-calendar-event-status="ended"],.event[data-calendar-event-status="cancelled"] { background:var(--color-soft); }
+  .eventLink { gap:8px; padding:16px; border-radius:13px; }
+  .eventLink strong { font-size:16px; font-weight:750; line-height:1.45; }
+  .eventMeta { gap:6px; font-size:12px; }
+  .eventMeta time { color:var(--color-ink); font-size:13px; font-weight:750; font-variant-numeric:tabular-nums; }
+  .eventTopline { gap:6px; }
+  .creator { font-size:13px; }
 }
