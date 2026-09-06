@@ -1,8 +1,9 @@
 "use client";
 
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Play, RotateCcw } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useState } from "react";
@@ -149,13 +150,7 @@ function LiveGroup({
               : `/live/${item.live.slug}?locale=${locale}`;
             return (
               <article className={styles.row} key={item.live.id}>
-                <Image
-                  src={item.live.celebrity.image}
-                  alt=""
-                  width={64}
-                  height={64}
-                  unoptimized={item.live.celebrity.image.startsWith("https://")}
-                />
+                <CreatorAvatar slug={item.live.celebrity.slug} src={item.live.celebrity.image} size={{ mobile: 52, desktop: 64 }} />
                 <Link
                   className={styles.details}
                   href={`/live/${item.live.slug}?locale=${locale}` as Route}

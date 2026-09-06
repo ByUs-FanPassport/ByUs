@@ -994,7 +994,6 @@ export function LiveEventScreen({
             {live.effectiveStatus === "live" ||
             live.effectiveStatus === "scheduled" ? (
               <LiveStatusIndicator
-                className={styles.status}
                 locale={locale}
                 status={live.effectiveStatus}
                 density="compact"

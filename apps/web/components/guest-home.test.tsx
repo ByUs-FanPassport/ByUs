@@ -6,6 +6,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatKoreanLiveDate, GuestHome } from "./guest-home";
 import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
+import { notifyFanActivityUpdated } from "./fan-ui/fan-activity-updates";
 
 const privy = vi.hoisted(() => ({
   ready: true,
@@ -518,6 +519,22 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
 
+  it("refreshes mounted Home fan panels when a first-reaction mutation invalidates owner activity", async () => {
+    privy.authenticated = true;
+    const base = {
+      profile: { nickname: "이전" }, creators: [], live: { upcoming: [], history: [] },
+      rewards: { availableCount: 0, entries: 0, items: [] },
+      collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    };
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ summary: base }))
+      .mockResolvedValue(Response.json({ summary: { ...base, profile: { nickname: "갱신" } } }));
+    vi.stubGlobal("fetch", (url: string) => url.includes("/reactions") ? Promise.resolve(Response.json({ reaction: null })) : fetcher(url));
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findAllByRole("heading", { name: "이전님, 반가워요." })).toHaveLength(2);
+    await act(async () => { notifyFanActivityUpdated(undefined); });
+    expect(await screen.findAllByRole("heading", { name: "갱신님, 반가워요." })).toHaveLength(2);
+  });
+
   it("restores the Passport artwork and lets fans page through multiple celebrity Passports", async () => {
     privy.authenticated = true;
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ summary: {
@@ -560,7 +577,7 @@ describe("canonical 03 guest home", () => {
           },
         }),
       });
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", (url: string) => url.includes("/reactions") ? Promise.resolve(Response.json({ reaction: null })) : fetchMock(url));
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     const retryButtons = await screen.findAllByRole("button", { name: "다시 시도" });

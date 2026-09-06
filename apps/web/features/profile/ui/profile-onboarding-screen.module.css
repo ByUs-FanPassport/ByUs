@@ -11,8 +11,8 @@
 .composition { display:grid; gap:24px; }
 .preview { display:grid; align-content:start; min-height:420px; overflow:hidden; border:1px solid oklch(90% 0 0); border-radius:16px; background:linear-gradient(145deg,#fff 8%,oklch(98% .012 340) 62%,oklch(97.2% .018 300)); box-shadow:0 1px 2px oklch(18% 0 0/.05),0 4px 12px oklch(18% 0 0/.03); }
 .celebrityContext { display:grid; grid-template-columns:56px minmax(0,1fr) auto; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid oklch(91% .01 315); background:rgb(255 255 255/.7); }
-.celebrityImage { position:relative; width:56px; height:56px; overflow:hidden; border-radius:50%; background:oklch(94% 0 0); }
-.celebrityImage img { object-fit:cover; }
+
+
 .celebrityContext div:nth-child(2) { display:grid; min-width:0; gap:3px; }
 .celebrityContext span { color:oklch(45% .12 315); font-size:11px; font-weight:800; letter-spacing:.06em; }
 .celebrityContext strong { overflow:hidden; font-size:17px; font-weight:850; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
@@ -57,7 +57,7 @@
 }
 @media (max-width:30rem) {
   .celebrityContext { grid-template-columns:48px minmax(0,1fr); padding-inline:18px; }
-  .celebrityImage { width:48px; height:48px; }
+
   .celebrityContext em { grid-column:2; justify-self:start; }
   .passportArtwork { padding-inline:18px; }
   .preview dl { margin-inline:18px; }

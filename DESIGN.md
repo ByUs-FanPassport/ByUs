@@ -559,3 +559,19 @@ missions in the half-open visibility window. False disables entry with the inlin
 reason 현재 참여 가능한 미션이 없어요. / No missions are available right now.
 Unknown read results retain a link to check the authenticated list and never
 claim there are no missions. No question or owner payload is exposed publicly.
+
+### Creator directory portrait contract
+
+`/celebrities` and Home favorites share `CreatorPortrait` for square profile
+photography. Directory keeps its responsive grid and existing card behavior;
+its square Gallery Gray media field centers the same `min(84%, 240px)` square
+portrait used by Home. Shared per-creator cover crops preserve faces, all group
+members and tattoo exclusion. Do not use contain letterboxing, route-local crop
+copies or hover zoom on these portraits. Passport badges remain outside the crop.
+Banner and circular-avatar treatments remain separate. See the directory section
+of [프로필 사진 규약](docs/design/creator-profile-photo-guidelines.md) for replacement
+and desktop/mobile verification requirements.
+
+### 원형 크리에이터 프로필
+- 팬 화면의 원형 사진은 `CreatorAvatar` 공용 컴포넌트 사용. 시각 옵션은 `size`만 허용하며 원형 마스크·개인/그룹 크롭·실패 시 실루엣은 공용으로 관리한다.
+- 등록·교체·24px/64px 검수는 `docs/design/creator-profile-photo-guidelines.md`의 원형 프로필 공용 구현 규약을 따른다. 호출부에서 내부 이미지 CSS를 덮어쓰지 않는다.

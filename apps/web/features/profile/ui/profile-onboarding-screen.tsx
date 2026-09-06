@@ -1,5 +1,7 @@
 "use client";
 
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
@@ -240,15 +242,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         <div className={styles.composition}>
           <section className={styles.preview} aria-label={t.preview} aria-live="polite">
             <div className={styles.celebrityContext}>
-              <div className={styles.celebrityImage}>
-                <Image
-                  src={celebrity.image.url}
-                  alt={celebrity.image.alt}
-                  fill
-                  sizes="72px"
-                  style={{ objectPosition: celebrity.image.position }}
-                />
-              </div>
+              <CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} size={{ mobile: 48, desktop: 56 }} alt={celebrity.image.alt} />
               <div><span>{t.verification}</span><strong>{celebrity.name}</strong></div>
               <em>{t.pending}</em>
             </div>

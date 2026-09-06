@@ -1,48 +1,59 @@
 .status {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  min-height: var(--min-target);
+  width: fit-content;
+  min-height: 28px;
   align-items: center;
   gap: 7px;
-  color: oklch(48% 0 0);
-  font-size: 13px;
-  font-weight: 400;
+  overflow: hidden;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.2;
   white-space: nowrap;
 }
-
-/* Density belongs to the component, never to stylesheet injection order. */
 .status[data-density="compact"] { min-height: 0; }
-
-.dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-radius: 999rem;
-  background: oklch(48% 0 0);
+.status[data-live-status="scheduled"] {
+  color: #9d174d;
+  background: #fdf2f8;
+  border-color: #fbcfe8;
 }
-
 .status[data-live-status="live"] {
-  color: oklch(24% 0 0);
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
 }
-
+.dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+.status[data-live-status="scheduled"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 65%) 50%, transparent 70%);
+  transform: translateX(-110%);
+  animation: live-sheen 5s ease-in-out infinite;
+}
 .status[data-live-status="live"] .dot {
-  background: #e11d48;
-  animation: live-pulse 1.5s ease-in-out infinite;
+  animation: live-pulse 2.4s ease-in-out infinite;
 }
-
+@keyframes live-sheen {
+  0%, 70% { transform: translateX(-110%); }
+  100% { transform: translateX(110%); }
+}
 @keyframes live-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.45;
-    transform: scale(0.72);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(185 28 28 / 0%); }
+  50% { box-shadow: 0 0 0 4px rgb(185 28 28 / 14%); }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .status[data-live-status="live"] .dot {
-    animation: none;
-  }
+  .status[data-live-status="live"] .dot,
+  .status[data-live-status="scheduled"]::after { animation: none; }
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, CircleHelp, ExternalLink, RotateCcw, Sparkles, X } from "lucide-react";
 import Image from "next/image";
@@ -20,9 +22,9 @@ import {
   type PassportStampType,
 } from "./passport-stamp-artwork";
 import { fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
+import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-resource";
 import styles from "./passport-screens.module.css";
 
-type Loadable<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: "auth" | "missing" | "network" };
 
 const copy = {
   ko: {
@@ -118,24 +120,6 @@ function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocal
   return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{kind === "auth" ? (locale === "ko" ? "로그인하고 내 패스포트를 확인하세요." : "Sign in to view your Passports.") : missing ? c.notFound : c.loadError}</h1><p>{kind === "auth" ? (locale === "ko" ? "팬 인증과 LIVE 참여로 남긴 기록을 한곳에서 볼 수 있어요." : "See your fan verification and LIVE participation records in one place.") : missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
 }
 
-function useOwnedApi<T>(url: string, parse: (value: unknown) => T, authReady: boolean, authenticated: boolean, getAccessToken: () => Promise<string | null>) {
-  const [nonce, setNonce] = useState(0); const [state, setState] = useState<Loadable<T>>({ status: "loading" });
-  useEffect(() => {
-    if (!authReady) return; if (!authenticated) { setState({ status: "error", kind: "auth" }); return; }
-    const controller = new AbortController(); setState({ status: "loading" });
-    void (async () => { try {
-      const token = await getAccessToken(); if (!token) { setState({ status: "error", kind: "auth" }); return; }
-      const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
-      if (response.status === 401) { setState({ status: "error", kind: "auth" }); return; }
-      if (response.status === 404) { setState({ status: "error", kind: "missing" }); return; }
-      if (!response.ok) throw new Error("request failed");
-      setState({ status: "ready", data: parse(await response.json()) });
-    } catch (error) { if (!controller.signal.aborted) setState({ status: "error", kind: "network" }); } })();
-    return () => controller.abort();
-  }, [authReady, authenticated, getAccessToken, nonce, url, parse]);
-  return { state, retry: useCallback(() => setNonce((value) => value + 1), []) };
-}
-
 function PageHeading({ title, subtitle, back }: { title: string; subtitle: string; back?: React.ReactNode }) { return <div className={styles.heading}>{back}<div><h1>{title}</h1><p>{subtitle}</p></div></div>; }
 
 function DigitalStatus({ status, locale }: { status: string; locale: PassportLocale }) { return <span className={styles.digitalStatus} data-complete={status === "minted"}><span aria-hidden="true">{status === "minted" ? <Check /> : <Sparkles />}</span>{issuanceText(status, locale)}</span>; }
@@ -143,11 +127,24 @@ function DigitalStatus({ status, locale }: { status: string; locale: PassportLoc
 const parseCollection = (body: unknown) => parsePassportCollectionResponse(body).passports;
 const parsePassport = (body: unknown) => (body as { passport: PassportDetail }).passport;
 const parseStamp = (body: unknown) => (body as { stamp: StampDetail }).stamp;
+const mintNeedsRefresh = (status: string | undefined) => status === "queued" || status === "processing" || status === "retryable";
+const collectionNeedsRefresh = (passports: ReturnType<typeof parseCollection>) => passports.some(p => mintNeedsRefresh(p.mint.status));
+const passportNeedsRefresh = (passport: PassportDetail) => mintNeedsRefresh(passport.mint.status)
+  || mintNeedsRefresh(passport.firstReaction?.mintStatus) || passport.stamps.some(s => mintNeedsRefresh(s.mint.status));
+const stampNeedsRefresh = (stamp: StampDetail) => mintNeedsRefresh(stamp.mint.status);
+
+function RefreshNotice({ failed, retry, locale }: { failed: boolean; retry: () => void; locale: PassportLocale }) {
+  return failed ? <p className={styles.refreshNotice} role="status">{copy[locale].loadError} <button className={styles.secondaryButton} type="button" onClick={retry}>{copy[locale].retry}</button></p> : null;
+}
+
 
 export function PassportCollectionScreen() {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
-  const fetcher = useOwnedApi(`/api/passports?locale=${locale}`, parseCollection, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale} collection><PageHeading title={c.passports} subtitle={c.passportsSub} />
+  const fetcher = useOwnedFanResource(`/api/passports?locale=${locale}`, parseCollection, auth, collectionNeedsRefresh);
+  return <Frame locale={locale} collection><div className={styles.collectionHeading}>
+      <PageHeading title={c.passports} subtitle={c.passportsSub} />
+      {fetcher.state.status === "ready" && fetcher.state.data.length > 0 ? <Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight aria-hidden="true" /></Link> : null}
+    </div>
     <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
       <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
         <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)}>
@@ -160,7 +157,7 @@ export function PassportCollectionScreen() {
           <Link href={passportSectionHref(passport.id, locale, "stamp-book")}><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></Link>
         </div>
         {passport.mint.status !== "minted" ? <DigitalStatus status={passport.mint.status} locale={locale} /> : null}<Link className={styles.openLabel} href={withLocale(`/passports/${passport.id}`, locale)}>{c.open}<ArrowRight aria-hidden="true" /></Link>
-      </article>)}</section><Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight /></Link></>}</div>
+      </article>)}</section></>}</div>
   </Frame>;
 }
 
@@ -194,7 +191,7 @@ function FirstReactionHistory({ firstReaction, locale, explorerBaseUrl }: {
     <ol className={styles.timeline}><li>
       <span className={styles.timelineDot} />
       <div><strong>{c.firstReactionDate}</strong><time dateTime={firstReaction.issuedAt}>{date(firstReaction.issuedAt, locale)}</time></div>
-      <div>
+      <div aria-live="polite">
         <DigitalStatus status={firstReaction.mintStatus} locale={locale} />
         {explorer && firstReaction.txHash ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{maskHash(firstReaction.txHash)}</strong><ExternalLink aria-hidden="true" /></a> : null}
       </div>
@@ -204,8 +201,8 @@ function FirstReactionHistory({ firstReaction, locale, explorerBaseUrl }: {
 
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
-  const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedApi(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} />}</Frame>;
+  const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedFanResource(`/api/passports/${encodeURIComponent(id)}?locale=${locale}`, parse, auth, passportNeedsRefresh);
+  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>}</Frame>;
 }
 
 function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: PassportDetail; locale: PassportLocale; explorerBaseUrl: string }) {
@@ -227,7 +224,7 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
   }));
   const nextLevel = passport.progress.nextLevel ? levelLabel(locale, passport.progress.nextLevel) : null;
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
-    <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stampRecords} totalCount={passport.stampSummary.total} locale={locale} priority /><div className={styles.passportFields}><span className={styles.starValue} aria-label={`STAR: ${passport.celebrity.name}`} title={passport.celebrity.name} data-passport-field="star">{passport.celebrity.name}</span><span className={styles.issueDateValue} aria-label={`DATE OF ISSUE: ${passportDate(passport.issuedAt, locale)}`} data-passport-field="issue-date">{passportDate(passport.issuedAt, locale)}</span><span className={styles.fanIdValue} aria-label={`FAN ID: ${passport.id}`} title={passport.id} data-wrap-anywhere data-passport-field="fan-id">{shortPassportId(passport.id)}</span></div></div><div className={styles.identity}><Link className={styles.identityAvatar} href={withLocale(`/c/${passport.celebrity.slug}`, locale)} aria-label={locale === "ko" ? `${passport.celebrity.name} 최애 페이지 보기` : `View ${passport.celebrity.name} creator page`}><Image src={passport.celebrity.image.url} alt="" width={72} height={72} style={{ objectPosition: passport.celebrity.image.position }} /></Link><div><span>{passport.celebrity.name}</span><strong>{passport.owner.nickname ?? passport.display.level}</strong><small>{passport.owner.nickname ? `${passport.display.level} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><Link href="#activity"><strong>{passport.score.points}</strong><small>{c.score}</small></Link><Link href="#stamp-book"><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></Link></div><div className={styles.levelProgress}><div><strong>{passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span></div><progress aria-label={passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
+    <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stampRecords} totalCount={passport.stampSummary.total} locale={locale} priority /><div className={styles.passportFields}><span className={styles.starValue} aria-label={`STAR: ${passport.celebrity.name}`} title={passport.celebrity.name} data-passport-field="star">{passport.celebrity.name}</span><span className={styles.issueDateValue} aria-label={`DATE OF ISSUE: ${passportDate(passport.issuedAt, locale)}`} data-passport-field="issue-date">{passportDate(passport.issuedAt, locale)}</span><span className={styles.fanIdValue} aria-label={`FAN ID: ${passport.id}`} title={passport.id} data-wrap-anywhere data-passport-field="fan-id">{shortPassportId(passport.id)}</span></div></div><div className={styles.identity}><Link className={styles.identityAvatar} href={withLocale(`/c/${passport.celebrity.slug}`, locale)} aria-label={locale === "ko" ? `${passport.celebrity.name} 최애 페이지 보기` : `View ${passport.celebrity.name} creator page`}><CreatorAvatar slug={passport.celebrity.slug} src={passport.celebrity.image.url} size={64} /></Link><div><span>{passport.celebrity.name}</span><strong>{passport.owner.nickname ?? passport.display.level}</strong><small>{passport.owner.nickname ? `${passport.display.level} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div><div className={styles.heroFacts}><Link href="#activity"><strong>{passport.score.points}</strong><small>{c.score}</small></Link><Link href="#stamp-book"><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></Link></div><div className={styles.levelProgress}><div><strong>{passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span></div><progress aria-label={passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
     {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
     {passport.firstReaction ? <FirstReactionHistory firstReaction={passport.firstReaction} locale={locale} explorerBaseUrl={explorerBaseUrl} /> : null}
     <section id="stamp-book" className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{passport.stampSummary.total} {c.stamps}</p></div>{stampRecords.length ? <div className={styles.stampGrid}>{stampRecords.map((stamp) => { const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
@@ -237,8 +234,8 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
 
 export function StampDetailScreen({ id, explorerBaseUrl, presentation = "page", onClose }: { id: string; explorerBaseUrl: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
-  const fetcher = useOwnedApi(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth.ready, auth.authenticated, auth.getAccessToken);
-  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} />}</Frame>;
+  const fetcher = useOwnedFanResource(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth, stampNeedsRefresh);
+  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} /></>}</Frame>;
 }
 
 function StampDetailView({ stamp, locale, explorerBaseUrl, onClose }: { stamp: StampDetail; locale: PassportLocale; explorerBaseUrl: string; onClose?: () => void }) {

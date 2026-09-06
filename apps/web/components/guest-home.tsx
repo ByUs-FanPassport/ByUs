@@ -1,5 +1,13 @@
 "use client";
 
+import { CreatorFanLink } from "./fan-ui/creator-fan-link";
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
+import { LiveStatusIndicator } from "./live-status-indicator";
+
+import { CreatorPortrait } from "./fan-ui/creator-portrait";
+import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
+
 import Image from "next/image";
 import { orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
@@ -7,7 +15,7 @@ import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { z } from "zod";
-import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Heart, Menu } from "./icons";
+import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Menu } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import { mySummarySchema, type MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -92,87 +100,33 @@ function formatPassportValue(tier: string, score: number, locale: ContentLocale)
     : `${tier} · ${score} Score`;
 }
 
+const parseHomeSummary = (body: unknown) => mySummarySchema.parse((body as { summary?: unknown }).summary);
+
 function useHomePersonalization(locale: ContentLocale) {
-  const { ready, authenticated, getAccessToken } = usePrivy();
-  const [retryKey, setRetryKey] = useState(0);
-  const [state, setState] = useState<HomePersonalizationState>({ status: "auth-loading" });
-
-  useEffect(() => {
-    if (!ready) {
-      setState({ status: "auth-loading" });
-      return;
-    }
-    if (!authenticated) {
-      setState({ status: "guest" });
-      return;
-    }
-
-    const controller = new AbortController();
-    setState({ status: "authenticated-loading" });
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        if (!token) {
-          setState({ status: "authenticated-error" });
-          return;
-        }
-        const response = await fetch(`/api/me/summary?locale=${locale}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("summary unavailable");
-        const body = await response.json() as unknown;
-        const summary = mySummarySchema.parse((body as { summary?: unknown }).summary);
-        setState({ status: "authenticated-ready", summary });
-      } catch (error) {
-        if (!controller.signal.aborted) setState({ status: "authenticated-error" });
-      }
-    })();
-    return () => controller.abort();
-  }, [authenticated, getAccessToken, locale, ready, retryKey]);
-
-  return {
-    state,
-    retry: useCallback(() => setRetryKey((value) => value + 1), []),
-  };
+  const auth = usePrivy();
+  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseHomeSummary, auth);
+  const state: HomePersonalizationState = !auth.ready ? { status: "auth-loading" }
+    : !auth.authenticated ? { status: "guest" }
+    : resource.state.status === "loading" ? { status: "authenticated-loading" }
+    : resource.state.status === "error" ? { status: "authenticated-error" }
+    : { status: "authenticated-ready", summary: resource.state.data };
+  return { state, retry: resource.retry };
 }
 
+const parseHomePassportPreview = (body: unknown) => {
+  const parsed = passportPreviewResponseSchema.parse(body);
+  const pointsByStamp = new Map(parsed.passport.activities.flatMap((activity) => activity.stampId ? [[activity.stampId, activity.points] as const] : []));
+  return {
+    stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })),
+    totalCount: parsed.passport.stampSummary.total,
+  };
+};
+
 function usePassportPreview(passportId: string | null, locale: ContentLocale): PassportPreviewState {
-  const { getAccessToken } = usePrivy();
-  const [state, setState] = useState<PassportPreviewState>({ status: "loading", stamps: [], totalCount: 0 });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    if (!passportId) {
-      setState({ status: "error", stamps: [], totalCount: 0 });
-      return () => controller.abort();
-    }
-
-    setState({ status: "loading", stamps: [], totalCount: 0 });
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        if (!token) throw new Error("access token unavailable");
-        const response = await fetch(`/api/passports/${encodeURIComponent(passportId)}?locale=${locale}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("passport preview unavailable");
-        const parsed = passportPreviewResponseSchema.parse(await response.json());
-        const pointsByStamp = new Map(parsed.passport.activities.flatMap((activity) => activity.stampId ? [[activity.stampId, activity.points] as const] : []));
-        setState({
-          status: "ready",
-          stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })),
-          totalCount: parsed.passport.stampSummary.total,
-        });
-      } catch {
-        if (!controller.signal.aborted) setState({ status: "error", stamps: [], totalCount: 0 });
-      }
-    })();
-    return () => controller.abort();
-  }, [getAccessToken, locale, passportId]);
-
-  return state;
+  const auth = usePrivy();
+  const resource = useOwnedFanResource(passportId ? `/api/passports/${encodeURIComponent(passportId)}?locale=${locale}` : null, parseHomePassportPreview, auth);
+  return resource.state.status === "ready" ? { status: "ready", ...resource.state.data }
+    : { status: resource.state.status, stamps: [], totalCount: 0 };
 }
 
 function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
@@ -359,13 +313,13 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                         }}
                       />
                     ) : (
-                      <span className={styles.celebrityPortrait} data-portrait={celebrity.slug} data-group-photo={celebrity.slug === "xin" ? "true" : undefined}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={420} height={420} style={{ objectPosition: celebrity.slug === "park-myungho" ? "50% 0%" : celebrity.slug === "xin" ? "50% 100%" : celebrity.slug === "yuna" ? "50% 20%" : celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></span>
+                      <CreatorPortrait slug={celebrity.slug} image={celebrity.image} />
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
                     <div className={styles.celebrityMetaRow}>
                       <h3>{celebrity.name}</h3>
-                      <Link className={styles.celebrityFanLink} href={`/c/${celebrity.slug}${localeQuery}` as Route} aria-label={`${celebrity.name} ${locale === "ko" ? "입덕하기" : "Become a fan"}`}><Heart aria-hidden="true" /><span>{locale === "ko" ? "입덕하기" : "Become a fan"}</span></Link>
+                      <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
                     </div>
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
@@ -396,9 +350,9 @@ export function GuestHome({ celebrities, celebrityLives = [], featuredLives, loc
                 const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
                 return (
                   <article className={styles.liveRow} key={featuredLive.live.id}>
-                    <Image className={styles.liveAvatar} src={featuredLive.live.celebrity.image} alt={`${featuredLive.live.celebrity.name} ${locale === "ko" ? "프로필" : "profile"}`} width={64} height={64} unoptimized={featuredLive.live.celebrity.image.startsWith("https://")} />
+                    <CreatorAvatar slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} size={{ mobile: 56, desktop: 64 }} />
                     <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
-                    <div className={styles.liveMeta}><span>{statusLabel}</span></div>
+                    <div className={styles.liveMeta}><LiveStatusIndicator label={statusLabel} status={featuredLive.live.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" /></div>
                     <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>
                   </article>
                 );

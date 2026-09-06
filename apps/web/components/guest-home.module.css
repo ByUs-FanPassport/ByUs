@@ -109,9 +109,6 @@
 .celebrityCard { min-width: 0; scroll-snap-align: start; }
 .celebrityMediaBox { position: relative; display: grid; aspect-ratio: 1; overflow: hidden; place-items: center; border: 1px solid var(--card-line); border-radius: 12px; background: #f6f6f5; transition: transform 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .celebrityMediaBox > [data-preview-mode="card"] { inset: 8%; border-radius: 4px; }
-.celebrityPortrait { position: relative; display: block; width: min(84%, 240px); aspect-ratio: 1; overflow: hidden; border-radius: 4px; }
-.celebrityPortrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.celebrityPortrait[data-group-photo="true"] img { transform: scale(1.6); transform-origin: 50% 100%; }
 .celebrityInfo { display: grid; min-width: 0; gap: 4px; padding: 12px 12px 0; }
 .celebrityMetaRow { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .celebrityMetaRow:first-child { min-height: 20px; }
@@ -130,9 +127,9 @@
 .liveList { display: grid; gap: 12px; }
 .liveList[data-paginated="true"] { min-height: calc(104px * 3 + 24px); align-content: start; }
 .liveRow { display: grid; grid-template-columns: 56px minmax(0,1fr) 44px; gap: 12px; align-items: center; min-height: 104px; padding: 16px; border: 1px solid var(--card-line); border-radius: 12px; background: var(--canvas); box-shadow: var(--card-shadow); }
-.liveAvatar { display: block; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+
 .liveDetails { min-width: 0; }
-.liveDetails span, .liveMeta span { color: var(--muted); font-size: 12px; font-weight: 750; }
+.liveDetails span { color: var(--muted); font-size: 12px; font-weight: 750; }
 .liveDetails h3 { overflow: hidden; margin: 4px 0; font-size: 15px; font-weight: 750; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
 .liveDetails p, .liveMeta p { margin: 0; color: var(--muted); font-size: 12px; }
 .liveMeta { display: none; text-align: right; }
@@ -307,7 +304,7 @@
   .celebrityRail { grid-auto-columns: calc((100% - 32px) / 3); padding-bottom: 0; }
   .liveList[data-paginated="true"] { min-height: calc(112px * 3 + 24px); }
   .liveRow { grid-template-columns: 64px minmax(0,1fr) 128px 44px; min-height: 112px; padding: 20px; }
-  .liveAvatar { width: 64px; height: 64px; }
+
   .liveMeta { display: block; }
 }
 
@@ -358,5 +355,5 @@
 .creatorControls button:disabled { opacity: .3; cursor: default; }
 .creatorControls button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-.celebrityPortrait[data-portrait="park-myungho"] img { transform: scale(1.9); transform-origin: 56% 14%; }
-.celebrityPortrait[data-portrait="ifewknow"] img { transform: scale(2.45); transform-origin: 48% 40%; }
+.celebrityFanLink[data-reacted="true"] { color: #dc2626; }
+.celebrityFanLink[data-reacted="true"] svg { fill: currentColor; }

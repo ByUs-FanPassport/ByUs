@@ -1,5 +1,9 @@
 "use client";
 
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
+import { LiveStatusIndicator } from "@/components/live-status-indicator";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { Check } from "lucide-react";
 import Image from "next/image";
@@ -258,13 +262,7 @@ export function LiveCalendarScreen({
                 onClick={() => toggleCelebrity(celebrity.slug)}
                 key={celebrity.slug}
               >
-                <Image
-                  src={celebrity.image}
-                  alt=""
-                  width={28}
-                  height={28}
-                  unoptimized={celebrity.image.startsWith("https://")}
-                />
+                <CreatorAvatar slug={celebrity.slug} src={celebrity.image} size={24} />
                 {celebrity.name}{selectedCelebritySet.has(celebrity.slug) ? <Check aria-hidden="true" /> : null}
               </button>;
             })}
@@ -335,13 +333,7 @@ export function LiveCalendarScreen({
                           </span>
                           <strong>{event.title}</strong>
                           <span className={styles.eventTopline}>
-                            <Image
-                              src={event.celebrity.image}
-                              alt=""
-                              width={24}
-                              height={24}
-                              unoptimized={event.celebrity.image.startsWith("https://")}
-                            />
+                            <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
                             <span className={styles.creator}>{event.celebrity.name}</span>
                             {platforms.length > 0 ? <span
                               className={styles.platforms}
@@ -355,9 +347,7 @@ export function LiveCalendarScreen({
                                 key={platform}
                               />)}
                             </span> : null}
-                            <span className={styles.status} data-status={event.effectiveStatus}>
-                              {t.status[event.effectiveStatus]}
-                            </span>
+                            {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
                           </span>
                         </Link>
                       </article>;

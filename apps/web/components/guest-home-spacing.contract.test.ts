@@ -60,7 +60,7 @@ describe("guest home compact icon-only action spacing", () => {
       /\bfont-weight:\s*400\b/,
     );
     expect(liveStatusCss).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.status\[data-live-status="live"\]\s+\.dot\s*\{[^}]*animation:\s*none/,
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.status\[data-live-status="live"\]\s+\.dot\s*,\s*\.status\[data-live-status="scheduled"\]::after\s*\{[^}]*animation:\s*none/,
     );
   });
 

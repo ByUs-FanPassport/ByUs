@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PassportCollectionScreen, PassportDetailScreen, StampDetailOverlay, StampDetailScreen } from "./passport-screens";
 
@@ -139,6 +139,31 @@ describe("passport fan screens", () => {
     });
     expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
     expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
+  });
+
+  it("refreshes a pending First Reaction on return and keeps the displayed history while reading", async () => {
+    const tx = `0x${"b".repeat(64)}`;
+    const detail = {
+      ...passport, stamps: [], activities: [],
+      stampSummary: { knowledge: 0, reservation: 0, attendance: 0, survey: 0, total: 0 },
+      progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
+      nextBenefit: null,
+      firstReaction: { reactionId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", stampId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", activityId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb3", reactionType: "FirstReaction", mintStatus: "queued", txHash: null, issuedAt: "2026-09-06T01:32:55Z" },
+    };
+    let finish!: (response: Response) => void;
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ passport: detail }))
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
+    const history = await screen.findByRole("region", { name: "첫 반응" });
+    expect(within(history).getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
+    fireEvent.focus(window);
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    expect(history).toBeInTheDocument();
+    await act(async () => { finish(Response.json({ passport: { ...detail, firstReaction: { ...detail.firstReaction, mintStatus: "minted", txHash: tx } } })); });
+    expect(await within(history).findByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
+    expect(within(history).getByRole("link")).toHaveAttribute("href", `${explorerBaseUrl}/tx/${tx}`);
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
   });
 

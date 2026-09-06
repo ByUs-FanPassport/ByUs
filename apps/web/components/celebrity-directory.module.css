@@ -20,8 +20,7 @@
 .filterMeta button { min-height: 44px; padding: 0 4px; border: 0; background: none; color: oklch(38% .2 315); font: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .grid { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:24px; }
 .card { min-width:0; flex:0 1 100%; overflow:hidden; border:1px solid var(--color-line); border-radius:var(--radius-collection); background:var(--color-surface); }
-.media { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 0; background: #f6f6f5; }
-.media img { width: 100%; height: 100%; object-fit: contain; transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.media { position: relative; display: grid; place-items: center; aspect-ratio: 1; overflow: hidden; border-radius: 0; background: #f6f6f5; }
 .passportBadge { position: absolute; right: 12px; bottom: 12px; display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 0 12px; border-radius: 999rem; background: rgb(255 255 255 / 94%); color: oklch(26% .08 315); font-size: 12px; font-weight: 800; box-shadow: 0 1px 4px rgb(0 0 0 / 12%); }
 .cardBody { display:grid; gap:12px; padding:var(--space-5); }
 .cardBody h2 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.025em; }
@@ -37,7 +36,7 @@
 .empty > button { display: inline-flex; min-height: 44px; align-items: center; padding: 0 16px; border: 1px solid oklch(84% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
 .page :is(a,button,input,select):focus-visible { outline: 3px solid oklch(18% 0 0); outline-offset: 3px; }
 @media (min-width: 48rem) { .content { padding-top: 56px; } .intro h1 { font-size: 24px; } .controls { grid-template-columns: minmax(240px,1fr) 180px auto; align-items: end; } .grid { gap:24px; } .card { flex-basis:calc((100% - 24px)/2); } }
-@media (hover:hover) and (pointer:fine) { .media:hover img { transform: scale(1.02); } .homeLink:hover, .cardAction:hover { color: oklch(45% .22 315); } .searchField input:hover,.sortField select:hover,.passportFilter:hover:not([data-disabled="true"]) { border-color: oklch(72% 0 0); background: oklch(98.5% 0 0); } }
+@media (hover:hover) and (pointer:fine) { .homeLink:hover, .cardAction:hover { color: oklch(45% .22 315); } .searchField input:hover,.sortField select:hover,.passportFilter:hover:not([data-disabled="true"]) { border-color: oklch(72% 0 0); background: oklch(98.5% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { transition-duration: .01ms !important; } }
 
 .cardBody .creatorSummary { display:block; margin:8px 0 12px; overflow-wrap:anywhere; }
@@ -47,3 +46,7 @@
 .cardBody { flex:1; align-content:space-between; }
 .cardLink:focus-visible { outline-offset:-3px!important; }
 @media(hover:hover) { .cardLink:hover { background:var(--color-soft); } }
+
+.guestCheckbox { width: 18px; height: 18px; flex-shrink: 0; border: 1px solid currentColor; border-radius: 3px; }
+
+.cardBody .liveSchedule { flex-wrap: wrap; row-gap: 6px; }

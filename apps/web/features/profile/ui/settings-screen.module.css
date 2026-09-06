@@ -11,7 +11,7 @@
     sans-serif;
 }
 .main { padding-top:56px; padding-bottom:96px; }
-.main > * { max-width:720px; }
+.main > * { max-width:720px; margin-inline:auto; }
 .intro {
   margin-bottom: 40px;
 }

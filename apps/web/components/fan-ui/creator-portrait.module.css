@@ -1,0 +1,20 @@
+/* Keep approved crops shared by Home and /celebrities. See photo guidelines. */
+.portrait {
+  position: relative;
+  display: block;
+  width: min(84%, 240px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portrait[data-portrait="xin"] img { transform: scale(1.6); transform-origin: 50% 100%; }
+.portrait[data-portrait="park-myungho"] img { transform: scale(1.9); transform-origin: 56% 14%; }
+.portrait[data-portrait="ifewknow"] img { transform: scale(2.45); transform-origin: 48% 40%; }

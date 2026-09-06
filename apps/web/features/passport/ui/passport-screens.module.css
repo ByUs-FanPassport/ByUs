@@ -237,15 +237,40 @@
   width: 18px;
   height: 18px;
 }
+.collectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 32px;
+}
+.collectionHeading .heading {
+  margin-bottom: 0;
+}
 .discoverLink {
   display: flex;
   width: max-content;
   min-height: 44px;
   align-items: center;
   gap: 8px;
-  margin: 32px 0 0 auto;
+  flex-shrink: 0;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
   font-size: 14px;
   font-weight: 750;
+}
+.discoverLink:hover {
+  background: var(--soft);
+}
+@media (max-width: 639px) {
+  .collectionHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
 }
 .discoverLink svg {
   width: 18px;
@@ -400,12 +425,7 @@
   flex: none;
   border-radius: 50%;
 }
-.identityAvatar img {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
 .identity div {
   display: grid;
   min-width: 0;
@@ -1030,6 +1050,7 @@
 
 /* A single owned Passport keeps the same footprint as a collection of many. */
 .collectionApp { background:transparent; }
+.refreshNotice { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
 .collection { grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),380px)); justify-content:start; gap:24px; }
 .passportCard { min-height:0; background:var(--color-surface); box-shadow:none; border-color:var(--color-line); }
 .cardFacts small { font-size:12px; }

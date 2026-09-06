@@ -10,11 +10,13 @@ export function LiveStatusIndicator({
   status,
   locale,
   className,
+  label,
   density = "comfortable",
 }: {
   status: Extract<EffectiveLiveStatus, "live" | "scheduled">;
   locale: "ko" | "en";
   className?: string;
+  label?: string;
   density?: "comfortable" | "compact";
 }) {
   return (
@@ -25,7 +27,7 @@ export function LiveStatusIndicator({
       data-live-state={status}
     >
       <span className={styles.dot} aria-hidden="true" />
-      {labels[locale][status]}
+      {label ?? labels[locale][status]}
     </span>
   );
 }

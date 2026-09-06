@@ -3,8 +3,8 @@ import { createPublishedContentRepositoryFromEnvironment } from "../../server/co
 
 export const dynamic = "force-dynamic";
 
-export default async function CelebritiesPage({ searchParams }: { searchParams: Promise<{ locale?: string }> }) {
-  const { locale: requestedLocale } = await searchParams;
+export default async function CelebritiesPage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; q?: string | string[]; sort?: string | string[] }> }) {
+  const { locale: requestedLocale, owned, q, sort } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [publishedCelebrities, primaryLives] = await Promise.all([
@@ -16,5 +16,5 @@ export default async function CelebritiesPage({ searchParams }: { searchParams: 
     ...celebrity,
     upcomingLive: livesByCelebrity.get(celebrity.slug) ?? null,
   }));
-  return <CelebrityDirectory celebrities={celebrities} locale={locale} />;
+  return <CelebrityDirectory celebrities={celebrities} locale={locale} initialOwnedOnly={owned === "1"} initialQuery={typeof q === "string" ? q : q?.[0] ?? ""} initialSort={sort === "name-asc" || sort === "live-first" ? sort : "published"} />;
 }

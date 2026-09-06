@@ -1,10 +1,13 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import Image from "next/image";
+import { LiveStatusIndicator } from "./live-status-indicator";
+import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
+import { CreatorPortrait } from "./fan-ui/creator-portrait";
 import { orderCreatorsForDiscovery } from "../server/content/creator-discovery";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import type { Route } from "next";
+import { useMemo, useState } from "react";
 import { ArrowRight } from "./icons";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -46,48 +49,25 @@ export function directoryIntroduction(summary: string, locale: ContentLocale) {
   return Array.from(sentences)[0]?.segment.trim() ?? "";
 }
 
-export function CelebrityDirectory({ celebrities, locale }: { celebrities: readonly DirectoryCelebrity[]; locale: ContentLocale }) {
+export function CelebrityDirectory({ celebrities, locale, initialQuery = "", initialSort = "published", initialOwnedOnly = false }: { celebrities: readonly DirectoryCelebrity[]; locale: ContentLocale; initialQuery?: string; initialSort?: SortOrder; initialOwnedOnly?: boolean }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
-  const { ready, authenticated, getAccessToken } = usePrivy();
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortOrder>("published");
-  const [ownedOnly, setOwnedOnly] = useState(false);
-  const [requestKey, setRequestKey] = useState(0);
-  const [passportState, setPassportState] = useState<PassportState>({ status: "loading" });
-
-  useEffect(() => {
-    if (!ready) return;
-    if (!authenticated) {
-      setPassportState({ status: "guest" });
-      setOwnedOnly(false);
-      return;
-    }
-    const controller = new AbortController();
-    setPassportState({ status: "loading" });
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        if (!token) throw new Error("Missing access token");
-        const response = await fetch(`/api/passports?locale=${locale}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("Passport request failed");
-        setPassportState({ status: "ready", slugs: passportSlugs(await response.json()) });
-      } catch {
-        if (!controller.signal.aborted) setPassportState({ status: "error" });
-      }
-    })();
-    return () => controller.abort();
-  }, [authenticated, getAccessToken, locale, ready, requestKey]);
+  const auth = usePrivy();
+  const { ready, authenticated } = auth;
+  const [query, setQuery] = useState(initialQuery);
+  const [sort, setSort] = useState<SortOrder>(initialSort);
+  const [ownedOnly, setOwnedOnly] = useState(initialOwnedOnly);
+  const { state, retry } = useOwnedFanResource(`/api/passports?locale=${locale}`, passportSlugs, auth);
+  const passportState = useMemo<PassportState>(() => ready && !authenticated ? { status: "guest" }
+    : state.status === "ready" ? { status: "ready", slugs: state.data }
+    : { status: state.status }, [ready, authenticated, state]);
 
   const visibleCelebrities = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("ko-KR");
     const ownedSlugs = passportState.status === "ready" ? passportState.slugs : new Set<string>();
     const filtered = celebrities.filter((celebrity) => {
       const matchesQuery = !normalized || celebrity.name.toLocaleLowerCase("ko-KR").includes(normalized);
-      return matchesQuery && (!ownedOnly || ownedSlugs.has(celebrity.slug));
+      return matchesQuery && (!authenticated || !ownedOnly || passportState.status !== "ready" || ownedSlugs.has(celebrity.slug));
     });
     if (sort === "name-asc") {
       return filtered.toSorted((left, right) => left.name.localeCompare(right.name, locale));
@@ -96,8 +76,10 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
       return filtered.toSorted((left, right) => Number(Boolean(right.upcomingLive)) - Number(Boolean(left.upcomingLive)));
     }
     return orderCreatorsForDiscovery(filtered);
-  }, [celebrities, locale, ownedOnly, passportState, query, sort]);
+  }, [authenticated, celebrities, locale, ownedOnly, passportState, query, sort]);
 
+  const loginReturnQuery = new URLSearchParams({ locale, owned: "1", q: query, sort });
+  const passportLoginHref = `/login?${new URLSearchParams({ locale, returnTo: `/celebrities?${loginReturnQuery}` })}` as Route;
   const filtersActive = query.trim().length > 0 || ownedOnly;
   const passportFilterDisabled = passportState.status !== "ready";
 
@@ -105,10 +87,10 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
     const ownsPassport = passportState.status === "ready" && passportState.slugs.has(celebrity.slug);
     return (<article key={celebrity.slug} className={styles.card}>
                   <Link className={styles.cardLink} href={`/c/${celebrity.slug}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `${t.fanPage} ${celebrity.name}`}><div className={styles.media}>
-                    <Image src={celebrity.image.url} alt={celebrity.image.alt} width={640} height={800} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} />
+                    <CreatorPortrait slug={celebrity.slug} image={celebrity.image} />
                     {ownsPassport ? <span className={styles.passportBadge}><span aria-hidden="true">✓</span>{t.owned}</span> : null}
                   </div>
-                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p className={styles.creatorSummary}>{directoryIntroduction(celebrity.summary, locale)}</p>{celebrity.upcomingLive ? <p><span className={styles.statusDot} data-live={Boolean(celebrity.upcomingLive)} aria-hidden="true" />{celebrity.upcomingLive ? `${formatLiveDate(celebrity.upcomingLive.startsAt, locale)} · ${celebrity.upcomingLive.effectiveStatus === "live" ? (locale === "ko" ? "LIVE 진행 중" : "LIVE now") : t.liveSoon}` : t.livePreparing}</p> : null}</div><span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span></div></Link>
+                  <div className={styles.cardBody}><div><h2>{celebrity.name}</h2><p className={styles.creatorSummary}>{directoryIntroduction(celebrity.summary, locale)}</p>{celebrity.upcomingLive ? <p className={styles.liveSchedule}><LiveStatusIndicator status={celebrity.upcomingLive.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" />{formatLiveDate(celebrity.upcomingLive.startsAt, locale)}</p> : null}</div><span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span></div></Link>
                 </article>);
   };
 
@@ -123,13 +105,13 @@ export function CelebrityDirectory({ celebrities, locale }: { celebrities: reado
           <form className={styles.controls} role="search" onSubmit={(event) => event.preventDefault()}>
             <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><input id="celebrity-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.searchPlaceholder} /></label>
             <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><select id="celebrity-sort" value={sort} onChange={(event) => setSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select></label>
-            <label className={styles.passportFilter} data-disabled={passportFilterDisabled}><input type="checkbox" checked={ownedOnly} disabled={passportFilterDisabled} onChange={(event) => setOwnedOnly(event.target.checked)} /><span>{t.passportOnly}</span></label>
+            {ready && !authenticated ? <Link className={styles.passportFilter} href={passportLoginHref} aria-describedby="passport-filter-help"><span className={styles.guestCheckbox} aria-hidden="true" /><span>{t.passportOnly}</span></Link> : <label className={styles.passportFilter} data-disabled={passportFilterDisabled}><input type="checkbox" checked={ownedOnly} disabled={passportFilterDisabled} onChange={(event) => setOwnedOnly(event.target.checked)} /><span>{t.passportOnly}</span></label>}
           </form>
           <div className={styles.filterMeta} aria-live="polite">
             <p>{locale === "ko" ? `크리에이터 ${visibleCelebrities.length}명` : `${visibleCelebrities.length} creators`}</p>
-            {passportState.status === "guest" ? <p>{t.guestFilter}</p> : null}
+            {passportState.status === "guest" ? <p id="passport-filter-help">{t.guestFilter}</p> : null}
             {passportState.status === "loading" ? <p role="status">{t.loadingPassport}</p> : null}
-            {passportState.status === "error" ? <p role="alert">{t.retryPrefix} <button type="button" onClick={() => setRequestKey((key) => key + 1)}>{t.retry}</button></p> : null}
+            {passportState.status === "error" ? <p role="alert">{t.retryPrefix} <button type="button" onClick={retry}>{t.retry}</button></p> : null}
           </div>
           {visibleCelebrities.length === 0 ? (
             <div className={styles.empty} role="status"><h2>{ownedOnly ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly ? t.ownedHelp : t.searchHelp}</p>{filtersActive ? <button type="button" onClick={() => { setQuery(""); setOwnedOnly(false); }}>{t.reset}</button> : null}</div>

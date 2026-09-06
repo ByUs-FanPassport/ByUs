@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MyScreen } from "./my-screen";
+import { notifyFanActivityUpdated } from "../../../components/fan-ui/fan-activity-updates";
 
 const id = "11111111-1111-4111-8111-111111111111";
 const benefitId = "22222222-2222-4222-8222-222222222222";
@@ -42,6 +43,16 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 
 describe("unified MY hub", () => {
+  it("adds a newly recorded first-reaction relationship after the shared update without remounting", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [] } }))
+      .mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [{ ...summary.creators[0], relationship: "first_reaction_only", passport: null }] } }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<MyScreen locale="ko" />);
+    expect(await screen.findByText("아직 등록한 최애가 없어요.")).toBeInTheDocument();
+    await act(async () => { notifyFanActivityUpdated(undefined); });
+    expect(await screen.findByText("첫 반응")).toBeInTheDocument();
+    expect(screen.getByText("첫 반응").closest("a")).toHaveAttribute("href", "/c/kara?locale=ko");
+  });
   it("prioritizes profile identity, activity totals, and the four owner activity sections", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     render(<MyScreen locale="ko" />);

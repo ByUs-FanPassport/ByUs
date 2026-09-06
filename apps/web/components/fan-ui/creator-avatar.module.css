@@ -1,0 +1,20 @@
+.avatar {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f6f6f5;
+  vertical-align: middle;
+  isolation: isolate;
+}
+.avatar > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.avatar > svg { width: 100%; height: 100%; fill: #a3a3a3; padding: 12%; }
+/* Circular crops are independently reviewed; do not inherit square card crops. */
+.avatar[data-creator-avatar="yuna"] > img { object-position: 50% 0%; transform: translateX(-4%) scale(.82); }
+.avatar[data-creator-avatar="xin"] > img { object-position: 50% 30%; }
+.avatar[data-creator-avatar="park-myungho"] > img { object-position: 50% 0%; transform: scale(1.9); transform-origin: 56% 14%; }
+.avatar[data-creator-avatar="ifewknow"] > img { transform: scale(2.45); transform-origin: 48% 40%; }
+@media (min-width: 48rem) { .avatar { width: var(--avatar-desktop-size); height: var(--avatar-desktop-size); } }

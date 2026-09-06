@@ -5,7 +5,8 @@ import { ArrowRight, Bell, BookOpen, RotateCcw, Settings, Sparkles, Star } from 
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-resource";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
@@ -47,7 +48,7 @@ const copy = {
   },
 } as const;
 
-type ScreenState = { status: "loading" } | { status: "ready"; summary: MySummary } | { status: "error" };
+const parseSummaryResponse = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
 
 const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> = {
   information_required: { ko: "정보 입력 필요", en: "Information required" },
@@ -62,34 +63,19 @@ const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> =
 };
 
 export function MyScreen({ locale }: { locale: FanLocale }) {
-  const { ready, authenticated, getAccessToken } = usePrivy();
-  const [state, setState] = useState<ScreenState>({ status: "loading" });
-  const [requestKey, setRequestKey] = useState(0);
+  const auth = usePrivy();
+  const { ready, authenticated } = auth;
+  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseSummaryResponse, auth);
+  const state = resource.state;
   const t = copy[locale];
-  const load = useCallback(async (signal: AbortSignal) => {
-    const token = await getAccessToken();
-    if (!token) { setState({ status: "error" }); return; }
-    const response = await fetch(`/api/me/summary?locale=${locale}`, { headers: { Authorization: `Bearer ${token}` }, signal });
-    if (!response.ok) throw new Error("summary failed");
-    const body = await response.json() as { summary: unknown };
-    setState({ status: "ready", summary: mySummarySchema.parse(body.summary) });
-  }, [getAccessToken, locale]);
-
-  useEffect(() => {
-    if (!ready || !authenticated) return;
-    const controller = new AbortController();
-    setState({ status: "loading" });
-    void load(controller.signal).catch(() => { if (!controller.signal.aborted) setState({ status: "error" }); });
-    return () => controller.abort();
-  }, [ready, authenticated, load, requestKey]);
 
   const heading = <header className={styles.pageHeading}><FanHeading as="h1" variant="personal-page">{t.title}</FanHeading></header>;
   return <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
     {!ready ? <>{heading}<FanState kind="loading" title={t.loading} /></>
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
       : state.status === "loading" ? <>{heading}<FanState kind="loading" title={t.loading} /></>
-      : state.status === "error" ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={() => setRequestKey((value) => value + 1)}><RotateCcw/>{t.retry}</FanAction>} /></>
-      : <Dashboard summary={state.summary} locale={locale}/>}
+      : state.status === "error" ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={resource.retry}><RotateCcw/>{t.retry}</FanAction>} /></>
+      : <Dashboard summary={state.data} locale={locale}/>}
   </FanContentContainer></FanAppFrame>;
 }
 

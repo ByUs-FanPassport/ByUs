@@ -1,5 +1,9 @@
 "use client";
 
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+
+import { LiveStatusIndicator } from "./live-status-indicator";
+
 import { usePrivy } from "@privy-io/react-auth";
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
@@ -28,7 +32,6 @@ import {
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
 import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
-import katseyeProfile from "../public/images/celebrities/katseye/profile.webp";
 import bronzeTierMedal from "../public/images/passport/tiers/bronze.png";
 import styles from "./celebrity-fan-page.module.css";
 import { ReactionAction } from "../features/reaction/ui/reaction-action";
@@ -119,8 +122,8 @@ function formatMiniCalendarDate(value: string, locale: ContentLocale) {
 }
 
 function localizedLiveStatus(status: string, locale: ContentLocale) {
-  if (locale === "en") return status === "scheduled" ? "Upcoming" : status === "live" ? "LIVE now" : "Ended";
-  return status === "scheduled" ? "LIVE 예정" : status === "live" ? "지금 LIVE 중" : "종료";
+  if (status === "live" || status === "scheduled") return <LiveStatusIndicator status={status} locale={locale} density="compact" />;
+  return locale === "en" ? "Ended" : "종료";
 }
 
 function localizedBenefitState(state: string, locale: ContentLocale) {
@@ -526,7 +529,7 @@ export function CelebrityFanPage({
                   ? <div className={styles.liveSection}>
                       <div className={styles.livePortrait}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={240} height={300} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></div>
                       <div className={styles.liveCopy}>
-                        <div className={styles.liveStatus}><FanMotionIcon name="radio" size={16} active={upcomingLive.effectiveStatus === "live"} />{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</div>
+                        <div className={styles.liveStatus}>{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</div>
                         <h3>{upcomingLive.title}</h3>
                         <span><Clock />{formatDate(upcomingLive.startsAt, locale)}</span>
                       </div>
@@ -597,7 +600,7 @@ export function CelebrityFanPage({
                 />
               </TabSection>
               <section className={styles.profilePanel} aria-labelledby="profile-title">
-                <div className={styles.profilePortrait} data-creator={celebrity.slug}><Image src={hasKatseyePresentation ? katseyeProfile : celebrity.image.url} alt="" width={144} height={144} style={{ objectPosition: celebrity.slug === "yuna" ? "50% 0%" : celebrity.image.position }} unoptimized={!hasKatseyePresentation && celebrity.image.url.startsWith("https://")} /></div>
+                <div className={styles.profilePortrait}><CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} size={64} /></div>
                 <h2 id="profile-title">{celebrity.name} {t.profile}</h2><p>{t.profileHelp(celebrity.name)}</p>
                 {celebrity.socialLinks.length ? <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${t.officialSns}`}>{celebrity.socialLinks.map((social) => <a key={social.platform} href={social.url} target="_blank" rel="noreferrer" aria-label={`${socialLabel[social.platform]} ${locale === "ko" ? "열기" : "open"}: ${celebrity.name}, ${t.newWindow}`}><Image src={`/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel[social.platform]}</span></a>)}</div> : <div className={styles.socialEmpty} role="status"><strong>{t.noSns}</strong><span>{t.noSnsHelp}</span></div>}
               </section>
@@ -621,7 +624,7 @@ export function CelebrityFanPage({
               {liveState.status !== "ready"
                 ? liveState.status === "error" ? <ErrorState text={t.noLiveHelp} /> : <Loading locale={locale} />
                 : liveState.data.length === 0 ? <Empty title={t.noLive} help={t.noLiveHelp} />
-                : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><div className={styles.liveStatus}><FanMotionIcon name="radio" size={16} active={live.effectiveStatus === "live"} /> {localizedLiveStatus(live.effectiveStatus, locale)}</div><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
+                : <div className={styles.liveList}>{liveState.data.map(({ live }) => <div key={live.slug} className={styles.liveSection}><div className={styles.liveCopy}><div className={styles.liveStatus}>{localizedLiveStatus(live.effectiveStatus, locale)}</div><h3>{live.title}</h3><span><Clock /> {formatDate(live.startsAt, locale)}</span></div><FanAction variant="neutral" href={`/live/${live.slug}${localeQuery}`} leadingIcon={<Play />} trailingIcon={<ArrowRight />}>{t.liveDetails}</FanAction></div>)}</div>}
             </TabSection>
             <div className={styles.calendarSlot} data-celebrity-calendar-placement="content"><CelebrityMiniCalendar celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /></div>
           </div>}

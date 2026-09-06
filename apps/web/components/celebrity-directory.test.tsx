@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CelebrityDirectory, directoryIntroduction } from "./celebrity-directory";
 
@@ -45,8 +45,9 @@ const ownedPassport = {
 } as const;
 
 let authenticated = false;
+let ownerId = "owner-a";
 const getAccessToken = vi.fn();
-vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken }) }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, user: { id: ownerId }, getAccessToken }) }));
 
 describe("published celebrity directory", () => {
   beforeEach(() => { authenticated = false; getAccessToken.mockReset(); vi.unstubAllGlobals(); });
@@ -57,7 +58,8 @@ describe("published celebrity directory", () => {
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
     expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
-    expect(screen.getByText(/7월 24일.*LIVE 예정/)).toBeInTheDocument();
+    expect(screen.getByText("LIVE 예정")).toHaveAttribute("data-live-status", "scheduled");
+    expect(screen.getByText(/7월 24일/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("published");
   });
@@ -113,9 +115,12 @@ describe("published celebrity directory", () => {
     expect(screen.getByRole("checkbox", { name: "내 패스포트만" })).toBeDisabled();
   });
 
-  it("keeps the Passport filter unavailable for guests with an explanation", () => {
+  it("sends guests to login with the selected filter and search context", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-    expect(screen.getByRole("checkbox", { name: "내 패스포트만" })).toBeDisabled();
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "KARA" } });
+    const login = new URL(screen.getByRole("link", { name: "내 패스포트만" }).getAttribute("href")!, "https://byus.test");
+    expect(login.pathname).toBe("/login");
+    expect(login.searchParams.get("returnTo")).toBe("/celebrities?locale=ko&owned=1&q=KARA&sort=published");
     expect(screen.getByText("내 패스포트만 보려면 로그인해 주세요.")).toBeInTheDocument();
   });
 
@@ -152,3 +157,34 @@ it("keeps identical card treatment in default and sorted discovery", () => {
   fireEvent.change(screen.getByRole("combobox", { name: "정렬" }), { target: { value: "name-asc" } });
   expect(container.querySelectorAll('[data-supporting="true"]')).toHaveLength(0);
 });
+
+ it("restores the owned filter after login once Passports load", async () => {
+   authenticated = true;
+   getAccessToken.mockResolvedValue("token");
+   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ok:true,json:async()=>({passports:[ownedPassport]})}));
+   render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" initialOwnedOnly initialSort="name-asc" />);
+   await waitFor(()=>expect(screen.getAllByRole("article")).toHaveLength(1));
+   expect(screen.getByRole("checkbox",{name:"내 패스포트만"})).toBeChecked();
+   expect(screen.getByRole("heading",{name:"KARA"})).toBeInTheDocument();
+ });
+
+ it("clears prior owner badges immediately and ignores late responses after switching accounts", async () => {
+   authenticated = true; ownerId = "owner-a";
+   getAccessToken.mockResolvedValue("token");
+   let resolveOld!: (value: unknown) => void;
+   const late = new Promise(resolve => { resolveOld = resolve; });
+   const fetchMock = vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({passports:[ownedPassport]})})
+     .mockResolvedValueOnce({ok:true,json:()=>late})
+     .mockResolvedValue({ok:true,json:async()=>({passports:[]})});
+   vi.stubGlobal("fetch",fetchMock);
+   const view=render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+   await screen.findByText("패스포트 보유");
+   fireEvent.focus(window);
+   await waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(2));
+   ownerId="owner-b";
+   view.rerender(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+   expect(screen.queryByText("패스포트 보유")).not.toBeInTheDocument();
+   await waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(3));
+   await act(async()=>resolveOld({passports:[ownedPassport]}));
+   expect(screen.queryByText("패스포트 보유")).not.toBeInTheDocument();
+ });
