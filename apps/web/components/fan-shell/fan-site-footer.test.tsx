@@ -32,7 +32,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).queryByRole("link", { name: "문의하기" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "이미지 출처 열기" })).not.toBeInTheDocument();
     expect(footer).not.toHaveTextContent("biz@sallylab.io");
-    expect(within(footer).getByText("© 2026 Sallylab Inc.")).toBeInTheDocument();
+    expect(within(footer).getByText("© 2026 ByUs. All rights reserved.")).toBeInTheDocument();
     expect(footer).not.toHaveTextContent(/Instagram|LinkedIn|채용/);
   });
 

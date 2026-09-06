@@ -92,7 +92,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
       </FanContentContainer>
 
       <FanContentContainer className={styles.legal}>
-        <span>© 2026 Sallylab Inc.</span>
+        <span>© 2026 ByUs. All rights reserved.</span>
       </FanContentContainer>
     </footer>
   );
