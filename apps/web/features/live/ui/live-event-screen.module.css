@@ -827,6 +827,11 @@
   .fanCodeIntro {
     align-items: flex-start;
   }
+  .fanCode:has([data-before-live]) { padding:16px; }
+  .fanCode:has([data-before-live]) .fanCodeContent { gap:12px; }
+  .fanCode:has([data-before-live]) p { margin:0; }
+  .fanCode .attendanceNotice[data-before-live] { font-size:12px !important; line-height:1.5; font-weight:550 !important; }
+  .attendanceNotice[data-before-live] svg { width:16px; height:16px; }
   .fanCodeControl {
     grid-template-columns: 1fr;
   }

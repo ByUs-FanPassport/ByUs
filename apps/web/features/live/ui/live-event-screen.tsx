@@ -1190,7 +1190,7 @@ export function LiveEventScreen({
                       </FanAction>
                     </div>
                   ) : authenticated && live.effectiveStatus === "scheduled" ? (
-                    <p className={styles.attendanceNotice}>
+                    <p className={styles.attendanceNotice} data-before-live>
                       <Clock3 aria-hidden="true" />
                       {c.attendance.beforeLive}
                     </p>
