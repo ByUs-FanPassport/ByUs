@@ -12,12 +12,13 @@ const { enablePushNotifications } = vi.hoisted(() => ({
   >(async () => "subscribed"),
 }));
 
+const logout = vi.fn();
 const replace = vi.fn();
 const router = { replace };
 const getAccessToken = vi.fn().mockResolvedValue("access-token");
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated: true, getAccessToken }),
+  usePrivy: () => ({ ready: true, authenticated: true, getAccessToken, logout }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
@@ -93,6 +94,7 @@ function setBrowserCapabilities({
 
 describe("FAN-020 settings", () => {
   beforeEach(() => {
+    logout.mockReset().mockResolvedValue(undefined);
     replace.mockClear();
     getAccessToken.mockClear();
     enablePushNotifications.mockReset();
@@ -368,5 +370,36 @@ describe("FAN-020 settings", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "English" }));
     expect(replace).toHaveBeenCalledWith("/settings?locale=en");
+  });
+});
+
+
+describe("settings logout", () => {
+  beforeEach(() => {
+    replace.mockClear();
+    logout.mockReset().mockResolvedValue(undefined);
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
+  });
+  it("waits for Privy logout, prevents double clicks and returns to login", async () => {
+    let finish!: () => void;
+    logout.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve; }));
+    render(<SettingsScreen locale="ko" />);
+    fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+    expect(screen.getByRole("button", { name: "로그아웃 중…" })).toBeDisabled();
+    expect(replace).not.toHaveBeenCalledWith("/login?locale=ko");
+    finish();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?locale=ko"));
+    expect(logout).toHaveBeenCalledOnce();
+  });
+
+  it("keeps logout available after settings load fails and allows retry", async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error("offline"));
+    logout.mockRejectedValueOnce(new Error("logout failed")).mockResolvedValue(undefined);
+    render(<SettingsScreen locale="en" />);
+    await screen.findByText("We couldn't load your settings. Try again.");
+    fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not log out");
+    fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?locale=en"));
   });
 });

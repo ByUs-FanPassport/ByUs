@@ -5,6 +5,7 @@ import {
   Bell,
   Download,
   Globe2,
+  LogOut,
   Pencil,
   Smartphone,
   WalletCards,
@@ -74,6 +75,9 @@ export function resolveBrowserPermissionState(input: {
 
 const copy = {
   ko: {
+    logout: "로그아웃",
+    loggingOut: "로그아웃 중…",
+    logoutFailed: "로그아웃하지 못했어요. 다시 시도해 주세요.",
     back: "홈으로",
     title: "설정",
     subtitle: "ByUs에서 사용할 프로필과 알림을 관리하세요.",
@@ -137,6 +141,9 @@ const copy = {
     failed: "저장하지 못했어요. 다시 시도해 주세요.",
   },
   en: {
+    logout: "Log out",
+    loggingOut: "Logging out…",
+    logoutFailed: "Could not log out. Please try again.",
     back: "Home",
     title: "Settings",
     subtitle: "Manage your ByUs profile and notifications.",
@@ -208,7 +215,10 @@ function authHeaders(token: string): HeadersInit {
 export function SettingsScreen({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const router = useRouter();
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, logout } = usePrivy();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const logoutPending = useRef(false);
   const [settings, setSettings] = useState<SettingsSummary | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [connections, setConnections] = useState<NotificationConnections | null>(null);
@@ -259,6 +269,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }, [authenticated, getAccessToken, ready]);
 
   useEffect(() => {
+    if (logoutPending.current) return;
     if (ready && !authenticated) {
       router.replace(
         `/login?returnTo=${encodeURIComponent(`/settings?locale=${locale}`)}&locale=${locale}`,
@@ -472,11 +483,36 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     setPushState("error");
   }
 
+  async function signOut() {
+    if (logoutPending.current) return;
+    logoutPending.current = true;
+    setLoggingOut(true);
+    setLogoutError("");
+    try {
+      await logout();
+      router.replace(`/login?locale=${locale}`);
+    } catch {
+      logoutPending.current = false;
+      setLoggingOut(false);
+      setLogoutError(t.logoutFailed);
+    }
+  }
+
+  const logoutAction = ready && authenticated ? (
+    <div className={styles.logout}>
+      <FanAction variant="neutral" leadingIcon={<LogOut />} disabled={loggingOut} ariaBusy={loggingOut} onClick={() => void signOut()}>
+        {loggingOut ? t.loggingOut : t.logout}
+      </FanAction>
+      {logoutError ? <p role="alert">{logoutError}</p> : null}
+    </div>
+  ) : null;
+
   if (!ready || state === "loading")
     return (
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1} aria-busy="true">
         <span className={styles.spinner} />
         {t.loading}
+        {logoutAction}
       </FanContentContainer></FanAppFrame>
     );
   if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</FanContentContainer></FanAppFrame>;
@@ -485,6 +521,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>
         <p>{t.unavailable}</p>
         <button onClick={() => void load()}>{t.retry}</button>
+        {logoutAction}
       </FanContentContainer></FanAppFrame>
     );
 
@@ -496,6 +533,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           <h1>{t.title}</h1>
           <span>{t.subtitle}</span>
         </div>
+
+        {logoutAction}
 
         <section className={styles.section} aria-labelledby="profile-title">
           <div className={styles.sectionTitle}>
