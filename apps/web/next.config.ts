@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  // Sharp 0.35 moved its entry point; Next 16's native dependency tracing
+  // misses libvips. Include the installed runtime assets for avatar routes.
+  outputFileTracingIncludes: {
+    "/api/me/avatar": ["../../node_modules/@img/sharp-libvips-*/**/*"],
+    "/api/me/avatar/**": ["../../node_modules/@img/sharp-libvips-*/**/*"],
+  },
   async headers() {
     return [
       {
