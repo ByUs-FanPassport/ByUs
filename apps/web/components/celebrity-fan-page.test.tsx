@@ -175,12 +175,9 @@ describe("published celebrity fan page", () => {
 
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
 
-    expect(await screen.findByRole("link", { name: "12일 KARA 캘린더 LIVE, 예약 상태 미확인" })).toHaveAttribute(
-      "href",
-      "/live/kara-calendar-live?locale=ko",
-    );
+    expect(await screen.findByRole("button", { name: "12일, 1 LIVE" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("heading", { name: "다가오는 일정" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /KARA 캘린더 LIVE/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /KARA 캘린더 LIVE/ })).toHaveLength(1);
     expect(screen.queryByLabelText(/다른 셀럽 캘린더 LIVE/)).not.toBeInTheDocument();
   });
 
@@ -195,11 +192,24 @@ describe("published celebrity fan page", () => {
       reservationState, hasBenefit: null,
     })) });
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    const date = await screen.findByRole("link", { name: /12일 첫 LIVE.*외 1개/ });
-    expect(date).toHaveAttribute("href", "/live/kara-first-live?locale=ko");
-    expect(date).toHaveAttribute("data-reservation", "multiple");
+    const date = await screen.findByRole("button", { name: "12일, 2 LIVE" });
+    expect(date).not.toHaveAttribute("href");
+    expect(date).not.toHaveAttribute("data-reservation");
+    expect(date).toHaveAttribute("data-upcoming", "true");
+    fireEvent.click(date);
+    expect(date).toHaveAttribute("aria-pressed", "true");
+    const region = screen.getByRole("region", { name: "KARA LIVE 일정" });
+    expect(within(region).getByRole("link", { name: /첫 LIVE/ })).toHaveAttribute("href", "/live/kara-first-live?locale=ko");
+    expect(within(region).getByRole("link", { name: /두 번째 LIVE/ })).toHaveAttribute("href", "/live/kara-second-live?locale=ko");
+    expect(within(region).getByText("예약 완료")).toBeInTheDocument();
+    expect(within(region).getByText("미예약")).toBeInTheDocument();
+    fireEvent.click(within(region).getByRole("button", { name: "전체 보기" }));
+    expect(date).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(date);
+    fireEvent.click(date);
+    expect(date).toHaveAttribute("aria-pressed", "false");
     expect(within(date).getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("숫자: 일정 수")).toBeInTheDocument();
+
   });
 
   it("moves between mini-calendar months and refreshes the full-calendar destination", async () => {
@@ -240,8 +250,10 @@ describe("published celebrity fan page", () => {
 
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
 
-    expect(await screen.findByRole("link", { name: "18일 예약한 KARA LIVE, 예약 완료" }))
-      .toHaveAttribute("data-reservation", "reserved");
+    const reservedDate = await screen.findByRole("button", { name: "18일, 1 LIVE" });
+    expect(reservedDate).not.toHaveAttribute("data-reservation");
+    fireEvent.click(reservedDate);
+    expect(within(screen.getByRole("region", { name: "KARA LIVE 일정" })).getByText("예약 완료")).toBeInTheDocument();
     expect(request).toHaveBeenCalledWith(
       `/api/live-events/calendar?month=${month}&locale=ko`,
       expect.objectContaining({ headers: { Authorization: "Bearer token" } }),

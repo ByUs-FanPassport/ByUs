@@ -15,6 +15,7 @@ import {
 import type { Route } from "next";
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowRight, Clock, Play } from "./icons";
+import { Check } from "lucide-react";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { CalendarArt } from "./fan-calendar/calendar-art";
@@ -226,6 +227,7 @@ function CelebrityMiniCalendar({
   const upcomingMonth = upcomingLive ? kstMonthForInstant(upcomingLive.startsAt) : null;
   const initialMonth = upcomingMonth && upcomingMonth >= currentMonth ? upcomingMonth : currentMonth;
   const [month, setMonth] = useState(initialMonth);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [state, setState] = useState<AsyncState<LiveCalendarDay[]>>({ status: "loading" });
 
   useEffect(() => {
@@ -236,6 +238,7 @@ function CelebrityMiniCalendar({
     if (!ready) return;
     const controller = new AbortController();
     setState({ status: "loading" });
+    setSelectedDate(null);
     void (async () => {
       try {
         const token = authenticated ? await getAccessToken() : null;
@@ -269,6 +272,12 @@ function CelebrityMiniCalendar({
     .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
     .slice(0, 3);
 
+  const selectedDay = days.find((day) => day.date === selectedDate && day.events.length > 0);
+  const displayedEvents = selectedDay
+    ? [...selectedDay.events].sort((left, right) => left.startsAt.localeCompare(right.startsAt))
+    : upcomingEvents;
+  const calendarListId = `${celebrity.slug}-calendar-events`;
+
   return (
     <section className={styles.heroCalendar} aria-labelledby={`${celebrity.slug}-mini-calendar-title`} aria-busy={state.status === "loading"}>
       <div className={styles.calendarHeading}>
@@ -288,27 +297,24 @@ function CelebrityMiniCalendar({
           const firstEvent = day.events[0];
           const style = index === 0 ? { gridColumnStart: firstWeekday + 1 } : undefined;
           if (firstEvent) {
-            const reservationState = firstEvent.reservationState ?? "unknown";
-            const reservationLabel = reservationState === "reserved"
-              ? t.reserved
-              : reservationState === "not_reserved" ? t.notReserved : t.reservationUnknown;
-            const eventLabel = locale === "ko"
-              ? `${dayNumber}일 ${firstEvent.title}, ${reservationLabel}${day.events.length > 1 ? ` 외 ${day.events.length - 1}개` : ""}`
-              : `${dayNumber}, ${firstEvent.title}, ${reservationLabel}${day.events.length > 1 ? ` and ${day.events.length - 1} more` : ""}`;
+            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE` : `${dayNumber}, ${day.events.length} LIVE`;
             return (
-              <Link
+              <button
+                type="button"
                 className={styles.calendarEventDay}
-                data-reservation={day.events.length > 1 ? "multiple" : reservationState}
+                data-upcoming={day.events.some(event => event.effectiveStatus === "scheduled" || event.effectiveStatus === "live") ? "true" : undefined}
                 data-multiple={day.events.length > 1 ? "true" : undefined}
                 data-today={day.date === today ? "true" : undefined}
-                href={`/live/${firstEvent.slug}?locale=${locale}` as Route}
+                aria-pressed={selectedDay?.date === day.date}
+                aria-controls={calendarListId}
+                onClick={() => setSelectedDate(selectedDay?.date === day.date ? null : day.date)}
                 key={day.date}
                 style={style}
                 aria-label={eventLabel}
               >
                 <CalendarDayNumber date={day.date} today={today} />
                 <span aria-hidden="true">{day.events.length > 1 ? day.events.length : ""}</span>
-              </Link>
+              </button>
             );
           }
           return (
@@ -321,25 +327,23 @@ function CelebrityMiniCalendar({
       {state.status !== "ready" ? <p className={styles.calendarMessage} role={state.status === "error" ? "alert" : "status"}>
         {state.status === "loading" ? t.calendarLoading : t.calendarError}
       </p> : null}
-      <div className={styles.calendarUpcoming}>
-        <h3>{t.calendarUpcoming}</h3>
-        {state.status === "ready" && upcomingEvents.length > 0 ? <ol>{upcomingEvents.map((event) => (
+      <div className={styles.calendarUpcoming} id={calendarListId}>
+        <div className={styles.calendarListHeading}>
+          <h3 aria-live="polite">{selectedDay ? new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${selectedDay.date}T00:00:00+09:00`)) : t.calendarUpcoming}</h3>
+          {selectedDay ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? "전체 보기" : "Show all"}</button> : null}
+        </div>
+        {state.status === "ready" && displayedEvents.length > 0 ? <ol>{displayedEvents.map((event) => (
           <li key={event.id} data-status={event.effectiveStatus}>
             <Link href={`/live/${event.slug}?locale=${locale}` as Route}>
               <time dateTime={event.startsAt}>{formatMiniCalendarDate(event.startsAt, locale)}</time>
               <strong>{event.title}</strong>
               <span>{localizedLiveStatus(event.effectiveStatus, locale)}</span>
+              <small className={styles.calendarReservation}>{event.reservationState === "reserved" ? <Check aria-hidden="true" /> : null}{event.reservationState === "reserved" ? t.reserved : event.reservationState === "not_reserved" ? t.notReserved : t.reservationUnknown}</small>
             </Link>
           </li>
         ))}</ol> : state.status === "ready" ? <p>{t.calendarUpcomingEmpty}</p> : null}
       </div>
       <div className={styles.calendarFooter}>
-        <div className={styles.calendarLegend} aria-label={locale === "ko" ? "예약 상태 범례" : "Reservation legend"}>
-          <span><i data-state="reserved" aria-hidden="true" />{t.reserved}</span>
-          <span><i data-state="not_reserved" aria-hidden="true" />{t.notReserved}</span>
-          <span><i data-state="unknown" aria-hidden="true" />{t.reservationUnknown}</span>
-          {days.some((day) => day.events.length > 1) ? <span>{locale === "ko" ? "숫자: 일정 수" : "Number: LIVE count"}</span> : null}
-        </div>
         <Link href={`/live/calendar?month=${month}&locale=${locale}&celebrity=${celebrity.slug}` as Route}>{t.calendarOpen}<ArrowRight /></Link>
       </div>
     </section>

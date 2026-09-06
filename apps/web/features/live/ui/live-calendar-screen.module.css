@@ -133,6 +133,7 @@
   .mobileWeekdays span { padding-block:8px; font-size:12px; }
   .mobileDay { min-height:48px; gap:2px; }
   .mobileDay time { width:32px; height:32px; font-size:14px; font-weight:650; }
+  .mobileDay[data-upcoming-day="true"][aria-pressed="false"] time { background:oklch(97% .025 315); color:var(--color-service-ink); }
   .mobileDay[aria-pressed="true"] time { border-color:var(--color-service-ink); font-weight:800; }
   .mobileSelection { margin-top:16px; padding-block:4px; border-top:0; color:var(--color-ink); font-weight:700; }
   .mobileSelection button { font-size:12px; }
@@ -182,12 +183,12 @@
 
 /* Original 1672px reference: left title/filter, inline month lettering, horizontal calendar. */
 @media (min-width:64rem) {
-  .main { position:relative; max-width:none; padding:0 2.81% 70px; background:#fff; }
+  .main { position:relative; max-width:none; padding:32px 2.81% 70px; background:#fff; }
   .editorialHeader { position:relative; display:block; height:239px; margin:0; }
   .intro { position:absolute; top:49px; left:0; width:29%; gap:0; }
   .main .intro h1 { font-size:48px; line-height:1.2; font-weight:850; letter-spacing:-.03em; }
   .intro p,.catalogLink { display:none; }
-  .filters { position:absolute; top:149px; left:2.81%; width:28%; z-index:2; margin:0; }
+  .filters { position:absolute; top:181px; left:2.81%; width:28%; z-index:2; margin:0; }
   .filterScroller { gap:8px; padding:0; }
   .filterChip { padding:0 17px; gap:0; min-height:44px; font-size:14px; font-weight:650; }
   .filterChip > svg,.filterChip > span { display:none; }

@@ -301,6 +301,7 @@ export function LiveCalendarScreen({
                 className={styles.mobileDay}
                 key={day.date}
                 data-calendar-date={day.date}
+                data-upcoming-day={day.events.some((event) => event.effectiveStatus === "scheduled" || event.effectiveStatus === "live") ? "true" : undefined}
                 aria-label={`${dayLabel(day.date, locale)}, ${day.events.length} LIVE`}
                 aria-pressed={activeDate === day.date}
                 aria-controls="calendar-day-list"

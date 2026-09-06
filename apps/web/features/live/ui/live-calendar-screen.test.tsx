@@ -112,6 +112,16 @@ function renderCalendar(locale: "ko" | "en" = "ko", initialCelebritySlugs: reado
 }
 
 describe("LIVE calendar screen", () => {
+  it.each(["scheduled", "live", "ended", "cancelled"] as const)("marks only actionable mobile dates for %s events", (status) => {
+    const { container } = render(<LiveCalendarScreen locale="ko" initialCelebritySlugs={[]} initialCalendar={{ ...calendar, days: calendar.days.map(day => ({ ...day, events: day.date === "2026-09-15" ? [{ ...events[0]!, effectiveStatus: status }] : [] })) }} celebrities={celebrities} eventMetadata={eventMetadata} />);
+    const date = container.querySelector('[data-calendar-date="2026-09-15"]');
+    if (status === "scheduled" || status === "live") expect(date).toHaveAttribute("data-upcoming-day", "true");
+    else expect(date).not.toHaveAttribute("data-upcoming-day");
+    expect(container.querySelector('[data-calendar-date="2026-09-01"]')).not.toHaveAttribute("data-upcoming-day");
+    fireEvent.click(screen.getByRole("button", { name: "ELINA" }));
+    expect(date).not.toHaveAttribute("data-upcoming-day");
+  });
+
   it("selects a mobile date without removing the desktop month's events and can clear it", () => {
     renderCalendar();
     const date = screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ });
