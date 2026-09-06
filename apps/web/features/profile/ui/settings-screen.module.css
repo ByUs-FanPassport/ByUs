@@ -83,7 +83,10 @@
   border-radius: 12px;
 }
 .valueRow strong {
+  min-width: 0;
   font-size: 15px;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
 }
 .valueRow button,
 .renameForm button,
@@ -114,6 +117,16 @@
   border-radius: 12px;
   background: #fff;
   color: inherit;
+  font-size: 16px;
+  unicode-bidi: plaintext;
+}
+.renameForm input[aria-invalid="true"] {
+  border-color: oklch(50% 0.2 25);
+}
+.renameForm input:disabled {
+  background: oklch(97.5% 0 0);
+  color: oklch(48% 0 0);
+  cursor: wait;
 }
 .renameForm small,
 .support {
@@ -132,11 +145,33 @@
 }
 .nicknameRule small:last-child {
   flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+.nicknameMessage {
+  min-height: 18px;
+  font-weight: 700;
+}
+.nicknameMessage[data-tone="error"] {
+  color: oklch(45% 0.19 25);
+}
+.nicknameMessage[data-tone="success"] {
+  color: oklch(42% 0.14 145);
+}
+.nicknameResult {
+  margin: 10px 0 0 58px;
+  color: oklch(42% 0.14 145);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 .renameForm > div {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+.renameForm button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 .segmented {
   margin: 20px 0 0 58px;
@@ -370,6 +405,9 @@
   .support,
   .installState,
   .installButton {
+    margin-left: 0;
+  }
+  .nicknameResult {
     margin-left: 0;
   }
   .section {

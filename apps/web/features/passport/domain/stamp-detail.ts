@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { nicknameSchema } from "../../profile/domain/nickname-schema";
 import { ACTIVITY_SOURCE_BY_TYPE, activityTypeSchema, celebritySchema, mintFactsSchema, mintStatusLabel, passportActivityContextSchema, stampTypeLabel, stampTypeSchema, type PassportLocale } from "./passport-read-model";
 
 export const stampDetailRecordSchema = z.object({
   id: z.uuid(), type: stampTypeSchema, businessStatus: z.literal("issued"), mint: mintFactsSchema,
   issuedAt: z.iso.datetime({ offset: true }), passport: z.object({ id: z.uuid() }).strict(),
-  owner: z.object({ nickname: z.string().trim().min(2).max(16).nullable() }).strict(), celebrity: celebritySchema,
+  owner: z.object({ nickname: nicknameSchema.nullable() }).strict(), celebrity: celebritySchema,
   activity: z.object({
     id: z.uuid(),
     type: activityTypeSchema,

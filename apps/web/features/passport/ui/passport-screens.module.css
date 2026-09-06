@@ -442,6 +442,8 @@
   font-size: 22px;
   font-weight: 850;
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
 }
 .identity small {
   color: var(--muted);

@@ -2,9 +2,10 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { nicknameSchema } from "../../features/profile/domain/nickname-schema";
 
 const profileRowSchema = z
-  .object({ nickname: z.string().min(2).max(16) })
+  .object({ nickname: nicknameSchema })
   .nullable();
 const walletRowSchema = z
   .object({

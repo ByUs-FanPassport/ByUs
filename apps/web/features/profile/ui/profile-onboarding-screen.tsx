@@ -10,7 +10,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction } from "@/components/fan-ui/fan-action";
-import { getNicknameFormat } from "../domain/nickname-format";
+import {
+  getNicknameFormat,
+  getNicknameFormatMessage,
+  type NicknameFormatReason,
+} from "../domain/nickname-format";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
 import styles from "./profile-onboarding-screen.module.css";
@@ -32,34 +36,34 @@ const copy: Record<"ko" | "en", Copy> = {
     subtitle: (name) => `팬 인증을 통과하면 ${name} Fan Passport와 활동 기록에 표시돼요.`, preview: "발급 예정 Fan Passport 미리보기",
     progress: "프로필 설정 · 1 / 1",
     verification: "팬 인증 준비", pending: "발급 예정", owner: "공개 이름", placeholderOwner: "닉네임",
-    issuance: "팬 인증 완료 후 발급", field: "닉네임", counter: (count) => `${count}/16자`,
-    rule: "한글, 영문, 숫자, 공백, 밑줄, 하이픈을 사용해 2–16자로 입력해 주세요.",
+    issuance: "팬 인증 완료 후 발급", field: "닉네임", counter: (count) => `${count}/32자`,
+    rule: "원하는 언어로 1–32자까지 입력해 주세요.",
     privacy: "입력한 닉네임만 공개되며 이메일과 Google 계정 정보는 표시되지 않아요.",
     save: "닉네임 저장", saving: "저장 중…", saved: "저장 완료", back: "이전으로",
     checking: "프로필을 확인하고 있어요.", empty: "사용할 닉네임을 입력해 주세요.",
-    typing: "2–16자의 허용된 문자로 입력해 주세요.", valid: "사용 가능한 형식이에요. 저장할 때 중복 여부를 확인합니다.",
-    duplicate: "이미 사용 중인 닉네임이에요. 다른 이름을 입력해 주세요.",
-    prohibited: "사용할 수 없는 표현이 포함되어 있어요. 다른 이름을 입력해 주세요.",
+    typing: "원하는 언어로 표시 이름을 입력해 주세요.", valid: "사용 가능한 형식이에요. 저장할 때 중복 여부를 확인합니다.",
+    duplicate: "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.",
+    prohibited: "사용할 수 없는 표현이 포함되어 있어요. 다른 닉네임을 입력해 주세요.",
     invalid: "닉네임의 길이 또는 문자를 확인해 주세요.",
     network: "저장하지 못했어요. 입력한 닉네임을 유지했으니 다시 시도해 주세요.",
     auth: "로그인 후 닉네임 설정을 이어갈 수 있어요.",
   },
   en: {
-    home: "ByUs home", language: "Language", heading: (name) => `Choose a nickname for your ${name} fan verification.`,
+    home: "ByUs home", language: "Language", heading: (name) => `Choose a display name for your ${name} fan verification.`,
     subtitle: (name) => `After verification, it will appear in your ${name} Fan Passport and activity history.`, preview: "Fan Passport preview before issuance",
     progress: "Profile setup · 1 / 1",
-    verification: "Fan verification", pending: "Pending issuance", owner: "Public name", placeholderOwner: "Nickname",
-    issuance: "Issued after fan verification", field: "Nickname", counter: (count) => `${count}/16 characters`,
-    rule: "Use 2–16 Korean or Latin letters, numbers, spaces, underscores, or hyphens.",
-    privacy: "Only this nickname is public. Your email and Google account details are never shown.",
-    save: "Save nickname", saving: "Saving…", saved: "Saved", back: "Go back",
-    checking: "Checking your profile.", empty: "Enter the nickname you want to use.",
-    typing: "Use 2–16 supported characters.", valid: "The format is valid. Availability is checked when you save.",
-    duplicate: "That nickname is already in use. Please choose another.",
-    prohibited: "That nickname contains a restricted expression. Please choose another.",
-    invalid: "Check the nickname length and characters.",
-    network: "We couldn't save it. Your nickname is still here, so you can try again.",
-    auth: "Log in to continue setting your nickname.",
+    verification: "Fan verification", pending: "Pending issuance", owner: "Public name", placeholderOwner: "Display name",
+    issuance: "Issued after fan verification", field: "Display name", counter: (count) => `${count}/32 characters`,
+    rule: "Use 1–32 characters in your preferred language.",
+    privacy: "Only this display name is public. Your email and Google account details are never shown.",
+    save: "Save display name", saving: "Saving…", saved: "Saved", back: "Go back",
+    checking: "Checking your profile.", empty: "Enter the display name you want to use.",
+    typing: "Enter your display name in your preferred language.", valid: "The format is valid. Availability is checked when you save.",
+    duplicate: "This display name is taken. Try another.",
+    prohibited: "This display name contains a restricted term. Try another.",
+    invalid: "Check the display name length and characters.",
+    network: "We couldn't save it. Your display name is still here, so you can try again.",
+    auth: "Log in to continue setting your display name.",
   },
 };
 
@@ -76,8 +80,12 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
   const { ready, authenticated, getAccessToken } = usePrivy();
   const inputRef = useRef<HTMLInputElement>(null);
   const loginRedirectedRef = useRef(false);
+  const composingRef = useRef(false);
+  const savePendingRef = useRef(false);
   const [nickname, setNickname] = useState("");
   const [state, setState] = useState<ScreenState>("checking");
+  const [validationVisible, setValidationVisible] = useState(false);
+  const [serverFormatReason, setServerFormatReason] = useState<NicknameFormatReason | null>(null);
   const rawReturnTo = searchParams.get("returnTo");
   const rawIntent = searchParams.get("intent");
   const rawEntity = searchParams.get("entity");
@@ -134,6 +142,8 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         const draft = sessionStorage.getItem(draftStorageKey) ?? "";
         setNickname(draft);
         setState(draft ? getNicknameFormat(draft).valid ? "valid" : "typing" : "empty");
+        setValidationVisible(false);
+        setServerFormatReason(null);
         requestAnimationFrame(() => inputRef.current?.focus());
       } catch (error) {
         if ((error as Error).name !== "AbortError") setState("network");
@@ -144,10 +154,19 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
 
   const updateNickname = useCallback((value: string) => {
     setNickname(value);
+    setServerFormatReason(null);
     sessionStorage.setItem(draftStorageKey, value);
-    if (!value) setState("empty");
-    else setState(getNicknameFormat(value).valid ? "valid" : "typing");
-  }, []);
+    if (composingRef.current) {
+      setState("typing");
+      return;
+    }
+    const format = getNicknameFormat(value);
+    if (validationVisible && !format.valid) setState("invalid");
+    else {
+      setValidationVisible(false);
+      setState(!value ? "empty" : format.valid ? "valid" : "typing");
+    }
+  }, [validationVisible]);
 
   const focusNickname = () => {
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -166,12 +185,15 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!localValid || state === "saving" || state === "saved") {
-      setState(nickname ? "invalid" : "empty");
+    if (composingRef.current || savePendingRef.current) return;
+    if (!localValid || state === "checking" || state === "saving" || state === "saved") {
+      setValidationVisible(true);
+      setState("invalid");
       focusNickname();
       return;
     }
 
+    savePendingRef.current = true;
     setState("saving");
     try {
       const token = await getAccessToken();
@@ -197,7 +219,19 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
           replace(returnTo as Route);
           return;
         }
-        else if (code === "INVALID_NICKNAME") setState("invalid");
+        else if (code === "INVALID_NICKNAME") {
+          const detailReason = body.error?.details?.reason;
+          setServerFormatReason(
+            detailReason === "empty"
+            || detailReason === "too_long"
+            || detailReason === "newline"
+            || detailReason === "unsupported"
+              ? detailReason
+              : null,
+          );
+          setValidationVisible(true);
+          setState("invalid");
+        }
         else setState("network");
         focusNickname();
         return;
@@ -211,12 +245,16 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
     } catch {
       setState("network");
       focusNickname();
+    } finally {
+      savePendingRef.current = false;
     }
   };
 
-  const statusText = t[state];
+  const statusText = state === "invalid"
+    ? getNicknameFormatMessage(serverFormatReason ?? nicknameFormat.reason, locale) || t.invalid
+    : t[state];
   const invalid = state === "duplicate" || state === "prohibited" || state === "invalid";
-  const canSave = localValid && state !== "saving" && state !== "saved" && state !== "checking";
+  const canSave = state !== "saving" && state !== "saved" && state !== "checking";
   const displayOwner = normalized || t.placeholderOwner;
 
   return (
@@ -257,15 +295,31 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
               />
             </div>
             <dl>
-              <div className={styles.ownerRow}><dt>{t.owner}</dt><dd>{displayOwner}</dd></div>
+              <div className={styles.ownerRow}><dt>{t.owner}</dt><dd dir="auto">{displayOwner}</dd></div>
               <div><dt>{locale === "ko" ? "상태" : "Status"}</dt><dd>{t.issuance}</dd></div>
             </dl>
           </section>
 
           <form className={styles.form} onSubmit={submit} noValidate aria-busy={state === "checking" || state === "saving"}>
-            <div className={styles.fieldHead}><label htmlFor="nickname">{t.field}</label><span aria-label={t.counter(count)}>{count}/16</span></div>
+            <div className={styles.fieldHead}><label htmlFor="nickname">{t.field}</label><span aria-label={t.counter(count)}>{count}/32</span></div>
             <input ref={inputRef} id="nickname" name="nickname" value={nickname} onChange={(event) => updateNickname(event.target.value)}
-              maxLength={32} autoComplete="nickname" enterKeyHint="done" aria-invalid={invalid} aria-describedby="nickname-status nickname-rules nickname-privacy"
+              onBlur={() => {
+                if (composingRef.current) return;
+                if (!getNicknameFormat(nickname).valid) {
+                  setValidationVisible(true);
+                  setState("invalid");
+                }
+              }}
+              onCompositionStart={() => {
+                composingRef.current = true;
+                setServerFormatReason(null);
+                setState("typing");
+              }}
+              onCompositionEnd={(event) => {
+                composingRef.current = false;
+                updateNickname(event.currentTarget.value);
+              }}
+              dir="auto" autoComplete="nickname" enterKeyHint="done" aria-invalid={invalid} aria-describedby="nickname-status nickname-rules nickname-privacy"
               disabled={state === "checking" || state === "saving" || state === "saved"} />
             <p id="nickname-status" className={styles.status} data-tone={invalid ? "error" : state === "valid" || state === "saved" ? "success" : "neutral"} role={invalid || state === "network" ? "alert" : "status"}>{statusText}</p>
             <p id="nickname-rules" className={styles.rule}>{t.rule}</p>

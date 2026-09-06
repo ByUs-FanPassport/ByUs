@@ -305,6 +305,15 @@ describe("FAN-020 settings", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("leaves loading for a retryable error when the initial access token is missing", async () => {
+    getAccessToken.mockResolvedValueOnce(null).mockResolvedValue("access-token");
+    render(<SettingsScreen locale="ko" />);
+
+    expect(await screen.findByText("설정을 불러오지 못했어요. 다시 시도해 주세요.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(await screen.findByText("Kamilia")).toBeInTheDocument();
+  });
+
   it("renames the profile with PUT and preserves wallet presentation", async () => {
     render(<SettingsScreen locale="ko" />);
     await screen.findByText("Kamilia");
@@ -323,12 +332,12 @@ describe("FAN-020 settings", () => {
       ),
     );
     expect(
-      await screen.findByText("변경 사항을 저장했어요."),
+      await screen.findByText("닉네임을 변경했어요."),
     ).toBeInTheDocument();
     expect(screen.getByText("0x1234…cdef")).toBeInTheDocument();
   });
 
-  it("uses the shared separator-aware nickname format before PUT", async () => {
+  it("accepts one-character and compatibility-normalized display names before PUT", async () => {
     render(<SettingsScreen locale="ko" />);
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
@@ -336,10 +345,10 @@ describe("FAN-020 settings", () => {
     const save = screen.getByRole("button", { name: "저장" });
 
     fireEvent.change(input, { target: { value: "J" } });
-    expect(save).toBeDisabled();
+    expect(save).toBeEnabled();
 
     fireEvent.change(input, { target: { value: "  Ｊｅｗｅｌ＿ＫＡＴ  " } });
-    expect(screen.getByLabelText("9/16")).toBeInTheDocument();
+    expect(screen.getByLabelText("9/32")).toBeInTheDocument();
     expect(save).toBeEnabled();
     fireEvent.click(save);
 
@@ -352,6 +361,124 @@ describe("FAN-020 settings", () => {
         }),
       ),
     );
+  });
+
+  it("allows a case-only display-name change and preserves the requested casing", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    const save = screen.getByRole("button", { name: "저장" });
+
+    fireEvent.change(input, { target: { value: "KAMILIA" } });
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/me/nickname",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ nickname: "KAMILIA" }),
+      }),
+    ));
+  });
+
+  it("shows precise inline validation on blur and refreshes it as the value changes", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    const save = screen.getByRole("button", { name: "저장" });
+
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.blur(input);
+    expect(screen.getByRole("alert")).toHaveTextContent("닉네임을 입력해 주세요.");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(save).toBeEnabled();
+
+    fireEvent.change(input, { target: { value: "가".repeat(33) } });
+    expect(screen.getByRole("alert")).toHaveTextContent("닉네임은 32자까지 입력할 수 있어요.");
+    expect(screen.getByLabelText("33/32")).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "화이팅!💜" } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    fireEvent.click(save);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/me/nickname",
+      expect.objectContaining({ body: JSON.stringify({ nickname: "화이팅!💜" }) }),
+    ));
+  });
+
+  it("keeps nickname API errors beside the field and allows a retry", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    fireEvent.change(input, { target: { value: "Melody" } });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({ error: { code: "NICKNAME_TAKEN" } }, { status: 409 }))
+      .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "Melody" } }));
+
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.");
+    expect(input).toHaveValue("Melody");
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+    expect(await screen.findByText("닉네임을 변경했어요.")).toBeInTheDocument();
+  });
+
+  it("identifies an expired nickname save session without marking the field invalid", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    fireEvent.change(input, { target: { value: "Melody" } });
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ error: { code: "UNAUTHENTICATED" } }, { status: 401 }));
+
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("로그인 후 설정을 이용할 수 있어요.");
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    expect(input).toHaveValue("Melody");
+  });
+
+  it("keeps a nickname draft when the save token is missing and explains reauthentication", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    fireEvent.change(input, { target: { value: "Melody" } });
+    getAccessToken.mockResolvedValueOnce(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("로그인 후 설정을 이용할 수 있어요.");
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    expect(input).toHaveValue("Melody");
+    expect(input).toBeEnabled();
+  });
+
+  it("does not validate or submit an unfinished IME composition", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "변경" }));
+    const input = screen.getByRole("textbox", { name: "닉네임" });
+    const save = screen.getByRole("button", { name: "저장" });
+    const nicknameCalls = () => vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/nickname");
+    const callsBeforeComposition = nicknameCalls().length;
+
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.blur(input);
+    expect(screen.getByRole("alert")).toHaveTextContent("닉네임을 입력해 주세요.");
+    fireEvent.compositionStart(input);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    fireEvent.change(input, { target: { value: "ㅎ" } });
+    fireEvent.click(save);
+    expect(nicknameCalls()).toHaveLength(callsBeforeComposition);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.compositionEnd(input);
+    fireEvent.click(save);
+    fireEvent.click(save);
+    await waitFor(() => expect(nicknameCalls()).toHaveLength(callsBeforeComposition + 1));
   });
 
   it("persists language and integrates the notification preference contract", async () => {

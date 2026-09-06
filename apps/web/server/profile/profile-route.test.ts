@@ -61,7 +61,7 @@ describe("FAN-005 profile routes", () => {
 
   it.each([
     [{ nickname: "fan\nname" }, "INVALID_NICKNAME"],
-    [{ nickname: "KARAFan" }, "NICKNAME_PROHIBITED"],
+    [{ nickname: "KARA" }, "NICKNAME_PROHIBITED"],
     [{ nickname: "KAT_SEYE" }, "NICKNAME_PROHIBITED"],
     [{ nickname: "fan", extra: true }, "INVALID_NICKNAME"],
   ] as const)("rejects invalid body %o with %s", async (body, code) => {

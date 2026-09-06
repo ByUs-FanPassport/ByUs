@@ -15,7 +15,11 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { FanAction } from "@/components/fan-ui/fan-action";
-import { getNicknameFormat } from "../domain/nickname-format";
+import {
+  getNicknameFormat,
+  getNicknameFormatMessage,
+  type NicknameFormatReason,
+} from "../domain/nickname-format";
 import {
   enablePushNotifications,
 } from "../../notification/ui/push-subscription";
@@ -83,11 +87,12 @@ const copy = {
     subtitle: "ByUs에서 사용할 프로필과 알림을 관리하세요.",
     profile: "프로필",
     nickname: "닉네임",
+    nicknameHelp: "ByUs에서 다른 팬들에게 표시되는 이름이에요.",
     edit: "변경",
     save: "저장",
     saving: "저장 중…",
     cancel: "취소",
-    nicknameRule: "한글, 영문, 숫자, 공백, 밑줄, 하이픈을 사용해 2–16자로 입력해 주세요.",
+    nicknameRule: "원하는 언어로 1–32자까지 입력해 주세요.",
     language: "언어",
     languageHelp: "선택한 언어는 이 브라우저에 저장됩니다.",
     korean: "한국어",
@@ -134,10 +139,11 @@ const copy = {
     unavailable: "설정을 불러오지 못했어요. 다시 시도해 주세요.",
     retry: "다시 시도",
     auth: "로그인 후 설정을 이용할 수 있어요.",
-    duplicate: "이미 사용 중인 닉네임이에요.",
-    prohibited: "사용할 수 없는 표현이 포함되어 있어요.",
+    duplicate: "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.",
+    prohibited: "사용할 수 없는 표현이 포함되어 있어요. 다른 닉네임을 입력해 주세요.",
     invalid: "닉네임의 길이 또는 문자를 확인해 주세요.",
     saved: "변경 사항을 저장했어요.",
+    nicknameSaved: "닉네임을 변경했어요.",
     failed: "저장하지 못했어요. 다시 시도해 주세요.",
   },
   en: {
@@ -148,12 +154,13 @@ const copy = {
     title: "Settings",
     subtitle: "Manage your ByUs profile and notifications.",
     profile: "Profile",
-    nickname: "Nickname",
+    nickname: "Display name",
+    nicknameHelp: "This is how other fans will see you on ByUs.",
     edit: "Change",
     save: "Save",
     saving: "Saving…",
     cancel: "Cancel",
-    nicknameRule: "Use 2–16 Korean or Latin letters, numbers, spaces, underscores, or hyphens.",
+    nicknameRule: "Use 1–32 characters in your preferred language.",
     language: "Language",
     languageHelp: "Your selection is saved in this browser.",
     korean: "한국어",
@@ -200,10 +207,11 @@ const copy = {
     unavailable: "We couldn't load your settings. Try again.",
     retry: "Try again",
     auth: "Log in to use Settings.",
-    duplicate: "That nickname is already in use.",
-    prohibited: "That nickname contains a restricted expression.",
+    duplicate: "This display name is taken. Try another.",
+    prohibited: "This display name contains a restricted term. Try another.",
     invalid: "Check the nickname length and characters.",
     saved: "Your changes were saved.",
+    nicknameSaved: "Display name updated.",
     failed: "We couldn't save that. Try again.",
   },
 } as const;
@@ -226,6 +234,10 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+  const [nicknameMessage, setNicknameMessage] = useState("");
+  const [nicknameMessageTone, setNicknameMessageTone] = useState<"error" | "success" | null>(null);
+  const [nicknameFieldInvalid, setNicknameFieldInvalid] = useState(false);
+  const [nicknameValidationVisible, setNicknameValidationVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
@@ -236,13 +248,18 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [pushState, setPushState] =
     useState<PushConnectionState>("idle");
   const nicknameRef = useRef<HTMLInputElement>(null);
+  const nicknameComposingRef = useRef(false);
+  const nicknameSavePendingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!ready || !authenticated) return;
     setState("loading");
     try {
       const token = await getAccessToken();
-      if (!token) throw new Error("token");
+      if (!token) {
+        setState("error");
+        return;
+      }
       const headers = authHeaders(token);
       const [settingsResponse, preferenceResponse, connectionResponse] = await Promise.all([
         fetch("/api/me/settings", { headers, cache: "no-store" }),
@@ -326,17 +343,30 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   async function rename(event: FormEvent) {
     event.preventDefault();
+    if (nicknameComposingRef.current || nicknameSavePendingRef.current) return;
     const nicknameFormat = getNicknameFormat(nickname);
     if (!nicknameFormat.valid) {
-      setMessage(t.invalid);
+      setNicknameValidationVisible(true);
+      setNicknameMessage(getNicknameFormatMessage(nicknameFormat.reason, locale));
+      setNicknameMessageTone("error");
+      setNicknameFieldInvalid(true);
       nicknameRef.current?.focus();
       return;
     }
+    nicknameSavePendingRef.current = true;
     setSaving(true);
-    setMessage("");
+    setNicknameMessage("");
+    setNicknameMessageTone(null);
+    setNicknameFieldInvalid(false);
     try {
       const token = await getAccessToken();
-      if (!token) throw new Error("token");
+      if (!token) {
+        setNicknameMessage(t.auth);
+        setNicknameMessageTone("error");
+        setNicknameFieldInvalid(false);
+        nicknameRef.current?.focus();
+        return;
+      }
       const response = await fetch("/api/me/nickname", {
         method: "PUT",
         headers: { ...authHeaders(token), "content-type": "application/json" },
@@ -344,18 +374,36 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       });
       const body = (await response.json()) as {
         profile?: { nickname: string };
-        error?: { code?: string };
+        error?: { code?: string; details?: { reason?: string } };
       };
       if (!response.ok || !body.profile) {
         const code = body.error?.code;
-        setMessage(
-          code === "NICKNAME_TAKEN"
+        const detailReason = body.error?.details?.reason;
+        const formatReason: NicknameFormatReason | null =
+          detailReason === "empty"
+          || detailReason === "too_long"
+          || detailReason === "newline"
+          || detailReason === "unsupported"
+            ? detailReason
+            : null;
+        setNicknameMessage(
+          response.status === 401 || code === "UNAUTHENTICATED"
+            ? t.auth
+            : code === "NICKNAME_TAKEN"
             ? t.duplicate
             : code === "NICKNAME_PROHIBITED"
               ? t.prohibited
               : code === "INVALID_NICKNAME"
-                ? t.invalid
+                ? getNicknameFormatMessage(formatReason, locale) || t.invalid
                 : t.failed,
+        );
+        setNicknameMessageTone("error");
+        setNicknameFieldInvalid(
+          response.status !== 401
+          && code !== "UNAUTHENTICATED"
+          && (code === "NICKNAME_TAKEN"
+          || code === "NICKNAME_PROHIBITED"
+          || code === "INVALID_NICKNAME"),
         );
         nicknameRef.current?.focus();
         return;
@@ -365,11 +413,17 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       );
       setNickname(body.profile.nickname);
       setEditing(false);
-      setMessage(t.saved);
+      setNicknameValidationVisible(false);
+      setNicknameMessage(t.nicknameSaved);
+      setNicknameMessageTone("success");
+      setNicknameFieldInvalid(false);
     } catch {
-      setMessage(t.failed);
+      setNicknameMessage(t.failed);
+      setNicknameMessageTone("error");
+      setNicknameFieldInvalid(false);
       nicknameRef.current?.focus();
     } finally {
+      nicknameSavePendingRef.current = false;
       setSaving(false);
     }
   }
@@ -543,16 +597,19 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             </div>
             <div>
               <h2 id="profile-title">{t.profile}</h2>
-              <p>{t.nickname}</p>
+              <p id="nickname-help">{t.nicknameHelp}</p>
             </div>
           </div>
           {!editing ? (
             <div className={styles.valueRow}>
-              <strong>{settings.nickname}</strong>
+              <strong dir="auto">{settings.nickname}</strong>
               <button
                 onClick={() => {
                   setEditing(true);
-                  setMessage("");
+                  setNicknameMessage("");
+                  setNicknameMessageTone(null);
+                  setNicknameFieldInvalid(false);
+                  setNicknameValidationVisible(false);
                   requestAnimationFrame(() => nicknameRef.current?.focus());
                 }}
               >
@@ -567,33 +624,95 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 id="settings-nickname"
                 value={nickname}
                 onChange={(event) => {
-                  setNickname(event.target.value);
-                  setMessage("");
+                  const value = event.target.value;
+                  setNickname(value);
+                  if (nicknameComposingRef.current) return;
+                  if (nicknameValidationVisible) {
+                    const format = getNicknameFormat(value);
+                    setNicknameMessage(
+                      format.valid
+                        ? ""
+                        : getNicknameFormatMessage(format.reason, locale),
+                    );
+                    setNicknameMessageTone(format.valid ? null : "error");
+                    setNicknameFieldInvalid(!format.valid);
+                  } else {
+                    setNicknameMessage("");
+                    setNicknameMessageTone(null);
+                    setNicknameFieldInvalid(false);
+                  }
                 }}
-                maxLength={32}
+                onBlur={() => {
+                  if (nicknameComposingRef.current) return;
+                  const format = getNicknameFormat(nickname);
+                  if (!format.valid) {
+                    setNicknameValidationVisible(true);
+                    setNicknameMessage(getNicknameFormatMessage(format.reason, locale));
+                    setNicknameMessageTone("error");
+                    setNicknameFieldInvalid(true);
+                  }
+                }}
+                onCompositionStart={() => {
+                  nicknameComposingRef.current = true;
+                  setNicknameMessage("");
+                  setNicknameMessageTone(null);
+                  setNicknameFieldInvalid(false);
+                }}
+                onCompositionEnd={(event) => {
+                  nicknameComposingRef.current = false;
+                  if (!nicknameValidationVisible) return;
+                  const format = getNicknameFormat(event.currentTarget.value);
+                  setNicknameMessage(
+                    format.valid
+                      ? ""
+                      : getNicknameFormatMessage(format.reason, locale),
+                  );
+                  setNicknameMessageTone(format.valid ? null : "error");
+                  setNicknameFieldInvalid(!format.valid);
+                }}
+                dir="auto"
                 autoComplete="nickname"
-                aria-describedby="nickname-rule settings-message"
+                aria-invalid={nicknameFieldInvalid}
+                aria-describedby="nickname-help nickname-rule nickname-message"
+                disabled={saving}
               />
               <span className={styles.nicknameRule}>
                 <small id="nickname-rule">{t.nicknameRule}</small>
-                <small aria-label={`${getNicknameFormat(nickname).length}/16`}>
-                  {getNicknameFormat(nickname).length}/16
+                <small aria-label={`${getNicknameFormat(nickname).length}/32`}>
+                  {getNicknameFormat(nickname).length}/32
                 </small>
               </span>
+              <small
+                id="nickname-message"
+                className={styles.nicknameMessage}
+                data-tone={nicknameMessageTone ?? "neutral"}
+                role={nicknameMessageTone === "error" ? "alert" : "status"}
+                aria-live="polite"
+              >
+                {nicknameMessage}
+              </small>
               <div>
                 <button
                   type="button"
                   onClick={() => {
                     setEditing(false);
                     setNickname(settings.nickname);
-                    setMessage("");
+                    setNicknameMessage("");
+                    setNicknameMessageTone(null);
+                    setNicknameFieldInvalid(false);
+                    setNicknameValidationVisible(false);
                   }}
+                  disabled={saving}
                 >
                   {t.cancel}
                 </button>
                 <FanAction
                   variant="primary"
-                  disabled={saving || !getNicknameFormat(nickname).valid}
+                  disabled={
+                    saving
+                    || getNicknameFormat(nickname).nickname
+                      === settings.nickname
+                  }
                   type="submit"
                   ariaBusy={saving}
                 >
@@ -602,6 +721,16 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               </div>
             </form>
           )}
+          {!editing && nicknameMessage ? (
+            <p
+              className={styles.nicknameResult}
+              data-tone={nicknameMessageTone ?? "neutral"}
+              role="status"
+              aria-live="polite"
+            >
+              {nicknameMessage}
+            </p>
+          ) : null}
         </section>
 
         <section className={styles.section} aria-labelledby="language-title">

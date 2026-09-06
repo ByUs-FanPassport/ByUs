@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { getNicknameFormat } from "./nickname-format";
+import { nicknameSchema } from "./nickname-schema";
 
 export const NICKNAME_CATALOG_VERSION = "fan-nickname-v1" as const;
 
 export const fanProfileSchema = z.object({
   completed: z.boolean(),
-  nickname: z.string().min(2).max(16).nullable(),
+  nickname: nicknameSchema.nullable(),
 }).strict().superRefine((profile, context) => {
   if (profile.completed !== (profile.nickname !== null)) {
     context.addIssue({ code: "custom", message: "profile completion and nickname must agree" });
@@ -16,9 +17,11 @@ export type FanProfile = z.infer<typeof fanProfileSchema>;
 
 const prohibitedNicknameEntries = [
   "admin", "administrator", "system", "operator", "official",
-  "관리자", "운영자", "공식", "byus", "바이어스", "kara", "카라", "katseye", "캣츠아이",
+  "관리자", "운영자", "공식", "byus", "바이어스",
   "fuck", "shit", "bitch", "시발", "씨발", "병신",
 ] as const;
+
+const reservedArtistNames = ["kara", "카라", "katseye", "캣츠아이"] as const;
 
 export type NicknameValidationFailure = "invalid" | "prohibited";
 
@@ -36,8 +39,10 @@ export function normalizeNickname(input: string): { nickname: string; normalized
     throw new NicknameValidationError("invalid");
   }
 
-  const prohibitedCandidate = format.normalized.replace(/[ _-]+/g, "");
+  const prohibitedCandidate = format.normalized.replace(/[^\p{L}\p{N}]/gu, "");
   if (
+    reservedArtistNames.some((entry) => prohibitedCandidate === entry)
+    ||
     prohibitedNicknameEntries.some(
       (entry) =>
         format.normalized.includes(entry)

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nicknameSchema } from "../../profile/domain/nickname-schema";
 
 export const passportLocaleSchema = z.enum(["ko", "en"]);
 export type PassportLocale = z.infer<typeof passportLocaleSchema>;
@@ -118,7 +119,7 @@ export const stampSummarySchema = z.object({
 
 export const basePassportSchema = z.object({
   id: z.uuid(),
-  owner: z.object({ nickname: z.string().trim().min(2).max(16).nullable() }).strict(),
+  owner: z.object({ nickname: nicknameSchema.nullable() }).strict(),
   celebrity: celebritySchema,
   businessStatus: z.literal("issued"),
   mint: mintFactsSchema,
