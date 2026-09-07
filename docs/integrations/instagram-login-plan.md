@@ -18,10 +18,12 @@ Progress:
 - [x] Current code and administrator authentication inspected.
 - [x] Parent confirmed flow and media contract.
 - [x] Independent security plan review incorporated.
-- [x] Provider official references / Meta console inventory. Dedicated ByUs Meta1732948291088067 / IG3397133600468084 confirmed, unpublished, no account/callback.
+- [x] Provider official references / Meta console inventory. Dedicated ByUs Meta1732948291088067 / IG3397133600468084 confirmed, unpublished, no account; all3 byus.kr callbacks saved and verified after reload.
 - [x] Implementation and focused verification:43 Instagram tests +32 regression/header tests, TypeScript/build/lint, local SQL lifecycle/ACL and4 concurrent schedules, Dev migration/ACL, desktop/mobile browser fixture checks.
 - [ ] Actual test-account OAuth and media proof (credentials/assets not yet available).
 
 Current evidence limits: real creator consent, live token/profile/media, 24h token refresh and provider webhook delivery remain unverified. Default feature OFF. Dedicated Meta app IDs confirmed; permission testing state requires final live recheck; no production changes in this worktree.
 
 2026-09-08 browser finish: start/confirm/cancel at1440/390, all3 portrait9:16 cards and video-only play mark, mobile scroll to third card, original new-window link. Captures in instagram-render-proof/. Final run intercepts all Meta navigation through CDP; earlier failed test reached logged-out Meta login with fake client ID and no creator token, not live OAuth success.
+
+Meta callbacks verified after reload. Instagram secret obtained via saved login reauth, protected0600 env + new encryption key prepared outsideGit; defaultOFF. Remaining parent deploy/env inject, approved creator tester+consent and live API proof. Own local4319 server/Postgres56487 stopped; logs/captures retained.
