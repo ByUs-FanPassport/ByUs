@@ -533,7 +533,7 @@ export function CelebrityFanPage({
             <div className={styles.homePrimary}>
               <TabSection title={t.nextLive} help="">
                 {upcomingLive
-                  ? <div className={styles.liveSection}>
+                  ? <div className={`${styles.liveSection} ${styles.liveSectionWithPortrait}`}>
                       <div className={styles.livePortrait}><Image src={celebrity.image.url} alt={celebrity.image.alt} width={240} height={300} style={{ objectPosition: celebrity.image.position }} unoptimized={celebrity.image.url.startsWith("https://")} /></div>
                       <div className={styles.liveCopy}>
                         <div className={styles.liveStatus}>{localizedLiveStatus(upcomingLive.effectiveStatus, locale)}</div>
