@@ -130,14 +130,31 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
     if (available === false) {
-      expect(screen.getByRole("button", { name: "LIVE 미션 보기" })).toBeDisabled();
+      const mission = screen.getByRole("button", { name: "LIVE 미션 보기" });
+      expect(mission).toBeDisabled();
+      expect(mission).toHaveAccessibleDescription("현재 참여 가능한 미션이 없어요.");
       expect(screen.getByText("현재 참여 가능한 미션이 없어요.")).toBeVisible();
       expect(screen.queryByRole("link", { name: "LIVE 미션 보기" })).not.toBeInTheDocument();
     } else {
-      expect(screen.getByRole("link", { name: "LIVE 미션 보기" })).toHaveAttribute("href", "/live/kara-nualeaf/missions?locale=ko");
+      const mission = screen.getByRole("link", { name: "LIVE 미션 보기" });
+      expect(mission).toHaveAttribute("href", "/live/kara-nualeaf/missions?locale=ko");
       expect(screen.queryByText("현재 참여 가능한 미션이 없어요.")).not.toBeInTheDocument();
-      if (available === null) expect(screen.getByText("미션 목록에서 참여 가능 여부를 확인해 주세요.")).toBeVisible();
+      if (available === null) {
+        expect(screen.getByText("미션 목록에서 참여 가능 여부를 확인해 주세요.")).toBeVisible();
+        expect(mission).toHaveAccessibleDescription("미션 목록에서 참여 가능 여부를 확인해 주세요.");
+      }
     }
+  });
+
+  it("places the Fan Code header icon after its copy on the right", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload()), { status: 200 }));
+    const { container } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    const heading = await screen.findByRole("heading", { name: "Fan Code" });
+    const icon = container.querySelector("[data-fan-code-header-icon]");
+    expect(icon).not.toBeNull();
+    expect(heading.parentElement).not.toBeNull();
+    expect(heading.parentElement!.compareDocumentPosition(icon!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
   beforeEach(() => {
     authenticated = true;
@@ -365,7 +382,9 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("예약 완료");
     expect(screen.queryByRole("button", { name: /예약 완료/ })).not.toBeInTheDocument();
     expect(document.querySelector("[data-live-primary-action-slot]")).toBeNull();
-    expect(screen.getByRole("link", { name: /Google Calendar에 추가/ })).toHaveAttribute("target", "_blank");
+    const calendar = screen.getByRole("link", { name: /Google Calendar에 추가/ });
+    expect(calendar).toHaveAttribute("target", "_blank");
+    expect(calendar.querySelector("[data-live-calendar-icon]")).not.toBeNull();
     expect(screen.queryByText(/취소하기/)).not.toBeInTheDocument();
   });
 

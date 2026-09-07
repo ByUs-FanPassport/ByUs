@@ -8,7 +8,7 @@ const back = vi.fn();
 const explorerBaseUrl = "https://sepolia-explorer.giwa.io";
 const maskedHash = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
 let locale = "ko";
-vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: true, getAccessToken }) }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: true, user: { id: "did:privy:fan" }, getAccessToken }) }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/passports", useRouter: () => ({ push, back }), useSearchParams: () => new URLSearchParams(`locale=${locale}`) }));
 
 const celebrity = { slug: "kara", name: "KARA", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA", position: "center" } };
@@ -170,14 +170,21 @@ describe("passport fan screens", () => {
       firstReaction: { reactionId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", stampId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", activityId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb3", reactionType: "FirstReaction", mintStatus: "queued", txHash: null, issuedAt: "2026-09-06T01:32:55Z" },
     };
     let finish!: (response: Response) => void;
-    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ passport: detail }))
-      .mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+    let passportReads = 0;
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/me/avatar") return new Response(null, { status: 503 });
+      passportReads += 1;
+      if (passportReads === 1) return Response.json({ passport: detail });
+      return new Promise<Response>(resolve => { finish = resolve; });
+    });
     vi.stubGlobal("fetch", fetcher);
-    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
+    const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     const history = await screen.findByRole("region", { name: "첫 반응" });
     expect(within(history).getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.any(Object)));
+    expect(container.querySelector("[data-fan-avatar] img")).toBeNull();
     fireEvent.focus(window);
-    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(passportReads).toBe(2));
     expect(history).toBeInTheDocument();
     await act(async () => { finish(Response.json({ passport: { ...detail, firstReaction: { ...detail.firstReaction, mintStatus: "minted", txHash: tx } } })); });
     expect(await within(history).findByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
@@ -243,10 +250,19 @@ describe("passport fan screens", () => {
         missingConditions: [{ type: "score", current: 15, required: 50 }],
       },
     };
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passport: detail })));
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/me/avatar") {
+        return Response.json({ avatar: { initialCharacterId: "star-cream", characterId: "heart-pink", source: "character", hasImage: false, revision: 2 } });
+      }
+      return Response.json({ passport: detail });
+    });
+    vi.stubGlobal("fetch", fetcher);
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "눈부신팬 프로필 아바타" })).toHaveAttribute("src", "/images/avatars/heart-pink.webp");
+    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.objectContaining({ cache: "no-store" }));
     expect(screen.getByRole("progressbar", { name: "다음 등급: 골드" })).toHaveAttribute("value", "30");
     expect(screen.getByText("35 점 남음")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "다음 혜택: 스페셜 디지털 배경화면" })).toBeInTheDocument();

@@ -225,3 +225,10 @@
 .calendarUpcoming a { grid-template-areas:"time title state" "time reservation reservation"; }
 .calendarReservation { grid-area:reservation; display:flex; align-items:center; gap:4px; color:var(--color-muted); font-size:11px; }
 .calendarReservation svg { width:12px; height:12px; color:var(--color-service-ink); }
+
+/* Let the complete title lead; time and status share the quiet metadata row. */
+.calendarUpcoming a { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title title" "time state" "reservation reservation"; row-gap:6px; }
+.calendarUpcoming strong { display:block; overflow:visible; -webkit-line-clamp:unset; overflow-wrap:anywhere; line-height:1.45; }
+.calendarEventDay[data-upcoming="true"]:not([data-multiple="true"]) > span { animation:calendar-upcoming-pulse 2.8s ease-in-out infinite; }
+@keyframes calendar-upcoming-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.55; transform:scale(.82); } }
+@media (prefers-reduced-motion:reduce) { .calendarEventDay[data-upcoming="true"]:not([data-multiple="true"]) > span { animation:none; } }

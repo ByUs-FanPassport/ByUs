@@ -57,3 +57,5 @@
 .action:focus-visible,.pagination button:focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
 @keyframes reservation-shimmer { to { transform:translateX(100%); } }
 @media (prefers-reduced-motion:reduce) { .actionSkeleton::after { animation:none; } }
+
+.details .dateRange { margin-block:6px 4px; line-height:1.5; }

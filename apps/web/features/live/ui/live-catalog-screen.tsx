@@ -1,5 +1,6 @@
 "use client";
 
+import { MyLiveCountdown } from "@/features/my/ui/my-live-countdown";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -161,7 +162,7 @@ function LiveGroup({
                   }
                 >
                   <div className={styles.meta}>
-                    <span>{item.live.celebrity.name} · {item.live.brand.name}</span>
+                    <span>{item.live.celebrity.name}{item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
                     {item.live.effectiveStatus === "live" ||
                     item.live.effectiveStatus === "scheduled" ? (
                       <LiveStatusIndicator
@@ -174,7 +175,8 @@ function LiveGroup({
                     )}
                   </div>
                   <h3>{item.live.title}</h3>
-                  <p>{dateRange(item, locale)}</p>
+                  <p className={styles.dateRange}>{dateRange(item, locale)}</p>
+                  {item.live.effectiveStatus === "scheduled" ? <MyLiveCountdown event={item.live} locale={locale} pulseScheduled /> : null}
                 </Link>
                 {awaitsReservation ? reservationStatus === "loading" ? (
                   <span className={styles.actionSkeleton} role="status" aria-label={t.reservationLoading}>

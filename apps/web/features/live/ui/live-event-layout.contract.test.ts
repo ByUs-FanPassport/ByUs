@@ -34,7 +34,23 @@ describe("LIVE detail information hierarchy contract", () => {
   });
 
   it("keeps the mission arrow aligned with its label at a fixed size", () => {
+    expect(declarations(".actionRail > div:has(> .missionLink)")).toMatchObject({ width: "100%", "margin-top": "var(--space-4)", "--fan-action-max-width": "100%" });
+    expect(declarations(".missionLink")).toMatchObject({ width: "100%", "min-height": "52px" });
+    expect(declarations(".missionLink:disabled")).toMatchObject({ "border-color": "var(--color-line-subtle)", background: "oklch(98% 0 0)", color: "var(--color-muted)", "box-shadow": "none" });
     expect(declarations(".missionLinkContent")).toMatchObject({ display: "flex", "align-items": "center", gap: "var(--space-2)" });
     expect(declarations(".missionLinkContent svg")).toMatchObject({ display: "block", width: "18px", height: "18px", flex: "none" });
+  });
+
+  it("aligns the Calendar icon wrapper and label on a stable baseline", () => {
+    expect(declarations(".calendarActionIcon")).toMatchObject({ display: "grid", width: "18px", height: "18px", flex: "none", "place-items": "center", "line-height": "0" });
+    expect(declarations(".calendarActionLabel")).toMatchObject({ "line-height": "1.2" });
+  });
+
+  it("matches the Fan Code card inset to the collectible and keeps its notice quiet", () => {
+    expect(declarations(".fanCode")).toMatchObject({ margin: "0 0 64px", padding: "20px" });
+    expect(declarations(".collectible")).toMatchObject({ padding: "20px" });
+    expect(declarations(".fanCodeIntro")).toMatchObject({ "align-items": "flex-start", "justify-content": "space-between" });
+    expect(declarations('.attendanceNotice[data-before-live]')).toMatchObject({ color: "var(--color-muted)", "font-size": "12px !important", "font-weight": "550 !important", "line-height": "1.5" });
+    expect(css).not.toContain(".fanCode:has([data-before-live]) { padding:");
   });
 });

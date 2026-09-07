@@ -182,7 +182,7 @@
 .cardFacts a:focus-visible,
 .cardMainLink:focus-visible,
 .openLabel:focus-visible,
-.identityAvatar:focus-visible,
+.creatorLink:focus-visible,
 .heroFacts a:focus-visible {
   border-radius: 8px;
   outline: 3px solid var(--ink);
@@ -419,24 +419,18 @@
   gap: 14px;
 }
 .identityAvatar {
-  display: block;
+  display: grid;
   width: 64px;
   height: 64px;
+  place-items: center;
   flex: none;
   border-radius: 50%;
 }
 
-.identity div {
+.identityCopy {
   display: grid;
   min-width: 0;
-  gap: 2px;
-}
-.identity span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-  font-size: 13px;
+  gap: 1px;
 }
 .identity strong {
   font-size: 22px;
@@ -444,6 +438,34 @@
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
   unicode-bidi: plaintext;
+}
+.identityMeta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+}
+.creatorLink {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.creatorLink span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.creatorLink svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
 }
 .identity small {
   color: var(--muted);
@@ -534,7 +556,7 @@
   border: 0;
   border-radius: 999rem;
   background: var(--line);
-  color: var(--ink);
+  color: oklch(48% 0.22 350);
   appearance: none;
 }
 .levelProgress progress::-webkit-progress-bar {
@@ -543,11 +565,11 @@
 }
 .levelProgress progress::-webkit-progress-value {
   border-radius: 999rem;
-  background: var(--ink);
+  background: oklch(48% 0.22 350);
 }
 .levelProgress progress::-moz-progress-bar {
   border-radius: 999rem;
-  background: var(--ink);
+  background: oklch(48% 0.22 350);
 }
 .nextBenefit {
   display: grid;

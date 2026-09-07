@@ -13,6 +13,7 @@ type MyLiveCountdownProps = {
   event: MyLiveCountdownEvent;
   locale: "ko" | "en";
   active?: boolean;
+  pulseScheduled?: boolean;
   onStartReached?: (event: MyLiveCountdownEvent) => void;
 };
 
@@ -102,6 +103,7 @@ export function MyLiveCountdown({
   event,
   locale,
   active = true,
+  pulseScheduled = false,
   onStartReached,
 }: MyLiveCountdownProps) {
   const callbackRef = useRef(onStartReached);
@@ -138,7 +140,7 @@ export function MyLiveCountdown({
     ? "--:--:--"
     : formatMyLiveCountdown(event.startsAt, clock.now);
   const shouldPulse = active && clock.visible && (
-    isLive || (clock.now !== null && remainingSeconds(event.startsAt, clock.now) < DAY_SECONDS)
+    isLive || (clock.now !== null && remainingSeconds(event.startsAt, clock.now) > 0 && (pulseScheduled || remainingSeconds(event.startsAt, clock.now) < DAY_SECONDS))
   );
 
   if (!isScheduled && !isLive) return null;

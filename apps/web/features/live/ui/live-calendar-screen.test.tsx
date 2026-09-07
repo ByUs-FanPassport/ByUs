@@ -129,7 +129,7 @@ describe("LIVE calendar screen", () => {
     expect(date).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).toHaveAttribute("data-mobile-hidden", "true");
     expect(screen.getByRole("article", { name: "ENDED LIVE" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "전체 보기" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "전체 보기" }).find(button => !button.hasAttribute("aria-haspopup"))!);
     expect(date).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).not.toHaveAttribute("data-mobile-hidden");
   });
@@ -153,9 +153,9 @@ describe("LIVE calendar screen", () => {
 
     expect(screen.getByRole("heading", { name: /2026.*9월/ })).toBeInTheDocument();
     const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
-    expect(within(day).getByText("KARA")).toBeInTheDocument();
-    expect(within(day).getByText("ELINA")).toBeInTheDocument();
-    expect(screen.getByText("예정")).toBeInTheDocument();
+    expect(within(day).getAllByText("KARA")[0]).toBeInTheDocument();
+    expect(within(day).getAllByText("ELINA")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("예정")[0]).toBeInTheDocument();
     expect(screen.getByText("LIVE 중")).toBeInTheDocument();
     expect(screen.getByText("종료")).toBeInTheDocument();
     expect(screen.getByText("취소")).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe("LIVE calendar screen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "전체 셀럽 일정" }));
     expect(screen.getByRole("button", { name: "전체 셀럽 일정" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("전체 보기")).toBeInTheDocument();
+    expect(screen.getAllByText("전체 보기")[0]).toBeInTheDocument();
     expect(screen.getByRole("article", { name: "KARA LIVE" })).toBeInTheDocument();
     expect(screen.getByRole("article", { name: "ELINA LIVE" })).toBeInTheDocument();
   });
@@ -215,19 +215,51 @@ describe("LIVE calendar screen", () => {
     )).toBeInTheDocument();
   });
 
-  it("keeps crowded dates compact until the fan asks to reveal every LIVE", () => {
+  it("browses crowded desktop dates with bounded controls and opens all events in a dialog", async () => {
     renderCalendar();
     const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
+    const current = () => day.querySelector('[data-current="true"]');
+    expect(current()).toHaveAccessibleName("KARA LIVE");
+    expect(within(day).getByRole("button", { name: "이전 LIVE" })).toBeDisabled();
+    for (let index = 0; index < 3; index++) fireEvent.click(within(day).getByRole("button", { name: "다음 LIVE" }));
+    expect(current()).toHaveAccessibleName("ELINA AFTER PARTY");
+    expect(within(day).getByRole("button", { name: "다음 LIVE" })).toBeDisabled();
+    fireEvent.click(within(day).getByRole("button", { name: "이전 LIVE" }));
+    expect(current()).toHaveAccessibleName("KARA AFTER TALK");
+    const trigger = within(day).getByRole("button", { name: "전체 보기" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getAllByRole("article")).toHaveLength(4);
+    expect(within(dialog).getByRole("link", { name: "ELINA AFTER PARTY 상세 보기" })).toHaveAttribute("href", "/live/elina-after-party?locale=ko");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(trigger).toHaveFocus());
+  });
 
-    expect(within(day).getAllByRole("article")).toHaveLength(2);
-    const disclosure = within(day).getByRole("button", { name: "+2개 더보기" });
-    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+  it("resets carousel selection with filters and omits controls on single or empty dates", () => {
+    renderCalendar();
+    const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
+    fireEvent.click(within(day).getByRole("button", { name: "다음 LIVE" }));
+    fireEvent.click(screen.getByRole("button", { name: "KARA" }));
+    expect(day.querySelector('[data-current="true"]')).toHaveAccessibleName("KARA LIVE");
+    const single = screen.getByRole("group", { name: /2026년 9월 16일/ });
+    expect(within(single).queryByRole("button")).not.toBeInTheDocument();
+    const empty = screen.getByRole("group", { name: /2026년 9월 1일/ });
+    expect(within(empty).queryByRole("button")).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(disclosure);
-    expect(within(day).getAllByRole("article")).toHaveLength(4);
-    expect(within(day).getByRole("button", { name: "접기" })).toHaveAttribute("aria-expanded", "true");
-
-    fireEvent.click(within(day).getByRole("button", { name: "접기" }));
-    expect(within(day).getAllByRole("article")).toHaveLength(2);
+  it("closes the modal on close button, backdrop, and month replacement", () => {
+    const view = renderCalendar("en");
+    const open = () => fireEvent.click(screen.getAllByRole("button", { name: "View all" })[0]!);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    open();
+    fireEvent.pointerDown(document.querySelector('[data-overlay-root]')!);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    open();
+    view.rerender(<LiveCalendarScreen locale="en" initialCalendar={{...calendar, month:"2026-10", days:[]}} celebrities={celebrities} eventMetadata={eventMetadata} initialCelebritySlugs={[]} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

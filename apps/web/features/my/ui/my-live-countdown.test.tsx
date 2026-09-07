@@ -19,6 +19,16 @@ afterEach(() => {
 });
 
 describe("MyLiveCountdown", () => {
+  it("allows catalog D-day pulse with the same shared clock and stops at start", () => {
+    const view = render(<><MyLiveCountdown event={scheduled} locale="ko" pulseScheduled /><MyLiveCountdown event={{...scheduled, id:"second"}} locale="en" /></>);
+    expect(view.container.firstElementChild).toHaveAttribute("data-pulse", "true");
+    expect(vi.getTimerCount()).toBe(1);
+    act(() => { vi.setSystemTime(new Date(start)); vi.advanceTimersByTime(1000); });
+    expect(view.container.firstElementChild).toHaveAttribute("data-pulse", "false");
+    expect(screen.queryByText("진행 중")).not.toBeInTheDocument();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("formats scheduled events above and below 24 hours", () => {
     expect(formatMyLiveCountdown(start, Date.parse("2026-09-08T23:59:59.000Z"))).toBe("D-1 00:00:01");
     expect(formatMyLiveCountdown(start, Date.parse("2026-09-09T23:59:59.000Z"))).toBe("00:00:01");

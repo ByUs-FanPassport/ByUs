@@ -1039,11 +1039,23 @@ export function LiveEventScreen({
               </div>
             ) : primaryControl}
             {live.missionsAvailable === false ? (
-              <FanAction variant="text" className={styles.missionLink} disabled helperText={locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}>
+              <FanAction
+                variant="neutral"
+                className={styles.missionLink}
+                fullWidth
+                disabled
+                helperText={locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}
+              >
                 {locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}
               </FanAction>
             ) : (
-              <FanAction variant="text" className={styles.missionLink} href={`/live/${slug}/missions?locale=${locale}` as Route} helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}>
+              <FanAction
+                variant="neutral"
+                className={styles.missionLink}
+                fullWidth
+                href={`/live/${slug}/missions?locale=${locale}` as Route}
+                helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}
+              >
                 <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
               </FanAction>
             )}
@@ -1055,8 +1067,10 @@ export function LiveEventScreen({
                 rel="noopener noreferrer"
                 aria-label={externalActionLabel(c.calendar, live.title, locale)}
               >
-                <FanMotionIcon name="calendar" />
-                {c.calendar}
+                <span className={styles.calendarActionIcon} data-live-calendar-icon aria-hidden="true">
+                  <FanMotionIcon name="calendar" />
+                </span>
+                <span className={styles.calendarActionLabel}>{c.calendar}</span>
               </a>
             )}
             {live.watch.available &&
@@ -1169,12 +1183,12 @@ export function LiveEventScreen({
               ) : (
                 <div className={styles.fanCodeContent}>
                   <div className={styles.fanCodeIntro}>
-                    <div className={styles.fanCodeIcon} aria-hidden="true">
-                      <TicketCheck />
-                    </div>
-                    <div>
+                    <div className={styles.fanCodeHeading}>
                       <h2 id="fan-code-title">{c.fanCode}</h2>
                       <p>{c.fanCodeHelper}</p>
+                    </div>
+                    <div className={styles.fanCodeIcon} data-fan-code-header-icon aria-hidden="true">
+                      <TicketCheck />
                     </div>
                   </div>
                   {authenticated && viewer.passport === "missing" ? (

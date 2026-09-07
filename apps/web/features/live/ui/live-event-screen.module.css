@@ -354,8 +354,8 @@
 }
 
 .fanCode {
-  margin: 0 4px 64px;
-  padding: 28px;
+  margin: 0 0 64px;
+  padding: 20px;
   border: 1px solid oklch(90% 0 0);
   border-radius: 16px;
   transition:
@@ -379,8 +379,12 @@
 }
 .fanCodeIntro {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
-  align-items: center;
+}
+.fanCodeHeading {
+  min-width: 0;
 }
 .fanCodeIcon {
   display: grid;
@@ -488,6 +492,16 @@
   color: oklch(43% 0 0);
   font-size: 14px !important;
   font-weight: 650 !important;
+}
+.attendanceNotice[data-before-live] {
+  color: var(--color-muted);
+  font-size: 12px !important;
+  font-weight: 550 !important;
+  line-height: 1.5;
+}
+.attendanceNotice[data-before-live] svg {
+  width: 16px;
+  height: 16px;
 }
 .attendanceNotice svg {
   width: 18px;
@@ -824,14 +838,8 @@
     margin: 0 0 48px;
     padding: 20px;
   }
-  .fanCodeIntro {
-    align-items: flex-start;
-  }
-  .fanCode:has([data-before-live]) { padding:16px; }
   .fanCode:has([data-before-live]) .fanCodeContent { gap:12px; }
   .fanCode:has([data-before-live]) p { margin:0; }
-  .fanCode .attendanceNotice[data-before-live] { font-size:12px !important; line-height:1.5; font-weight:550 !important; }
-  .attendanceNotice[data-before-live] svg { width:16px; height:16px; }
   .fanCodeControl {
     grid-template-columns: 1fr;
   }
@@ -950,10 +958,16 @@
 .primaryActionSlot { margin-top:var(--space-6); padding-top:var(--space-2); }
 .primaryActionBlock { width:100%; --fan-action-max-width:100%; }
 .actionHelper { margin-top:var(--space-3); color:var(--color-muted); font-weight:400; text-align:start; }
-.missionLink { margin-top:var(--space-1); align-self:flex-start; padding-inline:0; }
+.actionRail > div:has(> .missionLink) { width:100%; margin-top:var(--space-4); --fan-action-max-width:100%; }
+.missionLink { width:100%; min-height:52px; }
+.missionLink:disabled { border-color:var(--color-line-subtle); background:oklch(98% 0 0); color:var(--color-muted); box-shadow:none; }
 /* FanAction wraps children in its label: align this inline accessory explicitly. */
 .missionLinkContent { display:flex; align-items:center; gap:var(--space-2); }
 .missionLinkContent svg { display:block; width:18px; height:18px; flex:none; }
+.calendarActionIcon { display:grid; width:18px; height:18px; flex:none; place-items:center; line-height:0; }
+.calendarActionIcon > span,
+.calendarActionIcon svg { display:block; width:18px; height:18px; }
+.calendarActionLabel { line-height:1.2; }
 .schedule .deadlineSchedule { grid-template-columns:max-content minmax(0,1fr); align-items:start; gap:var(--space-2); }
 .deadlineSchedule dt { font-size:14px; line-height:1.6; white-space:nowrap; }
 .scheduleMeta { margin-top:var(--space-2); }

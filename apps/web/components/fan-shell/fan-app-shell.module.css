@@ -61,3 +61,6 @@
   .desktopNavItem:hover, .language:hover, .bottomNavigationItem:hover { background: oklch(97.5% 0 0); color: var(--fan-ink); }
 }
 @media (prefers-reduced-motion:reduce) { .frame * { transition-duration: .01ms !important; } }
+
+.activeNav[data-fan-navigation-id="live"],.activeBottomItem[data-fan-navigation-id="live"] { color:#b91469; }
+.activeBottomItem[data-fan-navigation-id="live"]::before { background:#b91469; }

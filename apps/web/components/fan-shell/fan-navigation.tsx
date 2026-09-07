@@ -37,6 +37,7 @@ export function FanPrimaryNavigation({
       {items.map((item) => (
         <Link
           key={item.id}
+          data-fan-navigation-id={item.id}
           className={classNames(
             styles.navigationItem,
             itemClassName,

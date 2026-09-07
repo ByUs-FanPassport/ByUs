@@ -1,16 +1,17 @@
 "use client";
 
 import { CalendarArt } from "@/components/fan-calendar/calendar-art";
+import { Dialog } from "@/components/ui/overlay/accessible-overlay";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { Check } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { CalendarDayNumber, CalendarMonthHeader } from "../../../components/fan-calendar/calendar-parts";
@@ -50,8 +51,6 @@ const copy = {
     allSelected: "전체 보기",
     selectedCount: (count: number) => `${count}명 선택`,
     platformLabel: "송출 플랫폼",
-    moreEvents: (count: number) => `+${count}개 더보기`,
-    collapseEvents: "접기",
   },
   en: {
     title: "LIVE calendar",
@@ -70,8 +69,6 @@ const copy = {
     allSelected: "Showing all",
     selectedCount: (count: number) => `${count} selected`,
     platformLabel: "Broadcast platforms",
-    moreEvents: (count: number) => `+${count} more`,
-    collapseEvents: "Show less",
   },
 } as const;
 
@@ -143,7 +140,10 @@ export function LiveCalendarScreen({
   const [selectedCelebritySlugs, setSelectedCelebritySlugs] = useState<string[]>([
     ...initialCelebritySlugs,
   ]);
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(() => new Set());
+  const [eventPositions, setEventPositions] = useState<Record<string, number>>({});
+  const [modalDate, setModalDate] = useState<string | null>(null);
+  const gesture = useRef<{ date: string; x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
   const t = copy[locale];
@@ -179,10 +179,14 @@ export function LiveCalendarScreen({
 
   useEffect(() => {
     setCalendar(initialCalendar);
+    setEventPositions({});
+    setModalDate(null);
   }, [initialCalendar]);
 
   useEffect(() => {
     setSelectedCelebritySlugs([...initialCelebritySlugs]);
+    setEventPositions({});
+    setModalDate(null);
   }, [initialCelebritySlugs]);
 
   useEffect(() => {
@@ -215,6 +219,8 @@ export function LiveCalendarScreen({
       .filter((slug) => next.includes(slug));
     setSelectedCelebritySlugs(ordered);
     setSelectedDate(null);
+    setEventPositions({});
+    setModalDate(null);
     const href = calendarHref(calendar.month, locale, ordered);
     window.history.replaceState(window.history.state, "", href);
   }
@@ -223,6 +229,47 @@ export function LiveCalendarScreen({
     selectCelebrities(selectedCelebritySet.has(slug)
       ? selectedCelebritySlugs.filter((selected) => selected !== slug)
       : [...selectedCelebritySlugs, slug]);
+  }
+
+  const modalDay = visibleDays.find(day => day.date === modalDate);
+  function renderEvent(event: LiveCalendarMonth["days"][number]["events"][number], isCurrent = true) {
+    const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
+    const platformNames = platforms.map((platform) => platformLabel[platform]);
+    const tone = [...event.slug].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
+    return <article className={styles.event} key={event.id} aria-label={event.title} data-current={isCurrent ? "true" : "false"} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
+      <Link
+        className={styles.eventLink}
+        href={`/live/${event.slug}?locale=${locale}` as Route}
+        aria-label={locale === "ko" ? `${event.title} 상세 보기` : `View ${event.title} details`}
+      >
+        <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={64} height={96} sizes="64px" />
+        <span className={styles.eventMeta}>
+          <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
+        </span>
+        <strong>{event.title}</strong>
+        <span className={styles.eventTopline}>
+          <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
+          <span className={styles.creator}>{event.celebrity.name}</span>
+          {platforms.length > 0 ? <span
+            className={styles.platforms}
+            aria-label={`${t.platformLabel}: ${platformNames.join(", ")}`}
+          >
+            {platforms.map((platform) => <Image
+              src={`/images/guest-home/${platform}.svg`}
+              alt=""
+              width={14}
+              height={14}
+              key={platform}
+            />)}
+          </span> : null}
+          {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
+        </span>
+        {event.reservationState || event.hasBenefit === true ? <span className={styles.eventExtras}>
+          {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
+          {event.hasBenefit === true ? <span className={styles.benefit}>Benefit</span> : null}
+        </span> : null}
+      </Link>
+    </article>;
   }
 
   return (
@@ -339,9 +386,8 @@ export function LiveCalendarScreen({
             {visibleDays.map((day, dayIndex) => {
               const label = dayLabel(day.date, locale);
               const isFirstColumn = (firstWeekday + dayIndex) % 7 === 0;
-              const expanded = expandedDates.has(day.date);
-              const hiddenEventCount = Math.max(0, day.events.length - 2);
-              const visibleEvents = expanded ? day.events : day.events.slice(0, 2);
+              const position = Math.min(eventPositions[day.date] ?? 0, Math.max(0, day.events.length - 1));
+              const move = (offset: number) => setEventPositions(current => ({ ...current, [day.date]: Math.max(0, Math.min(day.events.length - 1, position + offset)) }));
               const eventListId = `calendar-events-${day.date}`;
               return <section
                 className={styles.day}
@@ -356,63 +402,50 @@ export function LiveCalendarScreen({
                 <header className={styles.dayHeading}>
                   <CalendarDayNumber date={day.date} today={today} />
                   <span>{label}</span>
+                  {day.events.length > 1 ? <>
+                    <span className={styles.eventPosition} aria-live="polite" aria-atomic="true">{position + 1} / {day.events.length}</span>
+                    <button className={styles.viewAll} type="button" aria-haspopup="dialog" onClick={() => setModalDate(day.date)}>{locale === "ko" ? "전체 보기" : "View all"}</button>
+                  </> : null}
                 </header>
                 {day.events.length ? (
-                  <>
-                    <div className={styles.eventList} id={eventListId}>
-                    {visibleEvents.map((event) => {
-                      const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
-                      const platformNames = platforms.map((platform) => platformLabel[platform]);
-                      const tone = [...event.slug].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
-                      return <article className={styles.event} key={event.id} aria-label={event.title} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
-                        <Link
-                          className={styles.eventLink}
-                          href={`/live/${event.slug}?locale=${locale}` as Route}
-                          aria-label={locale === "ko" ? `${event.title} 상세 보기` : `View ${event.title} details`}
-                        >
-                          <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={64} height={96} sizes="64px" />
-                          <span className={styles.eventMeta}>
-                            <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
-                            {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
-                            {event.hasBenefit === true ? <span className={styles.benefit}>Benefit</span> : null}
-                          </span>
-                          <strong>{event.title}</strong>
-                          <span className={styles.eventTopline}>
-                            <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
-                            <span className={styles.creator}>{event.celebrity.name}</span>
-                            {platforms.length > 0 ? <span
-                              className={styles.platforms}
-                              aria-label={`${t.platformLabel}: ${platformNames.join(", ")}`}
-                            >
-                              {platforms.map((platform) => <Image
-                                src={`/images/guest-home/${platform}.svg`}
-                                alt=""
-                                width={14}
-                                height={14}
-                                key={platform}
-                              />)}
-                            </span> : null}
-                            {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
-                          </span>
-                        </Link>
-                      </article>;
-                    })}
-                    </div>
-                    {hiddenEventCount > 0 ? <button
-                      className={styles.eventDisclosure}
-                      type="button"
-                      aria-expanded={expanded}
-                      aria-controls={eventListId}
-                      onClick={() => setExpandedDates((current) => {
-                        const nextDates = new Set(current);
-                        if (expanded) nextDates.delete(day.date);
-                        else nextDates.add(day.date);
-                        return nextDates;
-                      })}
+                  <div className={styles.eventStage} data-multiple={day.events.length > 1 ? "true" : undefined}>
+                    <div className={styles.eventList} id={eventListId}
+                      onDragStart={event => event.preventDefault()}
+                      onPointerDown={event => {
+                        suppressClick.current = false;
+                        if (event.button !== 0 || !window.matchMedia("(min-width: 64rem)").matches) return;
+                        gesture.current = { date: day.date, x: event.clientX, y: event.clientY };
+                      }}
+                      onPointerMove={event => {
+                        const start = gesture.current;
+                        if (!start || start.date !== day.date) return;
+                        if (Math.abs(event.clientX - start.x) > 12 && Math.abs(event.clientX - start.x) > Math.abs(event.clientY - start.y)) {
+                          suppressClick.current = true;
+                          event.currentTarget.setPointerCapture?.(event.pointerId);
+                        }
+                      }}
+                      onPointerUp={event => {
+                        const start = gesture.current;
+                        gesture.current = null;
+                        if (!start || start.date !== day.date) return;
+                        const dx = event.clientX - start.x;
+                        if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(event.clientY - start.y)) {
+                          suppressClick.current = true;
+                          move(dx < 0 ? 1 : -1);
+                        }
+                      }}
+                      onPointerCancel={() => { gesture.current = null; suppressClick.current = false; }}
+                      onClickCapture={event => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; } }}
                     >
-                      {expanded ? t.collapseEvents : t.moreEvents(hiddenEventCount)}
-                    </button> : null}
-                  </>
+                    {day.events.map((event, index) => renderEvent(event, index === position))}
+                    </div>
+                    {day.events.length > 1 ? <div className={styles.dayControls}>
+                      <div className={styles.carouselControls}>
+                        <button type="button" aria-label={locale === "ko" ? "이전 LIVE" : "Previous LIVE"} aria-controls={eventListId} disabled={position === 0} onClick={() => move(-1)}><ChevronLeft aria-hidden="true" size={16} /></button>
+                        <button type="button" aria-label={locale === "ko" ? "다음 LIVE" : "Next LIVE"} aria-controls={eventListId} disabled={position === day.events.length - 1} onClick={() => move(1)}><ChevronRight aria-hidden="true" size={16} /></button>
+                      </div>
+                    </div> : null}
+                  </div>
                 ) : <p className={styles.empty}>{t.empty}</p>}
               </section>;
             })}
@@ -425,6 +458,13 @@ export function LiveCalendarScreen({
           </div>
         </section>
       </FanContentContainer>
+      <Dialog open={Boolean(modalDay)} onClose={() => setModalDate(null)} labelledBy="calendar-dialog-title" backdropClassName={styles.modalBackdrop} contentClassName={styles.modal}>
+        <header className={styles.modalHeader}>
+          <h2 id="calendar-dialog-title">{modalDay ? dayLabel(modalDay.date, locale) : ""}</h2>
+          <button type="button" onClick={() => setModalDate(null)} aria-label={locale === "ko" ? "닫기" : "Close"}><X aria-hidden="true" size={20} /></button>
+        </header>
+        <div className={styles.modalEvents}>{modalDay?.events.map(event => renderEvent(event))}</div>
+      </Dialog>
     </FanAppFrame>
   );
 }

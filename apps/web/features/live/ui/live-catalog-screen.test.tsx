@@ -41,6 +41,14 @@ describe("LIVE catalog", () => {
     privy.getAccessToken.mockReset();
   });
 
+  it("omits only ByUs brand metadata and uses the LIVE start for its countdown", () => {
+    const byus = { ...base, live: { ...base.live, id: "byus-event", slug: "byus-event", brand: { ...base.live.brand, name: "ByUs" } } };
+    render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [byus, base], replay: [] }} />);
+    expect(screen.queryByText("KARA · ByUs")).not.toBeInTheDocument();
+    expect(screen.getByText("KARA · NUALEAF")).toBeInTheDocument();
+    expect(screen.getAllByText("시작까지")).toHaveLength(2);
+  });
+
   it("renders the three product states with canonical details", () => {
     const { container } = render(<LiveCatalogScreen locale="ko" initialCatalog={{
       liveNow: [{ ...base, live: { ...base.live, effectiveStatus: "live", watch: { ...base.live.watch, available: true, mode: "live" } }, primaryAction: "watch_live" }],
