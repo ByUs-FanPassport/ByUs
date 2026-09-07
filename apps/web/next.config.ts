@@ -16,8 +16,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/:path((?!connect/instagram/).*)",
         headers: responseSecurityHeaders,
+      },
+      {
+        // OAuth flow documents supply their own hashed-style, script-free CSP.
+        // A second global form-action 'self' would block their external 303.
+        source: "/connect/instagram/:path*",
+        headers: [
+          ...responseSecurityHeaders.filter((header) => !["Content-Security-Policy", "Referrer-Policy"].includes(header.key)),
+          { key: "Referrer-Policy", value: "same-origin" },
+          { key: "Content-Security-Policy", value: "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://www.instagram.com; base-uri 'none'; frame-ancestors 'none'" },
+        ],
       },
     ];
   },

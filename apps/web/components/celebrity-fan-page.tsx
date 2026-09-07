@@ -39,6 +39,7 @@ import bronzeTierMedal from "../public/images/passport/tiers/bronze.png";
 import styles from "./celebrity-fan-page.module.css";
 import { ReactionAction } from "../features/reaction/ui/reaction-action";
 import { creatorHeroImages } from "./fan-ui/creator-hero-images";
+import { InstagramRecentActivity } from "./instagram-recent-activity";
 
 export type CelebrityFanTab = "home" | "notice" | "live" | "benefits";
 type OwnedPassport = PassportCollectionResponse["passports"][number];
@@ -352,12 +353,13 @@ function CelebrityMiniCalendar({
 }
 
 export function CelebrityFanPage({
-  celebrity, locale, upcomingLive, initialTab,
+  celebrity, locale, upcomingLive, initialTab, instagramEnabled = false,
 }: {
   celebrity: PublishedCelebrity;
   locale: ContentLocale;
   upcomingLive: PublishedCelebrityLive | null;
   initialTab?: CelebrityFanTab;
+  instagramEnabled?: boolean;
 }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
@@ -591,6 +593,8 @@ export function CelebrityFanPage({
                   copy={{ error: t.noticeError, empty: t.noNotice, emptyHelp: t.noNoticeHelp, pinned: t.pinned }}
                 />
               </TabSection>
+
+              {instagramEnabled && <InstagramRecentActivity slug={celebrity.slug} locale={locale} />}
 
               <TabSection
                 title={t.fanBenefits}

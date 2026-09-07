@@ -16,5 +16,5 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   ]);
   if (!celebrity) notFound();
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
-  return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} />;
+  return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />;
 }
