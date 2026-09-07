@@ -110,8 +110,24 @@ HTTPS 테스트 프록시는 정확히 connect/instagram 4개 경로와 Instagra
 
 ## 전용 Meta 앱 현재 상태
 
-2026-09-08 로그인 재확인 후 ByUs 앱 존재 확인. Meta App ID `1732948291088067`, Instagram 앱 이름 `ByUs-IG`, Instagram App ID `3397133600468084`. 환경변수 `INSTAGRAM_APP_ID`에는 **Instagram App ID**를 사용한다. 앱 시크릿은 해당 Instagram API 설정 화면에서 비밀 저장소로 직접 옮기고 문서/채팅에 기록하지 않는다. 현재 시크릿을 조회하거나 환경에 저장하지 않았다.
+2026-09-08 로그인 재확인 후 ByUs 앱 존재 확인. Meta App ID `1732948291088067`, Instagram 앱 이름 `ByUs-IG`, Instagram App ID `3397133600468084`. 환경변수 `INSTAGRAM_APP_ID`에는 **Instagram App ID**를 사용한다. 앱 시크릿은 해당 Instagram API 설정 화면에서 비밀 저장소로 직접 옮기고 문서/채팅에 기록하지 않는다. 후속 작업에서 기존 저장로그인 재인증을 거쳐 조회하고 접근권한0600인 로컬 환경 파일에 보관했다(아래 인계 항목 참조).
 
-[ByUs Instagram API 설정](https://developers.facebook.com/apps/1732948291088067/use_cases/customize/?use_case_enum=INSTAGRAM_BUSINESS&product_route=instagram-business&selected_tab=API-Setup). 화면 증거 `instagram-render-proof/meta-api-setup.png`에는 ID와 마스킹된 secret, 미연결 계정과 미설정 webhook이 보인다. 대시보드에서 게시되지 않음 확인. redirect 미설정. Aside 보고상 basic은 Ready for testing이나 해당 권한 상태의 충분한 직접 캡처를 확보하지 못했으므로 실제 연결 전에 재확인한다. Add all required permissions 버튼은 메시지/댓글까지 포함하므로 누르지 않고 기본읽기만 개별 확인한다.
+[ByUs Instagram API 설정](https://developers.facebook.com/apps/1732948291088067/use_cases/customize/?use_case_enum=INSTAGRAM_BUSINESS&product_route=instagram-business&selected_tab=API-Setup). 화면 증거 `instagram-render-proof/meta-api-setup.png`에는 ID와 마스킹된 secret, 미연결 계정과 미설정 webhook이 보인다. 대시보드에서 게시되지 않음 확인. redirect 설정 완료(아래 후속 확인 참조). Aside 보고상 basic은 Ready for testing이나 해당 권한 상태의 충분한 직접 캡처를 확보하지 못했으므로 실제 연결 전에 재확인한다. Add all required permissions 버튼은 메시지/댓글까지 포함하므로 누르지 않고 기본읽기만 개별 확인한다.
 
-현재 실연동 차단사항은 배포된 origin/callback 설정, Instagram 전용 secret 및 암호화키 설정, 승인된 프로계정 테스트 역할과 본인 동의다. 실제 크리에이터가 없으므로 OFF 상태로 통합한다. 라이브 앱 전환/심사 제출은 하지 않았다.
+현재 실연동 차단사항은 부모 통합배포와 환경 주입, 승인된 프로계정 테스트 역할과 본인 동의다. Meta 주소등록 및 로컬 secret/암호화키 준비는 완료했다. 실제 크리에이터가 없으므로 OFF 상태로 통합한다. 라이브 앱 전환/심사 제출은 하지 않았다.
+
+## Meta 운영 주소 저장 확인 (후속)
+
+2026-09-08 전용 ByUs Instagram 비즈니스 로그인 설정에 아래3개 주소 저장 성공 후 **새로고침하고 설정창을 다시 열어 값이 유지됨**을 확인했다.
+
+- OAuth redirect: `https://byus.kr/connect/instagram/callback`
+- 승인 취소 callback: `https://byus.kr/api/instagram/deauthorize`
+- 데이터 삭제 요청: `https://byus.kr/api/instagram/data-deletion`
+
+일반 미디어 Webhooks 입력란과 구분된 Instagram 비즈니스 로그인 설정에 저장했다. 앱 게시/심사 제출/공유 앱 변경은 하지 않았다. 당시 운영3경로 GET은 모두404로 확인되어, 콘솔 등록은 완료지만 실제 delivery/OAuth 정상 동작은 부모 통합배포 후 검증해야 한다.
+
+## 비밀 환경 인계
+
+`/Users/jewel/Desktop/Developement/byus/.env.instagram-byus.local`에 실제 Instagram 전용 앱 secret, 새32바이트 토큰 암호화키와 앱ID/origin/version/flag를 저장했다. 파일 접근권한0600, Git ignore 확인, 채팅·커밋에 비밀값 없음. Aside 임시 전달 파일2개는 보관 후 제거했다. 해당 파일은 **운영 준비용**이며 수집 flag=false, 원격 revoke=false, origin=https://byus.kr, graph version=v25.0다. 부모 작업이 Vercel 비밀 환경변수로 직접 주입한다. Dev 테스트에는 별도 암호화키를 사용한다. 기존 서비스의 CRON_SECRET은 보존·확인하고 누락 시 부모가 생성/주입한다.
+
+실제 token 교환·프로필·미디어·24시간 이후refresh·provider signed event 수신은 아직 수행하지 않았다. 비밀값 형식과 로컬 파일 권한 확인은 실제 OAuth 검증을 대체하지 않는다. 소유자 동의 전 기본 OFF로 통합한다.
