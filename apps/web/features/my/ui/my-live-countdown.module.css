@@ -1,0 +1,53 @@
+.countdown {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-service-ink);
+}
+
+.label {
+  font-weight: 650;
+}
+
+.countdown .value {
+  color: var(--color-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+.countdown[data-status="live"] {
+  color: #b91c1c;
+}
+
+.liveLabel {
+  font-weight: 750;
+}
+
+.countdown[data-pulse="true"] .dot {
+  animation: my-live-dot-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes my-live-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown[data-pulse="true"] .dot { animation: none; }
+}

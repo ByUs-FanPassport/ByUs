@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyScreen } from "./my-screen";
 import { notifyFanActivityUpdated } from "../../../components/fan-ui/fan-activity-updates";
@@ -55,7 +55,7 @@ describe("unified MY hub", () => {
     ));
     render(<MyScreen locale="ko" />);
 
-    const link = await screen.findByRole("link", { name: "프로필 이미지 변경" });
+    const link = await screen.findByRole("link", { name: "프로필 수정" });
     expect(link).toHaveAttribute("href", "/settings?locale=ko");
     expect(link.querySelector("img")).toHaveAttribute("src", "/images/avatars/fairy-pink.webp");
     expect(link).not.toHaveTextContent("카");
@@ -77,6 +77,8 @@ describe("unified MY hub", () => {
 
     expect(await screen.findByRole("heading", { name: "카밀리아님", level: 1 })).toBeInTheDocument();
     expect(screen.getByText("최애와 함께한 기록을 한눈에 모았어요.")).toBeInTheDocument();
+    const badge = screen.getByRole("link", { name: "KARA · 실버" });
+    expect(badge.compareDocumentPosition(screen.getByRole("heading", { name: "카밀리아님", level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("heading", { name: "활동 요약" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 최애" })).toBeInTheDocument();
     expect(screen.getByText("실버 · 팬 점수 15 · 골드까지 팬 점수 35점")).toBeInTheDocument();
@@ -92,10 +94,10 @@ describe("unified MY hub", () => {
     expect(screen.queryByRole("link", { name: /^0\s*디지털 기념품$/ })).not.toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
-    const settings = screen.getByRole("link", { name:"알림 설정" });
+    const settings = screen.getByRole("link", { name:"설정" });
     expect(settings).toHaveAttribute("href", "/settings?locale=ko");
     expect(settings.closest("header")).toContainElement(screen.getByRole("link", { name:/새 알림/ }));
-    expect(screen.getAllByRole("link", { name:"알림 설정" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name:"설정" })).toHaveLength(1);
   });
 
   it("renders natural, explicit empty states", async () => {
@@ -125,16 +127,16 @@ describe("unified MY hub", () => {
   });
 });
 
-it("places reserved LIVE before owned records and compact totals", async () => {
+it("places the compact owner totals first and reserved LIVE before owned records", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
   render(<MyScreen locale="ko"/>);
   const event=await screen.findByText("내 예약 LIVE");
   expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"내 최애"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByRole("heading",{name:"활동 요약"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
 
-it("shows a date-led reserved event and moves recent records into the supporting column", async () => {
+it("shows a date-led reserved event and keeps recent records below favorites in the main column", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
     ...summary,
     live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-18T11:30:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] },
@@ -144,9 +146,11 @@ it("shows a date-led reserved event and moves recent records into the supporting
   const {container} = render(<MyScreen locale="ko"/>);
   await screen.findByText("내 예약 LIVE");
   expect(container.querySelector('time[datetime="2026-09-18T11:30:00.000Z"]')).toHaveTextContent("9월18");
-  expect(screen.getByText("KARA Stamp").closest("aside")).not.toBeNull();
+  expect(screen.getByText("KARA Stamp").closest("aside")).toBeNull();
+  expect(container.querySelector("#my-creators")!.parentElement).toBe(container.querySelector("#my-collection")!.parentElement);
+  expect(container.querySelector("#my-creators")!.compareDocumentPosition(container.querySelector("#my-collection")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelector('[data-has-rail="true"]')).not.toBeNull();
-  expect(screen.getByText("KARA").closest("a")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
+  expect(within(container.querySelector("#my-creators")!).getByText("KARA").closest("a")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
 });
 
 it("links the collectible total only when a real recent collectible supplies a destination", async () => {
@@ -163,4 +167,31 @@ it("links the collectible total only when a real recent collectible supplies a d
 
   expect(await screen.findByRole("link", { name: /^1\s*디지털 기념품$/ })).toHaveAttribute("href", "#my-collection");
   expect(document.querySelector("#my-collection")).toHaveTextContent("KARA 디지털 기념품");
+  expect(screen.getByText("KARA 디지털 기념품")).toBeVisible();
+  const scroll = vi.fn();
+  document.querySelector("#my-collection")!.scrollIntoView = scroll;
+  fireEvent.click(screen.getByRole("link", { name: /^1\s*디지털 기념품$/ }));
+  expect(screen.getByText("KARA 디지털 기념품")).toBeVisible();
+  await waitFor(() => expect(scroll).toHaveBeenCalled());
+  expect(document.activeElement).toBe(document.querySelector("#my-collection"));
+});
+
+it("keeps all twelve recent items accessible inside the disclosure and follows its fragment", async () => {
+  const recent = Array.from({ length: 12 }, (_, index) => ({ id: `11111111-1111-4111-8111-${String(index).padStart(12,"0")}`, kind:"stamp", title:`팬 활동 ${index + 1}`, occurredAt:"2026-09-01T00:00:00.000Z", href:`/passports/${id}` }));
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, collection: { ...summary.collection, recent } } })));
+  render(<MyScreen locale="ko"/>);
+  await screen.findByRole("heading",{name:"카밀리아님"});
+  expect(screen.getByText("팬 활동 1")).toBeVisible();
+  expect(screen.getByText("팬 활동 3")).toBeVisible();
+  expect(screen.getByText("팬 활동 4")).not.toBeVisible();
+  expect(screen.getByText("팬 활동 12")).not.toBeVisible();
+  const collection = document.querySelector("#my-collection")!;
+  collection.scrollIntoView = vi.fn();
+  await act(async () => {
+    window.history.replaceState(null,"","#my-collection");
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  });
+  expect(screen.getByText("팬 활동 12")).toBeVisible();
+  await waitFor(() => expect(document.activeElement).toBe(collection));
+  window.history.replaceState(null,"","/my");
 });

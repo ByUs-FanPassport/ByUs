@@ -8,12 +8,22 @@
 .dashboard { display:grid; min-width:0; gap:var(--space-12); }
 
 .profileHeader { display:grid; min-width:0; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:var(--space-4); padding-block:var(--space-4) var(--space-8); border-bottom:1px solid var(--color-line); }
-.avatarLink { display: inline-grid; width: 64px; height: 64px; border-radius: var(--radius-pill); }
+.avatarLink { position:relative; display: inline-grid; width: 64px; height: 64px; border-radius: var(--radius-pill); }
+.avatarEdit { position:absolute; right:-3px; bottom:-3px; display:grid; width:24px; height:24px; place-items:center; border:2px solid var(--color-canvas); border-radius:var(--radius-pill); background:var(--color-ink); color:var(--color-canvas); }
+.avatarEdit svg { width:12px; height:12px; }
 .avatarLink:focus-visible { outline: 3px solid var(--color-ink); outline-offset: 3px; }
 .profileCopy { min-width:0; }
 .profileCopy>span { color:var(--color-muted); font-size:12px; font-weight:800; letter-spacing:.06em; }
 .profileCopy h1 { min-width:0; margin:var(--space-1) 0; overflow-wrap:anywhere; font-size:clamp(28px,5vw,40px); line-height:1.1; letter-spacing:-.04em; }
 .profileCopy p { margin:0; color:var(--color-muted); font-size:14px; line-height:1.5; }
+.tierBadge { display:flex; width:fit-content; min-height:32px; max-width:100%; align-items:center; gap:var(--space-2); padding-block:var(--space-1); color:oklch(40% .07 55); font-size:13px; font-weight:750; line-height:1.5; text-decoration:none; }
+.tierBadge svg { width:20px; height:20px; flex-shrink:0; }
+.tierBadge span { overflow-wrap:anywhere; }
+.tierBadge[data-tier="Silver"] { color:oklch(42% .035 255); }
+.tierBadge[data-tier="Gold"] { color:oklch(43% .09 75); }
+.tierBadge[data-tier="Platinum"] { color:oklch(40% .08 195); }
+.tierBadge[data-tier="Diamond"] { color:oklch(43% .14 285); }
+.tierBadge:focus-visible,.recentDisclosure summary:focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
 .notificationLink { display:inline-flex; min-height:var(--min-target); align-items:center; justify-content:center; gap:var(--space-2); padding-inline:var(--space-3); border:1px solid var(--color-line); border-radius:var(--radius-control); font-size:13px; font-weight:700; white-space:nowrap; }
 .notificationLink svg { width:18px; height:18px; }
 .notificationLink strong { min-width:20px; font-variant-numeric:tabular-nums; text-align:center; }
@@ -121,8 +131,19 @@
 .liveDate { display:grid; align-content:center; justify-items:center; gap:4px; width:64px; min-height:76px; border:1px solid var(--color-line); border-radius:var(--radius-control); font-variant-numeric:tabular-nums; }
 .liveDate span { color:var(--color-muted); font-size:12px; }
 .liveDate b { font-size:28px; line-height:1; }
-.activityMark { display:grid; place-items:center; width:32px; height:40px; color:var(--color-muted); }
+.activityMark { border-radius:10px; display:grid; place-items:center; width:32px; height:40px; color:var(--color-muted); }
 .activityMark svg { width:20px; height:20px; }
+.activityMark > span { color:inherit; }
+.activityMark[data-kind="stamp"] { color:oklch(48% .14 52); background:oklch(96% .035 65); }
+.activityMark[data-kind="collectible"] { color:oklch(48% .16 285); background:oklch(96% .025 285); }
+.metricIcon[data-kind="gift"] { color:oklch(48% .16 285); }
+.metricIcon[data-kind="ticket"] { color:oklch(48% .17 300); }
+.metricIcon > span { color:inherit; }
+.recentDisclosure { border-top:1px solid var(--color-line-subtle); }
+.recentDisclosure summary { display:flex; min-height:var(--min-target); align-items:center; justify-content:space-between; gap:var(--space-3); cursor:pointer; list-style:none; font-size:14px; font-weight:700; }
+.recentDisclosure summary::-webkit-details-marker { display:none; }
+.recentDisclosure summary > svg { width:18px; height:18px; flex-shrink:0; }
+.recentDisclosure[open] summary { margin-block-end:var(--space-3); }
 .rows strong { line-height:1.5; }
 .rows span { line-height:1.5; }
 .overview { padding-top:var(--space-5); border-top:1px solid var(--color-line); }
@@ -132,8 +153,6 @@
 @media(min-width:40rem) { .profileHeader { grid-template-columns:64px minmax(0,1fr) auto; } }
 @media(min-width:64rem) {
  .workspace { grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:var(--space-12); }
- .workspace[data-has-rail="false"] .primaryColumn { grid-template-columns:repeat(2,minmax(0,1fr)); }
- .workspace[data-has-rail="false"] .primaryColumn > :only-child { grid-column:1/-1; }
 }
 
 /* Notifications and their preferences are one utility group, not a content section. */
@@ -147,3 +166,20 @@
 @media(hover:hover) and (pointer:fine) {
  .stat[href]:hover { background:var(--color-soft); }
 }
+
+.workspace .section[data-appearance="card"] { padding:var(--space-5); border:1px solid var(--color-line); border-radius:var(--radius-collection); }
+.activityRail { gap:var(--space-5); }
+.activityRail .rewardMetrics { border-radius:0; background:transparent; }
+.activityRail .rewardMetrics > a,.activityRail .rewardMetrics > div { padding-inline:0; background:transparent; border-bottom:1px solid var(--color-line-subtle); }
+.section[data-appearance="card"] .rows strong { font-size:14px; }
+
+/* Owner assets are a single summary group directly below the profile. */
+.overview { padding:var(--space-5); border:0; border-radius:var(--radius-collection); background:var(--color-soft); }
+.overview > h2 { margin-bottom:var(--space-2); }
+.overviewGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-2); }
+.stat { display:grid; grid-template-columns:24px auto; grid-template-rows:auto auto; justify-content:center; align-content:center; min-height:80px; gap:var(--space-2); padding:var(--space-2); }
+.statIcon { grid-row:1; align-self:center; }
+.stat strong { align-self:center; font-size:24px; }
+.stat > span { grid-column:1/-1; font-size:12px; text-align:center; }
+@media(min-width:40rem) { .overviewGrid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+@media(hover:hover) and (pointer:fine) { .overview .stat[href]:hover { background:var(--color-canvas); } }
