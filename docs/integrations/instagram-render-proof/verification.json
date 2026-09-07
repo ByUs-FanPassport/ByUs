@@ -1,0 +1,11 @@
+{
+  "kind": "Local production UI + Dev flow storage + intercepted Instagram fixtures; NO actual Instagram OAuth/media",
+  "checks": [
+    "start 1440: keyboard focus, no overflow, CSP permits actual form→Instagram navigation (intercepted)",
+    "confirmation 1440: separate target/account, real native cancellation submitted",
+    "start 390: keyboard focus, no overflow, CSP permits actual form→Instagram navigation (intercepted)",
+    "confirmation 390: separate target/account, real native cancellation submitted",
+    "cards 1440: three 9:16 images, video-only play mark, no page overflow, original permalink popup (intercepted)",
+    "cards 390: three 9:16 images, video-only play mark, no page overflow, original permalink popup (intercepted)"
+  ]
+}

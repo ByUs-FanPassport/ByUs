@@ -1,0 +1,82 @@
+Target: Dev xcppyedwusirqnfpbtit
+Before:
+ creator_count |       creator_fingerprint
+---------------+----------------------------------
+             2 | 4ef45d8d8cf0ae838121fa5f978e6acb
+(1개 행)
+
+
+Applied:
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+GRANT
+INSERT 0 1
+COMMIT
+
+After:
+ creator_count |       creator_fingerprint
+---------------+----------------------------------
+             2 | 4ef45d8d8cf0ae838121fa5f978e6acb
+(1개 행)
+
+    version     |             name
+----------------+-------------------------------
+ 20260908020000 | instagram_creator_connections
+(1개 행)
+
+ initial_connections
+---------------------
+                   0
+(1개 행)
+
+
+Access verification:
+         proname          | anon_execute | authenticated_execute
+--------------------------+--------------+-----------------------
+ instagram_claim_sync     | f            | f
+ instagram_delete_subject | f            | f
+ instagram_disconnect     | f            | f
+ instagram_finish_sync    | f            | f
+ instagram_issue_invite   | f            | f
+ instagram_transition     | f            | f
+(6개 행)
+
+  slug   |  status
+---------+-----------
+ kara    | published
+ katseye | published
+(2개 행)
+
+
+[
+  {
+    "path": "/rest/v1/instagram_connections?select=token_ciphertext",
+    "status": 401
+  },
+  {
+    "path": "/rest/v1/instagram_connection_flows?select=payload",
+    "status": 401
+  },
+  {
+    "path": "/rest/v1/rpc/instagram_claim_sync",
+    "status": 401
+  }
+]
