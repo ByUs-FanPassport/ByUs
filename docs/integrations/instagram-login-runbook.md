@@ -2,6 +2,16 @@
 
 작성/공식 문서 확인: 2026-09-08 KST. 이 작업은 개발 앱/Dev DB/로컬 검증 범위다. 후속 승인으로 커밋·푸시를 준비하며 전체 운영 통합/배포는 부모 작업이 담당한다. 앱 심사 제출, 외부인 메시지, 기존 Sally 앱/계정 변경은 수행하지 않는다.
 
+
+## 운영 통합 완료 — 2026-09-08
+
+- 부모 팬페이지 작업에서 운영 DB migration `20260908020000`과 서버 환경을 적용하고 운영 배포했다. 제품 코드 커밋은 `8718956`, 최종 배포는 `dpl_57MuFSu8MPSFLzy6dKwPCBXJoWdC` / `byus-bs0vj8h6g-sallylab.vercel.app`, 도메인은 `https://byus.kr`이다. 아래 개발 단계의 미배포 문구는 당시 이력이다.
+- ByUs 전용 Instagram App ID, secret, 별도 32바이트 암호화 키, graph version, production origin, 수집 OFF, 원격 revoke 미검증 플래그를 서버 Secret으로 설정했다. 기존 운영 `CRON_SECRET`도 서버 Secret으로 연결했다. 다른 Meta 앱과 다른 서비스의 비밀값은 변경하지 않았다.
+- 최초 운영 점검에서는 `CRON_SECRET`이 없어 예약 작업 인증이 401이었다. 해당 설정을 추가하고 같은 코드로 재배포한 후, 보호된 `/api/internal/instagram/sync` 호출이 **200 / `{"skipped":"collection_disabled"}`**를 반환했다. 이는 서버 설정·DB cleanup 경로의 정상 동작이며 자동 예약 실행 시각이나 실제 Instagram 미디어 수집의 증거는 아니다.
+- 공개 Instagram API의 **503 / `INSTAGRAM_UNAVAILABLE` / items[]**는 수집 OFF에서 의도한 응답이다. 팬페이지에는 실제 LIVE 정보를 표시하고 가짜 게시물을 채우지 않는다.
+- 셀럽 본인 프로계정 연결·동의, 필요한 테스트 역할·Meta 외부 권한과 실제 provider 동작 검증은 남아 있다. 연결 전 수집 ON, 심사 제출, 타인에게 연결 요청 전송은 하지 않는다.
+- 운영 회복 시 앱을 이전 배포로 되돌릴 수 있다. 연결 이력이 생긴 뒤 DB rollback 파일을 바로 실행하거나 암호화 키를 교체하지 않는다. 백업 후 재연결 또는 별도 재암호화 계획을 세운다.
+
 ## 목적과 연결 계약
 
 운영자 → 특정 셀럽 팬페이지와 예상 Instagram 사용자명(확보했다면 professional ID도)을 지정하여 24시간 일회용 링크 발급 → 셀럽이 프로계정으로 Instagram 로그인 → 실제 계정 확인 → 명시적 연결. 팬의 ByUs 로그인과 별도다. 사용자가 프로계정(비즈니스/크리에이터)을 연결해주어야 하며 Facebook Page 연결은 이 Login 방식에서 필요하지 않다.
@@ -114,7 +124,7 @@ HTTPS 테스트 프록시는 정확히 connect/instagram 4개 경로와 Instagra
 
 [ByUs Instagram API 설정](https://developers.facebook.com/apps/1732948291088067/use_cases/customize/?use_case_enum=INSTAGRAM_BUSINESS&product_route=instagram-business&selected_tab=API-Setup). 화면 증거 `instagram-render-proof/meta-api-setup.png`에는 ID와 마스킹된 secret, 미연결 계정과 미설정 webhook이 보인다. 대시보드에서 게시되지 않음 확인. redirect 설정 완료(아래 후속 확인 참조). Aside 보고상 basic은 Ready for testing이나 해당 권한 상태의 충분한 직접 캡처를 확보하지 못했으므로 실제 연결 전에 재확인한다. Add all required permissions 버튼은 메시지/댓글까지 포함하므로 누르지 않고 기본읽기만 개별 확인한다.
 
-현재 실연동 차단사항은 부모 통합배포와 환경 주입, 승인된 프로계정 테스트 역할과 본인 동의다. Meta 주소등록 및 로컬 secret/암호화키 준비는 완료했다. 실제 크리에이터가 없으므로 OFF 상태로 통합한다. 라이브 앱 전환/심사 제출은 하지 않았다.
+현재 실연동 차단사항은 승인된 프로계정 테스트 역할과 본인 동의다. 부모 통합배포와 운영 환경 주입은 상단 운영 통합 기록처럼 완료했다. Meta 주소등록 및 로컬 secret/암호화키 준비는 완료했다. 실제 크리에이터가 없으므로 OFF 상태로 통합한다. 라이브 앱 전환/심사 제출은 하지 않았다.
 
 ## Meta 운영 주소 저장 확인 (후속)
 
