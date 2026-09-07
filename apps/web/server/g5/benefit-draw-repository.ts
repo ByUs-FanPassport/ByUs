@@ -13,12 +13,14 @@ const resultSchema = z.object({
   seedHash: z.string().regex(/^[0-9a-f]{64}$/),
   executedAt: z.string().datetime({ offset: true }),
   candidateCount: z.number().int().nonnegative(),
-  winners: z.array(z.object({
-    winnerId: z.string().uuid(),
-    benefitId: z.string().uuid(),
-    appUserId: z.string().uuid(),
-    weight: z.number().int().positive(),
-  })),
+  winners: z.array(
+    z.object({
+      winnerId: z.string().uuid(),
+      benefitId: z.string().uuid(),
+      appUserId: z.string().uuid(),
+      weight: z.number().int().positive(),
+    }),
+  ),
   replayed: z.boolean(),
 });
 
@@ -31,10 +33,20 @@ export interface BenefitDrawRepository {
     idempotencyKey: string;
     now: Date;
   }): Promise<BenefitDrawResult>;
+  publish?(input: {
+    actor: BenefitDrawActor;
+    correlationId: string;
+    campaignId: string;
+    drawId: string;
+    now: Date;
+  }): Promise<{ drawId: string; publishedAt: string; replayed: boolean }>;
 }
 
 export class BenefitDrawRepositoryError extends Error {
-  constructor(readonly code: "NOT_READY" | "ALREADY_EXECUTED" | "CONFLICT" | "UNAVAILABLE") {
+  constructor(
+    readonly code:
+      "NOT_READY" | "ALREADY_EXECUTED" | "CONFLICT" | "UNAVAILABLE",
+  ) {
     super(code);
   }
 }
@@ -54,9 +66,11 @@ export function createSupabaseBenefitDrawRepository(
   config: { url: string; serviceRoleKey: string },
   client?: RpcClient,
 ): BenefitDrawRepository {
-  const db = client ?? createClient(config.url, config.serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const db =
+    client ??
+    createClient(config.url, config.serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   return {
     async execute(input) {
       const { data, error } = await db.rpc("execute_admin_benefit_draw", {
@@ -71,6 +85,24 @@ export function createSupabaseBenefitDrawRepository(
       const parsed = resultSchema.safeParse(data);
       if (!parsed.success) throw new BenefitDrawRepositoryError("UNAVAILABLE");
       return parsed.data;
+    },
+    async publish(input) {
+      const { data, error } = await db.rpc("publish_admin_benefit_draw", {
+        p_actor_app_user_id: input.actor.appUserId,
+        p_actor_admin_allowlist_id: input.actor.allowlistId,
+        p_correlation_id: input.correlationId,
+        p_campaign_id: input.campaignId,
+        p_draw_id: input.drawId,
+        p_now: input.now.toISOString(),
+      });
+      if (error) throw map(error.message);
+      return z
+        .object({
+          drawId: z.string().uuid(),
+          publishedAt: z.string().datetime({ offset: true }),
+          replayed: z.boolean(),
+        })
+        .parse(data);
     },
   };
 }

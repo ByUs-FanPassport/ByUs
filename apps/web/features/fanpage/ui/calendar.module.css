@@ -1,0 +1,57 @@
+.heroCalendar { display:grid; min-width:0; gap:12px; padding:8px; border:1px solid oklch(93% 0 0); border-radius:16px; background:#fff; color:oklch(18% 0 0); box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.calendarHeading { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:12px; }
+.calendarHeading h2,.calendarHeading time { margin:0; }
+.calendarHeading h2 { display:flex; align-items:center; gap:8px; font-size:18px; font-weight:850; letter-spacing:-.025em; }
+.calendarWeekdays,.calendarDays { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+.calendarWeekdays span { display:grid; min-height:24px; place-items:center; color:var(--color-muted); font-size:var(--fan-calendar-meta-size); font-weight:700; }
+.calendarDays { gap:0; }
+.calendarDay,.calendarEventDay { position:relative; display:grid; min-width:0; min-height:44px; place-items:center; border-radius:10px; color:oklch(30% 0 0); font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; text-decoration:none; }
+.calendarEventDay { grid-template-rows:1fr 7px; padding:5px 2px 3px; color:oklch(35% .18 315); font-weight:850; }
+.calendarEventDay > span { display:block; width:6px; height:6px; border-radius:50%; background:oklch(50% .22 315); color:transparent; font-size:0; }
+.calendarMessage { min-height:16px; margin:0; color:oklch(48% 0 0); font-size:11px; font-weight:650; }
+.calendarUpcoming { display:grid; gap:8px; padding-top:12px; border-top:1px solid oklch(93% 0 0); }
+.calendarUpcoming h3,.calendarUpcoming p { margin:0; }
+.calendarUpcoming h3 { color:oklch(40% 0 0); font-size:12px; font-weight:800; letter-spacing:.02em; }
+.calendarUpcoming p { padding-block:8px; color:oklch(52% 0 0); font-size:12px; line-height:1.5; }
+.calendarUpcoming ol { display:grid; gap:4px; margin:0; padding:0; list-style:none; }
+.calendarUpcoming li { overflow:hidden; border-radius:10px; background:oklch(97.5% .022 305); }
+.calendarUpcoming li[data-status="live"] { background:oklch(97% .028 18); }
+.calendarUpcoming a { display:grid; min-height:52px; grid-template-columns:72px minmax(0,1fr) auto; grid-template-areas:"time title state"; align-items:center; gap:8px; padding:8px 10px; color:oklch(24% 0 0); text-decoration:none; }
+.calendarUpcoming time { grid-area:time; color:oklch(48% 0 0); font-size:10px; font-weight:700; line-height:1.35; font-variant-numeric:tabular-nums; }
+.calendarUpcoming strong { grid-area:title; display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:12px; font-weight:750; line-height:1.35; }
+.calendarUpcoming a > span { grid-area:state; color:oklch(43% .17 315); font-size:10px; font-weight:800; white-space:nowrap; }
+.calendarFooter { display:flex; flex-direction:column; min-height:44px; align-items:stretch; gap:8px; padding-top:12px; border-top:1px solid oklch(93% 0 0); }
+.calendarLegend { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:8px 12px; }
+.calendarLegend > span { display:flex; align-items:center; gap:5px; color:oklch(48% 0 0); font-size:var(--fan-calendar-meta-size); font-weight:650; white-space:nowrap; }
+.calendarLegend i { width:7px; height:7px; border-radius:50%; }
+.calendarLegend i[data-state="reserved"] { background:oklch(50% .22 315); }
+.calendarLegend i[data-state="not_reserved"] { border:1px solid oklch(50% .22 315); background:#fff; }
+.calendarFooter > a { align-self:flex-end; display:inline-flex; min-height:44px; align-items:center; gap:8px; color:oklch(30% 0 0); font-size:13px; font-weight:750; text-decoration:none; }
+.calendarFooter svg { width:16px; height:16px; }
+.calendarLegend i[data-state="unknown"] { border-radius:0; width:8px; height:2px; background:var(--color-muted); }
+.calendarLegend i[data-state="reserved"] { width:8px; height:5px; border:solid var(--color-service-ink); border-width:0 0 2px 2px; border-radius:0; background:transparent; transform:rotate(-45deg); }
+.calendarMessage { font-size:var(--fan-calendar-meta-size); line-height:1.5; }
+.calendarEventDay[data-multiple="true"] > span { width:auto; height:auto; border:0; border-radius:0; background:transparent; color:var(--color-muted); font-size:var(--fan-calendar-meta-size); line-height:1; transform:none; }
+.calendarSlot { min-width:0; }
+.calendarEventDay { border:0; background:transparent; font:inherit; cursor:pointer; min-height:48px; }
+.calendarEventDay time { width:32px; height:32px; }
+.calendarEventDay[data-upcoming="true"] time { background:oklch(97% .025 315); color:var(--color-service-ink); }
+.calendarEventDay[aria-pressed="true"] time { background:var(--color-service-ink); color:#fff; }
+.calendarEventDay:focus-visible { outline:3px solid var(--color-focus); outline-offset:-3px; }
+.calendarListHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.calendarListHeading button { min-height:44px; padding:0 8px; border:0; background:transparent; color:var(--color-service-ink); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.calendarUpcoming a { grid-template-areas:"time title state" "time reservation reservation"; }
+.calendarReservation { grid-area:reservation; display:flex; align-items:center; gap:4px; color:var(--color-muted); font-size:11px; }
+.calendarReservation svg { width:12px; height:12px; color:var(--color-service-ink); }
+.calendarUpcoming a { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title title" "time state" "reservation reservation"; row-gap:6px; }
+.calendarUpcoming strong { display:block; overflow:visible; -webkit-line-clamp:unset; overflow-wrap:anywhere; line-height:1.45; }
+.calendarEventDay[data-upcoming="true"]:not([data-multiple="true"]) > span { animation:calendar-upcoming-pulse 2.8s ease-in-out infinite; }
+.heroCalendar{padding:24px;gap:14px;box-shadow:none;border:1px solid #e8e7ec;border-radius:18px}
+.calendarHeading h2{font-size:20px}
+.calendarUpcoming li{background:#fff}
+.calendarUpcoming a{padding:12px 0;grid-template-columns:76px minmax(0,1fr) auto;grid-template-areas:"time title state" "time reservation reservation"}
+.calendarUpcoming strong{font-size:14px;line-height:1.5}
+.calendarUpcoming time{font-size:12px}
+@media(max-width:767px){.heroCalendar{padding:20px}}
+
+.heroCalendar{gap:10px}.calendarHeading{min-height:32px}.calendarFooter{padding-top:8px;min-height:32px}.calendarFooter>a{min-height:32px}.calendarEventDay[data-upcoming="true"] time{background:#ff0080;color:#fff}.calendarEventDay>span{background:#ff0080}

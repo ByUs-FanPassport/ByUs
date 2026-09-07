@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Play } from "./icons";
 import { instagramMediaSchema, type InstagramMedia } from "../server/instagram/model";
 import styles from "./instagram-recent-activity.module.css";
 
-export function InstagramRecentActivity({ slug, locale }: { slug: string; locale: "ko" | "en" }) {
+export function InstagramRecentActivity({ slug, locale, fallback = null }: { slug: string; locale: "ko" | "en"; fallback?: ReactNode }) {
   const [media, setMedia] = useState<InstagramMedia[]>([]);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -36,7 +36,7 @@ export function InstagramRecentActivity({ slug, locale }: { slug: string; locale
     return () => { active = false; controller?.abort(); window.clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
   }, [slug]);
   const cards = media.filter((item) => !failedImages.has(item.imageUrl));
-  if (!cards.length) return null;
+  if (!cards.length) return fallback;
   return <section className={styles.section} aria-labelledby="instagram-activity-title">
     <h2 id="instagram-activity-title">{locale === "ko" ? "최근 활동" : "Recent activity"}</h2>
     <div className={styles.grid}>

@@ -121,7 +121,9 @@ describe("benefit screens", () => {
     });
 
     render(<BenefitDetailOverlay benefitId={benefit.id} locale="ko" />);
-    fireEvent.click(await screen.findByRole("button", { name: /혜택 수령하기/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /혜택 수령하기/ }),
+    );
     const dialog = screen.getByRole("dialog", { name: "혜택 정보" });
     const close = screen.getByRole("button", { name: "혜택 정보 닫기" });
     await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "true"));
@@ -130,14 +132,18 @@ describe("benefit screens", () => {
     fireEvent.pointerDown(dialog.parentElement!);
     expect(routerBack).not.toHaveBeenCalled();
 
-    resolveClaim(new Response(JSON.stringify({
+    resolveClaim(
+      new Response(
+        JSON.stringify({
       claimId: "a1f86df9-f5e4-4ee1-b375-d18092b63e6a",
       benefitId: benefit.id,
       deliveryType: "unique_code",
       deliveryValue: "SECRET-42",
       claimedAt: "2026-07-21T00:00:00.000Z",
       replayed: false,
-    })));
+        }),
+      ),
+    );
     await waitFor(() => expect(dialog).not.toHaveAttribute("aria-busy"));
   });
   it("loads API celebrities and benefits, preserving locale and celebrity in detail routes", async () => {
@@ -147,7 +153,9 @@ describe("benefit screens", () => {
         new Response(JSON.stringify({ benefits: [benefit] })),
       );
     render(<BenefitsScreen locale="ko" />);
-    const currentMyLinks = screen.getAllByRole("link", { name: "MY" }).filter((link) => link.hasAttribute("aria-current"));
+    const currentMyLinks = screen
+      .getAllByRole("link", { name: "MY" })
+      .filter((link) => link.hasAttribute("aria-current"));
     expect(currentMyLinks).toHaveLength(2);
     for (const currentLink of currentMyLinks) {
       expect(currentLink).toHaveAttribute("aria-current", "page");
@@ -196,7 +204,9 @@ describe("benefit screens", () => {
       />,
     );
 
-    expect(await screen.findByRole("heading", { name: benefit.title })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: benefit.title }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "혜택 목록" })).toHaveAttribute(
       "href",
@@ -275,7 +285,9 @@ describe("benefit screens", () => {
   });
   it("enters campaign Tickets once on rapid clicks and refreshes balance and history", async () => {
     let resolveEntry!: (response: Response) => void;
-    const entryResponse = new Promise<Response>((resolve) => { resolveEntry = resolve; });
+    const entryResponse = new Promise<Response>((resolve) => {
+      resolveEntry = resolve;
+    });
     const campaignBenefit = {
       ...benefit,
       entry: {
@@ -290,17 +302,41 @@ describe("benefit screens", () => {
         entries: [],
       },
     };
-    const fetchMock = vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({ benefit: campaignBenefit })))
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ benefit: campaignBenefit })),
+      )
       .mockImplementationOnce(() => entryResponse);
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
-    const amount = await screen.findByRole("spinbutton", { name: "사용할 응모권 수" });
+    const amount = await screen.findByRole("spinbutton", {
+      name: "사용할 응모권 수",
+    });
     fireEvent.change(amount, { target: { value: "2" } });
-    const button = screen.getByRole("button", { name: "응모권으로 응모하기" });
-    fireEvent.click(button);
-    fireEvent.click(button);
+    fireEvent.click(
+      screen.getByRole("button", { name: "응모권으로 응모하기" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "응모권 사용 확인" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("현재 보유").nextElementSibling).toHaveTextContent(
+      "25",
+    );
+    expect(screen.getByText("이번 차감").nextElementSibling).toHaveTextContent(
+      "-2",
+    );
+    expect(
+      screen.getByText("응모 후 잔액").nextElementSibling,
+    ).toHaveTextContent("23");
+    const confirm = screen.getByRole("button", {
+      name: "이 수량으로 응모 확정",
+    });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    resolveEntry(new Response(JSON.stringify({
+    resolveEntry(
+      new Response(
+        JSON.stringify({
       entryId: "44444444-4444-4444-8444-444444444444",
       benefitId: benefit.id,
       campaignId: "55555555-5555-4555-8555-555555555555",
@@ -311,40 +347,170 @@ describe("benefit screens", () => {
       ticketLedgerId: "66666666-6666-4666-8666-666666666666",
       resultingBalance: 23,
       replayed: false,
-    })));
-    expect(await screen.findByText(/2 응모/)).toBeInTheDocument();
-    expect(screen.getByText("23")).toBeInTheDocument();
+        }),
+      ),
+    );
+    expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
+    expect(screen.getAllByText(/2 응모/)).toHaveLength(2);
+    expect(screen.getAllByText("23").length).toBeGreaterThan(0);
     const call = fetchMock.mock.calls[1];
     expect(call[0]).toContain("/entries");
-    expect(JSON.parse(String(call[1]?.body))).toMatchObject({ ticketAmount: 2 });
+    expect(JSON.parse(String(call[1]?.body))).toMatchObject({
+      ticketAmount: 2,
+    });
   });
+  it("reuses the same entry idempotency key after a retry", async () => {
+    const campaignBenefit = {
+      ...benefit,
+      entry: {
+        campaignId: "55555555-5555-4555-8555-555555555555",
+        creatorTicketBalance: 5,
+        enteredTickets: 0,
+        perFanTicketLimit: 5,
+        remainingBenefitTickets: 5,
+        entryOpensAt: "2020-01-01T00:00:00.000Z",
+        entryClosesAt: "2099-01-01T00:00:00.000Z",
+        canEnter: true,
+        entries: [],
+      },
+    };
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ benefit: campaignBenefit })),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            entryId: "44444444-4444-4444-8444-444444444444",
+            benefitId: benefit.id,
+            campaignId: campaignBenefit.entry.campaignId,
+            ticketAmount: 3,
+            benefitTicketTotal: 3,
+            perFanTicketLimit: 5,
+            remainingBenefitTickets: 2,
+            ticketLedgerId: "66666666-6666-4666-8666-666666666666",
+            resultingBalance: 2,
+            replayed: false,
+          }),
+        ),
+      );
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    fireEvent.change(
+      await screen.findByRole("spinbutton", { name: "사용할 응모권 수" }),
+      { target: { value: "3" } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "응모권으로 응모하기" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "이 수량으로 응모 확정" }),
+    );
+    expect(await screen.findByText(/응모하지 못했어요/)).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "이 수량으로 응모 확정" }),
+    );
+    expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
+    const first = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    const second = JSON.parse(String(fetchMock.mock.calls[2][1]?.body));
+    expect(first).toEqual({
+      idempotencyKey: expect.any(String),
+      ticketAmount: 3,
+  });
+    expect(second).toEqual(first);
+  });
+  it.each([
+    [
+      "zero balance",
+      { creatorTicketBalance: 0, remainingBenefitTickets: 5, canEnter: true },
+      "보유 응모권을 모두 사용했어요.",
+    ],
+    [
+      "limit reached",
+      { creatorTicketBalance: 5, remainingBenefitTickets: 0, canEnter: true },
+      "이 혜택의 응모 한도에 도달했어요.",
+    ],
+    [
+      "closed",
+      { creatorTicketBalance: 5, remainingBenefitTickets: 5, canEnter: false },
+      "응모가 종료됐어요.",
+    ],
+  ])(
+    "renders the %s entry state without posting",
+    async (_name, state, label) => {
+      const campaignBenefit = {
+        ...benefit,
+        entry: {
+          campaignId: "55555555-5555-4555-8555-555555555555",
+          enteredTickets: 3,
+          perFanTicketLimit: 5,
+          entryOpensAt: "2020-01-01T00:00:00.000Z",
+          entryClosesAt: "2099-01-01T00:00:00.000Z",
+          entries: [],
+          ...state,
+        },
+      };
+      const fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ benefit: campaignBenefit })),
+        );
+      render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+      expect(await screen.findByRole("button", { name: label })).toBeDisabled();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
   it("automatically resumes one matching benefit claim after login", async () => {
-    const intent = createAuthIntent({ sourcePath: `/benefits/${benefit.id}`, sourceQuery: "?locale=ko", actionType: "CLAIM_BENEFIT", targetType: "benefit", targetId: benefit.id });
+    const intent = createAuthIntent({
+      sourcePath: `/benefits/${benefit.id}`,
+      sourceQuery: "?locale=ko",
+      actionType: "CLAIM_BENEFIT",
+      targetType: "benefit",
+      targetId: benefit.id,
+    });
     persistAuthIntent(sessionStorage, intent);
-    window.history.replaceState({}, "", `/benefits/${benefit.id}?locale=ko&authIntent=${intent.id}`);
-    const fetchMock = vi.spyOn(globalThis, "fetch")
+    window.history.replaceState(
+      {},
+      "",
+      `/benefits/${benefit.id}?locale=ko&authIntent=${intent.id}`,
+    );
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ benefit })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
         claimId: "a1f86df9-f5e4-4ee1-b375-d18092b63e6a",
         benefitId: benefit.id,
         deliveryType: "unique_code",
         deliveryValue: "AUTO-SECRET",
         claimedAt: "2026-07-21T00:00:00.000Z",
         replayed: false,
-      })));
+          }),
+        ),
+      );
 
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
 
     expect(await screen.findByText("AUTO-SECRET")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/claim"))).toHaveLength(1);
-    expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
+    expect(
+      fetchMock.mock.calls.filter(([url]) => String(url).includes("/claim")),
+    ).toHaveLength(1);
+    expect(
+      sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`),
+    ).toBeNull();
   });
   it("offers a contextual login action to a guest without attempting the mutation", async () => {
     authenticated = false;
     const locked = { ...benefit, state: "locked" as const };
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ benefit: locked })));
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ benefit: locked })));
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
-    expect(await screen.findByRole("link", { name: "로그인하고 혜택 이어받기" })).toHaveAttribute("href", expect.stringContaining("intent=benefit-claim"));
+    expect(
+      await screen.findByRole("link", { name: "로그인하고 혜택 이어받기" }),
+    ).toHaveAttribute("href", expect.stringContaining("intent=benefit-claim"));
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it("uses a safe external link after an external URL claim", async () => {
@@ -372,9 +538,13 @@ describe("benefit screens", () => {
   });
   it("renders text delivery as readable content without code controls", async () => {
     vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
         benefit: { ...benefit, deliveryType: "text" },
-      })))
+          }),
+        ),
+      )
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -394,7 +564,9 @@ describe("benefit screens", () => {
     expect(
       await screen.findByText("ByUs 디지털 메시지가 보관함에 추가되었어요."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "코드 복사" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "코드 복사" }),
+    ).not.toBeInTheDocument();
   });
   it("offers retry on an API failure", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(

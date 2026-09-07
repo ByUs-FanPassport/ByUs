@@ -55,6 +55,9 @@ export const legalDocuments = {
             "팬 인증 참여와 결과, Fan Passport 및 Stamp 발급·상태 정보",
             "LIVE 예약·출석·설문 참여 정보",
             "혜택 신청·수령·사용 상태와 알림 설정·구독 정보",
+            "수동 팬 인증을 위해 직접 제출한 설명·증빙 이미지, 제출·심사 상태와 보상 기록",
+            "공지 댓글 본문, 공개 닉네임·캐릭터, 팬 순위와 선택적으로 공개한 팬 활동",
+            "프로계정 소유자가 Instagram 연결에 동의한 경우 계정 ID·사용자명, 암호화한 접근 토큰과 만료시각, 최근 게시물의 설명·게시시각·원본 링크·미디어 주소",
             "서비스 이용 과정에서 생성되는 접속 기록, 오류 및 보안 이벤트",
           ],
         },
@@ -63,6 +66,8 @@ export const legalDocuments = {
           items: [
             "회원 식별, 로그인 유지 및 계정 보호",
             "팬 인증, Passport·Stamp 발급과 소유자 확인",
+            "비공개 증빙 심사와 보상 지급, 댓글 운영, 팬 순위 집계 및 이용자가 선택한 팬 활동 공개",
+            "연결에 동의한 Instagram 프로계정의 최근 활동을 해당 팬페이지에 표시하고 연결을 유지",
             "LIVE 예약·출석·설문 및 혜택 제공",
             "알림 발송, 문의 대응과 서비스 품질 개선",
             "부정 이용 방지, 보안 사고 대응과 법적 의무 이행",
@@ -74,6 +79,7 @@ export const legalDocuments = {
         },
         {
           heading: "4. 외부 서비스 이용",
+          items: ["Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. ByUs는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.", "연결 해제 또는 유효한 삭제 요청을 처리하면 ByUs의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다."],
           paragraphs: ["회사는 로그인과 Embedded Wallet 제공을 위해 Google 및 Privy의 인증·지갑 서비스를 이용합니다. 각 서비스 제공자는 인증 과정에서 필요한 식별 정보와 기술 정보를 자체 정책에 따라 처리할 수 있습니다. 회사는 서비스 제공에 필요한 범위를 넘어 개인정보를 판매하지 않습니다."],
         },
         {
@@ -113,6 +119,9 @@ export const legalDocuments = {
             "Fan verification participation and results, and Fan Passport and Stamp issuance and status information",
             "LIVE reservations, attendance, and survey participation information",
             "Benefit application, receipt, and usage status, and notification settings and subscription information",
+            "Descriptions and evidence images you submit for manual fan verification, review status, and reward records",
+            "Notice comments, public nicknames and characters, fan rankings, and fan activity you choose to make public",
+            "When a professional account owner consents to Instagram connection: account ID and username, encrypted access token and expiry time, and recent post captions, timestamps, original links, and media URLs",
             "Access logs, errors, and security events generated while you use the service",
           ],
         },
@@ -121,6 +130,8 @@ export const legalDocuments = {
           items: [
             "Identifying members, maintaining login sessions, and protecting accounts",
             "Providing fan verification, issuing Passports and Stamps, and confirming ownership",
+            "Privately reviewing evidence, granting rewards, moderating comments, calculating fan rankings, and displaying fan activity you choose to share",
+            "Displaying recent activity from a consenting Instagram professional account on its fan page and maintaining the connection",
             "Providing LIVE reservations, attendance, surveys, and benefits",
             "Sending notifications, responding to inquiries, and improving service quality",
             "Preventing misuse, responding to security incidents, and complying with legal obligations",
@@ -132,6 +143,7 @@ export const legalDocuments = {
         },
         {
           heading: "4. Use of External Services",
+          items: ["Instagram connection requires separate consent from the professional account owner. ByUs requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.", "When disconnection or a valid deletion request is processed, ByUs deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings."],
           paragraphs: ["We use Google and Privy authentication and wallet services to provide login and Embedded Wallet functionality. Each provider may process identifiers and technical information required for authentication under its own policies. We do not sell personal information beyond what is necessary to provide the service."],
         },
         {

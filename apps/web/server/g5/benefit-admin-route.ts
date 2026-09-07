@@ -28,8 +28,8 @@ const save = z
       "shared_code",
       "unique_code",
     ]),
-    claimOpensAt: instant,
-    claimClosesAt: instant,
+    claimOpensAt: instant.nullable(),
+    claimClosesAt: instant.nullable(),
     stockLimit: z.number().int().positive().nullable(),
     perUserLimit: z.number().int().min(1).max(100),
     minimumScore: z.number().int().nonnegative(),
@@ -51,6 +51,10 @@ const save = z
     deliverySecret: z.string().max(4000).optional().default(""),
   })
   .superRefine((v, c) => {
+    if ((v.claimOpensAt === null) !== (v.claimClosesAt === null))
+      c.addIssue({ code: "custom", path: ["claimClosesAt"], message: "CLAIM_WINDOW_SHAPE" });
+    if (v.claimOpensAt !== null && v.claimClosesAt !== null && new Date(v.claimOpensAt) >= new Date(v.claimClosesAt))
+      c.addIssue({ code: "custom", path: ["claimClosesAt"], message: "CLAIM_WINDOW" });
     if (v.allocationMode === "application_selection" && v.perUserLimit !== 1)
       c.addIssue({
         code: "custom",
@@ -64,7 +68,15 @@ const campaignBenefit = z
     priority: z.number().int().positive(),
     perFanTicketLimit: z.number().int().positive().nullable(),
     winnerQuantity: z.number().int().positive().optional().default(1),
-    fulfillmentMethod: z.enum(["digital", "physical_shipping", "on_site_pickup"]).optional().default("digital"),
+    fulfillmentMethod: z
+      .enum(["digital", "physical_shipping", "on_site_pickup"])
+      .optional()
+      .default("digital"),
+    teaserImageUrl: z
+      .union([z.string().url(), z.string().regex(/^\/(?!\/)[^\s@]+$/)])
+      .nullable()
+      .optional()
+      .default(null),
   })
   .strict();
 const saveCampaign = z
@@ -73,29 +85,56 @@ const saveCampaign = z
     id: uuid.nullable().optional(),
     expectedRevision: z.number().int().positive().nullable(),
     liveEventId: uuid,
-    entryOpensAt: instant,
-    entryClosesAt: instant,
+    entryOpensAt: instant.nullable(),
+    entryClosesAt: instant.nullable(),
+    publicTeaser: z.boolean().optional().default(false),
     benefits: z.array(campaignBenefit).min(1).max(100),
   })
   .strict()
   .superRefine((v, c) => {
     if ((v.id == null) !== (v.expectedRevision == null))
       c.addIssue({ code: "custom", message: "CAMPAIGN_REVISION_SHAPE" });
-    if (new Date(v.entryOpensAt) >= new Date(v.entryClosesAt))
-      c.addIssue({ code: "custom", path: ["entryClosesAt"], message: "CAMPAIGN_WINDOW" });
+    if (
+      v.entryOpensAt !== null &&
+      v.entryClosesAt !== null &&
+      new Date(v.entryOpensAt) >= new Date(v.entryClosesAt)
+    )
+      c.addIssue({
+        code: "custom",
+        path: ["entryClosesAt"],
+        message: "CAMPAIGN_WINDOW",
+      });
     if (new Set(v.benefits.map((b) => b.benefitId)).size !== v.benefits.length)
-      c.addIssue({ code: "custom", path: ["benefits"], message: "DUPLICATE_BENEFIT" });
+      c.addIssue({
+        code: "custom",
+        path: ["benefits"],
+        message: "DUPLICATE_BENEFIT",
+      });
     if (new Set(v.benefits.map((b) => b.priority)).size !== v.benefits.length)
-      c.addIssue({ code: "custom", path: ["benefits"], message: "DUPLICATE_PRIORITY" });
+      c.addIssue({
+        code: "custom",
+        path: ["benefits"],
+        message: "DUPLICATE_PRIORITY",
+      });
   });
 const command = z.discriminatedUnion("action", [
   save,
   saveCampaign,
-  z.object({
-    action: z.literal("publish_campaign"),
-    id: uuid,
-    expectedRevision: z.number().int().positive(),
-  }).strict(),
+  z
+    .object({
+      action: z.literal("publish_campaign"),
+      id: uuid,
+      expectedRevision: z.number().int().positive(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("cancel_campaign"),
+      id: uuid,
+      expectedRevision: z.number().int().positive(),
+      reason: z.string().trim().min(10).max(1000),
+    })
+    .strict(),
   z.object({
     action: z.literal("codes"),
     id: uuid,
@@ -192,6 +231,19 @@ export function createPostBenefitAdminHandler(d: BenefitAdminDependencies) {
         await d.repository.publishCampaign(actor, c, p.id, p.expectedRevision);
         return json({ ok: true }, 200);
       }
+      if (p.action === "cancel_campaign")
+        return d.repository.cancelCampaign
+          ? json(
+              await d.repository.cancelCampaign(
+                actor,
+                c,
+                p.id,
+                p.expectedRevision,
+                p.reason,
+              ),
+              200,
+            )
+          : json({ error: { code: "BENEFIT_MANAGER_UNAVAILABLE" } }, 503);
       if (p.action === "codes")
         return json(
           await d.repository.codes(actor, c, p.id, p.expectedRevision, p.codes),

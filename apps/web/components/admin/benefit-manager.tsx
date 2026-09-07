@@ -34,8 +34,8 @@ type Benefit = {
   publicationStatus: "draft" | "published";
   allocationMode: "direct_claim" | "application_selection";
   deliveryType: string;
-  claimOpensAt: string;
-  claimClosesAt: string;
+  claimOpensAt: string | null;
+  claimClosesAt: string | null;
   stockLimit: number | null;
   perUserLimit: number;
   minimumScore: number;
@@ -66,15 +66,19 @@ type CampaignItem = {
   perFanTicketLimit: number | null;
   winnerQuantity: number;
   fulfillmentMethod: "digital" | "physical_shipping" | "on_site_pickup";
+  teaserImageUrl: string | null;
 };
 type Campaign = {
   id: string;
   liveEventId: string;
   status: "draft" | "published";
-  entryOpensAt: string;
-  entryClosesAt: string;
+  entryOpensAt: string | null;
+  entryClosesAt: string | null;
+  publicTeaser: boolean;
   revision: number;
   publishedAt: string | null;
+  cancelledAt: string | null;
+  drawPublishedAt: string | null;
   benefits: CampaignItem[];
   draw: null | {
     drawId: string;
@@ -98,12 +102,14 @@ type CampaignForm = {
   liveEventId: string;
   entryOpensAt: string;
   entryClosesAt: string;
+  publicTeaser: boolean;
   benefits: Array<{
     benefitId: string;
     priority: string;
     perFanTicketLimit: string;
     winnerQuantity: string;
     fulfillmentMethod: string;
+    teaserImageUrl: string;
   }>;
 };
 type Form = {
@@ -162,7 +168,8 @@ const blankCampaign: CampaignForm = {
   liveEventId: "",
   entryOpensAt: "",
   entryClosesAt: "",
-  benefits: [{ benefitId: "", priority: "1", perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital" }],
+  publicTeaser: false,
+  benefits: [{ benefitId: "", priority: "1", perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital", teaserImageUrl: "" }],
 };
 const copy = {
   ko: {
@@ -221,7 +228,7 @@ const copy = {
       "This action is permanently recorded and cannot be undone. Continue?",
   },
 } as const;
-const local = (v: string) => (v ? new Date(v).toISOString().slice(0, 16) : "");
+const local = (v: string | null) => (v ? new Date(v).toISOString().slice(0, 16) : "");
 const instant = (v: string) => new Date(`${v}:00Z`).toISOString();
 function formFor(b: Benefit): Form {
   return {
@@ -257,12 +264,14 @@ function campaignFormFor(c: Campaign): CampaignForm {
     liveEventId: c.liveEventId,
     entryOpensAt: local(c.entryOpensAt),
     entryClosesAt: local(c.entryClosesAt),
+    publicTeaser: c.publicTeaser,
     benefits: c.benefits.map((b) => ({
       benefitId: b.benefitId,
       priority: String(b.priority),
       perFanTicketLimit: b.perFanTicketLimit?.toString() ?? "",
       winnerQuantity: String(b.winnerQuantity),
       fulfillmentMethod: b.fulfillmentMethod,
+      teaserImageUrl: b.teaserImageUrl ?? "",
     })),
   };
 }
@@ -356,8 +365,8 @@ function BenefitManager({
       ...form,
       id: form.id || null,
       expectedRevision: form.id ? form.revision : null,
-      claimOpensAt: instant(form.claimOpensAt),
-      claimClosesAt: instant(form.claimClosesAt),
+      claimOpensAt: form.claimOpensAt ? instant(form.claimOpensAt) : null,
+      claimClosesAt: form.claimClosesAt ? instant(form.claimClosesAt) : null,
       stockLimit: form.stockLimit ? Number(form.stockLimit) : null,
       perUserLimit: Number(form.perUserLimit),
       minimumScore: Number(form.minimumScore),
@@ -372,14 +381,16 @@ function BenefitManager({
       id: campaign.id || null,
       expectedRevision: campaign.id ? campaign.revision : null,
       liveEventId: campaign.liveEventId,
-      entryOpensAt: instant(campaign.entryOpensAt),
-      entryClosesAt: instant(campaign.entryClosesAt),
+      entryOpensAt: campaign.entryOpensAt ? instant(campaign.entryOpensAt) : null,
+      entryClosesAt: campaign.entryClosesAt ? instant(campaign.entryClosesAt) : null,
+      publicTeaser: campaign.publicTeaser,
       benefits: campaign.benefits.map((b) => ({
         benefitId: b.benefitId,
         priority: Number(b.priority),
         perFanTicketLimit: b.perFanTicketLimit ? Number(b.perFanTicketLimit) : null,
         winnerQuantity: Number(b.winnerQuantity),
         fulfillmentMethod: b.fulfillmentMethod,
+        teaserImageUrl: b.teaserImageUrl || null,
       })),
     });
   }
@@ -416,6 +427,19 @@ function BenefitManager({
     } finally {
       setPending(false);
     }
+  }
+  async function publishDraw(campaignId: string, drawId: string) {
+    if (pending) return;
+    try {
+      setPending(true);
+      const token = await getAccessToken();
+      if (!token) throw new Error();
+      const response = await fetch(`/api/admin/benefit-campaigns/${campaignId}/draws/${drawId}/publication`, {
+        method: "POST", headers: { authorization: `Bearer ${token}`, "x-correlation-id": crypto.randomUUID() },
+      });
+      if (!response.ok) throw new Error();
+      await refresh();
+    } catch { setError(t.failure); } finally { setPending(false); }
   }
   async function readWinner(winnerId: string, reveal: boolean) {
     try {
@@ -501,11 +525,13 @@ function BenefitManager({
                 <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
                   {item.liveEventId} · {item.status}
                 </button>
-                {item.status === "published" && (
+                {item.status === "published" && !item.draw && !item.cancelledAt && (
                   <button disabled={!canWrite || pending} type="button" onClick={() => void drawCampaign(item.id)}>
                     {t.draw}
                   </button>
                 )}
+                {item.draw && !item.drawPublishedAt && <button disabled={!canWrite || pending} type="button" onClick={() => void publishDraw(item.id, item.draw!.drawId)}>{locale === "ko" ? "추첨 결과 공개" : "Publish draw results"}</button>}
+                {item.status === "published" && !item.draw && !item.cancelledAt && <button disabled={!canWrite || pending} type="button" onClick={() => { const reason = window.prompt(locale === "ko" ? "취소 사유를 10자 이상 입력하세요." : "Enter a cancellation reason (10+ characters).", ""); if (reason) void cmd({ action: "cancel_campaign", id: item.id, expectedRevision: item.revision, reason }); }}>{locale === "ko" ? "응모 취소 및 환불" : "Cancel and refund"}</button>}
                 {draws[item.id] && (
                   <small>{draws[item.id].candidateCount} candidates · {draws[item.id].winners.length} winners · {draws[item.id].seedHash}</small>
                 )}
@@ -528,6 +554,7 @@ function BenefitManager({
                 <Field label="LIVE event ID" value={campaign.liveEventId} set={(liveEventId) => setCampaign((c) => ({ ...c, liveEventId }))} />
                 <Field type="datetime-local" label="Entry opens (UTC)" value={campaign.entryOpensAt} set={(entryOpensAt) => setCampaign((c) => ({ ...c, entryOpensAt }))} />
                 <Field type="datetime-local" label="Entry closes (UTC)" value={campaign.entryClosesAt} set={(entryClosesAt) => setCampaign((c) => ({ ...c, entryClosesAt }))} />
+                <label><input type="checkbox" checked={campaign.publicTeaser} onChange={(event) => setCampaign((current) => ({ ...current, publicTeaser: event.target.checked }))} />{locale === "ko" ? "일정 미정 티저 공개" : "Show undated teaser"}</label>
               </div>
               {campaign.benefits.map((item, index) => (
                 <div className={styles.grid} key={`${index}-${item.benefitId}`}>
@@ -536,10 +563,11 @@ function BenefitManager({
                   <Field required={false} type="number" label={t.campaignNoLimit} value={item.perFanTicketLimit} set={(v) => setCampaignItem(index, "perFanTicketLimit", v)} />
                   <Field type="number" label="Winner quantity" value={item.winnerQuantity} set={(v) => setCampaignItem(index, "winnerQuantity", v)} />
                   <Select label="Fulfillment" value={item.fulfillmentMethod} set={(v) => setCampaignItem(index, "fulfillmentMethod", v)} options={[["digital", "Digital"], ["physical_shipping", "Physical shipping"], ["on_site_pickup", "On-site pickup"]]} />
+                  <Field required={false} label={locale === "ko" ? "티저 이미지 경로" : "Teaser image URL"} value={item.teaserImageUrl} set={(v) => setCampaignItem(index, "teaserImageUrl", v)} />
                 </div>
               ))}
               <div className={styles.actions}>
-                <button type="button" onClick={() => setCampaign((c) => ({ ...c, benefits: [...c.benefits, { benefitId: "", priority: String(c.benefits.length + 1), perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital" }] }))}>+ Benefit</button>
+                <button type="button" onClick={() => setCampaign((c) => ({ ...c, benefits: [...c.benefits, { benefitId: "", priority: String(c.benefits.length + 1), perFanTicketLimit: "", winnerQuantity: "1", fulfillmentMethod: "digital", teaserImageUrl: "" }] }))}>+ Benefit</button>
                 <button type="submit"><Save aria-hidden="true" />{t.campaignSave}</button>
                 {campaign.id && <button type="button" onClick={() => void cmd({ action: "publish_campaign", id: campaign.id, expectedRevision: campaign.revision })}>{t.campaignPublish}</button>}
               </div>
@@ -621,12 +649,14 @@ function BenefitManager({
                     ].map((v) => [v, v])}
                   />
                   <Field
+                    required={false}
                     type="datetime-local"
                     label="Opens (UTC)"
                     value={form.claimOpensAt}
                     set={(v) => set("claimOpensAt", v)}
                   />
                   <Field
+                    required={false}
                     type="datetime-local"
                     label="Closes (UTC)"
                     value={form.claimClosesAt}

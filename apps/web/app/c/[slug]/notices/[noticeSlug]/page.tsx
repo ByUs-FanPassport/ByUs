@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FanAppFrame, FanContentContainer } from "../../../../../components/fan-shell/fan-app-shell";
 import { NoticeBody } from "../../../../../components/notice/notice-body";
+import { NoticeComments } from "@/features/fanpage/ui/notice-comments";
 import { NoticeShare } from "../../../../../components/notice/notice-share";
 import styles from "../../../../../components/notice/notice-detail.module.css";
 import { loadServerEnv } from "../../../../../server/config/env";
@@ -40,6 +41,7 @@ export default async function NoticeDetailPage({
         <article className={styles.article}>
           <header className={styles.header}><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt, locale)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
           <NoticeBody document={notice.body} locale={locale} />
+          <NoticeComments slug={slug} noticeSlug={noticeSlug} locale={locale} />
         </article>
         {recentNotices.length > 0 && <aside className={styles.recent} aria-labelledby="recent-notices"><h2 id="recent-notices">{locale === "ko" ? "최근 공지" : "Recent Notices"}</h2>{recentNotices.map((item) => <Link key={item.slug} href={`/c/${slug}/notices/${item.slug}?locale=${locale}`}><strong>{item.title}</strong><small>{format(item.publishedAt, locale)}</small></Link>)}</aside>}
       </div>

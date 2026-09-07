@@ -5,14 +5,16 @@ export type BenefitAdminActor = { appUserId: string; allowlistId: string };
 export type BenefitCampaignDraft = {
   id?: string | null;
   liveEventId: string;
-  entryOpensAt: string;
-  entryClosesAt: string;
+  entryOpensAt: string | null;
+  entryClosesAt: string | null;
+  publicTeaser?: boolean;
   benefits: Array<{
     benefitId: string;
     priority: number;
     perFanTicketLimit: number | null;
     winnerQuantity?: number;
     fulfillmentMethod?: "digital" | "physical_shipping" | "on_site_pickup";
+    teaserImageUrl?: string | null;
   }>;
   expectedRevision: number | null;
 };
@@ -34,6 +36,13 @@ export type BenefitAdminRepository = {
     id: string,
     expectedRevision: number,
   ): Promise<void>;
+  cancelCampaign?(
+    actor: BenefitAdminActor,
+    correlationId: string,
+    id: string,
+    expectedRevision: number,
+    reason: string,
+  ): Promise<Record<string, unknown>>;
   codes(
     actor: BenefitAdminActor,
     correlationId: string,
@@ -143,6 +152,7 @@ export function createSupabaseBenefitAdminRepository(
         p_entry_opens_at: i.entryOpensAt,
         p_entry_closes_at: i.entryClosesAt,
         p_benefits: i.benefits,
+        p_public_teaser: i.publicTeaser ?? false,
       });
       return String(result(data, error));
     },
@@ -154,6 +164,16 @@ export function createSupabaseBenefitAdminRepository(
         p_expected_revision: expectedRevision,
       });
       result(null, error);
+    },
+    async cancelCampaign(a, c, id, expectedRevision, reason) {
+      const { data, error } = await db.rpc("cancel_admin_benefit_campaign", {
+        ...actorArgs(a),
+        p_correlation_id: c,
+        p_campaign_id: id,
+        p_expected_revision: expectedRevision,
+        p_reason: reason,
+      });
+      return result(data, error) as Record<string, unknown>;
     },
     async codes(a, c, id, expectedRevision, codes) {
       const { data, error } = await db.rpc("upload_admin_benefit_codes", {

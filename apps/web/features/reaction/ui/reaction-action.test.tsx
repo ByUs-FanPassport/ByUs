@@ -11,9 +11,10 @@ const privy = vi.hoisted(() => ({
   authenticated: true,
   user: { id: "owner-a" } as { id: string } | undefined,
   getAccessToken: vi.fn<() => Promise<string | null>>().mockResolvedValue("token"),
+  unstableTokenIdentity: false,
 }));
 
-vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => privy }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ...privy, getAccessToken: privy.unstableTokenIdentity ? () => privy.getAccessToken() : privy.getAccessToken }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const reactionId = "11111111-1111-4111-8111-111111111111";
@@ -37,6 +38,7 @@ describe("ReactionAction", () => {
     privy.ready = true;
     privy.authenticated = true;
     privy.user = { id: "owner-a" };
+    privy.unstableTokenIdentity = false;
     privy.getAccessToken.mockReset().mockResolvedValue("token");
     vi.unstubAllGlobals();
     vi.clearAllMocks();
@@ -52,6 +54,19 @@ describe("ReactionAction", () => {
 
     expect(await screen.findByRole("button", { name: /좋아요를 남겼어요/ })).toBeDisabled();
     expect(fetch.mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
+  });
+
+  it("settles the ownership lookup when Privy returns a new token-provider function on every render", async () => {
+    privy.unstableTokenIdentity = true;
+    const fetch = vi.fn(async () => response({ reaction: null }));
+    vi.stubGlobal("fetch", fetch);
+
+    render(<StrictMode><ReactionAction slug="kara" locale="ko" variant="compact" /></StrictMode>);
+
+    expect(await screen.findByRole("button", { name: "좋아요 남기기" })).toBeEnabled();
+    await new Promise((resolve) => window.setTimeout(resolve, 20));
+    expect(screen.getByRole("button", { name: "좋아요 남기기" })).toBeEnabled();
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("does not enable mutation when the ownership lookup fails, and retries the lookup only", async () => {

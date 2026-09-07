@@ -64,13 +64,15 @@ describe("benefit admin route", () => {
       id: null,
       expectedRevision: null,
       liveEventId: "33333333-3333-4333-8333-333333333333",
-      entryOpensAt: "2026-09-04T00:00:00Z",
-      entryClosesAt: "2026-09-05T00:00:00Z",
+      entryOpensAt: null,
+      entryClosesAt: null,
+      publicTeaser: true,
       benefits: [
         {
           benefitId: "66666666-6666-4666-8666-666666666666",
           priority: 1,
           perFanTicketLimit: null,
+          teaserImageUrl: "/images/guest-home/banksy-exhibition-campaign.webp",
         },
       ],
     };
@@ -81,6 +83,39 @@ describe("benefit admin route", () => {
       "44444444-4444-4444-8444-444444444444",
       expect.not.objectContaining({ perFanTicketLimit: expect.anything() }),
     );
+  });
+
+  it("saves an undated draft Benefit but rejects a partial claim window", async () => {
+    const d = deps();
+    const body = {
+      action: "save",
+      id: null,
+      expectedRevision: null,
+      slug: "undated-teaser",
+      celebrityId: "33333333-3333-4333-8333-333333333333",
+      allocationMode: "direct_claim",
+      deliveryType: "text",
+      claimOpensAt: null,
+      claimClosesAt: null,
+      stockLimit: null,
+      perUserLimit: 1,
+      minimumScore: 0,
+      minimumLevel: "Bronze",
+      requiredStampType: null,
+      requiredActivityType: null,
+      titleKo: "티저",
+      summaryKo: "티저",
+      eligibilityKo: "준비 중",
+      deliveryKo: "추후 안내",
+      titleEn: "Teaser",
+      summaryEn: "Teaser",
+      eligibilityEn: "Preparing",
+      deliveryEn: "To be announced",
+      deliverySecret: "",
+    };
+    expect((await createPostBenefitAdminHandler(d)(req(body))).status).toBe(201);
+    expect(d.repository.save).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ claimOpensAt: null, claimClosesAt: null }));
+    expect((await createPostBenefitAdminHandler(d)(req({ ...body, claimOpensAt: "2026-09-04T00:00:00Z" }))).status).toBe(400);
   });
 
   it("rejects a non-positive per-Benefit Ticket limit", async () => {

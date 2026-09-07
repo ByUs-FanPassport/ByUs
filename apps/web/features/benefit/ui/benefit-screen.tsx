@@ -3,7 +3,10 @@
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
-import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
+import {
+  FanAppFrame,
+  FanContentContainer,
+} from "@/components/fan-shell/fan-app-shell";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -19,7 +22,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
-import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
+import {
+  BottomSheet,
+  Dialog,
+  Drawer,
+} from "@/components/ui/overlay/accessible-overlay";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 
@@ -114,6 +121,18 @@ const copy = {
     noEntryLimit: "제한 없음",
     entryAmount: "사용할 응모권 수",
     entryHistory: "응모 이력",
+    entryConfirmTitle: "응모권 사용 확인",
+    entryConfirmHelp: "확정하면 응모권이 즉시 차감돼요.",
+    entryCurrentBalance: "현재 보유",
+    entryDebit: "이번 차감",
+    entryRemainingBalance: "응모 후 잔액",
+    entryConfirm: "이 수량으로 응모 확정",
+    entryCancel: "수량 다시 선택",
+    entrySuccess: "응모가 완료됐어요",
+    entryAgain: "응모권 추가 사용",
+    entryZero: "보유 응모권을 모두 사용했어요.",
+    entryLimitReached: "이 혜택의 응모 한도에 도달했어요.",
+    entryClosed: "응모가 종료됐어요.",
     entryError: "응모하지 못했어요. 응모권 잔액과 응모 기간을 확인해 주세요.",
     delivered: "혜택이 안전하게 전달되었어요",
     text: "혜택 내용",
@@ -179,7 +198,21 @@ const copy = {
     noEntryLimit: "No limit",
     entryAmount: "Raffle tickets to use",
     entryHistory: "Entry history",
-    entryError: "Entry failed. Check your raffle ticket balance and entry window.",
+    entryConfirmTitle: "Confirm raffle ticket use",
+    entryConfirmHelp:
+      "Your raffle tickets are deducted immediately after confirmation.",
+    entryCurrentBalance: "Current balance",
+    entryDebit: "This entry",
+    entryRemainingBalance: "Balance after entry",
+    entryConfirm: "Confirm this entry",
+    entryCancel: "Change quantity",
+    entrySuccess: "Your entry is complete",
+    entryAgain: "Use more raffle tickets",
+    entryZero: "You have used all available raffle tickets.",
+    entryLimitReached: "You reached this benefit’s entry limit.",
+    entryClosed: "This raffle has ended.",
+    entryError:
+      "Entry failed. Check your raffle ticket balance and entry window.",
     delivered: "Your benefit was delivered securely",
     text: "Benefit details",
     code: "Benefit code",
@@ -368,7 +401,12 @@ export function BenefitsScreen({
   return (
     <FanAppFrame locale={locale} mainId="benefit-content">
       <div className={styles.page}>
-      <FanContentContainer as="main" className={styles.main} id="benefit-content" tabIndex={-1}>
+        <FanContentContainer
+          as="main"
+          className={styles.main}
+          id="benefit-content"
+          tabIndex={-1}
+        >
         <div className={styles.listHeading}>
           <div>
             <h1>{c.title}</h1>
@@ -477,6 +515,8 @@ export function BenefitDetailScreen({
 }) {
   const c = copy[locale];
   const { ready, authenticated, getAccessToken } = usePrivy();
+  const mobileEntryConfirmation = useMobileBenefitOverlay();
+  const EntryConfirmationOverlay = mobileEntryConfirmation ? BottomSheet : Dialog;
   const [view, setView] = useState<DetailView>({ kind: "loading" });
   const [pending, setPending] = useState(false);
   useEffect(() => {
@@ -490,7 +530,12 @@ export function BenefitDetailScreen({
     useState<BenefitOwnedApplicationResponse | null>(null);
   const [actionError, setActionError] = useState(false);
   const [entryAmount, setEntryAmount] = useState("1");
-  const [entryResult, setEntryResult] = useState<BenefitEntryResult | null>(null);
+  const [entryResult, setEntryResult] = useState<BenefitEntryResult | null>(
+    null,
+  );
+  const [entryConfirmation, setEntryConfirmation] = useState<number | null>(
+    null,
+  );
   const [copied, setCopied] = useState(false);
   const claimRef = useRef<Promise<void> | null>(null);
   const resumedIntentRef = useRef<string | null>(null);
@@ -591,7 +636,9 @@ export function BenefitDetailScreen({
             },
           }),
         );
-        const intentId = new URLSearchParams(window.location.search).get("authIntent");
+        const intentId = new URLSearchParams(window.location.search).get(
+          "authIntent",
+        );
         if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
       } catch {
         setActionError(true);
@@ -652,7 +699,9 @@ export function BenefitDetailScreen({
             },
           }),
         );
-        const intentId = new URLSearchParams(window.location.search).get("authIntent");
+        const intentId = new URLSearchParams(window.location.search).get(
+          "authIntent",
+        );
         if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
       } catch {
         setActionError(true);
@@ -664,10 +713,16 @@ export function BenefitDetailScreen({
     claimRef.current = operation;
     await operation;
   }, [benefitId, getAccessToken, pending, view]);
-  const enterBenefit = useCallback(async () => {
-    if (view.kind !== "ready" || !view.benefit.entry || pending || claimRef.current) return;
+  const enterBenefit = useCallback(
+    async (ticketAmount: number) => {
+      if (
+        view.kind !== "ready" ||
+        !view.benefit.entry ||
+        pending ||
+        claimRef.current
+      )
+        return;
     const currentEntry = view.benefit.entry;
-    const ticketAmount = Number(entryAmount);
     if (!Number.isInteger(ticketAmount) || ticketAmount <= 0) return;
     const operation = (async () => {
       setPending(true);
@@ -675,20 +730,27 @@ export function BenefitDetailScreen({
       try {
         const token = await getAccessToken();
         if (!token) throw new Error();
-        const keyName = `byus:benefit-entry:${benefitId}`;
+          const keyName = `byus:benefit-entry:${benefitId}:${ticketAmount}`;
         let idempotencyKey = sessionStorage.getItem(keyName);
         if (!idempotencyKey) {
           idempotencyKey = crypto.randomUUID();
           sessionStorage.setItem(keyName, idempotencyKey);
         }
-        const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}/entries`, {
+          const response = await fetch(
+            `/api/benefits/${encodeURIComponent(benefitId)}/entries`,
+            {
           method: "POST",
-          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+              headers: {
+                authorization: `Bearer ${token}`,
+                "content-type": "application/json",
+              },
           body: JSON.stringify({ idempotencyKey, ticketAmount }),
-        });
+            },
+          );
         if (!response.ok) throw new Error();
         const result = benefitEntryResultSchema.parse(await response.json());
         setEntryResult(result);
+          setEntryConfirmation(null);
         sessionStorage.removeItem(keyName);
         setView({
           kind: "ready",
@@ -699,11 +761,14 @@ export function BenefitDetailScreen({
               creatorTicketBalance: result.resultingBalance,
               enteredTickets: result.benefitTicketTotal,
               remainingBenefitTickets: result.remainingBenefitTickets,
-              entries: [{
+                entries: [
+                  {
                 entryId: result.entryId,
                 ticketAmount: result.ticketAmount,
                 enteredAt: new Date().toISOString(),
-              }, ...currentEntry.entries],
+                  },
+                  ...currentEntry.entries,
+                ],
             },
           },
         });
@@ -716,18 +781,41 @@ export function BenefitDetailScreen({
     })();
     claimRef.current = operation;
     await operation;
-  }, [benefitId, entryAmount, getAccessToken, pending, view]);
+    },
+    [benefitId, getAccessToken, pending, view],
+  );
 
   useEffect(() => {
-    if (!authenticated || view.kind !== "ready" || view.benefit.state !== "eligible") return;
-    const intentId = new URLSearchParams(window.location.search).get("authIntent");
+    if (
+      !authenticated ||
+      view.kind !== "ready" ||
+      view.benefit.state !== "eligible"
+    )
+      return;
+    const intentId = new URLSearchParams(window.location.search).get(
+      "authIntent",
+    );
     if (!intentId || resumedIntentRef.current === intentId) return;
     const intent = readAuthIntent(window.sessionStorage, intentId);
-    if (!intent || intent.targetType !== "benefit" || intent.targetId !== benefitId) return;
+    if (
+      !intent ||
+      intent.targetType !== "benefit" ||
+      intent.targetId !== benefitId
+    )
+      return;
     resumedIntentRef.current = intentId;
-    if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.entry) consumeAuthIntent(window.sessionStorage, intentId);
-    else if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.allocationMode === "direct_claim") void claimBenefit();
-    if (intent.actionType === "APPLY_BENEFIT" && view.benefit.allocationMode === "application_selection") void applyForBenefit();
+    if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.entry)
+      consumeAuthIntent(window.sessionStorage, intentId);
+    else if (
+      intent.actionType === "CLAIM_BENEFIT" &&
+      view.benefit.allocationMode === "direct_claim"
+    )
+      void claimBenefit();
+    if (
+      intent.actionType === "APPLY_BENEFIT" &&
+      view.benefit.allocationMode === "application_selection"
+    )
+      void applyForBenefit();
   }, [applyForBenefit, authenticated, benefitId, claimBenefit, view]);
   async function copyCode(value: string) {
     try {
@@ -741,7 +829,13 @@ export function BenefitDetailScreen({
 
   if (view.kind === "loading")
     return presentation === "overlay" ? (
-      <FanContentContainer as="main" className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale} aria-busy="true">
+      <FanContentContainer
+        as="main"
+        className={`${styles.detailMain} ${styles.overlayMain}`}
+        data-fan-surface
+        lang={locale}
+        aria-busy="true"
+      >
         <div className={styles.detailSkeleton}>
           <i />
           <i />
@@ -752,7 +846,13 @@ export function BenefitDetailScreen({
     ) : (
       <FanAppFrame locale={locale} mainId="benefit-content">
         <div className={styles.page}>
-        <FanContentContainer as="main" className={styles.detailMain} id="benefit-content" tabIndex={-1} aria-busy="true">
+          <FanContentContainer
+            as="main"
+            className={styles.detailMain}
+            id="benefit-content"
+            tabIndex={-1}
+            aria-busy="true"
+          >
           <div className={styles.detailSkeleton}>
             <i />
             <i />
@@ -765,7 +865,12 @@ export function BenefitDetailScreen({
     );
   if (view.kind === "error")
     return presentation === "overlay" ? (
-      <FanContentContainer as="main" className={`${styles.detailMain} ${styles.overlayMain}`} data-fan-surface lang={locale}>
+      <FanContentContainer
+        as="main"
+        className={`${styles.detailMain} ${styles.overlayMain}`}
+        data-fan-surface
+        lang={locale}
+      >
         <section
           className={styles.message}
           role={view.notFound ? "status" : "alert"}
@@ -783,7 +888,12 @@ export function BenefitDetailScreen({
     ) : (
       <FanAppFrame locale={locale} mainId="benefit-content">
         <div className={styles.page}>
-        <FanContentContainer as="main" className={styles.detailMain} id="benefit-content" tabIndex={-1}>
+          <FanContentContainer
+            as="main"
+            className={styles.detailMain}
+            id="benefit-content"
+            tabIndex={-1}
+          >
           <section
             className={styles.message}
             role={view.notFound ? "status" : "alert"}
@@ -815,7 +925,8 @@ export function BenefitDetailScreen({
           ? c.sold_out
           : c.expired;
   const detailContent = (
-    <FanContentContainer as="main"
+    <FanContentContainer
+      as="main"
       className={`${styles.detailMain} ${presentation === "overlay" ? styles.overlayMain : ""}`}
       data-fan-surface
       lang={locale}
@@ -885,13 +996,61 @@ export function BenefitDetailScreen({
             <FanMotionIcon name="ticket" size={24} />
             <div>
               <h2>{c.enter}</h2>
-              <p>{locale === "ko" ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요." : "Use this creator’s raffle tickets to enter for this benefit."}</p>
+              <p>
+                {locale === "ko"
+                  ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
+                  : "Use this creator’s raffle tickets to enter for this benefit."}
+              </p>
               <dl className={styles.period}>
-                <div><dt>{c.tickets}</dt><dd>{benefit.entry.creatorTicketBalance}</dd></div>
-                <div><dt>{c.enteredTickets}</dt><dd>{benefit.entry.enteredTickets}</dd></div>
-                <div><dt>{c.entryLimit}</dt><dd>{benefit.entry.perFanTicketLimit ?? c.noEntryLimit}</dd></div>
+                <div>
+                  <dt>{c.tickets}</dt>
+                  <dd>{benefit.entry.creatorTicketBalance}</dd>
+                </div>
+                <div>
+                  <dt>{c.enteredTickets}</dt>
+                  <dd>{benefit.entry.enteredTickets}</dd>
+                </div>
+                <div>
+                  <dt>{c.entryLimit}</dt>
+                  <dd>{benefit.entry.perFanTicketLimit ?? c.noEntryLimit}</dd>
+                </div>
               </dl>
-              <label>
+              {entryResult ? (
+                <div className={styles.entrySuccess} role="status">
+                  <Check aria-hidden="true" />
+                  <div>
+                    <strong>{c.entrySuccess}</strong>
+                    <span>
+                      {entryResult.ticketAmount}{" "}
+                      {locale === "ko" ? "응모" : "entries"} ·{" "}
+                      {c.entryRemainingBalance} {entryResult.resultingBalance}
+                    </span>
+                  </div>
+                  {benefit.entry.canEnter &&
+                  benefit.entry.creatorTicketBalance > 0 &&
+                  benefit.entry.remainingBenefitTickets !== 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEntryResult(null);
+                        setEntryAmount("1");
+                      }}
+                    >
+                      {c.entryAgain}
+                    </button>
+                  ) : (
+                    <p>
+                      {!benefit.entry.canEnter
+                        ? c.entryClosed
+                        : benefit.entry.remainingBenefitTickets === 0
+                          ? c.entryLimitReached
+                          : c.entryZero}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <label className={styles.entryAmount}>
                 <span>{c.entryAmount}</span>
                 <input
                   aria-label={c.entryAmount}
@@ -899,7 +1058,8 @@ export function BenefitDetailScreen({
                   min={1}
                   max={Math.min(
                     benefit.entry.creatorTicketBalance,
-                    benefit.entry.remainingBenefitTickets ?? Number.MAX_SAFE_INTEGER,
+                        benefit.entry.remainingBenefitTickets ??
+                          Number.MAX_SAFE_INTEGER,
                   )}
                   step={1}
                   value={entryAmount}
@@ -911,29 +1071,105 @@ export function BenefitDetailScreen({
                 disabled={
                   pending ||
                   !Number.isInteger(Number(entryAmount)) ||
-                  benefit.entry.creatorTicketBalance < Number(entryAmount) ||
+                      benefit.entry.creatorTicketBalance <
+                        Number(entryAmount) ||
                   Number(entryAmount) <= 0 ||
                   !benefit.entry.canEnter ||
                   (benefit.entry.remainingBenefitTickets !== null &&
-                    benefit.entry.remainingBenefitTickets < Number(entryAmount))
+                        benefit.entry.remainingBenefitTickets <
+                          Number(entryAmount))
                 }
                 ariaBusy={pending}
-                onClick={() => void enterBenefit()}
+                    onClick={() => setEntryConfirmation(Number(entryAmount))}
                 trailingIcon={<ArrowRight />}
               >
-                {pending ? c.entering : c.enter}
+                    {!benefit.entry.canEnter
+                      ? c.entryClosed
+                      : benefit.entry.creatorTicketBalance === 0
+                        ? c.entryZero
+                        : benefit.entry.remainingBenefitTickets === 0
+                          ? c.entryLimitReached
+                          : c.enter}
               </FanAction>
+                </>
+              )}
               {(entryResult || benefit.entry.entries.length > 0) && (
                 <div>
                   <h3>{c.entryHistory}</h3>
                   <ul>
                     {benefit.entry.entries.map((entry) => (
-                      <li key={entry.entryId}>{entry.ticketAmount} {locale === "ko" ? "응모" : "entries"} · {formatDate(entry.enteredAt, locale)}</li>
+                      <li key={entry.entryId}>
+                        {entry.ticketAmount}{" "}
+                        {locale === "ko" ? "응모" : "entries"} ·{" "}
+                        {formatDate(entry.enteredAt, locale)}
+                      </li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
+            <EntryConfirmationOverlay
+              open={entryConfirmation !== null}
+              onClose={() => setEntryConfirmation(null)}
+              labelledBy="entry-confirm-title"
+              describedBy="entry-confirm-description"
+              backdropClassName={styles.entryConfirmBackdrop}
+              contentClassName={styles.entryConfirmPanel}
+              busy={pending}
+              closeOnBackdrop={!pending}
+              closeOnEscape={!pending}
+            >
+              <div className={styles.entryConfirmHeader}>
+                <div>
+                  <h2 id="entry-confirm-title">{c.entryConfirmTitle}</h2>
+                  <p id="entry-confirm-description">{c.entryConfirmHelp}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={locale === "ko" ? "닫기" : "Close"}
+                  disabled={pending}
+                  onClick={() => setEntryConfirmation(null)}
+                >
+                  <X aria-hidden="true" />
+                </button>
+              </div>
+              <dl className={styles.entryConfirmSummary}>
+                <div>
+                  <dt>{c.entryCurrentBalance}</dt>
+                  <dd>{benefit.entry.creatorTicketBalance}</dd>
+                </div>
+                <div>
+                  <dt>{c.entryDebit}</dt>
+                  <dd>-{entryConfirmation ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>{c.entryRemainingBalance}</dt>
+                  <dd>
+                    {benefit.entry.creatorTicketBalance -
+                      (entryConfirmation ?? 0)}
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.entryConfirmActions}>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => setEntryConfirmation(null)}
+                >
+                  {c.entryCancel}
+                </button>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    entryConfirmation !== null &&
+                    void enterBenefit(entryConfirmation)
+                  }
+                >
+                  {pending ? c.entering : c.entryConfirm}
+                </button>
+              </div>
+            </EntryConfirmationOverlay>
           </section>
         ) : deliveredClaim ? (
           <section className={styles.delivery} aria-live="polite">
@@ -971,7 +1207,9 @@ export function BenefitDetailScreen({
               )}
             </div>
           </section>
-        ) : !authenticated && benefit.state !== "sold_out" && benefit.state !== "expired" ? (
+        ) : !authenticated &&
+          benefit.state !== "sold_out" &&
+          benefit.state !== "expired" ? (
           <AuthIntentLink
             className={fanActionClassName("primary")}
             emphasis="primary"
@@ -979,7 +1217,10 @@ export function BenefitDetailScreen({
             input={{
               sourcePath: `/benefits/${benefitId}`,
               sourceQuery: `?locale=${locale}${celebrity ? `&celebrity=${encodeURIComponent(celebrity)}` : ""}`,
-              actionType: benefit.allocationMode === "application_selection" ? "APPLY_BENEFIT" : "CLAIM_BENEFIT",
+              actionType:
+                benefit.allocationMode === "application_selection"
+                  ? "APPLY_BENEFIT"
+                  : "CLAIM_BENEFIT",
               targetType: "benefit",
               targetId: benefitId,
             }}
@@ -990,21 +1231,32 @@ export function BenefitDetailScreen({
           (application?.status ?? benefit.applicationStatus) ? (
           <div className={styles.unavailable} role="status">
             <TicketCheck aria-hidden="true" />
-            {c.applicationStates[
-              (application?.status ?? benefit.applicationStatus) as keyof typeof c.applicationStates
-            ]}
+            {
+              c.applicationStates[
+                (application?.status ??
+                  benefit.applicationStatus) as keyof typeof c.applicationStates
+              ]
+            }
           </div>
         ) : benefit.state === "eligible" ? (
           <FanAction
             variant="primary"
             disabled={pending}
             ariaBusy={pending}
-            onClick={() => void (benefit.allocationMode === "application_selection" ? applyForBenefit() : claimBenefit())}
+            onClick={() =>
+              void (benefit.allocationMode === "application_selection"
+                ? applyForBenefit()
+                : claimBenefit())
+            }
             trailingIcon={<ArrowRight />}
           >
             {pending
-              ? benefit.allocationMode === "application_selection" ? c.applying : c.claiming
-              : benefit.allocationMode === "application_selection" ? c.apply : c.claim}
+              ? benefit.allocationMode === "application_selection"
+                ? c.applying
+                : c.claiming
+              : benefit.allocationMode === "application_selection"
+                ? c.apply
+                : c.claim}
           </FanAction>
         ) : (
           <div className={styles.unavailable} role="status">
@@ -1014,7 +1266,11 @@ export function BenefitDetailScreen({
         )}
         {actionError && (
           <p className={styles.actionError} role="alert">
-            {benefit.entry ? c.entryError : benefit.allocationMode === "application_selection" ? c.applyError : c.claimError}
+            {benefit.entry
+              ? c.entryError
+              : benefit.allocationMode === "application_selection"
+                ? c.applyError
+                : c.claimError}
           </p>
         )}
       </article>
@@ -1023,9 +1279,7 @@ export function BenefitDetailScreen({
   if (presentation === "overlay") return detailContent;
   return (
     <FanAppFrame locale={locale} mainId="benefit-content">
-      <div className={styles.page}>
-      {detailContent}
-      </div>
+      <div className={styles.page}>{detailContent}</div>
     </FanAppFrame>
   );
 }
@@ -1043,7 +1297,15 @@ function useMobileBenefitOverlay() {
   return mobile;
 }
 
-export function BenefitDetailOverlay({ benefitId, locale, celebrity }: { benefitId: string; locale: BenefitLocale; celebrity?: string }) {
+export function BenefitDetailOverlay({
+  benefitId,
+  locale,
+  celebrity,
+}: {
+  benefitId: string;
+  locale: BenefitLocale;
+  celebrity?: string;
+}) {
   const router = useRouter();
   const mobile = useMobileBenefitOverlay();
   const [busy, setBusy] = useState(false);
@@ -1061,12 +1323,28 @@ export function BenefitDetailOverlay({ benefitId, locale, celebrity }: { benefit
       busy={busy}
     >
       <header className={styles.overlayHeader}>
-        <h2 id="benefit-overlay-title">{locale === "ko" ? "혜택 정보" : "Benefit details"}</h2>
-        <button type="button" aria-label={locale === "ko" ? "혜택 정보 닫기" : "Close benefit details"} data-autofocus disabled={busy} onClick={close}>
+        <h2 id="benefit-overlay-title">
+          {locale === "ko" ? "혜택 정보" : "Benefit details"}
+        </h2>
+        <button
+          type="button"
+          aria-label={
+            locale === "ko" ? "혜택 정보 닫기" : "Close benefit details"
+          }
+          data-autofocus
+          disabled={busy}
+          onClick={close}
+        >
           <X aria-hidden="true" />
         </button>
       </header>
-      <BenefitDetailScreen benefitId={benefitId} locale={locale} celebrity={celebrity} presentation="overlay" onBusyChange={setBusy} />
+      <BenefitDetailScreen
+        benefitId={benefitId}
+        locale={locale}
+        celebrity={celebrity}
+        presentation="overlay"
+        onBusyChange={setBusy}
+      />
     </Overlay>
   );
 }

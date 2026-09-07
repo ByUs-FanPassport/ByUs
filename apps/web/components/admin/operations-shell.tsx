@@ -141,6 +141,8 @@ export function AdminOperationsShell({
       >
         {t.benefits}
       </Link>
+      <Link className={isSectionActive("/admin/certifications") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/certifications") ? "page" : undefined} href={`/admin/certifications${locale === "en" ? "?lang=en" : ""}` as Route}>{locale === "ko" ? "인증 심사" : "Certifications"}</Link>
+      <Link className={isSectionActive("/admin/notice-comments") ? styles.activeNav : undefined} aria-current={isSectionActive("/admin/notice-comments") ? "page" : undefined} href="/admin/notice-comments">{locale === "ko" ? "공지 댓글" : "Notice comments"}</Link>
       <Link
         className={
           isSectionActive("/admin/dashboard") ? styles.activeNav : undefined

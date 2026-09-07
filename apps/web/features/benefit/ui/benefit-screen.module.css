@@ -388,6 +388,160 @@
   margin: 1px 0 16px;
   font-size: 18px;
 }
+.entryAmount {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 12px;
+  color: #66636c;
+  font-size: 13px;
+  font-weight: 700;
+}
+.entryAmount input {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid #e8e7ec;
+  border-radius: 12px;
+  background: #fff;
+  color: #17161b;
+  font: inherit;
+  font-size: 16px;
+}
+.entrySuccess {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #ffd0e4;
+  border-radius: 14px;
+  background: #fff6fa;
+}
+.entrySuccess > svg {
+  width: 22px;
+  color: #ff2d87;
+}
+.entrySuccess div {
+  display: grid;
+  gap: 4px;
+}
+.entrySuccess span,
+.entrySuccess p {
+  color: #66636c;
+  font-size: 13px;
+}
+.entrySuccess p {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+}
+.entrySuccess button {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  border: 1px solid #ff2d87;
+  border-radius: 12px;
+  background: #fff;
+  color: #d91268;
+  font: inherit;
+  font-weight: 800;
+}
+.entryConfirmBackdrop {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.entryConfirmPanel {
+  width: min(520px, 100%);
+  padding: 24px;
+  border-radius: 20px;
+  background: #fff;
+  color: #17161b;
+}
+@media (max-width: 47.999rem) {
+  .entryConfirmBackdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .entryConfirmPanel {
+    border-radius: 20px 20px 0 0;
+  }
+}
+.entryConfirmHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.entryConfirmHeader h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+.entryConfirmHeader p {
+  margin: 8px 0 0;
+  color: #66636c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.entryConfirmHeader button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+.entryConfirmHeader svg {
+  width: 20px;
+}
+.entryConfirmSummary {
+  margin: 24px 0;
+  border-top: 1px solid #e8e7ec;
+}
+.entryConfirmSummary div {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e8e7ec;
+}
+.entryConfirmSummary dt {
+  color: #66636c;
+  font-size: 14px;
+}
+.entryConfirmSummary dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 850;
+}
+.entryConfirmSummary div:nth-child(2) dd {
+  color: #d91268;
+}
+.entryConfirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 10px;
+}
+.entryConfirmActions button {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #e8e7ec;
+  border-radius: 12px;
+  background: #fff;
+  color: #25242a;
+  font: inherit;
+  font-weight: 800;
+}
+.entryConfirmActions button:last-child {
+  border-color: #ff2d87;
+  background: #ff2d87;
+  color: #fff;
+}
+.entryConfirmActions button:disabled {
+  opacity: 0.55;
+}
 .delivery a {
   min-height: 44px;
   display: inline-flex;

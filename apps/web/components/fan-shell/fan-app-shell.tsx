@@ -130,6 +130,7 @@ export function FanAppHeader({
         items={items}
       />
       <div className={styles.actions}>
+        {actions}
         <Link
           className={styles.language}
           data-fan-language-action
@@ -138,7 +139,6 @@ export function FanAppHeader({
         >
           <Languages aria-hidden="true" />
         </Link>
-        {actions}
       </div>
     </FanHeader>
   );

@@ -8,7 +8,7 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   const { slug } = await params;
   const { locale: requestedLocale, tab: requestedTab } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
-  const initialTab: CelebrityFanTab = requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" ? requestedTab : "home";
+  const initialTab: CelebrityFanTab = requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" || requestedTab === "certifications" || requestedTab === "raffles" || requestedTab === "leaderboard" ? requestedTab : "home";
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [celebrity, primaryLives] = await Promise.all([
     repository.findBySlug(locale, slug),
