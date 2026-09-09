@@ -477,9 +477,11 @@ Do not introduce a parallel hard-coded blue palette from the guide's example hex
   image instead of cropping portrait heads or group members; published positioning is retained.
   Use published summaries only, no invented biographies or popular/recommended claims.
   Default order remains the published order. Search, ordering and ownership filters stay.
-- MY: eligible reserved LIVE first (active before scheduled, then start time), one
-  leading event with other reservations in a disclosure. Owned creator records and
-  recent activity follow; totals appear once as a quiet summary. First-reaction-only
+- MY (updated 2026-09-10, slide 58): profile then a shared favorite selector,
+  with attained fan tier/progress and that creator’s raffle ticket balance as the
+  two primary panels. Reserved LIVE and recent activity follow; totals appear
+  once as a quiet summary. Within LIVE, active precedes scheduled, then start time,
+  with other reservations in a disclosure. First-reaction-only
   relationships remain distinct from owned Passports. Tier targets use FAN_TIERS;
   remaining points come from the existing summary, not a new score calculation.
 - Passport collection cards stay at most 380px even for one record. Technical
@@ -508,9 +510,11 @@ production account or of benefit eligibility logic.
 - Directory cards have one semantic link covering image, introduction, status,
   and action. Korean actions use the creator name plus `만나보기`. Introductions
   use the first complete published sentence; no line-clamp or invented biography.
-- MY uses `FanSurface appearance="plain"` for open sections rather than repeated
-  large boxes. Reserved LIVE stays first in DOM; owned creator imagery follows.
-  Recent activity occupies the desktop supporting column even with no rewards.
+- MY uses two restrained bordered panels for selected-creator fan tier and raffle
+  tickets (updated 2026-09-10, slide 58). Supporting LIVE and recent activity use
+  open sections below these panels. The same creator selection controls tier,
+  tickets, current mission and existing benefit progress; it does not save a
+  representative badge. Recent activity shares the desktop supporting row.
   Without supporting content, primary sections share available width instead of
   leaving a left-aligned 800px island. Mobile remains a linear task sequence.
 - MY LIVE uses truthful KST date tiles, not an inferred creator/event photo; its

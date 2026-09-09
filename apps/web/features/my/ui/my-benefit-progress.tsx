@@ -3,7 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { useOwnedFanResource } from "@/components/fan-ui/use-owned-fan-resource";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
@@ -14,7 +14,7 @@ import styles from "./my-benefit-progress.module.css";
 
 const copy = {
   ko: {
-    choose: "혜택을 확인할 최애", loading: "다음 혜택을 불러오는 중이에요.",
+    loading: "다음 혜택을 불러오는 중이에요.",
     error: "다음 혜택을 불러오지 못했어요.", retry: "다시 시도", empty: "현재 이 최애의 다음 혜택이 없어요.",
     all: "혜택 전체 보기", view: "혜택 확인하기", score: "팬 점수", scoreProgress: "팬 점수 조건 달성률",
     remaining: "남은 조건", ready: "조건 충족", locked: "조건을 달성하면 받을 수 있어요.",
@@ -24,7 +24,7 @@ const copy = {
     stale: "최신 조건을 확인하지 못했어요.",
   },
   en: {
-    choose: "Favorite to view benefits for", loading: "Loading your next benefit.",
+    loading: "Loading your next benefit.",
     error: "We couldn’t load the next benefit.", retry: "Try again", empty: "No next benefit for this favorite right now.",
     all: "View all benefits", view: "View benefit", score: "Fan Score", scoreProgress: "Fan Score requirement progress",
     remaining: "Remaining conditions", ready: "Conditions met", locked: "Complete the conditions to unlock it.",
@@ -56,20 +56,8 @@ function conditionLabel(condition: NextPassportBenefit["missingConditions"][numb
   }
 }
 
-export function MyBenefitProgress({ creators, locale }: { creators: readonly PassportCreator[]; locale: FanLocale }) {
-  const [chosenId, setChosenId] = useState<string | null>(null);
-  const selected = creators.find(creator => creator.passport.id === chosenId) ?? creators[0];
-  const t = copy[locale];
-  if (!selected) return null;
-  return <div className={styles.panel}>
-    {creators.length > 1 ? <label className={styles.selector}>
-      <span>{t.choose}</span>
-      <select value={selected.passport.id} onChange={event => setChosenId(event.target.value)}>
-        {creators.map(creator => <option key={creator.passport.id} value={creator.passport.id}>{creator.celebrity.name}</option>)}
-      </select>
-    </label> : <p className={styles.creatorName}>{selected.celebrity.name}</p>}
-    <SelectedBenefit creator={selected} locale={locale}/>
-  </div>;
+export function MyBenefitProgress({ creator, locale }: { creator: PassportCreator; locale: FanLocale }) {
+  return <div className={styles.panel}><SelectedBenefit creator={creator} locale={locale}/></div>;
 }
 
 function SelectedBenefit({ creator, locale }: { creator: PassportCreator; locale: FanLocale }) {
@@ -104,5 +92,6 @@ function SelectedBenefit({ creator, locale }: { creator: PassportCreator; locale
     {benefit.allocationMode === "application_selection" ? <p className={styles.selectionHelp}>{t.selectionHelp}</p> : null}
     {resource.refreshFailed ? <p className={styles.refresh} role="status">{t.stale} <button type="button" onClick={resource.retry}>{t.retry}</button></p> : null}
     <Link className={styles.link} href={`/benefits/${benefit.id}?locale=${locale}`}>{t.view}<ArrowRight aria-hidden="true"/></Link>
+    <Link className={styles.link} href={allHref}>{t.all}<ArrowRight aria-hidden="true"/></Link>
   </div>;
 }

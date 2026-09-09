@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyScreen } from "./my-screen";
-import { notifyFanActivityUpdated } from "../../../components/fan-ui/fan-activity-updates";
 
 const id = "11111111-1111-4111-8111-111111111111";
 const benefitId = "22222222-2222-4222-8222-222222222222";
@@ -43,7 +42,7 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated: true, user: avatarOwner.id ? { id: avatarOwner.id } : undefined, getAccessToken }),
 }));
 
-afterEach(() => { avatarOwner.id = undefined; });
+afterEach(() => { avatarOwner.id = undefined; vi.useRealTimers(); });
 
 describe("unified MY hub", () => {
   it("renders the same catalog avatar in the profile header and links it to settings", async () => {
@@ -61,15 +60,19 @@ describe("unified MY hub", () => {
     expect(link).not.toHaveTextContent("카");
   });
 
-  it("adds a newly recorded first-reaction relationship after the shared update without remounting", async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [] } }))
-      .mockResolvedValueOnce(Response.json({ summary: { ...summary, creators: [{ ...summary.creators[0], relationship: "first_reaction_only", passport: null }] } }));
+  it("renders a first-reaction favorite without manufacturing a fan tier", async () => {
+    avatarOwner.id = "owner-a";
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/summary")) return Response.json({ summary: { ...summary, creators: [{ ...summary.creators[0], relationship: "first_reaction_only", passport: null }] } });
+      if (url.startsWith("/api/me/avatar")) return Response.json({ avatar: null });
+      return Response.json({ certifications: [], raffles: [] });
+    });
     vi.stubGlobal("fetch", fetcher);
     render(<MyScreen locale="ko" />);
-    expect(await screen.findByText("아직 등록한 최애가 없어요.")).toBeInTheDocument();
-    await act(async () => { notifyFanActivityUpdated(undefined); });
-    expect(await screen.findByText("첫 반응")).toBeInTheDocument();
-    expect(screen.getByText("첫 반응").closest("a")).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(await screen.findByText(/첫 반응/)).toBeInTheDocument();
+    expect(screen.getByText(/첫 반응/).closest("button")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByRole("link", { name: "팬 인증 시작하기" })[0]).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
   });
   it("prioritizes profile identity, activity totals, and the four owner activity sections", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
@@ -77,11 +80,12 @@ describe("unified MY hub", () => {
 
     expect(await screen.findByRole("heading", { name: "카밀리아님", level: 1 })).toBeInTheDocument();
     expect(screen.getByText("최애와 함께한 기록을 한눈에 모았어요.")).toBeInTheDocument();
-    const badge = screen.getByRole("link", { name: "KARA · 실버" });
-    expect(badge.compareDocumentPosition(screen.getByRole("heading", { name: "카밀리아님", level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "KARA · 실버" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /KARA실버/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("heading", { name: "활동 요약" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 최애" })).toBeInTheDocument();
-    expect(screen.getByText("실버 · 팬 점수 15 · 골드까지 팬 점수 35점")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "다음 팬등급 진행률" })).toHaveAttribute("value", "30");
+    expect(screen.getByText("골드까지 35점")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
@@ -125,14 +129,42 @@ describe("unified MY hub", () => {
     expect(screen.getAllByText("Raffle tickets").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /^4\s*Raffle tickets$/ })).toHaveAttribute("href", "#my-creators");
   });
+
+  it("refetches a preparing raffle at its opening boundary after unrelated resources rerender", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime("2026-09-10T00:00:00Z");
+    avatarOwner.id = "owner-a";
+    let raffleReads = 0;
+    const preparingCreator = { ...summary.creators[0], relationship: "first_reaction_only", passport: null };
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/summary")) return Response.json({ summary: { ...summary, creators: [preparingCreator] } });
+      if (url.startsWith("/api/me/avatar")) return Response.json({ avatar: null });
+      if (url.includes("/raffles?")) {
+        raffleReads += 1;
+        return Response.json({ raffles: [{ id: "60000000-0000-4000-8000-000000000001", benefitId, title: "오픈 경계 래플", summary: "곧 열려요", imageUrl: null, winnerQuantity: 1, status: raffleReads === 1 ? "preparing" : "open", entryOpensAt: "2026-09-10T00:00:01Z", entryClosesAt: "2026-09-10T01:00:00Z", fulfillmentMethod: "digital", perFanTicketLimit: null }] });
+      }
+      if (url.includes("/certifications?")) return await new Promise<Response>((resolve) => setTimeout(() => resolve(Response.json({ certifications: [] })), 500));
+      return Response.json({ certifications: [] });
+    }));
+    render(<MyScreen locale="ko"/>);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(raffleReads).toBe(1);
+    expect(screen.queryByRole("link", { name: "래플 자세히 보기" })).not.toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(raffleReads).toBe(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(501); });
+    expect(raffleReads).toBe(2);
+    expect(screen.getByRole("link", { name: "래플 자세히 보기" })).toHaveAttribute("href", `/benefits/${benefitId}?locale=ko`);
+  });
 });
 
-it("places the compact owner totals first and reserved LIVE before owned records", async () => {
+it("places the selected favorite panels before LIVE and compact totals after owned records", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
   render(<MyScreen locale="ko"/>);
   const event=await screen.findByText("내 예약 LIVE");
-  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"내 최애"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(screen.getByRole("heading",{name:"활동 요약"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByRole("heading",{name:"내 최애"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
 
@@ -147,10 +179,9 @@ it("shows a date-led reserved event and keeps recent records below favorites in 
   await screen.findByText("내 예약 LIVE");
   expect(container.querySelector('time[datetime="2026-09-18T11:30:00.000Z"]')).toHaveTextContent("9월18");
   expect(screen.getByText("KARA Stamp").closest("aside")).toBeNull();
-  expect(container.querySelector("#my-creators")!.parentElement).toBe(container.querySelector("#my-collection")!.parentElement);
   expect(container.querySelector("#my-creators")!.compareDocumentPosition(container.querySelector("#my-collection")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(container.querySelector('[data-has-rail="true"]')).not.toBeNull();
-  expect(within(container.querySelector("#my-creators")!).getByText("KARA").closest("a")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
+  expect(container.querySelector("#my-collection")!.parentElement?.className).toContain("lowerGrid");
+  expect(within(container.querySelector("#my-creators")!).getByText("KARA").closest("button")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
 });
 
 it("links the collectible total only when a real recent collectible supplies a destination", async () => {

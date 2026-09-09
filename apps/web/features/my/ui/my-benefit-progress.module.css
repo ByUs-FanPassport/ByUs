@@ -22,7 +22,7 @@
 .status svg { width:18px; height:18px; flex-shrink:0; }
 .link { display:flex; width:fit-content; min-height:var(--min-target); align-items:center; gap:var(--space-3); color:var(--color-ink); font-size:14px; font-weight:750; text-decoration:none; }
 .link svg { width:18px; height:18px; flex-shrink:0; }
-.message,.loading { display:grid; min-height:120px; align-content:start; gap:var(--space-3); }
+.message,.loading { display:grid; min-height:0; align-content:start; gap:var(--space-3); }
 .skeleton { display:block; width:70%; height:24px; border-radius:4px; background:var(--color-soft); }
 .refresh button { min-height:var(--min-target); padding:0 var(--space-2); border:0; background:transparent; color:var(--color-ink); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; }
 @media(hover:hover) and (pointer:fine) { .link:hover { text-decoration:underline; text-underline-offset:4px; } .selector select:hover { border-color:var(--color-muted); } }
