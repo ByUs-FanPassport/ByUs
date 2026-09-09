@@ -9,6 +9,7 @@ export type CreatorHeroImage = Readonly<{
 }>;
 
 export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
+  "thisisj-official": { src: "/images/celebrities/thisisj-official/hero-source.webp", desktopPosition: "50% 28%", mobilePosition: "40% 35%" },
   kara: { src: "/images/guest-home/kara-card.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 50%" },
   changha: { src: "/images/celebrities/changha/hero-source.jpg", mobileSrc: "/images/celebrities/changha/hero-mobile.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 10%" },
   elina: { src: "/images/celebrities/elina/hero-beach.jpg", mobileSrc: "/images/celebrities/elina/hero-source.jpg", desktopPosition: "50% 25%", mobilePosition: "50% 100%" },
