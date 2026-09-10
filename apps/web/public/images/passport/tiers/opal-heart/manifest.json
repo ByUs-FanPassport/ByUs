@@ -1,0 +1,152 @@
+{
+  "design": "opal-heart",
+  "format": "RGBA PNG",
+  "tierStageCounts": {
+    "bronze": 1,
+    "silver": 2,
+    "gold": 3,
+    "platinum": 4,
+    "diamond": 1
+  },
+  "sizes": [
+    1024,
+    512,
+    256,
+    128,
+    64
+  ],
+  "assets": [
+    {
+      "tier": "bronze",
+      "stage": 1,
+      "pearlCount": 1,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/bronze-1.png",
+        "512": "/images/passport/tiers/opal-heart/512/bronze-1.png",
+        "256": "/images/passport/tiers/opal-heart/256/bronze-1.png",
+        "128": "/images/passport/tiers/opal-heart/128/bronze-1.png",
+        "64": "/images/passport/tiers/opal-heart/64/bronze-1.png"
+      }
+    },
+    {
+      "tier": "silver",
+      "stage": 1,
+      "pearlCount": 1,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/silver-1.png",
+        "512": "/images/passport/tiers/opal-heart/512/silver-1.png",
+        "256": "/images/passport/tiers/opal-heart/256/silver-1.png",
+        "128": "/images/passport/tiers/opal-heart/128/silver-1.png",
+        "64": "/images/passport/tiers/opal-heart/64/silver-1.png"
+      }
+    },
+    {
+      "tier": "silver",
+      "stage": 2,
+      "pearlCount": 2,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/silver-2.png",
+        "512": "/images/passport/tiers/opal-heart/512/silver-2.png",
+        "256": "/images/passport/tiers/opal-heart/256/silver-2.png",
+        "128": "/images/passport/tiers/opal-heart/128/silver-2.png",
+        "64": "/images/passport/tiers/opal-heart/64/silver-2.png"
+      }
+    },
+    {
+      "tier": "gold",
+      "stage": 1,
+      "pearlCount": 1,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/gold-1.png",
+        "512": "/images/passport/tiers/opal-heart/512/gold-1.png",
+        "256": "/images/passport/tiers/opal-heart/256/gold-1.png",
+        "128": "/images/passport/tiers/opal-heart/128/gold-1.png",
+        "64": "/images/passport/tiers/opal-heart/64/gold-1.png"
+      }
+    },
+    {
+      "tier": "gold",
+      "stage": 2,
+      "pearlCount": 2,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/gold-2.png",
+        "512": "/images/passport/tiers/opal-heart/512/gold-2.png",
+        "256": "/images/passport/tiers/opal-heart/256/gold-2.png",
+        "128": "/images/passport/tiers/opal-heart/128/gold-2.png",
+        "64": "/images/passport/tiers/opal-heart/64/gold-2.png"
+      }
+    },
+    {
+      "tier": "gold",
+      "stage": 3,
+      "pearlCount": 3,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/gold-3.png",
+        "512": "/images/passport/tiers/opal-heart/512/gold-3.png",
+        "256": "/images/passport/tiers/opal-heart/256/gold-3.png",
+        "128": "/images/passport/tiers/opal-heart/128/gold-3.png",
+        "64": "/images/passport/tiers/opal-heart/64/gold-3.png"
+      }
+    },
+    {
+      "tier": "platinum",
+      "stage": 1,
+      "pearlCount": 1,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/platinum-1.png",
+        "512": "/images/passport/tiers/opal-heart/512/platinum-1.png",
+        "256": "/images/passport/tiers/opal-heart/256/platinum-1.png",
+        "128": "/images/passport/tiers/opal-heart/128/platinum-1.png",
+        "64": "/images/passport/tiers/opal-heart/64/platinum-1.png"
+      }
+    },
+    {
+      "tier": "platinum",
+      "stage": 2,
+      "pearlCount": 2,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/platinum-2.png",
+        "512": "/images/passport/tiers/opal-heart/512/platinum-2.png",
+        "256": "/images/passport/tiers/opal-heart/256/platinum-2.png",
+        "128": "/images/passport/tiers/opal-heart/128/platinum-2.png",
+        "64": "/images/passport/tiers/opal-heart/64/platinum-2.png"
+      }
+    },
+    {
+      "tier": "platinum",
+      "stage": 3,
+      "pearlCount": 3,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/platinum-3.png",
+        "512": "/images/passport/tiers/opal-heart/512/platinum-3.png",
+        "256": "/images/passport/tiers/opal-heart/256/platinum-3.png",
+        "128": "/images/passport/tiers/opal-heart/128/platinum-3.png",
+        "64": "/images/passport/tiers/opal-heart/64/platinum-3.png"
+      }
+    },
+    {
+      "tier": "platinum",
+      "stage": 4,
+      "pearlCount": 4,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/platinum-4.png",
+        "512": "/images/passport/tiers/opal-heart/512/platinum-4.png",
+        "256": "/images/passport/tiers/opal-heart/256/platinum-4.png",
+        "128": "/images/passport/tiers/opal-heart/128/platinum-4.png",
+        "64": "/images/passport/tiers/opal-heart/64/platinum-4.png"
+      }
+    },
+    {
+      "tier": "diamond",
+      "stage": 1,
+      "pearlCount": 1,
+      "images": {
+        "1024": "/images/passport/tiers/opal-heart/diamond-1.png",
+        "512": "/images/passport/tiers/opal-heart/512/diamond-1.png",
+        "256": "/images/passport/tiers/opal-heart/256/diamond-1.png",
+        "128": "/images/passport/tiers/opal-heart/128/diamond-1.png",
+        "64": "/images/passport/tiers/opal-heart/64/diamond-1.png"
+      }
+    }
+  ]
+}

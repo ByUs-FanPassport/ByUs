@@ -94,7 +94,8 @@ describe("approved fanpage", () => {
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });
     expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "찐팬 인증", "래플 응모"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
-    expect(within(menu).getByRole("button", { name: /리더보드/ })).toBeDisabled();
+    expect(within(menu).getByRole("button", { name: "리더보드" })).toBeDisabled();
+    expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 등록된 공지가 없어요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "인증 미션 보기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();

@@ -4,7 +4,7 @@ import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, type CSSProperties } from "react";
-import { ArrowRight, BadgeCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, BookOpen } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { AuthIntentLink } from "./auth-intent-link";
 import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
@@ -19,6 +19,7 @@ import { useFanpageResource } from "@/features/fanpage/ui/use-fanpage-resource";
 import { CelebrityMiniCalendar } from "@/features/fanpage/ui/celebrity-calendar";
 import { LeaderboardPanel } from "@/features/fanpage/ui/leaderboard-panel";
 import { FanActivityPanel } from "@/features/fanpage/ui/fan-activity-panel";
+import { FanScoreProgress } from "@/features/fanpage/ui/fan-score-progress";
 import { CertificationPanel } from "@/features/certification/ui/certification-panel";
 import { CreatorLivePanel, NoticePanel, RafflePanel, RecentLive } from "@/features/fanpage/ui/home-panels";
 import { InstagramRecentActivity } from "./instagram-recent-activity";
@@ -72,12 +73,19 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
         <picture className={styles.heroPicture}><source media="(min-width: 48rem)" srcSet={desktop.srcSet} sizes={desktop.sizes} /><img {...mobile} alt={celebrity.image.alt} /></picture><div className={styles.scrim} aria-hidden="true" />
         <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><p>{ko ? "최근 활동과 LIVE 소식을 한곳에서" : "Recent activity and LIVE updates, together."}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabels[social.platform]}, ${ko ? "새 창" : "new window"}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabels[social.platform]}</span></a>; })}</div><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /></div>
       </section>
-      <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => value === "leaderboard" && !(fanpage.state.status === "ready" && fanpage.state.data.leaderboardAvailable) ? <button key={value} disabled aria-describedby="leaderboard-lock-hint">{labels[locale][value]}<small>{ko ? "집계 중" : "Counting"}</small></button> : <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>
+      <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => value === "leaderboard" && !(fanpage.state.status === "ready" && fanpage.state.data.leaderboardAvailable) ? <button key={value} disabled aria-describedby="leaderboard-lock-hint">{labels[locale][value]}</button> : <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>
       <span id="leaderboard-lock-hint" className={styles.srOnly}>{ko ? "ByUs 패스포트 보유 팬 501명부터 리더보드가 열려요." : "Leaderboard opens at 501 ByUs Passport holders."}</span>
-      <section className={styles.fanbar} aria-label={ko ? "내 팬 활동" : "My fan activity"}>
+      <section className={`${styles.fanbar} ${passport ? styles.ownedFanbar : ""}`} aria-label={ko ? "내 팬 활동" : "My fan activity"}>
         {!auth.ready || (auth.authenticated && my.state.status === "loading") ? <p role="status">{ko ? "내 팬 활동을 확인하고 있어요." : "Loading your fan activity."}</p> : auth.authenticated && my.state.status === "error" ? <p role="alert">{ko ? "내 팬 활동을 불러오지 못했어요." : "Couldn't load your fan activity."} <button onClick={my.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : passport ? <>
-          <div className={styles.fanIdentity}>{portrait(48)}<strong>{nickname ?? (ko ? "내 팬 활동" : "My activity")}</strong><span className={styles.tier} data-tier={passport.tier}>{passport.tier === "Bronze" ? <Image src="/images/passport/tiers/bronze.png" width={24} height={24} alt="" /> : <BadgeCheck size={20} aria-hidden="true" />}{ko ? tierLabels[passport.tier] : passport.tier}</span></div>
-          <div className={styles.progress}><div><span>{passport.remainingToNextTier ? (ko ? "다음 등급까지" : "To next tier") : (ko ? "최고 등급 달성" : "Top tier reached")} {passport.remainingToNextTier > 0 && <strong>{passport.remainingToNextTier}{ko ? "점" : " points"}</strong>}</span><span>{passport.score}{ko ? "점" : " points"}</span></div><progress value={passport.score} max={Math.max(1, passport.score + passport.remainingToNextTier)} aria-label={ko ? "팬 등급 진행도" : "Fan tier progress"} /></div><Link className={styles.pillButton} href={`/passports/${passport.id}?locale=${locale}`}>{ko ? "내 패스포트" : "My Passport"}<ArrowRight aria-hidden="true" /></Link>
+          <div className={styles.fanIdentity}>{portrait(48)}<strong>{nickname ?? (ko ? "내 팬 활동" : "My activity")}</strong></div>
+          <span className={styles.tier} data-tier={passport.tier}>{passport.tier === "Bronze" ? <Image src="/images/passport/tiers/bronze.png" width={32} height={32} alt="" /> : <BadgeCheck size={28} aria-hidden="true" />}{ko ? tierLabels[passport.tier] : passport.tier}</span>
+          <div className={styles.fanProgress}>
+            <div className={styles.progressHeading}>
+              <span>{passport.tier === "Diamond" ? (ko ? "최고 등급 달성" : "Top tier reached") : <>{ko ? "다음 등급까지" : "To next tier"} <strong>{passport.remainingToNextTier.toLocaleString(ko ? "ko-KR" : "en-US")}{ko ? "점" : " points"}</strong></>}</span>
+              <Link className={styles.passportLink} href={`/passports/${passport.id}?locale=${locale}`}><BookOpen aria-hidden="true" />{ko ? "내 패스포트" : "My Passport"}<ArrowRight aria-hidden="true" /></Link>
+            </div>
+            <FanScoreProgress key={passport.id} passport={passport} locale={locale} />
+          </div>
         </> : <><div><strong>{ko ? `${celebrity.name} 팬 인증하고, 함께한 순간을 모아 보세요.` : `Verify your ${celebrity.name} fandom and collect your moments.`}</strong><p>{ko ? "퀴즈로 패스포트를 만들고 팬 활동을 시작하세요." : "Create a Passport with a quiz and start your fan journey."}</p></div>{verifyLink}</>}
       </section>
       <div id="celebrity-content" className={styles.content}>
