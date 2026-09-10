@@ -63,7 +63,8 @@ function calendarPayload(events: unknown[] = [], month = currentCalendarMonth())
 }
 
 function summaryPayload(passports: unknown[] = []) {
-  return { summary: { profile: { nickname: "별빛팬" }, creators: passports.length ? [{ celebrity: { slug: "kara", name: "KARA", image: kara.image.url }, relationship: "passport", passport: { id: ownedPassport.id, tier: "Silver", score: 8, remainingToNextTier: 2 }, ticketBalance: 3, firstReaction: null }] : [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: passports.length, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 } };
+  const supplied = passports[0] as { stageProgress?: unknown } | undefined;
+  return { summary: { profile: { nickname: "별빛팬" }, creators: passports.length ? [{ celebrity: { slug: "kara", name: "KARA", image: kara.image.url }, relationship: "passport", passport: { id: ownedPassport.id, tier: "Silver", score: 8, remainingToNextTier: 2, ...(supplied?.stageProgress ? { stageProgress: supplied.stageProgress } : {}) }, ticketBalance: 3, firstReaction: null }] : [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: passports.length, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 } };
 }
 function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffles = [] }: { notices?: unknown[]; passports?: unknown[]; calendarEvents?: unknown[]; raffles?: unknown[] } = {}) {
   const request = vi.fn(async (input: RequestInfo | URL) => {
@@ -122,7 +123,25 @@ describe("approved fanpage", () => {
     expect(screen.getByText("2점")).toBeInTheDocument();
     expect(screen.queryByText("87점")).not.toBeInTheDocument();
     expect(fetcher.mock.calls.filter(([url]) => String(url).includes("/api/me/summary"))).toHaveLength(1);
+    expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
     expect(fetcher.mock.calls.filter(([url]) => String(url).includes("/api/passports"))).toHaveLength(0);
+  });
+  it("uses this celebrity's server stage for its badge and nearest-stage progress", async () => {
+    authenticated = true;
+    const stageProgress = {
+      policyVersion: 2,
+      current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 },
+      next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 },
+      remaining: 7,
+      progressPercent: 53,
+    };
+    stubHubFetch({ passports: [{ ...ownedPassport, stageProgress }] });
+    const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
+    expect(await screen.findByText("실버 1")).toBeInTheDocument();
+    expect(screen.getAllByText("실버 2까지").length).toBeGreaterThan(0);
+    expect(screen.getByText("7점")).toBeInTheDocument();
+    expect([...view.container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-1.png"))).toBe(true);
+    expect(screen.getByRole("progressbar", { name: "팬 등급 진행도" })).toHaveAttribute("value", "53");
   });
   it("clears the previous owner's identity immediately during account changes", async () => {
     authenticated = true;

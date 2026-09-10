@@ -182,7 +182,9 @@
 .ownedPassportLink h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; text-wrap: balance; }
 .ownedPassportArtwork { position: relative; overflow: hidden; width: min(88%, 300px); aspect-ratio: 3 / 2; justify-self: center; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); transition: transform 240ms cubic-bezier(.2,0,0,1); }
 .ownedPassportArtwork img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.passportValue { color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.5; text-align: center; }
+.passportValue { display:flex; min-width:0; align-items:center; justify-content:center; gap:6px; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.5; text-align: center; }
+.passportValue img { flex:0 0 auto; object-fit:contain; }
+.passportValue span { min-width:0; overflow-wrap:anywhere; }
 .passportUtilityRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .passportUtilityRowSingle { justify-content: flex-end; }
 .passportControls { display: grid; width: min(176px, 100%); min-width: 0; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; }

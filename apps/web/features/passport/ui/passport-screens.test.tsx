@@ -43,6 +43,23 @@ describe("passport fan screens", () => {
     expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
   });
 
+  it("shows the server stage and committed badge asset in the opted-in collection", async () => {
+    const staged = { ...passport, score: { ...passport.score, stageProgress: {
+      policyVersion: 2,
+      current: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 },
+      next: { key: "gold-1", tier: "Gold", subdivision: 1, rank: 4, minimumScore: 50 },
+      remaining: 12,
+      progressPercent: 40,
+    } } };
+    const fetcher = vi.fn(async () => Response.json({ passports: [staged] }));
+    vi.stubGlobal("fetch", fetcher);
+    const { container } = render(<PassportCollectionScreen />);
+
+    expect(await screen.findByText("실버 2")).toBeInTheDocument();
+    expect([...container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-2.png"))).toBe(true);
+    expect(fetcher).toHaveBeenCalledWith("/api/passports?locale=ko&tierStages=1", expect.any(Object));
+  });
+
   it("loads HTTPS collection photos directly while retaining optimization for local photos", async () => {
     const external = { ...passport, id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", celebrity: {
       slug: "xin", name: "엑신", image: {
@@ -271,6 +288,35 @@ describe("passport fan screens", () => {
       "href",
       `/benefits/${detail.nextBenefit.id}?locale=ko`,
     );
+  });
+
+  it("shows nearest-stage progress and keeps the next tier goal in Passport details", async () => {
+    const stageProgress = {
+      policyVersion: 2,
+      current: { key: "gold-2", tier: "Gold", subdivision: 2, rank: 5, minimumScore: 70 },
+      next: { key: "gold-3", tier: "Gold", subdivision: 3, rank: 6, minimumScore: 95 },
+      remaining: 15,
+      progressPercent: 40,
+    };
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => String(input) === "/api/me/avatar"
+      ? new Response(null, { status: 503 })
+      : Response.json({ passport: {
+        ...passport,
+        score: { points: 80, level: "Gold", stageProgress },
+        display: { ...passport.display, level: "골드" },
+        stamps: [], activities: [],
+        progress: { currentScore: 80, currentLevel: "Gold", nextLevel: "Platinum", nextThreshold: 120, remainingPoints: 40, percent: 66, maxed: false },
+        nextBenefit: null,
+      } }));
+    vi.stubGlobal("fetch", fetcher);
+    const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByText("골드 2 → 골드 3")).toBeInTheDocument();
+    expect(screen.getByText("15 점 남음")).toBeInTheDocument();
+    expect(screen.getByText("플래티넘 등급까지 40점")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "다음 등급: 골드 3" })).toHaveAttribute("value", "40");
+    expect([...container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/128/gold-2.png"))).toBe(true);
+    expect(fetcher.mock.calls.some(([url]) => String(url) === `/api/passports/${passport.id}?locale=ko&tierStages=1`)).toBe(true);
   });
 
   it("links the masked Stamp transaction to the validated GIWA Sepolia Explorer URL", async () => {

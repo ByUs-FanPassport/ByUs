@@ -15,6 +15,7 @@ const headers = { "cache-control": "no-store", vary: "Authorization" } as const;
 
 function error(status: 401 | 403 | 404 | 503, code: string): Response { return Response.json({ error: { code } }, { status, headers }); }
 function locale(request: Request): PassportLocale | null { const parsed = passportLocaleSchema.safeParse(new URL(request.url).searchParams.get("locale") ?? "ko"); return parsed.success ? parsed.data : null; }
+function stageOption(request: Request): { includeStages?: boolean } { return new URL(request.url).searchParams.get("tierStages") === "1" ? { includeStages: true } : {}; }
 async function owner(request: Request, dependencies: PassportReadRouteDependencies): Promise<AuthorizedFan | Response> {
   try { return await dependencies.authorize(request.headers.get("authorization") ?? ""); }
   catch (caught) {
@@ -27,7 +28,7 @@ export function createPassportCollectionHandler(dependencies: PassportReadRouteD
   return async (request: Request): Promise<Response> => {
     const selectedLocale = locale(request); if (!selectedLocale) return error(404, "NOT_FOUND");
     const fan = await owner(request, dependencies); if (fan instanceof Response) return fan;
-    try { return Response.json({ passports: await dependencies.repository.findCollection({ appUserId: fan.appUserId, locale: selectedLocale }) }, { headers }); }
+    try { return Response.json({ passports: await dependencies.repository.findCollection({ appUserId: fan.appUserId, locale: selectedLocale, ...stageOption(request) }) }, { headers }); }
     catch { return error(503, "PASSPORTS_UNAVAILABLE"); }
   };
 }
@@ -42,6 +43,7 @@ export function createPassportDetailHandler(dependencies: PassportReadRouteDepen
         id: parsed.data,
         appUserId: fan.appUserId,
         locale: selectedLocale,
+        ...stageOption(request),
       });
       if (!passport) return error(404, "NOT_FOUND");
       return Response.json({ passport }, { headers });

@@ -48,4 +48,48 @@ describe("fan score details", () => {
     expect(screen.getByRole("progressbar")).toHaveAttribute("value", "1");
     expect(screen.getByRole("progressbar")).toHaveAttribute("max", "1");
   });
+
+  it("uses the server stage segment while retaining the next major-tier goal in details", () => {
+    render(<FanScoreProgress passport={{
+      ...passport,
+      tier: "Gold",
+      score: 80,
+      remainingToNextTier: 40,
+      stageProgress: {
+        policyVersion: 2,
+        current: { key: "gold-2", tier: "Gold", subdivision: 2, rank: 5, minimumScore: 70 },
+        next: { key: "gold-3", tier: "Gold", subdivision: 3, rank: 6, minimumScore: 95 },
+        remaining: 15,
+        progressPercent: 40,
+      },
+    }} locale="ko" />);
+    const progress = screen.getByRole("progressbar", { name: "팬 등급 진행도" });
+    expect(progress).toHaveAttribute("value", "40");
+    expect(progress).toHaveAttribute("max", "100");
+    expect(progress).toHaveAttribute("aria-valuetext", "골드 3까지: 15점 남음. 현재 점수: 80점. 플래티넘까지 40점");
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("tooltip")).toHaveTextContent("골드 3까지15점 남음");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("현재 점수80점");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("등급 목표플래티넘까지 40점");
+  });
+
+  it("omits a duplicate tier goal when the nearest stage is the next tier", () => {
+    render(<FanScoreProgress passport={{
+      ...passport,
+      tier: "Platinum",
+      score: 215,
+      remainingToNextTier: 35,
+      stageProgress: {
+        policyVersion: 2,
+        current: { key: "platinum-4", tier: "Platinum", subdivision: 4, rank: 10, minimumScore: 215 },
+        next: { key: "diamond-1", tier: "Diamond", subdivision: 1, rank: 11, minimumScore: 250 },
+        remaining: 35,
+        progressPercent: 0,
+      },
+    }} locale="ko" />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("tooltip")).toHaveTextContent("다이아몬드까지35점 남음");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("현재 점수215점");
+    expect(screen.queryByText("등급 목표")).not.toBeInTheDocument();
+  });
 });

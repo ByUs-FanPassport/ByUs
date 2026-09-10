@@ -502,19 +502,20 @@ describe("canonical 03 guest home", () => {
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {
     privy.authenticated = true;
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+    const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         summary: {
           profile: { nickname: "카밀리아" },
-          creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: null }],
+          creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35, stageProgress: { policyVersion: 2, current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 }, next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 }, remaining: 15, progressPercent: 0 } }, ticketBalance: 4, firstReaction: null }],
           live: { upcoming: [{ id: "22222222-2222-4222-8222-222222222222", slug: "kara-live", title: "KARA LIVE", startsAt: "2026-07-31T11:00:00.000Z", effectiveStatus: "scheduled", attended: false }], history: [] },
           rewards: { availableCount: 0, entries: 0, items: [] },
           collection: { passportCount: 1, stampCount: 2, collectibleCount: 0, recent: [] },
           unreadNotificationCount: 0,
         },
       }),
-    }));
+    });
+    vi.stubGlobal("fetch", fetcher);
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
@@ -522,7 +523,9 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("link", { name: "엘리나와 함께 만나는 뱅크시" })).toHaveAttribute("href", "/c/elina?locale=ko");
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(2);
-    expect(screen.getAllByText("실버 · 15점")).toHaveLength(2);
+    expect(screen.getAllByText("실버 1 · 15점")).toHaveLength(2);
+    expect([...document.querySelectorAll("img")].filter((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-1.png"))).toHaveLength(2);
+    expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
   });
 

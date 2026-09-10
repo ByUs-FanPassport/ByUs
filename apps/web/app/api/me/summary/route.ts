@@ -20,7 +20,7 @@ export async function GET(request: Request): Promise<Response> {
       verifier: createPrivyNodeAccessVerifier({ appId: environment.PRIVY_APP_ID, appSecret: environment.PRIVY_APP_SECRET, appEnvironment: environment.PRIVY_APP_ENVIRONMENT, testAccountLoginEnabled: environment.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: environment.PRIVY_APPLE_LOGIN_ENABLED }),
       repository: createSupabaseFanAuthRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }, database),
     });
-    const summary = await createSupabaseMySummaryRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }, database).get({ appUserId: fan.appUserId, locale, asOf: new Date() });
+    const summary = await createSupabaseMySummaryRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }, database).get({ appUserId: fan.appUserId, locale, asOf: new Date(), ...(new URL(request.url).searchParams.get("tierStages") === "1" ? { includeStages: true } : {}) });
     return Response.json({ summary }, { headers });
   } catch (error) {
     if (error instanceof AuthError) return Response.json({ error: { code: "UNAUTHENTICATED" } }, { status: error.status, headers });

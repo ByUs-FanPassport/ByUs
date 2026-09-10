@@ -18,6 +18,19 @@ function dependencies() {
 function request(path: string, token = "Bearer token") { return new Request(`https://byus.kr${path}`, { headers: { authorization: token } }); }
 
 describe("G4 owner read HTTP handlers", () => {
+  it("enables stage projection only for the exact opt-in and keeps authenticated owner scope", async () => {
+    const deps = dependencies();
+    await createPassportCollectionHandler(deps)(request("/api/passports?tierStages=1&app_user_id=other"));
+    await createPassportDetailHandler(deps)(request(`/api/passports/${passportId}?tierStages=1`), { passportId });
+    expect(deps.repository.findCollection).toHaveBeenLastCalledWith({ appUserId: "owner", locale: "ko", includeStages: true });
+    expect(deps.repository.findPassport).toHaveBeenLastCalledWith({ id: passportId, appUserId: "owner", locale: "ko", includeStages: true });
+    await createPassportCollectionHandler(deps)(request("/api/passports?tierStages=true"));
+    expect(deps.repository.findCollection).toHaveBeenLastCalledWith({ appUserId: "owner", locale: "ko" });
+    const denied = dependencies();
+    denied.authorize.mockRejectedValue(new AuthError("AUTHENTICATION_REQUIRED", 401, "denied"));
+    expect((await createPassportCollectionHandler(denied)(request("/api/passports?tierStages=1"))).status).toBe(401);
+    expect(denied.repository.findCollection).not.toHaveBeenCalled();
+  });
   it("returns collection/detail/stamp DTOs with no-store and canonical authenticated owner", async () => {
     const deps = dependencies();
     const collection = await createPassportCollectionHandler(deps)(request("/api/passports?locale=en&app_user_id=attacker&wallet=secret"));

@@ -31,6 +31,8 @@ import {
   type PassportStampRecord,
 } from "../features/passport/ui/passport-stamp-artwork";
 import { FanSectionHeader } from "./fan-ui/fan-heading";
+import { FanTierBadge } from "../features/rewards/ui/fan-tier-badge";
+import { fanStageLabel } from "../features/rewards/domain/fan-stage";
 import styles from "./guest-home.module.css";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
@@ -68,10 +70,11 @@ function formatPassportTitle(name: string, locale: ContentLocale) {
   return locale === "ko" ? `${name} 패스포트` : `${name} Fan Passport`;
 }
 
-function formatPassportValue(tier: string, score: number, locale: ContentLocale) {
+function formatPassportValue(tier: string, score: number, locale: ContentLocale, stage?: NonNullable<MySummary["creators"][number]["passport"]>["stageProgress"]) {
+  const tierName = stage ? fanStageLabel(locale, stage.current) : formatPassportTier(tier, locale);
   return locale === "ko"
-    ? `${formatPassportTier(tier, locale)} · ${score}점`
-    : `${tier} · ${score} Score`;
+    ? `${tierName} · ${score}점`
+    : `${tierName} · ${score} Score`;
 }
 
 function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
@@ -118,7 +121,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
     if (selected) owner.selectPassport(selected.id);
   };
   const passportTitle = creator ? formatPassportTitle(creator.celebrity.name, locale) : "";
-  const passportValue = creator?.passport ? formatPassportValue(creator.passport.tier, creator.passport.score, locale) : "";
+  const passportValue = creator?.passport ? formatPassportValue(creator.passport.tier, creator.passport.score, locale, creator.passport.stageProgress ?? undefined) : "";
   return (
     <section className={styles.signedInSummary} aria-labelledby={headingId}>
       <div className={styles.signedInGreeting}><h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2></div>
@@ -138,7 +141,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
               />
             </span>
             <h3>{passportTitle}</h3>
-            <strong className={styles.passportValue}>{passportValue}</strong>
+            <strong className={styles.passportValue}><FanTierBadge tier={creator.passport.tier} stageKey={creator.passport.stageProgress?.current.key} locale={locale} size={32}/><span>{passportValue}</span></strong>
           </Link>
           <div className={`${styles.passportUtilityRow} ${passportCount === 1 ? styles.passportUtilityRowSingle : ""}`}>
           {passportCount > 1 ? <div className={styles.passportControls} aria-label={locale === "ko" ? "패스포트 선택" : "Choose a Fan Passport"}>

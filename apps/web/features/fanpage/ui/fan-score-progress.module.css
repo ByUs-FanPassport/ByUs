@@ -8,3 +8,6 @@
 .tooltip[hidden] { display: none; }
 .tooltip::after { position: absolute; top: 100%; left: calc(50% - 5px); width: 10px; height: 10px; border-right: 1px solid #eee5eb; border-bottom: 1px solid #eee5eb; background: #fff; content: ""; transform: translateY(-5px) rotate(45deg); }
 .tooltip strong { color: #d90065; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.stageDetail,.currentDetail,.majorDetail { display: grid; gap: 2px; }
+.stageDetail { padding-bottom: 8px; border-bottom: 1px solid #eee5eb; }
+.stageDetail strong,.currentDetail strong,.majorDetail strong { font-size: 15px; }

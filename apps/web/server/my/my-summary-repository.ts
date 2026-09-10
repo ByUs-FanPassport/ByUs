@@ -8,13 +8,13 @@ interface RpcClient {
 }
 
 export interface MySummaryRepository {
-  get(input: { appUserId: string; locale: "ko" | "en"; asOf: Date }): Promise<MySummary>;
+  get(input: { appUserId: string; locale: "ko" | "en"; asOf: Date; includeStages?: boolean }): Promise<MySummary>;
 }
 
 export class SupabaseMySummaryRepository implements MySummaryRepository {
   constructor(private readonly client: RpcClient) {}
-  async get(input: { appUserId: string; locale: "ko" | "en"; asOf: Date }): Promise<MySummary> {
-    const { data, error } = await this.client.rpc("get_owned_my_fan_activity", {
+  async get(input: { appUserId: string; locale: "ko" | "en"; asOf: Date; includeStages?: boolean }): Promise<MySummary> {
+    const { data, error } = await this.client.rpc(input.includeStages ? "get_owned_my_fan_activity_with_stages" : "get_owned_my_fan_activity", {
       p_app_user_id: input.appUserId,
       p_locale: input.locale,
       p_as_of: input.asOf.toISOString(),

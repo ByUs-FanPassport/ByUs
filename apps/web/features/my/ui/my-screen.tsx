@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, BadgeCheck, Bell, BookOpen, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -22,6 +22,8 @@ import { levelLabel } from "../../passport/domain/passport-read-model";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
+import { fanStageLabel } from "../../rewards/domain/fan-stage";
+import { FanTierBadge } from "../../rewards/ui/fan-tier-badge";
 import { FanSurface, fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
 import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
 import { useAvatar } from "../../profile/ui/use-avatar";
@@ -86,7 +88,7 @@ const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> =
 export function MyScreen({ locale }: { locale: FanLocale }) {
   const auth = usePrivy();
   const { ready, authenticated } = auth;
-  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseSummaryResponse, auth);
+  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}&tierStages=1`, parseSummaryResponse, auth);
   const avatarResource = useAvatar();
   const state = resource.state;
   const t = copy[locale];
@@ -162,7 +164,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
       <SectionTitle title={t.creators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
       {summary.creators.length ? <div className={styles.favoriteSelector} role="group" aria-label={t.creators}>{summary.creators.map((creator) =>
         <button type="button" aria-pressed={selected?.celebrity.slug === creator.celebrity.slug} onClick={() => setSelectedSlug(creator.celebrity.slug)} key={creator.celebrity.slug}>
-          <Image src={creator.celebrity.image} alt="" width={48} height={48}/><span><strong>{creator.celebrity.name}</strong><small>{creator.passport ? levelLabel(locale, creator.passport.tier) : t.firstReaction} · {t.tickets} {creator.ticketBalance}</small></span>
+          <Image src={creator.celebrity.image} alt="" width={48} height={48}/><span><strong>{creator.celebrity.name}</strong><small>{creator.passport ? creator.passport.stageProgress ? fanStageLabel(locale, creator.passport.stageProgress.current) : levelLabel(locale, creator.passport.tier) : t.firstReaction} · {t.tickets} {creator.ticketBalance}</small></span>
         </button>)}</div>
         : <Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}
     </FanSurface>
@@ -270,9 +272,11 @@ export function scheduleRaffleBoundary(
 function FanGrade({ creator, locale }: { creator: PassportCreator; locale: FanLocale }) {
   const t = copy[locale];
   const progress = fanTierProgress(creator.passport);
+  const stage = creator.passport.stageProgress;
+  const currentLabel = stage ? fanStageLabel(locale, stage.current) : levelLabel(locale, creator.passport.tier);
   return <div className={styles.fanGrade}>
-    <div className={styles.gradeIdentity}>{creator.passport.tier === "Bronze" ? <Image src="/images/passport/tiers/bronze.png" width={88} height={88} alt=""/> : <span className={styles.gradeIcon} data-tier={creator.passport.tier}><BadgeCheck aria-hidden="true"/></span>}<div><span>{creator.celebrity.name}</span><strong>{levelLabel(locale, creator.passport.tier)}</strong><p>{t.tierHelp}</p></div></div>
-    <div className={styles.tierScore}><div><span>{locale === "ko" ? "팬 점수" : "Fan Score"}</span><strong>{creator.passport.score}{progress.nextThreshold !== null ? ` / ${progress.nextThreshold}` : ""}{locale === "ko" ? "점" : ""}</strong></div><progress value={progress.percent} max={100} aria-label={locale === "ko" ? "다음 팬등급 진행률" : "Progress to next fan tier"}>{progress.percent}%</progress><div><span>{levelLabel(locale, creator.passport.tier)}</span><strong>{progress.maxed ? t.highestTier : locale === "ko" ? `${levelLabel(locale, progress.nextTier)}까지 ${progress.remaining}점` : `${progress.remaining} points to ${levelLabel(locale, progress.nextTier)}`}</strong></div></div>
+    <div className={styles.gradeIdentity}><FanTierBadge tier={creator.passport.tier} stageKey={stage?.current.key} locale={locale} size={88}/><div><span>{creator.celebrity.name}</span><strong>{currentLabel}</strong><p>{t.tierHelp}</p></div></div>
+    <div className={styles.tierScore}><div><span>{locale === "ko" ? "팬 점수" : "Fan Score"}</span><strong>{creator.passport.score}{stage?.next ? ` / ${stage.next.minimumScore}` : !stage && progress.nextThreshold !== null ? ` / ${progress.nextThreshold}` : ""}{locale === "ko" ? "점" : ""}</strong></div><progress value={stage?.progressPercent ?? progress.percent} max={100} aria-label={locale === "ko" ? "다음 팬등급 진행률" : "Progress to next fan tier"}>{stage?.progressPercent ?? progress.percent}%</progress><div><span>{currentLabel}</span><strong>{stage ? stage.next ? (locale === "ko" ? `${fanStageLabel(locale, stage.next)}까지 ${stage.remaining}점` : `${stage.remaining} points to ${fanStageLabel(locale, stage.next)}`) : t.highestTier : progress.maxed ? t.highestTier : locale === "ko" ? `${levelLabel(locale, progress.nextTier)}까지 ${progress.remaining}점` : `${progress.remaining} points to ${levelLabel(locale, progress.nextTier)}`}</strong></div>{stage && stage.next?.tier === stage.current.tier && !progress.maxed ? <p className={styles.majorGoal}>{locale === "ko" ? `${levelLabel(locale, progress.nextTier)} 등급까지 ${progress.remaining}점` : `${progress.remaining} points to ${levelLabel(locale, progress.nextTier)}`}</p> : null}</div>
   </div>;
 }
 

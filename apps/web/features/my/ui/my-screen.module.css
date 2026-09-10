@@ -218,6 +218,7 @@
 .tierScore progress::-webkit-progress-bar { background:var(--color-line-subtle); }
 .tierScore progress::-webkit-progress-value { border-radius:999px; background:var(--my-accent); }
 .tierScore progress::-moz-progress-bar { border-radius:999px; background:var(--my-accent); }
+.majorGoal { margin:2px 0 0; color:var(--color-muted); font-size:12px; line-height:1.45; text-align:right; overflow-wrap:anywhere; }
 .nextAction { display:grid; gap:var(--space-2); margin-block-start:var(--space-5); padding-block-start:var(--space-4); border-top:1px solid var(--color-line-subtle); }
 .nextAction>span { color:var(--color-muted); font-size:12px; }
 .nextAction p,.nextAction small { margin:0; color:var(--color-muted); font-size:13px; line-height:1.5; }

@@ -16,6 +16,18 @@ const stamp = { id: stampId, type: "knowledge", businessStatus: "issued", mint: 
 const activity = { id: activityId, type: "knowledge", occurredAt: "2026-07-21T01:00:00.000Z", points: 1, stampId, context };
 
 describe("SupabasePassportReadRepository", () => {
+  it("keeps major growth and benefits intact when requesting stage projections", async () => {
+    const stageProgress = { policyVersion: 2, current: { key: "gold-1", tier: "Gold", subdivision: 1, rank: 4, minimumScore: 50 }, next: { key: "gold-2", tier: "Gold", subdivision: 2, rank: 5, minimumScore: 70 }, remaining: 60, progressPercent: 0 };
+    const projected = { ...base, score: { points: 10, level: "Gold", stageProgress } };
+    const rpc = vi.fn().mockResolvedValueOnce({ data: [projected], error: null }).mockResolvedValueOnce({ data: [{ ...projected, nextBenefit: null, stamps: [], activities: [] }], error: null });
+    const repository = new SupabasePassportReadRepository({ rpc });
+    const owner = "40000000-0000-4000-8000-000000000001";
+    const collection = await repository.findCollection({ appUserId: owner, locale: "ko", includeStages: true });
+    const detail = await repository.findPassport({ id: passportId, appUserId: owner, locale: "ko", includeStages: true });
+    expect(collection[0].score.stageProgress).toEqual(stageProgress);
+    expect(detail).toMatchObject({ score: { stageProgress }, progress: { currentScore: 10, currentLevel: "Gold", nextLevel: "Platinum", remainingPoints: 110 }, nextBenefit: null });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["get_owned_passport_collection_with_stages", "get_owned_passport_detail_with_stages"]);
+  });
   it("uses only the three owner-scoped service RPCs and preserves RPC ordering", async () => {
     const rpc = vi.fn()
       .mockResolvedValueOnce({ data: [base], error: null })

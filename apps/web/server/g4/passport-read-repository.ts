@@ -8,8 +8,8 @@ import { parseStampDetail, type StampDetail } from "../../features/passport/doma
 import { attachPassportGrowth } from "./passport-growth";
 
 export interface PassportReadRepository {
-  findCollection(input: { appUserId: string; locale: PassportLocale }): Promise<PassportCollection>;
-  findPassport(input: { id: string; appUserId: string; locale: PassportLocale }): Promise<PassportDetail | null>;
+  findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection>;
+  findPassport(input: { id: string; appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportDetail | null>;
   findStamp(input: { id: string; appUserId: string; locale: PassportLocale }): Promise<StampDetail | null>;
 }
 
@@ -28,17 +28,17 @@ function oneRow(value: unknown): unknown | null {
 export class SupabasePassportReadRepository implements PassportReadRepository {
   constructor(readonly client: RpcClient) {}
 
-  async findCollection(input: { appUserId: string; locale: PassportLocale }): Promise<PassportCollection> {
+  async findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection> {
     const locale = passportLocaleSchema.parse(input.locale);
-    const { data, error } = await this.client.rpc("get_owned_passport_collection", { p_app_user_id: input.appUserId, p_locale: locale });
+    const { data, error } = await this.client.rpc(input.includeStages ? "get_owned_passport_collection_with_stages" : "get_owned_passport_collection", { p_app_user_id: input.appUserId, p_locale: locale });
     if (error) throw new Error("Passport collection query failed");
     try { return parsePassportCollection(data ?? [], locale); }
     catch { throw new Error("Passport collection projection is invalid"); }
   }
 
-  async findPassport(input: { id: string; appUserId: string; locale: PassportLocale }): Promise<PassportDetail | null> {
+  async findPassport(input: { id: string; appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportDetail | null> {
     const locale = passportLocaleSchema.parse(input.locale);
-    const { data, error } = await this.client.rpc("get_owned_passport_detail", { p_passport_id: input.id, p_app_user_id: input.appUserId, p_locale: locale });
+    const { data, error } = await this.client.rpc(input.includeStages ? "get_owned_passport_detail_with_stages" : "get_owned_passport_detail", { p_passport_id: input.id, p_app_user_id: input.appUserId, p_locale: locale });
     if (error) throw new Error("Passport detail query failed");
     const row = oneRow(data);
     if (row === null) return null;

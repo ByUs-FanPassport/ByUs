@@ -14,12 +14,15 @@ import { ReactionAction } from "@/features/reaction/ui/reaction-action";
 import { Avatar, AvatarPlaceholder } from "@/features/profile/ui/avatar";
 import { useAvatar } from "@/features/profile/ui/use-avatar";
 import { mySummarySchema } from "@/features/my/domain/my-summary";
+import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import { fanpageSummarySchema } from "@/features/fanpage/domain/community";
 import { useFanpageResource } from "@/features/fanpage/ui/use-fanpage-resource";
 import { CelebrityMiniCalendar } from "@/features/fanpage/ui/celebrity-calendar";
 import { LeaderboardPanel } from "@/features/fanpage/ui/leaderboard-panel";
 import { FanActivityPanel } from "@/features/fanpage/ui/fan-activity-panel";
 import { FanScoreProgress } from "@/features/fanpage/ui/fan-score-progress";
+import { FanTierBadge } from "@/features/rewards/ui/fan-tier-badge";
+import { fanStageLabel } from "@/features/rewards/domain/fan-stage";
 import { CertificationPanel } from "@/features/certification/ui/certification-panel";
 import { CreatorLivePanel, NoticePanel, RafflePanel, RecentLive } from "@/features/fanpage/ui/home-panels";
 import { InstagramRecentActivity } from "./instagram-recent-activity";
@@ -34,7 +37,6 @@ export type CelebrityFanTab = "home" | "certifications" | "raffles" | "leaderboa
 const mainTabs = ["home", "certifications", "raffles", "leaderboard"] as const;
 const labels = { ko: { home: "홈", certifications: "찐팬 인증", raffles: "래플 응모", leaderboard: "리더보드" }, en: { home: "Home", certifications: "Fan verification", raffles: "Raffles", leaderboard: "Leaderboard" } };
 const socialLabels = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", chzzk: "치지직" };
-const tierLabels = { Bronze: "브론즈", Silver: "실버", Gold: "골드", Platinum: "플래티넘", Diamond: "다이아몬드" };
 const parseSummary = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
 const parseFanpage = (body: unknown) => fanpageSummarySchema.parse(body);
 
@@ -42,13 +44,15 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const auth = usePrivy();
   const { ready, authenticated, getAccessToken } = auth;
   const ko = locale === "ko";
-  const my = useOwnedFanResource(`/api/me/summary?locale=${locale}`, parseSummary, auth);
+  const my = useOwnedFanResource(`/api/me/summary?locale=${locale}&tierStages=1`, parseSummary, auth);
   const avatar = useAvatar();
   const fanpage = useFanpageResource(`/api/celebrities/${celebrity.slug}/fanpage`, parseFanpage);
   const tab = initialTab === "benefits" ? "raffles" : initialTab;
   const creator = my.state.status === "ready" ? my.state.data.creators.find((item) => item.celebrity.slug === celebrity.slug) : undefined;
   const nickname = my.state.status === "ready" ? my.state.data.profile.nickname : null;
   const passport = creator?.passport;
+  const stage = passport?.stageProgress;
+  const stageName = stage ? fanStageLabel(locale, stage.current) : passport ? levelLabel(locale, passport.tier) : null;
   const ticketBalance = auth.authenticated && my.state.status === "ready" ? creator?.ticketBalance ?? 0 : null;
   const tabHref = (value: CelebrityFanTab) => `/c/${celebrity.slug}?tab=${value}&locale=${locale}#celebrity-content` as Route;
   const portrait = (size: number) => avatar.state.status === "ready" ? <Avatar avatar={avatar.state.avatar} imageUrl={avatar.state.imageUrl} label="" size={size} /> : <AvatarPlaceholder size={size} />;
@@ -78,10 +82,10 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
       <section className={`${styles.fanbar} ${passport ? styles.ownedFanbar : ""}`} aria-label={ko ? "내 팬 활동" : "My fan activity"}>
         {!auth.ready || (auth.authenticated && my.state.status === "loading") ? <p role="status">{ko ? "내 팬 활동을 확인하고 있어요." : "Loading your fan activity."}</p> : auth.authenticated && my.state.status === "error" ? <p role="alert">{ko ? "내 팬 활동을 불러오지 못했어요." : "Couldn't load your fan activity."} <button onClick={my.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : passport ? <>
           <div className={styles.fanIdentity}>{portrait(48)}<strong>{nickname ?? (ko ? "내 팬 활동" : "My activity")}</strong></div>
-          <span className={styles.tier} data-tier={passport.tier}>{passport.tier === "Bronze" ? <Image src="/images/passport/tiers/bronze.png" width={32} height={32} alt="" /> : <BadgeCheck size={28} aria-hidden="true" />}{ko ? tierLabels[passport.tier] : passport.tier}</span>
+          <span className={styles.tier} data-tier={passport.tier}><FanTierBadge tier={passport.tier} stageKey={stage?.current.key} locale={locale} size={32} />{stageName}</span>
           <div className={styles.fanProgress}>
             <div className={styles.progressHeading}>
-              <span>{passport.tier === "Diamond" ? (ko ? "최고 등급 달성" : "Top tier reached") : <>{ko ? "다음 등급까지" : "To next tier"} <strong>{passport.remainingToNextTier.toLocaleString(ko ? "ko-KR" : "en-US")}{ko ? "점" : " points"}</strong></>}</span>
+              <span>{stage ? stage.next ? <>{ko ? `${fanStageLabel(locale, stage.next)}까지` : `To ${fanStageLabel(locale, stage.next)}`} <strong>{stage.remaining.toLocaleString(ko ? "ko-KR" : "en-US")}{ko ? "점" : " points"}</strong></> : (ko ? "최고 단계 달성" : "Top stage reached") : passport.tier === "Diamond" ? (ko ? "최고 등급 달성" : "Top tier reached") : <>{ko ? "다음 등급까지" : "To next tier"} <strong>{passport.remainingToNextTier.toLocaleString(ko ? "ko-KR" : "en-US")}{ko ? "점" : " points"}</strong></>}</span>
               <Link className={styles.passportLink} href={`/passports/${passport.id}?locale=${locale}`}><BookOpen aria-hidden="true" />{ko ? "내 패스포트" : "My Passport"}<ArrowRight aria-hidden="true" /></Link>
             </div>
             <FanScoreProgress key={passport.id} passport={passport} locale={locale} />

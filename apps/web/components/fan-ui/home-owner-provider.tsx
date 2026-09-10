@@ -111,7 +111,7 @@ function HomeOwnerStateProvider({ creatorSlugs, locale, children, auth }: { crea
   const ownerId = auth.user?.id;
   const privateReady = auth.ready && (!auth.authenticated || Boolean(ownerId));
   const ownerAuth = { ready: privateReady, authenticated: auth.authenticated, user: ownerId ? { id: ownerId } : null, getAccessToken: auth.getAccessToken };
-  const summaryResource = useOwnedFanResource(auth.authenticated && ownerId ? `/api/me/summary?locale=${locale}` : null, parseHomeSummary, ownerAuth);
+  const summaryResource = useOwnedFanResource(auth.authenticated && ownerId ? `/api/me/summary?locale=${locale}&tierStages=1` : null, parseHomeSummary, ownerAuth);
   const personalization: PersonalizationState = !privateReady ? { status: "auth-loading" }
     : !auth.authenticated ? { status: "guest" }
     : summaryResource.state.status === "loading" ? { status: "authenticated-loading" }
@@ -122,7 +122,7 @@ function HomeOwnerStateProvider({ creatorSlugs, locale, children, auth }: { crea
     : [];
   const [requestedPassportId, setRequestedPassportId] = useState<string | null>(null);
   const selectedPassportId = requestedPassportId && passportIds.includes(requestedPassportId) ? requestedPassportId : passportIds[0] ?? null;
-  const passportResource = useOwnedFanResource(selectedPassportId ? `/api/passports/${encodeURIComponent(selectedPassportId)}?locale=${locale}` : null, parseHomePassportPreview, ownerAuth);
+  const passportResource = useOwnedFanResource(selectedPassportId ? `/api/passports/${encodeURIComponent(selectedPassportId)}?locale=${locale}&tierStages=1` : null, parseHomePassportPreview, ownerAuth);
   const passportPreview: OwnedState<PassportPreview> = passportResource.state.status === "ready"
     ? { status: "ready", data: passportResource.state.data }
     : passportResource.state.status === "loading" ? { status: "loading" } : { status: "error" };

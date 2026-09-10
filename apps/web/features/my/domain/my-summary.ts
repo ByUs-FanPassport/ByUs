@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { myRewardSchema } from "../../benefit/domain/my-reward";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
+import { fanStageProgressSchema } from "../../rewards/domain/fan-stage";
 
 const safeImageUrl = z.string().min(1).refine((value) => value.startsWith("/") || value.startsWith("https://"));
 const dateTime = z.string().datetime({ offset: true });
@@ -25,6 +26,7 @@ export const mySummarySchema = z.object({
       tier: z.enum(FAN_TIERS),
       score: z.number().int().nonnegative(),
       remainingToNextTier: z.number().int().nonnegative(),
+      stageProgress: fanStageProgressSchema.nullable().optional(),
     }).strict().nullable(),
     ticketBalance: z.number().int().nonnegative(),
     firstReaction: z.object({ completedAt: dateTime, txHash: z.string().trim().min(1).nullable() }).strict().nullable(),

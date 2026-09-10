@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nicknameSchema } from "../../profile/domain/nickname-schema";
+import { fanStageProgressSchema } from "../../rewards/domain/fan-stage";
 
 export const passportLocaleSchema = z.enum(["ko", "en"]);
 export type PassportLocale = z.infer<typeof passportLocaleSchema>;
@@ -124,7 +125,7 @@ export const basePassportSchema = z.object({
   businessStatus: z.literal("issued"),
   mint: mintFactsSchema,
   issuedAt: z.iso.datetime({ offset: true }),
-  score: z.object({ points: z.number().int().nonnegative(), level: levelSchema }).strict(),
+  score: z.object({ points: z.number().int().nonnegative(), level: levelSchema, stageProgress: fanStageProgressSchema.nullable().optional() }).strict(),
   stampSummary: stampSummarySchema,
 }).strict();
 

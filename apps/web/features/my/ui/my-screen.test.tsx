@@ -104,6 +104,38 @@ describe("unified MY hub", () => {
     expect(screen.getAllByRole("link", { name:"설정" })).toHaveLength(1);
   });
 
+  it("follows the selected favorite and trusts its server stage label, segment, and artwork", async () => {
+    const stageProgress = {
+      policyVersion: 2,
+      current: { key: "gold-2", tier: "Gold", subdivision: 2, rank: 5, minimumScore: 70 },
+      next: { key: "gold-3", tier: "Gold", subdivision: 3, rank: 6, minimumScore: 95 },
+      remaining: 15,
+      progressPercent: 40,
+    } as const;
+    const second = {
+      ...summary.creators[0],
+      celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg" },
+      passport: { ...summary.creators[0].passport, id: "66666666-6666-4666-8666-666666666666", tier: "Gold", score: 80, remainingToNextTier: 40, stageProgress },
+    };
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/summary")) return Response.json({ summary: { ...summary, creators: [summary.creators[0], second] } });
+      if (url.startsWith("/api/me/avatar")) return Response.json({ avatar: null });
+      if (url.includes("certifications")) return Response.json({ certifications: [] });
+      return Response.json({ raffles: [] });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const { container } = render(<MyScreen locale="ko" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Elina골드 2/ }));
+    expect(screen.getByText("골드 2", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByText("골드 3까지 15점")).toBeInTheDocument();
+    expect(screen.getByText("플래티넘 등급까지 40점")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "다음 팬등급 진행률" })).toHaveAttribute("value", "40");
+    expect([...container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/256/gold-2.png"))).toBe(true);
+    expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
+  });
+
   it("renders natural, explicit empty states", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
       summary: {
