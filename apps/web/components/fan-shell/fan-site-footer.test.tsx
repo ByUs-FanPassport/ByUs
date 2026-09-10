@@ -65,8 +65,8 @@ describe("FanSiteFooter", () => {
     expect(linkRule).toContain("min-height: 44px");
     expect(linkRule).toContain("font-size: 13px");
     expect(linkRule).toContain("line-height: 1.35");
-    expect(navigationRule).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
-    expect(footerCss).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
+    expect(navigationRule).toContain("grid-template-columns: minmax(0, 1fr) minmax(176px, 1fr)");
+    expect(footerCss).toContain("grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(176px, 1fr)");
     expect(socialLinkRule).toContain("width: 44px");
     expect(socialLinkRule).toContain("height: 44px");
     expect(socialLinkRule).toContain("justify-content: flex-start");
