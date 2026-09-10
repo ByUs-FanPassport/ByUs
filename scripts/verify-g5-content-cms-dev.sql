@@ -21,8 +21,8 @@ declare
   rejected boolean;
 begin
   insert into public.admin_allowlist(id,email,role,active) values(actor,'cms-verifier@byus.dev','admin',true);
-  insert into public.celebrities(id,slug,image_url) values
-    (celebrity_a,'cms-proof-a','/proof-a.jpg'),(celebrity_b,'cms-proof-b','/proof-b.jpg');
+  insert into public.celebrities(id,slug,image_url,roles) values
+    (celebrity_a,'cms-proof-a','/proof-a.jpg','{artist}'),(celebrity_b,'cms-proof-b','/proof-b.jpg','{artist}');
   insert into public.celebrity_localizations(celebrity_id,locale,name,summary,image_alt) values
     (celebrity_a,'ko','검증 A','검증 소개','검증 A'),(celebrity_a,'en','Proof A','Proof summary','Proof A'),
     (celebrity_b,'ko','검증 B','검증 소개','검증 B'),(celebrity_b,'en','Proof B','Proof summary','Proof B');

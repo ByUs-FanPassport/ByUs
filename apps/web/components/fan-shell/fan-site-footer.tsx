@@ -44,6 +44,7 @@ const copy = {
     privacy: "개인정보처리방침",
     terms: "이용약관",
     nav: "ByUs 하단 메뉴",
+    fanmeetings: "미국 팬미팅 문의",
   },
   en: {
     tagline: "Keep every moment with your favorite and continue your fan journey.",
@@ -58,6 +59,7 @@ const copy = {
     privacy: "Privacy Policy",
     terms: "Terms of Use",
     nav: "ByUs footer navigation",
+    fanmeetings: "U.S. fan meeting inquiries",
   },
 } as const;
 
@@ -93,6 +95,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           </section>
           <section>
             <h2>{t.guide}</h2>
+            <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
             <Link href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
             <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
           </section>

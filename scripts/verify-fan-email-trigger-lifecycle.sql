@@ -59,10 +59,10 @@ values(
   '61000000-0000-4000-8000-000000000001'
 );
 
-insert into public.celebrities(id,slug,status,image_url)
+insert into public.celebrities(id,slug,status,image_url,roles)
 values(
   '61000000-0000-4000-8000-000000000020','email-lifecycle-artist','draft',
-  'https://example.test/artist.jpg'
+  'https://example.test/artist.jpg','{artist}'
 );
 insert into public.celebrity_localizations(celebrity_id,locale,name,summary,image_alt)
 values

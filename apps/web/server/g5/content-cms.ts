@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { creatorRolesSchema } from "../../features/creator/domain/creator-role";
 import type { AdminSession } from "../admin/admin-session-gate";
 
 const uuid = z.string().uuid();
@@ -17,6 +18,8 @@ export const celebrityPayload = z.object({
   imagePosition: z.string().trim().min(1).max(100),
   displayOrder: z.number().int().min(0),
   fanCount: z.number().int().min(0).nullable(),
+  // Older clients may omit roles only when editing an existing classified profile.
+  roles: creatorRolesSchema.optional(),
   localizations: z.object({ ko: localization, en: localization }),
   themes: z
     .array(
@@ -75,7 +78,11 @@ export const commandPayload = z.discriminatedUnion("action", [
     celebrityId: uuid,
     reason: z.string().trim().min(10).max(1000),
   }),
-]);
+]).superRefine((command, context) => {
+  if (command.action === "save" && command.celebrityId === null && command.payload.roles === undefined) {
+    context.addIssue({ code: "custom", path: ["payload", "roles"], message: "A primary role is required for a new profile" });
+  }
+});
 export const quizCommandPayload = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), payload: quizPayload }),
   z.object({ action: z.enum(["clone", "publish"]), quizId: uuid }),

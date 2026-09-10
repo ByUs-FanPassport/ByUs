@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { AppleLifecycleRepository, providerSubjectHash, sha256 } from "./apple-lifecycle";
 import { receiveAppleNotification } from "./notification-route";
@@ -22,6 +22,16 @@ function dependencies() {
 }
 
 describe("Apple notification HTTP boundary", () => {
+  let warn: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
   it("persists only a verified normalized event with subject and destination hashes", async () => {
     const deps = dependencies();
     const response = await receiveAppleNotification(request(JSON.stringify({ payload: "signed-token" })), deps);
@@ -41,6 +51,7 @@ describe("Apple notification HTTP boundary", () => {
     expect((await receiveAppleNotification(request(body), deps)).status).toBe(400);
     expect(deps.verify).not.toHaveBeenCalled();
     expect(deps.rpc).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenLastCalledWith("apple_notification_rejected", { reason: "INVALID_ENVELOPE" });
   });
 
   it("rejects non-JSON input", async () => {
@@ -57,6 +68,52 @@ describe("Apple notification HTTP boundary", () => {
     deps.verify.mockRejectedValue(error);
     expect((await receiveAppleNotification(request('{"payload":"jwt"}'), deps)).status).toBe(expectedStatus);
     expect(deps.rpc).not.toHaveBeenCalled();
+  });
+
+  it("logs only the fixed rejection structure and sanitized verifier diagnostic", async () => {
+    const deps = dependencies();
+    const rejection = new InvalidAppleNotificationError("JWT_CLAIM_INVALID", {
+      claim: "aud",
+      issuer: "https://appleid.apple.com",
+      audience: ["wrong.client"],
+      leaked: "arbitrary diagnostic secret",
+    } as unknown as { claim: "aud"; issuer: string; audience: string[] });
+    rejection.stack = "arbitrary error secret";
+    Object.defineProperty(rejection, "cause", { value: new Error("arbitrary error secret") });
+    deps.verify.mockRejectedValue(rejection);
+
+    const token = "secret-token";
+    const response = await receiveAppleNotification(request(JSON.stringify({ payload: token })), deps);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: { code: "INVALID_APPLE_NOTIFICATION" } });
+    expect(warn).toHaveBeenCalledWith("apple_notification_rejected", {
+      reason: "JWT_CLAIM_INVALID",
+      diagnostic: {
+        claim: "aud",
+        issuer: "https://appleid.apple.com",
+        audience: ["wrong.client"],
+      },
+    });
+    const logged = JSON.stringify(warn.mock.calls);
+    expect(logged).not.toContain(token);
+    expect(logged).not.toContain(event.subject);
+    expect(logged).not.toContain(event.email!);
+    expect(logged).not.toContain("arbitrary error secret");
+    expect(logged).not.toContain("arbitrary diagnostic secret");
+  });
+
+  it("does not copy arbitrary transient verification errors into logs", async () => {
+    const deps = dependencies();
+    deps.verify.mockRejectedValue(new Error("arbitrary error secret"));
+
+    const response = await receiveAppleNotification(request('{"payload":"secret-token"}'), deps);
+
+    expect(response.status).toBe(503);
+    expect(warn).toHaveBeenCalledWith("apple_notification_rejected", {
+      reason: "VERIFICATION_UNAVAILABLE",
+    });
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/secret-token|arbitrary error secret/u);
   });
 
   it("acknowledges a durable duplicate and returns 503 on persistence failure", async () => {

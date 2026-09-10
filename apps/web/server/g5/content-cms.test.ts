@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const { celebrityPayload, ContentCmsRepository, quizPayload } = await import("./content-cms");
+const { celebrityPayload, commandPayload, ContentCmsRepository, quizPayload } = await import("./content-cms");
 
 const actor = {
   email: "admin@example.com",
@@ -10,6 +10,16 @@ const actor = {
 };
 
 describe("content CMS", () => {
+  it("requires roles for creation while leaving omission intact for an old existing-profile edit", () => {
+    const payload = { slug: "kara", imageUrl: "/kara.jpg", imagePosition: "center", displayOrder: 0, fanCount: null, localizations: { ko: { name: "카라", summary: "소개", imageAlt: "카라" }, en: { name: "KARA", summary: "Profile", imageAlt: "KARA" } }, themes: [], socialLinks: [] };
+    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload }).success).toBe(false);
+    const oldEdit = commandPayload.parse({ action: "save", celebrityId: actor.allowlistId, payload });
+    expect(oldEdit.action === "save" && Object.hasOwn(oldEdit.payload, "roles")).toBe(false);
+    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload: { ...payload, roles: ["artist"] } }).success).toBe(true);
+    for (const roles of [null, [], ["artist", "artist"], ["host"]]) {
+      expect(commandPayload.safeParse({ action: "save", celebrityId: actor.allowlistId, payload: { ...payload, roles } }).success).toBe(false);
+    }
+  });
   it("requires complete KO and EN celebrity content", () => {
     expect(() =>
       celebrityPayload.parse({
@@ -21,7 +31,7 @@ describe("content CMS", () => {
         localizations: {
           ko: { name: "카라", summary: "소개", imageAlt: "카라" },
         },
-        themes: [],
+        roles: ["artist"] as const, themes: [],
         socialLinks: [],
       }),
     ).toThrow();
@@ -37,7 +47,7 @@ describe("content CMS", () => {
         ko: { name: "카라", summary: "소개", imageAlt: "카라" },
         en: { name: "KARA", summary: "Profile", imageAlt: "KARA" },
       },
-      themes: [],
+      roles: ["artist"] as const, themes: [],
       socialLinks: [],
     };
     expect(celebrityPayload.parse({ ...base, fanCount: null }).fanCount).toBeNull();

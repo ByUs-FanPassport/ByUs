@@ -6,6 +6,8 @@ import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 import { LiveTimeIndicator } from "@/features/live/ui/live-time-indicator";
 
 import { CreatorPortrait } from "./fan-ui/creator-portrait";
+import { CreatorRoleFilterControl, CreatorRolesText } from "./fan-ui/creator-roles";
+import { availableCreatorRoles, matchesCreatorRole, type CreatorRoleFilter } from "@/features/creator/domain/creator-role";
 import { HomeOwnerProvider, useHomeOwner } from "./fan-ui/home-owner-provider";
 
 import Image from "next/image";
@@ -213,23 +215,30 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
   const owner = useHomeOwner();
   const personalization = { state: owner.personalization, retry: owner.retryPersonalization };
   const orderedCreators = orderCreatorsForDiscovery(celebrities);
+  const [role, setRole] = useState<CreatorRoleFilter>("all");
+  const visibleCreators = orderedCreators.filter((creator) => matchesCreatorRole(creator.roles, role));
+  const directoryHref = `/celebrities${localeQuery}${role === "all" ? "" : `&role=${role}`}` as Route;
   const creatorRailRef = useRef<HTMLDivElement>(null);
   const [creatorScroll, setCreatorScroll] = useState({ previous: false, next: false });
   const updateCreatorScroll = useCallback(() => {
     const rail = creatorRailRef.current;
     const first = rail?.querySelector<HTMLElement>("article");
-    if (!rail || !first || rail.clientWidth === 0) return;
+    if (!rail || !first || rail.clientWidth === 0) {
+      setCreatorScroll({ previous: false, next: false });
+      return;
+    }
     setCreatorScroll({ previous: rail.scrollLeft > 2, next: rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 2 });
   }, []);
   useEffect(() => {
     const rail = creatorRailRef.current;
     if (!rail) return;
+    rail.scrollLeft = 0;
     updateCreatorScroll();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateCreatorScroll);
     observer?.observe(rail);
     window.addEventListener("resize", updateCreatorScroll);
     return () => { observer?.disconnect(); window.removeEventListener("resize", updateCreatorScroll); };
-  }, [updateCreatorScroll, celebrities.length]);
+  }, [updateCreatorScroll, celebrities.length, role]);
   const moveCreators = (direction: number) => {
     const rail = creatorRailRef.current;
     const card = rail?.querySelector<HTMLElement>("article");
@@ -247,7 +256,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
   );
   const liveByCelebrity = new Map(celebrityLives.map((live) => [live.celebritySlug, live]));
   const firstPreviewId =
-    orderedCreators.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
+    visibleCreators.find((celebrity) => liveByCelebrity.get(celebrity.slug)?.preview)
       ?.slug ?? null;
 
   useEffect(() => {
@@ -282,12 +291,13 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
           )}
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={`/celebrities${localeQuery}`}>{t.all} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{t.all} <ChevronRight /></Link>} />
+            {!contentErrors.celebrities && celebrities.length > 0 ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={setRole} locale={locale} controls="home-creator-rail" /> : null}
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             {contentErrors.celebrities || contentErrors.celebrityLives ? <ContentLoadError locale={locale} /> : null}
             {!contentErrors.celebrities ? <div className={styles.celebrityCarousel}>
             <div id="home-creator-rail" ref={creatorRailRef} className={styles.celebrityRail} aria-label={t.celebrityList} onScroll={updateCreatorScroll}>
-              {orderedCreators.map((celebrity) => {
+              {visibleCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
                 return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
@@ -311,6 +321,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
                       <h3>{celebrity.name}</h3>
                       <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
                     </div>
+                    <CreatorRolesText roles={celebrity.roles} locale={locale} />
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>

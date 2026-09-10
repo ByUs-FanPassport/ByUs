@@ -4,14 +4,14 @@ import { MyLiveCountdown } from "@/features/my/ui/my-live-countdown";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Eye, Play, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
-import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
+import { FanHeading } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-catalog-screen.module.css";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
@@ -28,11 +28,8 @@ const copy = {
     title: "전체 LIVE",
     intro: "지금 진행 중인 LIVE에 참여하고, 예정된 LIVE를 예약하거나 다시보기를 시청해 보세요.",
     liveNow: "지금 LIVE 중",
-    liveNowSub: "지금 바로 시청할 수 있어요.",
     upcoming: "예정된 LIVE",
-    upcomingSub: "일정을 확인하고 LIVE를 예약해 보세요.",
     replay: "다시보기",
-    replaySub: "종료된 LIVE의 공개 영상을 다시 시청할 수 있어요.",
     emptyAll: "현재 공개된 LIVE가 없어요.",
     emptyLive: "현재 진행 중인 LIVE가 없어요.",
     emptyUpcoming: "예정된 LIVE가 없어요.",
@@ -40,6 +37,7 @@ const copy = {
     enter: "LIVE 시청하기",
     reserve: "라이브 예약하기",
     reserved: "예약 완료",
+    details: "상세 보기",
     reservationLoading: "예약 상태 확인 중",
     reservationUnknown: "예약 상태 확인 필요",
     watch: "다시보기",
@@ -50,11 +48,8 @@ const copy = {
     title: "All LIVE events",
     intro: "Join what is live now, reserve the next moment, or revisit a past LIVE.",
     liveNow: "LIVE NOW",
-    liveNowSub: "Broadcasts you can enter right now.",
     upcoming: "Upcoming LIVE",
-    upcomingSub: "Check the schedule and reserve your place.",
     replay: "Replay",
-    replaySub: "Revisit published videos from completed LIVE events.",
     emptyAll: "No LIVE event is published right now.",
     emptyLive: "Nothing is live right now.",
     emptyUpcoming: "No upcoming LIVE events.",
@@ -62,6 +57,7 @@ const copy = {
     enter: "Enter LIVE",
     reserve: "Reserve LIVE",
     reserved: "Reserved",
+    details: "View details",
     reservationLoading: "Checking reservation status",
     reservationUnknown: "Reservation status unavailable",
     watch: "Watch replay",
@@ -99,20 +95,13 @@ function action(item: LiveEventResponse, locale: FanLocale) {
   const t = copy[locale];
   if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true, state: "watch" as const };
   if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true, state: "watch" as const };
-  if (item.viewer.reservation) return { label: t.reserved, icon: <CircleCheck />, external: false, state: "reserved" as const };
+  if (item.viewer.reservation) return { label: t.details, icon: <Eye />, external: false, state: "reserved" as const };
   return { label: t.reserve, icon: <CalendarDays />, external: false, state: "reserve" as const };
-}
-
-function statusLabel(item: LiveEventResponse, locale: FanLocale) {
-  if (item.live.effectiveStatus === "live") return locale === "ko" ? "LIVE 진행 중" : "LIVE now";
-  if (item.live.effectiveStatus === "scheduled") return locale === "ko" ? "LIVE 예정" : "Upcoming";
-  return locale === "ko" ? "다시보기" : "Replay";
 }
 
 function LiveGroup({
   id,
   title,
-  subtitle,
   empty,
   items,
   locale,
@@ -121,7 +110,6 @@ function LiveGroup({
 }: {
   id: string;
   title: string;
-  subtitle: string;
   empty: string;
   items: readonly LiveEventResponse[];
   locale: FanLocale;
@@ -137,17 +125,17 @@ function LiveGroup({
     (currentPage + 1) * CATALOG_PAGE_SIZE,
   );
   return (
-    <section className={styles.group} aria-labelledby={`${id}-heading`}>
-      <FanSectionHeader id={`${id}-heading`} title={title} description={subtitle} accessory={
-        <span aria-label={`${title} ${items.length}${locale === "ko" ? "개" : ""}`}>
-          {locale === "ko" ? `총 ${items.length}개` : `${items.length} total`}
-        </span>
-      } />
+    <section className={styles.group} data-empty={items.length === 0} aria-labelledby={`${id}-heading`}>
+      <header className={styles.groupHeader}>
+        <FanHeading id={`${id}-heading`}>{title}</FanHeading>
+        {items.length > 0 ? <span className={styles.count} aria-label={`${title} ${items.length}${locale === "ko" ? "개" : " total"}`}>{items.length}</span> : null}
+      </header>
       {items.length ? (
         <div className={styles.list}>
           {visibleItems.map((item) => {
             const currentAction = action(item, locale);
             const awaitsReservation = item.live.effectiveStatus === "scheduled" && reservationStatus !== "ready";
+            const isReserved = item.live.effectiveStatus === "scheduled" && reservationStatus === "ready" && Boolean(item.viewer.reservation);
             const href = currentAction.external
               ? item.live.watch.url
               : `/live/${item.live.slug}?locale=${locale}`;
@@ -164,28 +152,28 @@ function LiveGroup({
                   }
                 >
                   <div className={styles.meta}>
-                    <span>{item.live.celebrity.name}{item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
-                    {item.live.effectiveStatus === "live" ||
-                    item.live.effectiveStatus === "scheduled" ? (
+                    <span className={styles.creatorName}>{item.live.celebrity.name}{item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
+                    {isReserved ? <span className={styles.reservationStatus}><CircleCheck aria-hidden="true" />{t.reserved}</span> : null}
+                    {item.live.effectiveStatus === "live" ? (
                       <LiveStatusIndicator
                         density="compact"
                         locale={locale}
                         status={item.live.effectiveStatus}
                       />
-                    ) : (
-                      <span>{statusLabel(item, locale)}</span>
-                    )}
+                    ) : null}
                   </div>
                   <h3>{item.live.title}</h3>
-                  <p className={styles.dateRange}>{dateRange(item, locale)}</p>
-                  {item.live.effectiveStatus === "scheduled" ? <MyLiveCountdown event={item.live} locale={locale} pulseScheduled onStartReached={onStartReached} /> : null}
+                  <div className={styles.schedule}>
+                    <time className={styles.dateRange} dateTime={item.live.startsAt}>{dateRange(item, locale)}</time>
+                    {item.live.effectiveStatus === "scheduled" ? <MyLiveCountdown event={item.live} locale={locale} pulseScheduled onStartReached={onStartReached} /> : null}
+                  </div>
                 </Link>
                 {awaitsReservation ? reservationStatus === "loading" ? (
                   <span className={styles.actionSkeleton} role="status" aria-label={t.reservationLoading}>
                     <span className={styles.srOnly}>{t.reservationLoading}</span>
                   </span>
                 ) : (
-                  <span className={styles.actionUnavailable} role="status">
+                  <span className={styles.actionUnavailable} role="status" aria-label={t.reservationUnknown}>
                     <CalendarDays aria-hidden="true" />
                     <span>{t.reservationUnknown}</span>
                   </span>
@@ -193,7 +181,7 @@ function LiveGroup({
                   <Link
                     className={styles.action}
                     data-action-state={currentAction.state}
-                    data-fan-action-emphasis={currentAction.state === "reserve" ? "primary" : "secondary"}
+                    data-fan-action-emphasis="secondary"
                     href={href as Route}
                     target={currentAction.external ? "_blank" : undefined}
                     rel={currentAction.external ? "noreferrer" : undefined}
@@ -293,19 +281,21 @@ export function LiveCatalogScreen({
     <FanAppFrame locale={locale} mainId="live-catalog-main">
       <FanContentContainer as="main" className={styles.main} id="live-catalog-main" tabIndex={-1}>
         <header className={styles.intro}>
-          <FanHeading as="h1">{t.title}</FanHeading>
-          <p>{t.intro}</p>
+          <div>
+            <FanHeading as="h1">{t.title}</FanHeading>
+            <p>{t.intro}</p>
+          </div>
+          <Link className={styles.calendarLink} href={`/live/calendar?locale=${locale}` as Route}>
+            <CalendarDays aria-hidden="true" />
+            {t.calendar}
+          </Link>
         </header>
-        <Link className={styles.calendarLink} href={`/live/calendar?locale=${locale}` as Route}>
-          <CalendarDays aria-hidden="true" />
-          {t.calendar}
-        </Link>
         {failed ? <button className={styles.retry} onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button> : null}
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
-            {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} subtitle={t.liveNowSub} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} /> : null}
-            <LiveGroup id="upcoming" title={t.upcoming} subtitle={t.upcomingSub} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
-            <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
+            {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} /> : null}
+            <LiveGroup id="upcoming" title={t.upcoming} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
+            <LiveGroup id="replay" title={t.replay} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
           </>
         )}
       </FanContentContainer>
