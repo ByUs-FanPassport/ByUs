@@ -794,9 +794,6 @@
     padding-top: 16px;
     padding-bottom: 112px;
   }
-  .heroMedia {
-    aspect-ratio: 4 / 5;
-  }
   .heroMedia img {
     object-fit: contain;
     object-position: center;
