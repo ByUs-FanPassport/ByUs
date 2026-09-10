@@ -6,9 +6,10 @@ describe("home entry cards", () => {
   it.each(["ko", "en"] as const)("makes each complete card one localized link (%s)", (locale) => {
     const { container } = render(<HomeEntryCards locale={locale} />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(2);
-    expect(links[0]).toHaveAttribute("href", `/pages/elina-fan-guide?locale=${locale}`);
-    expect(links[1]).toHaveAttribute("href", `/pages/us-fanmeetings?locale=${locale}`);
+    expect(links).toHaveLength(3);
+    expect(links[0]).toHaveAttribute("href", `/pages/ifew-fan-guide?locale=${locale}`);
+    expect(links[1]).toHaveAttribute("href", `/pages/elina-fan-guide?locale=${locale}`);
+    expect(links[2]).toHaveAttribute("href", `/pages/us-fanmeetings?locale=${locale}`);
     expect(links[0].querySelector("img")).not.toBeNull();
     expect(links[0].querySelector("strong")).not.toBeNull();
     expect(links[1].querySelector("strong")).not.toBeNull();
