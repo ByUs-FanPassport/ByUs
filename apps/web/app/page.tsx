@@ -1,13 +1,15 @@
 import { GuestHome, type HomeContentErrors } from "../components/guest-home";
+import { parseCreatorRoleFilter } from "../features/creator/domain/creator-role";
 import { loadServerEnv } from "../server/config/env";
 import { createPublishedContentRepositoryFromEnvironment } from "../server/content/published-content-repository";
 import { createLiveEventRepositoryFromEnvironment } from "../server/g3/live-event-repository";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ locale?: string }> }) {
-  const { locale: requestedLocale } = await searchParams;
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; role?: string | string[] }> }) {
+  const { locale: requestedLocale, owned, role } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
+  const initialOwnedOnly = owned === "1";
   const environment = loadServerEnv();
   const liveRepository = createLiveEventRepositoryFromEnvironment({
     url: environment.SUPABASE_URL,
@@ -31,5 +33,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     featuredLives={featuredLivesResult.status === "fulfilled" ? featuredLivesResult.value : []}
     locale={locale}
     contentErrors={contentErrors}
+    initialOwnedOnly={initialOwnedOnly}
+    initialRole={initialOwnedOnly ? "all" : parseCreatorRoleFilter(role)}
   />;
 }

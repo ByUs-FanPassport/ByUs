@@ -5,10 +5,10 @@ values
   ('11111111-1111-4111-8111-111111111111', 'did:privy:reaction-batch-owner-a', 'reaction-batch-a@byus.test', 'active'),
   ('22222222-2222-4222-8222-222222222222', 'did:privy:reaction-batch-owner-b', 'reaction-batch-b@byus.test', 'active');
 
-insert into public.celebrities (id, slug, status, image_url, published_at, roles)
+insert into public.celebrities (id, slug, status, image_url, published_at, roles,primary_role)
 values
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'reaction-batch-a', 'published', '/reaction-batch-a.webp', now(), '{artist}'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', 'reaction-batch-b', 'published', '/reaction-batch-b.webp', now(), '{artist}');
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'reaction-batch-a', 'published', '/reaction-batch-a.webp', now(), '{artist}','idol'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', 'reaction-batch-b', 'published', '/reaction-batch-b.webp', now(), '{artist}','idol');
 
 insert into public.user_wallets (app_user_id, chain_id, address, provider, wallet_type)
 values ('11111111-1111-4111-8111-111111111111', 91342, '0x1111111111111111111111111111111111111111', 'privy', 'embedded');

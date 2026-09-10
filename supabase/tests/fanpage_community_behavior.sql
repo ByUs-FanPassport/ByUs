@@ -18,8 +18,8 @@ declare creator uuid:=extensions.gen_random_uuid();quiz uuid:=extensions.gen_ran
   notice uuid:=extensions.gen_random_uuid();comment uuid;idem uuid:=extensions.gen_random_uuid();
   admin_id uuid:=extensions.gen_random_uuid();viewer_id uuid:=extensions.gen_random_uuid();i integer;
 begin
-  insert into public.celebrities(id,slug,status,image_url,published_at,fan_count,roles)
-    values(creator,slug,'published','/images/guest-home/kara-card.jpg',now(),12800000,'{artist}');
+  insert into public.celebrities(id,slug,status,image_url,published_at,fan_count,roles,primary_role)
+    values(creator,slug,'published','/images/guest-home/kara-card.jpg',now(),12800000,'{artist}','idol');
   insert into public.celebrity_quizzes(id,celebrity_id,version,status,published_at) values(quiz,creator,1,'published',now());
   for i in 1..501 loop
     owner:=extensions.gen_random_uuid();attempt:=extensions.gen_random_uuid();pass:=extensions.gen_random_uuid();

@@ -31,6 +31,11 @@
   color: var(--color-canvas);
 }
 
+.filters button:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
 .filters button:focus-visible {
   outline: var(--focus-width) solid var(--color-ink);
   outline-offset: var(--focus-offset);
@@ -44,20 +49,8 @@
   line-height: 1.5;
 }
 
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .filters button:hover:not([aria-pressed="true"]) { background: var(--color-soft); }
+  .filters button:hover:not([aria-pressed="true"]):not(:disabled) { background: var(--color-soft); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -103,6 +103,3 @@ button:disabled { cursor: not-allowed; }
 
 .cmsForm select{min-height:46px;width:100%;padding:0 13px;border:1px solid #d8d9de;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
 .cmsForm select:focus-visible{outline:3px solid rgb(23 23 26 / 28%);outline-offset:2px}
-.cmsForm .cmsAdditionalRoles{display:flex;flex-wrap:wrap;gap:8px 20px}
-.cmsForm .cmsAdditionalRoles label{display:flex;min-height:44px;align-items:center;gap:8px}
-.cmsForm .cmsAdditionalRoles input{width:18px;height:18px;padding:0}

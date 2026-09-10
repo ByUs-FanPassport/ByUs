@@ -15,7 +15,7 @@ const completeRow = {
   image_url: "/images/guest-home/kara-card.jpg",
   image_alt: "KARA 멤버",
   image_position: "center 46%",
-  roles: ["artist"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
+  primary_role: "idol" as const, themes: [{ slug: "beauty", name: "뷰티" }],
   social_links: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
   display_order: 0,
   fan_count: 12_800_000,
@@ -48,7 +48,7 @@ describe("published content boundary", () => {
         alt: "KARA 멤버",
         position: "center 46%",
       },
-      roles: ["artist"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
+      roles: ["idol"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
       socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
       displayOrder: 0,
       fanCount: 12_800_000,
@@ -130,10 +130,10 @@ it("accepts CHZZK alongside existing public social links", () => {
  expect(parsePublishedCelebrity({...completeRow,social_links:[...completeRow.social_links,social]}).socialLinks).toEqual([...completeRow.social_links,social]);
 });
 
-// Every persisted profile is classified; projection omissions must never invent a role.
-it.each([undefined, null, [], ["artist", "artist"], ["host"], ["artist", null]])("rejects invalid published roles %j", (roles) => {
-  expect(() => parsePublishedCelebrity({ ...completeRow, roles })).toThrow();
+// Legacy activities cannot substitute for a required single public classification.
+it.each([undefined, null, "", "artist", [], ["idol"], "host"])("rejects invalid primary role %j even with valid legacy roles", (primary_role) => {
+  expect(() => parsePublishedCelebrity({ ...completeRow, primary_role, roles: ["artist", "creator"] })).toThrow();
 });
-it("preserves representative role order in the public DTO", () => {
-  expect(parsePublishedCelebrity({ ...completeRow, roles: ["show_host", "creator"] }).roles).toEqual(["show_host", "creator"]);
+it.each(["idol", "singer", "actor", "creator", "show_host"])("projects one %s role without leaking legacy activities", (primary_role) => {
+  expect(parsePublishedCelebrity({ ...completeRow, primary_role, roles: ["artist", "creator"] }).roles).toEqual([primary_role]);
 });

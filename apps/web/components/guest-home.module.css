@@ -97,6 +97,11 @@
 .passportAction span { flex: 1; text-align: center; }
 
 .favoriteSection { padding: 20px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
+.favoriteFilterState { display: grid; min-height: 220px; place-content: center; justify-items: center; gap: 10px; padding: 28px 16px; color: var(--muted); text-align: center; }
+.favoriteFilterState :is(strong,p) { margin: 0; }
+.favoriteFilterState strong { color: var(--ink); font-size: 18px; }
+.favoriteFilterState p { max-width: 34ch; font-size: 14px; line-height: 1.6; }
+.favoriteFilterState :is(a,button) { display: inline-flex; min-height: 44px; align-items: center; padding: 0 12px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .celebrityRail { display: grid; grid-auto-columns: min(82vw, 288px, 100%); grid-auto-flow: column; gap: 16px; overflow-x: auto; padding-bottom: 0; scroll-snap-type: inline mandatory; scrollbar-width: none; }
 .celebrityRail::-webkit-scrollbar { display: none; }
 .celebrityCard { min-width: 0; scroll-snap-align: start; container-type: inline-size; }
