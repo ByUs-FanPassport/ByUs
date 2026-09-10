@@ -24,7 +24,7 @@ describe("public inquiry API", () => {
     const { submit, handle } = setup();
     expect((await handle(request(" ".repeat(16385), { "content-length": "1" }))).status).toBe(400); expect(submit).not.toHaveBeenCalled();
   });
-  it.each([{ origin: "https://evil.example" }, { origin: "null" }, { "content-type": "text/plain" }, { "sec-fetch-site": "cross-site" }])("rejects origin/content violations %j", async (headers) => {
+  it.each<Record<string, string>>([{ origin: "https://evil.example" }, { origin: "null" }, { "content-type": "text/plain" }, { "sec-fetch-site": "cross-site" }])("rejects origin/content violations %j", async (headers) => {
     const { submit, handle } = setup(); expect((await handle(request(input, headers))).status).toBe(400); expect(submit).not.toHaveBeenCalled();
   });
   it("does not derive trusted origin from the request Host", async () => {
