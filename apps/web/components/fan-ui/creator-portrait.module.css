@@ -1,4 +1,4 @@
-/* Keep approved crops shared by Home and /celebrities. See photo guidelines. */
+/* Shared crops; only the directory fills its card's entire media area. */
 .portrait {
   position: relative;
   display: block;
@@ -6,6 +6,11 @@
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 4px;
+}
+
+.portrait[data-variant="full-bleed"] {
+  width: 100%;
+  border-radius: 0;
 }
 
 .portrait img {

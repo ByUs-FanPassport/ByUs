@@ -52,6 +52,8 @@ const copy = {
     allCelebrities: "전체 셀럽 일정",
     allSelected: "전체 보기",
     selectedCount: (count: number) => `${count}명 선택`,
+    selectedResult: (date: string, count: number) => `${date} · LIVE ${count}개`,
+    selectedEmpty: "선택한 날짜에 예정된 LIVE가 없어요.",
     platformLabel: "송출 플랫폼",
   },
   en: {
@@ -69,6 +71,8 @@ const copy = {
     allCelebrities: "All celebrity schedules",
     allSelected: "Showing all",
     selectedCount: (count: number) => `${count} selected`,
+    selectedResult: (date: string, count: number) => `${date} · ${count} LIVE ${count === 1 ? "event" : "events"}`,
+    selectedEmpty: "No LIVE events are scheduled for the selected date.",
     platformLabel: "Broadcast platforms",
   },
 } as const;
@@ -166,6 +170,8 @@ export function LiveCalendarScreen({
   const suppressClick = useRef(false);
   const refreshedStarts = useRef(new Set<string>());
   const refreshController = useRef<AbortController | null>(null);
+  const mobileResultHeading = useRef<HTMLHeadingElement | null>(null);
+  const pendingMobileSelection = useRef<{ date: string; focus: boolean } | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const isMobileCalendar = useMediaQuery("(max-width: 63.99rem)");
   const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
@@ -199,6 +205,8 @@ export function LiveCalendarScreen({
         }),
   })), [calendar.days, celebrities, metadataByEventSlug, selectedCelebritySet]);
   const visibleEventCount = visibleDays.reduce((total, day) => total + day.events.length, 0);
+  const activeDay = activeDate ? visibleDays.find((day) => day.date === activeDate) : undefined;
+  const activeEventCount = activeDay?.events.length ?? 0;
 
   useEffect(() => {
     setCalendar(initialCalendar);
@@ -211,6 +219,22 @@ export function LiveCalendarScreen({
     setEventPositions({});
     setModalDate(null);
   }, [initialCelebritySlugs]);
+
+  useEffect(() => {
+    const pending = pendingMobileSelection.current;
+    if (!activeDate || pending?.date !== activeDate) return;
+    pendingMobileSelection.current = null;
+    const frame = window.requestAnimationFrame(() => {
+      const heading = mobileResultHeading.current;
+      if (!heading) return;
+      heading.scrollIntoView?.({
+        block: "start",
+        behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+      if (pending.focus) heading.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeDate]);
 
   const abortCalendarRefresh = useCallback(() => {
     refreshController.current?.abort();
@@ -278,6 +302,12 @@ export function LiveCalendarScreen({
     selectCelebrities(selectedCelebritySet.has(slug)
       ? selectedCelebritySlugs.filter((selected) => selected !== slug)
       : [...selectedCelebritySlugs, slug]);
+  }
+
+  function selectMobileDate(date: string, focusResult: boolean) {
+    const nextDate = activeDate === date ? null : date;
+    pendingMobileSelection.current = nextDate ? { date: nextDate, focus: focusResult } : null;
+    setSelectedDate(nextDate);
   }
 
   const modalDay = visibleDays.find(day => day.date === modalDate);
@@ -407,7 +437,7 @@ export function LiveCalendarScreen({
                 aria-label={`${dayLabel(day.date, locale)}, ${day.events.length} LIVE`}
                 aria-pressed={activeDate === day.date}
                 aria-controls="calendar-day-list"
-                onClick={() => setSelectedDate(activeDate === day.date ? null : day.date)}
+                onClick={(event) => selectMobileDate(day.date, event.detail === 0)}
               >
                 <CalendarDayNumber date={day.date} today={today} />
                 <span className={styles.mobileDayEvents} aria-hidden="true">
@@ -416,11 +446,22 @@ export function LiveCalendarScreen({
               </button>)}
             </div>
             <div className={styles.mobileSelection}>
-              <span aria-live="polite">{activeDate ? dayLabel(activeDate, locale) : `${visibleEventCount} LIVE`}</span>
+              <h3
+                className={styles.mobileResultHeading}
+                id="calendar-results-heading"
+                ref={mobileResultHeading}
+                tabIndex={-1}
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {activeDate
+                  ? t.selectedResult(dayLabel(activeDate, locale), activeEventCount)
+                  : `${visibleEventCount} LIVE`}
+              </h3>
               {activeDate ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? t.allSelected : "Show all"}</button> : null}
             </div>
-            {activeDate && visibleEventCount > 0 && !visibleDays.find((day) => day.date === activeDate)?.events.length
-              ? <p className={styles.calendarEmpty}>{t.empty}</p> : null}
+            {activeDate && activeEventCount === 0
+              ? <p className={styles.calendarEmpty}>{t.selectedEmpty}</p> : null}
           </div>
 
 

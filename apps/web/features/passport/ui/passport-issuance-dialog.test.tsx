@@ -58,6 +58,8 @@ describe("PassportIssuanceCeremony", () => {
     expect(screen.getByText("발급 상태 확인 중")).toBeInTheDocument();
     const openPassport = screen.getByRole("link", { name: "Passport 열기" });
     expect(openPassport).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
+    expect(screen.getByText(/MY의 내 패스포트에서 언제든 다시 볼 수 있어요/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "MY에서 보기" })).toHaveAttribute("href", "/my?locale=ko");
     expect(openPassport).toHaveFocus();
   });
 
@@ -67,7 +69,8 @@ describe("PassportIssuanceCeremony", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
     expect(screen.getByRole("link", { name: "LIVE 예약 이어가기" })).toHaveAttribute("href", liveReturnTo);
-    expect(screen.queryByRole("link", { name: "Passport 열기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Passport 열기" })).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
+    expect(screen.getByRole("link", { name: "MY에서 보기" })).toHaveAttribute("href", "/my?locale=ko");
   });
 
   it("ignores an unsafe LIVE target and keeps the normal Passport action", () => {
@@ -243,5 +246,6 @@ describe("PassportIssuanceCeremony", () => {
       "href",
       `/passports/${aggregate.passport.id}?locale=en`,
     );
+    expect(screen.getByRole("link", { name: "View in MY" })).toHaveAttribute("href", "/my?locale=en");
   });
 });

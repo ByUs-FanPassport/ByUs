@@ -420,10 +420,11 @@ describe("canonical 03 guest home", () => {
   it("lets desktop users collapse and restore the context panel without removing mobile actions", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    const toggle = screen.getByRole("button", { name: "팬 활동 영역 접기" });
+    const toggle = screen.getByRole("button", { name: "나의 팬 활동: 팬 활동 영역 접기" });
+    expect(toggle).toHaveTextContent("나의 팬 활동");
     fireEvent.click(toggle);
     expect(screen.queryByRole("complementary", { name: "로그인 전 팬 활동" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "팬 활동 영역 펼치기" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "나의 팬 활동: 팬 활동 영역 펼치기" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
   });
 

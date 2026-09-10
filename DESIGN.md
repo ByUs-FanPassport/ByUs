@@ -36,7 +36,7 @@ Use Pretendard Variable throughout product UI. Apply the exact hierarchy, weight
 
 ## Image
 
-Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop, center square favorite artwork at roughly 66.5% within a Gallery Gray field, and use only the fully opened identity-and-stamp Passport asset.
+Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed square portraits with the same approved crops. Use only the fully opened identity-and-stamp Passport asset.
 
 ## Surfaces
 
@@ -218,7 +218,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Image Treatment
 
 - Hero uses full-bleed high-resolution KARA photography with `object-fit: cover` and a slightly right-shifted focal position.
-- Favorite cards use a nested gallery composition: a square `#F6F6F5` field contains a square editorial portrait occupying 84% of the field. Padding is `8%` on all sides; contain preserves group portraits.
+- Home favorite cards use a nested gallery composition: a square `#F6F6F5` field contains the shared `min(84%, 240px)` square portrait. The `/celebrities` directory fills its entire square media area. Both use the shared per-creator cover crop; do not use contain letterboxing.
 - Favorite portraits are direct, colorful, face-legible editorial crops: blue KARA group styling, warm gold Elina close-up, cool dark Changha close-up.
 - Upcoming LIVE avatars reuse the corresponding artist imagery in circular 64px desktop / 56px mobile crops.
 - Passport uses a transparent, fully opened identity-and-stamp-book asset with `object-fit: contain`; it is never shown as a closed burgundy cover.
@@ -245,6 +245,8 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Grid & Container
 
 - Maximum product width: `1440px`.
+- HOME, LIVE list, LIVE calendar, creator directory and MY share that outer width, including horizontal gutters of `16px` below 768px, `32px` from 768px, and `40px` from 1280px. Page headings and first content edges align with the header and footer; do not add narrower nested page containers. Control density with rows and columns inside this shared shell.
+- Reading and focused task widths remain separate: settings fields 720px; certification and quiz 760px (quiz result 690px); login 440px or gateway 960px; onboarding 1120px; legal reading 760px; LIVE mission 880px and survey 800px; Passport issuance presentation 1320px. Dialog widths are independent of page width.
 - At 1440px with the side panel open: 40px page insets, `944px` main column, 32px gutter, `384px` context panel.
 - At 1024–1279px: main column plus 360px context panel with a 24px gap.
 - At 768px: 32px page insets and a single 704px content column.
@@ -302,7 +304,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Do not add colored card backgrounds to “balance” the hero.
 - Do not place multiple gradients, dark feature cards, or competing primary CTAs on the same screen.
 - Do not use a closed leather Passport, pocket graphic, or heavy burgundy surface in this system.
-- Do not enlarge portraits until they fill the Gallery Gray field; preserve the approximately 66.5% artwork ratio.
+- Preserve the inset portrait composition on Home. Only the creator directory uses the approved full-bleed portrait variant; banner, Passport and circular-avatar treatments are separate.
 - Do not introduce nested cards, oversized shadows, glass panels, or ornamental divider lines.
 - Do not hide secondary information behind tiny hit areas or use icons below 44px without a larger target.
 - Do not fabricate dark mode rules from the light-only implementation.
@@ -569,9 +571,10 @@ claim there are no missions. No question or owner payload is exposed publicly.
 ### Creator directory portrait contract
 
 `/celebrities` and Home favorites share `CreatorPortrait` for square profile
-photography. Directory keeps its responsive grid and existing card behavior;
-its square Gallery Gray media field centers the same `min(84%, 240px)` square
-portrait used by Home. Shared per-creator cover crops preserve faces, all group
+photography. Directory keeps its responsive grid and existing full-card links,
+using the `full-bleed` variant to fill the entire square media area without a gray
+frame. Home keeps the default `min(84%, 240px)` inset portrait. Shared per-creator
+cover crops preserve faces, all group
 members and tattoo exclusion. Do not use contain letterboxing, route-local crop
 copies or hover zoom on these portraits. Passport badges remain outside the crop.
 Banner and circular-avatar treatments remain separate. See the directory section
@@ -590,6 +593,12 @@ and desktop/mobile verification requirements.
 아래 상세 일정에 유지한다. 날짜 선택은 아래 목록을 좁히고 전체 보기로 되돌릴 수 있다.
 셀럽 필터 변경 시 날짜 선택을 해제하며 월 이동 링크는 셀럽/언어를 보존한다.
 PC의 기존 월간 상세 달력에는 모바일 날짜 선택이 적용되지 않는다.
+
+2026-09-10 점검 개선: 홈 PC 패널 토글은 `나의 팬 활동 / My fan activity`이라는
+목적을 표시하며 기존 접기·본문 확장과 모바일 활동 요약을 유지한다. 모바일 달력은
+사용자가 날짜를 선택하면 선택 날짜·LIVE 건수를 알리고 해당 결과 제목이 보이도록
+이동한다. 화면 크기 변경만으로 포커스를 옮기지 않으며 reduced motion을 존중한다.
+PC 날짜 셀의 다건 전환과 전체 보기 dialog는 유지한다.
 
 사용자 승인으로 Weverse 공식 공지 27504와 Blip App Store 캘린더 이미지를
 모바일 시각 레퍼런스로 채택했다. 필터는 박스 대신 가로 한 줄의 아바타 칩으로,

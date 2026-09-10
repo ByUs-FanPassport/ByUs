@@ -17,6 +17,8 @@ const missionId = "22222222-2222-4222-8222-222222222222";
 const rejectedId = "33333333-3333-4333-8333-333333333333";
 const pendingId = "44444444-4444-4444-8444-444444444444";
 const uploadId = "55555555-5555-4555-8555-555555555555";
+const approvedId = "77777777-7777-4777-8777-777777777777";
+const karaPassportId = "88888888-8888-4888-8888-888888888888";
 
 const history = [
   {
@@ -45,7 +47,7 @@ const history = [
   },
 ] as const;
 
-function detail(id: string, status: "pending" | "rejected", attemptNumber: number) {
+function detail(id: string, status: "pending" | "approved" | "rejected", attemptNumber: number) {
   return {
     id,
     missionId,
@@ -56,10 +58,49 @@ function detail(id: string, status: "pending" | "rejected", attemptNumber: numbe
     rejectionReason: status === "rejected" ? "날짜가 보이게 다시 촬영해 주세요." : null,
     revision: attemptNumber,
     submittedAt: `2026-09-08T0${attemptNumber - 1}:00:00.000Z`,
-    reviewedAt: status === "rejected" ? "2026-09-08T01:00:00.000Z" : null,
+    reviewedAt: status === "pending" ? null : "2026-09-08T01:00:00.000Z",
     reward: { scorePoints: 2, ticketAmount: 1 },
     uploads: [{ id: uploadId, contentType: "image/webp", width: 800, height: 600 }],
   };
+}
+
+const approvedHistory = [{
+  id: approvedId,
+  kind: "manual",
+  missionId,
+  title: "콘서트 인증",
+  status: "approved",
+  attemptNumber: 1,
+  rejectionReason: null,
+  submittedAt: "2026-09-08T00:00:00.000Z",
+  reviewedAt: "2026-09-08T01:00:00.000Z",
+  actionHref: `/c/kara/certifications/${missionId}?locale=ko`,
+}] as const;
+
+function passport(id: string, slug: string) {
+  return {
+    id,
+    owner: { nickname: null },
+    celebrity: { slug, name: slug.toUpperCase(), image: { url: `/${slug}.jpg`, alt: slug.toUpperCase(), position: "center" } },
+    businessStatus: "issued",
+    mint: { status: "queued", txHash: null, tokenId: null },
+    issuedAt: "2026-09-08T01:00:00.000Z",
+    score: { points: 2, level: "Bronze" },
+    stampSummary: { knowledge: 1, reservation: 0, attendance: 0, survey: 0, total: 1 },
+    display: { level: "브론즈", mintStatus: "발급 대기" },
+  };
+}
+
+function approvedFetch(passports: unknown[] | Response) {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.startsWith(`/api/certifications/${missionId}?`)) return new Response(null, { status: 404 });
+    if (url.startsWith("/api/passports?")) return passports instanceof Response ? passports : Response.json({ passports });
+    if (url.includes("/api/me/")) return Response.json({ certifications: approvedHistory });
+    if (url.includes(`/proofs/${uploadId}`)) return new Response(new Blob(["proof"], { type: "image/webp" }));
+    if (url.includes(`/api/certification-submissions/${approvedId}`)) return Response.json({ submission: detail(approvedId, "approved", 1) });
+    throw new Error(`Unexpected request: ${url}`);
+  });
 }
 
 describe("CertificationDetailScreen", () => {
@@ -94,6 +135,7 @@ describe("CertificationDetailScreen", () => {
       `/api/certification-submissions/${rejectedId}/proofs/${uploadId}`,
       expect.objectContaining({ cache: "no-store" }),
     );
+    expect(fetchMock.mock.calls.some(([input]) => String(input).startsWith("/api/passports?"))).toBe(false);
   });
 
   it("remounts for a new owner and ignores the previous owner's late response", async () => {
@@ -165,5 +207,61 @@ describe("CertificationDetailScreen", () => {
     releaseUpload(Response.json({ uploadId }));
     expect(await screen.findByText("인증 자료를 제출했어요.")).toBeInTheDocument();
     expect(uploadCalls).toHaveLength(1);
+  });
+
+  it("opens the matching issued Passport after manual approval when exactly one is owned", async () => {
+    approvedFetch([passport(karaPassportId, "kara")]);
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByRole("heading", { name: "인증이 승인됐어요" })).toBeInTheDocument();
+    expect(await screen.findByText("발급된 내 패스포트를 다시 열어볼 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "내 패스포트 보기" })).toHaveAttribute("href", `/passports/${karaPassportId}?locale=ko`);
+  });
+
+  it("keeps manual approval distinct from issuance when no Passport is owned", async () => {
+    approvedFetch([]);
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByText("이번 인증 승인과 패스포트 발급은 별개예요. 팬 인증에서 발급 과정을 확인하세요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "팬 인증 확인하기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
+  });
+
+  it("chooses the current creator Passport from multiple owned Passports", async () => {
+    approvedFetch([
+      passport("99999999-9999-4999-8999-999999999999", "elina"),
+      passport(karaPassportId, "kara"),
+    ]);
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByRole("link", { name: "내 패스포트 보기" })).toHaveAttribute("href", `/passports/${karaPassportId}?locale=ko`);
+  });
+
+  it("uses a safe MY destination when Passport ownership cannot be confirmed", async () => {
+    approvedFetch(new Response(null, { status: 503 }));
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByText("패스포트 보유 여부를 확인하지 못했어요. MY에서 내 활동을 확인하세요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "MY로 이동" })).toHaveAttribute("href", "/my?locale=ko");
+    expect(screen.queryByRole("link", { name: "내 패스포트 보기" })).not.toBeInTheDocument();
+  });
+
+  it("describes Passport ownership as loading before the owner read settles", async () => {
+    let releasePassports!: (response: Response) => void;
+    const passportResponse = new Promise<Response>((resolve) => { releasePassports = resolve; });
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith(`/api/certifications/${missionId}?`)) return new Response(null, { status: 404 });
+      if (url.startsWith("/api/passports?")) return passportResponse;
+      if (url.includes("/api/me/")) return Response.json({ certifications: approvedHistory });
+      if (url.includes(`/proofs/${uploadId}`)) return new Response(new Blob(["proof"], { type: "image/webp" }));
+      if (url.includes(`/api/certification-submissions/${approvedId}`)) return Response.json({ submission: detail(approvedId, "approved", 1) });
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByText("패스포트 보유 여부를 확인하는 중이에요. MY에서 내 활동을 먼저 확인할 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "MY로 이동" })).toHaveAttribute("href", "/my?locale=ko");
+    releasePassports(Response.json({ passports: [passport(karaPassportId, "kara")] }));
+    expect(await screen.findByRole("link", { name: "내 패스포트 보기" })).toHaveAttribute("href", `/passports/${karaPassportId}?locale=ko`);
   });
 });

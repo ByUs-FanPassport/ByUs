@@ -104,6 +104,30 @@ describe("unified MY hub", () => {
     expect(screen.getAllByRole("link", { name:"설정" })).toHaveLength(1);
   });
 
+  it("keeps all three re-entry destinations near the profile without claiming an unavailable reservation", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
+    render(<MyScreen locale="ko" />);
+
+    const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
+    expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveAttribute("href", "/passports?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음.*LIVE 둘러보기/ })).toHaveAttribute("href", "/live?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /응모·혜택.*혜택 2.*응모 내역 3/ })).toHaveAttribute("href", "/benefits?locale=ko");
+    expect(within(shortcuts).queryByText("응모 가능")).not.toBeInTheDocument();
+  });
+
+  it("opens the nearest actual reservation and summarizes multiple Passports without hiding the collection", async () => {
+    const later = { id: "77777777-7777-4777-8777-777777777777", slug: "later-live", title: "두 번째 예약", startsAt: "2026-09-20T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
+    const sooner = { id: "88888888-8888-4888-8888-888888888888", slug: "sooner-live", title: "가장 가까운 예약", startsAt: "2026-09-18T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      summary: { ...summary, live: { upcoming: [later, sooner], history: [] }, collection: { ...summary.collection, passportCount: 2 } },
+    })));
+    render(<MyScreen locale="ko" />);
+
+    const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
+    expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 2개/ })).toHaveAttribute("href", "/passports?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*가장 가까운 예약/ })).toHaveAttribute("href", "/live/sooner-live?locale=ko");
+  });
+
   it("follows the selected favorite and trusts its server stage label, segment, and artwork", async () => {
     const stageProgress = {
       policyVersion: 2,
@@ -151,6 +175,8 @@ describe("unified MY hub", () => {
     expect(screen.queryByText("예약한 LIVE가 없어요.")).not.toBeInTheDocument();
     expect(screen.queryByText("아직 받은 혜택이 없어요.")).not.toBeInTheDocument();
     expect(screen.queryByText("아직 수집한 기록이 없어요.")).not.toBeInTheDocument();
+    const shortcuts = screen.getByRole("navigation", { name: "내 활동 바로가기" });
+    expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 0개/ })).toHaveAttribute("href", "/passports?locale=ko");
   });
 
   it("distinguishes unspent Raffle tickets from completed Entries in English", async () => {
@@ -210,7 +236,7 @@ describe("unified MY hub", () => {
 it("places the selected favorite panels before LIVE and compact totals after owned records", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
   render(<MyScreen locale="ko"/>);
-  const event=await screen.findByText("내 예약 LIVE");
+  const event=await screen.findByText("내 예약 LIVE", { selector: "strong" });
   expect(screen.getByRole("heading",{name:"내 최애"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
@@ -224,7 +250,7 @@ it("shows a date-led reserved event and keeps recent records below favorites in 
     collection: { ...summary.collection, recent:[{ id, kind:"stamp", title:"KARA Stamp", occurredAt:"2026-09-01T00:00:00.000Z", href:`/passports/${id}` }] },
   } })));
   const {container} = render(<MyScreen locale="ko"/>);
-  await screen.findByText("내 예약 LIVE");
+  await screen.findByText("내 예약 LIVE", { selector: "strong" });
   expect(container.querySelector('time[datetime="2026-09-18T11:30:00.000Z"]')).toHaveTextContent("9월18");
   expect(screen.getByText("KARA Stamp").closest("aside")).toBeNull();
   expect(container.querySelector("#my-creators")!.compareDocumentPosition(container.querySelector("#my-collection")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

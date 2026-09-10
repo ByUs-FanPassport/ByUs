@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, CalendarDays, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Star, Ticket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -45,7 +45,10 @@ const copy = {
     passports: "내 패스포트", stamps: "스탬프", collectibles: "디지털 기념품", noCollection: "아직 수집한 기록이 없어요.",
     notifications: "새 알림", settings: "설정", tickets: "응모권", firstReaction: "첫 반응",
     avatarSettings: "프로필 수정",
-    allLive: "전체 LIVE 보기", allRewards: "혜택 전체 보기", fanTier: "나의 팬등급", myPassport: "내 패스포트",
+    destinations: "내 활동 바로가기", reservedLive: "예약한 LIVE", noReservedLive: "예약 없음 · LIVE 둘러보기",
+    benefitEntry: "응모·혜택", benefitSummary: (benefits: number, entries: number) => `혜택 ${benefits} · 응모 내역 ${entries}`,
+    passportSummary: (count: number) => `발급 ${count}개`,
+    allLive: "전체 LIVE 보기", fanTier: "나의 팬등급", myPassport: "내 패스포트",
     ticketPanel: "이벤트 응모권", allRaffles: "전체 래플", raffleOpen: "응모 진행 중", raffleDraw: "추첨", raffleView: "래플 자세히 보기",
     raffleEmpty: "현재 열려 있는 래플이 없어요.", raffleHelp: "응모권 사용과 응모 조건은 상세에서 확인하세요.",
     nextAction: "다음 팬 활동", noMission: "새 인증 미션을 기다리고 있어요.", viewLive: "LIVE 일정 보기", startPassport: "팬 인증 시작하기",
@@ -63,7 +66,10 @@ const copy = {
     passports: "Fan Passports", stamps: "Stamps", collectibles: "Collectibles", noCollection: "Nothing collected yet.",
     notifications: "New alerts", settings: "Settings", tickets: "Raffle tickets", firstReaction: "First Reaction",
     avatarSettings: "Edit profile",
-    allLive: "View all LIVE", allRewards: "View all rewards", fanTier: "My fan tier", myPassport: "My Passport",
+    destinations: "My activity shortcuts", reservedLive: "Reserved LIVE", noReservedLive: "No reservation · Browse LIVE",
+    benefitEntry: "Entries & rewards", benefitSummary: (benefits: number, entries: number) => `${benefits} rewards · ${entries} entries`,
+    passportSummary: (count: number) => `${count} issued`,
+    allLive: "View all LIVE", fanTier: "My fan tier", myPassport: "My Passport",
     ticketPanel: "Event raffle tickets", allRaffles: "All raffles", raffleOpen: "Raffle open", raffleDraw: "winners", raffleView: "View raffle",
     raffleEmpty: "No raffles are open right now.", raffleHelp: "Check ticket use and entry requirements on the raffle page.",
     nextAction: "Next fan activity", noMission: "There are no new verification missions.", viewLive: "View LIVE schedule", startPassport: "Start fan verification",
@@ -161,6 +167,24 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
       </div>
     </header>
 
+    <nav className={styles.destinations} aria-label={t.destinations}>
+      <Link href={`/passports?locale=${locale}` as Route}>
+        <span className={styles.destinationIcon} data-kind="passport" aria-hidden="true"><BookOpen /></span>
+        <span><strong>{t.myPassport}</strong><small>{t.passportSummary(summary.collection.passportCount)}</small></span>
+        <ArrowRight aria-hidden="true" />
+      </Link>
+      <Link href={(reservedLives[0] ? `/live/${reservedLives[0].slug}?locale=${locale}` : `/live?locale=${locale}`) as Route}>
+        <span className={styles.destinationIcon} data-kind="live" aria-hidden="true"><CalendarDays /></span>
+        <span><strong>{t.reservedLive}</strong><small>{reservedLives[0]?.title ?? t.noReservedLive}</small></span>
+        <ArrowRight aria-hidden="true" />
+      </Link>
+      <Link href={`/benefits?locale=${locale}` as Route}>
+        <span className={styles.destinationIcon} data-kind="benefit" aria-hidden="true"><Ticket /></span>
+        <span><strong>{t.benefitEntry}</strong><small>{t.benefitSummary(summary.rewards.availableCount, summary.rewards.entries)}</small></span>
+        <ArrowRight aria-hidden="true" />
+      </Link>
+    </nav>
+
     <FanSurface appearance="plain" className={`${styles.section} ${styles.favoritesSection}`} id="my-creators">
       <SectionTitle title={t.creators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
       {summary.creators.length ? <div className={styles.favoriteSelector} role="group" aria-label={t.creators}>{summary.creators.map((creator) =>
@@ -189,7 +213,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
     </div>
 
     {hasRewards ? <FanSurface className={styles.section}>
-      <SectionTitle title={t.rewards} href={`/benefits?locale=${locale}`} action={t.allRewards}/>
+      <SectionTitle title={t.rewards}/>
       <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="gift" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><span className={styles.metricIcon} data-kind="ticket" aria-hidden="true"><FanMotionIcon name="ticket" size={20}/></span><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
       {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) => {
         const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;

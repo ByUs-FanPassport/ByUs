@@ -3,7 +3,7 @@
 .homeLink { display: inline-flex; min-height: 44px; align-items: center; }
 .homeLink { color: oklch(48% 0 0); font-size: 14px; font-weight: 650; text-decoration: none; }
 .homeLink svg { width: 16px; height: 16px; }
-.content { max-width:1200px; margin-inline:auto; padding-block:32px 96px; }
+.content { min-width:0; padding-block:32px 96px; }
 .intro { display: grid; gap: 8px; margin-bottom: 32px; }
 .intro h1 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; text-wrap: balance; }
 .intro p { max-width: 65ch; margin: 0; color: oklch(48% 0 0); font-size: 14px; line-height: 1.5; text-wrap: pretty; }
@@ -20,7 +20,7 @@
 .filterMeta button { min-height: 44px; padding: 0 4px; border: 0; background: none; color: oklch(38% .2 315); font: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .grid { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:24px; }
 .card { min-width:0; flex:0 1 100%; overflow:hidden; border:1px solid var(--color-line); border-radius:var(--radius-collection); background:var(--color-surface); }
-.media { position: relative; display: grid; place-items: center; aspect-ratio: 1; overflow: hidden; border-radius: 0; background: #f6f6f5; }
+.media { position: relative; display: grid; place-items: center; aspect-ratio: 1; overflow: hidden; border-radius: 0; background: var(--color-surface); }
 .passportBadge { position: absolute; right: 12px; bottom: 12px; display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 0 12px; border-radius: 999rem; background: rgb(255 255 255 / 94%); color: oklch(26% .08 315); font-size: 12px; font-weight: 800; box-shadow: 0 1px 4px rgb(0 0 0 / 12%); }
 .cardBody { display:grid; gap:12px; padding:var(--space-5); }
 .cardBody h2 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.025em; }

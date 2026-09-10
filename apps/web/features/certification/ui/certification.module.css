@@ -211,7 +211,7 @@
   border-bottom: 1px solid #e7e4e2;
 }
 .hero > span {
-  color: #ff008a;
+  color: var(--color-service-ink);
   font-size: 13px;
   font-weight: 850;
 }
@@ -398,6 +398,21 @@
 .submissionState p {
   margin: 0;
   color: #686462;
+}
+.approvedNext {
+  gap: 12px;
+}
+.approvedNext h2 {
+  margin-bottom: 0;
+}
+.approvedNext p {
+  max-width: 48ch;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.approvedNext a {
+  min-height: 44px;
+  margin-top: 4px;
 }
 .message {
   min-height: 24px;
