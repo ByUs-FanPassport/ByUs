@@ -282,6 +282,8 @@
 .section {
   padding: 0 4px 64px;
 }
+
+.benefitAction { margin-top: 20px; }
 .section + .section {
   border-top: 1px solid oklch(93% 0 0);
   padding-top: 48px;

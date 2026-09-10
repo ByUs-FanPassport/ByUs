@@ -8,6 +8,7 @@ import { Check, Info, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { parseQuizAttemptProjection, parseQuizStartProjection, type QuizAttemptProjection } from "../domain/quiz-attempt";
+import { appendLiveReturnTo, sanitizeLiveReturnTo } from "../domain/live-return-context";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction } from "@/components/fan-ui/fan-action";
@@ -19,6 +20,7 @@ interface QuizResultScreenProps {
   celebritySlug: string;
   celebrityName?: string;
   locale: FanLocale;
+  returnTo?: string | null;
 }
 
 type ViewState =
@@ -126,6 +128,7 @@ export function QuizResultScreen({
   celebritySlug,
   celebrityName,
   locale,
+  returnTo,
 }: QuizResultScreenProps) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
@@ -135,6 +138,7 @@ export function QuizResultScreen({
   const actionErrorRef = useRef<HTMLParagraphElement>(null);
   const t = copy[locale];
   const displayName = celebrityName ?? t.favorite;
+  const liveReturnTo = sanitizeLiveReturnTo(returnTo);
 
   useEffect(() => {
     if (actionError) actionErrorRef.current?.focus();
@@ -186,9 +190,12 @@ export function QuizResultScreen({
       })) as { result?: unknown };
       const result = parseQuizStartProjection(body.result);
       if (result.kind === "holder") {
-        router.push(withLocale(`/passports/${result.passportId}`, locale));
+        router.push((liveReturnTo ?? withLocale(`/passports/${result.passportId}`, locale)) as Route);
       } else {
-        router.push(withLocale(`/c/${celebritySlug}/verify/questions?attempt=${result.attempt.id}`, locale));
+        router.push(appendLiveReturnTo(
+          withLocale(`/c/${celebritySlug}/verify/questions?attempt=${result.attempt.id}`, locale),
+          liveReturnTo,
+        ) as Route);
       }
     } catch (error) {
       setActionError(
@@ -204,6 +211,7 @@ export function QuizResultScreen({
   if (attemptId) resultQuery.set("attempt", attemptId);
   if (passportId) resultQuery.set("passport", passportId);
   resultQuery.set("locale", locale);
+  if (liveReturnTo) resultQuery.set("returnTo", liveReturnTo);
   const resultReturnTo = `/c/${celebritySlug}/verify/result?${resultQuery.toString()}`;
 
   if (view.kind === "loading") {
@@ -264,7 +272,7 @@ export function QuizResultScreen({
               <div><span>Stamp</span><strong>{locale === "ko" ? "팬 인증 Stamp" : "Fan Verification Stamp"}</strong><small>{t.earned}</small></div>
               <div><span>Score</span><strong>{t.fanScore}</strong><small>{t.applied}</small></div>
             </div>
-            <FanAction className={styles.resultAction} variant="primary" href={withLocale(`/passports/${passportId}/issuance`, locale)}>
+            <FanAction className={styles.resultAction} variant="primary" href={appendLiveReturnTo(withLocale(`/passports/${passportId}/issuance`, locale), liveReturnTo) as Route}>
               {t.receivePassport}
             </FanAction>
           </>

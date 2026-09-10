@@ -1,6 +1,6 @@
 "use client";
 
-import { useLogin, usePrivy } from "@privy-io/react-auth";
+import { useCreateWallet, useLogin, useLoginWithOAuth, usePrivy, useUser } from "@privy-io/react-auth";
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -99,10 +99,15 @@ export function LoginPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { ready, authenticated, getAccessToken, logout, user } = usePrivy();
+  const { createWallet } = useCreateWallet();
+  const { refreshUser } = useUser();
   const privyUserId = user?.id;
   const markAvatarSessionReady = useAvatarSessionReady();
   const [error, setError] = useState<string | null>(null);
+  const [oauthStarting, setOauthStarting] = useState(false);
+  const oauthStartRef = useRef(false);
   const synchronizationRef = useRef<Promise<void> | null>(null);
+  const attemptedSessionUserRef = useRef<string | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const sessionErrorRef = useRef<HTMLDivElement>(null);
@@ -114,9 +119,25 @@ export function LoginPage({
   const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
   const synchronizeSession = useCallback((completedUserId?: string) => {
     if (synchronizationRef.current) return synchronizationRef.current;
+    attemptedSessionUserRef.current = completedUserId ?? privyUserId ?? null;
 
     synchronizationRef.current = (async () => {
       try {
+        // Headless OAuth does not run Privy's createOnLogin policy. Prepare the
+        // same user-owned EVM wallet before the server establishes its session.
+        const expectedUserId = completedUserId ?? privyUserId;
+        const currentUser = await refreshUser();
+        if (!expectedUserId || currentUser.id !== expectedUserId) {
+          throw new Error("Privy user changed during sign-in");
+        }
+        const hasWallet = currentUser.linkedAccounts.some((account) =>
+          account.type === "wallet" && account.chainType === "ethereum"
+          && account.connectorType === "embedded" && account.walletClientType === "privy",
+        );
+        if (!hasWallet) {
+          // Never create an additional wallet or replace an existing identity.
+          await createWallet({ createAdditional: false });
+        }
         const token = await getAccessToken();
         if (!token) throw new Error("Missing Privy access token");
         const response = await fetch("/api/auth/session", {
@@ -160,20 +181,38 @@ export function LoginPage({
     })();
 
     return synchronizationRef.current;
-  }, [authIntent, entity, getAccessToken, intent, locale, returnTo, router, privyUserId, markAvatarSessionReady]);
+  }, [authIntent, createWallet, entity, getAccessToken, intent, locale, refreshUser, returnTo, router, privyUserId, markAvatarSessionReady]);
+  const loginErrorMessage = testAccountLoginEnabled
+    ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
+    : appleLoginEnabled
+      ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
+      : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
+  const loginCallbacks = {
+    onComplete: ({ user: completedUser }: { user: { id: string } }) => synchronizeSession(completedUser.id),
+    onError: () => setError(loginErrorMessage),
+  };
   const { login } = useLogin({
-    onComplete: ({ user: completedUser }) => synchronizeSession(completedUser.id),
-    onError: () => setError(
-      testAccountLoginEnabled
-        ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
-        : appleLoginEnabled
-          ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
-        : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.",
-    ),
+    ...loginCallbacks,
   });
+  const { initOAuth, loading: oauthLoading } = useLoginWithOAuth(loginCallbacks);
+
+  const startOAuthLogin = useCallback((provider: "google" | "apple") => {
+    if (oauthStartRef.current) return;
+    oauthStartRef.current = true;
+    setOauthStarting(true);
+    setError(null);
+    void initOAuth({ provider })
+      .catch(() => setError(loginErrorMessage))
+      .finally(() => {
+        oauthStartRef.current = false;
+        setOauthStarting(false);
+      });
+  }, [initOAuth, loginErrorMessage]);
 
   useEffect(() => {
-    if (ready && authenticated && privyUserId) void synchronizeSession();
+    if (ready && authenticated && privyUserId && attemptedSessionUserRef.current !== privyUserId) {
+      void synchronizeSession();
+    }
   }, [authenticated, ready, privyUserId, synchronizeSession]);
 
   useEffect(() => {
@@ -194,6 +233,7 @@ export function LoginPage({
     try {
       await logout();
       synchronizationRef.current = null;
+      attemptedSessionUserRef.current = null;
       setError(null);
     } catch {
       setError("로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -309,9 +349,9 @@ export function LoginPage({
         <button
           className={styles.googleButton}
           type="button"
-          disabled={!ready || authenticated}
-          aria-busy={authenticated}
-          onClick={() => { setError(null); login({ loginMethods: ["google"] }); }}
+          disabled={!ready || authenticated || oauthLoading || oauthStarting}
+          aria-busy={authenticated || oauthLoading || oauthStarting}
+          onClick={() => startOAuthLogin("google")}
         >
           <GoogleMark />
           <span>{ready ? locale === "ko" ? "Google로 계속하기" : "Continue with Google" : "로그인 준비 중"}</span>
@@ -321,9 +361,9 @@ export function LoginPage({
           <button
             className={styles.appleButton}
             type="button"
-            disabled={!ready || authenticated}
-            aria-busy={authenticated}
-            onClick={() => { setError(null); login({ loginMethods: ["apple"] }); }}
+            disabled={!ready || authenticated || oauthLoading || oauthStarting}
+            aria-busy={authenticated || oauthLoading || oauthStarting}
+            onClick={() => startOAuthLogin("apple")}
           >
             <AppleMark />
             <span>{ready ? locale === "ko" ? "Apple로 계속하기" : "Continue with Apple" : "로그인 준비 중"}</span>

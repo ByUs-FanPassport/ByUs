@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { parseQuizStartProjection } from "../domain/quiz-attempt";
 import { parsePublicQuizIntro, type PublicQuizIntro } from "../domain/quiz-intro";
+import { appendLiveReturnTo, sanitizeLiveReturnTo } from "../domain/live-return-context";
 import { consumeAuthIntent, readAuthIntent } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
@@ -110,7 +111,15 @@ function errorMessage(error: unknown, locale: FanLocale): string {
   return t.loadError;
 }
 
-export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLocale }) {
+export function QuizEntryScreen({
+  slug,
+  locale,
+  returnTo,
+}: {
+  slug: string;
+  locale: FanLocale;
+  returnTo?: string | null;
+}) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [screen, setScreen] = useState<ScreenState>({ kind: "loading" });
@@ -120,6 +129,10 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
   const requestGeneration = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
   const t = copy[locale];
+  const liveReturnTo = sanitizeLiveReturnTo(returnTo);
+  const entryQuery = new URLSearchParams({ locale });
+  if (liveReturnTo) entryQuery.set("returnTo", liveReturnTo);
+  const entrySourceQuery = `?${entryQuery.toString()}`;
 
   const loadIntro = useCallback(async () => {
     const generation = ++requestGeneration.current;
@@ -171,6 +184,7 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
           for (const value of current.getAll(key)) returnQuery.append(key, value);
         }
         if (authIntent) returnQuery.set("authIntent", authIntent);
+        if (liveReturnTo) returnQuery.set("returnTo", liveReturnTo);
         const returnTo = `/c/${slug}/verify?${returnQuery.toString()}`;
         router.replace(appendLoginContext("/onboarding/profile", {
           returnTo,
@@ -184,7 +198,7 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
       }
     })();
     return () => controller.abort();
-  }, [authenticated, getAccessToken, locale, ready, router, slug]);
+  }, [authenticated, getAccessToken, liveReturnTo, locale, ready, router, slug]);
 
   const start = useCallback(async () => {
     if (!ready || !authenticated || profileState !== "complete" || starting) return;
@@ -211,19 +225,25 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
         consumeAuthIntent(window.sessionStorage, intent.id);
       }
       if (result.kind === "holder") {
-        router.push(withLocale(`/passports/${result.passportId}`, locale));
+        router.push((liveReturnTo ?? withLocale(`/passports/${result.passportId}`, locale)) as Route);
         return;
       }
       if (result.attempt.status !== "open") {
-        router.push(withLocale(`/c/${slug}/verify/result?attempt=${result.attempt.id}`, locale));
+        router.push(appendLiveReturnTo(
+          withLocale(`/c/${slug}/verify/result?attempt=${result.attempt.id}`, locale),
+          liveReturnTo,
+        ) as Route);
         return;
       }
-      router.push(withLocale(`/c/${slug}/verify/questions?attempt=${result.attempt.id}`, locale));
+      router.push(appendLiveReturnTo(
+        withLocale(`/c/${slug}/verify/questions?attempt=${result.attempt.id}`, locale),
+        liveReturnTo,
+      ) as Route);
     } catch (error) {
       setStartError(errorMessage(error, locale));
       setStarting(false);
     }
-  }, [authenticated, getAccessToken, locale, profileState, ready, router, slug, starting]);
+  }, [authenticated, getAccessToken, liveReturnTo, locale, profileState, ready, router, slug, starting]);
 
   useEffect(() => {
     if (!authenticated || profileState !== "complete" || screen.kind !== "ready" || screen.intro.quiz.availability !== "available") return;
@@ -295,7 +315,7 @@ export function QuizEntryScreen({ slug, locale }: { slug: string; locale: FanLoc
                 {starting ? t.starting : t.start}
               </FanAction>
             ) : (
-              <AuthIntentLink className={fanActionClassName("primary", { className: styles.entryAction })} emphasis="primary" locale={locale} input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>{t.login}</AuthIntentLink>
+              <AuthIntentLink className={fanActionClassName("primary", { className: styles.entryAction })} emphasis="primary" locale={locale} input={{ sourcePath: `/c/${slug}/verify`, sourceQuery: entrySourceQuery, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: slug }}>{t.login}</AuthIntentLink>
             )}
             {startError && <p className={styles.inlineError} role="alert" tabIndex={-1}>{startError}</p>}
             <p className={styles.note}>{t.note}</p>

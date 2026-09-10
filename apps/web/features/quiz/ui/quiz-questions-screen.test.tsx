@@ -162,6 +162,35 @@ describe("FAN-007 quiz questions", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith(`/c/kara/verify/result?attempt=${ids.attempt}&locale=ko`));
   });
 
+  it("keeps the LIVE return context after failure and through a signed-out retry", async () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko";
+    const complete = attempt([ids.o11, ids.o21, ids.o31]);
+    vi.spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => json({ result: { kind: "attempt", ...complete } }))
+      .mockImplementationOnce(() => json({ result: {
+        attempt: { id: ids.attempt, status: "failed", score: 1, submittedAt: "2026-07-21T00:00:00.000Z" },
+        issuance: null,
+      } }));
+
+    const { rerender } = render(<QuizQuestionsScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+    await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      `/c/kara/verify/result?attempt=${ids.attempt}&locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`,
+    ));
+
+    privyState = { ready: true, authenticated: false };
+    rerender(<QuizQuestionsScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+    const questionReturnTo = `/c/kara/verify/questions?locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`;
+    expect(screen.getByRole("link", { name: "로그인하고 계속하기" })).toHaveAttribute(
+      "href",
+      `/login?returnTo=${encodeURIComponent(questionReturnTo)}&locale=ko&intent=passport`,
+    );
+  });
+
   it("sends an existing Passport holder directly to the owner-scoped detail", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => json({
       result: { kind: "holder", passportId: ids.passport },

@@ -32,6 +32,9 @@ export async function enablePushNotifications(
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey(publicKey),
       }));
+    const serialized = subscription.toJSON();
+    if (!serialized.endpoint || !serialized.keys?.p256dh || !serialized.keys.auth)
+      return "failed";
     const token = await getAccessToken();
     if (!token) return "failed";
     const response = await fetch("/api/notifications/subscriptions", {
@@ -40,7 +43,13 @@ export async function enablePushNotifications(
         authorization: `Bearer ${token}`,
         "content-type": "application/json",
       },
-      body: JSON.stringify(subscription.toJSON()),
+      body: JSON.stringify({
+        endpoint: serialized.endpoint,
+        keys: {
+          p256dh: serialized.keys.p256dh,
+          auth: serialized.keys.auth,
+        },
+      }),
     });
     return response.ok ? "subscribed" : "failed";
   } catch {

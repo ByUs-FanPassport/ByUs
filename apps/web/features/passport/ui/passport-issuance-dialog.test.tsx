@@ -8,11 +8,17 @@ import { PassportIssuanceCeremony, PassportIssuanceScreen } from "./passport-iss
 const getAccessToken = vi.fn();
 let authenticated = true;
 let locale = "ko";
+let returnTo: string | null = null;
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated, getAccessToken }),
 }));
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(`locale=${locale}`),
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => {
+    const params = new URLSearchParams({ locale });
+    if (returnTo) params.set("returnTo", returnTo);
+    return params;
+  },
 }));
 
 const aggregate: IssuanceAggregate = {
@@ -26,6 +32,7 @@ describe("PassportIssuanceCeremony", () => {
   beforeEach(() => {
     authenticated = true;
     locale = "ko";
+    returnTo = null;
     getAccessToken.mockResolvedValue("access-token");
     vi.spyOn(globalThis, "fetch").mockReset();
     Object.defineProperty(window, "matchMedia", {
@@ -52,6 +59,25 @@ describe("PassportIssuanceCeremony", () => {
     const openPassport = screen.getByRole("link", { name: "Passport 열기" });
     expect(openPassport).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
     expect(openPassport).toHaveFocus();
+  });
+
+  it("offers an explicit return to the original LIVE after issuance completes", () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko&authIntent=abcdefab-1234-4123-8123-abcdefabcdef";
+    render(<PassportIssuanceCeremony issuance={aggregate} returnTo={liveReturnTo} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    expect(screen.getByRole("link", { name: "LIVE 예약 이어가기" })).toHaveAttribute("href", liveReturnTo);
+    expect(screen.queryByRole("link", { name: "Passport 열기" })).not.toBeInTheDocument();
+  });
+
+  it("ignores an unsafe LIVE target and keeps the normal Passport action", () => {
+    render(<PassportIssuanceCeremony issuance={aggregate} returnTo="//evil.example/live/kara?locale=ko" />);
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+
+    expect(screen.getByRole("link", { name: "Passport 열기" })).toHaveAttribute(
+      "href",
+      `/passports/${aggregate.passport.id}?locale=ko`,
+    );
   });
 
   it("uses Skip only to complete the local presentation and exposes no issuance mutation", () => {
@@ -178,6 +204,19 @@ describe("PassportIssuanceCeremony", () => {
       expect.objectContaining({ method: "GET", headers: { authorization: "Bearer access-token" } }),
     );
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("preserves the LIVE return when issuance requires login again", async () => {
+    authenticated = false;
+    returnTo = "/live/kara-seoul?locale=ko";
+    render(<PassportIssuanceScreen passportId={aggregate.passport.id} />);
+
+    const issuanceReturnTo = `/passports/${aggregate.passport.id}/issuance?locale=ko&returnTo=${encodeURIComponent(returnTo)}`;
+    expect(await screen.findByRole("link", { name: "로그인하고 발급 결과 확인하기" })).toHaveAttribute(
+      "href",
+      `/login?returnTo=${encodeURIComponent(issuanceReturnTo)}&locale=ko&intent=passport&entity=${aggregate.passport.id}`,
+    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("keeps Passport access available if ceremony data cannot load", async () => {

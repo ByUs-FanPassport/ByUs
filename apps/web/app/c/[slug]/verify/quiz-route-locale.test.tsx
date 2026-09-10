@@ -32,6 +32,34 @@ describe("fan verification route locale contract", () => {
     expect(element.props).toMatchObject({ locale: "en", slug: "katseye" });
   });
 
+  it("passes only a validated LIVE return target to every verification route", async () => {
+    const returnTo = "/live/katseye-seoul?locale=en";
+    const [entry, questions, result] = await Promise.all([
+      QuizEntryPage({
+        params: Promise.resolve({ slug: "katseye" }),
+        searchParams: Promise.resolve({ locale: "en", returnTo }),
+      }),
+      QuizQuestionsPage({
+        params: Promise.resolve({ slug: "katseye" }),
+        searchParams: Promise.resolve({ locale: "en", returnTo }),
+      }),
+      QuizResultPage({
+        params: Promise.resolve({ slug: "katseye" }),
+        searchParams: Promise.resolve({ locale: "en", returnTo }),
+      }),
+    ]);
+
+    expect(entry.props.returnTo).toBe(returnTo);
+    expect(questions.props.returnTo).toBe(returnTo);
+    expect(result.props.returnTo).toBe(returnTo);
+
+    const unsafe = await QuizEntryPage({
+      params: Promise.resolve({ slug: "katseye" }),
+      searchParams: Promise.resolve({ locale: "en", returnTo: "https://evil.example/live/katseye?locale=en" }),
+    });
+    expect(unsafe.props.returnTo).toBeNull();
+  });
+
   it("threads the English locale and entity slug into the questions screen", async () => {
     const element = await QuizQuestionsPage({
       params: Promise.resolve({ slug: "katseye" }),

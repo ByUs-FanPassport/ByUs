@@ -230,6 +230,16 @@ describe("LiveEventScreen", () => {
     ).toBeInTheDocument();
   });
 
+  it("preserves the original LIVE and login intent through fan verification", async () => {
+    query = "locale=ko&authIntent=11111111-1111-4111-8111-111111111111";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(payload("verify_fan")));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const verify = await screen.findByRole("link", { name: "팬 인증하기" });
+    const destination = new URL(verify.getAttribute("href")!, "http://localhost");
+    expect(destination.pathname).toBe("/c/kara/verify");
+    expect(destination.searchParams.get("returnTo")).toBe(`/live/kara-nualeaf?${query}`);
+    expect(screen.getByRole("link", { name: "KARA 혜택·응모 보기" })).toHaveAttribute("href", "/benefits?locale=ko&celebrity=kara");
+  });
   it("keeps LIVE current across desktop and mobile navigation and preserves locale switching", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(payload()), { status: 200 }),
@@ -326,7 +336,7 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
 
     expect(await screen.findByRole("link", { name: "팬 인증하기" }))
-      .toHaveAttribute("href", "/c/kara/verify?locale=ko");
+      .toHaveAttribute("href", "/c/kara/verify?locale=ko&returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Dko");
     expect(screen.getByRole("link", { name: "팬 인증하기" }))
       .toHaveAccessibleDescription("예약하려면 KARA Fan Passport가 필요해요.");
     expect(screen.getByRole("link", { name: "팬 인증하기" })
@@ -501,7 +511,7 @@ describe("LiveEventScreen", () => {
 
     expect(await screen.findByText("Fan Passport 발급 후 참여할 수 있어요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Fan Passport 발급받기" }))
-      .toHaveAttribute("href", "/c/kara/verify?locale=ko");
+      .toHaveAttribute("href", "/c/kara/verify?locale=ko&returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Dko");
     expect(screen.queryByRole("textbox", { name: "Fan Code 입력" })).not.toBeInTheDocument();
   });
 
@@ -517,7 +527,7 @@ describe("LiveEventScreen", () => {
 
     expect(await screen.findByText("Create a Fan Passport before joining.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Get Fan Passport" }))
-      .toHaveAttribute("href", "/c/kara/verify?locale=en");
+      .toHaveAttribute("href", "/c/kara/verify?locale=en&returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Den");
   });
 
   it("QA-ATT-006 keeps Fan Code attendance available after the LIVE has ended", async () => {

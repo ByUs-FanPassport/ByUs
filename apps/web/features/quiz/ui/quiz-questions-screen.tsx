@@ -13,6 +13,7 @@ import {
   parseQuizSubmitProjection,
   type QuizAttemptProjection,
 } from "../domain/quiz-attempt";
+import { appendLiveReturnTo, sanitizeLiveReturnTo } from "../domain/live-return-context";
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction } from "@/components/fan-ui/fan-action";
@@ -122,7 +123,15 @@ function authorization(token: string): HeadersInit {
   return { authorization: `Bearer ${token}` };
 }
 
-export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: FanLocale }) {
+export function QuizQuestionsScreen({
+  slug,
+  locale,
+  returnTo,
+}: {
+  slug: string;
+  locale: FanLocale;
+  returnTo?: string | null;
+}) {
   const router = useRouter();
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [screen, setScreen] = useState<ScreenState>({ kind: "loading" });
@@ -133,13 +142,14 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
   const requestGeneration = useRef(0);
   const operationErrorRef = useRef<HTMLDivElement>(null);
   const t = copy[locale];
+  const liveReturnTo = sanitizeLiveReturnTo(returnTo);
 
   const resultPath = useCallback((attemptId: string, passportId?: string) => {
     const query = new URLSearchParams({ attempt: attemptId });
     if (passportId) query.set("passport", passportId);
     query.set("locale", locale);
-    return `/c/${slug}/verify/result?${query.toString()}` as Route;
-  }, [locale, slug]);
+    return appendLiveReturnTo(`/c/${slug}/verify/result?${query.toString()}`, liveReturnTo) as Route;
+  }, [liveReturnTo, locale, slug]);
 
   const load = useCallback(async () => {
     const generation = ++requestGeneration.current;
@@ -157,7 +167,7 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
       const result = parseQuizStartProjection(body.result);
       if (generation !== requestGeneration.current) return;
       if (result.kind === "holder") {
-        router.replace(withLocale(`/passports/${result.passportId}`, locale));
+        router.replace((liveReturnTo ?? withLocale(`/passports/${result.passportId}`, locale)) as Route);
         return;
       }
       if (result.attempt.status !== "open") {
@@ -170,7 +180,7 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
     } catch (error) {
       if (generation === requestGeneration.current) setScreen({ kind: "error", message: errorMessage(error, locale) });
     }
-  }, [getAccessToken, locale, resultPath, router, slug]);
+  }, [getAccessToken, liveReturnTo, locale, resultPath, router, slug]);
 
   useEffect(() => {
     if (!ready || !authenticated) return;
@@ -240,8 +250,8 @@ export function QuizQuestionsScreen({ slug, locale }: { slug: string; locale: Fa
   }
 
   if (!authenticated) {
-    const returnTo = withLocale(`/c/${slug}/verify/questions`, locale);
-    return <QuizFrame locale={locale}><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">{t.loginTitle}</h1><p>{t.loginBody}</p><FanAction variant="primary" href={`/login?returnTo=${encodeURIComponent(returnTo)}&locale=${locale}&intent=passport` as Route} trailingIcon={<ArrowRight />}>{t.login}</FanAction></section></QuizFrame>;
+    const questionReturnTo = appendLiveReturnTo(withLocale(`/c/${slug}/verify/questions`, locale), liveReturnTo);
+    return <QuizFrame locale={locale}><section className={styles.message} aria-labelledby="login-required"><h1 id="login-required">{t.loginTitle}</h1><p>{t.loginBody}</p><FanAction variant="primary" href={`/login?returnTo=${encodeURIComponent(questionReturnTo)}&locale=${locale}&intent=passport` as Route} trailingIcon={<ArrowRight />}>{t.login}</FanAction></section></QuizFrame>;
   }
 
   if (screen.kind === "error") {

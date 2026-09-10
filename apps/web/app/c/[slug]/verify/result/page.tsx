@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { QuizResultScreen } from "../../../../../features/quiz/ui/quiz-result-screen";
+import { sanitizeLiveReturnTo } from "../../../../../features/quiz/domain/live-return-context";
 import { createPublishedContentRepositoryFromEnvironment } from "../../../../../server/content/published-content-repository";
 import { sanitizeLocale } from "../../../../../components/login-intent";
 
@@ -21,6 +22,7 @@ export default async function QuizResultPage({
   const rawPassport = typeof query.passport === "string" ? query.passport : null;
   const parsedPassport = rawPassport === null ? null : uuidSchema.safeParse(rawPassport);
   const locale = sanitizeLocale(typeof query.locale === "string" ? query.locale : undefined);
+  const returnTo = sanitizeLiveReturnTo(typeof query.returnTo === "string" ? query.returnTo : undefined);
 
   if (!parsedSlug.success) {
     notFound();
@@ -34,6 +36,7 @@ export default async function QuizResultPage({
       locale={locale}
       attemptId={parsedAttempt.success ? parsedAttempt.data : null}
       passportId={parsedPassport?.success ? parsedPassport.data : null}
+      returnTo={returnTo}
     />
   );
 }

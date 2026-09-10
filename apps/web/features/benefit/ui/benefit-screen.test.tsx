@@ -283,6 +283,37 @@ describe("benefit screens", () => {
       idempotencyKey: expect.any(String),
     });
   });
+  it("uses the creator in the incoming link instead of the first creator", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ celebrities: [{ slug: "elina", name: "엘리나" }, { slug: "ifewknow", name: "이퓨" }] }))
+      .mockResolvedValueOnce(Response.json({ benefits: [benefit] }));
+    render(<BenefitsScreen locale="ko" initialCelebrity="ifewknow" />);
+    await screen.findByRole("heading", { name: benefit.title });
+    expect(screen.getByRole("combobox")).toHaveValue("ifewknow");
+    expect(fetchMock).toHaveBeenCalledWith("/api/benefits?locale=ko&celebrity=ifewknow", expect.anything());
+  });
+  it("distinguishes raffle entry eligibility and uses its exact KST deadline", async () => {
+    const raffle = {
+      ...benefit,
+      allocationMode: "application_selection",
+      eligibilityLabel: "이퓨 응모권으로 9월 19일 밤 12시(KST)까지 응모하세요.",
+      entry: {
+        campaignId: "55555555-5555-4555-8555-555555555555",
+        creatorTicketBalance: 1, enteredTickets: 1, perFanTicketLimit: null, remainingBenefitTickets: null,
+        entryOpensAt: "2026-09-09T08:53:24.796Z", entryClosesAt: "2026-09-19T15:00:00Z",
+        canEnter: true, entries: [],
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit: raffle }));
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    expect(await screen.findByText("응모 가능")).toBeInTheDocument();
+    expect(screen.queryByText("수령 가능")).not.toBeInTheDocument();
+    const deadline = screen.getByText("응모 마감").nextElementSibling;
+    expect(deadline).toHaveTextContent("2026년 9월 20일 00:00 (KST)");
+    expect(deadline?.querySelector("time")).toHaveAttribute("datetime", raffle.entry.entryClosesAt);
+    expect(screen.getByText("이퓨 응모권으로 2026년 9월 20일 00:00 (KST)까지 응모하세요.")).toBeInTheDocument();
+    expect(screen.queryByText(/밤 12시/)).not.toBeInTheDocument();
+  });
   it("enters campaign Tickets once on rapid clicks and refreshes balance and history", async () => {
     let resolveEntry!: (response: Response) => void;
     const entryResponse = new Promise<Response>((resolve) => {

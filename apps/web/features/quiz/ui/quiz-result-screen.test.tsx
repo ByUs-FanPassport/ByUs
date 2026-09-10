@@ -61,6 +61,18 @@ describe("QuizResultScreen", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("preserves the LIVE return when an expired result session requires login", () => {
+    authenticated = false;
+    const liveReturnTo = "/live/kara-seoul?locale=ko";
+    render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" returnTo={liveReturnTo} />);
+    const resultReturnTo = `/c/kara/verify/result?attempt=${attemptId}&passport=${passportId}&locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`;
+
+    expect(screen.getByRole("link", { name: "로그인하고 결과 확인하기" })).toHaveAttribute(
+      "href",
+      `/login?returnTo=${encodeURIComponent(resultReturnTo)}&locale=ko&intent=passport`,
+    );
+  });
+
   it("links the terminal pass to the recoverable, GET-only issuance route", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
 
@@ -77,6 +89,32 @@ describe("QuizResultScreen", () => {
     );
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST" && String(init))).toBe(false);
+  });
+
+  it("carries LIVE context into issuance and a failed-attempt retry", async () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko";
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(terminalAttempt("passed", 2)));
+    const { unmount } = render(
+      <QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" returnTo={liveReturnTo} />,
+    );
+
+    expect(await screen.findByRole("link", { name: "Passport 받기" })).toHaveAttribute(
+      "href",
+      `/passports/${passportId}/issuance?locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`,
+    );
+    unmount();
+
+    const nextAttemptId = "40000000-0000-4000-8000-000000000004";
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json(terminalAttempt("failed", 1)))
+      .mockResolvedValueOnce(Response.json({
+        result: { kind: "attempt", ...terminalAttempt("failed", 1).attempt, attempt: { id: nextAttemptId, status: "open", score: null, submittedAt: null } },
+      }));
+    render(<QuizResultScreen attemptId={attemptId} passportId={null} celebritySlug="kara" celebrityName="KARA" locale="ko" returnTo={liveReturnTo} />);
+    fireEvent.click(await screen.findByRole("button", { name: "다시 도전" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(
+      `/c/kara/verify/questions?attempt=${nextAttemptId}&locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`,
+    ));
   });
 
   it("starts a fresh attempt after failure and navigates to its question snapshot", async () => {

@@ -57,6 +57,38 @@ describe("QuizEntryScreen", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/celebrities/kara/quiz/attempts?locale=ko", expect.objectContaining({ method: "POST", headers: { authorization: "Bearer privy-token" } }));
   });
 
+  it("carries a validated LIVE reservation return through a successful start", async () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko&authIntent=abcdefab-1234-4123-8123-abcdefabcdef";
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/profile") return Response.json({ profile: { completed: true } });
+      if (url.includes("/api/public/")) return Response.json({ intro });
+      return Response.json({ result: { kind: "attempt", attempt: { id: attemptId, status: "open", score: null, submittedAt: null }, questions } });
+    });
+
+    render(<QuizEntryScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+    fireEvent.click(await screen.findByRole("button", { name: "팬 인증 시작하기" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith(
+      `/c/kara/verify/questions?attempt=${attemptId}&locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`,
+    ));
+  });
+
+  it("returns an existing Passport holder directly to the validated LIVE", async () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko";
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/profile") return Response.json({ profile: { completed: true } });
+      if (url.includes("/api/public/")) return Response.json({ intro });
+      return Response.json({ result: { kind: "holder", passportId: "22222222-2222-4222-8222-222222222222" } });
+    });
+
+    render(<QuizEntryScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+    fireEvent.click(await screen.findByRole("button", { name: "팬 인증 시작하기" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith(liveReturnTo));
+  });
+
   it.each(["creator_page", "live", "benefit", "reaction"] as const)(
     "forwards canonical %s attribution to the server-owned attempt",
     async (source) => {
@@ -84,6 +116,24 @@ describe("QuizEntryScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ intro }));
     render(<QuizEntryScreen locale="ko" slug="kara" />);
     expect(await screen.findByRole("link", { name: "로그인하고 시작하기" })).toHaveAttribute("href", `/login?returnTo=${encodeURIComponent("/c/kara/verify?locale=ko")}&locale=ko&intent=passport&entity=kara`);
+  });
+
+  it("preserves a validated LIVE return through login and drops an unsafe one", async () => {
+    privyState = { ready: true, authenticated: false };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ intro }));
+    const liveReturnTo = "/live/kara-seoul?locale=ko";
+    const { rerender } = render(<QuizEntryScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+
+    expect(await screen.findByRole("link", { name: "로그인하고 시작하기" })).toHaveAttribute(
+      "href",
+      `/login?returnTo=${encodeURIComponent(`/c/kara/verify?locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`)}&locale=ko&intent=passport&entity=kara`,
+    );
+
+    rerender(<QuizEntryScreen locale="ko" slug="kara" returnTo="https://evil.example/live/kara?locale=ko" />);
+    expect(screen.getByRole("link", { name: "로그인하고 시작하기" })).toHaveAttribute(
+      "href",
+      `/login?returnTo=${encodeURIComponent("/c/kara/verify?locale=ko")}&locale=ko&intent=passport&entity=kara`,
+    );
   });
 
   it("resumes a matching durable verification action once and consumes it after the server projection", async () => {
@@ -141,6 +191,21 @@ describe("QuizEntryScreen", () => {
     const returnTo = `/c/kara/verify?locale=ko&source=live&sourceId=${sourceId}`;
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
       `/onboarding/profile?returnTo=${encodeURIComponent(returnTo)}&locale=ko&intent=passport&entity=kara`,
+    ));
+  });
+
+  it("preserves the LIVE return while profile onboarding repairs an incomplete profile", async () => {
+    const liveReturnTo = "/live/kara-seoul?locale=ko&authIntent=abcdefab-1234-4123-8123-abcdefabcdef";
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input) === "/api/me/profile") return Response.json({ profile: { completed: false } });
+      return Response.json({ intro });
+    });
+
+    render(<QuizEntryScreen locale="ko" slug="kara" returnTo={liveReturnTo} />);
+
+    const verificationReturnTo = `/c/kara/verify?locale=ko&returnTo=${encodeURIComponent(liveReturnTo)}`;
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      `/onboarding/profile?returnTo=${encodeURIComponent(verificationReturnTo)}&locale=ko&intent=passport&entity=kara`,
     ));
   });
 

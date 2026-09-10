@@ -40,8 +40,8 @@ import {
   type BenefitClaimResponse,
   type BenefitApplicationResponse,
   type BenefitOwnedApplicationResponse,
-  type BenefitState,
 } from "../domain/benefit";
+import { benefitEligibilityLabel, formatBenefitDateTime } from "./benefit-presentation";
 import styles from "./benefit-screen.module.css";
 import {
   benefitEntryResultSchema,
@@ -97,6 +97,7 @@ const copy = {
     activity: "필요 활동",
     claim: "혜택 수령하기",
     signIn: "로그인하고 혜택 이어받기",
+    signInToEnter: "로그인하고 응모하기",
     claiming: "수령 처리 중",
     locked: "조건을 달성하면 수령할 수 있어요",
     claimed: "이미 수령한 혜택이에요",
@@ -174,6 +175,7 @@ const copy = {
     activity: "Activity",
     claim: "Claim benefit",
     signIn: "Sign in to continue",
+    signInToEnter: "Sign in to enter",
     claiming: "Claiming",
     locked: "Complete the requirements to claim",
     claimed: "You already claimed this benefit",
@@ -253,18 +255,36 @@ function localizeBenefitValue(value: string, locale: BenefitLocale) {
   return knownValues[normalized] ?? value;
 }
 
+function benefitStateLabel(benefit: BenefitCatalogItem, locale: BenefitLocale): string {
+  const { state, applicationStatus, entry, allocationMode } = benefit;
+  if (state === "claimed") return copy[locale].states.claimed;
+  if (applicationStatus === "selected") return locale === "ko" ? "선정 완료" : "Selected";
+  if (applicationStatus === "submitted") return locale === "ko" ? "신청 완료" : "Application submitted";
+  if (applicationStatus === "not_selected") return locale === "ko" ? "선정 종료" : "Selection complete";
+  if (state === "eligible" && entry) {
+    if (entry.canEnter) return locale === "ko" ? "응모 가능" : "Open for entries";
+    if (Date.now() < Date.parse(entry.entryOpensAt)) return locale === "ko" ? "응모 예정" : "Entries open soon";
+    return locale === "ko" ? "응모 종료" : "Entries closed";
+  }
+  if (state === "eligible" && allocationMode === "application_selection") {
+    return locale === "ko" ? "신청 가능" : "Open for applications";
+  }
+  return copy[locale].states[state];
+}
+
 function StateBadge({
-  state,
+  benefit,
   locale,
 }: {
-  state: BenefitState;
+  benefit: BenefitCatalogItem;
   locale: BenefitLocale;
 }) {
+  const { state } = benefit;
   return (
     <span className={styles.stateBadge} data-state={state}>
       {state === "claimed" && <Check aria-hidden="true" />}
       {state === "locked" && <LockKeyhole aria-hidden="true" />}
-      {copy[locale].states[state]}
+      {benefitStateLabel(benefit, locale)}
     </span>
   );
 }
@@ -470,10 +490,10 @@ export function BenefitsScreen({
             {view.benefits.map((benefit) => (
               <article className={styles.benefitRow} key={benefit.id}>
                 <div className={styles.rowContent}>
-                  <StateBadge state={benefit.state} locale={locale} />
+                  <StateBadge benefit={benefit} locale={locale} />
                   <h2>{benefit.title}</h2>
                   <p>{benefit.summary}</p>
-                  <span>{benefit.eligibilityLabel}</span>
+                  <span>{benefitEligibilityLabel(benefit, locale)}</span>
                 </div>
                 <Link
                   className={styles.rowLink}
@@ -943,14 +963,14 @@ export function BenefitDetailScreen({
       )}
       <article className={styles.detail}>
         <div className={styles.detailIntro}>
-          <StateBadge state={benefit.state} locale={locale} />
+          <StateBadge benefit={benefit} locale={locale} />
           <h1>{benefit.title}</h1>
           <p>{benefit.summary}</p>
         </div>
         <div className={styles.detailColumns}>
           <section>
-            <h2>{c.requirement}</h2>
-            <p>{localizeBenefitValue(benefit.eligibilityLabel, locale)}</p>
+            <h2>{benefit.entry ? locale === "ko" ? "응모하려면" : "How to enter" : c.requirement}</h2>
+            <p>{localizeBenefitValue(benefitEligibilityLabel(benefit, locale), locale)}</p>
             <RequirementList benefit={benefit} locale={locale} />
           </section>
           <section>
@@ -958,18 +978,18 @@ export function BenefitDetailScreen({
             <p>{localizeBenefitValue(benefit.deliveryLabel, locale)}</p>
             <dl className={styles.period}>
               <div>
-                <dt>{c.periodStart}</dt>
+                <dt>{benefit.entry ? locale === "ko" ? "응모 시작" : "Entries open" : c.periodStart}</dt>
                 <dd>
-                  <time dateTime={benefit.claimOpensAt}>
-                    {formatDate(benefit.claimOpensAt, locale)}
+                  <time dateTime={benefit.entry?.entryOpensAt ?? benefit.claimOpensAt}>
+                    {formatBenefitDateTime(benefit.entry?.entryOpensAt ?? benefit.claimOpensAt, locale)}
                   </time>
                 </dd>
               </div>
               <div>
-                <dt>{c.periodEnd}</dt>
+                <dt>{benefit.entry ? locale === "ko" ? "응모 마감" : "Entries close" : c.periodEnd}</dt>
                 <dd>
-                  <time dateTime={benefit.claimClosesAt}>
-                    {formatDate(benefit.claimClosesAt, locale)}
+                  <time dateTime={benefit.entry?.entryClosesAt ?? benefit.claimClosesAt}>
+                    {formatBenefitDateTime(benefit.entry?.entryClosesAt ?? benefit.claimClosesAt, locale)}
                   </time>
                 </dd>
               </div>
@@ -989,7 +1009,7 @@ export function BenefitDetailScreen({
               targetId: benefitId,
             }}
           >
-            {c.signIn}
+            {c.signInToEnter}
           </AuthIntentLink>
         ) : benefit.entry ? (
           <section className={styles.delivery} aria-live="polite">

@@ -396,6 +396,8 @@ function ReservationDialog({
           ? locale === "ko"
             ? "알림 켜짐"
             : "Notifications on"
+          : pushState === "failed"
+            ? locale === "ko" ? "알림 설정 다시 시도" : "Retry notification setup"
           : locale === "ko"
             ? "시작 알림 받기"
             : "Enable reminders"}
@@ -411,8 +413,8 @@ function ReservationDialog({
                 ? "이 브라우저는 푸시 알림을 지원하지 않습니다."
                 : "This browser does not support push notifications."
               : locale === "ko"
-                ? "알림 설정을 저장하지 못했습니다."
-                : "Could not save notification settings."}
+                ? "알림 설정을 저장하지 못했어요. 다시 시도해 주세요. LIVE 예약은 완료됐어요."
+                : "Could not save notification settings. Please try again. Your LIVE reservation is complete."}
         </p>
       )}
       <FanAction variant="primary" className={styles.dialogPrimary} fullWidth onClick={() => dialogRef.current?.close()}>
@@ -841,6 +843,14 @@ export function LiveEventScreen({
     ? c.reservePending
     : c.action[primaryAction];
   const calendarUrl = googleCalendarUrl(live);
+  const liveReturnQuery = new URLSearchParams({ locale });
+  const authIntentId = searchParams.get("authIntent");
+  if (authIntentId) liveReturnQuery.set("authIntent", authIntentId);
+  const verificationQuery = new URLSearchParams({
+    locale,
+    returnTo: `/live/${slug}?${liveReturnQuery.toString()}`,
+  });
+  const verificationHref = `/c/${live.celebrity.slug}/verify?${verificationQuery.toString()}` as Route;
   const primaryHelper =
     primaryAction === "sign_in_to_reserve"
       ? c.actionHelper.signIn
@@ -894,7 +904,7 @@ export function LiveEventScreen({
     ) : primaryAction === "verify_fan" ? (
       <div className={styles.primaryActionBlock}>
         <FanAction
-          href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
+          href={verificationHref}
           variant="primary"
           fullWidth
           ariaDescribedBy={primaryHelperId}
@@ -1196,7 +1206,7 @@ export function LiveEventScreen({
                       <p>{c.attendance.passport}</p>
                       <FanAction
                         className={styles.attendanceAction}
-                        href={`/c/${live.celebrity.slug}/verify?locale=${locale}` as Route}
+                        href={verificationHref}
                         variant="passport"
                         trailingIcon={<ArrowRight />}
                       >
@@ -1290,6 +1300,14 @@ export function LiveEventScreen({
             <section className={styles.section}>
               <h2>{c.benefit}</h2>
               <p>{c.benefitIntro}</p>
+              <FanAction
+                href={`/benefits?locale=${locale}&celebrity=${encodeURIComponent(live.celebrity.slug)}` as Route}
+                variant="neutral"
+                className={styles.benefitAction}
+                trailingIcon={<ArrowRight />}
+              >
+                {locale === "ko" ? `${live.celebrity.name} 혜택·응모 보기` : `View ${live.celebrity.name} benefits & entries`}
+              </FanAction>
             </section>
           </div>
           <aside className={styles.identity}>

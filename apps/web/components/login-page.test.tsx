@@ -4,25 +4,38 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "./login-page";
 
 const login = vi.fn();
+const initOAuth = vi.fn();
 const replace = vi.fn();
 const back = vi.fn();
 let onComplete: ((result?: { user: { id: string } }) => void) | undefined;
 let onError: (() => void) | undefined;
+let onOAuthComplete: ((result?: { user: { id: string } }) => void) | undefined;
 const getAccessToken = vi.fn();
+const createWallet = vi.fn();
+const refreshUser = vi.fn();
+let currentUserId = "restored-fan";
+const embeddedWallet = { type: "wallet", chainType: "ethereum", connectorType: "embedded", walletClientType: "privy", address: "0x1111111111111111111111111111111111111111" };
 const logout = vi.fn();
 let authenticated = false;
 let ready = true;
+let oauthLoading = false;
 let query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
 const markAvatarSessionReady = vi.fn();
 
 vi.mock("./avatar-session-bridge", () => ({ useAvatarSessionReady: () => markAvatarSessionReady }));
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready, authenticated, getAccessToken, logout, user: authenticated ? { id: "restored-fan" } : null }),
+  usePrivy: () => ({ ready, authenticated, getAccessToken, logout, user: authenticated ? { id: currentUserId } : null }),
+  useCreateWallet: () => ({ createWallet }),
+  useUser: () => ({ refreshUser }),
   useLogin: (callbacks: { onComplete?: (result: { user: { id: string } }) => void; onError?: () => void }) => {
-    onComplete = (result = { user: { id: "callback-fan" } }) => callbacks.onComplete?.(result);
+    onComplete = (result = { user: { id: "callback-fan" } }) => { currentUserId = result.user.id; return callbacks.onComplete?.(result); };
     onError = callbacks.onError;
     return { login };
+  },
+  useLoginWithOAuth: (callbacks: { onComplete?: (result: { user: { id: string } }) => void; onError?: () => void }) => {
+    onOAuthComplete = (result = { user: { id: "oauth-fan" } }) => { currentUserId = result.user.id; return callbacks.onComplete?.(result); };
+    return { initOAuth, loading: oauthLoading, state: { status: "initial" } };
   },
 }));
 
@@ -46,10 +59,15 @@ describe("Privy login page", () => {
         dispatchEvent: vi.fn(),
       })),
     });
-    login.mockClear(); replace.mockClear(); back.mockClear();
+    login.mockClear(); initOAuth.mockReset(); replace.mockClear(); back.mockClear();
+    initOAuth.mockResolvedValue(undefined);
     markAvatarSessionReady.mockClear();
+    currentUserId = "restored-fan";
+    createWallet.mockReset().mockResolvedValue(embeddedWallet);
+    refreshUser.mockReset().mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [embeddedWallet] }));
     authenticated = false;
     ready = true;
+    oauthLoading = false;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
     getAccessToken.mockResolvedValue("privy-access-token");
     logout.mockResolvedValue(undefined);
@@ -73,10 +91,11 @@ describe("Privy login page", () => {
     expect(replace).toHaveBeenCalled();
   });
 
-  it("starts the real Privy modal with Google as the only login method", () => {
+  it("starts Google OAuth directly without opening the Privy login modal", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: /Google로 계속하기/ }));
-    expect(login).toHaveBeenCalledWith({ loginMethods: ["google"] });
+    expect(initOAuth).toHaveBeenCalledWith({ provider: "google" });
+    expect(login).not.toHaveBeenCalled();
     expect(screen.queryByText(/Embedded Wallet과 Fan Passport/)).not.toBeInTheDocument();
     expect(screen.queryByText(/로그인 후 .* 돌아갑니다/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Test Account 이메일/ })).not.toBeInTheDocument();
@@ -90,13 +109,93 @@ describe("Privy login page", () => {
     expect(screen.getByText("YOUR FAN PASSPORT")).toBeInTheDocument();
   });
 
-  it("shows Apple only behind the readiness flag and starts the Apple method", () => {
+  it("shows Apple only behind the readiness flag and starts Apple OAuth directly", () => {
     const { rerender } = render(<LoginPage />);
     expect(screen.queryByRole("button", { name: /Apple로 계속하기/ })).not.toBeInTheDocument();
 
     rerender(<LoginPage appleLoginEnabled />);
     fireEvent.click(screen.getByRole("button", { name: /Apple로 계속하기/ }));
-    expect(login).toHaveBeenLastCalledWith({ loginMethods: ["apple"] });
+    expect(initOAuth).toHaveBeenLastCalledWith({ provider: "apple" });
+    expect(login).not.toHaveBeenCalled();
+  });
+
+  it("synchronizes the completed headless OAuth user through the existing return path", async () => {
+    query = "returnTo=%2Fmy%3Flocale%3Dko&locale=ko";
+    render(<LoginPage />);
+
+    await act(async () => { await onOAuthComplete?.({ user: { id: "direct-google-fan" } }); });
+
+    await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("direct-google-fan"));
+    expect(replace).toHaveBeenCalledWith("/my?locale=ko");
+  });
+
+  it("prepares a new user's wallet before synchronizing and shares callback/effect work", async () => {
+    let finishWallet!: (value: unknown) => void;
+    createWallet.mockImplementation(() => new Promise(resolve => { finishWallet = resolve; }));
+    refreshUser.mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [] }));
+    const { rerender } = render(<LoginPage />);
+    act(() => { void onOAuthComplete?.({ user: { id: "new-fan" } }); });
+    await waitFor(() => expect(createWallet).toHaveBeenCalledWith({ createAdditional: false }));
+    authenticated = true;
+    rerender(<LoginPage />);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+    await act(async () => { finishWallet(embeddedWallet); });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    expect(createWallet).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses the existing embedded EVM wallet without creating another", async () => {
+    authenticated = true;
+    render(<LoginPage />);
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(refreshUser).toHaveBeenCalledTimes(1);
+    expect(createWallet).not.toHaveBeenCalled();
+  });
+
+  it("retries wallet preparation before session sync after creation fails", async () => {
+    authenticated = true;
+    refreshUser.mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [] }));
+    createWallet.mockRejectedValueOnce(new Error("wallet unavailable")).mockResolvedValueOnce(embeddedWallet);
+    render(<LoginPage />);
+    await screen.findByRole("alert");
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(createWallet).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not prepare a wallet for a different restored account", async () => {
+    refreshUser.mockResolvedValue({ id: "different-fan", linkedAccounts: [] });
+    render(<LoginPage />);
+    await act(async () => { await onOAuthComplete?.({ user: { id: "expected-fan" } }); });
+    expect(createWallet).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("blocks repeated OAuth starts while its authorization URL is pending", async () => {
+    let finishOAuth!: () => void;
+    initOAuth.mockImplementation(() => new Promise<void>(resolve => { finishOAuth = resolve; }));
+    render(<LoginPage />);
+    const google = screen.getByRole("button", { name: /Google로 계속하기/ });
+    fireEvent.click(google);
+    fireEvent.click(google);
+    expect(google).toBeDisabled();
+    expect(initOAuth).toHaveBeenCalledTimes(1);
+    await act(async () => { finishOAuth(); });
+  });
+
+  it("keeps the login page recoverable when direct OAuth initialization fails", async () => {
+    initOAuth.mockRejectedValueOnce(new Error("oauth initialization failed"));
+    render(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Google로 계속하기/ }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("로그인을 완료하지 못했어요");
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("uses the official English Google and Apple labels", () => {

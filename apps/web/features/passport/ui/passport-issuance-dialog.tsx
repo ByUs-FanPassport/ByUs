@@ -12,6 +12,7 @@ import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { parseIssuanceAggregate, type IssuanceAggregate } from "../domain/issuance-aggregate";
 import { levelLabel, type PassportLocale } from "../domain/passport-read-model";
+import { sanitizeLiveReturnTo } from "@/features/quiz/domain/live-return-context";
 import { PassportStampCanvas, VerificationSealArtwork } from "./passport-stamp-artwork";
 import styles from "./passport-issuance-dialog.module.css";
 
@@ -31,6 +32,7 @@ const copy = {
     copyFanIdFailed: "Fan ID를 복사하지 못했어요.",
     stampEarned: "팬 인증 Stamp 획득",
     open: "Passport 열기",
+    continueLive: "LIVE 예약 이어가기",
     waiting: "Passport에 첫 기록을 남기고 있어요.",
     mintComplete: "디지털 발급 완료",
     mintChecking: "발급 상태 확인 중",
@@ -58,6 +60,7 @@ const copy = {
     copyFanIdFailed: "Couldn’t copy the Fan ID.",
     stampEarned: "Fan Verification Stamp earned",
     open: "Open Passport",
+    continueLive: "Continue LIVE reservation",
     waiting: "Adding your first record to the Passport.",
     mintComplete: "Digital issuance complete",
     mintChecking: "Checking issuance status",
@@ -100,7 +103,8 @@ function shortPassportId(value: string): string {
 export function PassportIssuanceCeremony({
   issuance,
   locale = "ko",
-}: PassportIssuanceCeremonyProps & { locale?: PassportLocale }) {
+  returnTo,
+}: PassportIssuanceCeremonyProps & { locale?: PassportLocale; returnTo?: string | null }) {
   const [stage, setStage] = useState(0);
   const t = copy[locale];
   const progress = stage + 1;
@@ -111,6 +115,9 @@ export function PassportIssuanceCeremony({
     day: "2-digit",
   }).format(new Date(issuance.firstStamp.issuedAt));
   const passportHref = withLocale(`/passports/${issuance.passport.id}`, locale);
+  const liveReturnTo = sanitizeLiveReturnTo(returnTo);
+  const finalHref = (liveReturnTo ?? passportHref) as Route;
+  const finalLabel = liveReturnTo ? t.continueLive : t.open;
   const skipRef = useRef<HTMLButtonElement>(null);
   const openPassportRef = useRef<HTMLAnchorElement>(null);
   const focusOpenOnCompletionRef = useRef(false);
@@ -283,8 +290,8 @@ export function PassportIssuanceCeremony({
 
         <div className={styles.actionRail} aria-live="polite">
           {stage >= 3 ? (
-            <Link ref={openPassportRef} className={fanActionClassName("passport", { className: styles.openPassport })} href={passportHref}>
-              <span>{t.open}</span><ArrowRight aria-hidden="true" />
+            <Link ref={openPassportRef} className={fanActionClassName("passport", { className: styles.openPassport })} href={finalHref}>
+              <span>{finalLabel}</span><ArrowRight aria-hidden="true" />
             </Link>
           ) : (
             <span className={styles.actionStatus}>{t.waiting}</span>
@@ -305,6 +312,7 @@ type ScreenState =
 export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
   const params = useSearchParams();
   const locale = localeFrom(params.get("locale"));
+  const liveReturnTo = sanitizeLiveReturnTo(params.get("returnTo"));
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [state, setState] = useState<ScreenState>({ kind: "loading" });
   const t = copy[locale];
@@ -334,7 +342,9 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
 
   useEffect(() => { void load(); }, [load]);
 
-  if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} locale={locale} />;
+  if (state.kind === "ready") return <PassportIssuanceCeremony issuance={state.issuance} locale={locale} returnTo={liveReturnTo} />;
+  const issuanceQuery = new URLSearchParams({ locale });
+  if (liveReturnTo) issuanceQuery.set("returnTo", liveReturnTo);
   return (
     <FocusFlowFrame locale={locale} mainId="passport-issuance-state-main">
       <main className={styles.screen} id="passport-issuance-state-main" tabIndex={-1}>
@@ -345,7 +355,7 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
           <>
             <h1>{t.authTitle}</h1>
             <p>{t.authBody}</p>
-            <AuthIntentLink className={fanActionClassName("primary")} emphasis="primary" locale={locale} input={{ sourcePath: `/passports/${passportId}/issuance`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: passportId }}>{t.authAction}</AuthIntentLink>
+            <AuthIntentLink className={fanActionClassName("primary")} emphasis="primary" locale={locale} input={{ sourcePath: `/passports/${passportId}/issuance`, sourceQuery: `?${issuanceQuery.toString()}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: passportId }}>{t.authAction}</AuthIntentLink>
           </>
         ) : (
           <>
