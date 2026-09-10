@@ -1,4 +1,5 @@
 export const ifewGuideImage = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png";
+export const ifewEventBanner = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png";
 export const ifewLiveSlug = "ifew-100-days-tiktok-20260912";
 export const ifewBenefitId = "41ae7883-098e-49f2-9229-4f6962160141";
 export const ifewTikTokEvent = "https://www.tiktok.com/live/event/7680769355085185044";
@@ -66,6 +67,7 @@ export const ifewFanGuideContent = {
     closingAction: "LIVE 일정 보기",
     footer: "ByUs. Your Bias.    ·    한국어 / EN",
     imageAlt: "야외에서 촬영한 이퓨의 프로필 사진",
+    eventImageAlt: "이퓨 틱톡 100일 기념 LIVE 포스터, 2026년 9월 12일",
     prizeAlt: "전시 공간에 걸린 작품을 바라보는 관람객",
   },
   en: {
@@ -130,6 +132,7 @@ export const ifewFanGuideContent = {
     closingAction: "View the LIVE",
     footer: "ByUs. Your Bias.    ·    KO / English",
     imageAlt: "ifew’s profile photo taken outdoors",
+    eventImageAlt: "ifew 100 Days on TikTok LIVE poster, September 12, 2026",
     prizeAlt: "A visitor viewing artwork in an exhibition space",
   },
 } as const;

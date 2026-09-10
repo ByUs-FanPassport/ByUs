@@ -22,7 +22,8 @@
 
 - `FanParticipationGuide`에서 엘리나·이퓨 화면 구조와 스타일을 공유하고, 카피와 실제 이동 목적지를 구분한다.
 - 팬 인증 → LIVE 예약 → TikTok LIVE 참여 → 뱅크시 티켓 응모 순서로 안내한다.
-- 이퓨 사진은 기존 `CreatorImage`의 `collection` 표현을 사용해 지정 원본의 구도를 유지한다.
+- 대표 이미지·홈 카드·Open Graph는 기존 `ifew 100 Days!` 행사 배너를 재사용한다. 원본의 2:1 비율로 전체 구도를 보존하며, 모바일 상세에서는 안내문보다 먼저 배치한다.
+- LIVE 안내 카드의 작은 프로필은 기존 `CreatorImage`의 `collection` 표현을 사용한다.
 - 홈에 이퓨 카드와 기존 엘리나·미국 팬미팅 카드를 함께 제공한다.
 - 공통 가이드의 링크 색상 초기화가 키보드 접근용 본문 바로가기의 흰 글자를 덮던 문제를 가이드 범위 안에서 수정했다.
 
@@ -32,3 +33,11 @@
 - 이퓨 KO/EN × 360/390/768/1440, 엘리나 KO/EN × 390/1440: 12개 화면에서 이미지·줄바꿈·넘침·키보드 본문 바로가기·언어 전환·섹션 이동 확인. axe 위반 0건.
 - 비로그인 홈 KO/EN × 390/1440: 카드 3개 노출, 이퓨 가이드 → LIVE 및 혜택 상세 이동 확인. 예약·응모·외부 등록 제출은 하지 않았다.
 - 근거: `artifacts/ifew-fan-guide/qa.json`, `build.log`, 화면 PNG.
+
+## 행사 배너 후속 반영
+
+- 사용자 요청: 기존 100 LIVE 이벤트 이미지를 활용한다.
+- 원본: 메인 체크아웃 `docs/assets/ifew-100-days/ifew-100-days-horizontal-banner.png`.
+- 게시된 동일 행사 자산: `cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png`. 재생성·이미지 편집 없이 사용했다.
+- 후속 검증: 관련 테스트 10개, 대상 ESLint, production build 통과. 상세 KO/EN × 360/390/768/1440 및 홈 KO/EN × 390/1440의 12개 로컬 브라우저 사례에서 전체 2:1 이미지, 가독성, 메타 이미지, 링크 이동을 확인했다. axe 위반 0건. 실제 모바일 기기 검증은 수행하지 않았다.
+- 최신 화면 근거: `artifacts/ifew-event-artwork/qa.json`, `guide-*.png`, `home-card-*.png`, `build.log`.

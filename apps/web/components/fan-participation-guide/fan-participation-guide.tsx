@@ -8,7 +8,7 @@ import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
 import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { CreatorImage } from "../fan-ui/creator-image";
 import { elinaFanGuideContent } from "../elina-fan-guide/content";
-import { ifewBenefitId, ifewFanGuideContent, ifewGuideImage, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
+import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewGuideImage, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
 import styles from "./fan-participation-guide.module.css";
 
 const actionTargets = (locale: FanLocale) => ({
@@ -66,7 +66,7 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
       </FocusFlowHeader>
 
       <main className={styles.main} id={`${creator}-guide-main`} tabIndex={-1}>
-        <section className={styles.hero} aria-labelledby={`${creator}-guide-title`}>
+        <section className={`${styles.hero} ${creator === "ifew" ? styles.eventHero : ""}`} aria-labelledby={`${creator}-guide-title`}>
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>BYUS GUIDE&nbsp;&nbsp;/&nbsp;&nbsp;{creator.toUpperCase()}</p>
             <h1 id={`${creator}-guide-title`}>{t.heroTitle}</h1>
@@ -81,7 +81,7 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
           {creator === "elina" ? (
             <Image className={styles.heroImage} src={image} alt={t.imageAlt} width={580} height={560} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority />
           ) : (
-            <CreatorImage className={styles.heroImage} slug="ifewknow" src={image} presentation="collection" alt={t.imageAlt} width={580} height={560} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority />
+            <Image className={styles.eventImage} src={ifewEventBanner} alt={ifewFanGuideContent[locale].eventImageAlt} width={1774} height={887} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority />
           )}
         </section>
 

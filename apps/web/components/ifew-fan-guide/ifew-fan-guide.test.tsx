@@ -30,7 +30,7 @@ describe("ifew Saturday LIVE guide", () => {
     expect(metadata.title).toBe("100 days with ifew. Let’s celebrate. | ByUs");
     expect(metadata.description).toContain("Sat, Sep 12 · 08:00–13:00 KST");
     expect(metadata.alternates?.canonical).toBe("https://byus.kr/pages/ifew-fan-guide?locale=en");
-    expect(metadata.openGraph?.images).toEqual(expect.arrayContaining([expect.objectContaining({ url: expect.stringContaining("ifewknow/profile-") })]));
+    expect(metadata.openGraph?.images).toEqual(expect.arrayContaining([expect.objectContaining({ url: expect.stringContaining("lives/ifew-100-days/banner-") })]));
   });
 
   it("uses Korean for unsupported or repeated locale values", async () => {
