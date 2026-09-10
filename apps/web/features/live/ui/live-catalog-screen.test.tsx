@@ -81,16 +81,20 @@ describe("LIVE catalog", () => {
     expect(within(screen.getByRole("region", { name: "지금 LIVE 중" })).getByRole("link", { name: /LIVE 시청하기/ })).toHaveAttribute("href", base.live.watch.url);
     const reserveAction = within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ });
     expect(reserveAction).toHaveAttribute("href", "/live/kara-live?locale=ko");
-    expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "secondary");
     expect(reserveAction).toHaveAttribute("data-action-state", "reserve");
     expect(within(reserveAction).getByText("라이브 예약하기")).toBeInTheDocument();
     expect(within(reserveAction).getByText("라이브 예약하기").previousElementSibling).toHaveAttribute("aria-hidden", "true");
     expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", {
       name: "KARA × NUALEAF LIVE 상세 보기",
     })).toHaveAttribute("href", "/live/kara-live?locale=ko");
-    expect(within(screen.getByRole("region", { name: "다시보기" })).getByRole("link", { name: /다시보기/ })).toHaveAttribute("href", base.live.watch.url);
-    expect(container.querySelectorAll('article [data-fan-action-emphasis="secondary"]')).toHaveLength(2);
-    expect(container.querySelectorAll('article [data-fan-action-emphasis="primary"]')).toHaveLength(1);
+    const replayAction = within(screen.getByRole("region", { name: "다시보기" })).getByRole("link", { name: /다시보기/ });
+    expect(replayAction).toHaveAttribute("href", base.live.watch.url);
+    expect(replayAction).toHaveAttribute("target", "_blank");
+    expect(replayAction).toHaveAttribute("rel", "noreferrer");
+    expect(container.querySelectorAll('article [data-fan-action-emphasis="secondary"]')).toHaveLength(3);
+    expect(container.querySelectorAll('article [data-fan-action-emphasis="primary"]')).toHaveLength(0);
+    expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).queryByText("LIVE 예정")).not.toBeInTheDocument();
   });
 
   it("keeps scheduled actions skeletal until personalized reservation data arrives", async () => {
@@ -111,11 +115,44 @@ describe("LIVE catalog", () => {
       replay: [],
     } }), { status: 200 }));
 
-    const reservedAction = await screen.findByRole("link", { name: /예약 완료/ });
+    const reservedAction = await screen.findByRole("link", { name: /^상세 보기:/ });
     expect(reservedAction).toHaveAttribute("data-action-state", "reserved");
     expect(reservedAction).toHaveAttribute("data-fan-action-emphasis", "secondary");
+    expect(reservedAction).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    expect(screen.getByText("예약 완료").closest("a")).not.toBe(reservedAction);
+    expect(screen.queryByRole("link", { name: /^예약 완료:/ })).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("status", { name: "예약 상태 확인 중" })).not.toBeInTheDocument());
 
+  });
+
+  it("keeps English reservation status separate from its details action and omits empty-section counts", () => {
+    const reserved = { ...base, viewer: { ...base.viewer, authenticated: true, reservation: {
+      id: "22222222-2222-4222-8222-222222222222", createdAt: "2026-09-04T00:00:00.000Z",
+      stamp: { id: "33333333-3333-4333-8333-333333333333", mintStatus: "not_requested" as const },
+    } } };
+    render(<LiveCatalogScreen locale="en" initialCatalog={{ liveNow: [], upcoming: [reserved], replay: [] }} />);
+    expect(screen.getByText("Reserved")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^View details:/ })).toHaveAttribute("href", "/live/kara-live?locale=en");
+    expect(screen.getByRole("link", { name: "LIVE calendar" })).toHaveAttribute("href", "/live/calendar?locale=en");
+    expect(screen.queryByRole("link", { name: /^Reserved:/ })).not.toBeInTheDocument();
+    const replay = screen.getByRole("region", { name: "Replay" });
+    expect(within(replay).getByText("No replays are published yet.")).toBeInTheDocument();
+    expect(within(replay).queryByText("0 total")).not.toBeInTheDocument();
+    expect(within(replay).queryByText("Revisit published videos from completed LIVE events.")).not.toBeInTheDocument();
+  });
+
+  it("does not show a reserved state after personalized status fails and can retry", async () => {
+    privy.authenticated = true;
+    privy.getAccessToken.mockResolvedValue("token");
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({}, { status: 500 }))
+      .mockResolvedValueOnce(Response.json({ catalog: { liveNow: [], upcoming: [base], replay: [] } }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [base], replay: [] }} />);
+    expect(await screen.findByRole("status", { name: "예약 상태 확인 필요" })).toBeInTheDocument();
+    expect(screen.queryByText("예약 완료")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "내 예약 상태 다시 불러오기" }));
+    expect(await screen.findByRole("link", { name: /^라이브 예약하기:/ })).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it("paginates each LIVE group independently in bounded sets of four", () => {
