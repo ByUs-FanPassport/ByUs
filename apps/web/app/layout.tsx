@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+import { LocaleProvider } from "../components/locale-provider";
 import { DocumentLocale } from "../components/document-locale";
 import { ByUsPrivyProvider } from "../components/privy-provider";
 import { PwaRegistration } from "../components/pwa-registration";
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale === "en"
         ? "Keep every moment with your favorite in your Fan Passport."
         : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
-    manifest: "/manifest.webmanifest",
+    manifest: `/manifest.webmanifest?locale=${locale}`,
     icons: BYUS_BRAND_ICONS,
     appleWebApp: { capable: true, title: "ByUs", statusBarStyle: "default" },
     openGraph: { locale: locale === "en" ? "en_US" : "ko_KR" },
@@ -33,7 +34,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
   modal,
-}: Readonly<{ children: React.ReactNode; modal?: React.ReactNode }>) {
+}: Readonly<{ children: React.ReactNode; modal: React.ReactNode }>) {
   const requestHeaders = await headers();
   const locale = requestHeaders.get("x-byus-locale") === "en" ? "en" : "ko";
   const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
@@ -42,6 +43,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
+        <LocaleProvider initialLocale={locale}>
         <ByUsPrivyProvider
           appId={privyAppId}
           appleLoginEnabled={appleLoginEnabled}
@@ -54,6 +56,7 @@ export default async function RootLayout({
           {children}
           {modal}
         </ByUsPrivyProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

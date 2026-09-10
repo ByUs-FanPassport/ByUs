@@ -162,6 +162,22 @@ describe("unified MY hub", () => {
     expect(screen.getByRole("link", { name: /^4\s*Raffle tickets$/ })).toHaveAttribute("href", "#my-creators");
   });
 
+  it("links an information-required reward to its localized recipient route", async () => {
+    const actionable = {
+      ...summary.rewards.items[0],
+      status: "information_required",
+      recipientRequired: true,
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      summary: { ...summary, rewards: { ...summary.rewards, items: [actionable] } },
+    })));
+    render(<MyScreen locale="en" />);
+
+    const link = await screen.findByRole("link", { name: /Enter recipient details/ });
+    expect(link).toHaveAttribute("href", `/my/rewards/${actionable.winnerId}/recipient?locale=en`);
+    expect(actionable.benefitHref).toBe(`/benefits/${benefitId}`);
+  });
+
   it("refetches a preparing raffle at its opening boundary after unrelated resources rerender", async () => {
     vi.useFakeTimers();
     vi.setSystemTime("2026-09-10T00:00:00Z");

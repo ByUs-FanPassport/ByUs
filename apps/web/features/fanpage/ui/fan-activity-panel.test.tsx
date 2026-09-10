@@ -11,7 +11,7 @@ beforeEach(() => { owner = "owner-a"; getAccessToken.mockReset().mockResolvedVal
 
 it("reflects selection before token/PATCH and keeps confirmed data while activity refresh waits", async () => {
   const token = deferred<string>(); const patch = deferred<Response>(); const refresh = deferred<Response>(); let reads = 0;
-  const fetcher = vi.fn((url: string, init?: RequestInit) => init?.method === "PATCH" ? patch.promise : url.endsWith("/fanpage") ? (++reads === 1 ? Promise.resolve(Response.json(summary)) : refresh.promise) : Promise.resolve(Response.json({ enabled: false })));
+  const fetcher = vi.fn((url: string, init?: RequestInit) => init?.method === "PATCH" ? patch.promise : url.includes("/fanpage?locale=") ? (++reads === 1 ? Promise.resolve(Response.json(summary)) : refresh.promise) : Promise.resolve(Response.json({ enabled: false })));
   vi.stubGlobal("fetch", fetcher);
   render(<FanActivityPanel slug="ifewknow" locale="ko" />);
   const checkbox = await screen.findByRole("checkbox");
@@ -29,7 +29,7 @@ it("reflects selection before token/PATCH and keeps confirmed data while activit
 });
 
 it.each(["http", "invalid", "token"])("rolls back and permits retry after %s failure", async failure => {
-  vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => init?.method === "PATCH" ? failure === "http" ? new Response(null, { status: 500 }) : Response.json({ enabled: "yes" }) : _url.endsWith("/fanpage") ? Response.json(summary) : Response.json({ enabled: false })));
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => init?.method === "PATCH" ? failure === "http" ? new Response(null, { status: 500 }) : Response.json({ enabled: "yes" }) : _url.includes("/fanpage?locale=") ? Response.json(summary) : Response.json({ enabled: false })));
   render(<FanActivityPanel slug="ifewknow" locale="ko" />);
   const checkbox = await screen.findByRole("checkbox");
   if (failure === "token") getAccessToken.mockResolvedValueOnce(null);
@@ -40,7 +40,7 @@ it.each(["http", "invalid", "token"])("rolls back and permits retry after %s fai
 
 it("discards old-owner intent during token wait and never PATCHes the next account", async () => {
   const token = deferred<string>();
-  const fetcher = vi.fn(async (url: string, _init?: RequestInit) => url.endsWith("/fanpage") ? Response.json(summary) : Response.json({ enabled: false }));
+  const fetcher = vi.fn(async (url: string, _init?: RequestInit) => url.includes("/fanpage?locale=") ? Response.json(summary) : Response.json({ enabled: false }));
   vi.stubGlobal("fetch", fetcher);
   const view = render(<FanActivityPanel slug="ifewknow" locale="ko" />);
   const checkbox = await screen.findByRole("checkbox");

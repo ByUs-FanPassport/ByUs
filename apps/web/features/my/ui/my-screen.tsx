@@ -27,6 +27,7 @@ import { FanTierBadge } from "../../rewards/ui/fan-tier-badge";
 import { FanSurface, fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
 import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
 import { useAvatar } from "../../profile/ui/use-avatar";
+import { withLocalePath } from "../../../components/locale-path";
 import { fanTierProgress, localizedPath, nextRaffleBoundary, recommendCertification, selectOpenRaffle, type MyCreator, type PassportCreator } from "../domain/my-progress";
 import { MyBenefitProgress } from "./my-benefit-progress";
 import { MyLiveCountdown } from "./my-live-countdown";
@@ -190,8 +191,11 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
     {hasRewards ? <FanSurface className={styles.section}>
       <SectionTitle title={t.rewards} href={`/benefits?locale=${locale}`} action={t.allRewards}/>
       <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="gift" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><span className={styles.metricIcon} data-kind="ticket" aria-hidden="true"><FanMotionIcon name="ticket" size={20}/></span><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
-      {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) =>
-        <Link href={`${reward.benefitHref}?locale=${locale}` as Route} key={reward.rewardResultId}><span className={styles.activityMark} data-kind="collectible" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><div><strong>{reward.title}</strong><span>{rewardStatusCopy[reward.status][locale]}</span></div><ArrowRight/></Link>)}</div> : <p className={styles.emptyText}>{t.noRewards}</p>}
+      {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) => {
+        const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;
+        const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : "Enter recipient details") : rewardStatusCopy[reward.status][locale];
+        return <Link href={withLocalePath(recipientHref ?? reward.benefitHref, locale) as Route} key={reward.rewardResultId}><span className={styles.activityMark} data-kind="collectible" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><div><strong>{reward.title}</strong><span>{status}</span></div><ArrowRight/></Link>;
+      })}</div> : <p className={styles.emptyText}>{t.noRewards}</p>}
     </FanSurface> : null}
 
     <section className={styles.overview} aria-labelledby="activity-overview-heading">

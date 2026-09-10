@@ -47,6 +47,13 @@ describe("page locale proxy", () => {
     expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("ko");
   });
 
+  it("uses callback cookie only when query is absent and localizes manifest requests", () => {
+    for (const [path, locale] of [["/settings/kakao/callback", "en"], ["/settings/kakao/callback?locale=ko", "ko"], ["/manifest.webmanifest?locale=en", "en"]]) {
+      const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { cookie: "byus_locale=en" } }));
+      expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe(locale);
+    }
+  });
+
   it("uses the existing Admin lang query contract instead of the fan locale query", () => {
     const english = proxy(new NextRequest("https://byus.example/admin?lang=en&locale=ko"));
     const korean = proxy(new NextRequest("https://byus.example/admin?lang=ko&locale=en"));

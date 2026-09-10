@@ -13,9 +13,10 @@ const { authState, getAccessToken, enablePushNotifications } = vi.hoisted(() => 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ...authState, getAccessToken }),
 }));
+let locale = "ko";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/notifications",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(`locale=${locale}`),
 }));
 vi.mock("./push-subscription", () => ({ enablePushNotifications }));
 import { NotificationCenter } from "./notification-center";
@@ -36,6 +37,7 @@ const unreadCollection = {
 describe("FAN-019 Notification Center", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    locale = "ko";
     authState.ready = true;
     authState.authenticated = true;
     authState.user = { id: "owner-a" };
@@ -100,7 +102,7 @@ describe("FAN-019 Notification Center", () => {
     const link = await screen.findByRole("link", {
       name: /KARA LIVE, 10분 후 시작해요/,
     });
-    expect(link).toHaveAttribute("href", "/live/kara-live");
+    expect(link).toHaveAttribute("href", "/live/kara-live?locale=ko");
     expect(screen.getByText("읽지 않음")).toBeInTheDocument();
     const currentMyLinks = screen.getAllByRole("link", { name: "MY" }).filter((link) => link.hasAttribute("aria-current"));
     expect(currentMyLinks).toHaveLength(2);
@@ -112,6 +114,97 @@ describe("FAN-019 Notification Center", () => {
       screen.getByRole("link", { name: /팬 혜택 신청이 완료되었어요/ }),
     ).toHaveAttribute("data-read-state", "read");
     expect(screen.getByText("읽음")).toBeInTheDocument();
+  });
+
+  it("renders the complete English chrome and adds locale to stored pathname-only rows", async () => {
+    locale = "en";
+    vi.mocked(fetch).mockImplementation(async (input) =>
+      String(input).startsWith("/api/notifications?")
+        ? Response.json({
+            notifications: [{
+              ...unreadCollection.notifications[0],
+              title: "KARA LIVE starts in 10 minutes",
+              detail: "The LIVE starts soon.",
+              deepLink: "/live/kara-live",
+            }],
+            unreadCount: 1,
+          })
+        : Response.json({}),
+    );
+
+    render(<NotificationCenter />);
+
+    expect(await screen.findByRole("heading", { name: "Notifications", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open notification settings" })).toHaveAttribute("href", "/settings?locale=en");
+    expect(screen.getByRole("link", { name: /KARA LIVE starts in 10 minutes/ })).toHaveAttribute(
+      "href",
+      "/live/kara-live?locale=en",
+    );
+    expect(screen.getByText("Unread")).toHaveAccessibleName("Unread notification");
+    expect(screen.getByRole("heading", { name: "Notification summary" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/notifications?locale=en&recipientLinks=1",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+
+  it("renders English signed-out, loading, empty, and collection failure states", async () => {
+    locale = "en";
+    authState.ready = false;
+    const view = render(<NotificationCenter />);
+    expect(screen.getByText("Loading notifications.")).toBeInTheDocument();
+
+    authState.ready = true;
+    authState.authenticated = false;
+    view.rerender(<NotificationCenter />);
+    expect(await screen.findByRole("heading", { name: "Sign in to view notifications." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Continue with Google" })).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fnotifications%3Flocale%3Den&locale=en",
+    );
+
+    authState.authenticated = true;
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ notifications: [], unreadCount: 0 }));
+    view.rerender(<NotificationCenter />);
+    expect(await screen.findByRole("heading", { name: "No notifications yet." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View upcoming LIVE" })).toHaveAttribute("href", "/live?locale=en");
+
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 503 }));
+    authState.user = { id: "owner-b" };
+    view.rerender(<NotificationCenter />);
+    expect(await screen.findByRole("heading", { name: "We couldn't load notifications." })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["subscribed", "Browser notifications are on."],
+    ["denied", "Allow notifications in your browser settings."],
+    ["unsupported", "This browser does not support push notifications."],
+    ["failed", "We couldn't save your notification settings."],
+  ] as const)("announces the English %s push result", async (result, message) => {
+    locale = "en";
+    enablePushNotifications.mockResolvedValueOnce(result);
+    render(<NotificationCenter />);
+    await screen.findByText("No notifications yet.");
+    fireEvent.click(screen.getAllByRole("button", { name: "Enable browser notifications" })[0]);
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it("localizes English read-all progress and failure", async () => {
+    locale = "en";
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({
+      ...unreadCollection,
+      notifications: [{ ...unreadCollection.notifications[0], title: "LIVE reminder", detail: "Starts soon" }],
+    }));
+    render(<NotificationCenter />);
+    await screen.findByText("LIVE reminder");
+    let rejectToken!: (error: Error) => void;
+    getAccessToken.mockImplementationOnce(() => new Promise((_, reject) => { rejectToken = reject; }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark all as read" }));
+    expect(screen.getByRole("button", { name: "Marking all as read…" })).toBeDisabled();
+    rejectToken(new Error("offline"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't mark all notifications as read. Please try again.");
   });
 
   it("renders a clear hierarchy without the repeated uppercase eyebrow", async () => {

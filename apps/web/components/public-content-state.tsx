@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useAppLocale } from "./locale-provider";
 import styles from "./public-content-state.module.css";
 
 type PublicContentStateProps =
@@ -22,10 +22,7 @@ const labels = {
 } as const;
 
 export function PublicContentState(props: PublicContentStateProps) {
-  const [locale, setLocale] = useState<"ko" | "en">("ko");
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("locale") === "en") setLocale("en");
-  }, []);
+  const { locale } = useAppLocale();
   const t = labels[locale];
   return <main className={styles.page} aria-live="polite" aria-busy={props.state === "loading"}>
     <div className={styles.state} role={props.state === "error" ? "alert" : "status"}>

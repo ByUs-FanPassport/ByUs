@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { withLocalePath } from "./locale-path";
 import { X } from "lucide-react";
 import { AppleMark, ArrowRight, GoogleMark } from "./icons";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
@@ -122,7 +123,7 @@ export function LoginPage({
   const errorRef = useRef<HTMLParagraphElement>(null);
   const sessionErrorRef = useRef<HTMLDivElement>(null);
   const mobilePresentation = useMobileLoginPresentation();
-  const returnTo = useMemo(() => sanitizeReturnTo(searchParams.get("returnTo")), [searchParams]);
+  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(searchParams.get("returnTo")), sanitizeLocale(searchParams.get("locale"))), [searchParams]);
   const intent = useMemo(() => sanitizeIntent(searchParams.get("intent")), [searchParams]);
   const entity = useMemo(() => sanitizeEntity(searchParams.get("entity")), [searchParams]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(searchParams.get("authIntent")), [searchParams]);
@@ -199,11 +200,15 @@ export function LoginPage({
 
     return synchronizationRef.current;
   }, [authIntent, createWallet, entity, getAccessToken, intent, locale, refreshUser, returnTo, router, privyUserId, markAvatarSessionReady]);
-  const loginErrorMessage = testAccountLoginEnabled
-    ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
-    : appleLoginEnabled
-      ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
-      : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
+  const loginErrorMessage = locale === "en"
+    ? testAccountLoginEnabled
+      ? "We couldn't complete sign-in. Check your account and verification code, then try again."
+      : `We couldn't complete sign-in. Check your Google${appleLoginEnabled ? " or Apple" : ""} account, then try again.`
+    : testAccountLoginEnabled
+      ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
+      : appleLoginEnabled
+        ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
+        : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
   const loginCallbacks = {
     onComplete: ({ user: completedUser }: { user: { id: string } }) => synchronizeSession(completedUser.id),
     onError: () => setError(loginErrorMessage),
@@ -394,13 +399,13 @@ export function LoginPage({
   const content = (
     <div className={styles.contents} data-fan-surface lang={locale}>
         <div className={styles.panelHeader}>
-          <Link className={styles.brand} href="/" aria-label="ByUs 홈으로 돌아가기"><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
+          <Link className={styles.brand} href={`/?locale=${locale}`} aria-label={locale === "ko" ? "ByUs 홈으로 돌아가기" : "Return to ByUs home"}><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
           {presentation === "overlay" && (
             <button
               ref={closeButtonRef}
               className={styles.closeButton}
               type="button"
-              aria-label="로그인 창 닫기"
+              aria-label={locale === "ko" ? "로그인 창 닫기" : "Close sign-in"}
               onClick={() => router.back()}
             >
               <X aria-hidden="true" />
@@ -408,7 +413,7 @@ export function LoginPage({
           )}
         </div>
         <div className={styles.copy}>
-          <h1 id="login-heading">최애와 함께한 순간을 기록하세요.</h1>
+          <h1 id="login-heading">{locale === "ko" ? "최애와 함께한 순간을 기록하세요." : "Keep every moment with your favorite."}</h1>
         </div>
         <button
           className={styles.googleButton}
@@ -418,7 +423,7 @@ export function LoginPage({
           onClick={() => startOAuthLogin("google")}
         >
           <GoogleMark />
-          <span>{ready ? locale === "ko" ? "Google로 계속하기" : "Continue with Google" : "로그인 준비 중"}</span>
+          <span>{ready ? locale === "ko" ? "Google로 계속하기" : "Continue with Google" : locale === "ko" ? "로그인 준비 중" : "Preparing sign-in"}</span>
           <ArrowRight />
         </button>
         {appleLoginEnabled && (
@@ -430,13 +435,13 @@ export function LoginPage({
             onClick={() => startOAuthLogin("apple")}
           >
             <AppleMark />
-            <span>{ready ? locale === "ko" ? "Apple로 계속하기" : "Continue with Apple" : "로그인 준비 중"}</span>
+            <span>{ready ? locale === "ko" ? "Apple로 계속하기" : "Continue with Apple" : locale === "ko" ? "로그인 준비 중" : "Preparing sign-in"}</span>
             <ArrowRight />
           </button>
         )}
         {testAccountLoginEnabled && (
-          <div className={styles.testAccountGroup} role="group" aria-label="개발 환경 Test Account 로그인">
-            <span className={styles.divider}>개발 환경 Test Account</span>
+          <div className={styles.testAccountGroup} role="group" aria-label={locale === "ko" ? "개발 환경 Test Account 로그인" : "Development Test Account sign-in"}>
+            <span className={styles.divider}>{locale === "ko" ? "개발 환경 Test Account" : "Development Test Account"}</span>
             <button
               className={styles.emailButton}
               type="button"
@@ -446,9 +451,9 @@ export function LoginPage({
                 login({ loginMethods: ["email"] });
               }}
             >
-              <span>Test Account 이메일로 계속하기</span><ArrowRight />
+              <span>{locale === "ko" ? "Test Account 이메일로 계속하기" : "Continue with Test Account email"}</span><ArrowRight />
             </button>
-            <p>Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요.</p>
+            <p>{locale === "ko" ? "Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요." : "Use only a Test Account email and verification code registered in the Privy dashboard."}</p>
           </div>
         )}
         {error && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
@@ -491,7 +496,7 @@ export function LoginPage({
               <Image
                 className={styles.passportImage}
                 src={passportPreview}
-                alt="펼쳐진 Fan Passport"
+                alt={locale === "ko" ? "펼쳐진 Fan Passport" : "Open Fan Passport"}
                 width={1536}
                 height={1024}
                 sizes="(min-width: 768px) 390px, 1px"

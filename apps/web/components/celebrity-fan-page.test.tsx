@@ -181,8 +181,11 @@ describe("approved fanpage", () => {
     await screen.findByText("아직 등록된 공지가 없어요.");
   });
   it("preserves English labels and locale in actions", async () => {
-    render(<CelebrityFanPage celebrity={{ ...kara, locale: "en" }} locale="en" upcomingLive={{ ...upcomingLive, locale: "en" }} />);
+    const links = [{ platform: "chzzk" as const, url: "https://chzzk.naver.com/channel" }];
+    render(<CelebrityFanPage celebrity={{ ...kara, locale: "en", socialLinks: links }} locale="en" upcomingLive={{ ...upcomingLive, locale: "en" }} />);
     expect(screen.getByRole("link", { name: "View verification missions" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=en#celebrity-content");
+    expect(screen.getByRole("link", { name: "CHZZK, new window" })).toHaveTextContent("CHZZK");
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === "/api/celebrities/kara/fanpage?locale=en")).toBe(true);
     expect(await screen.findByText("No notices yet.")).toBeInTheDocument();
   });
   it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {

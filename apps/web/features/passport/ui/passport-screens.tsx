@@ -114,7 +114,7 @@ function Frame({ locale, children, presentation = "page", collection = false }: 
   return <FanAppFrame locale={locale} className={collection ? fanUtilityCanvasClassName : undefined} mainId="passport-content"><div className={`${styles.app} ${collection ? styles.collectionApp : ""}`}><FanContentContainer as="main" className={styles.main} id="passport-content" tabIndex={-1}>{children}</FanContentContainer></div></FanAppFrame>;
 }
 
-function Skeleton({ detail = false }: { detail?: boolean }) { return <div className={styles.skeleton} role="status" aria-label="Loading" aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
+function Skeleton({ detail = false, locale }: { detail?: boolean; locale: PassportLocale }) { return <div className={styles.skeleton} role="status" aria-label={locale === "ko" ? "패스포트 불러오는 중" : "Loading Passport"} aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
 
 function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocale; kind: "auth" | "missing" | "network"; retry: () => void; returnTo: string }) {
   const c = copy[locale]; const missing = kind === "missing";
@@ -148,7 +148,7 @@ export function PassportCollectionScreen() {
       <PageHeading title={c.passports} subtitle={c.passportsSub} />
       {fetcher.state.status === "ready" && fetcher.state.data.length > 0 ? <Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight aria-hidden="true" /></Link> : null}
     </div>
-    <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
+    <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
       <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
         <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)}>
           <div className={styles.cardMedia}><Image src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="(max-width: 767px) 100vw, 380px" style={{ objectPosition: passport.celebrity.image.position }} unoptimized={passport.celebrity.image.url.startsWith("https://")} /></div>
@@ -205,7 +205,7 @@ function FirstReactionHistory({ firstReaction, locale, explorerBaseUrl }: {
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
   const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedFanResource(`/api/passports/${encodeURIComponent(id)}?locale=${locale}&tierStages=1`, parse, auth, passportNeedsRefresh);
-  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>}</Frame>;
+  return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>}</Frame>;
 }
 
 function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: PassportDetail; locale: PassportLocale; explorerBaseUrl: string }) {
@@ -245,7 +245,7 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
 export function StampDetailScreen({ id, explorerBaseUrl, presentation = "page", onClose }: { id: string; explorerBaseUrl: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
   const fetcher = useOwnedFanResource(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth, stampNeedsRefresh);
-  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} /></>}</Frame>;
+  return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} /></>}</Frame>;
 }
 
 function StampDetailView({ stamp, locale, explorerBaseUrl, onClose }: { stamp: StampDetail; locale: PassportLocale; explorerBaseUrl: string; onClose?: () => void }) {
@@ -267,12 +267,14 @@ function useMobileDetail() {
 }
 
 export function StampDetailOverlay({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
+  const params = useSearchParams();
+  const locale = localeFrom(params.get("locale"));
   const router = useRouter();
   const mobile = useMobileDetail();
   const close = useCallback(() => router.back(), [router]);
   const Overlay = mobile ? BottomSheet : Drawer;
   return <Overlay open onClose={close} labelledBy="stamp-detail-overlay-title" closeOnBackdrop backdropClassName={styles.detailBackdrop} contentClassName={styles.detailOverlay}>
-    <h1 className={styles.visuallyHidden} id="stamp-detail-overlay-title">Stamp 상세</h1>
+    <h1 className={styles.visuallyHidden} id="stamp-detail-overlay-title">{copy[locale].stampDetail}</h1>
     <StampDetailScreen id={id} explorerBaseUrl={explorerBaseUrl} presentation="overlay" onClose={close} />
   </Overlay>;
 }
