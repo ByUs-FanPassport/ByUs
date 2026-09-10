@@ -522,7 +522,7 @@ describe("canonical 03 guest home", () => {
         summary: {
           profile: { nickname: "카밀리아" },
           creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35, stageProgress: { policyVersion: 2, current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 }, next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 }, remaining: 15, progressPercent: 0 } }, ticketBalance: 4, firstReaction: null }],
-          live: { upcoming: [{ id: "22222222-2222-4222-8222-222222222222", slug: "kara-live", title: "KARA LIVE", startsAt: "2026-07-31T11:00:00.000Z", effectiveStatus: "scheduled", attended: false }], history: [] },
+          live: { upcoming: [{ id: featuredLive.live.id, slug: "kara-live", title: "KARA LIVE", startsAt: "2026-07-31T11:00:00.000Z", effectiveStatus: "scheduled", attended: false }], history: [] },
           rewards: { availableCount: 0, entries: 0, items: [] },
           collection: { passportCount: 1, stampCount: 2, collectibleCount: 0, recent: [] },
           unreadNotificationCount: 0,
@@ -548,7 +548,33 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect([...document.querySelectorAll("img")].filter((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-1.png"))).toHaveLength(2);
     expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
-    expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
+    const reservations = screen.getAllByRole("link", { name: "KARA LIVE LIVE 상세 보기" });
+    expect(reservations).toHaveLength(2);
+    reservations.forEach((reservation) => {
+      expect(reservation).toHaveAttribute("href", "/live/kara-live?locale=ko");
+      expect(reservation.querySelector('[data-creator-avatar="kara"] img')).toHaveAttribute("src", expect.stringContaining("kara-card.jpg"));
+      expect(reservation.querySelector("a,button")).toBeNull();
+    });
+    expect(screen.queryByText("LIVE 상세 보기")).not.toBeInTheDocument();
+  });
+
+  it.each([true, false])("matches a reserved creator by LIVE identity, with matching data: %s", async (hasMatchingLive) => {
+    privy.authenticated = true;
+    const reserved = { id: "22222222-2222-4222-8222-222222222222", slug: "reserved-live", title: featuredLive.live.title, startsAt: "2026-09-12T00:00:00.000Z", effectiveStatus: "scheduled", attended: false };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
+      profile: { nickname: "Fan" }, creators: [], live: { upcoming: [reserved], history: [] },
+      rewards: { availableCount: 0, entries: 0, items: [] },
+      collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    } })));
+    const match = { ...featuredLive, live: { ...featuredLive.live, id: reserved.id, celebrity: { ...featuredLive.live.celebrity, slug: "elina", name: "Elina", image: "/images/guest-home/elina-card.jpg" } } };
+    render(<GuestHome {...defaultProps} locale="en" featuredLives={hasMatchingLive ? [featuredLive, match] : [featuredLive]} />);
+    const reservations = await screen.findAllByRole("link", { name: `${reserved.title} View LIVE details` });
+    reservations.forEach((reservation) => {
+      expect(reservation).toHaveAttribute("href", "/live/reserved-live?locale=en");
+      expect(reservation.querySelector('[data-creator-avatar="kara"]')).toBeNull();
+      if (hasMatchingLive) expect(reservation.querySelector('[data-creator-avatar="elina"] img')).toHaveAttribute("src", expect.stringContaining("elina-card.jpg"));
+      else expect(reservation.querySelector("[data-creator-avatar]")).toBeNull();
+    });
   });
 
   it("refreshes mounted Home fan panels when a first-reaction mutation invalidates owner activity", async () => {

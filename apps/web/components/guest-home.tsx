@@ -101,7 +101,7 @@ function BanksyCampaignAd({ locale }: { locale: ContentLocale }) {
   );
 }
 
-function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile" }) {
+function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile"; featuredLives: readonly LiveEventResponse[] }) {
   const owner = useHomeOwner();
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
@@ -112,6 +112,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
     ? { status: "ready" as const, ...owner.passportPreview.data }
     : { status: owner.passportPreview.status, stamps: [] as readonly PassportStampRecord[], totalCount: 0 };
   const reservation = summary.live.upcoming[0] ?? null;
+  const reservationCreator = featuredLives.find(({ live }) => live.id === reservation?.id)?.live.celebrity;
   const headingId = `signed-in-home-heading-${placement}`;
   const passportCount = passportCreators.length;
   const selectPassport = (index: number) => {
@@ -158,7 +159,23 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
       </div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>
-        {reservation ? <div className={styles.reservationSummary}><CalendarHeart aria-hidden="true"/><div><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time><LiveTimeIndicator event={reservation} locale={locale} variant="text" onStartReached={owner.retryPersonalization}/></div><Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link></div> : <div className={styles.summaryEmpty}><CalendarHeart aria-hidden="true"/><p>{t.noReservation}</p><Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link></div>}
+        {reservation ? <Link
+          className={styles.reservationSummary}
+          data-reserved-live={reservation.id}
+          data-has-avatar={Boolean(reservationCreator)}
+          href={`/live/${reservation.slug}${localeQuery}` as Route}
+          aria-label={`${reservation.title} ${t.liveDetails}`}
+        >
+          {reservationCreator ? <CreatorAvatar slug={reservationCreator.slug} src={reservationCreator.image} size={56} /> : null}
+          <div className={styles.reservationContent}>
+            <h3>{reservation.title}</h3>
+            <div className={styles.reservationMeta}>
+              <time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time>
+              <LiveTimeIndicator event={reservation} locale={locale} variant="text" onStartReached={owner.retryPersonalization}/>
+            </div>
+          </div>
+          <ChevronRight className={styles.reservationArrow} aria-hidden="true" />
+        </Link> : <div className={styles.summaryEmpty}><CalendarHeart aria-hidden="true"/><p>{t.noReservation}</p><Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link></div>}
       </div>
     </section>
   );
@@ -259,7 +276,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
             </section>
           ) : (
             <div className={styles.mobilePersonalization}>
-              {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" /> : null}
+              {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /> : null}
               {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
               {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
             </div>
@@ -352,7 +369,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
               <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
             </section>
           </> : null}
-          {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" /><BanksyCampaignAd locale={locale} /></> : null}
+          {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /><BanksyCampaignAd locale={locale} /></> : null}
           {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
           {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
         </aside>}
