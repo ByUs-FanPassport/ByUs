@@ -91,5 +91,9 @@
 - L31: EN manifest/start_url과 locale-bearing 링크 계약 완료. OS 설치 및 기기 재실행 자체는 미검증.
 - C10/L15: 현재 AWS dev/prod 외부알림 mode 및 Kakao/email provider URL/token 미설정 상태 확인. 언어 snapshot·KO/EN payload 전달을 구현하고 이 비활성 설정은 보존한다. 승인 템플릿·실제 수신은 미검증이며 이번에 활성화/발송하지 않는다.
 - C15: LIVE/Collectible 운영 시각은 KST 명시, 개인 과거 기록은 viewer-local 유지. C16: 기존 immutable on-chain 영문 canonical metadata 유지, locale 변경으로 tokenURI/기존 토큰 변경 없음.
-- 웹 확대 검사에서 참조 파일2종 테스트 실패는 원본의 무시된 브랜드/ledger 파일을 정확히 복사해5개 테스트 재통과. Home CSS 고정값 검사3개는 기존 main과 대조 중이며 이번 변경의 관련361개 테스트와 별도 기록한다.
+- 웹 확대 검사에서 참조 파일2종 테스트 실패는 원본의 무시된 브랜드/ledger 파일을 정확히 복사해5개 테스트 재통과. Home CSS 고정값 검사3개는 분리한 기존 main `d222885` 및 `b538c7b`에서도 동일하게 실패함을 확인했다. 현재4개 입력파일 해시도 기존 main과 같으며 이번 변경의 회귀가 아니다. 상세 `artifacts/locale-audit-20260910/baseline-failures.md`.
 - 로그: `web-focused-final.log`, `worker-all-tests-final.log`, `web-production-build.log`, `lint-final.log`, `backend-clean-replay-final.log`, `root-document-e2e-production.log`.
+
+- Production DB: Supabase linked push 최종 성공 및 `supabase_migrations.schema_migrations`의120000 localization_contracts 반영 확인. 로컬Docker 비실행으로 부가 catalog cache 경고만 발생했으며 migration적용은 성공했다.
+
+- Notification worker Production code-only 교체 성공: `Active / Successful`, 배포ZIP SHA256 일치. EventBridge/schedule/target/concurrency 및 환경변수·handler 등 운영 설정 보존. AWS Auto runtime ARN만 변경됐으며, 과거 INIT_START ARN을 대입하면 배포 전 전체 설정 digest가 정확히 재현되는 것으로 차이를 확인했다. 증거 `deployment/notification-after.json`, `notification-runtime-change-proof.json`.

@@ -103,3 +103,8 @@
 - 독립 reviewer 최종 지적 모두 해소. Instagram 기존 form호환,실제수령상태 enum8종 KOEN16조합,Kakao생성당시 snapshot보정,recipient최신locale/중복방지 보완.
 - Supabase linked dry-run 성공: 새 `20260910120000_localization_contracts.sql` 한 개만 적용 대상.
 - 통합 main: `b538c7b` 이후 새 `d222885`도 반영. 원래 작업공간·다른 배포 변경 유지.
+
+- 확대 검사 잔여3개 CSS 고정값 실패는 분리한 기존main d222885/b538c7b에서도 동일함을 확인했다. 이번 변경의 회귀가 아니며 기존 제품CSS를 테스트를 맞추기 위해 바꾸지 않았다. 누락된 ignored reference3개는 원본동일hash로 복사해 관련5개 테스트 통과.
+- SupabaseProduction120000 적용 및 migrationhistory 확인 완료.
+
+- Notification worker Production code-only 교체 성공: `Active / Successful`, 배포ZIP SHA256 일치. EventBridge/schedule/target/concurrency 및 환경변수·handler 등 운영 설정 보존. AWS Auto runtime ARN만 변경됐으며, 과거 INIT_START ARN을 대입하면 배포 전 전체 설정 digest가 정확히 재현되는 것으로 차이를 확인했다. 증거 `deployment/notification-after.json`, `notification-runtime-change-proof.json`.
