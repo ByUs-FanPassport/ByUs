@@ -1,5 +1,19 @@
 .cards, .cards * { box-sizing: border-box; }
-.cards { display: grid; gap: 16px; margin-top: 16px; }
+.cards { display: grid; min-width: 0; gap: 16px; margin-top: 16px; }
+.carousel { display: flex; flex-direction: column; min-width: 0; gap: 6px; }
+.carouselViewport { order: 0; overflow: hidden; border-radius: 16px; touch-action: pan-y pinch-zoom; }
+.carouselTrack { display: flex; align-items: stretch; }
+.carouselSlide { display: flex; flex: 0 0 100%; min-width: 0; }
+.carouselSlide > a { width: 100%; height: 100%; min-height: 216px; }
+.carousel .carouselSlide > a:focus-visible { outline-offset: -3px; }
+.carouselControls { order: 1; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.carouselButton { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #686873; background: transparent; cursor: pointer; }
+.carousel .carouselButton:focus-visible { outline: 2px solid #b22161; outline-offset: 1px; }
+.carousel .carouselButton svg { width: 16px; height: 16px; pointer-events: none; }
+.carouselButton:disabled { opacity: .45; cursor: default; }
+.carouselCount { display: flex; justify-content: center; gap: 6px; min-width: 38px; color: #686873; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; }
+.carouselCount strong { color: #19191e; font-weight: 600; }
+@media (hover: hover) { .carouselButton:not(:disabled):hover { color: #19191e; background: #f8f2f6; } }
 .guide, .eventGuide, .fanmeeting { position: relative; display: block; isolation: isolate; overflow: hidden; text-decoration: none; color: #19191e !important; }
 .guide:focus-visible, .eventGuide:focus-visible, .fanmeeting:focus-visible { outline: 3px solid #b22161; outline-offset: 4px; }
 .guide { height: 216px; border-radius: 16px; background: #f8f2f6; }

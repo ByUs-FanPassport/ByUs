@@ -57,7 +57,6 @@ export const ifewFanGuideContent = {
     historyAction: "내 기록 보기",
     faqTitle: "참여 전에 확인해 주세요",
     faqs: [
-      ["로그인 없이 안내를 볼 수 있나요?", "네. 이 안내는 누구나 볼 수 있어요. ByUs 팬 인증·예약·선물 응모를 시작할 때 로그인해 주세요."],
       ["LIVE는 어디에서 하나요?", "9월 12일(토) 오전 8시부터 오후 1시까지 TikTok @ifewknow에서 진행해요. 모두 한국 시간(KST, UTC+9) 기준이에요."],
       ["LIVE를 예약하면 자동으로 선물에 응모되나요?", "아니요. LIVE 예약과 선물 응모는 별개예요. 이퓨 응모권으로 사용할 수량을 선택하고 직접 응모해 주세요. 이미 응모권이 있다면 LIVE 전에도 응모할 수 있어요."],
       ["다른 최애의 응모권도 사용할 수 있나요?", "이 선물에는 이퓨 응모권을 사용해요. 응모권 획득 방법과 지급 조건은 각 활동에서 확인해 주세요."],
@@ -122,7 +121,6 @@ export const ifewFanGuideContent = {
     historyAction: "View my history",
     faqTitle: "Before you join",
     faqs: [
-      ["Can I read this without signing in?", "Yes. This guide is open to everyone. Sign in to verify your fandom, reserve on ByUs or enter the prize draw."],
       ["Where does the LIVE take place?", "On TikTok @ifewknow, Saturday, September 12 from 8 AM to 1 PM. All times are Korean Standard Time (KST, UTC+9)."],
       ["Does reserving the LIVE enter me in the draw?", "No. Reservations and prize entries are separate. Choose how many ifew raffle tickets to use and confirm your entry. If you already have tickets, you can enter before the LIVE."],
       ["Can I use another creator’s raffle tickets?", "This draw uses ifew raffle tickets. Check each activity for ways to earn tickets and its reward conditions."],

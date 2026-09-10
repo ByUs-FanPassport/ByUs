@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { ContentLocale } from "@/server/content/content-domain";
 import { ifewEventBanner } from "../ifew-fan-guide/content";
+import { HomeGuideCarousel } from "./home-guide-carousel";
 import styles from "./home-entry-cards.module.css";
 
 const copy = {
@@ -35,14 +36,15 @@ export function HomeEntryCards({ locale }: { locale: ContentLocale }) {
   const t = copy[locale];
   return (
     <div className={styles.cards} data-home-entry-cards>
-      <Link className={styles.eventGuide} href={`/pages/ifew-fan-guide?locale=${locale}` as Route} aria-label={t.ifewLabel}>
+      <HomeGuideCarousel locale={locale} slides={[
+        { key: "ifew", label: t.ifewLabel, content: <Link className={styles.eventGuide} href={`/pages/ifew-fan-guide?locale=${locale}` as Route} aria-label={t.ifewLabel}>
         <Image className={styles.eventBanner} src={ifewEventBanner} alt="" width={1774} height={887} sizes="(max-width: 767px) calc(100vw - 32px), 384px" />
         <span className={styles.eventGuideCopy}>
           <span><strong>{t.ifewTitle}</strong><small>{t.ifewDescription}</small></span>
           <ArrowRight size={18} aria-hidden="true" />
         </span>
-      </Link>
-      <Link className={styles.guide} href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}>
+      </Link> },
+        { key: "elina", label: t.label, content: <Link className={styles.guide} href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}>
         <span className={styles.portrait}><Image src="/images/home-entry/elina.jpg" alt="" fill sizes="154px" /></span>
         <span className={styles.guideCopy}>
           <small>ELINA × BYUS</small>
@@ -50,7 +52,8 @@ export function HomeEntryCards({ locale }: { locale: ContentLocale }) {
           <span className={styles.description}>{t.description}</span>
           <span className={styles.action}>{t.action}<ArrowRight size={16} aria-hidden="true" /></span>
         </span>
-      </Link>
+      </Link> },
+      ]} />
       <Link className={styles.fanmeeting} href={`/pages/us-fanmeetings?locale=${locale}`} aria-label={t.fanmeeting}>
         <span className={styles.flag} aria-hidden="true"><span>{Array.from({ length: 20 }, (_, i) => <span key={i}>☆</span>)}</span></span>
         <span className={styles.fanmeetingCopy}><strong>{t.fanmeeting}</strong><span>{t.explore}</span></span>
