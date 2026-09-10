@@ -35,7 +35,7 @@
 - [x] 발송 경로 조사 및 독립 위험 검토
 - [x] UI/API/DB/worker 구현
 - [x] 로컬 검증
-- [x] 배포 여부/최종 상태 기록 — 이번 문의창 변경은 로컬 완료, 미배포
+- [x] 배포 여부/최종 상태 기록 — 사용자 운영 배포 승인 후 DB 및 worker 반영 확인, web 릴리스 진행
 
 ## 독립 검토 반영
 
@@ -60,7 +60,18 @@
 1. `20260910130000_business_inquiries.sql` 적용 및 cron job 등록 확인.
 2. 현재 운영 worker secret/SES IAM 및 sandbox 상태를 읽기 확인한다. 기존 secret/설정 보존 후 `BUSINESS_INQUIRY_MODE=ses_email`, `NOTIFICATION_EXTERNAL_ENVIRONMENT=prod`를 설정한다. 기존 From은 notifications@byus.kr다.
 3. worker Lambda 코드 배포 최종 성공을 확인한다. 기본값 disabled 상태로 두면 접수 메일을 발송하지 않는다.
-4. web 배포 최종 성공을 확인한다. 이 단계까지 이번 변경의 commit/push/운영 migration은 수행하지 않았다.
+4. web 배포 최종 성공을 확인한다. 사용자 운영 배포 승인 후 아래 실행 기록에 따라 반영한다.
 5. PII 없는 `business_inquiry_health()`로 pending/old_pending/failed/delivery_unknown을 확인할 수 있다. unknown은 자동 재전송하지 않는다.
 
 증거: `artifacts/inquiry/qa.json`, KO/EN form/error/success PNG, `scripts/verify-business-inquiries-local-db.mjs`.
+
+
+## 2026-09-10 운영 배포 실행 기록
+
+- 사용자 `운영 배포` 승인으로 진행.
+- 문의 구현 커밋 `27006f3` 후 최신 main `565cc27`의 localization 변경을 병합했다. 병합 후 worker 43개 테스트, Lambda bundle, web production build와 타입 검사 통과.
+- Supabase Production `gmrykvmtmuaeswpajteq`: dry-run에서 `20260910130000` 하나만 확인 후 적용 성공. migration history 및 `business-inquiry-retention` cron 활성 등록 확인.
+- AWS `coredot-dev` / account `200151116034` / ap-northeast-2 / `byus-notification-worker-prod`: code-only 업데이트 성공, Active/Successful 및 ZIP SHA256 일치. Lambda 환경·역할·runtime·handler·timeout·메모리·아키텍처 보존.
+- 기존 secret의 팬 알림 모드는 변경하지 않았다(미설정 기본 disabled). 문의 모드 `BUSINESS_INQUIRY_MODE=ses_email`과 운영 환경 `NOTIFICATION_EXTERNAL_ENVIRONMENT=prod`만 추가했다. 기존 값 보존 확인.
+- SES ProductionAccessEnabled/SendingEnabled=true, byus.kr 발신 identity SUCCESS, SES From IAM 허용 확인. 기존 매분 EventBridge 예약 ENABLED 유지.
+- 실제 수신자 대상 시험 문의나 이메일 전송은 수행하지 않았다. 웹 배포의 exact SHA 및 READY 최종 상태는 `artifacts/inquiry/deployment/web-confirmed.json`에 기록한다.
