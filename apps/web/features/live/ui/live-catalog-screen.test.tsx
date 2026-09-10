@@ -111,7 +111,7 @@ describe("LIVE catalog", () => {
     await waitFor(() => expect(resolveCatalog).toBeDefined());
     resolveCatalog?.(new Response(JSON.stringify({ catalog: {
       liveNow: [],
-      upcoming: [{ ...base, viewer: { ...base.viewer, authenticated: true, reservation: { id: "22222222-2222-4222-8222-222222222222", createdAt: "2026-09-04T00:00:00.000Z", stamp: { id: "33333333-3333-4333-8333-333333333333", mintStatus: "not_requested" } } } }],
+      upcoming: [{ ...base, viewer: { ...base.viewer, authenticated: true, reservation: { id: "22222222-2222-4222-8222-222222222222", createdAt: "2026-09-04T00:00:00.000Z", stamp: { id: "33333333-3333-4333-8333-333333333333", businessStatus: "issued", mintStatus: "queued" } } } }],
       replay: [],
     } }), { status: 200 }));
 
@@ -128,7 +128,7 @@ describe("LIVE catalog", () => {
   it("keeps English reservation status separate from its details action and omits empty-section counts", () => {
     const reserved = { ...base, viewer: { ...base.viewer, authenticated: true, reservation: {
       id: "22222222-2222-4222-8222-222222222222", createdAt: "2026-09-04T00:00:00.000Z",
-      stamp: { id: "33333333-3333-4333-8333-333333333333", mintStatus: "not_requested" as const },
+      stamp: { id: "33333333-3333-4333-8333-333333333333", businessStatus: "issued" as const, mintStatus: "queued" as const },
     } } };
     render(<LiveCatalogScreen locale="en" initialCatalog={{ liveNow: [], upcoming: [reserved], replay: [] }} />);
     expect(screen.getByText("Reserved")).toBeInTheDocument();
