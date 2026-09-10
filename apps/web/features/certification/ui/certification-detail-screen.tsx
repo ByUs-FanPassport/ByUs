@@ -1,11 +1,14 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, CheckCircle2, ImagePlus, Ticket, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ImagePlus, Ticket, X } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { fanActionClassName } from "@/components/fan-ui/fan-action";
+import { useOwnedFanResource } from "@/components/fan-ui/use-owned-fan-resource";
+import { parsePassportCollectionResponse } from "../../passport/domain/passport-collection";
 import {
   historyItemSchema,
   manualCertificationSchema,
@@ -18,6 +21,9 @@ import styles from "./certification.module.css";
 
 type OwnerProof = { id: string; url: string };
 type Auth = ReturnType<typeof usePrivy>;
+const parseOwnerPassports = (body: unknown) => parsePassportCollectionResponse(body).passports;
+type OwnerPassports = ReturnType<typeof parseOwnerPassports>;
+type PassportResourceState = ReturnType<typeof useOwnedFanResource<OwnerPassports>>["state"];
 
 export function CertificationDetailScreen({
   id,
@@ -72,6 +78,11 @@ function CertificationDetailForOwner({
   const proofUrls = useRef<string[]>([]);
   const submitInFlight = useRef<Promise<void> | null>(null);
   const mutationAbort = useRef<AbortController | null>(null);
+  const passports = useOwnedFanResource(
+    submission?.status === "approved" ? `/api/passports?locale=${locale}&tierStages=1` : null,
+    parseOwnerPassports,
+    auth,
+  );
 
   useEffect(() => {
     tokenProvider.current = getAccessToken;
@@ -277,7 +288,7 @@ function CertificationDetailForOwner({
               </section>
             ) : null}
             {submission?.status === "pending" ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "검토 중이에요" : "Under review"}</h2><p>{locale === "ko" ? "관리자가 인증 자료를 확인하고 있어요." : "An administrator is reviewing your proof."}</p></section>
-              : submission?.status === "approved" ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "인증이 승인됐어요" : "Certification approved"}</h2></section>
+              : submission?.status === "approved" ? <ApprovedNextStep locale={locale} slug={slug} passportState={passports.state}/>
                 : submission?.status === "rejected" && !currentRejected ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "이후 제출 내역이 있어요" : "A newer submission exists"}</h2></section>
                   : null}
             {canOpenForm ? (
@@ -295,4 +306,44 @@ function CertificationDetailForOwner({
       </FanContentContainer>
     </FanAppFrame>
   );
+}
+
+function ApprovedNextStep({
+  locale,
+  slug,
+  passportState,
+}: {
+  locale: CertificationLocale;
+  slug: string;
+  passportState: PassportResourceState;
+}) {
+  const ownedPassport = passportState.status === "ready"
+    ? passportState.data.find((passport) => passport.celebrity.slug === slug) ?? null
+    : null;
+  const href = ownedPassport
+    ? `/passports/${ownedPassport.id}?locale=${locale}`
+    : passportState.status === "ready"
+      ? `/c/${slug}?tab=certifications&locale=${locale}#celebrity-content`
+      : `/my?locale=${locale}`;
+  const body = ownedPassport
+    ? (locale === "ko" ? "발급된 내 패스포트를 다시 열어볼 수 있어요." : "You can reopen your issued Passport.")
+    : passportState.status === "ready"
+      ? (locale === "ko" ? "이번 인증 승인과 패스포트 발급은 별개예요. 팬 인증에서 발급 과정을 확인하세요." : "This approval does not issue a Passport. Check fan verification to start issuance.")
+      : passportState.status === "loading"
+        ? (locale === "ko" ? "패스포트 보유 여부를 확인하는 중이에요. MY에서 내 활동을 먼저 확인할 수 있어요." : "Checking Passport ownership. You can review your activity in MY in the meantime.")
+        : (locale === "ko" ? "패스포트 보유 여부를 확인하지 못했어요. MY에서 내 활동을 확인하세요." : "We couldn’t confirm Passport ownership. Check your activity in MY.");
+  const action = ownedPassport
+    ? (locale === "ko" ? "내 패스포트 보기" : "Open my Passport")
+    : passportState.status === "ready"
+      ? (locale === "ko" ? "팬 인증 확인하기" : "Check fan verification")
+      : (locale === "ko" ? "MY로 이동" : "Go to MY");
+
+  return <section className={`${styles.submissionState} ${styles.approvedNext}`} role="status">
+    <CheckCircle2 aria-hidden="true" />
+    <h2>{locale === "ko" ? "인증이 승인됐어요" : "Certification approved"}</h2>
+    <p>{body}</p>
+    <Link className={fanActionClassName(ownedPassport ? "passport" : "neutral")} href={href as Route}>
+      {action}<ArrowRight aria-hidden="true" />
+    </Link>
+  </section>;
 }

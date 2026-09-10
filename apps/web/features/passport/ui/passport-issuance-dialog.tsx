@@ -33,6 +33,8 @@ const copy = {
     stampEarned: "팬 인증 Stamp 획득",
     open: "Passport 열기",
     continueLive: "LIVE 예약 이어가기",
+    myHint: "MY의 내 패스포트에서 언제든 다시 볼 수 있어요.",
+    openMy: "MY에서 보기",
     waiting: "Passport에 첫 기록을 남기고 있어요.",
     mintComplete: "디지털 발급 완료",
     mintChecking: "발급 상태 확인 중",
@@ -61,6 +63,8 @@ const copy = {
     stampEarned: "Fan Verification Stamp earned",
     open: "Open Passport",
     continueLive: "Continue LIVE reservation",
+    myHint: "You can return to it anytime from My Passports in MY.",
+    openMy: "View in MY",
     waiting: "Adding your first record to the Passport.",
     mintComplete: "Digital issuance complete",
     mintChecking: "Checking issuance status",
@@ -290,9 +294,17 @@ export function PassportIssuanceCeremony({
 
         <div className={styles.actionRail} aria-live="polite">
           {stage >= 3 ? (
-            <Link ref={openPassportRef} className={fanActionClassName("passport", { className: styles.openPassport })} href={finalHref}>
-              <span>{finalLabel}</span><ArrowRight aria-hidden="true" />
-            </Link>
+            <div className={styles.completedActions}>
+              <div className={styles.actionLinks}>
+                <Link ref={openPassportRef} className={fanActionClassName(liveReturnTo ? "primary" : "passport", { className: styles.openPassport })} href={finalHref}>
+                  <span>{finalLabel}</span><ArrowRight aria-hidden="true" />
+                </Link>
+                {liveReturnTo ? <Link className={fanActionClassName("passport", { className: styles.openPassport })} href={passportHref}>
+                  <span>{t.open}</span><ArrowRight aria-hidden="true" />
+                </Link> : null}
+              </div>
+              <p className={styles.revisitHint}>{t.myHint} <Link href={withLocale("/my", locale)}>{t.openMy}</Link></p>
+            </div>
           ) : (
             <span className={styles.actionStatus}>{t.waiting}</span>
           )}

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCalendarScreen } from "./live-calendar-screen";
 
@@ -119,6 +119,10 @@ describe("LIVE calendar screen", () => {
     vi.unstubAllGlobals();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it.each(["scheduled", "live", "ended", "cancelled"] as const)("marks only actionable mobile dates for %s events", (status) => {
     const { container } = render(<LiveCalendarScreen locale="ko" initialCelebritySlugs={[]} initialCalendar={{ ...calendar, days: calendar.days.map(day => ({ ...day, events: day.date === "2026-09-15" ? [{ ...events[0]!, effectiveStatus: status }] : [] })) }} celebrities={celebrities} eventMetadata={eventMetadata} />);
     const date = container.querySelector('[data-calendar-date="2026-09-15"]');
@@ -139,6 +143,107 @@ describe("LIVE calendar screen", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "전체 보기" }).find(button => !button.hasAttribute("aria-haspopup"))!);
     expect(date).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).not.toHaveAttribute("data-mobile-hidden");
+  });
+
+  it("announces and scrolls an intentional mobile selection without moving pointer focus", () => {
+    const frame = vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
+    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const scroll = vi.fn();
+    heading.scrollIntoView = scroll;
+
+    fireEvent.click(date, { detail: 1 });
+
+    expect(screen.getByRole("heading", { name: /2026년 9월 15일.*LIVE 4개/ })).toBe(heading);
+    expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(heading).not.toHaveFocus();
+    frame.mockRestore();
+  });
+
+  it("focuses the result for keyboard activation and respects reduced motion", () => {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
+    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const scroll = vi.fn();
+    heading.scrollIntoView = scroll;
+
+    date.focus();
+    fireEvent.click(date, { detail: 0 });
+
+    expect(heading).toHaveFocus();
+    expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "auto" });
+  });
+
+  it("does not scroll or move focus when only the responsive breakpoint changes", () => {
+    let mobileMatches = true;
+    let mobileChange: ((event: MediaQueryListEvent) => void) | undefined;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+      get matches() { return query === "(max-width: 63.99rem)" ? mobileMatches : false; },
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn((_type, listener) => {
+        if (query === "(max-width: 63.99rem)" && typeof listener === "function") mobileChange = listener;
+      }),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
+    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const scroll = vi.fn();
+    heading.scrollIntoView = scroll;
+    fireEvent.click(date, { detail: 1 });
+    scroll.mockClear();
+
+    mobileMatches = false;
+    act(() => mobileChange?.({ matches: false } as MediaQueryListEvent));
+
+    expect(scroll).not.toHaveBeenCalled();
+    expect(heading).not.toHaveFocus();
+  });
+
+  it.each([0, 1, 2, 5, 10])("keeps all %i events reachable after a mobile date selection", (count) => {
+    const selectedEvents = Array.from({ length: count }, (_, index) => ({
+      ...events[index % events.length]!,
+      id: `calendar-event-${index}`,
+      slug: `calendar-event-${index}`,
+      title: `Calendar event ${index + 1}`,
+    }));
+    const selectedCalendar = {
+      ...calendar,
+      days: calendar.days.map((day) => ({
+        ...day,
+        events: day.date === "2026-09-15" ? selectedEvents : [],
+      })),
+    };
+    render(<LiveCalendarScreen locale="en" initialCalendar={selectedCalendar} celebrities={celebrities} eventMetadata={[]} initialCelebritySlugs={[]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`September 15, 2026.*${count} LIVE`) }), { detail: 1 });
+
+    expect(screen.getByRole("heading", { name: new RegExp(`September 15, 2026.*${count} LIVE event`) })).toBeInTheDocument();
+    expect(screen.queryAllByRole("article")).toHaveLength(count);
+    if (count === 0) expect(screen.getByText("No LIVE events are scheduled for the selected date.")).toBeInTheDocument();
   });
 
   it("updates mobile date counts with multi-creator filters and resets the date when filters change", () => {

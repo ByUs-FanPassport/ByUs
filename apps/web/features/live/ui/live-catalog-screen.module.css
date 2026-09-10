@@ -1,4 +1,4 @@
-.main { max-width:1120px; padding-top:40px; padding-bottom:96px; }
+.main { padding-top:40px; padding-bottom:96px; }
 .intro { display:grid; gap:20px; margin-bottom:32px; }
 .intro p { max-width:65ch; margin:12px 0 0; color:var(--color-muted); font-size:15px; line-height:1.6; text-wrap:pretty; }
 .group + .group { margin-top:40px; }

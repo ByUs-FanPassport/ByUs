@@ -26,8 +26,10 @@
 .mobileDayEvents { display:flex; height:4px; align-items:center; justify-content:center; gap:3px; }
 .mobileDayEvents i { width:4px; height:4px; border-radius:50%; background:var(--color-service-ink); }
 .mobileSelection { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--space-2); margin-top:var(--space-3); border-top:1px solid var(--color-line); color:var(--color-muted); font-size:13px; }
+.mobileResultHeading { margin:0; padding-block:8px; scroll-margin-block:calc(var(--fan-header-height,68px) + 16px) calc(64px + env(safe-area-inset-bottom) + 16px); color:inherit; font:inherit; font-weight:inherit; line-height:1.5; }
 .mobileSelection button { min-height:44px; padding:0 var(--space-2); border:0; background:transparent; color:var(--color-service-ink); font:inherit; font-weight:700; cursor:pointer; }
 .mobileDay:focus-visible,.mobileSelection button:focus-visible { outline:3px solid var(--color-focus); outline-offset:-3px; }
+.mobileResultHeading:focus-visible { outline:3px solid var(--color-focus); outline-offset:3px; border-radius:4px; }
 @media (max-width:63.99rem) { .day[data-mobile-hidden="true"] { display:none; } }
 @media (max-width:47.99rem) { .mobileWeekdays,.mobileMonth { margin-inline:-12px; } }
 .calendarEmpty { margin:0 0 16px; padding:14px 16px; border-radius:12px; background:oklch(97.5% 0 0); color:oklch(45% 0 0); font-size:13px; font-weight:650; text-align:center; }
@@ -182,31 +184,31 @@
   .eventLink { border-radius:4px; }
 }
 
-/* Original 1672px reference: left title/filter, inline month lettering, horizontal calendar. */
+/* Paper calendar: left title/filter, inline month lettering, horizontal calendar. */
 @media (min-width:64rem) {
-  .main { position:relative; max-width:none; padding:32px 2.81% 70px; background:#fff; }
+  .main { position:relative; padding-top:32px; padding-bottom:70px; background:#fff; }
   .editorialHeader { position:relative; display:block; height:239px; margin:0; }
   .intro { position:absolute; top:49px; left:0; width:29%; gap:0; }
   .main .intro h1 { font-size:48px; line-height:1.2; font-weight:850; letter-spacing:-.03em; }
   .intro p,.catalogLink { display:none; }
-  .filters { position:absolute; top:181px; left:2.81%; width:28%; z-index:2; margin:0; }
-  .filterScroller { gap:8px; padding:0; }
+  .filters { position:absolute; top:181px; left:32px; width:28%; z-index:2; margin:0; }
+  .filterScroller { gap:8px; max-height:148px; overflow-y:auto; padding:0 3px 3px 0; }
   .filterChip { padding:0 17px; gap:0; min-height:44px; font-size:14px; font-weight:650; }
   .filterChip > svg,.filterChip > span { display:none; }
-  .filterChip[data-selected="true"] { background:#eb238b; border-color:#eb238b; color:#fff; }
+  .filterChip[data-selected="true"] { background:#b91469; border-color:#b91469; color:#fff; }
   .filterCount { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
   .calendar > [data-calendar-header] { max-width:470px; height:68px; }
   .calendar > [data-calendar-header] h2 { font-size:28px; }
   .weekdays { height:52px; align-items:end; border-color:#ccc; }
   .weekdays span { text-align:center; font-size:16px; padding-bottom:14px; color:#151515; }
-  .weekdays span:first-child,.weekdays span:last-child { color:#ed2087; }
+  .weekdays span:first-child,.weekdays span:last-child { color:#b91469; }
   .days { grid-auto-rows:minmax(81px,auto); border-bottom:0; }
   .day { min-height:81px; padding:10px 12px 10px; border-left:0; border-color:#e4e4e4; }
   .day:first-of-type { border-color:#e4e4e4; }
   .outsideDay { border-left:0; border-color:#e4e4e4; background:transparent; }
   .dayHeading { margin-bottom:6px; }
   .dayHeading time { font-size:22px; width:30px; height:30px; font-weight:550; }
-  .day:nth-child(7n+1) .dayHeading time,.day:nth-child(7n) .dayHeading time { color:#ed2087; }
+  .day:nth-child(7n+1) .dayHeading time,.day:nth-child(7n) .dayHeading time { color:#b91469; }
   .event { background:#fff; border-color:#eee; border-radius:5px; }
   .event[data-calendar-event-tone] { background:#fff; border-color:#eee; }
   .eventLink { padding:7px; }
@@ -235,15 +237,15 @@
 /* Reference details: today marker and a photo-led event ticket. */
 @media (min-width:64rem) {
   .day[data-upcoming-day="true"] { border:1px solid #f0e8ed; border-radius:5px; padding:9px 9px 8px; }
-  .day .dayHeading time[data-calendar-today="true"] { width:36px; height:36px; border:0; outline:none; background:#ed2087; color:#fff; font-size:24px; font-weight:650; }
+  .day .dayHeading time[data-calendar-today="true"] { width:36px; height:36px; border:0; outline:none; background:#b91469; color:#fff; font-size:24px; font-weight:650; }
   .day[data-upcoming-day="true"] .dayHeading { margin-bottom:5px; }
   .day[data-upcoming-day="true"] .event { border-color:transparent; background:transparent; }
   .eventLink { min-height:105px; padding-top:1px; padding-bottom:4px; padding-left:78px; gap:5px; }
   .eventPortrait { left:0; top:1px; width:66px; height:96px; border-radius:4px; }
-  .eventMeta time { color:#e52286; font-size:14px; font-weight:650; }
+  .eventMeta time { color:#b91469; font-size:14px; font-weight:650; }
   .eventLink strong { font-size:14px; font-weight:700; line-height:1.4; -webkit-line-clamp:3; }
   .eventTopline { gap:4px; }
-  .calendarStatus[data-live-status] { min-height:25px; padding:4px 9px; gap:4px; background:#ed2087; border:0; color:#fff; font-size:12px; font-weight:650; }
+  .calendarStatus[data-live-status] { min-height:25px; padding:4px 9px; gap:4px; background:#b91469; border:0; color:#fff; font-size:12px; font-weight:650; }
   .calendarStatus[data-live-status] > span { display:none; }
   .calendarStatus[data-live-status]::after { display:none; }
   .calendarStatus[data-live-status]::before { content:""; width:14px; height:14px; flex:none; background:currentColor; mask:url('/images/calendar/clock.svg') center / contain no-repeat; }
@@ -253,10 +255,9 @@
   .eventLink { padding-left:4px; }
   .eventLink strong { font-size:13px; }
 }
-/* Cap the reference composition so ultrawide screens add outer margins only. */
-@media (min-width:64rem) {
-  .main { max-width:1672px; margin-inline:auto; padding-inline:clamp(28px,2.81vw,47px); }
-  .filters { left:clamp(28px,2.81vw,47px); }
+/* Keep the paper composition inside the shared 1440px shell gutter. */
+@media (min-width:80rem) {
+  .filters { left:40px; }
 }
 
 /* Compact desktop dates: header action and arrows flank the event itself. */

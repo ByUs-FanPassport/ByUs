@@ -16,7 +16,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark, Menu } from "./icons";
+import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -252,7 +252,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
     <FanAppFrame
       locale={locale}
       mainId="main-content"
-      actions={<button className={styles.panelToggle} type="button" aria-label={panelOpen ? t.panelClose : t.panelOpen} aria-expanded={panelOpen} aria-controls="guest-context-panel" onClick={() => setPanelOpen((value) => !value)}><Menu /></button>}
+      actions={<button className={styles.panelToggle} type="button" aria-label={`${t.signedInPanel}: ${panelOpen ? t.panelClose : t.panelOpen}`} aria-expanded={panelOpen} aria-controls="guest-context-panel" onClick={() => setPanelOpen((value) => !value)}><span>{t.signedInPanel}</span>{panelOpen ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}</button>}
     >
     <div className={styles.page} data-fan-pulse-home data-candidate="03">
       <div className={`${styles.shell} ${panelOpen ? styles.panelOpen : styles.panelClosed}`}>
