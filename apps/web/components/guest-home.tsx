@@ -26,12 +26,10 @@ import {
   ActivePreviewVideo,
 } from "./active-preview-video";
 import { formatFanCount } from "./fan-ui/fan-count";
-import {
-  PassportStampCanvas,
-  type PassportStampRecord,
-} from "../features/passport/ui/passport-stamp-artwork";
+import { type PassportStampRecord } from "../features/passport/ui/passport-stamp-artwork";
+import { PassportIdentityArtwork } from "../features/passport/ui/passport-identity-artwork";
 import { FanSectionHeader } from "./fan-ui/fan-heading";
-import { FanTierBadge } from "../features/rewards/ui/fan-tier-badge";
+import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
 import { fanStageLabel } from "../features/rewards/domain/fan-stage";
 import styles from "./guest-home.module.css";
 
@@ -128,10 +126,11 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 1 ? <small>{locale === "ko" ? `${passportCount}개` : passportCount}</small> : null}</div>
         {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : "Passport carousel"} aria-label={t.myPassport}>
-          <Link className={styles.ownedPassportLink} href={`/passports/${creator.passport.id}${localeQuery}` as Route} aria-label={`${passportTitle}, ${passportValue}`}>
-            <span className={styles.ownedPassportArtwork}>
-              <PassportStampCanvas
-                celebrityName={creator.celebrity.name}
+          <div className={styles.ownedPassportPreview}>
+            <Link className={styles.ownedPassportLink} href={`/passports/${creator.passport.id}${localeQuery}` as Route} aria-label={`${passportTitle}, ${passportValue}`}>
+              <PassportIdentityArtwork
+                key={creator.passport.id}
+                celebrity={creator.celebrity}
                 level={creator.passport.tier}
                 stamps={passportPreview.stamps}
                 totalCount={passportPreview.totalCount}
@@ -139,10 +138,14 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
                 priority={placement === "desktop"}
                 loading={passportPreview.status === "loading"}
               />
-            </span>
-            <h3>{passportTitle}</h3>
-            <strong className={styles.passportValue}><FanTierBadge tier={creator.passport.tier} stageKey={creator.passport.stageProgress?.current.key} locale={locale} size={32}/><span>{passportValue}</span></strong>
-          </Link>
+            </Link>
+            <div className={styles.passportGrade}>
+              <FanStageTooltip key={creator.passport.id} celebrityName={creator.celebrity.name}
+                tier={creator.passport.tier} points={creator.passport.score}
+                stageProgress={creator.passport.stageProgress} remainingToNextTier={creator.passport.remainingToNextTier}
+                locale={locale} />
+            </div>
+          </div>
           <div className={`${styles.passportUtilityRow} ${passportCount === 1 ? styles.passportUtilityRowSingle : ""}`}>
           {passportCount > 1 ? <div className={styles.passportControls} aria-label={locale === "ko" ? "패스포트 선택" : "Choose a Fan Passport"}>
             <button type="button" onClick={() => selectPassport(activePassportIndex - 1)} aria-label={locale === "ko" ? "이전 패스포트" : "Previous Fan Passport"}><ChevronLeft /></button>

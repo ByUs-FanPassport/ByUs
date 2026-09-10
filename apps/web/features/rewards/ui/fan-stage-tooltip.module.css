@@ -1,0 +1,151 @@
+.root {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.trigger {
+  position: relative;
+  display: flex;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.trigger:focus-visible {
+  outline: 3px solid var(--ink, #171717);
+  outline-offset: 3px;
+}
+
+.floatingTrigger {
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #e7e0d3;
+  border-radius: 50%;
+  background: #fffdf7;
+  box-shadow: 0 5px 18px rgb(47 37 25 / 14%);
+}
+
+.floatingTrigger .progressRing {
+  position: absolute;
+  inset: 3px;
+  width: 40px;
+  height: 40px;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.progressTrack,
+.progressValue {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.progressTrack { stroke: #e9e1d2; }
+.progressValue { stroke: #b98b36; stroke-linecap: round; }
+
+.badge {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.inlineRoot { width: 100%; }
+
+.inlineTrigger {
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: start;
+}
+
+.inlineTrigger:hover { background: #f7f5f1; }
+
+.inlineCopy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.inlineCopy strong {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.inlineCopy small {
+  color: var(--muted, #716d67);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip, 60);
+  display: grid;
+  width: max-content;
+  max-width: min(300px, calc(100vw - 24px));
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #e9e2d6;
+  border-radius: 12px;
+  background: #fffefa;
+  color: #5f584d;
+  box-shadow: 0 10px 30px rgb(47 37 25 / 16%);
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: auto;
+}
+
+.tooltip:not([style]) { visibility: hidden; }
+
+.identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee8dd;
+  color: #29251f;
+  font-size: 14px;
+}
+
+.identity strong { min-width: 0; overflow-wrap: anywhere; }
+
+.detail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+}
+
+.detail > span { color: #7b746a; }
+.detail > strong { color: #332d26; text-align: end; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+.majorGoal {
+  padding-top: 8px;
+  border-top: 1px solid #eee8dd;
+}
+
+.reached {
+  color: #936d29;
+  font-weight: 750;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .floatingTrigger,
+  .inlineTrigger { transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+  .floatingTrigger:hover { transform: translateY(-1px); box-shadow: 0 7px 20px rgb(47 37 25 / 18%); }
+}

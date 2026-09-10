@@ -56,6 +56,10 @@ describe("passport fan screens", () => {
     const { container } = render(<PassportCollectionScreen />);
 
     expect(await screen.findByText("실버 2")).toBeInTheDocument();
+    const stageButton = screen.getByRole("button", { name: /KARA · 실버 2/ });
+    expect(stageButton.closest("a")).toBeNull();
+    fireEvent.click(stageButton);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("골드 1까지 12점");
     expect([...container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-2.png"))).toBe(true);
     expect(fetcher).toHaveBeenCalledWith("/api/passports?locale=ko&tierStages=1", expect.any(Object));
   });

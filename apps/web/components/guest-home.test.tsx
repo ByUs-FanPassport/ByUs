@@ -522,8 +522,16 @@ describe("canonical 03 guest home", () => {
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
     expect(screen.getByRole("link", { name: "엘리나와 함께 만나는 뱅크시" })).toHaveAttribute("href", "/c/elina?locale=ko");
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(2);
-    expect(screen.getAllByText("실버 1 · 15점")).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
+    expect(screen.queryByText("실버 1 · 15점")).not.toBeInTheDocument();
+    const gradeButtons = screen.getAllByRole("button", { name: /^KARA ·/ });
+    expect(gradeButtons).toHaveLength(2);
+    expect(gradeButtons[0].closest("a")).toBeNull();
+    fireEvent.click(gradeButtons[0]);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("실버 2");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("15점");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect([...document.querySelectorAll("img")].filter((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-1.png"))).toHaveLength(2);
     expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
     expect(screen.getAllByRole("link", { name: "LIVE 상세 보기" })).toHaveLength(2);
@@ -574,9 +582,13 @@ describe("canonical 03 guest home", () => {
     });
     expect(screen.queryByRole("heading", { name: "Reaction Only Fan Passport" })).not.toBeInTheDocument();
 
+    fireEvent.click(within(carousels[0]).getByRole("button", { name: /^KARA ·/ }));
+    expect(screen.getByRole("tooltip")).toHaveTextContent("KARA");
     fireEvent.click(within(carousels[0]).getByRole("button", { name: "다음 패스포트" }));
-    expect(screen.queryByRole("heading", { name: "KARA 패스포트" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { name: "KATSEYE 패스포트" })).toHaveLength(2);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(document.querySelectorAll('[data-passport-identity="katseye"]')).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: /^KARA 패스포트,/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /^KATSEYE 패스포트,/ })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
     await act(async () => {});
   });
@@ -638,7 +650,7 @@ describe("canonical 03 guest home", () => {
       } }) };
     }));
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
-    expect(await screen.findAllByText("골드 · 50점")).toHaveLength(2);
+    expect(await screen.findAllByRole("link", { name: /패스포트, 골드 · 50점/ })).toHaveLength(2);
     expect(await screen.findAllByRole("img", { name: /전체 10개 중 최근 9개 표시/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
     expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
@@ -661,7 +673,7 @@ describe("canonical 03 guest home", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     render(<GuestHome {...defaultProps} featuredLives={[]} />);
-    expect(await screen.findAllByRole("heading", { name: "KARA 패스포트" })).toHaveLength(2);
+    expect(await screen.findAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     await screen.findByRole("link", { name: "KARA 입덕 완료" });
     expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/creator-reactions"))).toHaveLength(1);
     expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith(`/api/passports/${passportId}`))).toHaveLength(1);

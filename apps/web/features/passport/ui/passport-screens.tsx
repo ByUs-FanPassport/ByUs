@@ -24,6 +24,7 @@ import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-re
 import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
 import { useAvatar } from "../../profile/ui/use-avatar";
 import { fanStageLabel } from "../../rewards/domain/fan-stage";
+import { FanStageTooltip } from "../../rewards/ui/fan-stage-tooltip";
 import { FanTierBadge } from "../../rewards/ui/fan-tier-badge";
 import styles from "./passport-screens.module.css";
 
@@ -154,7 +155,7 @@ export function PassportCollectionScreen() {
           <div className={styles.cardTop}><div><h2>{passport.celebrity.name}</h2></div><ArrowRight aria-hidden="true" /></div>
         </Link>
         <div className={styles.cardFacts}>
-          <span className={styles.stageFact}><FanTierBadge tier={passport.score.level} stageKey={passport.score.stageProgress?.current.key} locale={locale} size={40}/><span><strong>{passport.score.stageProgress ? fanStageLabel(locale, passport.score.stageProgress.current) : passport.display.level}</strong><small>LEVEL</small></span></span>
+          <FanStageTooltip className={styles.stageFact} celebrityName={passport.celebrity.name} tier={passport.score.level} points={passport.score.points} stageProgress={passport.score.stageProgress} locale={locale} variant="inline" />
           <Link href={passportSectionHref(passport.id, locale, "activity")}><strong>{passport.score.points}</strong><small>{c.score}</small></Link>
           <Link href={passportSectionHref(passport.id, locale, "stamp-book")}><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></Link>
         </div>

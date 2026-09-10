@@ -1,0 +1,24 @@
+.artwork { position: relative; width: 100%; }
+
+/* User's left-page crop mapped to the original 1536 × 1024 book artwork. */
+.portrait {
+  position: absolute;
+  top: 31.2%;
+  left: 21.4%;
+  width: 29.4%;
+  height: 35.2%;
+  color: #a77b3d;
+  background: #f7f3ee;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.artwork:has([role="img"][data-passport-ready="true"]) .portrait { opacity: 1; }
+.photo { position: absolute; inset: 3.2% 2.7%; display: block; overflow: hidden; border-radius: 5%; background: #f6f6f5; }
+.photo > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.photo[data-creator="ifewknow"] > img { transform: scale(2.45); transform-origin: 48% 40%; }
+.photo[data-creator="park-myungho"] > img { object-position: 50% 0%; transform: scale(1.9); transform-origin: 56% 14%; }
+.photo[data-creator="xin"] > img { object-position: 50% 30%; }
+.photo[data-creator="yuna"] > img { object-position: 50% 0%; }
+.artwork .frame { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.fallback { display: grid; height: 100%; place-items: center; padding: 8%; color: #66533c; font-size: 12px; font-weight: 700; }

@@ -178,13 +178,9 @@
 .summarySectionHeader > span { font-size: 14px; font-weight: 650; }
 .summarySectionHeader > small { display: grid; min-width: 30px; height: 24px; padding-inline: 8px; place-items: center; border-radius: 999rem; background: var(--surface-soft); color: var(--muted); font-size: 11px; font-weight: 750; }
 .passportCarousel { display: grid; min-width: 0; }
-.ownedPassportLink { display: grid; min-width: 0; gap: 5px; border-radius: 12px; text-align: center; }
-.ownedPassportLink h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; text-wrap: balance; }
-.ownedPassportArtwork { position: relative; overflow: hidden; width: min(88%, 300px); aspect-ratio: 3 / 2; justify-self: center; filter: drop-shadow(0 8px 14px rgb(23 25 28 / 7%)); transition: transform 240ms cubic-bezier(.2,0,0,1); }
-.ownedPassportArtwork img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.passportValue { display:flex; min-width:0; align-items:center; justify-content:center; gap:6px; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.5; text-align: center; }
-.passportValue img { flex:0 0 auto; object-fit:contain; }
-.passportValue span { min-width:0; overflow-wrap:anywhere; }
+.ownedPassportPreview { position: relative; width: min(100%, 320px); margin: 14px auto 0; }
+.ownedPassportLink { display: block; width: 100%; border-radius: 12px; transition: transform 240ms cubic-bezier(.2,0,0,1); }
+.passportGrade { position: absolute; top: 7.5%; right: 4.4%; z-index: 2; transform: translate(35%, -50%); }
 .passportUtilityRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .passportUtilityRowSingle { justify-content: flex-end; }
 .passportControls { display: grid; width: min(176px, 100%); min-width: 0; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; }
@@ -333,7 +329,7 @@
   .celebrityMediaBox:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
   .mobileContextActions a:hover, .googleButton:hover, .passportFooter > a:hover { background: linear-gradient(var(--surface-soft), var(--surface-soft)) padding-box, var(--spectrum-hover) border-box; }
   .passportReferenceCard:hover .passportAsset img { transform: translateY(-6px); }
-  .ownedPassportLink:hover .ownedPassportArtwork { transform: translateY(-6px); }
+  .ownedPassportLink:hover { transform: translateY(-3px); }
   .summaryOutlineAction:hover, .personalizationState button:hover, .passportControls > button:hover, .passportDots button:hover { background: var(--surface-soft); color: var(--ink); }
   .campaignAd:hover > img { transform: scale(1.025); }
 }
