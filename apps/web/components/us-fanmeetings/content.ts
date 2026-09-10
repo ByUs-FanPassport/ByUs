@@ -1,15 +1,18 @@
-// Approved ByUs × KH Pen copy, shared by both responsive layouts.
+// ByUs fanmeeting copy, shared by both responsive layouts.
 export const fanmeetingContent = {
   ko: {
     hero: "미국 팬미팅을\n함께 만듭니다.",
-    desc: "팬 참여 캠페인부터 장소·제작·현장 운영까지.\nByUs와 KH가 프로젝트에 맞춰 함께 준비합니다.",
+    desc: "팬 참여 기획부터 장소·제작·현장 운영까지.\nByUs가 미국 현지 운영 파트너와 함께 준비합니다.",
     cta: "팬미팅 문의하기",
     scope: "지원 범위 보기",
     audience: "크리에이터 · 기획사 · 브랜드를 위한 미국 프로젝트",
-    photo: "미국 현지 팬 이벤트",
+    visualTitle: "미국 팬들과\n만나는 무대",
+    visualServices: ["장소", "제작", "현장 운영"],
     rolesTitle: "팬이 모이는 과정부터,\n현장에서 만나는 순간까지.",
-    roleA: "팬 참여를 준비하는 ByUs",
-    roleB: "미국 현장을 준비하는 KH",
+    roleA: "팬 참여 기획",
+    roleADesc: "팬 참여를 준비하는 ByUs",
+    roleB: "미국 현장 운영",
+    roleBDesc: "미국 현지 운영 파트너와 함께",
     a: [
       "팬에게 안내할 참여 페이지와 캠페인",
       "예약·출석·미션·설문으로 쌓는 참여 기록",
@@ -96,14 +99,17 @@ export const fanmeetingContent = {
   },
   en: {
     hero: "Bring your fan\nmeeting to the U.S.",
-    desc: "From fan engagement campaigns to venues, production\nand on-site operations. Let’s plan your project together.",
+    desc: "From fan engagement to venues, production and on-site operations. ByUs works with our U.S. production partner to plan your project.",
     cta: "Discuss your fan meeting",
     scope: "Explore our support",
     audience: "U.S. PROJECTS FOR CREATORS, AGENCIES & BRANDS",
-    photo: "Fan events in the U.S.",
+    visualTitle: "A stage for\nyour U.S. fans.",
+    visualServices: ["Venues", "Production", "On-site operations"],
     rolesTitle: "From bringing fans together\nto meeting them in person.",
-    roleA: "Fan engagement with ByUs",
-    roleB: "U.S. execution with KH",
+    roleA: "Fan engagement",
+    roleADesc: "Fan participation, planned with ByUs",
+    roleB: "U.S. event operations",
+    roleBDesc: "With our U.S. production partner",
     a: [
       "Fan-facing pages and engagement campaigns",
       "Participation records from reservations, missions and surveys",

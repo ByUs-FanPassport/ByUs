@@ -17,6 +17,7 @@ import styles from "./us-fanmeetings-page.module.css";
 
 export const FANMEETING_EMAIL = "biz@sallylab.io";
 const serviceIcons = [MapPin, ClipboardCheck, Clapperboard, UsersRound];
+const visualServiceIcons = [MapPin, Clapperboard, UsersRound];
 
 function InquiryLink({ children }: { children: React.ReactNode }) {
   return (
@@ -67,7 +68,7 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
         <section className={styles.hero} aria-labelledby="fanmeeting-title">
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>
-              ByUs × KH <span aria-hidden="true">/</span> U.S. FAN MEETINGS
+              ByUs <span aria-hidden="true">/</span> U.S. FAN MEETINGS
             </p>
             <h1 id="fanmeeting-title">{t.hero}</h1>
             <p className={styles.description}>{t.desc}</p>
@@ -78,24 +79,42 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
             </a>
           </div>
           <figure className={styles.heroVisual}>
-            <p aria-hidden="true">
-              FANS.
-              <br />
-              IN PERSON.
-            </p>
-            <Image
-              className={styles.eventPhoto}
-              src="/images/kh-fanmeeting/times-square.png"
-              alt={
-                locale === "ko"
-                  ? "타임스퀘어에서 함께 모인 팬들"
-                  : "Fans together in Times Square"
-              }
-              width={300}
-              height={284}
-              priority
-            />
-            <figcaption>{t.photo}</figcaption>
+            <figcaption className={styles.visualTitle}>
+              {t.visualTitle}
+            </figcaption>
+            <div className={styles.stageScene} aria-hidden="true">
+              <div className={styles.stageLights}>
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className={styles.stageBackdrop}>
+                <Image
+                  src="/images/guest-home/byus-wordmark.svg"
+                  alt=""
+                  width={110}
+                  height={45}
+                />
+                <span>FANS. IN PERSON.</span>
+              </div>
+              <div className={styles.stageFloor} />
+              <div className={styles.fanRow}>
+                {Array.from({ length: 7 }, (_, index) => (
+                  <span key={index} />
+                ))}
+              </div>
+            </div>
+            <ul className={styles.visualServices}>
+              {t.visualServices.map((label, index) => {
+                const Icon = visualServiceIcons[index];
+                return (
+                  <li key={label}>
+                    <Icon size={20} aria-hidden="true" />
+                    <span>{label}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </figure>
         </section>
         <p className={styles.audience}>{t.audience}</p>
@@ -106,31 +125,34 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
           </SectionHeading>
           <div className={styles.partnerGrid}>
             {[
-              { name: "ByUs", title: t.roleA, items: t.a },
-              { name: "KH", title: t.roleB, items: t.b },
+              {
+                id: "engagement",
+                title: t.roleA,
+                description: t.roleADesc,
+                items: t.a,
+                icon: UsersRound,
+              },
+              {
+                id: "operations",
+                title: t.roleB,
+                description: t.roleBDesc,
+                items: t.b,
+                icon: MapPin,
+              },
             ].map((partner) => (
               <article
-                className={`${styles.partnerCard} ${partner.name === "KH" ? styles.khCard : ""}`}
-                key={partner.name}
+                className={`${styles.partnerCard} ${partner.id === "operations" ? styles.operationsCard : ""}`}
+                key={partner.id}
               >
-                <div className={styles.partnerLogo}>
-                  {partner.name === "KH" ? (
-                    <Image
-                      src="/images/kh-fanmeeting/kh-logo.png"
-                      alt="KH Solutions New York"
-                      width={200}
-                      height={46}
-                    />
-                  ) : (
-                    <Image
-                      src="/images/guest-home/byus-wordmark.svg"
-                      alt="ByUs"
-                      width={110}
-                      height={45}
-                    />
-                  )}
+                <partner.icon
+                  className={styles.partnerIcon}
+                  size={28}
+                  aria-hidden="true"
+                />
+                <div className={styles.partnerHeading}>
+                  <h3>{partner.title}</h3>
+                  <p>{partner.description}</p>
                 </div>
-                <h3>{partner.title}</h3>
                 <ul>
                   {partner.items.map((item) => (
                     <li key={item}>

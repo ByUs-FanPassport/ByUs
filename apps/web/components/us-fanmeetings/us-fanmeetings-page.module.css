@@ -1,10 +1,10 @@
 .page {
-  --kh-ink: #19191e;
-  --kh-muted: #686873;
-  --kh-pink: #d91d68;
-  --kh-line: #e7e7ec;
+  --fanmeeting-ink: #19191e;
+  --fanmeeting-muted: #686873;
+  --fanmeeting-pink: #d91d68;
+  --fanmeeting-line: #e7e7ec;
   background: #fff;
-  color: var(--kh-ink);
+  color: var(--fanmeeting-ink);
   font-family:
     "Pretendard Variable",
     Pretendard,
@@ -37,7 +37,7 @@
   text-decoration: none;
 }
 .page a:focus-visible {
-  outline: 3px solid var(--kh-ink);
+  outline: 3px solid var(--fanmeeting-ink);
   outline-offset: 4px;
 }
 .page svg {
@@ -65,11 +65,11 @@
   min-height: 44px;
   gap: 10px;
   align-items: center;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
   font-size: 13px;
 }
 .language strong {
-  color: var(--kh-ink);
+  color: var(--fanmeeting-ink);
 }
 .main {
   display: flex;
@@ -91,7 +91,7 @@
   min-width: 0;
 }
 .eyebrow {
-  color: var(--kh-pink);
+  color: var(--fanmeeting-pink);
   font-size: 12px;
   font-weight: 750;
   letter-spacing: 1.5px;
@@ -114,7 +114,7 @@
   white-space: pre-line;
   font-size: 18px;
   line-height: 1.6;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
 }
 .hero .description {
   font-size: 19px;
@@ -130,7 +130,7 @@
   padding: 17px 24px;
   border: 0;
   border-radius: 12px;
-  background: var(--kh-pink);
+  background: var(--fanmeeting-pink);
   color: #fff;
   font-size: 16px;
   font-family: inherit;
@@ -147,7 +147,7 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  color: var(--kh-ink);
+  color: var(--fanmeeting-ink);
   font-size: 14px;
   font-weight: 650;
 }
@@ -157,37 +157,124 @@
 .heroVisual {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
   padding: 32px;
   background: #f8f5fa;
   border-radius: 24px;
   min-width: 0;
 }
-.heroVisual > p {
-  font-size: 40px;
+.visualTitle {
+  font-size: 34px;
   font-weight: 800;
-  line-height: 1.03;
+  line-height: 1.2;
   letter-spacing: -1px;
   color: #322545;
+  white-space: pre-line;
 }
-.eventPhoto {
-  display: block;
-  width: 300px;
+.stageScene {
+  position: relative;
+  height: 224px;
+}
+.stageLights {
+  position: absolute;
+  z-index: 1;
+  inset: 5px 16% auto;
+  display: flex;
+  justify-content: space-between;
+}
+.stageLights span {
+  width: 20px;
+  height: 8px;
+  border-radius: 3px;
+  background: #a99ab9;
+}
+.stageBackdrop {
+  position: absolute;
+  inset: 8px 20px 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 16px 16px 0 0;
+  background:
+    linear-gradient(115deg, transparent 28%, #ffffff08 28%, #ffffff08 48%, transparent 48%),
+    linear-gradient(245deg, transparent 28%, #ffffff08 28%, #ffffff08 48%, transparent 48%),
+    #322545;
+}
+.stageBackdrop img {
+  width: 96px;
   height: auto;
-  border-radius: 12px;
+  filter: brightness(0) invert(1);
 }
-.heroVisual figcaption {
-  color: var(--kh-muted);
+.stageBackdrop > span {
+  color: #e4daed;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 1.5px;
+}
+.stageFloor {
+  position: absolute;
+  inset: auto 8px 34px;
+  height: 12px;
+  border-radius: 3px 3px 8px 8px;
+  background: #897498;
+}
+.fanRow {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fanRow > span {
+  position: relative;
+  flex: 1;
+  max-width: 34px;
+  height: 26px;
+  border-radius: 18px 18px 5px 5px;
+  background: #d0c0df;
+}
+.fanRow > span::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: inherit;
+}
+.fanRow > span:nth-child(3n + 2) {
+  background: #e8b4ce;
+}
+.visualServices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 20px 0 0;
+  border-top: 1px solid #e6deed;
+  list-style: none;
+}
+.visualServices li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #655172;
   font-size: 12px;
+  font-weight: 650;
   line-height: 1.4;
+  text-align: center;
 }
 .audience {
   padding-block: 22px;
-  border-block: 1px solid var(--kh-line);
+  border-block: 1px solid var(--fanmeeting-line);
   font-size: 15px;
   font-weight: 650;
   letter-spacing: 0.7px;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
   line-height: 1.4;
 }
 .section {
@@ -224,14 +311,18 @@
   background: #f8f5fa;
   border-radius: 20px;
 }
-.partnerLogo {
-  height: 46px;
-  display: flex;
-  align-items: center;
+.partnerIcon {
+  color: var(--fanmeeting-pink);
 }
-.partnerLogo img {
-  height: 46px;
-  width: auto;
+.partnerHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.partnerHeading p {
+  color: var(--fanmeeting-muted);
+  font-size: 16px;
+  line-height: 1.5;
 }
 .partnerCard h3 {
   font-size: 26px;
@@ -249,22 +340,24 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
   font-size: 17px;
   line-height: 1.5;
 }
 .partnerCard li svg {
-  color: var(--kh-pink);
+  color: var(--fanmeeting-pink);
   margin-top: 3px;
 }
-.khCard {
+.operationsCard {
   background: #222032;
   color: #fff;
 }
-.khCard li {
+.operationsCard li,
+.operationsCard .partnerHeading p {
   color: #dedbea;
 }
-.khCard li svg {
+.operationsCard li svg,
+.operationsCard .partnerIcon {
   color: #cbbaf0;
 }
 .journeyGrid {
@@ -277,7 +370,7 @@
   flex-direction: column;
   gap: 16px;
   padding-block: 24px;
-  border-top: 1px solid var(--kh-line);
+  border-top: 1px solid var(--fanmeeting-line);
 }
 .stage h3 {
   font-size: 24px;
@@ -287,7 +380,7 @@
 .stage > p:last-child {
   font-size: 13px;
   line-height: 1.4;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
 }
 .passportBand {
   display: flex;
@@ -313,7 +406,7 @@
 .processGrid p,
 .faq p,
 .inquiryMessage > p:last-child {
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
   font-size: 16px;
   line-height: 1.6;
   white-space: pre-line;
@@ -323,11 +416,11 @@
   flex-direction: column;
   gap: 18px;
   padding: 28px;
-  border: 1px solid var(--kh-line);
+  border: 1px solid var(--fanmeeting-line);
   border-radius: 16px;
 }
 .service > svg {
-  color: var(--kh-pink);
+  color: var(--fanmeeting-pink);
 }
 .service h3 {
   font-size: 26px;
@@ -362,7 +455,7 @@
   flex-direction: column;
   gap: 14px;
   padding-block: 24px;
-  border-top: 1px solid var(--kh-line);
+  border-top: 1px solid var(--fanmeeting-line);
 }
 .faq h3 {
   font-size: 21px;
@@ -401,19 +494,19 @@
   font-size: 32px;
   line-height: 1.4;
   font-weight: 750;
-  color: var(--kh-ink);
+  color: var(--fanmeeting-ink);
   overflow-wrap: anywhere;
   cursor: pointer;
   text-align: left;
 }
 .email svg { display: none; }
 .contact > p {
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
   font-size: 13px;
   line-height: 1.5;
 }
 .footer {
-  border-top: 1px solid var(--kh-line);
+  border-top: 1px solid var(--fanmeeting-line);
 }
 .footerInner {
   padding-block: 28px;
@@ -433,7 +526,7 @@
 }
 .footerInner > p {
   font-size: 13px;
-  color: var(--kh-muted);
+  color: var(--fanmeeting-muted);
 }
 @media (max-width: 1199px) {
   .headerInner,
@@ -488,7 +581,7 @@
   .heroVisual {
     padding: 24px;
   }
-  .heroVisual > p {
+  .visualTitle {
     font-size: 30px;
   }
   .audience {

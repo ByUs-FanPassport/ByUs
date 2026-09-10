@@ -9,7 +9,7 @@ export async function generateMetadata({
 }: Props): Promise<Metadata> {
   const locale = (await searchParams).locale === "en" ? "en" : "ko";
   const content = fanmeetingContent[locale];
-  const title = `${content.hero.replace(/\n/g, " ")} | ByUs × KH`;
+  const title = `${content.hero.replace(/\n/g, " ")} | ByUs`;
   const description = content.desc.replace(/\n/g, " ");
   const url = `https://byus.kr/pages/us-fanmeetings?locale=${locale}`;
   return {
