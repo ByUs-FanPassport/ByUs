@@ -55,11 +55,11 @@ describe("content CMS cache invalidation", () => {
 });
 
 it.each([true, false])("invalidates role edits only after a successful save (%s)", async (success) => {
-  const deps = dependencies(vi.fn().mockResolvedValue(success ? { data: { roles: ["artist"] }, error: null } : { data: null, error: { message: "failed" } }));
+  const deps = dependencies(vi.fn().mockResolvedValue(success ? { data: { primaryRole: "idol" }, error: null } : { data: null, error: { message: "failed" } }));
   const response = await celebrityHandlers(deps).POST(new Request("https://byus.test/api/admin/celebrities", {
     method: "POST", headers: { authorization: "Bearer test", "content-type": "application/json" },
     body: JSON.stringify({ action: "save", celebrityId, payload: {
-      slug: "kara", imageUrl: "/kara.jpg", imagePosition: "center", displayOrder: 0, fanCount: 10, roles: ["artist"],
+      slug: "kara", imageUrl: "/kara.jpg", imagePosition: "center", displayOrder: 0, fanCount: 10, primaryRole: "idol",
       localizations: { ko: { name: "카라", summary: "소개", imageAlt: "카라" }, en: { name: "KARA", summary: "Profile", imageAlt: "KARA" } }, themes: [], socialLinks: [],
     } }),
   }));
@@ -67,8 +67,8 @@ it.each([true, false])("invalidates role edits only after a successful save (%s)
   expect(deps.invalidatePublicContent).toHaveBeenCalledTimes(success ? 1 : 0);
 });
 
-it.each([null, celebrityId])("rejects missing roles on creation but accepts an existing edit (%s)", async (id) => {
-  const rpc = vi.fn().mockResolvedValue({ data: { roles: ["artist"] }, error: null });
+it.each([null, celebrityId])("rejects missing primary role on creation but accepts an existing edit (%s)", async (id) => {
+  const rpc = vi.fn().mockResolvedValue({ data: { primaryRole: "idol" }, error: null });
   const deps = dependencies(rpc);
   const response = await celebrityHandlers(deps).POST(new Request("https://byus.test/api/admin/celebrities", {
     method: "POST", headers: { authorization: "Bearer test", "content-type": "application/json" },
@@ -80,4 +80,11 @@ it.each([null, celebrityId])("rejects missing roles on creation but accepts an e
   expect(response.status).toBe(id === null ? 400 : 200);
   expect(rpc).toHaveBeenCalledTimes(id === null ? 0 : 1);
   expect(deps.invalidatePublicContent).toHaveBeenCalledTimes(id === null ? 0 : 1);
+});
+
+it("returns an actionable invalid response when publication lacks a primary role", async () => {
+  const deps = dependencies(vi.fn().mockResolvedValue({ data: null, error: { message: "celebrity publication requires a primary role" } }));
+  const response = await celebrityHandlers(deps).POST(request("publish"));
+  expect(response.status).toBe(409);
+  expect(deps.invalidatePublicContent).not.toHaveBeenCalled();
 });

@@ -12,7 +12,7 @@ declare
   invalid jsonb;
   invalid_array public.celebrity_role[];
   rejected boolean;
-  payload jsonb := '{"slug":"roles-proof","imageUrl":"/roles.jpg","imagePosition":"center","displayOrder":1,"fanCount":null,"roles":["show_host","creator"],"localizations":{"ko":{"name":"직군 검증","summary":"분류 검증","imageAlt":"직군 검증"},"en":{"name":"Role proof","summary":"Role validation","imageAlt":"Role proof"}},"themes":[],"socialLinks":[]}'::jsonb;
+  payload jsonb := '{"slug":"roles-proof","imageUrl":"/roles.jpg","imagePosition":"center","displayOrder":1,"fanCount":null,"roles":["show_host","creator"],"primaryRole":"show_host","localizations":{"ko":{"name":"직군 검증","summary":"분류 검증","imageAlt":"직군 검증"},"en":{"name":"Role proof","summary":"Role validation","imageAlt":"Role proof"}},"themes":[],"socialLinks":[]}'::jsonb;
 begin
   if exists(select 1 from public.celebrities where roles is null or cardinality(roles) = 0) then
     raise exception 'backfill left unclassified profiles';
@@ -50,8 +50,8 @@ begin
     if not rejected then raise exception 'invalid role payload accepted: %', invalid; end if;
   end loop;
   rejected := false;
-  begin perform public.save_admin_celebrity(actor,correlation,null,jsonb_set(payload-'roles','{slug}','"roles-missing"'));
-  exception when others then rejected := sqlerrm like '%roles are required%'; end;
+  begin perform public.save_admin_celebrity(actor,correlation,null,jsonb_set(payload-'roles'-'primaryRole','{slug}','"roles-missing"'));
+  exception when others then rejected := sqlerrm like '%requires a primary role%'; end;
   if not rejected then raise exception 'new profile without roles accepted'; end if;
   rejected := false;
   begin perform public.save_admin_celebrity(viewer,correlation,target,payload);

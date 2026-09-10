@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { creatorRolesSchema, type CreatorRole } from "../../features/creator/domain/creator-role";
+import { creatorRoleSchema, type CreatorRole } from "../../features/creator/domain/creator-role";
 import { livePreviewKindSchema } from "../../features/live/domain/live-preview";
 
 const slugSchema = z
@@ -44,7 +44,7 @@ const publishedCelebrityRowSchema = z.object({
   image_url: httpsOrRootRelativeUrl,
   image_alt: z.string().trim().min(1).max(300),
   image_position: z.string().trim().min(1).max(100),
-  roles: creatorRolesSchema,
+  primary_role: creatorRoleSchema,
   themes: z.array(themeSchema),
   social_links: z.array(socialLinkSchema),
   display_order: z.number().int().min(0),
@@ -113,7 +113,7 @@ export function parsePublishedCelebrity(value: unknown): PublishedCelebrity {
     name: row.name,
     summary: row.summary,
     image: { url: row.image_url, alt: row.image_alt, position: row.image_position },
-    roles: row.roles,
+    roles: [row.primary_role],
     themes: row.themes,
     socialLinks: row.social_links,
     displayOrder: row.display_order,

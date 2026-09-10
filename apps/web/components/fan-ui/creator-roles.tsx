@@ -10,18 +10,29 @@ import styles from "./creator-roles.module.css";
 
 type Locale = "ko" | "en";
 
-export function CreatorRoleFilterControl({ roles, value, onChange, locale, controls }: {
+export function CreatorRoleFilterControl({ roles, value, onChange, locale, controls, ownedOnly = false, onSelectOwned, ownedDisabled = false }: {
   roles: readonly CreatorRole[];
   value: CreatorRoleFilter;
   onChange: (role: CreatorRoleFilter) => void;
   locale: Locale;
   controls?: string;
+  ownedOnly?: boolean;
+  onSelectOwned?: () => void;
+  ownedDisabled?: boolean;
 }) {
   return <div className={styles.filters} role="group" aria-label={locale === "ko" ? "직군으로 찾기" : "Browse by role"}>
+    {onSelectOwned ? <button
+      type="button"
+      data-owned-filter="true"
+      aria-pressed={Boolean(ownedOnly)}
+      aria-controls={controls}
+      disabled={ownedDisabled}
+      onClick={onSelectOwned}
+    >{locale === "ko" ? "내 최애" : "My favorites"}</button> : null}
     {(["all", ...roles] as const).map((role) => <button
       key={role}
       type="button"
-      aria-pressed={value === role}
+      aria-pressed={!ownedOnly && value === role}
       aria-controls={controls}
       onClick={() => onChange(role)}
     >{creatorRoleFilterLabel(role, locale)}</button>)}
@@ -29,9 +40,7 @@ export function CreatorRoleFilterControl({ roles, value, onChange, locale, contr
 }
 
 export function CreatorRolesText({ roles, locale }: { roles: readonly CreatorRole[]; locale: Locale }) {
-  const fullText = roles.map((role) => creatorRoleLabel(role, locale)).join(" · ");
   return <p className={styles.text} data-creator-roles={roles.join(",")}>
-    <span aria-hidden="true">{roles.slice(0, 2).map((role) => creatorRoleLabel(role, locale)).join(" · ")}</span>
-    <span className={styles.srOnly}>{fullText}</span>
+    {roles[0] ? creatorRoleLabel(roles[0], locale) : null}
   </p>;
 }

@@ -17,5 +17,6 @@ export default async function CelebritiesPage({ searchParams }: { searchParams: 
     ...celebrity,
     upcomingLive: livesByCelebrity.get(celebrity.slug) ?? null,
   }));
-  return <CelebrityDirectory celebrities={celebrities} locale={locale} initialRole={parseCreatorRoleFilter(role)} initialOwnedOnly={owned === "1"} initialQuery={typeof q === "string" ? q : q?.[0] ?? ""} initialSort={sort === "name-asc" || sort === "live-first" ? sort : "published"} />;
+  const initialOwnedOnly = owned === "1";
+  return <CelebrityDirectory celebrities={celebrities} locale={locale} initialRole={initialOwnedOnly ? "all" : parseCreatorRoleFilter(role)} initialOwnedOnly={initialOwnedOnly} initialQuery={typeof q === "string" ? q : q?.[0] ?? ""} initialSort={sort === "name-asc" || sort === "live-first" ? sort : "published"} />;
 }

@@ -10,12 +10,18 @@ const actor = {
 };
 
 describe("content CMS", () => {
-  it("requires roles for creation while leaving omission intact for an old existing-profile edit", () => {
+  it("requires a scalar primary role for creation and preserves legacy existing edits", () => {
     const payload = { slug: "kara", imageUrl: "/kara.jpg", imagePosition: "center", displayOrder: 0, fanCount: null, localizations: { ko: { name: "카라", summary: "소개", imageAlt: "카라" }, en: { name: "KARA", summary: "Profile", imageAlt: "KARA" } }, themes: [], socialLinks: [] };
     expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload }).success).toBe(false);
     const oldEdit = commandPayload.parse({ action: "save", celebrityId: actor.allowlistId, payload });
     expect(oldEdit.action === "save" && Object.hasOwn(oldEdit.payload, "roles")).toBe(false);
-    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload: { ...payload, roles: ["artist"] } }).success).toBe(true);
+    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload: { ...payload, roles: ["artist"] } }).success).toBe(false);
+    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload: { ...payload, primaryRole: "idol" } }).success).toBe(true);
+    const legacyEdit = commandPayload.parse({ action: "save", celebrityId: actor.allowlistId, payload: { ...payload, roles: ["artist", "creator"] } });
+    expect(legacyEdit.action === "save" && Object.hasOwn(legacyEdit.payload, "primaryRole")).toBe(false);
+    for (const primaryRole of [null, "", [], ["actor"], "artist", "host"]) {
+      expect(commandPayload.safeParse({ action: "save", celebrityId: actor.allowlistId, payload: { ...payload, primaryRole } }).success).toBe(false);
+    }
     for (const roles of [null, [], ["artist", "artist"], ["host"]]) {
       expect(commandPayload.safeParse({ action: "save", celebrityId: actor.allowlistId, payload: { ...payload, roles } }).success).toBe(false);
     }

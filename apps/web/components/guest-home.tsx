@@ -43,8 +43,8 @@ const UPCOMING_LIVE_PAGE_SIZE = 3;
 export type HomeContentErrors = { celebrities?: boolean; celebrityLives?: boolean; featuredLives?: boolean };
 
 const copy = {
-  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
-  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
+  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", myFavoritesGuest: "내 최애를 보려면 로그인해 주세요.", myFavoritesLoading: "보유한 Fan Passport를 확인하고 있어요.", myFavoritesError: "보유한 Fan Passport를 확인하지 못했어요.", myFavoritesEmpty: "아직 보유한 Fan Passport가 없어요.", myFavoritesHelp: "전체 최애를 둘러보고 Fan Passport를 만들어 보세요.", signIn: "로그인하기", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
+  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", myFavoritesGuest: "Sign in to see your favorites.", myFavoritesLoading: "Checking the Fan Passports you own.", myFavoritesError: "We couldn't check your Fan Passports.", myFavoritesEmpty: "You don't own a Fan Passport yet.", myFavoritesHelp: "Browse all favorites and create a Fan Passport.", signIn: "Sign in", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
 } as const;
 
 export function formatKoreanLiveDate(value: string) {
@@ -183,14 +183,14 @@ function ContentLoadError({ locale }: { locale: ContentLocale }) {
   return <div className={styles.personalizationState} role="alert"><strong>{copy[locale].retryTitle}</strong><span>{copy[locale].retryHelp}</span><button type="button" onClick={() => router.refresh()}>{copy[locale].retry}</button></div>;
 }
 
-type GuestHomeProps = { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale; contentErrors?: HomeContentErrors };
+type GuestHomeProps = { celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale; contentErrors?: HomeContentErrors; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter };
 
 export function GuestHome(props: GuestHomeProps) {
   const creatorSlugs = props.celebrities.map((celebrity) => celebrity.slug);
   return <HomeOwnerProvider creatorSlugs={creatorSlugs} locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
 }
 
-function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {} }: GuestHomeProps) {
+function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {}, initialOwnedOnly = false, initialRole = "all" }: GuestHomeProps) {
   const t = copy[locale];
   const router = useRouter();
   const refreshLiveStatus = useCallback(() => router.refresh(), [router]);
@@ -200,9 +200,41 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
   const owner = useHomeOwner();
   const personalization = { state: owner.personalization, retry: owner.retryPersonalization };
   const orderedCreators = orderCreatorsForDiscovery(celebrities);
-  const [role, setRole] = useState<CreatorRoleFilter>("all");
-  const visibleCreators = orderedCreators.filter((creator) => matchesCreatorRole(creator.roles, role));
-  const directoryHref = `/celebrities${localeQuery}${role === "all" ? "" : `&role=${role}`}` as Route;
+  const [ownedOnly, setOwnedOnly] = useState(initialOwnedOnly);
+  const [role, setRole] = useState<CreatorRoleFilter>(initialOwnedOnly ? "all" : initialRole);
+  const ownedSlugs = personalization.state.status === "authenticated-ready"
+    ? new Set(personalization.state.summary.creators.flatMap((creator) => creator.passport ? [creator.celebrity.slug] : []))
+    : new Set<string>();
+  const visibleCreators = orderedCreators.filter((creator) => matchesCreatorRole(creator.roles, role) && (!ownedOnly || (personalization.state.status === "authenticated-ready" && ownedSlugs.has(creator.slug))));
+  const directoryQuery = new URLSearchParams({ locale });
+  if (ownedOnly) directoryQuery.set("owned", "1");
+  else if (role !== "all") directoryQuery.set("role", role);
+  const directoryHref = `/celebrities?${directoryQuery}` as Route;
+  const homeOwnedQuery = new URLSearchParams({ locale, owned: "1" });
+  const ownedLoginHref = `/login?${new URLSearchParams({ locale, returnTo: `/?${homeOwnedQuery}` })}` as Route;
+
+  const replaceHomeFilterUrl = (nextOwnedOnly: boolean, nextRole: CreatorRoleFilter) => {
+    const url = new URL(window.location.href);
+    if (nextOwnedOnly) url.searchParams.set("owned", "1");
+    else url.searchParams.delete("owned");
+    if (!nextOwnedOnly && nextRole !== "all") url.searchParams.set("role", nextRole);
+    else url.searchParams.delete("role");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+  const changeRole = (nextRole: CreatorRoleFilter) => {
+    setOwnedOnly(false);
+    setRole(nextRole);
+    replaceHomeFilterUrl(false, nextRole);
+  };
+  const selectOwned = () => {
+    if (personalization.state.status === "guest") {
+      router.push(ownedLoginHref);
+      return;
+    }
+    setOwnedOnly(true);
+    setRole("all");
+    replaceHomeFilterUrl(true, "all");
+  };
   const creatorRailRef = useRef<HTMLDivElement>(null);
   const [creatorScroll, setCreatorScroll] = useState({ previous: false, next: false });
   const updateCreatorScroll = useCallback(() => {
@@ -223,7 +255,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
     observer?.observe(rail);
     window.addEventListener("resize", updateCreatorScroll);
     return () => { observer?.disconnect(); window.removeEventListener("resize", updateCreatorScroll); };
-  }, [updateCreatorScroll, celebrities.length, role]);
+  }, [updateCreatorScroll, celebrities.length, ownedOnly, role]);
   const moveCreators = (direction: number) => {
     const rail = creatorRailRef.current;
     const card = rail?.querySelector<HTMLElement>("article");
@@ -277,10 +309,14 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{t.all} <ChevronRight /></Link>} />
-            {!contentErrors.celebrities && celebrities.length > 0 ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={setRole} locale={locale} controls="home-creator-rail" /> : null}
+            {!contentErrors.celebrities && celebrities.length > 0 ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="home-creator-rail" ownedOnly={ownedOnly} onSelectOwned={selectOwned} ownedDisabled={!ownedOnly && (personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading")} /> : null}
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             {contentErrors.celebrities || contentErrors.celebrityLives ? <ContentLoadError locale={locale} /> : null}
-            {!contentErrors.celebrities ? <div className={styles.celebrityCarousel}>
+            {!contentErrors.celebrities && ownedOnly && personalization.state.status === "guest" ? <div className={styles.favoriteFilterState} role="status"><p>{t.myFavoritesGuest}</p><Link href={ownedLoginHref}>{t.signIn}</Link></div> : null}
+            {!contentErrors.celebrities && ownedOnly && (personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading") ? <div className={styles.favoriteFilterState} role="status"><p>{t.myFavoritesLoading}</p></div> : null}
+            {!contentErrors.celebrities && ownedOnly && personalization.state.status === "authenticated-error" ? <div className={styles.favoriteFilterState} role="alert"><p>{t.myFavoritesError}</p><button type="button" onClick={personalization.retry}>{t.retry}</button></div> : null}
+            {!contentErrors.celebrities && ownedOnly && personalization.state.status === "authenticated-ready" && visibleCreators.length === 0 ? <div className={styles.favoriteFilterState} role="status"><strong>{t.myFavoritesEmpty}</strong><p>{t.myFavoritesHelp}</p><button type="button" onClick={() => changeRole("all")}>{t.all}</button></div> : null}
+            {!contentErrors.celebrities && (!ownedOnly || (personalization.state.status === "authenticated-ready" && visibleCreators.length > 0)) ? <div className={styles.celebrityCarousel}>
             <div id="home-creator-rail" ref={creatorRailRef} className={styles.celebrityRail} aria-label={t.celebrityList} onScroll={updateCreatorScroll}>
               {visibleCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);

@@ -1,10 +1,14 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { creatorRolesSchema } from "../../features/creator/domain/creator-role";
+import { creatorRoleSchema } from "../../features/creator/domain/creator-role";
 import type { AdminSession } from "../admin/admin-session-gate";
 
 const uuid = z.string().uuid();
+// Preserve old editing clients during the additive primary-role rollout.
+// New CMS writes use primaryRole, never this legacy activity array.
+const legacyRolesSchema = z.array(z.enum(["artist", "creator", "show_host"]))
+  .min(1).max(3).refine((roles) => new Set(roles).size === roles.length);
 const localization = z.object({
   name: z.string().trim().min(1).max(120),
   summary: z.string().trim().min(1).max(1000),
@@ -18,8 +22,9 @@ export const celebrityPayload = z.object({
   imagePosition: z.string().trim().min(1).max(100),
   displayOrder: z.number().int().min(0),
   fanCount: z.number().int().min(0).nullable(),
-  // Older clients may omit roles only when editing an existing classified profile.
-  roles: creatorRolesSchema.optional(),
+  roles: legacyRolesSchema.optional(),
+  // Omission from an existing edit preserves the locked row's primary role.
+  primaryRole: creatorRoleSchema.optional(),
   localizations: z.object({ ko: localization, en: localization }),
   themes: z
     .array(
@@ -79,8 +84,8 @@ export const commandPayload = z.discriminatedUnion("action", [
     reason: z.string().trim().min(10).max(1000),
   }),
 ]).superRefine((command, context) => {
-  if (command.action === "save" && command.celebrityId === null && command.payload.roles === undefined) {
-    context.addIssue({ code: "custom", path: ["payload", "roles"], message: "A primary role is required for a new profile" });
+  if (command.action === "save" && command.celebrityId === null && command.payload.primaryRole === undefined) {
+    context.addIssue({ code: "custom", path: ["payload", "primaryRole"], message: "A primary role is required for a new profile" });
   }
 });
 export const quizCommandPayload = z.discriminatedUnion("action", [

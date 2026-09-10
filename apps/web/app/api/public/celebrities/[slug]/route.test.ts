@@ -10,7 +10,7 @@ const celebrity = {
   name: "KARA",
   summary: "Published profile",
   image: { url: "/kara.jpg", alt: "KARA", position: "center" },
-  roles: ["artist"] as const, themes: [],
+  roles: ["idol"] as const, themes: [],
   socialLinks: [],
   displayOrder: 0,
   fanCount: 12_800_000,
