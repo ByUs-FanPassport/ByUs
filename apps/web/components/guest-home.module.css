@@ -88,14 +88,6 @@
 .carouselDot[aria-current="true"] span { width: 22px; background: var(--ink); }
 .carouselAnnouncement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
-.campaignAd { position: relative; display: flex; min-height: 216px; overflow: hidden; align-items: flex-end; margin-top: 16px; border-radius: 16px; background: var(--ink); color: #fff !important; box-shadow: var(--card-shadow); }
-.campaignAd > img { object-fit: cover; object-position: 64% center; transition: transform 240ms cubic-bezier(.2,0,0,1); }
-.campaignAdOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 88%) 0%, rgb(10 10 12 / 30%) 68%, transparent 100%); }
-.campaignAdContent { position: relative; z-index: 1; display: grid; width: 100%; gap: 6px; padding: 20px; text-shadow: 0 1px 3px rgb(10 10 12 / 62%); }
-.campaignAdContent small { color: rgb(255 255 255 / 72%); font-size: 11px; font-weight: 750; letter-spacing: .06em; }
-.campaignAdContent strong { max-width: 18ch; font-size: 20px; font-weight: 850; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
-.campaignAdContent > span { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; color: rgb(255 255 255 / 82%); font-size: 12px; font-weight: 650; }
-.campaignAdContent svg { width: 16px; height: 16px; }
 
 .mobileContextActions { display: grid; gap: 12px; margin-top: 24px; padding: 16px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
 .mobileContextActions a, .googleButton, .passportFooter > a { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 12px; padding-inline: 16px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff, #fff) padding-box, var(--spectrum) border-box; color: var(--service-ink) !important; font-size: 14px; font-weight: 800; }
@@ -358,7 +350,6 @@
   .passportReferenceCard:hover .passportAsset img { transform: translateY(-6px); }
   .ownedPassportLink:hover { transform: translateY(-3px); }
   .summaryOutlineAction:hover, .personalizationState button:hover, .passportControls > button:hover, .passportDots button:hover { background: var(--surface-soft); color: var(--ink); }
-  .campaignAd:hover > img { transform: scale(1.025); }
 }
 
 @media (prefers-reduced-motion: reduce) {

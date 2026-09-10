@@ -35,6 +35,7 @@ import { FanSectionHeader } from "./fan-ui/fan-heading";
 import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
 import { fanStageLabel } from "../features/rewards/domain/fan-stage";
 import styles from "./guest-home.module.css";
+import { HomeEntryCards } from "./home-entry-cards/home-entry-cards";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
 const UPCOMING_LIVE_PAGE_SIZE = 3;
@@ -42,8 +43,8 @@ const UPCOMING_LIVE_PAGE_SIZE = 3;
 export type HomeContentErrors = { celebrities?: boolean; celebrityLives?: boolean; featuredLives?: boolean };
 
 const copy = {
-  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시", campaignTitle: "엘리나와 함께 만나는 뱅크시", campaignBody: "전시가 끝난 뒤, 팬들과 작품을 보고 이야기를 나누는 특별 LIVE를 준비했어요.", campaignDate: "9월 18일 금요일 · 오후 5시", campaignPeriod: "11월 전시 종료까지", campaignBenefit: "전시 티켓·굿즈 이벤트", campaignAction: "이벤트 살펴보기", campaignPartner: "JKENT × ByUs" },
-  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9", campaignTitle: "Meet Banksy with Elina", campaignBody: "After the exhibition closes, join Elina and other fans for a special LIVE inspired by the works on view.", campaignDate: "Friday, September 18 · 5:00 PM", campaignPeriod: "Through the exhibition's November close", campaignBenefit: "Exhibition tickets and merchandise event", campaignAction: "Explore the event", campaignPartner: "JKENT × ByUs" },
+  ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", panelClose: "팬 활동 영역 접기", panelOpen: "팬 활동 영역 펼치기", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
+  en: { skip: "Skip to main content", language: "Choose language, currently English", panelClose: "Collapse fan activity panel", panelOpen: "Expand fan activity panel", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorite", allLive: "All LIVE events", noneStatus: "No published LIVE", noneTitle: "A new LIVE is in preparation.", reserve: "Reserve LIVE", details: "View LIVE details", context: "Sign in and start Fan Passport", google: "Continue with Google", passportIssue: "Get Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "details", social: "official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No celebrities are published right now.", upcoming: "Upcoming LIVE", upcomingSub: "Reserve early and receive a notification.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE event is published right now.", guestPanel: "Signed-out fan activities", soon: "Meet your favorite soon", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Your favorite's Fan Passport", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or Stamp yet.", passportHelp: "Start recording moments with your favorite.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview before issuance", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a favorite to verify", noReservation: "You don't have a reserved LIVE.", browseLive: "Browse LIVE", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
 } as const;
 
 export function formatKoreanLiveDate(value: string) {
@@ -83,22 +84,6 @@ function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
       <span className={styles.stateSkeletonShort} aria-hidden="true" />
       <span>{copy[locale].loading}</span>
     </section>
-  );
-}
-
-function BanksyCampaignAd({ locale }: { locale: ContentLocale }) {
-  const t = copy[locale];
-  const headingId = "banksy-campaign-ad";
-  return (
-    <Link className={styles.campaignAd} href={`/c/elina?locale=${locale}` as Route} aria-labelledby={headingId}>
-      <Image src="/images/guest-home/banksy-exhibition-campaign.webp" alt="" fill sizes="384px" />
-      <span className={styles.campaignAdOverlay} aria-hidden="true" />
-      <span className={styles.campaignAdContent}>
-        <small>{t.campaignPartner}</small>
-        <strong id={headingId}>{t.campaignTitle}</strong>
-        <span><time dateTime="2026-09-18T17:00:00+09:00">{t.campaignDate}</time><ArrowRight /></span>
-      </span>
-    </Link>
   );
 }
 
@@ -284,7 +269,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
             </section>
           ) : (
             <div className={styles.mobilePersonalization}>
-              {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /> : null}
+              {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /><HomeEntryCards locale={locale} /></> : null}
               {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
               {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
             </div>
@@ -379,7 +364,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
               <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
             </section>
           </> : null}
-          {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /><BanksyCampaignAd locale={locale} /></> : null}
+          {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /><HomeEntryCards locale={locale} /></> : null}
           {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
           {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
         </aside>}
