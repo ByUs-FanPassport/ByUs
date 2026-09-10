@@ -60,17 +60,6 @@
 .page > header {
   height: 88px;
 }
-.language {
-  display: inline-flex;
-  min-height: 44px;
-  gap: 10px;
-  align-items: center;
-  color: var(--fanmeeting-muted);
-  font-size: 13px;
-}
-.language strong {
-  color: var(--fanmeeting-ink);
-}
 .main {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,11 +8,6 @@ import {
   fanNavigationItems,
   localeSwitchHref,
 } from "./fan-app-shell";
-
-const shellCss = readFileSync(
-  resolve(process.cwd(), "components/fan-shell/fan-app-shell.module.css"),
-  "utf8",
-);
 
 let pathname = "/";
 let search = "";
@@ -116,20 +109,6 @@ describe("fan app shell navigation", () => {
       "/c/kara?tab=benefits&locale=en&source=home",
     );
     expect(languageAction).toHaveAttribute("data-fan-language-action");
-  });
-
-  it("keeps a 44px language target with a larger, optically aligned glyph", () => {
-    const targetRule = shellCss.match(/\.language\s*\{([^}]*)\}/)?.[1];
-    const iconRule = shellCss.match(/\.language svg\s*\{([^}]*)\}/)?.[1];
-    const actionsRule = shellCss.match(/\.actions\s*\{([^}]*)\}/)?.[1];
-
-    expect(targetRule).toContain("width: 44px");
-    expect(targetRule).toContain("height: 44px");
-    expect(iconRule).toContain("width: 24px");
-    expect(iconRule).toContain("height: 24px");
-    expect(iconRule).toContain("transform: translateY(-.25px)");
-    expect(actionsRule).toContain("min-height: 44px");
-    expect(actionsRule).toContain("gap: 0");
   });
 
   it("connects an optional skip link to the screen main landmark", () => {

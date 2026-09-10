@@ -28,13 +28,6 @@
 .brand img { display: block; transform: translateY(2px); }
 .desktopNav { display: none; }
 .actions { display: flex; min-height: 44px; align-items: center; gap: 0; }
-.language { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; }
-.language svg {
-  width: 24px;
-  height: 24px;
-  transform: translateY(-.25px);
-  stroke-width: 1.8;
-}
 .bottomNavigation {
   position: fixed; z-index: var(--z-bottom-nav); right: 0; bottom: 0; left: 0;
   display: grid; grid-template-columns: repeat(4,1fr);
@@ -58,7 +51,7 @@
   .frame { padding-bottom: 0; }
 }
 @media (hover:hover) and (pointer:fine) {
-  .desktopNavItem:hover, .language:hover, .bottomNavigationItem:hover { background: oklch(97.5% 0 0); color: var(--fan-ink); }
+  .desktopNavItem:hover, .bottomNavigationItem:hover { background: oklch(97.5% 0 0); color: var(--fan-ink); }
 }
 @media (prefers-reduced-motion:reduce) { .frame * { transition-duration: .01ms !important; } }
 

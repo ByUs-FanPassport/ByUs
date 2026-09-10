@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { ArrowRight, BadgeCheck, BookOpen, MessageCircle } from "lucide-react";
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
+import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
 import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { elinaFanGuideContent } from "./content";
 import styles from "./elina-fan-guide-page.module.css";
@@ -46,9 +47,11 @@ export function ElinaFanGuidePage({ locale }: { locale: FanLocale }) {
           <Link href={`/celebrities?locale=${locale}` as Route}>{locale === "ko" ? "최애" : "Favorites"}</Link>
           <Link href={href.my}>MY</Link>
         </nav>
-        <Link className={styles.language} href={`/pages/elina-fan-guide?locale=${nextLocale}` as Route} hrefLang={nextLocale} aria-label={locale === "ko" ? "Switch to English" : "한국어로 보기"}>
-          {locale === "ko" ? "한국어 / EN" : "KO / English"}
-        </Link>
+        <FanLanguageSwitch
+          locale={locale}
+          href={`/pages/elina-fan-guide?locale=${nextLocale}` as Route}
+          ariaLabel={locale === "ko" ? "Switch to English" : "한국어로 보기"}
+        />
       </FocusFlowHeader>
 
       <main className={styles.main} id="elina-guide-main" tabIndex={-1}>

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowDown,
   Check,
@@ -10,6 +9,7 @@ import {
 } from "lucide-react";
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
+import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
 import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { fanmeetingContent } from "./content";
 import { FanmeetingInquiryProvider, InquiryButton } from "./inquiry-dialog";
@@ -53,16 +53,11 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
         mainId="fanmeeting-main"
         innerClassName={styles.headerInner}
       >
-        <Link
-          className={styles.language}
+        <FanLanguageSwitch
+          locale={locale}
           href={`/pages/us-fanmeetings?locale=${nextLocale}`}
-          hrefLang={nextLocale}
-          aria-label={locale === "ko" ? "Switch to English" : "한국어로 보기"}
-        >
-          <strong>{locale.toUpperCase()}</strong>
-          <span aria-hidden="true">/</span>
-          {nextLocale.toUpperCase()}
-        </Link>
+          ariaLabel={locale === "ko" ? "Switch to English" : "한국어로 보기"}
+        />
       </FocusFlowHeader>
       <main className={styles.main} id="fanmeeting-main" tabIndex={-1}>
         <section className={styles.hero} aria-labelledby="fanmeeting-title">

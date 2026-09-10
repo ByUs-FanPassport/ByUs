@@ -50,7 +50,6 @@
 }
 .navigation a:nth-child(3) { color: #121212; font-weight: 900; }
 .navigation a:hover { background: #f7f7f8; }
-.language { display: inline-flex; min-height: 44px; align-items: center; color: #5f5f68; font-size: 13px; font-weight: 650; }
 .main { display: flex; flex-direction: column; gap: 80px; padding-block: 40px 80px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 580px; min-height: 560px; gap: 48px; align-items: center; }
 .heroCopy { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 24px; }
@@ -140,7 +139,6 @@
   .headerInner { height: 68px; }
   .page > header { height: 68px; }
   .navigation { display: none; }
-  .language { font-size: 11px; }
   .main { gap: 48px; padding-block: 20px 56px; }
   .hero { display: flex; min-height: 0; flex-direction: column; gap: 20px; align-items: stretch; }
   .heroCopy { gap: 14px; }

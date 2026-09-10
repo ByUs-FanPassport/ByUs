@@ -206,7 +206,7 @@ describe("canonical 03 guest home", () => {
     );
   });
 
-  it("uses the Korean and English language glyph while preserving locale switching", () => {
+  it("shows KO / EN in a fixed order and emphasizes the current language", () => {
     const { rerender } = render(
       <GuestHome {...defaultProps} featuredLives={[featuredLive]} />,
     );
@@ -215,16 +215,8 @@ describe("canonical 03 guest home", () => {
       name: "언어 선택, 현재 한국어",
     });
     expect(koreanLanguageLink).toHaveAttribute("href", "/?locale=en");
-    expect(
-      koreanLanguageLink.querySelector(
-        'svg[data-language-icon="ko-en"] [data-language-glyph="ko"]',
-      ),
-    ).toHaveAttribute("d", "M3.5 6.5h4.25V13M10.5 5.5v9M10.5 9h2");
-    expect(
-      koreanLanguageLink.querySelector(
-        'svg[data-language-icon="ko-en"] [data-language-glyph="en"]',
-      ),
-    ).toBeInTheDocument();
+    expect(koreanLanguageLink).toHaveTextContent("KO/EN");
+    expect(koreanLanguageLink.querySelector("strong")).toHaveTextContent("KO");
 
     rerender(
       <GuestHome
@@ -233,11 +225,12 @@ describe("canonical 03 guest home", () => {
         locale="en"
       />,
     );
-    expect(
-      screen.getByRole("link", {
-        name: "Choose language, currently English",
-      }),
-    ).toHaveAttribute("href", "/?locale=ko");
+    const englishLanguageLink = screen.getByRole("link", {
+      name: "Choose language, currently English",
+    });
+    expect(englishLanguageLink).toHaveAttribute("href", "/?locale=ko");
+    expect(englishLanguageLink).toHaveTextContent("KO/EN");
+    expect(englishLanguageLink.querySelector("strong")).toHaveTextContent("EN");
   });
 
   it("renders the first three active and scheduled LIVE events", () => {

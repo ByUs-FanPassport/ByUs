@@ -3,11 +3,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import { BookOpen, Heart, Home, Radio } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { Languages } from "../icons";
 import { FanHeader } from "./fan-header";
+import { FanLanguageSwitch } from "./fan-language-switch";
 import {
   FanBottomNavigation,
   FanPrimaryNavigation,
@@ -131,14 +130,7 @@ export function FanAppHeader({
       />
       <div className={styles.actions}>
         {actions}
-        <Link
-          className={styles.language}
-          data-fan-language-action
-          href={languageHref}
-          aria-label={locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English"}
-        >
-          <Languages aria-hidden="true" />
-        </Link>
+        <FanLanguageSwitch locale={locale} href={languageHref} />
       </div>
     </FanHeader>
   );

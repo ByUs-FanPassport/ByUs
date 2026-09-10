@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { Languages } from "./icons";
 import { FocusFlowFrame } from "./fan-shell/focus-flow-frame";
+import { FanLanguageSwitch } from "./fan-shell/fan-language-switch";
 import type { FanLocale } from "./fan-shell/fan-app-shell";
 import type { LegalDocumentContent, LegalDocumentId } from "./legal-content";
 import { legalLabels } from "./legal-content";
@@ -32,14 +32,11 @@ export function LegalPage({
             <ArrowLeft aria-hidden="true" />
             {labels.home}
           </Link>
-          <Link
-            className={styles.languageLink}
-            data-fan-language-action
+          <FanLanguageSwitch
+            locale={locale}
             href={`${pathname}?locale=${nextLocale}`}
-            aria-label={labels.languageAriaLabel}
-          >
-            <Languages aria-hidden="true" />
-          </Link>
+            ariaLabel={labels.languageAriaLabel}
+          />
         </div>
       }
     >

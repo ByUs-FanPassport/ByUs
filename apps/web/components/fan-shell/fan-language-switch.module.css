@@ -1,0 +1,36 @@
+.language {
+  display: inline-flex;
+  flex-shrink: 0;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-inline: 8px;
+  border-radius: 12px;
+  color: #686873;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.language strong {
+  color: #19191e;
+  font-weight: 750;
+}
+
+.language > span {
+  color: #686873;
+}
+
+.language:focus-visible {
+  outline: 3px solid #19191e;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .language:hover {
+    background: #f8f8f8;
+  }
+}
