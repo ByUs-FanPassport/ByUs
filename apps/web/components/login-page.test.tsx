@@ -326,6 +326,40 @@ describe("Privy login page", () => {
     expect(query).toContain("authIntent=11111111-1111-4111-8111-111111111111");
   });
 
+  it("requires server-provided provider verification after Apple revocation without clearing the Privy session", async () => {
+    authenticated = true;
+    vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({
+      error: { code: "APPLE_REAUTHENTICATION_REQUIRED", providers: ["google", "apple", "google", "untrusted"] },
+    }, { status: 403 }));
+    render(<LoginPage appleLoginEnabled />);
+
+    expect(await screen.findByText("계정을 다시 확인해 주세요.")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Google로 인증" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Apple로 인증" })).toBeInTheDocument();
+    expect(logout).not.toHaveBeenCalled();
+    expect(initOAuth).not.toHaveBeenCalled();
+    expect(createWallet).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("keeps failed reauthentication recoverable and prevents duplicate requests", async () => {
+    authenticated = true;
+    let finish: ((response: Response) => void) | undefined;
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(Response.json({
+      error: { code: "APPLE_REAUTHENTICATION_REQUIRED", providers: ["apple"] },
+    }, { status: 403 })).mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    render(<LoginPage appleLoginEnabled />);
+    const button = await screen.findByRole("button", { name: "Apple로 인증" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await act(async () => finish?.(Response.json({ error: { code: "REAUTHENTICATION_UNAVAILABLE" } }, { status: 503 })));
+    expect(await screen.findByText("인증을 완료하지 못했어요. 기존 계정으로 다시 인증해 주세요.")).toBeInTheDocument();
+    expect(button).toBeEnabled();
+    expect(logout).not.toHaveBeenCalled();
+  });
+
   it("restores a non-verification intent without forcing profile onboarding", async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
     render(<LoginPage />);

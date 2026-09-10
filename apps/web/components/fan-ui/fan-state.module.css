@@ -1,4 +1,5 @@
 .state {
+  box-sizing: border-box;
   display: grid;
   width: min(100%, 560px);
   min-height: 280px;

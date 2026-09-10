@@ -7,16 +7,23 @@ import { AuthError } from "../../features/auth/domain/auth-errors";
 import type { PrivyAccessVerifier } from "./authenticate-privy";
 import { mapPrivyIdentity } from "../../features/auth/domain/identity";
 import type { PrivySessionResolver } from "./session-sync";
+import {
+  createConfiguredAppleLifecycleGuard,
+  type VerifiedPrivySession,
+  type VerifiedProviderAccount,
+} from "./apple-notifications/apple-lifecycle";
 
 interface PrivyTokenClaims {
   app_id: string;
   user_id: string;
+  session_id?: string;
 }
 
 interface PrivyLinkedAccountShape {
   type: string;
   email?: string | null;
   verified_at?: number;
+  subject?: string;
   address?: string;
   chain_type?: string;
   connector_type?: string;
@@ -130,6 +137,51 @@ function verifiedFanEmail(user: PrivyUserShape, config: PrivyNodeServerConfig): 
   return verifiedPrivyTestAccountEmail(user);
 }
 
+function providerAccount(user: PrivyUserShape, provider: "apple" | "google"): VerifiedProviderAccount | null {
+  const account = user.linked_accounts.find((candidate) =>
+    candidate.type === `${provider}_oauth`
+    && typeof candidate.subject === "string" && candidate.subject.length > 0
+    && typeof candidate.verified_at === "number" && candidate.verified_at > 0,
+  );
+  return account?.subject ? { subject: account.subject, email: account.email ?? null } : null;
+}
+
+function verifiedSession(claims: PrivyTokenClaims, user: PrivyUserShape): VerifiedPrivySession {
+  return {
+    privyUserId: claims.user_id,
+    sessionId: claims.session_id ?? "",
+    apple: providerAccount(user, "apple"),
+    google: providerAccount(user, "google"),
+  };
+}
+
+/** Only the recovery challenge endpoint may use this without the lifecycle gate. */
+export function createPrivyNodeReauthenticationResolver(
+  config: PrivyNodeServerConfig,
+  client?: PrivyNodeClientPort,
+): {
+  resolve(accessToken: string): Promise<VerifiedPrivySession>;
+  findProviderSubject(privyUserId: string, provider: "apple" | "google"): Promise<string | null>;
+} {
+  const appId = requireConfig(config.appId, "Privy app ID");
+  const appSecret = requireConfig(config.appSecret, "Privy app secret");
+  const privy = client ?? new PrivyClient({ appId, appSecret });
+  return {
+    async resolve(accessToken) {
+      const claims = await privy.utils().auth().verifyAccessToken(accessToken);
+      if (claims.app_id !== appId || !claims.session_id) throw new Error("Invalid Privy session");
+      const user = await privy.users()._get(claims.user_id);
+      if (user.id !== claims.user_id) throw new Error("Privy token subject mismatch");
+      return verifiedSession(claims, user);
+    },
+    async findProviderSubject(privyUserId, provider) {
+      const user = await privy.users()._get(privyUserId);
+      if (user.id !== privyUserId) throw new Error("Privy user mismatch");
+      return providerAccount(user, provider)?.subject ?? null;
+    },
+  };
+}
+
 export function createPrivyNodeAccessVerifier(
   config: PrivyNodeServerConfig,
   client?: PrivyNodeClientPort,
@@ -137,6 +189,7 @@ export function createPrivyNodeAccessVerifier(
   const appId = requireConfig(config.appId, "Privy app ID");
   const appSecret = requireConfig(config.appSecret, "Privy app secret");
   const privy = client ?? new PrivyClient({ appId, appSecret });
+  const lifecycle = createConfiguredAppleLifecycleGuard();
 
   return {
     async verify(accessToken) {
@@ -149,6 +202,7 @@ export function createPrivyNodeAccessVerifier(
       if (user.id !== claims.user_id) {
         throw new Error("Privy token subject mismatch");
       }
+      await lifecycle?.assertAccess(verifiedSession(claims, user));
 
       return {
         privyUserId: claims.user_id,
@@ -189,6 +243,7 @@ export function createPrivyNodeSessionResolver(
   const appId = requireConfig(config.appId, "Privy app ID");
   const appSecret = requireConfig(config.appSecret, "Privy app secret");
   const privy = client ?? new PrivyClient({ appId, appSecret });
+  const lifecycle = createConfiguredAppleLifecycleGuard();
   const attempts = options.walletVisibilityAttempts ?? DEFAULT_WALLET_VISIBILITY_ATTEMPTS;
   const delayMs = options.walletVisibilityDelayMs ?? DEFAULT_WALLET_VISIBILITY_DELAY_MS;
   const sleep = options.sleep ?? defaultSleep;
@@ -201,6 +256,7 @@ export function createPrivyNodeSessionResolver(
       for (let attempt = 1; attempt <= attempts; attempt += 1) {
         const user = await privy.users()._get(claims.user_id);
         if (user.id !== claims.user_id) throw new Error("Privy token subject mismatch");
+        await lifecycle?.assertAccess(verifiedSession(claims, user));
         const wallet = extractEmbeddedEvmWallet(user, chainId);
         if (wallet) {
           const identity = mapPrivyIdentity({

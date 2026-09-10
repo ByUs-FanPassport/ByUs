@@ -5,6 +5,7 @@ import { createPrivyNodeSessionResolver } from "../../../../server/auth/privy-no
 import { syncAuthenticatedSession } from "../../../../server/auth/session-sync";
 import { createSupabaseSessionSyncRepository } from "../../../../server/auth/supabase-session-sync-repository";
 import { loadServerEnv } from "../../../../server/config/env";
+import { AppleReauthenticationRequiredError } from "../../../../server/auth/apple-notifications/apple-lifecycle";
 
 export const dynamic = "force-dynamic";
 const sessionRequestSchema = z.object({ locale: preferredLocaleSchema }).strict();
@@ -38,6 +39,9 @@ export async function POST(request: Request): Promise<Response> {
       (error instanceof Error && error.name === "ZodError");
     const status = invalidRequest ? 400 : error instanceof AuthError ? error.status : 503;
     const code = invalidRequest ? "INVALID_SESSION_REQUEST" : error instanceof AuthError ? error.code : "SESSION_SYNC_FAILED";
-    return Response.json({ error: { code } }, { status, headers: { "cache-control": "no-store" } });
+    return Response.json({ error: {
+      code,
+      ...(error instanceof AppleReauthenticationRequiredError ? { providers: error.providers } : {}),
+    } }, { status, headers: { "cache-control": "no-store" } });
   }
 }

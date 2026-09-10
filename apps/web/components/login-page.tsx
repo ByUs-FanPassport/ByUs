@@ -31,6 +31,7 @@ type LoginPageProps = {
 };
 
 const VERIFIED_EMAIL_REQUIRED = "VERIFIED_EMAIL_REQUIRED";
+const APPLE_REAUTHENTICATION_REQUIRED = "APPLE_REAUTHENTICATION_REQUIRED";
 
 function loginSessionCopy({
   locale,
@@ -41,6 +42,11 @@ function loginSessionCopy({
   ready: boolean;
   error: string | null;
 }): { title: string; description?: string } {
+  if (error === APPLE_REAUTHENTICATION_REQUIRED) {
+    return locale === "ko"
+      ? { title: "계정을 다시 확인해 주세요.", description: "Apple 계정 연결이 변경되었어요. 기존 계정으로 인증하면 계속할 수 있어요." }
+      : { title: "Verify your account again.", description: "Your Apple account connection has changed. Verify with your existing account to continue." };
+  }
   if (error === VERIFIED_EMAIL_REQUIRED) {
     return locale === "ko"
       ? {
@@ -105,6 +111,10 @@ export function LoginPage({
   const markAvatarSessionReady = useAvatarSessionReady();
   const [error, setError] = useState<string | null>(null);
   const [oauthStarting, setOauthStarting] = useState(false);
+  const [reauthenticationProviders, setReauthenticationProviders] = useState<Array<"google" | "apple">>([]);
+  const [reauthenticationStarting, setReauthenticationStarting] = useState(false);
+  const [reauthenticationFailed, setReauthenticationFailed] = useState(false);
+  const reauthenticationStartRef = useRef(false);
   const oauthStartRef = useRef(false);
   const synchronizationRef = useRef<Promise<void> | null>(null);
   const attemptedSessionUserRef = useRef<string | null>(null);
@@ -150,7 +160,14 @@ export function LoginPage({
           cache: "no-store",
         });
         if (!response.ok) {
-          const body = await response.json().catch(() => null) as { error?: { code?: string } } | null;
+          const body = await response.json().catch(() => null) as { error?: { code?: string; providers?: unknown } } | null;
+          if (response.status === 403 && body?.error?.code === APPLE_REAUTHENTICATION_REQUIRED) {
+            const providers = Array.isArray(body.error.providers)
+              ? body.error.providers.filter((provider): provider is "apple" | "google" => provider === "apple" || provider === "google")
+              : [];
+            setReauthenticationProviders([...new Set(providers)]);
+            throw new Error(APPLE_REAUTHENTICATION_REQUIRED);
+          }
           if (response.status === 403 && body?.error?.code === VERIFIED_EMAIL_REQUIRED) {
             throw new Error(VERIFIED_EMAIL_REQUIRED);
           }
@@ -173,8 +190,8 @@ export function LoginPage({
       } catch (caught) {
         synchronizationRef.current = null;
         setError(
-          caught instanceof Error && caught.message === VERIFIED_EMAIL_REQUIRED
-            ? VERIFIED_EMAIL_REQUIRED
+          caught instanceof Error && [VERIFIED_EMAIL_REQUIRED, APPLE_REAUTHENTICATION_REQUIRED].includes(caught.message)
+            ? caught.message
             : "로그인 정보를 안전하게 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
       }
@@ -235,10 +252,39 @@ export function LoginPage({
       synchronizationRef.current = null;
       attemptedSessionUserRef.current = null;
       setError(null);
+      setReauthenticationProviders([]);
     } catch {
       setError("로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
   }, [logout]);
+
+  const startReauthentication = useCallback(async (provider: "google" | "apple") => {
+    if (reauthenticationStartRef.current) return;
+    reauthenticationStartRef.current = true;
+    setReauthenticationStarting(true);
+    setReauthenticationFailed(false);
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Missing Privy session");
+      const response = await fetch("/api/auth/apple/reauth/start", {
+        method: "POST", cache: "no-store",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ provider, returnTo, locale, intent, entity, authIntent }),
+      });
+      const body = await response.json() as { authorizationUrl?: string };
+      if (!response.ok || !body.authorizationUrl) throw new Error("Reauthentication is unavailable");
+      const destination = new URL(body.authorizationUrl);
+      const expectedOrigin = provider === "apple" ? "https://appleid.apple.com" : "https://accounts.google.com";
+      if (destination.origin !== expectedOrigin) throw new Error("Invalid authentication destination");
+      window.location.assign(destination.toString());
+    } catch {
+      setReauthenticationFailed(true);
+      setError(APPLE_REAUTHENTICATION_REQUIRED);
+    } finally {
+      reauthenticationStartRef.current = false;
+      setReauthenticationStarting(false);
+    }
+  }, [authIntent, entity, getAccessToken, intent, locale, returnTo]);
 
   const showsSessionState = !ready || authenticated;
   const sessionCopy = loginSessionCopy({
@@ -269,8 +315,26 @@ export function LoginPage({
         <FanState
           kind={error ? "error" : "loading"}
           title={sessionCopy.title}
-          description={sessionCopy.description}
-          actions={error ? (
+          description={error === APPLE_REAUTHENTICATION_REQUIRED && reauthenticationProviders.length === 0
+            ? locale === "ko" ? "연결된 로그인 수단을 사용할 수 없어 현재 이 계정으로 로그인할 수 없어요." : "The linked sign-in methods are unavailable, so this account cannot sign in right now."
+            : error === APPLE_REAUTHENTICATION_REQUIRED && (reauthenticationFailed || searchParams.get("reauth") === "failed")
+              ? locale === "ko" ? "인증을 완료하지 못했어요. 기존 계정으로 다시 인증해 주세요." : "Verification wasn't completed. Please verify with your existing account again."
+            : sessionCopy.description}
+          actions={error === APPLE_REAUTHENTICATION_REQUIRED ? (
+            <>
+              {reauthenticationProviders.map((provider) => (
+                <FanAction key={provider} variant="neutral" disabled={reauthenticationStarting}
+                  aria-busy={reauthenticationStarting} onClick={() => void startReauthentication(provider)}>
+                  {locale === "ko" ? `${provider === "google" ? "Google" : "Apple"}로 인증` : `Verify with ${provider === "google" ? "Google" : "Apple"}`}
+                </FanAction>
+              ))}
+              {reauthenticationProviders.length === 0 && (
+                <FanAction variant="neutral" onClick={restartLogin}>
+                  {locale === "ko" ? "다른 계정으로 로그인" : "Sign in with another account"}
+                </FanAction>
+              )}
+            </>
+          ) : error ? (
             <FanAction
               variant="neutral"
               onClick={error === VERIFIED_EMAIL_REQUIRED ? restartLogin : retrySessionSynchronization}
