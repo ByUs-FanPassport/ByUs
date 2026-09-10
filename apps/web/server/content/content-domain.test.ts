@@ -15,7 +15,7 @@ const completeRow = {
   image_url: "/images/guest-home/kara-card.jpg",
   image_alt: "KARA 멤버",
   image_position: "center 46%",
-  themes: [{ slug: "beauty", name: "뷰티" }],
+  roles: ["artist"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
   social_links: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
   display_order: 0,
   fan_count: 12_800_000,
@@ -48,7 +48,7 @@ describe("published content boundary", () => {
         alt: "KARA 멤버",
         position: "center 46%",
       },
-      themes: [{ slug: "beauty", name: "뷰티" }],
+      roles: ["artist"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
       socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
       displayOrder: 0,
       fanCount: 12_800_000,
@@ -128,4 +128,12 @@ describe("published content boundary", () => {
 it("accepts CHZZK alongside existing public social links", () => {
  const social = {platform:"chzzk",url:"https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045"};
  expect(parsePublishedCelebrity({...completeRow,social_links:[...completeRow.social_links,social]}).socialLinks).toEqual([...completeRow.social_links,social]);
+});
+
+// Every persisted profile is classified; projection omissions must never invent a role.
+it.each([undefined, null, [], ["artist", "artist"], ["host"], ["artist", null]])("rejects invalid published roles %j", (roles) => {
+  expect(() => parsePublishedCelebrity({ ...completeRow, roles })).toThrow();
+});
+it("preserves representative role order in the public DTO", () => {
+  expect(parsePublishedCelebrity({ ...completeRow, roles: ["show_host", "creator"] }).roles).toEqual(["show_host", "creator"]);
 });

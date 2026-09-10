@@ -71,8 +71,8 @@ insert into public.app_users(id,privy_user_id,verified_email,status) values
   ('${admin}','did:privy:raffle-admin-${runKey}','raffle-admin-${runKey}@byus.test','active');
 insert into public.admin_allowlist(id,email,role,active) values
   ('${allowlist}','raffle-admin-${runKey}@byus.test','admin',true);
-insert into public.celebrities(id,slug,status,image_url,published_at)
-  values('${celebrity}','raffle-${runKey}','published','/raffle-fixture.webp',pg_catalog.now());
+insert into public.celebrities(id,slug,status,image_url,published_at,roles)
+  values('${celebrity}','raffle-${runKey}','published','/raffle-fixture.webp',pg_catalog.now(),'{artist}');
 insert into public.celebrity_localizations(celebrity_id,locale,name,summary,image_alt) values
   ('${celebrity}','ko','Raffle Fixture','Raffle fixture','Raffle fixture'),
   ('${celebrity}','en','Raffle Fixture','Raffle fixture','Raffle fixture');

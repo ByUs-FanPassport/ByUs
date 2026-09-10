@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CelebrityDirectory, directoryIntroduction } from "./celebrity-directory";
 
 const publishedCelebrityFixtures = [
-  { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000, upcomingLive: { slug: "kara-live", celebritySlug: "kara", locale: "ko", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } },
-  { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000, upcomingLive: null },
-  { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000, upcomingLive: null },
+  { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, roles: ["artist"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000, upcomingLive: { slug: "kara-live", celebritySlug: "kara", locale: "ko", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } },
+  { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, roles: ["creator", "artist"] as const, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000, upcomingLive: null },
+  { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, roles: ["creator", "artist"] as const, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000, upcomingLive: null },
 ] as const;
 const ownedPassport = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -188,3 +188,31 @@ it("keeps identical card treatment in default and sorted discovery", () => {
    await act(async()=>resolveOld({passports:[ownedPassport]}));
    expect(screen.queryByText("패스포트 보유")).not.toBeInTheDocument();
  });
+
+it("combines the role with search and preserves role on guest login", () => {
+  authenticated = false;
+  getAccessToken.mockReset();
+  vi.unstubAllGlobals();
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="en" initialRole="creator" />);
+  expect(screen.getAllByRole("article")).toHaveLength(2);
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Elina" } });
+  expect(screen.getAllByRole("article")).toHaveLength(1);
+  const href = new URL(screen.getByRole("link", { name: "My Passports only" }).getAttribute("href")!, "https://byus.test");
+  expect(href.searchParams.get("returnTo")).toBe("/celebrities?locale=en&owned=1&q=Elina&sort=published&role=creator");
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "KARA" } });
+  expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(screen.getAllByRole("article")).toHaveLength(3);
+  expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
+});
+it("intersects role and owned Passports instead of broadening either selection", async () => {
+  authenticated = true;
+  getAccessToken.mockResolvedValue("token");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ passports: [ownedPassport] }) }));
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" initialRole="creator" initialOwnedOnly />);
+  await waitFor(() => expect(screen.getByRole("checkbox", { name: "내 패스포트만" })).toBeEnabled());
+  expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "아티스트" }));
+  expect(screen.getAllByRole("article")).toHaveLength(1);
+  expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
+});

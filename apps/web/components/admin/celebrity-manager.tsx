@@ -8,6 +8,7 @@ import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import { NoticeManager } from "./notice-manager";
+import { CREATOR_ROLES, creatorRoleLabel, withRepresentativeRole, type CreatorRole } from "@/features/creator/domain/creator-role";
 import styles from "./admin.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
 type Loc = { name: string; summary: string; imageAlt: string };
@@ -26,6 +27,7 @@ type Celebrity = {
   imagePosition: string;
   displayOrder: number;
   fanCount: number | null;
+  roles: CreatorRole[];
   archivedAt: string | null;
   updatedAt: string;
   localizations: { ko: Loc; en: Loc };
@@ -38,6 +40,7 @@ const blank: Omit<Celebrity, "id" | "status" | "archivedAt" | "updatedAt"> = {
   imagePosition: "center",
   displayOrder: 0,
   fanCount: null,
+  roles: [],
   localizations: {
     ko: { name: "", summary: "", imageAlt: "" },
     en: { name: "", summary: "", imageAlt: "" },
@@ -130,6 +133,7 @@ function CelebrityCms({
         imagePosition: current.imagePosition,
         displayOrder: current.displayOrder,
         fanCount: current.fanCount,
+        roles: current.roles,
         localizations: current.localizations,
         themes: current.themes,
         socialLinks: current.socialLinks,
@@ -217,6 +221,9 @@ function CelebrityCms({
                 <img src={x.imageUrl} alt="" />
                 <span>
                   <strong>{x.localizations[locale]?.name || x.slug}</strong>
+                  <small>
+                    {x.roles.map((role) => creatorRoleLabel(role, locale)).join(" · ")}
+                  </small>
                   <small>
                     {x.slug} · {x.archivedAt ? "ARCHIVED" : x.status}
                   </small>
@@ -364,8 +371,22 @@ function CelebrityCms({
             </fieldset>
             <fieldset disabled={!canEdit || !!current?.archivedAt}>
               <legend>
-                {locale === "ko" ? "분류와 채널" : "Taxonomy and channels"}
+                {locale === "ko" ? "직군과 채널" : "Roles and channels"}
               </legend>
+              <label>
+                <span>{locale === "ko" ? "대표 직군" : "Primary role"}</span>
+                <select required value={draft.roles[0] ?? ""} onChange={(event) => setDraft((d) => ({ ...d, roles: withRepresentativeRole(d.roles, event.target.value as CreatorRole) }))}>
+                  <option value="" disabled>{locale === "ko" ? "직군을 선택하세요" : "Select a role"}</option>
+                  {CREATOR_ROLES.map((role) => <option key={role} value={role}>{creatorRoleLabel(role, locale)}</option>)}
+                </select>
+              </label>
+              <fieldset className={styles.cmsAdditionalRoles} disabled={!draft.roles.length}>
+                <legend>{locale === "ko" ? "추가 직군" : "Additional roles"}</legend>
+                {CREATOR_ROLES.filter((role) => role !== draft.roles[0]).map((role) => <label key={role}>
+                  <input type="checkbox" checked={draft.roles.includes(role)} onChange={(event) => setDraft((d) => ({ ...d, roles: event.target.checked ? [...d.roles, role] : d.roles.filter((value) => value !== role) }))} />
+                  <span>{creatorRoleLabel(role, locale)}</span>
+                </label>)}
+              </fieldset>
               <label>
                 <span>
                   {locale === "ko"

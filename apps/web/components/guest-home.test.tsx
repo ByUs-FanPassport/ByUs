@@ -37,9 +37,9 @@ const featuredLive = {
 };
 
 const celebrities = [
-  { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }, { platform: "tiktok", url: "https://tiktok.com/@kara" }, { platform: "instagram", url: "https://instagram.com/kara" }], displayOrder: 0, fanCount: 12_800_000 },
-  { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000 },
-  { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000 },
+  { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, roles: ["artist"] as const, themes: [], socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }, { platform: "tiktok", url: "https://tiktok.com/@kara" }, { platform: "instagram", url: "https://instagram.com/kara" }], displayOrder: 0, fanCount: 12_800_000 },
+  { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, roles: ["creator", "artist"] as const, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000 },
+  { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, roles: ["creator", "artist"] as const, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000 },
 ] as const;
 const defaultProps = { celebrities, locale: "ko" as const };
 const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boolean = () => false) => ({
@@ -840,4 +840,17 @@ it("renders the verified CHZZK channel with its icon and keeps Instagram", () =>
  expect(link.querySelector("img")?.getAttribute("src")).toContain("chzzk.png");
  expect(screen.getByRole("link",{name:"정제니 Instagram 공식 채널"})).toBeInTheDocument();
  expect(screen.queryByRole("link",{name:/정제니 TikTok/})).not.toBeInTheDocument();
+});
+
+it("filters any assigned role and carries it into the directory without exposing empty roles", () => {
+  const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
+  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  expect(within(filters).queryByRole("button", { name: "쇼호스트" })).not.toBeInTheDocument();
+  fireEvent.click(within(filters).getByRole("button", { name: "크리에이터" }));
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(2);
+  expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&role=creator");
+  expect(within(filters).getByRole("button", { name: "크리에이터" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(within(filters).getByRole("button", { name: "아티스트" }));
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(3);
+  expect(container.querySelectorAll("[data-creator-roles]")).toHaveLength(3);
 });

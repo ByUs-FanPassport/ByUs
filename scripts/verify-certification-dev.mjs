@@ -85,8 +85,8 @@ insert into public.app_users(id,privy_user_id,verified_email,status) values
 ('${admin}','did:privy:cert-concurrency-admin-${runKey}','cert-concurrency-admin-${runKey}@byus.test','active');
 insert into public.admin_allowlist(id,email,role,active) values
 ('${allowlist}','cert-concurrency-admin-${runKey}@byus.test','admin',true);
-insert into public.celebrities(id,slug,status,image_url,published_at) values
-('${celebrity}','cert-concurrency-${runKey}','draft','/cert-concurrency.webp',null);
+insert into public.celebrities(id,slug,status,image_url,published_at,roles) values
+('${celebrity}','cert-concurrency-${runKey}','draft','/cert-concurrency.webp',null,'{artist}');
 insert into public.certification_missions(
   id,celebrity_id,immutable_key,status,category,title_ko,title_en,description_ko,
   description_en,instructions_ko,instructions_en,opens_at,closes_at,activated_at

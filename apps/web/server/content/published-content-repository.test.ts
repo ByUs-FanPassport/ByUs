@@ -12,7 +12,7 @@ const row = {
   image_url: "/kara.jpg",
   image_alt: "KARA",
   image_position: "center",
-  themes: [],
+  roles: ["artist"] as const, themes: [],
   social_links: [],
   display_order: 3,
   fan_count: 12_800_000,
@@ -43,7 +43,7 @@ describe("SupabasePublishedContentRepository", () => {
     ]);
     expect(client.from).toHaveBeenCalledWith("published_celebrities");
     expect(query.select).toHaveBeenCalledWith(
-      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count",
+      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,roles",
     );
     expect(query.eq).toHaveBeenCalledWith("locale", "ko");
     expect(query.order).toHaveBeenCalledWith("display_order", { ascending: true });

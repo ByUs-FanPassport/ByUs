@@ -7,8 +7,8 @@ insert into public.app_users(id,privy_user_id,verified_email,status) values
 ('c3000000-0000-4000-8000-000000000003','did:privy:cert-admin','cert-admin@byus.test','active');
 insert into public.admin_allowlist(id,email,role,active) values
 ('c3000000-0000-4000-8000-000000000010','cert-admin@byus.test','admin',true);
-insert into public.celebrities(id,slug,status,image_url,published_at) values
-('c3100000-0000-4000-8000-000000000001','certification-contract','draft','/certification-contract.webp',null);
+insert into public.celebrities(id,slug,status,image_url,published_at,roles) values
+('c3100000-0000-4000-8000-000000000001','certification-contract','draft','/certification-contract.webp',null,'{artist}');
 insert into public.celebrity_localizations(celebrity_id,locale,name,summary,image_alt) values
 ('c3100000-0000-4000-8000-000000000001','ko','인증 테스트','인증 테스트','인증 테스트'),
 ('c3100000-0000-4000-8000-000000000001','en','Certification Test','Certification Test','Certification Test');

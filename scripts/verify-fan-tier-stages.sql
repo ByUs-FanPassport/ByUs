@@ -230,9 +230,9 @@ insert into public.admin_allowlist(id, email, role, created_by_app_user_id) valu
   ('71000000-0000-4000-8000-000000000003', 'fan-stage-owner@example.test', 'admin',
    '71000000-0000-4000-8000-000000000001');
 
-insert into public.celebrities(id, slug, image_url, image_position) values
-  ('71000000-0000-4000-8000-000000000011', 'fan-stage-alpha', 'https://example.test/alpha.jpg', 'center'),
-  ('71000000-0000-4000-8000-000000000012', 'fan-stage-beta', 'https://example.test/beta.jpg', 'center');
+insert into public.celebrities(id, slug, image_url, image_position, roles) values
+  ('71000000-0000-4000-8000-000000000011', 'fan-stage-alpha', 'https://example.test/alpha.jpg', 'center', '{artist}'),
+  ('71000000-0000-4000-8000-000000000012', 'fan-stage-beta', 'https://example.test/beta.jpg', 'center', '{artist}');
 insert into public.celebrity_localizations(celebrity_id, locale, name, summary, image_alt) values
   ('71000000-0000-4000-8000-000000000011', 'ko', 'Alpha', 'Alpha summary', 'Alpha'),
   ('71000000-0000-4000-8000-000000000012', 'ko', 'Beta', 'Beta summary', 'Beta');

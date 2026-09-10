@@ -62,15 +62,16 @@ export function celebrityHandlers(deps: CmsRouteDeps) {
         const c = correlation(request),
           admin = await actor(request, deps, c),
           body = commandPayload.parse(await request.json());
-        if (body.action === "save")
-          return Response.json(
-            await deps.repository.saveCelebrity(
+        if (body.action === "save") {
+          const result = await deps.repository.saveCelebrity(
               admin,
               c,
               body.celebrityId,
               body.payload,
-            ),
           );
+          deps.invalidatePublicContent();
+          return Response.json(result);
+        }
         if (body.action === "archive") {
           const result = await deps.repository.archive(
             admin,

@@ -15,8 +15,8 @@ vi.mock("next/navigation", () => ({
 }));
 import { CelebrityFanPage } from "./celebrity-fan-page";
 
-const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
-const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
+const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, roles: ["artist"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
+const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, roles: ["artist"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
 const upcomingLive = { slug: "kara-nualeaf", celebritySlug: "kara", locale: "ko", title: "KARA × NUALEAF LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } as const;
 const ownedPassport = {
   id: "8a6c0050-4c52-4e0f-b73a-e2f4aab48b85",
