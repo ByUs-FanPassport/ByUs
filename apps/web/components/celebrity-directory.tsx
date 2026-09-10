@@ -87,6 +87,20 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
   const filtersActive = query.trim().length > 0 || ownedOnly || role !== "all";
   const passportFilterDisabled = passportState.status !== "ready";
 
+  const changeRole = (nextRole: CreatorRoleFilter, clearFilters = false) => {
+    setRole(nextRole);
+    const url = new URL(window.location.href);
+    if (nextRole === "all") url.searchParams.delete("role");
+    else url.searchParams.set("role", nextRole);
+    if (clearFilters) {
+      setQuery("");
+      setOwnedOnly(false);
+      url.searchParams.delete("q");
+      url.searchParams.delete("owned");
+    }
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
   const renderCreator = (celebrity: DirectoryCelebrity) => {
     const ownsPassport = passportState.status === "ready" && passportState.slugs.has(celebrity.slug);
     return (<article key={celebrity.slug} className={styles.card}>
@@ -106,7 +120,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
         {celebrities.length === 0 ? (
           <div className={styles.empty} role="status"><h2>{t.noPublished}</h2><p>{t.noPublishedHelp}</p><Link href={`/${localeQuery}`}>{t.back}</Link></div>
         ) : <>
-          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={setRole} locale={locale} controls="directory-results" />
+          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" />
           <form className={styles.controls} role="search" onSubmit={(event) => event.preventDefault()}>
             <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><input id="celebrity-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.searchPlaceholder} /></label>
             <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><select id="celebrity-sort" value={sort} onChange={(event) => setSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select></label>
@@ -119,7 +133,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
             {passportState.status === "error" ? <p role="alert">{t.retryPrefix} <button type="button" onClick={retry}>{t.retry}</button></p> : null}
           </div>
           {visibleCelebrities.length === 0 ? (
-            <div id="directory-results" className={styles.empty} role="status"><h2>{ownedOnly ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly ? t.ownedHelp : t.searchHelp}</p>{filtersActive ? <button type="button" onClick={() => { setQuery(""); setOwnedOnly(false); setRole("all"); }}>{t.reset}</button> : null}</div>
+            <div id="directory-results" className={styles.empty} role="status"><h2>{ownedOnly ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly ? t.ownedHelp : t.searchHelp}</p>{filtersActive ? <button type="button" onClick={() => changeRole("all", true)}>{t.reset}</button> : null}</div>
           ) : (
             <div id="directory-results" className={styles.grid} aria-label={t.list}>
               {visibleCelebrities.map(c => renderCreator(c))}

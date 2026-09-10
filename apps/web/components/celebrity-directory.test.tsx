@@ -216,3 +216,28 @@ it("intersects role and owned Passports instead of broadening either selection",
   expect(screen.getAllByRole("article")).toHaveLength(1);
   expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
 });
+
+it("keeps the selected role in the URL without losing locale, sort or history state", () => {
+  authenticated = false;
+  window.history.replaceState({ entry: "directory" }, "", "/celebrities?locale=en&sort=name-asc#directory-results");
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="en" initialSort="name-asc" />);
+  fireEvent.click(screen.getByRole("button", { name: "Creators" }));
+  expect(new URL(window.location.href).searchParams.get("role")).toBe("creator");
+  expect(screen.getAllByRole("article")).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "All" }));
+  expect(window.location.pathname + window.location.search + window.location.hash).toBe("/celebrities?locale=en&sort=name-asc#directory-results");
+  expect(window.history.state).toEqual({ entry: "directory" });
+  window.history.replaceState({}, "", "/");
+});
+
+it("clears deep-linked filters from the URL so reloading cannot restore an old role", () => {
+  authenticated = false;
+  window.history.replaceState({}, "", "/celebrities?locale=ko&role=show_host&q=missing&owned=1&sort=name-asc");
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" initialRole="show_host" initialQuery="missing" initialOwnedOnly initialSort="name-asc" />);
+  fireEvent.click(screen.getByRole("button", { name: "필터 초기화" }));
+  expect(screen.getAllByRole("article")).toHaveLength(3);
+  expect(screen.getByRole("searchbox")).toHaveValue("");
+  expect(screen.getByRole("combobox")).toHaveValue("name-asc");
+  expect(window.location.pathname + window.location.search).toBe("/celebrities?locale=ko&sort=name-asc");
+  window.history.replaceState({}, "", "/");
+});
