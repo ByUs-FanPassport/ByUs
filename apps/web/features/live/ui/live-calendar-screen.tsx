@@ -78,6 +78,11 @@ const platformLabel: Record<ExternalLiveProvider, string> = {
   tiktok: "TikTok",
 };
 
+const calendarTitlesKo = new Map([
+  ["ifew-100-days-tiktok-20260912", "이퓨 틱톡100일 기념"],
+  ["elina-banksy-instagram-20260918", "엘리나 x 뱅크시 전시회 LIVE"],
+]);
+
 function calendarHref(month: string, locale: FanLocale, celebritySlugs: readonly string[]) {
   const params = new URLSearchParams({ month, locale });
   for (const slug of celebritySlugs) params.append("celebrity", slug);
@@ -233,20 +238,21 @@ export function LiveCalendarScreen({
 
   const modalDay = visibleDays.find(day => day.date === modalDate);
   function renderEvent(event: LiveCalendarMonth["days"][number]["events"][number], isCurrent = true) {
+    const title = locale === "ko" ? calendarTitlesKo.get(event.slug) ?? event.title : event.title;
     const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
     const platformNames = platforms.map((platform) => platformLabel[platform]);
     const tone = [...event.slug].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
-    return <article className={styles.event} key={event.id} aria-label={event.title} data-current={isCurrent ? "true" : "false"} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
+    return <article className={styles.event} key={event.id} aria-label={title} data-current={isCurrent ? "true" : "false"} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
       <Link
         className={styles.eventLink}
         href={`/live/${event.slug}?locale=${locale}` as Route}
-        aria-label={locale === "ko" ? `${event.title} 상세 보기` : `View ${event.title} details`}
+        aria-label={locale === "ko" ? `${title} 상세 보기` : `View ${title} details`}
       >
-        <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={64} height={96} sizes="64px" />
+        <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={72} height={96} sizes="72px" />
         <span className={styles.eventMeta}>
           <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
         </span>
-        <strong>{event.title}</strong>
+        <strong>{title}</strong>
         <span className={styles.eventTopline}>
           <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
           <span className={styles.creator}>{event.celebrity.name}</span>
