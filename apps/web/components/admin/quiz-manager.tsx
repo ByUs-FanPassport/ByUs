@@ -243,27 +243,30 @@ export function QuizManager({ celebrityId }: { celebrityId: string }) {
               <div className={styles.quizOptions}>
                 {q.options.map((o, oi) => (
                   <div key={oi}>
-                    <input
-                      type="radio"
-                      name={`correct-${index}`}
-                      aria-label={`${oi + 1} correct`}
-                      checked={o.isCorrect}
-                      onChange={() =>
-                        setQuestions((a) =>
-                          a.map((v, i) =>
-                            i === index
-                              ? {
-                                  ...v,
-                                  options: v.options.map((x, j) => ({
-                                    ...x,
-                                    isCorrect: j === oi,
-                                  })),
-                                }
-                              : v,
-                          ),
-                        )
-                      }
-                    />
+                    <label className={styles.quizCorrect}>
+                      <input
+                        type="radio"
+                        name={`correct-${index}`}
+                        aria-label={locale === "ko" ? `${oi + 1}번 선택지 정답` : `Option ${oi + 1} correct`}
+                        checked={o.isCorrect}
+                        onChange={() =>
+                          setQuestions((a) =>
+                            a.map((v, i) =>
+                              i === index
+                                ? {
+                                    ...v,
+                                    options: v.options.map((x, j) => ({
+                                      ...x,
+                                      isCorrect: j === oi,
+                                    })),
+                                  }
+                                : v,
+                            ),
+                          )
+                        }
+                      />
+                      <span>{locale === "ko" ? "정답" : "Correct"}</span>
+                    </label>
                     <label className={styles.quizOptionActive}>
                       <input
                         type="checkbox"

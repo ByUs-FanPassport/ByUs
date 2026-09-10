@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
@@ -64,6 +64,25 @@ const blank = {
   scorePoints: 0,
   ticketAmount: 0,
 };
+function missionForm(mission: Mission) {
+  return {
+    id: mission.id,
+    celebrityId: mission.celebrityId,
+    immutableKey: mission.immutableKey,
+    expectedRevision: mission.revision,
+    category: mission.category,
+    titleKo: mission.titleKo,
+    titleEn: mission.titleEn,
+    descriptionKo: mission.descriptionKo,
+    descriptionEn: mission.descriptionEn,
+    instructionsKo: mission.instructionsKo,
+    instructionsEn: mission.instructionsEn,
+    opensAt: mission.opensAt.slice(0, 16),
+    closesAt: mission.closesAt.slice(0, 16),
+    scorePoints: mission.reward.scorePoints,
+    ticketAmount: mission.reward.ticketAmount,
+  };
+}
 export function AuthorizedCertificationManager() {
   const locale = useSearchParams().get("lang") === "en" ? "en" : "ko";
   const session = useAdminSession();
@@ -88,10 +107,17 @@ function CertificationManager({
   const [queue, setQueue] = useState<Submission[]>([]);
   const [form, setForm] = useState(blank);
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const pendingRef = useRef(false);
+  const reconcileMissionIdRef = useRef<string | null>(null);
+  const reviewKeysRef = useRef(new Map<string, { fingerprint: string; key: string }>());
   const [reason, setReason] = useState<Record<string, string>>({});
   const request = useCallback(
     async (url: string, method = "GET", body?: unknown) => {
       const token = await getAccessToken();
+      if (!token) throw new Error("Authentication required");
       const response = await fetch(url, {
         method,
         headers: {
@@ -107,7 +133,7 @@ function CertificationManager({
     },
     [getAccessToken],
   );
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (reconcileMissionId?: string) => {
     try {
       const [m, q] = await Promise.all([
         request("/api/admin/certification-missions"),
@@ -115,47 +141,59 @@ function CertificationManager({
       ]);
       setMissions(m.missions ?? []);
       setQueue(q.submissions ?? []);
+      if (reconcileMissionId) {
+        const confirmed = (m.missions ?? []).find((mission: Mission) => mission.id === reconcileMissionId);
+        if (confirmed) setForm(missionForm(confirmed));
+      }
+      return true;
     } catch {
+      setMessageIsError(true);
       setMessage(
         locale === "ko"
           ? "인증 운영 데이터를 불러오지 못했습니다."
           : "Could not load certification operations.",
       );
+      return false;
     }
   }, [locale, request]);
   useEffect(() => {
     void refresh();
   }, [refresh]);
   function select(m: Mission) {
-    setForm({
-      id: m.id,
-      celebrityId: m.celebrityId,
-      immutableKey: m.immutableKey,
-      expectedRevision: m.revision,
-      category: m.category,
-      titleKo: m.titleKo,
-      titleEn: m.titleEn,
-      descriptionKo: m.descriptionKo,
-      descriptionEn: m.descriptionEn,
-      instructionsKo: m.instructionsKo,
-      instructionsEn: m.instructionsEn,
-      opensAt: m.opensAt.slice(0, 16),
-      closesAt: m.closesAt.slice(0, 16),
-      scorePoints: m.reward.scorePoints,
-      ticketAmount: m.reward.ticketAmount,
-    });
+    setForm(missionForm(m));
   }
   async function command(body: unknown) {
+    if (pendingRef.current || needsRefresh) return;
+    pendingRef.current = true;
+    setPending(true);
+    setMessageIsError(false);
+    setMessage(locale === "ko" ? "처리 중입니다." : "Processing.");
+    let postSucceeded = false;
     try {
-      await request("/api/admin/certification-missions", "POST", body);
+      const result = await request("/api/admin/certification-missions", "POST", body);
+      postSucceeded = true;
+      setNeedsRefresh(true);
+      const reconcileId = form.id || result.mission?.id || result.id;
+      reconcileMissionIdRef.current = reconcileId || null;
+      if (!(await refresh(reconcileId))) throw new Error("refresh failed");
+      reconcileMissionIdRef.current = null;
+      setNeedsRefresh(false);
+      setMessageIsError(false);
       setMessage(locale === "ko" ? "저장했습니다." : "Saved.");
-      await refresh();
     } catch {
+      setMessageIsError(true);
       setMessage(
-        locale === "ko"
+        postSucceeded
+          ? locale === "ko"
+            ? "변경은 처리됐지만 최신 상태를 불러오지 못했습니다."
+            : "The change was processed, but the latest state could not be loaded."
+          : locale === "ko"
           ? "처리하지 못했습니다. 버전과 필수 항목을 확인하세요."
           : "Could not complete the operation.",
       );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
     }
   }
   async function save(e: React.FormEvent) {
@@ -169,25 +207,65 @@ function CertificationManager({
     });
   }
   async function review(item: Submission, decision: "approve" | "reject") {
+    if (pendingRef.current || needsRefresh) return;
+    pendingRef.current = true;
+    setPending(true);
+    setMessageIsError(false);
+    setMessage(locale === "ko" ? "검토 결과를 처리 중입니다." : "Saving review.");
+    const rejectionReason = decision === "reject" ? reason[item.id] : undefined;
+    const fingerprint = JSON.stringify({ decision, expectedRevision: item.revision, rejectionReason });
+    const savedKey = reviewKeysRef.current.get(item.id);
+    const idem = savedKey?.fingerprint === fingerprint ? savedKey.key : crypto.randomUUID();
+    reviewKeysRef.current.set(item.id, { fingerprint, key: idem });
+    let postSucceeded = false;
     try {
       await request(
         `/api/admin/certification-submissions/${item.id}/review`,
         "POST",
         {
-          idem: crypto.randomUUID(),
+          idem,
           expectedRevision: item.revision,
           decision,
-          rejectionReason: decision === "reject" ? reason[item.id] : undefined,
+          rejectionReason,
         },
       );
-      setMessage(
-        locale === "ko" ? "검토 결과를 반영했습니다." : "Review saved.",
-      );
-      await refresh();
+      postSucceeded = true;
+      reviewKeysRef.current.delete(item.id);
+      setNeedsRefresh(true);
+      reconcileMissionIdRef.current = form.id || null;
+      if (!(await refresh(reconcileMissionIdRef.current || undefined))) throw new Error("refresh failed");
+      reconcileMissionIdRef.current = null;
+      setNeedsRefresh(false);
+      setMessageIsError(false);
+      setMessage(locale === "ko" ? "검토 결과를 반영했습니다." : "Review saved.");
     } catch {
+      setMessageIsError(true);
       setMessage(
-        locale === "ko" ? "검토 결과를 반영하지 못했습니다." : "Review failed.",
+        postSucceeded
+          ? locale === "ko"
+            ? "변경은 처리됐지만 최신 상태를 불러오지 못했습니다."
+            : "The change was processed, but the latest state could not be loaded."
+          : locale === "ko" ? "검토 결과를 반영하지 못했습니다." : "Review failed.",
       );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
+  }
+  async function refreshFromButton() {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
+    setPending(true);
+    setMessageIsError(false);
+    setMessage(locale === "ko" ? "최신 상태를 불러오는 중입니다." : "Loading latest state.");
+    try {
+      if (!(await refresh(needsRefresh ? reconcileMissionIdRef.current || form.id || undefined : undefined))) return;
+      reconcileMissionIdRef.current = null;
+      setNeedsRefresh(false);
+      setMessage(locale === "ko" ? "최신 상태를 불러왔습니다." : "Latest state loaded.");
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
     }
   }
   async function openProof(item: Submission, uploadId: string) {
@@ -223,14 +301,14 @@ function CertificationManager({
               : "Manage mission conditions, frozen rewards, and submitted proof."}
           </span>
         </header>
-        <p role="status" className={styles.message}>
+        <p role={messageIsError ? "alert" : "status"} className={styles.message}>
           {message}
         </p>
         <div className={styles.workspace}>
           <section className={styles.missions}>
             <div className={styles.sectionHeading}>
               <h2>{locale === "ko" ? "인증 미션" : "Missions"}</h2>
-              <button type="button" onClick={() => setForm(blank)}>
+              <button type="button" disabled={pending || needsRefresh} onClick={() => setForm(blank)}>
                 <Plus /> {locale === "ko" ? "새 미션" : "New"}
               </button>
             </div>
@@ -238,6 +316,7 @@ function CertificationManager({
               <button
                 type="button"
                 key={m.id}
+                disabled={pending || needsRefresh}
                 onClick={() => select(m)}
                 aria-pressed={form.id === m.id}
               >
@@ -275,7 +354,7 @@ function CertificationManager({
                     required
                     value={String(form[key as keyof typeof form] ?? "")}
                     disabled={
-                      !canWrite || Boolean(form.id && key === "immutableKey")
+                      !canWrite || pending || needsRefresh || Boolean(form.id && key === "immutableKey")
                     }
                     onChange={(e) =>
                       setForm((v) => ({ ...v, [key]: e.target.value }))
@@ -288,6 +367,7 @@ function CertificationManager({
                 <input
                   required
                   type="datetime-local"
+                  disabled={!canWrite || pending || needsRefresh}
                   value={form.opensAt}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, opensAt: e.target.value }))
@@ -299,6 +379,7 @@ function CertificationManager({
                 <input
                   required
                   type="datetime-local"
+                  disabled={!canWrite || pending || needsRefresh}
                   value={form.closesAt}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, closesAt: e.target.value }))
@@ -310,6 +391,7 @@ function CertificationManager({
                 <input
                   required
                   type="number"
+                  disabled={!canWrite || pending || needsRefresh}
                   min="0"
                   max="100"
                   value={form.scorePoints}
@@ -326,6 +408,7 @@ function CertificationManager({
                 <input
                   required
                   type="number"
+                  disabled={!canWrite || pending || needsRefresh}
                   min="0"
                   max="1000000"
                   value={form.ticketAmount}
@@ -350,6 +433,7 @@ function CertificationManager({
                 <span>{key}</span>
                 <textarea
                   required
+                  disabled={!canWrite || pending || needsRefresh}
                   value={form[key]}
                   onChange={(e) =>
                     setForm((v) => ({ ...v, [key]: e.target.value }))
@@ -358,7 +442,7 @@ function CertificationManager({
               </label>
             ))}
             <div className={styles.actions}>
-              <button type="submit" disabled={!canWrite}>
+              <button type="submit" disabled={!canWrite || pending || needsRefresh}>
                 <Save />
                 {locale === "ko" ? "초안 저장" : "Save draft"}
               </button>
@@ -366,7 +450,7 @@ function CertificationManager({
                 <>
                   <button
                     type="button"
-                    disabled={!canWrite}
+                    disabled={!canWrite || pending || needsRefresh}
                     onClick={() =>
                       void command({
                         command: "activate",
@@ -380,7 +464,7 @@ function CertificationManager({
                   </button>
                   <button
                     type="button"
-                    disabled={!canWrite}
+                    disabled={!canWrite || pending || needsRefresh}
                     onClick={() =>
                       void command({
                         command: "close",
@@ -403,9 +487,9 @@ function CertificationManager({
               <h2>{locale === "ko" ? "검토 대기" : "Review queue"}</h2>
               <p>{queue.length} pending</p>
             </div>
-            <button type="button" onClick={() => void refresh()}>
+            <button type="button" disabled={pending} onClick={() => void refreshFromButton()}>
               <RefreshCw />
-              {locale === "ko" ? "새로고침" : "Refresh"}
+              {needsRefresh ? (locale === "ko" ? "최신 상태 불러오기" : "Load latest state") : (locale === "ko" ? "새로고침" : "Refresh")}
             </button>
           </div>
           {queue.length ? (
@@ -444,6 +528,7 @@ function CertificationManager({
                     {locale === "ko" ? "반려 사유" : "Rejection reason"}
                   </span>
                   <textarea
+                    disabled={!canWrite || pending || needsRefresh}
                     value={reason[item.id] ?? ""}
                     onChange={(e) =>
                       setReason((v) => ({ ...v, [item.id]: e.target.value }))
@@ -453,7 +538,7 @@ function CertificationManager({
                 <div className={styles.reviewActions}>
                   <button
                     type="button"
-                    disabled={!canWrite}
+                    disabled={!canWrite || pending || needsRefresh}
                     onClick={() => void review(item, "approve")}
                   >
                     <Check />
@@ -462,7 +547,7 @@ function CertificationManager({
                   <button
                     type="button"
                     disabled={
-                      !canWrite || (reason[item.id]?.trim().length ?? 0) < 3
+                      !canWrite || pending || needsRefresh || (reason[item.id]?.trim().length ?? 0) < 3
                     }
                     onClick={() => void review(item, "reject")}
                   >

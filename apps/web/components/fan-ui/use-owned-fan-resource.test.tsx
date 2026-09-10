@@ -17,6 +17,21 @@ afterEach(() => {
 });
 
 describe("owned fan resource freshness", () => {
+  it("keeps a validated mutation response over an older read and allows later fresh reads", async () => {
+    let resolveRead!: (response: Response) => void;
+    const fetcher = vi.fn().mockResolvedValueOnce(response("before"))
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { resolveRead = resolve; }))
+      .mockResolvedValueOnce(response("later"));
+    vi.stubGlobal("fetch", fetcher);
+    const { result } = renderHook(() => useOwnedFanResource("/owned", parse, auth));
+    await waitFor(() => expect(result.current.state.status).toBe("ready"));
+    await act(async () => { result.current.retry(); await flush(); });
+    act(() => result.current.replaceData({ status: "saved" }));
+    await act(async () => { resolveRead(response("before")); await flush(); });
+    expect(result.current.state).toEqual({ status: "ready", data: { status: "saved" } });
+    await act(async () => { result.current.retry(); await flush(); });
+    expect(result.current.state).toEqual({ status: "ready", data: { status: "later" } });
+  });
   it("polls queued issuance without blanking content and stops once minted", async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn().mockResolvedValueOnce(response("queued")).mockResolvedValueOnce(response("minted"));

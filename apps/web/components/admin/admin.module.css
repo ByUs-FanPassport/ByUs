@@ -94,3 +94,9 @@ button:disabled { cursor: not-allowed; }
 .quizOptionActive{display:flex!important;align-items:center;gap:4px;font-size:12px}.quizOptionActive input{width:16px;height:16px}
 @media(max-width:47.99rem){.quizOptions>div>input:not([type=radio]){grid-column:1/-1}}
 .cmsSubheading{margin:8px 0 0;font-size:14px}
+.quizQuestion legend button{width:44px;height:44px}
+.quizOptions>div{grid-template-columns:76px minmax(0,1fr)}
+.quizCorrect{display:flex;min-width:76px;min-height:44px;align-items:center;gap:6px;font-size:12px;font-weight:650}
+.quizCorrect input{width:18px;height:18px;margin:0}
+.quizCorrect span{white-space:nowrap}
+@media(min-width:48rem){.quizOptions>div{grid-template-columns:76px 64px minmax(0,1fr) minmax(0,1fr)}}

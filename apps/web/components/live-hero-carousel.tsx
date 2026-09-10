@@ -385,7 +385,7 @@ export function LiveHeroCarousel({
           </button>
           <div
             className={styles.carouselDots}
-            style={{ "--carousel-width": `${total * 32 + 44}px` } as CSSProperties}
+            style={{ "--carousel-width": `${total * 44 + 44}px` } as CSSProperties}
           >
             {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "banksy-campaign"].map((key, index) => (
               <button

@@ -47,6 +47,11 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   const [titles, setTitles] = useState({ ko: "", en: "" });
   const [bodies, setBodies] = useState<{ ko: Document; en: Document }>({ ko: emptyDocument, en: emptyDocument });
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const pendingRef = useRef(false);
+  const recoveryTargetRef = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const current = useMemo(() => items.find((item) => item.id === selectedId) ?? null, [items, selectedId]);
   const request = useCallback(async (method: string, body?: unknown) => {
@@ -66,7 +71,12 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     try {
       const payload = await request("GET");
       setItems((payload.notices ?? []).map(normalize));
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Notice load failed"); }
+      return true;
+    } catch (error) {
+      setMessageIsError(true);
+      setMessage(error instanceof Error ? error.message : "Notice load failed");
+      return false;
+    }
   }, [request]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
@@ -83,6 +93,9 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     onUpdate: ({ editor: active }) => setBodies((value) => ({ ...value, [language]: active.getJSON() })),
   }, [language, selectedId, canEdit, current?.archivedAt, current?.publicationStatus]);
   useEffect(() => {
+    editor?.setEditable(canEdit && !pending && !needsRefresh && !current?.archivedAt && current?.publicationStatus !== "published");
+  }, [canEdit, current?.archivedAt, current?.publicationStatus, editor, needsRefresh, pending]);
+  useEffect(() => {
     if (editor && JSON.stringify(editor.getJSON()) !== JSON.stringify(bodies[language])) {
       editor.commands.setContent(bodies[language]);
     }
@@ -92,7 +105,21 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     setSelectedId(null); setSlug(""); setPinned(false); setTitles({ ko: "", en: "" });
     setBodies({ ko: emptyDocument, en: emptyDocument }); setMessage("");
   }
+  function beginOperation(label: string) {
+    if (pendingRef.current || needsRefresh) return false;
+    pendingRef.current = true;
+    setPending(true);
+    setMessageIsError(false);
+    setMessage(label);
+    return true;
+  }
+  function endOperation() {
+    pendingRef.current = false;
+    setPending(false);
+  }
   async function save() {
+    if (!beginOperation(locale === "ko" ? "공지를 저장하는 중입니다." : "Saving Notice.")) return;
+    let postSucceeded = false;
     try {
       const result = await request("POST", {
         action: "save", id: current?.id, expectedRevision: current?.revision, slug, pinned,
@@ -101,24 +128,38 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
           en: { title: titles.en, body: bodies.en },
         },
       });
-      await load(); setSelectedId(result.id); setMessage(locale === "ko" ? "공지를 저장했습니다." : "Notice saved.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
+      postSucceeded = true;
+      recoveryTargetRef.current = result.id;
+      setNeedsRefresh(true);
+      if (!(await load())) throw new Error(locale === "ko" ? "저장 후 공지를 다시 불러오지 못했습니다." : "Could not refresh after saving.");
+      setSelectedId(result.id); recoveryTargetRef.current = null; setNeedsRefresh(false); setMessageIsError(false); setMessage(locale === "ko" ? "공지를 저장했습니다." : "Notice saved.");
+    } catch (error) { setMessageIsError(true); setMessage(postSucceeded ? (locale === "ko" ? "변경은 처리됐지만 최신 상태를 불러오지 못했습니다." : "The change was processed, but the latest state could not be loaded.") : error instanceof Error ? error.message : "Save failed"); }
+    finally { endOperation(); }
   }
   async function state(action: "publish" | "unpublish" | "archive") {
     if (!current) return;
+    if (!beginOperation(locale === "ko" ? "공지 상태를 변경하는 중입니다." : "Updating Notice state.")) return;
     const reason = action === "archive" ? prompt(locale === "ko" ? "보관 사유를 10자 이상 입력하세요." : "Enter an archive reason (10+ characters).") : undefined;
-    if (action === "archive" && !reason) return;
+    if (action === "archive" && !reason) { endOperation(); setMessage(""); return; }
+    let postSucceeded = false;
     try {
       await request("POST", { action, id: current.id, expectedRevision: current.revision, reason });
-      await load(); setMessage(locale === "ko" ? "공지 상태를 변경했습니다." : "Notice state updated.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "State update failed"); }
+      postSucceeded = true;
+      recoveryTargetRef.current = current.id;
+      setNeedsRefresh(true);
+      if (!(await load())) throw new Error(locale === "ko" ? "상태 변경 후 공지를 다시 불러오지 못했습니다." : "Could not refresh after updating state.");
+      recoveryTargetRef.current = null; setNeedsRefresh(false); setMessageIsError(false); setMessage(locale === "ko" ? "공지 상태를 변경했습니다." : "Notice state updated.");
+    } catch (error) { setMessageIsError(true); setMessage(postSucceeded ? (locale === "ko" ? "변경은 처리됐지만 최신 상태를 불러오지 못했습니다." : "The change was processed, but the latest state could not be loaded.") : error instanceof Error ? error.message : "State update failed"); }
+    finally { endOperation(); }
   }
   async function upload(file: File) {
     if (!current) { setMessage(locale === "ko" ? "이미지를 추가하려면 공지를 먼저 저장하세요." : "Save the Notice before adding images."); return; }
+    if (!beginOperation(locale === "ko" ? "이미지를 업로드하는 중입니다." : "Uploading image.")) return;
     try {
       const alt = prompt(locale === "ko" ? "이미지 대체 텍스트를 입력하세요." : "Enter image alt text.");
       if (!alt?.trim()) throw new Error(locale === "ko" ? "이미지 대체 텍스트가 필요합니다." : "Image alt text is required.");
       const token = await getAccessToken();
+      if (!token) throw new Error(locale === "ko" ? "로그인이 필요합니다." : "Authentication required.");
       const data = new FormData(); data.set("file", file);
       const response = await fetch(`/api/admin/celebrities/${celebrityId}/notices/${current.id}/assets`, {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "x-correlation-id": crypto.randomUUID() }, body: data,
@@ -126,7 +167,26 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message ?? "Upload failed");
       editor?.chain().focus().setImage({ src: payload.url, alt: alt.trim() }).run();
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Upload failed"); }
+      setMessageIsError(false); setMessage(locale === "ko" ? "이미지를 추가했습니다." : "Image added.");
+    } catch (error) { setMessageIsError(true); setMessage(error instanceof Error ? error.message : "Upload failed"); }
+    finally { endOperation(); }
+  }
+  async function recoverLatest() {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
+    setPending(true);
+    setMessageIsError(false);
+    setMessage(locale === "ko" ? "최신 상태를 불러오는 중입니다." : "Loading latest state.");
+    try {
+      if (!(await load())) return;
+      if (recoveryTargetRef.current) setSelectedId(recoveryTargetRef.current);
+      recoveryTargetRef.current = null;
+      setNeedsRefresh(false);
+      setMessage(locale === "ko" ? "최신 상태를 불러왔습니다." : "Latest state loaded.");
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
   }
   function addLink() {
     const href = prompt("https://");
@@ -139,15 +199,16 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
       setMessage(locale === "ko" ? "HTTPS 링크만 사용할 수 있습니다." : "Only HTTPS links are allowed.");
     }
   }
-  const toolbarDisabled = !editor?.isEditable;
+  const interactionLocked = pending || needsRefresh;
+  const toolbarDisabled = interactionLocked || !editor?.isEditable;
 
   return <section className={styles.manager} aria-labelledby="notice-manager-title">
-    <header><div><p>ADM · Notice CMS</p><h2 id="notice-manager-title">{celebrityName} {locale === "ko" ? "공지" : "Notices"}</h2></div>{canEdit && <button type="button" onClick={reset}>{locale === "ko" ? "새 공지" : "New Notice"}</button>}</header>
+    <header><div><p>ADM · Notice CMS</p><h2 id="notice-manager-title">{celebrityName} {locale === "ko" ? "공지" : "Notices"}</h2></div>{canEdit && <button type="button" disabled={interactionLocked} onClick={reset}>{locale === "ko" ? "새 공지" : "New Notice"}</button>}</header>
     <div className={styles.layout}>
-      <div className={styles.list}>{items.map((item) => <button type="button" key={item.id} aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}</div>
+      <div className={styles.list}>{items.map((item) => <button type="button" key={item.id} disabled={interactionLocked} aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}</div>
       <div className={styles.editor}>
-        <div className={styles.language}><button type="button" aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
-        <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>
+        <div className={styles.language}><button type="button" disabled={interactionLocked} aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" disabled={interactionLocked} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
+        <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>
         <div className={styles.toolbar} aria-label={locale === "ko" ? "본문 서식" : "Body formatting"}>
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleBold().run()} aria-label="Bold"><Bold /></button>
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleItalic().run()} aria-label="Italic"><Italic /></button>
@@ -156,7 +217,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleOrderedList().run()} aria-label="Ordered list"><ListOrdered /></button>
           <button type="button" disabled={toolbarDisabled} onClick={addLink} aria-label="Link"><Link2 /></button>
           <button type="button" disabled={toolbarDisabled} onClick={() => fileRef.current?.click()} aria-label={locale === "ko" ? "이미지 업로드" : "Upload image"}><ImagePlus /></button>
-          <input ref={fileRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = ""; }} />
+          <input ref={fileRef} hidden disabled={interactionLocked} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = ""; }} />
         </div>
         <EditorContent editor={editor} className={styles.body} />
         <section className={styles.preview} aria-labelledby="notice-preview-title">
@@ -164,8 +225,8 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
           <h4>{titles[language] || (language === "ko" ? "공지 제목" : "Notice title")}</h4>
           <NoticeBody document={bodies[language] as TiptapDocument} locale={language} />
         </section>
-        {message && <p role="status" className={styles.message}>{message}</p>}
-        <div className={styles.actions}>{canEdit && !current?.archivedAt && current?.publicationStatus !== "published" && <button type="button" onClick={() => void save()}><Save />{locale === "ko" ? "저장" : "Save"}</button>}{canEdit && current && !current.archivedAt && <button type="button" onClick={() => void state(current.publicationStatus === "published" ? "unpublish" : "publish")}>{current.publicationStatus === "published" ? (locale === "ko" ? "공개 중지" : "Unpublish") : (locale === "ko" ? "공개" : "Publish")}</button>}{canEdit && current && !current.archivedAt && <button type="button" onClick={() => void state("archive")}><Archive />{locale === "ko" ? "보관" : "Archive"}</button>}</div>
+        {message && <p role={messageIsError ? "alert" : "status"} className={styles.message}>{message}</p>}
+        <div className={styles.actions}>{needsRefresh && <button type="button" disabled={pending} onClick={() => void recoverLatest()}>{locale === "ko" ? "최신 상태 불러오기" : "Load latest state"}</button>}{canEdit && !current?.archivedAt && current?.publicationStatus !== "published" && <button type="button" disabled={interactionLocked} onClick={() => void save()}><Save />{pending ? (locale === "ko" ? "처리 중" : "Processing") : (locale === "ko" ? "저장" : "Save")}</button>}{canEdit && current && !current.archivedAt && <button type="button" disabled={interactionLocked} onClick={() => void state(current.publicationStatus === "published" ? "unpublish" : "publish")}>{current.publicationStatus === "published" ? (locale === "ko" ? "공개 중지" : "Unpublish") : (locale === "ko" ? "공개" : "Publish")}</button>}{canEdit && current && !current.archivedAt && <button type="button" disabled={interactionLocked} onClick={() => void state("archive")}><Archive />{locale === "ko" ? "보관" : "Archive"}</button>}</div>
       </div>
     </div>
   </section>;

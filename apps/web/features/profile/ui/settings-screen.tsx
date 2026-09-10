@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import {
@@ -106,6 +106,10 @@ const copy = {
     googleReadOnly: "Google · 로그인에서 확인됨 (읽기 전용)",
     kakaoConnect: "Kakao 연결",
     kakaoDisconnect: "Kakao 연결 해제",
+    kakaoConnecting: "Kakao 연결 중…",
+    kakaoDisconnecting: "Kakao 연결 해제 중…",
+    preferenceSaving: "알림 설정을 저장하는 중…",
+    channelSaving: "수신 채널을 저장하는 중…",
     emailChannel: "Email 수신",
     kakaoChannel: "Kakao 수신",
     needsEnrollment: "연결 후 수신 대 확인이 필요해요.",
@@ -174,6 +178,10 @@ const copy = {
     googleReadOnly: "Google · verified at sign-in (read-only)",
     kakaoConnect: "Connect Kakao",
     kakaoDisconnect: "Disconnect Kakao",
+    kakaoConnecting: "Connecting Kakao…",
+    kakaoDisconnecting: "Disconnecting Kakao…",
+    preferenceSaving: "Saving notification settings…",
+    channelSaving: "Saving delivery channels…",
     emailChannel: "Email delivery",
     kakaoChannel: "Kakao delivery",
     needsEnrollment: "Verify a destination after connecting.",
@@ -226,7 +234,8 @@ function authHeaders(token: string): HeadersInit {
 export function SettingsScreen({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const router = useRouter();
-  const { ready, authenticated, getAccessToken, logout } = usePrivy();
+  const { ready, authenticated, user, getAccessToken, logout } = usePrivy();
+  const ownerId = user?.id ?? null;
   const avatarResource = useAvatar();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -245,6 +254,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [languageSaving, setLanguageSaving] = useState(false);
   const [languageError, setLanguageError] = useState(false);
   const [message, setMessage] = useState("");
+  const [preferencePending, setPreferencePending] = useState(false);
+  const [connectionAction, setConnectionAction] = useState<"channel" | "kakao-connect" | "kakao-disconnect" | null>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
   );
@@ -256,12 +267,58 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const nicknameRef = useRef<HTMLInputElement>(null);
   const nicknameComposingRef = useRef(false);
   const nicknameSavePendingRef = useRef(false);
+  const activeRef = useRef(true);
+  const ownerRef = useRef(ownerId);
+  const loadGenerationRef = useRef(0);
+  const preferencePendingRef = useRef(false);
+  const preferenceGenerationRef = useRef(0);
+  const connectionPendingRef = useRef(false);
+  const connectionGenerationRef = useRef(0);
+  const pushPendingRef = useRef(false);
+  const pushGenerationRef = useRef(0);
+  useLayoutEffect(() => {
+    const ownerChanged = ownerRef.current !== ownerId;
+    activeRef.current = true;
+    ownerRef.current = ownerId;
+    loadGenerationRef.current += 1;
+    preferenceGenerationRef.current += 1;
+    connectionGenerationRef.current += 1;
+    pushGenerationRef.current += 1;
+    preferencePendingRef.current = false;
+    connectionPendingRef.current = false;
+    pushPendingRef.current = false;
+    setPreferencePending(false);
+    setConnectionAction(null);
+    setPushState("idle");
+    if (ownerChanged) {
+      setSettings(null);
+      setPreferences(null);
+      setConnections(null);
+      setNickname("");
+      setEditing(false);
+      setMessage("");
+      setState("loading");
+    }
+    return () => {
+      activeRef.current = false;
+      loadGenerationRef.current += 1;
+      preferenceGenerationRef.current += 1;
+      connectionGenerationRef.current += 1;
+      pushGenerationRef.current += 1;
+      preferencePendingRef.current = false;
+      connectionPendingRef.current = false;
+      pushPendingRef.current = false;
+    };
+  }, [ownerId]);
 
   const load = useCallback(async () => {
     if (!ready || !authenticated) return;
+    const ownerAtStart = ownerId;
+    const generation = ++loadGenerationRef.current;
     setState("loading");
     try {
       const token = await getAccessToken();
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       if (!token) {
         setState("error");
         return;
@@ -281,15 +338,17 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         preferences: Preferences;
       };
       const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections };
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       setSettings(settingsBody.settings);
       setNickname(settingsBody.settings.nickname);
       setPreferences(preferenceBody.preferences);
       setConnections(connectionBody.connections);
       setState("ready");
     } catch {
-      setState("error");
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === loadGenerationRef.current)
+        setState("error");
     }
-  }, [authenticated, getAccessToken, ready]);
+  }, [authenticated, getAccessToken, ownerId, ready]);
 
   useEffect(() => {
     if (logoutPending.current) return;
@@ -435,12 +494,17 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }
 
   async function updatePreference(key: PreferenceKey, value: boolean) {
-    if (!preferences) return;
-    const previous = preferences;
-    setPreferences({ ...preferences, [key]: value });
+    if (!preferences || preferencePendingRef.current) return;
+    preferencePendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++preferenceGenerationRef.current;
+    const previousValue = preferences[key];
+    setPreferencePending(true);
+    setPreferences((current) => current ? { ...current, [key]: value } : current);
     setMessage("");
     try {
       const token = await getAccessToken();
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== preferenceGenerationRef.current) return;
       if (!token) throw new Error("token");
       const response = await fetch("/api/notifications/preferences", {
         method: "PATCH",
@@ -448,12 +512,20 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         body: JSON.stringify({ [key]: value }),
       });
       const body = (await response.json()) as { preferences?: Preferences };
-      if (!response.ok || !body.preferences) throw new Error("save");
-      setPreferences(body.preferences);
+      if (!response.ok || typeof body.preferences?.[key] !== "boolean") throw new Error("save");
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== preferenceGenerationRef.current) return;
+      setPreferences((current) => current ? { ...current, [key]: body.preferences![key] } : current);
       setMessage(t.saved);
     } catch {
-      setPreferences(previous);
-      setMessage(t.failed);
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === preferenceGenerationRef.current) {
+        setPreferences((current) => current ? { ...current, [key]: previousValue } : current);
+        setMessage(t.failed);
+      }
+    } finally {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === preferenceGenerationRef.current) {
+        preferencePendingRef.current = false;
+        setPreferencePending(false);
+      }
     }
   }
 
@@ -492,34 +564,75 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }
 
   async function updateChannel(channelId: string, consented: boolean) {
-    if (!connections) return;
-    const previous = connections;
-    setConnections({ ...connections, channels: connections.channels.map((channel) => channel.id === channelId ? { ...channel, consented } : channel) });
+    if (!connections || connectionPendingRef.current) return;
+    const previousValue = connections.channels.find((channel) => channel.id === channelId)?.consented;
+    if (previousValue === undefined) return;
+    connectionPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++connectionGenerationRef.current;
+    setConnectionAction("channel");
+    setMessage("");
+    setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? { ...channel, consented } : channel) } : current);
     try {
       const token = await getAccessToken();
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
       if (!token) throw new Error("token");
       const response = await fetch("/api/me/notification-channels", { method: "PATCH", headers: { ...authHeaders(token), "content-type": "application/json" }, body: JSON.stringify({ channelId, consented, consentVersion: "phase5-v1" }) });
       const body = await response.json() as { channel?: NotificationConnections["channels"][number] };
       if (!response.ok || !body.channel) throw new Error("save");
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
       setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? body.channel! : channel) } : current);
       setMessage(t.saved);
-    } catch { setConnections(previous); setMessage(t.failed); }
+    } catch {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
+        setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? { ...channel, consented: previousValue } : channel) } : current);
+        setMessage(t.failed);
+      }
+    } finally {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
+        connectionPendingRef.current = false;
+        setConnectionAction(null);
+      }
+    }
   }
 
   async function toggleKakao(connected: boolean) {
+    if (connectionPendingRef.current) return;
+    connectionPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++connectionGenerationRef.current;
+    setConnectionAction(connected ? "kakao-disconnect" : "kakao-connect");
+    setMessage("");
     try {
-      const token = await getAccessToken(); if (!token) throw new Error("token");
+      const token = await getAccessToken();
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
+      if (!token) throw new Error("token");
       if (connected) {
         const response = await fetch("/api/me/connected-accounts/kakao", { method: "DELETE", headers: authHeaders(token) });
         if (!response.ok) throw new Error("disconnect");
-        await load();
+        const connectionResponse = await fetch("/api/me/notification-channels", { headers: authHeaders(token), cache: "no-store" });
+        if (!connectionResponse.ok) throw new Error("connections");
+        const body = await connectionResponse.json() as { connections?: NotificationConnections };
+        if (!body.connections) throw new Error("connections");
+        if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
+        setConnections(body.connections);
+        setMessage(t.saved);
       } else {
         const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}`, { method: "POST", headers: authHeaders(token) });
         const body = await response.json() as { authorizationUrl?: string };
         if (!response.ok || !body.authorizationUrl) throw new Error("connect");
+        if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
         window.location.assign(body.authorizationUrl);
       }
-    } catch { setMessage(t.failed); }
+    } catch {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current)
+        setMessage(t.failed);
+    } finally {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
+        connectionPendingRef.current = false;
+        setConnectionAction(null);
+      }
+    }
   }
 
   async function install() {
@@ -537,6 +650,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }
 
   async function connectPush() {
+    if (pushPendingRef.current) return;
     const currentPermission = resolveBrowserPermissionState({
       secureContext: window.isSecureContext !== false,
       hasNotification: "Notification" in window,
@@ -552,29 +666,47 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       currentPermission === "insecure"
     )
       return;
+    pushPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++pushGenerationRef.current;
     setPushState("pending");
-    const result = await enablePushNotifications(getAccessToken);
-    const permissionAfterRequest =
-      "Notification" in window ? Notification.permission : undefined;
-    if (permissionAfterRequest)
-      setPermissionState(permissionAfterRequest);
-    if (result === "subscribed") {
-      setPushState("subscribed");
-      setPreferences((current) =>
-        current ? { ...current, browserSubscription: "subscribed" } : current,
-      );
-      return;
+    const isCurrent = () => activeRef.current
+      && ownerRef.current === ownerAtStart
+      && generation === pushGenerationRef.current;
+    try {
+      const guardedGetAccessToken = async () => {
+        if (!isCurrent()) return null;
+        const token = await getAccessToken();
+        return isCurrent() ? token : null;
+      };
+      const result = await enablePushNotifications(guardedGetAccessToken);
+      if (!isCurrent()) return;
+      const permissionAfterRequest =
+        "Notification" in window ? Notification.permission : undefined;
+      if (permissionAfterRequest)
+        setPermissionState(permissionAfterRequest);
+      if (result === "subscribed") {
+        setPushState("subscribed");
+        setPreferences((current) =>
+          current ? { ...current, browserSubscription: "subscribed" } : current,
+        );
+        return;
+      }
+      if (result === "denied") {
+        setPushState("idle");
+        return;
+      }
+      if (result === "unsupported") {
+        setPermissionState("unsupported");
+        setPushState("idle");
+        return;
+      }
+      setPushState("error");
+    } catch {
+      if (isCurrent()) setPushState("error");
+    } finally {
+      if (isCurrent()) pushPendingRef.current = false;
     }
-    if (result === "denied") {
-      setPushState("idle");
-      return;
-    }
-    if (result === "unsupported") {
-      setPermissionState("unsupported");
-      setPushState("idle");
-      return;
-    }
-    setPushState("error");
   }
 
   async function signOut() {
@@ -839,6 +971,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                   type="checkbox"
                   role="switch"
                   checked={preferences[key]}
+                  disabled={preferencePending}
+                  aria-describedby={preferencePending ? "preference-save-status" : undefined}
                   onChange={(event) =>
                     void updatePreference(key, event.target.checked)
                   }
@@ -846,6 +980,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               </label>
             ))}
           </div>
+          {preferencePending && (
+            <p id="preference-save-status" className={styles.inlineStatus} role="status" aria-live="polite">
+              {t.preferenceSaving}
+            </p>
+          )}
           <div className={styles.pushRow}>
             <dl className={styles.stateList} aria-live="polite">
               <div>
@@ -901,8 +1040,30 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           <div className={styles.channelControls}>
             <h3>{t.connections}</h3>
             {connections.accounts.some((account) => account.provider === "google" && account.status === "connected") && <p>{t.googleReadOnly}</p>}
-            {(() => { const connected = connections.accounts.some((account) => account.provider === "kakao" && account.status === "connected"); return <button type="button" onClick={() => void toggleKakao(connected)}>{connected ? t.kakaoDisconnect : t.kakaoConnect}</button>; })()}
-            {connections.channels.map((channel) => <label key={channel.id}><span><strong>{channel.kind === "email" ? t.emailChannel : t.kakaoChannel}</strong><small>{channel.destinationLabel}{channel.status === "needs_verification" ? ` · ${t.needsEnrollment}` : ""}</small></span><input type="checkbox" role="switch" aria-label={channel.kind === "email" ? t.emailChannel : t.kakaoChannel} checked={channel.consented} disabled={channel.status !== "eligible"} onChange={(event) => void updateChannel(channel.id, event.target.checked)} /></label>)}
+            {(() => {
+              const connected = connections.accounts.some((account) => account.provider === "kakao" && account.status === "connected");
+              return (
+                <button type="button" disabled={connectionAction !== null} aria-busy={connectionAction?.startsWith("kakao") ?? false} onClick={() => void toggleKakao(connected)}>
+                  {connectionAction === "kakao-disconnect"
+                    ? t.kakaoDisconnecting
+                    : connectionAction === "kakao-connect"
+                      ? t.kakaoConnecting
+                      : connected
+                        ? t.kakaoDisconnect
+                        : t.kakaoConnect}
+                </button>
+              );
+            })()}
+            {connectionAction && (
+              <p id="connection-save-status" className={styles.inlineStatus} role="status" aria-live="polite">
+                {connectionAction === "channel"
+                  ? t.channelSaving
+                  : connectionAction === "kakao-disconnect"
+                    ? t.kakaoDisconnecting
+                    : t.kakaoConnecting}
+              </p>
+            )}
+            {connections.channels.map((channel) => <label key={channel.id}><span><strong>{channel.kind === "email" ? t.emailChannel : t.kakaoChannel}</strong><small>{channel.destinationLabel}{channel.status === "needs_verification" ? ` · ${t.needsEnrollment}` : ""}</small></span><input type="checkbox" role="switch" aria-label={channel.kind === "email" ? t.emailChannel : t.kakaoChannel} aria-describedby={connectionAction ? "connection-save-status" : undefined} checked={channel.consented} disabled={connectionAction !== null || channel.status !== "eligible"} onChange={(event) => void updateChannel(channel.id, event.target.checked)} /></label>)}
           </div>
         </section>
 

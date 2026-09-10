@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useSearchParams } from "next/navigation";
@@ -34,16 +34,19 @@ const ko = {
   title: "알림",
   subtitle: "놓치면 아쉬운 라이브와 팬 혜택 소식을 모았습니다.",
   all: "모두 읽음",
+  readingAll: "모두 읽는 중…",
   empty: "아직 도착한 알림이 없습니다.",
   emptyHelp: "라이브를 예약하면 시작 전 알림을 받을 수 있어요.",
   today: "오늘",
   previous: "이전 알림",
   enable: "브라우저 알림 켜기",
+  enabling: "알림 켜는 중…",
   permission: "알림은 예약 완료 뒤, 이 버튼을 선택할 때만 권한을 요청합니다.",
   subscribed: "브라우저 알림이 켜졌습니다.",
   denied: "브라우저 설정에서 알림 권한을 허용해 주세요.",
   unsupported: "이 브라우저는 푸시 알림을 지원하지 않습니다.",
   failed: "알림 설정을 저장하지 못했습니다.",
+  readAllFailed: "알림을 모두 읽음으로 표시하지 못했습니다. 다시 시도해 주세요.",
   signIn: "로그인 후 알림을 확인해 주세요.",
   retry: "다시 시도",
 };
@@ -66,20 +69,50 @@ function time(value: string) {
   ).format(new Date(value));
 }
 export function NotificationCenter() {
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, user, getAccessToken } = usePrivy();
+  const ownerId = user?.id ?? null;
   const params = useSearchParams();
   const locale = params.get("locale") === "en" ? "en" : "ko";
   const [state, setState] = useState<State>({ kind: "loading" });
   const [permission, setPermission] = useState<PushEnableResult | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"read-all" | "enable" | null>(null);
+  const [actionError, setActionError] = useState("");
+  const activeRef = useRef(true);
+  const ownerRef = useRef(ownerId);
+  const loadGenerationRef = useRef(0);
+  const actionPendingRef = useRef(false);
+  const actionGenerationRef = useRef(0);
+  useLayoutEffect(() => {
+    const ownerChanged = ownerRef.current !== ownerId;
+    activeRef.current = true;
+    ownerRef.current = ownerId;
+    loadGenerationRef.current += 1;
+    actionGenerationRef.current += 1;
+    actionPendingRef.current = false;
+    setPendingAction(null);
+    setActionError("");
+    if (ownerChanged) {
+      setState({ kind: "loading" });
+      setPermission(null);
+    }
+    return () => {
+      activeRef.current = false;
+      loadGenerationRef.current += 1;
+      actionGenerationRef.current += 1;
+      actionPendingRef.current = false;
+    };
+  }, [ownerId]);
   const load = useCallback(async () => {
     if (!ready) return;
     if (!authenticated) {
       setState({ kind: "auth" });
       return;
     }
+    const ownerAtStart = ownerId;
+    const generation = ++loadGenerationRef.current;
     try {
       const token = await getAccessToken();
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       if (!token) throw new Error();
       const response = await fetch(`/api/notifications?locale=${locale}`, {
         headers: { authorization: `Bearer ${token}` },
@@ -87,15 +120,17 @@ export function NotificationCenter() {
       });
       if (!response.ok) throw new Error();
       const data = notificationCollectionSchema.parse(await response.json());
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       setState({
         kind: "ready",
         items: data.notifications,
         unread: data.unreadCount,
       });
     } catch {
-      setState({ kind: "error" });
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === loadGenerationRef.current)
+        setState({ kind: "error" });
     }
-  }, [authenticated, getAccessToken, locale, ready]);
+  }, [authenticated, getAccessToken, locale, ownerId, ready]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -150,37 +185,71 @@ export function NotificationCenter() {
       );
   }
   async function readAll() {
-    setBusy(true);
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++actionGenerationRef.current;
+    setPendingAction("read-all");
+    setActionError("");
     try {
       const token = await getAccessToken();
-      if (!token) return;
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== actionGenerationRef.current) return;
+      if (!token) throw new Error("token");
       const response = await fetch("/api/notifications/read-all", {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
       });
-      if (response.ok)
-        setState((current) =>
-          current.kind === "ready"
-            ? {
-                kind: "ready",
-                items: current.items.map((item) => ({
-                  ...item,
-                  readAt: item.readAt ?? new Date().toISOString(),
-                })),
-                unread: 0,
-              }
-            : current,
-        );
+      if (!response.ok) throw new Error("response");
+      if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== actionGenerationRef.current) return;
+      setState((current) =>
+        current.kind === "ready"
+          ? {
+              kind: "ready",
+              items: current.items.map((item) => ({
+                ...item,
+                readAt: item.readAt ?? new Date().toISOString(),
+              })),
+              unread: 0,
+            }
+          : current,
+      );
+    } catch {
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === actionGenerationRef.current)
+        setActionError(ko.readAllFailed);
     } finally {
-      setBusy(false);
+      if (activeRef.current && ownerRef.current === ownerAtStart && generation === actionGenerationRef.current) {
+        actionPendingRef.current = false;
+        setPendingAction(null);
+      }
     }
   }
   async function enable() {
-    setBusy(true);
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++actionGenerationRef.current;
+    setPendingAction("enable");
+    setActionError("");
+    const isCurrent = () => activeRef.current
+      && ownerRef.current === ownerAtStart
+      && generation === actionGenerationRef.current;
     try {
-      setPermission(await enablePushNotifications(getAccessToken));
+      const guardedGetAccessToken = async () => {
+        if (!isCurrent()) return null;
+        const token = await getAccessToken();
+        return isCurrent() ? token : null;
+      };
+      const result = await enablePushNotifications(guardedGetAccessToken);
+      if (!isCurrent()) return;
+      setPermission(result);
+    } catch {
+      if (isCurrent())
+        setPermission("failed");
     } finally {
-      setBusy(false);
+      if (isCurrent()) {
+        actionPendingRef.current = false;
+        setPendingAction(null);
+      }
     }
   }
   const status =
@@ -209,12 +278,14 @@ export function NotificationCenter() {
         <button
           type="button"
           onClick={readAll}
-          disabled={busy || state.kind !== "ready" || state.unread === 0}
+          disabled={pendingAction !== null || state.kind !== "ready" || state.unread === 0}
+          aria-busy={pendingAction === "read-all"}
         >
           <CheckCheck aria-hidden="true" />
-          {ko.all}
+          {pendingAction === "read-all" ? ko.readingAll : ko.all}
         </button>
       </header>
+      {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
       <section className={styles.permission} aria-labelledby="permission-title">
         <div className={styles.permissionIcon}>
           <Bell aria-hidden="true" />
@@ -223,7 +294,7 @@ export function NotificationCenter() {
           <h2 id="permission-title">{ko.enable}</h2>
           <p>{ko.permission}</p>
           {status && (
-            <p className={styles.status} role="status">
+            <p className={styles.status} role={permission === "failed" ? "alert" : "status"}>
               {status}
             </p>
           )}
@@ -231,9 +302,10 @@ export function NotificationCenter() {
         <button
           type="button"
           onClick={enable}
-          disabled={busy || permission === "subscribed"}
+          disabled={pendingAction !== null || permission === "subscribed"}
+          aria-busy={pendingAction === "enable"}
         >
-          {permission === "subscribed" ? "켜짐" : ko.enable}
+          {pendingAction === "enable" ? ko.enabling : permission === "subscribed" ? "켜짐" : ko.enable}
         </button>
       </section>
       {state.kind === "loading" && (

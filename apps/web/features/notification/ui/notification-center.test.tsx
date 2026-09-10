@@ -1,9 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const { authState, getAccessToken, enablePushNotifications } = vi.hoisted(() => ({
-  authState: { ready: true, authenticated: true },
-  getAccessToken: vi.fn(async () => "token"),
-  enablePushNotifications: vi.fn(
+  authState: { ready: true, authenticated: true, user: { id: "owner-a" } },
+  getAccessToken: vi.fn<() => Promise<string | null>>(async () => "token"),
+  enablePushNotifications: vi.fn<
+    (getToken: () => Promise<string | null>) => Promise<"subscribed" | "denied" | "unsupported" | "failed">
+  >(
     async (): Promise<"subscribed" | "denied" | "unsupported" | "failed"> =>
       "subscribed",
   ),
@@ -18,11 +20,27 @@ vi.mock("next/navigation", () => ({
 vi.mock("./push-subscription", () => ({ enablePushNotifications }));
 import { NotificationCenter } from "./notification-center";
 
+const unreadCollection = {
+  notifications: [{
+    id: "22222222-2222-4222-8222-222222222222",
+    kind: "live_10m",
+    title: "KARA LIVE, 10분 후 시작해요",
+    detail: "곧 라이브가 시작됩니다.",
+    createdAt: "2026-09-04T08:12:34.000+00:00",
+    readAt: null,
+    deepLink: "/live/kara-live",
+  }],
+  unreadCount: 1,
+};
+
 describe("FAN-019 Notification Center", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.ready = true;
     authState.authenticated = true;
+    authState.user = { id: "owner-a" };
+    getAccessToken.mockReset().mockResolvedValue("token");
+    enablePushNotifications.mockReset().mockResolvedValue("subscribed");
     vi.stubGlobal(
       "fetch",
       vi.fn(
@@ -47,7 +65,7 @@ describe("FAN-019 Notification Center", () => {
     await waitFor(() =>
       expect(enablePushNotifications).toHaveBeenCalledTimes(1),
     );
-    expect(enablePushNotifications).toHaveBeenCalledWith(getAccessToken);
+    expect(enablePushNotifications).toHaveBeenCalledWith(expect.any(Function));
   });
   it("renders authenticated notification deep links and unread state", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
@@ -158,5 +176,103 @@ describe("FAN-019 Notification Center", () => {
       screen.getAllByRole("button", { name: "브라우저 알림 켜기" })[0],
     );
     expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it("guards read-all before a delayed token and shows a pending label", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    render(<NotificationCenter />);
+    await screen.findByText("KARA LIVE, 10분 후 시작해요");
+    let resolveToken!: (token: string) => void;
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+
+    const button = screen.getByRole("button", { name: "모두 읽음" });
+    fireEvent.click(button);
+    expect(screen.getByRole("button", { name: "모두 읽는 중…" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "모두 읽는 중…" }));
+    resolveToken("delayed-token");
+
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.filter(([url]) =>
+      String(url) === "/api/notifications/read-all",
+    )).toHaveLength(1));
+  });
+
+  it.each(["token", "http", "network"] as const)("announces read-all %s errors and allows retry", async (kind) => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    render(<NotificationCenter />);
+    await screen.findByText("KARA LIVE, 10분 후 시작해요");
+    if (kind === "token") getAccessToken.mockResolvedValueOnce(null);
+    if (kind === "http") vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 503 }));
+    if (kind === "network") vi.mocked(fetch).mockRejectedValueOnce(new Error("offline"));
+
+    fireEvent.click(screen.getByRole("button", { name: "모두 읽음" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("알림을 모두 읽음으로 표시하지 못했습니다. 다시 시도해 주세요.");
+    expect(screen.getByRole("button", { name: "모두 읽음" })).toBeEnabled();
+  });
+
+  it("guards push enablement, shows progress, and reports thrown failures", async () => {
+    render(<NotificationCenter />);
+    await screen.findByText("아직 도착한 알림이 없습니다.");
+    let rejectEnable!: () => void;
+    enablePushNotifications.mockImplementationOnce(() => new Promise((_, reject) => {
+      rejectEnable = () => reject(new Error("offline"));
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 켜기" }));
+    expect(screen.getByRole("button", { name: "알림 켜는 중…" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "알림 켜는 중…" }));
+    rejectEnable();
+    expect(await screen.findByRole("alert")).toHaveTextContent("알림 설정을 저장하지 못했습니다.");
+    expect(enablePushNotifications).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not send read-all after unmount while its token is pending", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    const view = render(<NotificationCenter />);
+    await screen.findByText("KARA LIVE, 10분 후 시작해요");
+    let resolveToken!: (token: string) => void;
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+    fireEvent.click(screen.getByRole("button", { name: "모두 읽음" }));
+    view.unmount();
+
+    await act(async () => {
+      resolveToken("late-token");
+      await Promise.resolve();
+    });
+    expect(vi.mocked(fetch).mock.calls.filter(([url]) =>
+      String(url) === "/api/notifications/read-all",
+    )).toHaveLength(0);
+  });
+
+  it("clears the previous owner's notifications before the next owner's GET resolves", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    const view = render(<NotificationCenter />);
+    await screen.findByText("KARA LIVE, 10분 후 시작해요");
+    vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined));
+
+    authState.user = { id: "owner-b" };
+    view.rerender(<NotificationCenter />);
+
+    expect(screen.queryByText("KARA LIVE, 10분 후 시작해요")).not.toBeInTheDocument();
+    expect(screen.getByText("알림을 불러오는 중입니다.")).toBeInTheDocument();
+  });
+
+  it("does not let the push helper obtain the next owner's token", async () => {
+    let tokenProvider!: () => Promise<string | null>;
+    let finishPush!: (result: "failed") => void;
+    enablePushNotifications.mockImplementationOnce((provider) => {
+      tokenProvider = provider;
+      return new Promise((resolve) => { finishPush = resolve; });
+    });
+    const view = render(<NotificationCenter />);
+    await screen.findByText("아직 도착한 알림이 없습니다.");
+    fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 켜기" }));
+    await waitFor(() => expect(tokenProvider).toBeTypeOf("function"));
+
+    authState.user = { id: "owner-b" };
+    view.rerender(<NotificationCenter />);
+    const tokenCallsAfterSwitch = getAccessToken.mock.calls.length;
+    await expect(tokenProvider()).resolves.toBeNull();
+    expect(getAccessToken).toHaveBeenCalledTimes(tokenCallsAfterSwitch);
+    finishPush("failed");
   });
 });

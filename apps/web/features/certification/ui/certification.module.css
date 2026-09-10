@@ -75,7 +75,8 @@
   border-bottom: 1px solid #e7e4e2;
 }
 .categories button {
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   flex: none;
   padding: 0 13px;
   border: 1px solid #ddd9d6;

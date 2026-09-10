@@ -78,6 +78,14 @@
   text-wrap: pretty;
 }
 
+.actionError {
+  margin: -16px 0 24px;
+  color: #9f2f24;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .pageHeading button,
 .permission button,
 .message button,

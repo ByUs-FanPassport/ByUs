@@ -1,14 +1,15 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   resolveBrowserPermissionState,
   SettingsScreen,
 } from "./settings-screen";
 
-const { enablePushNotifications } = vi.hoisted(() => ({
+const { authState, enablePushNotifications } = vi.hoisted(() => ({
+  authState: { user: { id: "owner-a" } },
   enablePushNotifications: vi.fn<
-    () => Promise<"subscribed" | "denied" | "unsupported" | "failed">
+    (getToken?: () => Promise<string | null>) => Promise<"subscribed" | "denied" | "unsupported" | "failed">
   >(async () => "subscribed"),
 }));
 
@@ -18,7 +19,7 @@ const router = { replace };
 const getAccessToken = vi.fn().mockResolvedValue("access-token");
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated: true, getAccessToken, logout }),
+  usePrivy: () => ({ ready: true, authenticated: true, user: authState.user, getAccessToken, logout }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
@@ -27,6 +28,14 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("../../notification/ui/push-subscription", () => ({
   enablePushNotifications,
+}));
+vi.mock("./use-avatar", () => ({
+  useAvatar: () => ({
+    state: { status: "error" as const },
+    refresh: vi.fn(),
+    ownerId: authState.user.id,
+    getAccessToken,
+  }),
 }));
 
 const settings = {
@@ -95,9 +104,11 @@ function setBrowserCapabilities({
 
 describe("FAN-020 settings", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    authState.user = { id: "owner-a" };
     logout.mockReset().mockResolvedValue(undefined);
     replace.mockClear();
-    getAccessToken.mockClear();
+    getAccessToken.mockReset().mockResolvedValue("access-token");
     enablePushNotifications.mockReset();
     enablePushNotifications.mockResolvedValue("subscribed");
     preferences = {
@@ -311,10 +322,11 @@ describe("FAN-020 settings", () => {
   });
 
   it("leaves loading for a retryable error when the initial access token is missing", async () => {
-    getAccessToken.mockResolvedValueOnce(null).mockResolvedValue("access-token");
+    getAccessToken.mockResolvedValue(null);
     render(<SettingsScreen locale="ko" />);
 
     expect(await screen.findByText("설정을 불러오지 못했어요. 다시 시도해 주세요.")).toBeInTheDocument();
+    getAccessToken.mockResolvedValue("access-token");
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     expect(await screen.findByText("Kamilia")).toBeInTheDocument();
   });
@@ -511,6 +523,163 @@ describe("FAN-020 settings", () => {
       ),
     );
     expect(replace).toHaveBeenCalledWith("/settings?locale=en");
+  });
+
+  it("locks and serializes preference switches before a delayed token resolves", async () => {
+    let resolveToken!: (token: string) => void;
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+
+    const survey = screen.getByRole("switch", { name: "설문 참여 알림" });
+    fireEvent.click(survey);
+    expect(survey).toBeChecked();
+    expect(screen.getByText("알림 설정을 저장하는 중…")).toBeInTheDocument();
+    for (const control of screen.getAllByRole("switch", { name: /알림$/ }))
+      expect(control).toBeDisabled();
+    fireEvent.click(survey);
+
+    resolveToken("delayed-token");
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.filter(([url, init]) =>
+      String(url) === "/api/notifications/preferences" && init?.method === "PATCH",
+    )).toHaveLength(1));
+  });
+
+  it("rolls back only the failed preference field and preserves browser subscription changes", async () => {
+    let rejectPreference!: () => void;
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences" && init?.method === "PATCH")
+        return new Promise<Response>((_, reject) => { rejectPreference = () => reject(new Error("offline")); });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    fireEvent.click(screen.getByRole("switch", { name: "설문 참여 알림" }));
+    await waitFor(() => expect(rejectPreference).toBeTypeOf("function"));
+    fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 연결" }));
+    expect(await screen.findByText("등록된 브라우저 알림이 있어요.")).toBeInTheDocument();
+    rejectPreference();
+    await waitFor(() => expect(screen.getByRole("switch", { name: "설문 참여 알림" })).not.toBeChecked());
+    expect(screen.getByText("등록된 브라우저 알림이 있어요.")).toBeInTheDocument();
+  });
+
+  it("shares a connection-group lock between channel consent and Kakao", async () => {
+    let resolveToken!: (token: string) => void;
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+    fireEvent.click(screen.getByRole("switch", { name: "Email 수신" }));
+
+    expect(screen.getByRole("button", { name: "Kakao 연결 해제" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Email 수신" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Kakao 수신" })).toBeDisabled();
+    expect(screen.getByText("수신 채널을 저장하는 중…")).toBeInTheDocument();
+    resolveToken("delayed-token");
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/me/notification-channels",
+      expect.objectContaining({ method: "PATCH" }),
+    ));
+  });
+
+  it("keeps the settings screen visible while disconnecting Kakao and refreshes only connections", async () => {
+    let finishDelete!: () => void;
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections });
+      if (url === "/api/me/connected-accounts/kakao" && init?.method === "DELETE")
+        return new Promise<Response>((resolve) => { finishDelete = () => resolve(new Response(null, { status: 204 })); });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    const initialSettingsGets = vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/settings").length;
+    const initialPreferenceGets = vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/notifications/preferences").length;
+    fireEvent.click(screen.getByRole("button", { name: "Kakao 연결 해제" }));
+    expect(screen.getByRole("button", { name: "Kakao 연결 해제 중…" })).toBeDisabled();
+    expect(screen.getByRole("heading", { name: "설정" })).toBeInTheDocument();
+    await waitFor(() => expect(finishDelete).toBeTypeOf("function"));
+    finishDelete();
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/notification-channels").length).toBe(2));
+    expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/settings")).toHaveLength(initialSettingsGets);
+    expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/notifications/preferences")).toHaveLength(initialPreferenceGets);
+  });
+
+  it("does not mutate the next owner after the previous owner's token resolves", async () => {
+    let resolveToken!: (token: string) => void;
+    const view = render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+    fireEvent.click(screen.getByRole("switch", { name: "설문 참여 알림" }));
+    authState.user = { id: "owner-b" };
+    view.rerender(<SettingsScreen locale="ko" />);
+    resolveToken("stale-token");
+    await waitFor(() => expect(screen.getByRole("switch", { name: "설문 참여 알림" })).toBeEnabled());
+    expect(vi.mocked(fetch).mock.calls.filter(([url, init]) =>
+      String(url) === "/api/notifications/preferences" && init?.method === "PATCH",
+    )).toHaveLength(0);
+  });
+
+  it.each([
+    ["preference", "설문 참여 알림", "/api/notifications/preferences", "PATCH"],
+    ["channel", "Email 수신", "/api/me/notification-channels", "PATCH"],
+    ["Kakao", "Kakao 연결 해제", "/api/me/connected-accounts/kakao", "DELETE"],
+  ] as const)("does not send a deferred %s mutation after unmount", async (_kind, name, endpoint, method) => {
+    const view = render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    let resolveToken!: (token: string) => void;
+    getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
+    fireEvent.click(name.includes("수신") || name.includes("알림")
+      ? screen.getByRole("switch", { name })
+      : screen.getByRole("button", { name }));
+    view.unmount();
+
+    await act(async () => {
+      resolveToken("late-token");
+      await Promise.resolve();
+    });
+    expect(vi.mocked(fetch).mock.calls.filter(([url, init]) =>
+      String(url) === endpoint && init?.method === method,
+    )).toHaveLength(0);
+  });
+
+  it("clears the previous owner's private settings before the next owner's GET resolves", async () => {
+    const view = render(<SettingsScreen locale="ko" />);
+    await screen.findByText("Kamilia");
+    expect(screen.getByText("k***@example.com")).toBeInTheDocument();
+    vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined));
+
+    authState.user = { id: "owner-b" };
+    view.rerender(<SettingsScreen locale="ko" />);
+
+    expect(screen.queryByText("Kamilia")).not.toBeInTheDocument();
+    expect(screen.queryByText("k***@example.com")).not.toBeInTheDocument();
+    expect(screen.getByText("설정을 불러오는 중")).toBeInTheDocument();
+  });
+
+  it("gives the push helper an owner-guarded token provider", async () => {
+    let tokenProvider!: () => Promise<string | null>;
+    let finishPush!: (result: "failed") => void;
+    enablePushNotifications.mockImplementationOnce((provider) => {
+      tokenProvider = provider!;
+      return new Promise((resolve) => { finishPush = resolve; });
+    });
+    const view = render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 연결" }));
+    await waitFor(() => expect(tokenProvider).toBeTypeOf("function"));
+
+    authState.user = { id: "owner-b" };
+    view.rerender(<SettingsScreen locale="ko" />);
+    const tokenCallsAfterSwitch = getAccessToken.mock.calls.length;
+    await expect(tokenProvider()).resolves.toBeNull();
+    expect(getAccessToken).toHaveBeenCalledTimes(tokenCallsAfterSwitch);
+    finishPush("failed");
   });
 
   it("keeps the current language and allows retry when locale persistence fails", async () => {

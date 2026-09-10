@@ -25,7 +25,9 @@ export function useOwnedFanResource<T>(
   const key = `${ready}:${authenticated}:${ownerId ?? ""}:${url ?? ""}`;
   const [snapshot, setSnapshot] = useState<{ key: string; state: ResourceState<T>; refreshFailed: boolean }>();
   const refreshRef = useRef<() => void>(() => {});
+  const replaceRef = useRef<(data: T) => void>(() => {});
   const retry = useCallback(() => refreshRef.current(), []);
+  const replaceData = useCallback((data: T) => replaceRef.current(data), []);
 
   useEffect(() => {
     if (!ready || !authenticated || !url) return;
@@ -33,6 +35,7 @@ export function useOwnedFanResource<T>(
     let inFlight = false;
     let requestedAgain = false;
     let data: T | undefined;
+    let dataVersion = 0;
     let failures = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let controller: AbortController | undefined;
@@ -44,6 +47,7 @@ export function useOwnedFanResource<T>(
       if (inFlight) { requestedAgain = true; return; }
       clearTimeout(timer);
       inFlight = true;
+      const versionAtStart = dataVersion;
       controller = new AbortController();
       if (data === undefined) publish({ status: "loading" });
       try {
@@ -53,7 +57,7 @@ export function useOwnedFanResource<T>(
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal,
         });
-        if (!active) return;
+        if (!active || versionAtStart !== dataVersion) return;
         if (response.status === 401 || response.status === 403 || response.status === 404) {
           data = undefined;
           publish({ status: "error", kind: response.status === 404 ? "missing" : "auth" });
@@ -61,12 +65,12 @@ export function useOwnedFanResource<T>(
         }
         if (!response.ok) throw new Error("Owned resource unavailable");
         const next = parse(await response.json());
-        if (!active) return;
+        if (!active || versionAtStart !== dataVersion) return;
         data = next;
         failures = 0;
         publish({ status: "ready", data: next });
       } catch {
-        if (!active) return;
+        if (!active || versionAtStart !== dataVersion) return;
         failures += 1;
         publish(data === undefined ? { status: "error", kind: "network" } : { status: "ready", data }, data !== undefined);
       } finally {
@@ -83,6 +87,13 @@ export function useOwnedFanResource<T>(
     };
     const refresh = () => { void load(); };
     refreshRef.current = refresh;
+    // A validated mutation response is authoritative over reads started before it.
+    replaceRef.current = (next) => {
+      dataVersion += 1;
+      data = next;
+      failures = 0;
+      publish({ status: "ready", data: next });
+    };
     const unsubscribe = subscribeFanActivityUpdates(ownerId, refresh);
     void load();
     return () => {
@@ -91,6 +102,7 @@ export function useOwnedFanResource<T>(
       clearTimeout(timer);
       unsubscribe();
       refreshRef.current = () => {};
+      replaceRef.current = () => {};
     };
   }, [authenticated, getAccessToken, key, ownerId, parse, ready, shouldPoll, url]);
 
@@ -98,5 +110,5 @@ export function useOwnedFanResource<T>(
     : !authenticated ? { status: "error", kind: "auth" }
     : !url ? { status: "error", kind: "missing" }
     : snapshot?.key === key ? snapshot.state : { status: "loading" };
-  return { state, retry, refreshFailed: snapshot?.key === key && snapshot.refreshFailed };
+  return { state, retry, replaceData, refreshFailed: snapshot?.key === key && snapshot.refreshFailed };
 }
