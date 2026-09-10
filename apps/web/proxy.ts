@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requestLocale } from "./components/locale-path";
 
 export function proxy(request: NextRequest): NextResponse {
   if (!request.nextUrl.pathname.startsWith("/api/admin/")) {
@@ -6,7 +7,7 @@ export function proxy(request: NextRequest): NextResponse {
       request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/");
     const queryKey = isAdminPage ? "lang" : "locale";
     const requestedLocale = request.nextUrl.searchParams.get(queryKey);
-    const locale = requestedLocale === "en" ? "en" : "ko";
+    const locale = requestLocale(request.nextUrl.pathname, requestedLocale, request.cookies.get("byus_locale")?.value);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-byus-locale", locale);
     return NextResponse.next({ request: { headers: requestHeaders } });
@@ -28,6 +29,6 @@ export function proxy(request: NextRequest): NextResponse {
 export const config = {
   matcher: [
     "/api/admin/:path*",
-    "/((?!api/|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|images/).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|sw.js|images/).*)",
   ],
 };

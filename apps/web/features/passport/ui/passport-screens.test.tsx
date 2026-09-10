@@ -31,6 +31,16 @@ describe("passport fan screens", () => {
     });
   });
 
+  it.each([
+    ["ko", "패스포트 불러오는 중"],
+    ["en", "Loading Passport"],
+  ] as const)("localizes the %s Passport loading status", (selectedLocale, name) => {
+    locale = selectedLocale;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+    render(<PassportCollectionScreen />);
+    expect(screen.getByRole("status", { name })).toHaveAttribute("aria-busy", "true");
+  });
+
   it("renders only the owned issued collection and retains locale in canonical detail links", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passports: [passport] }), { status: 200 })));
     const { container } = render(<PassportCollectionScreen />);
@@ -431,7 +441,7 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
     render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    expect(await screen.findByRole("dialog", { name: "Stamp 상세" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "스탬프 상세" })).toBeInTheDocument();
     fireEvent.click(screen.getByText("디지털 발급 정보"));
     expect(screen.getByRole("link", {
       name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
@@ -449,10 +459,25 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
     render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    const overlay = await screen.findByRole("dialog", { name: "Stamp 상세" });
+    const overlay = await screen.findByRole("dialog", { name: "스탬프 상세" });
     await waitFor(() => expect(overlay).toHaveAttribute("data-variant", "bottom-sheet"));
     fireEvent.keyDown(document, { key: "Escape" });
     expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  it("announces an intercepted Stamp overlay in English", async () => {
+    locale = "en";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      stamp: {
+        ...stampDetail,
+        activity: { ...stampDetail.activity, display: { type: "Fan Verification" } },
+        display: { type: "Fan Verification", mintStatus: "Issued" },
+      },
+    })));
+    render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByRole("dialog", { name: "Stamp details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close details" })).toBeInTheDocument();
   });
 
   it("offers recovery for partial API failure and a locale-preserving retry", async () => {

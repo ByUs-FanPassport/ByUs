@@ -13,7 +13,7 @@ export function FanActivityPanel({ slug, locale }: { slug: string; locale: "ko" 
   return <FanActivityContent key={`${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${slug}`} slug={slug} locale={locale} auth={auth} />;
 }
 function FanActivityContent({ slug, locale, auth }: { slug: string; locale: "ko" | "en"; auth: ReturnType<typeof usePrivy> }) {
-  const resource = useFanpageResource(`/api/celebrities/${slug}/fanpage`, parse, true);
+  const resource = useFanpageResource(`/api/celebrities/${slug}/fanpage?locale=${locale}`, parse, true);
   const visibility = useOwnedFanResource("/api/me/fan-activity-visibility", parseVisibility, auth);
   const [optimistic, setOptimistic] = useState<boolean>();
   const [failed, setFailed] = useState(false);

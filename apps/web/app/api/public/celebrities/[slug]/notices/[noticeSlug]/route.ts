@@ -1,14 +1,15 @@
 import { publicContentCacheHeaders } from "../../../../../../../server/cache/public-content-cache";
 import { loadServerEnv } from "../../../../../../../server/config/env";
-import { noticeLocaleSchema } from "../../../../../../../server/notice/notice-domain";
+import { parseNoticeLocaleParams } from "../../../../../../../server/notice/notice-domain";
 import { createNoticeRepository } from "../../../../../../../server/notice/notice-repository";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request, context: { params: Promise<{ slug: string; noticeSlug: string }> }) {
+  const locale = parseNoticeLocaleParams(new URL(request.url).searchParams);
+  if (!locale) return Response.json({ error: { code: "INVALID_LOCALE" } }, { status: 400 });
   try {
     const { slug, noticeSlug } = await context.params;
-    const locale = noticeLocaleSchema.parse(new URL(request.url).searchParams.get("locale") ?? "ko");
     const env = loadServerEnv();
     const repository = createNoticeRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY });
     const notice = await repository.findPublic({ celebritySlug: slug, noticeSlug, locale });

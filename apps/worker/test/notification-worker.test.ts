@@ -12,6 +12,7 @@ const delivery: NotificationDelivery = {
   id: "11111111-1111-4111-8111-111111111111",
   notificationId: "22222222-2222-4222-8222-222222222222",
   kind: "live_10m",
+  locale: "ko",
   endpoint: "https://push.example/sub",
   p256dh: "p".repeat(40),
   authSecret: "a".repeat(16),

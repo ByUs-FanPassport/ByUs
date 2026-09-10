@@ -1,3 +1,4 @@
+import { withLocalePath } from "./locale-path";
 import { z } from "zod";
 
 export const authActionTypeSchema = z.enum([
@@ -215,7 +216,7 @@ export function authIntentReturnTo(intent: AuthIntent): string {
 
 export function buildAuthLoginHref(intent: AuthIntent, locale: "ko" | "en"): string {
   const query = new URLSearchParams({
-    returnTo: authIntentReturnTo(intent),
+    returnTo: withLocalePath(authIntentReturnTo(intent), locale),
     locale,
     intent: legacyIntentForAction(intent.actionType),
     entity: intent.targetId,

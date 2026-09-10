@@ -30,6 +30,7 @@ import {
 import { formatFanCount } from "./fan-ui/fan-count";
 import { type PassportStampRecord } from "../features/passport/ui/passport-stamp-artwork";
 import { PassportIdentityArtwork } from "../features/passport/ui/passport-identity-artwork";
+import { levelLabel, type PassportLevel } from "../features/passport/domain/passport-read-model";
 import { FanSectionHeader } from "./fan-ui/fan-heading";
 import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
 import { fanStageLabel } from "../features/rewards/domain/fan-stage";
@@ -61,17 +62,15 @@ function formatLiveDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value));
 }
 
-function formatPassportTier(tier: string, locale: ContentLocale) {
-  if (locale === "en") return tier;
-  const koreanTier: Record<string, string> = { Bronze: "브론즈", Silver: "실버", Gold: "골드" };
-  return koreanTier[tier] ?? tier;
+export function formatPassportTier(tier: PassportLevel, locale: ContentLocale) {
+  return levelLabel(locale, tier);
 }
 
 function formatPassportTitle(name: string, locale: ContentLocale) {
   return locale === "ko" ? `${name} 패스포트` : `${name} Fan Passport`;
 }
 
-function formatPassportValue(tier: string, score: number, locale: ContentLocale, stage?: NonNullable<MySummary["creators"][number]["passport"]>["stageProgress"]) {
+function formatPassportValue(tier: PassportLevel, score: number, locale: ContentLocale, stage?: NonNullable<MySummary["creators"][number]["passport"]>["stageProgress"]) {
   const tierName = stage ? fanStageLabel(locale, stage.current) : formatPassportTier(tier, locale);
   return locale === "ko"
     ? `${tierName} · ${score}점`

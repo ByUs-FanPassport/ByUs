@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalePath } from "./locale-path";
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,7 @@ import { rememberOverlayTrigger } from "./ui/overlay/focus-return";
 function fallbackHref(input: CreateAuthIntentInput, locale: "ko" | "en"): string {
   const returnTo = `${input.sourcePath}${input.sourceQuery}${input.returnAnchor ?? ""}`;
   const query = new URLSearchParams({
-    returnTo,
+    returnTo: withLocalePath(returnTo, locale),
     locale,
     intent: legacyIntentForAction(input.actionType),
     entity: input.targetId,
@@ -42,7 +43,7 @@ export function resolveAuthIntentHref(
 ): string | undefined {
   if (!state.ready) return undefined;
   return state.authenticated
-    ? sourceHref(input)
+    ? withLocalePath(sourceHref(input), locale)
     : fallbackHref(input, locale);
 }
 
@@ -53,7 +54,7 @@ export function resolveAuthIntentDestination(
 ): string | null {
   if (!state.ready) return null;
   return state.authenticated
-    ? authIntentReturnTo(intent)
+    ? withLocalePath(authIntentReturnTo(intent), locale)
     : buildAuthLoginHref(intent, locale);
 }
 

@@ -1,3 +1,5 @@
+import { withLocalePath } from "./locale-path";
+
 const allowedIntents = new Set(["reserve", "attendance", "survey", "benefit-claim", "benefit-application", "passport", "youtube", "tiktok", "instagram"]);
 
 export type LoginContext = {
@@ -41,7 +43,7 @@ export function sanitizeAuthIntentId(value: string | null | undefined): string |
 }
 
 export function appendLoginContext(pathname: string, context: LoginContext): string {
-  const query = new URLSearchParams({ returnTo: context.returnTo, locale: context.locale });
+  const query = new URLSearchParams({ returnTo: withLocalePath(sanitizeReturnTo(context.returnTo), context.locale), locale: context.locale });
   if (context.intent) query.set("intent", context.intent);
   if (context.entity) query.set("entity", context.entity);
   if (context.authIntent) query.set("authIntent", context.authIntent);

@@ -55,6 +55,7 @@ export const legalDocuments = {
             "팬 인증 참여와 결과, Fan Passport 및 Stamp 발급·상태 정보",
             "LIVE 예약·출석·설문 참여 정보",
             "혜택 신청·수령·사용 상태와 알림 설정·구독 정보",
+            "실물 혜택 배송 또는 현장 수령을 위한 이름·연락처와, 배송 시 우편번호·주소",
             "수동 팬 인증을 위해 직접 제출한 설명·증빙 이미지, 제출·심사 상태와 보상 기록",
             "공지 댓글 본문, 공개 닉네임·캐릭터, 팬 순위와 선택적으로 공개한 팬 활동",
             "프로계정 소유자가 Instagram 연결에 동의한 경우 계정 ID·사용자명, 암호화한 접근 토큰과 만료시각, 최근 게시물의 설명·게시시각·원본 링크·미디어 주소",
@@ -75,7 +76,7 @@ export const legalDocuments = {
         },
         {
           heading: "3. 보유 및 이용 기간",
-          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 다만 관계 법령에서 일정 기간 보관을 요구하거나 분쟁·보안 대응을 위해 필요한 경우에는 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
+          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 다만 관계 법령에서 일정 기간 보관을 요구하거나 분쟁·보안 대응을 위해 필요한 경우에는 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
         },
         {
           heading: "4. 외부 서비스 이용",
@@ -119,6 +120,7 @@ export const legalDocuments = {
             "Fan verification participation and results, and Fan Passport and Stamp issuance and status information",
             "LIVE reservations, attendance, and survey participation information",
             "Benefit application, receipt, and usage status, and notification settings and subscription information",
+            "Name and phone number for physical reward delivery or on-site pickup, plus postal code and address when shipping is required",
             "Descriptions and evidence images you submit for manual fan verification, review status, and reward records",
             "Notice comments, public nicknames and characters, fan rankings, and fan activity you choose to make public",
             "When a professional account owner consents to Instagram connection: account ID and username, encrypted access token and expiry time, and recent post captions, timestamps, original links, and media URLs",
@@ -139,7 +141,7 @@ export const legalDocuments = {
         },
         {
           heading: "3. Retention and Use Period",
-          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. If applicable laws require retention for a certain period, or if information is needed to resolve a dispute or respond to a security incident, we may store it separately for the scope and period necessary for that purpose."],
+          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If applicable laws require retention for a certain period, or if information is needed to resolve a dispute or respond to a security incident, we may store it separately for the scope and period necessary for that purpose."],
         },
         {
           heading: "4. Use of External Services",

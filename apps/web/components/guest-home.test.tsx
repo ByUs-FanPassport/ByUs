@@ -4,7 +4,7 @@ import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatKoreanLiveDate, GuestHome } from "./guest-home";
+import { formatKoreanLiveDate, formatPassportTier, GuestHome } from "./guest-home";
 import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
 import { notifyFanActivityUpdated } from "./fan-ui/fan-activity-updates";
 
@@ -60,6 +60,13 @@ describe("canonical 03 guest home", () => {
   it("formats KST deterministically without server locale AM/PM variation", () => {
     expect(formatKoreanLiveDate("2026-07-24T00:05:00.000Z")).toBe("7월 24일 오전 9:05");
     expect(formatKoreanLiveDate("2026-07-24T11:00:00.000Z")).toBe("7월 24일 오후 8:00");
+  });
+
+  it("reuses the complete tier labels when Home receives a legacy Passport without stage data", () => {
+    expect((["Bronze", "Silver", "Gold", "Platinum", "Diamond"] as const).map((tier) =>
+      formatPassportTier(tier, "ko"),
+    )).toEqual(["브론즈", "실버", "골드", "플래티넘", "다이아몬드"]);
+    expect(formatPassportTier("Diamond", "en")).toBe("Diamond");
   });
 
   it("formats the DESIGN countdown contract with and without a day prefix", () => {

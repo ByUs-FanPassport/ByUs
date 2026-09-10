@@ -38,19 +38,23 @@ self.addEventListener("push", (event) => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; } catch {}
   const notificationId = typeof payload.notificationId === "string" && /^[0-9a-f-]{36}$/.test(payload.notificationId) ? payload.notificationId : null;
-  const title = typeof payload.title === "string" ? payload.title : "ByUs 알림";
-  const body = typeof payload.body === "string" ? payload.body : "새 알림을 확인해 주세요.";
+  const locale = payload.locale === "en" ? "en" : "ko";
+  const title = typeof payload.title === "string" ? payload.title : locale === "en" ? "ByUs notification" : "ByUs 알림";
+  const body = typeof payload.body === "string" ? payload.body : locale === "en" ? "Review your new notification." : "새 알림을 확인해 주세요.";
   event.waitUntil(self.registration.showNotification(title, {
     body, icon: "/byus-app-icon-192.png", badge: "/byus-app-icon-192.png",
     tag: notificationId ? `notification:${notificationId}` : "byus-notification",
-    data: { notificationId },
+    data: { notificationId, locale },
   }));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const id = event.notification.data?.notificationId;
-  const path = id && /^[0-9a-f-]{36}$/.test(id) ? `/notifications?open=${encodeURIComponent(id)}` : "/notifications";
+  const locale = event.notification.data?.locale === "en" ? "en" : "ko";
+  const path = id && /^[0-9a-f-]{36}$/.test(id)
+    ? `/notifications?open=${encodeURIComponent(id)}&locale=${locale}`
+    : `/notifications?locale=${locale}`;
   event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
     const target = new URL(path, self.location.origin).href;
     for (const client of windows) {

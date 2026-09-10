@@ -23,6 +23,11 @@ async function optionalOwner(request: Request, dependencies: FanpageDependencies
   return authorization === null ? null : (await dependencies.authorize(authorization)).appUserId;
 }
 const cursorSchema = z.object({ at: z.iso.datetime({ offset: true }), id: z.uuid() }).strict();
+function locale(request: Request): "ko" | "en" {
+  const values = new URL(request.url).searchParams.getAll("locale");
+  if (values.length > 1) throw new Error("FANPAGE_INVALID_REQUEST");
+  return z.enum(["ko", "en"]).parse(values[0] ?? "ko");
+}
 function parseResult<T>(schema: z.ZodType<T>, result: unknown): T {
   const parsed = schema.safeParse(result);
   if (!parsed.success) throw new Error("FANPAGE_INVALID_RESPONSE");
@@ -60,7 +65,7 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
         celebritySlugSchema.parse(slug);
         // Reject invalid credentials even though this payload itself is public.
         await optionalOwner(request, dependencies);
-        const result = await dependencies.rpc("read_celebrity_fanpage", { p_slug: slug });
+        const result = await dependencies.rpc("read_celebrity_fanpage", { p_slug: slug, p_locale: locale(request) });
         if (!result) return fanpageJson({ error: { code: "FANPAGE_NOT_FOUND" } }, 404);
         return fanpageJson(parseResult(fanpageSummarySchema, result));
       } catch (error) { return fanpageFailure(error); }
@@ -69,7 +74,7 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
       try {
         celebritySlugSchema.parse(slug);
         const owner = await optionalOwner(request, dependencies);
-        const result = await dependencies.rpc("read_celebrity_fan_leaderboard", { p_slug: slug, p_app_user_id: owner });
+        const result = await dependencies.rpc("read_celebrity_fan_leaderboard", { p_slug: slug, p_app_user_id: owner, p_locale: locale(request) });
         if (!result) return fanpageJson({ error: { code: "FANPAGE_NOT_FOUND" } }, 404);
         const body = parseResult(leaderboardSchema, result);
         if (!body.available) return fanpageJson({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: body.membershipCount }, 403);
@@ -81,11 +86,12 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
         celebritySlugSchema.parse(slug); celebritySlugSchema.parse(noticeSlug);
         const owner = await optionalOwner(request, dependencies);
         const url = new URL(request.url);
+        const contentLocale = locale(request);
         const limit = z.coerce.number().int().min(1).max(50).parse(url.searchParams.get("limit") ?? 20);
         const cursor = url.searchParams.get("cursor");
         const before = cursor ? cursorSchema.parse(JSON.parse(Buffer.from(z.string().max(240).parse(cursor), "base64url").toString("utf8"))) : null;
         const result = await dependencies.rpc("read_celebrity_notice_comments", {
-          p_slug: slug, p_notice_slug: noticeSlug, p_app_user_id: owner, p_limit: limit, p_before: before?.at ?? null, p_before_id: before?.id ?? null,
+          p_slug: slug, p_notice_slug: noticeSlug, p_app_user_id: owner, p_limit: limit, p_before: before?.at ?? null, p_before_id: before?.id ?? null, p_locale: contentLocale,
         });
         if (!result) return fanpageJson({ error: { code: "FANPAGE_NOT_FOUND" } }, 404);
         const body = parseResult(commentsSchema, result);

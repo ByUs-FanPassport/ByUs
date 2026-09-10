@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseNoticeDocument } from "./notice-domain";
+import { parseNoticeDocument, parseNoticeLocaleParams } from "./notice-domain";
+
+describe("Notice locale query", () => {
+  it("defaults to Korean and rejects invalid or duplicate values", () => {
+    expect(parseNoticeLocaleParams(new URLSearchParams())).toBe("ko");
+    expect(parseNoticeLocaleParams(new URLSearchParams("locale=en"))).toBe("en");
+    expect(parseNoticeLocaleParams(new URLSearchParams("locale=fr"))).toBeNull();
+    expect(parseNoticeLocaleParams(new URLSearchParams("locale=ko&locale=en"))).toBeNull();
+  });
+});
 
 describe("Notice rich-text contract", () => {
   it("accepts the supported Tiptap document set", () => {

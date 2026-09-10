@@ -42,6 +42,7 @@ import {
   readAuthIntent,
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
+import { withLocalePath } from "@/components/locale-path";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import {
   FanAction,
@@ -982,7 +983,7 @@ export function LiveEventScreen({
     <FanAppFrame locale={locale} mainId="live-detail-main" currentPath={`/live/${slug}`}>
       <div className={styles.page}>
       <FanContentContainer as="main" id="live-detail-main" className={styles.main} tabIndex={-1}>
-        <Link className={styles.back} href="/">
+        <Link className={styles.back} href={withLocalePath("/live", locale) as Route}>
           <ArrowLeft aria-hidden="true" />
           {c.back}
         </Link>
@@ -1154,7 +1155,7 @@ export function LiveEventScreen({
                     : collectible.eligible
                       ? locale === "ko" ? "Journey를 완료했어요. 종료 후 48시간 안에 받아보세요." : "Journey complete. Claim within 48 hours after the LIVE."
                       : locale === "ko" ? "Journey 완료와 LIVE 종료 후 받을 수 있어요." : "Available after completing the Journey and the LIVE ends."}</p>
-                  <small>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(collectible.claimWindow.until))}{locale === "ko" ? "까지" : " deadline"}</small>
+                  <small>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST{locale === "ko" ? "까지" : " deadline"}</small>
                 </div>
                 {!collectible.claim && collectible.eligible ? (
                   <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>

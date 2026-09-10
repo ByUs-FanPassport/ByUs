@@ -1,6 +1,10 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { RecipientInput } from "../../features/benefit/domain/fulfillment";
+import {
+  recipientSaveResultSchema,
+  type RecipientInput,
+  type RecipientSaveResult,
+} from "../../features/benefit/domain/fulfillment";
 
 export interface BenefitFulfillmentRepository {
   saveRecipient(input: {
@@ -8,7 +12,7 @@ export interface BenefitFulfillmentRepository {
     winnerId: string;
     correlationId: string;
     recipient: RecipientInput;
-  }): Promise<Record<string, unknown>>;
+  }): Promise<RecipientSaveResult>;
 }
 type RpcClient = Pick<SupabaseClient, "rpc">;
 export function createSupabaseBenefitFulfillmentRepository(
@@ -31,7 +35,7 @@ export function createSupabaseBenefitFulfillmentRepository(
         p_address2: input.recipient.address2 ?? null,
       });
       if (error) throw new Error(error.message);
-      return data as Record<string, unknown>;
+      return recipientSaveResultSchema.parse(data);
     },
   };
 }

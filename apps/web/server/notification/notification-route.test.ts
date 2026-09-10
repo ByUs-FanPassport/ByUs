@@ -61,8 +61,25 @@ describe("notification routes", () => {
     expect(deps.repository.list).toHaveBeenCalledWith({
       appUserId: "11111111-1111-4111-8111-111111111111",
       locale: "ko",
+      recipientLinks: false,
     });
     expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+  it("opts into recipient routes only with one exact query flag", async () => {
+    const deps = dependencies();
+    await createGetNotificationsHandler(deps)(new Request(
+      "https://byus.example/notifications?locale=en&recipientLinks=1",
+      { headers: { authorization: "Bearer token" } },
+    ));
+    expect(deps.repository.list).toHaveBeenLastCalledWith(expect.objectContaining({
+      locale: "en",
+      recipientLinks: true,
+    }));
+    await createGetNotificationsHandler(deps)(new Request(
+      "https://byus.example/notifications?recipientLinks=1&recipientLinks=1",
+      { headers: { authorization: "Bearer token" } },
+    ));
+    expect(deps.repository.list).toHaveBeenLastCalledWith(expect.objectContaining({ recipientLinks: false }));
   });
   it("scopes read mutations to the owner", async () => {
     const deps = dependencies();

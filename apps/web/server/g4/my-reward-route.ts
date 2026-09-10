@@ -11,7 +11,7 @@ export interface MyRewardRouteDependencies {
 
 const headers = { "cache-control": "no-store", vary: "Authorization" } as const;
 
-function error(status: 401 | 403 | 503, code: string): Response {
+function error(status: 400 | 401 | 403 | 503, code: string): Response {
   return Response.json({ error: { code } }, { status, headers });
 }
 
@@ -19,6 +19,10 @@ export function createMyRewardsHandler(
   dependencies: MyRewardRouteDependencies,
 ) {
   return async (request: Request): Promise<Response> => {
+    const localeValues = new URL(request.url).searchParams.getAll("locale");
+    if (localeValues.length > 1 || (localeValues[0] !== undefined && localeValues[0] !== "ko" && localeValues[0] !== "en"))
+      return error(400, "INVALID_LOCALE");
+    const locale = localeValues[0] === "en" ? "en" : "ko";
     let owner: AuthorizedFan;
     try {
       owner = await dependencies.authorize(
@@ -33,7 +37,7 @@ export function createMyRewardsHandler(
     }
     try {
       return Response.json(
-        { rewards: await dependencies.repository.list({ appUserId: owner.appUserId }) },
+        { rewards: await dependencies.repository.list({ appUserId: owner.appUserId, locale }) },
         { headers },
       );
     } catch {

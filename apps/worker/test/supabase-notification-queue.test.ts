@@ -4,6 +4,7 @@ const row = {
   id: "11111111-1111-4111-8111-111111111111",
   notification_id: "22222222-2222-4222-8222-222222222222",
   kind: "live_24h",
+  locale: "en",
   endpoint: "https://push.example/sub",
   p256dh: "p",
   auth_secret: "a",
@@ -24,13 +25,19 @@ describe("SupabaseNotificationQueue", () => {
     const rpc = vi.fn(async () => ({ data: [row], error: null }));
     const queue = new SupabaseNotificationQueue({ rpc } as never);
     expect(await queue.claim("notify-1", 25, 120)).toMatchObject([
-      { id: row.id, authSecret: "a", attemptCount: 2 },
+      { id: row.id, authSecret: "a", attemptCount: 2, locale: "en" },
     ]);
-    expect(rpc).toHaveBeenCalledWith("claim_notification_deliveries", {
+    expect(rpc).toHaveBeenCalledWith("claim_localized_notification_deliveries", {
       p_worker_id: "notify-1",
       p_batch_size: 25,
       p_lease_seconds: 120,
     });
+  });
+  it("defaults a legacy row without locale to Korean and rejects an invalid explicit locale", async () => {
+    const legacyRpc = vi.fn(async () => ({ data: [{ ...row, locale: undefined }], error: null }));
+    await expect(new SupabaseNotificationQueue({ rpc: legacyRpc } as never).claim("notify-1", 1, 120)).resolves.toMatchObject([{ locale: "ko" }]);
+    const invalidRpc = vi.fn(async () => ({ data: [{ ...row, locale: "fr" }], error: null }));
+    await expect(new SupabaseNotificationQueue({ rpc: invalidRpc } as never).claim("notify-1", 1, 120)).rejects.toThrow("invalid locale");
   });
   it("refuses stale completion instead of direct table fallback", async () => {
     const rpc = vi.fn(async () => ({ data: false, error: null }));
@@ -40,6 +47,7 @@ describe("SupabaseNotificationQueue", () => {
         id: row.id,
         notificationId: row.notification_id,
         kind: "live_24h",
+        locale: "ko",
         endpoint: row.endpoint,
         p256dh: "p",
         authSecret: "a",

@@ -12,6 +12,7 @@ export interface NotificationRepository {
   list(input: {
     appUserId: string;
     locale: "ko" | "en";
+    recipientLinks?: boolean;
   }): Promise<NotificationItem[]>;
   markRead(input: {
     appUserId: string;
@@ -58,6 +59,7 @@ function text(value: unknown, fallback: string) {
 export function projectNotificationRow(
   row: Row,
   locale: "ko" | "en",
+  recipientLinks = false,
 ): NotificationItem {
   const kind = String(row.kind) as NotificationItem["kind"];
   const live = one(row.live_events);
@@ -84,10 +86,12 @@ export function projectNotificationRow(
     benefitLoc?.title,
     locale === "ko" ? "새 혜택" : "New benefit",
   );
-  const copy =
-    ["benefit_won","recipient_information_required","fulfillment_meaningful_update","collectible_claim_available","collectible_claim_expiring"].includes(kind)
-      ? [text(payload.title, locale === "ko" ? "확인이 필요해요" : "Action required"), text(payload.detail, locale === "ko" ? "자세한 내용을 확인해 주세요." : "Review the details.")]
-      : kind === "live_reserved"
+  const fulfillmentStatus = text(payload.fulfillmentStatus, "");
+  const fulfillmentLabel = ({
+    ko: { information_required: "정보 입력 필요", ready: "준비 완료", shipping_preparing: "배송 준비 중", shipping_in_transit: "배송 중", shipping_completed: "배송 완료", pickup_available: "수령 가능", pickup_completed: "수령 완료", digital_delivered: "지급 완료" },
+    en: { information_required: "Information required", ready: "Ready", shipping_preparing: "Preparing shipment", shipping_in_transit: "In transit", shipping_completed: "Delivered", pickup_available: "Ready for pickup", pickup_completed: "Picked up", digital_delivered: "Delivered" },
+  } as const)[locale][fulfillmentStatus as "information_required" | "ready" | "shipping_preparing" | "shipping_in_transit" | "shipping_completed" | "pickup_available" | "pickup_completed" | "digital_delivered"];
+  const copy = kind === "live_reserved"
       ? [locale === "ko" ? `${liveTitle} 예약이 완료됐어요` : `${liveTitle} is reserved`, locale === "ko" ? "예약한 LIVE 알림을 보내드릴게요." : "We'll remind you about this LIVE."]
       : kind === "live_changed"
         ? [locale === "ko" ? `${liveTitle} 일정이 변경됐어요` : `${liveTitle} schedule changed`, locale === "ko" ? "변경된 일정을 확인해 주세요." : "Review the updated schedule."]
@@ -138,15 +142,31 @@ export function projectNotificationRow(
                     ? "팬 활동으로 새 혜택을 받을 수 있게 되었어요."
                     : "Your fan activity unlocked a new benefit.",
                 ]
-              : [
+              : kind === "benefit_won"
+                ? [locale === "ko" ? `${benefitTitle}에 당첨됐어요` : `You won ${benefitTitle}`, locale === "ko" ? "MY에서 당첨 결과를 확인해 주세요." : "Review your reward in MY."]
+                : kind === "recipient_information_required"
+                  ? [locale === "ko" ? "수령 정보를 입력해 주세요" : "Enter recipient information", locale === "ko" ? `${benefitTitle} 수령에 필요한 정보를 입력해 주세요.` : `Provide the information needed to receive ${benefitTitle}.`]
+                  : kind === "fulfillment_meaningful_update"
+                    ? [locale === "ko" ? `${benefitTitle} 수령 상태가 변경됐어요` : `${benefitTitle} status changed`, fulfillmentLabel ?? (locale === "ko" ? "MY에서 현재 수령 상태를 확인해 주세요." : "Review the current status in MY.")]
+                    : kind === "collectible_claim_available"
+                      ? [locale === "ko" ? "Collectible을 받을 수 있어요" : "Your Collectible is ready", locale === "ko" ? `${liveTitle} Collectible을 수령해 주세요.` : `Claim your ${liveTitle} Collectible.`]
+                      : kind === "collectible_claim_expiring"
+                        ? [locale === "ko" ? "Collectible 수령 기간이 곧 끝나요" : "Your Collectible claim period ends soon", locale === "ko" ? `${liveTitle} Collectible을 기간 안에 수령해 주세요.` : `Claim your ${liveTitle} Collectible before the deadline.`]
+                        : kind === "benefit_available"
+                          ? [
                   locale === "ko"
                     ? `${benefitTitle} 혜택이 열렸어요`
                     : `${benefitTitle} is available`,
                   locale === "ko"
                     ? "받을 수 있는 혜택을 확인해 보세요."
                     : "See the benefit now.",
-                ];
-  const deepLink =
+                ]
+                          : (() => { throw new Error("notifications projection invalid"); })();
+  const sourceKey = typeof row.source_key === "string" ? row.source_key : "";
+  const recipientMatch = /^recipient_information_required:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):[1-9][0-9]*$/i.exec(sourceKey);
+  const deepLink = recipientLinks && kind === "recipient_information_required" && recipientMatch
+    ? `/my/rewards/${recipientMatch[1]}/recipient`
+    :
     storedDeepLink ??
     (kind === "benefit_available"
       ? `/benefits/${text(benefit?.id, "")}`
@@ -200,18 +220,18 @@ export function createNotificationRepository(
     };
   }
   return {
-    async list({ appUserId, locale }) {
+    async list({ appUserId, locale, recipientLinks = false }) {
       const { data, error } = await db
         .from("fan_notifications")
         .select(
-          "id,kind,created_at,read_at,deep_link,payload,celebrity_id,live_events(id,slug,live_event_localizations(locale,title)),benefits(id,slug,benefit_localizations(locale,title))",
+          "id,kind,source_key,created_at,read_at,deep_link,payload,celebrity_id,live_events(id,slug,live_event_localizations(locale,title)),benefits(id,slug,benefit_localizations(locale,title))",
         )
         .eq("app_user_id", appUserId)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw new Error("notifications unavailable");
       return (data ?? []).map((row) =>
-        projectNotificationRow(row as Row, locale),
+        projectNotificationRow(row as Row, locale, recipientLinks),
       );
     },
     async markRead({ appUserId, notificationId }) {

@@ -16,6 +16,8 @@ describe("public legal pages", () => {
     expect(screen.getAllByText(/Sallylab Inc\./).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "biz@sallylab.io" })).toHaveAttribute("href", "mailto:biz@sallylab.io");
     expect(screen.getByText(/Google 및 Privy 인증 식별자/)).toBeInTheDocument();
+    expect(screen.getByText(/실물 혜택 배송 또는 현장 수령을 위한 이름·연락처/)).toBeInTheDocument();
+    expect(screen.getByText(/배송 또는 현장 수령 완료 후 30일/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/?locale=ko");
   });
@@ -27,6 +29,8 @@ describe("public legal pages", () => {
     expect(screen.getByText("Effective date: July 25, 2026")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "1. Personal Information We Process" })).toBeInTheDocument();
     expect(screen.getByText(/Google and Privy authentication identifiers/)).toBeInTheDocument();
+    expect(screen.getByText(/Name and phone number for physical reward delivery/)).toBeInTheDocument();
+    expect(screen.getByText(/30 days after shipping or on-site pickup is completed/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Choose language, currently English" })).toHaveAttribute("href", "/privacy?locale=ko");
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/?locale=en");
     expect(container.querySelector("[data-fan-surface]")).toHaveAttribute("lang", "en");

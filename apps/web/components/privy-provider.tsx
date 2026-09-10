@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import type { ReactNode } from "react";
+import { useAppLocale } from "./locale-provider";
 import { AvatarSessionBridge } from "./avatar-session-bridge";
 
 export function ByUsPrivyProvider({
@@ -15,6 +16,7 @@ export function ByUsPrivyProvider({
   testAccountLoginEnabled?: boolean;
   children: ReactNode;
 }) {
+  const { locale } = useAppLocale();
   if (!appId) {
     throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is required to initialize ByUs authentication.");
   }
@@ -32,8 +34,12 @@ export function ByUsPrivyProvider({
           theme: "light",
           accentColor: "#8A18B8",
           logo: "/images/guest-home/byus-wordmark.svg",
-          landingHeader: "ByUs 시작하기",
-          loginMessage: testAccountLoginEnabled && appleLoginEnabled
+          landingHeader: locale === "en" ? "Get started with ByUs" : "ByUs 시작하기",
+          loginMessage: locale === "en"
+            ? testAccountLoginEnabled
+              ? `Sign in with Google${appleLoginEnabled ? ", Apple" : ""} or your Privy Test Account email.`
+              : `Sign in with Google${appleLoginEnabled ? " or Apple" : ""} to keep your moments with your favorite.`
+            : testAccountLoginEnabled && appleLoginEnabled
             ? "Google, Apple 또는 Privy Test Account 이메일로 로그인하세요."
             : testAccountLoginEnabled
               ? "Google 계정 또는 Privy Test Account 이메일로 로그인하세요."

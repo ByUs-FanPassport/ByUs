@@ -1,19 +1,28 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import manifest from "./manifest";
+import { createManifest } from "../components/pwa-manifest";
 
 describe("PWA-001 install contract", () => {
-  it("publishes a standalone manifest with required PNG icon sizes", () => {
-    const value = manifest();
+  it("publishes a standalone manifest with required PNG icon sizes", async () => {
+    const value = createManifest("ko");
     expect(value.display).toBe("standalone");
-    expect(value.start_url).toBe("/");
+    expect(value.start_url).toBe("/?locale=ko");
+    expect(value.id).toBe("/");
     expect(value.icons).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ sizes: "192x192", type: "image/png" }),
         expect.objectContaining({ sizes: "512x512", type: "image/png" }),
       ]),
     );
+  });
+
+  it("keeps installation identity while launching in the selected language", async () => {
+    const value = createManifest("en");
+    expect(value.lang).toBe("en");
+    expect(value.start_url).toBe("/?locale=en");
+    expect(value.id).toBe("/");
+    expect(value.description).toContain("Keep every moment");
   });
 
   it("uses the approved B Spark application icon files", () => {

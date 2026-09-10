@@ -118,11 +118,37 @@ describe("LiveEventScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, viewer: { ...response.viewer, collectible } }), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     const card = await screen.findByRole("region", { name: "Digital Collectible" });
+    expect(within(card).getByText(/KST까지$/)).toBeVisible();
     const action = within(card).queryByRole("button", { name: "Collectible 받기" });
     if (state === "eligible") expect(action).toBeEnabled();
     else expect(action).not.toBeInTheDocument();
     if (state === "locked") expect(within(card).getByText("Journey 완료와 LIVE 종료 후 받을 수 있어요.")).toBeVisible();
     if (state === "claimed") expect(within(card).getByLabelText("Claim 완료")).toBeVisible();
+  });
+  it.each([
+    ["ko", "라이브", "/live?locale=ko"],
+    ["en", "Live", "/live?locale=en"],
+  ] as const)("returns from %s LIVE details to the localized LIVE list", async (locale, name, href) => {
+    query = `locale=${locale}`;
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(payload()), { status: 200 }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale={locale} />);
+
+    expect(await screen.findByRole("link", { name })).toHaveAttribute("href", href);
+  });
+
+  it("formats the English Collectible deadline in KST", async () => {
+    query = "locale=en";
+    const response = payload();
+    const collectible = {
+      eligible: true,
+      claimWindow: { from: "2026-09-18T12:30:00Z", until: "2026-09-20T12:30:00Z" },
+      claim: null,
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, viewer: { ...response.viewer, collectible } }), { status: 200 }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
+
+    const card = await screen.findByRole("region", { name: "Digital Collectible" });
+    expect(within(card).getByText(/KST deadline$/)).toBeVisible();
   });
   it.each([false, true, null])("keeps mission availability truthful: %s", async (available) => {
     const response = payload();

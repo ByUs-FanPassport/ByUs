@@ -37,13 +37,13 @@ describe("login return intent", () => {
     expect(sanitizeLocale("fr")).toBe("ko");
   });
 
-  it("preserves the sanitized continuation context without interpreting it", () => {
+  it("preserves intent and anchor while synchronizing the continuation locale", () => {
     expect(appendLoginContext("/onboarding/profile", {
       returnTo: "/live/kara-nualeaf?tab=reservation#fan-code",
       intent: "reserve",
       entity: "kara-nualeaf",
       authIntent: "11111111-1111-4111-8111-111111111111",
       locale: "en",
-    })).toBe("/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf%3Ftab%3Dreservation%23fan-code&locale=en&intent=reserve&entity=kara-nualeaf&authIntent=11111111-1111-4111-8111-111111111111");
+    })).toBe("/onboarding/profile?returnTo=%2Flive%2Fkara-nualeaf%3Ftab%3Dreservation%26locale%3Den%23fan-code&locale=en&intent=reserve&entity=kara-nualeaf&authIntent=11111111-1111-4111-8111-111111111111");
   });
 });

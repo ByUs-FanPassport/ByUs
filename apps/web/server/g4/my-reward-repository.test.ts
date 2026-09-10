@@ -50,12 +50,13 @@ describe("SupabaseMyRewardRepository", () => {
     };
     const rpc = vi.fn().mockResolvedValue({ data: [won, result], error: null });
     const repository = new SupabaseMyRewardRepository({ rpc });
-    await expect(repository.list({ appUserId: "owner" })).resolves.toEqual([
+    await expect(repository.list({ appUserId: "owner", locale: "en" })).resolves.toEqual([
       won,
       result,
     ]);
     expect(rpc).toHaveBeenCalledWith("get_owned_benefit_rewards", {
       p_app_user_id: "owner",
+      p_locale: "en",
     });
   });
 
@@ -63,12 +64,12 @@ describe("SupabaseMyRewardRepository", () => {
     await expect(
       new SupabaseMyRewardRepository({
         rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }).list({ appUserId: "owner" }),
+      }).list({ appUserId: "owner", locale: "ko" }),
     ).resolves.toEqual([]);
     await expect(
       new SupabaseMyRewardRepository({
         rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "secret" } }),
-      }).list({ appUserId: "owner" }),
+      }).list({ appUserId: "owner", locale: "ko" }),
     ).rejects.toThrow("query failed");
     await expect(
       new SupabaseMyRewardRepository({
@@ -76,7 +77,7 @@ describe("SupabaseMyRewardRepository", () => {
           data: [{ ...result, address1: "secret" }],
           error: null,
         }),
-      }).list({ appUserId: "owner" }),
+      }).list({ appUserId: "owner", locale: "ko" }),
     ).rejects.toThrow("projection is invalid");
   });
 });

@@ -44,7 +44,7 @@ describe("FAN-005 profile onboarding", () => {
     authenticated = false;
     const { rerender } = render(<ProfileOnboardingScreen celebrity={celebrity} />);
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
-      "/login?returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fc%252Fkara%252Fverify%253Fstep%253Dintro%2523fan-verify%26locale%3Dko%26intent%3Dpassport%26entity%3Dkara&locale=ko&intent=passport&entity=kara",
+      "/login?returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fc%252Fkara%252Fverify%253Fstep%253Dintro%2526locale%253Dko%2523fan-verify%26locale%3Dko%26intent%3Dpassport%26entity%3Dkara&locale=ko&intent=passport&entity=kara",
     ));
     query = "returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fonboarding%252Fprofile%26locale%3Dko&locale=ko";
     rerender(<ProfileOnboardingScreen celebrity={celebrity} />);
@@ -54,7 +54,7 @@ describe("FAN-005 profile onboarding", () => {
   it("skips the setup screen when the authenticated user already has a profile", async () => {
     vi.mocked(fetch).mockResolvedValue(Response.json({ profile: { completed: true, nickname: "Kamilia" } }));
     render(<ProfileOnboardingScreen celebrity={celebrity} />);
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro#fan-verify"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"));
   });
 
   it("supports global 1-32 grapheme display names in the live owner preview", async () => {
@@ -117,7 +117,7 @@ describe("FAN-005 profile onboarding", () => {
     await waitFor(() => expect(input).toHaveFocus());
     expect(input).toHaveValue("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro#fan-verify"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"));
   });
 
   it("resumes the original action if another tab completed the profile first", async () => {
@@ -128,7 +128,7 @@ describe("FAN-005 profile onboarding", () => {
     const input = await screen.findByRole("textbox", { name: "닉네임" });
     fireEvent.change(input, { target: { value: "Kamilia" } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro#fan-verify"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"));
   });
 
   it("posts the normalized nickname once and restores the exact route after the saved state", async () => {
@@ -145,7 +145,7 @@ describe("FAN-005 profile onboarding", () => {
       headers: { authorization: "Bearer privy-access-token", "content-type": "application/json" },
     })));
     expect(await screen.findByRole("status")).toHaveTextContent("저장 완료");
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro#fan-verify"), { timeout: 1_000 });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"), { timeout: 1_000 });
   });
 
   it("renders complete English copy without changing the continuation", async () => {
@@ -155,6 +155,16 @@ describe("FAN-005 profile onboarding", () => {
     expect(screen.getByText("After verification, it will appear in your KARA Fan Passport and activity history.")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Display name" })).toHaveAttribute("dir", "auto");
     expect(screen.getByRole("link", { name: "EN" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("switches the return destination and nested LIVE locale while preserving the action", async () => {
+    query = new URLSearchParams({locale: "ko", intent: "passport", entity: "kara", returnTo: "/c/kara/verify?locale=ko&authIntent=11111111-1111-4111-8111-111111111111#fan-verify"}).toString();
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
+    await screen.findByRole("textbox", { name: "닉네임" });
+    const href = screen.getByRole("link", { name: "EN" }).getAttribute("href")!;
+    const destination = new URL(href, "https://byus.local");
+    expect(destination.searchParams.get("locale")).toBe("en");
+    expect(destination.searchParams.get("returnTo")).toBe("/c/kara/verify?locale=en&authIntent=11111111-1111-4111-8111-111111111111#fan-verify");
   });
 
   it("restores an unsaved nickname after reload or locale navigation", async () => {

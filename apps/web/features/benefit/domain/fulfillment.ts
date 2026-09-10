@@ -18,6 +18,9 @@ export const fulfillmentStatusSchema = z.enum([
 export type FulfillmentMethod = z.infer<typeof fulfillmentMethodSchema>;
 export type FulfillmentStatus = z.infer<typeof fulfillmentStatusSchema>;
 
+/** Must be released with the matching consent copy and active DB version. */
+export const BENEFIT_RECIPIENT_CONSENT_VERSION = "2026-09-v1";
+
 const next: Record<FulfillmentMethod, Partial<Record<FulfillmentStatus, FulfillmentStatus>>> = {
   digital: { ready: "digital_delivered" },
   physical_shipping: {
@@ -53,3 +56,13 @@ export const recipientInputSchema = z
   })
   .strict();
 export type RecipientInput = z.infer<typeof recipientInputSchema>;
+
+export const recipientSaveResultSchema = z
+  .object({
+    winnerId: z.string().uuid(),
+    method: fulfillmentMethodSchema.exclude(["digital"]),
+    status: z.literal("ready"),
+    revision: z.number().int().nonnegative(),
+  })
+  .strict();
+export type RecipientSaveResult = z.infer<typeof recipientSaveResultSchema>;

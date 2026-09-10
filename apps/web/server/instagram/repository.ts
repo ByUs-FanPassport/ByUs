@@ -1,11 +1,11 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { connectionSchema, flowSchema, instagramMediaSchema, type InstagramConnection, type InstagramFlow } from "./model";
+import { connectionSchema, flowSchema, instagramMediaSchema, type InstagramConnection, type InstagramFlow, type InstagramLocale } from "./model";
 
 export interface InstagramRepository {
   cleanup(): Promise<void>;
-  issueInvite(input: { celebrityId: string; hash: string; username: string; userId: string | null }): Promise<void>;
+  issueInvite(input: { celebrityId: string; hash: string; username: string; userId: string | null; locale: InstagramLocale }): Promise<void>;
   transition(operation: string, hash: string, browserHash?: string, payload?: Record<string, unknown>): Promise<InstagramFlow | null>;
   disconnect(celebrityId: string, generation?: string): Promise<{ celebrity_id: string; identity: InstagramConnection["identity"] | null; token_ciphertext: string | null } | null>;
   deleteSubject(scopedId: string, issuedAt: string, confirmationHash: string): Promise<void>;
@@ -28,7 +28,7 @@ export function createInstagramRepository(db: SupabaseClient): InstagramReposito
       if (results.some((result) => result.error)) throw new Error("Instagram cleanup unavailable");
     },
     async issueInvite(input) {
-      await rpc("instagram_issue_invite", { p_celebrity_id: input.celebrityId, p_secret_hash: input.hash, p_username: input.username, p_user_id: input.userId });
+      await rpc("instagram_issue_localized_invite", { p_celebrity_id: input.celebrityId, p_secret_hash: input.hash, p_username: input.username, p_user_id: input.userId, p_locale: input.locale });
     },
     async transition(operation, hash, browserHash, payload = {}) {
       const data = await rpc("instagram_transition", { p_operation: operation, p_secret_hash: hash, p_browser_hash: browserHash ?? null, p_payload: payload });

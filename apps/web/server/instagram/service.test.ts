@@ -12,7 +12,7 @@ const vault = tokenVault(Buffer.alloc(32, 9).toString("base64"));
 function setup(overrides: Partial<InstagramConnection> = {}) {
   const connection: InstagramConnection = { celebrity_id: celebrityId, generation: "22222222-2222-4222-8222-222222222222", lease_id: "33333333-3333-4333-8333-333333333333", identity, token_ciphertext: vault.seal("old-test-token", tokenBinding(celebrityId, identity)), token_issued_at: new Date(now - 86400000 * 55).toISOString(), token_expires_at: new Date(now + 86400000 * 5).toISOString(), ...overrides };
   const repository = {
-    transition: vi.fn<InstagramRepository["transition"]>(async () => ({ celebrity_id: celebrityId, generation: connection.generation, expected_username: "creator_test", expected_user_id: identity.user_id, payload: {}, expires_at: new Date(now + 600000).toISOString() })),
+    transition: vi.fn<InstagramRepository["transition"]>(async () => ({ celebrity_id: celebrityId, generation: connection.generation, expected_username: "creator_test", expected_user_id: identity.user_id, locale: "ko", payload: {}, expires_at: new Date(now + 600000).toISOString() })),
     disconnect: vi.fn(async () => ({ celebrity_id: celebrityId, identity, token_ciphertext: connection.token_ciphertext })),
     claimSync: vi.fn(async () => [connection]), finishSync: vi.fn<InstagramRepository["finishSync"]>(async () => true),
   };

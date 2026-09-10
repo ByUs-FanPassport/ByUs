@@ -17,7 +17,7 @@ function CommentsForOwner({ slug, noticeSlug, locale, preview }: { slug: string;
   const { authenticated, ready, getAccessToken } = usePrivy();
   const ko = locale === "ko";
   const [cursor, setCursor] = useState<string | null>(null);
-  const resource = useFanpageResource(`/api/celebrities/${slug}/notices/${noticeSlug}/comments?limit=${preview ? 2 : 20}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parseComments);
+  const resource = useFanpageResource(`/api/celebrities/${slug}/notices/${noticeSlug}/comments?locale=${locale}&limit=${preview ? 2 : 20}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parseComments);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

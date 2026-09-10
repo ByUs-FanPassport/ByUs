@@ -9,14 +9,23 @@ describe("My Rewards route", () => {
     const response = await createMyRewardsHandler({
       authorize: vi.fn(async () => ({ appUserId: "owner" })),
       repository: { list },
-    })(new Request("https://byus.test/api/me/rewards", {
+    })(new Request("https://byus.test/api/me/rewards?locale=en", {
       headers: { authorization: "Bearer token" },
     }));
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("vary")).toBe("Authorization");
     await expect(response.json()).resolves.toEqual({ rewards: [] });
-    expect(list).toHaveBeenCalledWith({ appUserId: "owner" });
+    expect(list).toHaveBeenCalledWith({ appUserId: "owner", locale: "en" });
+  });
+
+  it("defaults a missing locale to Korean and rejects invalid or duplicate values", async () => {
+    const list = vi.fn(async () => []);
+    const handler = createMyRewardsHandler({ authorize: vi.fn(async () => ({ appUserId: "owner" })), repository: { list } });
+    expect((await handler(new Request("https://byus.test/api/me/rewards"))).status).toBe(200);
+    expect(list).toHaveBeenLastCalledWith({ appUserId: "owner", locale: "ko" });
+    expect((await handler(new Request("https://byus.test/api/me/rewards?locale=fr"))).status).toBe(400);
+    expect((await handler(new Request("https://byus.test/api/me/rewards?locale=ko&locale=en"))).status).toBe(400);
   });
 
   it.each([[401, "UNAUTHENTICATED"], [403, "FORBIDDEN"]] as const)(

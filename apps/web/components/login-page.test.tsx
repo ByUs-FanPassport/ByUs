@@ -141,7 +141,7 @@ describe("Privy login page", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
     await act(async () => { finishWallet(embeddedWallet); });
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
     expect(createWallet).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -205,6 +205,24 @@ describe("Privy login page", () => {
     expect(screen.getByRole("button", { name: "Continue with Apple" })).toBeInTheDocument();
   });
 
+  it("localizes the English heading, home link, artwork and OAuth error", async () => {
+    query = "locale=en";
+    initOAuth.mockRejectedValueOnce(new Error("oauth initialization failed"));
+    render(<LoginPage appleLoginEnabled />);
+    expect(screen.getByRole("heading", { name: "Keep every moment with your favorite." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Return to ByUs home" })).toHaveAttribute("href", "/?locale=en");
+    expect(screen.getByAltText("Open Fan Passport")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't complete sign-in. Check your Google or Apple account");
+  });
+
+  it("returns an English direct sign-in to the English home", async () => {
+    query = "locale=en";
+    authenticated = true;
+    render(<LoginPage />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/?locale=en"));
+  });
+
   it("shows only a neutral loading state while Privy restores authentication", () => {
     ready = false;
     render(<LoginPage />);
@@ -257,7 +275,7 @@ describe("Privy login page", () => {
   it("syncs the verified Privy session before resuming the sanitized route", async () => {
     render(<LoginPage />);
     onComplete?.();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
     expect(fetch).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
       method: "POST",
       headers: {
@@ -279,7 +297,7 @@ describe("Privy login page", () => {
     expect(screen.queryByRole("button", { name: /Google로 계속하기/ })).not.toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
     finishSync?.(Response.json({ profile: { completed: true, nickname: "John" } }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
     expect(fetch).toHaveBeenCalledWith("/api/auth/session", expect.objectContaining({
       method: "POST",
       headers: {
@@ -304,7 +322,7 @@ describe("Privy login page", () => {
     await waitFor(() => expect(alert.parentElement).toHaveFocus());
 
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -364,7 +382,7 @@ describe("Privy login page", () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
     render(<LoginPage />);
     onComplete?.();
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
   });
 
   it("does not nest an existing onboarding return path", async () => {
@@ -392,7 +410,7 @@ describe("Privy login page", () => {
     render(<LoginPage />);
     onComplete?.();
     await waitFor(() => expect(replace).toHaveBeenCalledWith(
-      "/onboarding/profile?returnTo=%2Fc%2Fkara%2Fverify&locale=ko&intent=passport&entity=kara",
+      "/onboarding/profile?returnTo=%2Fc%2Fkara%2Fverify%3Flocale%3Dko&locale=ko&intent=passport&entity=kara",
     ));
   });
 

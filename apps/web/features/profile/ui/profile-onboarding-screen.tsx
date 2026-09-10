@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalePath } from "@/components/locale-path";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -91,7 +92,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
   const rawEntity = searchParams.get("entity");
   const rawAuthIntent = searchParams.get("authIntent");
   const rawLocale = searchParams.get("locale");
-  const returnTo = useMemo(() => sanitizeReturnTo(rawReturnTo), [rawReturnTo]);
+  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(rawReturnTo), sanitizeLocale(rawLocale)), [rawReturnTo, rawLocale]);
   const intent = useMemo(() => sanitizeIntent(rawIntent), [rawIntent]);
   const entity = useMemo(() => sanitizeEntity(rawEntity), [rawEntity]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(rawAuthIntent), [rawAuthIntent]);
