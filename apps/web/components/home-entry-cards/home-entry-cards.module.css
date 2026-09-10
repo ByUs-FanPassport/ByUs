@@ -1,0 +1,24 @@
+.cards, .cards * { box-sizing: border-box; }
+.cards { display: grid; gap: 16px; margin-top: 16px; }
+.guide, .fanmeeting { position: relative; display: block; isolation: isolate; overflow: hidden; text-decoration: none; color: #19191e !important; }
+.guide:focus-visible, .fanmeeting:focus-visible { outline: 3px solid #b22161; outline-offset: 4px; }
+.guide { height: 216px; border-radius: 16px; background: #f8f2f6; }
+.portrait { position: absolute; right: 0; top: 0; width: 40%; height: 100%; }
+.portrait img { object-fit: cover; }
+.guideCopy { position: relative; display: flex; flex-direction: column; gap: 12px; width: 60%; height: 100%; padding: 22px 16px 20px 20px; }
+.guideCopy small { color: #ad1d59; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.guideCopy strong { font-size: clamp(18px, 1.6vw, 22px); font-weight: 800; line-height: 1.2; letter-spacing: -.5px; }
+.description { color: #686873; font-size: 12px; line-height: 1.35; }
+.action { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; font-size: 13px; font-weight: 700; line-height: 1.35; }
+.action svg { flex-shrink: 0; }
+.fanmeeting { display: flex; align-items: center; gap: 16px; min-height: 104px; padding: 20px; border: 1px solid #e7e2eb; border-radius: 14px; background: #fffefe; }
+.fanmeetingCopy { display: grid; flex: 1; min-width: 0; gap: 5px; }
+.fanmeetingCopy strong { font-size: 15px; font-weight: 500; line-height: 1.3; letter-spacing: -.3px; }
+.fanmeetingCopy > span { color: #686873; font-size: 12px; line-height: 1.35; }
+.arrow { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; color: #b22161; background: #f6f0f5; }
+.flag { position: absolute; z-index: -1; pointer-events: none; inset: 0 0 0 auto; width: 152px; background: repeating-linear-gradient(to bottom, #d87485 0 8px, transparent 8px 16px); opacity: .12; mask-image: linear-gradient(to right, transparent, #000); }
+.flag > span { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(4, 1fr); width: 66px; height: 56px; padding: 3px; background: #6387bb; color: white; }
+.flag > span > span { display: grid; place-items: center; font-size: 9px; line-height: 1; }
+@media (hover: hover) { .guide:hover { background: #f3eaf1; } .fanmeeting:hover { border-color: #c2a4b8; } }
+@media (max-width: 767px) { .guideCopy strong { font-size: 22px; } }
+@media (max-width: 374px) { .guideCopy { padding-left: 16px; padding-right: 12px; } .guideCopy strong { font-size: 19px; } .fanmeeting { padding: 16px; gap: 10px; } .fanmeetingCopy strong { font-size: 14px; } }

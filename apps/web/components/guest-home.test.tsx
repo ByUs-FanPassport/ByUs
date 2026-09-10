@@ -534,7 +534,7 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
-    expect(screen.getByRole("link", { name: "엘리나와 함께 만나는 뱅크시" })).toHaveAttribute("href", "/c/elina?locale=ko");
+    for (const card of screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" })) expect(card).toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     expect(screen.queryByText("실버 1 · 15점")).not.toBeInTheDocument();
