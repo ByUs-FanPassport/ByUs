@@ -18,6 +18,10 @@ outputs
 supabase
 tmp
 scripts
+!scripts/
+scripts/*
+!scripts/local-production-env.mjs
+!scripts/local-production-env.d.mts
 *.tsbuildinfo
 design-preview.html
 design-qa.md
