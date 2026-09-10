@@ -14,6 +14,7 @@ const APPLE_JWKS_URL = new URL("https://appleid.apple.com/auth/keys");
 const MAX_TOKEN_BYTES = 16 * 1024;
 const CLOCK_TOLERANCE_SECONDS = 60;
 const MAX_EVENT_AGE_SECONDS = 7 * 24 * 60 * 60;
+const EVENT_TIME_MILLISECONDS_BOUNDARY = 1_000_000_000_000;
 
 export const APPLE_NOTIFICATION_AUDIENCES = ["kr.byus.web", "kr.byus.app"] as const;
 export const APPLE_NOTIFICATION_TYPES = [
@@ -28,7 +29,8 @@ export type AppleNotificationType = (typeof APPLE_NOTIFICATION_TYPES)[number];
 
 /**
  * A cryptographically verified and semantically normalized Apple account event.
- * Timestamps remain integer JWT NumericDate values (seconds since the Unix epoch).
+ * `issuedAt` remains a JWT NumericDate in seconds. `eventTime` is normalized to
+ * integer milliseconds so Apple's second and millisecond payloads preserve order.
  * `eventId` is Apple's required `jti`; callers can use it as the durable deduplication key.
  */
 export interface VerifiedAppleNotification {
@@ -64,6 +66,7 @@ export const APPLE_NOTIFICATION_REJECTION_REASONS = [
   "IAT_FUTURE",
   "IAT_TOO_OLD",
   "EVENT_TIME_NOT_POSITIVE_INTEGER",
+  "EVENT_TIME_UNSUPPORTED_RANGE",
   "EVENT_TIME_FUTURE",
   "EVENT_TIME_AFTER_IAT",
   "PRIVATE_RELAY_FORMAT",
@@ -221,6 +224,17 @@ function boundedString(
 function positiveInteger(value: unknown, reason: AppleNotificationRejectionReason): number {
   if (!Number.isSafeInteger(value) || (value as number) <= 0) invalid(reason, valueDiagnostic(value));
   return value as number;
+}
+
+function normalizeEventTime(value: unknown): { eventTime: number; rawEventTime: number } {
+  const rawEventTime = positiveInteger(value, "EVENT_TIME_NOT_POSITIVE_INTEGER");
+  const eventTime = rawEventTime < EVENT_TIME_MILLISECONDS_BOUNDARY
+    ? rawEventTime * 1000
+    : rawEventTime;
+  if (!Number.isSafeInteger(eventTime) || eventTime < EVENT_TIME_MILLISECONDS_BOUNDARY) {
+    invalid("EVENT_TIME_UNSUPPORTED_RANGE", { eventTime: rawEventTime });
+  }
+  return { eventTime, rawEventTime };
 }
 
 function parseEvents(value: unknown): Record<string, unknown> {
@@ -386,11 +400,15 @@ export async function verifyAppleNotification(
   const events = parseEvents(payload.events);
   const type = parseEventType(events.type);
   const subject = boundedString(events.sub, 256, "SUBJECT_FORMAT");
-  const eventTime = positiveInteger(events.event_time, "EVENT_TIME_NOT_POSITIVE_INTEGER");
+  const { eventTime, rawEventTime } = normalizeEventTime(events.event_time);
 
   if (issuedAt > now + CLOCK_TOLERANCE_SECONDS) invalid("IAT_FUTURE", { issuedAt, now });
-  if (eventTime > now + CLOCK_TOLERANCE_SECONDS) invalid("EVENT_TIME_FUTURE", { eventTime, now });
-  if (eventTime > issuedAt + CLOCK_TOLERANCE_SECONDS) invalid("EVENT_TIME_AFTER_IAT", { issuedAt, eventTime });
+  if (eventTime > (now + CLOCK_TOLERANCE_SECONDS) * 1000) {
+    invalid("EVENT_TIME_FUTURE", { eventTime: rawEventTime, now });
+  }
+  if (eventTime > (issuedAt + CLOCK_TOLERANCE_SECONDS) * 1000) {
+    invalid("EVENT_TIME_AFTER_IAT", { issuedAt, eventTime: rawEventTime });
+  }
 
   // Local replay-exposure policy, not an age guarantee made by Apple. Database
   // ordering still decides whether a verified delayed event changes current state.

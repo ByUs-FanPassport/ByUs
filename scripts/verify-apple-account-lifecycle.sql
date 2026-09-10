@@ -345,9 +345,9 @@ insert into public.app_users(id,privy_user_id,verified_email) values
   ('71000000-0000-4000-8000-000000000001','did:privy:relay-blocked','relay@privaterelay.appleid.com'),
   ('71000000-0000-4000-8000-000000000002','did:privy:google-current','google@example.test'),
   ('71000000-0000-4000-8000-000000000003','did:privy:relay-optout','optout@privaterelay.appleid.com');
-insert into public.celebrities(id,slug,status,image_url,published_at) values(
+insert into public.celebrities(id,slug,status,image_url,published_at,roles) values(
   '71000000-0000-4000-8000-000000000010','apple-lifecycle-artist','published',
-  'https://example.test/apple-lifecycle.jpg',clock_timestamp()
+  'https://example.test/apple-lifecycle.jpg',clock_timestamp(),array['artist']::public.celebrity_role[]
 );
 insert into public.benefits(
   id,slug,celebrity_id,publication_status,delivery_type,claim_opens_at,claim_closes_at,published_at

@@ -18,6 +18,17 @@ command -v initdb >/dev/null
 command -v pg_ctl >/dev/null
 command -v psql >/dev/null
 
+UPGRADE_MIGRATION="${BYUS_CLEAN_DB_UPGRADE_MIGRATION:-}"
+UPGRADE_BEFORE_FILE="${BYUS_CLEAN_DB_UPGRADE_BEFORE_FILE:-}"
+UPGRADE_AFTER_FILE="${BYUS_CLEAN_DB_UPGRADE_AFTER_FILE:-}"
+UPGRADE_CHECKED=false
+if [[ -n "$UPGRADE_MIGRATION$UPGRADE_BEFORE_FILE$UPGRADE_AFTER_FILE" ]]; then
+  if [[ -z "$UPGRADE_MIGRATION" || ! -f "$UPGRADE_BEFORE_FILE" || ! -f "$UPGRADE_AFTER_FILE" ]]; then
+    echo "Migration upgrade checks require a migration name and readable before/after SQL files" >&2
+    exit 1
+  fi
+fi
+
 # Release-critical forward migrations are deliberately enumerated.  The replay
 # still applies every repository migration below, while this guard makes a
 # missing or accidentally renamed PPT migration fail before PostgreSQL starts.
@@ -172,12 +183,27 @@ create function net.http_post(
 SQL
 
 while IFS= read -r migration; do
-  echo "Applying $(basename "$migration")"
+  migration_name="$(basename "$migration")"
+  if [[ -n "$UPGRADE_MIGRATION" && "$migration_name" == "$UPGRADE_MIGRATION" ]]; then
+    psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" \
+      -f "$UPGRADE_BEFORE_FILE" >/dev/null
+  fi
+  echo "Applying $migration_name"
   # pg_cron, pg_net, and supabase_vault are Supabase platform extensions. Their
   # minimal schemas are already present above; all repository SQL is unchanged.
   sed -E '/^create extension if not exists (pgcrypto|pg_cron|pg_net|supabase_vault) /d' "$migration" \
     | psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" >/dev/null
+  if [[ -n "$UPGRADE_MIGRATION" && "$migration_name" == "$UPGRADE_MIGRATION" ]]; then
+    psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PG_PORT" -d "$DATABASE" \
+      -f "$UPGRADE_AFTER_FILE"
+    UPGRADE_CHECKED=true
+  fi
 done < <(find "$ROOT_DIR/supabase/migrations" -maxdepth 1 -type f -name '*.sql' | sort)
+
+if [[ -n "$UPGRADE_MIGRATION" && "$UPGRADE_CHECKED" != true ]]; then
+  echo "Migration upgrade target was not found: $UPGRADE_MIGRATION" >&2
+  exit 1
+fi
 
 PGHOST="$SOCKET_DIR" PGPORT="$PG_PORT" PGDATABASE="$DATABASE" \
   bash "$ROOT_DIR/scripts/verify-phase5-notification-email-conflict.sh"

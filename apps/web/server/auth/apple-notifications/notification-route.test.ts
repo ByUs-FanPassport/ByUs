@@ -6,7 +6,7 @@ import { InvalidAppleNotificationError, AppleNotificationUnavailableError, type 
 
 const event: VerifiedAppleNotification = {
   eventId: "event-one", type: "email-disabled", subject: "apple-subject",
-  audience: "kr.byus.web", issuedAt: 1789032000, eventTime: 1789032000,
+  audience: "kr.byus.web", issuedAt: 1789032000, eventTime: 1789032000123,
   email: "owned@privaterelay.appleid.com", isPrivateEmail: true, payloadHash: "a".repeat(64),
 };
 

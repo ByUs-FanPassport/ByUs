@@ -8,6 +8,7 @@ import type { AppleNotificationType } from "./verify-apple-notification";
 const NOW = 1_789_000_000;
 const KID = "apple-test-key";
 const AUDIENCE = "kr.byus.web" as const;
+const EVENT_TIME_BOUNDARY = 1_000_000_000_000;
 
 let privateKey: CryptoKey;
 let otherPrivateKey: CryptoKey;
@@ -77,10 +78,14 @@ async function sign(
 }
 
 async function verify(token: string) {
+  return verifyAt(token, NOW);
+}
+
+async function verifyAt(token: string, now: number) {
   return verifyAppleNotification(token, {
     trustedAudiences: [AUDIENCE],
     getKey,
-    now: () => NOW,
+    now: () => now,
   });
 }
 
@@ -101,7 +106,7 @@ describe("verifyAppleNotification", () => {
         subject: "apple-subject-1",
         audience: AUDIENCE,
         issuedAt: NOW - 5,
-        eventTime: NOW - 5,
+        eventTime: (NOW - 5) * 1000,
         email: type.startsWith("email-") ? "relay.user@privaterelay.appleid.com" : null,
         isPrivateEmail: type.startsWith("email-") ? true : null,
       });
@@ -258,18 +263,93 @@ describe("verifyAppleNotification", () => {
     );
   });
 
-  it("distinguishes future and millisecond-like event timestamps without changing rejection", async () => {
+  it("normalizes legacy seconds and preserves exact Apple milliseconds", async () => {
+    const legacy = await verify(await sign());
+    expect(legacy.eventTime).toBe((NOW - 5) * 1000);
+
+    const precise = NOW * 1000 - 4_039;
+    const milliseconds = await verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: precise },
+    })));
+    expect(milliseconds.eventTime).toBe(precise);
+
+    const observedEventTime = 1_789_040_750_961;
+    const observedNow = 1_789_040_757;
+    const observed = await verifyAt(await sign(baseClaims({
+      iat: 1_789_040_750,
+      events: { ...baseEvents(), event_time: observedEventTime },
+    })), observedNow);
+    expect(observed.eventTime).toBe(observedEventTime);
+    expect(observed.issuedAt).toBe(1_789_040_750);
+  });
+
+  it("accepts exact millisecond tolerance boundaries and rejects one millisecond beyond them", async () => {
+    const futureBoundary = (NOW + 60) * 1000;
+    await expect(verify(await sign(baseClaims({
+      iat: NOW,
+      events: { ...baseEvents(), event_time: futureBoundary },
+    })))).resolves.toMatchObject({ eventTime: futureBoundary });
     await expect(
-      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: NOW + 61 } }))),
+      verify(await sign(baseClaims({
+        iat: NOW,
+        events: { ...baseEvents(), event_time: futureBoundary + 1 },
+      }))),
     ).rejects.toMatchObject({
       reason: "EVENT_TIME_FUTURE",
-      diagnostic: { eventTime: NOW + 61, now: NOW },
+      diagnostic: { eventTime: futureBoundary + 1, now: NOW },
     });
+
+    const issuedAt = NOW - 120;
+    const issuedBoundary = (issuedAt + 60) * 1000;
+    await expect(verify(await sign(baseClaims({
+      iat: issuedAt,
+      events: { ...baseEvents(), event_time: issuedBoundary },
+    })))).resolves.toMatchObject({ eventTime: issuedBoundary });
     await expect(
-      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: NOW * 1000 } }))),
+      verify(await sign(baseClaims({
+        iat: issuedAt,
+        events: { ...baseEvents(), event_time: issuedBoundary + 1 },
+      }))),
     ).rejects.toMatchObject({
+      reason: "EVENT_TIME_AFTER_IAT",
+      diagnostic: { issuedAt, eventTime: issuedBoundary + 1 },
+    });
+  });
+
+  it("enforces the fixed canonical range and exact integer input", async () => {
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: 999_999_999 },
+    })))).rejects.toMatchObject({
+      reason: "EVENT_TIME_UNSUPPORTED_RANGE",
+      diagnostic: { eventTime: 999_999_999 },
+    });
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: EVENT_TIME_BOUNDARY },
+    })))).resolves.toMatchObject({ eventTime: EVENT_TIME_BOUNDARY });
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: EVENT_TIME_BOUNDARY / 1000 },
+    })))).resolves.toMatchObject({ eventTime: EVENT_TIME_BOUNDARY });
+    await expect(verify(await sign(baseClaims({
+      iat: NOW,
+      events: { ...baseEvents(), event_time: Number.MAX_SAFE_INTEGER },
+    })))).rejects.toMatchObject({
       reason: "EVENT_TIME_FUTURE",
-      diagnostic: { eventTime: NOW * 1000, now: NOW },
+      diagnostic: { eventTime: Number.MAX_SAFE_INTEGER },
+    });
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: Number.MAX_SAFE_INTEGER + 1 },
+    })))).rejects.toMatchObject({ reason: "EVENT_TIME_NOT_POSITIVE_INTEGER" });
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: NOW - 0.5 },
+    })))).rejects.toMatchObject({
+      reason: "EVENT_TIME_NOT_POSITIVE_INTEGER",
+      diagnostic: { valueType: "number", numericValue: NOW - 0.5 },
+    });
+    await expect(verify(await sign(baseClaims({
+      events: { ...baseEvents(), event_time: "1789040750961" },
+    })))).rejects.toMatchObject({
+      reason: "EVENT_TIME_NOT_POSITIVE_INTEGER",
+      diagnostic: { valueType: "string" },
     });
   });
 
