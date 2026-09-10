@@ -198,7 +198,8 @@
   font-weight: 650;
 }
 .cardFacts .stageFact { display:flex; min-width:0; align-items:center; justify-content:center; padding-inline:0; }
-.stageFact strong { font-size:16px; word-break:keep-all; overflow-wrap:normal; }
+.cardFacts .stageFact img { width:28px; height:28px; }
+.cardFacts .stageFact strong { font-size:14px; white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
 .digitalStatus {
   display: flex;
   min-height: 44px;
@@ -1093,6 +1094,5 @@
   .cardMedia { aspect-ratio:16/9; }
   .cardTop { padding:16px 4px 12px; }
   .cardFacts { padding:8px 0; }
-  .stageFact strong { font-size:14px; }
   .cardFacts > span,.cardFacts > a { min-height:56px; }
 }

@@ -187,7 +187,7 @@ export function FanStageTooltip({
       tier={tier}
       stageKey={stageProgress?.current.key}
       locale={locale}
-      size={variant === "floating" ? 32 : 40}
+      size={variant === "floating" ? 28 : 40}
     />
     {variant === "inline" ? <span className={styles.inlineCopy}><strong>{currentStage}</strong><small>LEVEL</small></span> : null}
   </button>;
