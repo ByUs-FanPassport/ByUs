@@ -36,7 +36,15 @@ if (packages.some(([path]) => path === "node_modules/fast-xml-parser"
   failures.push("fast-xml-parser must not be present in the dependency tree");
 }
 
-const patchedMinimums = { "@tiptap/core": "3.30.4", nanoid: "3.3.18", hono: "4.12.34", "@walletconnect/utils": "2.21.9" };
+const patchedMinimums = {
+  "@tiptap/core": "3.30.4",
+  nanoid: "3.3.18",
+  hono: "4.12.34",
+  "@walletconnect/utils": "2.21.9",
+  next: "16.3.3",
+  sharp: "0.35.4",
+  "baseline-browser-mapping": "2.11.0",
+};
 for (const [path, metadata] of packages) {
   for (const [name, minimum] of Object.entries(patchedMinimums)) {
     if (path.endsWith(`/node_modules/${name}`) || path === `node_modules/${name}`) {
@@ -74,4 +82,4 @@ if (failures.length > 0) {
   throw new Error(`security dependency verification failed:\n- ${failures.join("\n- ")}`);
 }
 
-console.log("Security dependency verification passed: AWS XML, Axios, ws, editor, and wallet patch constraints are safe.");
+console.log("Security dependency verification passed: AWS XML, Axios, ws, editor, wallet, Next.js, and image patch constraints are safe.");
