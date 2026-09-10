@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const noticeLocaleSchema = z.enum(["ko", "en"]);
 export type NoticeLocale = z.infer<typeof noticeLocaleSchema>;
+export function parseNoticeLocaleParams(params: URLSearchParams): NoticeLocale | null {
+  const values = params.getAll("locale");
+  if (values.length > 1) return null;
+  const result = noticeLocaleSchema.safeParse(values[0] ?? "ko");
+  return result.success ? result.data : null;
+}
 
 export type TiptapDocument = Readonly<{
   type: "doc";

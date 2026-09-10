@@ -3,6 +3,8 @@ import { z } from "zod";
 export const instagramId = z.string().regex(/^\d{1,30}$/);
 export const instagramUsername = z.string().regex(/^[A-Za-z0-9._]{1,30}$/).transform((value) => value.toLowerCase());
 export const opaqueSecret = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const instagramLocale = z.enum(["ko", "en"]);
+export type InstagramLocale = z.infer<typeof instagramLocale>;
 
 const httpsUrl = z.string().url().refine((value) => {
   const url = new URL(value);
@@ -58,6 +60,7 @@ export const flowSchema = z.object({
   generation: z.string().uuid(),
   expected_username: instagramUsername,
   expected_user_id: instagramId.nullable(),
+  locale: instagramLocale,
   payload: z.record(z.string(), z.unknown()).default({}),
   expires_at: z.string(),
   celebrity_slug: z.string().optional(),

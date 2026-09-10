@@ -14,15 +14,16 @@ interface RpcClient {
 }
 
 export interface MyRewardRepository {
-  list(input: { appUserId: string }): Promise<MyReward[]>;
+  list(input: { appUserId: string; locale: "ko" | "en" }): Promise<MyReward[]>;
 }
 
 export class SupabaseMyRewardRepository implements MyRewardRepository {
   constructor(private readonly client: RpcClient) {}
 
-  async list(input: { appUserId: string }): Promise<MyReward[]> {
+  async list(input: { appUserId: string; locale: "ko" | "en" }): Promise<MyReward[]> {
     const { data, error } = await this.client.rpc("get_owned_benefit_rewards", {
       p_app_user_id: input.appUserId,
+      p_locale: input.locale,
     });
     if (error) throw new Error("My Rewards query failed");
     try {

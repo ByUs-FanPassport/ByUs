@@ -3,10 +3,14 @@ import type { NotificationDelivery } from "../notification-domain.js";
 import type { NotificationQueue } from "../notification-ports.js";
 type RpcClient = Pick<SupabaseClient, "rpc">;
 function row(value: Record<string, unknown>): NotificationDelivery {
+  const locale = value.locale == null ? "ko" : value.locale;
+  if (locale !== "ko" && locale !== "en")
+    throw new Error("notification queue returned invalid locale");
   return {
     id: String(value.id),
     notificationId: String(value.notification_id),
     kind: String(value.kind) as NotificationDelivery["kind"],
+    locale,
     endpoint: String(value.endpoint),
     p256dh: String(value.p256dh),
     authSecret: String(value.auth_secret),
@@ -42,7 +46,7 @@ export class SupabaseNotificationQueue implements NotificationQueue {
   }
   async claim(workerId: string, batchSize: number, leaseSeconds: number) {
     const { data, error } = await this.client.rpc(
-      "claim_notification_deliveries",
+      "claim_localized_notification_deliveries",
       {
         p_worker_id: workerId,
         p_batch_size: batchSize,

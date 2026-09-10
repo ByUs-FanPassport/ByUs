@@ -1,6 +1,6 @@
 # KO/EN 전체 누락 구현·배포 계획
 
-상태: 독립 계획 검토 및 보완 완료, 구현 중. 사용자 2026-09-10 `전체 define-goal 하고, 배포까지 진행`으로 TODO 전체 구현·배포 승인. 작업 공간은 기존 `/Users/jewel/.codex/worktrees/byus-footer-calendar-20260910`, 시작 HEAD `72e8b35`. 다른 작업의 미커밋 변경과 실행 중 서버는 보존한다.
+상태: 구현·로컬 검증 및 독립 결과 검토 완료, 배포 진행 중. 사용자 2026-09-10 `전체 define-goal 하고, 배포까지 진행`으로 TODO 전체 구현·배포 승인. 작업 공간은 기존 `/Users/jewel/.codex/worktrees/byus-footer-calendar-20260910`, 시작 HEAD `72e8b35`. 다른 작업의 미커밋 변경과 실행 중 서버는 보존한다.
 
 ## 완료 기준
 
@@ -73,8 +73,8 @@
 - [x] 사용자 전체 구현·배포 승인 및 goal 생성.
 - [x] 기존 격리 worktree를 최신 main72e8b35로 fast-forward; 조사 문서 보존.
 - [x] 세부 계약 계획과 독립 위험 검토.
-- [ ] 구현 및 관련 로컬 검증.
-- [ ] 결과 위험 검토와 필요한 보완.
+- [x] 구현 및 관련 로컬 검증.
+- [x] 결과 위험 검토와 필요한 보완.
 - [ ] DB/worker/web 배포 최종 성공 확인.
 
 - 환경 준비: npm ci --ignore-scripts로 최신 lockfile 동기화(제품 dependency 변경 없음). 검증 실행은 설치된 Node24.13.1(`/Users/jewel/.nvm/versions/node/v24.13.1/bin`)을 명시한다. 기존 own dev3017 서버는 소스 갱신 전 종료했고 root3000/다른3018은 보존했다.
@@ -95,3 +95,11 @@
 
 - 실제 문서 검사에서 Next의 file-based `app/manifest.ts`가 metadata의 locale query URL을 덮어씀을 발견했다. `components/pwa-manifest.ts` 생성기와 명시적 `/manifest.webmanifest` route로 변경했고 KO/EN 실제 SSR `rel=manifest` href가 각각 `?locale=ko/en`임을 확인했다. manifest JSON만 검사하면 발견되지 않는 문제였다.
 - Aside local 3024 desktop1440/mobile390:404 KO/EN 문구·홈링크·html lang·overflow 통과. 실제로그인SDK는 `Origin not allowed`로 초기상태에 머물러 본문은 real component+stubauth harness로 검증한다. SDK실제로그인 검증으로 표현하지 않는다. 증거 `artifacts/locale-audit-20260910/local-root-render/`.
+
+## 최종 로컬 검증 및 배포 준비
+
+- 관련 웹361/361, 워커213/213, 전체 lint 및 web/worker typecheck, production/Lambda build 통과.132개 migration 전체 replay 및 Kakao snapshot runtime fixture 통과.
+- 실제 production build 문서 언어·manifest·history Playwright1개 통과. 수정화면 desktop/mobile 렌더링 통과. 실제 계정·실제 외부 수신 및 OS install을 검증했다고 주장하지 않는다.
+- 독립 reviewer 최종 지적 모두 해소. Instagram 기존 form호환,실제수령상태 enum8종 KOEN16조합,Kakao생성당시 snapshot보정,recipient최신locale/중복방지 보완.
+- Supabase linked dry-run 성공: 새 `20260910120000_localization_contracts.sql` 한 개만 적용 대상.
+- 통합 main: `b538c7b` 이후 새 `d222885`도 반영. 원래 작업공간·다른 배포 변경 유지.

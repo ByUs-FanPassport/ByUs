@@ -21,7 +21,9 @@ describe("notification AWS deployment contract", () => {
     expect(script).toContain("byus.notification-cron");
     expect(script).toContain("events.amazonaws.com");
     expect(script).toContain("aws events put-targets");
-    expect(vercel).not.toHaveProperty("crons");
+    expect(vercel.crons ?? []).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: expect.stringMatching(/notification/i) }),
+    ]));
   });
   it("deploys Benefit maintenance as an independent daily function and alarm", () => {
     expect(script).toContain('maintenance_function_name="byus-benefit-maintenance-${environment}"');

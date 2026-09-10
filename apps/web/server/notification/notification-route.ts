@@ -77,12 +77,15 @@ export const createGetNotificationsHandler =
   (deps: NotificationRouteDependencies) => async (request: Request) => {
     const owner = await fan(request, deps);
     if (owner instanceof Response) return owner;
-    const locale =
-      new URL(request.url).searchParams.get("locale") === "en" ? "en" : "ko";
+    const params = new URL(request.url).searchParams;
+    const locale = params.get("locale") === "en" ? "en" : "ko";
+    const recipientLinkValues = params.getAll("recipientLinks");
+    const recipientLinks = recipientLinkValues.length === 1 && recipientLinkValues[0] === "1";
     try {
       const notifications = await deps.repository.list({
         appUserId: owner.appUserId,
         locale,
+        recipientLinks,
       });
       return json({
         notifications,

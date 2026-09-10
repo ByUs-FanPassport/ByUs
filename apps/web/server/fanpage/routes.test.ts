@@ -26,13 +26,20 @@ describe("fanpage server authority", () => {
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: 500 });
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: owner });
+    expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: owner, p_locale: "ko" });
   });
   it("returns Top100 at 501 but never trusts a caller's requested owner", async () => {
     rpc.mockResolvedValueOnce({ membershipCount: 501, available: true, asOf: now, rows: [row], me: row });
     const response = await api.leaderboard(request(`/api?appUserId=${other}`, undefined, false, "GET"), "elina");
     expect(response.status).toBe(200); expect((await response.json()).me).toBeNull();
-    expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null });
+    expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null, p_locale: "ko" });
+  });
+  it("passes a validated locale to public read RPCs", async () => {
+    rpc.mockResolvedValueOnce({ membershipCount: 0, leaderboardAvailable: false, activity: [] });
+    expect((await api.summary(request("/api?locale=en", undefined, false, "GET"), "elina")).status).toBe(200);
+    expect(rpc).toHaveBeenLastCalledWith("read_celebrity_fanpage", { p_slug: "elina", p_locale: "en" });
+    expect((await api.summary(request("/api?locale=fr", undefined, false, "GET"), "elina")).status).toBe(400);
+    expect((await api.summary(request("/api?locale=ko&locale=en", undefined, false, "GET"), "elina")).status).toBe(400);
   });
   it("treats a broken server boundary or private field as unavailable rather than exposing it", async () => {
     rpc.mockResolvedValueOnce({ membershipCount: 500, available: true, asOf: now, rows: [row], me: row });
@@ -74,6 +81,7 @@ describe("fanpage server authority", () => {
     const response = await api.comments(request("/api?limit=1", undefined, true, "GET"), "elina", "notice");
     const result = await response.json(); expect(result.comments).toEqual([comment]);
     expect(JSON.parse(Buffer.from(result.nextCursor, "base64url").toString())).toEqual({ at: now, id: commentId });
+    expect(rpc).toHaveBeenLastCalledWith("read_celebrity_notice_comments", expect.objectContaining({ p_locale: "ko" }));
   });
   it("requires admin authorization and bounded nonempty reasons", async () => {
     rpc.mockResolvedValueOnce(null);
