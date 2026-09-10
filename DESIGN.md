@@ -247,7 +247,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Maximum product width: `1440px`.
 - HOME, LIVE list, LIVE calendar, creator directory and MY share that outer width, including horizontal gutters of `16px` below 768px, `32px` from 768px, and `40px` from 1280px. Page headings and first content edges align with the header and footer; do not add narrower nested page containers. Control density with rows and columns inside this shared shell.
 - Reading and focused task widths remain separate: settings fields 720px; certification and quiz 760px (quiz result 690px); login 440px or gateway 960px; onboarding 1120px; legal reading 760px; LIVE mission 880px and survey 800px; Passport issuance presentation 1320px. Dialog widths are independent of page width.
-- At 1440px with the side panel open: 40px page insets, `944px` main column, 32px gutter, `384px` context panel.
+- At 1440px with the always-visible side panel: 40px page insets, `944px` main column, 32px gutter, `384px` context panel.
 - At 1024–1279px: main column plus 360px context panel with a 24px gap.
 - At 768px: 32px page insets and a single 704px content column.
 - At 390px: 16px page insets and a 358px content column.
@@ -317,7 +317,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | --- | --- | --- |
 | Mobile | `< 768px` | 16px page inset, 20px headings, 4:5 hero, horizontal 288px favorite cards, 56px live avatars, desktop nav hidden |
 | Tablet | `768–1023px` | 32px page inset, 24px headings, 2:1 hero, three fixed favorite columns, 64px live avatars, desktop nav visible |
-| Desktop | `1024–1279px` | Side context panel appears and becomes sticky; bottom navigation disappears; panel toggle appears |
+| Desktop | `1024–1279px` | Side context panel is always visible and sticky; bottom navigation disappears; no panel toggle |
 | Wide desktop | `≥ 1280px` | 40px page inset, 384px context panel, 32px column gap; social controls remain icon-only |
 
 ### Touch Targets
@@ -328,12 +328,12 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Bottom navigation divides the viewport into four equal-width targets with 64px minimum height.
 - Horizontal favorite cards use scroll snap and hide the scrollbar without disabling native touch scrolling.
 
-### Collapsing Strategy
+### Responsive Layout Strategy
 
 - Desktop behavior: two-column shell with a 944px content column and sticky 384px context panel at 1440px.
 - Tablet behavior: single content column; side context is removed, but the desktop header navigation remains.
 - Mobile behavior: compact header, no desktop nav or side panel, horizontal favorite rail, fixed bottom navigation.
-- Panel toggle: at desktop, collapsing the context panel expands the main column to the full available 1360px; content is not replaced with a placeholder.
+- Desktop context: keep the right activity panel visible without a header toggle or collapse state. The main column retains its two-column width; mobile activity summaries remain in the content flow.
 - Live metadata: reservation count is hidden on mobile, leaving avatar, content, and action columns.
 - Reduced motion: all transitions are reduced to `0.01ms`, and smooth scrolling is disabled.
 
@@ -370,14 +370,14 @@ Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scena
 1. Establish the hero image and the single primary action before adding secondary modules.
 2. Translate scenario information into title/subtitle pairs, compact rows, or one neutral utility card.
 3. Check that colored surfaces do not compete with artist photography.
-4. Verify 44px targets, 3px focus outlines, and mobile collapse behavior.
+4. Verify 44px targets, 3px focus outlines, and mobile in-flow activity access.
 5. Confirm that new components reuse the 4px spacing scale and existing radius/shadow tokens.
 
 ## Optional Appendix: Interaction Patterns
 
 - Scroll behavior: header remains sticky; context panel is sticky from 1024px; mobile/tablet use a fixed bottom navigation.
 - Hover behavior: neutral controls receive a subtle gray fill; artist media fields rise by 2px and strengthen their border; Passport artwork rises by 6px; the primary gradient darkens.
-- Click behavior: the desktop menu button collapses the entire context panel and lets the main content expand; login and reservation actions route downstream.
+- Click behavior: login and reservation actions route downstream. The desktop activity panel is always visible and has no fold/unfold control.
 - Animation tone: restrained and product-like, 160ms for control feedback and 240ms for layout/object transitions.
 - Reduced motion: transitions collapse to effectively instant and smooth scrolling is removed.
 
@@ -594,8 +594,9 @@ and desktop/mobile verification requirements.
 셀럽 필터 변경 시 날짜 선택을 해제하며 월 이동 링크는 셀럽/언어를 보존한다.
 PC의 기존 월간 상세 달력에는 모바일 날짜 선택이 적용되지 않는다.
 
-2026-09-10 점검 개선: 홈 PC 패널 토글은 `나의 팬 활동 / My fan activity`이라는
-목적을 표시하며 기존 접기·본문 확장과 모바일 활동 요약을 유지한다. 모바일 달력은
+2026-09-10 후속 승인: 홈 상단의 팬 활동 버튼과 패널 접기·펼치기를 제거한다.
+PC 오른쪽 활동 요약은 항상 표시하고 모바일 본문 활동 요약과 MY 경로는 유지한다.
+모바일 달력은
 사용자가 날짜를 선택하면 선택 날짜·LIVE 건수를 알리고 해당 결과 제목이 보이도록
 이동한다. 화면 크기 변경만으로 포커스를 옮기지 않으며 reduced motion을 존중한다.
 PC 날짜 셀의 다건 전환과 전체 보기 dialog는 유지한다.

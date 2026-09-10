@@ -24,7 +24,6 @@ describe("public image delivery boundary", () => {
     expect(creatorCropScale("park-myungho")).toBe(1.9);
     expect(creatorCropScale("ifewknow")).toBe(2.45);
     expect(creatorCropScale("jenny-jeong")).toBe(1);
-    expect(homeHeroSizes(true)).toContain("952px");
-    expect(homeHeroSizes(false)).toContain("1360px");
+    expect(homeHeroSizes()).toContain("952px");
   });
 });

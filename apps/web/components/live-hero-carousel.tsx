@@ -139,12 +139,10 @@ function HeroStatusBadge({ label, showRadio = false }: { label: string; showRadi
 export function LiveHeroCarousel({
   featuredLives,
   locale,
-  panelOpen = true,
   onStartReached,
 }: {
   featuredLives: readonly LiveEventResponse[];
   locale: ContentLocale;
-  panelOpen?: boolean;
   onStartReached?: (event: LiveStartEvent) => void;
 }) {
   const t = carouselCopy[locale];
@@ -234,7 +232,7 @@ export function LiveHeroCarousel({
 
   const visible = inView && documentVisible;
   const autoplayPaused = userPaused || hovered || focusWithin || pointerActive || !visible || reducedMotion;
-  const imageSizes = homeHeroSizes(panelOpen);
+  const imageSizes = homeHeroSizes();
 
   useEffect(() => {
     if (total <= 1 || autoplayPaused) return;
