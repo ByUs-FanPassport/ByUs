@@ -28,8 +28,6 @@ export function creatorCropScale(slug: string): number {
   return slug === "ifewknow" ? 2.45 : slug === "park-myungho" ? 1.9 : slug === "xin" ? 1.6 : 1;
 }
 
-export function homeHeroSizes(panelOpen: boolean): string {
-  return panelOpen
-    ? "(min-width: 1440px) 952px, (min-width: 1280px) calc(100vw - 488px), (min-width: 1024px) calc(100vw - 448px), (min-width: 768px) calc(100vw - 64px), calc(100vw - 32px)"
-    : "(min-width: 1440px) 1360px, (min-width: 1280px) calc(100vw - 80px), (min-width: 768px) calc(100vw - 64px), calc(100vw - 32px)";
+export function homeHeroSizes(): string {
+  return "(min-width: 1440px) 952px, (min-width: 1280px) calc(100vw - 488px), (min-width: 1024px) calc(100vw - 448px), (min-width: 768px) calc(100vw - 64px), calc(100vw - 32px)";
 }
