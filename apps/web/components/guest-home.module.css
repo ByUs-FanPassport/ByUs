@@ -161,6 +161,7 @@
 .passportFooter > a svg { width: 16px; height: 16px; }
 
 .mobilePersonalization { margin-top: 24px; }
+.mobilePersonalization > .mobileContextActions { margin-top: 0; }
 .signedInSummary {
   overflow: hidden;
   border: 1px solid var(--card-line);

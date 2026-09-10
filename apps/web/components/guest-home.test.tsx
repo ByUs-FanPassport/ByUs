@@ -419,6 +419,12 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("complementary", { name: "로그인 전 팬 활동" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
+    const guideCards = screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" });
+    const fanmeetingCards = screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" });
+    expect(guideCards).toHaveLength(2);
+    expect(fanmeetingCards).toHaveLength(2);
+    for (const card of guideCards) expect(card).toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
+    for (const card of fanmeetingCards) expect(card).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
   });
 
   it("renders a truthful empty state without inventing a Live link", () => {
@@ -513,6 +519,8 @@ describe("canonical 03 guest home", () => {
 
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" })).toHaveLength(2);
   });
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {
@@ -535,7 +543,9 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
-    for (const card of screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" })) expect(card).toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
+    const guideCards = screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" });
+    expect(guideCards).toHaveLength(2);
+    for (const card of guideCards) expect(card).toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     expect(screen.queryByText("실버 1 · 15점")).not.toBeInTheDocument();

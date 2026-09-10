@@ -293,18 +293,18 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
             {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel featuredLives={featuredLives} locale={locale} onStartReached={refreshLiveStatus} />}
           </section>
 
-          {personalization.state.status === "guest" ? (
-            <section className={styles.mobileContextActions} aria-label={t.context}>
-              <Link className={styles.googleAction} data-service-accent="spectrum-outline" href={`/login${localeQuery}`}><GoogleMark /><span>{t.google}</span></Link>
-              <AuthIntentLink className={styles.passportAction} locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><Book /><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink>
-            </section>
-          ) : (
-            <div className={styles.mobilePersonalization}>
-              {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /><HomeEntryCards locale={locale} /></> : null}
-              {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
-              {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
-            </div>
-          )}
+          <div className={styles.mobilePersonalization}>
+            {personalization.state.status === "guest" ? (
+              <section className={styles.mobileContextActions} aria-label={t.context}>
+                <Link className={styles.googleAction} data-service-accent="spectrum-outline" href={`/login${localeQuery}`}><GoogleMark /><span>{t.google}</span></Link>
+                <AuthIntentLink className={styles.passportAction} locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><Book /><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink>
+              </section>
+            ) : null}
+            {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /> : null}
+            {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
+            {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
+            <HomeEntryCards locale={locale} />
+          </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
             <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{t.all} <ChevronRight /></Link>} />
@@ -399,9 +399,10 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
               <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
             </section>
           </> : null}
-          {personalization.state.status === "authenticated-ready" ? <><AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /><HomeEntryCards locale={locale} /></> : null}
+          {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /> : null}
           {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
           {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
+          <HomeEntryCards locale={locale} />
         </aside>
       </div>
 
