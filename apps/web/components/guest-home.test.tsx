@@ -933,19 +933,19 @@ it("shows honest loading and error states for a personal Home deep link", async 
   expect(failedSection.querySelectorAll("article")).toHaveLength(0);
 });
 
-it("offers the full roster when an authenticated owner has no Passport", async () => {
+it.each([0, 1])("offers the full roster when no owned profile is published and Passport count is %s", async (passportCount) => {
   privy.authenticated = true;
   const summary = {
     profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] },
     rewards: { availableCount: 0, entries: 0, items: [] },
-    collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    collection: { passportCount, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
   };
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => String(input).startsWith("/api/me/creator-reactions")
     ? Response.json(reactionStates(celebrities.map(({ slug }) => slug)))
     : Response.json({ summary })));
   const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} initialOwnedOnly />);
   const section = container.querySelector("#celebrities") as HTMLElement;
-  expect(await within(section).findByText("아직 보유한 Fan Passport가 없어요.")).toBeInTheDocument();
+  expect(await within(section).findByText(passportCount > 0 ? "지금 공개된 내 최애가 없어요." : "아직 보유한 Fan Passport가 없어요.")).toBeInTheDocument();
   fireEvent.click(within(section).getByRole("button", { name: "전체 보기" }));
   expect(section.querySelectorAll("#home-creator-rail article")).toHaveLength(3);
   expect(new URL(window.location.href).searchParams.get("owned")).toBeNull();
