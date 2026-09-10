@@ -16,6 +16,19 @@ export interface AppleNotificationRouteDependencies {
 const payloadSchema = z.object({ payload: z.string().min(1).max(16_384) }).strict();
 const responseHeaders = { "cache-control": "no-store", "x-content-type-options": "nosniff" };
 
+function warnRejected(reason: "INVALID_ENVELOPE" | "VERIFICATION_UNAVAILABLE"): void;
+function warnRejected(error: InvalidAppleNotificationError): void;
+function warnRejected(value: "INVALID_ENVELOPE" | "VERIFICATION_UNAVAILABLE" | InvalidAppleNotificationError): void {
+  if (value instanceof InvalidAppleNotificationError) {
+    console.warn("apple_notification_rejected", {
+      reason: value.reason,
+      diagnostic: value.diagnostic,
+    });
+    return;
+  }
+  console.warn("apple_notification_rejected", { reason: value });
+}
+
 export async function receiveAppleNotification(request: Request, dependencies: AppleNotificationRouteDependencies): Promise<Response> {
   let token: string;
   try {
@@ -24,6 +37,7 @@ export async function receiveAppleNotification(request: Request, dependencies: A
     }
     token = payloadSchema.parse(JSON.parse(await boundedText(request, 20_480))).payload;
   } catch {
+    warnRejected("INVALID_ENVELOPE");
     return Response.json({ error: { code: "INVALID_APPLE_NOTIFICATION" } }, { status: 400, headers: responseHeaders });
   }
   let event: VerifiedAppleNotification;
@@ -33,6 +47,8 @@ export async function receiveAppleNotification(request: Request, dependencies: A
     })))(token);
   } catch (error) {
     const invalid = error instanceof InvalidAppleNotificationError;
+    if (invalid) warnRejected(error);
+    else warnRejected("VERIFICATION_UNAVAILABLE");
     return Response.json({ error: { code: invalid ? "INVALID_APPLE_NOTIFICATION" : "APPLE_NOTIFICATION_UNAVAILABLE" } }, {
       status: invalid ? 400 : 503, headers: responseHeaders,
     });

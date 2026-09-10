@@ -138,6 +138,18 @@ describe("verifyAppleNotification", () => {
     });
   });
 
+  it("diagnoses a signed audience array rejected by the normalized event contract", async () => {
+    const token = await sign(baseClaims({ aud: [AUDIENCE, "kr.byus.app"] }));
+    await expect(verify(token)).rejects.toMatchObject({
+      reason: "JWT_CLAIM_INVALID",
+      diagnostic: {
+        claim: "aud",
+        issuer: "https://appleid.apple.com",
+        audience: [AUDIENCE, "kr.byus.app"],
+      },
+    });
+  });
+
   it("does not require exp but validates it when present", async () => {
     await expect(verify(await sign())).resolves.toMatchObject({ eventId: "event-1" });
     await expect(
@@ -148,10 +160,16 @@ describe("verifyAppleNotification", () => {
   it.each([
     ["issuer", { iss: "https://attacker.example" }],
     ["audience", { aud: "attacker.app" }],
-  ] as const)("rejects the wrong %s", async (_label, overrides) => {
-    await expect(verify(await sign(baseClaims(overrides)))).rejects.toBeInstanceOf(
-      InvalidAppleNotificationError,
-    );
+  ] as const)("distinguishes the wrong %s after signature verification", async (label, overrides) => {
+    await expect(verify(await sign(baseClaims(overrides)))).rejects.toMatchObject({
+      message: "Invalid Apple notification",
+      reason: "JWT_CLAIM_INVALID",
+      diagnostic: {
+        claim: label === "issuer" ? "iss" : "aud",
+        issuer: label === "issuer" ? "https://attacker.example" : "https://appleid.apple.com",
+        audience: label === "audience" ? ["attacker.app"] : [AUDIENCE],
+      },
+    });
   });
 
   it("rejects an unknown signing key and a bad RSA signature", async () => {
@@ -161,6 +179,25 @@ describe("verifyAppleNotification", () => {
     await expect(verify(await sign(baseClaims(), otherPrivateKey))).rejects.toBeInstanceOf(
       InvalidAppleNotificationError,
     );
+  });
+
+  it("distinguishes key, signature, and algorithm failures", async () => {
+    await expect(
+      verify(await sign(baseClaims(), privateKey, { alg: "RS256", kid: "unknown" })),
+    ).rejects.toMatchObject({ reason: "JWT_KEY", diagnostic: {} });
+    await expect(verify(await sign(baseClaims(), otherPrivateKey))).rejects.toMatchObject({
+      reason: "JWT_SIGNATURE",
+      diagnostic: {},
+    });
+
+    const secret = new TextEncoder().encode("a sufficiently long test-only shared secret");
+    const hs256 = await new SignJWT(baseClaims())
+      .setProtectedHeader({ alg: "HS256", kid: KID })
+      .sign(secret);
+    await expect(verify(hs256)).rejects.toMatchObject({
+      reason: "JWT_ALGORITHM",
+      diagnostic: {},
+    });
   });
 
   it("rejects HS256 and unsecured tokens before accepting their contents", async () => {
@@ -186,6 +223,19 @@ describe("verifyAppleNotification", () => {
     },
   );
 
+  it("preserves a fixed claim name after a signed token misses a required claim", async () => {
+    const claims = baseClaims();
+    delete claims.jti;
+    await expect(verify(await sign(claims))).rejects.toMatchObject({
+      reason: "JWT_CLAIM_MISSING",
+      diagnostic: {
+        claim: "jti",
+        issuer: "https://appleid.apple.com",
+        audience: [AUDIENCE],
+      },
+    });
+  });
+
   it.each([
     ["future iat", { iat: NOW + 61 }],
     ["non-integer iat", { iat: NOW - 0.5 }],
@@ -208,6 +258,53 @@ describe("verifyAppleNotification", () => {
     );
   });
 
+  it("distinguishes future and millisecond-like event timestamps without changing rejection", async () => {
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: NOW + 61 } }))),
+    ).rejects.toMatchObject({
+      reason: "EVENT_TIME_FUTURE",
+      diagnostic: { eventTime: NOW + 61, now: NOW },
+    });
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: NOW * 1000 } }))),
+    ).rejects.toMatchObject({
+      reason: "EVENT_TIME_FUTURE",
+      diagnostic: { eventTime: NOW * 1000, now: NOW },
+    });
+  });
+
+  it("distinguishes timestamp integer, ordering, and age policies", async () => {
+    await expect(verify(await sign(baseClaims({ iat: 0 })))).rejects.toMatchObject({
+      reason: "IAT_NOT_POSITIVE_INTEGER",
+      diagnostic: { valueType: "number", numericValue: 0 },
+    });
+    await expect(
+      verify(await sign(baseClaims({ iat: "invalid" as unknown as number }))),
+    ).rejects.toMatchObject({
+      reason: "IAT_NOT_POSITIVE_INTEGER",
+      diagnostic: { claim: "iat", valueType: "string" },
+    });
+    await expect(verify(await sign(baseClaims({ iat: NOW + 61 })))).rejects.toMatchObject({
+      reason: "IAT_FUTURE",
+      diagnostic: { issuedAt: NOW + 61, now: NOW },
+    });
+    await expect(
+      verify(await sign(baseClaims({
+        iat: NOW - 7 * 24 * 60 * 60 - 1,
+        events: { ...baseEvents(), event_time: NOW - 7 * 24 * 60 * 60 - 1 },
+      }))),
+    ).rejects.toMatchObject({ reason: "IAT_TOO_OLD" });
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: 0 } }))),
+    ).rejects.toMatchObject({
+      reason: "EVENT_TIME_NOT_POSITIVE_INTEGER",
+      diagnostic: { valueType: "number", numericValue: 0 },
+    });
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), event_time: NOW + 56 } }))),
+    ).rejects.toMatchObject({ reason: "EVENT_TIME_AFTER_IAT" });
+  });
+
   it.each([
     ["array", []],
     ["malformed JSON string", "{"],
@@ -218,6 +315,20 @@ describe("verifyAppleNotification", () => {
     await expect(verify(await sign(baseClaims({ events })))).rejects.toBeInstanceOf(
       InvalidAppleNotificationError,
     );
+  });
+
+  it("distinguishes malformed event JSON from an unsupported event type", async () => {
+    await expect(verify(await sign(baseClaims({ events: "{" })))).rejects.toMatchObject({
+      reason: "EVENT_SHAPE",
+      diagnostic: { valueType: "string" },
+    });
+    await expect(verify(await sign(baseClaims({ events: 123 })))).rejects.toMatchObject({
+      reason: "EVENT_SHAPE",
+      diagnostic: { valueType: "number", numericValue: 123 },
+    });
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), type: "profile-updated" } }))),
+    ).rejects.toMatchObject({ reason: "EVENT_TYPE", diagnostic: {} });
   });
 
   it.each([
@@ -254,6 +365,24 @@ describe("verifyAppleNotification", () => {
         })),
       ),
     ).rejects.toBeInstanceOf(InvalidAppleNotificationError);
+  });
+
+  it("distinguishes event ID, subject, and private relay formats", async () => {
+    await expect(
+      verify(await sign(baseClaims({ jti: "j".repeat(257) }))),
+    ).rejects.toMatchObject({ reason: "JTI_FORMAT" });
+    await expect(
+      verify(await sign(baseClaims({ events: { ...baseEvents(), sub: "s".repeat(257) } }))),
+    ).rejects.toMatchObject({ reason: "SUBJECT_FORMAT" });
+    await expect(
+      verify(await sign(baseClaims({
+        events: {
+          ...baseEvents("email-disabled"),
+          email: "fan@example.com",
+          is_private_email: true,
+        },
+      }))),
+    ).rejects.toMatchObject({ reason: "PRIVATE_RELAY_FORMAT" });
   });
 
   it("rejects an arbitrary configured audience even when the token matches it", async () => {
