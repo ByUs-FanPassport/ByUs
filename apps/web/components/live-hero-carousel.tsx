@@ -11,11 +11,12 @@ import type { ContentLocale } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { Pause } from "lucide-react";
 import { bypassImageOptimization, homeHeroSizes } from "./fan-ui/public-image-policy";
-import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
+import { ArrowRight, ChevronLeft, ChevronRight, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
 import { creatorHeroImages } from "./fan-ui/creator-hero-images";
 import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
+import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -108,7 +109,8 @@ export function LiveCountdown({
   locale?: ContentLocale;
   onStartReached?: (event: LiveStartEvent) => void;
 }) {
-  const { now } = useLiveStartClock({ id, effectiveStatus, startsAt }, { active, precision: "second", onStartReached });
+  const { now, visible } = useLiveStartClock({ id, effectiveStatus, startsAt }, { active, precision: "second", onStartReached });
+  const shouldPulse = active && visible && effectiveStatus === "scheduled" && now !== null && Date.parse(startsAt) > now;
 
   const value = effectiveStatus === "live"
     ? "LIVE NOW"
@@ -116,7 +118,10 @@ export function LiveCountdown({
       ? "--:--:--"
       : formatLiveCountdown(startsAt, now, locale);
 
-  return <span aria-live="off">{value}</span>;
+  return <span className={timeStyles.emphasis} data-tone="on-image" data-status={effectiveStatus} data-pulse={shouldPulse ? "true" : "false"} aria-live="off">
+    {effectiveStatus === "scheduled" ? <span className={timeStyles.dot} aria-hidden="true" /> : null}
+    {value}
+  </span>;
 }
 
 function HeroStatusBadge({ label, showRadio = false }: { label: string; showRadio?: boolean }) {
@@ -307,7 +312,6 @@ export function LiveHeroCarousel({
                 </div>
                 <h2>{formatHeroLiveTitle(featuredLive.live.celebrity.name)}</h2>
                 <p className={styles.heroCountdown}>
-                  <Clock />
                   <LiveCountdown
                     id={featuredLive.live.id}
                     effectiveStatus={featuredLive.live.effectiveStatus}

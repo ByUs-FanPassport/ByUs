@@ -12,9 +12,11 @@ export function LiveTimeIndicator({ event, locale, active = true, onStartReached
   variant?: "badge" | "text";
   className?: string;
 }) {
-  const { now } = useLiveStartClock(event, { active, onStartReached });
-  return <span className={`${styles.indicator} ${className ?? ""}`} data-live-time={event.effectiveStatus} data-variant={variant} aria-live="off">
-    {event.effectiveStatus === "live" ? <span className={styles.dot} aria-hidden="true" /> : null}
+  const { now, visible } = useLiveStartClock(event, { active, onStartReached });
+  const upcoming = event.effectiveStatus === "scheduled" && now !== null && Date.parse(event.startsAt) > now;
+  const shouldPulse = active && visible && (upcoming || event.effectiveStatus === "live");
+  return <span className={`${styles.indicator} ${styles.emphasis} ${className ?? ""}`} data-live-time={event.effectiveStatus} data-status={event.effectiveStatus} data-pulse={shouldPulse ? "true" : "false"} data-variant={variant} aria-live="off">
+    {event.effectiveStatus === "scheduled" || event.effectiveStatus === "live" ? <span className={styles.dot} aria-hidden="true" /> : null}
     {liveTimeLabel(event, now, locale)}
   </span>;
 }

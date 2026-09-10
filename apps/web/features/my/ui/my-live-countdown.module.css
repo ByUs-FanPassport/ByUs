@@ -10,20 +10,16 @@
   line-height: 1.4;
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--color-service-ink);
+.countdown[data-status="scheduled"] {
+  min-height: 26px;
+  padding: 3px 9px;
+  box-sizing: border-box;
+  border: 1px solid;
+  border-radius: var(--radius-pill);
 }
 
-.label {
-  font-weight: 650;
-}
-
-.countdown .value {
-  color: var(--color-ink);
+.countdown[data-status] .value {
+  color: inherit;
   font-variant-numeric: tabular-nums;
   font-weight: 750;
   white-space: nowrap;
@@ -35,17 +31,4 @@
 
 .liveLabel {
   font-weight: 750;
-}
-
-.countdown[data-pulse="true"] .dot {
-  animation: my-live-dot-pulse 2.8s ease-in-out infinite;
-}
-
-@keyframes my-live-dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .55; transform: scale(.82); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .countdown[data-pulse="true"] .dot { animation: none; }
 }

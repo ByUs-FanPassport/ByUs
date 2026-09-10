@@ -19,9 +19,10 @@ afterEach(() => {
 });
 
 describe("MyLiveCountdown", () => {
-  it("allows catalog D-day pulse with the same shared clock and stops at start", () => {
+  it("pulses scheduled D-day by default with one shared clock and stops at start", () => {
     const view = render(<><MyLiveCountdown event={scheduled} locale="ko" pulseScheduled /><MyLiveCountdown event={{...scheduled, id:"second"}} locale="en" /></>);
     expect(view.container.firstElementChild).toHaveAttribute("data-pulse", "true");
+    expect(view.container.lastElementChild).toHaveAttribute("data-pulse", "true");
     expect(vi.getTimerCount()).toBe(1);
     act(() => { vi.setSystemTime(new Date(start)); vi.advanceTimersByTime(1000); });
     expect(view.container.firstElementChild).toHaveAttribute("data-pulse", "false");
@@ -172,7 +173,7 @@ describe("MyLiveCountdown", () => {
 });
 
 it("keeps ticking silent and disables dot motion for reduced-motion users", () => {
-  const source = readFileSync(resolve(process.cwd(), "features/my/ui/my-live-countdown.module.css"), "utf8");
+  const source = readFileSync(resolve(process.cwd(), "features/live/ui/live-time-indicator.module.css"), "utf8");
   expect(source).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none/);
 
   const view = render(<MyLiveCountdown event={scheduled} locale="en" />);

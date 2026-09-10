@@ -22,4 +22,70 @@
 }
 .indicator[data-live-time="live"] { color:var(--color-error); }
 .indicator[data-live-time="ended"],.indicator[data-live-time="cancelled"] { color:var(--color-muted); }
-.dot { width:6px;height:6px;flex:0 0 auto;border-radius:50%;background:currentColor; }
+
+/* Shared by compact labels, MY countdowns and the photo-overlay countdown. */
+.emphasis[data-status="scheduled"][data-pulse] {
+  color: #be185d;
+}
+
+.emphasis[data-status="scheduled"][data-variant="badge"] {
+  border-color: #f5c2d9;
+  background: #fff1f7;
+}
+
+.emphasis[data-tone="on-image"][data-status="scheduled"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid rgb(255 190 221 / 65%);
+  border-radius: var(--radius-pill);
+  background: rgb(34 12 26 / 82%);
+  color: #ffd0e6;
+  text-shadow: none;
+}
+
+.emphasis[data-status] .dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  overflow: visible;
+  color: inherit;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dot::after {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* A slow status pulse keeps the label readable throughout the cycle. */
+.emphasis[data-pulse="true"] .dot {
+  animation: live-time-dot-pulse 1.8s var(--motion-easing) infinite;
+}
+
+.emphasis[data-pulse="true"] .dot::after {
+  animation: live-time-halo-pulse 1.8s var(--motion-easing) infinite;
+}
+
+@keyframes live-time-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+@keyframes live-time-halo-pulse {
+  0% { opacity: .55; transform: scale(.7); }
+  75%, 100% { opacity: 0; transform: scale(1.65); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emphasis[data-pulse="true"] .dot,
+  .emphasis[data-pulse="true"] .dot::after { animation: none; }
+}

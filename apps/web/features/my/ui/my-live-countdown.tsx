@@ -2,6 +2,7 @@
 
 import { formatCompactLiveStart, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
+import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
 import styles from "./my-live-countdown.module.css";
 
 export type MyLiveCountdownEvent = LiveStartEvent & { id: string };
@@ -18,7 +19,7 @@ export function formatMyLiveCountdown(startsAt: string, now: number, locale: "ko
   return formatCompactLiveStart(startsAt, now, locale);
 }
 
-export function MyLiveCountdown({ event, locale, active = true, pulseScheduled = false, onStartReached }: MyLiveCountdownProps) {
+export function MyLiveCountdown({ event, locale, active = true, pulseScheduled = true, onStartReached }: MyLiveCountdownProps) {
   const clock = useLiveStartClock(event, { active, onStartReached });
   const isLive = event.effectiveStatus === "live";
   const isScheduled = event.effectiveStatus === "scheduled";
@@ -31,8 +32,8 @@ export function MyLiveCountdown({ event, locale, active = true, pulseScheduled =
     ? locale === "ko" ? "LIVE 예정" : "Upcoming LIVE"
     : formatMyLiveCountdown(event.startsAt, clock.now, locale);
 
-  return <span className={styles.countdown} data-active={active ? "true" : "false"} data-pulse={shouldPulse ? "true" : "false"} data-status={event.effectiveStatus} aria-live="off">
-    <span className={styles.dot} aria-hidden="true" />
+  return <span className={`${styles.countdown} ${timeStyles.emphasis}`} data-variant="badge" data-active={active ? "true" : "false"} data-pulse={shouldPulse ? "true" : "false"} data-status={event.effectiveStatus} aria-live="off">
+    <span className={timeStyles.dot} aria-hidden="true" />
     {isLive ? <span className={styles.liveLabel}>{locale === "ko" ? "진행 중" : "Live now"}</span> : <span className={styles.value}>{value}</span>}
   </span>;
 }
