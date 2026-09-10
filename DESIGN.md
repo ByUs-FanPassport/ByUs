@@ -608,3 +608,7 @@ PC 날짜 셀의 다건 전환과 전체 보기 dialog는 유지한다.
 흰 카드로 배치하고 시간 13px / 제목 16px / 셀럽 13px의 위계를 유지한다.
 여러 색 점의 의미를 새로 만들지 않으며 기존 예약·방송 상태는 카드에 유지한다.
 공식 출처와 원본 이미지는 artifacts/feedback-2026-09-06/calendar/benchmark에 보관한다.
+
+### Shared creator photography — 2026-09-10
+
+All creator identity-photo consumers use `CreatorImage` with source and framing registered in `creator-image-config.ts`. `CreatorPortrait` and `CreatorAvatar` keep their existing square/circle masks and sizing APIs. MY, LIVE detail/calendar, Passport photos and calendar collage use the same renderer; fanpage banners use `CreatorHeroPicture` and the same registry with separate responsive composition. Source replacement and crop stay coupled. A later CMS upload must be honored without inheriting a previous photo's zoom. Keep event artwork, benefits and user avatars separate. Park Myungho uses the approved user-provided suit portrait, about50% crown-to-chin height in square/circular photos; preserve shape-specific framing in wide/vertical surfaces.

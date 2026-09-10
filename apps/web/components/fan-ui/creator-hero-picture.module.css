@@ -1,0 +1,3 @@
+.picture { overflow: hidden; }
+.picture img { transform: scale(var(--creator-banner-mobile-scale, 1)); transform-origin: var(--creator-banner-mobile-origin, 50% 50%); }
+@media (min-width: 48rem) { .picture img { transform: none; } }

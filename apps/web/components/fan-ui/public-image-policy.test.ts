@@ -21,7 +21,7 @@ describe("public image delivery boundary", () => {
 
   it("accounts for existing crop magnification without multiplying by device DPR", () => {
     expect(creatorCropScale("xin")).toBe(1.6);
-    expect(creatorCropScale("park-myungho")).toBe(1.9);
+    expect(creatorCropScale("park-myungho")).toBe(2.3);
     expect(creatorCropScale("ifewknow")).toBe(2.45);
     expect(creatorCropScale("jenny-jeong")).toBe(1);
     expect(homeHeroSizes()).toContain("952px");

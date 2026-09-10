@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { z } from "zod";
 import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-resource";
 import { AuthIntentLink } from "@/components/auth-intent-link";
+import { CreatorImage } from "@/components/fan-ui/creator-image";
 import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
@@ -189,7 +190,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
       <SectionTitle title={t.creators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
       {summary.creators.length ? <div className={styles.favoriteSelector} role="group" aria-label={t.creators}>{summary.creators.map((creator) =>
         <button type="button" aria-pressed={selected?.celebrity.slug === creator.celebrity.slug} onClick={() => setSelectedSlug(creator.celebrity.slug)} key={creator.celebrity.slug}>
-          <Image src={creator.celebrity.image} alt="" width={48} height={48}/><span><strong>{creator.celebrity.name}</strong><small>{creator.passport ? creator.passport.stageProgress ? fanStageLabel(locale, creator.passport.stageProgress.current) : levelLabel(locale, creator.passport.tier) : t.firstReaction} · {t.tickets} {creator.ticketBalance}</small></span>
+          <CreatorImage slug={creator.celebrity.slug} src={creator.celebrity.image} alt="" width={48} height={48} sizes="(max-width: 639px) 40px, 48px" presentation="portrait" framed/><span><strong>{creator.celebrity.name}</strong><small>{creator.passport ? creator.passport.stageProgress ? fanStageLabel(locale, creator.passport.stageProgress.current) : levelLabel(locale, creator.passport.tier) : t.firstReaction} · {t.tickets} {creator.ticketBalance}</small></span>
         </button>)}</div>
         : <Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}
     </FanSurface>

@@ -1,0 +1,10 @@
+:where(.frame) {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--creator-frame-width);
+  height: var(--creator-frame-height);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.frame > img { display: block; width: 100%; height: 100%; }

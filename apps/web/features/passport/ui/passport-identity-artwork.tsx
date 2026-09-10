@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { useState, type ComponentProps } from "react";
-import { bypassImageOptimization, creatorCropScale } from "@/components/fan-ui/public-image-policy";
+import { type ComponentProps } from "react";
+import { CreatorImage } from "@/components/fan-ui/creator-image";
 import type { MySummary } from "@/features/my/domain/my-summary";
 import { PassportStampCanvas } from "./passport-stamp-artwork";
 import styles from "./passport-identity-artwork.module.css";
@@ -13,19 +12,13 @@ type Props = Omit<ComponentProps<typeof PassportStampCanvas>, "celebrityName"> &
 
 /** Compact Home identity layer. Detail and issuance keep the original canvas. */
 export function PassportIdentityArtwork({ celebrity, ...canvas }: Props) {
-  const [failedSource, setFailedSource] = useState<string | null>(null);
-  const source = celebrity.slug === "katseye" ? "/images/celebrities/katseye/profile.webp"
-    : celebrity.slug === "xin" ? "/images/celebrities/xin/hero-concept-mobile.jpg" : celebrity.image;
-
   return <div className={styles.artwork} data-passport-identity={celebrity.slug}>
     <PassportStampCanvas {...canvas} celebrityName={celebrity.name} />
     <span className={styles.portrait} aria-hidden="true">
       <span className={styles.photo} data-creator={celebrity.slug}>
-        {source !== failedSource
-          ? <Image src={source} alt="" width={440} height={354}
-              sizes={`${96 * creatorCropScale(celebrity.slug)}px`}
-              unoptimized={bypassImageOptimization(source)} onError={() => setFailedSource(source)} />
-          : <span className={styles.fallback}>{celebrity.name}</span>}
+        <CreatorImage slug={celebrity.slug} src={celebrity.image} presentation="passport"
+          alt="" width={440} height={354} sizes="96px"
+          fallback={<span className={styles.fallback}>{celebrity.name}</span>} />
       </span>
       <svg className={styles.frame} viewBox="0 0 440 354" fill="none" aria-hidden="true">
         <path d="M28 10H412Q412 28 430 28V326Q412 326 412 344H28Q28 326 10 326V28Q28 28 28 10Z" stroke="currentColor" strokeWidth="3" />

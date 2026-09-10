@@ -1,6 +1,6 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import Image, { getImageProps } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, type CSSProperties } from "react";
@@ -8,8 +8,8 @@ import { ArrowRight, BadgeCheck, BookOpen } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { AuthIntentLink } from "./auth-intent-link";
 import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
-import { creatorHeroImages } from "./fan-ui/creator-hero-images";
-import { bypassImageOptimization } from "./fan-ui/public-image-policy";
+import { resolveCreatorHeroImage } from "./fan-ui/creator-image-config";
+import { CreatorHeroPicture } from "./fan-ui/creator-hero-picture";
 import { ReactionAction } from "@/features/reaction/ui/reaction-action";
 import { Avatar, AvatarPlaceholder } from "@/features/profile/ui/avatar";
 import { useAvatar } from "@/features/profile/ui/use-avatar";
@@ -28,8 +28,6 @@ import { CreatorLivePanel, NoticePanel, RafflePanel, RecentLive } from "@/featur
 import { InstagramRecentActivity } from "./instagram-recent-activity";
 import { pageViewIdempotencyKey, recordProductEventV1 } from "@/features/analytics/client/product-event-client";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "@/server/content/content-domain";
-import katseyeHeroDesktop from "../public/images/celebrities/katseye/hero-desktop.webp";
-import katseyeHeroMobile from "../public/images/celebrities/katseye/hero-mobile.webp";
 import styles from "@/features/fanpage/ui/fanpage.module.css";
 import { CreatorRolesText } from "./fan-ui/creator-roles";
 export { flattenLiveCatalog } from "@/features/fanpage/domain/live-catalog";
@@ -67,18 +65,13 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
       await recordProductEventV1({ eventName: "creator_page_view", celebrityId: null, liveEventId: null, missionId: null, benefitId: null, source: "fan.creator.detail", idempotencyKey: pageViewIdempotencyKey("creator_page_view", `/c/${celebrity.slug}`), properties: { celebritySlug: celebrity.slug } }, token);
     })();
   }, [ready, authenticated, getAccessToken, celebrity.slug]);
-  const hero = creatorHeroImages[celebrity.slug];
-  const desktopSrc = celebrity.slug === "katseye" ? katseyeHeroDesktop : hero?.src ?? celebrity.image.url;
-  const mobileSrc = celebrity.slug === "katseye" ? katseyeHeroMobile : hero?.mobileSrc ?? desktopSrc;
-  const unoptimized = !hero && celebrity.slug !== "katseye" && bypassImageOptimization(celebrity.image.url);
-  const desktop = getImageProps({ src: desktopSrc, alt: celebrity.image.alt, fill: true, sizes: "(min-width: 1440px) 1360px, calc(100vw - 64px)", priority: true, unoptimized }).props;
-  const mobile = getImageProps({ src: mobileSrc, alt: celebrity.image.alt, fill: true, sizes: "calc(100vw - 32px)", priority: true, unoptimized }).props;
+  const hero = resolveCreatorHeroImage(celebrity.slug, celebrity.image);
   const verifyLink = <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}>{ko ? "퀴즈 풀고 팬 인증하기" : "Verify fandom"}<ArrowRight aria-hidden="true" /></AuthIntentLink>;
   const recent = <RecentLive celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />;
   return <FanAppFrame locale={locale} mainId="celebrity-detail-main" actions={auth.ready && auth.authenticated ? <Link className={styles.headerIdentity} href={`/my?locale=${locale}`}>{portrait(36)}<span>{nickname ?? "MY"}</span></Link> : auth.ready ? <Link className={styles.headerLogin} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(`/c/${celebrity.slug}?locale=${locale}`)}` as Route}>{ko ? "로그인" : "Sign in"}</Link> : undefined}>
     <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
       <section className={styles.hero} data-dedicated-hero={hero ? celebrity.slug : undefined} style={{ "--hero-desktop-position": hero?.desktopPosition ?? celebrity.image.position, "--hero-mobile-position": hero?.mobilePosition ?? celebrity.image.position, "--hero-desktop-fit": hero?.desktopFit ?? "cover", backgroundColor: hero?.background } as CSSProperties} aria-labelledby="celebrity-heading">
-        <picture className={styles.heroPicture}><source media="(min-width: 48rem)" srcSet={desktop.srcSet} sizes={desktop.sizes} /><img {...mobile} alt={celebrity.image.alt} /></picture><div className={styles.scrim} aria-hidden="true" />
+        <CreatorHeroPicture slug={celebrity.slug} image={celebrity.image} className={styles.heroPicture} priority /><div className={styles.scrim} aria-hidden="true" />
         <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><CreatorRolesText roles={celebrity.roles} locale={locale} /><p>{ko ? "최근 활동과 LIVE 소식을 한곳에서" : "Recent activity and LIVE updates, together."}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { const socialLabel = socialLabels[locale][social.platform]; return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabel}, ${ko ? "새 창" : "new window"}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel}</span></a>; })}</div><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /></div>
       </section>
       <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => value === "leaderboard" && !(fanpage.state.status === "ready" && fanpage.state.data.leaderboardAvailable) ? <button key={value} disabled aria-describedby="leaderboard-lock-hint">{labels[locale][value]}</button> : <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>

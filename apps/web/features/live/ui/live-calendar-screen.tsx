@@ -3,6 +3,7 @@
 import { CalendarArt } from "@/components/fan-calendar/calendar-art";
 import { Dialog } from "@/components/ui/overlay/accessible-overlay";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
+import { CreatorImage } from "@/components/fan-ui/creator-image";
 
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
@@ -317,7 +318,9 @@ export function LiveCalendarScreen({
     { isCurrent = true, showRelativeTime = false }: { isCurrent?: boolean; showRelativeTime?: boolean } = {},
   ) {
     const title = locale === "ko" ? calendarTitlesKo.get(event.slug) ?? event.title : event.title;
-    const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
+    const metadata = metadataByEventSlug.get(event.slug);
+    const creatorSlug = metadata?.celebritySlug ?? "";
+    const platforms = metadata?.platforms ?? [];
     const platformNames = platforms.map((platform) => platformLabel[platform]);
     const tone = [...event.slug].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 4;
     return <article className={styles.event} key={event.id} aria-label={title} data-current={isCurrent ? "true" : "false"} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
@@ -326,13 +329,13 @@ export function LiveCalendarScreen({
         href={`/live/${event.slug}?locale=${locale}` as Route}
         aria-label={locale === "ko" ? `${title} 상세 보기` : `View ${title} details`}
       >
-        <Image className={styles.eventPortrait} src={event.celebrity.image} alt="" width={72} height={96} sizes="72px" />
+        <CreatorImage className={styles.eventPortrait} slug={creatorSlug} src={event.celebrity.image} alt="" width={72} height={96} sizes="72px" presentation="vertical" framed />
         <span className={styles.eventMeta}>
           <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
         </span>
         <strong className={styles.eventTitle}><span>{title}</span>{event.reservationState === "reserved" ? <LiveReservationMark locale={locale} className={styles.reservationMark} /> : null}</strong>
         <span className={styles.eventTopline}>
-          <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
+          <CreatorAvatar slug={creatorSlug} src={event.celebrity.image} size={24} />
           <span className={styles.creator}>{event.celebrity.name}</span>
           {platforms.length > 0 ? <span
             className={styles.platforms}

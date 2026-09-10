@@ -49,6 +49,7 @@ import {
   fanActionClassName,
 } from "@/components/fan-ui/fan-action";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
 import { formatFanCount } from "@/components/fan-ui/fan-count";
@@ -1324,13 +1325,7 @@ export function LiveEventScreen({
             </section>
           </div>
           <aside className={styles.identity}>
-            <Image
-              src={live.celebrity.image}
-              alt=""
-              width={64}
-              height={64}
-              unoptimized={live.celebrity.image.startsWith("https://")}
-            />
+            <CreatorAvatar slug={live.celebrity.slug} src={live.celebrity.image} size={{ mobile: 56, desktop: 64 }} />
             <div>
               <span>{live.celebrity.name}</span>
               <strong>{formatFanCount(live.celebrity.fanCount)}</strong>

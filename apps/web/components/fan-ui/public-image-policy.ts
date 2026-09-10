@@ -1,3 +1,5 @@
+import { resolveCreatorImage } from "./creator-image-config";
+
 /** Only the two public CMS buckets may use the shared image optimizer. */
 export const publicImageRemotePatterns = [
   "gmrykvmtmuaeswpajteq.supabase.co",
@@ -23,9 +25,9 @@ export function bypassImageOptimization(source: string): boolean {
   }
 }
 
-// These match the existing CSS transforms; DPR is chosen by the browser.
+// Compatibility for consumers measuring the standard square profile crop.
 export function creatorCropScale(slug: string): number {
-  return slug === "ifewknow" ? 2.45 : slug === "park-myungho" ? 1.9 : slug === "xin" ? 1.6 : 1;
+  return resolveCreatorImage({ slug, src: undefined }).crop.scale;
 }
 
 export function homeHeroSizes(): string {
