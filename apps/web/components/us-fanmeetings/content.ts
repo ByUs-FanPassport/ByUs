@@ -89,8 +89,8 @@ export const fanmeetingContent = {
     ],
     close: "어떤 팬미팅을\n준비하고 계신가요?",
     closeDesc:
-      "출연자와 희망 도시, 일정 등\n현재 정해진 내용을 메일로 알려주세요.",
-    email: "이메일로 프로젝트 문의",
+      "출연자와 희망 도시, 일정 등\n현재 정해진 내용을 문의창에 남겨주세요.",
+    email: "프로젝트 문의하기",
     note: "아직 정해지지 않은 내용은 비워두셔도 괜찮습니다.",
     footer: "ByUs. Your Bias.    ·    미국 팬미팅",
   },
@@ -189,8 +189,8 @@ export const fanmeetingContent = {
     ],
     close: "What fan meeting\ndo you have in mind?",
     closeDesc:
-      "Email us with the talent, preferred city, timing\nand any details you have so far.",
-    email: "Email us about your project",
+      "Share the talent, preferred city, timing\nand any details you have so far.",
+    email: "Tell us about your project",
     note: "It’s fine if some details are still undecided.",
     footer: "ByUs. Your Bias.    ·    U.S. Fan Meetings",
   },

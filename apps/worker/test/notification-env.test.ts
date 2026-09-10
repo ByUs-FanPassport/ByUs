@@ -51,3 +51,10 @@ describe("notification worker secrets", () => {
     expect(parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider",EMAIL_PROVIDER_URL:"https://email.test/send",EMAIL_PROVIDER_TOKEN:"e".repeat(16),KAKAO_PROVIDER_URL:"https://kakao.test/send",KAKAO_PROVIDER_TOKEN:"k".repeat(16)})).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"provider"});
   });
 });
+
+it("inquiry sending is separately gated and production-only", () => {
+  const source = { NOTIFICATION_WORKER_ID: "inquiry-test", SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "s".repeat(48), WEB_PUSH_VAPID_SUBJECT: "mailto:ops@byus.kr", WEB_PUSH_VAPID_PUBLIC_KEY: "a".repeat(88), WEB_PUSH_VAPID_PRIVATE_KEY: "b".repeat(43) };
+  expect(parseNotificationEnv(source).BUSINESS_INQUIRY_MODE).toBe("disabled");
+  expect(() => parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email" })).toThrow();
+  expect(parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email", NOTIFICATION_EXTERNAL_ENVIRONMENT: "prod" }).BUSINESS_INQUIRY_MODE).toBe("ses_email");
+});

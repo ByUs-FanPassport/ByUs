@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowDown,
-  ArrowUpRight,
   Check,
   Clapperboard,
   ClipboardCheck,
@@ -13,18 +12,15 @@ import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
 import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { fanmeetingContent } from "./content";
+import { FanmeetingInquiryProvider, InquiryButton } from "./inquiry-dialog";
 import styles from "./us-fanmeetings-page.module.css";
 
 export const FANMEETING_EMAIL = "biz@sallylab.io";
-export const FANMEETING_MAILTO = `mailto:${FANMEETING_EMAIL}?subject=${encodeURIComponent("ByUs × KH Fan Meeting")}`;
 const serviceIcons = [MapPin, ClipboardCheck, Clapperboard, UsersRound];
 
 function InquiryLink({ children }: { children: React.ReactNode }) {
   return (
-    <a className={styles.cta} href={FANMEETING_MAILTO}>
-      {children}
-      <ArrowUpRight aria-hidden="true" size={18} />
-    </a>
+    <InquiryButton className={styles.cta}>{children}</InquiryButton>
   );
 }
 
@@ -49,6 +45,7 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
   const t = fanmeetingContent[locale];
   const nextLocale = locale === "ko" ? "en" : "ko";
   return (
+    <FanmeetingInquiryProvider locale={locale}>
     <div className={styles.page} lang={locale} data-fan-surface>
       <FocusFlowHeader
         locale={locale}
@@ -243,9 +240,9 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
             <p>{t.closeDesc}</p>
           </div>
           <div className={styles.contact}>
-            <a className={styles.email} href={FANMEETING_MAILTO}>
+            <InquiryButton className={styles.email}>
               {FANMEETING_EMAIL}
-            </a>
+            </InquiryButton>
             <InquiryLink>{t.email}</InquiryLink>
             <p>{t.note}</p>
           </div>
@@ -258,5 +255,6 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
         </div>
       </footer>
     </div>
+    </FanmeetingInquiryProvider>
   );
 }

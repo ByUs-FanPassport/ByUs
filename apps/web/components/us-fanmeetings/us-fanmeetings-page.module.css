@@ -128,12 +128,15 @@
   width: 320px;
   max-width: 100%;
   padding: 17px 24px;
+  border: 0;
   border-radius: 12px;
   background: var(--kh-pink);
   color: #fff;
   font-size: 16px;
+  font-family: inherit;
   line-height: 1.4;
   font-weight: 700;
+  cursor: pointer;
   transition: background 150ms ease;
 }
 .cta:hover {
@@ -391,12 +394,19 @@
   line-height: 1.2;
 }
 .email {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 32px;
   line-height: 1.4;
   font-weight: 750;
   color: var(--kh-ink);
   overflow-wrap: anywhere;
+  cursor: pointer;
+  text-align: left;
 }
+.email svg { display: none; }
 .contact > p {
   color: var(--kh-muted);
   font-size: 13px;

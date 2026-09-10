@@ -8,7 +8,9 @@ import { SesEmailSender } from "./adapters/ses-email-sender.js";
 import { EmailSender } from "./adapters/email-sender.js";
 import { KakaoSender } from "./adapters/kakao-sender.js";
 import { ExternalNotificationWorker } from "./external-notification-worker.js";
-export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
+import { runBusinessInquiryOnce } from "./business-inquiry-worker.js";
+
+async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const push = await new NotificationWorker(
     SupabaseNotificationQueue.create(
       env.SUPABASE_URL,
@@ -32,4 +34,11 @@ export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
   const senders=env.NOTIFICATION_EXTERNAL_MODE==="test_sink"?{email:sink,kakao:sink}:ses?{email:ses,kakao:ses}:{email:new EmailSender({url:env.EMAIL_PROVIDER_URL!,token:env.EMAIL_PROVIDER_TOKEN!}),kakao:new KakaoSender({url:env.KAKAO_PROVIDER_URL!,token:env.KAKAO_PROVIDER_TOKEN!})};
   const external=await new ExternalNotificationWorker(queue,senders,{workerId:`${env.NOTIFICATION_WORKER_ID}:external`,batchSize:env.NOTIFICATION_WORKER_BATCH_SIZE,leaseSeconds:env.NOTIFICATION_WORKER_LEASE_SECONDS}).runOnce();
   return push+external;
+}
+
+export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
+  // Start both independently; an unrelated fan queue failure cannot starve inquiries.
+  const results = await Promise.allSettled([runFanNotificationsOnce(env), runBusinessInquiryOnce(env)]);
+  if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
+  return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);
 }

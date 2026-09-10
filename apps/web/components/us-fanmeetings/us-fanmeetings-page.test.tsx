@@ -2,21 +2,17 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Page, { generateMetadata } from "../../app/pages/us-fanmeetings/page";
-import { FANMEETING_MAILTO, UsFanmeetingsPage } from "./us-fanmeetings-page";
+import { UsFanmeetingsPage } from "./us-fanmeetings-page";
 
 describe("U.S. fanmeeting inquiries", () => {
   it.each(["ko", "en"] as const)(
-    "offers public email inquiries and preserves the %s language route",
+    "offers an on-site inquiry dialog and preserves the %s language route",
     (locale) => {
       const { container } = render(<UsFanmeetingsPage locale={locale} />);
-      const mailLinks = Array.from(
-        container.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]'),
-      );
-      expect(mailLinks).toHaveLength(3);
-      for (const link of mailLinks) {
-        expect(link.href).toBe(FANMEETING_MAILTO);
-        expect(new URL(link.href).pathname).toBe("biz@sallylab.io");
-      }
+      expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
+      expect(screen.getByRole("button", { name: locale === "ko" ? "팬미팅 문의하기" : "Discuss your fan meeting" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "biz@sallylab.io" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: locale === "ko" ? "프로젝트 문의하기" : "Tell us about your project" })).toBeInTheDocument();
       expect(
         screen.getByRole("link", {
           name: locale === "ko" ? "Switch to English" : "한국어로 보기",
