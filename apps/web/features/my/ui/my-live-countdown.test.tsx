@@ -30,22 +30,20 @@ describe("MyLiveCountdown", () => {
   });
 
   it("formats scheduled events above and below 24 hours", () => {
-    expect(formatMyLiveCountdown(start, Date.parse("2026-09-08T23:59:59.000Z"))).toBe("D-1 00:00:01");
-    expect(formatMyLiveCountdown(start, Date.parse("2026-09-09T23:59:59.000Z"))).toBe("00:00:01");
+    expect(formatMyLiveCountdown(start, Date.parse("2026-09-08T23:59:59.000Z"))).toBe("D-1");
+    expect(formatMyLiveCountdown(start, Date.parse("2026-09-09T23:59:59.000Z"))).toBe("곧 시작");
   });
 
   it("clamps exact and elapsed scheduled events without claiming they are live", () => {
     vi.setSystemTime(new Date(start));
     const exact = render(<MyLiveCountdown event={scheduled} locale="ko" />);
-    expect(screen.getByText("시작까지")).toBeInTheDocument();
-    expect(screen.getByText("00:00:00")).toBeInTheDocument();
+    expect(screen.getByText("시작 확인 중")).toBeInTheDocument();
     expect(screen.queryByText(/LIVE NOW|Live now|진행 중/)).not.toBeInTheDocument();
     exact.unmount();
 
     vi.setSystemTime(new Date("2026-09-10T00:30:00.000Z"));
     render(<MyLiveCountdown event={scheduled} locale="en" />);
-    expect(screen.getByText("Starts in")).toBeInTheDocument();
-    expect(screen.getByText("00:00:00")).toBeInTheDocument();
+    expect(screen.getByText("Checking start")).toBeInTheDocument();
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -72,7 +70,7 @@ describe("MyLiveCountdown", () => {
     let visibility: DocumentVisibilityState = "visible";
     vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility);
     const view = render(<MyLiveCountdown event={scheduled} locale="en" />);
-    expect(screen.getByText("00:01:00")).toBeInTheDocument();
+    expect(screen.getByText("Starts in 1 min")).toBeInTheDocument();
     expect(vi.getTimerCount()).toBe(1);
 
     visibility = "hidden";
@@ -83,7 +81,7 @@ describe("MyLiveCountdown", () => {
     vi.setSystemTime(new Date("2026-09-09T23:59:50.000Z"));
     visibility = "visible";
     fireEvent(document, new Event("visibilitychange"));
-    expect(screen.getByText("00:00:10")).toBeInTheDocument();
+    expect(screen.getByText("Starting soon")).toBeInTheDocument();
     expect(vi.getTimerCount()).toBe(1);
   });
 
@@ -103,8 +101,8 @@ describe("MyLiveCountdown", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("shares one interval and visibility listener across multiple mounted countdowns", () => {
-    const setInterval = vi.spyOn(window, "setInterval");
+  it("shares one scheduler and visibility listener across multiple mounted countdowns", () => {
+    const setInterval = vi.spyOn(window, "setTimeout");
     const addEventListener = vi.spyOn(document, "addEventListener");
     const removeEventListener = vi.spyOn(document, "removeEventListener");
     const visibilityAdds = () => addEventListener.mock.calls
@@ -157,10 +155,10 @@ describe("MyLiveCountdown", () => {
     expect(onStartReached).toHaveBeenCalledTimes(2);
   });
 
-  it("uses the latest callback without restarting its interval", () => {
+  it("uses the latest callback without restarting its scheduler", () => {
     const first = vi.fn();
     const latest = vi.fn();
-    const interval = vi.spyOn(window, "setInterval");
+    const interval = vi.spyOn(window, "setTimeout");
     const view = render(<MyLiveCountdown event={scheduled} locale="en" onStartReached={first} />);
     expect(interval).toHaveBeenCalledTimes(1);
     view.rerender(<MyLiveCountdown event={scheduled} locale="en" onStartReached={latest} />);

@@ -11,13 +11,16 @@ import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { CalendarDayNumber, CalendarMonthHeader } from "../../../components/fan-calendar/calendar-parts";
 import { FanMotionIcon } from "../../../components/fan-ui/fan-motion-icon";
-import type { LiveCalendarMonth } from "../domain/live-calendar";
+import { liveCalendarMonthSchema, type LiveCalendarMonth } from "../domain/live-calendar";
 import type { ExternalLiveProvider } from "../domain/live-event";
+import type { LiveStartEvent } from "../domain/live-time-display";
+import { LiveReservationLegend, LiveReservationMark } from "./live-reservation-mark";
+import { LiveTimeIndicator } from "./live-time-indicator";
 import { FanHeading } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-calendar-screen.module.css";
 
@@ -42,7 +45,6 @@ const copy = {
     catalog: "전체 LIVE",
     weekdays: ["일", "월", "화", "수", "목", "금", "토"],
     status: { scheduled: "예정", live: "LIVE 중", ended: "종료", cancelled: "취소" },
-    reservation: { reserved: "예약 완료", not_reserved: "미예약" },
     empty: "예정된 LIVE가 없어요.",
     filteredEmpty: "선택한 셀럽의 이번 달 LIVE가 없어요.",
     filterTitle: "셀럽 일정 필터",
@@ -60,7 +62,6 @@ const copy = {
     catalog: "All LIVE",
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     status: { scheduled: "Scheduled", live: "LIVE now", ended: "Ended", cancelled: "Cancelled" },
-    reservation: { reserved: "Reserved", not_reserved: "Not reserved" },
     empty: "No LIVE events scheduled.",
     filteredEmpty: "No LIVE is scheduled for the selected celebrities this month.",
     filterTitle: "Celebrity filters",
@@ -127,6 +128,20 @@ function calendarWeekday(date: string) {
   return new Date(Date.UTC(year!, month! - 1, day!)).getUTCDay();
 }
 
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [query]);
+
+  return matches;
+}
+
 export function LiveCalendarScreen({
   initialCalendar,
   locale,
@@ -149,7 +164,10 @@ export function LiveCalendarScreen({
   const [modalDate, setModalDate] = useState<string | null>(null);
   const gesture = useRef<{ date: string; x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
+  const refreshedStarts = useRef(new Set<string>());
+  const refreshController = useRef<AbortController | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const isMobileCalendar = useMediaQuery("(max-width: 63.99rem)");
   const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
   const t = copy[locale];
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -194,29 +212,55 @@ export function LiveCalendarScreen({
     setModalDate(null);
   }, [initialCelebritySlugs]);
 
+  const abortCalendarRefresh = useCallback(() => {
+    refreshController.current?.abort();
+    refreshController.current = null;
+  }, []);
+
+  const refreshCalendar = useCallback(async () => {
+    if (!ready) return;
+    abortCalendarRefresh();
+    const controller = new AbortController();
+    refreshController.current = controller;
+    try {
+      const token = authenticated ? await getAccessToken() : null;
+      if (controller.signal.aborted) return;
+      if (authenticated && !token) return;
+      const response = await fetch(
+        `/api/live-events/calendar?month=${initialCalendar.month}&locale=${locale}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          signal: controller.signal,
+        },
+      );
+      if (!response.ok) return;
+      const nextCalendar = liveCalendarMonthSchema.parse(await response.json());
+      if (controller.signal.aborted) return;
+      setCalendar(nextCalendar);
+    } catch {
+      // Keep the current calendar visible if identity restoration or refresh fails.
+    } finally {
+      if (refreshController.current === controller) refreshController.current = null;
+    }
+  }, [abortCalendarRefresh, authenticated, getAccessToken, initialCalendar.month, locale, ready]);
+
   useEffect(() => {
     if (!ready) return;
     if (!authenticated) {
+      abortCalendarRefresh();
       setCalendar(initialCalendar);
       return;
     }
-    const controller = new AbortController();
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        if (!token) return;
-        const response = await fetch(
-          `/api/live-events/calendar?month=${initialCalendar.month}&locale=${locale}`,
-          { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal },
-        );
-        if (!response.ok) return;
-        setCalendar(await response.json() as LiveCalendarMonth);
-      } catch {
-        // Keep the public calendar visible if identity restoration or refresh fails.
-      }
-    })();
-    return () => controller.abort();
-  }, [authenticated, getAccessToken, initialCalendar, locale, ready]);
+    void refreshCalendar();
+    return abortCalendarRefresh;
+  }, [abortCalendarRefresh, authenticated, initialCalendar, ready, refreshCalendar]);
+
+  const handleStartReached = useCallback((event: LiveStartEvent) => {
+    const key = `${event.id ?? "event"}:${event.startsAt}`;
+    if (refreshedStarts.current.has(key)) return;
+    refreshedStarts.current.add(key);
+    void refreshCalendar();
+  }, [refreshCalendar]);
 
   function selectCelebrities(next: readonly string[]) {
     const ordered = celebrities
@@ -237,7 +281,11 @@ export function LiveCalendarScreen({
   }
 
   const modalDay = visibleDays.find(day => day.date === modalDate);
-  function renderEvent(event: LiveCalendarMonth["days"][number]["events"][number], isCurrent = true) {
+  const hasVisibleReservation = visibleDays.some((day) => day.events.some((event) => event.reservationState === "reserved"));
+  function renderEvent(
+    event: LiveCalendarMonth["days"][number]["events"][number],
+    { isCurrent = true, showRelativeTime = false }: { isCurrent?: boolean; showRelativeTime?: boolean } = {},
+  ) {
     const title = locale === "ko" ? calendarTitlesKo.get(event.slug) ?? event.title : event.title;
     const platforms = metadataByEventSlug.get(event.slug)?.platforms ?? [];
     const platformNames = platforms.map((platform) => platformLabel[platform]);
@@ -252,7 +300,7 @@ export function LiveCalendarScreen({
         <span className={styles.eventMeta}>
           <time dateTime={event.startsAt}>{eventTime(event.startsAt, locale)}</time>
         </span>
-        <strong>{title}</strong>
+        <strong className={styles.eventTitle}><span>{title}</span>{event.reservationState === "reserved" ? <LiveReservationMark locale={locale} className={styles.reservationMark} /> : null}</strong>
         <span className={styles.eventTopline}>
           <CreatorAvatar slug={metadataByEventSlug.get(event.slug)?.celebritySlug ?? ""} src={event.celebrity.image} size={24} />
           <span className={styles.creator}>{event.celebrity.name}</span>
@@ -268,10 +316,11 @@ export function LiveCalendarScreen({
               key={platform}
             />)}
           </span> : null}
-          {event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
+          {showRelativeTime
+            ? <LiveTimeIndicator event={event} locale={locale} active onStartReached={handleStartReached} variant="text" className={styles.calendarTimeIndicator} />
+            : event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
         </span>
-        {event.reservationState || event.hasBenefit === true ? <span className={styles.eventExtras}>
-          {event.reservationState ? <span>{t.reservation[event.reservationState]}</span> : null}
+        {event.hasBenefit === true ? <span className={styles.eventExtras}>
           {event.hasBenefit === true ? <span className={styles.benefit}>Benefit</span> : null}
         </span> : null}
       </Link>
@@ -443,7 +492,10 @@ export function LiveCalendarScreen({
                       onPointerCancel={() => { gesture.current = null; suppressClick.current = false; }}
                       onClickCapture={event => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; } }}
                     >
-                    {day.events.map((event, index) => renderEvent(event, index === position))}
+                    {day.events.map((event, index) => renderEvent(event, {
+                      isCurrent: index === position,
+                      showRelativeTime: isMobileCalendar && activeDate === day.date,
+                    }))}
                     </div>
                     {day.events.length > 1 ? <div className={styles.dayControls}>
                       <div className={styles.carouselControls}>
@@ -462,6 +514,7 @@ export function LiveCalendarScreen({
               key={`trailing-${index}`}
             />)}
           </div>
+          {hasVisibleReservation ? <LiveReservationLegend locale={locale} className={styles.calendarLegend} /> : null}
         </section>
       </FanContentContainer>
       <Dialog open={Boolean(modalDay)} onClose={() => setModalDate(null)} labelledBy="calendar-dialog-title" backdropClassName={styles.modalBackdrop} contentClassName={styles.modal}>
@@ -469,7 +522,7 @@ export function LiveCalendarScreen({
           <h2 id="calendar-dialog-title">{modalDay ? dayLabel(modalDay.date, locale) : ""}</h2>
           <button type="button" onClick={() => setModalDate(null)} aria-label={locale === "ko" ? "닫기" : "Close"}><X aria-hidden="true" size={20} /></button>
         </header>
-        <div className={styles.modalEvents}>{modalDay?.events.map(event => renderEvent(event))}</div>
+        <div className={styles.modalEvents}>{modalDay?.events.map(event => renderEvent(event, { showRelativeTime: true }))}</div>
       </Dialog>
     </FanAppFrame>
   );

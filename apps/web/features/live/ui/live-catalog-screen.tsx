@@ -7,7 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Play, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
@@ -117,6 +117,7 @@ function LiveGroup({
   items,
   locale,
   reservationStatus,
+  onStartReached,
 }: {
   id: string;
   title: string;
@@ -125,6 +126,7 @@ function LiveGroup({
   items: readonly LiveEventResponse[];
   locale: FanLocale;
   reservationStatus: "loading" | "ready" | "error";
+  onStartReached: () => void;
 }) {
   const t = copy[locale];
   const [page, setPage] = useState(0);
@@ -176,7 +178,7 @@ function LiveGroup({
                   </div>
                   <h3>{item.live.title}</h3>
                   <p className={styles.dateRange}>{dateRange(item, locale)}</p>
-                  {item.live.effectiveStatus === "scheduled" ? <MyLiveCountdown event={item.live} locale={locale} pulseScheduled /> : null}
+                  {item.live.effectiveStatus === "scheduled" ? <MyLiveCountdown event={item.live} locale={locale} pulseScheduled onStartReached={onStartReached} /> : null}
                 </Link>
                 {awaitsReservation ? reservationStatus === "loading" ? (
                   <span className={styles.actionSkeleton} role="status" aria-label={t.reservationLoading}>
@@ -244,6 +246,7 @@ export function LiveCatalogScreen({
   const [catalog, setCatalog] = useState(initialCatalog);
   const [failed, setFailed] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
+  const refreshLiveStatus = useCallback(() => setRequestKey(value => value + 1), []);
   const [reservationStatus, setReservationStatus] = useState<"loading" | "ready" | "error">(
     !ready || authenticated ? "loading" : "ready",
   );
@@ -254,7 +257,8 @@ export function LiveCatalogScreen({
       setReservationStatus("loading");
       return;
     }
-    if (!authenticated) {
+    if (!authenticated && requestKey === 0) {
+      setCatalog(initialCatalog);
       setReservationStatus("ready");
       return;
     }
@@ -263,10 +267,11 @@ export function LiveCatalogScreen({
     setReservationStatus("loading");
     void (async () => {
       try {
-        const token = await getAccessToken();
-        if (!token) throw new Error("access token unavailable");
+        const token = authenticated ? await getAccessToken() : null;
+        if (authenticated && !token) throw new Error("access token unavailable");
         const response = await fetch(`/api/live-events?locale=${locale}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          cache: "no-store",
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("catalog request failed");
@@ -281,7 +286,7 @@ export function LiveCatalogScreen({
       }
     })();
     return () => controller.abort();
-  }, [ready, authenticated, getAccessToken, locale, requestKey]);
+  }, [ready, authenticated, getAccessToken, locale, requestKey, initialCatalog]);
 
   const total = catalog.liveNow.length + catalog.upcoming.length + catalog.replay.length;
   return (
@@ -298,9 +303,9 @@ export function LiveCatalogScreen({
         {failed ? <button className={styles.retry} onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button> : null}
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
-            {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} subtitle={t.liveNowSub} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} /> : null}
-            <LiveGroup id="upcoming" title={t.upcoming} subtitle={t.upcomingSub} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} />
-            <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} />
+            {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} subtitle={t.liveNowSub} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} /> : null}
+            <LiveGroup id="upcoming" title={t.upcoming} subtitle={t.upcomingSub} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
+            <LiveGroup id="replay" title={t.replay} subtitle={t.replaySub} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
           </>
         )}
       </FanContentContainer>

@@ -1,0 +1,18 @@
+.mark {
+  position:relative;
+  display:inline-flex;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  border-radius:50%;
+  color:var(--color-service-ink);
+  background:var(--color-surface-focus);
+  border:1px solid currentColor;
+  vertical-align:middle;
+}
+.mark .checkIcon { width:12px;height:12px;flex:0 0 auto; }
+.legend { display:inline-flex;align-items:center;gap:6px;color:var(--color-muted);font-size:12px;line-height:1.4; }
+.srOnly { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }

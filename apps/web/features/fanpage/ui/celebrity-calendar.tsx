@@ -1,20 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import type { Route } from "next";
-import { Check } from "lucide-react";
 import { ArrowRight } from "@/components/icons";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
-import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import { CalendarDayNumber, CalendarMonthHeader } from "@/components/fan-calendar/calendar-parts";
 import { liveCalendarMonthSchema, type LiveCalendarDay } from "@/features/live/domain/live-calendar";
+import { LiveReservationLegend, LiveReservationMark } from "@/features/live/ui/live-reservation-mark";
+import { LiveTimeIndicator } from "@/features/live/ui/live-time-indicator";
 import type { PublishedCelebrity, PublishedCelebrityLive, ContentLocale } from "@/server/content/content-domain";
 import styles from "./calendar.module.css";
 type AsyncState<T> = { status: "idle" | "loading" } | { status: "ready"; data:T } | {status:"error"};
 const copy = {
-ko: { calendarTitle:"LIVE 일정", calendarOpen:"캘린더 크게 보기", calendarLoading:"LIVE 일정을 확인하고 있어요", calendarError:"일정을 불러오지 못했어요.", calendarUpcoming:"다가오는 일정", calendarUpcomingEmpty:"이번 달에는 예정된 LIVE가 없어요.", previousMonth:"이전 달", nextMonth:"다음 달", reserved:"예약 완료", notReserved:"예약 전", reservationUnknown:"예약 확인 전", weekdays:["일","월","화","수","목","금","토"] },
-en: { calendarTitle:"LIVE schedule", calendarOpen:"Open full calendar", calendarLoading:"Checking LIVE schedule", calendarError:"We couldn't load the schedule.", calendarUpcoming:"Upcoming", calendarUpcomingEmpty:"No upcoming LIVE this month.", previousMonth:"Previous month", nextMonth:"Next month", reserved:"Reserved", notReserved:"Not reserved", reservationUnknown:"Reservation unknown", weekdays:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] }
+ko: { calendarTitle:"LIVE 일정", calendarOpen:"캘린더 크게 보기", calendarLoading:"LIVE 일정을 확인하고 있어요", calendarError:"일정을 불러오지 못했어요.", calendarUpcoming:"다가오는 일정", calendarUpcomingEmpty:"이번 달에는 예정된 LIVE가 없어요.", previousMonth:"이전 달", nextMonth:"다음 달", weekdays:["일","월","화","수","목","금","토"] },
+en: { calendarTitle:"LIVE schedule", calendarOpen:"Open full calendar", calendarLoading:"Checking LIVE schedule", calendarError:"We couldn't load the schedule.", calendarUpcoming:"Upcoming", calendarUpcomingEmpty:"No upcoming LIVE this month.", previousMonth:"Previous month", nextMonth:"Next month", weekdays:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] }
 } as const;
 function formatMiniCalendarDate(value: string, locale: ContentLocale) {
   return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
@@ -24,11 +24,6 @@ function formatMiniCalendarDate(value: string, locale: ContentLocale) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function localizedLiveStatus(status: string, locale: ContentLocale) {
-  if (status === "live" || status === "scheduled") return <LiveStatusIndicator status={status} locale={locale} density="compact" />;
-  return locale === "en" ? "Ended" : "종료";
 }
 
 function currentKstDate(now = new Date()) {
@@ -87,38 +82,57 @@ export function CelebrityMiniCalendar({
   const [month, setMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [state, setState] = useState<AsyncState<LiveCalendarDay[]>>({ status: "loading" });
+  const refreshController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setMonth(initialMonth);
   }, [initialMonth]);
 
+  const abortCalendarRefresh = useCallback(() => {
+    refreshController.current?.abort();
+    refreshController.current = null;
+  }, []);
+
+  const refreshCalendar = useCallback(async () => {
+    abortCalendarRefresh();
+    const controller = new AbortController();
+    refreshController.current = controller;
+    try {
+      const token = authenticated ? await getAccessToken() : null;
+      if (controller.signal.aborted) return;
+      if (authenticated && !token) throw new Error("Calendar authentication unavailable");
+      const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${locale}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Calendar request failed");
+      const calendar = liveCalendarMonthSchema.parse(await response.json());
+      if (controller.signal.aborted) return;
+      setState({
+        status: "ready",
+        data: calendar.days.map((day) => ({
+          ...day,
+          events: day.events.filter((event) => event.celebrity.name === celebrity.name),
+        })),
+      });
+    } catch {
+      if (!controller.signal.aborted) setState({ status: "error" });
+    } finally {
+      if (refreshController.current === controller) refreshController.current = null;
+    }
+  }, [abortCalendarRefresh, authenticated, celebrity.name, getAccessToken, locale, month]);
+
   useEffect(() => {
     if (!ready) return;
-    const controller = new AbortController();
     setState({ status: "loading" });
     setSelectedDate(null);
-    void (async () => {
-      try {
-        const token = authenticated ? await getAccessToken() : null;
-        const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${locale}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("Calendar request failed");
-        const calendar = liveCalendarMonthSchema.parse(await response.json());
-        setState({
-          status: "ready",
-          data: calendar.days.map((day) => ({
-            ...day,
-            events: day.events.filter((event) => event.celebrity.name === celebrity.name),
-          })),
-        });
-      } catch {
-        if (!controller.signal.aborted) setState({ status: "error" });
-      }
-    })();
-    return () => controller.abort();
-  }, [authenticated, celebrity.name, getAccessToken, locale, month, ready]);
+    void refreshCalendar();
+    return abortCalendarRefresh;
+  }, [abortCalendarRefresh, ready, refreshCalendar]);
+
+  const handleStartReached = useCallback(() => {
+    void refreshCalendar();
+  }, [refreshCalendar]);
 
   const days = state.status === "ready" ? state.data : emptyCalendarDays(month);
   const firstWeekday = calendarWeekday(days[0]?.date ?? `${month}-01`);
@@ -134,6 +148,7 @@ export function CelebrityMiniCalendar({
   const displayedEvents = selectedDay
     ? [...selectedDay.events].sort((left, right) => left.startsAt.localeCompare(right.startsAt))
     : upcomingEvents;
+  const hasDisplayedReservation = displayedEvents.some((event) => event.reservationState === "reserved");
   const calendarListId = `${celebrity.slug}-calendar-events`;
 
   return (
@@ -193,14 +208,14 @@ export function CelebrityMiniCalendar({
           <li key={event.id} data-status={event.effectiveStatus}>
             <Link href={`/live/${event.slug}?locale=${locale}` as Route}>
               <time dateTime={event.startsAt}>{formatMiniCalendarDate(event.startsAt, locale)}</time>
-              <strong>{event.title}</strong>
-              <span>{localizedLiveStatus(event.effectiveStatus, locale)}</span>
-              <small className={styles.calendarReservation}>{event.reservationState === "reserved" ? <Check aria-hidden="true" /> : null}{event.reservationState === "reserved" ? t.reserved : event.reservationState === "not_reserved" ? t.notReserved : t.reservationUnknown}</small>
+              <strong><span>{event.title}</span>{event.reservationState === "reserved" ? <LiveReservationMark locale={locale} className={styles.calendarReservation} /> : null}</strong>
+              <LiveTimeIndicator event={event} locale={locale} active onStartReached={handleStartReached} variant="text" className={styles.calendarTimeIndicator} />
             </Link>
           </li>
         ))}</ol> : state.status === "ready" ? <p>{t.calendarUpcomingEmpty}</p> : null}
       </div>
       <div className={styles.calendarFooter}>
+        {hasDisplayedReservation ? <LiveReservationLegend locale={locale} className={styles.calendarLegend} /> : null}
         <Link href={`/live/calendar?month=${month}&locale=${locale}&celebrity=${celebrity.slug}` as Route}>{t.calendarOpen}<ArrowRight /></Link>
       </div>
     </section>

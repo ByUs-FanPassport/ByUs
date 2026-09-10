@@ -14,6 +14,8 @@ import { bypassImageOptimization, homeHeroSizes } from "./fan-ui/public-image-po
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
 import { creatorHeroImages } from "./fan-ui/creator-hero-images";
+import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
+import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -83,15 +85,8 @@ function formatLiveDate(value: string, locale: ContentLocale) {
   }).format(new Date(value));
 }
 
-export function formatLiveCountdown(startsAt: string, now: number) {
-  const remainingSeconds = Math.max(0, Math.floor((Date.parse(startsAt) - now) / 1_000));
-  if (remainingSeconds === 0) return "LIVE NOW";
-  const days = Math.floor(remainingSeconds / 86_400);
-  const hours = Math.floor((remainingSeconds % 86_400) / 3_600);
-  const minutes = Math.floor((remainingSeconds % 3_600) / 60);
-  const seconds = remainingSeconds % 60;
-  const clock = [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
-  return days > 0 ? `D-${days} ${clock}` : clock;
+export function formatLiveCountdown(startsAt: string, now: number, locale: ContentLocale = "ko") {
+  return formatDetailedLiveCountdown(startsAt, now, locale);
 }
 
 export function formatHeroLiveTitle(celebrityName: string) {
@@ -99,29 +94,27 @@ export function formatHeroLiveTitle(celebrityName: string) {
 }
 
 export function LiveCountdown({
+  id,
   effectiveStatus,
   startsAt,
   active,
+  locale = "ko",
+  onStartReached,
 }: {
+  id?: string;
   effectiveStatus: LiveEventResponse["live"]["effectiveStatus"];
   startsAt: string;
   active: boolean;
+  locale?: ContentLocale;
+  onStartReached?: (event: LiveStartEvent) => void;
 }) {
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!active || effectiveStatus === "live") return;
-    const update = () => setNow(Date.now());
-    update();
-    const timer = window.setInterval(update, 1_000);
-    return () => window.clearInterval(timer);
-  }, [active, effectiveStatus, startsAt]);
+  const { now } = useLiveStartClock({ id, effectiveStatus, startsAt }, { active, precision: "second", onStartReached });
 
   const value = effectiveStatus === "live"
     ? "LIVE NOW"
     : now === null
       ? "--:--:--"
-      : formatLiveCountdown(startsAt, now);
+      : formatLiveCountdown(startsAt, now, locale);
 
   return <span aria-live="off">{value}</span>;
 }
@@ -142,10 +135,12 @@ export function LiveHeroCarousel({
   featuredLives,
   locale,
   panelOpen = true,
+  onStartReached,
 }: {
   featuredLives: readonly LiveEventResponse[];
   locale: ContentLocale;
   panelOpen?: boolean;
+  onStartReached?: (event: LiveStartEvent) => void;
 }) {
   const t = carouselCopy[locale];
   const total = featuredLives.length + 1;
@@ -314,9 +309,12 @@ export function LiveHeroCarousel({
                 <p className={styles.heroCountdown}>
                   <Clock />
                   <LiveCountdown
+                    id={featuredLive.live.id}
                     effectiveStatus={featuredLive.live.effectiveStatus}
                     startsAt={featuredLive.live.startsAt}
                     active={isActive && visible}
+                    locale={locale}
+                    onStartReached={onStartReached}
                   />
                 </p>
                 {featuredLive.primaryAction === "sign_in_to_reserve" ? (

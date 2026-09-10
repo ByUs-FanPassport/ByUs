@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCatalogScreen } from "./live-catalog-screen";
 
@@ -35,10 +35,31 @@ const base = {
 };
 
 describe("LIVE catalog", () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-10T00:00:00Z"));
     privy.ready = true;
     privy.authenticated = false;
     privy.getAccessToken.mockReset();
+  });
+
+  it("refreshes an anonymous catalog at the start and uses the returned LIVE group", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.parse(base.live.startsAt) - 500));
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ catalog: {
+      liveNow: [{ ...base, live: { ...base.live, effectiveStatus: "live", watch: { ...base.live.watch, available: true, mode: "live" } }, primaryAction: "watch_live" }],
+      upcoming: [], replay: [],
+    } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [base], replay: [] }} />);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(privy.getAccessToken).not.toHaveBeenCalled();
+    expect(screen.getByRole("region", { name: "지금 LIVE 중" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).queryByRole("article")).not.toBeInTheDocument();
+    unmount();
   });
 
   it("omits only ByUs brand metadata and uses the LIVE start for its countdown", () => {
@@ -46,7 +67,7 @@ describe("LIVE catalog", () => {
     render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [byus, base], replay: [] }} />);
     expect(screen.queryByText("KARA · ByUs")).not.toBeInTheDocument();
     expect(screen.getByText("KARA · NUALEAF")).toBeInTheDocument();
-    expect(screen.getAllByText("시작까지")).toHaveLength(2);
+    expect(screen.getAllByText(/^D-\d+$/)).toHaveLength(2);
   });
 
   it("renders the three product states with canonical details", () => {

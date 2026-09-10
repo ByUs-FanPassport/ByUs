@@ -238,7 +238,8 @@ describe("approved fanpage", () => {
     expect(within(region).getByRole("link", { name: /첫 LIVE/ })).toHaveAttribute("href", "/live/kara-first-live?locale=ko");
     expect(within(region).getByRole("link", { name: /두 번째 LIVE/ })).toHaveAttribute("href", "/live/kara-second-live?locale=ko");
     expect(within(region).getByText("예약 완료")).toBeInTheDocument();
-    expect(within(region).getByText("예약 전")).toBeInTheDocument();
+    expect(within(region).queryByText("예약 전")).not.toBeInTheDocument();
+    expect(within(region).getByText("내 예약")).toBeInTheDocument();
     fireEvent.click(within(region).getByRole("button", { name: "전체 보기" }));
     expect(date).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(date);
@@ -289,7 +290,10 @@ describe("approved fanpage", () => {
     const reservedDate = await screen.findByRole("button", { name: "18일, 1 LIVE" });
     expect(reservedDate).not.toHaveAttribute("data-reservation");
     fireEvent.click(reservedDate);
-    expect(within(screen.getByRole("region", { name: "KARA LIVE 일정" })).getByText("예약 완료")).toBeInTheDocument();
+    const region = screen.getByRole("region", { name: "KARA LIVE 일정" });
+    expect(within(region).getByText("예약 완료")).toBeInTheDocument();
+    expect(within(region).getByText("내 예약")).toBeInTheDocument();
+    expect(region.querySelectorAll('[data-live-reserved="true"]')).toHaveLength(1);
     expect(request).toHaveBeenCalledWith(
       `/api/live-events/calendar?month=${month}&locale=ko`,
       expect.objectContaining({ headers: { Authorization: "Bearer token" } }),

@@ -24,10 +24,8 @@
 
 .countdown .value {
   color: var(--color-ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
   font-weight: 750;
-  letter-spacing: .01em;
   white-space: nowrap;
 }
 

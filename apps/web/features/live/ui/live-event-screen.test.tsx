@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveEventScreen, formatReservationDateTime, formatReservationDeadline } from "./live-event-screen";
 import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
@@ -156,7 +156,11 @@ describe("LiveEventScreen", () => {
     expect(heading.parentElement).not.toBeNull();
     expect(heading.parentElement!.compareDocumentPosition(icon!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+  afterEach(() => vi.useRealTimers());
+
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-23T00:00:00Z"));
     authenticated = true;
     query = "locale=ko";
     push.mockReset();
@@ -164,6 +168,34 @@ describe("LiveEventScreen", () => {
     vi.restoreAllMocks();
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); });
     HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); });
+  });
+
+  it("keeps details visible during start refresh and does not record another page view", async () => {
+    const response = payload();
+    vi.setSystemTime(new Date(Date.parse(response.live.startsAt) - 500));
+    let resolveRefresh!: (value: Response) => void;
+    let detailReads = 0;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).startsWith("/api/live-events/")) {
+        detailReads += 1;
+        if (detailReads > 1) return new Promise<Response>(resolve => { resolveRefresh = resolve; });
+      }
+      return Response.json(response);
+    });
+    const { unmount } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    const priorOtherCalls = fetchMock.mock.calls.filter(([url]) => !String(url).startsWith("/api/live-events/")).length;
+    await act(async () => {
+      vi.setSystemTime(new Date(response.live.startsAt));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(detailReads).toBe(2);
+    expect(screen.getByRole("heading", { name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
+    expect(screen.getByText("시작 확인 중")).toBeInTheDocument();
+    await act(async () => { resolveRefresh(Response.json({ ...response, live: { ...response.live, effectiveStatus: "live" } })); });
+    expect(screen.getByText("LIVE 진행중")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => !String(url).startsWith("/api/live-events/"))).toHaveLength(priorOtherCalls);
+    unmount();
   });
 
   it("renders the localized live details and the only spectrum reservation action", async () => {

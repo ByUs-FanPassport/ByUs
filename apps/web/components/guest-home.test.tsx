@@ -64,9 +64,9 @@ describe("canonical 03 guest home", () => {
 
   it("formats the DESIGN countdown contract with and without a day prefix", () => {
     const startsAt = "2026-09-15T11:00:00.000Z";
-    expect(formatLiveCountdown(startsAt, Date.parse("2026-09-13T08:57:56.000Z"))).toBe("D-2 02:02:04");
+    expect(formatLiveCountdown(startsAt, Date.parse("2026-09-13T08:57:56.000Z"))).toBe("D-2");
     expect(formatLiveCountdown(startsAt, Date.parse("2026-09-15T10:57:56.000Z"))).toBe("00:02:04");
-    expect(formatLiveCountdown(startsAt, Date.parse(startsAt))).toBe("LIVE NOW");
+    expect(formatLiveCountdown(startsAt, Date.parse(startsAt))).toBe("시작 확인 중");
   });
 
   it("formats Home Hero titles without repeating the brand", () => {
@@ -75,6 +75,18 @@ describe("canonical 03 guest home", () => {
       "Elina LIVE",
       "Changha LIVE",
     ]);
+  });
+
+  it("refreshes server status once when the same LIVE reaches its start in hero and list", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.parse(featuredLive.live.startsAt) - 500));
+    const { unmount } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    expect(routerRefresh).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(routerRefresh).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText("시작 확인 중")).toHaveLength(2);
+    expect(screen.queryByText("LIVE NOW")).not.toBeInTheDocument();
+    unmount();
   });
 
   it("shows LIVE NOW in the countdown position for an active LIVE", () => {
@@ -222,6 +234,8 @@ describe("canonical 03 guest home", () => {
   });
 
   it("renders the first three active and scheduled LIVE events", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-23T00:00:00Z"));
     const activeLive = {
       ...featuredLive,
       live: {
@@ -279,9 +293,9 @@ describe("canonical 03 guest home", () => {
 
     expect(rows).toHaveLength(3);
     expect(within(rows[0]).getByText("KARA")).toBeInTheDocument();
-    expect(within(rows[0]).getByText("LIVE")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("LIVE 진행중")).toBeInTheDocument();
     expect(within(rows[1]).getByText("Elina 예정 LIVE")).toBeInTheDocument();
-    expect(within(rows[1]).getByText("UPCOMING")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("D-2")).toBeInTheDocument();
     expect(within(rows[2]).getByText("Changha 예정 LIVE")).toBeInTheDocument();
     expect(within(rows[2]).getByText("7월 26일 오후 8:00")).toBeInTheDocument();
     expect(

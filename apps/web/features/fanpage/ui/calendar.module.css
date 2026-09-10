@@ -40,17 +40,17 @@
 .calendarEventDay:focus-visible { outline:3px solid var(--color-focus); outline-offset:-3px; }
 .calendarListHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .calendarListHeading button { min-height:44px; padding:0 8px; border:0; background:transparent; color:var(--color-service-ink); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
-.calendarUpcoming a { grid-template-areas:"time title state" "time reservation reservation"; }
-.calendarReservation { grid-area:reservation; display:flex; align-items:center; gap:4px; color:var(--color-muted); font-size:11px; }
-.calendarReservation svg { width:12px; height:12px; color:var(--color-service-ink); }
-.calendarUpcoming a { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title title" "time state" "reservation reservation"; row-gap:6px; }
-.calendarUpcoming strong { display:block; overflow:visible; -webkit-line-clamp:unset; overflow-wrap:anywhere; line-height:1.45; }
+.calendarUpcoming a { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title title" "time state"; row-gap:6px; }
+.calendarUpcoming strong { display:flex; min-width:0; align-items:center; justify-content:center; gap:6px; overflow:visible; -webkit-line-clamp:unset; overflow-wrap:anywhere; line-height:1.45; }
+.calendarUpcoming strong > span:first-child { min-width:0; word-break:keep-all; }
+.calendarReservation { flex:none; }
+.calendarTimeIndicator { grid-area:state; }
 .calendarEventDay[data-upcoming="true"]:not([data-multiple="true"]) > span { animation:calendar-upcoming-pulse 2.8s ease-in-out infinite; }
 .heroCalendar{padding:24px;gap:14px;box-shadow:none;border:1px solid #e8e7ec;border-radius:18px}
 .calendarHeading h2{font-size:20px}
 .calendarUpcoming li{background:#fff}
-.calendarUpcoming a{padding:12px 0;grid-template-columns:76px minmax(0,1fr) auto;grid-template-areas:"time title state" "time reservation reservation"}
-.calendarUpcoming strong{font-size:14px;line-height:1.5}
+.calendarUpcoming a{padding:12px 0;grid-template-columns:76px minmax(0,1fr) auto;grid-template-areas:"time title state"}
+.calendarUpcoming strong{font-size:14px;line-height:1.5;text-align:center}
 .calendarUpcoming time{font-size:12px}
 @media(max-width:767px){.heroCalendar{padding:20px}}
 

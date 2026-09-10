@@ -3,7 +3,7 @@
 import { CreatorFanLink } from "./fan-ui/creator-fan-link";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
-import { LiveStatusIndicator } from "./live-status-indicator";
+import { LiveTimeIndicator } from "@/features/live/ui/live-time-indicator";
 
 import { CreatorPortrait } from "./fan-ui/creator-portrait";
 import { HomeOwnerProvider, useHomeOwner } from "./fan-ui/home-owner-provider";
@@ -158,7 +158,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement }: { locale: Cont
       </div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>
-        {reservation ? <div className={styles.reservationSummary}><CalendarHeart aria-hidden="true"/><div><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time></div><Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link></div> : <div className={styles.summaryEmpty}><CalendarHeart aria-hidden="true"/><p>{t.noReservation}</p><Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link></div>}
+        {reservation ? <div className={styles.reservationSummary}><CalendarHeart aria-hidden="true"/><div><h3>{reservation.title}</h3><time dateTime={reservation.startsAt}>{formatLiveDate(reservation.startsAt, locale)}</time><LiveTimeIndicator event={reservation} locale={locale} variant="text" onStartReached={owner.retryPersonalization}/></div><Link className={styles.summaryOutlineAction} href={`/live/${reservation.slug}${localeQuery}` as Route}>{t.liveDetails}<ArrowRight /></Link></div> : <div className={styles.summaryEmpty}><CalendarHeart aria-hidden="true"/><p>{t.noReservation}</p><Link className={styles.summaryTextLink} href={`/live${localeQuery}` as Route}>{t.browseLive}<ChevronRight /></Link></div>}
       </div>
     </section>
   );
@@ -189,6 +189,8 @@ export function GuestHome(props: GuestHomeProps) {
 
 function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {} }: GuestHomeProps) {
   const t = copy[locale];
+  const router = useRouter();
+  const refreshLiveStatus = useCallback(() => router.refresh(), [router]);
   const localeQuery = `?locale=${locale}`;
   const [panelOpen, setPanelOpen] = useState(true);
   const [upcomingPage, setUpcomingPage] = useState(0);
@@ -247,7 +249,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
             <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
-            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel featuredLives={featuredLives} locale={locale} panelOpen={panelOpen} />}
+            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel featuredLives={featuredLives} locale={locale} panelOpen={panelOpen} onStartReached={refreshLiveStatus} />}
           </section>
 
           {personalization.state.status === "guest" ? (
@@ -319,12 +321,11 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
             <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
             {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
               {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
-                const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
                 return (
                   <article className={styles.liveRow} key={featuredLive.live.id}>
                     <CreatorAvatar slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} size={{ mobile: 56, desktop: 64 }} />
                     <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
-                    <div className={styles.liveMeta}><LiveStatusIndicator label={statusLabel} status={featuredLive.live.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" /></div>
+                    <div className={styles.liveMeta}><LiveTimeIndicator event={featuredLive.live} locale={locale} onStartReached={refreshLiveStatus} /></div>
                     <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>
                   </article>
                 );

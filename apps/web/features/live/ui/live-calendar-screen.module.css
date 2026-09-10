@@ -55,6 +55,10 @@
 .status[data-status="live"] { background:oklch(95% .04 8); color:oklch(45% .18 15); }
 .status[data-status="cancelled"] { color:oklch(48% 0 0); text-decoration:line-through; }
 .eventLink strong { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:var(--fan-calendar-event-size); font-weight:750; letter-spacing:-.02em; line-height:1.45; overflow-wrap:anywhere; }
+.eventLink .eventTitle { display:flex; align-items:center; gap:6px; overflow:visible; }
+.eventTitle > span:first-child { display:-webkit-box; min-width:0; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.reservationMark { flex:none; }
+.calendarTimeIndicator { flex:none; }
 .eventMeta > * + *::before { margin-right:6px; color:oklch(72% 0 0); content:"·"; }
 .eventMeta .benefit::before { content:none; }
 .benefit { background:oklch(96% .025 315); color:oklch(42% .19 315); }
@@ -273,6 +277,10 @@
   .eventMeta { grid-column:2; grid-row:1; gap:3px; }
   .eventMeta time { font-size:11px; }
   .eventLink strong { grid-column:2; grid-row:2; min-height:0; font-size:12px; line-height:1.4; -webkit-line-clamp:4; overflow-wrap:anywhere; }
+  .days .eventLink .eventTitle { display:contents; }
+  .days .eventTitle > span:first-child { grid-column:2; grid-row:2; -webkit-line-clamp:4; }
+  .days .reservationMark { grid-column:1 / -1; grid-row:4; }
+  .days .eventTitle:has(.reservationMark) ~ .eventExtras { padding-left:24px; }
   .eventTopline { grid-column:1 / -1; grid-row:3; flex-wrap:wrap; gap:3px; }
   .eventExtras { grid-column:1 / -1; grid-row:4; }
   .calendarStatus[data-live-status] { padding:3px 5px; font-size:10px; min-height:22px; }
@@ -294,6 +302,7 @@
 .modalEvents .eventLink { display:flex; flex-direction:column; position:relative; height:auto; min-height:124px; padding:16px 0 16px 88px; gap:8px; }
 .modalEvents .eventPortrait { display:block; position:absolute; top:16px; left:0; width:72px; height:96px; object-fit:cover; border-radius:4px; }
 .modalEvents .eventLink strong { display:block; overflow:visible; font-size:16px; line-height:1.5; overflow-wrap:anywhere; -webkit-line-clamp:unset; }
+.modalEvents .eventLink .eventTitle { display:flex; }
 .modalEvents .eventTopline > .creator { display:inline; }
 .modalEvents .eventMeta time { font-size:13px; color:#b91469; }
 .modalEvents .eventTopline { flex-wrap:wrap; }
@@ -302,3 +311,4 @@
 .modal,.modal *,.modal *::before,.modal *::after { box-sizing:border-box; }
 
 .eventExtras { display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; color:var(--color-muted); font-size:11px; line-height:1.4; }
+.calendarLegend { display:flex; justify-content:flex-end; margin-top:16px; color:var(--color-muted); font-size:var(--fan-calendar-meta-size); }

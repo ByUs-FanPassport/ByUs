@@ -1,11 +1,12 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCalendarScreen } from "./live-calendar-screen";
 
+const auth = vi.hoisted(() => ({ authenticated: false, getAccessToken: vi.fn() }));
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated: false, getAccessToken: vi.fn() }),
+  usePrivy: () => ({ ready: true, authenticated: auth.authenticated, getAccessToken: auth.getAccessToken }),
 }));
 
 const events = [
@@ -112,6 +113,12 @@ function renderCalendar(locale: "ko" | "en" = "ko", initialCelebritySlugs: reado
 }
 
 describe("LIVE calendar screen", () => {
+  beforeEach(() => {
+    auth.authenticated = false;
+    auth.getAccessToken.mockReset().mockResolvedValue("token");
+    vi.unstubAllGlobals();
+  });
+
   it.each(["scheduled", "live", "ended", "cancelled"] as const)("marks only actionable mobile dates for %s events", (status) => {
     const { container } = render(<LiveCalendarScreen locale="ko" initialCelebritySlugs={[]} initialCalendar={{ ...calendar, days: calendar.days.map(day => ({ ...day, events: day.date === "2026-09-15" ? [{ ...events[0]!, effectiveStatus: status }] : [] })) }} celebrities={celebrities} eventMetadata={eventMetadata} />);
     const date = container.querySelector('[data-calendar-date="2026-09-15"]');
@@ -175,12 +182,36 @@ describe("LIVE calendar screen", () => {
     expect(within(elina).getByText("Benefit")).toBeInTheDocument();
   });
 
-  it("keeps unknown, reserved, and not-reserved states distinct and links back to the catalog", () => {
-    renderCalendar("en");
+  it("marks only reserved events and shows one reservation legend", () => {
+    const { container } = renderCalendar("en");
     expect(screen.getByRole("link", { name: /All LIVE/i })).toHaveAttribute("href", "/live?locale=en");
     expect(within(screen.getByRole("article", { name: "KARA LIVE" })).queryByText(/reserved/i)).not.toBeInTheDocument();
     expect(within(screen.getByRole("article", { name: "ELINA LIVE" })).getByText("Reserved")).toBeInTheDocument();
-    expect(within(screen.getByRole("article", { name: "ENDED LIVE" })).getByText("Not reserved")).toBeInTheDocument();
+    expect(within(screen.getByRole("article", { name: "ENDED LIVE" })).queryByText(/reserved/i)).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-live-reserved="true"]')).toHaveLength(1);
+    expect(screen.getByText("My reservation")).toBeInTheDocument();
+  });
+
+  it("renders relative time only for a selected mobile date and the event dialog", () => {
+    const matchMedia = vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+        matches: query === "(max-width: 63.99rem)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+    const { container } = renderCalendar();
+    expect(container.querySelector('[data-live-time]')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ }));
+    expect(container.querySelectorAll('[data-live-time]')).toHaveLength(4);
+
+    fireEvent.click(within(screen.getByRole("group", { name: /2026년 9월 15일/ })).getByRole("button", { name: "전체 보기" }));
+    expect(screen.getByRole("dialog").querySelectorAll('[data-live-time]')).toHaveLength(4);
+    matchMedia.mockRestore();
   });
 
   it("preserves a creator entry filter, supports multi-select, and can return to every schedule", () => {
@@ -261,5 +292,34 @@ describe("LIVE calendar screen", () => {
     open();
     view.rerender(<LiveCalendarScreen locale="en" initialCalendar={{...calendar, month:"2026-10", days:[]}} celebrities={celebrities} eventMetadata={eventMetadata} initialCelebritySlugs={[]} />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("ignores an older authenticated refresh that resolves after the month changes", async () => {
+    auth.authenticated = true;
+    let resolveSeptember!: (response: Response) => void;
+    const septemberResponse = new Promise<Response>((resolve) => { resolveSeptember = resolve; });
+    const october = { ...calendar, month: "2026-10", days: [] };
+    const request = vi.fn((input: RequestInfo | URL, _init?: RequestInit) => String(input).includes("month=2026-09")
+      ? septemberResponse
+      : Promise.resolve({ ok: true, json: async () => october } as Response));
+    vi.stubGlobal("fetch", request);
+
+    const view = render(<LiveCalendarScreen locale="ko" initialCalendar={calendar} celebrities={celebrities} eventMetadata={eventMetadata} initialCelebritySlugs={[]} />);
+    await waitFor(() => expect(request).toHaveBeenCalledWith(
+      "/api/live-events/calendar?month=2026-09&locale=ko",
+      expect.objectContaining({ headers: { Authorization: "Bearer token" }, signal: expect.any(AbortSignal) }),
+    ));
+    const septemberSignal = request.mock.calls[0]?.[1]?.signal as AbortSignal;
+
+    view.rerender(<LiveCalendarScreen locale="ko" initialCalendar={october} celebrities={celebrities} eventMetadata={eventMetadata} initialCelebritySlugs={[]} />);
+    await screen.findByRole("heading", { name: /2026.*10월/ });
+    expect(septemberSignal.aborted).toBe(true);
+
+    await act(async () => {
+      resolveSeptember({ ok: true, json: async () => calendar } as Response);
+      await septemberResponse;
+    });
+    expect(screen.getByRole("heading", { name: /2026.*10월/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /2026.*9월/ })).not.toBeInTheDocument();
   });
 });

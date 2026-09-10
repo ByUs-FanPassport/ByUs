@@ -1,5 +1,7 @@
 "use client";
 
+import { LiveTimeIndicator } from "./live-time-indicator";
+
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Image from "next/image";
@@ -48,7 +50,6 @@ import {
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
-import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import { formatFanCount } from "@/components/fan-ui/fan-count";
 import {
   createLiveAttendanceResponseSchema,
@@ -455,28 +456,36 @@ export function LiveEventScreen({
   const attendanceKeyRef = useRef<string | null>(null);
   const attendanceAttemptsRef = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
+  const liveReadController = useRef<AbortController | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (background = false) => {
     if (!authReady) return;
-    setView({ kind: "loading" });
+    liveReadController.current?.abort();
+    const controller = new AbortController();
+    liveReadController.current = controller;
+    if (!background) setView({ kind: "loading" });
     try {
       const token = authenticated ? await getAccessToken() : null;
+      if (controller.signal.aborted) return;
       const response = await fetch(
         `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
         {
           method: "GET",
           headers: token ? { authorization: `Bearer ${token}` } : undefined,
           cache: "no-store",
+          signal: controller.signal,
         },
       );
+      if (controller.signal.aborted) return;
       if (!response.ok) {
-        setView({ kind: "error", notFound: response.status === 404 });
+        if (!background) setView({ kind: "error", notFound: response.status === 404 });
         return;
       }
       const data = liveEventResponseSchema.parse(await response.json());
+      if (controller.signal.aborted) return;
       setCollectible(data.viewer.collectible ?? null);
       setView({ kind: "ready", data });
-      void recordProductEventV1(
+      if (!background) void recordProductEventV1(
         {
           eventName: "live_page_view",
           celebrityId: null,
@@ -493,13 +502,15 @@ export function LiveEventScreen({
         token,
       );
     } catch {
-      setView({ kind: "error", notFound: false });
+      if (!controller.signal.aborted && !background) setView({ kind: "error", notFound: false });
     }
   }, [authReady, authenticated, getAccessToken, locale, slug]);
 
   useEffect(() => {
     void load();
+    return () => liveReadController.current?.abort();
   }, [load]);
+  const refreshLiveStatus = useCallback(() => { void load(true); }, [load]);
 
   const claimCollectible = useCallback(async () => {
     if (!collectible?.eligible || collectiblePending) return;
@@ -554,6 +565,7 @@ export function LiveEventScreen({
 
   const reserve = useCallback(async () => {
     if (view.kind !== "ready" || reservePending) return;
+    liveReadController.current?.abort();
     setReservePending(true);
     setActionError(null);
     try {
@@ -1005,10 +1017,10 @@ export function LiveEventScreen({
           >
             {live.effectiveStatus === "live" ||
             live.effectiveStatus === "scheduled" ? (
-              <LiveStatusIndicator
+              <LiveTimeIndicator
                 locale={locale}
-                status={live.effectiveStatus}
-                density="compact"
+                event={live}
+                onStartReached={refreshLiveStatus}
               />
             ) : (
               <span className={styles.status} data-status={live.effectiveStatus}>
