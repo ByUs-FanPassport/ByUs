@@ -37,6 +37,30 @@ const benefit = {
   requiredActivityType: null,
   state: "eligible",
 } as const;
+const ifewBenefit = {
+  ...benefit,
+  id: "41ae7883-098e-49f2-9229-4f6962160141",
+  slug: "ifew-banksy-tickets-20260912",
+  title: "뱅크시 전시 티켓",
+  summary: "이퓨의 틱톡 100일 기념 LIVE 혜택",
+  eligibilityLabel: "이퓨 응모권으로 응모하세요.",
+  deliveryLabel: "당첨자 10명에게 1장씩 지급합니다.",
+  allocationMode: "application_selection",
+  minimumScore: 0,
+  minimumLevel: "Bronze",
+  state: "eligible",
+  entry: {
+    campaignId: "55555555-5555-4555-8555-555555555555",
+    creatorTicketBalance: 0,
+    enteredTickets: 0,
+    perFanTicketLimit: null,
+    remainingBenefitTickets: null,
+    entryOpensAt: "2020-01-01T00:00:00.000Z",
+    entryClosesAt: "2099-01-01T00:00:00.000Z",
+    canEnter: true,
+    entries: [],
+  },
+} as const;
 const celebrities = { celebrities: [{ slug: "kara", name: "KARA" }] };
 
 describe("benefit screens", () => {
@@ -313,6 +337,69 @@ describe("benefit screens", () => {
     expect(deadline?.querySelector("time")).toHaveAttribute("datetime", raffle.entry.entryClosesAt);
     expect(screen.getByText("이퓨 응모권으로 2026년 9월 20일 00:00 (KST)까지 응모하세요.")).toBeInTheDocument();
     expect(screen.queryByText(/밤 12시/)).not.toBeInTheDocument();
+    expect(screen.getByText("필요 팬 점수")).toBeInTheDocument();
+    expect(screen.getByText("필요 등급")).toBeInTheDocument();
+  });
+  it("gives a first-time IfeW fan with no raffle tickets a truthful next action", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({ benefit: ifewBenefit }),
+    );
+
+    render(<BenefitDetailScreen benefitId={ifewBenefit.id} locale="ko" />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "더현대 서울 뱅크시 전시 관람권",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("현재 보유한 응모권이 없어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    expect(screen.queryByText("필요 팬 점수")).not.toBeInTheDocument();
+    expect(screen.queryByText("필요 등급")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/받은 응모권은 수량을 선택해 직접 응모해야 해요/),
+    ).toBeInTheDocument();
+    const nextAction = screen.getByRole("link", {
+      name: "팬 인증하고 LIVE 참여하기",
+    });
+    expect(nextAction).toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(nextAction).toHaveAttribute(
+      "href",
+      "/c/ifewknow/verify?locale=ko&returnTo=%2Flive%2Fifew-100-days-tiktok-20260912%3Flocale%3Dko",
+    );
+  });
+  it("keeps prior IfeW entry history when the current balance is zero", async () => {
+    const entered = {
+      ...ifewBenefit,
+      entry: {
+        ...ifewBenefit.entry,
+        enteredTickets: 3,
+        entries: [
+          {
+            entryId: "44444444-4444-4444-8444-444444444444",
+            ticketAmount: 3,
+            enteredAt: "2026-09-10T00:00:00.000Z",
+          },
+        ],
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({ benefit: entered }),
+    );
+
+    render(<BenefitDetailScreen benefitId={entered.id} locale="ko" />);
+
+    expect(await screen.findByText("현재 보유한 응모권이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("보유 응모권").nextElementSibling).toHaveTextContent("0");
+    expect(screen.getByText("이 혜택의 응모 수").nextElementSibling).toHaveTextContent("3");
+    expect(screen.getByRole("heading", { name: "응모 이력" })).toBeInTheDocument();
+    expect(screen.getByText(/3 응모/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "팬 인증하고 LIVE 참여하기" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "이퓨 LIVE 자세히 보기" }),
+    ).toHaveAttribute("href", "/live/ifew-100-days-tiktok-20260912?locale=ko");
   });
   it("enters campaign Tickets once on rapid clicks and refreshes balance and history", async () => {
     let resolveEntry!: (response: Response) => void;
@@ -453,11 +540,6 @@ describe("benefit screens", () => {
   });
   it.each([
     [
-      "zero balance",
-      { creatorTicketBalance: 0, remainingBenefitTickets: 5, canEnter: true },
-      "보유 응모권을 모두 사용했어요.",
-    ],
-    [
       "limit reached",
       { creatorTicketBalance: 5, remainingBenefitTickets: 0, canEnter: true },
       "이 혜택의 응모 한도에 도달했어요.",
@@ -471,14 +553,11 @@ describe("benefit screens", () => {
     "renders the %s entry state without posting",
     async (_name, state, label) => {
       const campaignBenefit = {
-        ...benefit,
+        ...ifewBenefit,
         entry: {
-          campaignId: "55555555-5555-4555-8555-555555555555",
+          ...ifewBenefit.entry,
           enteredTickets: 3,
           perFanTicketLimit: 5,
-          entryOpensAt: "2020-01-01T00:00:00.000Z",
-          entryClosesAt: "2099-01-01T00:00:00.000Z",
-          entries: [],
           ...state,
         },
       };
@@ -487,11 +566,87 @@ describe("benefit screens", () => {
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ benefit: campaignBenefit })),
         );
-      render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
-      expect(await screen.findByRole("button", { name: label })).toBeDisabled();
+      render(<BenefitDetailScreen benefitId={campaignBenefit.id} locale="ko" />);
+      expect(await screen.findByText(label)).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "팬 인증하고 LIVE 참여하기" }),
+      ).not.toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledTimes(1);
     },
   );
+  it.each([
+    ["open", { canEnter: true }, "응모 가능"],
+    [
+      "upcoming",
+      { canEnter: false, entryOpensAt: "2098-01-01T00:00:00.000Z" },
+      "응모 예정",
+    ],
+    [
+      "closed",
+      { canEnter: false, entryOpensAt: "2020-01-01T00:00:00.000Z" },
+      "응모 종료",
+    ],
+  ])("shows the guest raffle window as %s instead of locked", async (_name, entry, label) => {
+    authenticated = false;
+    const guestRaffle = {
+      ...ifewBenefit,
+      state: "locked" as const,
+      entry: { ...ifewBenefit.entry, ...entry },
+    };
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json({
+          celebrities: [{ slug: "ifewknow", name: "이퓨" }],
+        }),
+      )
+      .mockResolvedValueOnce(Response.json({ benefits: [guestRaffle] }));
+
+    render(<BenefitsScreen locale="ko" initialCelebrity="ifewknow" />);
+
+    expect(await screen.findByText(label)).toBeInTheDocument();
+    expect(screen.queryByText("잠김")).not.toBeInTheDocument();
+  });
+  it("keeps non-baseline raffle requirements visible", async () => {
+    const constrainedRaffle = {
+      ...ifewBenefit,
+      id: benefit.id,
+      minimumScore: 10,
+      minimumLevel: "Gold" as const,
+      requiredStampType: "survey" as const,
+      requiredActivityType: "attendance" as const,
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({ benefit: constrainedRaffle }),
+    );
+
+    render(<BenefitDetailScreen benefitId={constrainedRaffle.id} locale="ko" />);
+
+    expect(await screen.findByText("필요 팬 점수")).toBeInTheDocument();
+    expect(screen.getByText("필요 등급")).toBeInTheDocument();
+    expect(screen.getByText("필요 도장")).toBeInTheDocument();
+    expect(screen.getByText("필요 활동")).toBeInTheDocument();
+    expect(screen.getByText("골드")).toBeInTheDocument();
+    expect(screen.getByText("attendance")).toBeInTheDocument();
+  });
+  it("keeps baseline score and level visible for a direct-claim benefit", async () => {
+    const baselineDirectClaim = {
+      ...benefit,
+      minimumScore: 0,
+      minimumLevel: "Bronze" as const,
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({ benefit: baselineDirectClaim }),
+    );
+
+    render(
+      <BenefitDetailScreen benefitId={baselineDirectClaim.id} locale="ko" />,
+    );
+
+    expect(await screen.findByText("필요 팬 점수")).toBeInTheDocument();
+    expect(screen.getByText("필요 등급")).toBeInTheDocument();
+    expect(screen.getByText("브론즈")).toBeInTheDocument();
+  });
   it("automatically resumes one matching benefit claim after login", async () => {
     const intent = createAuthIntent({
       sourcePath: `/benefits/${benefit.id}`,

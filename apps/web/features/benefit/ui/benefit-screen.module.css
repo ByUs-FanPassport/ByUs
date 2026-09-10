@@ -408,6 +408,31 @@
   font: inherit;
   font-size: 16px;
 }
+.entryEmpty {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #e8e7ec;
+  border-radius: 14px;
+  background: #faf9fb;
+}
+.entryEmpty strong {
+  font-size: 15px;
+}
+.entryEmpty p {
+  margin: 0;
+  color: #66636c;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.entryEmpty a {
+  width: fit-content;
+  margin-top: 2px;
+}
+.delivery .entryEmpty a[data-fan-action-emphasis="primary"] {
+  color: #fff;
+}
 .entrySuccess {
   display: grid;
   grid-template-columns: auto 1fr;

@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Page, { generateMetadata } from "../../app/pages/ifew-fan-guide/page";
+import { sanitizeLiveReturnTo } from "@/features/quiz/domain/live-return-context";
 
 describe("ifew Saturday LIVE guide", () => {
   it.each(["ko", "en"] as const)("shows the confirmed schedule and separate actions publicly (%s)", async (locale) => {
@@ -9,18 +10,22 @@ describe("ifew Saturday LIVE guide", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(locale === "ko" ? "이퓨의 100일," : "100 days with ifew.");
     expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-09-12T08:00:00+09:00");
     expect(container.querySelector("time")).toHaveTextContent("08:00–13:00");
-    const actions = locale === "ko" ? ["이퓨 팬 인증하기", "LIVE 예약하기", "TikTok 일정 보기", "뱅크시 티켓 응모하기"] : ["Verify your ifew fandom", "Reserve the LIVE", "View the TikTok event", "Enter the Banksy ticket draw"];
+    const actions = locale === "ko" ? ["이퓨 팬 인증하기", "LIVE 예약하기", "TikTok 일정 보기", "뱅크시 관람권 추첨 응모하기", "출석 코드 입력하기"] : ["Verify your ifew fandom", "Reserve the LIVE", "View the TikTok event", "Enter the Banksy ticket draw", "Enter the attendance code"];
     const destinations = [
-      `/c/ifewknow/verify?locale=${locale}`,
+      `/c/ifewknow/verify?${new URLSearchParams({ locale, returnTo: `/live/ifew-100-days-tiktok-20260912?locale=${locale}` }).toString()}`,
       `/live/ifew-100-days-tiktok-20260912?locale=${locale}`,
       "https://www.tiktok.com/live/event/7680769355085185044",
       `/benefits/41ae7883-098e-49f2-9229-4f6962160141?locale=${locale}`,
+      `/live/ifew-100-days-tiktok-20260912?locale=${locale}#fan-code`,
     ];
     actions.forEach((action, index) => expect(screen.getByRole("link", { name: action })).toHaveAttribute("href", destinations[index]));
-    expect(container.textContent).toContain(locale === "ko" ? "예약이나 시청만으로 자동 응모되지 않아요." : "Reserving or watching does not enter you automatically.");
-    expect(container.textContent).toContain(locale === "ko" ? "10명에게 티켓을 1장씩" : "Ten winners receive one ticket each");
+    const returnTo = new URL(destinations[0], "https://byus.kr").searchParams.get("returnTo");
+    expect(sanitizeLiveReturnTo(returnTo)).toBe(destinations[1]);
+    expect(container.textContent).toContain(locale === "ko" ? "예약·출석만으로 자동 응모되지 않으니 직접 응모해 주세요." : "Reservations and attendance do not enter you automatically.");
+    expect(container.textContent).toContain(locale === "ko" ? "10명에게 관람권을 1장씩" : "Ten winners receive one admission ticket each");
+    expect(container.textContent).toContain(locale === "ko" ? "더현대 서울" : "The Hyundai Seoul");
     expect(container.textContent).toContain(locale === "ko" ? "9월 20일(일) 00:00 KST" : "September 20 at 00:00 KST");
-    expect(container.textContent).not.toMatch(/엘리나|Elina|코드 출석|퀴즈|미션|check in with a code|quiz/i);
+    expect(container.textContent).not.toMatch(/엘리나|Elina|퀴즈|미션|quiz/i);
     expect(container.querySelector("form")).toBeNull();
     expect(screen.getByRole("link", { name: locale === "ko" ? "Switch to English" : "한국어로 보기" })).toHaveAttribute("href", `/pages/ifew-fan-guide?locale=${locale === "ko" ? "en" : "ko"}`);
   });

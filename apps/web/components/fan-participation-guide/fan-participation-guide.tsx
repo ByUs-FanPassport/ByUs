@@ -9,6 +9,7 @@ import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { CreatorImage } from "../fan-ui/creator-image";
 import { elinaFanGuideContent } from "../elina-fan-guide/content";
 import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewGuideImage, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
+import { ifewVerificationHref } from "@/features/live/domain/ifew-event";
 import styles from "./fan-participation-guide.module.css";
 
 const actionTargets = (locale: FanLocale) => ({
@@ -35,7 +36,7 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
   const t = creator === "elina" ? elinaFanGuideContent[locale] : ifewFanGuideContent[locale];
   const image = creator === "elina" ? "/images/home-entry/elina.jpg" : ifewGuideImage;
   const href = creator === "elina" ? actionTargets(locale) : {
-    verify: `/c/ifewknow/verify?locale=${locale}` as Route,
+    verify: ifewVerificationHref(locale) as Route,
     live: `/live/${ifewLiveSlug}?locale=${locale}` as Route,
     certifications: ifewTikTokEvent,
     raffles: `/benefits/${ifewBenefitId}?locale=${locale}` as Route,
@@ -45,7 +46,7 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
   const stepTargets: ReadonlyArray<ReadonlyArray<GuideHref>> = [
     [href.verify],
     [href.live, creator === "elina" ? href.live : href.my],
-    creator === "elina" ? [href.live, href.certifications] : [ifewTikTokEvent, href.live],
+    creator === "elina" ? [href.live, href.certifications] : [`${href.live}#fan-code` as Route, ifewTikTokEvent],
     [href.raffles],
   ] as const;
 

@@ -1,7 +1,6 @@
 export const ifewGuideImage = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png";
 export const ifewEventBanner = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png";
-export const ifewLiveSlug = "ifew-100-days-tiktok-20260912";
-export const ifewBenefitId = "41ae7883-098e-49f2-9229-4f6962160141";
+export { ifewLiveSlug, ifewBenefitId } from "@/features/live/domain/ifew-event";
 export const ifewTikTokEvent = "https://www.tiktok.com/live/event/7680769355085185044";
 
 export const ifewFanGuideContent = {
@@ -11,13 +10,13 @@ export const ifewFanGuideContent = {
     heroSchedule: "9월 12일(토) 08:00–13:00 · KST",
     howToJoin: "참여 방법 보기",
     viewPrizes: "뱅크시 티켓 보기",
-    heroNote: "뱅크시 전시 티켓 10명 추첨 · 1인 1장",
-    stages: ["팬 인증", "LIVE 예약", "LIVE 참여", "선물 응모"],
+    heroNote: "더현대 서울 뱅크시 전시 관람권 · 10명 추첨, 1인 1장",
+    stages: ["팬 인증", "LIVE 예약", "LIVE 출석", "선물 응모"],
     steps: [
       {
         label: "01  /  GET READY",
         title: "이퓨의 팬 패스포트로\n참여를 준비해요.",
-        body: "팬 인증을 마치면 이퓨 Fan Passport가 생겨요.\nByUs에서 LIVE를 예약하고\n나의 팬 활동을 기록할 수 있어요.",
+        body: "팬 인증을 마치면 이퓨 Fan Passport가 생겨요.\n인증 후 LIVE 화면으로 돌아와\n이어서 예약할 수 있어요.",
         actions: ["이퓨 팬 인증하기"],
       },
       {
@@ -28,18 +27,18 @@ export const ifewFanGuideContent = {
         note: "한국 시간(KST, UTC+9) 기준이에요.\nByUs 예약에는 이퓨 Passport가 필요해요.",
       },
       {
-        label: "03  /  CELEBRATE TOGETHER",
-        title: "함께한 100일을,\n틱톡에서 축하해요.",
-        body: "이퓨가 틱톡에서 팬들과 축하파티 LIVE를 열어요.\n그동안의 응원에 대한 감사 인사와 함께\n이야기하고 즐거운 추억을 만들어 보세요.",
-        actions: ["TikTok 일정 보기", "ByUs LIVE 상세 보기"],
-        note: "방송은 TikTok @ifewknow에서 진행해요.\nByUs 예약과 TikTok 이벤트 등록은 별개예요.",
+        label: "03  /  CHECK IN TOGETHER",
+        title: "LIVE에서 받은 코드로\n출석을 남겨요.",
+        body: "TikTok @ifewknow에서 100일을 함께 축하해요.\n방송 중 알려주는 출석 코드를\n아래 버튼을 눌러 ByUs에 입력하세요.",
+        actions: ["출석 코드 입력하기", "TikTok 일정 보기"],
+        note: "출석 코드 입력: 9월 12일(토) 08:00–13:00 KST.\nByUs 예약과 TikTok 이벤트 등록은 별개예요.",
       },
       {
         label: "04  /  BANKSY TICKETS",
-        title: "뱅크시 전시 티켓,\n10명에게 1장씩.",
-        body: "이퓨 응모권으로 뱅크시 전시 티켓에 응모하세요.\n추첨으로 10명에게 티켓을 1장씩 드려요.\n응모는 9월 19일(토) 밤 12시(KST)까지예요.",
-        actions: ["뱅크시 티켓 응모하기"],
-        note: "마감: 9월 20일(일) 00:00 KST.\n예약이나 시청만으로 자동 응모되지 않아요.\n사용할 응모권 수량을 확인하고 직접 응모해 주세요.",
+        title: "뱅크시 전시 관람권,\n10명에게 1장씩.",
+        body: "더현대 서울 뱅크시 전시 관람권을 드려요.\n추첨으로 10명에게 관람권을 1장씩 드려요.\n응모는 9월 19일(토) 밤 12시(KST)까지예요.",
+        actions: ["뱅크시 관람권 추첨 응모하기"],
+        note: "마감: 9월 20일(일) 00:00 KST.\n팬 인증·LIVE 출석으로 받은 이퓨 응모권을 사용해요.\n예약·출석만으로 자동 응모되지 않으니 직접 응모해 주세요.",
       },
     ],
     liveCard: {
@@ -49,8 +48,8 @@ export const ifewFanGuideContent = {
       value: "08:00 – 13:00",
     },
     missionCards: [
-      ["100일 기념 축하파티", "팬들과 이야기하고 추억 만들기"],
-      ["TikTok @ifewknow", "9월 12일 토요일 오전 8시"],
+      ["TikTok에서 LIVE 시청", "방송 중 출석 코드를 확인하세요"],
+      ["ByUs에 출석 코드 입력", "9월 12일 08:00–13:00 KST"],
     ],
     historyTitle: "예약과 응모 내역은 MY에서.",
     historyBody: "내 패스포트, 예약한 LIVE와 선물 응모 내역을 확인하세요.",
@@ -59,7 +58,7 @@ export const ifewFanGuideContent = {
     faqs: [
       ["LIVE는 어디에서 하나요?", "9월 12일(토) 오전 8시부터 오후 1시까지 TikTok @ifewknow에서 진행해요. 모두 한국 시간(KST, UTC+9) 기준이에요."],
       ["LIVE를 예약하면 자동으로 선물에 응모되나요?", "아니요. LIVE 예약과 선물 응모는 별개예요. 이퓨 응모권으로 사용할 수량을 선택하고 직접 응모해 주세요. 이미 응모권이 있다면 LIVE 전에도 응모할 수 있어요."],
-      ["다른 최애의 응모권도 사용할 수 있나요?", "이 선물에는 이퓨 응모권을 사용해요. 응모권 획득 방법과 지급 조건은 각 활동에서 확인해 주세요."],
+      ["응모권은 어떻게 받나요?", "이퓨 팬 인증과 LIVE 출석으로 이퓨 응모권을 받을 수 있어요. 응모권은 추첨에 참여할 때 사용하는 수량이며, 당첨자에게 드리는 전시 관람권과는 달라요. 다른 최애의 응모권은 사용할 수 없어요."],
       ["응모는 언제까지인가요?", "9월 19일(토)이 끝나는 밤 12시, 즉 9월 20일(일) 00:00 KST에 마감해요. 선물 상세에서 참여 조건과 응모 내역을 확인하세요."],
     ],
     closingTitle: "이퓨의 100일,\n이번 토요일에 만나요.",
@@ -75,13 +74,13 @@ export const ifewFanGuideContent = {
     heroSchedule: "Sat, Sep 12 · 08:00–13:00 KST",
     howToJoin: "How to join",
     viewPrizes: "View Banksy tickets",
-    heroNote: "Banksy exhibition tickets · 10 winners, 1 ticket each",
-    stages: ["Fan verification", "Reserve LIVE", "Join LIVE", "Prize entry"],
+    heroNote: "Banksy exhibition at The Hyundai Seoul · 10 winners, 1 admission each",
+    stages: ["Fan verification", "Reserve LIVE", "LIVE attendance", "Prize entry"],
     steps: [
       {
         label: "01  /  GET READY",
         title: "Get ready with\nyour ifew Passport.",
-        body: "Complete fan verification to get your ifew Fan Passport. Use it to reserve the LIVE on ByUs and keep a record of your fan activities.",
+        body: "Complete fan verification to get your ifew Fan Passport. You’ll return to the LIVE page to make your reservation.",
         actions: ["Verify your ifew fandom"],
       },
       {
@@ -92,18 +91,18 @@ export const ifewFanGuideContent = {
         note: "All times are Korean Standard Time (KST, UTC+9).\nAn ifew Passport is required to reserve on ByUs.",
       },
       {
-        label: "03  /  CELEBRATE TOGETHER",
-        title: "Celebrate 100 days\ntogether on TikTok.",
-        body: "ifew is hosting a celebration LIVE to thank the fans who have been part of the journey. Come chat, have fun and make more memories together.",
-        actions: ["View the TikTok event", "View LIVE on ByUs"],
-        note: "The broadcast takes place on TikTok @ifewknow.\nA ByUs reservation is separate from TikTok event registration.",
+        label: "03  /  CHECK IN TOGETHER",
+        title: "Check in with the code\nshared during the LIVE.",
+        body: "Celebrate 100 days on TikTok @ifewknow. Look for the attendance code shared during the broadcast, then use the button below to enter it on ByUs.",
+        actions: ["Enter the attendance code", "View the TikTok event"],
+        note: "Enter your code on September 12, 08:00–13:00 KST.\nA ByUs reservation is separate from TikTok event registration.",
       },
       {
         label: "04  /  BANKSY TICKETS",
         title: "Banksy exhibition tickets.\n10 winners. One each.",
-        body: "Use your ifew raffle tickets to enter the Banksy exhibition ticket draw. Ten winners receive one ticket each. Enter by the end of Saturday, September 19 (KST).",
+        body: "Enter the draw for Banksy exhibition admission at The Hyundai Seoul. Ten winners receive one admission ticket each. Enter by the end of Saturday, September 19 (KST).",
         actions: ["Enter the Banksy ticket draw"],
-        note: "Closes September 20 at 00:00 KST.\nReserving or watching does not enter you automatically.\nChoose how many raffle tickets to use and confirm your entry.",
+        note: "Closes September 20 at 00:00 KST.\nUse ifew raffle tickets earned through fan verification and LIVE attendance.\nReservations and attendance do not enter you automatically. Confirm your entry on the prize page.",
       },
     ],
     liveCard: {
@@ -113,8 +112,8 @@ export const ifewFanGuideContent = {
       value: "08:00 – 13:00",
     },
     missionCards: [
-      ["A 100-day celebration", "Chat and make memories together"],
-      ["TikTok @ifewknow", "Saturday, September 12 at 8 AM KST"],
+      ["Watch the LIVE on TikTok", "Look for the attendance code during the broadcast"],
+      ["Enter your code on ByUs", "September 12, 08:00–13:00 KST"],
     ],
     historyTitle: "Your reservations and entries, in MY.",
     historyBody: "Find your Passport, reserved LIVE events and prize entries.",
@@ -123,7 +122,7 @@ export const ifewFanGuideContent = {
     faqs: [
       ["Where does the LIVE take place?", "On TikTok @ifewknow, Saturday, September 12 from 8 AM to 1 PM. All times are Korean Standard Time (KST, UTC+9)."],
       ["Does reserving the LIVE enter me in the draw?", "No. Reservations and prize entries are separate. Choose how many ifew raffle tickets to use and confirm your entry. If you already have tickets, you can enter before the LIVE."],
-      ["Can I use another creator’s raffle tickets?", "This draw uses ifew raffle tickets. Check each activity for ways to earn tickets and its reward conditions."],
+      ["How do I get raffle tickets?", "Earn ifew raffle tickets through fan verification and LIVE attendance. Raffle tickets are used to enter the draw; they are different from the exhibition admission tickets awarded to winners. Another creator’s raffle tickets cannot be used."],
       ["When do entries close?", "At the end of Saturday, September 19: September 20 at 00:00 KST. Check the prize page for entry conditions and your entry history."],
     ],
     closingTitle: "Celebrate 100 days with ifew.\nSee you this Saturday.",

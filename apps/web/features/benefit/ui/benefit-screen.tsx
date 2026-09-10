@@ -51,6 +51,12 @@ import {
   pageViewIdempotencyKey,
   recordProductEventV1,
 } from "@/features/analytics/client/product-event-client";
+import {
+  ifewBenefitId,
+  ifewLiveHref,
+  ifewPrizeName,
+  ifewVerificationHref,
+} from "@/features/live/domain/ifew-event";
 
 export type BenefitLocale = "ko" | "en";
 
@@ -131,7 +137,8 @@ const copy = {
     entryCancel: "수량 다시 선택",
     entrySuccess: "응모가 완료됐어요",
     entryAgain: "응모권 추가 사용",
-    entryZero: "보유 응모권을 모두 사용했어요.",
+    entryZero: "현재 보유한 응모권이 없어요.",
+    entrySpent: "보유 응모권을 모두 사용했어요.",
     entryLimitReached: "이 혜택의 응모 한도에 도달했어요.",
     entryClosed: "응모가 종료됐어요.",
     entryError: "응모하지 못했어요. 응모권 잔액과 응모 기간을 확인해 주세요.",
@@ -210,7 +217,8 @@ const copy = {
     entryCancel: "Change quantity",
     entrySuccess: "Your entry is complete",
     entryAgain: "Use more raffle tickets",
-    entryZero: "You have used all available raffle tickets.",
+    entryZero: "You don’t currently have any raffle tickets.",
+    entrySpent: "You have used all available raffle tickets.",
     entryLimitReached: "You reached this benefit’s entry limit.",
     entryClosed: "This raffle has ended.",
     entryError:
@@ -261,7 +269,7 @@ function benefitStateLabel(benefit: BenefitCatalogItem, locale: BenefitLocale): 
   if (applicationStatus === "selected") return locale === "ko" ? "선정 완료" : "Selected";
   if (applicationStatus === "submitted") return locale === "ko" ? "신청 완료" : "Application submitted";
   if (applicationStatus === "not_selected") return locale === "ko" ? "선정 종료" : "Selection complete";
-  if (state === "eligible" && entry) {
+  if (entry) {
     if (entry.canEnter) return locale === "ko" ? "응모 가능" : "Open for entries";
     if (Date.now() < Date.parse(entry.entryOpensAt)) return locale === "ko" ? "응모 예정" : "Entries open soon";
     return locale === "ko" ? "응모 종료" : "Entries closed";
@@ -283,7 +291,7 @@ function StateBadge({
   return (
     <span className={styles.stateBadge} data-state={state}>
       {state === "claimed" && <Check aria-hidden="true" />}
-      {state === "locked" && <LockKeyhole aria-hidden="true" />}
+      {state === "locked" && !benefit.entry && <LockKeyhole aria-hidden="true" />}
       {benefitStateLabel(benefit, locale)}
     </span>
   );
@@ -297,20 +305,33 @@ function RequirementList({
   locale: BenefitLocale;
 }) {
   const c = copy[locale];
+  const showScore = !benefit.entry || benefit.minimumScore > 0;
+  const showLevel = !benefit.entry || benefit.minimumLevel !== "Bronze";
+  if (
+    !showScore &&
+    !showLevel &&
+    !benefit.requiredStampType &&
+    !benefit.requiredActivityType
+  )
+    return null;
   return (
     <dl className={styles.requirements}>
-      <div>
-        <dt>{c.score}</dt>
-        <dd>
-          {new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US").format(
-            benefit.minimumScore,
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt>{c.level}</dt>
-        <dd>{localizeBenefitValue(benefit.minimumLevel, locale)}</dd>
-      </div>
+      {showScore && (
+        <div>
+          <dt>{c.score}</dt>
+          <dd>
+            {new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US").format(
+              benefit.minimumScore,
+            )}
+          </dd>
+        </div>
+      )}
+      {showLevel && (
+        <div>
+          <dt>{c.level}</dt>
+          <dd>{localizeBenefitValue(benefit.minimumLevel, locale)}</dd>
+        </div>
+      )}
       {benefit.requiredStampType && (
         <div>
           <dt>{c.stamp}</dt>
@@ -935,6 +956,13 @@ export function BenefitDetailScreen({
       </FanAppFrame>
     );
   const benefit = view.benefit;
+  const isIfewRaffle = benefit.id === ifewBenefitId && benefit.entry !== null;
+  const detailTitle = isIfewRaffle ? ifewPrizeName[locale] : benefit.title;
+  const detailSummary = isIfewRaffle
+    ? locale === "ko"
+      ? "10명을 추첨해 관람권을 1장씩 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다."
+      : "Ten winners receive one admission ticket each. Ifew raffle tickets are used to enter the draw."
+    : benefit.summary;
   const deliveredClaim = claim ?? ownedApplication?.claim ?? null;
   const unavailableCopy =
     benefit.state === "locked"
@@ -964,8 +992,8 @@ export function BenefitDetailScreen({
       <article className={styles.detail}>
         <div className={styles.detailIntro}>
           <StateBadge benefit={benefit} locale={locale} />
-          <h1>{benefit.title}</h1>
-          <p>{benefit.summary}</p>
+          <h1>{detailTitle}</h1>
+          <p>{detailSummary}</p>
         </div>
         <div className={styles.detailColumns}>
           <section>
@@ -1017,9 +1045,13 @@ export function BenefitDetailScreen({
             <div>
               <h2>{c.enter}</h2>
               <p>
-                {locale === "ko"
-                  ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
-                  : "Use this creator’s raffle tickets to enter for this benefit."}
+                {isIfewRaffle
+                  ? locale === "ko"
+                    ? "사용할 이퓨 응모권 수량을 선택하고 직접 응모해 주세요. 팬 인증이나 LIVE 참여만으로 자동 응모되지는 않아요."
+                    : "Choose how many ifew raffle tickets to use and submit your entry. Fan verification or LIVE participation does not enter you automatically."
+                  : locale === "ko"
+                    ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
+                    : "Use this creator’s raffle tickets to enter for this benefit."}
               </p>
               <dl className={styles.period}>
                 <div>
@@ -1064,9 +1096,51 @@ export function BenefitDetailScreen({
                         ? c.entryClosed
                         : benefit.entry.remainingBenefitTickets === 0
                           ? c.entryLimitReached
-                          : c.entryZero}
+                          : c.entrySpent}
                     </p>
                   )}
+                </div>
+              ) : !benefit.entry.canEnter ||
+                benefit.entry.remainingBenefitTickets === 0 ||
+                benefit.entry.creatorTicketBalance === 0 ? (
+                <div className={styles.entryEmpty} role="status">
+                  <strong>
+                    {!benefit.entry.canEnter
+                      ? c.entryClosed
+                      : benefit.entry.remainingBenefitTickets === 0
+                        ? c.entryLimitReached
+                        : c.entryZero}
+                  </strong>
+                  {isIfewRaffle &&
+                    benefit.entry.canEnter &&
+                    benefit.entry.remainingBenefitTickets !== 0 &&
+                    benefit.entry.creatorTicketBalance === 0 && (
+                      <>
+                        {benefit.entry.enteredTickets === 0 ? (
+                          <>
+                            <p>
+                              {locale === "ko"
+                                ? "팬 인증이나 LIVE 출석 등 팬 활동에서 이퓨 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
+                                : "You can get ifew raffle tickets through fan verification or LIVE attendance. Choose how many to use and submit your entry yourself."}
+                            </p>
+                            <FanAction
+                              variant="primary"
+                              href={ifewVerificationHref(locale)}
+                            >
+                              {locale === "ko"
+                                ? "팬 인증하고 LIVE 참여하기"
+                                : "Verify your fandom and join the LIVE"}
+                            </FanAction>
+                          </>
+                        ) : (
+                          <Link href={ifewLiveHref(locale)}>
+                            {locale === "ko"
+                              ? "이퓨 LIVE 자세히 보기"
+                              : "View the ifew LIVE"}
+                          </Link>
+                        )}
+                      </>
+                    )}
                 </div>
               ) : (
                 <>

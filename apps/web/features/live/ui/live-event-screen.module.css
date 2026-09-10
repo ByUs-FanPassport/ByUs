@@ -325,6 +325,10 @@
   overflow: hidden;
 }
 
+.journey[data-step-count="4"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .journey li {
   display: flex;
   min-height: 148px;
@@ -822,6 +826,9 @@
     font-size: 20px;
   }
   .journey {
+    grid-template-columns: 1fr;
+  }
+  .journey[data-step-count="4"] {
     grid-template-columns: 1fr;
   }
   .journey li {

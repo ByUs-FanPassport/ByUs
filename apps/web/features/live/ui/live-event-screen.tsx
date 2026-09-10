@@ -35,6 +35,11 @@ import {
   type LiveEventResponse,
 } from "@/features/live/domain/live-event";
 import {
+  ifewBenefitId,
+  ifewLiveSlug,
+  ifewPrizeName,
+} from "@/features/live/domain/ifew-event";
+import {
   buildAuthLoginHref,
   consumeAuthIntent,
   createAuthIntent,
@@ -238,6 +243,55 @@ const copy = {
     stampIssued: "Reservation Stamp earned",
     continue: "Keep browsing",
     close: "Close reservation confirmation",
+  },
+} as const;
+
+const ifewLiveCopy = {
+  ko: {
+    fanCode: "출석 코드",
+    fanCodeHelper:
+      "LIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 ByUs에 출석을 남길 수 있어요.",
+    attendance: {
+      label: "출석 코드 입력",
+      beforeLive:
+        "LIVE가 시작되면 방송에서 알려주는 출석 코드를 이 화면에 입력해 주세요.",
+      invalid:
+        "출석 코드가 올바르지 않아요. LIVE 방송에서 알려준 코드를 다시 확인해 주세요.",
+      successHelper:
+        "LIVE 출석이 기록되고 이퓨 응모권 2장을 받았어요.",
+    },
+    steps: ["팬 인증", "예약", "LIVE 출석", "선물 응모"],
+    stepHelpers: [
+      "이퓨 Fan Passport를 발급받아요",
+      "ByUs에서 LIVE를 예약해요",
+      "방송에서 공개된 출석 코드를 ByUs에 입력해요",
+      "이퓨 응모권으로 뱅크시 관람권 추첨에 응모해요",
+    ],
+    prizeAction: "뱅크시 관람권 추첨 응모하기",
+    prizeHelper: `${ifewPrizeName.ko} 추첨 페이지로 이동해요.`,
+  },
+  en: {
+    fanCode: "Attendance code",
+    fanCodeHelper:
+      "Enter the attendance code shared during the LIVE here to record your attendance on ByUs.",
+    attendance: {
+      label: "Enter attendance code",
+      beforeLive:
+        "Once the LIVE starts, enter the attendance code shared during the broadcast here.",
+      invalid:
+        "That attendance code isn’t valid. Check the code shared during the LIVE.",
+      successHelper:
+        "Your LIVE attendance is recorded, and you received 2 ifew raffle tickets.",
+    },
+    steps: ["Fan verification", "Reserve", "LIVE attendance", "Enter the prize draw"],
+    stepHelpers: [
+      "Get your ifew Fan Passport",
+      "Reserve the LIVE on ByUs",
+      "Enter the Attendance code shared during the broadcast on ByUs",
+      "Use your ifew raffle tickets to enter the Banksy ticket draw",
+    ],
+    prizeAction: "Enter the Banksy ticket draw",
+    prizeHelper: `Go to the draw for ${ifewPrizeName.en}.`,
   },
 } as const;
 
@@ -845,6 +899,13 @@ export function LiveEventScreen({
 
   const data = view.data;
   const { live, viewer, primaryAction } = data;
+  const isIfewLive = live.slug === ifewLiveSlug;
+  const eventCopy = isIfewLive ? ifewLiveCopy[locale] : null;
+  const attendanceCopy = eventCopy
+    ? { ...c.attendance, ...eventCopy.attendance }
+    : c.attendance;
+  const journeySteps = eventCopy?.steps ?? c.steps;
+  const journeyStepHelpers = eventCopy?.stepHelpers ?? c.stepHelpers;
   const statusLabel =
     live.effectiveStatus === "scheduled"
       ? c.scheduled
@@ -877,20 +938,20 @@ export function LiveEventScreen({
   const attendanceError =
     attendance.kind === "error"
       ? attendance.code === "ATTENDANCE_CODE_INVALID"
-        ? c.attendance.invalid
+        ? attendanceCopy.invalid
         : attendance.code === "ATTENDANCE_NOT_OPEN"
-          ? c.attendance.notOpen
+          ? attendanceCopy.notOpen
           : attendance.code === "ATTENDANCE_ENDED"
-            ? c.attendance.attendanceEnded
+            ? attendanceCopy.attendanceEnded
         : attendance.code === "FORMAT"
-          ? c.attendance.format
+          ? attendanceCopy.format
           : attendance.code === "WALLET_NOT_READY"
-            ? c.attendance.wallet
+            ? attendanceCopy.wallet
             : attendance.code === "PASSPORT_REQUIRED"
-              ? c.attendance.passport
-              : c.attendance.unavailable
+              ? attendanceCopy.passport
+              : attendanceCopy.unavailable
       : attendance.kind === "rate-limited"
-        ? c.attendance.rateLimited.replace("{time}", formatRetry(retrySeconds))
+        ? attendanceCopy.rateLimited.replace("{time}", formatRetry(retrySeconds))
         : null;
 
   const primaryControl =
@@ -1062,7 +1123,17 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
-            {live.missionsAvailable === false ? (
+            {isIfewLive ? (
+              <FanAction
+                variant="neutral"
+                className={styles.missionLink}
+                fullWidth
+                href={`/benefits/${ifewBenefitId}?locale=${locale}` as Route}
+                helperText={eventCopy?.prizeHelper}
+              >
+                <span className={styles.missionLinkContent}><span>{eventCopy?.prizeAction}</span><ArrowRight aria-hidden="true" /></span>
+              </FanAction>
+            ) : live.missionsAvailable === false ? (
               <FanAction
                 variant="neutral"
                 className={styles.missionLink}
@@ -1130,12 +1201,12 @@ export function LiveEventScreen({
             </section>
             <section className={styles.section}>
               <h2>{c.howTo}</h2>
-              <ol className={styles.journey}>
-                {c.steps.map((step, index) => (
+              <ol className={styles.journey} data-step-count={journeySteps.length}>
+                {journeySteps.map((step, index) => (
                   <li key={step}>
                     <span>{index + 1}</span>
                     <strong>{step}</strong>
-                    <small>{c.stepHelpers[index]}</small>
+                    <small>{journeyStepHelpers[index]}</small>
                   </li>
                 ))}
               </ol>
@@ -1182,8 +1253,8 @@ export function LiveEventScreen({
                   <FanActivityCompletionSummary
                     locale={locale}
                     stampType="attendance"
-                    title={c.attendance.successTitle}
-                    description={c.attendance.successHelper}
+                    title={attendanceCopy.successTitle}
+                    description={attendanceCopy.successHelper}
                     scoreDelta={attendance.result.completion.scoreDelta}
                     updatedScore={attendance.result.completion.updatedScore}
                     updatedLevel={levelLabel(
@@ -1192,14 +1263,24 @@ export function LiveEventScreen({
                     )}
                     leveledUp={attendance.result.completion.leveledUp}
                     passportHref={`/passports/${attendance.result.completion.passportId}?locale=${locale}`}
-                    note={attendance.replayed ? c.attendance.replay : undefined}
+                    note={attendance.replayed ? attendanceCopy.replay : undefined}
                     primaryAction={
                       <FanAction
                         variant="primary"
-                        href={`/live/${slug}/survey?locale=${locale}` as Route}
+                        href={(isIfewLive
+                          ? `/benefits/${ifewBenefitId}?locale=${locale}`
+                          : live.missionsAvailable !== false
+                            ? `/live/${slug}/survey?locale=${locale}`
+                            : `/passports/${attendance.result.completion.passportId}?locale=${locale}`) as Route}
                         trailingIcon={<ArrowRight />}
                       >
-                        {c.attendance.survey}
+                        {isIfewLive
+                          ? eventCopy?.prizeAction
+                          : live.missionsAvailable !== false
+                            ? attendanceCopy.survey
+                            : locale === "ko"
+                              ? "Passport에서 참여 기록 보기"
+                              : "View participation in Passport"}
                       </FanAction>
                     }
                   />
@@ -1208,8 +1289,8 @@ export function LiveEventScreen({
                 <div className={styles.fanCodeContent}>
                   <div className={styles.fanCodeIntro}>
                     <div className={styles.fanCodeHeading}>
-                      <h2 id="fan-code-title">{c.fanCode}</h2>
-                      <p>{c.fanCodeHelper}</p>
+                      <h2 id="fan-code-title">{eventCopy?.fanCode ?? c.fanCode}</h2>
+                      <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p>
                     </div>
                     <div className={styles.fanCodeIcon} data-fan-code-header-icon aria-hidden="true">
                       <TicketCheck />
@@ -1217,20 +1298,20 @@ export function LiveEventScreen({
                   </div>
                   {authenticated && viewer.passport === "missing" ? (
                     <div className={styles.attendanceGate}>
-                      <p>{c.attendance.passport}</p>
+                      <p>{attendanceCopy.passport}</p>
                       <FanAction
                         className={styles.attendanceAction}
                         href={verificationHref}
                         variant="passport"
                         trailingIcon={<ArrowRight />}
                       >
-                        {c.attendance.issuePassport}
+                        {attendanceCopy.issuePassport}
                       </FanAction>
                     </div>
                   ) : authenticated && live.effectiveStatus === "scheduled" ? (
                     <p className={styles.attendanceNotice} data-before-live>
                       <Clock3 aria-hidden="true" />
-                      {c.attendance.beforeLive}
+                      {attendanceCopy.beforeLive}
                     </p>
                   ) : (
                     <form
@@ -1240,7 +1321,7 @@ export function LiveEventScreen({
                       noValidate
                     >
                       <label htmlFor="fan-code-input">
-                        {c.attendance.label}
+                        {attendanceCopy.label}
                       </label>
                       <div className={styles.fanCodeControl}>
                         <input
@@ -1267,7 +1348,7 @@ export function LiveEventScreen({
                           spellCheck={false}
                           minLength={4}
                           maxLength={32}
-                          placeholder={c.attendance.placeholder}
+                          placeholder={attendanceCopy.placeholder}
                           aria-describedby={
                             attendanceError
                               ? "fan-code-help fan-code-error"
@@ -1288,14 +1369,14 @@ export function LiveEventScreen({
                           }
                         >
                           {!authenticated
-                            ? c.attendance.signIn
+                            ? attendanceCopy.signIn
                             : attendance.kind === "pending"
-                            ? c.attendance.pending
-                            : c.attendance.submit}
+                            ? attendanceCopy.pending
+                            : attendanceCopy.submit}
                         </button>
                       </div>
                       <p id="fan-code-help" className={styles.inputHelp}>
-                        {c.attendance.placeholder}
+                        {attendanceCopy.placeholder}
                       </p>
                       {attendanceError && (
                         <p
