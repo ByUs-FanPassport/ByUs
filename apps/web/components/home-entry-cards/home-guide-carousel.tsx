@@ -109,7 +109,6 @@ export function HomeGuideCarousel({ locale, slides }: {
           {userPaused || reducedMotion ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
         </button>
         <button type="button" className={styles.carouselButton} aria-label={t.previous} onClick={() => goTo(activeIndex - 1, true)}><ChevronLeft size={16} aria-hidden="true" /></button>
-        <span className={styles.carouselCount} aria-hidden="true"><strong>{activeIndex + 1}</strong><span>/</span>{slides.length}</span>
         <button type="button" className={styles.carouselButton} aria-label={t.next} onClick={() => goTo(activeIndex + 1, true)}><ChevronRight size={16} aria-hidden="true" /></button>
       </div>
       <div className={styles.carouselViewport} ref={viewportRef}>
