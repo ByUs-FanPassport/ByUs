@@ -1,7 +1,7 @@
 # KO/EN 누락 수정 TODO · 관리자 제외
 
 - 요청: 2026-09-10, 확인된 누락을 TODO에 기록하고 추가 조사.
-- 상태: **구현·로컬 검증·독립 결과 검토 완료 / 배포 진행 중**. 2026-09-10 사용자가 전체 define-goal 및 배포를 승인했다. 체크 완료는 조사 또는 구현 검증이 실제 끝난 항목에만 표시한다.
+- 상태: **27개 항목 처리 및 로컬 검증·배포 완료**. 2026-09-10 사용자가 전체 define-goal 및 배포를 승인했다. 체크 완료는 조사 또는 구현 검증이 실제 끝난 항목에만 표시한다.
 - 소스·로컬 실행 기준: `b381524a1f519e262319c1f1fe5af8c484de402b`. 추가 변경 대조: `origin/main` `72e8b35`까지.
 - 범위: 공개·팬 화면, 로그인, 크리에이터 외부 연결 화면, 알림·이메일·푸시. 관리자 화면 제외.
 - 작업 위치: `/Users/jewel/.codex/worktrees/byus-footer-calendar-20260910`.
@@ -97,3 +97,11 @@
 - Production DB: Supabase linked push 최종 성공 및 `supabase_migrations.schema_migrations`의120000 localization_contracts 반영 확인. 로컬Docker 비실행으로 부가 catalog cache 경고만 발생했으며 migration적용은 성공했다.
 
 - Notification worker Production code-only 교체 성공: `Active / Successful`, 배포ZIP SHA256 일치. EventBridge/schedule/target/concurrency 및 환경변수·handler 등 운영 설정 보존. AWS Auto runtime ARN만 변경됐으며, 과거 INIT_START ARN을 대입하면 배포 전 전체 설정 digest가 정확히 재현되는 것으로 차이를 확인했다. 증거 `deployment/notification-after.json`, `notification-runtime-change-proof.json`.
+
+## 배포 완료 기록
+
+- 코드 배포 commit `1d07748fbaab2675b9ac7858c793e02afc977e44`, Vercel Production `dpl_J48d7W5erXMgUEy5gyHhckExgxHu` **Ready**. Vercel 조회로 `byus.kr` 및 `www.byus.kr`이 동일 deployment에 할당됨을 확인했다. 운영 화면/로그인/API를 반복 검사하지 않았다.
+- Supabase migration120000, Notification worker code-only 배포도 최종 성공. 외부 발송 설정은 비활성 상태 유지.
+- 추가 로컬 Instagram 오류 shell: KO desktop1440/EN mobile390의 실제 HTML lang·제목·본문·privacy locale 링크·가로 넘침 확인. 유효 OAuth 연결 자체는 unit fixture 검증이며 실제 계정 연결은 하지 않았다.
+- 이번 작업이 연 임시 브라우저 탭과 검증 서버를 정리했다. 다른 작업의 서버/사용자 탭은 보존했다.
+- 결론: **로컬 검증 및 배포 완료**. 실제 Kakao 수신, 실제 Google/Apple 로그인, OS 설치/재실행은 완료 주장에 포함하지 않는다. 전체 웹 확대 검사 중 기존 CSS 기준선3개 실패는 관련361개 테스트 통과와 구분한다.

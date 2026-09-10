@@ -1,6 +1,6 @@
 # KO/EN 전체 누락 구현·배포 계획
 
-상태: 구현·로컬 검증 및 독립 결과 검토 완료, 배포 진행 중. 사용자 2026-09-10 `전체 define-goal 하고, 배포까지 진행`으로 TODO 전체 구현·배포 승인. 작업 공간은 기존 `/Users/jewel/.codex/worktrees/byus-footer-calendar-20260910`, 시작 HEAD `72e8b35`. 다른 작업의 미커밋 변경과 실행 중 서버는 보존한다.
+상태: 27개 항목 처리, 로컬 검증 및 DB/worker/web 배포 완료. 사용자 2026-09-10 `전체 define-goal 하고, 배포까지 진행`으로 TODO 전체 구현·배포 승인. 작업 공간은 기존 `/Users/jewel/.codex/worktrees/byus-footer-calendar-20260910`, 시작 HEAD `72e8b35`. 다른 작업의 미커밋 변경과 실행 중 서버는 보존한다.
 
 ## 완료 기준
 
@@ -75,7 +75,7 @@
 - [x] 세부 계약 계획과 독립 위험 검토.
 - [x] 구현 및 관련 로컬 검증.
 - [x] 결과 위험 검토와 필요한 보완.
-- [ ] DB/worker/web 배포 최종 성공 확인.
+- [x] DB/worker/web 배포 최종 성공 확인.
 
 - 환경 준비: npm ci --ignore-scripts로 최신 lockfile 동기화(제품 dependency 변경 없음). 검증 실행은 설치된 Node24.13.1(`/Users/jewel/.nvm/versions/node/v24.13.1/bin`)을 명시한다. 기존 own dev3017 서버는 소스 갱신 전 종료했고 root3000/다른3018은 보존했다.
 
@@ -108,3 +108,10 @@
 - SupabaseProduction120000 적용 및 migrationhistory 확인 완료.
 
 - Notification worker Production code-only 교체 성공: `Active / Successful`, 배포ZIP SHA256 일치. EventBridge/schedule/target/concurrency 및 환경변수·handler 등 운영 설정 보존. AWS Auto runtime ARN만 변경됐으며, 과거 INIT_START ARN을 대입하면 배포 전 전체 설정 digest가 정확히 재현되는 것으로 차이를 확인했다. 증거 `deployment/notification-after.json`, `notification-runtime-change-proof.json`.
+
+## 완료 체크포인트
+
+- 코드 release `1d07748fbaab2675b9ac7858c793e02afc977e44`: Vercel `dpl_J48d7W5erXMgUEy5gyHhckExgxHu` Ready. byus.kr/www.byus.kr alias도 Vercel 도구로 같은 배포 확인.
+- DB120000 및 notification Lambda의 정확한 코드 hash/Active/Successful 확인. AWS Auto runtime 변경 외 운영 설정 동일.
+- 남은 승인 범위 작업 없음. 실제 외부 수신/Google·Apple 로그인/OS 설치는 범위 밖 검증으로 명시. 기존 main CSS source-contract 실패3개는 별도 기준선 기록.
+- 로컬 Instagram 오류 shell KOdesktop/ENmobile 추가 rendered검증 통과. 임시 브라우저탭/검증서버 정리.
