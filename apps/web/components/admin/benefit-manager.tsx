@@ -457,7 +457,7 @@ function BenefitManager({
     }
   }
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={role}>
       <div className={styles.heading}>
         <div>
           <p>ADM-007</p>

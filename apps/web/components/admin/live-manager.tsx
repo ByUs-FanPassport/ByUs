@@ -136,7 +136,7 @@ function LiveManager({ locale, role }: { locale: AdminLocale; role: string }) {
   }
   function choose(live: Live) { setGeneratedCode(""); setRescheduleReason(""); setForm(formFor(live)); }
 
-  return <AdminOperationsShell locale={locale}><div className={styles.heading}><div><p>ADM-005</p><h1>{t.title}</h1><span>{t.description}</span></div><button type="button" onClick={() => { setForm(empty); setRescheduleReason(""); }} disabled={!canWrite || pending}><CirclePlus aria-hidden="true" />{t.newLive}</button></div>
+  return <AdminOperationsShell locale={locale} adminRole={role}><div className={styles.heading}><div><p>ADM-005</p><h1>{t.title}</h1><span>{t.description}</span></div><button type="button" onClick={() => { setForm(empty); setRescheduleReason(""); }} disabled={!canWrite || pending}><CirclePlus aria-hidden="true" />{t.newLive}</button></div>
     {!canWrite && <p className={styles.notice} role="status">{t.readonly}</p>}{message && <p className={styles.notice} role="status">{message}</p>}
     {status === "loading" && <div className={styles.skeleton} aria-busy="true">{t.loading}</div>}
     {status === "error" && <div className={styles.error} role="alert">{t.failure}<button type="button" onClick={() => void refresh()}>Retry</button></div>}

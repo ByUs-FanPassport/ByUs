@@ -313,7 +313,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
   const t = copy[locale];
   const ready = state.status === "ready" ? state : null;
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <div className={styles.heading}>
         <div>
           <p>{t.overview}</p>
@@ -632,7 +632,7 @@ export function AdminAnalytics({
   if (session.status !== "authorized")
     return <AdminAccessState status={session.status} locale={locale} />;
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <div className={styles.heading}>
         <div>
           <p>{t.analytics}</p>

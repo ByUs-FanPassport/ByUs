@@ -116,7 +116,7 @@ export function QuizManager({ celebrityId }: { celebrityId: string }) {
     setQuestions(next.map((q, i) => ({ ...q, position: i + 1 })));
   }
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.status === "authorized" ? session.admin.role : undefined}>
       <div className={styles.cmsHeading}>
         <div>
           <Link href="/admin/celebrities" className={styles.backLink}>

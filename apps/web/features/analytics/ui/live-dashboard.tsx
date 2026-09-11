@@ -339,7 +339,7 @@ export function LiveDashboard({
     return <AdminAccessState status={session.status} locale={locale} />;
   const ko = locale === "ko";
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <div className={styles.dashboard}>
         <header className={styles.hero}>
           <div>

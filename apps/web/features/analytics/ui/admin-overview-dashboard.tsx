@@ -163,7 +163,7 @@ export function AdminOverviewDashboard({ locale = "ko" }: { locale?: AdminLocale
   if (state.status === "unauthenticated" || state.status === "denied") return <AdminAccessState status={state.status} locale={locale} />;
   const visibleState = state.status === "ready" && (state.owner !== owner || state.data.days !== Number(days)) ? { status: "loading" as const } : state;
   const ko = locale === "ko";
-  return <AdminOperationsShell locale={locale}><div className={styles.dashboard}>
+  return <AdminOperationsShell locale={locale} adminRole={session.admin.role}><div className={styles.dashboard}>
     <header className={styles.header}><div><p>{ko ? "BYUS 운영 대시보드" : "BYUS OPERATIONS"}</p><h1>{ko ? "서비스 현황" : "Service overview"}</h1><span>{ko ? "회원의 성장과 팬들의 참여, 오늘 처리할 일을 한눈에 확인하세요." : "Member growth, fan participation and the work that needs your attention."}</span></div>
       <button className={styles.refresh} type="button" onClick={() => setRefresh((v) => v + 1)} disabled={visibleState.status === "loading"}><RefreshCw aria-hidden="true" />{ko ? "새로고침" : "Refresh"}</button>
     </header>
