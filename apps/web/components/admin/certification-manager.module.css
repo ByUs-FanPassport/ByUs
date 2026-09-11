@@ -34,9 +34,24 @@
   color: var(--muted);
 }
 .message {
-  min-height: 24px;
-  color: #9f1239;
+  margin: 12px 0;
+  color: #376344;
+  font-size: 14px;
 }
+.message:empty { display: none; }
+.message[data-error="true"] { color: #9f1239; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.toolbar button, .statusTabs button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+.toolbar svg { width: 17px; height: 17px; }
+.tabs { display: flex; gap: 8px; }
+.tabs button { border-color: transparent; background: transparent; }
+.tabs button[aria-selected="true"] { background: #eee8fc; color: #6333bf; }
+.statusTabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.statusTabs button { font-size: 13px; }
+.statusTabs button[aria-pressed="true"] { background: #25242b; color: #fff; border-color: #25242b; }
+.loadState { padding: 64px 16px; text-align: center; color: var(--muted); }
+.advanced { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.advanced summary { cursor: pointer; min-height: 32px; }
 .workspace {
   display: grid;
   border: 1px solid var(--line);
@@ -46,6 +61,8 @@
 .missions {
   padding: 18px;
   background: #faf9f8;
+  max-height: 760px;
+  overflow-y: auto;
 }
 .sectionHeading {
   display: flex;

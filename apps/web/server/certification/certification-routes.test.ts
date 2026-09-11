@@ -99,6 +99,26 @@ describe("certification routes", () => {
     expect(response.status).toBe(400);
     expect(dependencies.repository.submit).not.toHaveBeenCalled();
   });
+  it("rejects a submission without proof uploads before repository mutation", async () => {
+    const dependencies = deps();
+    const response = await certificationRoutes.submit(dependencies)(
+      new Request("https://byus.kr/api/certification-submissions", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer fan",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          missionId: mission,
+          idem,
+          uploadIds: [],
+          note: "설명만으로는 제출할 수 없습니다.",
+        }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(dependencies.repository.submit).not.toHaveBeenCalled();
+  });
   it("bounds JSON from streamed bytes before parsing", async () => {
     const dependencies = deps();
     const response = await certificationRoutes.submit(dependencies)(

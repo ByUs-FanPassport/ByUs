@@ -10,6 +10,8 @@ insert into public.app_users(id,privy_user_id,verified_email,status) values
   ('d1000000-0000-4000-8000-000000000004','did:privy:membership-admin','membership-admin@byus.test','active');
 insert into public.admin_allowlist(id,email,role,active) values
   ('d1000000-0000-4000-8000-000000000010','membership-admin@byus.test','admin',true);
+insert into public.user_profiles(app_user_id,nickname,nickname_normalized) values
+  ('d1000000-0000-4000-8000-000000000001','멤버십팬','멤버십팬');
 insert into public.user_wallets(app_user_id,chain_id,address,provider,wallet_type) values
   ('d1000000-0000-4000-8000-000000000001',91342,'0xd100000000000000000000000000000000000001','privy','embedded'),
   ('d1000000-0000-4000-8000-000000000002',91342,'0xd100000000000000000000000000000000000002','privy','embedded');
@@ -43,7 +45,8 @@ declare
   saved jsonb; activated jsonb; submitted jsonb; reviewed jsonb; replayed jsonb;
   mission_id uuid; first_submission uuid; second_submission uuid; no_wallet_submission uuid;
   v_activity_id uuid; v_stamp_id uuid; detail jsonb; public_detail jsonb; owner_detail jsonb;
-  collection_row jsonb; passport_detail jsonb; stamp_detail jsonb; history jsonb; admin_queue jsonb;
+  collection_row jsonb; passport_detail jsonb; stamp_detail jsonb; history jsonb;
+  admin_queue jsonb; admin_pending jsonb; admin_rejected jsonb;
   admin_fan jsonb; analytics jsonb;
 begin
   -- Only the three supported membership platforms may be configured.
@@ -113,6 +116,21 @@ begin
     'd1000000-0000-4000-8000-000000000004','d1000000-0000-4000-8000-000000000010','d1300000-0000-4000-8000-000000000007',mission_id,1,'active');
   if activated->>'status'<>'active' then raise exception 'membership mission did not activate'; end if;
 
+  begin
+    perform public.submit_owned_certification(
+      'd1000000-0000-4000-8000-000000000001',mission_id,'d1500000-0000-4000-8000-000000000020','[]',null,null);
+    raise exception 'zero-image membership proof was accepted';
+  exception when others then
+    if sqlerrm not like '%CERTIFICATION_UPLOAD_COUNT_INVALID%' then raise; end if;
+  end;
+  begin
+    perform public.submit_owned_certification(
+      'd1000000-0000-4000-8000-000000000001',mission_id,'d1500000-0000-4000-8000-000000000021','["d1400000-0000-4000-8000-000000000099"]',null,null);
+    raise exception 'missing membership upload was accepted';
+  exception when others then
+    if sqlerrm not like '%CERTIFICATION_UPLOAD_INVALID%' then raise; end if;
+  end;
+
   -- Registration and consumption remain Passport- and owner-scoped.
   begin
     perform public.register_owned_certification_upload(
@@ -148,6 +166,15 @@ begin
     or exists(select 1 from public.stamps where app_user_id='d1000000-0000-4000-8000-000000000003') then
     raise exception 'failed wallet precondition left partial membership rewards';
   end if;
+  admin_pending:=public.get_admin_certification_queue(
+    'd1000000-0000-4000-8000-000000000004','d1000000-0000-4000-8000-000000000010','pending');
+  if not exists(
+    select 1 from jsonb_array_elements(admin_pending) row_value
+    where row_value->>'id'=no_wallet_submission::text
+      and row_value->'applicantName'='null'::jsonb
+  ) then
+    raise exception 'missing profile was not represented neutrally in admin queue';
+  end if;
 
   -- Reject with a reason, grant nothing, then accept a three-image resubmission.
   perform public.register_owned_certification_upload('d1000000-0000-4000-8000-000000000001',mission_id,'d1400000-0000-4000-8000-000000000011','d1000000-0000-4000-8000-000000000001/'||mission_id||'/d1400000-0000-4000-8000-000000000011.webp',100,10,10,repeat('a',64));
@@ -177,6 +204,23 @@ begin
     or exists(select 1 from public.fan_score_ledger where manual_submission_id=first_submission)
     or exists(select 1 from public.fan_ticket_ledger where source_type='manual_certification' and source_id=first_submission) then
     raise exception 'membership rejection state or zero-grant contract failed';
+  end if;
+  admin_rejected:=public.get_admin_certification_queue(
+    'd1000000-0000-4000-8000-000000000004','d1000000-0000-4000-8000-000000000010','rejected');
+  if not exists(
+    select 1 from jsonb_array_elements(admin_rejected) row_value
+    where row_value->>'id'=first_submission::text
+      and row_value->>'applicantName'='멤버십팬'
+      and row_value->>'creatorNameKo'='멤버십 테스트'
+      and row_value->>'creatorNameEn'='Membership Test'
+      and row_value->>'missionTitleEn'='YouTube paid membership'
+      and row_value->>'instructionsKo'='크리에이터 계정, 내 계정, 유효기간을 보여 주세요.'
+      and row_value->>'instructionsEn'='Show the creator, your account, and validity.'
+      and row_value->>'rejectionReason'='다음 결제일이 보이도록 다시 제출해 주세요.'
+      and row_value->>'reviewedAt' is not null
+      and row_value->'previousSubmissionId'='null'::jsonb
+  ) then
+    raise exception 'rejected admin review context mismatch';
   end if;
   begin
     insert into public.fan_activities(app_user_id,celebrity_id,activity_type,source_type,source_id)
@@ -251,7 +295,21 @@ begin
     or public_detail->'reward'->>'stampCount'<>'1' or public_detail->'reward'->>'ticketAmount'<>'0'
     or owner_detail->>'membershipPlatform'<>'youtube' or owner_detail->'reward'->>'stampCount'<>'1' or detail is not null
     or not exists(select 1 from jsonb_array_elements(history) row_value where row_value->>'id'=second_submission::text and row_value->>'membershipPlatform'='youtube')
-    or not exists(select 1 from jsonb_array_elements(admin_queue) row_value where row_value->>'id'=second_submission::text and row_value->>'membershipPlatform'='youtube')
+    or not exists(
+      select 1 from jsonb_array_elements(admin_queue) row_value
+      where row_value->>'id'=second_submission::text
+        and row_value->>'membershipPlatform'='youtube'
+        and row_value->>'applicantName'='멤버십팬'
+        and row_value->>'creatorNameKo'='멤버십 테스트'
+        and row_value->>'creatorNameEn'='Membership Test'
+        and row_value->>'missionTitleEn'='YouTube paid membership'
+        and row_value->>'instructionsKo'='크리에이터 계정, 내 계정, 유효기간을 보여 주세요.'
+        and row_value->>'instructionsEn'='Show the creator, your account, and validity.'
+        and row_value->>'reviewedAt' is not null
+        and row_value->'rejectionReason'='null'::jsonb
+        and row_value->>'previousSubmissionId'=first_submission::text
+        and jsonb_array_length(row_value->'uploads')=3
+    )
     or collection_row->'stampSummary'->>'membership'<>'1' or collection_row->'score'->>'points'<>'1' or not (collection_row->'score' ? 'stageProgress')
     or passport_detail->'stampSummary'->>'membership'<>'1' or passport_detail->'score'->>'points'<>'1' or not (passport_detail ? 'firstReaction') or not (passport_detail->'score' ? 'stageProgress')
     or not exists(select 1 from jsonb_array_elements(passport_detail->'activities') row_value where row_value->>'type'='membership' and row_value->>'points'='1')
@@ -265,6 +323,9 @@ begin
     or has_function_privilege('authenticated','public.save_admin_certification_mission_v2(uuid,uuid,uuid,uuid,uuid,text,bigint,text,text,text,text,text,text,text,timestamptz,timestamptz,smallint,bigint,public.social_platform)','EXECUTE')
     or has_function_privilege('anon','public.review_admin_certification_submission(uuid,uuid,uuid,uuid,uuid,bigint,text,text)','EXECUTE')
     or has_function_privilege('authenticated','public.get_owned_passport_detail(uuid,uuid,public.content_locale)','EXECUTE')
+    or has_function_privilege('anon','public.get_admin_certification_queue(uuid,uuid,public.certification_submission_status)','EXECUTE')
+    or has_function_privilege('authenticated','public.get_admin_certification_queue(uuid,uuid,public.certification_submission_status)','EXECUTE')
+    or not has_function_privilege('service_role','public.get_admin_certification_queue(uuid,uuid,public.certification_submission_status)','EXECUTE')
     or not has_function_privilege('service_role','public.get_owned_passport_detail(uuid,uuid,public.content_locale)','EXECUTE') then
     raise exception 'membership RPC privilege boundary mismatch';
   end if;
