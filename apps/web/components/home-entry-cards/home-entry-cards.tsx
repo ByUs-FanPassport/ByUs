@@ -38,7 +38,7 @@ const copy = {
 
 export function ElinaGuideCard({ locale, elina, hero = false, priority = false }: { locale: ContentLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean }) {
   const t = copy[locale];
-  const image = elina ? <CreatorImage slug={elina.slug} src={elina.image.url} photos={elina.image.photos} position={elina.image.position} presentation="editorial" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
+  const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-blue-beret-20260912.webp" photos={undefined} position="50% 70%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
   if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BYUS" title={t.title}
     description={t.description}
     action={<Link href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}><span>{t.action}</span><ArrowRight aria-hidden="true" /></Link>} />;
