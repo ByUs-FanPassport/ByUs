@@ -28,7 +28,7 @@ describe("MY next benefit", () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => Response.json(url.includes(ids[1]) ? payload(1) : payload(0, null))));
     const view = render(<MyBenefitProgress creator={creators[0]} locale="ko" compact/>);
     expect(await screen.findByText("현재 KARA의 다음 혜택이 없어요.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "혜택 보기" })).toHaveAttribute("href", "/benefits?locale=ko&celebrity=kara");
+    expect(screen.getByRole("link", { name: "혜택 전체 보기" })).toHaveAttribute("href", "/benefits?locale=ko&celebrity=kara");
     view.rerender(<MyBenefitProgress creator={creators[1]} locale="ko" compact/>);
     expect(await screen.findByRole("heading", { name: benefit.title })).toBeInTheDocument();
     expect(screen.queryByText("현재 KARA의 다음 혜택이 없어요.")).not.toBeInTheDocument();
