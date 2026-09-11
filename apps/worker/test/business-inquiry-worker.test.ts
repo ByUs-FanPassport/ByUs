@@ -41,27 +41,30 @@ describe("inquiry durable send boundary", () => {
   });
 });
 describe("SES inquiry envelope", () => {
-  it("fixes To/CC and replies to the submitter with plain UTF-8 text", async () => {
+  it("preserves To/CC and Reply-To while sending HTML and plain UTF-8 text", async () => {
     const send = vi.fn().mockResolvedValue({ MessageId: "ses-id" });
     await new SesInquirySender({ send }).send(job);
     const input = send.mock.calls[0]![0].input;
     expect(input.FromEmailAddress).toBe("notifications@byus.kr");
     expect(input.Destination).toEqual({ ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] });
     expect(input.ReplyToAddresses).toEqual([job.email]);
-    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs] 미국 팬미팅 문의 · ${job.id}`);
-    expect(input.Content.Simple.Body.Text.Data).toContain("ByUs 미국 팬미팅 문의");
+    expect(input.Content.Simple.Subject.Data).toBe("[ByUs 미국 팬미팅 문의] 미국 팬미팅 문의 일정을 상담하고 싶어요.");
+    expect(input.Content.Simple.Body.Text.Data).toContain("미국 팬미팅 문의");
     expect(input.Content.Simple.Body.Text.Data).toContain(job.message);
-    expect(input.Content.Simple.Body.Html).toBeUndefined();
+    expect(input.Content.Simple.Body.Html.Charset).toBe("UTF-8");
+    expect(input.Content.Simple.Body.Html.Data).toContain("미국 팬미팅 문의<br>일정을 상담하고 싶어요.");
+    expect(JSON.stringify(input.Content)).not.toContain(job.id);
   });
   it.each([
-    ["creator", "ByUs 시작 문의"],
-    ["partner", "파트너 문의"],
+    ["creator", "팬 활동 문의"],
+    ["partner", "파트너 협업 문의"],
   ] as const)("labels %s inquiries in the subject and body", async (inquiryType, label) => {
     const send = vi.fn().mockResolvedValue({ MessageId: "ses-id" });
     await new SesInquirySender({ send }).send({ ...job, inquiry_type: inquiryType });
     const input = send.mock.calls[0]![0].input;
-    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs] ${label} · ${job.id}`);
-    expect(input.Content.Simple.Body.Text.Data).toContain(`ByUs ${label}`);
+    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs ${label}] 미국 팬미팅 문의 일정을 상담하고 싶어요.`);
+    expect(input.Content.Simple.Body.Text.Data).toContain(label);
+    expect(input.Content.Simple.Body.Html.Data).toContain(label);
   });
   it.each(["TimeoutError", "InternalServerError", "RequestTimeout", "Error"])("classifies %s as ambiguous without logging provider detail", async (name) => {
     const send = vi.fn().mockRejectedValue({ name, message: "private contact" });
