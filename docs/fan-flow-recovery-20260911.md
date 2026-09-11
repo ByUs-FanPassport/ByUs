@@ -61,3 +61,16 @@ Actual source components and CSS are served by an isolated Vite harness at port 
 - Integrated concurrent `origin/main` changes through `b0ea2a7` without conflicts. The shared profile onboarding merge preserves both generic setup and exception-safe storage.
 - Final merged web typecheck passed. Focused integration verification (profile onboarding, global next-action guide, raffle dialog) passed 3 files / 26 tests. Earlier unchanged auth/participation suites were reused.
 - Source change: `b205f15`; merged tree: `1c1c887` before this documentation-only release checkpoint.
+
+## Apple/browser follow-up improvement
+
+User authorized improving the subsequent Apple/non-Safari review findings and connected an iPhone for verification. The existing deployment path remains in scope.
+
+- Reproduced on deployed code: hold Google OAuth initialization, expire the UI deadline, choose Apple, then release Google response; the SDK navigated to Google. Prior evidence remains in `artifacts/auth-browser-review-20260911/`.
+- `oauth-start.ts` now owns one document-wide initiation guard. Timeout leaves a restart-required state across overlay remount and late resolve/reject. A native same-origin link starts a new document and preserves sanitized return path, locale and intent; it never logs out. Definitive initialization failures remain retryable.
+- Browser-shaped Apple/Google reauthentication callbacks with missing/invalid state or binding now fail closed into a fixed same-origin login recovery path, clearing only the challenge cookie. Wrong origin/method/provider/content type remains HTTP 400. Verified challenges retain their contextual return path. State, nonce, subject and credential-generation checks are unchanged.
+- Login page regression: two new expectations failed before the UI change; afterward 39/39 tests passed. Guard tests 4/4 and callback tests 27/27 passed. Targeted ESLint and web typecheck passed. An independent security reviewer found no blocking defects.
+- Actual source/CSS rendered with mocked stalled auth passed KO/EN at 390px and 1440px: one initialization, disabled alternate provider after timeout and late settlement, keyboard-accessible restart, changed `performance.timeOrigin` after restart and retained login context. Visual review caught native-link content-box overflow; a scoped border-box fix passed the final rendered checks. Evidence: `artifacts/auth-browser-improvement-20260911/`.
+- Integrated `origin/main` through `89276ed` without conflicts. Changes to shared environment validation prompted a fresh merged typecheck and environment tests (46/46), both passed; unchanged auth test results were reused.
+- Real iPhone 17 Pro Safari opened Apple's system authentication and automatically reached authenticated ByUs home using stored device authentication before cancellation. This is current-production sign-in evidence, separate from the mocked local source checks. Whether that transition created a new ByUs account/wallet was not inspected. The user then explicitly authorized logging out this test session and verifying Google. Device verification continues in the evidence directory; account deletion, wallet deletion and provider revocation remain outside scope.
+- Source change: `3bebf1b`; integrated tree: `96586e2` before this documentation checkpoint. No database migration is required for these follow-up fixes.
