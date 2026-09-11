@@ -11,58 +11,74 @@
 }
 .panel {
   display: grid;
-  gap: 20px;
+  width: min(100%, 1120px);
+  gap: 24px;
+  margin-inline: auto;
   padding-block: 24px;
 }
-.panelHeading p {
+.panelHeading h2 {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0;
-  color: #ff008a;
-  font-size: 13px;
-  font-weight: 800;
-}
-.panelHeading p svg {
-  width: 16px;
-}
-.panelHeading h2 {
-  max-width: 640px;
-  margin: 8px 0 0;
-  font-size: clamp(22px, 4vw, 32px);
-  line-height: 1.25;
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.3;
   letter-spacing: -0.035em;
-  text-wrap: balance;
+}
+.panelHeading h2 svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-service-ink, #be185d);
+}
+.panelHeading p {
+  margin: 8px 0 0;
+  color: #65656d;
+  font-size: 14px;
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 .tabs {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  background: #f4f3f2;
+  gap: 24px;
+  border-bottom: 1px solid #e8e7ec;
 }
 .tabs button {
-  display: flex;
-  min-height: 44px;
-  flex: 1;
+  position: relative;
+  display: inline-flex;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
+  padding: 0 0 12px;
   border: 0;
-  border-radius: 9px;
   background: transparent;
-  color: #6c6968;
+  color: #65656d;
   font: inherit;
   font-size: 14px;
-  font-weight: 750;
+  font-weight: 600;
+  cursor: pointer;
 }
 .tabs button[aria-selected="true"] {
-  background: #fff;
   color: #19191c;
-  box-shadow: 0 1px 4px rgb(20 20 22 / 8%);
+  font-weight: 750;
+}
+.tabs button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: #19191c;
 }
 .tabs svg {
-  width: 17px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.missions {
+  display: grid;
+  gap: 16px;
 }
 .list {
   border-top: 1px solid #e7e4e2;
@@ -71,8 +87,7 @@
   display: flex;
   overflow-x: auto;
   gap: 7px;
-  padding: 12px 4px;
-  border-bottom: 1px solid #e7e4e2;
+  padding: 0 0 4px;
 }
 .categories button {
   min-width: 44px;
@@ -82,10 +97,11 @@
   border: 1px solid #ddd9d6;
   border-radius: 999px;
   background: #fff;
-  color: #686462;
+  color: #65656d;
   font: inherit;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 .categories button[aria-pressed="true"] {
   border-color: #19191c;
@@ -111,16 +127,126 @@
   width: 18px;
   color: #777270;
 }
+.missionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.missionGrid > li {
+  min-width: 0;
+}
+.card {
+  box-sizing: border-box;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e8e7ec;
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+a.card:hover {
+  border-color: #bdbdc7;
+  background: #fcfcfd;
+}
+a.card:active {
+  background: #f6f5f7;
+}
+.card[data-disabled="true"] {
+  background: #f8f8fa;
+}
+.cardHeading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .kind {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
   place-items: center;
-  border-radius: 50%;
-  background: #fff0f4;
-  color: #c81f4f;
-  font-size: 10px;
-  font-weight: 900;
+  border: 1px solid #eeeef2;
+  border-radius: 12px;
+  background: #fafafa;
+  color: #4d4d58;
+}
+.kind :is(img, svg) {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.cardIdentity {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.cardCategory {
+  color: #65656d;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.cardIdentity strong {
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.cardDescription {
+  color: #65656d;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.cardFooter {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f0eff3;
+}
+.cardAction {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.cardAction svg {
+  width: 16px;
+  height: 16px;
+}
+.cardAction:not([data-status="available"]) {
+  color: #65656d;
+  font-weight: 500;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .rowCopy {
   display: grid;
@@ -142,8 +268,9 @@
 .reward {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
-  color: #c81f4f;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-service-ink, #be185d);
   font-size: 12px;
   font-weight: 750;
 }
@@ -151,13 +278,18 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  line-height: 1.5;
 }
 .reward svg {
-  width: 13px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .reason {
   color: #9f1239;
   font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .status {
   padding: 6px 9px;
@@ -525,8 +657,11 @@
   .panel {
     padding-block: 36px;
   }
-  .tabs {
-    width: 420px;
+  .missionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card {
+    padding: 24px;
   }
   .row {
     padding-inline: 12px;
@@ -537,16 +672,49 @@
 }
 @media (max-width: 30rem) {
   .row {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 20px;
+    gap: 8px 12px;
+  }
+  .rowCopy {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
   .row > svg {
     display: none;
   }
   .status {
-    grid-column: 2;
+    grid-column: 1;
+    grid-row: 2;
     justify-self: start;
+  }
+  .row > svg:last-child {
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
   }
   .rowCopy small {
     white-space: normal;
+  }
+}
+
+.panel :is(button, a):focus-visible {
+  outline: 3px solid #19191c;
+  outline-offset: 4px;
+}
+@media (max-width: 30rem) {
+  .panel {
+    gap: 20px;
+  }
+  .tabs {
+    gap: 20px;
+  }
+  .card {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
   }
 }

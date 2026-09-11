@@ -61,6 +61,17 @@ describe("FAN-005 profile onboarding", () => {
     expect(replace).toHaveBeenCalledTimes(1);
   });
 
+  it("supports generic profile setup without promising a creator passport", async () => {
+    query = "locale=ko&returnTo=%2Fsettings%3Flocale%3Dko";
+    render(<ProfileOnboardingScreen celebrity={null} />);
+
+    expect(await screen.findByRole("heading", { name: "ByUs에서 사용할 닉네임을 정해 주세요." })).toBeInTheDocument();
+    expect(screen.getByText("프로필을 완성하면 이전 화면으로 돌아가 계속할 수 있어요.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("발급 예정 Fan Passport 미리보기")).not.toBeInTheDocument();
+    expect(screen.queryByText("팬 인증 완료 후 발급")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "이전으로" })).toHaveAttribute("href", "/settings?locale=ko");
+  });
+
   it("skips the setup screen when the authenticated user already has a profile", async () => {
     vi.mocked(fetch).mockResolvedValue(Response.json({ profile: { completed: true, nickname: "Kamilia" } }));
     render(<ProfileOnboardingScreen celebrity={celebrity} />);

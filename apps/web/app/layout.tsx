@@ -10,6 +10,7 @@ import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-accou
 import { readPublicPrivyAppleLoginPolicy } from "../components/privy-apple-login-policy";
 import { AcquisitionSessionTracker } from "../features/analytics/client/acquisition-session-tracker";
 import { VercelTelemetry } from "../features/analytics/client/vercel-telemetry";
+import { FanNextActionGuide } from "../features/onboarding/ui/fan-next-action-guide";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
 import "./globals.css";
 
@@ -72,6 +73,7 @@ export default async function RootLayout({
           </Suspense>
           {children}
           {modal}
+          <Suspense fallback={null}><FanNextActionGuide /></Suspense>
         </ByUsPrivyProvider>
         </LocaleProvider>
       </body>
