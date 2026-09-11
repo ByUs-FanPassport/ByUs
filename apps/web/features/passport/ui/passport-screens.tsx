@@ -150,16 +150,23 @@ export function PassportCollectionScreen() {
     </div>
     <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
       <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
-        <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)}>
-          <div className={styles.cardMedia}><CreatorImage locale={locale} slug={passport.celebrity.slug} src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="(max-width: 767px) 100vw, 380px" presentation="collection" position={passport.celebrity.image.position} photos={passport.celebrity.photos} /></div>
-          <div className={styles.cardTop}><div><h2>{passport.celebrity.name}</h2></div><ArrowRight aria-hidden="true" /></div>
-        </Link>
-        <div className={styles.cardFacts}>
-          <FanStageTooltip className={styles.stageFact} celebrityName={passport.celebrity.name} tier={passport.score.level} points={passport.score.points} stageProgress={passport.score.stageProgress} locale={locale} variant="inline" />
-          <Link href={passportSectionHref(passport.id, locale, "activity")}><strong>{passport.score.points}</strong><small>{c.score}</small></Link>
-          <Link href={passportSectionHref(passport.id, locale, "stamp-book")}><strong>{passport.stampSummary.total}</strong><small>{c.stamps}</small></Link>
+        <div className={styles.collectionPortrait}>
+          <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)} aria-label={`${passport.celebrity.name} · ${c.open}`}>
+            <div className={styles.cardMedia}><CreatorImage locale={locale} slug={passport.celebrity.slug} src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="(max-width: 767px) calc(100vw - 32px), 380px" presentation="portrait" position={passport.celebrity.image.position} photos={passport.celebrity.photos} /></div>
+          </Link>
+          <FanStageTooltip className={styles.collectionStage} celebrityName={passport.celebrity.name} tier={passport.score.level} points={passport.score.points} stageProgress={passport.score.stageProgress} locale={locale} />
         </div>
-        {passport.mint.status !== "minted" ? <DigitalStatus status={passport.mint.status} locale={locale} /> : null}<Link className={styles.openLabel} href={withLocale(`/passports/${passport.id}`, locale)}>{c.open}<ArrowRight aria-hidden="true" /></Link>
+        <div className={styles.collectionCardBody}>
+          <div className={styles.cardTop}>
+            <h2>{passport.celebrity.name}</h2>
+          </div>
+          <div className={styles.cardFacts}>
+            <Link href={passportSectionHref(passport.id, locale, "activity")}><strong>{passport.score.points.toLocaleString(locale)}</strong><small>{c.score}</small></Link>
+            <Link href={passportSectionHref(passport.id, locale, "stamp-book")}><strong>{passport.stampSummary.total.toLocaleString(locale)}</strong><small>{c.stamps}</small></Link>
+          </div>
+          {passport.mint.status !== "minted" ? <DigitalStatus status={passport.mint.status} locale={locale} /> : null}
+          <Link className={styles.openLabel} href={withLocale(`/passports/${passport.id}`, locale)}><BookOpen aria-hidden="true" /><span>{c.open}</span><ArrowRight aria-hidden="true" /></Link>
+        </div>
       </article>)}</section></>}</div>
   </Frame>;
 }
