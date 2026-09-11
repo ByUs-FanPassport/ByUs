@@ -1,0 +1,3 @@
+.picture { position: absolute; inset: 0; display: block; overflow: hidden; }
+.picture img { object-fit: var(--event-photo-mobile-fit, contain) !important; object-position: var(--event-photo-mobile-position, 50% 50%) !important; }
+@media (min-width: 48rem) { .picture img { object-fit: var(--event-photo-desktop-fit, contain) !important; object-position: var(--event-photo-desktop-position, 50% 50%) !important; } }

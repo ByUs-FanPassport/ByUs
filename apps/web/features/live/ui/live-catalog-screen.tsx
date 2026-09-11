@@ -141,7 +141,7 @@ function LiveGroup({
               : `/live/${item.live.slug}?locale=${locale}`;
             return (
               <article className={styles.row} key={item.live.id}>
-                <CreatorAvatar slug={item.live.celebrity.slug} src={item.live.celebrity.image} size={{ mobile: 52, desktop: 64 }} />
+                <CreatorAvatar slug={item.live.celebrity.slug} src={item.live.celebrity.image} photos={item.live.celebrity.photos} position={item.live.celebrity.imagePosition} size={{ mobile: 52, desktop: 64 }} />
                 <Link
                   className={styles.details}
                   href={`/live/${item.live.slug}?locale=${locale}` as Route}

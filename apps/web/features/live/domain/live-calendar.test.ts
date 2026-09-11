@@ -75,12 +75,21 @@ describe("LIVE calendar domain", () => {
   });
 
   it("validates the public-only shape and distinguishes unknown reservation and Benefit states", () => {
-    const calendar = buildLiveCalendarMonth({ month: "2026-09", events: [event] });
+    const calendar = buildLiveCalendarMonth({
+      month: "2026-09",
+      events: [{
+        ...event,
+        photos: { poster: null },
+        celebrity: { ...event.celebrity, imagePosition: "center", photos: { portrait: null } },
+      }],
+    });
     expect(liveCalendarMonthSchema.parse(calendar)).toEqual(calendar);
     expect(JSON.stringify(calendar)).not.toMatch(/appUserId|reservationId|reservedAt|passport|wallet/i);
     expect(calendar.days[0]?.events[0]).toMatchObject({
       reservationState: null,
       hasBenefit: null,
+      photos: { poster: null },
+      celebrity: expect.objectContaining({ photos: { portrait: null } }),
     });
   });
 });

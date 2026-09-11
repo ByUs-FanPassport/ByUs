@@ -4,7 +4,6 @@ import { LiveTimeIndicator } from "./live-time-indicator";
 
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -54,6 +53,7 @@ import {
   fanActionClassName,
 } from "@/components/fan-ui/fan-action";
 import { FanActivityCompletionSummary } from "@/components/fan-ui/fan-activity-completion-summary";
+import { EventPhoto } from "@/components/fan-ui/event-photo";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import { ActivePreviewVideo } from "@/components/active-preview-video";
@@ -1051,14 +1051,7 @@ export function LiveEventScreen({
         </Link>
         <div className={styles.heroGrid}>
           <div className={styles.heroMedia}>
-            <Image
-              src={live.heroImage.url}
-              alt={live.heroImage.alt}
-              fill
-              sizes="(min-width: 1024px) 66vw, 100vw"
-              priority
-              unoptimized={live.heroImage.url.startsWith("https://")}
-            />
+            <EventPhoto photos={live.photos} src={live.heroImage.url} alt={live.heroImage.alt} locale={locale} surface="detail" priority sizes="(min-width: 1440px) 960px, (min-width: 1024px) 66vw, calc(100vw - 32px)" />
             {live.preview ? (
               <ActivePreviewVideo
                 id={live.id}
@@ -1406,7 +1399,7 @@ export function LiveEventScreen({
             </section>
           </div>
           <aside className={styles.identity}>
-            <CreatorAvatar slug={live.celebrity.slug} src={live.celebrity.image} size={{ mobile: 56, desktop: 64 }} />
+            <CreatorAvatar slug={live.celebrity.slug} src={live.celebrity.image} photos={live.celebrity.photos} position={live.celebrity.imagePosition} size={{ mobile: 56, desktop: 64 }} />
             <div>
               <span>{live.celebrity.name}</span>
               <strong>{formatFanCount(live.celebrity.fanCount)}</strong>

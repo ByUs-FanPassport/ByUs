@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { effectiveLiveStatusSchema, safeAssetUrlSchema } from "./live-event";
+import type { PhotoSet } from "../../media/domain/public-image";
 
 const calendarMonthPattern = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const calendarDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -18,10 +19,13 @@ export const liveCalendarEventSchema = z
     startsAt: z.iso.datetime({ offset: true }),
     effectiveStatus: effectiveLiveStatusSchema,
     title: z.string().trim().min(1).max(160),
+    photos: z.custom<PhotoSet>().optional(),
     celebrity: z
       .object({
         name: z.string().trim().min(1).max(120),
         image: safeAssetUrlSchema,
+        imagePosition: z.string().trim().min(1).max(100).optional(),
+        photos: z.custom<PhotoSet>().optional(),
       })
       .strict(),
     reservationState: z.enum(["reserved", "not_reserved"]).nullable(),

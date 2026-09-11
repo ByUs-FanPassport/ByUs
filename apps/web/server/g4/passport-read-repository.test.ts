@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-import { SupabasePassportReadRepository } from "./passport-read-repository";
+import { PublicImagePassportReadRepository, SupabasePassportReadRepository } from "./passport-read-repository";
 
 const passportId = "10000000-0000-4000-8000-000000000001";
 const stampId = "20000000-0000-4000-8000-000000000001";
@@ -55,6 +55,25 @@ describe("SupabasePassportReadRepository", () => {
     await expect(repository.findCollection({ appUserId: "owner", locale: "ko" })).resolves.toStrictEqual([]);
     await expect(repository.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).resolves.toBeNull();
     await expect(repository.findStamp({ id: stampId, appUserId: "owner", locale: "ko" })).resolves.toBeNull();
+  });
+
+  it("batch-attaches approved public photos without replacing a private owner's legacy image", async () => {
+    const projected = [
+      base,
+      { ...base, id: "10000000-0000-4000-8000-000000000002", celebrity: { ...base.celebrity, slug: "private", image: { ...base.celebrity.image, url: "/private.jpg" } } },
+    ];
+    const readCelebrityPhotoSetsBySlug = vi.fn().mockResolvedValue({ kara: { profile: null } });
+    const repository = new PublicImagePassportReadRepository(
+      new SupabasePassportReadRepository({ rpc: vi.fn().mockResolvedValue({ data: projected, error: null }) }),
+      { readCelebrityPhotoSetsBySlug, readLivePhotoSetsBySlug: vi.fn() },
+    );
+
+    const result = await repository.findCollection({ appUserId: "owner", locale: "ko" });
+
+    expect(readCelebrityPhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith(["kara", "private"]);
+    expect(result[0]?.celebrity.photos).toEqual({ profile: null });
+    expect(result[1]?.celebrity.image.url).toBe("/private.jpg");
+    expect(result[1]?.celebrity).not.toHaveProperty("photos");
   });
 
   it("preserves archived LIVE titles while keeping their public-link contract false", async () => {

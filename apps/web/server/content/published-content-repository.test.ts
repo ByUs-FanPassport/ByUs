@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { SupabasePublishedContentRepository } from "./published-content-repository";
+import {
+  PublicImagePublishedContentRepository,
+  SupabasePublishedContentRepository,
+} from "./published-content-repository";
 
 const row = {
   slug: "kara",
@@ -75,6 +78,29 @@ describe("SupabasePublishedContentRepository", () => {
       expect.objectContaining({ slug: "alpha" }),
       expect.objectContaining({ slug: "zeta" }),
     ]);
+  });
+
+  it("attaches approved photo roles after parsing with one batch per owner kind", async () => {
+    const content = new SupabasePublishedContentRepository({
+      from: () => queryResult([row, { ...row, slug: "elina", name: "Elina" }]),
+    });
+    const readCelebrityPhotoSetsBySlug = vi.fn().mockResolvedValue({
+      kara: { profile: null },
+    });
+    const readLivePhotoSetsBySlug = vi.fn().mockResolvedValue({});
+    const repository = new PublicImagePublishedContentRepository(content, {
+      readCelebrityPhotoSetsBySlug,
+      readLivePhotoSetsBySlug,
+    });
+
+    const result = await repository.list("ko");
+
+    expect(readCelebrityPhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([
+      "elina",
+      "kara",
+    ]);
+    expect(result.find(({ slug }) => slug === "kara")?.image.photos).toEqual({ profile: null });
+    expect(result.find(({ slug }) => slug === "elina")?.image).not.toHaveProperty("photos");
   });
 
   it("returns null for an unknown or unpublished slug projection", async () => {

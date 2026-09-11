@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { creatorRoleSchema, type CreatorRole } from "../../features/creator/domain/creator-role";
 import { livePreviewKindSchema } from "../../features/live/domain/live-preview";
+import type { PhotoSet } from "../../features/media/domain/public-image";
 
 const slugSchema = z
   .string()
@@ -72,7 +73,7 @@ export type PublishedCelebrity = Readonly<{
   locale: ContentLocale;
   name: string;
   summary: string;
-  image: Readonly<{ url: string; alt: string; position: string }>;
+  image: Readonly<{ url: string; alt: string; position: string; photos?: PhotoSet }>;
   roles: readonly CreatorRole[];
   themes: readonly Readonly<{ slug: string; name: string }>[];
   socialLinks: readonly Readonly<{
@@ -90,6 +91,7 @@ export type PublishedCelebrityLive = Readonly<{
   title: string;
   startsAt: string;
   effectiveStatus: "scheduled" | "live";
+  photos?: PhotoSet;
   preview?: Readonly<{
     kind: "artist_teaser" | "event_highlight";
     durationMs: number;

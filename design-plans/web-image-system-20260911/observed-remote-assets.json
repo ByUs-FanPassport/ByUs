@@ -1,0 +1,66 @@
+[
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+    "width": 1774,
+    "height": 887,
+    "ratio": 2,
+    "format": "png",
+    "bytes": 3134354
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/yuna/profile-f6180ad3a36ea5c1.webp",
+    "width": 1067,
+    "height": 1600,
+    "ratio": 0.6669,
+    "format": "webp",
+    "bytes": 134582
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/xin/profile-f2ec8b19121877f6.jpg",
+    "width": 4096,
+    "height": 2537,
+    "ratio": 1.6145,
+    "format": "jpeg",
+    "bytes": 1837059
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+    "width": 853,
+    "height": 1280,
+    "ratio": 0.6664,
+    "format": "jpeg",
+    "bytes": 158649
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/aryeom/profile-f596fa168833a2cb.jpg",
+    "width": 1080,
+    "height": 1080,
+    "ratio": 1,
+    "format": "jpeg",
+    "bytes": 96450
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-536c3c1765064266.jpg",
+    "width": 1080,
+    "height": 1350,
+    "ratio": 0.8,
+    "format": "jpeg",
+    "bytes": 100629
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+    "width": 1622,
+    "height": 1622,
+    "ratio": 1,
+    "format": "png",
+    "bytes": 3787467
+  },
+  {
+    "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/thisisj-official/profile-b0e528d586a167fb.jpg",
+    "width": 540,
+    "height": 540,
+    "ratio": 1,
+    "format": "jpeg",
+    "bytes": 25766
+  }
+]

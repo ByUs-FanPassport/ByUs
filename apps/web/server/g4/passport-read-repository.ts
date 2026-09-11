@@ -1,11 +1,12 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { parsePassportCollection, type PassportCollection } from "../../features/passport/domain/passport-collection";
 import { parsePassportDetailRecord, type PassportDetail } from "../../features/passport/domain/passport-detail";
 import { passportLocaleSchema, type PassportLocale } from "../../features/passport/domain/passport-read-model";
 import { parseStampDetail, type StampDetail } from "../../features/passport/domain/stamp-detail";
 import { attachPassportGrowth } from "./passport-growth";
+import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 export interface PassportReadRepository {
   findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection>;
@@ -57,7 +58,52 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
   }
 }
 
+export class PublicImagePassportReadRepository implements PassportReadRepository {
+  constructor(
+    private readonly repository: PassportReadRepository,
+    private readonly images: PublicImageRoleReader,
+  ) {}
+
+  async findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection> {
+    const passports = await this.repository.findCollection(input);
+    const photosBySlug = await this.images.readCelebrityPhotoSetsBySlug(
+      passports.map(({ celebrity }) => celebrity.slug),
+    );
+    return passports.map((passport) => {
+      const photos = photosBySlug[passport.celebrity.slug];
+      return photos === undefined
+        ? passport
+        : { ...passport, celebrity: { ...passport.celebrity, photos } };
+    });
+  }
+
+  async findPassport(input: { id: string; appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportDetail | null> {
+    const passport = await this.repository.findPassport(input);
+    if (!passport) return null;
+    const photos = (await this.images.readCelebrityPhotoSetsBySlug([passport.celebrity.slug]))[
+      passport.celebrity.slug
+    ];
+    return photos === undefined
+      ? passport
+      : { ...passport, celebrity: { ...passport.celebrity, photos } };
+  }
+
+  async findStamp(input: { id: string; appUserId: string; locale: PassportLocale }): Promise<StampDetail | null> {
+    const stamp = await this.repository.findStamp(input);
+    if (!stamp) return null;
+    const photos = (await this.images.readCelebrityPhotoSetsBySlug([stamp.celebrity.slug]))[
+      stamp.celebrity.slug
+    ];
+    return photos === undefined
+      ? stamp
+      : { ...stamp, celebrity: { ...stamp.celebrity, photos } };
+  }
+}
+
 export function createSupabasePassportReadRepository(config: { url: string; serviceRoleKey: string }, client?: RpcClient): PassportReadRepository {
   const database = client ?? createClient(config.url, config.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  return new SupabasePassportReadRepository(database as unknown as RpcClient);
+  return new PublicImagePassportReadRepository(
+    new SupabasePassportReadRepository(database as unknown as RpcClient),
+    createPublicImageRoleReader(config, database as unknown as SupabaseClient),
+  );
 }

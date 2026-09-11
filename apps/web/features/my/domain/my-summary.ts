@@ -2,6 +2,7 @@ import { z } from "zod";
 import { myRewardSchema } from "../../benefit/domain/my-reward";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
 import { fanStageProgressSchema } from "../../rewards/domain/fan-stage";
+import type { PhotoSet } from "../../media/domain/public-image";
 
 const safeImageUrl = z.string().min(1).refine((value) => value.startsWith("/") || value.startsWith("https://"));
 const dateTime = z.string().datetime({ offset: true });
@@ -19,7 +20,13 @@ const liveItemSchema = z.object({
 export const mySummarySchema = z.object({
   profile: z.object({ nickname: z.string().nullable() }).strict(),
   creators: z.array(z.object({
-    celebrity: z.object({ slug: z.string(), name: z.string(), image: safeImageUrl }).strict(),
+    celebrity: z.object({
+      slug: z.string(),
+      name: z.string(),
+      image: safeImageUrl,
+      imagePosition: z.string().trim().min(1).max(100).optional(),
+      photos: z.custom<PhotoSet>().optional(),
+    }).strict(),
     relationship: z.enum(["passport", "first_reaction_only"]),
     passport: z.object({
       id: uuid,

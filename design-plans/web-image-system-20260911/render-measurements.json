@@ -1,0 +1,3128 @@
+[
+  {
+    "name": "home",
+    "width": 1440,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 1440,
+          "height": 2105.421875
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 29.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨의 틱톡 100일 기념 LIVE 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 952,
+        "naturalHeight": 476,
+        "box": {
+          "x": 40,
+          "y": 196,
+          "width": 944,
+          "height": 472
+        },
+        "parentBox": {
+          "width": 944,
+          "height": 472
+        },
+        "fit": "cover",
+        "position": "51% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "뱅크시 전시회 Instagram LIVE를 진행하는 엘리나의 프로필 사진",
+        "src": "/images/celebrities/elina/hero-beach.jpg",
+        "naturalWidth": 952,
+        "naturalHeight": 634,
+        "box": {
+          "x": 40,
+          "y": 196,
+          "width": 944,
+          "height": 472
+        },
+        "parentBox": {
+          "width": 944,
+          "height": 472
+        },
+        "fit": "cover",
+        "position": "50% 25%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
+        "src": "/images/guest-home/banksy-exhibition-campaign.webp",
+        "naturalWidth": 952,
+        "naturalHeight": 535,
+        "box": {
+          "x": 40,
+          "y": 196,
+          "width": 944,
+          "height": 472
+        },
+        "parentBox": {
+          "width": 944,
+          "height": 472
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 384,
+        "naturalHeight": 192,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 0,
+          "height": 0
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/home-entry/elina.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 0,
+          "height": 0
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "Changha 프로필 이미지",
+        "src": "/images/guest-home/changha-card.jpg",
+        "naturalWidth": 239,
+        "naturalHeight": 239,
+        "box": {
+          "x": 88.828125,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 32%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 220.328125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 264.328125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 308.328125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "Elina 프로필 이미지",
+        "src": "/images/guest-home/elina-card.jpg",
+        "naturalWidth": 239,
+        "naturalHeight": 239,
+        "box": {
+          "x": 392.15625,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 36%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 523.65625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 567.65625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 611.65625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "회색 의상을 입은 유나의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/yuna/profile-f6180ad3a36ea5c1.webp",
+        "naturalWidth": 239,
+        "naturalHeight": 359,
+        "box": {
+          "x": 695.484375,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 20%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 826.984375,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 870.984375,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 914.984375,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "엑신 멤버들의 행사 단체 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/xin/profile-f2ec8b19121877f6.jpg",
+        "naturalWidth": 384,
+        "naturalHeight": 238,
+        "box": {
+          "x": 926.9109497070312,
+          "y": 777.0250244140625,
+          "width": 383.47503662109375,
+          "height": 383.4749755859375
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 100%",
+        "transform": "matrix(1.6, 0, 0, 1.6, 0, 0)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1130.3125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1174.3125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1218.3125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "정제니의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+        "naturalWidth": 239,
+        "naturalHeight": 360,
+        "box": {
+          "x": 1302.140625,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 30%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1477.640625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/chzzk.png",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1521.640625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "아렴의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/aryeom/profile-f596fa168833a2cb.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1605.46875,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1780.96875,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1824.96875,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "박명호의 인물 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-536c3c1765064266.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1908.796875,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 20%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2084.296875,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2128.296875,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "이퓨의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 2045.3133544921875,
+          "y": 781.8184204101562,
+          "width": 587.1961669921875,
+          "height": 587.1961059570312
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "matrix(2.45, 0, 0, 2.45, 0, 0)",
+        "display": "block",
+        "visible": true,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2387.625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2431.625,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "재희의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/thisisj-official/profile-b0e528d586a167fb.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 2515.453125,
+          "y": 920.828125,
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "parentBox": {
+          "width": 239.671875,
+          "height": 239.671875
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2690.953125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2734.953125,
+          "y": 1277.875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 156,
+        "naturalHeight": 156,
+        "box": {
+          "x": 16.45600128173828,
+          "y": 1461.7550048828125,
+          "width": 156.80001831054688,
+          "height": 156.800048828125
+        },
+        "parentBox": {
+          "width": 64,
+          "height": 64
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "matrix(2.45, 0, 0, 2.45, 0, 0)",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/elina-card.jpg",
+        "naturalWidth": 64,
+        "naturalHeight": 64,
+        "box": {
+          "x": 61,
+          "y": 1622.875,
+          "width": 64,
+          "height": 64
+        },
+        "parentBox": {
+          "width": 64,
+          "height": 64
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport",
+        "src": "/images/guest-home/passport-open-blank-9-transparent.png",
+        "naturalWidth": 1536,
+        "naturalHeight": 1024,
+        "box": {
+          "x": 1041,
+          "y": 658.3125,
+          "width": 334,
+          "height": 222.65625
+        },
+        "parentBox": {
+          "width": 334,
+          "height": 277.203125
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 384,
+        "naturalHeight": 192,
+        "box": {
+          "x": 1017,
+          "y": 1080.046875,
+          "width": 382,
+          "height": 191
+        },
+        "parentBox": {
+          "width": 384,
+          "height": 262.4375
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/home-entry/elina.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1630.40625,
+          "y": 1079.046875,
+          "width": 153.59375,
+          "height": 262.4375
+        },
+        "parentBox": {
+          "width": 153.59375,
+          "height": 262.4375
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 1826.1875,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "ifew",
+    "width": 1440,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/c/ifewknow",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 1440,
+          "height": 2215.984375
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 29.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨의 프로필 사진",
+        "src": "/images/celebrities/ifewknow/hero-studio.jpg",
+        "naturalWidth": 1360,
+        "naturalHeight": 2040,
+        "box": {
+          "x": 461.96875,
+          "y": 97,
+          "width": 937.03125,
+          "height": 358
+        },
+        "parentBox": {
+          "width": 937.03125,
+          "height": 358
+        },
+        "fit": "cover",
+        "position": "50% 45%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 81,
+          "y": 318.71875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 66.234375,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 167.234375,
+          "y": 318.71875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 86.15625,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/banksy-exhibition-campaign.webp",
+        "naturalWidth": 280,
+        "naturalHeight": 157,
+        "box": {
+          "x": 57,
+          "y": 1437,
+          "width": 282.09375,
+          "height": 246.296875
+        },
+        "parentBox": {
+          "width": 282.09375,
+          "height": 246.296875
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/avatars/heart-lavender.webp",
+        "naturalWidth": 512,
+        "naturalHeight": 512,
+        "box": {
+          "x": 918,
+          "y": 1699.4375,
+          "width": 32,
+          "height": 32
+        },
+        "parentBox": {
+          "width": 476,
+          "height": 32
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/avatars/ghost-pink.webp",
+        "naturalWidth": 512,
+        "naturalHeight": 512,
+        "box": {
+          "x": 918,
+          "y": 1747.4375,
+          "width": 32,
+          "height": 32
+        },
+        "parentBox": {
+          "width": 476,
+          "height": 32
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 1936.75,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "jenny",
+    "width": 1440,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/c/jenny-jeong",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 1440,
+          "height": 2141.609375
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 29.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "정제니의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+        "naturalWidth": 604,
+        "naturalHeight": 906,
+        "box": {
+          "x": 461.96875,
+          "y": 97,
+          "width": 937.03125,
+          "height": 358
+        },
+        "parentBox": {
+          "width": 937.03125,
+          "height": 358
+        },
+        "fit": "cover",
+        "position": "50% 30%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 81,
+          "y": 318.71875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 86.15625,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/chzzk.png",
+        "naturalWidth": 32,
+        "naturalHeight": 32,
+        "box": {
+          "x": 187.15625,
+          "y": 318.71875,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 59.125,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/avatars/ghost-pink.webp",
+        "naturalWidth": 512,
+        "naturalHeight": 512,
+        "box": {
+          "x": 918,
+          "y": 1673.0625,
+          "width": 32,
+          "height": 32
+        },
+        "parentBox": {
+          "width": 476,
+          "height": 32
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 40,
+          "y": 1862.375,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "live",
+    "width": 1440,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/live/ifew-100-days-tiktok-20260912",
+    "images": [
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 0,
+          "height": 0,
+          "x": 0,
+          "y": 0
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "ByUs",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 80,
+          "height": 32.8125,
+          "x": 40,
+          "y": 29.59375
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "alt": "이퓨의 틱톡 100일 기념 LIVE 프로필 사진",
+        "naturalWidth": 1774,
+        "naturalHeight": 887,
+        "box": {
+          "width": 885.328125,
+          "height": 442.65625,
+          "x": 40,
+          "y": 180
+        },
+        "fit": "cover",
+        "position": "50% 36%",
+        "loaded": true
+      },
+      {
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "alt": "",
+        "naturalWidth": 156,
+        "naturalHeight": 156,
+        "box": {
+          "width": 156.79998779296875,
+          "height": 156.79998779296875,
+          "x": 933.7841186523438,
+          "y": 743.1612548828125
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "ByUs",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 96,
+          "height": 39.375,
+          "x": 40,
+          "y": 1903.234375
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      }
+    ],
+    "body": "본문으로 바로가기\nHOME\nLIVE\n최애\nMY\nKO\n/\nEN\n라이브\nD-1\n이퓨의 틱톡 100일 기념 LIVE\nLIVE 일정\n2026년 9월 12일 (토) 08:00\n예약 마감\n당일 08:00\n\n기준 시간 KST (GMT+9)\n\n예약 전체 기간\n로그인하기\n\nLIVE를 예약하려면 먼저 로그인해 주세요.\n\n뱅크시 관람권 추첨 응모하기\n\n더현대 서울 뱅크시 전시 관람권 추첨 페이지로 이동해요.\n\nLIVE 소개\n\n이퓨의 틱톡 100일을 함께 축하해요! 팬들과 이야기하고 추억을 만드는 축하파티 LIVE. 뱅크시 티켓 총 10장 응모 혜택이 함께합니다.\n\n팬과 셀럽의 LIVE 순간을 연결하는 ByUs입니다.\n\n참여 방법\n1\n팬 인증\n이퓨 Fan Passport를 발급받아요\n2\n예약\nByUs에서 LIVE를 예약해요\n3\nLIVE 출석\n방송에서 공개된 출석 코드를 ByUs에 입력해요\n4\n선물 응모\n이퓨 응모권으로 뱅크시 관람권 추첨에 응모해요\n출석 코드\n\nLIVE 방송에서 알려주는 출석 코드를 이 ",
+    "readiness": "waited for h1 and images"
+  },
+  {
+    "name": "guide",
+    "width": 1440,
+    "status": 200,
+    "title": "이퓨의 100일, 함께 축하해요. | ByUs",
+    "url": "/pages/ifew-fan-guide",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 1440,
+          "height": 3768.515625
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 100,
+          "y": 27.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨 틱톡 100일 기념 LIVE 포스터, 2026년 9월 12일",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 580,
+        "naturalHeight": 290,
+        "box": {
+          "x": 760,
+          "y": 198.015625,
+          "width": 580,
+          "height": 290
+        },
+        "parentBox": {
+          "width": 1240,
+          "height": 430.046875
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "Fan Passport",
+        "src": "/images/guest-home/passport-open-blank-9-transparent.png",
+        "naturalWidth": 640,
+        "naturalHeight": 427,
+        "box": {
+          "x": 150,
+          "y": 806.1875,
+          "width": 460,
+          "height": 306.90625
+        },
+        "parentBox": {
+          "width": 560,
+          "height": 340
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 48,
+        "naturalHeight": 48,
+        "box": {
+          "x": 223,
+          "y": 1333.796875,
+          "width": 48,
+          "height": 48
+        },
+        "parentBox": {
+          "width": 314,
+          "height": 48
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "전시 공간에 걸린 작품을 바라보는 관람객",
+        "src": "/images/guest-home/banksy-exhibition-campaign.webp",
+        "naturalWidth": 640,
+        "naturalHeight": 360,
+        "box": {
+          "x": 100,
+          "y": 2231.515625,
+          "width": 560,
+          "height": 340
+        },
+        "parentBox": {
+          "width": 560,
+          "height": 340
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 100,
+          "y": 3705.609375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 80,
+          "height": 36.8125
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "inline",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "home",
+    "width": 390,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 390,
+          "height": 3111.953125
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 19.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨의 틱톡 100일 기념 LIVE 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 358,
+        "naturalHeight": 179,
+        "box": {
+          "x": 16,
+          "y": 168,
+          "width": 358,
+          "height": 447.5
+        },
+        "parentBox": {
+          "width": 358,
+          "height": 447.5
+        },
+        "fit": "cover",
+        "position": "51% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "뱅크시 전시회 Instagram LIVE를 진행하는 엘리나의 프로필 사진",
+        "src": "/images/celebrities/elina/hero-source.jpg",
+        "naturalWidth": 358,
+        "naturalHeight": 477,
+        "box": {
+          "x": 16,
+          "y": 168,
+          "width": 358,
+          "height": 447.5
+        },
+        "parentBox": {
+          "width": 358,
+          "height": 447.5
+        },
+        "fit": "cover",
+        "position": "50% 100%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
+        "src": "/images/guest-home/banksy-exhibition-campaign.webp",
+        "naturalWidth": 358,
+        "naturalHeight": 201,
+        "box": {
+          "x": 16,
+          "y": 168,
+          "width": 358,
+          "height": 447.5
+        },
+        "parentBox": {
+          "width": 358,
+          "height": 447.5
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 358,
+        "naturalHeight": 179,
+        "box": {
+          "x": 17,
+          "y": 818.5,
+          "width": 356,
+          "height": 178
+        },
+        "parentBox": {
+          "width": 358,
+          "height": 249.4375
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/home-entry/elina.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 588.8125,
+          "y": 817.5,
+          "width": 143.1875,
+          "height": 249.4375
+        },
+        "parentBox": {
+          "width": 143.1875,
+          "height": 249.4375
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": false
+      },
+      {
+        "alt": "Changha 프로필 이미지",
+        "src": "/images/guest-home/changha-card.jpg",
+        "naturalWidth": 239,
+        "naturalHeight": 239,
+        "box": {
+          "x": 61,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 32%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 193,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 237,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 281,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "Elina 프로필 이미지",
+        "src": "/images/guest-home/elina-card.jpg",
+        "naturalWidth": 239,
+        "naturalHeight": 239,
+        "box": {
+          "x": 365,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 36%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 497,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 541,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 585,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "회색 의상을 입은 유나의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/yuna/profile-f6180ad3a36ea5c1.webp",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 669,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 20%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 801,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 845,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 889,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "엑신 멤버들의 행사 단체 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/xin/profile-f2ec8b19121877f6.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 901,
+          "y": 1343.9375,
+          "width": 384,
+          "height": 384
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 100%",
+        "transform": "matrix(1.6, 0, 0, 1.6, 0, 0)",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1105,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1149,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1193,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "정제니의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1277,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 30%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1453,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/chzzk.png",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1497,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "아렴의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/aryeom/profile-f596fa168833a2cb.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1581,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1757,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/youtube.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 1801,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "박명호의 인물 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-536c3c1765064266.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 1885,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 20%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2061,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2105,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "이퓨의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 2021.9599609375,
+          "y": 1348.737548828125,
+          "width": 588,
+          "height": 588
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "matrix(2.45, 0, 0, 2.45, 0, 0)",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2365,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2409,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "재희의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/thisisj-official/profile-b0e528d586a167fb.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 2493,
+          "y": 1487.9375,
+          "width": 240,
+          "height": 240
+        },
+        "parentBox": {
+          "width": 240,
+          "height": 240
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2669,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 2713,
+          "y": 1845.484375,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 44,
+          "height": 44
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 137,
+        "naturalHeight": 137,
+        "box": {
+          "x": -5.976005554199219,
+          "y": 2041.50439453125,
+          "width": 137.20001220703125,
+          "height": 137.199951171875
+        },
+        "parentBox": {
+          "width": 56,
+          "height": 56
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "matrix(2.45, 0, 0, 2.45, 0, 0)",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/elina-card.jpg",
+        "naturalWidth": 55,
+        "naturalHeight": 55,
+        "box": {
+          "x": 33,
+          "y": 2212.984375,
+          "width": 56,
+          "height": 56
+        },
+        "parentBox": {
+          "width": 56,
+          "height": 56
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport",
+        "src": "/images/guest-home/passport-open-blank-9-transparent.png",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 0,
+          "height": 0
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 358,
+        "naturalHeight": 179,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 0,
+          "height": 0
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "",
+        "src": "/images/home-entry/elina.jpg",
+        "naturalWidth": 0,
+        "naturalHeight": 0,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 0,
+          "height": 0
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": false
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 2475.796875,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "ifew",
+    "width": 390,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/c/ifewknow",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 390,
+          "height": 3502.125
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 19.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨의 프로필 사진",
+        "src": "/images/celebrities/ifewknow/hero-studio.jpg",
+        "naturalWidth": 358,
+        "naturalHeight": 537,
+        "box": {
+          "x": 17,
+          "y": 73,
+          "width": 356,
+          "height": 468
+        },
+        "parentBox": {
+          "width": 356,
+          "height": 468
+        },
+        "fit": "cover",
+        "position": "50% 70%",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/tiktok.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 41,
+          "y": 425,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 66.234375,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 123.234375,
+          "y": 425,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 86.15625,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 2865.96875,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "jenny",
+    "width": 390,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/c/jenny-jeong",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 390,
+          "height": 3329.640625
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 19.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "matrix(1, 0, 0, 1, 0, 2)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "정제니의 프로필 사진",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+        "naturalWidth": 358,
+        "naturalHeight": 537,
+        "box": {
+          "x": 17,
+          "y": 73,
+          "width": 356,
+          "height": 468
+        },
+        "parentBox": {
+          "width": 356,
+          "height": 468
+        },
+        "fit": "cover",
+        "position": "50% 30%",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/instagram.svg",
+        "naturalWidth": 150,
+        "naturalHeight": 150,
+        "box": {
+          "x": 41,
+          "y": 425,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 86.15625,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/guest-home/chzzk.png",
+        "naturalWidth": 32,
+        "naturalHeight": 32,
+        "box": {
+          "x": 143.15625,
+          "y": 425,
+          "width": 20,
+          "height": 20
+        },
+        "parentBox": {
+          "width": 59.125,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "/images/avatars/ghost-pink.webp",
+        "naturalWidth": 512,
+        "naturalHeight": 512,
+        "box": {
+          "x": 20,
+          "y": 2546.171875,
+          "width": 32,
+          "height": 32
+        },
+        "parentBox": {
+          "width": 350,
+          "height": 32
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 16,
+          "y": 2693.484375,
+          "width": 96,
+          "height": 39.375
+        },
+        "parentBox": {
+          "width": 104,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  },
+  {
+    "name": "live",
+    "width": 390,
+    "status": 200,
+    "title": "ByUs | Your Bias",
+    "url": "/live/ifew-100-days-tiktok-20260912",
+    "images": [
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 0,
+          "height": 0,
+          "x": 0,
+          "y": 0
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "ByUs",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 80,
+          "height": 32.8125,
+          "x": 16,
+          "y": 19.59375
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "alt": "이퓨의 틱톡 100일 기념 LIVE 프로필 사진",
+        "naturalWidth": 1774,
+        "naturalHeight": 887,
+        "box": {
+          "width": 358,
+          "height": 179,
+          "x": 16,
+          "y": 148
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "alt": "",
+        "naturalWidth": 137,
+        "naturalHeight": 137,
+        "box": {
+          "width": 137.20001220703125,
+          "height": 137.199951171875,
+          "x": -1.9760055541992188,
+          "y": 892.00439453125
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "loaded": true
+      },
+      {
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "alt": "ByUs",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "width": 96,
+          "height": 39.375,
+          "x": 16,
+          "y": 2503.046875
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "loaded": true
+      }
+    ],
+    "body": "본문으로 바로가기\nKO\n/\nEN\n라이브\nD-1\n이퓨의 틱톡 100일 기념 LIVE\nLIVE 일정\n2026년 9월 12일 (토) 08:00\n예약 마감\n당일 08:00\n\n기준 시간 KST (GMT+9)\n\n예약 전체 기간\n로그인하기\n\nLIVE를 예약하려면 먼저 로그인해 주세요.\n\n뱅크시 관람권 추첨 응모하기\n\n더현대 서울 뱅크시 전시 관람권 추첨 페이지로 이동해요.\n\nLIVE 소개\n\n이퓨의 틱톡 100일을 함께 축하해요! 팬들과 이야기하고 추억을 만드는 축하파티 LIVE. 뱅크시 티켓 총 10장 응모 혜택이 함께합니다.\n\n팬과 셀럽의 LIVE 순간을 연결하는 ByUs입니다.\n\n참여 방법\n1\n팬 인증\n이퓨 Fan Passport를 발급받아요\n2\n예약\nByUs에서 LIVE를 예약해요\n3\nLIVE 출석\n방송에서 공개된 출석 코드를 ByUs에 입력해요\n4\n선물 응모\n이퓨 응모권으로 뱅크시 관람권 추첨에 응모해요\n출석 코드\n\nLIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 ByUs에 출",
+    "readiness": "waited for h1 and images"
+  },
+  {
+    "name": "guide",
+    "width": 390,
+    "status": 200,
+    "title": "이퓨의 100일, 함께 축하해요. | ByUs",
+    "url": "/pages/ifew-fan-guide",
+    "images": [
+      {
+        "alt": "",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "parentBox": {
+          "width": 390,
+          "height": 4212.796875
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "none",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 20,
+          "y": 17.59375,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 88,
+          "height": 44
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "이퓨 틱톡 100일 기념 LIVE 포스터, 2026년 9월 12일",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png",
+        "naturalWidth": 350,
+        "naturalHeight": 175,
+        "box": {
+          "x": 20,
+          "y": 88,
+          "width": 350,
+          "height": 175
+        },
+        "parentBox": {
+          "width": 350,
+          "height": 490.03125
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "Fan Passport",
+        "src": "/images/guest-home/passport-open-blank-9-transparent.png",
+        "naturalWidth": 640,
+        "naturalHeight": 427,
+        "box": {
+          "x": 37.5,
+          "y": 766.828125,
+          "width": 315,
+          "height": 210.15625
+        },
+        "parentBox": {
+          "width": 350,
+          "height": 231
+        },
+        "fit": "contain",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": true,
+        "loaded": true
+      },
+      {
+        "alt": "",
+        "src": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png",
+        "naturalWidth": 48,
+        "naturalHeight": 48,
+        "box": {
+          "x": 53,
+          "y": 1334.125,
+          "width": 40,
+          "height": 40
+        },
+        "parentBox": {
+          "width": 284,
+          "height": 40
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "전시 공간에 걸린 작품을 바라보는 관람객",
+        "src": "/images/guest-home/banksy-exhibition-campaign.webp",
+        "naturalWidth": 640,
+        "naturalHeight": 360,
+        "box": {
+          "x": 20,
+          "y": 2555.5,
+          "width": 350,
+          "height": 231
+        },
+        "parentBox": {
+          "width": 350,
+          "height": 231
+        },
+        "fit": "cover",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "block",
+        "visible": false,
+        "loaded": true
+      },
+      {
+        "alt": "ByUs",
+        "src": "/images/guest-home/byus-wordmark.svg",
+        "naturalWidth": 300,
+        "naturalHeight": 123,
+        "box": {
+          "x": 155,
+          "y": 4136.390625,
+          "width": 80,
+          "height": 32.8125
+        },
+        "parentBox": {
+          "width": 80,
+          "height": 36.8125
+        },
+        "fit": "fill",
+        "position": "50% 50%",
+        "transform": "none",
+        "display": "inline",
+        "visible": false,
+        "loaded": true
+      }
+    ]
+  }
+]

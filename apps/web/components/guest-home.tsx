@@ -152,7 +152,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
           href={`/live/${reservation.slug}${localeQuery}` as Route}
           aria-label={`${reservation.title} ${t.liveDetails}`}
         >
-          {reservationCreator ? <CreatorAvatar slug={reservationCreator.slug} src={reservationCreator.image} size={56} /> : null}
+          {reservationCreator ? <CreatorAvatar slug={reservationCreator.slug} src={reservationCreator.image} photos={reservationCreator.photos} position={reservationCreator.imagePosition} size={56} /> : null}
           <div className={styles.reservationContent}>
             <h3>{reservation.title}</h3>
             <div className={styles.reservationMeta}>
@@ -333,7 +333,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
                         }}
                       />
                     ) : (
-                      <CreatorPortrait slug={celebrity.slug} image={celebrity.image} />
+                      <CreatorPortrait locale={locale} slug={celebrity.slug} image={celebrity.image} />
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
@@ -370,7 +370,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
               {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
                 return (
                   <article className={styles.liveRow} key={featuredLive.live.id}>
-                    <CreatorAvatar slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} size={{ mobile: 56, desktop: 64 }} />
+                    <CreatorAvatar slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} photos={featuredLive.live.celebrity.photos} position={featuredLive.live.celebrity.imagePosition} size={{ mobile: 56, desktop: 64 }} />
                     <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
                     <div className={styles.liveMeta}><LiveTimeIndicator event={featuredLive.live} locale={locale} onStartReached={refreshLiveStatus} /></div>
                     <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={`${featuredLive.live.title} ${t.detail}`}><ChevronRight /></Link>

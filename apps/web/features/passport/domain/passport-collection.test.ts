@@ -45,6 +45,15 @@ describe("Passport collection API contract", () => {
     });
   });
 
+  it("preserves approved public photo roles in the response parser", () => {
+    const projected = parsePassportCollection([rawPassport], "ko")[0]!;
+    const enriched = {
+      ...projected,
+      celebrity: { ...projected.celebrity, photos: { profile: null } },
+    };
+    expect(parsePassportCollectionResponse({ passports: [enriched] }).passports[0]?.celebrity.photos).toEqual({ profile: null });
+  });
+
   it.each([
     ["missing display", { ...rawPassport }],
     [

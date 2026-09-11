@@ -42,7 +42,7 @@ export default async function LiveCalendarPage({
   const celebrities = publishedCelebrities.map((celebrity) => ({
     slug: celebrity.slug,
     name: celebrity.name,
-    image: celebrity.image.url,
+    image: celebrity.image.url, photos: celebrity.image.photos, imagePosition: celebrity.image.position,
   }));
   const availableSlugs = new Set(celebrities.map((celebrity) => celebrity.slug));
   const requestedCelebritySlugs = (Array.isArray(requested.celebrity)

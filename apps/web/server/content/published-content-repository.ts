@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import {
   type ContentLocale,
@@ -9,6 +9,10 @@ import {
   parsePublishedCelebrity,
   parsePublishedCelebrityLive,
 } from "./content-domain";
+import {
+  createPublicImageRoleReader,
+  type PublicImageRoleReader,
+} from "../media/public-image-reader";
 
 const PUBLIC_COLUMNS =
   "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role";
@@ -111,6 +115,55 @@ export class SupabasePublishedContentRepository
   }
 }
 
+export class PublicImagePublishedContentRepository
+  implements PublishedContentRepository
+{
+  constructor(
+    private readonly repository: PublishedContentRepository,
+    private readonly images: PublicImageRoleReader,
+  ) {}
+
+  async list(locale: ContentLocale): Promise<readonly PublishedCelebrity[]> {
+    const celebrities = await this.repository.list(locale);
+    const photosBySlug = await this.images.readCelebrityPhotoSetsBySlug(
+      celebrities.map(({ slug }) => slug),
+    );
+    return celebrities.map((celebrity) => {
+      const photos = photosBySlug[celebrity.slug];
+      return photos === undefined
+        ? celebrity
+        : { ...celebrity, image: { ...celebrity.image, photos } };
+    });
+  }
+
+  async findBySlug(
+    locale: ContentLocale,
+    slug: string,
+  ): Promise<PublishedCelebrity | null> {
+    const celebrity = await this.repository.findBySlug(locale, slug);
+    if (!celebrity) return null;
+    const photos = (await this.images.readCelebrityPhotoSetsBySlug([celebrity.slug]))[
+      celebrity.slug
+    ];
+    return photos === undefined
+      ? celebrity
+      : { ...celebrity, image: { ...celebrity.image, photos } };
+  }
+
+  async listPrimaryLives(
+    locale: ContentLocale,
+  ): Promise<readonly PublishedCelebrityLive[]> {
+    const lives = await this.repository.listPrimaryLives(locale);
+    const photosBySlug = await this.images.readLivePhotoSetsBySlug(
+      lives.map(({ slug }) => slug),
+    );
+    return lives.map((live) => {
+      const photos = photosBySlug[live.slug];
+      return photos === undefined ? live : { ...live, photos };
+    });
+  }
+}
+
 export function createPublishedContentRepositoryFromEnvironment(
   source: Record<string, string | undefined> = process.env,
 ): PublishedContentRepository {
@@ -123,5 +176,12 @@ export function createPublishedContentRepositoryFromEnvironment(
   const client = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  return new SupabasePublishedContentRepository(client as unknown as PublishedContentClient);
+  const repository = new SupabasePublishedContentRepository(
+    client as unknown as PublishedContentClient,
+  );
+  const images = createPublicImageRoleReader(
+    { url, serviceRoleKey },
+    client as SupabaseClient,
+  );
+  return new PublicImagePublishedContentRepository(repository, images);
 }

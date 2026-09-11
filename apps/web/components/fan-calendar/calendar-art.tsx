@@ -1,5 +1,6 @@
 "use client";
 
+import type { PhotoSet } from "@/features/media/domain/public-image";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CreatorImage } from "@/components/fan-ui/creator-image";
@@ -11,7 +12,7 @@ const months = ["january", "february", "march", "april", "may", "june", "july", 
 export function CalendarArt({ month, celebrity, compact = false }: {
   compact?: boolean;
   month: string;
-  celebrity?: { slug: string; name: string; image: string };
+  celebrity?: { slug: string; name: string; image: string; photos?: PhotoSet; imagePosition?: string };
 }) {
   const [shown, setShown] = useState(celebrity);
   const changing = shown?.slug !== celebrity?.slug;
@@ -22,7 +23,7 @@ export function CalendarArt({ month, celebrity, compact = false }: {
     return () => window.clearTimeout(timer);
   }, [celebrity, changing]);
   const monthName = months[Number(month.slice(5, 7)) - 1];
-  const availablePhotos = shown ? creatorCalendarPhotos(shown.slug, shown.image) : [];
+  const availablePhotos = shown ? creatorCalendarPhotos(shown.slug, shown.image, shown.photos) : [];
   const photos = compact ? availablePhotos.slice(0, 2) : availablePhotos;
   return <div className={styles.art} aria-hidden="true" data-calendar-art data-compact={compact ? "true" : undefined}>
     <div className={styles.month}>
@@ -37,7 +38,7 @@ export function CalendarArt({ month, celebrity, compact = false }: {
             <span className={styles.frame} />
             <Image className={styles.tape} src="/images/calendar/tape-pink.svg" alt="" width={90} height={28} />
             <div className={styles.photo} data-group={shown.slug === "xin" || !hasCreatorCalendarPhotos(shown.slug) ? "true" : undefined}>
-              <CreatorImage slug={shown.slug} src={src} alt="" fill sizes="170px" presentation="calendar" />
+              <CreatorImage slug={shown.slug} src={src} photos={shown.photos} position={shown.imagePosition} alt="" fill sizes="170px" presentation="calendar" />
             </div>
             <span className={styles.name}>{shown.name}</span>
             <Image className={styles.cardStar} src="/images/calendar/star-spark.svg" alt="" width={16} height={16} />

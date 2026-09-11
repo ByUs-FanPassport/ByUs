@@ -15,6 +15,7 @@ import {
   type LiveStatusOverride,
   type LiveViewer,
 } from "../../features/live/domain/live-event";
+import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 export interface LiveEventRepository {
   listFeaturedPublished(input: {
@@ -58,6 +59,7 @@ export interface LiveEventRecord {
     slug: string;
     name: string;
     image: string;
+    imagePosition: string;
     fanCount: number;
   };
   brand: {
@@ -199,6 +201,7 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
           slug: record.celebrity.slug,
           name: record.celebrity.name,
           image: record.celebrity.image,
+          imagePosition: record.celebrity.imagePosition,
           fanCount: record.celebrity.fanCount,
         },
         brand: {
@@ -234,6 +237,71 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       }),
     };
     return liveEventResponseSchema.parse(response);
+  }
+}
+
+async function enrichLiveResponses(
+  responses: readonly LiveEventResponse[],
+  images: PublicImageRoleReader,
+): Promise<readonly LiveEventResponse[]> {
+  const [eventPhotosBySlug, creatorPhotosBySlug] = await Promise.all([
+    images.readLivePhotoSetsBySlug(responses.map(({ live }) => live.slug)),
+    images.readCelebrityPhotoSetsBySlug(
+      responses.map(({ live }) => live.celebrity.slug),
+    ),
+  ]);
+  return responses.map((response) => {
+    const eventPhotos = eventPhotosBySlug[response.live.slug];
+    const creatorPhotos = creatorPhotosBySlug[response.live.celebrity.slug];
+    if (eventPhotos === undefined && creatorPhotos === undefined) return response;
+    return {
+      ...response,
+      live: {
+        ...response.live,
+        ...(eventPhotos === undefined ? {} : { photos: eventPhotos }),
+        celebrity: {
+          ...response.live.celebrity,
+          ...(creatorPhotos === undefined ? {} : { photos: creatorPhotos }),
+        },
+      },
+    };
+  });
+}
+
+export class PublicImageLiveEventRepository implements LiveEventRepository {
+  constructor(
+    private readonly repository: LiveEventRepository,
+    private readonly images: PublicImageRoleReader,
+  ) {}
+
+  async listFeaturedPublished(input: { locale: LiveLocale; now: Date }): Promise<readonly LiveEventResponse[]> {
+    return enrichLiveResponses(
+      await this.repository.listFeaturedPublished(input),
+      this.images,
+    );
+  }
+
+  async listPublishedCatalog(input: { locale: LiveLocale; appUserId: string | null; now: Date }) {
+    const catalog = await this.repository.listPublishedCatalog(input);
+    const all = [...catalog.liveNow, ...catalog.upcoming, ...catalog.replay];
+    const enriched = await enrichLiveResponses(all, this.images);
+    let offset = 0;
+    const take = (count: number) => {
+      const items = enriched.slice(offset, offset + count);
+      offset += count;
+      return items;
+    };
+    return {
+      liveNow: take(catalog.liveNow.length),
+      upcoming: take(catalog.upcoming.length),
+      replay: take(catalog.replay.length),
+    };
+  }
+
+  async findPublishedBySlug(input: { slug: string; locale: LiveLocale; appUserId: string | null; now: Date }): Promise<LiveEventResponse | null> {
+    const response = await this.repository.findPublishedBySlug(input);
+    if (!response) return null;
+    return (await enrichLiveResponses([response], this.images))[0] ?? null;
   }
 }
 
@@ -289,7 +357,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
 
     const [localizationResult, celebrityResult, brandResult, overridesResult, previewResult] = await Promise.all([
       this.database.from("live_event_localizations").select("title, summary, hero_alt").eq("live_event_id", event.id).eq("locale", locale).maybeSingle(),
-      this.database.from("celebrities").select("id, slug, image_url, fan_count, celebrity_localizations!inner(name)").eq("id", event.celebrity_id).eq("status", "published").eq("celebrity_localizations.locale", locale).maybeSingle(),
+      this.database.from("celebrities").select("id, slug, image_url, image_position, fan_count, celebrity_localizations!inner(name)").eq("id", event.celebrity_id).eq("status", "published").eq("celebrity_localizations.locale", locale).maybeSingle(),
       this.database.from("brands").select("slug, logo_url, website_url, brand_localizations!inner(name, description)").eq("id", event.brand_id).eq("status", "published").eq("brand_localizations.locale", locale).maybeSingle(),
       this.database.from("live_status_overrides").select("effective_status, effective_from, effective_until, created_at").eq("live_event_id", event.id),
       this.database
@@ -332,6 +400,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
         slug: celebrity.slug,
         name: celebrityLocalization.name,
         image: celebrity.image_url,
+        imagePosition: celebrity.image_position,
         fanCount: celebrity.fan_count,
       },
       brand: {
@@ -407,5 +476,8 @@ export function createLiveEventRepositoryFromEnvironment(config: {
   const database = createClient(config.url, config.serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  return new DefaultLiveEventRepository(new SupabaseLiveEventDataSource(database));
+  return new PublicImageLiveEventRepository(
+    new DefaultLiveEventRepository(new SupabaseLiveEventDataSource(database)),
+    createPublicImageRoleReader(config, database),
+  );
 }

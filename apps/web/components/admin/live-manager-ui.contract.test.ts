@@ -63,4 +63,11 @@ describe("ADM-005 Phase 1 reward settings UI contract", () => {
     expect(source).toContain("mission.lifecycleStatus");
     expect(source).toContain("mission.version");
   });
+
+  it("keeps the legacy hero field only for draft creation and routes saved LIVE images to roles", () => {
+    expect(source).toContain('"기본 Hero URL (초안 생성용)"');
+    expect(source).toContain("disabled={!canSaveDraft || Boolean(selected)}");
+    expect(source).toContain('ownerType="live"');
+    expect(source).toContain("저장된 LIVE 이미지는 아래 공개 이미지 역할에서 변경합니다.");
+  });
 });

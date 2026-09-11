@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1440,
+    "rows": 34,
+    "filterMatches": 1,
+    "comparisonSwitch": "pass",
+    "pageWidth": 1440,
+    "viewport": 1440,
+    "brokenImages": [],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "rows": 34,
+    "filterMatches": 1,
+    "comparisonSwitch": "pass",
+    "pageWidth": 390,
+    "viewport": 390,
+    "brokenImages": [],
+    "errors": []
+  }
+]

@@ -1,3 +1,3 @@
 .picture { overflow: hidden; }
-.picture img { transform: scale(var(--creator-banner-mobile-scale, 1)); transform-origin: var(--creator-banner-mobile-origin, 50% 50%); }
-@media (min-width: 48rem) { .picture img { transform: none; } }
+.picture img { object-fit: var(--creator-banner-mobile-fit, contain) !important; object-position: var(--creator-banner-mobile-position, 50% 50%) !important; transform: scale(var(--creator-banner-mobile-scale, 1)); transform-origin: var(--creator-banner-mobile-origin, 50% 50%); }
+@media (min-width: 48rem) { .picture img { transform: none; object-fit: var(--creator-banner-desktop-fit, contain) !important; object-position: var(--creator-banner-desktop-position, 50% 50%) !important; } }

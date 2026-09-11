@@ -6,7 +6,7 @@ import { createPrivyNodeAccessVerifier } from "../auth/privy-node-verifier";
 import { loadServerEnv } from "../config/env";
 import { authorizeFanRequest } from "../fan-auth/fan-auth-gate";
 import { createSupabaseFanAuthRepository } from "../fan-auth/supabase-fan-auth-repository";
-import { SupabaseLiveCalendarRepository } from "./live-calendar-repository";
+import { createLiveCalendarRepositoryFromEnvironment } from "./live-calendar-repository";
 import type { LiveCalendarRouteDependencies } from "./live-calendar-route";
 
 export function createLiveCalendarRouteDependencies(): LiveCalendarRouteDependencies {
@@ -28,7 +28,13 @@ export function createLiveCalendarRouteDependencies(): LiveCalendarRouteDependen
   );
 
   return {
-    repository: new SupabaseLiveCalendarRepository(database),
+    repository: createLiveCalendarRepositoryFromEnvironment(
+      {
+        url: environment.SUPABASE_URL,
+        serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
+      },
+      database,
+    ),
     authorize: (authorization) =>
       authorizeFanRequest({ authorization, verifier, repository: fanRepository }),
     now: () => new Date(),

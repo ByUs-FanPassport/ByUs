@@ -1,7 +1,8 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { mySummarySchema, type MySummary } from "../../features/my/domain/my-summary";
+import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 interface RpcClient {
   rpc(name: string, parameters: Record<string, string>): PromiseLike<{ data: unknown; error: unknown }>;
@@ -25,7 +26,33 @@ export class SupabaseMySummaryRepository implements MySummaryRepository {
   }
 }
 
+export class PublicImageMySummaryRepository implements MySummaryRepository {
+  constructor(
+    private readonly repository: MySummaryRepository,
+    private readonly images: PublicImageRoleReader,
+  ) {}
+
+  async get(input: { appUserId: string; locale: "ko" | "en"; asOf: Date; includeStages?: boolean }): Promise<MySummary> {
+    const summary = await this.repository.get(input);
+    const photosBySlug = await this.images.readCelebrityPhotoSetsBySlug(
+      summary.creators.map(({ celebrity }) => celebrity.slug),
+    );
+    return {
+      ...summary,
+      creators: summary.creators.map((creator) => {
+        const photos = photosBySlug[creator.celebrity.slug];
+        return photos === undefined
+          ? creator
+          : { ...creator, celebrity: { ...creator.celebrity, photos } };
+      }),
+    };
+  }
+}
+
 export function createSupabaseMySummaryRepository(config: { url: string; serviceRoleKey: string }, client?: RpcClient): MySummaryRepository {
   const database = client ?? createClient(config.url, config.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  return new SupabaseMySummaryRepository(database as unknown as RpcClient);
+  return new PublicImageMySummaryRepository(
+    new SupabaseMySummaryRepository(database as unknown as RpcClient),
+    createPublicImageRoleReader(config, database as unknown as SupabaseClient),
+  );
 }

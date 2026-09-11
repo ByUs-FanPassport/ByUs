@@ -1,3 +1,5 @@
+import { resolvePhoto, type PhotoSet, type ImageSlot } from "../../features/media/domain/public-image";
+import { legacyImageDimensions } from "./legacy-image-dimensions";
 /** Creator photo sources and reviewed framing. Surfaces choose a presentation, never a crop. */
 export type CreatorImagePresentation = "portrait" | "avatar" | "passport" | "collection" | "vertical" | "calendar";
 
@@ -25,12 +27,29 @@ function isPreviousJennySource(source: string) {
     || /^https:\/\/(gmrykvmtmuaeswpajteq|xcppyedwusirqnfpbtit)\.supabase\.co\/storage\/v1\/object\/public\/cms-assets\/celebrities\/jenny-jeong\/profile-88d6cd4994afe602\.jpg$/.test(source);
 }
 
-export function resolveCreatorImage({ slug, src, presentation = "portrait", position }: {
+export function resolveCreatorImage({ slug, src, presentation = "portrait", position, photos }: {
   slug: string;
   src: string | null | undefined;
   presentation?: CreatorImagePresentation;
   position?: string;
+  photos?: PhotoSet;
 }): Readonly<{ src: string | null | undefined; crop: Crop }> {
+  const slot: ImageSlot = { portrait: "identity.square", avatar: "identity.avatar", passport: "identity.passport", collection: "creator.collection", vertical: "creator.vertical", calendar: "creator.calendar" }[presentation] as ImageSlot;
+  const role = presentation === "collection" ? "landscape" : presentation === "vertical" || presentation === "calendar" ? "portrait" : "profile";
+  if (photos && Object.hasOwn(photos, role)) {
+    const resolved = resolvePhoto(photos, slot, src ?? "");
+    return { src: resolved.src, crop: { ...neutralCrop, fit: resolved.fit, position: resolved.position } };
+  }
+  if (role !== "profile") {
+    if (presentation === "calendar") {
+      const registered = src && calendarPortraits[slug]?.includes(src);
+      return { src, crop: { ...neutralCrop, position: position ?? "50% 35%", fit: registered && slug !== "xin" ? "cover" : "contain" } };
+    }
+    const hero = resolveCreatorHeroImage(slug, { url: src ?? "", position: position ?? "50% 50%" });
+    return role === "landscape"
+      ? { src: hero?.src ?? src, crop: { ...neutralCrop, position: hero?.desktopPosition ?? "50% 50%", fit: hero?.desktopFit ?? "contain" } }
+      : { src: hero?.mobileSrc ?? src, crop: { ...neutralCrop, position: hero?.mobilePosition ?? "50% 50%", fit: hero?.mobileFit ?? "contain" } };
+  }
   const base = { ...neutralCrop, position: position ?? (presentation === "calendar" ? "center 35%" : "center") };
   if (slug === "park-myungho") {
     return isPreviousParkSource(src) ? { src: parkMyunghoProfile, crop: parkPresentations[presentation] ?? parkCrop } : { src, crop: base };
@@ -75,7 +94,8 @@ const calendarPortraits: Readonly<Record<string, readonly string[]>> = {
   ifewknow: ["/images/celebrities/ifewknow/hero-studio.jpg"],
 };
 
-export function creatorCalendarPhotos(slug: string, src: string) {
+export function creatorCalendarPhotos(slug: string, src: string, photos?: PhotoSet) {
+  if (photos && Object.hasOwn(photos, "portrait")) return [photos.portrait?.asset.url ?? src];
   if (slug === "jenny-jeong" && !isPreviousJennySource(src)) return [src];
   return calendarPortraits[slug] ?? [resolveCreatorImage({ slug, src }).src ?? src];
 }
@@ -88,7 +108,8 @@ export function hasCreatorCalendarPhotos(slug: string) {
 export type CreatorHeroImage = Readonly<{
   src: string;
   mobileSrc?: string;
-  desktopFit?: "contain";
+  desktopFit?: "contain" | "cover";
+  mobileFit?: "contain" | "cover";
   background?: string;
   desktopPosition: string;
   mobilePosition: string;
@@ -97,6 +118,7 @@ export type CreatorHeroImage = Readonly<{
 }>;
 
 export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
+  katseye: { src: "/images/celebrities/katseye/hero-desktop.webp", mobileSrc: "/images/celebrities/katseye/hero-mobile.webp", desktopPosition: "50% 50%", mobilePosition: "50% 50%" },
   "thisisj-official": { src: "/images/celebrities/thisisj-official/hero-source.webp", desktopPosition: "50% 28%", mobilePosition: "40% 35%" },
   kara: { src: "/images/guest-home/kara-card.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 50%" },
   changha: { src: "/images/celebrities/changha/hero-source.jpg", mobileSrc: "/images/celebrities/changha/hero-mobile.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 10%" },
@@ -109,11 +131,26 @@ export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
   "park-myungho": { src: parkMyunghoProfile, background: "#f6ead2", desktopPosition: "50% 0%", mobilePosition: "50% 0%", mobileScale: 2.3, mobileOrigin: "56% 14%" },
 };
 
-export function resolveCreatorHeroImage(slug: string, image: { url: string; position: string }): CreatorHeroImage | undefined {
-  const hero = creatorHeroImages[slug];
-  if ((slug === "park-myungho" && !isPreviousParkSource(image.url))
-    || (slug === "jenny-jeong" && !isPreviousJennySource(image.url))) {
-    return { src: image.url, desktopPosition: image.position, mobilePosition: image.position };
-  }
-  return hero;
+export function resolveCreatorHeroImage(slug: string, image: { url: string; position: string; photos?: PhotoSet }): CreatorHeroImage | undefined {
+  const dedicated = creatorHeroImages[slug];
+  const replaced = (slug === "park-myungho" && !isPreviousParkSource(image.url)) || (slug === "jenny-jeong" && !isPreviousJennySource(image.url));
+  const legacy = replaced ? undefined : dedicated;
+  const desktopSource = legacy?.src ?? image.url;
+  const mobileSource = legacy?.mobileSrc ?? desktopSource;
+  const desktopDimensions = legacyImageDimensions[desktopSource];
+  const mobileDimensions = legacyImageDimensions[mobileSource];
+  const desktop = resolvePhoto(image.photos, "creator.hero.desktop", image.photos?.landscape === null ? image.url : desktopSource);
+  const mobile = resolvePhoto(image.photos, "creator.hero.mobile", image.photos?.portrait === null ? image.url : mobileSource);
+  const desktopConfigured = image.photos && Object.hasOwn(image.photos, "landscape");
+  const mobileConfigured = image.photos && Object.hasOwn(image.photos, "portrait");
+  return {
+    src: desktopConfigured ? desktop.src : desktopSource,
+    mobileSrc: mobileConfigured ? mobile.src : mobileSource,
+    desktopFit: desktopConfigured ? desktop.fit : legacy && desktopDimensions && desktopDimensions[0] / desktopDimensions[1] >= 1.4 ? legacy?.desktopFit ?? "cover" : "contain",
+    mobileFit: mobileConfigured ? mobile.fit : legacy && mobileDimensions && mobileDimensions[0] / mobileDimensions[1] <= .9 ? "cover" : "contain",
+    desktopPosition: desktopConfigured ? desktop.position : legacy?.desktopPosition ?? image.position,
+    mobilePosition: mobileConfigured ? mobile.position : legacy?.mobilePosition ?? image.position,
+    background: legacy?.background,
+    mobileScale: 1,
+  };
 }

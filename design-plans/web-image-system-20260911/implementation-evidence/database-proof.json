@@ -1,0 +1,22 @@
+{
+  "dev": "migration + extended SQL contract passed in rolled-back transaction, then migration applied",
+  "production": "additive migration 20260911034700 applied",
+  "selectedCreatorRowsUnchanged": true,
+  "creators": [
+    {
+      "archived_at": null,
+      "image_position": "50% 30%",
+      "image_url": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg",
+      "slug": "jenny-jeong",
+      "status": "published"
+    },
+    {
+      "archived_at": null,
+      "image_position": "50% 20%",
+      "image_url": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-536c3c1765064266.jpg",
+      "slug": "park-myungho",
+      "status": "published"
+    }
+  ],
+  "securityAdvisor": "connector permission denied; SQL privilege/RLS assertions used"
+}

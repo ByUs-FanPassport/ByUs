@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { SupabaseLiveCalendarRepository } from "./live-calendar-repository";
+import { PublicImageLiveCalendarRepository, SupabaseLiveCalendarRepository } from "./live-calendar-repository";
 
 const event = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -53,6 +53,42 @@ describe("SupabaseLiveCalendarRepository", () => {
       appUserId: null,
       now: new Date("2026-09-03T00:00:00.000Z"),
     })).rejects.toThrow();
+  });
+
+  it("rejects role metadata injected by the RPC before the approved reader runs", async () => {
+    const repository = new SupabaseLiveCalendarRepository({
+      rpc: vi.fn().mockResolvedValue({
+        data: [{ ...event, photos: { portrait: null } }],
+        error: null,
+      }),
+    });
+
+    await expect(repository.readMonth({
+      month: "2026-09",
+      locale: "ko",
+      appUserId: null,
+      now: new Date("2026-09-03T00:00:00.000Z"),
+    })).rejects.toThrow("projection is invalid");
+  });
+
+  it("attaches event photos after strict RPC parsing with one batch read", async () => {
+    const readLivePhotoSetsBySlug = vi.fn().mockResolvedValue({
+      [event.slug]: { poster: null },
+    });
+    const repository = new PublicImageLiveCalendarRepository(
+      new SupabaseLiveCalendarRepository({ rpc: vi.fn().mockResolvedValue({ data: [event], error: null }) }),
+      { readLivePhotoSetsBySlug, readCelebrityPhotoSetsBySlug: vi.fn() },
+    );
+
+    const result = await repository.readMonth({
+      month: "2026-09",
+      locale: "ko",
+      appUserId: null,
+      now: new Date("2026-09-03T00:00:00.000Z"),
+    });
+
+    expect(readLivePhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([event.slug]);
+    expect(result.days.find(({ date }) => date === "2026-09-15")?.events[0]?.photos).toEqual({ poster: null });
   });
 
   it("passes only the authenticated owner to the RPC and projects reserved/not-reserved without identifiers", async () => {

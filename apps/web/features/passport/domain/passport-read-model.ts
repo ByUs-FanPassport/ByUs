@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nicknameSchema } from "../../profile/domain/nickname-schema";
 import { fanStageProgressSchema } from "../../rewards/domain/fan-stage";
+import type { PhotoSet } from "../../media/domain/public-image";
 
 export const passportLocaleSchema = z.enum(["ko", "en"]);
 export type PassportLocale = z.infer<typeof passportLocaleSchema>;
@@ -91,6 +92,8 @@ export const celebritySchema = z.object({
     alt: z.string().trim().min(1).max(300),
     position: z.string().trim().min(1).max(100),
   }).strict(),
+  imagePosition: z.string().trim().min(1).max(100).optional(),
+  photos: z.custom<PhotoSet>().optional(),
 }).strict();
 
 export const mintFactsSchema = z.object({

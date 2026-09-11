@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import {
   buildLiveCalendarMonth,
@@ -8,6 +8,7 @@ import {
   type LiveCalendarMonth,
 } from "../../features/live/domain/live-calendar";
 import type { LiveLocale } from "../../features/live/domain/live-event";
+import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 export interface LiveCalendarRepository {
   readMonth(input: {
@@ -91,12 +92,45 @@ export class SupabaseLiveCalendarRepository implements LiveCalendarRepository {
   }
 }
 
+export class PublicImageLiveCalendarRepository implements LiveCalendarRepository {
+  constructor(
+    private readonly repository: LiveCalendarRepository,
+    private readonly images: PublicImageRoleReader,
+  ) {}
+
+  async readMonth(input: {
+    month: string;
+    locale: LiveLocale;
+    appUserId: string | null;
+    now: Date;
+  }): Promise<LiveCalendarMonth> {
+    const calendar = await this.repository.readMonth(input);
+    const slugs = calendar.days.flatMap(({ events }) =>
+      events.map(({ slug }) => slug),
+    );
+    const photosBySlug = await this.images.readLivePhotoSetsBySlug(slugs);
+    return {
+      ...calendar,
+      days: calendar.days.map((day) => ({
+        ...day,
+        events: day.events.map((event) => {
+          const photos = photosBySlug[event.slug];
+          return photos === undefined ? event : { ...event, photos };
+        }),
+      })),
+    };
+  }
+}
+
 export function createLiveCalendarRepositoryFromEnvironment(config: {
   url: string;
   serviceRoleKey: string;
-}): LiveCalendarRepository {
-  const client = createClient(config.url, config.serviceRoleKey, {
+}, client?: RpcClient): LiveCalendarRepository {
+  const database = client ?? createClient(config.url, config.serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  return new SupabaseLiveCalendarRepository(client as unknown as RpcClient);
+  return new PublicImageLiveCalendarRepository(
+    new SupabaseLiveCalendarRepository(database as unknown as RpcClient),
+    createPublicImageRoleReader(config, database as unknown as SupabaseClient),
+  );
 }

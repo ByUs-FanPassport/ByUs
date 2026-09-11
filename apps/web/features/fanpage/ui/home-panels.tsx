@@ -1,4 +1,5 @@
 "use client";
+import { EventPhoto } from "@/components/fan-ui/event-photo";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Radio, Ticket } from "lucide-react";
@@ -54,5 +55,5 @@ export function CreatorLivePanel({ slug, locale }: { slug: string; locale: Conte
   const ko = locale === "ko";
   const events = resource.state.status === "ready" ? resource.state.data.filter(({ live }) => live.celebrity.slug === slug) : [];
   const statuses = { scheduled: ko ? "예정" : "Upcoming", live: "LIVE NOW", ended: ko ? "종료" : "Ended", cancelled: ko ? "취소" : "Cancelled" };
-  return <section><div className={styles.sectionHeading}><h2>LIVE</h2></div>{resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : events.length === 0 ? <div className={styles.empty}>{ko ? "공개된 LIVE가 없어요." : "No published LIVE events."}</div> : events.map(({ live }) => <Link key={live.slug} className={styles.liveCard} href={`/live/${live.slug}?locale=${locale}`}><Image src={live.heroImage.url} alt={live.heroImage.alt} width={340} height={340} unoptimized={bypassImageOptimization(live.heroImage.url)} /><div><span className={styles.eyebrow}>{statuses[live.effectiveStatus]}</span><h3>{live.title}</h3><p>{formatDate(live.startsAt, locale)}</p><span>{ko ? "LIVE 자세히 보기" : "View LIVE details"} →</span></div></Link>)}</section>;
+  return <section><div className={styles.sectionHeading}><h2>LIVE</h2></div>{resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : events.length === 0 ? <div className={styles.empty}>{ko ? "공개된 LIVE가 없어요." : "No published LIVE events."}</div> : events.map(({ live }) => <Link key={live.slug} className={styles.liveCard} href={`/live/${live.slug}?locale=${locale}`}><div className={styles.livePhoto}><EventPhoto src={live.heroImage.url} alt={live.heroImage.alt} photos={live.photos} locale={locale} surface="detail" sizes="(min-width:768px) 340px, calc(100vw - 64px)" /></div><div><span className={styles.eyebrow}>{statuses[live.effectiveStatus]}</span><h3>{live.title}</h3><p>{formatDate(live.startsAt, locale)}</p><span>{ko ? "LIVE 자세히 보기" : "View LIVE details"} →</span></div></Link>)}</section>;
 }

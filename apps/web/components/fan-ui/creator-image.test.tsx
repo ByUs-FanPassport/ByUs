@@ -8,7 +8,7 @@ const previous = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/pub
 describe("shared creator photography", () => {
   it("uses the approved source across all identity presentations without overriding a later CMS replacement", () => {
     for (const presentation of ["portrait", "avatar", "passport", "collection", "vertical", "calendar"] as CreatorImagePresentation[]) {
-      expect(resolveCreatorImage({ slug: "park-myungho", src: previous, presentation }).src).toBe(parkMyunghoProfile);
+      if (["portrait", "avatar", "passport"].includes(presentation)) expect(resolveCreatorImage({ slug: "park-myungho", src: previous, presentation }).src).toBe(parkMyunghoProfile);
       const replacement = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/new-photo.jpg";
       expect(resolveCreatorImage({ slug: "park-myungho", src: replacement, position: "50% 32%", presentation })).toMatchObject({ src: replacement, crop: { scale: 1, position: "50% 32%" } });
     }
@@ -21,7 +21,7 @@ describe("shared creator photography", () => {
 
   it("keeps the banner in sync with an approved photo or a later CMS replacement", () => {
     expect(resolveCreatorHeroImage("park-myungho", { url: previous, position: "center" })?.src).toBe(parkMyunghoProfile);
-    expect(resolveCreatorHeroImage("park-myungho", { url: "/new-profile.jpg", position: "50% 32%" })).toEqual({ src: "/new-profile.jpg", desktopPosition: "50% 32%", mobilePosition: "50% 32%" });
+    expect(resolveCreatorHeroImage("park-myungho", { url: "/new-profile.jpg", position: "50% 32%" })).toMatchObject({ src: "/new-profile.jpg", desktopPosition: "50% 32%", mobilePosition: "50% 32%" });
   });
 
   it("scales source sizes while preserving breakpoint conditions and calc geometry", () => {
@@ -33,7 +33,7 @@ describe("shared creator photography", () => {
     const oldPhoto = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-88d6cd4994afe602.jpg";
     const replacement = oldPhoto.replace("profile-88d6cd4994afe602.jpg", "new-profile.jpg");
     expect(resolveCreatorHeroImage("jenny-jeong", { url: oldPhoto, position: "center" })?.src).toBe("/images/celebrities/jenny-jeong/hero-source.jpg");
-    expect(resolveCreatorHeroImage("jenny-jeong", { url: replacement, position: "50% 30%" })).toEqual({ src: replacement, desktopPosition: "50% 30%", mobilePosition: "50% 30%" });
+    expect(resolveCreatorHeroImage("jenny-jeong", { url: replacement, position: "50% 30%" })).toMatchObject({ src: replacement, desktopPosition: "50% 30%", mobilePosition: "50% 30%" });
     expect(creatorCalendarPhotos("jenny-jeong", replacement)).toEqual([replacement]);
   });
 

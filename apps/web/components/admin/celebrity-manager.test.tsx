@@ -25,6 +25,8 @@ it("requires exactly one primary role and saves no legacy activity array", async
   expect(screen.queryByRole("group", { name: "추가 직군" })).not.toBeInTheDocument();
   fireEvent.click(await screen.findByRole("button", { name: /직군 검증.*가수/ }));
   await waitFor(() => expect(primary).toHaveValue("singer"));
+  expect(screen.getByRole("textbox", { name: "기본 이미지 URL (초안 생성용)" })).toBeDisabled();
+  expect(screen.getByRole("textbox", { name: "기본 이미지 위치 (초안 생성용)" })).toBeDisabled();
   fireEvent.change(primary, { target: { value: "show_host" } });
   fireEvent.submit(primary.closest("form")!);
   await waitFor(() => expect(fetchMock.mock.calls.some(([, init]) => init.method === "POST")).toBe(true));

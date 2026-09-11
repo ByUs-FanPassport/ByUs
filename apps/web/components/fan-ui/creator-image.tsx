@@ -1,5 +1,6 @@
 "use client";
 
+import type { PhotoSet } from "@/features/media/domain/public-image";
 import Image, { type ImageProps } from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { creatorImageSizes, resolveCreatorImage, type CreatorImagePresentation } from "./creator-image-config";
@@ -11,16 +12,20 @@ type Props = Pick<ImageProps, "alt" | "width" | "height" | "fill" | "priority" |
   src: string | null | undefined;
   presentation?: CreatorImagePresentation;
   position?: string;
+  photos?: PhotoSet;
+  locale?: "ko" | "en";
   sizes: string;
   fallback?: ReactNode;
   framed?: boolean;
 };
 
 /** All creator identity photos share source selection, framing, sizing and load recovery. */
-export function CreatorImage({ slug, src, presentation = "portrait", position, sizes, fallback = null, framed = false, ...imageProps }: Props) {
-  const image = resolveCreatorImage({ slug, src, presentation, position });
+export function CreatorImage({ slug, src, presentation = "portrait", position, photos, locale = "ko", sizes, fallback = null, framed = false, ...imageProps }: Props) {
+  const image = resolveCreatorImage({ slug, src, presentation, position, photos });
+  const role = presentation === "collection" ? "landscape" : presentation === "vertical" || presentation === "calendar" ? "portrait" : "profile";
+  const alt = imageProps.alt === "" ? "" : photos?.[role]?.alt[locale] ?? imageProps.alt;
   const [failedSource, setFailedSource] = useState<string | null>(null);
-  const photo = !image.src || image.src === failedSource ? fallback : <Image {...imageProps} alt={imageProps.alt} className={framed ? undefined : imageProps.className} src={image.src} sizes={creatorImageSizes(sizes, image.crop.scale)}
+  const photo = !image.src || image.src === failedSource ? fallback : <Image {...imageProps} alt={alt} className={framed ? undefined : imageProps.className} src={image.src} sizes={creatorImageSizes(sizes, image.crop.scale)}
     data-creator-image={slug} data-image-presentation={presentation}
     style={{ objectFit: image.crop.fit ?? "cover", objectPosition: image.crop.position,
       transform: image.crop.scale !== 1 || image.crop.translateX ? `${image.crop.translateX ? `translateX(${image.crop.translateX}) ` : ""}scale(${image.crop.scale})` : undefined,

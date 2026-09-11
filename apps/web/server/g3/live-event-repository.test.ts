@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import type { LiveEventRecord, LiveEventDataSource } from "./live-event-repository";
-import { DefaultLiveEventRepository } from "./live-event-repository";
+import { DefaultLiveEventRepository, PublicImageLiveEventRepository } from "./live-event-repository";
 
 const event: LiveEventRecord = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -25,6 +25,7 @@ const event: LiveEventRecord = {
     slug: "kara",
     name: "KARA",
     image: "/images/kara.jpg",
+    imagePosition: "center 46%",
     fanCount: 12_800_000,
   },
   brand: { slug: "meriq", name: "Meriq", logo: "/images/meriq.svg", websiteUrl: "https://meriq.example", productContext: "여름 뷰티 루틴" },
@@ -122,6 +123,29 @@ describe("DefaultLiveEventRepository", () => {
     expect(result.replay.every(({ live }) => live.watch.mode === "replay")).toBe(true);
   });
 
+  it("batch-attaches event and creator roles after the LIVE projection", async () => {
+    const readLivePhotoSetsBySlug = vi.fn().mockResolvedValue({
+      [event.slug]: { landscape: null },
+    });
+    const readCelebrityPhotoSetsBySlug = vi.fn().mockResolvedValue({
+      [event.celebrity.slug]: { portrait: null },
+    });
+    const repository = new PublicImageLiveEventRepository(
+      new DefaultLiveEventRepository(source()),
+      { readLivePhotoSetsBySlug, readCelebrityPhotoSetsBySlug },
+    );
+
+    const result = await repository.listFeaturedPublished({
+      locale: "ko",
+      now: new Date("2026-07-21T00:00:00Z"),
+    });
+
+    expect(readLivePhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([event.slug]);
+    expect(readCelebrityPhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([event.celebrity.slug]);
+    expect(result[0]?.live.photos).toEqual({ landscape: null });
+    expect(result[0]?.live.celebrity.photos).toEqual({ portrait: null });
+  });
+
   it("returns only the public localized projection for a guest", async () => {
     const result = await new DefaultLiveEventRepository(source()).findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });
     expect(result).toMatchObject({
@@ -129,7 +153,7 @@ describe("DefaultLiveEventRepository", () => {
         slug: event.slug,
         effectiveStatus: "scheduled",
         productContext: "여름 뷰티 루틴",
-        celebrity: { fanCount: 12_800_000 },
+        celebrity: { fanCount: 12_800_000, imagePosition: "center 46%" },
         watch: { available: false, provider: "youtube" },
       },
       viewer: { authenticated: false, passport: "missing", reservation: null },

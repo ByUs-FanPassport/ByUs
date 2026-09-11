@@ -17,6 +17,24 @@ describe("MY summary contract", () => {
     expect(mySummarySchema.safeParse({ ...summary, walletAddress: "0xsecret" }).success).toBe(false);
   });
 
+  it("preserves public photo roles and legacy positioning in browser parsing", () => {
+    const enriched = {
+      ...summary,
+      creators: [{
+        ...summary.creators[0],
+        celebrity: {
+          ...summary.creators[0].celebrity,
+          imagePosition: "center 42%",
+          photos: { profile: null },
+        },
+      }],
+    };
+    expect(mySummarySchema.parse(enriched).creators[0]?.celebrity).toMatchObject({
+      imagePosition: "center 42%",
+      photos: { profile: null },
+    });
+  });
+
   it("rejects invalid counts and unsafe collection links", () => {
     expect(mySummarySchema.safeParse({ ...summary, unreadNotificationCount: -1 }).success).toBe(false);
     expect(mySummarySchema.safeParse({ ...summary, collection: { ...summary.collection, recent: [{ ...summary.collection.recent[0], href: "https://evil.example" }] } }).success).toBe(false);

@@ -16,7 +16,7 @@ export function PassportIdentityArtwork({ celebrity, ...canvas }: Props) {
     <PassportStampCanvas {...canvas} celebrityName={celebrity.name} />
     <span className={styles.portrait} aria-hidden="true">
       <span className={styles.photo} data-creator={celebrity.slug}>
-        <CreatorImage slug={celebrity.slug} src={celebrity.image} presentation="passport"
+        <CreatorImage slug={celebrity.slug} src={celebrity.image} photos={celebrity.photos} position={celebrity.imagePosition} presentation="passport"
           alt="" width={440} height={354} sizes="96px"
           fallback={<span className={styles.fallback}>{celebrity.name}</span>} />
       </span>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { livePreviewKindSchema } from "./live-preview";
 import { collectibleOwnedStateSchema } from "../../collectible/domain/collectible";
+import type { PhotoSet } from "../../media/domain/public-image";
 
 export const liveLocaleSchema = z.enum(["ko", "en"]);
 export type LiveLocale = z.infer<typeof liveLocaleSchema>;
@@ -73,11 +74,14 @@ export const publicLiveEventSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1200),
   productContext: z.string().trim().min(1).max(1000),
+  photos: z.custom<PhotoSet>().optional(),
   heroImage: z.object({ url: safeAssetUrlSchema, alt: z.string().trim().min(1).max(300) }),
   celebrity: z.object({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     name: z.string().trim().min(1).max(120),
     image: safeAssetUrlSchema,
+    imagePosition: z.string().trim().min(1).max(100).optional(),
+    photos: z.custom<PhotoSet>().optional(),
     fanCount: z.number().int().min(0),
   }),
   brand: z.object({

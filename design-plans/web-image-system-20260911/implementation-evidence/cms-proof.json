@@ -1,0 +1,102 @@
+[
+  {
+    "width": 1440,
+    "requests": [
+      {
+        "role": "profile",
+        "expectedRevision": 1,
+        "assetId": "00000000-0000-4000-8000-000000000003"
+      }
+    ],
+    "frames": [
+      {
+        "legend": "정사각형 프로필440 × 440",
+        "w": 320,
+        "h": 320,
+        "aspect": "440 / 440"
+      },
+      {
+        "legend": "작은 아바타64 × 64",
+        "w": 320,
+        "h": 320,
+        "aspect": "64 / 64"
+      },
+      {
+        "legend": "팬 패스포트440 × 354",
+        "w": 397.734375,
+        "h": 319.984375,
+        "aspect": "440 / 354"
+      },
+      {
+        "legend": "모바일 셀럽 홈440 × 470",
+        "w": 299.5625,
+        "h": 319.984375,
+        "aspect": "440 / 470"
+      },
+      {
+        "legend": "세로 목록72 × 96",
+        "w": 240,
+        "h": 320,
+        "aspect": "72 / 96"
+      },
+      {
+        "legend": "캘린더320 × 392",
+        "w": 261.21875,
+        "h": 319.984375,
+        "aspect": "320 / 392"
+      }
+    ],
+    "overflow": false,
+    "provenance": "Local rendered real CMS component; admin HTTP responses mocked; no business data writes"
+  },
+  {
+    "width": 390,
+    "requests": [
+      {
+        "role": "profile",
+        "expectedRevision": 1,
+        "assetId": "00000000-0000-4000-8000-000000000003"
+      }
+    ],
+    "frames": [
+      {
+        "legend": "정사각형 프로필440 × 440",
+        "w": 282,
+        "h": 282,
+        "aspect": "440 / 440"
+      },
+      {
+        "legend": "작은 아바타64 × 64",
+        "w": 282,
+        "h": 282,
+        "aspect": "64 / 64"
+      },
+      {
+        "legend": "팬 패스포트440 × 354",
+        "w": 282,
+        "h": 226.875,
+        "aspect": "440 / 354"
+      },
+      {
+        "legend": "모바일 셀럽 홈440 × 470",
+        "w": 282,
+        "h": 301.21875,
+        "aspect": "440 / 470"
+      },
+      {
+        "legend": "세로 목록72 × 96",
+        "w": 240,
+        "h": 320,
+        "aspect": "72 / 96"
+      },
+      {
+        "legend": "캘린더320 × 392",
+        "w": 261.21875,
+        "h": 319.984375,
+        "aspect": "320 / 392"
+      }
+    ],
+    "overflow": false,
+    "provenance": "Local rendered real CMS component; admin HTTP responses mocked; no business data writes"
+  }
+]

@@ -100,11 +100,14 @@ describe("live event domain", () => {
         title: "KATSEYE LIVE",
         description: "함께 만나요.",
         productContext: "ByUs LIVE",
+        photos: { landscape: null },
         heroImage: { url: "/hero.webp", alt: "KATSEYE" },
         celebrity: {
           slug: "katseye",
           name: "KATSEYE",
           image: "/card.webp",
+          imagePosition: "center 42%",
+          photos: { portrait: null },
           fanCount: 6_800_000,
         },
         brand: { slug: "byus", name: "ByUs", logo: "/logo.svg", websiteUrl: null },
@@ -123,6 +126,8 @@ describe("live event domain", () => {
     };
 
     expect(liveEventResponseSchema.parse(response).live.preview?.durationMs).toBe(4_000);
+    expect(liveEventResponseSchema.parse(response).live.photos).toEqual({ landscape: null });
+    expect(liveEventResponseSchema.parse(response).live.celebrity.photos).toEqual({ portrait: null });
     expect(() =>
       liveEventResponseSchema.parse({
         ...response,

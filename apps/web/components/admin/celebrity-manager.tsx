@@ -8,6 +8,7 @@ import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import { NoticeManager } from "./notice-manager";
+import { ImageRoleEditor } from "./image-role-editor";
 import { CREATOR_ROLES, creatorRoleLabel, type CreatorRole } from "@/features/creator/domain/creator-role";
 import styles from "./admin.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
@@ -349,19 +350,46 @@ function CelebrityCms({
                 </label>
               </div>
               <label>
-                <span>{locale === "ko" ? "이미지 URL" : "Image URL"}</span>
+                <span>
+                  {locale === "ko"
+                    ? "기본 이미지 URL (초안 생성용)"
+                    : "Fallback image URL (draft creation)"}
+                </span>
                 <input
                   required
+                  disabled={Boolean(current)}
+                  aria-label={
+                    locale === "ko"
+                      ? "기본 이미지 URL (초안 생성용)"
+                      : "Fallback image URL (draft creation)"
+                  }
                   value={draft.imageUrl}
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, imageUrl: e.target.value }))
                   }
                 />
+                {current && (
+                  <small>
+                    {locale === "ko"
+                      ? "저장된 셀럽 이미지는 아래 공개 이미지 역할에서 변경합니다."
+                      : "Use Public image roles below for a saved celebrity."}
+                  </small>
+                )}
               </label>
               <label>
-                <span>object-position</span>
+                <span>
+                  {locale === "ko"
+                    ? "기본 이미지 위치 (초안 생성용)"
+                    : "Fallback image position (draft creation)"}
+                </span>
                 <input
                   required
+                  disabled={Boolean(current)}
+                  aria-label={
+                    locale === "ko"
+                      ? "기본 이미지 위치 (초안 생성용)"
+                      : "Fallback image position (draft creation)"
+                  }
                   value={draft.imagePosition}
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, imagePosition: e.target.value }))
@@ -537,6 +565,22 @@ function CelebrityCms({
               )}
             </div>
           </form>
+          {current ? (
+            <ImageRoleEditor
+              key={current.id}
+              ownerType="celebrity"
+              ownerId={current.id}
+              locale={locale}
+              canEdit={canEdit && !Boolean(current.archivedAt)}
+              getAccessToken={getAccessToken}
+            />
+          ) : (
+            <p className={styles.cmsMessage}>
+              {locale === "ko"
+                ? "새 셀럽의 기본 정보를 초안으로 저장하면 역할별 이미지를 등록할 수 있습니다."
+                : "Save the new celebrity as a draft before assigning image roles."}
+            </p>
+          )}
         </section>
       </div>
       {current && (

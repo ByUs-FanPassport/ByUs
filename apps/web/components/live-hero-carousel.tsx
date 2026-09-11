@@ -1,6 +1,6 @@
 "use client";
 
-import Image, { getImageProps } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import useEmblaCarousel from "embla-carousel-react";
@@ -10,10 +10,10 @@ import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { Pause } from "lucide-react";
-import { bypassImageOptimization, homeHeroSizes } from "./fan-ui/public-image-policy";
+import { homeHeroSizes } from "./fan-ui/public-image-policy";
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
-import { creatorHeroImages } from "./fan-ui/creator-hero-images";
+import { EventPhoto } from "./fan-ui/event-photo";
 import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
@@ -265,11 +265,6 @@ export function LiveHeroCarousel({
         <div className={styles.heroTrack}>
           {featuredLives.map((featuredLive, index) => {
           const isActive = index === activeIndex;
-          const creatorHero = featuredLive.live.celebrity.slug === "elina" ? creatorHeroImages.elina : undefined;
-          const creatorPicture = creatorHero ? {
-            desktop: getImageProps({ src: creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: imageSizes, loading: index === 0 ? "eager" : "lazy", fetchPriority: index === 0 ? "high" : "auto" }).props,
-            mobile: getImageProps({ src: creatorHero.mobileSrc ?? creatorHero.src, alt: featuredLive.live.heroImage.alt, fill: true, sizes: imageSizes, loading: index === 0 ? "eager" : "lazy", fetchPriority: index === 0 ? "high" : "auto" }).props,
-          } : null;
           const detailHref = `/live/${featuredLive.live.slug}`;
           const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
           const heroActionLabel =
@@ -288,20 +283,8 @@ export function LiveHeroCarousel({
               aria-label={t.position(index + 1, total)}
               inert={!isActive}
               data-active={isActive ? "true" : "false"}
-              style={creatorHero ? { "--creator-hero-desktop-position": creatorHero.desktopPosition, "--creator-hero-mobile-position": creatorHero.mobilePosition } as CSSProperties : undefined}
             >
-              {creatorPicture ? <picture className={styles.heroCreatorPicture}>
-                <source media="(min-width: 48rem)" srcSet={creatorPicture.desktop.srcSet} sizes={creatorPicture.desktop.sizes} />
-                <img {...creatorPicture.mobile} alt={featuredLive.live.heroImage.alt} />
-              </picture> : <Image
-                src={featuredLive.live.heroImage.url}
-                alt={featuredLive.live.heroImage.alt}
-                fill
-                unoptimized={bypassImageOptimization(featuredLive.live.heroImage.url)}
-                sizes={imageSizes}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "auto"}
-              />}
+              <EventPhoto photos={featuredLive.live.photos} src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} locale={locale} priority={index === 0} sizes={imageSizes} />
               <div className={styles.heroOverlay} aria-hidden="true" />
               <div className={styles.heroContent}>
                 <div className={styles.statusRail}>
