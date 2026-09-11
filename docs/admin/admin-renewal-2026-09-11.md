@@ -162,10 +162,11 @@ const points = groupSignups(data.trend, "week").map((point) => ({
 - [x] 기존 Privy 검증 + 활성 관리자 allowlist gate 재사용.
 - [x] 새 RPC는 `PUBLIC/anon/authenticated` 실행 권한 회수, `service_role`만 허용. 내부에서 actor/allowlist 재검증.
 - [x] 기존 행 잠금과 호환되도록 `VOLATILE`, 빈 `search_path` 유지. 개별 회원 정보 반환 없음.
-- [ ] Dev 집계·경계·권한 SQL 검증, 단위 테스트, 타입 검사, 빌드, 로컬 렌더링 검증.
+- [x] Dev 집계·경계·권한 SQL 검증, 관련 137개 테스트, 타입 검사, 빌드, PC·모바일 렌더링 검증.
 - [x] 검토한 새 migration만 운영 DB에 적용. 다른 미적용 migration을 일괄 실행하지 않음.
-- [ ] 관련 파일만 커밋, 최신 `origin/main`과 통합, 푸시.
-- [ ] 해당 커밋의 Vercel 자동 배포 시작 확인.
+- [x] 관련 파일 커밋 `f91a05d`, 최신 `origin/main`과 충돌 없이 통합 `720f6d6`.
+- [x] main 푸시: `720f6d61ec368e7ea31a06f70bb7271cfd7281ee`.
+- [x] 해당 코드 커밋의 Vercel production 자동 배포 시작 확인: `dpl_GpekyB1vs6zvRC4T7uFyx8KCf5PF`, `BUILDING`.
 
 GitHub의 기존 Fan design system 체크는 어드민 계약을 충분히 다루지 않는다. 이번에 어드민 전용 CI를 추가해 타입 검사와 관련 컴포넌트·API 테스트를 수행한다. secret이 없는 테스트로 실행하며 production 키를 CI 테스트에 제공하지 않는다. 기존 브랜치 보호를 우회하지 않는다.
 
@@ -197,12 +198,15 @@ GitHub의 기존 Fan design system 체크는 어드민 계약을 충분히 다�
 - 변경 화면은 실제 소스 컴포넌트·CSS를 불러온 로컬 렌더 환경에서 PC 1440×1000과 모바일 390×844로 확인했다.
 - 로컬 인증 허용 origin은 3000/5173이고 두 포트가 다른 작업에 사용 중이어서, 3040의 Next 로그인 전체 연결은 확인하지 못했다. 인증·Next 경계는 렌더 환경에서 대체하고 API/권한은 별도 테스트로 검증했다.
 - 메인·상세 통계 화면은 Dev 집계 스냅샷, 회원·콘텐츠 화면은 개인정보 없는 테스트 데이터를 사용했다. 이것은 운영 실계정 E2E 검증을 뜻하지 않는다.
-- 변경 후 캡처: `artifacts/admin-renewal/after/`. 차트 단위·수치 보기, 테이블 검색·정렬·페이지·CSV, 모바일 메뉴 및 입력 조건을 확인한다.
+- 변경 후 캡처: `artifacts/admin-renewal/after/`. 차트 단위·수치 보기, 테이블 검색·정렬·페이지·CSV, 모바일 메뉴 및 입력 조건 38/38개를 통과했고 콘솔 오류는 0건이다. 실제 렌더에서 확인한 버튼 배경색 누락과 정렬 라벨 줄바꿈도 수정 후 재확인했다.
 
 ### 릴리스 기록
 
 - 브랜치: `codex/admin-renewal-20260911`
 - migration: `20260911083724_admin_overview_metrics.sql`
-- Dev 적용과 테스트 완료. 운영 DB에 해당 migration의 함수·인덱스만 트랜잭션 적용했다. 웹 릴리스 상태는 배포 시 갱신한다.
+- Dev와 운영 DB 적용 완료. 해당 migration의 함수·인덱스만 트랜잭션 적용하고 이력을 기록했다. 운영에서 함수 존재·migration 이름, anon/authenticated 실행 불가 및 service_role 허용을 확인했다.
+- 통합 코드 `720f6d6`에서 프로덕션 빌드와 `npm run typecheck` 통과. 관련 137개 테스트 근거는 통합으로 해당 소스가 바뀌지 않아 재사용했다. 마지막 크리에이터 문구 수정은 해당 2개 테스트와 렌더링으로 추가 확인했다.
+- 검증 로그: `artifacts/admin-renewal/verification/`. 로컬 검증용 서버와 임시 브라우저를 종료했다.
+- 웹: 코드 커밋 `720f6d6`의 main 푸시와 [Vercel production 배포 시작](https://vercel.com/sallylab/byus/GpekyB1vs6zvRC4T7uFyx8KCf5PF)을 확인했다. 관찰 상태는 `BUILDING`이며 최종 성공까지 대기하지 않는다. 이 문서의 후속 기록 커밋은 실행 코드 변경이 없다. 운영 로그인 E2E는 별도 수행하지 않았다.
 
 공식 참조: [Supabase 데이터 조회](https://supabase.com/docs/reference/javascript/select), [Supabase changelog](https://supabase.com/changelog). 현재 저장소의 잠금 버전과 구현 계약이 기술 선택의 우선 근거다.
