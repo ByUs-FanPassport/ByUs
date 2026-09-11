@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/seo/metadata";
 import { loadGuideImages } from "@/server/media/guide-images";
 import { resolvePhoto } from "@/features/media/domain/public-image";
 export const dynamic = "force-dynamic";
@@ -17,26 +18,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const content = elinaFanGuideContent[locale];
   const title = `${content.heroTitle.replace(/\n/g, " ")} | ByUs`;
   const description = content.heroDescription.replace(/\n/g, " ");
-  const url = `https://byus.kr/pages/elina-fan-guide?locale=${locale}`;
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-      languages: {
-        ko: "https://byus.kr/pages/elina-fan-guide?locale=ko",
-        en: "https://byus.kr/pages/elina-fan-guide?locale=en",
-      },
-    },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      locale: locale === "en" ? "en_US" : "ko_KR",
-      images: images.celebrity ? [{ url: resolvePhoto(images.celebrity.image.photos, "creator.hero.desktop", images.celebrity.image.url, locale).src, alt: content.imageAlt }] : [],
-    },
-  };
+  return publicMetadata({ path: "/pages/elina-fan-guide", locale, title, description, image: images.celebrity ? resolvePhoto(images.celebrity.image.photos, "creator.hero.desktop", images.celebrity.image.url, locale).src : undefined, imageAlt: content.imageAlt });
 }
 
 export default async function Page({ searchParams }: Props) {

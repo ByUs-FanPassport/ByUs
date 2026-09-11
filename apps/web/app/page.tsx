@@ -1,3 +1,5 @@
+import { publicMetadata, pageCopy } from "@/seo/metadata";
+import { homeStructuredData, serializeStructuredData } from "@/seo/structured-data";
 import { loadGuideEventPhotos } from "../server/media/guide-images";
 import { GuestHome, type HomeContentErrors } from "../components/guest-home";
 import { parseCreatorRoleFilter } from "../features/creator/domain/creator-role";
@@ -6,6 +8,11 @@ import { createPublishedContentRepositoryFromEnvironment } from "../server/conte
 import { createLiveEventRepositoryFromEnvironment } from "../server/g3/live-event-repository";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ locale?: string | string[] }> }) {
+  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  return publicMetadata({ path: "/", locale, ...pageCopy.home[locale] });
+}
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; role?: string | string[] }> }) {
   const { locale: requestedLocale, owned, role } = await searchParams;
@@ -30,14 +37,21 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     celebrityLives: celebrityLivesResult.status === "rejected" || undefined,
     guideImages: guideEventPhotosResult.status === "rejected" || undefined,
   };
-  return <GuestHome
-    guideEventPhotos={guideEventPhotosResult.status === "fulfilled" ? guideEventPhotosResult.value : undefined}
-    celebrities={celebritiesResult.status === "fulfilled" ? celebritiesResult.value : []}
-    celebrityLives={celebrityLivesResult.status === "fulfilled" ? celebrityLivesResult.value : []}
-    featuredLives={featuredLivesResult.status === "fulfilled" ? featuredLivesResult.value : []}
-    locale={locale}
-    contentErrors={contentErrors}
-    initialOwnedOnly={initialOwnedOnly}
-    initialRole={initialOwnedOnly ? "all" : parseCreatorRoleFilter(role)}
-  />;
+  return <>
+    <script
+      id="byus-home-structured-data"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeStructuredData(homeStructuredData()) }}
+    />
+    <GuestHome
+      guideEventPhotos={guideEventPhotosResult.status === "fulfilled" ? guideEventPhotosResult.value : undefined}
+      celebrities={celebritiesResult.status === "fulfilled" ? celebritiesResult.value : []}
+      celebrityLives={celebrityLivesResult.status === "fulfilled" ? celebrityLivesResult.value : []}
+      featuredLives={featuredLivesResult.status === "fulfilled" ? featuredLivesResult.value : []}
+      locale={locale}
+      contentErrors={contentErrors}
+      initialOwnedOnly={initialOwnedOnly}
+      initialRole={initialOwnedOnly ? "all" : parseCreatorRoleFilter(role)}
+    />
+  </>;
 }

@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 import { publicImageRemotePatterns } from "./components/fan-ui/public-image-policy";
 import { responseSecurityHeaders } from "./security-headers";
+import { htmlLimitedBots } from "./seo/bots";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  htmlLimitedBots,
   images: { remotePatterns: publicImageRemotePatterns },
   poweredByHeader: false,
   typedRoutes: true,

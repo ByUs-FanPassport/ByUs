@@ -19,6 +19,7 @@ describe("FanSiteFooter", () => {
     const navigation = within(footer).getByRole("navigation", { name: "ByUs 하단 메뉴" });
     expect(within(navigation).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", "/live?locale=ko");
     expect(within(navigation).getByRole("link", { name: "미국 팬미팅 문의" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
+    expect(within(navigation).getByRole("link", { name: "이용 가이드" })).toHaveAttribute("href", "/guide?locale=ko");
     expect(within(navigation).getByRole("link", { name: "Fan Passport" })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(navigation).getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy?locale=ko");
     expect(within(navigation).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms?locale=ko");
@@ -43,6 +44,7 @@ describe("FanSiteFooter", () => {
     const navigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
     expect(within(navigation).getByRole("link", { name: "Favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
     expect(within(navigation).getByRole("link", { name: "U.S. fan meeting inquiries" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
+    expect(within(navigation).getByRole("link", { name: "Service guide" })).toHaveAttribute("href", "/guide?locale=en");
     expect(within(navigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(within(navigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
     expect(within(navigation).getByRole("heading", { name: "Social" })).toBeInTheDocument();
@@ -60,6 +62,7 @@ describe("FanSiteFooter", () => {
     const socialLinkRule = footerCss.match(/\.navigation \.socialLink\s*\{([^}]*)\}/)?.[1];
     const socialIconRule = footerCss.match(/\.socialLink svg\s*\{([^}]*)\}/)?.[1];
     const legalRule = footerCss.match(/\.legal\s*\{([^}]*)\}/)?.[1];
+    const brandImageRule = footerCss.match(/\.brand img\s*\{([^}]*)\}/)?.[1];
 
     expect(footerRule).toContain("padding: 40px 0 16px");
     expect(innerRule).toContain("gap: 32px");
@@ -77,5 +80,14 @@ describe("FanSiteFooter", () => {
     expect(legalRule).toContain("min-height: 44px");
     expect(legalRule).toContain("margin-top: 24px");
     expect(legalRule).toContain("padding-top: 12px");
+    expect(brandImageRule).toContain("width: 96px");
+    expect(brandImageRule).toContain("height: 39px");
+  });
+
+  it("reserves the footer wordmark at its rendered SVG ratio", () => {
+    render(<FanSiteFooter locale="ko" />);
+    const wordmark = screen.getByRole("img", { name: "ByUs" });
+    expect(wordmark).toHaveAttribute("width", "96");
+    expect(wordmark).toHaveAttribute("height", "39");
   });
 });

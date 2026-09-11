@@ -1,8 +1,14 @@
+import { publicMetadata, pageCopy } from "@/seo/metadata";
 import { LiveCatalogScreen } from "@/features/live/ui/live-catalog-screen";
 import { loadServerEnv } from "@/server/config/env";
 import { createLiveEventRepositoryFromEnvironment } from "@/server/g3/live-event-repository";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ locale?: string | string[] }> }) {
+  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  return publicMetadata({ path: "/live", locale, ...pageCopy.live[locale] });
+}
 
 export default async function LivePage({
   searchParams,

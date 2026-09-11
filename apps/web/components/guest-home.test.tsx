@@ -819,7 +819,7 @@ it("filters any assigned role and carries it into the directory without exposing
   expect(within(filters).queryByRole("button", { name: "쇼호스트" })).not.toBeInTheDocument();
   fireEvent.click(within(filters).getByRole("button", { name: "크리에이터" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(2);
-  expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&role=creator");
+  expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "최애 전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&role=creator");
   expect(within(filters).getByRole("button", { name: "크리에이터" })).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(within(filters).getByRole("button", { name: "아이돌" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
@@ -871,7 +871,7 @@ it("shows only Passport owners in My favorites and excludes first-reaction-only 
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("heading", { name: "KARA" })).toBeInTheDocument();
   expect(within(container.querySelector("#celebrities") as HTMLElement).queryByRole("heading", { name: "Elina" })).not.toBeInTheDocument();
-  expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&owned=1");
+  expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "최애 전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&owned=1");
   expect(new URL(window.location.href).searchParams.get("owned")).toBe("1");
   expect(new URL(window.location.href).searchParams.get("role")).toBeNull();
 });

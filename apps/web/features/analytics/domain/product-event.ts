@@ -22,6 +22,15 @@ export const PRODUCT_EVENT_NAMES = [
 export const productEventNameSchema = z.enum(PRODUCT_EVENT_NAMES);
 export type ProductEventName = z.infer<typeof productEventNameSchema>;
 
+export const CLIENT_PRODUCT_EVENT_NAMES = [
+  "creator_page_view",
+  "live_page_view",
+  "live_cta_click",
+  "benefit_page_view",
+] as const satisfies readonly ProductEventName[];
+
+const clientProductEventNameSchema = z.enum(CLIENT_PRODUCT_EVENT_NAMES);
+
 const primitiveSchema = z.union([z.string().max(500), z.number().finite(), z.boolean(), z.null()]);
 const propertiesSchema = z.record(z.string().min(1).max(80), primitiveSchema)
   .superRefine((properties, context) => {
@@ -56,8 +65,8 @@ export const productEventV1Schema = productEventV1BaseSchema.superRefine((event,
 
 export const clientProductEventV1Schema = productEventV1BaseSchema
   .omit({ appUserId: true })
-  .refine((event) => event.eventName !== "ticket_credited" && event.eventName !== "ticket_debited", {
-    message: "Ticket events are server-only",
+  .refine((event) => clientProductEventNameSchema.safeParse(event.eventName).success, {
+    message: "Completion events are server-only",
     path: ["eventName"],
   });
 

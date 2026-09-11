@@ -377,7 +377,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
     const celebrityLocalization = onlyRow(celebrity?.celebrity_localizations ?? null);
     const brandLocalization = onlyRow(brand?.brand_localizations ?? null);
     if (!localization || !celebrity || !brand || !celebrityLocalization || !brandLocalization) {
-      throw new Error("Published live event projection is incomplete");
+      return null;
     }
 
     return {

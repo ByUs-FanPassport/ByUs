@@ -484,16 +484,18 @@ function ReservationDialog({
 export function LiveEventScreen({
   slug,
   locale,
+  initialData,
 }: {
   slug: string;
   locale: Locale;
+  initialData?: LiveEventResponse;
 }) {
   const c = copy[locale];
   const { ready: authReady, authenticated, getAccessToken, user } = usePrivy();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<ViewState>({ kind: "loading" });
+  const [view, setView] = useState<ViewState>(() => initialData ? { kind: "ready", data: initialData } : { kind: "loading" });
   const [reservePending, setReservePending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -514,7 +516,7 @@ export function LiveEventScreen({
   const resumedIntentRef = useRef<string | null>(null);
   const liveReadController = useRef<AbortController | null>(null);
 
-  const load = useCallback(async (background = false) => {
+  const load = useCallback(async (background = false, trackPageView = !background) => {
     if (!authReady) return;
     liveReadController.current?.abort();
     const controller = new AbortController();
@@ -541,7 +543,7 @@ export function LiveEventScreen({
       if (controller.signal.aborted) return;
       setCollectible(data.viewer.collectible ?? null);
       setView({ kind: "ready", data });
-      if (!background) void recordProductEventV1(
+      if (trackPageView) void recordProductEventV1(
         {
           eventName: "live_page_view",
           celebrityId: null,
@@ -563,9 +565,11 @@ export function LiveEventScreen({
   }, [authReady, authenticated, getAccessToken, locale, slug]);
 
   useEffect(() => {
-    void load();
+    // SSR data already fills the page. Refresh viewer-specific state without
+    // replacing the full document with a loading skeleton during hydration.
+    void load(Boolean(initialData), true);
     return () => liveReadController.current?.abort();
-  }, [load]);
+  }, [initialData, load]);
   const refreshLiveStatus = useCallback(() => { void load(true); }, [load]);
 
   const claimCollectible = useCallback(async () => {
