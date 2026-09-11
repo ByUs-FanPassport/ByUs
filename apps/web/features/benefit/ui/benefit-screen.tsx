@@ -1028,8 +1028,8 @@ function BenefitDetailOwnerScreen({
   const detailTitle = isIfewRaffle ? ifewPrizeName[locale] : benefit.title;
   const detailSummary = isIfewRaffle
     ? locale === "ko"
-      ? "10명을 추첨해 관람권을 1장씩 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다."
-      : "Ten winners receive one admission ticket each. Ifew raffle tickets are used to enter the draw."
+      ? "5명을 추첨해 관람권을 2장씩, 총 10장 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다."
+      : "Five winners receive two admission tickets each, for 10 tickets in total. Ifew raffle tickets are used to enter the draw."
     : benefit.summary;
   const deliveredClaim = claim ?? ownedApplication?.claim ?? null;
   const unavailableCopy =

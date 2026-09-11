@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Page, { generateMetadata } from "../../app/pages/ifew-fan-guide/page";
 import { sanitizeLiveReturnTo } from "@/features/quiz/domain/live-return-context";
+import { ifewEventBanner } from "./content";
 
 vi.mock("@/server/media/guide-images", () => ({ loadGuideImages: vi.fn(async () => ({ celebrity: null, eventPhotos: undefined })) }));
 
@@ -24,7 +25,7 @@ describe("ifew Saturday LIVE guide", () => {
     const returnTo = new URL(destinations[0], "https://byus.kr").searchParams.get("returnTo");
     expect(sanitizeLiveReturnTo(returnTo)).toBe(destinations[1]);
     expect(container.textContent).toContain(locale === "ko" ? "예약·출석만으로 자동 응모되지 않으니 직접 응모해 주세요." : "Reservations and attendance do not enter you automatically.");
-    expect(container.textContent).toContain(locale === "ko" ? "10명에게 관람권을 1장씩" : "Ten winners receive one admission ticket each");
+    expect(container.textContent).toContain(locale === "ko" ? "5명에게 관람권을 2장씩, 총 10장" : "Five winners receive two admission tickets each, for 10 tickets in total");
     expect(container.textContent).toContain(locale === "ko" ? "더현대 서울" : "The Hyundai Seoul");
     expect(container.textContent).toContain(locale === "ko" ? "9월 20일(일) 00:00 KST" : "September 20 at 00:00 KST");
     expect(container.textContent).not.toMatch(/엘리나|Elina|퀴즈|미션|quiz/i);
@@ -37,9 +38,12 @@ describe("ifew Saturday LIVE guide", () => {
     expect(metadata.title).toBe("100 days with ifew. Let’s celebrate. | ByUs");
     expect(metadata.description).toContain("Sat, Sep 12 · 08:00–13:00 KST");
     expect(metadata.alternates?.canonical).toBe("https://byus.kr/pages/ifew-fan-guide?locale=en");
-    const images = metadata.openGraph?.images as Array<{ url: string }>;
-    const source = new URL(images[0].url).searchParams.get("url") ?? images[0].url;
-    expect(source).toContain("lives/ifew-100-days/banner-");
+    const socialImages = metadata.openGraph?.images;
+    const socialImage = Array.isArray(socialImages) ? socialImages[0] : socialImages;
+    const socialImageUrl = typeof socialImage === "object" && "url" in socialImage
+      ? socialImage.url.toString()
+      : socialImage?.toString() ?? "";
+    expect(decodeURIComponent(socialImageUrl)).toContain(ifewEventBanner);
   });
 
   it("uses Korean for unsupported or repeated locale values", async () => {
