@@ -114,6 +114,7 @@ const copy = {
     loadingMore: "불러오는 중…",
     loadMoreError: "다음 회원을 불러오지 못했습니다. 다시 시도해 주세요.",
     fan: "회원",
+    noNickname: "닉네임 미설정",
     loginMethod: "로그인 수단",
     providerUnknown: "확인 불가",
     providerNone: "연결 없음",
@@ -174,6 +175,7 @@ const copy = {
     loadingMore: "Loading…",
     loadMoreError: "More members could not be loaded. Try again.",
     fan: "Member",
+    noNickname: "Nickname not set",
     loginMethod: "Login method",
     providerUnknown: "Unavailable",
     providerNone: "None linked",
@@ -550,7 +552,7 @@ export function FanOperations() {
             <div className={ops.drawerHeader}>
               <div>
                 <p>{selected.fanId}</p>
-                <h2 id="fan-title">{selected.nickname ?? t.detail}</h2>
+                <h2 id="fan-title">{selected.nickname?.trim() || t.noNickname}</h2>
               </div>
               <button
                 ref={closeButtonRef}
@@ -675,7 +677,7 @@ function FanTable({
                     </span>
                     <div className={styles.memberIdentity}>
                       <div className={styles.memberName}>
-                        <strong>{fan.nickname ?? "—"}</strong>
+                        <strong>{fan.nickname?.trim() || labels.noNickname}</strong>
                         {fan.accountStatus === "disabled" && <span className={styles.disabledLabel}>{labels.disabled}</span>}
                       </div>
                       <span className={styles.memberEmail} title={fan.email ?? undefined}>{fan.email ?? "—"}</span>
@@ -707,7 +709,7 @@ function FanTable({
                   <button
                     className={ops.iconButton}
                     type="button"
-                    aria-label={`${labels.detail}: ${fan.nickname ?? fan.fanId}`}
+                    aria-label={`${labels.detail}: ${fan.nickname?.trim() || fan.email || fan.fanId}`}
                     onClick={() => void open(fan)}
                   >
                     <ChevronRight aria-hidden="true" />
