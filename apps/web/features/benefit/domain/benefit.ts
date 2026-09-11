@@ -33,11 +33,25 @@ export type BenefitApplicationStatus = z.infer<
   typeof benefitApplicationStatusSchema
 >;
 
+export const benefitImageUrlSchema = z.union([
+  z.string().regex(/^\/(?!\/)[^\s@]+$/),
+  z.string().url().refine((value) => {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      Boolean(url.hostname)
+    );
+  }),
+]);
+
 export const benefitCatalogItemSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   title: z.string().min(1),
   summary: z.string().min(1),
+  imageUrl: benefitImageUrlSchema.nullable().optional(),
   eligibilityLabel: z.string().min(1),
   deliveryLabel: z.string().min(1),
   deliveryType: benefitDeliveryTypeSchema,

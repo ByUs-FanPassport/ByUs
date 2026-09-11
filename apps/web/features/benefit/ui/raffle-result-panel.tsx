@@ -116,7 +116,7 @@ function resultStatus(result: OwnedRaffleResult, locale: Locale) {
   }
 }
 
-export function RaffleResultPanel({ result, locale }: { result: OwnedRaffleResult; locale: Locale }) {
+export function RaffleResultPanel({ result, locale, embedded = false }: { result: OwnedRaffleResult; locale: Locale; embedded?: boolean }) {
   const t = copy[locale];
   const recipientHref = result.winnerId
     ? withLocalePath(`/my/rewards/${result.winnerId}/recipient`, locale)
@@ -142,8 +142,11 @@ export function RaffleResultPanel({ result, locale }: { result: OwnedRaffleResul
     && result.method !== "digital"
     && (result.fulfillmentStatus === "information_required" || result.fulfillmentStatus === "ready" || result.fulfillmentStatus === "pickup_available");
 
+  if (embedded && result.state === "not_entered") {
+    return <p className={styles.emptySummary} role="status"><TicketCheck aria-hidden="true" />{t.notEntered}</p>;
+  }
   return (
-    <section className={styles.panel} aria-labelledby={`raffle-result-${result.benefitId}`}>
+    <section className={`${styles.panel} ${embedded ? styles.embedded : ""}`} aria-labelledby={`raffle-result-${result.benefitId}`}>
       <span className={styles.eyebrow}>{t.heading}</span>
       <div className={styles.status} data-state={result.state}>
         <span aria-hidden="true">{state.icon}</span>
@@ -152,10 +155,10 @@ export function RaffleResultPanel({ result, locale }: { result: OwnedRaffleResul
           <p>{state.description}</p>
         </div>
       </div>
-      <h3>{result.title}</h3>
+      {!embedded ? <h3>{result.title}</h3> : null}
       <dl className={styles.facts}>
         {result.enteredTickets > 0 ? <div><dt>{t.entered}</dt><dd>{result.enteredTickets}</dd></div> : null}
-        {result.entryClosesAt ? <div><dt>{t.closed}</dt><dd><time dateTime={result.entryClosesAt}>{formatRaffleDateTime(result.entryClosesAt, locale)}</time></dd></div> : null}
+        {!embedded && result.entryClosesAt ? <div><dt>{t.closed}</dt><dd><time dateTime={result.entryClosesAt}>{formatRaffleDateTime(result.entryClosesAt, locale)}</time></dd></div> : null}
         {result.publishedAt ? <div><dt>{t.published}</dt><dd><time dateTime={result.publishedAt}>{formatRaffleDateTime(result.publishedAt, locale)}</time></dd></div> : null}
         {result.state === "won" && result.recipientDeadlineAt ? <div><dt>{t.deadline}</dt><dd><time dateTime={result.recipientDeadlineAt}>{formatRaffleDateTime(result.recipientDeadlineAt, locale)}</time></dd></div> : null}
         {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupVenue[locale]
@@ -178,7 +181,7 @@ export function RaffleResultPanel({ result, locale }: { result: OwnedRaffleResul
   );
 }
 
-export function BenefitRaffleResult({ benefitId, locale }: { benefitId: string; locale: Locale }) {
+export function BenefitRaffleResult({ benefitId, locale, embedded = false }: { benefitId: string; locale: Locale; embedded?: boolean }) {
   const auth = usePrivy();
   const parse = useCallback((body: unknown) => ownedRaffleResultSchema.parse(body), []);
   const resource = useOwnedFanResource(
@@ -194,5 +197,5 @@ export function BenefitRaffleResult({ benefitId, locale }: { benefitId: string; 
   }
   if (resource.state.status === "loading") return <FanState kind="loading" title={copy[locale].loading} />;
   if (resource.state.status === "error") return <FanState kind="error" title={copy[locale].error} description={copy[locale].errorHelp} actions={<FanAction variant="neutral" onClick={resource.retry} leadingIcon={<RotateCcw />}>{copy[locale].retry}</FanAction>} />;
-  return <RaffleResultPanel result={resource.state.data} locale={locale} />;
+  return <RaffleResultPanel result={resource.state.data} locale={locale} embedded={embedded} />;
 }

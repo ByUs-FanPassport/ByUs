@@ -1,0 +1,113 @@
+.artwork {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 14px;
+  background: oklch(96% 0 0);
+}
+
+.large {
+  width: 100%;
+  height: clamp(220px, 40vw, 420px);
+  aspect-ratio: auto;
+  margin-bottom: 0;
+  border-radius: 18px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.large .image {
+  object-fit: contain;
+}
+
+.beepio {
+  background: #f0f1ed;
+}
+
+.beepio .image {
+  position: absolute;
+  top: -20%;
+  left: 63%;
+  width: auto;
+  max-width: none;
+  height: 145%;
+  transform: translateX(-50%);
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.large.beepio .image {
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  transform: none;
+  object-fit: contain;
+}
+
+.statue {
+  background: #fff;
+}
+
+.statue .image {
+  object-fit: contain;
+}
+
+.wordmark {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  width: 64px;
+  height: auto;
+}
+
+.large .wordmark {
+  top: 24px;
+  left: 24px;
+  width: 88px;
+}
+
+.fallback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42px;
+  height: 42px;
+  transform: translate(-50%, -50%);
+  color: oklch(68% 0 0);
+}
+
+@media (max-width: 767px) {
+  .artwork {
+    border-radius: 12px;
+  }
+
+  .large {
+    width: 100%;
+    height: clamp(180px, 55vw, 220px);
+    margin-bottom: 0;
+    border-radius: 16px;
+  }
+
+  .wordmark {
+    top: 10px;
+    left: 10px;
+    width: 48px;
+  }
+
+  .large .wordmark {
+    top: 20px;
+    left: 20px;
+    width: 76px;
+  }
+
+}

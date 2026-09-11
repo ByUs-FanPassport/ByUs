@@ -41,10 +41,11 @@ import {
   type BenefitApplicationResponse,
   type BenefitOwnedApplicationResponse,
 } from "../domain/benefit";
-import { benefitEligibilityLabel, formatBenefitDateTime } from "./benefit-presentation";
+import { benefitEligibilityLabel, formatBenefitDateTime, formatRaffleDateTime } from "./benefit-presentation";
 import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
 import { BenefitRaffleResult } from "./raffle-result-panel";
 import styles from "./benefit-screen.module.css";
+import { BenefitArtwork, benefitArtworkSource } from "./benefit-artwork";
 import {
   benefitEntryResultSchema,
   type BenefitEntryResult,
@@ -527,20 +528,26 @@ export function BenefitsScreen({
           <div className={styles.benefitList}>
             {view.benefits.map((benefit) => (
               <article className={styles.benefitRow} key={benefit.id}>
-                <div className={styles.rowContent}>
-                  <StateBadge benefit={benefit} locale={locale} />
-                  <h2>{benefit.title}</h2>
-                  <p>{benefit.summary}</p>
-                  <span>{benefitEligibilityLabel(benefit, locale)}</span>
-                </div>
                 <Link
                   className={styles.rowLink}
-                  href={
-                    `/benefits/${benefit.id}?${query(locale, selected)}` as Route
-                  }
+                  href={`/benefits/${benefit.id}?${query(locale, selected)}` as Route}
                   scroll={false}
                   aria-label={`${benefit.title}: ${c.details}`}
                 >
+                  <BenefitArtwork benefit={benefit} />
+                  <div className={styles.rowContent}>
+                    <StateBadge benefit={benefit} locale={locale} />
+                    <h2>{benefit.title}</h2>
+                    <p>{benefit.entry
+                      ? locale === "ko" ? "응모권으로 참여" : "Enter with raffle tickets"
+                      : benefitEligibilityLabel(benefit, locale)}</p>
+                    <p className={styles.rowDeadline}>
+                      {locale === "ko" ? "마감 " : "Closes "}
+                      <time dateTime={benefit.entry?.entryClosesAt ?? benefit.claimClosesAt}>
+                        {formatRaffleDateTime(benefit.entry?.entryClosesAt ?? benefit.claimClosesAt, locale)}
+                      </time>
+                    </p>
+                  </div>
                   <ArrowRight aria-hidden="true" />
                 </Link>
               </article>
@@ -1040,6 +1047,55 @@ function BenefitDetailOwnerScreen({
         : benefit.state === "sold_out"
           ? c.sold_out
           : c.expired;
+  const benefitInformation = (
+        <div className={styles.detailColumns}>
+          <section>
+            <h2>{benefit.entry ? locale === "ko" ? "응모하려면" : "How to enter" : c.requirement}</h2>
+            <p>{localizeBenefitValue(benefitEligibilityLabel(benefit, locale), locale)}</p>
+            <RequirementList benefit={benefit} locale={locale} />
+          </section>
+          <section>
+            <h2>{c.delivery}</h2>
+            <p>{localizeBenefitValue(benefit.deliveryLabel, locale)}</p>
+              {benefit.entry?.fulfillmentPolicy?.method === "physical_shipping" ? (
+                <div className={styles.fulfillmentNotice}>
+                  <strong>{c.shippingOnly}</strong>
+                  <span>{c.shippingOnlyHelp}</span>
+                </div>
+              ) : benefit.entry?.fulfillmentPolicy?.method === "on_site_pickup" ? (
+                <div className={styles.fulfillmentNotice}>
+                  <strong>{c.pickupMethod}</strong>
+                  {benefit.entry?.fulfillmentPolicy.pickupVenue[locale] ? (
+                    <span>{benefit.entry?.fulfillmentPolicy.pickupVenue[locale]}</span>
+                  ) : null}
+                </div>
+              ) : null}
+            <dl className={styles.period}>
+              <div>
+                <dt>{benefit.entry ? locale === "ko" ? "응모 시작" : "Entries open" : c.periodStart}</dt>
+                <dd>
+                  <time dateTime={benefit.entry?.entryOpensAt ?? benefit.claimOpensAt}>
+                    {formatBenefitDateTime(benefit.entry?.entryOpensAt ?? benefit.claimOpensAt, locale)}
+                  </time>
+                </dd>
+              </div>
+              {!benefit.entry ? (
+              <div>
+                <dt>{c.periodEnd}</dt>
+                <dd>
+                  <time dateTime={benefit.claimClosesAt}>
+                    {formatBenefitDateTime(benefit.claimClosesAt, locale)}
+                  </time>
+                </dd>
+              </div>
+              ) : null}
+            </dl>
+          </section>
+        </div>
+  );
+  const raffleResult = benefit.entry && (authenticated || !benefit.entry.canEnter) ? (
+    <BenefitRaffleResult benefitId={benefitId} locale={locale} embedded />
+  ) : null;
   const detailContent = (
     <FanContentContainer
       as="main"
@@ -1058,43 +1114,18 @@ function BenefitDetailOwnerScreen({
         </Link>
       )}
       <article className={styles.detail}>
+        {benefitArtworkSource(benefit) ? <BenefitArtwork benefit={benefit} large /> : null}
         <div className={styles.detailIntro}>
           <StateBadge benefit={benefit} locale={locale} />
           <h1>{detailTitle}</h1>
           <p>{detailSummary}</p>
+          {benefit.entry ? <p className={styles.deadline}>
+            <span>{locale === "ko" ? "응모 마감" : "Entries close"}</span>
+            <time dateTime={benefit.entry.entryClosesAt}>{formatBenefitDateTime(benefit.entry.entryClosesAt, locale)}</time>
+          </p> : null}
         </div>
-        <div className={styles.detailColumns}>
-          <section>
-            <h2>{benefit.entry ? locale === "ko" ? "응모하려면" : "How to enter" : c.requirement}</h2>
-            <p>{localizeBenefitValue(benefitEligibilityLabel(benefit, locale), locale)}</p>
-            <RequirementList benefit={benefit} locale={locale} />
-          </section>
-          <section>
-            <h2>{c.delivery}</h2>
-            <p>{localizeBenefitValue(benefit.deliveryLabel, locale)}</p>
-            <dl className={styles.period}>
-              <div>
-                <dt>{benefit.entry ? locale === "ko" ? "응모 시작" : "Entries open" : c.periodStart}</dt>
-                <dd>
-                  <time dateTime={benefit.entry?.entryOpensAt ?? benefit.claimOpensAt}>
-                    {formatBenefitDateTime(benefit.entry?.entryOpensAt ?? benefit.claimOpensAt, locale)}
-                  </time>
-                </dd>
-              </div>
-              <div>
-                <dt>{benefit.entry ? locale === "ko" ? "응모 마감" : "Entries close" : c.periodEnd}</dt>
-                <dd>
-                  <time dateTime={benefit.entry?.entryClosesAt ?? benefit.claimClosesAt}>
-                    {formatBenefitDateTime(benefit.entry?.entryClosesAt ?? benefit.claimClosesAt, locale)}
-                  </time>
-                </dd>
-              </div>
-            </dl>
-          </section>
-        </div>
-        {benefit.entry && (authenticated || !benefit.entry.canEnter) ? (
-          <BenefitRaffleResult benefitId={benefitId} locale={locale} />
-        ) : null}
+        {!benefit.entry ? benefitInformation : null}
+        {benefit.entry && !benefit.entry.canEnter ? raffleResult : null}
         {!authenticated && benefit.entry ? (
           benefit.entry.canEnter ? (
             <AuthIntentLink
@@ -1113,10 +1144,9 @@ function BenefitDetailOwnerScreen({
             </AuthIntentLink>
           ) : null
         ) : benefit.entry ? (
-          <section className={styles.delivery} aria-live="polite">
-            <FanMotionIcon name="ticket" size={24} />
+          <section className={`${styles.delivery} ${styles.entryPanel}`} aria-live="polite">
             <div>
-              <h2>{c.enter}</h2>
+              <h2 className={styles.entryHeading}><FanMotionIcon name="ticket" size={24} />{c.enter}</h2>
               <p>
                 {isIfewRaffle
                   ? locale === "ko"
@@ -1126,20 +1156,7 @@ function BenefitDetailOwnerScreen({
                     ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
                     : "Use this creator’s raffle tickets to enter for this benefit."}
               </p>
-              {benefit.entry.fulfillmentPolicy?.method === "physical_shipping" ? (
-                <div className={styles.fulfillmentNotice}>
-                  <strong>{c.shippingOnly}</strong>
-                  <span>{c.shippingOnlyHelp}</span>
-                </div>
-              ) : benefit.entry.fulfillmentPolicy?.method === "on_site_pickup" ? (
-                <div className={styles.fulfillmentNotice}>
-                  <strong>{c.pickupMethod}</strong>
-                  {benefit.entry.fulfillmentPolicy.pickupVenue[locale] ? (
-                    <span>{benefit.entry.fulfillmentPolicy.pickupVenue[locale]}</span>
-                  ) : null}
-                </div>
-              ) : null}
-              <dl className={styles.period}>
+              <dl className={`${styles.period} ${styles.entryStats}`}>
                 <div>
                   <dt>{c.tickets}</dt>
                   <dd>{benefit.entry.creatorTicketBalance}</dd>
@@ -1218,12 +1235,12 @@ function BenefitDetailOwnerScreen({
                                 <FanAction variant="primary" href={elinaVerificationHref(locale)}>
                                   {locale === "ko"
                                     ? "팬 인증하고 응모권 받기"
-                                    : "Verify your fandom and get a raffle ticket"}
+                                    : "Verify fandom"}
                                 </FanAction>
                                 <FanAction variant="neutral" href={elinaLiveHref(locale)}>
                                   {locale === "ko"
                                     ? "LIVE 예약하고 응모권 받기"
-                                    : "Reserve the LIVE and get a raffle ticket"}
+                                    : "Reserve the LIVE"}
                                 </FanAction>
                               </>
                             ) : (
@@ -1233,7 +1250,7 @@ function BenefitDetailOwnerScreen({
                               >
                                 {locale === "ko"
                                   ? "팬 인증하고 LIVE 참여하기"
-                                  : "Verify your fandom and join the LIVE"}
+                                  : "Verify fandom & join LIVE"}
                               </FanAction>
                             )}
                           </>
@@ -1505,6 +1522,8 @@ function BenefitDetailOwnerScreen({
             {c.entryPolicyRefresh}
           </p>
         )}
+        {benefit.entry?.canEnter ? raffleResult : null}
+        {benefit.entry ? benefitInformation : null}
       </article>
     </FanContentContainer>
   );
