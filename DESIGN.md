@@ -36,7 +36,7 @@ Use Pretendard Variable throughout product UI. Apply the exact hierarchy, weight
 
 ## Image
 
-Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed square portraits with the same approved crops. Use only the fully opened identity-and-stamp Passport asset.
+Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed portraits: 5:4 on mobile and square from 768px, retaining the registered image source and focal position. Its mobile role filters show 36px pills within separate 44px touch targets; search and sort render at the same 14px label size. Use only the fully opened identity-and-stamp Passport asset.
 
 ## Surfaces
 

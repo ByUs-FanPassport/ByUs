@@ -188,9 +188,9 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
             </div>
           </div>
         ) : <>
-          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" ownedOnly={ownedOnly} onSelectOwned={selectOwned} />
+          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" ownedOnly={ownedOnly} onSelectOwned={selectOwned} compact />
           <form className={styles.controls} role="search" onSubmit={(event) => event.preventDefault()}>
-            <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><input id="celebrity-search" type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={t.searchPlaceholder} /></label>
+            <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><span className={styles.inputControl}><input id="celebrity-search" type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={t.searchPlaceholder} /></span></label>
             <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><span className={styles.selectControl}><select id="celebrity-sort" value={sort} onChange={(event) => changeSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select><ChevronDown aria-hidden="true" /></span></label>
           </form>
           <div className={styles.filterMeta} aria-live="polite">

@@ -51,6 +51,17 @@
 @media (prefers-reduced-motion:reduce) { .page * { transition-duration: .01ms !important; } }
 
 .cardBody .creatorSummary { display:block; margin:0 0 4px; overflow-wrap:anywhere; }
+@media (max-width: 47.999rem) {
+  .media { aspect-ratio: 5 / 4; }
+  .media > span[data-variant="full-bleed"] { height: 100%; aspect-ratio: auto; }
+  .cardPrimary { padding-top: 16px; }
+  .cardAction { margin-bottom: 8px; }
+  .cardBody { padding-block: 16px; }
+  .inputControl, .selectControl { position: relative; display: block; height: 44px; }
+  /* Render 14px labels while retaining native 16px inputs to avoid iOS focus zoom. */
+  .searchField input, .sortField select { position: absolute; top: 0; left: 0; width: calc(100% / .875); height: calc(44px / .875); min-height: 0; transform: scale(.875); transform-origin: top left; }
+  .skeletonInput { height: 44px; }
+}
 @media(min-width:64rem) { .card { flex-basis:calc((100% - 48px)/3); } }
 
 .cardLink { display:flex; height:100%; flex-direction:column; color:inherit; text-decoration:none; }

@@ -49,6 +49,15 @@
   line-height: 1.5;
 }
 
+@media (max-width: 47.999rem) {
+  .filters[data-compact] { gap: 0 6px; margin-bottom: 16px; }
+  /* A 36px visible pill keeps its separate 44px touch target. */
+  .filters[data-compact] button { position: relative; border: 0; background: transparent; font-size: 14px; padding-inline: 8px; }
+  .filters[data-compact] button::before { content: ""; position: absolute; inset: 4px 0; border: 1px solid var(--color-line); border-radius: inherit; background: var(--color-canvas); }
+  .filters[data-compact] button[aria-pressed="true"]::before { border-color: var(--color-ink); background: var(--color-ink); }
+  .filters[data-compact] button span { position: relative; }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .filters button:hover:not([aria-pressed="true"]):not(:disabled) { background: var(--color-soft); }
 }
