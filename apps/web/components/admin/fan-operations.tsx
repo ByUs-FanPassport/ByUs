@@ -113,6 +113,8 @@ const copy = {
     loadMoreError: "다음 회원을 불러오지 못했습니다. 다시 시도해 주세요.",
     fan: "회원",
     journey: "패스포트 여정",
+    noPassport: "패스포트 미발급",
+    noPassportDescription: "아직 발급된 패스포트가 없습니다.",
     score: "팬 점수",
     activity: "활동",
     benefit: "혜택",
@@ -167,6 +169,8 @@ const copy = {
     loadMoreError: "More members could not be loaded. Try again.",
     fan: "Member",
     journey: "Passport journey",
+    noPassport: "No Passport issued",
+    noPassportDescription: "This member has not issued a Passport yet.",
     score: "Score",
     activity: "Activity",
     benefit: "Benefits",
@@ -576,6 +580,12 @@ export function FanOperations() {
                       </span>
                     ))}
                   </div>
+                  {detail.passports.length === 0 && (
+                    <section className={ops.detailSection}>
+                      <h3>{t.noPassport}</h3>
+                      <p>{t.noPassportDescription}</p>
+                    </section>
+                  )}
                   {detail.passports.length > 0 && (
                     <select
                       className={styles.journeySwitcher}
@@ -665,13 +675,13 @@ function FanTable({
                 </td>
                 <td>
                   <div className={styles.journeyCell}>
-                    <strong>{journey?.celebrity.name ?? "—"}</strong>
-                    <span>
+                    <strong>{journey?.celebrity.name ?? labels.noPassport}</strong>
+                    {journey && <span>
                       {fan.celebritySummaries.length > 1
                         ? `+${fan.celebritySummaries.length - 1} · `
                         : ""}
                       {journey?.passportMintStatus ?? "—"}
-                    </span>
+                    </span>}
                   </div>
                 </td>
                 <td className={styles.score}>
