@@ -10,6 +10,7 @@ import { KakaoSender } from "./adapters/kakao-sender.js";
 import { ExternalNotificationWorker } from "./external-notification-worker.js";
 import { runRaffleRecipientRemindersOnce } from "./raffle-recipient-reminders.js";
 import { runBusinessInquiryOnce } from "./business-inquiry-worker.js";
+import { runTelegramAlertWorkerOnce } from "./telegram-alert-worker.js";
 
 async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const push = await new NotificationWorker(
@@ -39,7 +40,12 @@ async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
 
 export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
   // Each queue advances independently. Newly queued reminders can dispatch next tick.
-  const results = await Promise.allSettled([runFanNotificationsOnce(env), runBusinessInquiryOnce(env), runRaffleRecipientRemindersOnce(env)]);
+  const results = await Promise.allSettled([
+    runFanNotificationsOnce(env),
+    runBusinessInquiryOnce(env),
+    runRaffleRecipientRemindersOnce(env),
+    runTelegramAlertWorkerOnce(env),
+  ]);
   if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
   return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);
 }
