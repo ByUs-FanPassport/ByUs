@@ -3,7 +3,7 @@
 import {
   Activity, BadgeCheck, BarChart3, Bell, Blocks, ChevronRight,
   Clapperboard, ExternalLink, Gift, LayoutDashboard, Menu,
-  MessageSquareText, ScrollText, Sparkles, UsersRound, X, type LucideIcon,
+  MessageSquareText, ScrollText, ShieldCheck, Sparkles, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -38,7 +38,7 @@ const copy = {
   },
 } as const;
 
-export function AdminOperationsShell({ locale, children }: { locale: AdminLocale; children: ReactNode }) {
+export function AdminOperationsShell({ locale, children, adminRole }: { locale: AdminLocale; children: ReactNode; adminRole?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -48,7 +48,11 @@ export function AdminOperationsShell({ locale, children }: { locale: AdminLocale
   const t = copy[locale];
   const groups = t.groups.map((group) => ({
     label: group.label,
-    items: (group.items as readonly RawItem[]).map(([href, label, icon, exact = false]) => ({ href, label, icon, exact })),
+    items: (group.items as readonly RawItem[])
+      .map(([href, label, icon, exact = false]) => ({ href, label, icon, exact }))
+      .concat(group.label === (locale === "ko" ? "운영 관리" : "Operations") && adminRole === "admin"
+        ? [{ href: "/admin/administrators" as Route, label: locale === "ko" ? "관리자 관리" : "Admin management", icon: ShieldCheck, exact: false }]
+        : []),
   }));
 
   useEffect(() => {

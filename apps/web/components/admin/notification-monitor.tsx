@@ -79,7 +79,7 @@ export function NotificationMonitor() {
   }
 
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale="ko"/>;
-  return <AdminOperationsShell locale="ko">
+  return <AdminOperationsShell locale="ko" adminRole={session.admin.role}>
     <header className={styles.pageHeading}><p>전송 운영</p><h1>알림 전송</h1><span>Push, Email, Kakao 상태를 수신자 정보 없이 확인하고 최종 실패만 재시도합니다.</span></header>
     {data && <div className={styles.summaryGrid}>{(["pending","processing","sent","failed"] as const).map((deliveryStatus) => <button key={deliveryStatus} type="button" onClick={() => setStatus(deliveryStatus)}><span>{deliveryStatus}</span><strong>{data.counts[deliveryStatus]}</strong></button>)}</div>}
     <div className={styles.filterBar}><label><span>상태</span><select value={status} onChange={(event) => setStatus(event.target.value as Status|"")}><option value="">전체</option><option>pending</option><option>processing</option><option>sent</option><option>failed</option></select></label></div>

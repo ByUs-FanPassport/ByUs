@@ -114,15 +114,18 @@ export function AuthorizedCertificationManager() {
     <CertificationManager
       locale={locale}
       canWrite={session.admin.role !== "viewer"}
+      adminRole={session.admin.role}
     />
   );
 }
 function CertificationManager({
   locale,
   canWrite,
+  adminRole,
 }: {
   locale: "ko" | "en";
   canWrite: boolean;
+  adminRole: string;
 }) {
   const { getAccessToken } = usePrivy();
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -312,7 +315,7 @@ function CertificationManager({
     }
   }
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={adminRole}>
       <main className={styles.page}>
         <header>
           <p>Certification operations</p>

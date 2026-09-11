@@ -243,7 +243,7 @@ function CelebrityCms({
       },
     }));
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={role}>
       <div className={styles.cmsHeading}>
         <div>
           <p>{locale === "ko" ? "콘텐츠 관리" : "Content management"} · {environment === "Production" ? (locale === "ko" ? "운영 환경" : "Production") : environment === "Preview" ? (locale === "ko" ? "미리보기 환경" : "Preview") : (locale === "ko" ? "개발 환경" : "Development")}</p>

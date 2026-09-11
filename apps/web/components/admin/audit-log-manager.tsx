@@ -60,7 +60,7 @@ export function AuditLogManager() {
     router.replace(`/admin/audit${next.size ? `?${next}` : ""}` as Route, { scroll: false });
   }
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale={locale} />;
-  return <AdminOperationsShell locale={locale}>
+  return <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
     <header className={styles.pageHeading}><p>{t.eyebrow}</p><h1>{t.title}</h1><span>{t.description}</span></header>
     <div className={styles.immutableNotice}><FileLock2 aria-hidden="true" /><p>{t.immutable}</p></div>
     <form className={`${styles.filterBar} ${styles.auditFilters}`} action={applyFilters}>

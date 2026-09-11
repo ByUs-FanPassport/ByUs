@@ -406,7 +406,7 @@ export function FanOperations() {
   if (session.status !== "authorized")
     return <AdminAccessState status={session.status} locale={locale} />;
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <header className={ops.pageHeading}>
         <p>{t.eyebrow}</p>
         <h1>{t.title}</h1>
