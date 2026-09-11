@@ -16,7 +16,7 @@ import panels from "./home-panels.module.css";
 import { ifewEventBanner } from "@/components/ifew-fan-guide/content";
 import { ifewLiveSlug } from "@/features/live/domain/ifew-event";
 
-const noticeListSchema = z.object({ notices: z.array(z.object({ slug: z.string(), title: z.string(), pinned: z.boolean(), publishedAt: z.string() })) });
+const noticeListSchema = z.object({ notices: z.array(z.object({ slug: z.string(), title: z.string(), pinned: z.boolean(), kind: z.enum(["standard", "welcome"]).default("standard"), publishedAt: z.string() })) });
 const parseNotices = (body: unknown) => noticeListSchema.parse(body).notices;
 const parseRaffles = (body: unknown) => raffleListSchema.parse(body).raffles;
 const formatDate = (date: string, locale: ContentLocale) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(date));
@@ -60,7 +60,7 @@ export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: Pub
 }
 export function NoticePanel({ slug, locale, full = false }: { slug: string; locale: ContentLocale; full?: boolean }) {
   const ko = locale === "ko";
-  const resource = useFanpageResource(`/api/public/celebrities/${slug}/notices?locale=${locale}`, parseNotices);
+  const resource = useFanpageResource(`/api/public/celebrities/${slug}/notices?locale=${locale}${full ? "" : "&surface=home"}`, parseNotices);
   const empty = resource.state.status === "ready" && resource.state.data.length === 0;
   return (
     <section className={panels.notices}>
@@ -75,10 +75,10 @@ export function NoticePanel({ slug, locale, full = false }: { slug: string; loca
         </div>
         : resource.state.data.slice(0, full ? undefined : 1).map((notice) => <article key={notice.slug} className={`${styles.notice} ${panels.noticeItem}`}>
           <Link className={panels.noticeLink} href={`/c/${slug}/notices/${notice.slug}?locale=${locale}`}>
-            <div><h3>{notice.pinned && <span className={styles.pinned}>{ko ? "공지" : "Notice"}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></div>
+            <div><h3>{notice.pinned && <span className={styles.pinned}>{notice.kind === "welcome" ? (ko ? "이용 안내" : "Start here") : (ko ? "공지" : "Notice")}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></div>
             <ArrowRight size={18} aria-hidden="true" />
           </Link>
-          {!full && <NoticeComments slug={slug} noticeSlug={notice.slug} locale={locale} preview />}
+          {!full && <NoticeComments slug={slug} noticeSlug={notice.slug} locale={locale} welcome={notice.kind === "welcome"} preview />}
         </article>)}
     </section>
   );

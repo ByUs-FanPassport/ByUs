@@ -42,3 +42,20 @@
 ## 검증
 
 로컬 전체 migration replay에 `supabase/tests/telegram_alert_capture.sql`와 `supabase/tests/telegram_alert_lifecycle.sql`를 적용한다. 워커 테스트는 메시지 크기·요청한 신원 필드·그 외 정보 제외·빈 큐 무발송·응답 분류·중복 실행·다른 알림 분기 격리를 검증한다. 운영에서는 설정과 함수 배포 상태를 확인한다. 최초 연결 안내 발송과 실제 회원 이벤트 수신 검증을 구분하며, 가짜 회원·당첨자를 운영 DB에 생성하지 않는다.
+
+## 운영 방 명령어
+
+| 명령어 | 응답 |
+| --- | --- |
+| `/users` | 전체 회원, 이용 가능한 회원, 이용 중지 회원, 팬 가입 회원 수와 누적 팬 가입 건수 |
+| `/today` | 한국시간 오늘 가입·팬 가입·LIVE 예약·출석 건수 |
+| `/lives` | 최근 7일 내 종료했거나 이후 종료하는 공개 LIVE의 일정·예약·출석, 시작 시간순 최대 5개 |
+| `/help` | 명령어와 이용 안내 (`/start`도 같은 안내) |
+
+그룹에서는 `/users@SallyLabSurveyAlertBot`처럼 봇 이름을 붙일 수 있다. 등록 메뉴는 지정 운영 방 범위에만 설정한다. 일반 대화, 다른 봇을 향한 명령, 다른 방과 개인 메시지에는 응답하지 않는다. 집계 응답에는 개별 회원 개인정보를 포함하지 않는다. 사용자 수는 이용 중지·팬 미가입 회원을 포함한 전체 계정 수이며, `active`는 접속 빈도가 아닌 계정 이용 상태다.
+
+기존 매분 notification Lambda가 `getUpdates`로 확인하므로 보통 다음 확인 주기에 답한다. 한 번에 최대 3개 답장을 처리하고 실행 시간을 제한한다. 명령이 몰리면 다음 주기로 이어서 처리하며, 활성화 전이나 10분이 지난 명령에는 뒤늦게 답하지 않는다. 이벤트 알림과 명령 처리는 각각 독립 분기로 실행한다.
+
+`20260911125938_telegram_operator_commands.sql`을 적용한 뒤 기존 notification 비밀 JSON에 `TELEGRAM_COMMAND_MODE=enabled`를 추가하고 `configure_telegram_commands(true)`로 수신을 켠다. 기본값은 비활성이다. 활성화 전 기존 webhook과 다른 수신 처리기의 사용 여부를 확인한다. 봇 업데이트 수신은 이 워커가 담당하므로 다른 polling/webhook 수신기를 동시에 연결하지 않는다. 기존 webhook·허용 업데이트 종류를 자동으로 변경하지 않는다.
+
+명령 update ID는 응답 전 서버 전용 receipt에 기록한다. 동일 update와 발송 결과 불명 요청은 자동 재전송하지 않는다. 실패 시 사용자가 명령을 다시 입력할 수 있다. 처리한 구간까지만 cursor를 저장하며 정상 완료한 구간을 다음 요청에서 확인 처리한다. 일반 메시지 본문·사용자 정보는 저장하지 않고 receipt는 30일 후 제거한다. `/today` KST 경계와 권한·TTL·중복·cursor 검증은 `supabase/tests/telegram_operator_commands.sql`에 있다.

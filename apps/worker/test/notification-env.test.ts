@@ -50,6 +50,12 @@ describe("notification worker secrets", () => {
     expect(()=>parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider"})).toThrow();
     expect(parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider",EMAIL_PROVIDER_URL:"https://email.test/send",EMAIL_PROVIDER_TOKEN:"e".repeat(16),KAKAO_PROVIDER_URL:"https://kakao.test/send",KAKAO_PROVIDER_TOKEN:"k".repeat(16)})).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"provider"});
   });
+  it("keeps Kakao independently disabled and requires both SOLAPI credentials when enabled",()=>{
+    expect(parseNotificationEnv(valid).KAKAO_ALIMTALK_MODE).toBe("disabled");
+    expect(()=>parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi"})).toThrow();
+    expect(()=>parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi",SOLAPI_API_KEY:"solapi_key"})).toThrow();
+    expect(parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi",SOLAPI_API_KEY:"solapi_key",SOLAPI_API_SECRET:"solapi-secret"})).toMatchObject({KAKAO_ALIMTALK_MODE:"solapi"});
+  });
 });
 
 it("inquiry sending is separately gated and production-only", () => {
@@ -68,6 +74,7 @@ it("keeps Telegram configuration raw so invalid values cannot fail common parsin
   });
   expect(env.telegram).toEqual({
     mode: "invalid-mode",
+    commandMode: undefined,
     token: "invalid-token",
     chatId: "not-a-group",
   });
@@ -79,7 +86,11 @@ it("does not consume browser-public Telegram fields", () => {
     NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: "browser-secret",
     NEXT_PUBLIC_TELEGRAM_CHAT_ID: "-1001234567890",
   });
-  expect(env.telegram).toEqual({ mode: undefined, token: undefined, chatId: undefined });
+  expect(env.telegram).toEqual({ mode: undefined, commandMode: undefined, token: undefined, chatId: undefined });
   expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_BOT_TOKEN");
   expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_CHAT_ID");
+});
+
+it("keeps invalid Telegram command mode isolated from common parsing", () => {
+  expect(parseNotificationEnv({ ...valid, TELEGRAM_COMMAND_MODE: "invalid" }).telegram.commandMode).toBe("invalid");
 });

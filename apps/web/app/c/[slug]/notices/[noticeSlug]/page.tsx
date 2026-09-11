@@ -41,7 +41,7 @@ export default async function NoticeDetailPage({
         <article className={styles.article}>
           <header className={styles.header}><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt, locale)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
           <NoticeBody document={notice.body} locale={locale} />
-          <NoticeComments slug={slug} noticeSlug={noticeSlug} locale={locale} />
+          <NoticeComments slug={slug} noticeSlug={noticeSlug} locale={locale} welcome={notice.kind === "welcome"} />
         </article>
         {recentNotices.length > 0 && <aside className={styles.recent} aria-labelledby="recent-notices"><h2 id="recent-notices">{locale === "ko" ? "최근 공지" : "Recent Notices"}</h2>{recentNotices.map((item) => <Link key={item.slug} href={`/c/${slug}/notices/${item.slug}?locale=${locale}`}><strong>{item.title}</strong><small>{format(item.publishedAt, locale)}</small></Link>)}</aside>}
       </div>

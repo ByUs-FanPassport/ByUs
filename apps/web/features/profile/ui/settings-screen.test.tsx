@@ -155,6 +155,46 @@ describe("FAN-020 settings", () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels", expect.objectContaining({ method: "PATCH" })));
   });
 
+  it("uses the fixed Kakao consent version when withdrawing Kakao delivery", async () => {
+    render(<SettingsScreen locale="ko" />);
+    fireEvent.click(await screen.findByRole("switch", { name: "Kakao 수신" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels", expect.objectContaining({
+      method: "PATCH", body: JSON.stringify({ channelId: connections.channels[1].id, consented: false, consentVersion: "kakao-alimtalk-v1" }),
+    })));
+  });
+
+  it("hides activation controls when the server capability is disabled", async () => {
+    render(<SettingsScreen locale="ko" />);
+    await screen.findByRole("heading", { name: "설정" });
+    expect(screen.queryByText("카카오 알림톡")).not.toBeInTheDocument();
+  });
+
+  it("requires confirmation consent and confirms only the pending id", async () => {
+    const pending = { id: "33333333-3333-4333-8333-333333333333", destinationLabel: "010-****-5678", expiresAt: "2026-09-11T00:10:00Z" };
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections, kakaoEnrollment: { enabled: true, pending } });
+      if (url.endsWith("/kakao/enrollment/confirm") && init?.method === "POST") return Response.json({ channel: connections.channels[1] });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    const { unmount } = render(<SettingsScreen locale="ko" />);
+    const confirm = await screen.findByRole("button", { name: "이 번호로 알림 받기" });
+    expect(screen.getByText("카카오 계정에 등록된 번호로 서비스 알림을 보내드려요.")).toBeInTheDocument();
+    expect(confirm).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: /위 번호로 서비스 알림/ }));
+    fireEvent.click(confirm);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels/kakao/enrollment/confirm", expect.objectContaining({
+      method: "POST", body: JSON.stringify({ enrollmentId: pending.id, consented: true, consentVersion: "kakao-alimtalk-v1" }),
+    })));
+    const mutation = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith("/kakao/enrollment/confirm"));
+    expect(JSON.stringify(mutation)).not.toContain("01012345678");
+    unmount();
+    render(<SettingsScreen locale="en" />);
+    expect(await screen.findByText("We'll send service notifications to the number registered to your Kakao account.")).toBeInTheDocument();
+  });
+
   it("maps every browser permission capability without requesting permission", () => {
     const base = {
       secureContext: true,

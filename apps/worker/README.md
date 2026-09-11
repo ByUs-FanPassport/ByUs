@@ -74,6 +74,18 @@ maintenance), then claims and sends. Enqueue failure is fail-closed: no delivery
 claimed or pushed. The protected Web enqueue route is manual diagnostics only;
 runtime operation does not require a Vercel cron or `CRON_SECRET`.
 
+## Kakao Alimtalk via SOLAPI
+
+`KAKAO_ALIMTALK_MODE=solapi` enables a dedicated Kakao queue and requires both
+`SOLAPI_API_KEY` and `SOLAPI_API_SECRET`. It is independent from
+`NOTIFICATION_EXTERNAL_MODE`; leaving Email external delivery disabled does not
+prevent the Kakao queue from running. Each one-minute tick maintains expired
+states, reconciles at most two provider message IDs through the canonical SOLAPI
+list API, then claims at most two new sends. Only a successful database `begin`
+CAS can authorize the POST. Provider acceptance remains pending until a fully
+correlated `COMPLETE` result with status code `4000` is observed. Unknown or
+uncorrelated results never retry or fall back to Email.
+
 ## SES notification email
 
 `NOTIFICATION_EXTERNAL_MODE=ses_email` uses the email-only, consent-aware

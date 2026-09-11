@@ -24,19 +24,31 @@ export type LegalDocumentContent = {
 export const legalLabels = {
   ko: {
     notice: "ByUs 법적 고지",
-    effectiveDate: "시행일: 2026년 7월 25일",
+    effectiveDate: {
+      privacy: "시행일: 2026년 9월 11일",
+      terms: "시행일: 2026년 7월 25일",
+    },
     home: "홈",
     homeAriaLabel: "홈으로 돌아가기",
     languageAriaLabel: "언어 선택, 현재 한국어",
   },
   en: {
     notice: "ByUs Legal Notice",
-    effectiveDate: "Effective date: July 25, 2026",
+    effectiveDate: {
+      privacy: "Effective date: September 11, 2026",
+      terms: "Effective date: July 25, 2026",
+    },
     home: "Home",
     homeAriaLabel: "Return home",
     languageAriaLabel: "Choose language, currently English",
   },
-} as const satisfies Record<FanLocale, Record<string, string>>;
+} as const satisfies Record<FanLocale, {
+  notice: string;
+  effectiveDate: Record<LegalDocumentId, string>;
+  home: string;
+  homeAriaLabel: string;
+  languageAriaLabel: string;
+}>;
 
 export const legalDocuments = {
   privacy: {
@@ -55,6 +67,7 @@ export const legalDocuments = {
             "팬 인증 참여와 결과, Fan Passport 및 Stamp 발급·상태 정보",
             "LIVE 예약·출석·설문 참여 정보",
             "혜택 신청·수령·사용 상태와 알림 설정·구독 정보",
+            "선택 사항: 카카오 알림톡 수신을 직접 등록한 경우 카카오 계정에서 확인한 국내 휴대전화번호, 마스킹된 표시값, 카카오 계정 식별자 해시, 동의·철회 및 발송 상태 정보",
             "실물 혜택 배송 또는 현장 수령을 위한 이름·연락처와, 배송 시 우편번호·주소",
             "수동 팬 인증을 위해 직접 제출한 설명·증빙 이미지, 제출·심사 상태와 보상 기록",
             "공지 댓글 본문, 공개 닉네임·캐릭터, 팬 순위와 선택적으로 공개한 팬 활동",
@@ -71,16 +84,17 @@ export const legalDocuments = {
             "연결에 동의한 Instagram 프로계정의 최근 활동을 해당 팬페이지에 표시하고 연결을 유지",
             "LIVE 예약·출석·설문 및 혜택 제공",
             "알림 발송, 문의 대응과 서비스 품질 개선",
+            "카카오 알림톡 수신 동의를 확인하고 카카오 계정의 전화번호로 서비스 알림을 발송하며, 제공사 접수와 최종 배달 결과 확인",
             "부정 이용 방지, 보안 사고 대응과 법적 의무 이행",
           ],
         },
         {
           heading: "3. 보유 및 이용 기간",
-          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 다만 관계 법령에서 일정 기간 보관을 요구하거나 분쟁·보안 대응을 위해 필요한 경우에는 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
+          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 카카오 알림톡 수신 동의를 철회하거나 Kakao 연결을 해제하면 ByUs 내부 저장소의 원본 전화번호와 완료되지 않은 등록 정보를 삭제합니다. 동의·철회 이력, 발송 대조값과 제공사 접수·결과 기록은 관계 법령 준수, 분쟁 또는 보안 대응에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다. 그 밖에 관계 법령에서 일정 기간 보관을 요구하는 경우에도 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
         },
         {
-          heading: "4. 외부 서비스 이용",
-          items: ["Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. ByUs는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.", "연결 해제 또는 유효한 삭제 요청을 처리하면 ByUs의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다."],
+          heading: "4. 외부 서비스 이용 및 처리 위탁",
+          items: ["Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. ByUs는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.", "연결 해제 또는 유효한 삭제 요청을 처리하면 ByUs의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다.", "카카오 알림톡 등록은 이용자의 별도 동의 후 Kakao의 phone_number 권한으로 해당 카카오 계정에서 확인된 전화번호를 조회합니다. 이 과정에서 발급된 Kakao 접근 토큰은 보관하지 않습니다.", "수탁자: 솔라피 주식회사(SOLAPI). 위탁 업무: 카카오 알림톡 발송과 제공사 접수·배달 결과 확인. 이 업무를 위해 수신 전화번호와 메시지 발송에 필요한 정보가 전달됩니다. 솔라피 주식회사는 공식 개인정보처리방침에 따라 수신번호·메시지 내용·발송일시·발송결과 등 메시지 발송 이력을 발송일로부터 1년간 보관합니다."],
           paragraphs: ["회사는 로그인과 Embedded Wallet 제공을 위해 Google 및 Privy의 인증·지갑 서비스를 이용합니다. 각 서비스 제공자는 인증 과정에서 필요한 식별 정보와 기술 정보를 자체 정책에 따라 처리할 수 있습니다. 회사는 서비스 제공에 필요한 범위를 넘어 개인정보를 판매하지 않습니다."],
         },
         {
@@ -120,6 +134,7 @@ export const legalDocuments = {
             "Fan verification participation and results, and Fan Passport and Stamp issuance and status information",
             "LIVE reservations, attendance, and survey participation information",
             "Benefit application, receipt, and usage status, and notification settings and subscription information",
+            "Optional: when you register for Kakao service notifications, the Korean mobile phone number confirmed through your Kakao account, its masked display value, a hash of the Kakao account identifier, and consent, withdrawal, and delivery status information",
             "Name and phone number for physical reward delivery or on-site pickup, plus postal code and address when shipping is required",
             "Descriptions and evidence images you submit for manual fan verification, review status, and reward records",
             "Notice comments, public nicknames and characters, fan rankings, and fan activity you choose to make public",
@@ -136,16 +151,17 @@ export const legalDocuments = {
             "Displaying recent activity from a consenting Instagram professional account on its fan page and maintaining the connection",
             "Providing LIVE reservations, attendance, surveys, and benefits",
             "Sending notifications, responding to inquiries, and improving service quality",
+            "Confirming consent for Kakao service notifications, sending service notifications to the phone number on the Kakao account, and checking provider acceptance and final delivery results",
             "Preventing misuse, responding to security incidents, and complying with legal obligations",
           ],
         },
         {
           heading: "3. Retention and Use Period",
-          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If applicable laws require retention for a certain period, or if information is needed to resolve a dispute or respond to a security incident, we may store it separately for the scope and period necessary for that purpose."],
+          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If you withdraw consent for Kakao service notifications or disconnect Kakao, we delete the original phone number from ByUs systems and any incomplete registration information. Consent and withdrawal history, delivery correlation values, and provider acceptance and result records may be stored separately for the scope and period necessary to comply with applicable laws, resolve disputes, or respond to security incidents. We may also store information separately where applicable laws require retention for a certain period."],
         },
         {
-          heading: "4. Use of External Services",
-          items: ["Instagram connection requires separate consent from the professional account owner. ByUs requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.", "When disconnection or a valid deletion request is processed, ByUs deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings."],
+          heading: "4. External Services and Processing Providers",
+          items: ["Instagram connection requires separate consent from the professional account owner. ByUs requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.", "When disconnection or a valid deletion request is processed, ByUs deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings.", "Kakao service notification registration uses Kakao's phone_number permission, with your separate consent, to read the phone number confirmed through that Kakao account. We do not retain the Kakao access token issued during this process.", "Processor: 솔라피 주식회사 (SOLAPI). Processing service: sending Kakao service notifications and checking provider acceptance and delivery results. The recipient phone number and information required to send the message are provided for this service. Under its official Privacy Policy, 솔라피 주식회사 retains message delivery records, including the recipient number, message content, delivery time, and delivery result, for one year from the delivery date."],
           paragraphs: ["We use Google and Privy authentication and wallet services to provide login and Embedded Wallet functionality. Each provider may process identifiers and technical information required for authentication under its own policies. We do not sell personal information beyond what is necessary to provide the service."],
         },
         {

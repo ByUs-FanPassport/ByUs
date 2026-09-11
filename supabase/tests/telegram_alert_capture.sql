@@ -161,6 +161,18 @@ begin
   end if;
 end $$;
 
+-- Command LIVE aggregates include this public fixture and exclude the draft one.
+do $$
+declare stats jsonb; fixture jsonb;
+begin
+  stats:=public.telegram_command_stats('lives',clock_timestamp());
+  select value into fixture from jsonb_array_elements(stats->'lives') where value->>'title'='공개 LIVE 제목';
+  if fixture is null or fixture->>'reservations'<>'1' or fixture->>'attendances'<>'1'
+    or stats::text like '%비공개 LIVE 제목%' or stats::text like '%telegram-reserved@example.test%' then
+    raise exception 'TELEGRAM_COMMAND_LIVE_AGGREGATE';
+  end if;
+end $$;
+
 -- Existing pending rows gain current actor identity without backfill or new PII columns.
 insert into public.user_profiles(app_user_id,nickname,nickname_normalized) values
   ('f1000000-0000-4000-8000-000000000003','예약팬','예약팬');

@@ -44,7 +44,7 @@ export function LegalPage({
         <header className={styles.intro}>
           <p>{labels.notice}</p>
           <h1>{document.title}</h1>
-          <span>{labels.effectiveDate}</span>
+          <span>{labels.effectiveDate[documentId]}</span>
           <p>{document.description}</p>
         </header>
         <article className={styles.document}>

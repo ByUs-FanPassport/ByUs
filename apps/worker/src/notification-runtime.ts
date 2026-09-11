@@ -10,7 +10,11 @@ import { KakaoSender } from "./adapters/kakao-sender.js";
 import { ExternalNotificationWorker } from "./external-notification-worker.js";
 import { runRaffleRecipientRemindersOnce } from "./raffle-recipient-reminders.js";
 import { runBusinessInquiryOnce } from "./business-inquiry-worker.js";
+import { SupabaseKakaoNotificationQueue } from "./adapters/supabase-kakao-notification-queue.js";
+import { KakaoNotificationWorker } from "./kakao-notification-worker.js";
+import { SolapiClient } from "./solapi/index.js";
 import { runTelegramAlertWorkerOnce } from "./telegram-alert-worker.js";
+import { runTelegramCommandWorkerOnce } from "./telegram-command-worker.js";
 
 async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const push = await new NotificationWorker(
@@ -38,13 +42,27 @@ async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   return push+external;
 }
 
+export async function runKakaoNotificationsOnce(env: NotificationWorkerEnv) {
+  if (env.KAKAO_ALIMTALK_MODE === "disabled") return 0;
+  return new KakaoNotificationWorker(
+    SupabaseKakaoNotificationQueue.create(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY),
+    new SolapiClient({apiKey:env.SOLAPI_API_KEY!,apiSecret:env.SOLAPI_API_SECRET!}),
+    {
+      workerId:`${env.NOTIFICATION_WORKER_ID.slice(0, 114)}:kakao`,
+      leaseSeconds:Math.min(env.NOTIFICATION_WORKER_LEASE_SECONDS, 300),
+    },
+  ).runOnce();
+}
+
 export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
   // Each queue advances independently. Newly queued reminders can dispatch next tick.
   const results = await Promise.allSettled([
     runFanNotificationsOnce(env),
     runBusinessInquiryOnce(env),
     runRaffleRecipientRemindersOnce(env),
+    runKakaoNotificationsOnce(env),
     runTelegramAlertWorkerOnce(env),
+    runTelegramCommandWorkerOnce(env),
   ]);
   if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
   return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);

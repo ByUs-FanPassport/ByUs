@@ -10,4 +10,5 @@ export BYUS_CLEAN_DB_ASSERTION_FILE="$ROOT_DIR/supabase/tests/backend_security.s
 export BYUS_CLEAN_DB_SHELL_ASSERTION_FILE="$ROOT_DIR/scripts/verify-backend-security-behavior.sh"
 export BYUS_CLEAN_DB_PORT=55472
 export BYUS_MINT_BUDGET_TEST_SENTINEL=mint-dispatch-budget-clean-replay
+export BYUS_KAKAO_TEST_SENTINEL=kakao-alimtalk-clean-replay
 bash "$ROOT_DIR/scripts/verify-clean-migration-chain.sh"

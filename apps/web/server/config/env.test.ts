@@ -36,6 +36,8 @@ const validEnv = {
   KAKAO_CLIENT_SECRET: "",
   KAKAO_REDIRECT_URI: "",
   KAKAO_TEST_SINK_SECRET: "",
+  KAKAO_ALIMTALK_ENROLLMENT_ENABLED: "false",
+  SOLAPI_WEBHOOK_SECRET: "",
   GOOGLE_SITE_VERIFICATION: "",
   NAVER_SITE_VERIFICATION: "",
   BING_SITE_VERIFICATION: "",
@@ -176,6 +178,7 @@ describe("server environment", () => {
       (key) =>
         !key.startsWith("NEXT_PUBLIC_") &&
         !key.startsWith("KAKAO_") &&
+        key !== "SOLAPI_WEBHOOK_SECRET" &&
         !key.endsWith("_SITE_VERIFICATION") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
         key !== "PRIVY_APPLE_LOGIN_ENABLED" &&
