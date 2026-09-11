@@ -24,6 +24,7 @@ import { FanScoreProgress } from "@/features/fanpage/ui/fan-score-progress";
 import { FanTierBadge } from "@/features/rewards/ui/fan-tier-badge";
 import { fanStageLabel } from "@/features/rewards/domain/fan-stage";
 import { CertificationPanel } from "@/features/certification/ui/certification-panel";
+import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
 import { CreatorLivePanel, NoticePanel, RafflePanel, RecentLive } from "@/features/fanpage/ui/home-panels";
 import { InstagramRecentActivity } from "./instagram-recent-activity";
 import { pageViewIdempotencyKey, recordProductEventV1 } from "@/features/analytics/client/product-event-client";
@@ -56,7 +57,9 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const stage = passport?.stageProgress;
   const stageName = stage ? fanStageLabel(locale, stage.current) : passport ? levelLabel(locale, passport.tier) : null;
   const ticketBalance = auth.authenticated && my.state.status === "ready" ? creator?.ticketBalance ?? 0 : null;
-  const tabHref = (value: CelebrityFanTab) => `/c/${celebrity.slug}?tab=${value}&locale=${locale}#celebrity-content` as Route;
+  const tabHref = (value: CelebrityFanTab) => value === "raffles"
+    ? creatorRafflesHref(celebrity.slug, locale)
+    : `/c/${celebrity.slug}?tab=${value}&locale=${locale}#celebrity-content` as Route;
   const portrait = (size: number) => avatar.state.status === "ready" ? <Avatar avatar={avatar.state.avatar} imageUrl={avatar.state.imageUrl} label="" size={size} /> : <AvatarPlaceholder size={size} />;
   useEffect(() => {
     if (!ready) return;

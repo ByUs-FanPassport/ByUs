@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorRaffleHref, creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
 import Image from "next/image";
@@ -264,7 +266,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
   const recommendationHref = recommendation ? localizedPath(recommendation.actionHref, locale) : null;
   const missionState = missions.state.status === "error" || history.state.status === "error" ? "error"
     : missions.state.status === "loading" || history.state.status === "loading" ? "loading" : "ready";
-  const raffleAllHref = `/c/${creator.celebrity.slug}?tab=raffles&locale=${locale}#celebrity-content` as Route;
+  const raffleAllHref = creatorRafflesHref(creator.celebrity.slug, locale);
   const liveHref = `/c/${creator.celebrity.slug}?tab=live&locale=${locale}#celebrity-content` as Route;
   useEffect(() => {
     if (raffleState.status !== "ready") return;
@@ -289,7 +291,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
       <FanSectionHeader variant="personal" title={t.ticketPanel(creator.celebrity.name)} accessory={<strong className={styles.ticketBalance}>{creator.ticketBalance}{locale === "ko" ? "장" : ""}</strong>}/>
       {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "래플을 불러오는 중이에요." : "Loading raffles."}</p>
         : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{locale === "ko" ? "래플을 불러오지 못했어요." : "We couldn’t load raffles."}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
-        : raffle ? <div className={styles.rafflePreview}>{raffle.imageUrl ? <Image src={raffle.imageUrl} width={112} height={112} alt=""/> : <span className={styles.rafflePlaceholder} aria-hidden="true"><Ticket/></span>}<div><span>{t.raffleOpen}</span><strong>{raffle.title}</strong><small>{raffle.winnerQuantity}{locale === "ko" ? "명 " : " "}{t.raffleDraw}</small><time dateTime={raffle.entryClosesAt!}>{formatClosing(raffle.entryClosesAt!, locale)}</time></div><Link href={`/benefits/${raffle.benefitId}?locale=${locale}` as Route}>{t.raffleView}<ArrowRight/></Link></div>
+        : raffle ? <div className={styles.rafflePreview}>{raffle.imageUrl ? <Image src={raffle.imageUrl} width={112} height={112} alt=""/> : <span className={styles.rafflePlaceholder} aria-hidden="true"><Ticket/></span>}<div><span>{t.raffleOpen}</span><strong>{raffle.title}</strong><small>{raffle.winnerQuantity}{locale === "ko" ? "명 " : " "}{t.raffleDraw}</small><time dateTime={raffle.entryClosesAt!}>{formatClosing(raffle.entryClosesAt!, locale)}</time></div><Link href={creatorRaffleHref(creator.celebrity.slug, raffle.benefitId!, locale)}>{t.raffleView}<ArrowRight/></Link></div>
         : <div className={styles.raffleEmpty}><p>{t.raffleEmpty}</p></div>}
     </div>
       <div className={styles.nextAction}><span>{t.nextAction}</span>{missionState === "loading" ? <p role="status">{t.missionLoading}</p>

@@ -10,8 +10,8 @@ import { CreatorAvatar } from "../fan-ui/creator-avatar";
 import { EventPhoto } from "../fan-ui/event-photo";
 import { CreatorImage } from "../fan-ui/creator-image";
 import { elinaFanGuideContent } from "../elina-fan-guide/content";
-import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
-import { ifewVerificationHref } from "@/features/live/domain/ifew-event";
+import { ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
+import { ifewRafflesHref, ifewVerificationHref } from "@/features/live/domain/ifew-event";
 import { elinaLiveHref, elinaRafflesHref, elinaVerificationHref } from "@/features/live/domain/elina-event";
 import styles from "./fan-participation-guide.module.css";
 
@@ -40,7 +40,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
     verify: ifewVerificationHref(locale) as Route,
     live: `/live/${ifewLiveSlug}?locale=${locale}` as Route,
     certifications: ifewTikTokEvent,
-    raffles: `/benefits/${ifewBenefitId}?locale=${locale}` as Route,
+    raffles: ifewRafflesHref(locale),
     my: `/my?locale=${locale}` as Route,
   } as const;
   const nextLocale = locale === "ko" ? "en" : "ko";
@@ -82,7 +82,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
             {creator === "elina" ? <p className={styles.prizeSummary}>{elinaFanGuideContent[locale].prizeSummary}</p> : null}
             <div className={styles.actions}>
               <ActionLink href={creator === "elina" ? href.verify : "#steps"} primary>{t.howToJoin}</ActionLink>
-              <ActionLink href={creator === "elina" ? href.raffles : "#prizes"}>{t.viewPrizes}</ActionLink>
+              <ActionLink href={href.raffles}>{t.viewPrizes}</ActionLink>
             </div>
             <p className={styles.note}>{t.heroNote}</p>
           </div>

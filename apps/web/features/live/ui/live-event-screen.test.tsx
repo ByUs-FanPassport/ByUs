@@ -208,7 +208,7 @@ describe("LiveEventScreen", () => {
     expect(screen.queryByText("Stamp", { selector: "strong" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "LIVE 미션 보기" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "뱅크시 관람권 추첨 응모하기" }))
-      .toHaveAttribute("href", "/benefits/41ae7883-098e-49f2-9229-4f6962160141?locale=ko");
+      .toHaveAttribute("href", "/c/ifewknow/raffles?locale=ko");
   });
 
   it.each(["ko", "en"] as const)("shows Elina's real reward path and returns attendance to prize selection (%s)", async (locale) => {
@@ -227,7 +227,7 @@ describe("LiveEventScreen", () => {
     fireEvent.change(field, { target: { value: "TESTCODE" } });
     fireEvent.click(screen.getByRole("button", { name: locale === "ko" ? "출석 인증하기" : "Verify attendance" }));
     expect(await screen.findByRole("link", { name: locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter" }))
-      .toHaveAttribute("href", `/c/elina?tab=raffles&locale=${locale}#celebrity-content`);
+      .toHaveAttribute("href", `/c/elina/raffles?locale=${locale}`);
   });
 
   it("uses attendance code throughout the IfeW English attendance form and error", async () => {
@@ -517,7 +517,7 @@ describe("LiveEventScreen", () => {
     fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("link", { name: "선물 고르고 응모하기" }))
-      .toHaveAttribute("href", "/c/elina?tab=raffles&locale=ko#celebrity-content");
+      .toHaveAttribute("href", "/c/elina/raffles?locale=ko");
     expect(within(dialog).getByText("보유 응모권으로 지금 원하는 선물에 직접 응모할 수 있어요.")).toBeVisible();
   });
 
@@ -634,7 +634,7 @@ describe("LiveEventScreen", () => {
     expect(screen.getByText("LIVE 출석이 기록되고 이퓨 응모권 2장을 받았어요.")).toBeVisible();
     const prizeActions = screen.getAllByRole("link", { name: "뱅크시 관람권 추첨 응모하기" });
     expect(prizeActions).toHaveLength(2);
-    expect(prizeActions[1]).toHaveAttribute("href", "/benefits/41ae7883-098e-49f2-9229-4f6962160141?locale=ko");
+    expect(prizeActions[1]).toHaveAttribute("href", "/c/ifewknow/raffles?locale=ko");
     expect(screen.queryByRole("link", { name: /설문 참여/ })).not.toBeInTheDocument();
   });
 

@@ -95,6 +95,7 @@ describe("approved fanpage", () => {
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });
     expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "찐팬 인증", "래플 응모"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
+    expect(within(menu).getByRole("link", { name: "래플 응모" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
     expect(within(menu).getByRole("button", { name: "리더보드" })).toBeDisabled();
     expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 등록된 공지가 없어요.")).toBeInTheDocument();
@@ -154,13 +155,14 @@ describe("approved fanpage", () => {
     expect(screen.queryByText("별빛팬")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "내 패스포트" })).not.toBeInTheDocument();
   });
-  it("shows one featured raffle and all raffle prizes only on the raffle tab", async () => {
-    const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: null, title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50, status: "preparing", entryOpensAt: null, entryClosesAt: null, fulfillmentMethod: "digital", perFanTicketLimit: null };
-    stubHubFetch({ raffles: [raffle, { ...raffle, id: "33333333-3333-4333-8333-333333333333", title: "콜라보 케이스", winnerQuantity: 10 }] });
+  it("links the featured raffle into the creator catalog and shows every prize on the legacy raffle panel", async () => {
+    const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444", title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50, status: "open", entryOpensAt: null, entryClosesAt: null, fulfillmentMethod: "digital", perFanTicketLimit: null };
+    stubHubFetch({ raffles: [raffle, { ...raffle, id: "33333333-3333-4333-8333-333333333333", benefitId: null, status: "preparing", title: "콜라보 케이스", winnerQuantity: 10 }] });
     const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
     await screen.findByText("전시 티켓");
     expect(screen.queryByText("콜라보 케이스")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "래플 자세히 보기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "전체 래플 보기 →" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(screen.getByRole("link", { name: "래플 자세히 보기" })).toHaveAttribute("href", "/c/kara/raffles/44444444-4444-4444-8444-444444444444?locale=ko");
     view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="raffles" />);
     expect(await screen.findByText("콜라보 케이스")).toBeInTheDocument();
     expect(screen.queryByText(/9월 25일/)).not.toBeInTheDocument();
