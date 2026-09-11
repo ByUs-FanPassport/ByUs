@@ -1,0 +1,14 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100dvh;
+}
+
+.frame > * {
+  flex-shrink: 0;
+}
+
+.frame > [data-fan-site-footer] {
+  margin-top: auto;
+}

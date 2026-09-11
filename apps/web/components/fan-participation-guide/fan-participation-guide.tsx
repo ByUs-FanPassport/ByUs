@@ -5,7 +5,6 @@ import { ArrowRight, BadgeCheck, BookOpen, CalendarDays, MessageCircle } from "l
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
 import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
-import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import type { GuideImages } from "@/server/media/guide-images";
 import { CreatorAvatar } from "../fan-ui/creator-avatar";
 import { EventPhoto } from "../fan-ui/event-photo";
@@ -151,7 +150,6 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
         </section>
       </main>
 
-      <footer className={styles.footer}><div className={styles.footerInner}><FanWordmarkLink locale={locale} /><p>{t.footer}</p></div></footer>
     </div>
   );
 }
