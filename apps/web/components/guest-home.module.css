@@ -394,13 +394,17 @@
 
 /* Missing/unapproved portrait crops retain the whole poster without a fixed 4:5 void. */
 @media (max-width: 767px) {
-  .heroViewport { aspect-ratio:auto; height:var(--mobile-hero-height, auto); }
+  .heroViewport { aspect-ratio:auto; height:var(--mobile-hero-height, auto); background:var(--canvas); }
   .heroTrack { height:auto; align-items:flex-start; }
   .heroCarousel .heroCard { height:auto; aspect-ratio:4 / 5; }
-  .heroCarousel .heroCard[data-mobile-contained="true"] { display:block; aspect-ratio:auto; }
-  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] { position:relative; inset:auto; }
+  .heroCarousel .heroCard[data-mobile-contained="true"] { display:block; aspect-ratio:auto; background:var(--canvas); color:var(--ink); }
+  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] { position:relative; inset:auto; overflow:hidden; border-radius:20px; }
   .heroCard[data-mobile-contained="true"] [data-event-photo="home"] img { position:relative !important; display:block; width:100% !important; height:auto !important; }
   .heroCard[data-mobile-contained="true"] .heroOverlay { display:none; }
-  .heroCard[data-mobile-contained="true"] .heroContent { padding:20px 24px 24px; }
+  .heroCard[data-mobile-contained="true"] .heroContent { padding:20px 8px 12px; text-shadow:none; }
+  .heroCard[data-mobile-contained="true"] .heroDate { color:var(--muted); }
+  .heroCard[data-mobile-contained="true"] .liveStatus[data-hero-status],
+  .heroCard[data-mobile-contained="true"] .liveStatus[data-hero-status]::before { background:var(--canvas); }
+  .heroCard[data-mobile-contained="true"] .heroCountdown [data-tone="on-image"][data-status="scheduled"] { border-color:#f5c2d9; background:#fff1f7; color:#be185d; }
   .carouselControls > button { top:var(--mobile-controls-top, calc(50% - 22px)); }
 }
