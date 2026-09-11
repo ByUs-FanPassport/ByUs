@@ -2,7 +2,7 @@
 
 import {
   Activity, BadgeCheck, BarChart3, Bell, Blocks, ChevronRight,
-  Clapperboard, ExternalLink, Gift, LayoutDashboard, Menu,
+  Clapperboard, ExternalLink, Gift, Globe, LayoutDashboard, Menu,
   MessageSquareText, ScrollText, ShieldCheck, Sparkles, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import type { Route } from "next";
@@ -20,7 +20,7 @@ const copy = {
     menu: "관리자 메뉴", admin: "관리자", breadcrumb: "현재 위치",
     language: "English", environment: "운영", openService: "서비스 열기",
     groups: [
-      { label: "서비스 현황", items: [["/admin", "서비스 현황", LayoutDashboard, true], ["/admin/dashboard", "상세 통계", BarChart3]] },
+      { label: "서비스 현황", items: [["/admin", "서비스 현황", LayoutDashboard, true], ["/admin/traffic", "방문 통계", Globe], ["/admin/dashboard", "상세 통계", BarChart3]] },
       { label: "회원", items: [["/admin/inquiries", "CS 문의", MessageSquareText], ["/admin/fans", "회원 관리", UsersRound], ["/admin/certifications", "인증 심사", BadgeCheck]] },
       { label: "콘텐츠", items: [["/admin/celebrities", "크리에이터 관리", Sparkles], ["/admin/lives", "LIVE 관리", Clapperboard], ["/admin/benefits", "혜택·경품", Gift], ["/admin/notice-comments", "공지 댓글", MessageSquareText], ["/admin/lounge-messages", "팬 라운지", MessageSquareText]] },
       { label: "운영 관리", items: [["/admin/system", "시스템 상태", Activity], ["/admin/blockchain-jobs", "디지털 발급 내역", Blocks], ["/admin/notifications", "알림 전송", Bell], ["/admin/audit", "관리자 활동 기록", ScrollText]] },
@@ -30,7 +30,7 @@ const copy = {
     menu: "Admin menu", admin: "Admin", breadcrumb: "Breadcrumb",
     language: "한국어", environment: "Operations", openService: "Open service",
     groups: [
-      { label: "Service status", items: [["/admin", "Service status", LayoutDashboard, true], ["/admin/dashboard", "Detailed analytics", BarChart3]] },
+      { label: "Service status", items: [["/admin", "Service status", LayoutDashboard, true], ["/admin/traffic", "Web traffic", Globe], ["/admin/dashboard", "Detailed analytics", BarChart3]] },
       { label: "Members", items: [["/admin/inquiries", "Customer support", MessageSquareText], ["/admin/fans", "Member management", UsersRound], ["/admin/certifications", "Certification review", BadgeCheck]] },
       { label: "Content", items: [["/admin/celebrities", "Creator management", Sparkles], ["/admin/lives", "LIVE management", Clapperboard], ["/admin/benefits", "Benefits & prizes", Gift], ["/admin/notice-comments", "Notice comments", MessageSquareText], ["/admin/lounge-messages", "Fan lounge", MessageSquareText]] },
       { label: "Operations", items: [["/admin/system", "System status", Activity], ["/admin/blockchain-jobs", "Issuance history", Blocks], ["/admin/notifications", "Notification delivery", Bell], ["/admin/audit", "Admin activity log", ScrollText]] },
