@@ -40,6 +40,8 @@ export const legacyImageDimensions: Readonly<Record<string, readonly [number, nu
     2160,
     3240
   ],
+  "/images/celebrities/ifewknow/hero-editorial-soft-20260911.webp": [1672, 941],
+  "/images/celebrities/ifewknow/hero-editorial-portrait-20260911.webp": [1122, 1402],
   "/images/celebrities/jenny-jeong/hero-source.jpg": [
     3386,
     2667
