@@ -1,0 +1,145 @@
+{
+  "source": "Elina public mission presentation snapshot, 2026-09-11. Synthetic viewer and question/option IDs are supplied by server.mjs.",
+  "reward": {
+    "current": {
+      "missionScore": 1,
+      "missionTicket": 1
+    }
+  },
+  "authenticatedFanRead": {
+    "ko": {
+      "missions": [
+        {
+          "id": "4067a4ba-5874-4e2a-b100-d030f60ebaac",
+          "type": "vote",
+          "version": 1,
+          "title": "가장 눈길이 가는 뱅크시 작품",
+          "description": "세 작품을 살펴보고 가장 마음에 드는 하나를 골라 주세요. 작품 이미지: Banksy Exhibition Culture Co., Ltd. 제공.",
+          "attendanceRequired": false,
+          "visibleFrom": "2026-09-11T14:55:00+00:00",
+          "visibleUntil": "2026-09-18T10:30:00+00:00",
+          "question": "가장 눈길이 가는 뱅크시 작품은 무엇인가요?",
+          "questionImageUrl": null,
+          "options": [
+            {
+              "label": "풍선을 든 소녀",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/a38bb88324437e505d910db35f94331cf67725fdb849871c60e8e0d1ce7e6b14.webp"
+            },
+            {
+              "label": "플라잉 코퍼",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/9d1c78f0f777e0d34f304d4aae973115c11832ef00804148072440e44e4a9925.webp"
+            },
+            {
+              "label": "러브 랫",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/5fca43c55e3aa002782e63aa3cd0135c484c55c4f49d2a88c01ef5c91ee0d382.webp"
+            }
+          ]
+        },
+        {
+          "id": "2d83ca88-1768-4ab7-85af-2a6e595e5490",
+          "type": "quiz",
+          "version": 2,
+          "title": "작품 속 디테일 찾기",
+          "description": "그림을 자세히 보고 답을 골라 주세요. 작품 이미지: Banksy Exhibition Culture Co., Ltd. 제공.",
+          "attendanceRequired": false,
+          "visibleFrom": "2026-09-11T14:56:59.923+00:00",
+          "visibleUntil": "2026-09-18T10:30:00+00:00",
+          "question": "그림 속 빨간 풍선은 어떤 모양인가요?",
+          "questionImageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/a38bb88324437e505d910db35f94331cf67725fdb849871c60e8e0d1ce7e6b14.webp",
+          "options": [
+            {
+              "label": "하트",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "별",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "동그라미",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "꽃",
+              "displayMode": "text",
+              "imageUrl": null
+            }
+          ]
+        }
+      ]
+    },
+    "en": {
+      "missions": [
+        {
+          "id": "4067a4ba-5874-4e2a-b100-d030f60ebaac",
+          "type": "vote",
+          "version": 1,
+          "title": "Which Banksy artwork catches your eye?",
+          "description": "Take a look at the three artworks and choose your favorite. Images courtesy of Banksy Exhibition Culture Co., Ltd.",
+          "attendanceRequired": false,
+          "visibleFrom": "2026-09-11T14:55:00+00:00",
+          "visibleUntil": "2026-09-18T10:30:00+00:00",
+          "question": "Which Banksy artwork catches your eye the most?",
+          "questionImageUrl": null,
+          "options": [
+            {
+              "label": "Girl with Balloon",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/a38bb88324437e505d910db35f94331cf67725fdb849871c60e8e0d1ce7e6b14.webp"
+            },
+            {
+              "label": "Flying Copper",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/9d1c78f0f777e0d34f304d4aae973115c11832ef00804148072440e44e4a9925.webp"
+            },
+            {
+              "label": "Love Rat",
+              "displayMode": "text_media",
+              "imageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/5fca43c55e3aa002782e63aa3cd0135c484c55c4f49d2a88c01ef5c91ee0d382.webp"
+            }
+          ]
+        },
+        {
+          "id": "2d83ca88-1768-4ab7-85af-2a6e595e5490",
+          "type": "quiz",
+          "version": 2,
+          "title": "Find the detail",
+          "description": "Look closely at the artwork and choose your answer. Image courtesy of Banksy Exhibition Culture Co., Ltd.",
+          "attendanceRequired": false,
+          "visibleFrom": "2026-09-11T14:56:59.923+00:00",
+          "visibleUntil": "2026-09-18T10:30:00+00:00",
+          "question": "What shape is the red balloon in the artwork?",
+          "questionImageUrl": "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/public-image-assets/a38bb88324437e505d910db35f94331cf67725fdb849871c60e8e0d1ce7e6b14.webp",
+          "options": [
+            {
+              "label": "Heart",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "Star",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "Circle",
+              "displayMode": "text",
+              "imageUrl": null
+            },
+            {
+              "label": "Flower",
+              "displayMode": "text",
+              "imageUrl": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

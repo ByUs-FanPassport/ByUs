@@ -9,6 +9,8 @@ import { liveMissionCompletionSchema, liveMissionListSchema, liveMissionSchema }
 import { FanState } from "../../../components/fan-ui/fan-state";
 import { FanAction } from "../../../components/fan-ui/fan-action";
 import { FocusFlowHeader } from "../../../components/fan-shell/focus-flow-header";
+import { elinaLiveSlug } from "../domain/elina-event";
+import { ArtMissionHeader, ArtMissionPlay, supportsArtMissionPlay } from "./art-mission-play";
 import styles from "./live-mission-screen.module.css";
 
 type Mission = z.infer<typeof liveMissionSchema>;
@@ -18,12 +20,13 @@ type SubmissionState = "pending" | "complete" | "error";
 export function LiveMissionScreen(props: Props) {
   const auth = usePrivy();
   const otherLocale = props.locale === "ko" ? "en" : "ko";
-  return <div className={styles.surface} data-fan-surface lang={props.locale}>
-    <FocusFlowHeader locale={props.locale} mainId="live-mission-main" innerClassName={styles.headerInner} sticky>
+  const artCampaign = props.slug === elinaLiveSlug;
+  return <div className={`${styles.surface} ${artCampaign ? styles.artSurface : ""}`} data-fan-surface lang={props.locale}>
+    {artCampaign ? <ArtMissionHeader locale={props.locale} /> : <FocusFlowHeader locale={props.locale} mainId="live-mission-main" innerClassName={styles.headerInner} sticky>
       <Link className={styles.locale} href={`/live/${props.slug}/missions?locale=${otherLocale}`} lang={otherLocale} hrefLang={otherLocale}>
         {props.locale === "ko" ? "KO / EN" : "EN / KO"}
       </Link>
-    </FocusFlowHeader>
+    </FocusFlowHeader>}
     <MissionContent key={`${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${props.slug}:${props.locale}`} {...props} auth={auth} />
   </div>;
 }
@@ -37,6 +40,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
   const [missions, setMissions] = useState<Mission[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submissions, setSubmissions] = useState<Record<string, SubmissionState>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const active = useRef(true);
   const inFlight = useRef(new Map<string, AbortController>());
   const requestKeys = useRef(new Map<string, { fingerprint: string; key: string }>());
@@ -98,15 +102,23 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
         body: JSON.stringify({ idempotencyKey: request.key, answers: selectedAnswers }),
       });
-      if (!response.ok) throw new Error("Mission submission failed");
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: { code?: unknown } } | null;
+        const code = body?.error?.code;
+        throw new Error(typeof code === "string" && /^MISSION_[A-Z_]+$/.test(code) ? code : "MISSION_UNAVAILABLE");
+      }
       const completed = liveMissionCompletionSchema.parse(await response.json()).mission;
       if (completed.id !== mission.id || completed.type !== mission.type) throw new Error("Mission response mismatch");
       if (!active.current || controller.signal.aborted) return;
       setMissions(current => current.map(item => item.id === completed.id ? { ...item, completed: true } : item));
       setSubmissions(current => ({ ...current, [mission.id]: "complete" }));
       requestKeys.current.delete(mission.id);
-    } catch {
-      if (active.current && !controller.signal.aborted) setSubmissions(current => ({ ...current, [mission.id]: "error" }));
+      return completed;
+    } catch (error) {
+      if (active.current && !controller.signal.aborted) {
+        setErrors(current => ({ ...current, [mission.id]: error instanceof Error ? error.message : "MISSION_UNAVAILABLE" }));
+        setSubmissions(current => ({ ...current, [mission.id]: "error" }));
+      }
     } finally {
       inFlight.current.delete(mission.id);
     }
@@ -115,6 +127,10 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
   const back = <Link className={styles.back} href={`/live/${slug}?locale=${locale}`}>{ko ? "LIVE로 돌아가기" : "Back to LIVE"}</Link>;
   if (!ready) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<FanState kind="loading" title={ko ? "참여 정보를 확인하고 있어요." : "Checking participation."} /></main>;
   if (!authenticated) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<h1>{ko ? "LIVE 미션" : "LIVE Missions"}</h1><button onClick={login}>{ko ? "로그인하고 참여하기" : "Sign in to join"}</button></main>;
+  if (loadState === "ready" && slug === elinaLiveSlug && supportsArtMissionPlay(missions)) {
+    return <ArtMissionPlay missions={missions} locale={locale} answers={answers} submissions={submissions} errors={errors}
+      onAnswer={(questionId, optionId) => setAnswers(current => ({ ...current, [questionId]: optionId }))} onSubmit={submit} />;
+  }
   return <main className={styles.page} id="live-mission-main" tabIndex={-1}>
     {back}<header><p>{title || (ko ? "LIVE 참여 미션" : "LIVE participation")}</p><h1>{ko ? "미션" : "Missions"}</h1></header>
     {loadState === "loading" ? <FanState kind="loading" title={ko ? "미션을 불러오고 있어요." : "Loading missions."} />

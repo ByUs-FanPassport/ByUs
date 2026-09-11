@@ -1,4 +1,6 @@
 .surface { min-height: 100dvh; color: var(--color-ink, #161616); background: #fff; font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.artSurface { background: #fff4f8; }
+.artSurface, .artSurface *, .artSurface *::before, .artSurface *::after { box-sizing: border-box; }
 .headerInner { width: min(944px, calc(100% - 40px)); }
 .locale { display: inline-flex; min-width: 88px; min-height: 44px; align-items: center; justify-content: flex-end; color: inherit; font-size: 13px; font-weight: 750; text-decoration: none; }
 .page { width: min(880px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 max(64px, env(safe-area-inset-bottom)); }

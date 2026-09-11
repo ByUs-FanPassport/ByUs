@@ -1,6 +1,9 @@
 import { act,render,screen,fireEvent,waitFor } from "@testing-library/react";
 import { beforeEach,it,expect,vi } from "vitest";
 import { LiveMissionScreen } from "./live-mission-screen";
+import { elinaLiveSlug } from "../domain/elina-event";
+import { supportsArtMissionPlay } from "./art-mission-play";
+import { liveMissionListSchema } from "../domain/live-mission";
 let authenticated=true;
 let owner="owner-a";
 const getAccessToken=vi.fn(async()=>"token");
@@ -56,4 +59,93 @@ it("distinguishes failed load from empty and retries without submitting",async()
  failed=false;fireEvent.click(screen.getByRole("button",{name:"다시 시도"}));
  expect(await screen.findByText("지금 참여할 수 있는 미션이 없어요.")).toBeInTheDocument();
  expect(fetcher.mock.calls.every(([url])=>!url.includes("/submit"))).toBe(true);
+});
+
+const optionId = (n: number) => `30000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const artQuiz = {
+ ...mission, attendanceRequired: false,
+ description: "그림을 살펴보세요. 작품 이미지: Banksy Exhibition Culture Co., Ltd. 제공.",
+ questions: [{ ...mission.questions[0], text: "그림 속 빨간 풍선은 어떤 모양인가요?", media: { type: "image", url: "https://example.com/balloon.webp" },
+  options: ["하트", "별", "동그라미", "꽃"].map((label, index) => ({ id: optionId(index + 1), label, displayMode: "text", media: null })) }],
+};
+const artVote = {
+ ...mission, id: "10000000-0000-4000-8000-000000000002", type: "vote", attendanceRequired: false,
+ description: "세 작품을 골라보세요. 작품 이미지: Banksy Exhibition Culture Co., Ltd. 제공.",
+ questions: [{ id: "20000000-0000-4000-8000-000000000002", text: "가장 눈길이 가는 뱅크시 작품은 무엇인가요?", media: null,
+  options: ["풍선을 든 소녀", "플라잉 코퍼", "러브 랫"].map((label, index) => ({ id: optionId(index + 5), label, displayMode: "text_media", media: { type: "image", url: `https://example.com/art-${index}.webp` } })) }],
+};
+
+function mockArtFetch(list = [artVote, artQuiz], post = async (id: string) => Response.json({ mission: { ...completion.mission, id, type: id === artVote.id ? "vote" : "quiz", correctness: id === artVote.id ? null : true } })) {
+ const fetcher = vi.fn(async (url: string, init?: RequestInit) => init?.method === "POST" ? post(url.split("/")[3]) : url.includes("/missions?") ? Response.json(list) : new Response(null, { status: 404 }));
+ vi.stubGlobal("fetch", fetcher);
+ Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { value: vi.fn(), configurable: true });
+ return fetcher;
+}
+
+it("runs the image vote then quiz, using server reward values on the final result", async () => {
+ const fetcher = mockArtFetch([artQuiz, artVote], async id => Response.json({ mission: { ...completion.mission, id, type: id === artVote.id ? "vote" : "quiz", correctness: id === artVote.id ? null : true, scorePoints: 3, ticketAmount: 2 } }));
+ render(<LiveMissionScreen slug={elinaLiveSlug} locale="ko" />);
+ expect(await screen.findByRole("button", { name: "이 작품으로 결정" })).toBeDisabled();
+ fireEvent.click(screen.getByRole("radio", { name: "플라잉 코퍼" }));
+ fireEvent.click(screen.getByRole("button", { name: "이 작품으로 결정" }));
+ expect(await screen.findByRole("heading", { name: "빨간 풍선의 모양은?" })).toHaveFocus();
+ expect(screen.getByRole("button", { name: "취향 고르기 완료" })).toBeDisabled();
+ fireEvent.click(screen.getByRole("radio", { name: "하트" }));
+ fireEvent.click(screen.getByRole("button", { name: "정답 확인하기" }));
+ expect(await screen.findByRole("heading", { name: /두 미션.*모두 완료/ })).toHaveFocus();
+ expect(screen.getByRole("status")).toHaveTextContent("정답이에요");
+ expect(screen.getByText("+3")).toBeInTheDocument();
+ expect(screen.getByText("+2")).toBeInTheDocument();
+ expect(screen.getByRole("link", { name: "엘리나 팬페이지로" })).toHaveAttribute("href", "/c/elina?locale=ko");
+ expect(fetcher.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(2);
+});
+
+it("completes an incorrect quiz without claiming a correct answer or offering resubmission", async () => {
+ mockArtFetch([{ ...artVote, completed: true }, artQuiz], async id => Response.json({ mission: { ...completion.mission, id, correctness: false, scorePoints: 0, ticketAmount: 0 } }));
+ render(<LiveMissionScreen slug={elinaLiveSlug} locale="ko" />);
+ fireEvent.click(await screen.findByRole("radio", { name: "별" }));
+ fireEvent.click(screen.getByRole("button", { name: "정답 확인하기" }));
+ expect(await screen.findByRole("status")).toHaveTextContent("정답은 아니지만, 미션 참여는 완료됐어요");
+ expect(screen.getAllByText("+0")).toHaveLength(2);
+ expect(screen.queryByRole("button", { name: "정답 확인하기" })).not.toBeInTheDocument();
+ expect(screen.queryByText(/정답이에요/)).not.toBeInTheDocument();
+});
+
+it("shows a truthful already-completed state with no reconstructed rewards", async () => {
+ const fetcher = mockArtFetch([{ ...artVote, completed: true }, { ...artQuiz, completed: true }]);
+ render(<LiveMissionScreen slug={elinaLiveSlug} locale="en" />);
+ expect(await screen.findByRole("heading", { name: /Both missions.*complete/ })).toBeInTheDocument();
+ expect(screen.queryByRole("region", { name: "Rewards from this mission" })).not.toBeInTheDocument();
+ expect(screen.queryByText(/^\+\d/)).not.toBeInTheDocument();
+ expect(screen.getByRole("link", { name: "Back to Elina" })).toHaveAttribute("href", "/c/elina?locale=en");
+ expect(fetcher.mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
+});
+
+it("locks art controls while submitting and preserves the answer and idempotency key after failure", async () => {
+ const post = deferred<Response>();
+ const fetcher = mockArtFetch([artVote, artQuiz], () => post.promise);
+ render(<LiveMissionScreen slug={elinaLiveSlug} locale="ko" />);
+ fireEvent.click(await screen.findByRole("radio", { name: "러브 랫" }));
+ const button = screen.getByRole("button", { name: "이 작품으로 결정" });
+ fireEvent.click(button); fireEvent.click(button);
+ expect(screen.getByRole("radio", { name: "풍선을 든 소녀" })).toBeDisabled();
+ expect(screen.getByRole("button", { name: "디테일 퀴즈" })).toBeDisabled();
+ await act(async () => post.resolve(Response.json({ error: { code: "MISSION_UNAVAILABLE" } }, { status: 503 })));
+ expect(await screen.findByRole("alert")).toHaveTextContent("선택한 답은 그대로예요");
+ expect(screen.getByRole("radio", { name: "러브 랫" })).toBeChecked();
+ fireEvent.click(screen.getByRole("button", { name: "이 작품으로 결정" }));
+ await waitFor(() => expect(fetcher.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(2));
+ const bodies = fetcher.mock.calls.filter(([, init]) => init?.method === "POST").map(([, init]) => JSON.parse(String(init?.body)));
+ expect(bodies[0]).toEqual(bodies[1]);
+});
+
+it("keeps changed CMS questions and falls back for unsupported mission structures", async () => {
+ mockArtFetch([artVote, { ...artQuiz, questions: [{ ...artQuiz.questions[0], text: "새로 등록된 질문" }] }]);
+ render(<LiveMissionScreen slug={elinaLiveSlug} locale="ko" />);
+ fireEvent.click(await screen.findByRole("button", { name: "디테일 퀴즈" }));
+ expect(screen.getByRole("heading", { name: "새로 등록된 질문" })).toBeInTheDocument();
+ const list = liveMissionListSchema.parse([artVote, artQuiz]);
+ expect(supportsArtMissionPlay(list)).toBe(true);
+ expect(supportsArtMissionPlay([{ ...list[0], questions: [...list[0].questions, list[0].questions[0]] }, list[1]])).toBe(false);
+ expect(supportsArtMissionPlay([{ ...list[0], questions: [{ ...list[0].questions[0], media: { type: "video", url: "https://example.com/instructions.mp4" } }] }, list[1]])).toBe(false);
 });

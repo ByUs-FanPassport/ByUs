@@ -1,0 +1,136 @@
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.78fr);
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 32px;
+  padding: 20px;
+  border: 1px solid #f0c2d8;
+  border-radius: 20px;
+  background: #fff8fb;
+}
+
+.copy {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.copy p,
+.copy h2 {
+  margin: 0;
+}
+
+.eyebrow {
+  color: #a7185d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.copy h2 {
+  color: #2a1721;
+  font-size: clamp(24px, 2.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.invitation {
+  max-width: 560px;
+  color: #66565e;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.count {
+  color: #7c5066;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 2px;
+  padding: 10px 24px 12px;
+  border: 1px solid #c91f70;
+  border-radius: 10px;
+  background: #c91f70;
+  box-shadow: inset 0 -3px #9f1458;
+  color: #fff !important;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.action:focus-visible {
+  outline: 3px solid #202024;
+  outline-offset: 4px;
+}
+
+.hint {
+  color: #716c74;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.artworks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.artwork {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 0.72;
+  overflow: hidden;
+  border: 1px solid rgb(107 64 84 / 12%);
+  border-radius: 12px;
+  background: #f7eef2;
+}
+
+.artwork img {
+  object-fit: contain;
+}
+
+@media (max-width: 767px) {
+  .card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .copy {
+    display: contents;
+  }
+
+  .artworks {
+    grid-row: 4;
+    gap: 8px;
+    margin: 10px 0 2px;
+  }
+
+  .artwork {
+    height: 112px;
+    aspect-ratio: auto;
+  }
+
+  .copy h2 {
+    font-size: 26px;
+  }
+
+  .action {
+    width: 100%;
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
+}
