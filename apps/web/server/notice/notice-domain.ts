@@ -93,6 +93,7 @@ export type PublicNoticeSummary = Readonly<{
   slug: string;
   title: string;
   pinned: boolean;
+  kind: "standard" | "welcome";
   publishedAt: string;
 }>;
 

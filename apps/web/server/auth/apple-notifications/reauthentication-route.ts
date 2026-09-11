@@ -73,6 +73,30 @@ function safeLoginPath(path: string): string {
   return url.pathname + url.search;
 }
 
+function invalidCallbackResponse(responseHeaders: Headers): Response {
+  return Response.json(
+    { error: { code: "INVALID_REAUTHENTICATION_CALLBACK" } },
+    { status: 400, headers: responseHeaders },
+  );
+}
+
+function callbackFailureResponse(input: {
+  responseHeaders: Headers;
+  origin: string;
+  provider: ReauthenticationProvider;
+  returnPath?: string;
+}): Response {
+  const destination = new URL(
+    input.returnPath ? safeLoginPath(input.returnPath) : "/login",
+    input.origin,
+  );
+  if (!input.returnPath) destination.searchParams.set("locale", sanitizeLocale(null));
+  destination.searchParams.set("reauth", "failed");
+  input.responseHeaders.set("set-cookie", cookie("", input.provider, 0));
+  input.responseHeaders.set("location", destination.toString());
+  return new Response(null, { status: 303, headers: input.responseHeaders });
+}
+
 export async function startReauthentication(request: Request, dependencies: ReauthenticationRouteDependencies): Promise<Response> {
   const responseHeaders = headers();
   try {
@@ -123,15 +147,21 @@ export async function completeReauthentication(
   request: Request, provider: string, dependencies: ReauthenticationRouteDependencies,
 ): Promise<Response> {
   const responseHeaders = headers();
+  let requestOrigin: string;
+  try {
+    requestOrigin = new URL(request.url).origin;
+  } catch {
+    return invalidCallbackResponse(responseHeaders);
+  }
+  if ((provider !== "apple" && provider !== "google")
+    || requestOrigin !== dependencies.config.origin
+    || (provider === "apple" && request.method !== "POST")
+    || (provider === "google" && request.method !== "GET")
+    || (provider === "apple" && !request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded"))) {
+    return invalidCallbackResponse(responseHeaders);
+  }
   let validatedChallenge: z.infer<typeof challengeSchema> | null = null;
   try {
-    if ((provider !== "apple" && provider !== "google")
-      || new URL(request.url).origin !== dependencies.config.origin
-      || (provider === "apple" && request.method !== "POST")
-      || (provider === "google" && request.method !== "GET")) throw new Error("Invalid callback");
-    if (provider === "apple" && !request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) {
-      throw new Error("Invalid callback");
-    }
     const parameters = provider === "apple"
       ? new URLSearchParams(await boundedText(request, 8192))
       : new URL(request.url).searchParams;
@@ -144,7 +174,7 @@ export async function completeReauthentication(
       p_state_hash: sha256(state), p_cookie_hash: sha256(browserBinding),
     });
     const challenge = challengeSchema.parse(row);
-    if (challenge.provider !== provider) throw new Error("Invalid callback provider");
+    if (challenge.provider !== provider) return invalidCallbackResponse(responseHeaders);
     validatedChallenge = challenge;
     const code = parameters.get("code");
     if (parameters.has("error") || !code || code.length > 4096 || parameters.getAll("code").length !== 1) {
@@ -168,13 +198,11 @@ export async function completeReauthentication(
     responseHeaders.set("location", destination.toString());
     return new Response(null, { status: 303, headers: responseHeaders });
   } catch {
-    if (validatedChallenge) {
-      const destination = new URL(safeLoginPath(validatedChallenge.returnPath), dependencies.config.origin);
-      destination.searchParams.set("reauth", "failed");
-      responseHeaders.set("set-cookie", cookie("", validatedChallenge.provider, 0));
-      responseHeaders.set("location", destination.toString());
-      return new Response(null, { status: 303, headers: responseHeaders });
-    }
-    return Response.json({ error: { code: "INVALID_REAUTHENTICATION_CALLBACK" } }, { status: 400, headers: responseHeaders });
+    return callbackFailureResponse({
+      responseHeaders,
+      origin: dependencies.config.origin,
+      provider: validatedChallenge?.provider ?? provider,
+      returnPath: validatedChallenge?.returnPath,
+    });
   }
 }

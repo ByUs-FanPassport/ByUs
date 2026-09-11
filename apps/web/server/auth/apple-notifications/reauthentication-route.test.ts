@@ -349,7 +349,7 @@ describe("reauthentication callback route", () => {
     ["wrong cookie", { cookie: `${COOKIE_NAME}=${"c".repeat(43)}` }],
     ["duplicate cookie", { cookie: `${COOKIE_NAME}=${"c".repeat(43)}; ${COOKIE_NAME}=${"d".repeat(43)}` }],
     ["duplicate state", { duplicateState: true }],
-  ] as const)("does not verify a code before rejecting %s binding", async (_label, input) => {
+  ] as const)("does not verify a code before recovering from %s binding", async (_label, input) => {
     const deps = dependencies();
     const started = await start("google", deps);
     const response = await completeReauthentication(
@@ -357,9 +357,41 @@ describe("reauthentication callback route", () => {
       "google",
       deps,
     );
-    expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: { code: "INVALID_REAUTHENTICATION_CALLBACK" } });
+    expect(response.status).toBe(303);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.origin).toBe(ORIGIN);
+    expect(location.pathname).toBe("/login");
+    expect([...location.searchParams.entries()]).toEqual([
+      ["locale", "ko"],
+      ["reauth", "failed"],
+    ]);
+    expect(response.headers.get("set-cookie")).toContain(`${COOKIE_NAME}=;`);
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
     expect(deps.verifyCode).not.toHaveBeenCalled();
+    expect(deps.repository.call).not.toHaveBeenCalledWith(
+      "complete_apple_reauthentication",
+      expect.anything(),
+    );
+  });
+
+  it("recovers an Apple form_post with a missing browser cookie without trusting callback data", async () => {
+    const deps = dependencies();
+    const started = await start("apple", deps);
+    const response = await completeReauthentication(
+      callbackRequest(started, { cookie: "" }),
+      "apple",
+      deps,
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/login?locale=ko&reauth=failed`);
+    expect(response.headers.get("set-cookie")).toContain(`${COOKIE_NAME}=;`);
+    expect(response.headers.get("set-cookie")).toContain("SameSite=None");
+    expect(deps.verifyCode).not.toHaveBeenCalled();
+    expect(deps.repository.call).not.toHaveBeenCalledWith(
+      "complete_apple_reauthentication",
+      expect.anything(),
+    );
   });
 
   it("rejects provider and method mismatches before code verification", async () => {
@@ -372,6 +404,7 @@ describe("reauthentication callback route", () => {
       deps,
     );
     expect(wrongProvider.status).toBe(400);
+    expect(wrongProvider.headers.get("location")).toBeNull();
     expect(deps.verifyCode).not.toHaveBeenCalled();
 
     const wrongMethod = await completeReauthentication(
@@ -380,6 +413,7 @@ describe("reauthentication callback route", () => {
       deps,
     );
     expect(wrongMethod.status).toBe(400);
+    expect(wrongMethod.headers.get("location")).toBeNull();
     expect(deps.verifyCode).not.toHaveBeenCalled();
 
     const unknownProvider = await completeReauthentication(
@@ -388,6 +422,7 @@ describe("reauthentication callback route", () => {
       deps,
     );
     expect(unknownProvider.status).toBe(400);
+    expect(unknownProvider.headers.get("location")).toBeNull();
     expect(deps.verifyCode).not.toHaveBeenCalled();
 
     const appleDeps = dependencies();
@@ -405,7 +440,30 @@ describe("reauthentication callback route", () => {
       appleDeps,
     );
     expect(wrongContentType.status).toBe(400);
+    expect(wrongContentType.headers.get("location")).toBeNull();
     expect(appleDeps.verifyCode).not.toHaveBeenCalled();
+  });
+
+  it("rejects a callback on the wrong origin instead of redirecting it", async () => {
+    const deps = dependencies();
+    const started = await start("google", deps);
+    const parameters = new URLSearchParams({ state: started.state, code: "openid-code-secret" });
+    const response = await completeReauthentication(
+      new Request(`https://attacker.test/api/auth/apple/reauth/callback/google?${parameters}`, {
+        headers: { cookie: `${COOKIE_NAME}=${started.binding}` },
+      }),
+      "google",
+      deps,
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(deps.repository.call).not.toHaveBeenCalledWith(
+      "read_apple_reauth_challenge",
+      expect.anything(),
+    );
+    expect(deps.verifyCode).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -450,10 +508,13 @@ describe("reauthentication callback route", () => {
     const readDeps = dependencies({ callFailure: { operation: "read", message: "private read detail" } });
     const readStarted = await start("google", readDeps);
     const readResponse = await completeReauthentication(callbackRequest(readStarted), "google", readDeps);
-    expect(readResponse.status).toBe(400);
+    expect(readResponse.status).toBe(303);
     const readBody = await readResponse.text();
-    expect(JSON.parse(readBody)).toEqual({ error: { code: "INVALID_REAUTHENTICATION_CALLBACK" } });
+    expect(readResponse.headers.get("location")).toBe(`${ORIGIN}/login?locale=ko&reauth=failed`);
+    expect(readResponse.headers.get("set-cookie")).toContain(`${COOKIE_NAME}=;`);
+    expect(readBody).toBe("");
     expect(readBody).not.toMatch(/private|read detail/iu);
+    expect(readDeps.verifyCode).not.toHaveBeenCalled();
 
     const completeDeps = dependencies({ callFailure: { operation: "complete", message: "private write detail" } });
     const completeStarted = await start("apple", completeDeps);

@@ -5,7 +5,7 @@ import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { withLocalePath } from "./locale-path";
 import { X } from "lucide-react";
 import { AppleMark, ArrowRight, GoogleMark } from "./icons";
@@ -23,6 +23,7 @@ import {
   withRequestDeadline,
 } from "../features/reliability/client/request-deadline";
 import { getSessionStorage } from "../features/reliability/client/session-storage";
+import { getOAuthStartGuard } from "../features/reliability/client/oauth-start";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -138,13 +139,15 @@ export function LoginPage({
   const privyUserId = user?.id;
   const markAvatarSessionReady = useAvatarSessionReady();
   const [error, setError] = useState<string | null>(null);
-  const [oauthStarting, setOauthStarting] = useState(false);
+  const oauthGuard = getOAuthStartGuard();
+  const oauthState = useSyncExternalStore(oauthGuard.subscribe, oauthGuard.getSnapshot, oauthGuard.getServerSnapshot);
+  const oauthStarting = oauthState === "starting";
+  const oauthRestartRequired = oauthState === "restart-required";
   const [reauthenticationProviders, setReauthenticationProviders] = useState<Array<"google" | "apple">>([]);
   const [reauthenticationStarting, setReauthenticationStarting] = useState(false);
   const [reauthenticationFailed, setReauthenticationFailed] = useState(false);
   const [readinessAttempt, setReadinessAttempt] = useState(0);
   const reauthenticationStartRef = useRef(false);
-  const oauthStartRef = useRef(false);
   const synchronizationRef = useRef<{ userId: string; promise: Promise<void> } | null>(null);
   const walletCreationsRef = useRef(new Map<string, Promise<unknown>>());
   const activeIdentityRef = useRef<string | null>(privyUserId ?? null);
@@ -296,21 +299,24 @@ export function LoginPage({
   });
   const { initOAuth, loading: oauthLoading } = useLoginWithOAuth(loginCallbacks);
 
+  const loginError = oauthRestartRequired
+    ? locale === "ko"
+      ? "로그인 연결이 오래 걸리고 있어요. 로그인 화면을 새로 열어 다시 시도해 주세요."
+      : "Sign-in is taking longer than expected. Reopen the sign-in page to try again."
+    : error ?? (searchParams.get("reauth") === "failed"
+      ? locale === "ko" ? "계정을 확인하지 못했어요. 다시 로그인해 주세요." : "We couldn't verify your account. Please sign in again."
+      : null);
+  const restartOAuthPath = appendLoginContext("/login", { returnTo, locale, intent, entity, authIntent });
+
   const startOAuthLogin = useCallback((provider: "google" | "apple") => {
-    if (oauthStartRef.current) return;
-    oauthStartRef.current = true;
-    setOauthStarting(true);
+    if (oauthGuard.getSnapshot() !== "idle") return;
     setError(null);
-    void withOperationDeadline(initOAuth({ provider }), SDK_OPERATION_TIMEOUT_MS)
-      .catch((caught) => {
+    void oauthGuard.start(() => initOAuth({ provider }), SDK_OPERATION_TIMEOUT_MS)
+      ?.catch((caught) => {
         reportRecoveryFailure("login.oauth", caught);
-        setError(loginErrorMessage);
-      })
-      .finally(() => {
-        oauthStartRef.current = false;
-        setOauthStarting(false);
+        if (mountedRef.current) setError(loginErrorMessage);
       });
-  }, [initOAuth, loginErrorMessage]);
+  }, [initOAuth, loginErrorMessage, oauthGuard]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -350,13 +356,13 @@ export function LoginPage({
   }, [authenticated, ready, privyUserId, synchronizeSession]);
 
   useEffect(() => {
-    if (!error) return;
+    if (!(authenticated ? error : loginError)) return;
     if (authenticated) {
       sessionErrorRef.current?.focus();
       return;
     }
     errorRef.current?.focus();
-  }, [authenticated, error]);
+  }, [authenticated, error, loginError]);
 
   const retrySessionSynchronization = useCallback(() => {
     setError(null);
@@ -560,8 +566,8 @@ export function LoginPage({
         <button
           className={styles.googleButton}
           type="button"
-          disabled={!ready || authenticated || oauthLoading || oauthStarting}
-          aria-busy={authenticated || oauthLoading || oauthStarting}
+          disabled={!ready || authenticated || oauthLoading || oauthStarting || oauthRestartRequired}
+          aria-busy={!oauthRestartRequired && (authenticated || oauthLoading || oauthStarting)}
           onClick={() => startOAuthLogin("google")}
         >
           <GoogleMark />
@@ -572,8 +578,8 @@ export function LoginPage({
           <button
             className={styles.appleButton}
             type="button"
-            disabled={!ready || authenticated || oauthLoading || oauthStarting}
-            aria-busy={authenticated || oauthLoading || oauthStarting}
+            disabled={!ready || authenticated || oauthLoading || oauthStarting || oauthRestartRequired}
+            aria-busy={!oauthRestartRequired && (authenticated || oauthLoading || oauthStarting)}
             onClick={() => startOAuthLogin("apple")}
           >
             <AppleMark />
@@ -587,7 +593,7 @@ export function LoginPage({
             <button
               className={styles.emailButton}
               type="button"
-              disabled={!ready || authenticated}
+              disabled={!ready || authenticated || oauthStarting || oauthRestartRequired}
               onClick={() => {
                 setError(null);
                 login({ loginMethods: ["email"] });
@@ -598,7 +604,14 @@ export function LoginPage({
             <p>{locale === "ko" ? "Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요." : "Use only a Test Account email and verification code registered in the Privy dashboard."}</p>
           </div>
         )}
-        {error && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
+        {loginError && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{loginError}</p>}
+        {oauthRestartRequired && (
+          // A native navigation replaces the document and its pending SDK work.
+          // A Next Link/router transition would retain the old OAuth request.
+          <a className={`${styles.emailButton} ${styles.restartLink}`} href={restartOAuthPath}>
+            {locale === "ko" ? "로그인 다시 시작" : "Restart sign-in"}
+          </a>
+        )}
     </div>
   );
 
