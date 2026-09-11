@@ -1,6 +1,6 @@
 # ByUs 시작 문의 / 파트너 협업 제안
 
-기존 이용 가이드와 미국 팬미팅 협업 문의 페이지처럼 두 문의 페이지를 추가한다. 구현 범위는 로컬 코드와 검증이며, 운영 변경·메일 실발송·푸시·배포는 수행하지 않았다.
+기존 이용 가이드와 미국 팬미팅 협업 문의 페이지처럼 두 문의 페이지를 추가한다. 로컬 구현·검증을 마친 뒤 사용자의 배포 완료 요청에 따라 운영 반영을 진행한다. 실제 업무 수신자에게 테스트 문의나 메일은 보내지 않는다.
 
 ## 구현
 
@@ -49,3 +49,12 @@
 독립 위험 검토에서 공개 API의 차단 결함은 발견하지 못했다. service_role이 직접 동일 UUID/hash를 조합해 새 유형 행을 legacy RPC로 재생하는 경우 type을 따로 비교하지 않는 기존 동작은 남아 있다. 공개 API는 서버 고정 유형과 유형별 HMAC으로 교차 replay를 차단한다.
 
 작업 중 발견한 빈 `20260911081706_add_business_inquiry_types.sql`은 생성 주체를 확인하지 못해 보존했다. 이 작업이 작성·검증한 migration은 `20260911081906_categorize_business_inquiries.sql` 하나다.
+
+## 운영 반영 기록 — 2026-09-11
+
+- 구현 커밋 `5db5fc5`에 최신 main `02c0cf1`을 통합했다. 추가된 MY 화면 변경과 문의 기능은 겹치지 않아 기존 문의 검증 근거를 재사용했다.
+- 기존 main CI에서 실패하던 LIVE 모바일 버튼 계약 테스트는 이미 적용된 텍스트 버튼의 최소 너비·높이와 표시 라벨을 확인하도록 수정했다 (`e2450c3`). 해당 테스트 2개 통과. 제품 UI 변경은 없다.
+- 운영 Supabase `gmrykvmtmuaeswpajteq`에 `20260911081906 / categorize_business_inquiries` 하나만 적용했다. 원격 버전과 이름, NOT NULL/default, 기존 9인자 RPC 보존을 확인했다. 새 RPC는 anon/authenticated 실행 불가, service_role 실행 가능이다. 문의 관련 보안 advisor 경고는 없다.
+- 운영 Lambda `byus-notification-worker-prod`를 코드만 업데이트했다. `Active / Successful`, 배포 ZIP과 원격 CodeSha256 일치, 기존 runtime·handler·role·timeout·memory·architecture·환경 변수 해시 유지 확인. 기존 코드 ZIP도 복구용으로 보관했다.
+- worker와 DB 선반영이 끝났으므로 web을 main에 푸시한다. 해당 커밋의 GitHub `Dependency audit`·`Fan design system` 성공과 Vercel Production `READY`를 최종 완료 기준으로 확인한다.
+- 결과와 복구 자료는 로컬 `artifacts/business-inquiries-20260911/deployment/`에 보관한다. `db-verified.json`, `worker-verified.json`, `worker-before.zip`, 최종 `release-result.json`에서 실제 반영 상태를 구분한다. 운영 UI 반복 검사나 문의 실발송은 검증 범위에 포함하지 않는다.
