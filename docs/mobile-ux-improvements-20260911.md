@@ -23,3 +23,68 @@
 - [x] 실제 MY 컴포넌트와 CSS에 mock 인증·응답을 사용한 브라우저 검증: KO→EN loading→재정렬 선택 유지, 삭제 fallback, owner 변경 초기화 통과. KO/EN × 3개 폭에서 넘침·런타임 오류 없음.
 
 배포는 main 푸시 후 해당 SHA의 Vercel 최종 상태를 별도 확인한다. 운영 UI 반복 검사는 요청 범위에 포함하지 않는다.
+
+
+## 2026-09-12 전체 모바일 검토
+
+사용자 요청: 팬·일반 방문자용 모바일 UI/UX 전체 검토, 확인된 문제 개선, 배포. 관리자·운영 데이터 쓰기·인증 및 보상 정책 변경은 제외한다. 작업 브랜치 `codex/mobile-ux-audit-20260912`, 시작 커밋 `6d423f8`.
+
+진행 순서: 경로·탭·모달 목록화 → 실제 컴포넌트와 로컬 모의 응답으로 390px 기준 렌더 검토 → 확인된 문제만 수정 → 360/430px 및 Chromium/WebKit 핵심 동선·KO/EN·상태 검증 → 1440px 회귀와 관련 검사 → main 푸시·정확한 SHA의 자동 운영 배포 시작 확인. 브라우저 엔진 검증과 실제 모바일 기기 검증을 구분한다.
+
+- [x] 현재 변경 없음과 최신 origin/main 일치 확인.
+- [x] 팬·계정 영역 읽기 전용 코드 매핑 완료.
+- [x] baseline-ui + fixing-accessibility 선택; 기존 DESIGN.md/한국어 문구 보존.
+- [ ] 모든 팬 경로·탭·모달 렌더 근거 확보.
+- [ ] 확인된 문제 우선순위와 수정 계획 독립 검토.
+- [ ] 개선·동작 검증·관련 테스트·타입 검사.
+- [ ] 푸시·자동 운영 배포 시작 확인.
+
+### 경로 목록
+
+| 경로 | 화면/라우팅 근거 | 검토 상태 |
+|---|---|---|
+| `/@modal/(.)benefits/[id]` | `apps/web/app/@modal/(.)benefits/[id]/page.tsx` | 대기 |
+| `/@modal/(.)login` | `apps/web/app/@modal/(.)login/page.tsx` | 대기 |
+| `/@modal/(.)stamps/[id]` | `apps/web/app/@modal/(.)stamps/[id]/page.tsx` | 대기 |
+| `/@modal/[...catchAll]` | `apps/web/app/@modal/[...catchAll]/page.tsx` | 대기 |
+| `/benefits/[id]` | `apps/web/app/benefits/[id]/page.tsx` | 대기 |
+| `/benefits` | `apps/web/app/benefits/page.tsx` | 대기 |
+| `/c/[slug]/certifications/[id]` | `apps/web/app/c/[slug]/certifications/[id]/page.tsx` | 대기 |
+| `/c/[slug]/certifications` | `apps/web/app/c/[slug]/certifications/page.tsx` | 대기 |
+| `/c/[slug]/leaderboard` | `apps/web/app/c/[slug]/leaderboard/page.tsx` | 대기 |
+| `/c/[slug]/notices/[noticeSlug]` | `apps/web/app/c/[slug]/notices/[noticeSlug]/page.tsx` | 대기 |
+| `/c/[slug]` | `apps/web/app/c/[slug]/page.tsx` | 대기 |
+| `/c/[slug]/raffles/[benefitId]` | `apps/web/app/c/[slug]/raffles/[benefitId]/page.tsx` | 대기 |
+| `/c/[slug]/raffles` | `apps/web/app/c/[slug]/raffles/page.tsx` | 대기 |
+| `/c/[slug]/verify` | `apps/web/app/c/[slug]/verify/page.tsx` | 대기 |
+| `/c/[slug]/verify/questions` | `apps/web/app/c/[slug]/verify/questions/page.tsx` | 대기 |
+| `/c/[slug]/verify/result` | `apps/web/app/c/[slug]/verify/result/page.tsx` | 대기 |
+| `/celebrities` | `apps/web/app/celebrities/page.tsx` | 대기 |
+| `/guide` | `apps/web/app/guide/page.tsx` | 대기 |
+| `/live/[slug]/missions` | `apps/web/app/live/[slug]/missions/page.tsx` | 대기 |
+| `/live/[slug]` | `apps/web/app/live/[slug]/page.tsx` | 대기 |
+| `/live/[slug]/survey` | `apps/web/app/live/[slug]/survey/page.tsx` | 대기 |
+| `/live/calendar` | `apps/web/app/live/calendar/page.tsx` | 대기 |
+| `/live` | `apps/web/app/live/page.tsx` | 대기 |
+| `/login` | `apps/web/app/login/page.tsx` | 대기 |
+| `/my/inquiries/[id]` | `apps/web/app/my/inquiries/[id]/page.tsx` | 대기 |
+| `/my/inquiries` | `apps/web/app/my/inquiries/page.tsx` | 대기 |
+| `/my` | `apps/web/app/my/page.tsx` | 대기 |
+| `/my/raffles` | `apps/web/app/my/raffles/page.tsx` | 대기 |
+| `/my/rewards/[winnerId]/recipient` | `apps/web/app/my/rewards/[winnerId]/recipient/page.tsx` | 대기 |
+| `/notifications` | `apps/web/app/notifications/page.tsx` | 대기 |
+| `/onboarding/profile` | `apps/web/app/onboarding/profile/page.tsx` | 대기 |
+| `/` | `apps/web/app/page.tsx` | 대기 |
+| `/pages/creator-onboarding` | `apps/web/app/pages/creator-onboarding/page.tsx` | 대기 |
+| `/pages/elina-fan-guide` | `apps/web/app/pages/elina-fan-guide/page.tsx` | 대기 |
+| `/pages/ifew-fan-guide` | `apps/web/app/pages/ifew-fan-guide/page.tsx` | 대기 |
+| `/pages/partners` | `apps/web/app/pages/partners/page.tsx` | 대기 |
+| `/pages/us-fanmeetings` | `apps/web/app/pages/us-fanmeetings/page.tsx` | 대기 |
+| `/passports/[id]/issuance` | `apps/web/app/passports/[id]/issuance/page.tsx` | 대기 |
+| `/passports/[id]` | `apps/web/app/passports/[id]/page.tsx` | 대기 |
+| `/passports` | `apps/web/app/passports/page.tsx` | 대기 |
+| `/privacy` | `apps/web/app/privacy/page.tsx` | 대기 |
+| `/settings/kakao/callback` | `apps/web/app/settings/kakao/callback/page.tsx` | 대기 |
+| `/settings` | `apps/web/app/settings/page.tsx` | 대기 |
+| `/stamps/[id]` | `apps/web/app/stamps/[id]/page.tsx` | 대기 |
+| `/terms` | `apps/web/app/terms/page.tsx` | 대기 |

@@ -475,6 +475,7 @@
   line-height: 1.2;
 }
 .email {
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: transparent;

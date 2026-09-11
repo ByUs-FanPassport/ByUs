@@ -15,6 +15,7 @@
 .form label:not(.consent) { display: flex; flex-direction: column; gap: 8px; color: #29272d; font-size: 14px; font-weight: 700; }
 .form input:not([type="checkbox"]), .form textarea, .form select { width: 100%; border: 1px solid #d8d5dc; border-radius: 12px; background: #fff; color: #19191e; font: inherit; font-weight: 500; }
 .form input:not([type="checkbox"]), .form select { min-height: 48px; padding: 12px 14px; }
+.form select { height: 48px; }
 .form textarea { min-height: 140px; resize: vertical; padding: 14px; line-height: 1.5; }
 .form input::placeholder, .form textarea::placeholder { color: #77737d; opacity: 1; }
 .form input:disabled, .form textarea:disabled, .form select:disabled { background: #f5f4f6; cursor: wait; }

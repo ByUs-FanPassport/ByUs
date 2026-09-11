@@ -10,6 +10,9 @@ it("keeps a locale-preserving return route for guests without showing a raw slug
  authenticated=false;vi.stubGlobal("fetch",vi.fn(async()=>new Response(null,{status:404})));
  render(<LiveMissionScreen slug="test-live" locale="ko"/>);
  expect(screen.getByRole("link",{name:"LIVE로 돌아가기"})).toHaveAttribute("href","/live/test-live?locale=ko");
+ expect(screen.getByRole("link",{name:"본문으로 바로가기"})).toHaveAttribute("href","#live-mission-main");
+ expect(screen.getByRole("main")).toHaveAttribute("id","live-mission-main");
+ expect(screen.getByRole("link",{name:"KO / EN"})).toHaveAttribute("href","/live/test-live/missions?locale=en");
  expect(screen.queryByText("LIVE · test-live")).not.toBeInTheDocument();
 });
 const mission={id:"10000000-0000-4000-8000-000000000001",type:"quiz",version:1,title:"LIVE 퀴즈",description:"오늘의 질문",attendanceRequired:true,completed:false,visibleFrom:"2026-09-10T00:00:00Z",visibleUntil:"2026-09-11T00:00:00Z",questions:[{id:"20000000-0000-4000-8000-000000000001",text:"오늘의 색상은?",media:null,options:[{id:"30000000-0000-4000-8000-000000000001",label:"분홍",displayMode:"text",media:null},{id:"30000000-0000-4000-8000-000000000002",label:"파랑",displayMode:"text",media:null}]}]};

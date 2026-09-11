@@ -7,6 +7,8 @@ import type { z } from "zod";
 import { liveEventResponseSchema } from "../domain/live-event";
 import { liveMissionCompletionSchema, liveMissionListSchema, liveMissionSchema } from "../domain/live-mission";
 import { FanState } from "../../../components/fan-ui/fan-state";
+import { FanAction } from "../../../components/fan-ui/fan-action";
+import { FocusFlowHeader } from "../../../components/fan-shell/focus-flow-header";
 import styles from "./live-mission-screen.module.css";
 
 type Mission = z.infer<typeof liveMissionSchema>;
@@ -15,7 +17,15 @@ type SubmissionState = "pending" | "complete" | "error";
 
 export function LiveMissionScreen(props: Props) {
   const auth = usePrivy();
-  return <MissionContent key={`${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${props.slug}:${props.locale}`} {...props} auth={auth} />;
+  const otherLocale = props.locale === "ko" ? "en" : "ko";
+  return <div className={styles.surface} data-fan-surface lang={props.locale}>
+    <FocusFlowHeader locale={props.locale} mainId="live-mission-main" innerClassName={styles.headerInner} sticky>
+      <Link className={styles.locale} href={`/live/${props.slug}/missions?locale=${otherLocale}`} lang={otherLocale} hrefLang={otherLocale}>
+        {props.locale === "ko" ? "KO / EN" : "EN / KO"}
+      </Link>
+    </FocusFlowHeader>
+    <MissionContent key={`${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${props.slug}:${props.locale}`} {...props} auth={auth} />
+  </div>;
 }
 
 function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeof usePrivy> }) {
@@ -103,12 +113,12 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
   }
 
   const back = <Link className={styles.back} href={`/live/${slug}?locale=${locale}`}>{ko ? "LIVE로 돌아가기" : "Back to LIVE"}</Link>;
-  if (!ready) return <main className={styles.page}>{back}<FanState kind="loading" title={ko ? "참여 정보를 확인하고 있어요." : "Checking participation."} /></main>;
-  if (!authenticated) return <main className={styles.page}>{back}<h1>{ko ? "LIVE 미션" : "LIVE Missions"}</h1><button onClick={login}>{ko ? "로그인하고 참여하기" : "Sign in to join"}</button></main>;
-  return <main className={styles.page}>
+  if (!ready) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<FanState kind="loading" title={ko ? "참여 정보를 확인하고 있어요." : "Checking participation."} /></main>;
+  if (!authenticated) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<h1>{ko ? "LIVE 미션" : "LIVE Missions"}</h1><button onClick={login}>{ko ? "로그인하고 참여하기" : "Sign in to join"}</button></main>;
+  return <main className={styles.page} id="live-mission-main" tabIndex={-1}>
     {back}<header><p>{title || (ko ? "LIVE 참여 미션" : "LIVE participation")}</p><h1>{ko ? "미션" : "Missions"}</h1></header>
     {loadState === "loading" ? <FanState kind="loading" title={ko ? "미션을 불러오고 있어요." : "Loading missions."} />
-      : loadState === "error" ? <FanState kind="error" title={ko ? "미션을 불러오지 못했어요." : "Could not load missions."} actions={<button onClick={() => setRetry(value => value + 1)}>{ko ? "다시 시도" : "Try again"}</button>} />
+      : loadState === "error" ? <FanState kind="error" title={ko ? "미션을 불러오지 못했어요." : "Could not load missions."} actions={<FanAction onClick={() => setRetry(value => value + 1)}>{ko ? "다시 시도" : "Try again"}</FanAction>} />
       : missions.length === 0 ? <p>{ko ? "지금 참여할 수 있는 미션이 없어요." : "No missions are available right now."}</p>
       : missions.map(mission => {
         const pending = submissions[mission.id] === "pending";

@@ -110,12 +110,12 @@
 }
 .countrySearch input {
   min-width: 0;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   outline: 0;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
 }
 .countryOptions {
   max-height: 280px;

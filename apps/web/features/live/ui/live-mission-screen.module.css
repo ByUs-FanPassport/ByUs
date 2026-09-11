@@ -1,4 +1,29 @@
-.page{max-width:880px;margin:0 auto;padding:48px 20px 96px;color:#161616}.page header{margin-bottom:32px}.page h1{font-size:clamp(32px,6vw,64px);margin:4px 0}.card{border:1px solid #ddd;border-radius:20px;padding:24px;margin:20px 0;background:#fff}.card fieldset{border:0;padding:16px 0;margin:0}.card legend{font-weight:700;margin-bottom:12px}.option{display:flex;align-items:center;gap:12px;border:1px solid #ddd;border-radius:12px;padding:12px;margin:8px 0}.option img,.option video,.card>fieldset>img,.card>fieldset>video{width:160px;height:auto;border-radius:8px}.card button,.page>button{min-height:44px;border:0;border-radius:999px;padding:0 20px;background:#111;color:#fff;font-weight:700}.card button:disabled{opacity:.45}.notice{padding:14px;border-radius:12px;background:#eef7ff}
-
-.back { display:inline-flex; min-height:44px; align-items:center; margin-bottom:20px; font-weight:750; text-decoration:underline; text-underline-offset:4px; }
-.page :is(a,button,input):focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
+.surface { min-height: 100dvh; color: var(--color-ink, #161616); background: #fff; font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.headerInner { width: min(944px, calc(100% - 40px)); }
+.locale { display: inline-flex; min-width: 88px; min-height: 44px; align-items: center; justify-content: flex-end; color: inherit; font-size: 13px; font-weight: 750; text-decoration: none; }
+.page { width: min(880px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 max(64px, env(safe-area-inset-bottom)); }
+.page header { margin-bottom: 28px; }
+.page h1 { margin: 4px 0; font-size: clamp(32px, 6vw, 48px); line-height: 1.2; }
+.page :is(h2, p, legend) { overflow-wrap: anywhere; }
+.card { min-width: 0; margin: 20px 0; padding: 24px; border: 1px solid #ddd; border-radius: 20px; background: #fff; }
+.card fieldset { min-width: 0; margin: 0; padding: 16px 0; border: 0; }
+.card legend { max-width: 100%; margin-bottom: 12px; font-weight: 700; }
+.option { display: grid; grid-template-columns: 20px minmax(0, 1fr); min-height: 52px; align-items: center; gap: 12px; margin: 8px 0; padding: 12px; border: 1px solid #ddd; border-radius: 12px; cursor: pointer; }
+.option input { grid-column: 1; grid-row: 1; margin: 0; }
+.option > :is(span, img, video) { grid-column: 2; min-width: 0; }
+.option span { overflow-wrap: anywhere; line-height: 1.5; }
+.option img, .option video { width: min(240px, 100%); max-width: 100%; height: auto; border-radius: 8px; }
+.card > fieldset > :is(img, video) { display: block; max-width: 100%; height: auto; margin-bottom: 16px; border-radius: 8px; }
+.option:has(input:checked) { border-color: var(--color-ink, #161616); background: #f7f7f7; }
+.option:has(input:focus-visible) { outline: 3px solid var(--color-ink, #161616); outline-offset: 3px; }
+.card button, .page > button { min-height: 48px; border: 0; border-radius: 999px; padding: 10px 20px; background: #111; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.card button:disabled { opacity: .45; cursor: default; }
+.notice { padding: 14px; border-radius: 12px; background: #eef7ff; }
+.back { display: inline-flex; min-height: 44px; align-items: center; margin-bottom: 20px; color: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 4px; }
+.surface :is(a, button, input):focus-visible { outline: 3px solid var(--color-ink, #161616); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .headerInner { width: calc(100% - 32px); }
+  .page { width: calc(100% - 32px); padding-top: 20px; }
+  .card { padding: 20px 16px; }
+  .card button, .page > button { width: 100%; }
+}
