@@ -34,12 +34,29 @@ const baseSchema = z
   })
   .strict();
 const schema=baseSchema.superRefine((v,ctx)=>{if(v.BUSINESS_INQUIRY_MODE==="ses_email"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="prod")ctx.addIssue({code:"custom",path:["BUSINESS_INQUIRY_MODE"],message:"Business inquiries can send only in production"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&v.NOTIFICATION_WORKER_BATCH_SIZE>2)ctx.addIssue({code:"custom",path:["NOTIFICATION_WORKER_BATCH_SIZE"],message:"SES mode requires batch size at most 2 to bound sequential send time"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&(!v.SES_REGION||!v.SES_FROM_EMAIL))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"SES email mode requires region and sender"});if(v.NOTIFICATION_EXTERNAL_MODE==="test_sink"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="dev")ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"test sink is Dev-only"});if(v.NOTIFICATION_EXTERNAL_MODE==="provider"&&(!v.EMAIL_PROVIDER_URL||!v.EMAIL_PROVIDER_TOKEN||!v.KAKAO_PROVIDER_URL||!v.KAKAO_PROVIDER_TOKEN))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"provider mode requires both sandbox providers"});if(v.KAKAO_ALIMTALK_MODE==="solapi"&&(!v.SOLAPI_API_KEY||!v.SOLAPI_API_SECRET))ctx.addIssue({code:"custom",path:["KAKAO_ALIMTALK_MODE"],message:"SOLAPI mode requires API key and secret"});});
-export type NotificationWorkerEnv = z.infer<typeof schema>;
+export type NotificationWorkerEnv = z.infer<typeof schema> & {
+  telegram: Readonly<{
+    mode: string | undefined;
+    commandMode: string | undefined;
+    token: string | undefined;
+    chatId: string | undefined;
+  }>;
+};
 export function parseNotificationEnv(
   source: NodeJS.ProcessEnv,
 ): NotificationWorkerEnv {
   const known = Object.fromEntries(
     Object.keys(baseSchema.shape).map((key) => [key, source[key]]),
   );
-  return schema.parse(known);
+  return {
+    ...schema.parse(known),
+    // Telegram config is intentionally parsed only by its independent runtime
+    // branch so a bad optional config cannot stop the existing queues.
+    telegram: {
+      mode: source.TELEGRAM_ALERT_MODE,
+      commandMode: source.TELEGRAM_COMMAND_MODE,
+      token: source.TELEGRAM_BOT_TOKEN,
+      chatId: source.TELEGRAM_CHAT_ID,
+    },
+  };
 }

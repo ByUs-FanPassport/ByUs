@@ -89,12 +89,70 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   sessionStorage.clear();
 });
 
 describe("raffle entry controller", () => {
+  it("times out token acquisition before POST and unlocks the same durable request", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const { result } = renderEntry("owner-a", () => new Promise<string | null>(() => undefined));
+
+    let submission!: Promise<void>;
+    act(() => { submission = result.current.submit({ ticketAmount: 2 }); });
+    await vi.advanceTimersByTimeAsync(20_000);
+    await act(async () => { await submission; });
+
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.pending).toBe(false);
+    expect(result.current.error).toBe("unavailable");
+    expect(result.current.unresolvedRequest?.idempotencyKey).toBe(operationId);
+    expect(sessionStorage).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
+  it("times out a stalled POST body, preserves the immutable request, and unlocks retry", async () => {
+    vi.useFakeTimers();
+    const stalledBody = new Response();
+    vi.spyOn(stalledBody, "json").mockImplementation(() => new Promise(() => undefined));
+    const fetcher = vi.fn().mockResolvedValue(stalledBody);
+    vi.stubGlobal("fetch", fetcher);
+    const { result } = renderEntry();
+
+    let submission!: Promise<void>;
+    act(() => { submission = result.current.submit({ ticketAmount: 2 }); });
+    await vi.advanceTimersByTimeAsync(20_000);
+    await act(async () => { await submission; });
+
+    expect(result.current.pending).toBe(false);
+    expect(result.current.error).toBe("uncertain");
+    expect(result.current.unresolvedRequest).toEqual({ idempotencyKey: operationId, ticketAmount: 2 });
+    expect(JSON.parse(sessionStorage.getItem(sessionStorage.key(0)!)!)).toEqual(result.current.unresolvedRequest);
+    vi.useRealTimers();
+  });
+
+  it("keeps an accepted receipt when reconciliation times out", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(Response.json(entryResult))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined)));
+    const { result } = renderEntry();
+
+    let submission!: Promise<void>;
+    act(() => { submission = result.current.submit({ ticketAmount: 2 }); });
+    await vi.advanceTimersByTimeAsync(20_000);
+    await act(async () => { await submission; });
+
+    expect(result.current.receipt).toEqual(entryResult);
+    expect(result.current.error).toBe("reconcile");
+    expect(result.current.reconciling).toBe(false);
+    vi.useRealTimers();
+  });
+
   it("publishes a validated receipt immediately, then reconciles from the private benefit read", async () => {
     const read = deferred<Response>();
     const fetcher = vi.fn()
@@ -386,7 +444,7 @@ describe("raffle entry controller", () => {
 
     await act(async () => { await result.current.submit({ ticketAmount: 2 }); });
     expect(fetcher).not.toHaveBeenCalled();
-    expect(result.current.error).toBe("uncertain");
+    expect(result.current.error).toBe("storage");
     expect(result.current.unresolvedRequest?.idempotencyKey).toBe(operationId);
 
     await act(async () => { await result.current.retry(); });

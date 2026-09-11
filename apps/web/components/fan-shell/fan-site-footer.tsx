@@ -35,7 +35,7 @@ const copy = {
     tagline: "최애와 함께한 순간을 기록하는 곳.",
     explore: "둘러보기",
     activity: "나의 활동",
-    guide: "안내",
+    guide: "안내 및 문의",
     social: "소셜",
     favorites: "최애",
     passports: "Fan Passport",
@@ -53,7 +53,7 @@ const copy = {
     tagline: "A place to record moments with your favorite.",
     explore: "Explore",
     activity: "My activity",
-    guide: "Guide",
+    guide: "Guide & contact",
     social: "Social",
     favorites: "Favorites",
     passports: "Fan Passport",
@@ -105,8 +105,6 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
             <Link href={fanHref("/pages/creator-onboarding", locale)}>{t.creatorOnboarding}</Link>
             <Link href={fanHref("/pages/partners", locale)}>{t.partners}</Link>
-            <Link href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
-            <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
           </section>
           <section>
             <h2>{t.social}</h2>
@@ -144,6 +142,11 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
 
       <FanContentContainer className={styles.legal}>
         <span>© 2026 ByUs. All rights reserved.</span>
+        <div className={styles.legalLinks}>
+          <Link className={styles.privacyLink} href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
+          <span aria-hidden="true">·</span>
+          <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
+        </div>
       </FanContentContainer>
     </footer>
   );

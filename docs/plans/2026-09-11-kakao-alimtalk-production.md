@@ -77,3 +77,5 @@
 - 배포 순서: 기존 DB 응답을 지원하는 Web 먼저 → DB migration → Worker. DB가 먼저 provider 필드를 반환하면 구 Web의 strict DTO가 거부할 수 있으므로 이 순서를 지킨다. 등록 기능은 phone_number 승인 전까지 false로 둔다.
 - 운영 migration 사전조회에서 기존 Email은 새 예약으로 19건까지 증가했다. 과거 13건을 포함한 전체 Email 행을 migration 트랜잭션 안에서 전후 비교해 변경하지 않는다.
 - 운영 webhook 등록, Web/DB/Worker 배포 및 상태 확인이 남아 있다. 발송·등록 활성화와 실제 수신 증명은 외부 권한 완료 여부와 구분한다.
+
+- 최신 `origin/main` 79e5ef2와 통합: 설정의 프로필 미완성 복구와 Telegram 알림·명령을 보존했다. 통합 후 Web 타입 검사·집중 48건 통과, backend security 전체(ACL·mint·Telegram·Kakao 실동시성) 통과. 신규 Kakao 검증은 기존 `verify-backend-security-behavior.sh`에 합쳤다.

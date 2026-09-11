@@ -7,11 +7,12 @@ import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 const getAccessToken = vi.fn(async () => "access-token");
 let authenticated = true;
 let authReady = true;
+let userId = "owner-a";
 const push = vi.fn();
 let query = "locale=ko";
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: authReady, authenticated, getAccessToken }),
+  usePrivy: () => ({ ready: authReady, authenticated, getAccessToken, user: authenticated ? { id: userId } : null }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -264,6 +265,7 @@ describe("LiveEventScreen", () => {
     vi.setSystemTime(new Date("2026-07-23T00:00:00Z"));
     authenticated = true;
     authReady = true;
+    userId = "owner-a";
     query = "locale=ko";
     push.mockReset();
     sessionStorage.clear();
@@ -502,6 +504,145 @@ describe("LiveEventScreen", () => {
       body: expect.any(String),
     }));
     expect(JSON.parse(String(request[1]?.body))).toEqual({ idempotencyKey: expect.any(String) });
+  });
+
+  it("keeps a valid reservation receipt successful when the projection refresh times out", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockResolvedValueOnce(Response.json({ reservation, completion: reservationCompletion }))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const reserve = await screen.findByRole("button", { name: "LIVE 예약하기" });
+    vi.useFakeTimers();
+    fireEvent.click(reserve);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(screen.getByRole("heading", { name: "예약이 완료되었습니다" })).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+    vi.useRealTimers();
+    expect(screen.queryByText("예약을 완료하지 못했어요.")).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("recovers a committed reservation from the authoritative projection after a lost response", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined))
+      .mockResolvedValueOnce(Response.json(payload("reserved", true)));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const reserve = await screen.findByRole("button", { name: "LIVE 예약하기" });
+    vi.useFakeTimers();
+    fireEvent.click(reserve);
+    await act(async () => { await Promise.resolve(); await vi.advanceTimersByTimeAsync(20_000); });
+    vi.useRealTimers();
+    expect(await screen.findByRole("status")).toHaveTextContent("예약 완료");
+    expect(sessionStorage.getItem(`byus:live-reservation:${encodeURIComponent(userId)}:${payload().live.id}`)).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("unlocks an unconfirmed reservation and retries with the same key", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined))
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockResolvedValueOnce(Response.json({ reservation, completion: reservationCompletion }))
+      .mockResolvedValueOnce(Response.json(payload("reserved", true)));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const reserveButton = await screen.findByRole("button", { name: "LIVE 예약하기" });
+    vi.useFakeTimers();
+    fireEvent.click(reserveButton);
+    await act(async () => { await Promise.resolve(); await vi.advanceTimersByTimeAsync(20_000); });
+    vi.useRealTimers();
+    expect(await screen.findByText("예약 결과를 아직 확인하지 못했어요. 같은 예약 요청을 다시 확인해 주세요.")).toBeInTheDocument();
+    expect(reserveButton).toBeEnabled();
+    fireEvent.click(reserveButton);
+    await screen.findByRole("dialog");
+
+    const postBodies = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "POST")
+      .map(([, init]) => String(init?.body));
+    expect(postBodies).toHaveLength(2);
+    expect(new Set(postBodies).size).toBe(1);
+  });
+
+  it("does not reuse another account's unresolved reservation key", async () => {
+    const eventId = payload().live.id;
+    sessionStorage.setItem(`byus:live-reservation:${encodeURIComponent("owner-a")}:${eventId}`, "owner-a-key");
+    userId = "owner-b";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("owner-b-key");
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockImplementationOnce(() => {
+        expect(sessionStorage.getItem(
+          `byus:live-reservation:${encodeURIComponent("owner-b")}:${eventId}`,
+        )).toBe("owner-b-key");
+        return Promise.resolve(Response.json({ reservation, completion: reservationCompletion }));
+      })
+      .mockResolvedValueOnce(Response.json(payload("reserved", true)));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
+    await screen.findByRole("dialog");
+
+    const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST")!;
+    expect(JSON.parse(String(post[1]?.body))).toEqual({ idempotencyKey: "owner-b-key" });
+    expect(sessionStorage.getItem(`byus:live-reservation:${encodeURIComponent("owner-a")}:${eventId}`)).toBe("owner-a-key");
+  });
+
+  it("ignores a late reservation receipt after the signed-in account changes", async () => {
+    let resolvePost!: (response: Response) => void;
+    const latePost = new Promise<Response>((resolve) => { resolvePost = resolve; });
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockImplementationOnce((_input, init) => {
+        expect(init?.method).toBe("POST");
+        return latePost;
+      })
+      .mockResolvedValueOnce(Response.json(payload()));
+    const { rerender } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const signal = fetchMock.mock.calls[1][1]?.signal as AbortSignal;
+
+    userId = "owner-b";
+    rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(signal.aborted).toBe(true);
+    await act(async () => { resolvePost(Response.json({ reservation, completion: reservationCompletion })); });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "LIVE 예약하기" })).toBeEnabled();
+  });
+
+  it("aborts an in-flight reservation when the screen unmounts", async () => {
+    const latePost = new Promise<Response>(() => undefined);
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockImplementationOnce(() => latePost);
+    const { unmount } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const signal = fetchMock.mock.calls[1][1]?.signal as AbortSignal;
+
+    unmount();
+
+    expect(signal.aborted).toBe(true);
+  });
+
+  it("closes the previous account's receipt and reloads viewer state after an account switch", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(payload()))
+      .mockResolvedValueOnce(Response.json({ reservation, completion: reservationCompletion }))
+      .mockResolvedValueOnce(Response.json(payload("reserved", true)))
+      .mockResolvedValueOnce(Response.json(payload()));
+    const { rerender } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+
+    userId = "owner-b";
+    rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "LIVE 예약하기" })).toBeEnabled();
   });
 
   it("offers prize entry immediately after an Elina reservation", async () => {

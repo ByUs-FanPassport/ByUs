@@ -64,3 +64,33 @@ it("inquiry sending is separately gated and production-only", () => {
   expect(() => parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email" })).toThrow();
   expect(parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email", NOTIFICATION_EXTERNAL_ENVIRONMENT: "prod" }).BUSINESS_INQUIRY_MODE).toBe("ses_email");
 });
+
+it("keeps Telegram configuration raw so invalid values cannot fail common parsing", () => {
+  const env = parseNotificationEnv({
+    ...valid,
+    TELEGRAM_ALERT_MODE: "invalid-mode",
+    TELEGRAM_BOT_TOKEN: "invalid-token",
+    TELEGRAM_CHAT_ID: "not-a-group",
+  });
+  expect(env.telegram).toEqual({
+    mode: "invalid-mode",
+    commandMode: undefined,
+    token: "invalid-token",
+    chatId: "not-a-group",
+  });
+});
+
+it("does not consume browser-public Telegram fields", () => {
+  const env = parseNotificationEnv({
+    ...valid,
+    NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: "browser-secret",
+    NEXT_PUBLIC_TELEGRAM_CHAT_ID: "-1001234567890",
+  });
+  expect(env.telegram).toEqual({ mode: undefined, commandMode: undefined, token: undefined, chatId: undefined });
+  expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_BOT_TOKEN");
+  expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_CHAT_ID");
+});
+
+it("keeps invalid Telegram command mode isolated from common parsing", () => {
+  expect(parseNotificationEnv({ ...valid, TELEGRAM_COMMAND_MODE: "invalid" }).telegram.commandMode).toBe("invalid");
+});

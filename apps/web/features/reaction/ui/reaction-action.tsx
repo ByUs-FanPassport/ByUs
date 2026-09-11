@@ -1,5 +1,7 @@
 "use client";
 
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
+
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import type { Route } from "next";
@@ -102,10 +104,10 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
   const resumeIntentIfNeeded = useCallback(() => {
     const id = new URLSearchParams(window.location.search).get("authIntent");
     if (!id || resumedIntent.current === id) return;
-    const intent = readAuthIntent(window.sessionStorage, id);
+    const intent = readAuthIntent(getSessionStorage(), id);
     if (intent?.actionType !== "CREATE_REACTION" || intent.targetId !== slug) return;
     resumedIntent.current = id;
-    consumeAuthIntent(window.sessionStorage, intent.id);
+    consumeAuthIntent(getSessionStorage(), intent.id);
     void postReaction(true);
   }, [postReaction, slug]);
 

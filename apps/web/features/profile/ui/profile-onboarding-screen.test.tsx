@@ -31,6 +31,7 @@ vi.mock("next/navigation", () => ({
 
 describe("FAN-005 profile onboarding", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     replace.mockClear();
     authenticated = true;
     ready = true;
@@ -58,6 +59,17 @@ describe("FAN-005 profile onboarding", () => {
     query = "returnTo=%2Fonboarding%2Fprofile%3FreturnTo%3D%252Fonboarding%252Fprofile%26locale%3Dko&locale=ko";
     rerender(<ProfileOnboardingScreen celebrity={celebrity} />);
     expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("supports generic profile setup without promising a creator passport", async () => {
+    query = "locale=ko&returnTo=%2Fsettings%3Flocale%3Dko";
+    render(<ProfileOnboardingScreen celebrity={null} />);
+
+    expect(await screen.findByRole("heading", { name: "ByUs에서 사용할 닉네임을 정해 주세요." })).toBeInTheDocument();
+    expect(screen.getByText("프로필을 완성하면 이전 화면으로 돌아가 계속할 수 있어요.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("발급 예정 Fan Passport 미리보기")).not.toBeInTheDocument();
+    expect(screen.queryByText("팬 인증 완료 후 발급")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "이전으로" })).toHaveAttribute("href", "/settings?locale=ko");
   });
 
   it("skips the setup screen when the authenticated user already has a profile", async () => {
@@ -125,6 +137,18 @@ describe("FAN-005 profile onboarding", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("입력한 닉네임을 유지했으니 다시 시도해 주세요.");
     await waitFor(() => expect(input).toHaveFocus());
     expect(input).toHaveValue("Kamilia");
+    fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"));
+  });
+
+  it("saves the nickname and resumes when the browser storage getter is blocked", async () => {
+    vi.spyOn(window, "sessionStorage", "get").mockImplementation(() => { throw new DOMException("blocked", "SecurityError"); });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({ profile: { completed: false, nickname: null } }))
+      .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "Kamilia" } }));
+    render(<ProfileOnboardingScreen celebrity={celebrity} />);
+    const input = await screen.findByRole("textbox", { name: "닉네임" });
+    fireEvent.change(input, { target: { value: "Kamilia" } });
     fireEvent.click(screen.getByRole("button", { name: "닉네임 저장" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?step=intro&locale=ko#fan-verify"));
   });

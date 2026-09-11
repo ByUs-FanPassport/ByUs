@@ -334,7 +334,7 @@ describe("benefit screens", () => {
     expect(screen.queryByText("수령 가능")).not.toBeInTheDocument();
     const deadline = screen.getByText("응모 마감").nextElementSibling;
     expect(deadline).toHaveTextContent("2026년 9월 20일 00:00 (KST)");
-    expect(deadline?.querySelector("time")).toHaveAttribute("datetime", raffle.entry.entryClosesAt);
+    expect(deadline).toHaveAttribute("datetime", raffle.entry.entryClosesAt);
     expect(screen.getByText("이퓨 응모권으로 2026년 9월 20일 00:00 (KST)까지 응모하세요.")).toBeInTheDocument();
     expect(screen.queryByText(/밤 12시/)).not.toBeInTheDocument();
     expect(screen.getByText("필요 팬 점수")).toBeInTheDocument();

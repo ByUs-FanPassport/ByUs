@@ -371,6 +371,81 @@ describe("FAN-020 settings", () => {
     expect(await screen.findByText("Kamilia")).toBeInTheDocument();
   });
 
+  it.each([
+    ["ko", "프로필 설정을 먼저 완료해 주세요.", "ByUs에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.", "프로필 설정하기"],
+    ["en", "Complete your profile first.", "Choose the display name you'll use on ByUs to continue to Settings.", "Set up profile"],
+  ] as const)("offers %s profile setup only for the exact PROFILE_REQUIRED response", async (locale, title, body, action) => {
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/settings")
+        return Response.json({ error: { code: "PROFILE_REQUIRED" } }, { status: 409 });
+      if (url === "/api/notifications/preferences") throw new Error("preferences unavailable");
+      if (url === "/api/me/notification-channels") return Response.json({ connections });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    render(<SettingsScreen locale={locale} />);
+
+    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
+    expect(screen.getByText(body)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: action })).toHaveAttribute(
+      "href",
+      `/onboarding/profile?returnTo=%2Fsettings%3Flocale%3D${locale}&locale=${locale}`,
+    );
+    expect(screen.queryByRole("button", { name: locale === "ko" ? "다시 시도" : "Try again" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [409, "SETTINGS_UNAVAILABLE"],
+    [400, "PROFILE_REQUIRED"],
+    [503, "PROFILE_REQUIRED"],
+  ])("keeps status %s with code %s in the retryable error state", async (status, code) => {
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/settings")
+        return Response.json({ error: { code } }, { status });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    render(<SettingsScreen locale="ko" />);
+
+    expect(await screen.findByText("설정을 불러오지 못했어요. 다시 시도해 주세요.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "프로필 설정하기" })).not.toBeInTheDocument();
+  });
+
+  it("ignores a PROFILE_REQUIRED response from the previous owner", async () => {
+    let finishOldSettings!: () => void;
+    let settingsGetCount = 0;
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/settings") {
+        settingsGetCount += 1;
+        if (settingsGetCount === 1)
+          return new Promise<Response>((resolve) => {
+            finishOldSettings = () => resolve(Response.json({ error: { code: "PROFILE_REQUIRED" } }, { status: 409 }));
+          });
+        return new Promise<Response>(() => undefined);
+      }
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    const view = render(<SettingsScreen locale="ko" />);
+    await waitFor(() => expect(finishOldSettings).toBeTypeOf("function"));
+
+    authState.user = { id: "owner-b" };
+    view.rerender(<SettingsScreen locale="ko" />);
+    await act(async () => {
+      finishOldSettings();
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByRole("link", { name: "프로필 설정하기" })).not.toBeInTheDocument();
+    expect(screen.getByText("설정을 불러오는 중")).toBeInTheDocument();
+  });
+
   it("renames the profile with PUT and preserves wallet presentation", async () => {
     render(<SettingsScreen locale="ko" />);
     await screen.findByText("Kamilia");

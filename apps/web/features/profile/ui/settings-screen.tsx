@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { appendLoginContext } from "@/components/login-intent";
 import {
   getNicknameFormat,
   getNicknameFormatMessage,
@@ -161,6 +162,9 @@ const copy = {
     loading: "설정을 불러오는 중",
     unavailable: "설정을 불러오지 못했어요. 다시 시도해 주세요.",
     retry: "다시 시도",
+    profileRequiredTitle: "프로필 설정을 먼저 완료해 주세요.",
+    profileRequiredBody: "ByUs에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.",
+    profileRequiredAction: "프로필 설정하기",
     auth: "로그인 후 설정을 이용할 수 있어요.",
     duplicate: "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.",
     prohibited: "사용할 수 없는 표현이 포함되어 있어요. 다른 닉네임을 입력해 주세요.",
@@ -245,6 +249,9 @@ const copy = {
     loading: "Loading settings",
     unavailable: "We couldn't load your settings. Try again.",
     retry: "Try again",
+    profileRequiredTitle: "Complete your profile first.",
+    profileRequiredBody: "Choose the display name you'll use on ByUs to continue to Settings.",
+    profileRequiredAction: "Set up profile",
     auth: "Log in to use Settings.",
     duplicate: "This display name is taken. Try another.",
     prohibited: "This display name contains a restricted term. Try another.",
@@ -273,7 +280,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [connections, setConnections] = useState<NotificationConnections | null>(null);
   const [kakaoEnrollment, setKakaoEnrollment] = useState<KakaoEnrollmentState>({ enabled: false, pending: null });
   const [kakaoEnrollmentConsent, setKakaoEnrollmentConsent] = useState(false);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "profile_required" | "error">("loading");
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
@@ -356,12 +363,35 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         return;
       }
       const headers = authHeaders(token);
-      const [settingsResponse, preferenceResponse, connectionResponse] = await Promise.all([
+      const [settingsResult, preferenceResult, connectionResult] = await Promise.allSettled([
         fetch("/api/me/settings", { headers, cache: "no-store" }),
         fetch("/api/notifications/preferences", { headers, cache: "no-store" }),
         fetch("/api/me/notification-channels", { headers, cache: "no-store" }),
       ]);
-      if (!settingsResponse.ok || !preferenceResponse.ok || !connectionResponse.ok)
+      if (settingsResult.status === "rejected") throw settingsResult.reason;
+      const settingsResponse = settingsResult.value;
+      if (!settingsResponse.ok) {
+        let code: string | undefined;
+        if (settingsResponse.status === 409) {
+          try {
+            const body = await settingsResponse.json() as { error?: { code?: string } };
+            code = body.error?.code;
+          } catch {
+            code = undefined;
+          }
+        }
+        if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
+        if (settingsResponse.status === 409 && code === "PROFILE_REQUIRED") {
+          setState("profile_required");
+          return;
+        }
+        throw new Error("settings response");
+      }
+      if (preferenceResult.status === "rejected") throw preferenceResult.reason;
+      if (connectionResult.status === "rejected") throw connectionResult.reason;
+      const preferenceResponse = preferenceResult.value;
+      const connectionResponse = connectionResult.value;
+      if (!preferenceResponse.ok || !connectionResponse.ok)
         throw new Error("response");
       const settingsBody = (await settingsResponse.json()) as {
         settings: SettingsSummary;
@@ -813,6 +843,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       {logoutError ? <p role="alert">{logoutError}</p> : null}
     </div>
   ) : null;
+  const profileSetupHref = appendLoginContext("/onboarding/profile", {
+    returnTo: `/settings?locale=${locale}`,
+    intent: null,
+    entity: null,
+    locale,
+  });
 
   if (!ready || state === "loading")
     return (
@@ -823,6 +859,15 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       </FanContentContainer></FanAppFrame>
     );
   if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</FanContentContainer></FanAppFrame>;
+  if (state === "profile_required")
+    return (
+      <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>
+        <h1>{t.profileRequiredTitle}</h1>
+        <p>{t.profileRequiredBody}</p>
+        <FanAction variant="primary" href={profileSetupHref}>{t.profileRequiredAction}</FanAction>
+        {logoutAction}
+      </FanContentContainer></FanAppFrame>
+    );
   if (state === "error" || !settings || !preferences || !connections)
     return (
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>

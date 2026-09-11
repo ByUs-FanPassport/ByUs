@@ -6,9 +6,14 @@ import { syncAuthenticatedSession } from "../../../../server/auth/session-sync";
 import { createSupabaseSessionSyncRepository } from "../../../../server/auth/supabase-session-sync-repository";
 import { loadServerEnv } from "../../../../server/config/env";
 import { AppleReauthenticationRequiredError } from "../../../../server/auth/apple-notifications/apple-lifecycle";
+import {
+  reportRecoveryFailure,
+  withOperationDeadline,
+} from "../../../../features/reliability/client/request-deadline";
 
 export const dynamic = "force-dynamic";
 const sessionRequestSchema = z.object({ locale: preferredLocaleSchema }).strict();
+const SESSION_REQUEST_TIMEOUT_MS = 30_000;
 
 export async function POST(request: Request): Promise<Response> {
   const env = loadServerEnv();
@@ -17,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
     const requestedLocale = rawBody
       ? sessionRequestSchema.parse(JSON.parse(rawBody)).locale
       : "ko";
-    const profile = await syncAuthenticatedSession({
+    const profile = await withOperationDeadline(syncAuthenticatedSession({
       authorization: request.headers.get("authorization") ?? "",
       chainId: env.GIWA_CHAIN_ID,
       preferredLocale: requestedLocale,
@@ -27,9 +32,10 @@ export async function POST(request: Request): Promise<Response> {
         testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: env.PRIVY_APPLE_LOGIN_ENABLED,
       }),
       repository: createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY }),
-    });
+    }), SESSION_REQUEST_TIMEOUT_MS);
     return Response.json({ profile }, { status: 200, headers: { "cache-control": "no-store", vary: "Authorization" } });
   } catch (error) {
+    reportRecoveryFailure("session.request", error);
     console.error("[auth/session] synchronization failed", {
       name: error instanceof Error ? error.name : "UnknownError",
       code: error instanceof AuthError ? error.code : "SESSION_SYNC_FAILED",
