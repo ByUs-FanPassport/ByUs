@@ -40,7 +40,7 @@ describe("guest home compact icon-only action spacing", () => {
     expect(icon).toMatch(/\bheight:\s*20px\b/);
   });
 
-  it("groups identity text compactly without shrinking action targets", () => {
+  it("aligns identity rows with the status and social action targets", () => {
     const info = declarationBlock(".celebrityInfo");
     const identity = declarationBlock(".celebrityIdentity");
     const status = declarationBlock(
@@ -48,7 +48,8 @@ describe("guest home compact icon-only action spacing", () => {
     );
     expect(declarationBlock(".fanCount")).toContain("var(--muted)");
 
-    expect(identity).toMatch(/\bgap:\s*4px\b/);
+    expect(identity).toMatch(/\bgrid-template-rows:\s*repeat\(2,\s*44px\)/);
+    expect(identity).toMatch(/\balign-items:\s*center\b/);
     expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
     expect(info).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
