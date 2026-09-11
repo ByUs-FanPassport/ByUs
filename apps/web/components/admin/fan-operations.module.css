@@ -85,6 +85,31 @@
 .avatar svg {
   width: 18px;
 }
+.memberIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.memberName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.memberEmail {
+  display: block;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.disabledLabel {
+  flex: none;
+  color: var(--error) !important;
+  font-size: 11px !important;
+}
+.loginMethods {
+  white-space: nowrap;
+}
 .fanCell strong,
 .journeyCell strong {
   display: block;

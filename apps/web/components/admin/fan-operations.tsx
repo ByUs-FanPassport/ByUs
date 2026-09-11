@@ -33,6 +33,8 @@ type Fan = {
   nickname: string | null;
   accountStatus: "active" | "disabled";
   maskedWallet: string | null;
+  email?: string | null;
+  loginProviders?: Array<"google" | "apple" | "email"> | null;
   createdAt?: string;
   celebritySummaries: Journey[];
 };
@@ -86,7 +88,7 @@ const copy = {
       "회원의 계정 상태와 패스포트 활동·혜택 기록을 확인합니다.",
     privacyTitle: "개인정보 조회 기준",
     privacy:
-      "검색에 사용한 이메일은 결과, 상세, 감사 로그에 표시되지 않습니다. Google 실명과 원문 지갑 주소도 노출하지 않습니다.",
+      "로그인 수단은 인증 서비스에 연결된 계정 기준입니다. 이메일은 권한이 있는 관리자만 조회할 수 있으며, 검색어 원문과 이메일은 감사 로그에 저장하지 않습니다.",
     query: "닉네임 또는 정확한 이메일",
     status: "계정 상태",
     all: "전체",
@@ -112,7 +114,13 @@ const copy = {
     loadingMore: "불러오는 중…",
     loadMoreError: "다음 회원을 불러오지 못했습니다. 다시 시도해 주세요.",
     fan: "회원",
+    loginMethod: "로그인 수단",
+    providerUnknown: "확인 불가",
+    providerNone: "연결 없음",
+    emailProvider: "이메일",
     journey: "패스포트 여정",
+    noPassport: "패스포트 미발급",
+    noPassportDescription: "아직 발급된 패스포트가 없습니다.",
     score: "팬 점수",
     activity: "활동",
     benefit: "혜택",
@@ -140,7 +148,7 @@ const copy = {
       "Review Passport journeys, issuance, and benefit states with minimum fan data.",
     privacyTitle: "Privacy and data access",
     privacy:
-      "Email is used only for exact search and never appears in results, details, or audit logs. Google names and full wallet addresses are excluded.",
+      "Login methods reflect accounts linked to the authentication service. Only authorized administrators can view email addresses. Raw search terms and email addresses are excluded from audit logs.",
     query: "Nickname or exact email",
     status: "Account status",
     all: "All",
@@ -166,7 +174,13 @@ const copy = {
     loadingMore: "Loading…",
     loadMoreError: "More members could not be loaded. Try again.",
     fan: "Member",
+    loginMethod: "Login method",
+    providerUnknown: "Unavailable",
+    providerNone: "None linked",
+    emailProvider: "Email",
     journey: "Passport journey",
+    noPassport: "No Passport issued",
+    noPassportDescription: "This member has not issued a Passport yet.",
     score: "Score",
     activity: "Activity",
     benefit: "Benefits",
@@ -576,6 +590,12 @@ export function FanOperations() {
                       </span>
                     ))}
                   </div>
+                  {detail.passports.length === 0 && (
+                    <section className={ops.detailSection}>
+                      <h3>{t.noPassport}</h3>
+                      <p>{t.noPassportDescription}</p>
+                    </section>
+                  )}
                   {detail.passports.length > 0 && (
                     <select
                       className={styles.journeySwitcher}
@@ -627,6 +647,7 @@ function FanTable({
         <thead>
           <tr>
             <th>{labels.fan}</th>
+            <th>{labels.loginMethod}</th>
             <th>{labels.journey}</th>
             <th>{labels.score}</th>
             <th>{labels.activity}</th>
@@ -652,26 +673,26 @@ function FanTable({
                     <span className={styles.avatar}>
                       <UserRound aria-hidden="true" />
                     </span>
-                    <span>
-                      <strong>{fan.nickname ?? "—"}</strong>
-                      <span>
-                        {fan.accountStatus === "active"
-                          ? labels.active
-                          : labels.disabled}
-                        {fan.maskedWallet ? ` · ${fan.maskedWallet}` : ""}
-                      </span>
-                    </span>
+                    <div className={styles.memberIdentity}>
+                      <div className={styles.memberName}>
+                        <strong>{fan.nickname ?? "—"}</strong>
+                        {fan.accountStatus === "disabled" && <span className={styles.disabledLabel}>{labels.disabled}</span>}
+                      </div>
+                      <span className={styles.memberEmail} title={fan.email ?? undefined}>{fan.email ?? "—"}</span>
+                    </div>
                   </div>
+                </td>
+                <td className={styles.loginMethods}>
+                  {fan.loginProviders == null
+                    ? <span className={styles.muted}>{labels.providerUnknown}</span>
+                    : fan.loginProviders.length === 0
+                      ? <span className={styles.muted}>{labels.providerNone}</span>
+                      : fan.loginProviders.map((provider) => provider === "google" ? "Google" : provider === "apple" ? "Apple" : labels.emailProvider).join(" · ")}
                 </td>
                 <td>
                   <div className={styles.journeyCell}>
-                    <strong>{journey?.celebrity.name ?? "—"}</strong>
-                    <span>
-                      {fan.celebritySummaries.length > 1
-                        ? `+${fan.celebritySummaries.length - 1} · `
-                        : ""}
-                      {journey?.passportMintStatus ?? "—"}
-                    </span>
+                    <strong>{journey?.celebrity.name ?? labels.noPassport}</strong>
+                    {fan.celebritySummaries.length > 1 && <span>+{fan.celebritySummaries.length - 1}</span>}
                   </div>
                 </td>
                 <td className={styles.score}>
