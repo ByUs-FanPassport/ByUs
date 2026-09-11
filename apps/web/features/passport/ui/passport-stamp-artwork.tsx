@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   CalendarCheck,
   ClipboardCheck,
+  Crown,
   Radio,
   type LucideIcon,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const stampIcons: Record<PassportStampType, LucideIcon> = {
   reservation: CalendarCheck,
   attendance: Radio,
   survey: ClipboardCheck,
+  membership: Crown,
 };
 
 export function StampArtwork({

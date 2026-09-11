@@ -125,6 +125,7 @@
   font-weight: 700;
 }
 .editor input,
+.editor select,
 .editor textarea {
   box-sizing: border-box;
   width: 100%;
@@ -136,6 +137,10 @@
 .editor input {
   height: 44px;
   padding: 0 12px;
+}
+.editor select {
+  height: 44px;
+  padding: 0 36px 0 12px;
 }
 .editor textarea {
   min-height: 88px;
@@ -185,6 +190,20 @@
   color: var(--muted);
   font-size: 13px;
 }
+.queueReward {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.queueReward span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.queueReward svg {
+  width: 16px;
+}
 .proofs {
   display: flex;
   flex-wrap: wrap;
@@ -225,7 +244,7 @@
   place-content: center;
   color: var(--muted);
 }
-.page :is(button, a, input, textarea):focus-visible {
+.page :is(button, a, input, select, textarea):focus-visible {
   outline: 3px solid rgb(217 35 84 / 28%);
   outline-offset: 3px;
 }

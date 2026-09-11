@@ -210,7 +210,7 @@ describe("MintWorker", () => {
     expect(metadata.documents[0]).toMatchObject({ name: "ByUs Digital Collectible" });
   });
 
-  it.each(["Attendance", "Survey"] as const)(
+  it.each(["Attendance", "Survey", "Membership"] as const)(
     "decodes a %s Stamp job through the full pre-broadcast pipeline",
     async (stampType) => {
       const stampPayload = {

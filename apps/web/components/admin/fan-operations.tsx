@@ -23,10 +23,8 @@ type Journey = {
   passportId: string;
   celebrity: { id: string; name: string; archived: boolean };
   score: { points: number; level: string };
-  activityCounts: Record<
-    "knowledge" | "reservation" | "attendance" | "survey",
-    number
-  >;
+  activityCounts: Record<"knowledge" | "reservation" | "attendance" | "survey", number>
+    & { membership?: number };
   passportMintStatus: string;
   benefitSummary: { claims: number; applications: number };
 };

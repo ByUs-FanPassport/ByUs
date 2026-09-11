@@ -2,6 +2,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Check,
+  Crown,
   Image as ImageIcon,
   Plus,
   RefreshCw,
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
+import { membershipPlatformLabel, type MembershipPlatform } from "@/features/certification/domain/certification";
 import styles from "./certification-manager.module.css";
 
 type Mission = {
@@ -31,7 +33,8 @@ type Mission = {
   instructionsEn: string;
   opensAt: string;
   closesAt: string;
-  reward: { scorePoints: number; ticketAmount: number };
+  reward: { scorePoints: number; ticketAmount: number; stampCount?: 1 };
+  membershipPlatform?: MembershipPlatform;
 };
 type Submission = {
   id: string;
@@ -44,13 +47,15 @@ type Submission = {
   note: string | null;
   revision: number;
   submittedAt: string;
-  reward: { scorePoints: number; ticketAmount: number };
+  reward: { scorePoints: number; ticketAmount: number; stampCount?: 1 };
+  membershipPlatform?: MembershipPlatform;
   uploads: { id: string; width: number; height: number }[];
 };
 const blank = {
   id: "",
   celebrityId: "",
   immutableKey: "",
+  membershipPlatform: "" as MembershipPlatform | "",
   expectedRevision: undefined as number | undefined,
   category: "",
   titleKo: "",
@@ -64,11 +69,12 @@ const blank = {
   scorePoints: 0,
   ticketAmount: 0,
 };
-function missionForm(mission: Mission) {
+function missionForm(mission: Mission): typeof blank {
   return {
     id: mission.id,
     celebrityId: mission.celebrityId,
     immutableKey: mission.immutableKey,
+    membershipPlatform: mission.membershipPlatform ?? "",
     expectedRevision: mission.revision,
     category: mission.category,
     titleKo: mission.titleKo,
@@ -81,6 +87,22 @@ function missionForm(mission: Mission) {
     closesAt: mission.closesAt.slice(0, 16),
     scorePoints: mission.reward.scorePoints,
     ticketAmount: mission.reward.ticketAmount,
+  };
+}
+
+function membershipPreset(platform: MembershipPlatform) {
+  const name = membershipPlatformLabel(platform);
+  return {
+    membershipPlatform: platform,
+    category: "유료 멤버십",
+    titleKo: `${name} 유료 멤버십 인증`,
+    titleEn: `${name} paid membership verification`,
+    descriptionKo: `${name} 유료 멤버십 상태를 인증하고 팬 점수와 멤버십 Stamp를 받으세요.`,
+    descriptionEn: `Verify your paid ${name} membership to earn fan score and a Membership Stamp.`,
+    instructionsKo: `${name}에서 가입한 멤버십의 정보 화면을 캡처해 주세요. 관리자가 자료를 확인한 뒤 스탬프와 점수를 지급합니다.`,
+    instructionsEn: `Capture the membership information screen in ${name}. Your Stamp and fan score are awarded after an administrator approves your proof.`,
+    scorePoints: 1,
+    ticketAmount: 0,
   };
 }
 export function AuthorizedCertificationManager() {
@@ -198,9 +220,11 @@ function CertificationManager({
   }
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const { membershipPlatform, ...fields } = form;
     await command({
       command: "save",
-      ...form,
+      ...fields,
+      ...(membershipPlatform ? { membershipPlatform } : {}),
       id: form.id || undefined,
       opensAt: new Date(form.opensAt).toISOString(),
       closesAt: new Date(form.closesAt).toISOString(),
@@ -323,7 +347,7 @@ function CertificationManager({
                 <span>
                   <strong>{m.titleKo}</strong>
                   <small>
-                    {m.celebritySlug} · r{m.revision}
+                    {m.celebritySlug}{m.membershipPlatform ? ` · ${membershipPlatformLabel(m.membershipPlatform)}` : ""} · r{m.revision}
                   </small>
                 </span>
                 <em data-status={m.status}>{m.status}</em>
@@ -340,6 +364,24 @@ function CertificationManager({
                   ? "새 미션"
                   : "New mission"}
             </h2>
+            <label>
+              <span>{locale === "ko" ? "인증 유형" : "Certification type"}</span>
+              <select
+                value={form.membershipPlatform}
+                disabled={!canWrite || pending || needsRefresh || Boolean(form.id)}
+                onChange={(event) => {
+                  const platform = event.target.value as MembershipPlatform | "";
+                  setForm((value) => platform
+                    ? { ...value, ...membershipPreset(platform) }
+                    : { ...value, membershipPlatform: "" });
+                }}
+              >
+                <option value="">{locale === "ko" ? "일반 수동 인증" : "Generic manual proof"}</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="youtube">YouTube</option>
+              </select>
+            </label>
             <div className={styles.grid}>
               {Object.entries({
                 celebrityId: "Celebrity UUID",
@@ -499,14 +541,15 @@ function CertificationManager({
                   <div>
                     <strong>{item.missionTitle}</strong>
                     <span>
-                      {item.celebritySlug} · #{item.attemptNumber}
+                      {item.celebritySlug}{item.membershipPlatform ? ` · ${membershipPlatformLabel(item.membershipPlatform)}` : ""} · #{item.attemptNumber}
                     </span>
                     <span>Submission ID: {item.id}</span>
                   </div>
-                  <span>
-                    +{item.reward.scorePoints} score · +
-                    {item.reward.ticketAmount} ticket
-                  </span>
+                  {item.reward.scorePoints > 0 || item.reward.ticketAmount > 0 || item.reward.stampCount ? <span className={styles.queueReward}>
+                    {item.reward.scorePoints > 0 ? <span>+{item.reward.scorePoints} score</span> : null}
+                    {item.reward.stampCount ? <span><Crown aria-hidden="true" />1 Membership Stamp</span> : null}
+                    {item.reward.ticketAmount > 0 ? <span>+{item.reward.ticketAmount} ticket</span> : null}
+                  </span> : null}
                 </header>
                 <div className={styles.proofs}>
                   {item.uploads.map((upload) => (
@@ -525,7 +568,9 @@ function CertificationManager({
                 {item.note ? <p>{item.note}</p> : null}
                 <label>
                   <span>
-                    {locale === "ko" ? "반려 사유" : "Rejection reason"}
+                    {item.membershipPlatform
+                      ? locale === "ko" ? "보완 요청 사유" : "Reason more proof is needed"
+                      : locale === "ko" ? "반려 사유" : "Rejection reason"}
                   </span>
                   <textarea
                     disabled={!canWrite || pending || needsRefresh}
@@ -552,7 +597,9 @@ function CertificationManager({
                     onClick={() => void review(item, "reject")}
                   >
                     <X />
-                    {locale === "ko" ? "반려" : "Reject"}
+                    {item.membershipPlatform
+                      ? locale === "ko" ? "보완 요청" : "Request more proof"
+                      : locale === "ko" ? "반려" : "Reject"}
                   </button>
                 </div>
               </article>

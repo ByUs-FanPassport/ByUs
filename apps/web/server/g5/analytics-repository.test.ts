@@ -52,7 +52,7 @@ describe("G5 analytics repository", () => {
     ).toMatchObject({ state: "unavailable", value: null });
   });
 
-  it("calls the guarded creator RPC with canonical scope and times", async () => {
+  it.each([undefined, 1])("preserves membership count %s through the guarded creator RPC", async (membership) => {
     const payload = {
       scope: { celebrityId: id, liveEventId: null },
       window,
@@ -64,7 +64,7 @@ describe("G5 analytics repository", () => {
           "fan_score_ledger",
         ),
         stampTypeCounts: available(
-          { knowledge: 0, reservation: 0, attendance: 0, survey: 0, total: 0 },
+          { knowledge: 0, reservation: 0, attendance: 0, survey: 0, ...(membership === undefined ? {} : { membership }), total: membership ?? 0 },
           "stamps",
         ),
         reservationCount: available(0, "live_reservations"),
@@ -97,7 +97,7 @@ describe("G5 analytics repository", () => {
         to: window.to,
         asOf: window.asOf,
       }),
-    ).resolves.toEqual(payload);
+    ).resolves.toEqual({ ...payload, metrics: { ...payload.metrics, stampTypeCounts: { ...payload.metrics.stampTypeCounts, value: { ...(payload.metrics.stampTypeCounts.value as Record<string, number>), membership: membership ?? 0 } } } });
     expect(database.rpc).toHaveBeenCalledWith(
       "read_admin_creator_analytics",
       expect.objectContaining({

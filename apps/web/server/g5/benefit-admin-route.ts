@@ -35,10 +35,10 @@ const save = z
     minimumScore: z.number().int().nonnegative(),
     minimumLevel: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]),
     requiredStampType: z
-      .enum(["knowledge", "reservation", "attendance", "survey"])
+      .enum(["knowledge", "reservation", "attendance", "survey", "membership"])
       .nullable(),
     requiredActivityType: z
-      .enum(["knowledge", "reservation", "attendance", "survey"])
+      .enum(["knowledge", "reservation", "attendance", "survey", "membership"])
       .nullable(),
     titleKo: z.string().trim().min(1).max(160),
     summaryKo: z.string().trim().min(1).max(1200),

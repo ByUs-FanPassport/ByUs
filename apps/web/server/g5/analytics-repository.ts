@@ -55,6 +55,7 @@ const stampValue = z.object({
   reservation: z.number().int().nonnegative(),
   attendance: z.number().int().nonnegative(),
   survey: z.number().int().nonnegative(),
+  membership: z.number().int().nonnegative().optional().default(0),
   total: z.number().int().nonnegative(),
 });
 const availableObjectMetric = <T extends z.ZodType>(value: T) =>

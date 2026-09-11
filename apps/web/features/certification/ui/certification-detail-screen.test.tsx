@@ -264,4 +264,55 @@ describe("CertificationDetailScreen", () => {
     releasePassports(Response.json({ passports: [passport(karaPassportId, "kara")] }));
     expect(await screen.findByRole("link", { name: "내 패스포트 보기" })).toHaveAttribute("href", `/passports/${karaPassportId}?locale=ko`);
   });
+
+  it("explains paid membership proof and uses the membership resubmission language", async () => {
+    const membershipHistory = [{
+      ...history[1],
+      title: "YouTube 유료 멤버십 인증",
+      membershipPlatform: "youtube",
+    }];
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith(`/api/certifications/${missionId}?`)) return Response.json({ certification: {
+        id: missionId,
+        kind: "manual",
+        celebrity: { slug: "kara", name: "KARA" },
+        category: "유료 멤버십",
+        title: "YouTube 유료 멤버십 인증",
+        description: "현재 유료 멤버십을 인증해 주세요.",
+        instructions: "필수 정보가 한 화면에 없다면 여러 이미지를 제출해 주세요.",
+        status: "available",
+        opensAt: "2026-09-08T00:00:00+09:00",
+        closesAt: "2026-09-30T00:00:00+09:00",
+        reward: { scorePoints: 1, ticketAmount: 0, stampCount: 1 },
+        membershipPlatform: "youtube",
+        creatorAccountUrl: "https://www.youtube.com/@kara",
+      } });
+      if (url.includes("/api/me/")) return Response.json({ certifications: membershipHistory });
+      if (url.includes(`/proofs/${uploadId}`)) return new Response(new Blob(["proof"], { type: "image/webp" }));
+      if (url.includes(`/api/certification-submissions/${rejectedId}`)) return Response.json({ submission: {
+        ...detail(rejectedId, "rejected", 1),
+        title: "YouTube 유료 멤버십 인증",
+        reward: { scorePoints: 1, ticketAmount: 0, stampCount: 1 },
+        membershipPlatform: "youtube",
+      } });
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByText("YouTube 유료 멤버십 회원만 참여할 수 있어요")).toBeInTheDocument();
+    expect(screen.getByText("일반 팔로우나 무료 채널 구독은 인증 대상이 아니에요.")).toBeInTheDocument();
+    expect(screen.getByText("현재 유료 멤버십 상태")).toBeInTheDocument();
+    expect(screen.getByText("다음 결제일 또는 유효기간")).toBeInTheDocument();
+    expect(screen.getByText(/멤버십 시작일이나 가입 기간은 선택 사항/)).toBeInTheDocument();
+    expect(screen.getByText(/최초 승인 시 한 번만 보상/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "크리에이터 계정 확인" })).toHaveAttribute("href", "https://www.youtube.com/@kara");
+    expect(screen.getByText("멤버십 Stamp 1개")).toBeInTheDocument();
+    expect(screen.queryByText("응모권")).not.toBeInTheDocument();
+    expect(screen.getByText("보완 필요")).toBeInTheDocument();
+    expect(screen.getByText("보완 요청 사유")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "보완 자료 제출하기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보완 자료 제출하기" })).toBeDisabled();
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowLeft, ArrowRight, CheckCircle2, ImagePlus, Ticket, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Crown, ExternalLink, ImagePlus, Ticket, X } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useRef, useState } from "react";
@@ -12,6 +12,7 @@ import { parsePassportCollectionResponse } from "../../passport/domain/passport-
 import {
   historyItemSchema,
   manualCertificationSchema,
+  membershipPlatformLabel,
   submissionSchema,
   type CertificationLocale,
   type ManualCertification,
@@ -251,7 +252,15 @@ function CertificationDetailForOwner({
   const canOpenForm = Boolean(mission) && ownerHistorySettled && (!submission || currentRejected);
   const title = mission?.title ?? submission?.title;
   const reward = mission?.reward ?? submission?.reward;
-  const statusLabel = submission ? ({ pending: locale === "ko" ? "검토 중" : "Under review", approved: locale === "ko" ? "승인" : "Approved", rejected: locale === "ko" ? "반려" : "Rejected" } as const)[submission.status] : null;
+  const membershipPlatform = mission?.membershipPlatform ?? submission?.membershipPlatform;
+  const isMembership = Boolean(membershipPlatform);
+  const statusLabel = submission ? ({
+    pending: locale === "ko" ? "검토 중" : "Under review",
+    approved: locale === "ko" ? "승인" : "Approved",
+    rejected: isMembership
+      ? locale === "ko" ? "보완 필요" : "More proof needed"
+      : locale === "ko" ? "반려" : "Rejected",
+  } as const)[submission.status] : null;
 
   return (
     <FanAppFrame locale={locale} mainId="certification-detail">
@@ -265,12 +274,17 @@ function CertificationDetailForOwner({
               <span>{mission?.category ?? (locale === "ko" ? "내 인증 기록" : "My certification")}</span>
               <h1>{title}</h1>
               {mission?.description ? <p>{mission.description}</p> : null}
-              <div className={styles.rewardCard}>
-                <strong>+{reward.scorePoints} {locale === "ko" ? "팬 점수" : "fan score"}</strong>
-                <span><Ticket aria-hidden="true" />+{reward.ticketAmount} {locale === "ko" ? "응모권" : "tickets"}</span>
-              </div>
+              {reward.scorePoints > 0 || reward.ticketAmount > 0 || reward.stampCount ? <div className={styles.rewardCard}>
+                {reward.scorePoints > 0 ? <strong>+{reward.scorePoints} {locale === "ko" ? "팬 점수" : "fan score"}</strong> : null}
+                {reward.stampCount ? <span><Crown aria-hidden="true" />{locale === "ko" ? "멤버십 Stamp 1개" : "1 Membership Stamp"}</span> : null}
+                {reward.ticketAmount > 0 ? <span><Ticket aria-hidden="true" />+{reward.ticketAmount} {locale === "ko" ? "응모권" : "tickets"}</span> : null}
+              </div> : null}
             </header>
-            {mission ? <section className={styles.instructions}><h2>{locale === "ko" ? "인증 방법" : "How to certify"}</h2><p>{mission.instructions}</p></section> : null}
+            {mission ? <section className={styles.instructions}>
+              <h2>{locale === "ko" ? "인증 방법" : "How to certify"}</h2>
+              {membershipPlatform ? <MembershipEligibility locale={locale} platform={membershipPlatform} creatorAccountUrl={mission.creatorAccountUrl} /> : null}
+              <p>{mission.instructions}</p>
+            </section> : null}
             {submission ? (
               <section className={styles.submissionDetail} aria-labelledby="submission-detail-heading">
                 <div className={styles.submissionDetailHeading}>
@@ -283,7 +297,7 @@ function CertificationDetailForOwner({
                   {submission.reviewedAt ? <div><dt>{locale === "ko" ? "검토일" : "Reviewed"}</dt><dd>{new Intl.DateTimeFormat(locale,{dateStyle:"medium",timeStyle:"short"}).format(new Date(submission.reviewedAt))}</dd></div> : null}
                 </dl>
                 {submission.note ? <div className={styles.submissionCopy}><strong>{locale === "ko" ? "제출 설명" : "Note"}</strong><p>{submission.note}</p></div> : null}
-                {submission.rejectionReason ? <div className={styles.rejection}><strong>{locale === "ko" ? "반려 사유" : "Reason"}</strong>{submission.rejectionReason}</div> : null}
+                {submission.rejectionReason ? <div className={styles.rejection}><strong>{isMembership ? (locale === "ko" ? "보완 요청 사유" : "Reason more proof is needed") : (locale === "ko" ? "반려 사유" : "Reason")}</strong>{submission.rejectionReason}</div> : null}
                 {proofs.length ? <div className={styles.proofs} aria-label={locale === "ko" ? "제출 이미지" : "Submitted images"}>{proofs.map((proof,index)=><img key={proof.id} src={proof.url} alt={locale === "ko" ? `제출 이미지 ${index+1}` : `Submitted image ${index+1}`} />)}</div> : null}
               </section>
             ) : null}
@@ -293,11 +307,11 @@ function CertificationDetailForOwner({
                   : null}
             {canOpenForm ? (
               <section className={styles.formArea} aria-labelledby="proof-heading">
-                <h2 id="proof-heading">{currentRejected ? (locale === "ko" ? "자료를 보완해 다시 제출해 주세요" : "Update and resubmit your proof") : (locale === "ko" ? "인증 자료 제출" : "Submit proof")}</h2>
+                <h2 id="proof-heading">{currentRejected ? (isMembership ? (locale === "ko" ? "보완 자료 제출하기" : "Submit additional proof") : (locale === "ko" ? "자료를 보완해 다시 제출해 주세요" : "Update and resubmit your proof")) : (locale === "ko" ? "인증 자료 제출" : "Submit proof")}</h2>
                 <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{locale === "ko" ? "이미지 선택 (최대 3장, 장당 3MB)" : "Choose up to 3 images, 3MB each"}</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event)=>setFiles([...(event.target.files??[])].slice(0,3))}/></label>
                 <ul className={styles.fileList}>{files.map((file,index)=><li key={`${file.name}-${index}`}><span>{file.name}</span><button type="button" aria-label={`${file.name} ${locale==="ko"?"삭제":"remove"}`} onClick={()=>setFiles((value)=>value.filter((_,itemIndex)=>itemIndex!==index))}><X /></button></li>)}</ul>
                 <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : "Note (optional)"}</span><textarea maxLength={1000} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
-                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
+                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
               </section>
             ) : null}
           </>
@@ -306,6 +320,32 @@ function CertificationDetailForOwner({
       </FanContentContainer>
     </FanAppFrame>
   );
+}
+
+function MembershipEligibility({
+  locale,
+  platform,
+  creatorAccountUrl,
+}: {
+  locale: CertificationLocale;
+  platform: NonNullable<ManualCertification["membershipPlatform"]>;
+  creatorAccountUrl?: string;
+}) {
+  const platformName = membershipPlatformLabel(platform);
+  return <div className={styles.membershipGuide}>
+    <strong>{locale === "ko" ? `${platformName} 유료 멤버십 회원만 참여할 수 있어요` : `For paid ${platformName} members only`}</strong>
+    <p>{locale === "ko" ? "일반 팔로우나 무료 채널 구독은 인증 대상이 아니에요." : "Following an account or subscribing to a free channel does not qualify."}</p>
+    <p>{locale === "ko" ? "캡처에서 아래 네 가지 정보를 확인할 수 있어야 해요." : "Your screenshots must show these four details."}</p>
+    <ul>
+      <li>{locale === "ko" ? "크리에이터 계정" : "Creator account"}</li>
+      <li>{locale === "ko" ? `내 ${platformName} 계정` : `Your ${platformName} account`}</li>
+      <li>{locale === "ko" ? "현재 유료 멤버십 상태" : "Current paid membership status"}</li>
+      <li>{locale === "ko" ? "다음 결제일 또는 유효기간" : "Next billing date or expiration date"}</li>
+    </ul>
+    <p>{locale === "ko" ? "화면이 나뉘어 있다면 이미지를 최대 3장까지 제출할 수 있어요. 멤버십 시작일이나 가입 기간은 선택 사항이며, 결제 수단과 인증에 필요하지 않은 개인정보는 가려도 됩니다." : "If the details appear on separate screens, you may submit up to 3 images. Start date or membership tenure is optional, and you may hide payment details and unrelated personal information."}</p>
+    <p>{locale === "ko" ? "이 크리에이터의 같은 플랫폼 멤버십은 최초 승인 시 한 번만 보상을 받아요." : "You can receive this creator and platform reward once, when your first submission is approved."}</p>
+    {creatorAccountUrl ? <a href={creatorAccountUrl} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "크리에이터 계정 확인" : "Open creator account"}<ExternalLink aria-hidden="true" /></a> : null}
+  </div>;
 }
 
 function ApprovedNextStep({

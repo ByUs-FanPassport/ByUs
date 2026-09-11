@@ -69,4 +69,42 @@ describe("CertificationPanel", () => {
       expect.objectContaining({ cache: "no-store" }),
     );
   });
+
+  it("shows the membership platform and Stamp while omitting a zero ticket reward", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).includes("/api/me/")) return Response.json({ certifications: [{
+        id,
+        kind: "manual",
+        missionId: id,
+        title: "Instagram 유료 멤버십 인증",
+        status: "rejected",
+        attemptNumber: 1,
+        rejectionReason: "계정명이 보이게 제출해 주세요.",
+        submittedAt: "2026-09-08T00:00:00.000Z",
+        reviewedAt: "2026-09-08T01:00:00.000Z",
+        actionHref: `/c/kara/certifications/${id}?locale=ko`,
+        membershipPlatform: "instagram",
+      }] });
+      return Response.json({ certifications: [{
+        id,
+        kind: "manual",
+        category: "유료 멤버십",
+        title: "Instagram 유료 멤버십 인증",
+        description: "현재 유료 멤버십 상태를 인증해 주세요.",
+        status: "available",
+        reward: { scorePoints: 1, ticketAmount: 0, stampCount: 1 },
+        actionHref: `/c/kara/certifications/${id}?locale=ko`,
+        membershipPlatform: "instagram",
+      }] });
+    });
+    render(<CertificationPanel slug="kara" locale="ko" />);
+
+    const mission = await screen.findByRole("link", { name: /Instagram 유료 멤버십 인증/ });
+    expect(mission).toHaveTextContent("Instagram");
+    expect(mission).toHaveTextContent("+1점 · 멤버십 Stamp 1개");
+    expect(mission).not.toHaveTextContent("응모권");
+
+    fireEvent.click(screen.getByRole("tab", { name: "내 인증 내역" }));
+    expect(await screen.findByText("보완 필요")).toBeInTheDocument();
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import { Award, ChevronRight, Clock3, History, Sparkles } from "lucide-react";
+import { Award, ChevronRight, Clock3, Crown, History, Sparkles, Ticket } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   certificationListItemSchema,
   historyItemSchema,
+  membershipPlatformLabel,
   type CertificationHistoryItem,
   type CertificationListItem,
   type CertificationLocale,
@@ -194,21 +195,24 @@ export function CertificationPanel({
               .map((item) => {
                 const content = (
                   <>
-                    <span className={styles.kind}>
-                      {item.kind === "quiz"
-                        ? "QUIZ"
-                        : item.kind === "live_mission"
-                          ? "LIVE"
-                          : "PROOF"}
+                      <span className={styles.kind}>
+                        {item.kind === "quiz"
+                          ? "QUIZ"
+                          : item.kind === "live_mission"
+                            ? "LIVE"
+                            : item.membershipPlatform ? "MEMBER" : "PROOF"}
                     </span>
                     <span className={styles.rowCopy}>
                       <strong>{item.title}</strong>
+                      {item.membershipPlatform ? <small>{membershipPlatformLabel(item.membershipPlatform)}</small> : null}
                       <small>{item.description}</small>
-                      <span className={styles.reward}>
-                        {item.reward
-                          ? `+${item.reward.scorePoints}${t.score} · +${item.reward.ticketAmount} ${t.ticket}`
-                          : ""}
-                      </span>
+                      {item.reward && (item.reward.scorePoints > 0 || item.reward.ticketAmount > 0 || item.reward.stampCount) ? <span className={styles.reward}>
+                        {item.reward.scorePoints > 0 ? <span>+{item.reward.scorePoints}{t.score}</span> : null}
+                        {item.reward.scorePoints > 0 && (item.reward.stampCount || item.reward.ticketAmount > 0) ? " · " : null}
+                        {item.reward.stampCount ? <span><Crown aria-hidden="true" />{locale === "ko" ? "멤버십 Stamp 1개" : "1 Membership Stamp"}</span> : null}
+                        {item.reward.stampCount && item.reward.ticketAmount > 0 ? " · " : null}
+                        {item.reward.ticketAmount > 0 ? <span><Ticket aria-hidden="true" />+{item.reward.ticketAmount} {t.ticket}</span> : null}
+                      </span> : null}
                     </span>
                     <span className={styles.status} data-status={item.status}>
                       {t[item.status]}
@@ -254,6 +258,7 @@ export function CertificationPanel({
                 <Clock3 aria-hidden="true" />
                 <span className={styles.rowCopy}>
                   <strong>{item.title}</strong>
+                  {item.membershipPlatform ? <small>{membershipPlatformLabel(item.membershipPlatform)}</small> : null}
                   <small>
                     {new Intl.DateTimeFormat(locale, {
                       dateStyle: "medium",
@@ -267,7 +272,9 @@ export function CertificationPanel({
                   ) : null}
                 </span>
                 <span className={styles.status} data-status={item.status}>
-                  {t[item.status]}
+                  {item.status === "rejected" && item.membershipPlatform
+                    ? locale === "ko" ? "보완 필요" : "More proof needed"
+                    : t[item.status]}
                 </span>
                 <ChevronRight aria-hidden="true" />
               </Link>

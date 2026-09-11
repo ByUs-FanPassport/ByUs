@@ -87,6 +87,14 @@ describe("Passport Stamp artwork", () => {
     expect(container.innerHTML).not.toContain("LIVE Reservation");
   });
 
+  it("renders membership with the shared Crown artwork and localized label", () => {
+    const { container } = render(<StampArtwork type="membership" locale="ko" />);
+    const stamp = screen.getByRole("img", { name: "멤버십 인증 Stamp" });
+    expect(stamp).toHaveTextContent("멤버십");
+    expect(stamp).toHaveStyle({ "--stamp-ink": STAMP_METADATA.membership.inkToken });
+    expect(container.querySelector("svg.lucide-crown")).toBeInTheDocument();
+  });
+
   it("keeps duplicate Stamp records and places every earned record in its own slot", () => {
     const stamps: PassportStampRecord[] = [
       { id: "one", type: "knowledge", issuedAt: "2026-07-20T00:00:00.000Z" },

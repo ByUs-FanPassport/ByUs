@@ -78,9 +78,9 @@ export class CertificationRepository {
     if (error) fail(error); return z.array(z.record(z.string(), z.unknown())).parse(data);
   }
   async saveAdmin(actor: { appUserId: string; allowlistId: string }, correlationId: string, input: Record<string, unknown>): Promise<unknown> {
-    const { data, error } = await this.db.rpc("save_admin_certification_mission", {
+    const { data, error } = await this.db.rpc("save_admin_certification_mission_v2", {
       p_actor: actor.appUserId,p_allowlist:actor.allowlistId,p_correlation:correlationId,p_mission_id:input.id ?? null,p_celebrity_id:input.celebrityId,p_immutable_key:input.immutableKey,p_expected_revision:input.expectedRevision ?? null,
-      p_category:input.category,p_title_ko:input.titleKo,p_title_en:input.titleEn,p_description_ko:input.descriptionKo,p_description_en:input.descriptionEn,p_instructions_ko:input.instructionsKo,p_instructions_en:input.instructionsEn,p_opens_at:input.opensAt,p_closes_at:input.closesAt,p_score_points:input.scorePoints,p_ticket_amount:input.ticketAmount,
+      p_category:input.category,p_title_ko:input.titleKo,p_title_en:input.titleEn,p_description_ko:input.descriptionKo,p_description_en:input.descriptionEn,p_instructions_ko:input.instructionsKo,p_instructions_en:input.instructionsEn,p_opens_at:input.opensAt,p_closes_at:input.closesAt,p_score_points:input.scorePoints,p_ticket_amount:input.ticketAmount,p_membership_platform:input.membershipPlatform ?? null,
     }); if (error) fail(error); return data;
   }
   async statusAdmin(actor: { appUserId: string; allowlistId: string }, correlationId: string, input: { id: string; expectedRevision: number; status: "active" | "closed" }): Promise<unknown> {

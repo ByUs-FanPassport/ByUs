@@ -23,7 +23,7 @@ export const passportPayloadV1Schema = basePayload.extend({
 
 export const stampPayloadV1Schema = basePayload.extend({
   issuanceId: bytes32Schema,
-  stampType: z.enum(["Knowledge", "Reservation", "Attendance", "Survey"]),
+  stampType: z.enum(["Knowledge", "Reservation", "Attendance", "Survey", "Membership"]),
 }).strict();
 
 export const reactionPayloadV1Schema = basePayload.extend({

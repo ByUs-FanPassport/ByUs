@@ -70,10 +70,8 @@ type CreatorAnalytics = {
       >
     >;
     stampTypeCounts: MetricEnvelope<
-      Record<
-        "knowledge" | "reservation" | "attendance" | "survey" | "total",
-        number
-      >
+      Record<"knowledge" | "reservation" | "attendance" | "survey" | "total", number>
+      & { membership?: number }
     >;
   } & EngagementMetrics;
 };
@@ -916,12 +914,12 @@ function AnalyticsResults({
           {stamps.state === "available" && stamps.value ? (
             <dl>
               {(
-                ["knowledge", "reservation", "attendance", "survey"] as const
+                ["knowledge", "reservation", "attendance", "survey", "membership"] as const
               ).map((stamp) => (
                 <div key={stamp}>
                   <dt>{stamp}</dt>
                   <dd>
-                    {stamps.value![stamp]} / {stamps.value!.total}
+                    {stamps.value![stamp] ?? 0} / {stamps.value!.total}
                   </dd>
                 </div>
               ))}

@@ -1,8 +1,11 @@
 import type { BlockchainJob, JobPayload } from "./domain.js";
 import type { MetadataDocument } from "./ports.js";
+import { MEMBERSHIP_STAMP_IMAGE_URI } from "./membership-stamp-asset.js";
 
 // ERC metadata requires a top-level `name`; only person-identifying name fields
 // are forbidden. Values are additionally produced from closed enums/slugs.
+type StampPayload = Extract<JobPayload, { stampType: string }>;
+
 const forbiddenKeys = new Set(["email", "nickname", "realName", "personalName", "phone", "wallet", "recipient", "entityId"]);
 
 export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBaseUri: string): MetadataDocument {
@@ -27,7 +30,9 @@ export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBas
     version: 1,
     name: `ByUs ${credential}`,
     description: `A soulbound ByUs ${credential} credential.`,
-    image: `${assetBaseUri.replace(/\/$/, "")}/${assetPath}`,
+    image: job.entityType === "stamp" && (payload as StampPayload).stampType === "Membership"
+      ? MEMBERSHIP_STAMP_IMAGE_URI
+      : `${assetBaseUri.replace(/\/$/, "")}/${assetPath}`,
     attributes: [
       { trait_type: "Credential", value: credential },
       { trait_type: "Celebrity", value: payload.celebritySlug },

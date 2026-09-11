@@ -6,13 +6,14 @@ import type { PhotoSet } from "../../media/domain/public-image";
 export const passportLocaleSchema = z.enum(["ko", "en"]);
 export type PassportLocale = z.infer<typeof passportLocaleSchema>;
 
-export const stampTypeSchema = z.enum(["knowledge", "reservation", "attendance", "survey"]);
+export const stampTypeSchema = z.enum(["knowledge", "reservation", "attendance", "survey", "membership"]);
 export const activityTypeSchema = stampTypeSchema;
 export const activitySourceTypeSchema = z.enum([
   "quiz_pass",
   "live_reservation",
   "live_attendance",
   "live_survey_response",
+  "certification_submission",
 ]);
 export const mintStatusSchema = z.enum(["queued", "processing", "retryable", "permanent_failure", "minted"]);
 export const levelSchema = z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]);
@@ -24,6 +25,7 @@ export const ACTIVITY_SOURCE_BY_TYPE = {
   reservation: "live_reservation",
   attendance: "live_attendance",
   survey: "live_survey_response",
+  membership: "certification_submission",
 } as const satisfies Record<
   PassportStampType,
   z.infer<typeof activitySourceTypeSchema>
@@ -38,10 +40,10 @@ export const passportActivityContextSchema = z.object({
     linkable: z.boolean(),
   }).strict().nullable(),
 }).strict().superRefine((value, context) => {
-  if (value.sourceType === "quiz_pass" && value.live !== null) {
-    context.addIssue({ code: "custom", message: "Quiz activity cannot contain LIVE context" });
+  if ((value.sourceType === "quiz_pass" || value.sourceType === "certification_submission") && value.live !== null) {
+    context.addIssue({ code: "custom", message: "Non-LIVE activity cannot contain LIVE context" });
   }
-  if (value.sourceType !== "quiz_pass" && value.live === null) {
+  if (value.sourceType !== "quiz_pass" && value.sourceType !== "certification_submission" && value.live === null) {
     context.addIssue({ code: "custom", message: "LIVE activity lacks source context" });
   }
 });
@@ -66,6 +68,11 @@ export const STAMP_METADATA = {
     label: { ko: "후기 참여", en: "Survey" },
     shortLabel: { ko: "후기", en: "SURVEY" },
     inkToken: "oklch(43% 0.11 155)",
+  },
+  membership: {
+    label: { ko: "멤버십 인증", en: "Membership Verification" },
+    shortLabel: { ko: "멤버십", en: "MEMBER" },
+    inkToken: "oklch(38% 0.1 75)",
   },
 } as const satisfies Record<
   PassportStampType,
@@ -114,9 +121,10 @@ export const stampSummarySchema = z.object({
   reservation: z.number().int().nonnegative(),
   attendance: z.number().int().nonnegative(),
   survey: z.number().int().nonnegative(),
+  membership: z.number().int().nonnegative().optional().default(0),
   total: z.number().int().nonnegative(),
 }).strict().superRefine((value, context) => {
-  if (value.total !== value.knowledge + value.reservation + value.attendance + value.survey) {
+  if (value.total !== value.knowledge + value.reservation + value.attendance + value.survey + value.membership) {
     context.addIssue({ code: "custom", message: "Stamp summary total is inconsistent" });
   }
 });

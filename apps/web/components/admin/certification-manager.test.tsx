@@ -22,6 +22,23 @@ const submission = {
   appUserId: "user-1", status: "pending", attemptNumber: 1, note: null, revision: 1,
   submittedAt: "2026-09-10T00:30:00.000Z", reward: { scorePoints: 10, ticketAmount: 1 }, uploads: [],
 };
+const membershipMission = {
+  ...mission,
+  id: "membership-mission",
+  immutableKey: "membership-youtube",
+  titleKo: "YouTube 유료 멤버십 인증",
+  titleEn: "YouTube paid membership verification",
+  reward: { scorePoints: 1, ticketAmount: 0, stampCount: 1 as const },
+  membershipPlatform: "youtube" as const,
+};
+const membershipSubmission = {
+  ...submission,
+  id: "membership-submission",
+  missionId: membershipMission.id,
+  missionTitle: membershipMission.titleKo,
+  reward: membershipMission.reward,
+  membershipPlatform: "youtube" as const,
+};
 
 describe("certification manager mutations", () => {
   beforeEach(() => {
@@ -168,5 +185,68 @@ describe("certification manager mutations", () => {
     await waitFor(() => expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(2));
     const lastPost = fetchMock.mock.calls.filter(([, init]) => init?.method === "POST").at(-1);
     expect(JSON.parse(String(lastPost?.[1]?.body))).toMatchObject({ id: created.id, expectedRevision: 1 });
+  });
+
+  it("applies membership presets and includes the selected platform in a new mission save", async () => {
+    let savedBody: Record<string, unknown> | null = null;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "POST") {
+        savedBody = JSON.parse(String(init.body));
+        return Response.json({ id: membershipMission.id });
+      }
+      if (url.includes("certification-missions")) {
+        return Response.json({ missions: savedBody ? [membershipMission] : [] });
+      }
+      return Response.json({ submissions: [] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<AuthorizedCertificationManager />);
+    await screen.findByText("검토할 제출이 없습니다.");
+
+    fireEvent.change(screen.getByLabelText("인증 유형"), { target: { value: "youtube" } });
+    expect(screen.getByDisplayValue("YouTube 유료 멤버십 인증")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/YouTube에서 가입한 멤버십의 정보 화면/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Score")).toHaveValue(1);
+    expect(screen.getByLabelText("Tickets")).toHaveValue(0);
+    fireEvent.change(screen.getByLabelText("Open"), { target: { value: "2026-09-10T00:00" } });
+    fireEvent.change(screen.getByLabelText("Close"), { target: { value: "2026-09-11T00:00" } });
+    fireEvent.submit(screen.getByRole("button", { name: /초안 저장/ }).closest("form")!);
+
+    await waitFor(() => expect(savedBody).toMatchObject({
+      command: "save",
+      membershipPlatform: "youtube",
+      scorePoints: 1,
+      ticketAmount: 0,
+    }));
+    expect(await screen.findByRole("button", { name: /YouTube 유료 멤버십 인증/ })).toHaveTextContent("YouTube");
+    expect(screen.getByLabelText("인증 유형")).toBeDisabled();
+  });
+
+  it("keeps generic saves backward compatible and gives membership reviews proof-request language", async () => {
+    let genericBody: Record<string, unknown> | null = null;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "POST") {
+        genericBody = JSON.parse(String(init.body));
+        return Response.json({ id: "generic-created" });
+      }
+      return url.includes("certification-missions")
+        ? Response.json({ missions: [] })
+        : Response.json({ submissions: [membershipSubmission] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByText("보완 요청 사유")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보완 요청" })).toBeDisabled();
+    expect(screen.getByText("1 Membership Stamp")).toBeInTheDocument();
+    expect(screen.queryByText(/\+0 ticket/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Open"), { target: { value: "2026-09-10T00:00" } });
+    fireEvent.change(screen.getByLabelText("Close"), { target: { value: "2026-09-11T00:00" } });
+    fireEvent.submit(screen.getByRole("button", { name: /초안 저장/ }).closest("form")!);
+
+    await waitFor(() => expect(genericBody).not.toBeNull());
+    expect(genericBody).not.toHaveProperty("membershipPlatform");
   });
 });

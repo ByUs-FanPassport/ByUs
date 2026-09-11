@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertPiiFree, renderMetadata } from "../src/metadata.js";
+import { MEMBERSHIP_STAMP_IMAGE_URI } from "../src/membership-stamp-asset.js";
 import type { BlockchainJob, CollectiblePayloadV1, PassportPayloadV1, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
 
 const payload: PassportPayloadV1 = {
@@ -40,6 +41,20 @@ describe("credential metadata", () => {
     const stampJob = { ...job, entityType: "stamp" as const, payload: stampPayload };
     expect(renderMetadata(stampJob, stampPayload, "ipfs://bafy-assets/credentials/v1").image)
       .toBe(`ipfs://bafy-assets/credentials/v1/stamp/${stampType.toLowerCase()}/kara.png`);
+  });
+
+  it("uses pinned public membership artwork without changing other credential asset bases", () => {
+    const membershipPayload: StampPayloadV1 = { recipient: payload.recipient, celebritySlug: "elina", issuanceId: payload.passportId, stampType: "Membership" };
+    const membershipJob = { ...job, entityType: "stamp" as const, payload: membershipPayload };
+    const first = renderMetadata(membershipJob, membershipPayload, "ipfs://existing-credential-assets/v1");
+    expect(first.name).toBe("ByUs Membership Stamp");
+    expect(first.image).toBe(MEMBERSHIP_STAMP_IMAGE_URI);
+    expect(first.image).toMatch(/^ipfs:\/\/b[a-z2-7]+$/);
+    expect(renderMetadata(membershipJob, membershipPayload, "ipfs://different-base/v2")).toEqual(first);
+    const serialized = JSON.stringify(first);
+    expect(serialized).not.toContain(payload.recipient);
+    expect(serialized).not.toContain(job.entityId);
+    expect(serialized).not.toContain("certification_submission");
   });
 
   it("represents Reaction independently while reusing the generic mint metadata pipeline", () => {

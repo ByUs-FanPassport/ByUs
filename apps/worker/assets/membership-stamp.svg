@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <rect width="1200" height="1200" rx="80" fill="#fffaf0"/>
+  <g fill="none" stroke="#91691c">
+    <rect x="124" y="124" width="952" height="952" rx="60" stroke-width="12"/>
+    <rect x="159" y="159" width="882" height="882" rx="36" stroke-width="3" stroke-dasharray="3 15" stroke-linecap="round"/>
+    <path d="M424 465 396 342 505 403 600 298 695 403 804 342 776 465Z" stroke-width="18" stroke-linejoin="round"/>
+    <path d="M442 505H758" stroke-width="18" stroke-linecap="round"/>
+    <path d="M306 882H500M700 882H894" stroke-width="3"/>
+    <circle cx="600" cy="881" r="8" fill="#91691c" stroke="none"/>
+  </g>
+  <g fill="#91691c" font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="600" y="636" font-size="62" font-weight="700" letter-spacing="5">MEMBERSHIP</text>
+    <text x="600" y="750" font-size="100" font-weight="700" letter-spacing="1">VERIFIED</text>
+    <text x="600" y="966" font-size="31" font-weight="700" letter-spacing="8">BYUS</text>
+  </g>
+</svg>

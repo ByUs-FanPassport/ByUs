@@ -252,3 +252,54 @@ describe("certification routes", () => {
     );
   });
 });
+
+const membershipMission = {
+  command: "save",
+  celebrityId: owner,
+  immutableKey: "membership-instagram",
+  membershipPlatform: "instagram",
+  category: "멤버십 인증",
+  titleKo: "Instagram 멤버십 인증",
+  titleEn: "Instagram membership verification",
+  descriptionKo: "유료 멤버십을 인증해 주세요.",
+  descriptionEn: "Verify your paid creator membership.",
+  instructionsKo: "크리에이터와 본인 계정, 멤버십 상태와 유효기간이 보이게 캡처해 주세요.",
+  instructionsEn: "Show the creator, your account, current membership status and validity.",
+  opensAt: "2026-09-11T00:00:00.000Z",
+  closesAt: "2027-09-11T00:00:00.000Z",
+  scorePoints: 1,
+  ticketAmount: 0,
+};
+
+describe("membership certification boundary", () => {
+  it.each(["instagram", "tiktok", "youtube"])("accepts configured %s membership rewards after admin authorization", async (membershipPlatform) => {
+    const saveAdmin = vi.fn(async () => ({ id: mission, revision: 1, status: "draft" }));
+    const dependencies = deps({ saveAdmin });
+    const response = await certificationRoutes.adminMissions(dependencies)(new Request("https://byus.kr/api/admin/certification-missions", {
+      method: "POST", headers: { authorization: "Bearer admin", "content-type": "application/json" },
+      body: JSON.stringify({ ...membershipMission, membershipPlatform }),
+    }));
+    expect(response.status).toBe(200);
+    expect(dependencies.authorizeAdmin).toHaveBeenCalled();
+    expect(saveAdmin).toHaveBeenCalledWith(expect.objectContaining({ appUserId: owner }), expect.any(String), expect.objectContaining({ membershipPlatform, scorePoints: 1, ticketAmount: 0 }));
+  });
+
+  it.each([{ scorePoints: 0 }, { ticketAmount: 1 }, { membershipPlatform: "chzzk" }, { membershipPlatform: "unsupported" }])("rejects invalid membership configuration %j before mutation", async (override) => {
+    const saveAdmin = vi.fn();
+    const response = await certificationRoutes.adminMissions(deps({ saveAdmin }))(new Request("https://byus.kr/api/admin/certification-missions", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...membershipMission, ...override }),
+    }));
+    expect(response.status).toBe(400);
+    expect(saveAdmin).not.toHaveBeenCalled();
+  });
+
+  it.each([{ membershipPlatform: "instagram" }, { scorePoints: 100 }, { stampCount: 1 }, { status: "approved" }])("does not allow fans to supply reward or review facts %j", async (override) => {
+    const dependencies = deps();
+    const response = await certificationRoutes.submit(dependencies)(new Request("https://byus.kr/api/certification-submissions", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ missionId: mission, idem, uploadIds: ["44444444-4444-4444-8444-444444444444"], ...override }),
+    }));
+    expect(response.status).toBe(400);
+    expect(dependencies.repository.submit).not.toHaveBeenCalled();
+  });
+});

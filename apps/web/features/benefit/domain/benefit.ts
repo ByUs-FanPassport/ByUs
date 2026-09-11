@@ -48,10 +48,10 @@ export const benefitCatalogItemSchema = z.object({
   minimumScore: z.number().int().nonnegative(),
   minimumLevel: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]),
   requiredStampType: z
-    .enum(["knowledge", "reservation", "attendance", "survey"])
+    .enum(["knowledge", "reservation", "attendance", "survey", "membership"])
     .nullable(),
   requiredActivityType: z
-    .enum(["knowledge", "reservation", "attendance", "survey"])
+    .enum(["knowledge", "reservation", "attendance", "survey", "membership"])
     .nullable(),
   state: benefitStateSchema,
   entry: benefitEntryStateSchema.nullable().default(null),

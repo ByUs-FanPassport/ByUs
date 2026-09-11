@@ -140,9 +140,20 @@
   white-space: nowrap;
 }
 .reward {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   color: #c81f4f;
   font-size: 12px;
   font-weight: 750;
+}
+.reward > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.reward svg {
+  width: 13px;
 }
 .reason {
   color: #9f1239;
@@ -261,6 +272,47 @@
   margin: 0 0 12px;
   font-size: 20px;
   letter-spacing: -0.025em;
+}
+.membershipGuide {
+  display: grid;
+  max-width: 62ch;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1px solid #e4dfdc;
+  border-radius: 14px;
+  background: #faf9f8;
+}
+.membershipGuide > strong {
+  color: #292624;
+  font-size: 16px;
+}
+.membershipGuide p,
+.membershipGuide ul {
+  margin: 0;
+  color: #5f5a57;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.membershipGuide ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 20px;
+}
+.membershipGuide a {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-service-ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.membershipGuide a svg {
+  width: 16px;
 }
 .submissionDetailHeading {
   display: flex;
