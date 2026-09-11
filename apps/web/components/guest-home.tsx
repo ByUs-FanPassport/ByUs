@@ -293,7 +293,7 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
             <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
-            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel featuredLives={featuredLives} locale={locale} onStartReached={refreshLiveStatus} />}
+            {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel elina={celebrities.find(celebrity => celebrity.slug === "elina")} featuredLives={featuredLives} locale={locale} onStartReached={refreshLiveStatus} />}
           </section>
 
           <div className={styles.mobilePersonalization}>

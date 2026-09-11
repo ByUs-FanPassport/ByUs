@@ -49,7 +49,7 @@
 .heroCreatorPicture { position:absolute; inset:0; }
 .heroCreatorPicture img { object-fit:cover; object-position:var(--creator-hero-mobile-position); }
 @media (min-width:48rem) { .heroCreatorPicture img { object-position:var(--creator-hero-desktop-position); } }
-.campaignHeroCard > img { object-position: center; }
+.heroCarousel .campaignHeroCard { display:block; background:#f8f2f6; }
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 10 12 / 52%) 0%, rgb(10 10 12 / 24%) 28%, rgb(10 10 12 / 6%) 54%, transparent 76%), linear-gradient(to right, rgb(10 10 12 / 24%) 0%, rgb(10 10 12 / 6%) 38%, transparent 64%); }
 .heroContent { position: relative; z-index: 1; width: 100%; padding: 24px; text-shadow: 0 1px 3px rgb(10 10 12 / 62%); }
 .statusRail { display: flex; max-width: 320px; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -71,7 +71,6 @@
 .heroDate { overflow: hidden; color: rgb(255 255 255 / 84%); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .heroContent h2 { max-width: 15ch; margin: 0; font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1.02; text-wrap: balance; }
 .heroCountdown { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 750 14px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.campaignHeroPeriod { margin: 12px 0 0; color: rgb(255 255 255 / 86%); font-size: 14px; font-weight: 650; }
 .primaryButton { display: flex; width: min(320px, 100%); min-height: 48px; align-items: center; justify-content: space-between; margin-top: 20px; padding-inline: 20px; border-radius: 999rem; background: linear-gradient(rgb(0 0 0 / 18%), rgb(0 0 0 / 18%)), var(--spectrum); box-shadow: 0 5px 8px rgb(58 18 55 / 22%); color: #fff !important; font-size: 15px; font-weight: 800; text-shadow: none; transition: background 160ms cubic-bezier(.2, 0, 0, 1); }
 .primaryButton span { display: inline-flex; align-items: center; gap: 8px; }
 .primaryButton svg { width: 16px; height: 16px; }
@@ -392,19 +391,10 @@
   .celebrityMetaRow:first-child .celebrityFanLink { justify-self: start; justify-content: flex-start; }
 }
 
-/* Missing/unapproved portrait crops retain the whole poster without a fixed 4:5 void. */
-@media (max-width: 767px) {
-  .heroViewport { aspect-ratio:auto; height:var(--mobile-hero-height, auto); background:var(--canvas); }
-  .heroTrack { height:auto; align-items:flex-start; }
-  .heroCarousel .heroCard { height:auto; aspect-ratio:4 / 5; }
-  .heroCarousel .heroCard[data-mobile-contained="true"] { display:block; aspect-ratio:auto; background:var(--canvas); color:var(--ink); }
-  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] { position:relative; inset:auto; overflow:hidden; border-radius:20px; }
-  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] img { position:relative !important; display:block; width:100% !important; height:auto !important; }
-  .heroCard[data-mobile-contained="true"] .heroOverlay { display:none; }
-  .heroCard[data-mobile-contained="true"] .heroContent { padding:20px 8px 12px; text-shadow:none; }
-  .heroCard[data-mobile-contained="true"] .heroDate { color:var(--muted); }
-  .heroCard[data-mobile-contained="true"] .liveStatus[data-hero-status],
-  .heroCard[data-mobile-contained="true"] .liveStatus[data-hero-status]::before { background:var(--canvas); }
-  .heroCard[data-mobile-contained="true"] .heroCountdown [data-tone="on-image"][data-status="scheduled"] { border-color:#f5c2d9; background:#fff1f7; color:#be185d; }
-  .carouselControls > button { top:var(--mobile-controls-top, calc(50% - 22px)); }
+/* Mobile slides share one portrait canvas with information over the photo. */
+.heroCarousel .heroCard { display:block; }
+@media (max-width:767px) {
+  .heroViewport { aspect-ratio:4 / 5; min-height:400px; }
+  .heroCarousel .heroCard { height:100%; aspect-ratio:auto; }
+  .carouselControls > button { top:calc(28% - 22px); }
 }

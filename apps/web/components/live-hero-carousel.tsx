@@ -1,27 +1,27 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import useEmblaCarousel from "embla-carousel-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
-import type { ContentLocale } from "../server/content/content-domain";
+import type { ContentLocale, PublishedCelebrity } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { Pause } from "lucide-react";
-import { homeHeroSizes } from "./fan-ui/public-image-policy";
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
+import { ElinaGuideCard } from "./home-entry-cards/home-entry-cards";
 import { EventPhoto } from "./fan-ui/event-photo";
-import { resolvePhoto } from "@/features/media/domain/public-image";
+import { homeHeroSizes } from "./fan-ui/public-image-policy";
+import { CreatorImage } from "./fan-ui/creator-image";
+import { HomeHeroBanner } from "./home-entry-cards/home-hero-banner";
 import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-const BANKSY_CAMPAIGN_IMAGE = "/images/guest-home/banksy-exhibition-campaign.webp";
 
 const carouselCopy = {
   ko: {
@@ -37,12 +37,6 @@ const carouselCopy = {
     details: "LIVE 상세보기",
     noneStatus: "공개된 LIVE 없음",
     noneTitle: "새로운 LIVE를 준비하고 있어요.",
-    campaignStatus: "SPECIAL EXHIBITION",
-    campaignDate: "9월 18일 금요일 · 오후 5시",
-    campaignTitle: "엘리나와 함께 만나는 뱅크시",
-    campaignPeriod: "11월 전시 종료까지",
-    campaignAction: "이벤트 살펴보기",
-    campaignAlt: "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
   },
   en: {
     label: "Featured LIVE events",
@@ -57,12 +51,6 @@ const carouselCopy = {
     details: "View LIVE details",
     noneStatus: "No published LIVE",
     noneTitle: "A new LIVE is in preparation.",
-    campaignStatus: "SPECIAL EXHIBITION",
-    campaignDate: "Friday, September 18 · 5:00 PM",
-    campaignTitle: "Meet Banksy with Elina",
-    campaignPeriod: "Through the exhibition's November close",
-    campaignAction: "Explore the event",
-    campaignAlt: "A contemporary museum with street-art works displayed in a dark concrete gallery",
   },
 } as const;
 
@@ -125,23 +113,13 @@ export function LiveCountdown({
   </span>;
 }
 
-function HeroStatusBadge({ label, showRadio = false }: { label: string; showRadio?: boolean }) {
-  return (
-    <p className={styles.liveStatus} data-hero-status={label}>
-      <span className={styles.statusShimmer} aria-hidden="true">
-        <span className={styles.statusShimmerSlide}><span className={styles.statusShimmerLight} /></span>
-      </span>
-      {showRadio && <Radio />}
-      <span className={styles.statusText}>{label}</span>
-    </p>
-  );
-}
-
 export function LiveHeroCarousel({
   featuredLives,
   locale,
   onStartReached,
+  elina,
 }: {
+  elina?: PublishedCelebrity;
   featuredLives: readonly LiveEventResponse[];
   locale: ContentLocale;
   onStartReached?: (event: LiveStartEvent) => void;
@@ -220,37 +198,6 @@ export function LiveHeroCarousel({
     setActiveIndex(0);
   }, [activeIndex, emblaApi, total]);
 
-  // A complete poster has its own aspect ratio; measure the active slide instead
-  // of reserving a portrait-sized black canvas below a landscape image.
-  useEffect(() => {
-    const root = rootRef.current;
-    const slide = root?.querySelector<HTMLElement>('[data-active="true"]');
-    if (!root || !slide) return;
-    const mobile = window.matchMedia("(max-width: 767px)");
-    const updateSize = () => {
-      if (!mobile.matches) {
-        root.style.removeProperty("--mobile-hero-height");
-        root.style.removeProperty("--mobile-controls-top");
-        return;
-      }
-      const height = slide.getBoundingClientRect().height;
-      if (height > 0) root.style.setProperty("--mobile-hero-height", `${height}px`);
-      const photo = slide.querySelector<HTMLElement>('[data-event-photo="home"]');
-      const controlHeight = slide.dataset.mobileContained === "true" && photo ? photo.getBoundingClientRect().height : height;
-      root.style.setProperty("--mobile-controls-top", `${Math.max(0, controlHeight / 2 - 22)}px`);
-    };
-    updateSize();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateSize);
-    observer?.observe(slide);
-    slide.addEventListener("load", updateSize, true);
-    mobile.addEventListener("change", updateSize);
-    return () => {
-      observer?.disconnect();
-      slide.removeEventListener("load", updateSize, true);
-      mobile.removeEventListener("change", updateSize);
-    };
-  }, [activeIndex, featuredLives]);
-
   const goTo = useCallback((index: number, manual: boolean) => {
     if (total < 1) return;
     const nextIndex = (index + total) % total;
@@ -264,7 +211,6 @@ export function LiveHeroCarousel({
 
   const visible = inView && documentVisible;
   const autoplayPaused = userPaused || hovered || focusWithin || pointerActive || !visible || reducedMotion;
-  const imageSizes = homeHeroSizes();
 
   useEffect(() => {
     if (total <= 1 || autoplayPaused) return;
@@ -315,29 +261,18 @@ export function LiveHeroCarousel({
               aria-label={t.position(index + 1, total)}
               inert={!isActive}
               data-active={isActive ? "true" : "false"}
-              data-mobile-contained={resolvePhoto(featuredLive.live.photos, "event.home.mobile", featuredLive.live.heroImage.url).fit === "contain" ? "true" : "false"}
             >
-              <EventPhoto photos={featuredLive.live.photos} src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} locale={locale} priority={index === 0} sizes={imageSizes} />
-              <div className={styles.heroOverlay} aria-hidden="true" />
-              <div className={styles.heroContent}>
-                <div className={styles.statusRail}>
-                  <HeroStatusBadge label={statusLabel} showRadio />
-                  <p className={styles.heroDate}>{formatLiveDate(featuredLive.live.startsAt, locale)}</p>
-                </div>
-                <h2>{formatHeroLiveTitle(featuredLive.live.celebrity.name)}</h2>
-                <p className={styles.heroCountdown}>
-                  <LiveCountdown
-                    id={featuredLive.live.id}
-                    effectiveStatus={featuredLive.live.effectiveStatus}
-                    startsAt={featuredLive.live.startsAt}
-                    active={isActive && visible}
-                    locale={locale}
-                    onStartReached={onStartReached}
-                  />
-                </p>
-                {featuredLive.primaryAction === "sign_in_to_reserve" ? (
+              <HomeHeroBanner kind="live"
+                desktopImage={<EventPhoto photos={featuredLive.live.photos} src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} locale={locale} priority={index === 0} sizes={homeHeroSizes()} />}
+                image={<CreatorImage slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} photos={featuredLive.live.celebrity.photos} position={featuredLive.live.celebrity.imagePosition} presentation="editorial" locale={locale} alt="" fill priority={index === 0} sizes="(max-width: 767px) calc(100vw - 32px), 1px" />}
+                eyebrow={<span><Radio />{statusLabel}</span>}
+                title={formatHeroLiveTitle(featuredLive.live.celebrity.name)}
+                description={<>
+                  <span>{formatLiveDate(featuredLive.live.startsAt, locale)}</span>
+                  <LiveCountdown id={featuredLive.live.id} effectiveStatus={featuredLive.live.effectiveStatus} startsAt={featuredLive.live.startsAt} active={isActive && visible} locale={locale} onStartReached={onStartReached} />
+                </>}
+                action={featuredLive.primaryAction === "sign_in_to_reserve" ? (
                   <AuthIntentLink
-                    className={styles.primaryButton}
                     emphasis="primary"
                     locale={locale}
                     pendingHref={`${detailHref}?locale=${locale}`}
@@ -352,11 +287,11 @@ export function LiveHeroCarousel({
                     <span><Play />{heroActionLabel}</span><ArrowRight />
                   </AuthIntentLink>
                 ) : (
-                  <Link data-fan-action-emphasis="primary" className={styles.primaryButton} href={`${detailHref}?locale=${locale}` as Route}>
+                  <Link data-fan-action-emphasis="primary" href={`${detailHref}?locale=${locale}` as Route}>
                     <span><Play />{heroActionLabel}</span><ArrowRight />
                   </Link>
                 )}
-              </div>
+              />
               </article>
             );
           })}
@@ -368,26 +303,7 @@ export function LiveHeroCarousel({
             inert={activeIndex !== featuredLives.length}
             data-active={activeIndex === featuredLives.length ? "true" : "false"}
           >
-            <Image
-              src={BANKSY_CAMPAIGN_IMAGE}
-              alt={t.campaignAlt}
-              fill
-              sizes={imageSizes}
-              loading={featuredLives.length === 0 ? "eager" : "lazy"}
-              fetchPriority={featuredLives.length === 0 ? "high" : "auto"}
-            />
-            <div className={styles.heroOverlay} aria-hidden="true" />
-            <div className={styles.heroContent}>
-              <div className={styles.statusRail}>
-                <HeroStatusBadge label={t.campaignStatus} />
-                <p className={styles.heroDate}>{t.campaignDate}</p>
-              </div>
-              <h2>{t.campaignTitle}</h2>
-              <p className={styles.campaignHeroPeriod}>{t.campaignPeriod}</p>
-              <Link data-fan-action-emphasis="primary" className={styles.primaryButton} href={`/c/elina?locale=${locale}` as Route}>
-                <span>{t.campaignAction}</span><ArrowRight />
-              </Link>
-            </div>
+            <ElinaGuideCard locale={locale} elina={elina} hero priority={featuredLives.length === 0} />
           </article>
         </div>
       </div>
@@ -401,7 +317,7 @@ export function LiveHeroCarousel({
             className={styles.carouselDots}
             style={{ "--carousel-width": `${total * 44 + 44}px` } as CSSProperties}
           >
-            {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "banksy-campaign"].map((key, index) => (
+            {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "elina-guide"].map((key, index) => (
               <button
                 type="button"
                 className={styles.carouselDot}
