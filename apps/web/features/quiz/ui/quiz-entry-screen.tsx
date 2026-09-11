@@ -75,7 +75,7 @@ const copy = {
     title: (name: string) => `See how well you know\n${name}.`,
     description: "Pass a short quiz to receive your first Fan Verification Stamp and Fan Passport.",
     questionCount: (count: number) => `${count} questions`,
-    questionCountTail: " about your favorite",
+    questionCountTail: " about your favorite creator",
     passThreshold: (count: number) => `At least ${count} correct`,
     passThresholdTail: " to pass",
     saved: "Each answer is saved securely",

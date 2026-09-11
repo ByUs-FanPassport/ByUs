@@ -44,10 +44,10 @@ const copy = {
     firstReaction: "첫 좋아요", firstReactionDate: "첫 좋아요를 남긴 날", firstReactionTransaction: "첫 좋아요 거래 기록",
   },
   en: {
-    passports: "My Passports", passportsSub: "Collect the moments you shared with your favorite artists.", discover: "Discover artists", open: "Open Passport",
+    passports: "My Passports", passportsSub: "Collect the moments you share with your favorite artists.", discover: "Discover artists", open: "Open Passport",
     emptyTitle: "No Passports yet", emptyBody: "Complete fan verification for an artist to begin your first record.", emptyAction: "Find artists to verify",
     retry: "Try again", loadError: "We couldn’t load your records.", loadErrorBody: "Please try again shortly. Your saved records are safe.", login: "Sign in to view my records",
-    issued: "Issued", score: "Fan Score", stamps: "Stamps", digital: "Digital issuance", pending: "Your digital edition is being prepared", complete: "Digital issuance is complete", needsHelp: "We’re checking the issuance status",
+    issued: "Issued", score: "Fan Score", stamps: "Stamps", digital: "Digital issuance", pending: "Your digital Passport is being prepared", complete: "Digital issuance is complete", needsHelp: "We’re checking the issuance status",
     detailSub: "See your activities and Stamps in one place.", stampBook: "Stamp Book", activity: "Recent activity", noActivity: "No activity yet", noActivityBody: "Fan verification and LIVE participation will appear here.",
     emptySlot: "Waiting for your next moment", earned: "View earned Stamp",
     points: "pts", digitalInfo: "Digital issuance details", token: "Token ID", transaction: "Transaction", explorer: "View issuance record", noFacts: "Details will appear after issuance is complete.",

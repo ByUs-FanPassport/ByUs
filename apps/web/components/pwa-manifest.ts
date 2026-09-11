@@ -5,7 +5,7 @@ export function createManifest(locale: AppLocale): MetadataRoute.Manifest {
   return {
     name: "ByUs | Your Bias",
     short_name: "ByUs",
-    description: locale === "en" ? "Keep every moment with your favorite in your Fan Passport." : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
+    description: locale === "en" ? "Record moments with each of your favorites in a Fan Passport." : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
     id: "/",
     start_url: `/?locale=${locale}`,
     display: "standalone",

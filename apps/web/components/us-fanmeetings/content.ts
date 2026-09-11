@@ -98,29 +98,29 @@ export const fanmeetingContent = {
     footer: "ByUs. Your Bias.    ·    미국 팬미팅",
   },
   en: {
-    hero: "Bring your fan\nmeeting to the U.S.",
-    desc: "From fan engagement to venues, production and on-site operations. ByUs works with our U.S. production partner to plan your project.",
-    cta: "Discuss your fan meeting",
+    hero: "Bring your fanmeeting\nto the U.S.",
+    desc: "Plan your fanmeeting with ByUs and our U.S. event partner, from fan engagement to venues, production, and on-site operations.",
+    cta: "Discuss your fanmeeting",
     scope: "Explore our support",
-    audience: "U.S. PROJECTS FOR CREATORS, AGENCIES & BRANDS",
+    audience: "FOR CELEBRITIES, CREATORS, TALENT AGENCIES & BRANDS",
     visualTitle: "A stage for\nyour U.S. fans.",
     visualServices: ["Venues", "Production", "On-site operations"],
     rolesTitle: "From bringing fans together\nto meeting them in person.",
     roleA: "Fan engagement",
-    roleADesc: "Fan participation, planned with ByUs",
+    roleADesc: "Fan engagement with ByUs",
     roleB: "U.S. event operations",
-    roleBDesc: "With our U.S. production partner",
+    roleBDesc: "With our U.S. event partner",
     a: [
       "Fan-facing pages and engagement campaigns",
-      "Participation records from reservations, missions and surveys",
+      "Fan activity records from reservations, check-ins, missions, and surveys",
       "Follow-up campaigns informed by fan participation",
     ],
     b: [
       "Venue sourcing and on-site preparation",
-      "Local crews, production and event operations",
+      "Local crews, production, and event operations",
       "Introductions to local partners and specialists",
     ],
-    journey: "Make one meeting\nthe start of what comes next.",
+    journey: "Bring fans together.\nGive them a reason to return.",
     stages: [
       [
         "BEFORE",
@@ -134,19 +134,19 @@ export const fanmeetingContent = {
       ],
       [
         "AFTER",
-        "Use participation and feedback\nto shape the next experience.",
+        "Use fan activity and feedback\nto plan your next event.",
         "Fan Passport · Surveys · Follow-ups",
       ],
     ],
     support: "Local support,\nshaped around your project.",
     supportDesc:
-      "From fan meetings to content shoots and brand events.\nLet’s explore the support your project needs.",
+      "Planning a fanmeeting, content shoot, or brand event?\nLet’s discuss the local support you need.",
     services: [
       ["map-pin", "Venues", "Source and review spaces\nthat fit your event."],
       [
         "clipboard-check",
         "Permits & insurance",
-        "Review requirements for\nevents, shoots and venue use.",
+        "Review requirements for\nevents, shoots, and venue use.",
       ],
       [
         "clapperboard",
@@ -156,14 +156,14 @@ export const fanmeetingContent = {
       [
         "users-round",
         "Specialist introductions",
-        "Connect with specialists for\nvisa, legal and other needs.",
+        "Find specialists for\nvisa, legal, and other needs.",
       ],
     ],
-    process: "Start with the idea\nyou have in mind.",
+    process: "Tell us what\nyou’re planning.",
     steps: [
       [
         "Share your project",
-        "Tell us about the talent, preferred city, timing and your plans so far.",
+        "Tell us who will be appearing, your preferred city and dates, and what you’ve planned so far.",
       ],
       [
         "Explore your needs",
@@ -171,33 +171,33 @@ export const fanmeetingContent = {
       ],
       [
         "Agree on a plan",
-        "Discuss responsibilities, schedule, budget and project terms.",
+        "Discuss responsibilities, dates, budget, and project terms.",
       ],
       [
         "Prepare together",
-        "Start campaign and on-site preparations within the agreed scope.",
+        "Begin campaign and on-site preparations within the agreed scope.",
       ],
     ],
-    faqTitle: "A few questions, answered.",
+    faqTitle: "Frequently asked questions",
     faqs: [
       [
-        "Can I inquire before choosing a city or date?",
-        "Share your idea and preferences. We can review the preparation needed together.",
+        "Can I get in touch before choosing a city or date?",
+        "Yes. Share your ideas and preferences, and we’ll discuss what needs to be prepared.",
       ],
       [
-        "Can I ask about local operations only?",
-        "Tell us what you need, such as venues, production or event operations. Scope is reviewed for each project.",
+        "Can I request U.S. event support only?",
+        "Tell us which services you need, such as venue sourcing, production, or on-site operations. We’ll discuss the scope for your project.",
       ],
       [
         "How is pricing determined?",
-        "We discuss pricing based on the city, timing, event size and scope of support.",
+        "Pricing depends on your preferred city and dates, event size, and the support you need. We’ll discuss these details with you.",
       ],
     ],
-    close: "What fan meeting\ndo you have in mind?",
+    close: "What fanmeeting\nare you planning?",
     closeDesc:
-      "Share the talent, preferred city, timing\nand any details you have so far.",
+      "Tell us who will be appearing, your preferred city and dates,\nand any other details you have so far.",
     email: "Tell us about your project",
     note: "It’s fine if some details are still undecided.",
-    footer: "ByUs. Your Bias.    ·    U.S. Fan Meetings",
+    footer: "ByUs. Your Bias.    ·    U.S. Fanmeetings",
   },
 } as const;

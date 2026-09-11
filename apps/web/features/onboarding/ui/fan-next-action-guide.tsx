@@ -41,7 +41,7 @@ export function FanNextActionDialog({ action, locale, onClose, onContinue }: {
     : action.step === "verify" ? (ko ? "최애의 팬임을 인증해 보세요" : "Verify your fandom")
     : (ko ? "다음 만남을 예약해 보세요" : "Reserve your next LIVE");
   const description = action.step === "profile" ? (ko ? "닉네임을 정하면 팬 인증과 활동 기록에 사용할 수 있어요." : "Choose a display name for your fan verification and activity history.")
-    : action.step === "verify" ? (ko ? "퀴즈를 통과하면 최애의 Fan Passport가 발급돼요." : "Pass the quiz to get your favorite’s Fan Passport.")
+    : action.step === "verify" ? (ko ? "퀴즈를 통과하면 최애의 Fan Passport가 발급돼요." : "Pass the quiz to get a Fan Passport for this creator.")
     : (ko ? "팬 인증을 마쳤어요. 예약 가능한 LIVE에서 다음 만남을 준비하세요." : "You’re verified. Continue to an available LIVE to make your reservation.");
   const label = action.step === "profile" ? (ko ? "닉네임 정하기" : "Set display name")
     : action.step === "verify" ? (selecting ? (ko ? "최애 선택하기" : "Choose a favorite") : (ko ? "퀴즈 풀고 팬 인증하기" : "Take the fan quiz"))

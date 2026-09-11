@@ -169,7 +169,7 @@ const copy = {
   en: {
     nav: ["Home", "Celebrities", "Live", "Passports", "Benefits"],
     title: "Fan benefits",
-    subtitle: "Discover benefits unlocked by the moments you have shared.",
+    subtitle: "Discover benefits available through your fan activities.",
     filter: "Choose a celebrity",
     allEmpty: "There are no published benefits yet.",
     filterEmpty: "This celebrity has no published benefits yet.",
@@ -218,7 +218,7 @@ const copy = {
     entering: "Entering",
     tickets: "Available raffle tickets",
     enteredTickets: "Your entries for this benefit",
-    entryLimit: "Per-Benefit entry limit",
+    entryLimit: "Entry limit for this benefit",
     noEntryLimit: "No limit",
     entryAmount: "Raffle tickets to use",
     entryHistory: "Entry history",
@@ -249,7 +249,7 @@ const copy = {
     open: "Open benefit",
     copy: "Copy code",
     copied: "Copied",
-    notFound: "This published benefit could not be found.",
+    notFound: "We couldn’t find this benefit.",
     locale: "EN / KO",
   },
 } as const;
@@ -1242,7 +1242,7 @@ function BenefitDetailOwnerScreen({
                                 <FanAction variant="neutral" href={elinaLiveHref(locale)}>
                                   {locale === "ko"
                                     ? "LIVE 예약하고 응모권 받기"
-                                    : "Reserve the LIVE"}
+                                    : "Reserve a spot"}
                                 </FanAction>
                               </>
                             ) : (

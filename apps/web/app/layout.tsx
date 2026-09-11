@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "ByUs | Your Bias",
     description:
       locale === "en"
-        ? "Keep every moment with your favorite in your Fan Passport."
+        ? "Record moments with each of your favorites in a Fan Passport."
         : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
     manifest: `/manifest.webmanifest?locale=${locale}`,
     icons: BYUS_BRAND_ICONS,

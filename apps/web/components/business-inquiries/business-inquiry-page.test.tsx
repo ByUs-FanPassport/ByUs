@@ -23,13 +23,13 @@ describe("business inquiry pages", () => {
     expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
     fireEvent.click(screen.getAllByRole("button", { name: t.cta })[0]);
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("heading", { level: 2 })).not.toHaveTextContent(/미국 팬미팅|U.S. fan meeting/);
+    expect(within(dialog).getByRole("heading", { level: 2 })).not.toHaveTextContent(/미국 팬미팅|U.S. fanmeeting/);
     const name = within(dialog).getByRole("textbox", { name: locale === "ko" ? /이름|담당자명/ : /Name \/ contact person|Contact name/ });
     const company = within(dialog).getByRole("textbox", { name: kind === "creator" ? (locale === "ko" ? "활동명 / 팀·브랜드명" : "Public name / team / brand") : (locale === "ko" ? "회사 / 브랜드명" : "Company / brand") });
     expect(company).toBeRequired();
     fireEvent.change(name, { target: { value: "Contact" } });
     fireEvent.change(company, { target: { value: kind === "creator" ? "Independent creator" : "Brand team" } });
-    fireEvent.change(within(dialog).getByRole("textbox", { name: locale === "ko" ? "회신 이메일" : "Reply email" }), { target: { value: "contact@example.com" } });
+    fireEvent.change(within(dialog).getByRole("textbox", { name: locale === "ko" ? "회신 이메일" : "Email address" }), { target: { value: "contact@example.com" } });
     fireEvent.change(within(dialog).getByRole("textbox", { name: locale === "ko" ? "문의 내용" : "Project details" }), { target: { value: "A fan activity proposal" } });
     if (kind === "partner") fireEvent.change(within(dialog).getByRole("combobox", { name: locale === "ko" ? "협업 분야" : "Collaboration type" }), { target: { value: "live" } });
     else expect(within(dialog).queryByRole("combobox")).not.toBeInTheDocument();
@@ -52,7 +52,7 @@ describe("business inquiry pages", () => {
     const form = within(dialog);
     fireEvent.change(form.getByRole("textbox", { name: locale === "ko" ? "담당자명" : "Contact name" }), { target: { value: "Contact" } });
     fireEvent.change(form.getByRole("textbox", { name: locale === "ko" ? "회사 / 브랜드명" : "Company / brand" }), { target: { value: "Brand" } });
-    fireEvent.change(form.getByRole("textbox", { name: locale === "ko" ? "회신 이메일" : "Reply email" }), { target: { value: "contact@example.com" } });
+    fireEvent.change(form.getByRole("textbox", { name: locale === "ko" ? "회신 이메일" : "Email address" }), { target: { value: "contact@example.com" } });
     const message = form.getByRole("textbox", { name: locale === "ko" ? "문의 내용" : "Project details" });
     expect(message).toHaveAttribute("maxLength", "3900");
     fireEvent.change(message, { target: { value: "A".repeat(3900) } });

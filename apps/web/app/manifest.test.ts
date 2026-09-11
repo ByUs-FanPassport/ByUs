@@ -22,7 +22,7 @@ describe("PWA-001 install contract", () => {
     expect(value.lang).toBe("en");
     expect(value.start_url).toBe("/?locale=en");
     expect(value.id).toBe("/");
-    expect(value.description).toContain("Keep every moment");
+    expect(value.description).toContain("Record moments with each of your favorites");
   });
 
   it("uses the approved B Spark application icon files", () => {

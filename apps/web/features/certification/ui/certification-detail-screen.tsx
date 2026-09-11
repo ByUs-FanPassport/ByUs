@@ -320,7 +320,7 @@ function CertificationDetailForOwner({
     <FanAppFrame locale={locale} mainId="certification-detail">
       <FanContentContainer as="main" id="certification-detail" tabIndex={-1} className={styles.detail}>
         <Link className={styles.back} href={`/c/${slug}/certifications?locale=${locale}&tab=history`}>
-          <ArrowLeft aria-hidden="true" />{locale === "ko" ? "내 인증 내역" : "My certifications"}
+          <ArrowLeft aria-hidden="true" />{locale === "ko" ? "내 인증 내역" : "My verification history"}
         </Link>
         {title && reward ? (
           <>
@@ -335,7 +335,7 @@ function CertificationDetailForOwner({
               </div> : null}
             </header>
             {mission ? <section className={styles.instructions}>
-              <h2>{locale === "ko" ? "인증 방법" : "How to certify"}</h2>
+              <h2>{locale === "ko" ? "인증 방법" : "How to verify"}</h2>
               {membershipPlatform ? <MembershipEligibility locale={locale} platform={membershipPlatform} creatorAccountUrl={mission.creatorAccountUrl} /> : null}
               <p>{mission.instructions}</p>
             </section> : null}

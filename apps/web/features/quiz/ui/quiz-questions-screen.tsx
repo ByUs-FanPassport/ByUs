@@ -85,7 +85,7 @@ const copy = {
     retry: "Try again",
     exit: "Exit verification and return to the fan page",
     eyebrow: "Fan verification quiz",
-    title: "How well do you know your favorite?",
+    title: "How well do you know your favorite creator?",
     progress: "Fan verification progress",
     progressValue: (current: number, total: number) => `Question ${current} of ${total}`,
     saving: "Saving answer…",

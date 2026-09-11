@@ -57,10 +57,10 @@ const copy = {
     tierHelp: "함께한 활동이 나의 등급이 돼요.", highestTier: "최고 등급을 달성했어요.", toNextTier: "까지",
   },
   en: {
-    title: "MY", profileSummary: "My fan activity", profileHelp: "Your moments with every favorite, all in one place.",
+    title: "MY", profileSummary: "My fan activity", profileHelp: "Your moments with all your favorites, in one place.",
     guestTitle: "Keep your fan activity together.", guestBody: "Sign in to see your favorites, reserved LIVE events, rewards, and collection.",
     login: "Continue with Google", loading: "Loading your fan activity.", error: "We couldn’t load your fan activity.", retry: "Try again",
-    creators: "My favorites", creatorsHelp: "Check each Fan Passport and Raffle ticket balance.",
+    creators: "My favorites", creatorsHelp: "Check each Fan Passport and its raffle ticket balance.",
     noCreators: "No favorites added yet.", findCreator: "Find favorites", live: "My reserved LIVE", upcoming: "Reserved",
     history: "Past LIVE", noLive: "No reserved LIVE events.", browseLive: "Browse LIVE", rewards: "My rewards",
     available: "Available rewards", entries: "Entries", noRewards: "No rewards received yet.", collection: "Recent collection",
@@ -75,7 +75,7 @@ const copy = {
     raffleEmpty: "No raffles are open right now.", raffleHelp: "Check ticket use and entry requirements on the raffle page.",
     nextAction: "Next fan activity", noMission: "There are no new verification missions.", viewLive: "View LIVE schedule", startPassport: "Start fan verification",
     missionLoading: "Checking your next activity.", missionError: "We couldn’t load your next activity.", manualReward: "Granted after approval",
-    tierHelp: "Your shared activities build your fan tier.", highestTier: "You reached the highest tier.", toNextTier: "to",
+    tierHelp: "Your fan activities determine your fan tier.", highestTier: "You reached the highest tier.", toNextTier: "to",
   },
 } as const;
 

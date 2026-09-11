@@ -87,7 +87,7 @@ function loginSessionCopy({
   if (error === SESSION_SYNCHRONIZATION_TIMEOUT) {
     return locale === "ko"
       ? { title: "로그인 연결이 오래 걸리고 있어요.", description: "현재 계정을 유지한 채 다시 시도해 주세요." }
-      : { title: "Connecting your sign-in is taking longer than expected.", description: "Try again while keeping your current account." };
+      : { title: "Finishing sign-in is taking longer than expected.", description: "Try again with the account you’re currently using." };
   }
   if (error) {
     return locale === "ko"
@@ -96,7 +96,7 @@ function loginSessionCopy({
           description: "잠시 후 다시 시도해 주세요.",
         }
       : {
-          title: "We couldn't connect your sign-in.",
+          title: "We couldn't finish signing you in.",
           description: "Please try again in a moment.",
         };
   }
@@ -110,7 +110,7 @@ function loginSessionCopy({
   return {
     title: locale === "ko"
       ? "로그인 상태를 연결하고 있어요."
-      : "Connecting your sign-in.",
+      : "Finishing sign-in.",
   };
 }
 
@@ -634,7 +634,7 @@ export function LoginPage({
           )}
         </div>
         <div className={styles.copy}>
-          <h1 id="login-heading">{locale === "ko" ? "최애와 함께한 순간을 기록하세요." : "Keep every moment with your favorite."}</h1>
+          <h1 id="login-heading">{locale === "ko" ? "최애와 함께한 순간을 기록하세요." : "Keep a record of moments with your favorites."}</h1>
         </div>
         <button
           className={styles.googleButton}

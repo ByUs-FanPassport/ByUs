@@ -31,7 +31,7 @@ const copy = {
     ifewTitle: "ifew’s 100-day LIVE guide",
     ifewLabel: "ifew’s 100-day TikTok LIVE guide",
     ifewDescription: "Sat, Sep 12 · 8 AM KST",
-    fanmeeting: "Plan your U.S. fan meeting with ByUs",
+    fanmeeting: "Plan your U.S. fanmeeting with ByUs",
     explore: "U.S. event partnerships for agencies and artists",
   },
 };

@@ -40,7 +40,7 @@ export function ByUsPrivyProvider({
           loginMessage: locale === "en"
             ? testAccountLoginEnabled
               ? `Sign in with Google${appleLoginEnabled ? ", Apple" : ""} or your Privy Test Account email.`
-              : `Sign in with Google${appleLoginEnabled ? " or Apple" : ""} to keep your moments with your favorite.`
+              : `Sign in with Google${appleLoginEnabled ? " or Apple" : ""} to keep a record of moments with your favorites.`
             : testAccountLoginEnabled && appleLoginEnabled
             ? "Google, Apple 또는 Privy Test Account 이메일로 로그인하세요."
             : testAccountLoginEnabled

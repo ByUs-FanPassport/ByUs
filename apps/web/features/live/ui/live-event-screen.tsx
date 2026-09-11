@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Bell,
   Check,
+  ChevronDown,
   Clock3,
   ExternalLink,
   LockKeyhole,
@@ -195,7 +196,7 @@ const copy = {
       pending: "Checking attendance",
       signIn: "Sign in to verify attendance",
       passport: "Create a Fan Passport before joining.",
-      issuePassport: "Get Fan Passport",
+      issuePassport: "Get your Fan Passport",
       beforeLive: "You can enter the Fan Code once the LIVE starts.",
       notOpen: "Attendance verification is not open yet.",
       attendanceEnded: "Attendance verification has ended.",
@@ -214,7 +215,7 @@ const copy = {
     stepHelpers: [
       "Save the schedule",
       "Watch in a new tab",
-      "Enter after LIVE starts",
+      "Enter the code after the LIVE starts",
       "Available after attendance",
       "Keep your participation record",
     ],
@@ -222,7 +223,7 @@ const copy = {
       reservation_upcoming: "Reservations open soon",
       sign_in_to_reserve: "Sign in",
       verify_fan: "Verify fan status",
-      reserve: "Reserve LIVE",
+      reserve: "Reserve a spot",
       reserved: "Reserved",
       watch_live: "Watch LIVE",
       reservation_closed: "Reservations closed",
@@ -236,15 +237,15 @@ const copy = {
     },
     reservationPeriod: "Reservation period",
     eventTime: "LIVE schedule",
-    timeZone: "Time zone KST (GMT+9)",
+    timeZone: "KST (UTC+9)",
     reservePending: "Reserving",
     reserveError:
       "We couldn’t complete your reservation. Check the status and try again.",
     reserveUnknown:
       "The reservation result is still unconfirmed. Check the same reservation request again.",
     loadError: "We couldn’t load this LIVE.",
-    loadErrorHelper: "Try again shortly or return to the live list.",
-    notFound: "This public LIVE could not be found.",
+    loadErrorHelper: "Try again shortly or return to all LIVE events.",
+    notFound: "We couldn’t find this LIVE.",
     retry: "Try again",
     calendar: "Add to Google Calendar",
     watch: "Watch LIVE",
@@ -271,10 +272,10 @@ const ifewLiveCopy = {
       successHelper:
         "LIVE 출석이 기록되고 이퓨 응모권 2장을 받았어요.",
     },
-    steps: ["팬 인증", "예약", "LIVE 출석", "선물 응모"],
+    steps: ["팬 인증", "LIVE 예약", "LIVE 출석", "선물 응모"],
     stepHelpers: [
       "이퓨 Fan Passport를 발급받아요",
-      "ByUs에서 LIVE를 예약해요",
+      "일정을 미리 저장해요. 예약은 선택이에요",
       "방송에서 공개된 출석 코드를 ByUs에 입력해요",
       "이퓨 응모권으로 뱅크시 관람권 추첨에 응모해요",
     ],
@@ -297,8 +298,8 @@ const ifewLiveCopy = {
     steps: ["Fan verification", "Reserve", "LIVE attendance", "Enter the prize draw"],
     stepHelpers: [
       "Get your ifew Fan Passport",
-      "Reserve the LIVE on ByUs",
-      "Enter the Attendance code shared during the broadcast on ByUs",
+      "Save the schedule. Reservation is optional",
+      "Enter the broadcast’s attendance code on ByUs",
       "Use your ifew raffle tickets to enter the Banksy ticket draw",
     ],
     prizeAction: "Enter the Banksy ticket draw",
@@ -1046,7 +1047,9 @@ export function LiveEventScreen({
       : primaryAction === "verify_fan"
         ? c.actionHelper.verifyFan.replace("{celebrity}", live.celebrity.name)
         : primaryAction === "watch_live"
-          ? c.actionHelper.watch
+          ? isIfewLive
+            ? locale === "ko" ? "틱톡이 새 창에서 열려요. 시청 후 이 화면에서 출석 코드를 입력해 주세요." : "TikTok opens in a new tab. Return here to enter the attendance code."
+            : c.actionHelper.watch
           : null;
   const primaryHelperId = primaryHelper ? "live-primary-action-helper" : undefined;
   const attendanceError =
@@ -1142,10 +1145,17 @@ export function LiveEventScreen({
         </FanAction>
       </div>
     ) : (
-      <p className={styles.actionStatus} role="status">
-        <LockKeyhole aria-hidden="true" />
-        <span>{actionLabel}</span>
-      </p>
+      <div className={styles.actionState}>
+        <p className={styles.actionStatus} role="status" data-reserved={primaryAction === "reserved" || undefined}>
+          {primaryAction === "reserved" ? <Check aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
+          <span>{actionLabel}</span>
+        </p>
+        {primaryAction === "reserved" ? <p className={styles.actionHelper}>
+          {isIfewLive
+            ? locale === "ko" ? "일정을 저장해 두세요. 방송이 시작되면 이 화면에서 출석 코드를 입력할 수 있어요." : "Save the schedule. When the LIVE starts, return here to enter the attendance code."
+            : c.reservedHelper}
+        </p> : null}
+      </div>
     );
   const hasPrimaryActionControl =
     primaryAction === "sign_in_to_reserve" ||
@@ -1163,7 +1173,7 @@ export function LiveEventScreen({
           <ArrowLeft aria-hidden="true" />
           {c.back}
         </Link>
-        <div className={styles.heroGrid}>
+        <div className={styles.detailLayout}>
           <div className={styles.heroMedia}>
             <EventPhoto photos={live.photos} src={live.heroImage.url} alt={live.heroImage.alt} locale={locale} surface="detail" priority sizes="(min-width: 1440px) 960px, (min-width: 1024px) 66vw, calc(100vw - 32px)" />
             {live.preview ? (
@@ -1179,12 +1189,15 @@ export function LiveEventScreen({
               />
             ) : null}
           </div>
+          <div className={styles.detailAside}>
           <aside
             className={styles.actionRail}
             aria-label={
               locale === "ko" ? "LIVE 예약 정보" : "LIVE reservation details"
             }
           >
+            <div className={styles.eventStatusRow}>
+            {live.effectiveStatus === "scheduled" ? <span className={styles.status}>{locale === "ko" ? "LIVE 예정" : "Upcoming LIVE"}</span> : null}
             {live.effectiveStatus === "live" ||
             live.effectiveStatus === "scheduled" ? (
               <LiveTimeIndicator
@@ -1197,6 +1210,7 @@ export function LiveEventScreen({
                 {statusLabel}
               </span>
             )}
+            </div>
             <div className={styles.titleGroup}>
               <h1>{live.title}</h1>
             </div>
@@ -1206,10 +1220,10 @@ export function LiveEventScreen({
                   <dt><FanMotionIcon name="calendar" />{c.eventTime}</dt>
                   <dd><time dateTime={live.startsAt}>{formatReservationDateTime(live.startsAt, locale)}</time></dd>
                 </div>
-                <div className={styles.deadlineSchedule}>
+                {!viewer.reservation && live.effectiveStatus === "scheduled" ? <div className={styles.deadlineSchedule}>
                   <dt><Clock3 aria-hidden="true" />{locale === "ko" ? "예약 마감" : "Booking closes"}</dt>
                   <dd><time dateTime={live.reservationClosesAt}>{formatReservationDeadline(live.reservationClosesAt, live.startsAt, locale)}</time></dd>
-                </div>
+                </div> : null}
               </dl>
               <div className={styles.scheduleMeta}>
                 <p className={styles.timeZone}>{c.timeZone}</p>
@@ -1230,17 +1244,7 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
-            {isIfewLive ? (
-              <FanAction
-                variant="neutral"
-                className={styles.missionLink}
-                fullWidth
-                href={ifewRafflesHref(locale)}
-                helperText={eventCopy?.prizeHelper}
-              >
-                <span className={styles.missionLinkContent}><span>{eventCopy?.prizeAction}</span><ArrowRight aria-hidden="true" /></span>
-              </FanAction>
-            ) : live.missionsAvailable === false ? (
+            {!isIfewLive && (live.missionsAvailable === false ? (
               <FanAction
                 variant="neutral"
                 className={styles.missionLink}
@@ -1260,7 +1264,16 @@ export function LiveEventScreen({
               >
                 <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
               </FanAction>
-            )}
+            ))}
+            {primaryAction === "watch_live" ? (
+              <a className={styles.attendanceShortcut} href="#fan-code">
+                <TicketCheck aria-hidden="true" />
+                {attendance.kind === "success"
+                  ? locale === "ko" ? "출석 기록 보기" : "View attendance record"
+                  : isIfewLive ? attendanceCopy.label : locale === "ko" ? "출석 인증하기" : "Verify attendance"}
+                <ArrowRight aria-hidden="true" />
+              </a>
+            ) : null}
             {viewer.reservation && (
               <a
                 className={styles.calendarAction}
@@ -1297,9 +1310,24 @@ export function LiveEventScreen({
               </p>
             )}
           </aside>
-        </div>
-
-        <div className={styles.contentGrid}>
+          <aside className={styles.identity}>
+            <CreatorAvatar slug={live.celebrity.slug} src={live.celebrity.image} photos={live.celebrity.photos} position={live.celebrity.imagePosition} size={{ mobile: 48, desktop: 64 }} />
+            <div>
+              <span>{live.celebrity.name}</span>
+              <strong>{formatFanCount(live.celebrity.fanCount)}</strong>
+            </div>
+            <Link
+              href={withLocalePath(`/c/${live.celebrity.slug}`, locale) as Route}
+              aria-label={
+                locale === "ko"
+                  ? `팬페이지 보기: ${live.celebrity.name}`
+                  : `View fan page: ${live.celebrity.name}`
+              }
+            >
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </aside>
+          </div>
           <div className={styles.contentMain}>
             <section className={styles.section}>
               <h2>{c.introduction}</h2>
@@ -1317,39 +1345,17 @@ export function LiveEventScreen({
                   </li>
                 ))}
               </ol>
+              {isIfewLive ? <p className={styles.participationNote}>
+                {locale === "ko" ? "Fan Passport가 있으면 예약 없이도 출석할 수 있어요. 선물은 응모권으로 별도 신청해 주세요." : "With a Fan Passport, you can check in without a reservation. Use your raffle tickets to enter the prize draw separately."}
+              </p> : null}
             </section>
-            {authenticated && collectible ? (
-              <section className={styles.collectible} aria-labelledby="collectible-title">
-                <div>
-                  <div className={styles.collectibleHeading}>
-                    <h2 id="collectible-title">Digital Collectible</h2>
-                    {collectible.claim
-                      ? <Check aria-label={locale === "ko" ? "Claim 완료" : "Claim complete"} />
-                      : !collectible.eligible ? <LockKeyhole aria-hidden="true" /> : null}
-                  </div>
-                  <p>{collectible.claim
-                    ? collectible.claim.mint.status === "minted"
-                      ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : `Minted · Token #${collectible.claim.mint.tokenId}`
-                      : locale === "ko" ? "Claim 완료 · 온체인 발급을 준비 중이에요." : "Claimed · On-chain mint is being prepared."
-                    : collectible.eligible
-                      ? locale === "ko" ? "Journey를 완료했어요. 종료 후 48시간 안에 받아보세요." : "Journey complete. Claim within 48 hours after the LIVE."
-                      : locale === "ko" ? "Journey 완료와 LIVE 종료 후 받을 수 있어요." : "Available after completing the Journey and the LIVE ends."}</p>
-                  <small>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST{locale === "ko" ? "까지" : " deadline"}</small>
-                </div>
-                {!collectible.claim && collectible.eligible ? (
-                  <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
-                    {collectiblePending ? (locale === "ko" ? "Claim 처리 중" : "Claiming") : (locale === "ko" ? "Collectible 받기" : "Claim Collectible")}
-                  </FanAction>
-                ) : null}
-                {collectibleError ? <p className={styles.actionError} role="alert">{collectibleError}</p> : null}
-              </section>
-            ) : null}
             <section
               ref={fanCodeRef}
               id="fan-code"
               className={styles.fanCode}
               tabIndex={-1}
-              aria-labelledby="fan-code-title"
+              aria-labelledby={attendance.kind === "success" ? undefined : "fan-code-title"}
+              aria-label={attendance.kind === "success" ? attendanceCopy.successTitle : undefined}
             >
               {attendance.kind === "success" ? (
                 <div
@@ -1401,13 +1407,18 @@ export function LiveEventScreen({
                   <div className={styles.fanCodeIntro}>
                     <div className={styles.fanCodeHeading}>
                       <h2 id="fan-code-title">{eventCopy?.fanCode ?? c.fanCode}</h2>
-                      <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p>
+                      {live.effectiveStatus !== "scheduled" ? <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p> : null}
                     </div>
                     <div className={styles.fanCodeIcon} data-fan-code-header-icon aria-hidden="true">
                       <TicketCheck />
                     </div>
                   </div>
-                  {authenticated && viewer.passport === "missing" ? (
+                  {live.effectiveStatus === "scheduled" ? (
+                    <p className={styles.attendanceNotice} data-before-live>
+                      <Clock3 aria-hidden="true" />
+                      {attendanceCopy.beforeLive}
+                    </p>
+                  ) : authenticated && viewer.passport === "missing" ? (
                     <div className={styles.attendanceGate}>
                       <p>{attendanceCopy.passport}</p>
                       <FanAction
@@ -1419,11 +1430,6 @@ export function LiveEventScreen({
                         {attendanceCopy.issuePassport}
                       </FanAction>
                     </div>
-                  ) : authenticated && live.effectiveStatus === "scheduled" ? (
-                    <p className={styles.attendanceNotice} data-before-live>
-                      <Clock3 aria-hidden="true" />
-                      {attendanceCopy.beforeLive}
-                    </p>
                   ) : (
                     <form
                       className={styles.fanCodeForm}
@@ -1505,34 +1511,58 @@ export function LiveEventScreen({
             </section>
             <section className={styles.section}>
               <h2>{c.benefit}</h2>
-              <p>{c.benefitIntro}</p>
-              <FanAction
+              {isIfewLive ? (
+                <>
+                  <p className={styles.prizeName}>{ifewPrizeName[locale]}</p>
+                  <p>{locale === "ko" ? "이퓨 응모권으로 추첨에 응모해 보세요. LIVE 예약이나 시청만으로 자동 응모되지는 않아요." : "Use your ifew raffle tickets to enter the draw. Reserving or watching the LIVE does not enter you automatically."}</p>
+                  {attendance.kind !== "success" ? <FanAction
+                    href={ifewRafflesHref(locale)} variant="neutral" className={styles.benefitAction} trailingIcon={<ArrowRight />}
+                  >{eventCopy?.prizeAction}</FanAction> : null}
+                </>
+              ) : <><p>{c.benefitIntro}</p><FanAction
                 href={`/benefits?locale=${locale}&celebrity=${encodeURIComponent(live.celebrity.slug)}` as Route}
                 variant="neutral"
                 className={styles.benefitAction}
                 trailingIcon={<ArrowRight />}
               >
                 {locale === "ko" ? `${live.celebrity.name} 혜택·응모 보기` : `View ${live.celebrity.name} benefits & entries`}
-              </FanAction>
+              </FanAction></>}
             </section>
+            {authenticated && collectible ? (
+              <section className={styles.collectible} aria-labelledby="collectible-title">
+                <details open={collectible.eligible || Boolean(collectible.claim) || undefined}>
+                  <summary>
+                    <h2 id="collectible-title">{locale === "ko" ? "디지털 소장품" : "Digital collectible"}</h2>
+                    <span className={styles.collectibleState}>
+                      {collectible.claim ? <Check aria-label={locale === "ko" ? "받기 완료" : "Claim complete"} /> : !collectible.eligible ? <LockKeyhole aria-hidden="true" /> : null}
+                      {collectible.claim
+                        ? locale === "ko" ? "받기 완료" : "Claimed"
+                        : collectible.eligible ? locale === "ko" ? "받기 가능" : "Ready to claim"
+                        : locale === "ko" ? "참여 완료 후" : "After participation"}
+                      <ChevronDown aria-hidden="true" />
+                    </span>
+                  </summary>
+                  <div className={styles.collectibleContent}>
+                    <p>{collectible.claim
+                      ? collectible.claim.mint.status === "minted"
+                        ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : `Minted · Token #${collectible.claim.mint.tokenId}`
+                        : locale === "ko" ? "받기 신청 완료 · 발급을 준비 중이에요." : "Claimed · Your collectible is being issued."
+                      : collectible.eligible
+                        ? locale === "ko" ? "참여 조건을 완료했어요. LIVE 종료 후 48시간 안에 받아보세요." : "Participation complete. Claim within 48 hours after the LIVE."
+                        : locale === "ko" ? "참여 조건을 완료하고 LIVE가 끝나면 받을 수 있어요." : "Available after completing participation and the LIVE ends."}</p>
+                    <small>{locale === "ko" ? "받기 마감 · " : "Claim deadline · "}{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST</small>
+                    {!collectible.claim && collectible.eligible ? (
+                      <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
+                        {collectiblePending ? (locale === "ko" ? "받기 처리 중" : "Claiming") : (locale === "ko" ? "소장품 받기" : "Claim collectible")}
+                      </FanAction>
+                    ) : null}
+                    {collectibleError ? <p className={styles.actionError} role="alert">{collectibleError}</p> : null}
+                  </div>
+                </details>
+              </section>
+            ) : null}
           </div>
-          <aside className={styles.identity}>
-            <CreatorAvatar slug={live.celebrity.slug} src={live.celebrity.image} photos={live.celebrity.photos} position={live.celebrity.imagePosition} size={{ mobile: 56, desktop: 64 }} />
-            <div>
-              <span>{live.celebrity.name}</span>
-              <strong>{formatFanCount(live.celebrity.fanCount)}</strong>
-            </div>
-            <Link
-              href={`/c/${live.celebrity.slug}` as Route}
-              aria-label={
-                locale === "ko"
-                  ? `팬페이지 보기: ${live.celebrity.name}`
-                  : `View fan page: ${live.celebrity.name}`
-              }
-            >
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </aside>
+
         </div>
       </FanContentContainer>
       {showConfirmation && reservationCompletion && (

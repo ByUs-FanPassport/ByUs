@@ -45,12 +45,12 @@ describe("FanSiteFooter", () => {
 
     const navigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
     expect(within(navigation).getByRole("link", { name: "Favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
-    expect(within(navigation).getByRole("link", { name: "Fan meeting partnerships" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
+    expect(within(navigation).getByRole("link", { name: "Fanmeeting partnerships" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
     expect(within(navigation).getByRole("link", { name: "Service guide" })).toHaveAttribute("href", "/guide?locale=en");
     expect(within(navigation).getByRole("link", { name: "Contact support" })).toHaveAttribute("href", "/my/inquiries?locale=en");
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
-    expect(within(navigation).getByRole("heading", { name: "Guide & contact" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("heading", { name: "Guides & contact" })).toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open Privacy Policy" })).not.toBeInTheDocument();
     expect(within(navigation).getByRole("heading", { name: "Social" })).toBeInTheDocument();
     expect(within(navigation).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");

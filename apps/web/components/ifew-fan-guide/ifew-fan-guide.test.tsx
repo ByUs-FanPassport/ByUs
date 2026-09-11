@@ -14,7 +14,7 @@ describe("ifew Saturday LIVE guide", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(locale === "ko" ? "이퓨의 100일," : "100 days with ifew.");
     expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-09-12T08:00:00+09:00");
     expect(container.querySelector("time")).toHaveTextContent("08:00–13:00");
-    const actions = locale === "ko" ? ["이퓨 팬 인증하기", "LIVE 예약하기", "TikTok 일정 보기", "뱅크시 관람권 추첨 응모하기", "출석 코드 입력하기"] : ["Verify your ifew fandom", "Reserve the LIVE", "View the TikTok event", "Enter the Banksy ticket draw", "Enter the attendance code"];
+    const actions = locale === "ko" ? ["이퓨 팬 인증하기", "LIVE 예약하기", "TikTok 일정 보기", "뱅크시 관람권 추첨 응모하기", "출석 코드 입력하기"] : ["Verify your ifew fandom", "Reserve a spot", "View the TikTok event", "Enter the Banksy ticket draw", "Enter the attendance code"];
     const destinations = [
       `/c/ifewknow/verify?${new URLSearchParams({ locale, returnTo: `/live/ifew-100-days-tiktok-20260912?locale=${locale}` }).toString()}`,
       `/live/ifew-100-days-tiktok-20260912?locale=${locale}`,

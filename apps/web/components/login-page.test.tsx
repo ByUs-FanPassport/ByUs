@@ -381,7 +381,7 @@ describe("Privy login page", () => {
     query = "locale=en";
     initOAuth.mockRejectedValueOnce(new Error("oauth initialization failed"));
     render(<LoginPage appleLoginEnabled />);
-    expect(screen.getByRole("heading", { name: "Keep every moment with your favorite." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Keep a record of moments with your favorites." })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Return to ByUs home" })).toHaveAttribute("href", "/?locale=en");
     expect(screen.getByAltText("Open Fan Passport")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
