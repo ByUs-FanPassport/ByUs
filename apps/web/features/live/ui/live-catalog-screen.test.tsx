@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCatalogScreen } from "./live-catalog-screen";
 
+vi.mock("./observed-live-strip", () => ({ ObservedLiveStrip: () => null }));
+
 const privy = { ready: true, authenticated: false, getAccessToken: vi.fn() };
 
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => privy }));

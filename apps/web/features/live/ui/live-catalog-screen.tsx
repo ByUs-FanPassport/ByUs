@@ -14,6 +14,7 @@ import type { LiveEventResponse } from "../domain/live-event";
 import { FanHeading } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-catalog-screen.module.css";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
+import { ObservedLiveStrip } from "./observed-live-strip";
 
 type Catalog = {
   liveNow: readonly LiveEventResponse[];
@@ -290,6 +291,7 @@ export function LiveCatalogScreen({
             {t.calendar}
           </Link>
         </header>
+        <ObservedLiveStrip locale={locale} />
         {failed ? <button className={styles.retry} onClick={() => setRequestKey((value) => value + 1)}><RotateCcw />{t.retry}</button> : null}
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
