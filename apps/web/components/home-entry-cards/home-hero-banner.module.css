@@ -80,7 +80,7 @@
   .banner[data-kind="live"] .copy {
     display:grid;
     grid-template-columns:minmax(0, 1fr) auto;
-    grid-template-areas:"status schedule" "title action";
+    grid-template-areas:"status ." "title ." "action schedule";
     align-items:end;
     gap:16px 32px;
     padding:40px 48px 40px 64px;
@@ -92,7 +92,7 @@
     max-width:280px;
     justify-content:flex-end;
   }
-  .banner[data-kind="live"] .action { grid-area:action; justify-self:end; margin-top:0; }
+  .banner[data-kind="live"] .action { grid-area:action; justify-self:start; margin-top:0; }
 }
 }
 @media (max-width:767px) {
