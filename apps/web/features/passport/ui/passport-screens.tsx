@@ -8,7 +8,7 @@ import { CreatorImage } from "@/components/fan-ui/creator-image";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
 import { parsePassportCollectionResponse } from "../domain/passport-collection";
 import type { PassportDetail } from "../domain/passport-detail";
@@ -144,7 +144,7 @@ function RefreshNotice({ failed, retry, locale }: { failed: boolean; retry: () =
 
 export function PassportCollectionScreen() {
   const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
-  const fetcher = useOwnedFanResource(`/api/passports?locale=${locale}&tierStages=1`, parseCollection, auth, collectionNeedsRefresh);
+  const fetcher = useOwnedFanResource(`/api/passports?locale=${locale}&tierStages=1&firstLikeStamp=1`, parseCollection, auth, collectionNeedsRefresh);
   return <Frame locale={locale} collection><div className={styles.collectionHeading}>
       <PageHeading title={c.passports} subtitle={c.passportsSub} />
       {fetcher.state.status === "ready" && fetcher.state.data.length > 0 ? <Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight aria-hidden="true" /></Link> : null}
@@ -183,12 +183,18 @@ function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: 
   return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{transaction ? <p><span>{c.transaction}</span>{explorer ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{transaction}</strong><ExternalLink aria-hidden="true" /></a> : <strong data-wrap-anywhere>{transaction}</strong>}</p> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
-function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl }: {
+function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityName }: {
   firstReaction: NonNullable<PassportDetail["firstReaction"]>;
   locale: PassportLocale;
   explorerBaseUrl: string;
+  celebrityName: string;
 }) {
   const c = copy[locale];
+  const [open, setOpen] = useState(false);
+  const mobile = useMobileDetail();
+  const titleId = useId();
+  const Overlay = mobile ? BottomSheet : Drawer;
+  const close = () => setOpen(false);
   const explorer = firstReaction.mintStatus === "minted" && firstReaction.txHash
     ? safeExplorerUrl(explorerBaseUrl, firstReaction.txHash)
     : null;
@@ -197,15 +203,34 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl }: {
       ? `${c.firstReactionTransaction} ${firstReaction.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`
       : `${c.firstReactionTransaction} ${firstReaction.txHash}, open in GIWA Sepolia Explorer in a new tab`
     : "";
-  return <article className={styles.stampSlot} id="first-like-stamp" aria-label={c.firstReaction}>
-      <div className={styles.stampArtwork}><StampArtwork type="first_reaction" locale={locale} issuedAt={firstReaction.issuedAt} /></div>
+  return <>
+    <button type="button" className={`${styles.stampSlot} ${styles.stampButton}`} id="first-like-stamp" aria-label={c.firstReaction} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+      <div className={styles.stampArtwork}><StampArtwork type="first_reaction" locale={locale} issuedAt={firstReaction.issuedAt} decorative /></div>
       <strong>{c.firstReaction}</strong>
       <time className={styles.firstLikeDate} dateTime={firstReaction.issuedAt} aria-label={c.firstReactionDate}>{date(firstReaction.issuedAt, locale)}</time>
-      <div className={styles.firstLikeFacts} aria-live="polite">
-        <DigitalStatus status={firstReaction.mintStatus} locale={locale} />
-        {explorer && firstReaction.txHash ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{maskHash(firstReaction.txHash)}</strong><ExternalLink aria-hidden="true" /></a> : null}
-      </div>
-  </article>;
+    </button>
+    {open ? <Overlay open onClose={close} labelledBy={titleId} closeOnBackdrop backdropClassName={styles.detailBackdrop} contentClassName={styles.detailOverlay}>
+      <h1 className={styles.visuallyHidden} id={titleId}>{c.stampDetail}</h1>
+      <Frame locale={locale} presentation="overlay">
+        <PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={<button className={styles.back} type="button" onClick={close} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button>} />
+        <div className={styles.stampDetailLayout}>
+          <section className={styles.stampFocus}>
+            <span className={styles.momentLabel}>{celebrityName}</span>
+            <div className={styles.stampArtwork}><StampArtwork type="first_reaction" locale={locale} celebrityName={celebrityName} issuedAt={firstReaction.issuedAt} /></div>
+            <h2>{c.firstReaction}</h2><p>{date(firstReaction.issuedAt, locale)}</p>
+            <div aria-live="polite"><DigitalStatus status={firstReaction.mintStatus} locale={locale} /></div>
+          </section>
+          <aside className={styles.stampFacts}>
+            <h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2>
+            <dl><div><dt>{c.earnedOn}</dt><dd>{date(firstReaction.issuedAt, locale)}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{c.firstReaction}</dd></div></dl>
+            <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>
+              {explorer && firstReaction.txHash ? <p><span>{c.transaction}</span><a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{maskHash(firstReaction.txHash)}</strong><ExternalLink aria-hidden="true" /></a></p> : <p>{c.noFacts}</p>}
+            </div></details>
+          </aside>
+        </div>
+      </Frame>
+    </Overlay> : null}
+  </>;
 }
 
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
@@ -243,7 +268,7 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
     <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stampDisplay.stamps} totalCount={stampDisplay.totalCount} locale={locale} priority /><div className={styles.passportFields}><span className={styles.starValue} aria-label={`STAR: ${passport.celebrity.name}`} title={passport.celebrity.name} data-passport-field="star">{passport.celebrity.name}</span><span className={styles.issueDateValue} aria-label={`DATE OF ISSUE: ${passportDate(passport.issuedAt, locale)}`} data-passport-field="issue-date">{passportDate(passport.issuedAt, locale)}</span><span className={styles.fanIdValue} aria-label={`FAN ID: ${passport.id}`} title={passport.id} data-wrap-anywhere data-passport-field="fan-id">{shortPassportId(passport.id)}</span></div></div><div className={styles.identity}><div className={styles.identityAvatar} data-fan-avatar>{avatarResource.state.status === "ready" ? <Avatar avatar={avatarResource.state.avatar} imageUrl={avatarResource.state.imageUrl} label={avatarLabel} size={64} /> : <AvatarPlaceholder size={64} />}</div><div className={styles.identityCopy}><strong dir="auto">{nickname}</strong><div className={styles.identityMeta}><Link className={styles.creatorLink} href={withLocale(`/c/${passport.celebrity.slug}`, locale)} aria-label={creatorLinkLabel}><span>{passport.celebrity.name}</span><ExternalLink aria-hidden="true" /></Link><small>{passport.owner.nickname ? `${currentStageLabel} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div></div><div className={styles.heroFacts}><Link href="#activity"><strong>{passport.score.points}</strong><small>{c.score}</small></Link><Link href="#stamp-book"><strong>{stampDisplay.totalCount}</strong><small>{c.stamps}</small></Link></div><div className={styles.levelProgress}><FanTierBadge tier={passport.score.level} stageKey={stage?.current.key} locale={locale} size={40}/><div><strong>{stage ? nextStageLabel ? `${currentStageLabel} → ${nextStageLabel}` : currentStageLabel : passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{stage ? stage.next ? `${stage.remaining} ${c.remaining}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span>{stage && stage.next?.tier === stage.current.tier && !passport.progress.maxed ? <small>{locale === "ko" ? `${nextLevel} 등급까지 ${passport.progress.remainingPoints}점` : `${passport.progress.remainingPoints} pts to ${nextLevel}`}</small> : null}</div><progress aria-label={stage ? stage.next ? `${c.nextLevel}: ${nextStageLabel}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={stage?.progressPercent ?? passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
     {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? passport.nextBenefit.allocationMode === "application_selection" ? c.participationReady : c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
-    <section id="stamp-book" className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{stampDisplay.totalCount} {c.stamps}</p></div>{stampDisplay.stamps.length ? <div className={styles.stampGrid}>{[...stampDisplay.stamps].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).map((stamp) => { if (stamp.type === "first_reaction") return passport.firstReaction ? <FirstLikeStampCard key={stamp.id} firstReaction={passport.firstReaction} locale={locale} explorerBaseUrl={explorerBaseUrl} /> : null; const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
+    <section id="stamp-book" className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{stampDisplay.totalCount} {c.stamps}</p></div>{stampDisplay.stamps.length ? <div className={styles.stampGrid}>{[...stampDisplay.stamps].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).map((stamp) => { if (stamp.type === "first_reaction") return passport.firstReaction ? <FirstLikeStampCard key={stamp.id} celebrityName={passport.celebrity.name} firstReaction={passport.firstReaction} locale={locale} explorerBaseUrl={explorerBaseUrl} /> : null; const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <section id="activity" className={styles.section}><div className={styles.sectionHeading}><h2>{c.activity}</h2></div>{activities.length ? <ol className={styles.timeline}>{activities.map((item) => <li key={item.id}><span className={styles.timelineDot} /><div><strong>{item.context.live ? item.context.live.linkable ? <Link href={withLocale(`/live/${item.context.live.slug}`, locale)}>{item.context.live.title}</Link> : item.context.live.title : item.display.type}</strong><time dateTime={item.occurredAt}>{item.display.type} · {date(item.occurredAt, locale)}</time></div><b>{item.points > 0 ? "+" : ""}{item.points} {c.points}</b></li>)}</ol> : <div className={styles.inlineEmpty}><CalendarDays /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <DigitalDisclosure mint={passport.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>;
 }

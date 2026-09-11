@@ -12,6 +12,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ArrowRight } from "./icons";
+import { ChevronDown } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
@@ -190,7 +191,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
           <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" ownedOnly={ownedOnly} onSelectOwned={selectOwned} />
           <form className={styles.controls} role="search" onSubmit={(event) => event.preventDefault()}>
             <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><input id="celebrity-search" type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={t.searchPlaceholder} /></label>
-            <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><select id="celebrity-sort" value={sort} onChange={(event) => changeSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select></label>
+            <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><span className={styles.selectControl}><select id="celebrity-sort" value={sort} onChange={(event) => changeSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select><ChevronDown aria-hidden="true" /></span></label>
           </form>
           <div className={styles.filterMeta} aria-live="polite">
             {!ownedOnly || passportState.status === "ready" ? <p>{locale === "ko" ? `총 ${visibleCelebrities.length}개` : `${visibleCelebrities.length} profiles`}</p> : null}

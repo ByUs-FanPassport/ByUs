@@ -1097,5 +1097,6 @@
 }
 
 .firstLikeDate { margin-top: 4px; color: var(--muted); font-size: 12px; }
-.firstLikeFacts { display: grid; justify-items: center; gap: 8px; margin-top: auto; padding-top: 12px; max-width: 100%; font-size: 12px; }
-.firstLikeFacts .transactionLink { min-height: 44px; max-width: 100%; }
+.stampButton { width: 100%; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.stampButton:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+@media (hover: hover) { .stampButton:hover { border-color: var(--line); } }
