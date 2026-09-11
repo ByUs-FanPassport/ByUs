@@ -1,0 +1,105 @@
+.listHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.listHeading strong {
+  font-size: 14px;
+}
+
+.listHeading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.listFilters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.searchField {
+  margin-top: 0;
+}
+
+.statusField {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.statusField select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.clearFilters {
+  min-height: 40px;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.editorIdentity {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.editorIdentity p,
+.editorIdentity h2,
+.editorIdentity span {
+  margin: 0;
+}
+
+.fieldHelp {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.validationNote {
+  color: var(--muted);
+}
+
+.editorIdentity p,
+.editorIdentity span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.editorIdentity h2 {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.editorIdentity span {
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.statusField select:focus-visible,
+.clearFilters:focus-visible {
+  outline: 3px solid rgb(23 23 26 / 28%);
+  outline-offset: 2px;
+}

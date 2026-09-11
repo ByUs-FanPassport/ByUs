@@ -1,11 +1,11 @@
 .backdrop { align-items: center; justify-content: center; padding: 24px; background: rgb(19 16 24 / 64%); }
-.dialog { position: relative; width: min(100%, 680px); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 40px; border-radius: 24px; background: #fff; color: #19191e; box-shadow: 0 24px 80px rgb(26 16 30 / 24%); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.dialog { position: relative; width: min(100%, 680px); max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; padding: 40px; border-radius: 24px; background: #fff; color: #19191e; box-shadow: 0 24px 80px rgb(26 16 30 / 24%); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 .dialog h2, .dialog p { margin: 0; }
 .dialog p { word-break: keep-all; text-wrap: pretty; }
 .close { position: absolute; top: 20px; right: 20px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 50%; background: #f5f4f6; color: #29272d; cursor: pointer; }
 .close:hover { background: #eceaee; }
 .close:disabled { cursor: wait; opacity: .55; }
-.close:focus-visible, .dialog input:focus-visible, .dialog textarea:focus-visible, .submit:focus-visible { outline: 3px solid #19191e; outline-offset: 3px; }
+.close:focus-visible, .dialog input:focus-visible, .dialog textarea:focus-visible, .dialog select:focus-visible, .submit:focus-visible { outline: 3px solid #19191e; outline-offset: 3px; }
 .heading { display: flex; flex-direction: column; gap: 12px; padding-right: 52px; }
 .eyebrow { color: #bb1757; font-size: 12px; font-weight: 750; letter-spacing: 1.4px; }
 .heading h2, .success h2 { font-size: 32px; font-weight: 800; letter-spacing: -.6px; line-height: 1.25; }
@@ -13,11 +13,11 @@
 .form { display: flex; flex-direction: column; gap: 20px; margin-top: 28px; }
 .twoColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .form label:not(.consent) { display: flex; flex-direction: column; gap: 8px; color: #29272d; font-size: 14px; font-weight: 700; }
-.form input:not([type="checkbox"]), .form textarea { width: 100%; border: 1px solid #d8d5dc; border-radius: 12px; background: #fff; color: #19191e; font: inherit; font-weight: 500; }
-.form input:not([type="checkbox"]) { min-height: 48px; padding: 12px 14px; }
+.form input:not([type="checkbox"]), .form textarea, .form select { width: 100%; border: 1px solid #d8d5dc; border-radius: 12px; background: #fff; color: #19191e; font: inherit; font-weight: 500; }
+.form input:not([type="checkbox"]), .form select { min-height: 48px; padding: 12px 14px; }
 .form textarea { min-height: 140px; resize: vertical; padding: 14px; line-height: 1.5; }
 .form input::placeholder, .form textarea::placeholder { color: #77737d; opacity: 1; }
-.form input:disabled, .form textarea:disabled { background: #f5f4f6; cursor: wait; }
+.form input:disabled, .form textarea:disabled, .form select:disabled { background: #f5f4f6; cursor: wait; }
 .consent { display: flex; align-items: flex-start; gap: 10px; color: #55515b; font-size: 13px; font-weight: 500; line-height: 1.5; }
 .consent input { width: 20px; height: 20px; flex: 0 0 20px; margin: 0; accent-color: #bb1757; }
 .error { padding: 12px 14px; border-radius: 10px; background: #fff1f4; color: #a31243; font-size: 14px; font-weight: 650; line-height: 1.45; }
@@ -39,6 +39,7 @@
   .twoColumns { grid-template-columns: minmax(0, 1fr); }
   .form { gap: 16px; margin-top: 22px; }
   .form textarea { min-height: 116px; }
+  .form input:not([type="checkbox"]), .form textarea, .form select { font-size: 16px; }
   .success { min-height: 280px; padding-inline: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: .01ms; } }

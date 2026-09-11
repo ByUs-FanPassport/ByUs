@@ -21,16 +21,18 @@ describe("AdminOperationsShell navigation", () => {
   });
 
   it.each([
-    ["/admin", "개요"],
-    ["/admin/celebrities", "셀럽 콘텐츠"],
-    ["/admin/celebrities/kara/quiz", "셀럽 콘텐츠"],
-    ["/admin/lives", "라이브"],
-    ["/admin/lives/live-1/survey", "라이브"],
-    ["/admin/benefits", "혜택"],
-    ["/admin/dashboard", "분석"],
-    ["/admin/fans", "팬 운영"],
-    ["/admin/blockchain-jobs", "블록체인 작업"],
-    ["/admin/audit", "감사 로그"],
+    ["/admin", "서비스 현황"],
+    ["/admin/celebrities", "크리에이터 관리"],
+    ["/admin/celebrities/kara/quiz", "크리에이터 관리"],
+    ["/admin/lives", "LIVE 관리"],
+    ["/admin/lives/live-1/survey", "LIVE 관리"],
+    ["/admin/benefits", "혜택·경품"],
+    ["/admin/dashboard", "상세 통계"],
+    ["/admin/fans", "회원 관리"],
+    ["/admin/blockchain-jobs", "디지털 발급 내역"],
+    ["/admin/system", "시스템 상태"],
+    ["/admin/notifications", "알림 전송"],
+    ["/admin/audit", "관리자 활동 기록"],
   ])("marks the owning navigation item current at %s", (route, label) => {
     pathname = route;
     render(<AdminOperationsShell locale="ko"><p>content</p></AdminOperationsShell>);
@@ -43,7 +45,7 @@ describe("AdminOperationsShell navigation", () => {
     pathname = "/admin/dashboard";
     searchParams = new URLSearchParams("view=brand");
     render(<AdminOperationsShell locale="ko"><p>content</p></AdminOperationsShell>);
-    expect(screen.getByRole("link", { name: "분석" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "상세 통계" })).toHaveAttribute("aria-current", "page");
   });
 
   it("focuses the current item when the mobile menu opens and restores the menu trigger on Escape", async () => {
@@ -53,7 +55,7 @@ describe("AdminOperationsShell navigation", () => {
     fireEvent.click(menuButton);
     const mobileNavigation = document.getElementById("admin-mobile-navigation");
     expect(mobileNavigation).not.toBeNull();
-    const currentLink = within(mobileNavigation!).getByRole("link", { name: "셀럽 콘텐츠" });
+    const currentLink = within(mobileNavigation!).getByRole("link", { name: "크리에이터 관리" });
     await waitFor(() => expect(currentLink).toHaveFocus());
     fireEvent.keyDown(currentLink, { key: "Escape" });
     expect(document.getElementById("admin-mobile-navigation")).not.toBeInTheDocument();
@@ -66,5 +68,25 @@ describe("AdminOperationsShell navigation", () => {
     render(<AdminOperationsShell locale="ko"><p>content</p></AdminOperationsShell>);
     fireEvent.click(screen.getByRole("button", { name: "English" }));
     expect(replace).toHaveBeenCalledWith("/admin/dashboard?view=brand&lang=en", { scroll: false });
+  });
+
+  it("groups navigation and exposes the public service without adding unsupported destinations", () => {
+    render(<AdminOperationsShell locale="ko"><p>content</p></AdminOperationsShell>);
+    const navigation = screen.getByRole("navigation", { name: "관리자 메뉴" });
+    expect(within(navigation).getByText("회원")).toBeInTheDocument();
+    expect(within(navigation).getByText("콘텐츠")).toBeInTheDocument();
+    expect(within(navigation).getByText("운영 관리")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "서비스 열기" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("navigation", { name: "현재 위치" })).toHaveTextContent("서비스 현황");
+  });
+
+  it("uses the approved English IA terms", () => {
+    pathname = "/admin/celebrities";
+    render(<AdminOperationsShell locale="en"><p>content</p></AdminOperationsShell>);
+    const navigation = screen.getByRole("navigation", { name: "Admin menu" });
+    expect(within(navigation).getByRole("link", { name: "Creator management" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "System status" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("link", { name: "Issuance history" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("link", { name: "Admin activity log" })).toBeInTheDocument();
   });
 });

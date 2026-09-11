@@ -18,10 +18,11 @@ describe("ifew Saturday LIVE guide", () => {
       `/c/ifewknow/verify?${new URLSearchParams({ locale, returnTo: `/live/ifew-100-days-tiktok-20260912?locale=${locale}` }).toString()}`,
       `/live/ifew-100-days-tiktok-20260912?locale=${locale}`,
       "https://www.tiktok.com/live/event/7680769355085185044",
-      `/benefits/41ae7883-098e-49f2-9229-4f6962160141?locale=${locale}`,
+      `/c/ifewknow/raffles?locale=${locale}`,
       `/live/ifew-100-days-tiktok-20260912?locale=${locale}#fan-code`,
     ];
     actions.forEach((action, index) => expect(screen.getByRole("link", { name: action })).toHaveAttribute("href", destinations[index]));
+    expect(screen.getByRole("link", { name: locale === "ko" ? "뱅크시 티켓 보기" : "View Banksy tickets" })).toHaveAttribute("href", `/c/ifewknow/raffles?locale=${locale}`);
     const returnTo = new URL(destinations[0], "https://byus.kr").searchParams.get("returnTo");
     expect(sanitizeLiveReturnTo(returnTo)).toBe(destinations[1]);
     expect(container.textContent).toContain(locale === "ko" ? "예약·출석만으로 자동 응모되지 않으니 직접 응모해 주세요." : "Reservations and attendance do not enter you automatically.");

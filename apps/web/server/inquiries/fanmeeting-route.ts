@@ -11,7 +11,8 @@ export const inquirySchema = z.object({
   consent: z.literal(true),
 }).strict();
 export type InquiryInput = z.infer<typeof inquirySchema>;
-export type InquiryRepository = { submit(input: InquiryInput, ipHash: string, payloadHash: string): Promise<boolean> };
+export type InquiryType = "fanmeeting" | "creator" | "partner";
+export type InquiryRepository = { submit(input: InquiryInput, ipHash: string, payloadHash: string, inquiryType: InquiryType): Promise<boolean> };
 export class InquiryError extends Error {
   constructor(readonly code: "INQUIRY_INVALID" | "INQUIRY_RATE_LIMITED" | "INQUIRY_IDEMPOTENCY_CONFLICT" | "INQUIRY_UNAVAILABLE") { super(code); }
 }
@@ -45,7 +46,7 @@ async function readBody(request: Request) {
     return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
   } finally { reader.releaseLock(); }
 }
-export function createInquiryHandler(deps: { repository: InquiryRepository; secret: string; vercel: boolean; localDevelopment?: boolean }) {
+export function createInquiryHandler(deps: { repository: InquiryRepository; secret: string; vercel: boolean; localDevelopment?: boolean; inquiryType?: InquiryType }) {
   return async (request: Request): Promise<Response> => {
     try {
       const origin = request.headers.get("origin");
@@ -57,10 +58,14 @@ export function createInquiryHandler(deps: { repository: InquiryRepository; secr
       const parsed = inquirySchema.safeParse(await readBody(request));
       if (!parsed.success) throw new InquiryError("INQUIRY_INVALID");
       const input = parsed.data;
+      const inquiryType = deps.inquiryType ?? "fanmeeting";
       const hash = (purpose: string, value: string) => createHmac("sha256", deps.secret).update(`byus-inquiry-v1:${purpose}:${value}`).digest("hex");
       const ipHash = hash("ip", normalizedClientIp(request, deps.vercel));
-      const payloadHash = hash("payload", JSON.stringify([input.locale, input.name, input.company, input.email, input.message, input.consent]));
-      const replayed = await deps.repository.submit(input, ipHash, payloadHash);
+      const canonicalPayload = [input.locale, input.name, input.company, input.email, input.message, input.consent];
+      // Preserve the deployed fanmeeting hash exactly; bind category into hashes
+      // only for the newly introduced inquiry types.
+      const payloadHash = hash("payload", JSON.stringify(inquiryType === "fanmeeting" ? canonicalPayload : [inquiryType, ...canonicalPayload]));
+      const replayed = await deps.repository.submit(input, ipHash, payloadHash, inquiryType);
       return Response.json({ status: "accepted" }, { status: replayed ? 200 : 202, headers: { "cache-control": "no-store" } });
     } catch (error) {
       if (error instanceof InquiryError) return inquiryFailure(error.code);

@@ -1,9 +1,6 @@
 .privacyNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
   margin-bottom: 16px;
-  padding: 14px 16px;
+  padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fafafa;
@@ -11,9 +8,64 @@
   font-size: 13px;
   line-height: 1.5;
 }
-.privacyNote svg {
+.privacyNote summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.privacyNote summary svg {
   width: 18px;
   flex: none;
+}
+.privacyNote > span {
+  display: block;
+  padding: 0 28px 14px;
+}
+.privacyNote summary:focus-visible {
+  outline: 3px solid rgb(23 23 26 / 28%);
+  outline-offset: 2px;
+}
+.resultToolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0 12px;
+}
+.resultSummary {
+  display: grid;
+  gap: 3px;
+}
+.resultToolbar strong {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.resultSummary span,
+.resultToolbar label > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.resultToolbar label {
+  display: grid;
+  min-width: 176px;
+  gap: 6px;
+}
+.resultActions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.resultToolbar select {
+  min-height: 40px;
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--strong-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
 }
 .fanCell {
   display: flex;
@@ -174,5 +226,15 @@
   }
   .correctionActions > * {
     flex: 1;
+  }
+  .resultToolbar {
+    display: grid;
+    align-items: stretch;
+  }
+  .resultToolbar label {
+    min-width: 0;
+  }
+  .resultActions {
+    display: grid;
   }
 }

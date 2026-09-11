@@ -95,3 +95,37 @@ it("allows only the collection-view intent from the exact MY hub", () => {
   expect(() => createAuthIntent({...input, actionType:"RESERVE_LIVE", targetType:"live_event"})).toThrow();
   expect(() => createAuthIntent({...input, targetType:"benefit"})).toThrow();
 });
+
+it("allows APPLY_BENEFIT only from the exact matching creator raffle detail", () => {
+  const benefitId = "22222222-2222-4222-8222-222222222222";
+  const input = {
+    sourcePath: `/c/kara/raffles/${benefitId}`,
+    sourceQuery: "?locale=ko",
+    actionType: "APPLY_BENEFIT",
+    targetType: "benefit",
+    targetId: benefitId,
+  } as const;
+
+  expect(createAuthIntent(input, { id })).toMatchObject(input);
+  expect(() => createAuthIntent({
+    ...input,
+    targetId: "33333333-3333-4333-8333-333333333333",
+  }, { id })).toThrow();
+  expect(() => createAuthIntent({
+    ...input,
+    sourcePath: `/c/kara/gifts/${benefitId}`,
+  }, { id })).toThrow();
+  expect(() => createAuthIntent({
+    ...input,
+    actionType: "CLAIM_BENEFIT",
+  }, { id })).toThrow();
+
+  for (const sourcePath of [
+    `/c/../raffles/${benefitId}`,
+    `/c/%2e%2e/raffles/${benefitId}`,
+    `/c/kara/raffles/${benefitId}/extra`,
+    `/c/kara/raffles/${benefitId}%2Fextra`,
+  ]) {
+    expect(() => createAuthIntent({ ...input, sourcePath }, { id })).toThrow();
+  }
+});

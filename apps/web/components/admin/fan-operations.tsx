@@ -33,8 +33,11 @@ type Fan = {
   nickname: string | null;
   accountStatus: "active" | "disabled";
   maskedWallet: string | null;
+  createdAt?: string;
   celebritySummaries: Journey[];
 };
+type FanSort = "recent" | "name" | "score" | "activity";
+type FanCursor = { createdAt: string; id: string };
 type Passport = {
   id: string;
   celebrity: Journey["celebrity"];
@@ -77,36 +80,50 @@ type FanDetail = {
 };
 const copy = {
   ko: {
-    eyebrow: "혜택 운영",
-    title: "팬 운영",
+    eyebrow: "회원 운영",
+    title: "회원 관리",
     description:
-      "팬의 Passport 여정과 발급·혜택 상태를 최소 정보로 확인합니다.",
+      "회원의 계정 상태와 패스포트 활동·혜택 기록을 확인합니다.",
+    privacyTitle: "개인정보 조회 기준",
     privacy:
       "검색에 사용한 이메일은 결과, 상세, 감사 로그에 표시되지 않습니다. Google 실명과 원문 지갑 주소도 노출하지 않습니다.",
     query: "닉네임 또는 정확한 이메일",
     status: "계정 상태",
     all: "전체",
-    active: "활성",
-    disabled: "비활성",
+    active: "이용 가능",
+    disabled: "이용 중지",
     search: "검색",
     reset: "초기화",
     loading: "팬 목록을 불러오는 중입니다.",
     empty: "조건에 맞는 팬이 없습니다.",
     error: "팬 정보를 불러오지 못했습니다.",
     retry: "다시 시도",
-    fan: "팬",
-    journey: "Passport 여정",
-    score: "Score",
+    loadedCount: (count: number) => `현재 불러온 ${count}명`,
+    moreResults: "다음 결과를 불러올 수 있습니다.",
+    endOfResults: "현재 조건의 마지막 결과입니다.",
+    filteredBy: "적용된 조건",
+    emailFilterApplied: "이메일 검색 적용",
+    sort: "현재 목록 정렬",
+    sortRecent: "가입 최신순",
+    sortName: "이름순",
+    sortScore: "점수 높은순",
+    sortActivity: "활동 많은순",
+    loadMore: "다음 회원 불러오기",
+    loadingMore: "불러오는 중…",
+    loadMoreError: "다음 회원을 불러오지 못했습니다. 다시 시도해 주세요.",
+    fan: "회원",
+    journey: "패스포트 여정",
+    score: "팬 점수",
     activity: "활동",
     benefit: "혜택",
-    detail: "팬 상세",
+    detail: "회원 상세",
     close: "상세 닫기",
-    ledger: "Score 원장",
-    stamps: "Stamp",
+    ledger: "팬 점수 원장",
+    stamps: "스탬프",
     benefits: "혜택 상태",
     none: "기록 없음",
     adjust: "점수 교정",
-    adjustHelp: "기존 점수를 덮어쓰지 않고 +/- 원장 행을 영구 추가합니다.",
+    adjustHelp: "기존 팬 점수를 덮어쓰지 않고 +/- 원장 행을 영구 추가합니다.",
     points: "조정값 (-100~100)",
     reason: "교정 사유",
     confirm: "이 교정이 불변 원장과 감사 로그에 영구 기록됨을 확인합니다.",
@@ -117,16 +134,17 @@ const copy = {
     unavailable: "비활성 팬 또는 보관된 셀럽은 교정할 수 없습니다.",
   },
   en: {
-    eyebrow: "Benefit operations",
-    title: "Fan operations",
+    eyebrow: "Member operations",
+    title: "Member management",
     description:
       "Review Passport journeys, issuance, and benefit states with minimum fan data.",
+    privacyTitle: "Privacy and data access",
     privacy:
       "Email is used only for exact search and never appears in results, details, or audit logs. Google names and full wallet addresses are excluded.",
     query: "Nickname or exact email",
     status: "Account status",
     all: "All",
-    active: "Active",
+    active: "Enabled",
     disabled: "Disabled",
     search: "Search",
     reset: "Reset",
@@ -134,12 +152,25 @@ const copy = {
     empty: "No fans match these filters.",
     error: "Fan data could not be loaded.",
     retry: "Try again",
-    fan: "Fan",
+    loadedCount: (count: number) => `${count} currently loaded`,
+    moreResults: "You can load the next results.",
+    endOfResults: "This is the end of the current results.",
+    filteredBy: "Active filters",
+    emailFilterApplied: "Email filter applied",
+    sort: "Sort loaded members",
+    sortRecent: "Newest members",
+    sortName: "Name",
+    sortScore: "Highest score",
+    sortActivity: "Most activity",
+    loadMore: "Load more members",
+    loadingMore: "Loading…",
+    loadMoreError: "More members could not be loaded. Try again.",
+    fan: "Member",
     journey: "Passport journey",
     score: "Score",
     activity: "Activity",
     benefit: "Benefits",
-    detail: "Fan detail",
+    detail: "Member detail",
     close: "Close detail",
     ledger: "Score ledger",
     stamps: "Stamps",
@@ -178,36 +209,87 @@ export function FanOperations() {
     [selected, setSelected] = useState<Fan | null>(null),
     [detail, setDetail] = useState<FanDetail | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading"),
+    [nextCursor, setNextCursor] = useState<FanCursor | null>(null),
+    [loadingMore, setLoadingMore] = useState(false),
+    [loadMoreError, setLoadMoreError] = useState(false),
+    [sort, setSort] = useState<FanSort>("recent"),
     [passportId, setPassportId] = useState(""),
     [saving, setSaving] = useState(false),
     [message, setMessage] = useState<"saved" | "error" | null>(null);
   const adjustmentAttempt = useRef<{ payload: string; key: string } | null>(
     null,
   );
+  const listRequestId = useRef(0);
+  const listAbortController = useRef<AbortController | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const openRequestId = useRef(0);
-  const load = useCallback(async () => {
-    setState("loading");
+  const load = useCallback(async (cursor: FanCursor | null = null) => {
+    const requestId = ++listRequestId.current;
+    listAbortController.current?.abort();
+    const controller = new AbortController();
+    listAbortController.current = controller;
+    if (cursor) setLoadingMore(true);
+    else setState("loading");
+    setLoadMoreError(false);
     try {
       const token = await getAccessToken();
       if (!token) throw new Error();
       const search = new URLSearchParams({ limit: "50", lang: locale });
       if (query) search.set("q", query);
       if (status) search.set("status", status);
+      if (cursor) {
+        search.set("cursorCreatedAt", cursor.createdAt);
+        search.set("cursorId", cursor.id);
+      }
       const response = await fetch(`/api/admin/fans?${search}`, {
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error();
-      const body = (await response.json()) as { items: Fan[] };
-      setFans(body.items);
+      const body = (await response.json()) as {
+        items: Fan[];
+        nextCursor?: FanCursor | null;
+      };
+      if (requestId !== listRequestId.current || controller.signal.aborted)
+        return;
+      setFans((currentFans) =>
+        cursor
+          ? Array.from(
+              new Map(
+                [...currentFans, ...body.items].map((fan) => [fan.fanId, fan]),
+              ).values(),
+            )
+          : body.items,
+      );
+      setNextCursor(body.nextCursor ?? null);
       setState("ready");
     } catch {
-      setState("error");
+      if (requestId !== listRequestId.current || controller.signal.aborted)
+        return;
+      if (cursor) setLoadMoreError(true);
+      else setState("error");
+    } finally {
+      if (requestId === listRequestId.current) {
+        if (cursor) setLoadingMore(false);
+        if (listAbortController.current === controller)
+          listAbortController.current = null;
+      }
     }
   }, [getAccessToken, locale, query, status]);
   useEffect(() => {
-    if (session.status === "authorized") void load();
+    if (session.status === "authorized") {
+      setFans([]);
+      setNextCursor(null);
+      setLoadingMore(false);
+      setLoadMoreError(false);
+      void load();
+    }
+    return () => {
+      listRequestId.current += 1;
+      listAbortController.current?.abort();
+      listAbortController.current = null;
+    };
   }, [load, session.status]);
   async function open(fan: Fan) {
     const requestId = ++openRequestId.current;
@@ -256,6 +338,30 @@ export function FanOperations() {
       null,
     [detail, passportId],
   );
+  const sortedFans = useMemo(() => {
+    const activityTotal = (fan: Fan) =>
+      fan.celebritySummaries.reduce(
+        (total, journey) =>
+          total +
+          Object.values(journey.activityCounts).reduce(
+            (sum, count) => sum + count,
+            0,
+          ),
+        0,
+      );
+    const scoreTotal = (fan: Fan) =>
+      fan.celebritySummaries.reduce(
+        (total, journey) => total + journey.score.points,
+        0,
+      );
+    return [...fans].sort((a, b) => {
+      if (sort === "name")
+        return (a.nickname ?? "").localeCompare(b.nickname ?? "", locale);
+      if (sort === "score") return scoreTotal(b) - scoreTotal(a);
+      if (sort === "activity") return activityTotal(b) - activityTotal(a);
+      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+    });
+  }, [fans, locale, sort]);
   async function adjust(form: FormData) {
     if (!selected || !current) return;
     setSaving(true);
@@ -306,10 +412,13 @@ export function FanOperations() {
         <h1>{t.title}</h1>
         <span>{t.description}</span>
       </header>
-      <div className={styles.privacyNote}>
-        <ShieldCheck aria-hidden="true" />
+      <details className={styles.privacyNote}>
+        <summary>
+          <ShieldCheck aria-hidden="true" />
+          <span>{t.privacyTitle}</span>
+        </summary>
         <span>{t.privacy}</span>
-      </div>
+      </details>
       <form className={ops.filterBar} action={apply}>
         <label className={ops.growField}>
           <span>{t.query}</span>
@@ -360,7 +469,59 @@ export function FanOperations() {
       )}
       {state === "ready" && fans.length === 0 && <State title={t.empty} />}
       {fans.length > 0 && (
-        <FanTable fans={fans} locale={locale} labels={t} open={open} />
+        <>
+          <div className={styles.resultToolbar}>
+            <div className={styles.resultSummary}>
+              <strong>{t.loadedCount(fans.length)}</strong>
+              <span>{nextCursor ? t.moreResults : t.endOfResults}</span>
+              {(query || status) && (
+                <span>
+                  {t.filteredBy}:{" "}
+                  {[
+                    query
+                      ? query.includes("@")
+                        ? t.emailFilterApplied
+                        : query
+                      : "",
+                    status ? t[status as "active" | "disabled"] : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              )}
+            </div>
+            <div className={styles.resultActions}>
+              <label>
+                <span>{t.sort}</span>
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value as FanSort)}
+                >
+                  <option value="recent">{t.sortRecent}</option>
+                  <option value="name">{t.sortName}</option>
+                  <option value="score">{t.sortScore}</option>
+                  <option value="activity">{t.sortActivity}</option>
+                </select>
+              </label>
+              {nextCursor && (
+                <button
+                  type="button"
+                  className={ops.textButton}
+                  disabled={loadingMore}
+                  onClick={() => void load(nextCursor)}
+                >
+                  {loadingMore ? t.loadingMore : t.loadMore}
+                </button>
+              )}
+            </div>
+          </div>
+          {loadMoreError && (
+            <p className={ops.inlineError} role="alert">
+              {t.loadMoreError}
+            </p>
+          )}
+          <FanTable fans={sortedFans} labels={t} open={open} />
+        </>
       )}
       {selected && (
         <Drawer
@@ -432,6 +593,7 @@ export function FanOperations() {
                   )}
                   {current && (
                     <JourneyDetail
+                      key={current.id}
                       current={current}
                       locale={locale}
                       labels={t}
@@ -452,12 +614,10 @@ export function FanOperations() {
 
 function FanTable({
   fans,
-  locale,
   labels,
   open,
 }: {
   fans: Fan[];
-  locale: AdminLocale;
   labels: (typeof copy)["ko"] | (typeof copy)["en"];
   open: (fan: Fan) => Promise<void>;
 }) {
@@ -494,7 +654,12 @@ function FanTable({
                     </span>
                     <span>
                       <strong>{fan.nickname ?? "—"}</strong>
-                      <span>{fan.maskedWallet ?? "—"}</span>
+                      <span>
+                        {fan.accountStatus === "active"
+                          ? labels.active
+                          : labels.disabled}
+                        {fan.maskedWallet ? ` · ${fan.maskedWallet}` : ""}
+                      </span>
                     </span>
                   </div>
                 </td>
@@ -552,6 +717,19 @@ function JourneyDetail({
   message: "saved" | "error" | null;
   adjust: (form: FormData) => Promise<void>;
 }) {
+  const [points, setPoints] = useState("");
+  const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const pointValue = Number(points);
+  const canSubmit =
+    !saving &&
+    Number.isInteger(pointValue) &&
+    pointValue >= -100 &&
+    pointValue <= 100 &&
+    pointValue !== 0 &&
+    reason.trim().length >= 10 &&
+    reason.trim().length <= 500 &&
+    confirmed;
   const benefits = [
     ...current.benefitClaims.map((item) => ({
       id: item.id,
@@ -572,7 +750,7 @@ function JourneyDetail({
           <dd>{current.score.points}</dd>
         </div>
         <div>
-          <dt>Passport NFT</dt>
+          <dt>{locale === "ko" ? "패스포트 NFT" : "Passport NFT"}</dt>
           <dd>{current.mintStatus}</dd>
         </div>
       </dl>
@@ -638,15 +816,30 @@ function JourneyDetail({
                 type="number"
                 min={-100}
                 max={100}
+                step={1}
                 required
+                value={points}
+                onChange={(event) => setPoints(event.target.value)}
               />
             </label>
             <label>
               {labels.reason}
-              <textarea name="reason" minLength={10} maxLength={500} required />
+              <textarea
+                name="reason"
+                minLength={10}
+                maxLength={500}
+                required
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
             </label>
             <label className={styles.confirmCheck}>
-              <input type="checkbox" required />
+              <input
+                type="checkbox"
+                required
+                checked={confirmed}
+                onChange={(event) => setConfirmed(event.target.checked)}
+              />
               <span>{labels.confirm}</span>
             </label>
             {message && (
@@ -663,7 +856,7 @@ function JourneyDetail({
               <button
                 className={ops.primaryButton}
                 type="submit"
-                disabled={saving}
+                disabled={!canSubmit}
               >
                 {saving ? "…" : labels.submit}
               </button>

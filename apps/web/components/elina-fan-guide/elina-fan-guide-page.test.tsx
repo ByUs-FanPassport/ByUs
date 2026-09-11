@@ -16,7 +16,7 @@ describe("Elina fan guide", () => {
     };
     const liveHref = `/live/elina-banksy-instagram-20260918?locale=${locale}`;
     const verifyHref = `/c/elina/verify?${new URLSearchParams({ locale, returnTo: liveHref })}`;
-    const raffleHref = `/c/elina?tab=raffles&locale=${locale}#celebrity-content`;
+    const raffleHref = `/c/elina/raffles?locale=${locale}`;
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(expected.title);
     expect(screen.getByRole("link", { name: expected.verify })).toHaveAttribute("href", verifyHref);
     expect(screen.getAllByRole("link", { name: expected.start })[0]).toHaveAttribute("href", verifyHref);
@@ -30,8 +30,8 @@ describe("Elina fan guide", () => {
     expect(container.textContent).toContain(locale === "ko" ? "방송까지 기다릴 필요 없어요." : "No need to wait for the broadcast.");
     expect(container.textContent).toContain(locale === "ko" ? "처음 완료할 때" : "granted once");
     expect(container.textContent).toContain(locale === "ko" ? "60명" : "60 exhibition");
-    expect(container.textContent).toContain(locale === "ko" ? "10명" : "10 collaboration");
-    expect(container.textContent).toContain(locale === "ko" ? "3명" : "3 limited-edition");
+    expect(container.textContent).toContain(locale === "ko" ? "비피오 랜덤 케이스 10명" : "10 Beepio random case");
+    expect(container.textContent).toContain(locale === "ko" ? "뱅크시 한정판 스태츄 3명" : "3 Banksy limited-edition statue");
     expect(container.querySelectorAll("h1")).toHaveLength(1);
     expect(container.querySelector("form")).toBeNull();
   });

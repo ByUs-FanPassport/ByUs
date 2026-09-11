@@ -1,3 +1,5 @@
+import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+
 export const elinaLiveSlug = "elina-banksy-instagram-20260918";
 
 export function elinaLiveHref(locale: "ko" | "en") {
@@ -10,5 +12,5 @@ export function elinaVerificationHref(locale: "ko" | "en") {
 }
 
 export function elinaRafflesHref(locale: "ko" | "en") {
-  return `/c/elina?tab=raffles&locale=${locale}#celebrity-content` as const;
+  return creatorRafflesHref("elina", locale);
 }

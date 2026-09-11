@@ -1,0 +1,45 @@
+name: Admin UI and analytics
+on:
+  pull_request:
+    paths:
+      - 'apps/web/components/admin/**'
+      - 'apps/web/features/analytics/**'
+      - 'apps/web/server/admin/**'
+      - 'apps/web/server/g6/**'
+      - 'apps/web/app/admin/**'
+      - 'apps/web/app/api/admin/**'
+      - 'supabase/migrations/*admin_overview*'
+      - '.github/workflows/admin-ui.yml'
+      - 'package*.json'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/components/admin/**'
+      - 'apps/web/features/analytics/**'
+      - 'apps/web/server/admin/**'
+      - 'apps/web/server/g6/**'
+      - 'apps/web/app/admin/**'
+      - 'apps/web/app/api/admin/**'
+      - 'supabase/migrations/*admin_overview*'
+      - '.github/workflows/admin-ui.yml'
+      - 'package*.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  admin-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - name: Verify admin UI, authorization and analytics contracts
+        run: >-
+          npm run test --workspace @byus/web -- --maxWorkers=3
+          components/admin features/analytics server/admin
+          server/g6/admin-overview server/g6/platform-analytics server/g6/live-analytics

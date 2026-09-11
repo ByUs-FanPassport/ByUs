@@ -36,3 +36,25 @@ it("requires exactly one primary role and saves no legacy activity array", async
   expect(payload).not.toHaveProperty("roles");
   expect(Array.from(primary.querySelectorAll("option")).map((option) => option.value)).toEqual(["", "idol", "singer", "actor", "creator", "show_host"]);
 });
+
+it("makes list scope and new-versus-edit mode explicit", async () => {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ items: [celebrity] }),
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<AuthorizedCelebrityManager environment="Development" />);
+  expect(screen.getByRole("heading", { name: "새 크리에이터 등록" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "초안 저장" })).toBeDisabled();
+  expect(await screen.findByText("1개 표시 · 전체 1개")).toBeInTheDocument();
+  const status = screen.getByRole("combobox", { name: "공개 상태" });
+  fireEvent.change(status, { target: { value: "published" } });
+  expect(screen.getByText("조건에 맞는 크리에이터가 없습니다.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "조건 지우기" }));
+  const item = await screen.findByRole("button", { name: /직군 검증.*가수.*초안/ });
+  fireEvent.click(item);
+  expect(
+    screen.getByRole("heading", { name: "직군 검증 편집" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "변경 저장" })).toBeEnabled();
+});

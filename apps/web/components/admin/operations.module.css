@@ -1,22 +1,33 @@
-.adminPage, .accessPage { --ink: #17171a; --muted: #62636a; --soft: #f5f6f8; --line: #e2e3e7; --strong-line: #c8c9cf; --error: #a30f32; --warning: #8a4b08; --success: #17613f; min-height: 100svh; background: #fff; color: var(--ink); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.adminPage, .accessPage { --ink: #18171c; --secondary-ink: #48464f; --muted: #727079; --soft: #f7f7f8; --control: #f5f4f7; --line: rgb(24 23 28 / 9%); --strong-line: rgb(24 23 28 / 18%); --accent: #6d4aff; --accent-soft: #f2efff; --cherry: var(--accent); --cherry-hover: #5838db; --error: #a30f32; --warning: #8a4b08; --success: #17613f; min-height: 100svh; background: #fff; color: var(--ink); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
 .adminPage { max-width: 100%; overflow-x: hidden; }
 .adminPage * { box-sizing: border-box; }
-.topbar { position: sticky; z-index: 20; top: 0; display: flex; min-height: 64px; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: #fff; }
+.topbar { position: sticky; z-index: 20; top: 0; display: flex; min-height: 64px; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / 96%); backdrop-filter: blur(12px); }
 .brand { display: inline-flex; min-height: 44px; align-items: center; color: var(--ink); font-size: 23px; font-weight: 850; letter-spacing: -.035em; text-decoration: none; }
 .brand span { color: var(--muted); font-size: 13px; font-weight: 650; letter-spacing: 0; }
 .topActions { display: flex; align-items: center; gap: 8px; }
 .environment { display: none; padding: 6px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 700; }
+.serviceLink { display: none; min-height: 44px; align-items: center; gap: 6px; padding: 0 10px; color: var(--secondary-ink); font-size: 13px; font-weight: 700; text-decoration: none; }
+.serviceLink svg { width: 15px; height: 15px; }
 .languageButton, .menuButton, .iconButton, .textButton { min-height: 44px; border: 0; background: transparent; color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; }
 .languageButton { padding: 0 10px; }
 .menuButton, .iconButton { display: inline-grid; width: 44px; padding: 0; place-items: center; border-radius: 10px; }
 .menuButton svg, .iconButton svg { width: 19px; }
-.mobileNav { position: sticky; z-index: 19; top: 64px; padding: 8px 16px 12px; border-bottom: 1px solid var(--line); background: #fff; }
-.mobileNav nav, .sidebar nav { display: grid; gap: 4px; }
-.mobileNav a, .sidebar a { display: flex; min-height: 44px; align-items: center; padding: 0 12px; border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 650; text-decoration: none; transition: background-color 160ms cubic-bezier(.2, 0, 0, 1), color 160ms cubic-bezier(.2, 0, 0, 1); }
-.mobileNav .activeNav, .sidebar .activeNav { background: var(--ink); color: #fff; }
+.mobileNav { position: sticky; z-index: 19; top: 64px; max-height: calc(100svh - 64px); padding: 12px 16px 20px; overflow-y: auto; border-bottom: 1px solid var(--line); background: #fff; box-shadow: 0 12px 24px rgb(24 23 28 / 7%); }
+.adminNav { display: grid; gap: 20px; }
+.navGroup { display: grid; gap: 2px; }
+.navGroup > p { margin: 0 12px 6px; color: #97949e; font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.mobileNav a, .sidebar a { display: flex; min-height: 44px; align-items: center; gap: 10px; padding: 0 12px; border-radius: 10px; color: var(--secondary-ink); font-size: 14px; font-weight: 620; text-decoration: none; transition: background-color 160ms cubic-bezier(.23, 1, .32, 1), color 160ms cubic-bezier(.23, 1, .32, 1), transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.mobileNav a svg, .sidebar a svg { width: 18px; height: 18px; flex: none; color: #898690; stroke-width: 1.8; }
+.mobileNav .activeNav, .sidebar .activeNav { background: var(--accent-soft); color: #5133cf; font-weight: 750; }
+.mobileNav .activeNav svg, .sidebar .activeNav svg { color: var(--accent); }
+.mobileNav a:active, .sidebar a:active { transform: scale(.98); }
 .layout { display: grid; min-width: 0; min-height: calc(100svh - 65px); grid-template-columns: minmax(0, 1fr); }
-.sidebar { display: none; padding: 24px 16px; border-right: 1px solid var(--line); background: #fafafa; }
-.workspace { min-width: 0; padding: 28px 16px 64px; }
+.sidebar { display: none; padding: 24px 12px 40px; border-right: 1px solid var(--line); background: #fff; }
+.workspace { min-width: 0; padding: 20px 16px 64px; background: #fbfbfc; }
+.breadcrumb { display: flex; min-height: 24px; align-items: center; gap: 4px; margin-bottom: 16px; color: var(--muted); font-size: 12px; font-weight: 650; }
+.breadcrumb a { color: inherit; text-decoration: none; }
+.breadcrumb svg { width: 14px; height: 14px; }
+.breadcrumb span { color: var(--secondary-ink); }
 .pageHeading { margin-bottom: 24px; }
 .pageHeading p { margin: 0 0 4px; color: var(--muted); font-size: 13px; font-weight: 700; }
 .pageHeading h1 { margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -.025em; text-wrap: balance; }
@@ -26,7 +37,7 @@
 .immutableNotice p { margin: 0; color: #45464c; font-size: 13px; font-weight: 650; line-height: 1.5; }
 .filterBar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
 .filterBar label { display: grid; min-width: 150px; gap: 7px; color: #45464c; font-size: 12px; font-weight: 700; }
-.filterBar input, .filterBar select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--strong-line); border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; }
+.filterBar input, .filterBar select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--control); color: var(--ink); font: inherit; font-size: 14px; }
 .growField { flex: 1 1 300px; }
 .secondaryButton, .primaryButton, .dangerButton, .loadMore, .stateMessage button { min-height: 44px; padding: 0 16px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 750; }
 .secondaryButton, .loadMore, .stateMessage button { border: 1px solid var(--strong-line); background: #fff; color: var(--ink); }
@@ -39,8 +50,8 @@
 .filterActions { display: flex; flex: 1 0 100%; justify-content: flex-end; gap: 8px; }
 .tableWrap { width: 100%; min-width: 0; max-width: 100%; contain: inline-size paint; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
 .tableWrap table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
-.tableWrap th { height: 44px; padding: 0 14px; border-bottom: 1px solid var(--line); background: #fafafa; color: var(--muted); font-size: 12px; font-weight: 750; text-align: left; white-space: nowrap; }
-.tableWrap td { height: 64px; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tableWrap th { height: 44px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 750; text-align: left; white-space: nowrap; }
+.tableWrap td { height: 56px; padding: 8px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; font-variant-numeric: tabular-nums; }
 .tableWrap tr:last-child td { border-bottom: 0; }
 .tableWrap td strong { display: block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tableWrap code, .detailGrid code { display: block; max-width: 260px; margin-top: 4px; overflow: hidden; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -104,7 +115,7 @@
 .adminPage :is(a, button, input, select):focus-visible, .accessPage a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (min-width: 48rem) { .topbar { padding: 0 24px; } .environment { display: inline-flex; } .workspace { padding: 40px 32px 72px; } .detailGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 64rem) { .menuButton, .mobileNav { display: none; } .layout { grid-template-columns: 220px minmax(0, 1fr); } .sidebar { display: block; } .workspace { padding: 40px 40px 80px; } }
-@media (hover: hover) { .sidebar a:hover, .mobileNav a:hover, .languageButton:hover, .menuButton:hover, .iconButton:hover, .textButton:hover { background: var(--soft); color: var(--ink); } .secondaryButton:hover, .loadMore:hover, .stateMessage button:hover { background: var(--soft); } .primaryButton:not(:disabled):hover { background: #333338; } .dangerButton:not(:disabled):hover { background: #881337; } .tableWrap tbody tr:hover { background: #fafafa; } }
+@media (min-width: 48rem) { .topbar { padding: 0 24px; } .environment, .serviceLink { display: inline-flex; } .workspace { padding: 28px 32px 72px; } .detailGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 64rem) { .menuButton, .mobileNav { display: none; } .layout { grid-template-columns: 232px minmax(0, 1fr); } .sidebar { display: block; } .workspace { padding: 28px 40px 80px; } }
+@media (hover: hover) { .sidebar a:hover, .mobileNav a:hover, .languageButton:hover, .menuButton:hover, .iconButton:hover, .textButton:hover, .serviceLink:hover { background: var(--soft); color: var(--ink); } .sidebar .activeNav:hover, .mobileNav .activeNav:hover { background: #ebe6ff; color: #4428bd; } .secondaryButton:hover, .loadMore:hover, .stateMessage button:hover { background: var(--soft); } .primaryButton:not(:disabled):hover { background: #333338; } .dangerButton:not(:disabled):hover { background: #881337; } .tableWrap tbody tr:hover { background: #fafafa; } }
 @media (prefers-reduced-motion: reduce) { .adminPage *, .accessPage * { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
