@@ -44,7 +44,7 @@ const ifewBenefit = {
   title: "뱅크시 전시 티켓",
   summary: "이퓨의 틱톡 100일 기념 LIVE 혜택",
   eligibilityLabel: "이퓨 응모권으로 응모하세요.",
-  deliveryLabel: "당첨자 10명에게 1장씩 지급합니다.",
+  deliveryLabel: "당첨자 5명에게 2장씩, 총 10장 지급합니다.",
   allocationMode: "application_selection",
   minimumScore: 0,
   minimumLevel: "Bronze",
@@ -351,6 +351,11 @@ describe("benefit screens", () => {
       await screen.findByRole("heading", {
         name: "더현대 서울 뱅크시 전시 관람권",
       }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "5명을 추첨해 관람권을 2장씩, 총 10장 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("현재 보유한 응모권이 없어요.")).toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();

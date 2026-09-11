@@ -10,7 +10,7 @@ export const ifewFanGuideContent = {
     heroSchedule: "9월 12일(토) 08:00–13:00 · KST",
     howToJoin: "참여 방법 보기",
     viewPrizes: "뱅크시 티켓 보기",
-    heroNote: "더현대 서울 뱅크시 전시 관람권 · 10명 추첨, 1인 1장",
+    heroNote: "더현대 서울 뱅크시 전시 관람권 · 5명 추첨, 1인 2장(총 10장)",
     stages: ["팬 인증", "LIVE 예약", "LIVE 출석", "선물 응모"],
     steps: [
       {
@@ -35,8 +35,8 @@ export const ifewFanGuideContent = {
       },
       {
         label: "04  /  BANKSY TICKETS",
-        title: "뱅크시 전시 관람권,\n10명에게 1장씩.",
-        body: "더현대 서울 뱅크시 전시 관람권을 드려요.\n추첨으로 10명에게 관람권을 1장씩 드려요.\n응모는 9월 19일(토) 밤 12시(KST)까지예요.",
+        title: "뱅크시 전시 관람권,\n5명에게 2장씩.",
+        body: "더현대 서울 뱅크시 전시 관람권을 드려요.\n추첨으로 5명에게 관람권을 2장씩, 총 10장 드려요.\n응모는 9월 19일(토) 밤 12시(KST)까지예요.",
         actions: ["뱅크시 관람권 추첨 응모하기"],
         note: "마감: 9월 20일(일) 00:00 KST.\n팬 인증·LIVE 출석으로 받은 이퓨 응모권을 사용해요.\n예약·출석만으로 자동 응모되지 않으니 직접 응모해 주세요.",
       },
@@ -74,7 +74,7 @@ export const ifewFanGuideContent = {
     heroSchedule: "Sat, Sep 12 · 08:00–13:00 KST",
     howToJoin: "How to join",
     viewPrizes: "View Banksy tickets",
-    heroNote: "Banksy exhibition at The Hyundai Seoul · 10 winners, 1 admission each",
+    heroNote: "Banksy exhibition at The Hyundai Seoul · 5 winners, 2 admission tickets each (10 total)",
     stages: ["Fan verification", "Reserve LIVE", "LIVE attendance", "Prize entry"],
     steps: [
       {
@@ -99,8 +99,8 @@ export const ifewFanGuideContent = {
       },
       {
         label: "04  /  BANKSY TICKETS",
-        title: "Banksy exhibition tickets.\n10 winners. One each.",
-        body: "Enter the draw for Banksy exhibition admission at The Hyundai Seoul. Ten winners receive one admission ticket each. Enter by the end of Saturday, September 19 (KST).",
+        title: "Banksy exhibition tickets.\n5 winners. Two each.",
+        body: "Enter the draw for Banksy exhibition admission at The Hyundai Seoul. Five winners receive two admission tickets each, for 10 tickets in total. Enter by the end of Saturday, September 19 (KST).",
         actions: ["Enter the Banksy ticket draw"],
         note: "Closes September 20 at 00:00 KST.\nUse ifew raffle tickets earned through fan verification and LIVE attendance.\nReservations and attendance do not enter you automatically. Confirm your entry on the prize page.",
       },
