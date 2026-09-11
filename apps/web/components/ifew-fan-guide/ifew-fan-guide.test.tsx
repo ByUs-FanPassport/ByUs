@@ -6,6 +6,7 @@ import { sanitizeLiveReturnTo } from "@/features/quiz/domain/live-return-context
 import { ifewEventBanner } from "./content";
 
 vi.mock("@/server/media/guide-images", () => ({ loadGuideImages: vi.fn(async () => ({ celebrity: null, eventPhotos: undefined })) }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false }) }));
 
 describe("ifew Saturday LIVE guide", () => {
   it.each(["ko", "en"] as const)("shows the confirmed schedule and separate actions publicly (%s)", async (locale) => {
