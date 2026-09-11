@@ -46,6 +46,8 @@ const copy = {
     nav: "ByUs 하단 메뉴",
     fanmeetings: "팬미팅 협업 문의",
     serviceGuide: "이용 가이드",
+    creatorOnboarding: "ByUs 시작 문의",
+    partners: "파트너 협업 제안",
   },
   en: {
     tagline: "Keep every moment with your favorite and continue your fan journey.",
@@ -62,6 +64,8 @@ const copy = {
     nav: "ByUs footer navigation",
     fanmeetings: "Fan meeting partnerships",
     serviceGuide: "Service guide",
+    creatorOnboarding: "Start with ByUs",
+    partners: "Partnership proposals",
   },
 } as const;
 
@@ -99,6 +103,8 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <h2>{t.guide}</h2>
             <Link href={fanHref("/guide", locale)}>{t.serviceGuide}</Link>
             <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
+            <Link href={fanHref("/pages/creator-onboarding", locale)}>{t.creatorOnboarding}</Link>
+            <Link href={fanHref("/pages/partners", locale)}>{t.partners}</Link>
             <Link href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
             <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
           </section>

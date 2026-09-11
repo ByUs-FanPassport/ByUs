@@ -12,6 +12,6 @@ export async function POST(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5000) }) },
     });
-    return createInquiryHandler({ repository: createInquiryRepository(database), secret: env.SUPABASE_SERVICE_ROLE_KEY, vercel: process.env.VERCEL === "1", localDevelopment: process.env.NODE_ENV === "development", inquiryType: "fanmeeting" })(request);
+    return createInquiryHandler({ repository: createInquiryRepository(database), secret: env.SUPABASE_SERVICE_ROLE_KEY, vercel: process.env.VERCEL === "1", localDevelopment: process.env.NODE_ENV === "development", inquiryType: "partner" })(request);
   } catch { return inquiryFailure("INQUIRY_UNAVAILABLE"); }
 }
