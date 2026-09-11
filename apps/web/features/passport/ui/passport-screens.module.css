@@ -1095,3 +1095,7 @@
 @media (hover:hover) and (pointer:fine) {
   .openLabel:hover { background:var(--soft); border-color:var(--line); }
 }
+
+.firstLikeDate { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.firstLikeFacts { display: grid; justify-items: center; gap: 8px; margin-top: auto; padding-top: 12px; max-width: 100%; font-size: 12px; }
+.firstLikeFacts .transactionLink { min-height: 44px; max-width: 100%; }

@@ -698,6 +698,7 @@ describe("canonical 03 guest home", () => {
         stamps,
         activities: stamps.map((stamp) => ({ stampId: stamp.id, points: 1 })),
         stampSummary: { total: 10 },
+        firstReaction: { reactionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1", stampId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2", activityId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3", reactionType: "FirstReaction", mintStatus: "queued", txHash: null, issuedAt: "2026-09-11T00:00:00Z" },
       } }) };
       return { ok: true, json: async () => ({ summary: {
       profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
@@ -706,9 +707,10 @@ describe("canonical 03 guest home", () => {
     }));
     const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
     expect(await screen.findAllByRole("link", { name: /패스포트, 골드 · 50점/ })).toHaveLength(2);
-    expect(await screen.findAllByRole("img", { name: /전체 10개 중 최근 9개 표시/ })).toHaveLength(2);
+    expect(await screen.findAllByRole("img", { name: /전체 11개 중 최근 9개 표시/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
-    expect(container.querySelectorAll('[data-total-stamps="10"][data-visible-stamps="9"]')).toHaveLength(2);
+    expect(container.querySelectorAll("[data-stamp-type=first_reaction]")).toHaveLength(2);
+    expect(container.querySelectorAll('[data-total-stamps="11"][data-visible-stamps="9"]')).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
   });
 

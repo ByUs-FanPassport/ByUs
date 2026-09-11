@@ -1,6 +1,7 @@
 "use client";
 
 import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+import { boundFirstLikeCount } from "../../passport/domain/first-like-stamp";
 
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Gift, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
@@ -135,6 +136,7 @@ function OwnerScopedDashboard({ summary, fallback, locale, avatarResource, refre
 function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSlug, onSelectSlug }: { summary: MySummary; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar>; refreshSummary: () => void; selectedSlug: string | null; onSelectSlug: (slug: string) => void }) {
   const t = copy[locale];
   const nickname = summary.profile.nickname?.trim() || null;
+  const stampCount = summary.collection.stampCount + boundFirstLikeCount(summary.creators);
   const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
   const hasRewards = summary.rewards.items.length > 0 || summary.rewards.availableCount > 0 || summary.rewards.entries > 0;
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
@@ -145,7 +147,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
   const visibleRecent = summary.collection.recent;
   const recentPreview = visibleRecent.slice(0, 3);
   const remainingRecent = visibleRecent.slice(3);
-  const hasCollection = visibleRecent.length > 0 || summary.collection.stampCount > 0 || summary.collection.collectibleCount > 0;
+  const hasCollection = visibleRecent.length > 0 || stampCount > 0 || summary.collection.collectibleCount > 0;
   const hasLive = reservedLives.length > 0 || summary.live.history.length > 0;
   const hasVisibleCollectible = visibleRecent.some((item) => item.kind === "collectible");
   const [recentOpen, setRecentOpen] = useState(false);
@@ -220,7 +222,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       {hasCollection ? <FanSurface appearance="plain" className={styles.section} id="my-collection" tabIndex={-1}>
         <SectionTitle title={t.collection} href={`/passports?locale=${locale}#collection`} action={t.allCollection}/>
         <div className={styles.collectionTotals}>
-          <CollectionTotal icon={<Sparkles/>} value={summary.collection.stampCount} label={t.stamps} href={`/passports?locale=${locale}#collection`} kind="stamp"/>
+          <CollectionTotal icon={<Sparkles/>} value={stampCount} label={t.stamps} href={`/passports?locale=${locale}#collection`} kind="stamp"/>
           <CollectionTotal icon={<FanMotionIcon name="gift" size={16}/>} value={summary.collection.collectibleCount} label={t.collectibles} href={hasVisibleCollectible ? "#my-collection" : undefined} onClick={hasVisibleCollectible ? openRecent : undefined} kind="collectible"/>
         </div>
         <RecentActivityRows items={recentPreview} creators={summary.creators} locale={locale}/>

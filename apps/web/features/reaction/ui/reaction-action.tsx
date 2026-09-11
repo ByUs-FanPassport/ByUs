@@ -13,10 +13,11 @@ import { ArrowRight, Heart } from "../../../components/icons";
 import { reactionResultSchema, type ReactionResult } from "../domain/reaction";
 import styles from "./reaction-action.module.css";
 import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
+import { StampArtwork } from "../../passport/ui/passport-stamp-artwork";
 
 const copy = {
-  ko: { title: "좋아요 남기기", body: "좋아하는 마음을 팬 활동 기록에 남겨보세요.", action: "좋아요 남기기", working: "남기는 중…", checking: "확인하는 중…", done: "좋아요를 남겼어요", error: "좋아요를 남기지 못했어요. 잠시 후 다시 시도해 주세요.", statusError: "좋아요 기록을 확인하지 못했어요. 다시 시도해 주세요.", retry: "다시 확인", modalTitle: "좋아요를 남겼어요", modalBody: "Fan Passport를 만들면 방금 남긴 좋아요를 팬 활동 기록에서 확인할 수 있어요.", passport: "Fan Passport 만들기", later: "나중에 할게요" },
-  en: { title: "Leave your first reaction", body: "Record your first moment for this Creator on-chain—once and forever.", action: "Leave First Reaction", working: "Recording…", checking: "Checking…", done: "First Reaction recorded", error: "We couldn't record your Reaction. Try again in a moment.", statusError: "We couldn't check your Reaction record. Try again in a moment.", retry: "Check again", modalTitle: "Reaction recorded", modalBody: "Create a Fan Passport to see this Reaction in your fan activity history.", passport: "Create Fan Passport", later: "Maybe later" },
+  ko: { title: "좋아요 남기기", body: "좋아하는 마음을 팬 활동 기록에 남겨보세요.", action: "좋아요 남기기", working: "남기는 중…", checking: "확인하는 중…", done: "좋아요를 남겼어요", error: "좋아요를 남기지 못했어요. 잠시 후 다시 시도해 주세요.", statusError: "좋아요 기록을 확인하지 못했어요. 다시 시도해 주세요.", retry: "다시 확인", passport: "Fan Passport 만들기", later: "나중에 할게요" },
+  en: { title: "Leave a like", body: "Save your first like as a Stamp in your Fan Passport.", action: "Leave a like", working: "Recording…", checking: "Checking…", done: "Like recorded", error: "We couldn't save your like. Try again in a moment.", statusError: "We couldn't check your like. Try again in a moment.", retry: "Check again", passport: "Create Fan Passport", later: "Maybe later" },
 } as const;
 
 type CheckState = "checking" | "ready" | "error";
@@ -88,7 +89,7 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
         knownReaction.current = true;
         setResult(parsed);
         setActionState("done");
-        setShowModal(!parsed.passportExists);
+        setShowModal(true);
         notifyFanActivityUpdated(ownerId);
       } catch {
         if (!controller.signal.aborted) setActionState("error");
@@ -172,6 +173,14 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
       : <button type="button" onClick={() => void postReaction()} disabled={checking || actionState === "working" || actionState === "done"}><Heart />{checking ? t.checking : actionState === "working" ? t.working : actionState === "done" ? (variant === "compact" && locale === "ko" ? "좋아요 완료" : t.done) : t.action}<ArrowRight /></button>}
     {checkState === "error" ? <p role="alert" className={styles.error}>{t.statusError}</p> : null}
     {actionState === "error" && checkState !== "error" ? <p role="alert" className={styles.error}>{t.error}</p> : null}
-    {actionState === "done" && result && showModal && <AccessibleOverlay open onClose={() => setShowModal(false)} labelledBy="reaction-modal-title" backdropClassName={styles.backdrop} contentClassName={styles.modal}><h2 id="reaction-modal-title">{t.modalTitle}</h2><p>{t.modalBody}</p><Link href={verificationHref as Route}>{t.passport}</Link><button type="button" onClick={() => setShowModal(false)}>{t.later}</button></AccessibleOverlay>}
+    {actionState === "done" && result && showModal && <AccessibleOverlay open onClose={() => setShowModal(false)} labelledBy="reaction-modal-title" backdropClassName={styles.backdrop} contentClassName={styles.modal}>
+      <div className={styles.stampReward}><StampArtwork type="first_reaction" locale={locale} /></div>
+      <h2 id="reaction-modal-title">{locale === "ko" ? "첫 좋아요 도장을 받았어요" : "You earned your First Like Stamp"}</h2>
+      <p>{result.passportExists
+        ? locale === "ko" ? "패스포트 도장함에서 첫 좋아요를 확인해 보세요." : "Find your first like in your Passport stamp book."
+        : locale === "ko" ? "첫 좋아요 도장을 보관했어요. 팬 인증을 마치고 Fan Passport를 만들면 도장함에 담겨요." : "Your First Like Stamp is saved. Complete fan verification to add it to your Fan Passport."}</p>
+      <Link href={(result.passportExists ? `/passports?locale=${locale}#collection` : verificationHref) as Route}>{result.passportExists ? locale === "ko" ? "내 패스포트 보기" : "View my Passports" : t.passport}</Link>
+      <button type="button" onClick={() => setShowModal(false)}>{t.later}</button>
+    </AccessibleOverlay>}
   </section>;
 }
