@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveBenefitState, parseSafeExternalHttpsUrl } from "./benefit";
+import {
+  benefitCatalogItemSchema,
+  deriveBenefitState,
+  parseSafeExternalHttpsUrl,
+} from "./benefit";
 
 const benefit = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -36,5 +40,29 @@ describe("benefit state", () => {
     expect(() => parseSafeExternalHttpsUrl("javascript:alert(1)")).toThrow();
     expect(() => parseSafeExternalHttpsUrl("http://example.com/reward")).toThrow();
     expect(() => parseSafeExternalHttpsUrl("https://user:secret@example.com/reward")).toThrow();
+  });
+
+  it("accepts safe optional benefit artwork URLs", () => {
+    const item = {
+      ...benefit,
+      slug: "reward",
+      title: "Reward",
+      summary: "Summary",
+      imageUrl: "/images/raffles/reward.webp",
+      eligibilityLabel: "Eligible",
+      deliveryLabel: "Code",
+      deliveryType: "unique_code",
+      allocationMode: "direct_claim",
+      applicationStatus: null,
+      state: "eligible",
+      entry: null,
+    };
+    expect(benefitCatalogItemSchema.parse(item).imageUrl).toBe(item.imageUrl);
+    expect(() =>
+      benefitCatalogItemSchema.parse({ ...item, imageUrl: "http://example.com/reward.jpg" }),
+    ).toThrow();
+    expect(() =>
+      benefitCatalogItemSchema.parse({ ...item, imageUrl: "https://user:secret@example.com/reward.jpg" }),
+    ).toThrow();
   });
 });

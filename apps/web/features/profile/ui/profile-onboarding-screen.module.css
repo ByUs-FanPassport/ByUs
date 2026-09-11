@@ -55,6 +55,9 @@
   .secondary { width:auto; min-width:132px; padding-inline:24px; grid-row:1; grid-column:2; }
   .actions > :first-child { grid-row:1; grid-column:1; }
 }
+@media (max-width:47.999rem) {
+  .actions { --fan-action-max-width:100%; }
+}
 @media (max-width:30rem) {
   .celebrityContext { grid-template-columns:48px minmax(0,1fr); padding-inline:18px; }
 

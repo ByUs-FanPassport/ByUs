@@ -25,3 +25,9 @@
   .facts time { white-space: normal; }
   .actions > * { width: 100%; }
 }
+
+.embedded { margin: 0; background: #fff; border-color: oklch(89% 0 0); }
+.embedded .status h2 { font-size: 20px; }
+.embedded .facts { margin-top: 20px; }
+.emptySummary { display: flex; align-items: center; gap: 8px; margin: 0; color: oklch(46% 0 0); font-size: 14px; line-height: 1.5; }
+.emptySummary svg { width: 18px; height: 18px; flex: 0 0 auto; }
