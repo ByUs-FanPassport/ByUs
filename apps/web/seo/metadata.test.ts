@@ -44,8 +44,8 @@ describe("sitemap URL inclusion", () => {
       { path: "/live/ended-event", locale: "ko" }, { path: "/live/ifew-rehearsal", locale: "ko" },
       { path: "/my", locale: "ko" }, { path: "/c/ifew/verify", locale: "ko" },
     ]);
-    expect(map).toHaveLength(17);
-    expect(new Set(map.map(({ url }) => url)).size).toBe(17);
+    expect(map).toHaveLength(21);
+    expect(new Set(map.map(({ url }) => url)).size).toBe(21);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=ko")).toBe(true);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=en")).toBe(true);
     expect(map.some(({ url }) => /rehearsal|\/my|\/verify/.test(url))).toBe(false);

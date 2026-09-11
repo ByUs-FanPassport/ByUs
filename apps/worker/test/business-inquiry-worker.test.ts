@@ -48,8 +48,20 @@ describe("SES inquiry envelope", () => {
     expect(input.FromEmailAddress).toBe("notifications@byus.kr");
     expect(input.Destination).toEqual({ ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] });
     expect(input.ReplyToAddresses).toEqual([job.email]);
+    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs] 미국 팬미팅 문의 · ${job.id}`);
+    expect(input.Content.Simple.Body.Text.Data).toContain("ByUs 미국 팬미팅 문의");
     expect(input.Content.Simple.Body.Text.Data).toContain(job.message);
     expect(input.Content.Simple.Body.Html).toBeUndefined();
+  });
+  it.each([
+    ["creator", "ByUs 시작 문의"],
+    ["partner", "파트너 문의"],
+  ] as const)("labels %s inquiries in the subject and body", async (inquiryType, label) => {
+    const send = vi.fn().mockResolvedValue({ MessageId: "ses-id" });
+    await new SesInquirySender({ send }).send({ ...job, inquiry_type: inquiryType });
+    const input = send.mock.calls[0]![0].input;
+    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs] ${label} · ${job.id}`);
+    expect(input.Content.Simple.Body.Text.Data).toContain(`ByUs ${label}`);
   });
   it.each(["TimeoutError", "InternalServerError", "RequestTimeout", "Error"])("classifies %s as ambiguous without logging provider detail", async (name) => {
     const send = vi.fn().mockRejectedValue({ name, message: "private contact" });
@@ -71,4 +83,8 @@ it("queue binds every state transition to the attempt token and masks raw errors
   expect(rpc).toHaveBeenCalledWith("finish_business_inquiry", { p_id: job.id, p_token: job.attempt_token, p_outcome: "sent", p_provider_id: "id" });
   rpc.mockResolvedValue({ error: { message: "private" }, data: null });
   await expect(q.claim()).rejects.toThrow("BUSINESS_INQUIRY_QUEUE_UNAVAILABLE");
+});
+it("queue treats a legacy row without inquiry_type as fanmeeting", async () => {
+  const rpc = vi.fn().mockResolvedValue({ data: [{ ...job }], error: null });
+  await expect(new SupabaseInquiryQueue({ rpc }).claim()).resolves.toMatchObject({ inquiry_type: "fanmeeting" });
 });

@@ -6,11 +6,20 @@ import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import styles from "./inquiry-dialog.module.css";
 
-type Draft = { name: string; company: string; email: string; message: string; consent: boolean };
+type Draft = { name: string; company: string; email: string; message: string; consent: boolean; topic: string };
 type SubmitState = "idle" | "pending" | "success" | "error";
 type Attempt = { fingerprint: string; key: string };
+type InquiryKind = "fanmeeting" | "creator" | "partner";
 
-const emptyDraft: Draft = { name: "", company: "", email: "", message: "", consent: false };
+const emptyDraft: Draft = { name: "", company: "", email: "", message: "", consent: false, topic: "other" };
+const partnerTopics = [
+  { value: "other", ko: "아직 정하지 못했어요 / 기타", en: "Not sure yet / other" },
+  { value: "commerce", ko: "커머스 · 공동구매", en: "Commerce & group buying" },
+  { value: "live", ko: "라이브커머스", en: "Live shopping" },
+  { value: "merchandise", ko: "굿즈 · IP 협업", en: "Merchandise & IP collaborations" },
+  { value: "advertising", ko: "광고 · 브랜디드 콘텐츠", en: "Advertising & branded content" },
+  { value: "benefits", ko: "팬 혜택 · 이벤트", en: "Fan benefits & events" },
+] as const;
 const copy = {
   ko: {
     title: "미국 팬미팅 프로젝트 문의",
@@ -52,6 +61,41 @@ const copy = {
   },
 } as const;
 
+const inquiryDetails = {
+  creator: {
+    ko: {
+      title: "ByUs 시작 문의",
+      description: "활동 중인 채널과 팬들과 해보고 싶은 일을 알려주세요.",
+      name: "이름 / 담당자명", company: "활동명 / 팀·브랜드명",
+      companyPlaceholder: "팬들에게 알려진 이름을 입력해 주세요",
+      messagePlaceholder: "활동 채널 링크, 소개, 팬들과 해보고 싶은 활동을 알려주세요.",
+    },
+    en: {
+      title: "Start with ByUs",
+      description: "Tell us about your channels and what you would like to do with your fans.",
+      name: "Name / contact person", company: "Public name / team / brand",
+      companyPlaceholder: "The name your fans know you by",
+      messagePlaceholder: "Share your channel links, a short introduction, and your ideas for fan activities.",
+    },
+  },
+  partner: {
+    ko: {
+      title: "파트너 협업 제안",
+      description: "브랜드나 프로젝트를 소개하고, 함께하고 싶은 협업을 알려주세요.",
+      company: "회사 / 브랜드명", companyPlaceholder: "회사 또는 브랜드명을 입력해 주세요",
+      messagePlaceholder: "제품·콘텐츠 소개, 함께하고 싶은 대상이나 팬층, 판매·게시 채널, 일정·예산·제공 조건 중 정해진 내용을 알려주세요.",
+    },
+    en: {
+      title: "Partnership proposal",
+      description: "Introduce your brand or project and the collaboration you have in mind.",
+      company: "Company / brand", companyPlaceholder: "Company or brand name",
+      messagePlaceholder: "Share your products or content, preferred partners or fans, sales or content channels, and any timing, budget, or offer terms you have.",
+    },
+  },
+} as const;
+
+const inquiryEyebrows = { fanmeeting: "U.S. FAN MEETINGS", creator: "FOR EVERYONE WITH FANS", partner: "PARTNERSHIPS" };
+
 const InquiryContext = createContext<{ open: () => void } | null>(null);
 
 function canonicalPayload(locale: FanLocale, draft: Draft) {
@@ -66,6 +110,10 @@ function errorCode(body: unknown) {
 }
 
 export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLocale; children: React.ReactNode }) {
+  return <BusinessInquiryProvider locale={locale} kind="fanmeeting">{children}</BusinessInquiryProvider>;
+}
+
+export function BusinessInquiryProvider({ locale, kind, children }: { locale: FanLocale; kind: InquiryKind; children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -73,7 +121,8 @@ export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLoc
   const attemptRef = useRef<Attempt | null>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
   const successButtonRef = useRef<HTMLButtonElement>(null);
-  const t = copy[locale];
+  const t = { ...copy[locale], ...(kind === "fanmeeting" ? {} : inquiryDetails[kind][locale]) };
+  const id = `${kind}-inquiry`;
 
   useEffect(() => {
     if (submitState === "success") successButtonRef.current?.focus();
@@ -99,7 +148,11 @@ export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLoc
     event.preventDefault();
     if (submitState === "pending") return;
     const payload = canonicalPayload(locale, draft);
-    const fingerprint = JSON.stringify(payload);
+    if (kind === "partner") {
+      const topic = partnerTopics.find((item) => item.value === draft.topic) ?? partnerTopics[0];
+      payload.message = `${locale === "ko" ? "협업 분야" : "Collaboration type"}: ${topic[locale]}\n\n${payload.message}`;
+    }
+    const fingerprint = JSON.stringify([kind, payload]);
     const attempt = attemptRef.current?.fingerprint === fingerprint
       ? attemptRef.current
       : { fingerprint, key: window.crypto.randomUUID() };
@@ -109,7 +162,7 @@ export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLoc
     setError(null);
     setSubmitState("pending");
     try {
-      const response = await fetch("/api/inquiries/fanmeeting", {
+      const response = await fetch(`/api/inquiries/${kind}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ idempotencyKey: attempt.key, ...payload }),
@@ -140,31 +193,32 @@ export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLoc
   return (
     <InquiryContext.Provider value={{ open: show }}>
       {children}
-      <AccessibleOverlay open={isOpen} onClose={close} labelledBy="fanmeeting-inquiry-title" describedBy={submitState === "success" ? "fanmeeting-inquiry-success-body" : "fanmeeting-inquiry-description"} initialFocusRef={firstFieldRef} backdropClassName={styles.backdrop} contentClassName={styles.dialog} contentAs="section" busy={busy}>
+      <AccessibleOverlay open={isOpen} onClose={close} labelledBy={`${id}-title`} describedBy={submitState === "success" ? `${id}-success-body` : `${id}-description`} initialFocusRef={firstFieldRef} backdropClassName={styles.backdrop} contentClassName={styles.dialog} contentAs="section" busy={busy}>
         <button className={styles.close} type="button" onClick={close} disabled={busy} aria-label={t.close}><X aria-hidden="true" size={22} /></button>
         {submitState === "success" ? (
           <div className={styles.success}>
             <CheckCircle2 aria-hidden="true" />
-            <h2 id="fanmeeting-inquiry-title">{t.successTitle}</h2>
-            <p id="fanmeeting-inquiry-success-body">{t.successBody}</p>
+            <h2 id={`${id}-title`}>{t.successTitle}</h2>
+            <p id={`${id}-success-body`}>{t.successBody}</p>
             <button ref={successButtonRef} className={styles.submit} type="button" onClick={close}>{t.done}</button>
           </div>
         ) : (
           <>
             <header className={styles.heading}>
-              <p className={styles.eyebrow}>U.S. FAN MEETINGS</p>
-              <h2 id="fanmeeting-inquiry-title">{t.title}</h2>
-              <p id="fanmeeting-inquiry-description">{t.description}</p>
+              <p className={styles.eyebrow}>{inquiryEyebrows[kind]}</p>
+              <h2 id={`${id}-title`}>{t.title}</h2>
+              <p id={`${id}-description`}>{t.description}</p>
             </header>
-            <form className={styles.form} onSubmit={submit} aria-describedby={error ? "fanmeeting-inquiry-error" : undefined}>
+            <form className={styles.form} onSubmit={submit} aria-describedby={error ? `${id}-error` : undefined}>
               <div className={styles.twoColumns}>
-                <label>{t.name}<input ref={firstFieldRef} name="name" value={draft.name} onChange={(event) => update("name", event.target.value)} maxLength={80} required disabled={busy} placeholder={t.namePlaceholder} /></label>
-                <label>{t.company}<input name="company" value={draft.company} onChange={(event) => update("company", event.target.value)} maxLength={120} required disabled={busy} placeholder={t.companyPlaceholder} /></label>
+                <label>{t.name}<input ref={firstFieldRef} name="name" autoComplete="name" value={draft.name} onChange={(event) => update("name", event.target.value)} maxLength={80} required disabled={busy} placeholder={t.namePlaceholder} /></label>
+                <label>{t.company}<input name="company" autoComplete={kind === "creator" ? "off" : "organization"} value={draft.company} onChange={(event) => update("company", event.target.value)} maxLength={120} required disabled={busy} placeholder={t.companyPlaceholder} /></label>
               </div>
-              <label>{t.email}<input name="email" type="email" value={draft.email} onChange={(event) => update("email", event.target.value)} maxLength={254} required disabled={busy} placeholder={t.emailPlaceholder} /></label>
-              <label>{t.message}<textarea name="message" value={draft.message} onChange={(event) => update("message", event.target.value)} maxLength={4000} required disabled={busy} placeholder={t.messagePlaceholder} /></label>
+              <label>{t.email}<input name="email" type="email" autoComplete="email" value={draft.email} onChange={(event) => update("email", event.target.value)} maxLength={254} required disabled={busy} placeholder={t.emailPlaceholder} /></label>
+              {kind === "partner" ? <label>{locale === "ko" ? "협업 분야" : "Collaboration type"}<select name="topic" value={draft.topic} onChange={(event) => update("topic", event.target.value)} disabled={busy}>{partnerTopics.map((topic) => <option key={topic.value} value={topic.value}>{topic[locale]}</option>)}</select></label> : null}
+              <label>{t.message}<textarea name="message" value={draft.message} onChange={(event) => update("message", event.target.value)} maxLength={kind === "partner" ? 3900 : 4000} required disabled={busy} placeholder={t.messagePlaceholder} /></label>
               <label className={styles.consent}><input name="consent" type="checkbox" checked={draft.consent} onChange={(event) => update("consent", event.target.checked)} required disabled={busy} /><span>{t.consent}</span></label>
-              {error ? <p className={styles.error} id="fanmeeting-inquiry-error" role="alert">{error}</p> : null}
+              {error ? <p className={styles.error} id={`${id}-error`} role="alert">{error}</p> : null}
               <button className={styles.submit} type="submit" disabled={busy}>
                 {busy ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : null}{busy ? t.pending : t.submit}{!busy ? <ArrowUpRight aria-hidden="true" size={18} /> : null}
               </button>
@@ -178,6 +232,6 @@ export function FanmeetingInquiryProvider({ locale, children }: { locale: FanLoc
 
 export function InquiryButton({ children, className }: { children: React.ReactNode; className?: string }) {
   const context = useContext(InquiryContext);
-  if (!context) throw new Error("InquiryButton must be used inside FanmeetingInquiryProvider");
+  if (!context) throw new Error("InquiryButton must be used inside BusinessInquiryProvider");
   return <button className={className} type="button" onClick={context.open}>{children}<ArrowUpRight aria-hidden="true" size={18} /></button>;
 }

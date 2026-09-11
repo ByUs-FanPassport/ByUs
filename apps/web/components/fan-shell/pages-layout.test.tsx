@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import PagesLayout from "@/app/pages/layout";
 import { FanParticipationGuide } from "../fan-participation-guide/fan-participation-guide";
 import { UsFanmeetingsPage } from "../us-fanmeetings/us-fanmeetings-page";
+import { BusinessInquiryPage } from "../business-inquiries/business-inquiry-page";
 
 const navigation = vi.hoisted(() => ({ search: "locale=ko" }));
 vi.mock("next/navigation", () => ({
@@ -14,11 +15,13 @@ describe("public pages layout", () => {
     ["elina", "ko"], ["elina", "en"],
     ["ifew", "ko"], ["ifew", "en"],
     ["us-fanmeetings", "ko"], ["us-fanmeetings", "en"],
+    ["creator", "ko"], ["creator", "en"],
+    ["partner", "ko"], ["partner", "en"],
   ] as const)("owns exactly one complete footer for %s (%s)", (page, locale) => {
     navigation.search = `locale=${locale}`;
     render(
       <PagesLayout>
-        {page === "us-fanmeetings" ? <UsFanmeetingsPage locale={locale} /> : (
+        {page === "us-fanmeetings" ? <UsFanmeetingsPage locale={locale} /> : page === "creator" || page === "partner" ? <BusinessInquiryPage kind={page} locale={locale} /> : (
           <FanParticipationGuide creator={page} locale={locale} images={{ celebrity: null, eventPhotos: undefined }} />
         )}
       </PagesLayout>,
@@ -28,6 +31,8 @@ describe("public pages layout", () => {
     expect(within(footer).getByRole("link", { name: /Privacy Policy|개인정보처리방침/ })).toHaveAttribute("href", `/privacy?locale=${locale}`);
     expect(within(footer).getByRole("link", { name: /Terms of Use|이용약관/ })).toHaveAttribute("href", `/terms?locale=${locale}`);
     expect(footer).toHaveTextContent("© 2026 ByUs. All rights reserved.");
+    expect(within(footer).getByRole("link", { name: /ByUs 시작 문의|Start with ByUs/ })).toHaveAttribute("href", `/pages/creator-onboarding?locale=${locale}`);
+    expect(within(footer).getByRole("link", { name: /파트너 협업 제안|Partnership proposals/ })).toHaveAttribute("href", `/pages/partners?locale=${locale}`);
     expect(screen.getAllByRole("main")).toHaveLength(1);
   });
 
