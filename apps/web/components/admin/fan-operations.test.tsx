@@ -154,6 +154,31 @@ describe("FanOperations", () => {
       screen.getAllByRole("link").find((link) => link.getAttribute("aria-current") === "page"),
     ).toHaveAttribute("href", "/admin/fans");
   });
+  it.each([
+    ["", "패스포트 미발급", "아직 발급된 패스포트가 없습니다.", "회원 상세: New member"],
+    ["lang=en", "No Passport issued", "This member has not issued a Passport yet.", "Member detail: New member"],
+  ])("shows members without passports and their empty detail (%s)", async (params, label, description, trigger) => {
+    searchParamsState.current = params;
+    const member = {
+      fanId: "33333333-3333-4333-8333-333333333333",
+      nickname: "New member", accountStatus: "active", maskedWallet: null,
+      createdAt: "2026-09-11T02:00:00Z", celebritySummaries: [],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => String(input).includes(member.fanId)
+        ? { fan: { ...member, wallets: [], passports: [] } }
+        : { items: [member], nextCursor: null },
+    })));
+    render(<FanOperations />);
+    const row = (await screen.findByText("New member")).closest("tr")!;
+    expect(within(row).getByText(label)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: trigger }));
+    const dialog = await screen.findByRole("dialog");
+    expect(await within(dialog).findByText(description)).toBeInTheDocument();
+    expect(within(dialog).queryByRole("combobox")).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
+  });
   it("moves focus into the dialog, closes with Escape, and restores the row trigger", async () => {
     render(<FanOperations />);
     await waitFor(() =>

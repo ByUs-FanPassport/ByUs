@@ -23,7 +23,7 @@ describe("independent image roles", () => {
   });
   it("does not revive a removed legacy portrait or carry profile zoom into another role", () => {
     expect(creatorCalendarPhotos("elina", "/profile.jpg", { portrait: null })).toEqual(["/profile.jpg"]);
-    expect(resolveCreatorImage({ slug: "ifewknow", src: "/profile.jpg", presentation: "collection" }).crop).toMatchObject({ fit: "contain", scale: 1 });
+    expect(resolveCreatorImage({ slug: "ifewknow", src: "/profile.jpg", presentation: "collection" }).crop).toMatchObject({ fit: "cover", scale: 1 });
     const jenny = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg";
     expect(resolveCreatorHeroImage("jenny-jeong", { url: jenny, position: "50% 30%" })).toMatchObject({ src: jenny, desktopFit: "contain", mobileFit: "contain", mobileScale: 1 });
   });

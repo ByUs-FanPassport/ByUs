@@ -6,6 +6,9 @@ import { AuthError } from "../../../../../../features/auth/domain/auth-errors";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const privateHeaders = { "cache-control": "private, no-store", vary: "Authorization" };
+const json = (body: unknown, status = 200) => Response.json(body, { status, headers: privateHeaders });
+
 const documentSchema = z.record(z.string(), z.unknown());
 const saveSchema = z.object({
   action: z.literal("save"),
@@ -35,14 +38,14 @@ async function admin(request: Request, id: string) {
   return { deps, session };
 }
 function failure(error: unknown) {
-  if (error instanceof z.ZodError) return Response.json({ error: "INVALID_REQUEST", issues: error.issues }, { status: 400 });
+  if (error instanceof z.ZodError || error instanceof SyntaxError) return json({ error: "INVALID_REQUEST" }, 400);
   if (error instanceof AuthError) {
-    return Response.json(
+    return json(
       { error: error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN" },
-      { status: error.status === 401 ? 401 : 403 },
+      error.status === 401 ? 401 : 403,
     );
   }
-  return Response.json({ error: "NOTICE_ADMIN_ERROR", message: error instanceof Error ? error.message : "Request failed" }, { status: 409 });
+  return json({ error: "NOTICE_ADMIN_ERROR", message: "Notice request failed" }, 409);
 }
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -51,7 +54,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     z.string().uuid().parse(id);
     const c = correlation(request);
     const { deps, session } = await admin(request, c);
-    return Response.json(await deps.repository.listAdmin(session, id));
+    return json(await deps.repository.listAdmin(session, id));
   } catch (error) { return failure(error); }
 }
 
@@ -61,12 +64,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     z.string().uuid().parse(celebrityId);
     const c = correlation(request);
     const { deps, session } = await admin(request, c);
+    if (session.role === "viewer") return json({ error: "FORBIDDEN" }, 403);
     const value = await request.json();
     if (value?.action === "save") {
       const body = saveSchema.parse(value);
-      return Response.json(await deps.repository.save(session, c, { ...body, celebrityId }));
+      return json(await deps.repository.save(session, c, { ...body, celebrityId }));
     }
     const body = stateSchema.parse(value);
-    return Response.json(await deps.repository.state(session, c, body));
+    return json(await deps.repository.state(session, c, body));
   } catch (error) { return failure(error); }
 }

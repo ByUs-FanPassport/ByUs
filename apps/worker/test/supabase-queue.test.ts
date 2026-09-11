@@ -98,10 +98,57 @@ describe("SupabaseQueueAdapter", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it("admits mint dispatch only through the server-clock budget RPC", async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const from = vi.fn();
+    const adapter = new SupabaseQueueAdapter({ rpc, from } as unknown as SupabaseClient);
+
+    await expect(adapter.admitMint(job)).resolves.toBe(true);
+
+    expect(rpc).toHaveBeenCalledWith("admit_mint_dispatch", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the budget RPC returns no boolean decision", async () => {
+    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const adapter = new SupabaseQueueAdapter({ rpc } as unknown as SupabaseClient);
+    await expect(adapter.admitMint(job)).rejects.toMatchObject({
+      code: "QUEUE_DATABASE_ERROR",
+    });
+  });
+
+  it("holds a fee-policy block only through the lease-checked RPC", async () => {
+    const rpc = vi.fn(async () => ({ data: row, error: null }));
+    const from = vi.fn();
+    const adapter = new SupabaseQueueAdapter({ rpc, from } as unknown as SupabaseClient);
+
+    await adapter.holdFeePolicy(job);
+
+    expect(rpc).toHaveBeenCalledWith("hold_mint_fee_policy", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_reason: "MINT_FEE_POLICY_BLOCKED",
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the fee-policy hold RPC returns no held job", async () => {
+    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const adapter = new SupabaseQueueAdapter({ rpc } as unknown as SupabaseClient);
+    await expect(adapter.holdFeePolicy(job)).rejects.toMatchObject({
+      code: "QUEUE_DATABASE_ERROR",
+    });
+  });
+
   it.each([
     ["claim", () => new SupabaseQueueAdapter(failingClient()).claim("worker-test", 1, 120)],
     ["complete", () => new SupabaseQueueAdapter(failingClient()).complete(job, txHash, 7n)],
     ["retry", () => new SupabaseQueueAdapter(failingClient()).retry(job, "RPC_TIMEOUT", "timeout", true)],
+    ["admit", () => new SupabaseQueueAdapter(failingClient()).admitMint(job)],
+    ["hold fee policy", () => new SupabaseQueueAdapter(failingClient()).holdFeePolicy(job)],
   ])("surfaces %s RPC rejection without a direct-table fallback", async (_operation, invoke) => {
     await expect(invoke()).rejects.toMatchObject({ code: "QUEUE_DATABASE_ERROR" });
   });

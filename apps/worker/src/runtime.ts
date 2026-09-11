@@ -17,6 +17,12 @@ export async function runWorkerOnce(env: WorkerEnv): Promise<number> {
     passportAddress: env.BYUS_PASSPORT_CONTRACT_ADDRESS as Address,
     stampAddress: env.BYUS_STAMP_CONTRACT_ADDRESS as Address,
     deploymentBlock: env.GIWA_DEPLOYMENT_BLOCK,
+    feePolicy: {
+      maxGas: env.GIWA_MINT_MAX_GAS,
+      maxFeePerGasWei: env.GIWA_MINT_MAX_FEE_PER_GAS_WEI,
+      maxPriorityFeePerGasWei: env.GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI,
+      maxExecutionFeeWei: env.GIWA_MINT_MAX_EXECUTION_FEE_WEI,
+    },
     ...(env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS && env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK !== undefined
       ? {
           collectibleAddress: env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS as Address,

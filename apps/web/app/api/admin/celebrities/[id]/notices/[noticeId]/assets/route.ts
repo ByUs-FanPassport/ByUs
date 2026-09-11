@@ -4,6 +4,9 @@ import { AuthError } from "../../../../../../../../features/auth/domain/auth-err
 
 export const runtime = "nodejs";
 
+const privateHeaders = { "cache-control": "private, no-store", vary: "Authorization" };
+const json = (body: unknown, status = 200) => Response.json(body, { status, headers: privateHeaders });
+
 export async function POST(request: Request, context: { params: Promise<{ id: string; noticeId: string }> }) {
   try {
     const { id, noticeId } = await context.params;
@@ -15,17 +18,18 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       : crypto.randomUUID();
     const deps = createNoticeDependencies();
     const session = await deps.authorize({ authorization: request.headers.get("authorization") ?? "", correlationId });
+    if (session.role === "viewer") return json({ error: "FORBIDDEN" }, 403);
     const form = await request.formData();
     const file = form.get("file");
-    if (!(file instanceof File)) return Response.json({ error: "FILE_REQUIRED" }, { status: 400 });
-    return Response.json(await deps.repository.upload(session, { celebrityId: id, noticeId, file }));
+    if (!(file instanceof File)) return json({ error: "FILE_REQUIRED" }, 400);
+    return json(await deps.repository.upload(session, { celebrityId: id, noticeId, file }));
   } catch (error) {
     if (error instanceof AuthError) {
-      return Response.json(
+      return json(
         { error: error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN" },
-        { status: error.status === 401 ? 401 : 403 },
+        error.status === 401 ? 401 : 403,
       );
     }
-    return Response.json({ error: "NOTICE_ASSET_ERROR", message: error instanceof Error ? error.message : "Upload failed" }, { status: 400 });
+    return json({ error: "NOTICE_ASSET_ERROR", message: "Upload failed" }, 400);
   }
 }

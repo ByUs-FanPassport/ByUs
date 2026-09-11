@@ -6,6 +6,7 @@ import {
   NotificationSubscriptionBusyError,
   type NotificationRepository,
 } from "./notification-repository";
+import { isTrustedWebPushEndpoint } from "./web-push-endpoint";
 
 export interface NotificationRouteDependencies {
   authorize(authorization: string): Promise<AuthorizedFan>;
@@ -15,7 +16,7 @@ const headers = { "cache-control": "no-store", vary: "Authorization" } as const;
 const uuid = z.uuid();
 const subscription = z
   .object({
-    endpoint: z.url().refine((v) => v.startsWith("https://")),
+    endpoint: z.string().refine(isTrustedWebPushEndpoint),
     keys: z.object({
       p256dh: z.string().min(20).max(200),
       auth: z.string().min(8).max(100),

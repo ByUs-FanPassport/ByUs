@@ -21,7 +21,10 @@ import {
 import styles from "./certification.module.css";
 
 type OwnerProof = { id: string; url: string };
+type SelectedProof = { id: number; file: File; url: string };
 type Auth = ReturnType<typeof usePrivy>;
+const allowedProofTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxProofBytes = 3 * 1024 * 1024;
 const parseOwnerPassports = (body: unknown) => parsePassportCollectionResponse(body).passports;
 type OwnerPassports = ReturnType<typeof parseOwnerPassports>;
 type PassportResourceState = ReturnType<typeof useOwnedFanResource<OwnerPassports>>["state"];
@@ -71,12 +74,15 @@ function CertificationDetailForOwner({
   const [latestSubmissionId, setLatestSubmissionId] = useState<string | null>(null);
   const [ownerHistorySettled, setOwnerHistorySettled] = useState(false);
   const [proofs, setProofs] = useState<OwnerProof[]>([]);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<SelectedProof[]>([]);
+  const [fileError, setFileError] = useState("");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const tokenProvider = useRef(getAccessToken);
   const proofUrls = useRef<string[]>([]);
+  const selectedProofUrls = useRef<string[]>([]);
+  const nextSelectedProofId = useRef(0);
   const submitInFlight = useRef<Promise<void> | null>(null);
   const mutationAbort = useRef<AbortController | null>(null);
   const passports = useOwnedFanResource(
@@ -170,6 +176,48 @@ function CertificationDetailForOwner({
 
   useEffect(() => () => mutationAbort.current?.abort(), []);
 
+  useEffect(() => () => {
+    for (const url of selectedProofUrls.current) URL.revokeObjectURL(url);
+    selectedProofUrls.current = [];
+  }, []);
+
+  function selectFiles(nextFiles: File[]) {
+    const error = nextFiles.length > 3
+      ? (locale === "ko" ? "이미지는 최대 3장까지 선택할 수 있어요." : "You can select up to 3 images.")
+      : nextFiles.some((file) => !allowedProofTypes.has(file.type))
+        ? (locale === "ko" ? "JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요." : "Attach JPG, PNG, or WEBP image files only.")
+        : nextFiles.some((file) => file.size <= 0)
+          ? (locale === "ko" ? "내용이 없는 이미지 파일은 첨부할 수 없어요." : "Empty image files cannot be attached.")
+          : nextFiles.some((file) => file.size > maxProofBytes)
+            ? (locale === "ko" ? "이미지 한 장의 용량은 3MB 이하여야 해요." : "Each image must be 3MB or smaller.")
+            : "";
+    if (error) {
+      setFileError(error);
+      return;
+    }
+
+    for (const url of selectedProofUrls.current) URL.revokeObjectURL(url);
+    const selected = nextFiles.map((file) => ({
+      id: nextSelectedProofId.current++,
+      file,
+      url: URL.createObjectURL(file),
+    }));
+    selectedProofUrls.current = selected.map(({ url }) => url);
+    setFiles(selected);
+    setFileError("");
+  }
+
+  function removeFile(id: number) {
+    setFiles((current) => {
+      const removed = current.find((item) => item.id === id);
+      if (removed) URL.revokeObjectURL(removed.url);
+      const next = current.filter((item) => item.id !== id);
+      selectedProofUrls.current = next.map(({ url }) => url);
+      return next;
+    });
+    setFileError("");
+  }
+
   function submit() {
     if (submitInFlight.current) return submitInFlight.current;
     const operation = (async () => {
@@ -177,7 +225,10 @@ function CertificationDetailForOwner({
         await login();
         return;
       }
-      if (!files.length || files.length > 3 || !mission) return;
+      if (!files.length || files.length > 3 || fileError || !mission) {
+        if (!files.length) setFileError(locale === "ko" ? "인증 이미지를 1장 이상 첨부해 주세요." : "Attach at least 1 proof image.");
+        return;
+      }
       const controller = new AbortController();
       const createdSubmissionProofUrls: string[] = [];
       mutationAbort.current = controller;
@@ -187,9 +238,9 @@ function CertificationDetailForOwner({
         const token = await tokenProvider.current();
         if (!token || controller.signal.aborted) throw new Error();
         const uploadIds: string[] = [];
-        for (const file of files) {
+        for (const selected of files) {
           const form = new FormData();
-          form.set("file", file);
+          form.set("file", selected.file);
           const response = await fetch(`/api/certifications/${id}/uploads`, {
             method: "POST", headers: { authorization: `Bearer ${token}` }, body: form, signal: controller.signal,
           });
@@ -232,7 +283,10 @@ function CertificationDetailForOwner({
         setProofs(nextProofs);
         setSubmission(next);
         setLatestSubmissionId(next.id);
+        for (const url of selectedProofUrls.current) URL.revokeObjectURL(url);
+        selectedProofUrls.current = [];
         setFiles([]);
+        setFileError("");
         setNote("");
         setMessage(locale === "ko" ? "인증 자료를 제출했어요." : "Your proof was submitted.");
       } catch {
@@ -308,10 +362,18 @@ function CertificationDetailForOwner({
             {canOpenForm ? (
               <section className={styles.formArea} aria-labelledby="proof-heading">
                 <h2 id="proof-heading">{currentRejected ? (isMembership ? (locale === "ko" ? "보완 자료 제출하기" : "Submit additional proof") : (locale === "ko" ? "자료를 보완해 다시 제출해 주세요" : "Update and resubmit your proof")) : (locale === "ko" ? "인증 자료 제출" : "Submit proof")}</h2>
-                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{locale === "ko" ? "이미지 선택 (최대 3장, 장당 3MB)" : "Choose up to 3 images, 3MB each"}</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event)=>setFiles([...(event.target.files??[])].slice(0,3))}/></label>
-                <ul className={styles.fileList}>{files.map((file,index)=><li key={`${file.name}-${index}`}><span>{file.name}</span><button type="button" aria-label={`${file.name} ${locale==="ko"?"삭제":"remove"}`} onClick={()=>setFiles((value)=>value.filter((_,itemIndex)=>itemIndex!==index))}><X /></button></li>)}</ul>
-                <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : "Note (optional)"}</span><textarea maxLength={1000} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
-                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
+                <div className={styles.requiredFieldHeading}>
+                  <strong>{locale === "ko" ? "인증 이미지 (필수)" : "Proof images (required)"}</strong>
+                  <span>{locale === "ko" ? "1~3장 · JPG, PNG, WEBP · 장당 3MB 이하" : "1–3 images · JPG, PNG, WEBP · 3MB each"}</span>
+                </div>
+                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{files.length ? (locale === "ko" ? "이미지 다시 선택" : "Choose different images") : (locale === "ko" ? "이미지 선택" : "Choose images")}</span><input aria-describedby="proof-file-hint proof-file-error" type="file" accept="image/jpeg,image/png,image/webp" multiple required disabled={busy} onChange={(event)=>{selectFiles([...(event.currentTarget.files??[])]);event.currentTarget.value="";}}/></label>
+                <p className={styles.fileHint} id="proof-file-hint">{isMembership
+                  ? locale === "ko" ? "크리에이터와 내 계정, 유료 멤버십 상태, 다음 결제일 또는 유효기간이 보이는 캡처를 첨부해 주세요." : "Attach screenshots showing the creator, your account, paid membership status, and next billing or expiration date."
+                  : locale === "ko" ? "위 인증 안내에 맞는 이미지 자료를 1장 이상 첨부해 주세요." : "Attach at least one image that meets the proof requirements above."}</p>
+                <p className={styles.fileError} id="proof-file-error" role="alert">{fileError}</p>
+                <ul className={styles.fileList}>{files.map((selected,index)=><li key={selected.id}><img src={selected.url} alt={locale === "ko" ? `선택한 이미지 ${index+1}` : `Selected image ${index+1}`} /><span><strong>{selected.file.name}</strong><small>{(selected.file.size/1024/1024).toFixed(1)}MB</small></span><button type="button" disabled={busy} aria-label={`${selected.file.name} ${locale==="ko"?"삭제":"remove"}`} onClick={()=>removeFile(selected.id)}><X /></button></li>)}</ul>
+                <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : "Note (optional)"}</span><textarea maxLength={1000} disabled={busy} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
+                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||Boolean(fileError)||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
               </section>
             ) : null}
           </>

@@ -4,6 +4,7 @@ import {
   type NotificationDelivery,
 } from "../notification-domain.js";
 import type { PushSender } from "../notification-ports.js";
+import { isTrustedWebPushEndpoint } from "./web-push-endpoint.js";
 const copy: Record<NotificationDelivery["locale"], Record<NotificationDelivery["kind"], { title: string; body: string }>> = {
   ko: {
     live_24h: { title: "예약한 LIVE가 내일 시작돼요", body: "예약한 LIVE를 미리 확인해 주세요." },
@@ -47,6 +48,13 @@ export class WebPushSender implements PushSender {
     webpush.setVapidDetails(input.subject, input.publicKey, input.privateKey);
   }
   async send(delivery: NotificationDelivery) {
+    if (!isTrustedWebPushEndpoint(delivery.endpoint))
+      throw new NotificationDeliveryError(
+        "INVALID_PUSH_ENDPOINT",
+        false,
+        true,
+      );
+
     try {
       await webpush.sendNotification(
         {
@@ -60,6 +68,7 @@ export class WebPushSender implements PushSender {
         }),
         {
           TTL: 86400,
+          timeout: 10_000,
           urgency: delivery.kind === "live_10m" ? "high" : "normal",
           topic: delivery.notificationId.replaceAll("-", "").slice(0, 32),
         },
@@ -79,7 +88,7 @@ export class WebPushSender implements PushSender {
         throw new NotificationDeliveryError("PUSH_RATE_LIMITED", true);
       if (status >= 500)
         throw new NotificationDeliveryError("PUSH_PROVIDER_UNAVAILABLE", true);
-      if (status >= 400)
+      if (status >= 300)
         throw new NotificationDeliveryError("PUSH_REJECTED", false);
       throw new NotificationDeliveryError("PUSH_NETWORK_ERROR", true);
     }

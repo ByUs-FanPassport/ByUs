@@ -44,6 +44,32 @@ export class SupabaseQueueAdapter implements QueuePort {
     return ((data ?? []) as Row[]).map(mapRow);
   }
 
+  async admitMint(job: BlockchainJob): Promise<boolean> {
+    const { data, error } = await this.client.rpc("admit_mint_dispatch", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+    });
+    if (error) throw dbError("admit_mint_dispatch", error);
+    if (typeof data !== "boolean")
+      throw dbError("admit_mint_dispatch", {
+        message: "database returned no admission decision",
+      });
+    return data;
+  }
+
+  async holdFeePolicy(job: BlockchainJob): Promise<void> {
+    const { data, error } = await this.client.rpc("hold_mint_fee_policy", {
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_reason: "MINT_FEE_POLICY_BLOCKED",
+    });
+    if (error) throw dbError("hold_mint_fee_policy", error);
+    if (!data)
+      throw dbError("hold_mint_fee_policy", {
+        message: "database returned no held job",
+      });
+  }
+
   async recordPrepared(job: BlockchainJob, submission: PreparedSubmission): Promise<BlockchainJob> {
     const { data, error } = await this.client.rpc("record_prepared_blockchain_job", {
       p_job_id: job.id,

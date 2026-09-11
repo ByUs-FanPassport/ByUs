@@ -119,6 +119,8 @@ const copy = {
     providerNone: "연결 없음",
     emailProvider: "이메일",
     journey: "패스포트 여정",
+    noPassport: "패스포트 미발급",
+    noPassportDescription: "아직 발급된 패스포트가 없습니다.",
     score: "팬 점수",
     activity: "활동",
     benefit: "혜택",
@@ -177,6 +179,8 @@ const copy = {
     providerNone: "None linked",
     emailProvider: "Email",
     journey: "Passport journey",
+    noPassport: "No Passport issued",
+    noPassportDescription: "This member has not issued a Passport yet.",
     score: "Score",
     activity: "Activity",
     benefit: "Benefits",
@@ -586,6 +590,12 @@ export function FanOperations() {
                       </span>
                     ))}
                   </div>
+                  {detail.passports.length === 0 && (
+                    <section className={ops.detailSection}>
+                      <h3>{t.noPassport}</h3>
+                      <p>{t.noPassportDescription}</p>
+                    </section>
+                  )}
                   {detail.passports.length > 0 && (
                     <select
                       className={styles.journeySwitcher}
@@ -681,7 +691,7 @@ function FanTable({
                 </td>
                 <td>
                   <div className={styles.journeyCell}>
-                    <strong>{journey?.celebrity.name ?? "—"}</strong>
+                    <strong>{journey?.celebrity.name ?? labels.noPassport}</strong>
                     {fan.celebritySummaries.length > 1 && <span>+{fan.celebritySummaries.length - 1}</span>}
                   </div>
                 </td>

@@ -1,0 +1,55 @@
+name: Backend security boundaries
+on:
+  pull_request:
+    paths:
+      - 'apps/web/server/**'
+      - 'apps/web/app/api/**'
+      - 'apps/web/features/auth/**'
+      - 'apps/worker/**'
+      - 'supabase/**'
+      - 'contracts/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/backend-security.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/server/**'
+      - 'apps/web/app/api/**'
+      - 'apps/web/features/auth/**'
+      - 'apps/worker/**'
+      - 'supabase/**'
+      - 'contracts/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/backend-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run typecheck --workspace @byus/worker
+      - name: API authorization, disclosure and outbound URL regression tests
+        run: >-
+          npm run test --workspace @byus/web -- --maxWorkers=3
+          features/auth server/auth server/fan-auth
+          server/notice/notice-admin-security.test.ts server/notification
+      - run: npm run test --workspace @byus/worker
+      - run: npm run build --workspace @byus/worker
+      - run: sudo apt-get update && sudo apt-get install -y postgresql
+      - name: Replay migrations and exercise real role and concurrent quota boundaries
+        run: npm run security:backend-db
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - run: forge test --root contracts

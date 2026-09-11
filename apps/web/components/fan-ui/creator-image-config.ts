@@ -135,7 +135,7 @@ export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
   "jenny-jeong": { src: "/images/celebrities/jenny-jeong/hero-source.jpg", desktopPosition: "50% 25%", mobilePosition: "53% 25%" },
   xin: { src: "/images/celebrities/xin/hero-concept.jpg", mobileSrc: "/images/celebrities/xin/hero-concept-mobile.jpg", desktopPosition: "50% 15%", mobilePosition: "50% 25%" },
   aryeom: { src: "/images/celebrities/aryeom/hero-portrait.jpg", desktopFit: "contain", background: "#887b69", desktopPosition: "right center", mobilePosition: "50% 20%" },
-  ifewknow: { src: "/images/celebrities/ifewknow/hero-studio.jpg", desktopPosition: "50% 45%", mobilePosition: "50% 70%" },
+  ifewknow: { src: "/images/celebrities/ifewknow/hero-editorial-soft-20260911.webp", mobileSrc: "/images/celebrities/ifewknow/hero-editorial-portrait-20260911.webp", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
   "park-myungho": { src: parkMyunghoProfile, background: "#f6ead2", desktopPosition: "50% 0%", mobilePosition: "50% 0%", mobileScale: 2.3, mobileOrigin: "56% 14%" },
 };
 
