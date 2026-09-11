@@ -22,6 +22,17 @@ class MemoryStorage implements Storage {
 const id = "11111111-1111-4111-8111-111111111111";
 
 describe("durable auth intent", () => {
+  it("does not throw when browser storage reads or writes are unavailable", () => {
+    const storage = new MemoryStorage();
+    storage.getItem = () => { throw new DOMException("blocked", "SecurityError"); };
+    storage.setItem = () => { throw new DOMException("full", "QuotaExceededError"); };
+    storage.removeItem = () => { throw new DOMException("blocked", "SecurityError"); };
+    const intent = createAuthIntent({ sourcePath: "/c/kara/verify", sourceQuery: "", actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: "kara" }, { id });
+    expect(() => persistAuthIntent(storage, intent)).not.toThrow();
+    expect(readAuthIntent(storage, id)).toBeNull();
+    expect(consumeAuthIntent(storage, id)).toBeNull();
+  });
+
   it("creates a bounded exact-action record and restores its URL", () => {
     const intent = createAuthIntent({
       sourcePath: "/live/kara-nualeaf",

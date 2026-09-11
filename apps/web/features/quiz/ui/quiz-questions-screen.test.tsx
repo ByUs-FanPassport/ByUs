@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { QuizQuestionsScreen } from "./quiz-questions-screen";
 
@@ -60,6 +60,9 @@ function json(body: unknown, status = 200) {
 }
 
 describe("FAN-007 quiz questions", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   beforeEach(() => {
     vi.restoreAllMocks();
     privyState = { ready: true, authenticated: true };
@@ -160,6 +163,76 @@ describe("FAN-007 quiz questions", () => {
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith(`/c/kara/verify/result?attempt=${ids.attempt}&locale=ko`));
+  });
+
+  it("recovers a committed submission after its response is lost", async () => {
+    const complete = attempt([ids.o11, ids.o21, ids.o31]);
+    const closed = {
+      ...complete,
+      attempt: { id: ids.attempt, status: "passed", score: 3, submittedAt: "2026-07-21T00:00:00.000Z" },
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => json({ result: { kind: "attempt", ...complete } }))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined))
+      .mockImplementationOnce(() => json({ attempt: closed }));
+
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
+    await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
+    await act(async () => { await Promise.resolve(); await vi.advanceTimersByTimeAsync(20_000); });
+    vi.useRealTimers();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      `/c/kara/verify/result?attempt=${ids.attempt}&locale=ko`,
+    ));
+    expect(fetchMock.mock.calls[2][0]).toBe(`/api/quiz-attempts/${ids.attempt}?locale=ko`);
+    vi.useRealTimers();
+  });
+
+  it("unlocks a timed-out submission and offers an explicit result recheck", async () => {
+    const complete = attempt([ids.o11, ids.o21, ids.o31]);
+    vi.spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => json({ result: { kind: "attempt", ...complete } }))
+      .mockImplementationOnce(() => new Promise<Response>(() => undefined))
+      .mockImplementationOnce(() => json({ attempt: complete }))
+      .mockImplementationOnce(() => json({ attempt: {
+        ...complete,
+        attempt: { id: ids.attempt, status: "failed", score: 1, submittedAt: "2026-07-21T00:00:00.000Z" },
+      } }));
+
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
+    await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
+    await act(async () => { await Promise.resolve(); await vi.advanceTimersByTimeAsync(20_000); });
+    vi.useRealTimers();
+    const recheck = await screen.findByRole("button", { name: "제출 결과 다시 확인" });
+    expect(screen.getByRole("button", { name: "팬 인증 결과 확인" })).toBeEnabled();
+    fireEvent.click(recheck);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      `/c/kara/verify/result?attempt=${ids.attempt}&locale=ko`,
+    ));
+  });
+
+  it("keeps a confirmed incomplete rejection distinct from an unknown submission result", async () => {
+    const complete = attempt([ids.o11, ids.o21, ids.o31]);
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => json({ result: { kind: "attempt", ...complete } }))
+      .mockImplementationOnce(() => json({ error: { code: "ATTEMPT_INCOMPLETE" } }, 409));
+
+    render(<QuizQuestionsScreen locale="ko" slug="kara" />);
+    await screen.findByRole("group", { name: "KARA의 데뷔곡은?" });
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }));
+    fireEvent.click(screen.getByRole("button", { name: "팬 인증 결과 확인" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("저장되지 않은 답변이 있어요");
+    expect(screen.queryByRole("button", { name: "제출 결과 다시 확인" })).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("keeps the LIVE return context after failure and through a signed-out retry", async () => {

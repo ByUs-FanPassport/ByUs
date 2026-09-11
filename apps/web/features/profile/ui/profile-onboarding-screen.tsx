@@ -1,5 +1,7 @@
 "use client";
 
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
+
 import { withLocalePath } from "@/components/locale-path";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
@@ -136,11 +138,11 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         }
         if (!response.ok) throw new Error("profile unavailable");
         if (body.profile?.completed) {
-          sessionStorage.removeItem(draftStorageKey);
+          getSessionStorage().removeItem(draftStorageKey);
           replace(returnTo as Route);
           return;
         }
-        const draft = sessionStorage.getItem(draftStorageKey) ?? "";
+        const draft = getSessionStorage().getItem(draftStorageKey) ?? "";
         setNickname(draft);
         setState(draft ? getNicknameFormat(draft).valid ? "valid" : "typing" : "empty");
         setValidationVisible(false);
@@ -156,7 +158,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
   const updateNickname = useCallback((value: string) => {
     setNickname(value);
     setServerFormatReason(null);
-    sessionStorage.setItem(draftStorageKey, value);
+    getSessionStorage().setItem(draftStorageKey, value);
     if (composingRef.current) {
       setState("typing");
       return;
@@ -238,7 +240,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         return;
       }
       const savedNickname = body.profile?.nickname ?? normalized;
-      sessionStorage.removeItem(draftStorageKey);
+      getSessionStorage().removeItem(draftStorageKey);
       setNickname(savedNickname);
       setState("saved");
       const completionDelay = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;

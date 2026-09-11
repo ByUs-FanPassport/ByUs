@@ -77,6 +77,12 @@ import {
   pageViewIdempotencyKey,
   recordProductEventV1,
 } from "@/features/analytics/client/product-event-client";
+import {
+  reportRecoveryFailure,
+  withOperationDeadline,
+  withRequestDeadline,
+} from "@/features/reliability/client/request-deadline";
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
 import styles from "./live-event-screen.module.css";
 
 type Locale = "ko" | "en";
@@ -153,6 +159,8 @@ const copy = {
     reservePending: "예약 처리 중",
     reserveError:
       "예약을 완료하지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요.",
+    reserveUnknown:
+      "예약 결과를 아직 확인하지 못했어요. 같은 예약 요청을 다시 확인해 주세요.",
     loadError: "LIVE 정보를 불러오지 못했어요.",
     loadErrorHelper: "잠시 후 다시 시도하거나 라이브 목록으로 돌아가 주세요.",
     notFound: "공개된 LIVE를 찾을 수 없어요.",
@@ -232,6 +240,8 @@ const copy = {
     reservePending: "Reserving",
     reserveError:
       "We couldn’t complete your reservation. Check the status and try again.",
+    reserveUnknown:
+      "The reservation result is still unconfirmed. Check the same reservation request again.",
     loadError: "We couldn’t load this LIVE.",
     loadErrorHelper: "Try again shortly or return to the live list.",
     notFound: "This public LIVE could not be found.",
@@ -306,6 +316,12 @@ type AttendanceState =
       result: CreateLiveAttendanceResponse;
       replayed: boolean;
     };
+
+class ReservationResponseError extends Error {
+  constructor(readonly status: number) {
+    super("Reservation response rejected");
+  }
+}
 
 function formatRetry(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -525,31 +541,49 @@ export function LiveEventScreen({
   const attendanceAttemptsRef = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
   const liveReadController = useRef<AbortController | null>(null);
+  const reservationControllerRef = useRef<AbortController | null>(null);
+  const reservationOperationRef = useRef<Promise<void> | null>(null);
+  const reservationGenerationRef = useRef(0);
+
+  useEffect(() => {
+    reservationGenerationRef.current += 1;
+    reservationControllerRef.current?.abort();
+    reservationOperationRef.current = null;
+    setReservePending(false);
+    setActionError(null);
+    setShowConfirmation(false);
+    setReservationCompletion(null);
+    return () => {
+      reservationGenerationRef.current += 1;
+      reservationControllerRef.current?.abort();
+      reservationOperationRef.current = null;
+    };
+  }, [authenticated, slug, user?.id]);
 
   const load = useCallback(async (background = false, trackPageView = !background) => {
     if (!authReady) return;
+    if (authenticated && !user?.id) return;
     liveReadController.current?.abort();
     const controller = new AbortController();
     liveReadController.current = controller;
     if (!background) setView({ kind: "loading" });
     try {
-      const token = authenticated ? await getAccessToken() : null;
+      const token = authenticated ? await withOperationDeadline(getAccessToken()) : null;
       if (controller.signal.aborted) return;
-      const response = await fetch(
-        `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
-        {
-          method: "GET",
-          headers: token ? { authorization: `Bearer ${token}` } : undefined,
-          cache: "no-store",
-          signal: controller.signal,
-        },
-      );
+      const result = await withRequestDeadline(async (signal) => {
+        const response = await fetch(
+          `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
+          { method: "GET", headers: token ? { authorization: `Bearer ${token}` } : undefined, cache: "no-store", signal },
+        );
+        if (!response.ok) return { ok: false as const, status: response.status };
+        return { ok: true as const, data: liveEventResponseSchema.parse(await response.json()) };
+      }, { signal: controller.signal });
       if (controller.signal.aborted) return;
-      if (!response.ok) {
-        if (!background) setView({ kind: "error", notFound: response.status === 404 });
+      if (!result.ok) {
+        if (!background) setView({ kind: "error", notFound: result.status === 404 });
         return;
       }
-      const data = liveEventResponseSchema.parse(await response.json());
+      const data = result.data;
       if (controller.signal.aborted) return;
       setCollectible(data.viewer.collectible ?? null);
       setView({ kind: "ready", data });
@@ -569,10 +603,11 @@ export function LiveEventScreen({
         },
         token,
       );
-    } catch {
+    } catch (error) {
+      reportRecoveryFailure("live.load", error);
       if (!controller.signal.aborted && !background) setView({ kind: "error", notFound: false });
     }
-  }, [authReady, authenticated, getAccessToken, locale, slug]);
+  }, [authReady, authenticated, getAccessToken, locale, slug, user?.id]);
 
   useEffect(() => {
     // SSR data already fills the page. Refresh viewer-specific state without
@@ -633,76 +668,134 @@ export function LiveEventScreen({
     return () => window.clearInterval(interval);
   }, [attendance]);
 
-  const reserve = useCallback(async () => {
-    if (view.kind !== "ready" || reservePending) return;
-    liveReadController.current?.abort();
-    setReservePending(true);
-    setActionError(null);
-    try {
-      const token = await getAccessToken();
-      if (!token) throw new Error("missing token");
-      const storageKey = `byus:live-reservation:${view.data.live.id}`;
-      let idempotencyKey = window.sessionStorage.getItem(storageKey);
-      if (!idempotencyKey) {
-        idempotencyKey = window.crypto.randomUUID();
-        window.sessionStorage.setItem(storageKey, idempotencyKey);
-      }
-      const response = await fetch(
-        `/api/live-events/${encodeURIComponent(view.data.live.id)}/reservation`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${token}`,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ idempotencyKey }),
-        },
-      );
-      if (!response.ok) {
-        const current = await fetch(
-          `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
-          {
-            method: "GET",
-            headers: { authorization: `Bearer ${token}` },
-            cache: "no-store",
-          },
-        );
-        if (current.ok)
-          setView({
-            kind: "ready",
-            data: liveEventResponseSchema.parse(await current.json()),
-          });
-        throw new Error("reservation failed");
-      }
-      const reservationResult = createLiveReservationResponseSchema.parse(
-        await response.json(),
-      );
-      const refreshed = await fetch(
-        `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
-        {
-          method: "GET",
-          headers: { authorization: `Bearer ${token}` },
-          cache: "no-store",
-        },
-      );
-      if (!refreshed.ok) throw new Error("refresh failed");
-      const data = liveEventResponseSchema.parse(await refreshed.json());
-      if (!data.viewer.reservation)
-        throw new Error("reservation not projected");
-      window.sessionStorage.removeItem(storageKey);
-      setView({ kind: "ready", data });
-      setReservationCompletion(reservationResult.completion);
-      setShowConfirmation(true);
-    } catch {
+  const reserve = useCallback(() => {
+    if (view.kind !== "ready") return Promise.resolve();
+    if (reservationOperationRef.current) return reservationOperationRef.current;
+    const ownerId = user?.id;
+    if (!ownerId) {
       setActionError(c.reserveError);
-    } finally {
-      setReservePending(false);
+      return Promise.resolve();
     }
-  }, [c.reserveError, getAccessToken, locale, reservePending, slug, view]);
+    const eventId = view.data.live.id;
+    const originalData = view.data;
+    const generation = reservationGenerationRef.current;
+    const isCurrent = () => generation === reservationGenerationRef.current;
+    const operation = (async () => {
+      liveReadController.current?.abort();
+      reservationControllerRef.current?.abort();
+      const controller = new AbortController();
+      reservationControllerRef.current = controller;
+      setReservePending(true);
+      setActionError(null);
+      const storageKey = `byus:live-reservation:${encodeURIComponent(ownerId)}:${eventId}`;
+      let idempotencyKey: string;
+      let existingRequest = false;
+      const clearReservationKey = () => {
+        try {
+          window.sessionStorage.removeItem(storageKey);
+        } catch (error) {
+          reportRecoveryFailure("storage.write", error);
+        }
+      };
+      try {
+        existingRequest = window.sessionStorage.getItem(storageKey) !== null;
+        idempotencyKey = window.sessionStorage.getItem(storageKey) ?? window.crypto.randomUUID();
+        window.sessionStorage.setItem(storageKey, idempotencyKey);
+      } catch (error) {
+        reportRecoveryFailure("storage.write", error);
+        if (isCurrent()) setActionError(c.reserveError);
+        return;
+      }
+      let token: string | null = null;
+      try {
+        token = await withOperationDeadline(getAccessToken());
+        if (!token) throw new Error("Missing reservation token");
+        const reservationResult = await withRequestDeadline(async (signal) => {
+          const response = await fetch(`/api/live-events/${encodeURIComponent(eventId)}/reservation`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+            body: JSON.stringify({ idempotencyKey }), signal,
+          });
+          if (!response.ok) throw new ReservationResponseError(response.status);
+          return createLiveReservationResponseSchema.parse(await response.json());
+        }, { signal: controller.signal });
+        if (!isCurrent()) return;
+
+        clearReservationKey();
+        setView({
+          kind: "ready",
+          data: {
+            ...originalData,
+            viewer: { ...originalData.viewer, reservation: reservationResult.reservation },
+            primaryAction: "reserved",
+          },
+        });
+        setReservationCompletion(reservationResult.completion);
+        setShowConfirmation(true);
+        setReservePending(false);
+
+        try {
+          const refreshController = new AbortController();
+          reservationControllerRef.current = refreshController;
+          const data = await withRequestDeadline(async (signal) => {
+            const refreshed = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, {
+              method: "GET", headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
+            });
+            if (!refreshed.ok) throw new Error("Reservation refresh failed");
+            return liveEventResponseSchema.parse(await refreshed.json());
+          }, { signal: refreshController.signal });
+          if (isCurrent() && data.viewer.reservation) setView({ kind: "ready", data });
+        } catch (error) {
+          reportRecoveryFailure("reservation.reconcile", error);
+        }
+        return;
+      } catch (error) {
+        reportRecoveryFailure("reservation.submit", error);
+        if (!isCurrent()) return;
+        if (error instanceof ReservationResponseError && error.status >= 400 && error.status < 500 && !existingRequest) {
+          clearReservationKey();
+          setActionError(c.reserveError);
+          return;
+        }
+      }
+
+      try {
+        const reconciliationController = new AbortController();
+        reservationControllerRef.current = reconciliationController;
+        if (!token) token = await withOperationDeadline(getAccessToken());
+        if (!token) throw new Error("Missing reconciliation token");
+        const current = await withRequestDeadline(async (signal) => {
+          const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, {
+            method: "GET", headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
+          });
+          if (!response.ok) throw new Error("Reservation reconciliation failed");
+          return liveEventResponseSchema.parse(await response.json());
+        }, { signal: reconciliationController.signal });
+        if (!isCurrent()) return;
+        setView({ kind: "ready", data: current });
+        if (current.viewer.reservation) {
+          clearReservationKey();
+          setActionError(null);
+        } else {
+          setActionError(c.reserveUnknown);
+        }
+      } catch (error) {
+        reportRecoveryFailure("reservation.reconcile", error);
+        if (isCurrent()) setActionError(c.reserveUnknown);
+      }
+    })();
+    reservationOperationRef.current = operation;
+    void operation.finally(() => {
+      if (reservationOperationRef.current === operation) reservationOperationRef.current = null;
+      if (reservationControllerRef.current && isCurrent()) reservationControllerRef.current = null;
+      if (isCurrent()) setReservePending(false);
+    });
+    return operation;
+  }, [c.reserveError, c.reserveUnknown, getAccessToken, locale, slug, user?.id, view]);
 
   function rememberWatchReturn() {
     const query = searchParams.toString();
-    window.sessionStorage.setItem(
+    getSessionStorage().setItem(
       "byus:live-return",
       JSON.stringify({
         route: `${pathname}${query ? `?${query}` : ""}#fan-code`,
@@ -749,7 +842,7 @@ export function LiveEventScreen({
 
     if (!authenticated) {
       const draftRef = `byus:fan-code-draft:${slug}`;
-      window.sessionStorage.setItem(draftRef, normalizedCode);
+      getSessionStorage().setItem(draftRef, normalizedCode);
       const intent = createAuthIntent({
         sourcePath: `/live/${slug}`,
         sourceQuery: `?locale=${locale}`,
@@ -759,7 +852,7 @@ export function LiveEventScreen({
         targetId: slug,
         draftPayload: { draftRef },
       });
-      persistAuthIntent(window.sessionStorage, intent);
+      persistAuthIntent(getSessionStorage(), intent);
       router.push(buildAuthLoginHref(intent, locale) as Route);
       return;
     }
@@ -798,8 +891,8 @@ export function LiveEventScreen({
         attendanceAttemptsRef.current = 0;
         setAttendance({ kind: "success", result, replayed: replayedRequest });
         const intentId = searchParams.get("authIntent");
-        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
-        window.sessionStorage.removeItem(`byus:fan-code-draft:${slug}`);
+        if (intentId) consumeAuthIntent(getSessionStorage(), intentId);
+        getSessionStorage().removeItem(`byus:fan-code-draft:${slug}`);
         return;
       }
       const body = (await response.json().catch(() => null)) as {
@@ -848,12 +941,12 @@ export function LiveEventScreen({
     if (!authenticated || view.kind !== "ready") return;
     const intentId = searchParams.get("authIntent");
     if (!intentId) return;
-    const intent = readAuthIntent(window.sessionStorage, intentId);
+    const intent = readAuthIntent(getSessionStorage(), intentId);
     if (!intent || intent.targetType !== "live_event" || intent.targetId !== slug) return;
 
     if (intent.actionType === "RESERVE_LIVE") {
       if (view.data.viewer.reservation) {
-        consumeAuthIntent(window.sessionStorage, intentId);
+        consumeAuthIntent(getSessionStorage(), intentId);
         resumedIntentRef.current = intentId;
       } else if (view.data.primaryAction === "reserve" && resumedIntentRef.current !== intentId) {
         resumedIntentRef.current = intentId;
@@ -865,7 +958,7 @@ export function LiveEventScreen({
     if (intent.actionType === "SUBMIT_FAN_CODE") {
       if (resumedIntentRef.current === intentId) return;
       const draftRef = typeof intent.draftPayload.draftRef === "string" ? intent.draftPayload.draftRef : null;
-      const draft = draftRef ? window.sessionStorage.getItem(draftRef) : null;
+      const draft = draftRef ? getSessionStorage().getItem(draftRef) : null;
       if (!draft) return;
       resumedIntentRef.current = intentId;
       setFanCode(draft);

@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { StrictMode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "./login-page";
 
 const login = vi.fn();
@@ -45,6 +46,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Privy login page", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
@@ -69,7 +74,7 @@ describe("Privy login page", () => {
     ready = true;
     oauthLoading = false;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
-    getAccessToken.mockResolvedValue("privy-access-token");
+    getAccessToken.mockReset().mockResolvedValue("privy-access-token");
     logout.mockResolvedValue(undefined);
     logout.mockClear();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ profile: { completed: true, nickname: "John" } }));
@@ -89,6 +94,30 @@ describe("Privy login page", () => {
     await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("new-google-fan"));
     expect(authenticated).toBe(false);
     expect(replace).toHaveBeenCalled();
+  });
+
+  it("synchronizes normally through the Strict Mode setup-cleanup-setup cycle", async () => {
+    authenticated = true;
+    render(<StrictMode><LoginPage /></StrictMode>);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
+    expect(markAvatarSessionReady).toHaveBeenCalledWith("restored-fan");
+  });
+
+  it("shows a recoverable user-facing error when callback synchronization fails before authenticated state arrives", async () => {
+    vi.mocked(globalThis.fetch)
+      .mockRejectedValueOnce(new Error("private upstream detail"))
+      .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "John" } }));
+    render(<LoginPage />);
+
+    await act(async () => { await onComplete?.({ user: { id: "new-google-fan" } }); });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 정보를 안전하게 연결하지 못했어요.");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("SESSION_SYNCHRONIZATION_FAILED");
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("starts Google OAuth directly without opening the Privy login modal", () => {
@@ -167,6 +196,103 @@ describe("Privy login page", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it("reuses a still-running wallet creation when its bounded wait is retried", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    refreshUser.mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [] }));
+    let finishWallet!: (value: unknown) => void;
+    createWallet.mockImplementation(() => new Promise((resolve) => { finishWallet = resolve; }));
+
+    render(<LoginPage />);
+    await act(async () => { await Promise.resolve(); });
+    expect(createWallet).toHaveBeenCalledTimes(1);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 연결이 오래 걸리고 있어요.");
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await act(async () => { await Promise.resolve(); });
+    expect(createWallet).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finishWallet(embeddedWallet);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko");
+  });
+
+  it("releases the session state when token retrieval stalls", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    getAccessToken.mockImplementation(() => new Promise(() => {}));
+    render(<LoginPage />);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 연결이 오래 걸리고 있어요.");
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeEnabled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("aborts and releases a stalled session request", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    let requestSignal: AbortSignal | undefined;
+    vi.mocked(globalThis.fetch).mockImplementation((_input, init) => {
+      requestSignal = init?.signal as AbortSignal;
+      return new Promise(() => {});
+    });
+    render(<LoginPage />);
+    await act(async () => { await Promise.resolve(); });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 연결이 오래 걸리고 있어요.");
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeEnabled();
+  });
+
+  it("does not let a late old-user wallet completion update the new user", async () => {
+    let finishOldWallet!: (value: unknown) => void;
+    createWallet.mockImplementation(() => new Promise((resolve) => { finishOldWallet = resolve; }));
+    refreshUser.mockImplementation(async () => ({
+      id: currentUserId,
+      linkedAccounts: currentUserId === "old-fan" ? [] : [embeddedWallet],
+    }));
+    const { rerender } = render(<LoginPage />);
+    act(() => { void onOAuthComplete?.({ user: { id: "old-fan" } }); });
+    await waitFor(() => expect(createWallet).toHaveBeenCalledTimes(1));
+
+    currentUserId = "new-fan";
+    authenticated = true;
+    rerender(<LoginPage />);
+    await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("new-fan"));
+
+    await act(async () => { finishOldWallet(embeddedWallet); });
+    expect(markAvatarSessionReady).not.toHaveBeenCalledWith("old-fan");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalidates an in-flight synchronization when the authenticated user logs out", async () => {
+    authenticated = true;
+    let finishRefresh!: (value: { id: string; linkedAccounts: unknown[] }) => void;
+    refreshUser.mockImplementation(() => new Promise((resolve) => { finishRefresh = resolve; }));
+    const { rerender } = render(<LoginPage />);
+    await waitFor(() => expect(refreshUser).toHaveBeenCalledTimes(1));
+
+    authenticated = false;
+    rerender(<LoginPage />);
+    await act(async () => {
+      finishRefresh({ id: "restored-fan", linkedAccounts: [embeddedWallet] });
+    });
+
+    expect(getAccessToken).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(markAvatarSessionReady).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it("does not prepare a wallet for a different restored account", async () => {
     refreshUser.mockResolvedValue({ id: "different-fan", linkedAccounts: [] });
     render(<LoginPage />);
@@ -230,6 +356,17 @@ describe("Privy login page", () => {
     expect(screen.getByText("로그인 상태를 확인하고 있어요.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Google로 계속하기/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최애와 함께한 순간을 기록하세요." })).not.toBeInTheDocument();
+  });
+
+  it("turns a stalled login readiness check into an actionable state", async () => {
+    vi.useFakeTimers();
+    ready = false;
+    render(<LoginPage />);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 준비가 오래 걸리고 있어요.");
+    expect(screen.getByRole("button", { name: "다시 확인" })).toBeEnabled();
   });
 
   it("uses Privy's email OTP UI only when the non-production Test Account path is enabled", () => {

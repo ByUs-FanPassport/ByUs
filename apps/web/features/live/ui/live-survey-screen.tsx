@@ -1,5 +1,7 @@
 "use client";
 
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
+
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
@@ -214,9 +216,9 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
   useEffect(() => {
     if (!authenticated || view.kind !== "ready") return;
     const intentId = new URLSearchParams(window.location.search).get("authIntent");
-    const intent = readAuthIntent(window.sessionStorage, intentId);
+    const intent = readAuthIntent(getSessionStorage(), intentId);
     if (intent?.actionType === "OPEN_SURVEY" && intent.targetType === "survey" && intent.targetId === slug) {
-      consumeAuthIntent(window.sessionStorage, intent.id);
+      consumeAuthIntent(getSessionStorage(), intent.id);
     }
   }, [authenticated, slug, view]);
 

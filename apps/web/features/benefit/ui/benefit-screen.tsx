@@ -1,5 +1,7 @@
 "use client";
 
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
+
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import Link from "next/link";
@@ -715,7 +717,7 @@ function BenefitDetailOwnerScreen({
         const intentId = new URLSearchParams(window.location.search).get(
           "authIntent",
         );
-        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
+        if (intentId) consumeAuthIntent(getSessionStorage(), intentId);
       } catch {
         setActionError(true);
       } finally {
@@ -778,7 +780,7 @@ function BenefitDetailOwnerScreen({
         const intentId = new URLSearchParams(window.location.search).get(
           "authIntent",
         );
-        if (intentId) consumeAuthIntent(window.sessionStorage, intentId);
+        if (intentId) consumeAuthIntent(getSessionStorage(), intentId);
       } catch {
         setActionError(true);
       } finally {
@@ -911,7 +913,7 @@ function BenefitDetailOwnerScreen({
       "authIntent",
     );
     if (!intentId || resumedIntentRef.current === intentId) return;
-    const intent = readAuthIntent(window.sessionStorage, intentId);
+    const intent = readAuthIntent(getSessionStorage(), intentId);
     if (
       !intent ||
       intent.targetType !== "benefit" ||
@@ -920,7 +922,7 @@ function BenefitDetailOwnerScreen({
       return;
     resumedIntentRef.current = intentId;
     if (intent.actionType === "CLAIM_BENEFIT" && view.benefit.entry)
-      consumeAuthIntent(window.sessionStorage, intentId);
+      consumeAuthIntent(getSessionStorage(), intentId);
     else if (
       intent.actionType === "CLAIM_BENEFIT" &&
       view.benefit.allocationMode === "direct_claim"
