@@ -1,6 +1,7 @@
 import "server-only";
 
 import { AuthError } from "../../features/auth/domain/auth-errors";
+import { isSignupClientEvent } from "../../features/analytics/domain/signup-funnel-event";
 import {
   assertSafeProductEventTime,
   clientProductEventV1Schema,
@@ -27,6 +28,9 @@ export function createRecordProductEventHandler(dependencies: ProductEventRouteD
     try {
       const raw = await request.json();
       const input = clientProductEventV1Schema.parse(raw);
+      if (isSignupClientEvent(input.eventName) && request.headers.has("authorization")) {
+        return json({ error: { code: "EVENT_INVALID" } }, 400);
+      }
       assertSafeProductEventTime(input.occurredAt, dependencies.now());
       const owner = await dependencies.identify(request.headers.get("authorization"));
       if (!owner && !input.anonymousSessionId) return json({ error: { code: "EVENT_OWNER_REQUIRED" } }, 400);

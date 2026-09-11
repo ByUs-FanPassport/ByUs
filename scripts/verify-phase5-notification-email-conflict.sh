@@ -201,11 +201,7 @@ where app_user_id in (
   '51000000-0000-4000-8000-000000000003'::uuid,
   '51000000-0000-4000-8000-000000000004'::uuid
 );
-delete from public.app_users
-where id in (
-  '51000000-0000-4000-8000-000000000001'::uuid,
-  '51000000-0000-4000-8000-000000000002'::uuid,
-  '51000000-0000-4000-8000-000000000003'::uuid,
-  '51000000-0000-4000-8000-000000000004'::uuid
-);
+-- account_created is append-only measurement evidence with an owner FK. Keep
+-- these synthetic source rows until the clean harness drops the entire
+-- disposable database instead of weakening or bypassing that relationship.
 SQL

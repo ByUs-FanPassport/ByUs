@@ -24,6 +24,8 @@ import {
 } from "../features/reliability/client/request-deadline";
 import { getSessionStorage } from "../features/reliability/client/session-storage";
 import { getOAuthStartGuard } from "../features/reliability/client/oauth-start";
+import { signupFunnelTracker, type LoginMeasurementAttempt } from "../features/analytics/client/signup-funnel-tracker";
+import { signupStageSchema, type SignupReason } from "../features/analytics/domain/signup-funnel-event";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -154,6 +156,11 @@ export function LoginPage({
   const identityGenerationRef = useRef(0);
   const mountedRef = useRef(true);
   const attemptedSessionUserRef = useRef<string | null>(null);
+  const loginMeasurementRef = useRef<LoginMeasurementAttempt | null>(null);
+  // Identity lives only in component memory; it is never sent to anonymous analytics.
+  const loginMeasurementOwnerRef = useRef<string | null>(null);
+  const providerMeasurementRef = useRef<LoginMeasurementAttempt | null>(null);
+  const providerCallbackClosedRef = useRef(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const sessionErrorRef = useRef<HTMLDivElement>(null);
@@ -165,6 +172,13 @@ export function LoginPage({
   const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
   const activateIdentity = useCallback((userId: string) => {
     if (activeIdentityRef.current !== userId) {
+      if (loginMeasurementOwnerRef.current !== null && loginMeasurementOwnerRef.current !== userId) {
+        signupFunnelTracker.forgetLoginAttempt();
+        loginMeasurementRef.current = null;
+        loginMeasurementOwnerRef.current = null;
+        providerMeasurementRef.current = null;
+        providerCallbackClosedRef.current = true;
+      }
       activeIdentityRef.current = userId;
       identityGenerationRef.current += 1;
       synchronizationRef.current = null;
@@ -181,7 +195,12 @@ export function LoginPage({
     if (!expectedUserId) return Promise.resolve();
     if (synchronizationRef.current?.userId === expectedUserId) return synchronizationRef.current.promise;
     const generation = activateIdentity(expectedUserId);
+    providerCallbackClosedRef.current = true;
     attemptedSessionUserRef.current = expectedUserId;
+    const measurement = loginMeasurementRef.current?.succeeded ? signupFunnelTracker.resumeLogin(locale)
+      : loginMeasurementRef.current ?? signupFunnelTracker.resumeLogin(locale);
+    loginMeasurementRef.current = measurement;
+    loginMeasurementOwnerRef.current = expectedUserId;
 
     let promise!: Promise<void>;
     promise = (async () => {
@@ -250,6 +269,7 @@ export function LoginPage({
           throw new Error("Session synchronization failed");
         }
         assertCurrentIdentity(expectedUserId, generation);
+        signupFunnelTracker.result(measurement, "succeeded", "session", "none");
         markAvatarSessionReady(expectedUserId);
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
         const storedIntent = typeof window === "undefined" ? null : readAuthIntent(getSessionStorage(), authIntent);
@@ -266,6 +286,11 @@ export function LoginPage({
         if (caught instanceof StaleLoginIdentityError) return;
         reportRecoveryFailure(stage, caught);
         if (!mountedRef.current || activeIdentityRef.current !== expectedUserId || identityGenerationRef.current !== generation) return;
+        const reason: SignupReason = caught instanceof RequestTimeoutError ? "timeout"
+          : caught instanceof Error && caught.message === VERIFIED_EMAIL_REQUIRED ? "verified_email_required"
+            : caught instanceof Error && caught.message === APPLE_REAUTHENTICATION_REQUIRED ? "reauthentication_required" : "session_error";
+        const observedStage = signupStageSchema.safeParse(stage.replace(/^login\./, ""));
+        signupFunnelTracker.result(measurement, "failed", observedStage.success ? observedStage.data : "session", reason);
         setError(
           caught instanceof Error && [VERIFIED_EMAIL_REQUIRED, APPLE_REAUTHENTICATION_REQUIRED].includes(caught.message)
             ? caught.message
@@ -291,8 +316,29 @@ export function LoginPage({
         ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
         : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
   const loginCallbacks = {
-    onComplete: ({ user: completedUser }: { user: { id: string } }) => synchronizeSession(completedUser.id),
-    onError: () => setError(loginErrorMessage),
+    onComplete: ({ user: completedUser }: { user: { id: string } }) => {
+      providerMeasurementRef.current = null;
+      providerCallbackClosedRef.current = true;
+      return synchronizeSession(completedUser.id);
+    },
+    onError: () => {
+      let measurement = providerMeasurementRef.current;
+      if (!measurement && !providerCallbackClosedRef.current && !loginMeasurementRef.current) {
+        const pending = signupFunnelTracker.pendingLogin();
+        // A fresh document can receive the provider's failure before any session synchronization.
+        if (pending?.trigger === "provider" && !pending.failed && !pending.succeeded) {
+          measurement = pending;
+          loginMeasurementRef.current = pending;
+        }
+      }
+      // A late SDK callback cannot turn a session retry or reauthentication into an OAuth failure.
+      if (!providerCallbackClosedRef.current && measurement && measurement === loginMeasurementRef.current) {
+        signupFunnelTracker.result(measurement, "failed", "oauth", "provider_error");
+      }
+      providerMeasurementRef.current = null;
+      providerCallbackClosedRef.current = true;
+      setError(loginErrorMessage);
+    },
   };
   const { login } = useLogin({
     ...loginCallbacks,
@@ -311,12 +357,18 @@ export function LoginPage({
   const startOAuthLogin = useCallback((provider: "google" | "apple") => {
     if (oauthGuard.getSnapshot() !== "idle") return;
     setError(null);
+    const measurement = signupFunnelTracker.beginLogin(provider, "provider", locale);
+    loginMeasurementRef.current = measurement;
+    providerMeasurementRef.current = measurement;
+    providerCallbackClosedRef.current = false;
     void oauthGuard.start(() => initOAuth({ provider }), SDK_OPERATION_TIMEOUT_MS)
       ?.catch((caught) => {
         reportRecoveryFailure("login.oauth", caught);
+        signupFunnelTracker.result(measurement, "failed", "oauth", caught instanceof RequestTimeoutError ? "timeout" : "provider_error");
+        if (providerMeasurementRef.current === measurement) providerMeasurementRef.current = null;
         if (mountedRef.current) setError(loginErrorMessage);
       });
-  }, [initOAuth, loginErrorMessage, oauthGuard]);
+  }, [initOAuth, locale, loginErrorMessage, oauthGuard]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -331,6 +383,13 @@ export function LoginPage({
   useEffect(() => {
     const currentUserId = privyUserId ?? null;
     if (activeIdentityRef.current === currentUserId) return;
+    if (loginMeasurementOwnerRef.current !== null && loginMeasurementOwnerRef.current !== currentUserId) {
+      signupFunnelTracker.forgetLoginAttempt();
+      loginMeasurementRef.current = null;
+      loginMeasurementOwnerRef.current = null;
+      providerMeasurementRef.current = null;
+      providerCallbackClosedRef.current = true;
+    }
     activeIdentityRef.current = currentUserId;
     identityGenerationRef.current += 1;
     synchronizationRef.current = null;
@@ -344,6 +403,7 @@ export function LoginPage({
     }
     const timeout = window.setTimeout(() => {
       reportRecoveryFailure("login.ready", new RequestTimeoutError(SDK_OPERATION_TIMEOUT_MS));
+      signupFunnelTracker.result(loginMeasurementRef.current ?? signupFunnelTracker.pendingLogin(), "failed", "ready", "timeout");
       setError(LOGIN_READINESS_TIMEOUT);
     }, SDK_OPERATION_TIMEOUT_MS);
     return () => window.clearTimeout(timeout);
@@ -366,8 +426,13 @@ export function LoginPage({
 
   const retrySessionSynchronization = useCallback(() => {
     setError(null);
+    if (!synchronizationRef.current) {
+      loginMeasurementRef.current = signupFunnelTracker.beginLogin(loginMeasurementRef.current?.provider ?? "unknown", "retry", locale);
+      providerMeasurementRef.current = null;
+      providerCallbackClosedRef.current = true;
+    }
     void synchronizeSession(attemptedSessionUserRef.current ?? undefined);
-  }, [synchronizeSession]);
+  }, [locale, synchronizeSession]);
 
   const retryLoginReadiness = useCallback(() => {
     setError(null);
@@ -381,6 +446,10 @@ export function LoginPage({
       attemptedSessionUserRef.current = null;
       activeIdentityRef.current = null;
       identityGenerationRef.current += 1;
+      loginMeasurementRef.current = null;
+      loginMeasurementOwnerRef.current = null;
+      providerMeasurementRef.current = null;
+      signupFunnelTracker.forgetLoginAttempt();
       setError(null);
       setReauthenticationProviders([]);
     } catch {
@@ -395,6 +464,9 @@ export function LoginPage({
     setReauthenticationFailed(false);
     const expectedUserId = activeIdentityRef.current;
     const generation = identityGenerationRef.current;
+    const measurement = signupFunnelTracker.beginLogin(provider, "reauth", locale);
+    loginMeasurementRef.current = measurement;
+    providerMeasurementRef.current = null;
     try {
       if (!expectedUserId) throw new StaleLoginIdentityError();
       const token = await withOperationDeadline(getAccessToken(), SDK_OPERATION_TIMEOUT_MS);
@@ -419,6 +491,7 @@ export function LoginPage({
     } catch (caught) {
       if (caught instanceof StaleLoginIdentityError) return;
       reportRecoveryFailure("login.reauthentication", caught);
+      signupFunnelTracker.result(measurement, "failed", "reauthentication", caught instanceof RequestTimeoutError ? "timeout" : "provider_error");
       setReauthenticationFailed(true);
       setError(APPLE_REAUTHENTICATION_REQUIRED);
     } finally {
@@ -596,6 +669,9 @@ export function LoginPage({
               disabled={!ready || authenticated || oauthStarting || oauthRestartRequired}
               onClick={() => {
                 setError(null);
+                loginMeasurementRef.current = signupFunnelTracker.beginLogin("test", "provider", locale);
+                providerMeasurementRef.current = loginMeasurementRef.current;
+                providerCallbackClosedRef.current = false;
                 login({ loginMethods: ["email"] });
               }}
             >

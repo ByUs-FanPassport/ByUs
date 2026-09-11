@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "./login-page";
 import { createOAuthStartGuard, getOAuthStartGuard } from "../features/reliability/client/oauth-start";
+import { signupFunnelTracker } from "../features/analytics/client/signup-funnel-tracker";
 
 vi.mock("../features/reliability/client/oauth-start", async (importOriginal) => ({
   ...await importOriginal<typeof import("../features/reliability/client/oauth-start")>(),
@@ -260,6 +261,8 @@ describe("Privy login page", () => {
   });
 
   it("does not let a late old-user wallet completion update the new user", async () => {
+    window.sessionStorage.clear();
+    const measurements = vi.spyOn(signupFunnelTracker, "result");
     let finishOldWallet!: (value: unknown) => void;
     createWallet.mockImplementation(() => new Promise((resolve) => { finishOldWallet = resolve; }));
     refreshUser.mockImplementation(async () => ({
@@ -269,6 +272,7 @@ describe("Privy login page", () => {
     const { rerender } = render(<LoginPage />);
     act(() => { void onOAuthComplete?.({ user: { id: "old-fan" } }); });
     await waitFor(() => expect(createWallet).toHaveBeenCalledTimes(1));
+    const oldAttemptNonce = signupFunnelTracker.pendingLogin()?.nonce;
 
     currentUserId = "new-fan";
     authenticated = true;
@@ -279,6 +283,12 @@ describe("Privy login page", () => {
     expect(markAvatarSessionReady).not.toHaveBeenCalledWith("old-fan");
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledTimes(1);
+    const successes = measurements.mock.calls.filter(([, outcome]) => outcome === "succeeded");
+    expect(successes).toHaveLength(1);
+    expect(successes[0][0]?.nonce).not.toBe(oldAttemptNonce);
+    expect(successes[0][0]?.trigger).toBe("session_restore");
+    expect(JSON.stringify(measurements.mock.calls)).not.toMatch(/old-fan|new-fan/);
+    measurements.mockRestore();
   });
 
   it("invalidates an in-flight synchronization when the authenticated user logs out", async () => {
@@ -597,5 +607,70 @@ describe("Privy login page", () => {
     await waitFor(() => expect(alert).toHaveFocus());
     expect(screen.getByRole("dialog")).toBeVisible();
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("observes provider start and session success on the same anonymous attempt", async () => {
+    window.sessionStorage.clear();
+    const result = vi.spyOn(signupFunnelTracker, "result");
+    render(<LoginPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }));
+    const attempt = signupFunnelTracker.pendingLogin();
+    expect(attempt).toMatchObject({ provider: "google", trigger: "provider" });
+    await act(async () => { await onOAuthComplete?.(); });
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(result).toHaveBeenCalledWith(expect.objectContaining({ nonce: attempt?.nonce }), "succeeded", "session", "none");
+    expect(getAccessToken).toHaveBeenCalledTimes(1); // Analytics never asks for another token.
+    result.mockRestore();
+  });
+
+  it("records a sanitized session failure and an explicit retry without changing the auth path", async () => {
+    window.sessionStorage.clear();
+    authenticated = true;
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(Response.json({ error: { code: "private-provider-detail" } }, { status: 503 }));
+    const result = vi.spyOn(signupFunnelTracker, "result");
+    const start = vi.spyOn(signupFunnelTracker, "beginLogin");
+    render(<LoginPage />);
+    await screen.findByText("로그인 정보를 안전하게 연결하지 못했어요.");
+    expect(result).toHaveBeenCalledWith(expect.anything(), "failed", "session", "session_error");
+    const failed = signupFunnelTracker.pendingLogin()?.nonce;
+    let finishRetry!: (response: Response) => void;
+    vi.mocked(globalThis.fetch).mockImplementationOnce(() => new Promise((resolve) => { finishRetry = resolve; }));
+    const retry = screen.getByRole("button", { name: /다시 시도/ });
+    fireEvent.click(retry);
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
+    await act(async () => { onError?.(); });
+    expect(result.mock.calls.filter(([, outcome]) => outcome === "failed")).toHaveLength(1);
+    await act(async () => { finishRetry(Response.json({ profile: { completed: true } })); });
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(start).toHaveBeenCalledWith("unknown", "retry", "ko");
+    const success = result.mock.calls.find(([, outcome]) => outcome === "succeeded");
+    expect(success?.[0]?.nonce).not.toBe(failed);
+    expect(JSON.stringify(result.mock.calls)).not.toContain("private-provider-detail");
+    result.mockRestore(); start.mockRestore();
+  });
+
+  it("keeps login working when browser storage blocks analytics", async () => {
+    const storage = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("storage blocked"); });
+    render(<LoginPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }));
+    await act(async () => { await onOAuthComplete?.(); });
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(initOAuth).toHaveBeenCalledWith({ provider: "google" });
+    expect(logout).not.toHaveBeenCalled();
+    storage.mockRestore();
+  });
+
+  it("records an OAuth failure after remount on the pending provider attempt", async () => {
+    window.sessionStorage.clear();
+    const result = vi.spyOn(signupFunnelTracker, "result");
+    const first = render(<LoginPage />);
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Google로 계속하기" })); });
+    const pending = signupFunnelTracker.pendingLogin();
+    first.unmount();
+    render(<LoginPage />);
+    await act(async () => { onError?.(); });
+    expect(result).toHaveBeenCalledWith(expect.objectContaining({ nonce: pending?.nonce, trigger: "provider" }), "failed", "oauth", "provider_error");
+    expect(replace).not.toHaveBeenCalled();
+    result.mockRestore();
   });
 });
