@@ -2,7 +2,7 @@
 import { EventPhoto } from "@/components/fan-ui/event-photo";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Radio, Ticket } from "lucide-react";
+import { ArrowRight, CalendarDays, MessageSquare, Radio, Ticket } from "lucide-react";
 import { z } from "zod";
 import { flattenLiveCatalog } from "../domain/live-catalog";
 import { raffleListSchema } from "@/features/benefit/domain/raffle";
@@ -12,6 +12,9 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import { NoticeComments } from "./notice-comments";
 import { useFanpageResource } from "./use-fanpage-resource";
 import styles from "./fanpage.module.css";
+import panels from "./home-panels.module.css";
+import { ifewEventBanner } from "@/components/ifew-fan-guide/content";
+import { ifewLiveSlug } from "@/features/live/domain/ifew-event";
 
 const noticeListSchema = z.object({ notices: z.array(z.object({ slug: z.string(), title: z.string(), pinned: z.boolean(), publishedAt: z.string() })) });
 const parseNotices = (body: unknown) => noticeListSchema.parse(body).notices;
@@ -24,17 +27,61 @@ export function ResourceMessage({ locale, error, retry }: { locale: ContentLocal
 export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null }) {
   const ko = locale === "ko";
   const registeredPoster = upcomingLive?.photos?.poster;
-  return <section><div className={styles.sectionHeading}><h2>{ko ? "최근 활동" : "Recent activity"}</h2><Link href={`/live?locale=${locale}`}>{ko ? "LIVE 전체 보기" : "All LIVE"} →</Link></div>{upcomingLive ? <Link className={styles.liveCard} href={`/live/${upcomingLive.slug}?locale=${locale}`}>
-    {upcomingLive.preview?.square.posterUrl ? <Image src={upcomingLive.preview.square.posterUrl} alt="" width={340} height={340} unoptimized={bypassImageOptimization(upcomingLive.preview.square.posterUrl)} /> : registeredPoster ? <div className={styles.livePhoto}><EventPhoto photos={upcomingLive.photos} src={registeredPoster.asset.url} alt={registeredPoster.alt[locale]} locale={locale} surface="poster" sizes="340px" /></div> : <div className={styles.liveArt}><Radio aria-hidden="true" /><span>LIVE</span></div>}
-    <div><span className={styles.eyebrow}>{upcomingLive.effectiveStatus === "live" ? "LIVE NOW" : (ko ? "다가오는 LIVE" : "Upcoming LIVE")}</span><h3>{upcomingLive.title}</h3><p>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { dateStyle: "long", timeStyle: "short", hourCycle: "h23", timeZone: "Asia/Seoul" }).format(new Date(upcomingLive.startsAt))}</p><span>{ko ? "LIVE 자세히 보기" : "View LIVE details"} →</span></div>
-  </Link> : <div className={styles.empty}><Radio aria-hidden="true" /><h3>{ko ? "새로운 활동을 기다리고 있어요." : "New moments are on the way."}</h3><p>{ko ? `${celebrity.name}의 새 소식과 LIVE가 공개되면 이곳에서 만나요.` : `See ${celebrity.name}'s updates and LIVE events here when published.`}</p></div>}</section>;
+  const previewPoster = upcomingLive?.preview?.square.posterUrl;
+  // An explicit CMS removal must never restore historical event artwork.
+  const fallbackPoster = upcomingLive?.slug === ifewLiveSlug && registeredPoster !== null ? ifewEventBanner : null;
+  const poster = registeredPoster?.asset.url ?? fallbackPoster;
+  const hasArtwork = Boolean(previewPoster || poster);
+  return (
+    <section>
+      <div className={styles.sectionHeading}>
+        <h2>{ko ? "최근 활동" : "Recent activity"}</h2>
+        <Link href={`/live?locale=${locale}`}>{ko ? "LIVE 전체 보기" : "All LIVE"}<ArrowRight size={16} aria-hidden="true" /></Link>
+      </div>
+      {upcomingLive ? (
+        <Link className={panels.liveCard} data-has-artwork={hasArtwork} href={`/live/${upcomingLive.slug}?locale=${locale}`}>
+          {hasArtwork ? <div className={panels.liveMedia}>
+            {previewPoster ? <Image src={previewPoster} alt="" fill sizes="(max-width:767px) calc(100vw - 32px), 320px" unoptimized={bypassImageOptimization(previewPoster)} />
+              : <EventPhoto photos={upcomingLive.photos} src={poster!} alt={registeredPoster?.alt[locale] ?? upcomingLive.title} locale={locale} surface="poster" sizes="(max-width:767px) calc(100vw - 32px), 320px" />}
+          </div> : null}
+          <div className={panels.liveBody}>
+            <span className={panels.liveStatus} data-live={upcomingLive.effectiveStatus === "live"}><Radio size={15} aria-hidden="true" />{upcomingLive.effectiveStatus === "live" ? "LIVE NOW" : (ko ? "다가오는 LIVE" : "Upcoming LIVE")}</span>
+            <h3>{upcomingLive.title}</h3>
+            <p className={panels.liveDate}><CalendarDays size={16} aria-hidden="true" /><time dateTime={upcomingLive.startsAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", hourCycle: "h23", timeZone: "Asia/Seoul" }).format(new Date(upcomingLive.startsAt))} (KST)</time></p>
+            <span className={panels.liveAction}>{ko ? "LIVE 자세히 보기" : "View LIVE details"}<ArrowRight size={16} aria-hidden="true" /></span>
+          </div>
+        </Link>
+      ) : <div className={panels.emptyState}>
+        <span className={panels.emptyIcon}><Radio aria-hidden="true" /></span>
+        <div><h3>{ko ? "새로운 활동을 기다리고 있어요." : "New moments are on the way."}</h3><p>{ko ? `${celebrity.name}의 새 소식과 LIVE가 공개되면 이곳에서 만나요.` : `See ${celebrity.name}'s updates and LIVE events here when published.`}</p></div>
+      </div>}
+    </section>
+  );
 }
 export function NoticePanel({ slug, locale, full = false }: { slug: string; locale: ContentLocale; full?: boolean }) {
   const ko = locale === "ko";
   const resource = useFanpageResource(`/api/public/celebrities/${slug}/notices?locale=${locale}`, parseNotices);
-  return <section className={styles.noticeCard}><div className={styles.sectionHeading}><h2>{ko ? "공지와 댓글" : "Notices & comments"}</h2>{!full && <Link href={`/c/${slug}?tab=notice&locale=${locale}#celebrity-content`}>{ko ? "공지 전체 보기" : "All notices"} →</Link>}</div>
-    {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><h3>{ko ? "아직 등록된 공지가 없어요." : "No notices yet."}</h3><p>{ko ? "새로운 소식이 올라오면 이곳에서 확인해 주세요." : "New updates will appear here."}</p></div> : resource.state.data.slice(0, full ? undefined : 1).map((notice) => <article key={notice.slug} className={styles.notice}><Link href={`/c/${slug}/notices/${notice.slug}?locale=${locale}`}><h3>{notice.pinned && <span className={styles.pinned}>{ko ? "공지" : "Notice"}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></Link>{!full && <NoticeComments slug={slug} noticeSlug={notice.slug} locale={locale} preview />}</article>)}
-  </section>;
+  const empty = resource.state.status === "ready" && resource.state.data.length === 0;
+  return (
+    <section className={panels.notices}>
+      <div className={styles.sectionHeading}>
+        <h2>{ko ? "공지와 댓글" : "Notices & comments"}</h2>
+        {!full && !empty && <Link href={`/c/${slug}?tab=notice&locale=${locale}#celebrity-content`}>{ko ? "공지 전체 보기" : "All notices"}<ArrowRight size={16} aria-hidden="true" /></Link>}
+      </div>
+      {resource.state.status !== "ready" ? <div className={panels.noticeFeedback}><ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /></div>
+        : empty ? <div className={panels.emptyState} role="status">
+          <span className={panels.emptyIcon}><MessageSquare aria-hidden="true" /></span>
+          <div><h3>{ko ? "아직 등록된 공지가 없어요." : "No notices yet."}</h3><p>{ko ? "새 소식이 올라오면 여기에서 확인할 수 있어요." : "New updates will appear here."}</p></div>
+        </div>
+        : resource.state.data.slice(0, full ? undefined : 1).map((notice) => <article key={notice.slug} className={`${styles.notice} ${panels.noticeItem}`}>
+          <Link className={panels.noticeLink} href={`/c/${slug}/notices/${notice.slug}?locale=${locale}`}>
+            <div><h3>{notice.pinned && <span className={styles.pinned}>{ko ? "공지" : "Notice"}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></div>
+            <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+          {!full && <NoticeComments slug={slug} noticeSlug={notice.slug} locale={locale} preview />}
+        </article>)}
+    </section>
+  );
 }
 export function RafflePanel({ slug, name, locale, preview = false, ticketBalance }: { slug: string; name: string; locale: ContentLocale; preview?: boolean; ticketBalance: number | null }) {
   const ko = locale === "ko";

@@ -1,0 +1,43 @@
+.liveCard {
+  display: grid;
+  grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #e8e7ec;
+  border-radius: 16px;
+  background: #fff;
+}
+.liveCard[data-has-artwork="false"] { grid-template-columns: 1fr; }
+.liveCard:hover { border-color: #c9c5cd; }
+.liveMedia { position: relative; min-width: 0; min-height: 180px; background: #f8f7f9; }
+.liveMedia > img { object-fit: cover; }
+.liveBody { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 12px; padding: 24px; }
+.liveStatus { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; line-height: 1.4; font-weight: 750; color: var(--fanpage-accent-text, #ce0066); }
+.liveStatus[data-live="true"] { padding: 5px 9px; border-radius: 999px; background: #fff0f6; }
+.liveBody h3 { margin: 0; font-size: clamp(20px, 1.65vw, 24px); line-height: 1.35; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.liveDate { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--fanpage-text-muted, #6b6570); font-size: 13px; line-height: 1.6; }
+.liveDate svg { flex: 0 0 auto; margin-top: 2px; }
+.liveAction { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: auto; font-size: 13px; font-weight: 750; }
+.emptyState { display: flex; align-items: center; gap: 16px; padding: 20px; border: 1px solid #eceaee; border-radius: 14px; background: #faf9fb; }
+.emptyIcon { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; background: #f0edf2; color: #837b88; }
+.emptyIcon svg { width: 20px; height: 20px; }
+.emptyState h3 { margin: 0 0 5px; font-size: 15px; line-height: 1.45; font-weight: 700; }
+.emptyState p { margin: 0; color: var(--fanpage-text-muted, #6b6570); font-size: 13px; line-height: 1.6; }
+.notices { min-width: 0; }
+.noticeItem { padding: 20px; border: 1px solid #e8e7ec; border-radius: 14px; }
+.noticeLink { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 44px; }
+.noticeLink > div { min-width: 0; }
+.noticeLink > svg { flex: 0 0 auto; color: #837b88; }
+.noticeLink h3 { overflow-wrap: anywhere; }
+.noticeFeedback > div { min-height: 88px; padding: 20px; }
+@media (max-width: 767px) {
+  .liveCard { grid-template-columns: 1fr; }
+  .liveMedia { min-height: 0; aspect-ratio: 16 / 9; }
+  .liveBody { padding: 18px; gap: 10px; }
+  .liveBody h3 { font-size: 20px; }
+  .liveDate { font-size: 12px; }
+  .liveAction { margin-top: 2px; }
+  .emptyState { align-items: flex-start; gap: 12px; padding: 16px; }
+  .emptyIcon { width: 36px; height: 36px; }
+  .emptyState h3 { font-size: 14px; }
+  .noticeItem { padding: 18px; }
+}
