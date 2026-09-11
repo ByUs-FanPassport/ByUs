@@ -67,3 +67,12 @@
 - `20260911144306_cs_telegram_alerts.sql`이 신규 사용자 메시지를 기존 outbox에 저장한다. 이전 문의는 소급 발송하지 않으며, 동일 전송의 재시도는 알림을 중복 생성하지 않는다. 기존 매분 확인·최대 5건 묶음·방 단위 60초 간격·결과 불명 자동 재전송 금지 정책을 유지한다.
 - DB migration을 먼저 적용한 뒤 notification Lambda 코드만 갱신한다. `claim_telegram_alert_batch_with_cs`가 새 DTO를 반환하며 이전 claim RPC는 CS를 제외하므로 이전 워커도 기존 이벤트를 계속 처리한다. 롤백 시 이전 코드로 복구하면 CS 알림은 대기하며 기존 이벤트는 유지된다.
 - `bash scripts/verify-cs-telegram-local.sh`: CS 접수/추가 메시지/재개, 중복·원자성, 개인정보 제외, 운영자 제외, 이전 워커 호환, 오류 격리와 기존 Telegram lifecycle·명령·경쟁 검증을 실행한다. 기존 backend-security CI에도 포함된다.
+
+### CS 운영 반영 및 전송 검증 — 2026-09-11
+
+- 구현 `b69b917`, 운영 migration `20260911144306` 적용 완료. 기존 notification Lambda를 코드만 갱신하고 `Active`/`Successful` 및 ZIP SHA-256 일치를 확인했다. 기존 설정·IAM·다른 Lambda·매분 스케줄은 유지했다.
+- 워커 39파일/485테스트, typecheck, lint, Lambda bundle 검사 PASS. 로컬 전체 migration replay와 기존 Telegram/CS SQL·동시 실행 검사 PASS. 독립 검토 잔여 지적 없음.
+- 회사 운영 계정으로 테스트임을 명시한 문의 `9a54c1bd-b5b1-4c2a-84bf-3e9f2972af62`를 생성하고 사용자 추가 메시지를 남겼다. 실제 CS RPC → 트리거 → outbox → 예약 Lambda → Telegram 경로를 검증했다.
+- 두 이벤트는 기존 운영 방의 Telegram 메시지 `334`로 묶여 전송됐다. 두 건 모두 `sent`, `attempt_count=1`, 오류 없음. 문의 제목·본문·개인정보를 포함하지 않았다. Telegram 전송 결과를 확인한 것이며 사람의 열람 여부는 확인하지 않았다.
+- 테스트 문의는 검증 후 기존 관리자 RPC로 `resolved` 처리했고 대화·감사·발송 이력은 보존했다.
+- 근거: `/tmp/byus-cs-telegram-sql-2.log`, `/tmp/byus-cs-telegram-worker.log`, `/tmp/byus-cs-tg-production-migration.log`, `/tmp/byus-cs-tg-deploy.log`, `/tmp/byus-cs-tg-live-test.log`, `/tmp/byus-cs-tg-receipts.log`, `/tmp/byus-cs-tg-resolve.log`. 이전 Lambda ZIP은 `/tmp/byus-cs-tg-rollout/previous.zip`에 보존했다.
