@@ -7,6 +7,7 @@ import {
 } from "./auth-intent-link";
 import { createAuthIntent } from "./auth-intent";
 import { takeOverlayTrigger } from "./ui/overlay/focus-return";
+import { getSessionStorage } from "../features/reliability/client/session-storage";
 
 const push = vi.fn();
 let ready = true;
@@ -33,6 +34,21 @@ describe("AuthIntentLink", () => {
     targetType: "celebrity",
     targetId: "kara",
   } as const;
+
+  it("opens the intended login path even when the sessionStorage getter is blocked", () => {
+    const getter = vi.spyOn(window, "sessionStorage", "get").mockImplementation(() => {
+      throw new DOMException("Storage blocked", "SecurityError");
+    });
+    try {
+      render(<AuthIntentLink locale="ko" input={input}>팬 인증하기</AuthIntentLink>);
+      fireEvent.click(screen.getByRole("link", { name: "팬 인증하기" }));
+      expect(push).toHaveBeenCalledWith(expect.stringContaining("returnTo=%2Fc%2Fkara%2Fverify"));
+      expect(push).toHaveBeenCalledWith(expect.stringContaining("intent=passport"));
+    } finally {
+      getter.mockRestore();
+      getSessionStorage().removeItem("byus:auth-intent:v1:11111111-1111-4111-8111-111111111111");
+    }
+  });
 
   it("resolves pending, guest, and authenticated destinations without duplicating auth state", () => {
     const intent = createAuthIntent(input);

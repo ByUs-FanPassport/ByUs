@@ -16,6 +16,13 @@ import { readAuthIntent } from "./auth-intent";
 import { FanAction } from "./fan-ui/fan-action";
 import { FanState } from "./fan-ui/fan-state";
 import { useAvatarSessionReady } from "./avatar-session-bridge";
+import {
+  RequestTimeoutError,
+  reportRecoveryFailure,
+  withOperationDeadline,
+  withRequestDeadline,
+} from "../features/reliability/client/request-deadline";
+import { getSessionStorage } from "../features/reliability/client/session-storage";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -33,6 +40,16 @@ type LoginPageProps = {
 
 const VERIFIED_EMAIL_REQUIRED = "VERIFIED_EMAIL_REQUIRED";
 const APPLE_REAUTHENTICATION_REQUIRED = "APPLE_REAUTHENTICATION_REQUIRED";
+const LOGIN_READINESS_TIMEOUT = "LOGIN_READINESS_TIMEOUT";
+const SESSION_SYNCHRONIZATION_TIMEOUT = "SESSION_SYNCHRONIZATION_TIMEOUT";
+const SDK_OPERATION_TIMEOUT_MS = 30_000;
+
+class StaleLoginIdentityError extends Error {
+  constructor() {
+    super("Login identity changed");
+    this.name = "StaleLoginIdentityError";
+  }
+}
 
 function loginSessionCopy({
   locale,
@@ -58,6 +75,16 @@ function loginSessionCopy({
           title: "We couldn't find a verified email for this account.",
           description: "Sign out, then choose an account that can share a verified email.",
         };
+  }
+  if (error === LOGIN_READINESS_TIMEOUT) {
+    return locale === "ko"
+      ? { title: "로그인 준비가 오래 걸리고 있어요.", description: "다시 확인하면 이 화면에서 로그인을 이어갈 수 있어요." }
+      : { title: "Sign-in is taking longer than expected.", description: "Check again to continue signing in from this screen." };
+  }
+  if (error === SESSION_SYNCHRONIZATION_TIMEOUT) {
+    return locale === "ko"
+      ? { title: "로그인 연결이 오래 걸리고 있어요.", description: "현재 계정을 유지한 채 다시 시도해 주세요." }
+      : { title: "Connecting your sign-in is taking longer than expected.", description: "Try again while keeping your current account." };
   }
   if (error) {
     return locale === "ko"
@@ -115,9 +142,14 @@ export function LoginPage({
   const [reauthenticationProviders, setReauthenticationProviders] = useState<Array<"google" | "apple">>([]);
   const [reauthenticationStarting, setReauthenticationStarting] = useState(false);
   const [reauthenticationFailed, setReauthenticationFailed] = useState(false);
+  const [readinessAttempt, setReadinessAttempt] = useState(0);
   const reauthenticationStartRef = useRef(false);
   const oauthStartRef = useRef(false);
-  const synchronizationRef = useRef<Promise<void> | null>(null);
+  const synchronizationRef = useRef<{ userId: string; promise: Promise<void> } | null>(null);
+  const walletCreationsRef = useRef(new Map<string, Promise<unknown>>());
+  const activeIdentityRef = useRef<string | null>(privyUserId ?? null);
+  const identityGenerationRef = useRef(0);
+  const mountedRef = useRef(true);
   const attemptedSessionUserRef = useRef<string | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -128,40 +160,80 @@ export function LoginPage({
   const entity = useMemo(() => sanitizeEntity(searchParams.get("entity")), [searchParams]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(searchParams.get("authIntent")), [searchParams]);
   const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
+  const activateIdentity = useCallback((userId: string) => {
+    if (activeIdentityRef.current !== userId) {
+      activeIdentityRef.current = userId;
+      identityGenerationRef.current += 1;
+      synchronizationRef.current = null;
+    }
+    return identityGenerationRef.current;
+  }, []);
+  const assertCurrentIdentity = useCallback((userId: string, generation: number) => {
+    if (!mountedRef.current || activeIdentityRef.current !== userId || identityGenerationRef.current !== generation) {
+      throw new StaleLoginIdentityError();
+    }
+  }, []);
   const synchronizeSession = useCallback((completedUserId?: string) => {
-    if (synchronizationRef.current) return synchronizationRef.current;
-    attemptedSessionUserRef.current = completedUserId ?? privyUserId ?? null;
+    const expectedUserId = completedUserId ?? privyUserId;
+    if (!expectedUserId) return Promise.resolve();
+    if (synchronizationRef.current?.userId === expectedUserId) return synchronizationRef.current.promise;
+    const generation = activateIdentity(expectedUserId);
+    attemptedSessionUserRef.current = expectedUserId;
 
-    synchronizationRef.current = (async () => {
+    let promise!: Promise<void>;
+    promise = (async () => {
+      let stage = "login.user";
       try {
         // Headless OAuth does not run Privy's createOnLogin policy. Prepare the
         // same user-owned EVM wallet before the server establishes its session.
-        const expectedUserId = completedUserId ?? privyUserId;
-        const currentUser = await refreshUser();
-        if (!expectedUserId || currentUser.id !== expectedUserId) {
-          throw new Error("Privy user changed during sign-in");
-        }
+        const currentUser = await withOperationDeadline(refreshUser(), SDK_OPERATION_TIMEOUT_MS);
+        assertCurrentIdentity(expectedUserId, generation);
+        if (currentUser.id !== expectedUserId) throw new StaleLoginIdentityError();
         const hasWallet = currentUser.linkedAccounts.some((account) =>
           account.type === "wallet" && account.chainType === "ethereum"
           && account.connectorType === "embedded" && account.walletClientType === "privy",
         );
         if (!hasWallet) {
           // Never create an additional wallet or replace an existing identity.
-          await createWallet({ createAdditional: false });
+          stage = "login.wallet";
+          let walletCreation = walletCreationsRef.current.get(expectedUserId);
+          if (!walletCreation) {
+            const underlying = Promise.resolve(createWallet({ createAdditional: false }));
+            walletCreation = underlying;
+            walletCreationsRef.current.set(expectedUserId, underlying);
+            void underlying.finally(() => {
+              if (walletCreationsRef.current.get(expectedUserId) === underlying) {
+                walletCreationsRef.current.delete(expectedUserId);
+              }
+            }).catch(() => undefined);
+          }
+          await withOperationDeadline(walletCreation, SDK_OPERATION_TIMEOUT_MS);
+          assertCurrentIdentity(expectedUserId, generation);
         }
-        const token = await getAccessToken();
+        stage = "login.token";
+        const token = await withOperationDeadline(getAccessToken(), SDK_OPERATION_TIMEOUT_MS);
+        assertCurrentIdentity(expectedUserId, generation);
         if (!token) throw new Error("Missing Privy access token");
-        const response = await fetch("/api/auth/session", {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${token}`,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ locale }),
-          cache: "no-store",
-        });
+        stage = "login.session";
+        const { response, body } = await withRequestDeadline(async (signal) => {
+          const response = await fetch("/api/auth/session", {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ locale }),
+            cache: "no-store",
+            signal,
+          });
+          const body = await response.json().catch(() => null) as {
+            profile?: { completed?: boolean };
+            error?: { code?: string; providers?: unknown };
+          } | null;
+          return { response, body };
+        }, { timeoutMs: SDK_OPERATION_TIMEOUT_MS });
+        assertCurrentIdentity(expectedUserId, generation);
         if (!response.ok) {
-          const body = await response.json().catch(() => null) as { error?: { code?: string; providers?: unknown } } | null;
           if (response.status === 403 && body?.error?.code === APPLE_REAUTHENTICATION_REQUIRED) {
             const providers = Array.isArray(body.error.providers)
               ? body.error.providers.filter((provider): provider is "apple" | "google" => provider === "apple" || provider === "google")
@@ -174,32 +246,38 @@ export function LoginPage({
           }
           throw new Error("Session synchronization failed");
         }
-        const body = await response.json() as { profile?: { completed?: boolean } };
-        const synchronizedUserId = completedUserId ?? privyUserId;
-        if (synchronizedUserId) markAvatarSessionReady(synchronizedUserId);
+        assertCurrentIdentity(expectedUserId, generation);
+        markAvatarSessionReady(expectedUserId);
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
-        const storedIntent = typeof window === "undefined" ? null : readAuthIntent(window.sessionStorage, authIntent);
+        const storedIntent = typeof window === "undefined" ? null : readAuthIntent(getSessionStorage(), authIntent);
         const continuesFanVerification = storedIntent?.actionType === "START_FAN_VERIFICATION"
           || (intent === "passport" && entity !== null && returnPathname === `/c/${entity}/verify`);
         const safeReturnTo = returnPathname === "/onboarding/profile" ? `/?locale=${locale}` : returnTo;
-        const destination = body.profile?.completed
+        const destination = body?.profile?.completed
           ? safeReturnTo
           : continuesFanVerification
             ? appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent })
             : safeReturnTo;
         router.replace(destination as Route);
       } catch (caught) {
-        synchronizationRef.current = null;
+        if (caught instanceof StaleLoginIdentityError) return;
+        reportRecoveryFailure(stage, caught);
+        if (!mountedRef.current || activeIdentityRef.current !== expectedUserId || identityGenerationRef.current !== generation) return;
         setError(
           caught instanceof Error && [VERIFIED_EMAIL_REQUIRED, APPLE_REAUTHENTICATION_REQUIRED].includes(caught.message)
             ? caught.message
-            : "로그인 정보를 안전하게 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
+            : caught instanceof RequestTimeoutError
+              ? SESSION_SYNCHRONIZATION_TIMEOUT
+              : "SESSION_SYNCHRONIZATION_FAILED",
         );
+      } finally {
+        if (synchronizationRef.current?.promise === promise) synchronizationRef.current = null;
       }
     })();
 
-    return synchronizationRef.current;
-  }, [authIntent, createWallet, entity, getAccessToken, intent, locale, refreshUser, returnTo, router, privyUserId, markAvatarSessionReady]);
+    synchronizationRef.current = { userId: expectedUserId, promise };
+    return promise;
+  }, [activateIdentity, assertCurrentIdentity, authIntent, createWallet, entity, getAccessToken, intent, locale, refreshUser, returnTo, router, privyUserId, markAvatarSessionReady]);
   const loginErrorMessage = locale === "en"
     ? testAccountLoginEnabled
       ? "We couldn't complete sign-in. Check your account and verification code, then try again."
@@ -223,13 +301,47 @@ export function LoginPage({
     oauthStartRef.current = true;
     setOauthStarting(true);
     setError(null);
-    void initOAuth({ provider })
-      .catch(() => setError(loginErrorMessage))
+    void withOperationDeadline(initOAuth({ provider }), SDK_OPERATION_TIMEOUT_MS)
+      .catch((caught) => {
+        reportRecoveryFailure("login.oauth", caught);
+        setError(loginErrorMessage);
+      })
       .finally(() => {
         oauthStartRef.current = false;
         setOauthStarting(false);
       });
   }, [initOAuth, loginErrorMessage]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      identityGenerationRef.current += 1;
+      synchronizationRef.current = null;
+      attemptedSessionUserRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentUserId = privyUserId ?? null;
+    if (activeIdentityRef.current === currentUserId) return;
+    activeIdentityRef.current = currentUserId;
+    identityGenerationRef.current += 1;
+    synchronizationRef.current = null;
+    attemptedSessionUserRef.current = null;
+  }, [privyUserId]);
+
+  useEffect(() => {
+    if (ready) {
+      setError((current) => current === LOGIN_READINESS_TIMEOUT ? null : current);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      reportRecoveryFailure("login.ready", new RequestTimeoutError(SDK_OPERATION_TIMEOUT_MS));
+      setError(LOGIN_READINESS_TIMEOUT);
+    }, SDK_OPERATION_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [readinessAttempt, ready]);
 
   useEffect(() => {
     if (ready && authenticated && privyUserId && attemptedSessionUserRef.current !== privyUserId) {
@@ -248,14 +360,21 @@ export function LoginPage({
 
   const retrySessionSynchronization = useCallback(() => {
     setError(null);
-    void synchronizeSession();
+    void synchronizeSession(attemptedSessionUserRef.current ?? undefined);
   }, [synchronizeSession]);
+
+  const retryLoginReadiness = useCallback(() => {
+    setError(null);
+    setReadinessAttempt((attempt) => attempt + 1);
+  }, []);
 
   const restartLogin = useCallback(async () => {
     try {
       await logout();
       synchronizationRef.current = null;
       attemptedSessionUserRef.current = null;
+      activeIdentityRef.current = null;
+      identityGenerationRef.current += 1;
       setError(null);
       setReauthenticationProviders([]);
     } catch {
@@ -268,30 +387,47 @@ export function LoginPage({
     reauthenticationStartRef.current = true;
     setReauthenticationStarting(true);
     setReauthenticationFailed(false);
+    const expectedUserId = activeIdentityRef.current;
+    const generation = identityGenerationRef.current;
     try {
-      const token = await getAccessToken();
+      if (!expectedUserId) throw new StaleLoginIdentityError();
+      const token = await withOperationDeadline(getAccessToken(), SDK_OPERATION_TIMEOUT_MS);
+      assertCurrentIdentity(expectedUserId, generation);
       if (!token) throw new Error("Missing Privy session");
-      const response = await fetch("/api/auth/apple/reauth/start", {
-        method: "POST", cache: "no-store",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ provider, returnTo, locale, intent, entity, authIntent }),
-      });
-      const body = await response.json() as { authorizationUrl?: string };
+      const { response, body } = await withRequestDeadline(async (signal) => {
+        const response = await fetch("/api/auth/apple/reauth/start", {
+          method: "POST", cache: "no-store", signal,
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify({ provider, returnTo, locale, intent, entity, authIntent }),
+        });
+        const body = await response.json() as { authorizationUrl?: string };
+        return { response, body };
+      }, { timeoutMs: SDK_OPERATION_TIMEOUT_MS });
+      assertCurrentIdentity(expectedUserId, generation);
       if (!response.ok || !body.authorizationUrl) throw new Error("Reauthentication is unavailable");
       const destination = new URL(body.authorizationUrl);
       const expectedOrigin = provider === "apple" ? "https://appleid.apple.com" : "https://accounts.google.com";
       if (destination.origin !== expectedOrigin) throw new Error("Invalid authentication destination");
+      assertCurrentIdentity(expectedUserId, generation);
       window.location.assign(destination.toString());
-    } catch {
+    } catch (caught) {
+      if (caught instanceof StaleLoginIdentityError) return;
+      reportRecoveryFailure("login.reauthentication", caught);
       setReauthenticationFailed(true);
       setError(APPLE_REAUTHENTICATION_REQUIRED);
     } finally {
       reauthenticationStartRef.current = false;
       setReauthenticationStarting(false);
     }
-  }, [authIntent, entity, getAccessToken, intent, locale, returnTo]);
+  }, [assertCurrentIdentity, authIntent, entity, getAccessToken, intent, locale, returnTo]);
 
-  const showsSessionState = !ready || authenticated;
+  const showsSessionState = !ready || authenticated || [
+    VERIFIED_EMAIL_REQUIRED,
+    APPLE_REAUTHENTICATION_REQUIRED,
+    LOGIN_READINESS_TIMEOUT,
+    SESSION_SYNCHRONIZATION_TIMEOUT,
+    "SESSION_SYNCHRONIZATION_FAILED",
+  ].includes(error ?? "");
   const sessionCopy = loginSessionCopy({
     locale,
     ready,
@@ -342,11 +478,17 @@ export function LoginPage({
           ) : error ? (
             <FanAction
               variant="neutral"
-              onClick={error === VERIFIED_EMAIL_REQUIRED ? restartLogin : retrySessionSynchronization}
+              onClick={error === VERIFIED_EMAIL_REQUIRED
+                ? restartLogin
+                : error === LOGIN_READINESS_TIMEOUT
+                  ? retryLoginReadiness
+                  : retrySessionSynchronization}
             >
               {error === VERIFIED_EMAIL_REQUIRED
                 ? locale === "ko" ? "다른 계정으로 로그인" : "Sign in with another account"
-                : locale === "ko" ? "다시 시도" : "Try again"}
+                : error === LOGIN_READINESS_TIMEOUT
+                  ? locale === "ko" ? "다시 확인" : "Check again"
+                  : locale === "ko" ? "다시 시도" : "Try again"}
             </FanAction>
           ) : undefined}
         />

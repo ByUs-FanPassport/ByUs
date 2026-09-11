@@ -1,5 +1,6 @@
 import { withLocalePath } from "./locale-path";
 import { z } from "zod";
+import type { SessionStorageAccess } from "../features/reliability/client/session-storage";
 
 export const authActionTypeSchema = z.enum([
   "CREATE_REACTION",
@@ -152,10 +153,14 @@ function storageKey(id: string): string {
   return `${AUTH_INTENT_STORAGE_PREFIX}${id}`;
 }
 
-function removeAssociatedDraft(storage: Storage, intent: AuthIntent): void {
+function removeSafely(storage: SessionStorageAccess, key: string): void {
+  try { storage.removeItem(key); } catch { /* A storage failure must not block navigation. */ }
+}
+
+function removeAssociatedDraft(storage: SessionStorageAccess, intent: AuthIntent): void {
   const draftRef = intent.draftPayload.draftRef;
   if (typeof draftRef === "string" && /^byus:fan-code-draft:[a-z0-9][a-z0-9-]{0,127}$/i.test(draftRef)) {
-    storage.removeItem(draftRef);
+    removeSafely(storage, draftRef);
   }
 }
 
@@ -175,39 +180,40 @@ export function createAuthIntent(
   });
 }
 
-export function persistAuthIntent(storage: Storage, intent: AuthIntent): void {
+export function persistAuthIntent(storage: SessionStorageAccess, intent: AuthIntent): void {
   const parsed = authIntentSchema.parse(intent);
-  storage.setItem(storageKey(parsed.id), JSON.stringify(parsed));
+  try { storage.setItem(storageKey(parsed.id), JSON.stringify(parsed)); }
+  catch { /* The login URL still carries its safe return path and legacy action. */ }
 }
 
 export function readAuthIntent(
-  storage: Storage,
+  storage: SessionStorageAccess,
   id: string | null | undefined,
   now = Date.now(),
 ): AuthIntent | null {
   if (!id || !z.uuid().safeParse(id).success) return null;
   const key = storageKey(id);
-  const raw = storage.getItem(key);
-  if (!raw) return null;
   try {
+    const raw = storage.getItem(key);
+    if (!raw) return null;
     const parsed = authIntentSchema.parse(JSON.parse(raw));
     if (parsed.expiresAt <= now) {
       removeAssociatedDraft(storage, parsed);
-      storage.removeItem(key);
+      removeSafely(storage, key);
       return null;
     }
     return parsed;
   } catch {
-    storage.removeItem(key);
+    removeSafely(storage, key);
     return null;
   }
 }
 
-export function consumeAuthIntent(storage: Storage, id: string, now = Date.now()): AuthIntent | null {
+export function consumeAuthIntent(storage: SessionStorageAccess, id: string, now = Date.now()): AuthIntent | null {
   const intent = readAuthIntent(storage, id, now);
   if (intent) {
     removeAssociatedDraft(storage, intent);
-    storage.removeItem(storageKey(intent.id));
+    removeSafely(storage, storageKey(intent.id));
   }
   return intent;
 }

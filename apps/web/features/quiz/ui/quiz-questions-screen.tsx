@@ -17,6 +17,11 @@ import { appendLiveReturnTo, sanitizeLiveReturnTo } from "../domain/live-return-
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { FocusFlowFrame } from "@/components/fan-shell/focus-flow-frame";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import {
+  reportRecoveryFailure,
+  withOperationDeadline,
+  withRequestDeadline,
+} from "@/features/reliability/client/request-deadline";
 import styles from "./quiz-questions-screen.module.css";
 
 type ScreenState =
@@ -60,6 +65,8 @@ const copy = {
     previous: "이전 질문",
     submitting: "결과 확인 중…",
     submit: "팬 인증 결과 확인",
+    submitUnknown: "제출 결과를 아직 확인하지 못했어요. 결과를 다시 확인하거나 같은 시도에서 다시 제출해 주세요.",
+    recheck: "제출 결과 다시 확인",
     next: "다음 질문",
   },
   en: {
@@ -89,6 +96,8 @@ const copy = {
     previous: "Previous question",
     submitting: "Checking result…",
     submit: "View verification result",
+    submitUnknown: "We couldn't confirm the submission result. Check it again or resubmit the same attempt.",
+    recheck: "Check submission result again",
     next: "Next question",
   },
 } as const;
@@ -156,14 +165,14 @@ export function QuizQuestionsScreen({
     setScreen({ kind: "loading" });
     setOperationError(null);
     try {
-      const token = await getAccessToken();
+      const token = await withOperationDeadline(getAccessToken());
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
-      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}`, {
-        method: "POST",
-        headers: authorization(token),
-        cache: "no-store",
+      const body = await withRequestDeadline(async (signal) => {
+        const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}`, {
+          method: "POST", headers: authorization(token), cache: "no-store", signal,
+        });
+        return await readJson(response) as { result?: unknown };
       });
-      const body = await readJson(response) as { result?: unknown };
       const result = parseQuizStartProjection(body.result);
       if (generation !== requestGeneration.current) return;
       if (result.kind === "holder") {
@@ -178,6 +187,7 @@ export function QuizQuestionsScreen({
       const firstUnanswered = result.questions.findIndex((question) => question.selectedOptionId === null);
       setQuestionIndex(firstUnanswered === -1 ? 0 : firstUnanswered);
     } catch (error) {
+      reportRecoveryFailure("quiz.load", error);
       if (generation === requestGeneration.current) setScreen({ kind: "error", message: errorMessage(error, locale) });
     }
   }, [getAccessToken, liveReturnTo, locale, resultPath, router, slug]);
@@ -222,28 +232,71 @@ export function QuizQuestionsScreen({
     }
   }, [getAccessToken, locale, projection, savingQuestionId, submitPending]);
 
+  const reconcileSubmission = useCallback(async (attemptId: string, generation: number) => {
+    try {
+      const token = await withOperationDeadline(getAccessToken());
+      if (!token) throw new QuizUiError("UNAUTHENTICATED");
+      const body = await withRequestDeadline(async (signal) => {
+        const response = await fetch(`/api/quiz-attempts/${attemptId}?locale=${locale}`, {
+          method: "GET", headers: authorization(token), cache: "no-store", signal,
+        });
+        return await readJson(response) as { attempt?: unknown };
+      });
+      const current = parseQuizAttemptProjection(body.attempt);
+      if (generation !== requestGeneration.current) return false;
+      if (current.attempt.status !== "open") {
+        router.replace(resultPath(current.attempt.id));
+        return true;
+      }
+      setScreen({ kind: "ready", projection: current });
+      setOperationError(t.submitUnknown);
+      return false;
+    } catch (error) {
+      reportRecoveryFailure("quiz.reconcile", error);
+      if (generation === requestGeneration.current) setOperationError(t.submitUnknown);
+      return false;
+    }
+  }, [getAccessToken, locale, resultPath, router, t.submitUnknown]);
+
   const submit = useCallback(async () => {
     if (!projection || !allAnswered || savingQuestionId || submitPending) return;
     setSubmitPending(true);
     setOperationError(null);
+    const generation = requestGeneration.current;
+    const attemptId = projection.attempt.id;
     try {
-      const token = await getAccessToken();
+      const token = await withOperationDeadline(getAccessToken());
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
-      const response = await fetch(`/api/quiz-attempts/${projection.attempt.id}/submit`, {
-        method: "POST",
-        headers: authorization(token),
-        cache: "no-store",
+      const body = await withRequestDeadline(async (signal) => {
+        const response = await fetch(`/api/quiz-attempts/${attemptId}/submit`, {
+          method: "POST", headers: authorization(token), cache: "no-store", signal,
+        });
+        return await readJson(response) as { result?: unknown };
       });
-      const body = await readJson(response) as { result?: unknown };
       const result = parseQuizSubmitProjection(body.result);
+      if (generation !== requestGeneration.current) return;
       router.replace(result.issuance
         ? resultPath(result.attempt.id, result.issuance.passportId)
         : resultPath(result.attempt.id));
     } catch (error) {
-      setOperationError(errorMessage(error, locale));
-      setSubmitPending(false);
+      reportRecoveryFailure("quiz.submit", error);
+      if (error instanceof QuizUiError && error.code !== "ATTEMPT_CLOSED") {
+        if (generation === requestGeneration.current) setOperationError(errorMessage(error, locale));
+      } else {
+        await reconcileSubmission(attemptId, generation);
+      }
+    } finally {
+      if (generation === requestGeneration.current) setSubmitPending(false);
     }
-  }, [allAnswered, getAccessToken, locale, projection, resultPath, router, savingQuestionId, submitPending]);
+  }, [allAnswered, getAccessToken, locale, projection, reconcileSubmission, resultPath, router, savingQuestionId, submitPending]);
+
+  const recheckSubmission = useCallback(async () => {
+    if (!projection || submitPending) return;
+    setSubmitPending(true);
+    const generation = requestGeneration.current;
+    await reconcileSubmission(projection.attempt.id, generation);
+    if (generation === requestGeneration.current) setSubmitPending(false);
+  }, [projection, reconcileSubmission, submitPending]);
 
   if (!ready || (authenticated && screen.kind === "loading")) {
     return <QuizFrame locale={locale}><div className={styles.loading} role="status" aria-label={t.loadingAria}><span /><span /><span /><p>{t.loading}</p></div></QuizFrame>;
@@ -299,7 +352,7 @@ export function QuizQuestionsScreen({
         <div className={styles.saveStatus} aria-live="polite">
           {isSaving ? t.saving : question.selectedOptionId ? t.saved : t.select}
         </div>
-        {operationError && <div ref={operationErrorRef} className={styles.inlineError} role="alert" tabIndex={-1}><p>{operationError} {t.retryAnswer}</p></div>}
+        {operationError && <div ref={operationErrorRef} className={styles.inlineError} role="alert" tabIndex={-1}><p>{operationError}{operationError === t.submitUnknown ? "" : ` ${t.retryAnswer}`}</p>{operationError === t.submitUnknown ? <button type="button" disabled={submitPending} onClick={() => void recheckSubmission()}>{t.recheck}</button> : null}</div>}
         <nav className={styles.navigation} aria-label={t.navigation}>
           <button className={styles.previous} type="button" disabled={questionIndex === 0 || Boolean(savingQuestionId) || submitPending} onClick={() => setQuestionIndex((index) => index - 1)}><ArrowLeft aria-hidden="true" /> {t.previous}</button>
           {isLast ? (

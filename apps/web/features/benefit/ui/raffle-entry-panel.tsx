@@ -11,7 +11,7 @@ import type { BenefitCatalogItem } from "../domain/benefit";
 import type { BenefitEntryResult } from "../domain/benefit-entry";
 import type { RaffleList } from "../domain/raffle";
 import { creatorRafflesHref } from "../domain/raffle-navigation";
-import { useRaffleEntry } from "./use-raffle-entry";
+import { useRaffleEntry, type RaffleEntryError } from "./use-raffle-entry";
 import styles from "./creator-raffles-screen.module.css";
 
 type Props = {
@@ -21,6 +21,17 @@ type Props = {
   onAccepted: (result: BenefitEntryResult) => void;
   onReconciled: (benefit: BenefitCatalogItem) => void;
 };
+
+export function raffleEntryErrorText(error: RaffleEntryError | null, locale: "ko" | "en") {
+  const ko = locale === "ko";
+  return error === "uncertain" ? (ko ? "접수 결과를 아직 확인하지 못했어요. 같은 요청을 다시 확인해 주세요." : "The entry result is unconfirmed. Check the same request again.")
+    : error === "storage" ? (ko ? "이 브라우저에 응모 요청을 안전하게 저장하지 못했어요. 저장 공간이나 브라우저 설정을 확인한 뒤 같은 요청을 다시 시도해 주세요." : "We couldn't safely save this entry request in your browser. Check your storage or browser settings, then retry the same request.")
+    : error === "unavailable" ? (ko ? "응모를 시작하지 못했어요. 같은 요청으로 다시 시도해 주세요." : "We couldn't start the entry. Try the same request again.")
+    : error === "reconcile" ? (ko ? "접수는 완료됐지만 최신 잔액을 확인하지 못했어요." : "Your entry was accepted, but the current balance could not be checked.")
+    : error === "policy" ? (ko ? "수령 조건이 변경됐어요. 최신 조건을 확인하고 다시 동의해 주세요." : "The delivery conditions changed. Review the latest conditions and confirm again.")
+    : error === "auth" ? (ko ? "로그인 상태를 확인한 뒤 다시 시도해 주세요." : "Check your sign-in status and try again.")
+    : error === "rejected" ? (ko ? "응모가 접수되지 않았어요. 잔액과 응모 조건을 다시 확인해 주세요." : "The entry was not accepted. Check your balance and entry conditions.") : null;
+}
 
 export function RaffleEntryPanel({ celebrity, locale, raffle, benefit, loading, loadFailed, status, refresh, onAccepted, onReconciled }: Props) {
   const auth = usePrivy();
@@ -52,11 +63,7 @@ export function RaffleEntryPanel({ celebrity, locale, raffle, benefit, loading, 
     else if (previousReceiptRef.current) entryHeadingRef.current?.focus();
     previousReceiptRef.current = request.receipt?.entryId;
   }, [request.receipt]);
-  const errorText = request.error === "uncertain" ? (ko ? "접수 결과를 아직 확인하지 못했어요. 같은 요청을 다시 확인해 주세요." : "The entry result is unconfirmed. Check the same request again.")
-    : request.error === "reconcile" ? (ko ? "접수는 완료됐지만 최신 잔액을 확인하지 못했어요." : "Your entry was accepted, but the current balance could not be checked.")
-    : request.error === "policy" ? (ko ? "수령 조건이 변경됐어요. 최신 조건을 확인하고 다시 동의해 주세요." : "The delivery conditions changed. Review the latest conditions and confirm again.")
-    : request.error === "auth" ? (ko ? "로그인 상태를 확인한 뒤 다시 시도해 주세요." : "Check your sign-in status and try again.")
-    : request.error === "rejected" ? (ko ? "응모가 접수되지 않았어요. 잔액과 응모 조건을 다시 확인해 주세요." : "The entry was not accepted. Check your balance and entry conditions.") : null;
+  const errorText = raffleEntryErrorText(request.error, locale);
   const blockedText = status !== "open" ? (status === "preparing" ? (ko ? "아직 응모 기간이 아니에요." : "Entries have not opened yet.") : status === "cancelled" ? (ko ? "취소된 응모예요." : "This raffle was cancelled.") : (ko ? "응모가 마감됐어요." : "Entries are closed."))
     : balance === 0 ? (ko ? "현재 보유한 응모권이 없어요." : "You have no raffle tickets available.")
     : entry?.remainingBenefitTickets === 0 ? (ko ? "이 선물의 응모 한도에 도달했어요." : "You have reached this gift’s entry limit.")
@@ -94,7 +101,7 @@ export function RaffleEntryPanel({ celebrity, locale, raffle, benefit, loading, 
     </section>
     <section className={styles.afterEntry}><h2>{ko ? "응모 후에는 이렇게 진행돼요" : "What happens after you enter"}</h2><div><article><span>01</span><h3>{ko ? "응모 완료" : "Entry confirmed"}</h3><p>{ko ? "선택한 수량만큼 응모권이 차감돼요." : "Only the confirmed number of tickets is deducted."}</p></article><article><span>02</span><h3>{ko ? "내 응모에서 결과 확인" : "Check your raffle result"}</h3><p>{ko ? "결과가 발표되면 당첨 여부를 확인해요." : "Check your result after the announcement."}</p></article><article><span>03</span><h3>{ko ? "당첨되면 선물 받기" : "Receive your prize if selected"}</h3><p>{policy && raffle.fulfillmentMethod !== "digital" ? (ko ? `발표 후 ${policy.recipientWindowDays}일 안에 수령 정보를 입력해요.` : `Submit recipient details within ${policy.recipientWindowDays} days of the announcement.`) : (ko ? "내 응모 내역의 수령 안내를 확인해요." : "Follow the delivery instructions in your raffle entries.")}</p></article></div>{needsAck ? <p className={styles.notice}>{ko ? "한국 주소로만 배송해요. 해외 배송은 지원하지 않습니다." : "Shipping is available only to addresses in South Korea."}</p> : null}{policy?.pickupInstructions[locale] ? <p className={styles.notice}>{policy.pickupInstructions[locale]}</p> : null}</section>
     <AlertDialog open={confirmAmount !== null && !hasReceipt} onClose={() => { if (!request.pending) setConfirmAmount(null); }} labelledBy="raffle-confirm-title" describedBy="raffle-confirm-help" busy={request.pending} closeOnEscape={!request.pending} closeOnBackdrop={!request.pending} initialFocusRef={cancelRef} backdropClassName={styles.dialogBackdrop} contentClassName={styles.dialog}>
-      <span className={styles.eyebrow}>{ko ? "응모권 사용 확인" : "REVIEW YOUR ENTRY"}</span><h2 id="raffle-confirm-title">{ko ? `${confirmAmount ?? amount}장으로 응모할까요?` : `Enter with ${confirmAmount ?? amount} tickets?`}</h2><p id="raffle-confirm-help">{raffle.title}<br />{ko ? "확정하면 응모권이 즉시 차감돼요." : "Your tickets will be deducted when you confirm."}</p><dl className={styles.facts}><div><dt>{ko ? "현재 보유" : "Available now"}</dt><dd>{balance ?? "—"}</dd></div><div><dt>{ko ? "이번 응모" : "This entry"}</dt><dd>−{confirmAmount}</dd></div><div><dt>{ko ? "응모 후 잔액" : "Balance after entry"}</dt><dd>{balance === undefined ? "—" : Math.max(0, balance - (confirmAmount ?? 0))}</dd></div></dl>{errorText ? <p role="alert">{errorText}</p> : null}<div className={styles.dialogActions}><button type="button" className={fanActionClassName("neutral")} ref={cancelRef} disabled={request.pending} onClick={() => setConfirmAmount(null)}>{ko ? "수량 다시 선택" : "Change quantity"}</button><FanAction variant="primary" disabled={request.pending || !canEnter || (confirmAmount ?? 0) > limit} ariaBusy={request.pending} onClick={() => void confirm()}>{request.pending ? (ko ? "응모 접수 중" : "Submitting") : (ko ? "응모 확정" : "Confirm entry")}</FanAction></div>
+      <span className={styles.eyebrow}>{ko ? "응모권 사용 확인" : "REVIEW YOUR ENTRY"}</span><h2 id="raffle-confirm-title">{ko ? `${confirmAmount ?? amount}장으로 응모할까요?` : `Enter with ${confirmAmount ?? amount} tickets?`}</h2><p id="raffle-confirm-help">{raffle.title}<br />{ko ? "확정하면 응모권이 즉시 차감돼요." : "Your tickets will be deducted when you confirm."}</p><dl className={styles.facts}><div><dt>{ko ? "현재 보유" : "Available now"}</dt><dd>{balance ?? "—"}</dd></div><div><dt>{ko ? "이번 응모" : "This entry"}</dt><dd>−{confirmAmount}</dd></div><div><dt>{ko ? "응모 후 잔액" : "Balance after entry"}</dt><dd>{balance === undefined ? "—" : Math.max(0, balance - (confirmAmount ?? 0))}</dd></div></dl>{errorText ? <p role="alert">{errorText}</p> : null}<div className={styles.dialogActions}><button type="button" className={fanActionClassName("neutral")} ref={cancelRef} disabled={request.pending} onClick={() => setConfirmAmount(null)}>{request.unresolvedRequest ? (ko ? "닫기" : "Close") : (ko ? "수량 다시 선택" : "Change quantity")}</button>{request.unresolvedRequest ? <FanAction variant="primary" disabled={request.pending} ariaBusy={request.pending} onClick={() => void request.retry()}>{request.pending ? (ko ? "응모 접수 중" : "Submitting") : (ko ? "같은 응모 요청 확인" : "Check the same entry")}</FanAction> : <FanAction variant="primary" disabled={request.pending || !canEnter || (confirmAmount ?? 0) > limit} ariaBusy={request.pending} onClick={() => void confirm()}>{request.pending ? (ko ? "응모 접수 중" : "Submitting") : (ko ? "응모 확정" : "Confirm entry")}</FanAction>}</div>
     </AlertDialog>
   </>;
 }

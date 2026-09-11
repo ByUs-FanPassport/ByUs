@@ -12,6 +12,11 @@ import {
   type BenefitEntryResult,
 } from "../domain/benefit-entry";
 import type { EntryPolicyAcknowledgment } from "../domain/raffle-fulfillment-policy";
+import {
+  reportRecoveryFailure,
+  withOperationDeadline,
+  withRequestDeadline,
+} from "@/features/reliability/client/request-deadline";
 
 export type RaffleEntryRequest = Readonly<{
   idempotencyKey: string;
@@ -23,6 +28,8 @@ export type RaffleEntryError =
   | "auth"
   | "rejected"
   | "uncertain"
+  | "unavailable"
+  | "storage"
   | "policy"
   | "reconcile";
 
@@ -191,7 +198,7 @@ export function useRaffleEntry({
     publish(runtime, restoredRequest
       ? { ...emptyState, unresolvedRequest: restoredRequest, error: "uncertain" }
       : storageBlocked
-        ? { ...emptyState, error: "uncertain" }
+        ? { ...emptyState, error: "storage" }
         : emptyState);
     return () => {
       if (runtime.generation === generation) {
@@ -230,30 +237,25 @@ export function useRaffleEntry({
       publish(runtime, { reconciling: true, reconciled: false, error: null });
       let controller: AbortController | null = null;
       try {
-        const token = await callbacksRef.current.getAccessToken();
+        const token = await withOperationDeadline(callbacksRef.current.getAccessToken());
         if (!isCurrent(runtime, generation)) return;
         if (!token) throw new Error("Missing reconciliation token");
         controller = new AbortController();
         runtime.controllers.add(controller);
-        const response = await fetch(
-          `/api/benefits/${encodeURIComponent(benefitId)}?locale=${locale}`,
-          {
-            headers: { authorization: `Bearer ${token}` },
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        );
-        if (!isCurrent(runtime, generation)) return;
-        if (!response.ok) throw new Error("Benefit reconciliation failed");
-        const benefit = benefitCatalogItemSchema.parse(
-          (await response.json() as { benefit?: unknown }).benefit,
-        );
+        const benefit = await withRequestDeadline(async (signal) => {
+          const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}?locale=${locale}`, {
+            headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
+          });
+          if (!response.ok) throw new Error("Benefit reconciliation failed");
+          return benefitCatalogItemSchema.parse((await response.json() as { benefit?: unknown }).benefit);
+        }, { signal: controller.signal });
         if (benefit.id !== benefitId || !benefit.entry) throw new Error("Invalid reconciliation identity");
         if (!isCurrent(runtime, generation)) return;
         runtime.reconciled = true;
         publish(runtime, { reconciling: false, reconciled: true, error: null });
         notifyParent(() => callbacksRef.current.onReconciled(benefit));
-      } catch {
+      } catch (error) {
+        reportRecoveryFailure("raffle.reconcile", error);
         if (!isCurrent(runtime, generation)) return;
         runtime.reconciled = false;
         publish(runtime, { reconciling: false, reconciled: false, error: "reconcile" });
@@ -287,7 +289,7 @@ export function useRaffleEntry({
         runtime.requestIsDurable = true;
       } catch {
         if (isCurrent(runtime, generation)) {
-          publish(runtime, { pending: false, error: "uncertain", unresolvedRequest: request });
+          publish(runtime, { pending: false, error: "storage", unresolvedRequest: request });
         }
         return;
       }
@@ -295,12 +297,17 @@ export function useRaffleEntry({
 
     let token: string | null;
     try {
-      token = await callbacksRef.current.getAccessToken();
-    } catch {
-      token = null;
+      token = await withOperationDeadline(callbacksRef.current.getAccessToken());
+    } catch (error) {
+      reportRecoveryFailure("raffle.token", error);
+      if (isCurrent(runtime, generation)) {
+        publish(runtime, { pending: false, unresolvedRequest: request, error: "unavailable" });
+      }
+      return;
     }
     if (!isCurrent(runtime, generation)) return;
     if (!token) {
+      token = null;
       if (!runtime.mayHaveCommitted) clearStoredRequest(runtime);
       publish(runtime, { pending: false, unresolvedRequest: runtime.unresolvedRequest, error: "auth" });
       return;
@@ -311,22 +318,19 @@ export function useRaffleEntry({
     const previousAttemptUncertain = runtime.mayHaveCommitted;
     runtime.mayHaveCommitted = true;
     try {
-      const response = await fetch(
-        `/api/benefits/${encodeURIComponent(benefitId)}/entries`,
-        {
+      const outcome = await withRequestDeadline(async (signal) => {
+        const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}/entries`, {
           method: "POST",
-          headers: {
-            authorization: `Bearer ${token}`,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(request),
-          signal: controller.signal,
-        },
-      );
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify(request), signal,
+        });
+        if (!response.ok) return { ok: false as const, status: response.status, code: await readErrorCode(response) };
+        return { ok: true as const, result: benefitEntryResultSchema.parse(await response.json()) };
+      }, { signal: controller.signal });
       if (!isCurrent(runtime, generation)) return;
-      if (!response.ok) {
-        if (response.status >= 400 && response.status < 500) {
-          const code = await readErrorCode(response);
+      if (!outcome.ok) {
+        if (outcome.status >= 400 && outcome.status < 500) {
+          const code = outcome.code;
           if (!isCurrent(runtime, generation)) return;
           if (previousAttemptUncertain) {
             // An auth/proxy rejection on this retry says nothing about the earlier POST.
@@ -339,7 +343,7 @@ export function useRaffleEntry({
             unresolvedRequest: null,
             error: code === "RAFFLE_POLICY_ACK_REQUIRED"
               ? "policy"
-              : response.status === 401 || response.status === 403
+              : outcome.status === 401 || outcome.status === 403
                 ? "auth"
                 : "rejected",
           });
@@ -347,7 +351,7 @@ export function useRaffleEntry({
         }
         throw new Error("Uncertain raffle response");
       }
-      const result = benefitEntryResultSchema.parse(await response.json());
+      const result = outcome.result;
       if (result.benefitId !== benefitId || result.ticketAmount !== request.ticketAmount) throw new Error("Invalid entry receipt identity");
       if (!isCurrent(runtime, generation)) return;
       clearStoredRequest(runtime);
@@ -362,7 +366,8 @@ export function useRaffleEntry({
       });
       notifyParent(() => callbacksRef.current.onAccepted(result));
       await reconcile(runtime, generation);
-    } catch {
+    } catch (error) {
+      reportRecoveryFailure("raffle.submit", error);
       if (!isCurrent(runtime, generation)) return;
       publish(runtime, {
         pending: false,
@@ -388,7 +393,7 @@ export function useRaffleEntry({
     let request = runtime.unresolvedRequest;
     if (!request) {
       if (runtime.storageBlocked) {
-        publish(runtime, { error: "uncertain" });
+        publish(runtime, { error: "storage" });
         return Promise.resolve();
       }
       let candidate;

@@ -15,6 +15,7 @@ import {
   type CreateAuthIntentInput,
 } from "./auth-intent";
 import { rememberOverlayTrigger } from "./ui/overlay/focus-return";
+import { getSessionStorage } from "../features/reliability/client/session-storage";
 
 function fallbackHref(input: CreateAuthIntentInput, locale: "ko" | "en"): string {
   const returnTo = `${input.sourcePath}${input.sourceQuery}${input.returnAnchor ?? ""}`;
@@ -94,7 +95,7 @@ export function AuthIntentLink({
 
     event.preventDefault();
     const intent = createAuthIntent(input);
-    persistAuthIntent(window.sessionStorage, intent);
+    persistAuthIntent(getSessionStorage(), intent);
     rememberOverlayTrigger(
       event.currentTarget,
       focusKey ? `[data-overlay-focus-key="${focusKey}"]` : undefined,

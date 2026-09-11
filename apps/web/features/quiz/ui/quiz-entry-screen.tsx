@@ -1,5 +1,7 @@
 "use client";
 
+import { getSessionStorage } from "@/features/reliability/client/session-storage";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
@@ -220,9 +222,9 @@ export function QuizEntryScreen({
       const body = await readJson(response) as { result?: unknown };
       const result = parseQuizStartProjection(body.result);
       const intentId = new URLSearchParams(window.location.search).get("authIntent");
-      const intent = readAuthIntent(window.sessionStorage, intentId);
+      const intent = readAuthIntent(getSessionStorage(), intentId);
       if (intent?.actionType === "START_FAN_VERIFICATION" && intent.targetType === "celebrity" && intent.targetId === slug) {
-        consumeAuthIntent(window.sessionStorage, intent.id);
+        consumeAuthIntent(getSessionStorage(), intent.id);
       }
       if (result.kind === "holder") {
         router.push((liveReturnTo ?? withLocale(`/passports/${result.passportId}`, locale)) as Route);
@@ -249,7 +251,7 @@ export function QuizEntryScreen({
     if (!authenticated || profileState !== "complete" || screen.kind !== "ready" || screen.intro.quiz.availability !== "available") return;
     const intentId = new URLSearchParams(window.location.search).get("authIntent");
     if (!intentId || resumedIntentRef.current === intentId) return;
-    const intent = readAuthIntent(window.sessionStorage, intentId);
+    const intent = readAuthIntent(getSessionStorage(), intentId);
     if (intent?.actionType !== "START_FAN_VERIFICATION" || intent.targetType !== "celebrity" || intent.targetId !== slug) return;
     resumedIntentRef.current = intentId;
     void start();
