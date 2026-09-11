@@ -43,13 +43,13 @@ describe("credential metadata", () => {
       .toBe(`ipfs://bafy-assets/credentials/v1/stamp/${stampType.toLowerCase()}/kara.png`);
   });
 
-  it("uses pinned public membership artwork without changing other credential asset bases", () => {
+  it("uses content-addressed public membership artwork without changing other credential asset bases", () => {
     const membershipPayload: StampPayloadV1 = { recipient: payload.recipient, celebritySlug: "elina", issuanceId: payload.passportId, stampType: "Membership" };
     const membershipJob = { ...job, entityType: "stamp" as const, payload: membershipPayload };
     const first = renderMetadata(membershipJob, membershipPayload, "ipfs://existing-credential-assets/v1");
     expect(first.name).toBe("ByUs Membership Stamp");
     expect(first.image).toBe(MEMBERSHIP_STAMP_IMAGE_URI);
-    expect(first.image).toMatch(/^ipfs:\/\/b[a-z2-7]+$/);
+    expect(first.image).toMatch(/^https:\/\/byus\.kr\/images\/stamps\/membership-[a-f0-9]{64}\.png$/);
     expect(renderMetadata(membershipJob, membershipPayload, "ipfs://different-base/v2")).toEqual(first);
     const serialized = JSON.stringify(first);
     expect(serialized).not.toContain(payload.recipient);
