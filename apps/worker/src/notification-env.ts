@@ -21,6 +21,7 @@ const baseSchema = z
     WEB_PUSH_VAPID_PRIVATE_KEY: z.string().regex(/^[A-Za-z0-9_-]{40,60}$/),
     BUSINESS_INQUIRY_MODE: z.enum(["disabled","ses_email"]).default("disabled"),
     NOTIFICATION_EXTERNAL_MODE: z.enum(["disabled","test_sink","provider","ses_email"]).default("disabled"),
+    KAKAO_ALIMTALK_MODE: z.enum(["disabled","solapi"]).default("disabled"),
     NOTIFICATION_EXTERNAL_ENVIRONMENT: z.enum(["dev","prod"]).default("dev"),
     SES_REGION: z.literal("ap-northeast-2").optional(),
     SES_FROM_EMAIL: z.literal("notifications@byus.kr").optional(),
@@ -28,9 +29,11 @@ const baseSchema = z
     EMAIL_PROVIDER_TOKEN: z.string().min(16).optional(),
     KAKAO_PROVIDER_URL: z.string().url().refine((v)=>v.startsWith("https://")).optional(),
     KAKAO_PROVIDER_TOKEN: z.string().min(16).optional(),
+    SOLAPI_API_KEY: z.string().min(8).max(256).regex(/^[A-Za-z0-9_-]+$/).optional(),
+    SOLAPI_API_SECRET: z.string().min(8).max(256).regex(/^[\x21-\x7e]+$/).optional(),
   })
   .strict();
-const schema=baseSchema.superRefine((v,ctx)=>{if(v.BUSINESS_INQUIRY_MODE==="ses_email"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="prod")ctx.addIssue({code:"custom",path:["BUSINESS_INQUIRY_MODE"],message:"Business inquiries can send only in production"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&v.NOTIFICATION_WORKER_BATCH_SIZE>2)ctx.addIssue({code:"custom",path:["NOTIFICATION_WORKER_BATCH_SIZE"],message:"SES mode requires batch size at most 2 to bound sequential send time"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&(!v.SES_REGION||!v.SES_FROM_EMAIL))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"SES email mode requires region and sender"});if(v.NOTIFICATION_EXTERNAL_MODE==="test_sink"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="dev")ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"test sink is Dev-only"});if(v.NOTIFICATION_EXTERNAL_MODE==="provider"&&(!v.EMAIL_PROVIDER_URL||!v.EMAIL_PROVIDER_TOKEN||!v.KAKAO_PROVIDER_URL||!v.KAKAO_PROVIDER_TOKEN))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"provider mode requires both sandbox providers"});});
+const schema=baseSchema.superRefine((v,ctx)=>{if(v.BUSINESS_INQUIRY_MODE==="ses_email"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="prod")ctx.addIssue({code:"custom",path:["BUSINESS_INQUIRY_MODE"],message:"Business inquiries can send only in production"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&v.NOTIFICATION_WORKER_BATCH_SIZE>2)ctx.addIssue({code:"custom",path:["NOTIFICATION_WORKER_BATCH_SIZE"],message:"SES mode requires batch size at most 2 to bound sequential send time"});if(v.NOTIFICATION_EXTERNAL_MODE==="ses_email"&&(!v.SES_REGION||!v.SES_FROM_EMAIL))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"SES email mode requires region and sender"});if(v.NOTIFICATION_EXTERNAL_MODE==="test_sink"&&v.NOTIFICATION_EXTERNAL_ENVIRONMENT!=="dev")ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"test sink is Dev-only"});if(v.NOTIFICATION_EXTERNAL_MODE==="provider"&&(!v.EMAIL_PROVIDER_URL||!v.EMAIL_PROVIDER_TOKEN||!v.KAKAO_PROVIDER_URL||!v.KAKAO_PROVIDER_TOKEN))ctx.addIssue({code:"custom",path:["NOTIFICATION_EXTERNAL_MODE"],message:"provider mode requires both sandbox providers"});if(v.KAKAO_ALIMTALK_MODE==="solapi"&&(!v.SOLAPI_API_KEY||!v.SOLAPI_API_SECRET))ctx.addIssue({code:"custom",path:["KAKAO_ALIMTALK_MODE"],message:"SOLAPI mode requires API key and secret"});});
 export type NotificationWorkerEnv = z.infer<typeof schema>;
 export function parseNotificationEnv(
   source: NodeJS.ProcessEnv,

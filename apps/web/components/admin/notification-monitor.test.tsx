@@ -18,7 +18,7 @@ vi.mock("./use-admin-session", () => ({
 const data = {
   counts: { pending: 0, processing: 0, sent: 0, failed: 1 },
   items: [{
-    id, channel: "kakao", kind: "benefit_won", status: "failed", attemptCount: 2,
+    id, channel: "email", kind: "benefit_won", status: "failed", attemptCount: 2,
     nextAttemptAt: "2026-09-04T00:00:00Z", destinationLabel: "Kakao ••••1234",
     errorCode: "INVALID_RECIPIENT", createdAt: "2026-09-04T00:00:00Z", sentAt: null,
     manuallyRetryable: true,
@@ -105,5 +105,17 @@ describe("notification monitor retry lifecycle", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(data)));
     render(<NotificationMonitor />);
     expect(await screen.findByRole("button", { name: `재시도 ${id}` })).toBeDisabled();
+  });
+
+  it("keeps Kakao retry disabled even if a malformed projection marks it retryable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...data, items: [{ ...data.items[0], channel: "kakao" }] })));
+    render(<NotificationMonitor />);
+    expect(await screen.findByRole("button", { name: `재시도 ${id}` })).toBeDisabled();
+  });
+
+  it("labels provider acceptance as awaiting delivery confirmation", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...data, items: [{ ...data.items[0], channel: "kakao", providerStatus: "accepted", providerStatusCode: "2000" }] })));
+    render(<NotificationMonitor />);
+    expect(await screen.findByText("접수 완료 / 배달 확인 중 · 2000")).toBeInTheDocument();
   });
 });

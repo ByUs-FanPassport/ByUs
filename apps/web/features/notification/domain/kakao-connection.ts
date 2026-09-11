@@ -2,8 +2,12 @@ import { createHash, randomBytes } from "node:crypto";
 export { kakaoConnectionCallbackSchema, safeKakaoReturnPathSchema } from "./kakao-connection-schema";
 
 export interface KakaoConnectionPort {
-  authorizationUrl(input: { state: string; codeChallenge: string; redirectUri: string }): string;
-  exchange(input: { code: string; codeVerifier: string; redirectUri: string }): Promise<{ kakaoSubject: string }>;
+  authorizationUrl(input: { state: string; codeChallenge: string; redirectUri: string; scope?: "phone_number" }): string;
+  exchange(input: { code: string; codeVerifier: string; redirectUri: string; includePhone?: boolean }): Promise<{
+    kakaoSubject: string;
+    phoneNumber?: unknown;
+    phoneNumberNeedsAgreement?: unknown;
+  }>;
 }
 
 export function createKakaoPkce(): { state: string; stateHash: string; codeVerifier: string; codeChallenge: string } {

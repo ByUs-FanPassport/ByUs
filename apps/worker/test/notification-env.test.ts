@@ -50,6 +50,12 @@ describe("notification worker secrets", () => {
     expect(()=>parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider"})).toThrow();
     expect(parseNotificationEnv({...valid,NOTIFICATION_EXTERNAL_MODE:"provider",EMAIL_PROVIDER_URL:"https://email.test/send",EMAIL_PROVIDER_TOKEN:"e".repeat(16),KAKAO_PROVIDER_URL:"https://kakao.test/send",KAKAO_PROVIDER_TOKEN:"k".repeat(16)})).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"provider"});
   });
+  it("keeps Kakao independently disabled and requires both SOLAPI credentials when enabled",()=>{
+    expect(parseNotificationEnv(valid).KAKAO_ALIMTALK_MODE).toBe("disabled");
+    expect(()=>parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi"})).toThrow();
+    expect(()=>parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi",SOLAPI_API_KEY:"solapi_key"})).toThrow();
+    expect(parseNotificationEnv({...valid,KAKAO_ALIMTALK_MODE:"solapi",SOLAPI_API_KEY:"solapi_key",SOLAPI_API_SECRET:"solapi-secret"})).toMatchObject({KAKAO_ALIMTALK_MODE:"solapi"});
+  });
 });
 
 it("inquiry sending is separately gated and production-only", () => {

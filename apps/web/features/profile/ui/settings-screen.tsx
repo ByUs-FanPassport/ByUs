@@ -42,6 +42,10 @@ interface Preferences {
   benefitNotifications: boolean;
   browserSubscription: "subscribed" | "unsubscribed";
 }
+interface KakaoEnrollmentState {
+  enabled: boolean;
+  pending: { id: string; destinationLabel: string; expiresAt: string } | null;
+}
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -113,6 +117,18 @@ const copy = {
     emailChannel: "Email 수신",
     kakaoChannel: "Kakao 수신",
     needsEnrollment: "연결 후 수신 대 확인이 필요해요.",
+    kakaoEnrollmentTitle: "카카오 알림톡",
+    kakaoEnrollmentConsent: "서비스 이용에 필요한 알림을 이 카카오 계정의 전화번호로 받는 데 동의합니다.",
+    kakaoEnrollmentStart: "카카오에서 전화번호 확인",
+    kakaoEnrollmentStarting: "카카오로 이동하는 중…",
+    kakaoEnrollmentPending: "카카오에서 확인한 번호",
+    kakaoEnrollmentConfirmConsent: "위 번호로 서비스 알림을 받는 데 동의합니다.",
+    kakaoEnrollmentConfirm: "이 번호로 알림 받기",
+    kakaoEnrollmentConfirming: "등록 중…",
+    kakaoEnrollmentCancel: "등록 취소",
+    kakaoEnrollmentCanceling: "취소 중…",
+    kakaoEnrollmentHelp: "카카오 계정에 등록된 번호로 서비스 알림을 보내드려요.",
+    kakaoEnrollmentConsentRequired: "동의 항목을 확인해 주세요.",
     live: "LIVE 시작 알림",
     survey: "설문 참여 알림",
     benefit: "혜택 오픈 알림",
@@ -185,6 +201,18 @@ const copy = {
     emailChannel: "Email delivery",
     kakaoChannel: "Kakao delivery",
     needsEnrollment: "Verify a destination after connecting.",
+    kakaoEnrollmentTitle: "Kakao service notifications",
+    kakaoEnrollmentConsent: "I agree to receive service notifications at the phone number on this Kakao account.",
+    kakaoEnrollmentStart: "Confirm phone number with Kakao",
+    kakaoEnrollmentStarting: "Opening Kakao…",
+    kakaoEnrollmentPending: "Number confirmed by Kakao",
+    kakaoEnrollmentConfirmConsent: "I agree to receive service notifications at the number above.",
+    kakaoEnrollmentConfirm: "Use this number",
+    kakaoEnrollmentConfirming: "Registering…",
+    kakaoEnrollmentCancel: "Cancel registration",
+    kakaoEnrollmentCanceling: "Canceling…",
+    kakaoEnrollmentHelp: "We'll send service notifications to the number registered to your Kakao account.",
+    kakaoEnrollmentConsentRequired: "Confirm the consent item to continue.",
     live: "LIVE start reminders",
     survey: "Survey reminders",
     benefit: "Benefit alerts",
@@ -243,6 +271,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [settings, setSettings] = useState<SettingsSummary | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [connections, setConnections] = useState<NotificationConnections | null>(null);
+  const [kakaoEnrollment, setKakaoEnrollment] = useState<KakaoEnrollmentState>({ enabled: false, pending: null });
+  const [kakaoEnrollmentConsent, setKakaoEnrollmentConsent] = useState(false);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState("");
@@ -255,7 +285,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [languageError, setLanguageError] = useState(false);
   const [message, setMessage] = useState("");
   const [preferencePending, setPreferencePending] = useState(false);
-  const [connectionAction, setConnectionAction] = useState<"channel" | "kakao-connect" | "kakao-disconnect" | null>(null);
+  const [connectionAction, setConnectionAction] = useState<"channel" | "kakao-connect" | "kakao-disconnect" | "kakao-enroll" | "kakao-confirm" | "kakao-cancel" | null>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
   );
@@ -294,6 +324,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       setSettings(null);
       setPreferences(null);
       setConnections(null);
+      setKakaoEnrollment({ enabled: false, pending: null });
+      setKakaoEnrollmentConsent(false);
       setNickname("");
       setEditing(false);
       setMessage("");
@@ -337,12 +369,13 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const preferenceBody = (await preferenceResponse.json()) as {
         preferences: Preferences;
       };
-      const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections };
+      const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState };
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       setSettings(settingsBody.settings);
       setNickname(settingsBody.settings.nickname);
       setPreferences(preferenceBody.preferences);
       setConnections(connectionBody.connections);
+      setKakaoEnrollment(connectionBody.kakaoEnrollment ?? { enabled: false, pending: null });
       setState("ready");
     } catch {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === loadGenerationRef.current)
@@ -565,7 +598,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   async function updateChannel(channelId: string, consented: boolean) {
     if (!connections || connectionPendingRef.current) return;
-    const previousValue = connections.channels.find((channel) => channel.id === channelId)?.consented;
+    const selectedChannel = connections.channels.find((channel) => channel.id === channelId);
+    const previousValue = selectedChannel?.consented;
     if (previousValue === undefined) return;
     connectionPendingRef.current = true;
     const ownerAtStart = ownerId;
@@ -577,7 +611,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const token = await getAccessToken();
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
       if (!token) throw new Error("token");
-      const response = await fetch("/api/me/notification-channels", { method: "PATCH", headers: { ...authHeaders(token), "content-type": "application/json" }, body: JSON.stringify({ channelId, consented, consentVersion: "phase5-v1" }) });
+      const response = await fetch("/api/me/notification-channels", { method: "PATCH", headers: { ...authHeaders(token), "content-type": "application/json" }, body: JSON.stringify({ channelId, consented, consentVersion: selectedChannel?.kind === "kakao" ? "kakao-alimtalk-v1" : "phase5-v1" }) });
       const body = await response.json() as { channel?: NotificationConnections["channels"][number] };
       if (!response.ok || !body.channel) throw new Error("save");
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
@@ -593,6 +627,51 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         connectionPendingRef.current = false;
         setConnectionAction(null);
       }
+    }
+  }
+
+  async function mutateKakaoEnrollment(action: "start" | "confirm" | "cancel") {
+    if (connectionPendingRef.current || !kakaoEnrollment.enabled) return;
+    if ((action === "start" || action === "confirm") && !kakaoEnrollmentConsent) { setMessage(t.kakaoEnrollmentConsentRequired); return; }
+    if (action === "confirm" && !kakaoEnrollment.pending) return;
+    connectionPendingRef.current = true;
+    const ownerAtStart = ownerId;
+    const generation = ++connectionGenerationRef.current;
+    setConnectionAction(action === "start" ? "kakao-enroll" : action === "confirm" ? "kakao-confirm" : "kakao-cancel");
+    setMessage("");
+    const isCurrent = () => activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current;
+    try {
+      const token = await getAccessToken();
+      if (!isCurrent()) return;
+      if (!token) throw new Error("token");
+      const base = "/api/me/notification-channels/kakao/enrollment";
+      const endpoint = action === "start" ? `${base}/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}` : `${base}/${action}`;
+      const body = action === "start"
+        ? { consented: true, consentVersion: "kakao-alimtalk-v1" }
+        : action === "confirm"
+          ? { enrollmentId: kakaoEnrollment.pending!.id, consented: true, consentVersion: "kakao-alimtalk-v1" }
+          : undefined;
+      const response = await fetch(endpoint, { method: "POST", headers: { ...authHeaders(token), ...(body ? { "content-type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+      if (!response.ok) throw new Error("enrollment");
+      if (!isCurrent()) return;
+      if (action === "start") {
+        const result = await response.json() as { authorizationUrl?: string };
+        if (!result.authorizationUrl || !isCurrent()) throw new Error("enrollment");
+        window.location.assign(result.authorizationUrl);
+        return;
+      }
+      if (action === "confirm") {
+        const result = await response.json() as { channel?: NotificationConnections["channels"][number] };
+        if (!result.channel) throw new Error("enrollment");
+        setConnections((current) => current ? { ...current, channels: current.channels.some((channel) => channel.id === result.channel!.id) ? current.channels.map((channel) => channel.id === result.channel!.id ? result.channel! : channel) : [...current.channels, result.channel!] } : current);
+      }
+      setKakaoEnrollment((current) => ({ ...current, pending: null }));
+      setKakaoEnrollmentConsent(false);
+      setMessage(t.saved);
+    } catch {
+      if (isCurrent()) setMessage(t.failed);
+    } finally {
+      if (isCurrent()) { connectionPendingRef.current = false; setConnectionAction(null); }
     }
   }
 
@@ -612,10 +691,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         if (!response.ok) throw new Error("disconnect");
         const connectionResponse = await fetch("/api/me/notification-channels", { headers: authHeaders(token), cache: "no-store" });
         if (!connectionResponse.ok) throw new Error("connections");
-        const body = await connectionResponse.json() as { connections?: NotificationConnections };
+        const body = await connectionResponse.json() as { connections?: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState };
         if (!body.connections) throw new Error("connections");
         if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
         setConnections(body.connections);
+        setKakaoEnrollment(body.kakaoEnrollment ?? { enabled: false, pending: null });
+        setKakaoEnrollmentConsent(false);
         setMessage(t.saved);
       } else {
         const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}`, { method: "POST", headers: authHeaders(token) });
@@ -1060,10 +1141,29 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                   ? t.channelSaving
                   : connectionAction === "kakao-disconnect"
                     ? t.kakaoDisconnecting
-                    : t.kakaoConnecting}
+                    : connectionAction === "kakao-connect"
+                      ? t.kakaoConnecting
+                      : connectionAction === "kakao-enroll"
+                        ? t.kakaoEnrollmentStarting
+                        : connectionAction === "kakao-confirm"
+                          ? t.kakaoEnrollmentConfirming
+                          : t.kakaoEnrollmentCanceling}
               </p>
             )}
             {connections.channels.map((channel) => <label key={channel.id}><span><strong>{channel.kind === "email" ? t.emailChannel : t.kakaoChannel}</strong><small>{channel.destinationLabel}{channel.status === "needs_verification" ? ` · ${t.needsEnrollment}` : ""}</small></span><input type="checkbox" role="switch" aria-label={channel.kind === "email" ? t.emailChannel : t.kakaoChannel} aria-describedby={connectionAction ? "connection-save-status" : undefined} checked={channel.consented} disabled={connectionAction !== null || channel.status !== "eligible"} onChange={(event) => void updateChannel(channel.id, event.target.checked)} /></label>)}
+            {kakaoEnrollment.enabled && <div className={styles.kakaoEnrollment}>
+              <strong>{t.kakaoEnrollmentTitle}</strong>
+              <small>{t.kakaoEnrollmentHelp}</small>
+              {kakaoEnrollment.pending ? <>
+                <p><span>{t.kakaoEnrollmentPending}</span><strong>{kakaoEnrollment.pending.destinationLabel}</strong></p>
+                <label className={styles.consentCheck}><input type="checkbox" checked={kakaoEnrollmentConsent} disabled={connectionAction !== null} onChange={(event) => setKakaoEnrollmentConsent(event.target.checked)} /><span>{t.kakaoEnrollmentConfirmConsent}</span></label>
+                <div><button type="button" disabled={connectionAction !== null || !kakaoEnrollmentConsent} aria-describedby={!kakaoEnrollmentConsent ? "kakao-enrollment-consent-help" : undefined} onClick={() => void mutateKakaoEnrollment("confirm")}>{connectionAction === "kakao-confirm" ? t.kakaoEnrollmentConfirming : t.kakaoEnrollmentConfirm}</button><button type="button" disabled={connectionAction !== null} onClick={() => void mutateKakaoEnrollment("cancel")}>{connectionAction === "kakao-cancel" ? t.kakaoEnrollmentCanceling : t.kakaoEnrollmentCancel}</button></div>
+              </> : <>
+                <label className={styles.consentCheck}><input type="checkbox" checked={kakaoEnrollmentConsent} disabled={connectionAction !== null} onChange={(event) => setKakaoEnrollmentConsent(event.target.checked)} /><span>{t.kakaoEnrollmentConsent}</span></label>
+                <button type="button" disabled={connectionAction !== null || !kakaoEnrollmentConsent} aria-describedby={!kakaoEnrollmentConsent ? "kakao-enrollment-consent-help" : undefined} onClick={() => void mutateKakaoEnrollment("start")}>{connectionAction === "kakao-enroll" ? t.kakaoEnrollmentStarting : t.kakaoEnrollmentStart}</button>
+              </>}
+              {!kakaoEnrollmentConsent && <small id="kakao-enrollment-consent-help">{t.kakaoEnrollmentConsentRequired}</small>}
+            </div>}
           </div>
         </section>
 

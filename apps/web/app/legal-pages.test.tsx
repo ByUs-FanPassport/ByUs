@@ -12,12 +12,17 @@ describe("public legal pages", () => {
     render(await PrivacyPage({ searchParams: searchParams("ko") }));
 
     expect(screen.getByRole("heading", { level: 1, name: "개인정보처리방침" })).toBeInTheDocument();
-    expect(screen.getByText("시행일: 2026년 7월 25일")).toBeInTheDocument();
+    expect(screen.getByText("시행일: 2026년 9월 11일")).toBeInTheDocument();
     expect(screen.getAllByText(/Sallylab Inc\./).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "biz@sallylab.io" })).toHaveAttribute("href", "mailto:biz@sallylab.io");
     expect(screen.getByText(/Google 및 Privy 인증 식별자/)).toBeInTheDocument();
     expect(screen.getByText(/실물 혜택 배송 또는 현장 수령을 위한 이름·연락처/)).toBeInTheDocument();
     expect(screen.getByText(/배송 또는 현장 수령 완료 후 30일/)).toBeInTheDocument();
+    expect(screen.getByText(/선택 사항: 카카오 알림톡 수신을 직접 등록한 경우/)).toBeInTheDocument();
+    expect(screen.getByText(/Kakao의 phone_number 권한/)).toBeInTheDocument();
+    expect(screen.getByText(/수탁자: 솔라피 주식회사\(SOLAPI\)/)).toBeInTheDocument();
+    expect(screen.getByText(/메시지 발송 이력을 발송일로부터 1년간 보관/)).toBeInTheDocument();
+    expect(screen.getByText(/원본 전화번호와 완료되지 않은 등록 정보를 삭제/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/?locale=ko");
   });
@@ -26,11 +31,16 @@ describe("public legal pages", () => {
     const { container } = render(await PrivacyPage({ searchParams: searchParams("en") }));
 
     expect(screen.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeInTheDocument();
-    expect(screen.getByText("Effective date: July 25, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Effective date: September 11, 2026")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "1. Personal Information We Process" })).toBeInTheDocument();
     expect(screen.getByText(/Google and Privy authentication identifiers/)).toBeInTheDocument();
     expect(screen.getByText(/Name and phone number for physical reward delivery/)).toBeInTheDocument();
     expect(screen.getByText(/30 days after shipping or on-site pickup is completed/)).toBeInTheDocument();
+    expect(screen.getByText(/Optional: when you register for Kakao service notifications/)).toBeInTheDocument();
+    expect(screen.getByText(/Kakao's phone_number permission/)).toBeInTheDocument();
+    expect(screen.getByText(/Processor: 솔라피 주식회사 \(SOLAPI\)/)).toBeInTheDocument();
+    expect(screen.getByText(/for one year from the delivery date/)).toBeInTheDocument();
+    expect(screen.getByText(/delete the original phone number from ByUs systems and any incomplete registration information/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Choose language, currently English" })).toHaveAttribute("href", "/privacy?locale=ko");
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/?locale=en");
     expect(container.querySelector("[data-fan-surface]")).toHaveAttribute("lang", "en");
@@ -40,11 +50,13 @@ describe("public legal pages", () => {
   it("publishes the terms in both languages with Korean governing law", async () => {
     const { unmount } = render(await TermsPage({ searchParams: searchParams("ko") }));
     expect(screen.getByRole("heading", { level: 1, name: "이용약관" })).toBeInTheDocument();
+    expect(screen.getByText("시행일: 2026년 7월 25일")).toBeInTheDocument();
     expect(screen.getByText(/대한민국 법률에 따라 해석됩니다/)).toBeInTheDocument();
     unmount();
 
     render(await TermsPage({ searchParams: searchParams("en") }));
     expect(screen.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeInTheDocument();
+    expect(screen.getByText("Effective date: July 25, 2026")).toBeInTheDocument();
     expect(screen.getByText(/governed by and construed in accordance with the laws of the Republic of Korea/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Choose language, currently English" })).toHaveAttribute("href", "/terms?locale=ko");
   });

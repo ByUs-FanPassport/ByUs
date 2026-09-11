@@ -118,6 +118,11 @@ const serverEnvSchema = publicEnvSchema
       (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
       z.string().min(16).optional(),
     ),
+    KAKAO_ALIMTALK_ENROLLMENT_ENABLED: booleanFlag,
+    SOLAPI_WEBHOOK_SECRET: z.preprocess(
+      (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.string().min(16).max(256).optional(),
+    ),
   })
   .superRefine((value, context) => {
     if (value.PRIVY_APP_ID !== value.NEXT_PUBLIC_PRIVY_APP_ID) {
