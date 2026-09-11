@@ -3,6 +3,12 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "./login-page";
+import { createOAuthStartGuard, getOAuthStartGuard } from "../features/reliability/client/oauth-start";
+
+vi.mock("../features/reliability/client/oauth-start", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../features/reliability/client/oauth-start")>(),
+  getOAuthStartGuard: vi.fn(),
+}));
 
 const login = vi.fn();
 const initOAuth = vi.fn();
@@ -51,6 +57,7 @@ describe("Privy login page", () => {
   });
 
   beforeEach(() => {
+    vi.mocked(getOAuthStartGuard).mockReturnValue(createOAuthStartGuard());
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -322,6 +329,35 @@ describe("Privy login page", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("로그인을 완료하지 못했어요");
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("requires a fresh document after OAuth times out, including after remount and late settlement", async () => {
+    vi.useFakeTimers();
+    let finishOAuth!: () => void;
+    initOAuth.mockImplementation(() => new Promise<void>((resolve) => { finishOAuth = resolve; }));
+    const first = render(<LoginPage appleLoginEnabled />);
+    fireEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(screen.getByRole("button", { name: "Apple로 계속하기" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 연결이 오래 걸리고 있어요.");
+    const restart = screen.getByRole("link", { name: "로그인 다시 시작" });
+    expect(restart).toHaveAttribute("href", "/login?returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Dko&locale=ko&intent=reserve");
+    expect(logout).not.toHaveBeenCalled();
+
+    first.unmount();
+    render(<LoginPage appleLoginEnabled />);
+    fireEvent.click(screen.getByRole("button", { name: "Apple로 계속하기" }));
+    expect(initOAuth).toHaveBeenCalledTimes(1);
+    await act(async () => { finishOAuth(); });
+    expect(screen.getByRole("button", { name: "Apple로 계속하기" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "로그인 다시 시작" })).toBeInTheDocument();
+  });
+
+  it("shows safe reauthentication recovery to a signed-out English user", () => {
+    query = "locale=en&reauth=failed";
+    render(<LoginPage appleLoginEnabled />);
+    expect(screen.getByRole("alert")).toHaveTextContent("We couldn't verify your account. Please sign in again.");
+    expect(screen.getByRole("button", { name: "Continue with Apple" })).toBeEnabled();
   });
 
   it("uses the official English Google and Apple labels", () => {

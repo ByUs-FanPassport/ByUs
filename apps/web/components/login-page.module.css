@@ -37,6 +37,7 @@
 .divider::before, .divider::after { height: 1px; flex: 1; background: oklch(90% 0 0); content: ""; }
 .emailButton { display: flex; width: 100%; min-height: 52px; align-items: center; justify-content: center; gap: 12px; padding-inline: 20px; border: 1px solid oklch(90% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); cursor: pointer; font: inherit; font-size: 15px; font-weight: 750; transition: background-color 160ms cubic-bezier(.2,0,0,1), border-color 160ms cubic-bezier(.2,0,0,1); }
 .emailButton span { flex: 1; text-align: center; }
+.restartLink { box-sizing: border-box; text-decoration: none; }
 .emailButton svg { width: 18px; height: 18px; flex: none; }
 .testAccountGroup p { margin: 0; color: oklch(48% 0 0); font-size: 13px; line-height: 1.5; text-align: center; text-wrap: pretty; }
 @media (hover: hover) and (pointer: fine) { .emailButton:hover:not(:disabled) { border-color: oklch(76% 0 0); background: oklch(97.5% 0 0); } .closeButton:hover { background: oklch(97.5% 0 0); } .footer a:hover { color: oklch(18% 0 0); } }
