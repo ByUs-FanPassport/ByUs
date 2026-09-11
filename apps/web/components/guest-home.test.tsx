@@ -417,7 +417,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
     const guideCarousels = screen.getAllByRole("region", { name: "참여 가이드" });
-    const fanmeetingCards = screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" });
+    const fanmeetingCards = screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" });
     expect(guideCarousels).toHaveLength(2);
     expect(fanmeetingCards).toHaveLength(2);
     for (const carousel of guideCarousels) {
@@ -524,7 +524,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "이퓨의 틱톡 100일 기념 LIVE 참여 가이드" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" })).toHaveLength(2);
   });
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {

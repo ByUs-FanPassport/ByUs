@@ -20,8 +20,8 @@ const copy = {
     ifewTitle: "이퓨 100일 LIVE 참여 가이드",
     ifewLabel: "이퓨의 틱톡 100일 기념 LIVE 참여 가이드",
     ifewDescription: "9월 12일(토) 오전 8시 · KST",
-    fanmeeting: "우리 아티스트의 첫 미국 팬미팅",
-    explore: "미국 팬들과의 만남, 시작해 볼까요?",
+    fanmeeting: "미국 팬미팅, ByUs와 함께 준비하세요",
+    explore: "기획사와 아티스트를 위한 미국 현지 협업",
   },
   en: {
     title: <>Your ByUs guide <br />with Elina</>,
@@ -31,8 +31,8 @@ const copy = {
     ifewTitle: "ifew’s 100-day LIVE guide",
     ifewLabel: "ifew’s 100-day TikTok LIVE guide",
     ifewDescription: "Sat, Sep 12 · 8 AM KST",
-    fanmeeting: "Your artist’s first U.S. fan meeting",
-    explore: "Explore the possibilities",
+    fanmeeting: "Plan your U.S. fan meeting with ByUs",
+    explore: "U.S. event partnerships for agencies and artists",
   },
 };
 
