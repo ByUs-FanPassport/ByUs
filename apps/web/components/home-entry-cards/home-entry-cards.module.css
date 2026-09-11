@@ -6,9 +6,8 @@
 .carouselSlide { display: flex; flex: 0 0 100%; min-width: 0; }
 .carouselSlide > a { width: 100%; height: 100%; min-height: 216px; }
 .carousel .carouselSlide > a:focus-visible { outline-offset: -3px; }
-.carouselControls { position: absolute; z-index: 2; top: 8px; right: 8px; display: flex; align-items: center; gap: 2px; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.carouselControls:has(:focus-visible) { width: auto; height: auto; padding: 2px; overflow: visible; clip-path: none; border-radius: 999px; background: #fff; box-shadow: 0 2px 8px #19191e1a; }
-.carouselButton { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #686873; background: transparent; cursor: pointer; }
+.carouselControls { position: absolute; z-index: 2; top: 8px; right: 8px; display: flex; align-items: center; border: 1px solid #e7e2eb; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px #19191e1a; }
+.carouselButton { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: #55505c; background: transparent; cursor: pointer; }
 .carousel .carouselButton:focus-visible { outline: 2px solid #b22161; outline-offset: 1px; }
 .carousel .carouselButton svg { width: 16px; height: 16px; pointer-events: none; }
 .carouselButton:disabled { opacity: .45; cursor: default; }

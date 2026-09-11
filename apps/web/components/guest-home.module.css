@@ -87,7 +87,7 @@
 .carouselAnnouncement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 
-.mobileContextActions { display: grid; gap: 12px; margin-top: 24px; padding: 16px; border: 1px solid var(--card-line); border-radius: 16px; background: var(--canvas); box-shadow: var(--card-shadow); }
+.mobileContextActions { display: grid; margin-top: 16px; }
 .mobileContextActions a, .googleButton, .passportFooter > a { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 12px; padding-inline: 16px; border: 1px solid transparent; border-radius: 999rem; background: linear-gradient(#fff, #fff) padding-box, var(--spectrum) border-box; color: var(--service-ink) !important; font-size: 14px; font-weight: 800; }
 .mobileContextActions a > svg:first-child, .googleButton svg { width: 16px; height: 16px; }
 .googleAction { font-family: "Google Sans", Roboto, Arial, sans-serif; font-weight: 600 !important; }
@@ -159,7 +159,8 @@
 .passportFooter > a span { flex: 1; text-align: center; }
 .passportFooter > a svg { width: 16px; height: 16px; }
 
-.mobilePersonalization { margin-top: 24px; }
+.mobilePersonalization { margin-top: 16px; }
+.mobileGuides { margin-top: 24px; }
 .mobilePersonalization > .mobileContextActions { margin-top: 0; }
 .signedInSummary {
   overflow: hidden;
@@ -320,7 +321,7 @@
   .heroCarousel .heroCard { aspect-ratio: auto; }
   .heroContent { padding: 40px; }
   .heroContent h2 { font-size: 48px; }
-  .mobileContextActions { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .mobileContextActions { max-width: 400px; }
   .favoriteSection { padding: 24px; }
   .celebrityRail { grid-auto-columns: calc((100% - 32px) / 3); padding-bottom: 0; }
   .liveList[data-paginated="true"] { min-height: calc(112px * 3 + 24px); }
@@ -333,7 +334,7 @@
   .page { padding-bottom: 0; }
   .shell { grid-template-columns: minmax(0,1fr) 360px; gap: 24px; }
   .contextPanel { position: sticky; top: calc(var(--header-height) + 32px); display: block; align-self: start; margin-top: 76px; }
-  .mobileContextActions, .mobilePersonalization, .bottomNav { display: none; }
+  .mobileContextActions, .mobilePersonalization, .mobileGuides, .bottomNav { display: none; }
 }
 
 @media (min-width: 80rem) {

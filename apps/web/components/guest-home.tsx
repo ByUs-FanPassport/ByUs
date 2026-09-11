@@ -300,13 +300,11 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
             {personalization.state.status === "guest" ? (
               <section className={styles.mobileContextActions} aria-label={t.context}>
                 <Link className={styles.googleAction} data-service-accent="spectrum-outline" href={`/login${localeQuery}`}><GoogleMark /><span>{t.google}</span></Link>
-                <AuthIntentLink className={styles.passportAction} locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><Book /><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink>
               </section>
             ) : null}
             {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /> : null}
             {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
             {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
-            {contentErrors.guideImages ? <ContentLoadError locale={locale} /> : <HomeEntryCards locale={locale} celebrities={celebrities} eventPhotos={guideEventPhotos} />}
           </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
@@ -365,6 +363,10 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
             </ActivePreviewCoordinator>
 
           </section>
+
+          <div className={styles.mobileGuides}>
+            {contentErrors.guideImages ? <ContentLoadError locale={locale} /> : <HomeEntryCards locale={locale} celebrities={celebrities} eventPhotos={guideEventPhotos} />}
+          </div>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
             <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
