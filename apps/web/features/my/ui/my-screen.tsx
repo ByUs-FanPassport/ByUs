@@ -1,14 +1,12 @@
 "use client";
 
-import { creatorRaffleHref, creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Gift, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { z } from "zod";
 import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-resource";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { CreatorImage } from "@/components/fan-ui/creator-image";
@@ -19,7 +17,6 @@ import { FanState } from "@/components/fan-ui/fan-state";
 import { FanMotionIcon } from "@/components/fan-ui/fan-motion-icon";
 import type { MyReward } from "../../benefit/domain/my-reward";
 import { raffleListSchema } from "../../benefit/domain/raffle";
-import { certificationListItemSchema, historyItemSchema } from "../../certification/domain/certification";
 import { useFanpageResource } from "../../fanpage/ui/use-fanpage-resource";
 import { levelLabel } from "../../passport/domain/passport-read-model";
 import { mySummarySchema, type MySummary } from "../domain/my-summary";
@@ -31,9 +28,8 @@ import { FanSurface, fanUtilityCanvasClassName } from "../../../components/fan-u
 import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
 import { useAvatar } from "../../profile/ui/use-avatar";
 import { withLocalePath } from "../../../components/locale-path";
-import { fanTierProgress, localizedPath, nextRaffleBoundary, recommendCertification, selectOpenRaffle, type MyCreator, type PassportCreator } from "../domain/my-progress";
+import { fanTierProgress, nextRaffleBoundary, selectOpenRaffles, type MyCreator, type PassportCreator } from "../domain/my-progress";
 import { collectionGroupTitle, groupRecentCollection } from "../domain/recent-collection";
-import { MyBenefitProgress } from "./my-benefit-progress";
 import { MyLiveCountdown } from "./my-live-countdown";
 import styles from "./my-screen.module.css";
 
@@ -248,26 +244,17 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
 }
 
 function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; locale: FanLocale }) {
-  const auth = usePrivy();
   const t = copy[locale];
+  const ko = locale === "ko";
   const [now, setNow] = useState(() => Date.now());
   const slug = encodeURIComponent(creator.celebrity.slug);
   const parseRaffles = useCallback((body: unknown) => raffleListSchema.parse(body).raffles, []);
-  const parseMissions = useCallback((body: unknown) => z.array(certificationListItemSchema).parse((body as { certifications: unknown }).certifications), []);
-  const parseHistory = useCallback((body: unknown) => z.array(historyItemSchema).parse((body as { certifications: unknown }).certifications), []);
   const raffles = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${locale}`, parseRaffles);
-  const missions = useFanpageResource(`/api/celebrities/${slug}/certifications?locale=${locale}`, parseMissions);
-  const history = useOwnedFanResource(`/api/me/celebrities/${slug}/certifications?locale=${locale}`, parseHistory, auth);
   const raffleState = raffles.state;
   const retryRaffles = raffles.retry;
-  const raffle = raffleState.status === "ready" ? selectOpenRaffle(raffleState.data, new Date(now)) : null;
-  const recommendation = missions.state.status === "ready" && history.state.status === "ready"
-    ? recommendCertification(missions.state.data, history.state.data, creator.passport !== null) : null;
-  const recommendationHref = recommendation ? localizedPath(recommendation.actionHref, locale) : null;
-  const missionState = missions.state.status === "error" || history.state.status === "error" ? "error"
-    : missions.state.status === "loading" || history.state.status === "loading" ? "loading" : "ready";
+  const openRaffles = raffleState.status === "ready" ? selectOpenRaffles(raffleState.data, new Date(now)) : [];
   const raffleAllHref = creatorRafflesHref(creator.celebrity.slug, locale);
-  const liveHref = `/c/${creator.celebrity.slug}?tab=live&locale=${locale}#celebrity-content` as Route;
+  const activityHref = `/c/${slug}?tab=certifications&locale=${locale}#celebrity-content` as Route;
   useEffect(() => {
     if (raffleState.status !== "ready") return;
     const scheduledNow = Date.now();
@@ -276,36 +263,29 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
     document.addEventListener("visibilitychange", refreshVisible);
     return () => { if (timer !== undefined) window.clearTimeout(timer); document.removeEventListener("visibilitychange", refreshVisible); };
   }, [now, raffleState, retryRaffles]);
-  return <FanSurface className={styles.selectedDetails} aria-label={locale === "ko" ? `${creator.celebrity.name} 팬 활동` : `${creator.celebrity.name} fan activity`}>
+  return <FanSurface className={styles.selectedDetails} aria-label={ko ? `${creator.celebrity.name} 팬 활동` : `${creator.celebrity.name} fan activity`}>
     <div className={styles.corePanels}>
-    <div className={styles.growthPanel}>
-      <div className={styles.panelContent}>
-      <SectionTitle title={t.fanTier(creator.celebrity.name)} href={creator.passport ? `/passports/${creator.passport.id}?locale=${locale}` : undefined} action={creator.passport ? t.myPassport : undefined}/>
-      {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <div className={styles.startPassport}><p>{locale === "ko" ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : `Start ${creator.celebrity.name} fan verification to earn your first tier.`}</p><Link href={`/c/${creator.celebrity.slug}?tab=certifications&locale=${locale}#celebrity-content` as Route}>{t.startPassport}<ArrowRight/></Link></div>}
-      </div>
-      {creator.passport ? <div className={styles.selectedBenefit}><MyBenefitProgress creator={creator as PassportCreator} locale={locale} compact/></div> : null}
-    </div>
-    <div className={styles.activityPanel}>
-    <div className={styles.panelContent}>
-    <div className={styles.rafflePanel}>
-      <FanSectionHeader variant="personal" title={t.ticketPanel(creator.celebrity.name)} accessory={<strong className={styles.ticketBalance}>{creator.ticketBalance}{locale === "ko" ? "장" : ""}</strong>}/>
-      {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "래플을 불러오는 중이에요." : "Loading raffles."}</p>
-        : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{locale === "ko" ? "래플을 불러오지 못했어요." : "We couldn’t load raffles."}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
-        : raffle ? <div className={styles.rafflePreview}>{raffle.imageUrl ? <Image src={raffle.imageUrl} width={112} height={112} alt=""/> : <span className={styles.rafflePlaceholder} aria-hidden="true"><Ticket/></span>}<div><span>{t.raffleOpen}</span><strong>{raffle.title}</strong><small>{raffle.winnerQuantity}{locale === "ko" ? "명 " : " "}{t.raffleDraw}</small><time dateTime={raffle.entryClosesAt!}>{formatClosing(raffle.entryClosesAt!, locale)}</time></div><Link href={creatorRaffleHref(creator.celebrity.slug, raffle.benefitId!, locale)}>{t.raffleView}<ArrowRight/></Link></div>
-        : <div className={styles.raffleEmpty}><p>{t.raffleEmpty}</p></div>}
-    </div>
-      <div className={styles.nextAction}><span>{t.nextAction}</span>{missionState === "loading" ? <p role="status">{t.missionLoading}</p>
-        : missionState === "error" ? <><p role="alert">{t.missionError}</p><button type="button" onClick={() => { missions.retry(); history.retry(); }}>{t.retry}</button></>
-        : recommendation ? <><strong>{recommendation.title}</strong><p>{recommendation.description}</p>{recommendation.reward ? <small>+{recommendation.reward.scorePoints} {locale === "ko" ? "팬 점수" : "Fan Score"} · +{recommendation.reward.ticketAmount} {t.tickets}{recommendation.kind === "manual" ? ` · ${t.manualReward}` : ""}</small> : null}{recommendationHref ? <Link href={recommendationHref as Route}>{t.startPassport}<ArrowRight/></Link> : null}</>
-        : <><strong>{t.noMission}</strong><Link href={liveHref}>{locale === "ko" ? `${creator.celebrity.name} LIVE 일정 보기` : `View ${creator.celebrity.name} LIVE schedule`}<ArrowRight/></Link></>}
-      </div>
-    </div>
-      <div className={`${styles.selectedBenefit} ${styles.raffleBenefits}`}>
-        <strong>{locale === "ko" ? "응모 혜택" : "Raffle benefits"}</strong>
-        <p className={styles.raffleHelp}>{t.raffleHelp}</p>
-        <Link className={styles.allRaffles} href={raffleAllHref}>{locale === "ko" ? "응모 혜택 보기" : "View raffle benefits"}<ArrowRight aria-hidden="true"/></Link>
-      </div>
-    </div>
+      <section className={styles.growthPanel}>
+        <div className={styles.panelContent}>
+          <SectionTitle title={t.fanTier(creator.celebrity.name)} href={creator.passport ? `/passports/${creator.passport.id}?locale=${locale}` : undefined} action={creator.passport ? t.myPassport : undefined}/>
+          {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <p className={styles.panelState}>{ko ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : `Start ${creator.celebrity.name} fan verification to earn your first tier.`}</p>}
+        </div>
+        <div className={styles.panelAction}><Link className={styles.fanActivityLink} href={activityHref}>{creator.passport ? (ko ? "참여할 팬 활동 보기" : "Explore fan activities") : t.startPassport}<ArrowRight aria-hidden="true"/></Link></div>
+      </section>
+      <section className={styles.activityPanel}>
+        <div className={styles.panelContent}>
+          <SectionTitle title={ko ? `${creator.celebrity.name} 이벤트` : `${creator.celebrity.name} events`} href={`/my/raffles?locale=${locale}`} action={ko ? "내 응모 내역" : "My entries"}/>
+          {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{ko ? "이벤트를 불러오는 중이에요." : "Loading events."}</p>
+            : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{ko ? "이벤트를 불러오지 못했어요." : "We couldn’t load events."}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
+            : openRaffles.length > 0 ? <div className={styles.eventSummary}>
+              <div className={styles.eventTitle}><span className={styles.eventIcon}><Gift aria-hidden="true"/></span><h3>{ko ? <>응모할 수 있는 선물 <em>{openRaffles.length}종</em></> : <>{openRaffles.length} {openRaffles.length === 1 ? "gift" : "gifts"} to enter for</>}</h3></div>
+              <p>{ko ? "마음에 드는 선물을 고르고, 모은 응모권으로 참여해 보세요." : "Choose a gift and enter with your tickets."}</p>
+              <p className={styles.eventDeadline}>{ko ? "가장 가까운 마감 · " : "Next deadline · "}<time dateTime={openRaffles[0].entryClosesAt!}>{formatClosing(openRaffles[0].entryClosesAt!, locale)}</time></p>
+            </div> : <p className={styles.panelState}>{ko ? "현재 진행 중인 이벤트가 없어요." : "No events are open right now."}</p>}
+          <div className={styles.eventWallet}><span><Ticket aria-hidden="true"/>{ko ? "보유 응모권" : "Available tickets"}</span><strong>{creator.ticketBalance}{ko ? "장" : ""}</strong></div>
+        </div>
+        <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{ko ? "이벤트 보러 가기" : "Explore events"}</FanAction></div>
+      </section>
     </div>
   </FanSurface>;
 }
