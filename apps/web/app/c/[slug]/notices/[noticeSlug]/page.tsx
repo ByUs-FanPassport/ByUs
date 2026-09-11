@@ -35,9 +35,9 @@ export default async function NoticeDetailPage({
   if (!notice) notFound();
   const recentNotices = recent.notices.filter((item) => item.slug !== noticeSlug).slice(0, 5);
   return <FanAppFrame locale={locale} mainId="notice-detail-main">
-    <FanContentContainer as="main" id="notice-detail-main" className={styles.page} tabIndex={-1}>
+    <FanContentContainer as="main" id="notice-detail-main" className={`${styles.page} ${recentNotices.length > 0 ? styles.withRecent : styles.standalone}`} tabIndex={-1}>
       <Link className={styles.back} href={`/c/${slug}?tab=notice&locale=${locale}`}><ArrowLeft aria-hidden="true" />{locale === "ko" ? "셀럽 팬페이지로 돌아가기" : "Back to celebrity fan page"}</Link>
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ${recentNotices.length > 0 ? styles.relatedLayout : ""}`}>
         <article className={styles.article}>
           <header className={styles.header}><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt, locale)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
           <NoticeBody document={notice.body} locale={locale} />

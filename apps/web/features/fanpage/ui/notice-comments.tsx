@@ -6,7 +6,8 @@ import { z } from "zod";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { commentsSchema } from "../domain/community";
 import { useFanpageResource } from "./use-fanpage-resource";
-import styles from "./fanpage.module.css";
+import previewStyles from "./fanpage.module.css";
+import detailStyles from "./notice-comments.module.css";
 
 const parseComments = (value: unknown) => commentsSchema.extend({ nextCursor: z.string().nullable() }).parse(value);
 export function NoticeComments({ slug, noticeSlug, locale, preview = false, welcome = false }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview?: boolean; welcome?: boolean }) {
@@ -16,6 +17,8 @@ export function NoticeComments({ slug, noticeSlug, locale, preview = false, welc
 function CommentsForOwner({ slug, noticeSlug, locale, preview, welcome }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview: boolean; welcome: boolean }) {
   const { authenticated, ready, getAccessToken } = usePrivy();
   const ko = locale === "ko";
+  const styles = preview ? previewStyles : detailStyles;
+  const Heading = preview ? "h3" : "h2";
   const [cursor, setCursor] = useState<string | null>(null);
   const resource = useFanpageResource(`/api/celebrities/${slug}/notices/${noticeSlug}/comments?locale=${locale}&limit=${preview ? 2 : 20}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parseComments);
   const [body, setBody] = useState("");
@@ -42,15 +45,15 @@ function CommentsForOwner({ slug, noticeSlug, locale, preview, welcome }: { slug
     finally { submitting.current = false; setBusy(false); }
   }
   return <section className={styles.comments} aria-label={ko ? "공지 댓글" : "Notice comments"}>
-    <div className={styles.sectionHeading}><h3>{ko ? "댓글" : "Comments"}{resource.state.status === "ready" ? ` ${resource.state.data.total}` : ""}</h3>{preview && <Link href={`/c/${slug}/notices/${noticeSlug}?locale=${locale}#comments`}>{welcome ? (ko ? "인사 남기기" : "Say hello") : (ko ? "댓글 전체 보기" : "All comments")} →</Link>}</div>
+    <div className={styles.sectionHeading}><Heading>{ko ? "댓글" : "Comments"}{resource.state.status === "ready" ? ` ${resource.state.data.total}` : ""}</Heading>{preview && <Link href={`/c/${slug}/notices/${noticeSlug}?locale=${locale}#comments`}>{welcome ? (ko ? "인사 남기기" : "Say hello") : (ko ? "댓글 전체 보기" : "All comments")} →</Link>}</div>
     <div id={preview ? undefined : "comments"}>
       {resource.state.status === "loading" ? <p role="status" className={styles.muted}>{ko ? "댓글을 불러오고 있어요." : "Loading comments."}</p> : resource.state.status === "error" ? <p role="alert">{ko ? "댓글을 불러오지 못했어요." : "Couldn't load comments."} <button onClick={resource.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : <>
         {!resource.state.data.comments.length && <p className={styles.muted}>{welcome ? (ko ? "어떤 순간에 팬이 되셨나요? 첫 인사를 남겨주세요." : "What made you a fan? Say hello in the comments.") : (ko ? "첫 댓글로 이야기를 시작해 보세요." : "Start the conversation with the first comment.")}</p>}
-        <ul className={styles.commentList}>{resource.state.data.comments.map((comment) => <li key={comment.id}><img src={comment.avatarUrl} width={32} height={32} alt="" /><div><div className={styles.commentMeta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} onClick={() => void mutate(comment.id)}>{ko ? "삭제" : "Delete"}</button>}</div><p>{comment.body}</p></div></li>)}</ul>
+        <ul className={styles.commentList}>{resource.state.data.comments.map((comment) => <li key={comment.id}><img src={comment.avatarUrl} width={preview ? 32 : 40} height={preview ? 32 : 40} alt="" /><div><div className={styles.commentMeta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} onClick={() => void mutate(comment.id)}>{ko ? "삭제" : "Delete"}</button>}</div><p>{comment.body}</p></div></li>)}</ul>
         {!preview && <div className={styles.pagination}>{cursor && <button onClick={() => setCursor(null)}>{ko ? "최신 댓글" : "Newest"}</button>}{resource.state.data.nextCursor && <button onClick={() => { if (resource.state.status === "ready") setCursor(resource.state.data.nextCursor); }}>{ko ? "이전 댓글" : "Older comments"}</button>}</div>}
       </>}
     </div>
-    {ready && authenticated ? <form className={styles.commentForm} onSubmit={(event) => { event.preventDefault(); void mutate(); }}><label htmlFor={`comment-${noticeSlug}`}>{ko ? "댓글 남기기" : "Leave a comment"}</label><textarea id={`comment-${noticeSlug}`} value={body} onChange={(event) => setBody(event.target.value)} maxLength={1000} rows={2} required disabled={busy} placeholder={ko ? "함께 나누고 싶은 이야기를 남겨 주세요." : "Share a thought with other fans."} /><div><small>{ko ? "닉네임과 캐릭터 아바타가 함께 공개돼요." : "Your nickname and character avatar are public."}</small><button type="submit" className={styles.darkButton} disabled={busy || !body.trim()}>{busy ? (ko ? "저장 중…" : "Saving…") : (ko ? "등록" : "Post")}</button></div></form> : ready ? <AuthIntentLink className={styles.loginComment} locale={locale} input={{ sourcePath: `/c/${slug}/notices/${noticeSlug}`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "celebrity", targetId: slug }}>{ko ? "로그인하고 댓글 남기기" : "Sign in to comment"}</AuthIntentLink> : null}
-    {error && <p role="alert">{error}</p>}
+    {ready && authenticated ? <form className={styles.commentForm} onSubmit={(event) => { event.preventDefault(); void mutate(); }}><label htmlFor={`comment-${noticeSlug}`}>{ko ? "댓글 남기기" : "Leave a comment"}</label><textarea id={`comment-${noticeSlug}`} value={body} onChange={(event) => setBody(event.target.value)} aria-describedby={`comment-note-${noticeSlug}${error ? ` comment-error-${noticeSlug}` : ""}`} maxLength={1000} rows={preview ? 2 : 3} required disabled={busy} placeholder={ko ? "함께 나누고 싶은 이야기를 남겨 주세요." : "Share a thought with other fans."} /><div><small id={`comment-note-${noticeSlug}`}>{ko ? "닉네임과 캐릭터 아바타가 함께 공개돼요." : "Your nickname and character avatar are public."}</small><button type="submit" className={styles.darkButton} disabled={busy || !body.trim()}>{busy ? (ko ? "저장 중…" : "Saving…") : (ko ? "등록" : "Post")}</button></div></form> : ready ? <AuthIntentLink className={styles.loginComment} locale={locale} input={{ sourcePath: `/c/${slug}/notices/${noticeSlug}`, sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "celebrity", targetId: slug }}>{ko ? "로그인하고 댓글 남기기" : "Sign in to comment"}</AuthIntentLink> : null}
+    {error && <p id={`comment-error-${noticeSlug}`} role="alert">{error}</p>}
   </section>;
 }
