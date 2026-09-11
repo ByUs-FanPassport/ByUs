@@ -7,11 +7,13 @@
 .intro { display: grid; gap: 8px; margin-bottom: 32px; }
 .intro h1 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.03em; line-height: 1.2; text-wrap: balance; }
 .intro p { max-width: 65ch; margin: 0; color: oklch(48% 0 0); font-size: 14px; line-height: 1.5; text-wrap: pretty; }
-.controls { display: grid; grid-template-columns:minmax(0,1fr) 112px; align-items:end; gap: 8px; margin-bottom: 8px; }
-.controls label { color: oklch(36% 0 0); font-size: 13px; font-weight: 700; }
-.searchField,.sortField { display: grid; gap: 7px; }
-.searchField input,.sortField select { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid oklch(88% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font: inherit; font-size: 16px; transition: border-color 160ms cubic-bezier(.2,0,0,1),background-color 160ms cubic-bezier(.2,0,0,1); }
-.sortField select { padding-inline:10px 28px; }
+.controls { display: grid; grid-template-columns:minmax(0,1fr) 120px; align-items:end; gap: 12px; margin-bottom: 8px; }
+.controls label { color: oklch(36% 0 0); font-size: 13px; font-weight: 600; line-height: 20px; }
+.searchField,.sortField { display: grid; min-width: 0; gap: 8px; }
+.searchField input,.sortField select { appearance: none; -webkit-appearance: none; width: 100%; min-width: 0; height: 48px; min-height: 48px; margin: 0; padding: 0 14px; border: 1px solid oklch(88% 0 0); border-radius: 12px; background: #fff; color: oklch(18% 0 0); font: inherit; font-size: 16px; font-weight: 500; line-height: 1.25; transition: border-color 160ms cubic-bezier(.2,0,0,1),background-color 160ms cubic-bezier(.2,0,0,1); }
+.selectControl { position: relative; display: block; min-width: 0; }
+.sortField select { padding-inline:12px 36px; cursor: pointer; }
+.selectControl > svg { position: absolute; top: 50%; right: 12px; width: 16px; height: 16px; transform: translateY(-50%); pointer-events: none; color: oklch(46% 0 0); }
 .searchField input::placeholder { color: oklch(46% 0 0); }
 .filterMeta { display: flex; min-height: 36px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; margin-bottom: 12px; color: oklch(48% 0 0); font-size: 13px; }
 .filterMeta p { margin: 0; }
