@@ -3,11 +3,16 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let authenticated = false;
-let ownerId = "owner-one";
+let ownerId: string | null = "owner-one";
 let membershipCount = 3;
 const getAccessToken = vi.fn();
 const routerPush = vi.fn();
-vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken, user: authenticated ? { id: ownerId } : null }) }));
+const analytics = vi.hoisted(() => ({
+  pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:creator_page_view:11111111-1111-4111-8111-111111111111"),
+  recordProductEventV1: vi.fn<typeof import("../features/analytics/client/product-event-client").recordProductEventV1>(async () => true),
+}));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken, user: authenticated && ownerId ? { id: ownerId } : null }) }));
+vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 vi.mock("next/navigation", () => ({
   usePathname: () => "/c/kara",
   useRouter: () => ({ push: routerPush }),
@@ -89,7 +94,66 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   return request;
 }
 describe("approved fanpage", () => {
-  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; getAccessToken.mockReset().mockResolvedValue("token"); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
+  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
+  it("keeps creator content visible when page-view storage fails", async () => {
+    analytics.pageViewIdempotencyKey.mockRejectedValueOnce(new Error("storage unavailable"));
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
+    expect(await screen.findByText("아직 등록된 공지가 없어요.")).toBeInTheDocument();
+  });
+  it("scopes a stale authenticated user as anonymous when no token is issued", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue(null);
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    await waitFor(() => expect(analytics.pageViewIdempotencyKey).toHaveBeenCalled());
+    expect(analytics.pageViewIdempotencyKey.mock.calls[0]?.[2]).toBeNull();
+  });
+  it("skips only creator telemetry when a token has no resolved owner", async () => {
+    authenticated = true;
+    ownerId = null;
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
+    expect(await screen.findByText("아직 등록된 공지가 없어요.")).toBeInTheDocument();
+    expect(analytics.pageViewIdempotencyKey).not.toHaveBeenCalled();
+  });
+  it("does not send owner A telemetry when its token resolves after switching to owner B", async () => {
+    authenticated = true;
+    let resolveOwnerAToken!: (token: string | null) => void;
+    const ownerAToken = new Promise<string | null>((resolve) => { resolveOwnerAToken = resolve; });
+    getAccessToken.mockImplementation(() => ownerId === "owner-one"
+      ? ownerAToken
+      : Promise.resolve("token-owner-b"));
+    const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    await waitFor(() => expect(getAccessToken).toHaveBeenCalled());
+
+    ownerId = "owner-two";
+    view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    await waitFor(() => expect(analytics.recordProductEventV1).toHaveBeenCalledTimes(1));
+    resolveOwnerAToken("token-owner-b");
+    await Promise.resolve();
+
+    expect(analytics.pageViewIdempotencyKey.mock.calls.map((call) => call[2])).toEqual(["owner-two"]);
+    expect(analytics.recordProductEventV1).toHaveBeenCalledTimes(1);
+  });
+  it("does not send owner A telemetry when its key resolves after switching to owner B", async () => {
+    authenticated = true;
+    let resolveOwnerAKey!: (key: string) => void;
+    analytics.pageViewIdempotencyKey
+      .mockReturnValueOnce(new Promise<string>((resolve) => { resolveOwnerAKey = resolve; }))
+      .mockResolvedValueOnce("page:creator_page_view:22222222-2222-4222-8222-222222222222");
+    const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    await waitFor(() => expect(analytics.pageViewIdempotencyKey).toHaveBeenCalledTimes(1));
+
+    ownerId = "owner-two";
+    view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+    await waitFor(() => expect(analytics.recordProductEventV1).toHaveBeenCalledTimes(1));
+    resolveOwnerAKey("page:creator_page_view:33333333-3333-4333-8333-333333333333");
+    await Promise.resolve();
+
+    expect(analytics.recordProductEventV1).toHaveBeenCalledTimes(1);
+    expect(analytics.recordProductEventV1.mock.calls[0]?.[0].idempotencyKey)
+      .toBe("page:creator_page_view:22222222-2222-4222-8222-222222222222");
+  });
   it("shows approved navigation and disables the leaderboard without trusting social followers", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });

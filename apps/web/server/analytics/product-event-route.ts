@@ -5,6 +5,7 @@ import { isSignupClientEvent } from "../../features/analytics/domain/signup-funn
 import {
   assertSafeProductEventTime,
   clientProductEventV1Schema,
+  type ClientProductEventV1,
 } from "../../features/analytics/domain/product-event";
 import {
   ProductEventRepositoryError,
@@ -20,14 +21,28 @@ export type ProductEventRouteDependencies = {
 const headers = { "cache-control": "no-store", vary: "Authorization" } as const;
 const json = (body: unknown, status: number) => Response.json(body, { status, headers });
 
+function logIdempotencyConflict(eventName: ClientProductEventV1["eventName"]): void {
+  try {
+    console.warn("product_event_idempotency_conflict", {
+      eventName,
+      reason: "strict_replay_mismatch",
+      status: 409,
+    });
+  } catch {
+    // Diagnostics must not change the handled conflict response.
+  }
+}
+
 export function createRecordProductEventHandler(dependencies: ProductEventRouteDependencies) {
   return async (request: Request): Promise<Response> => {
     const contentLength = Number(request.headers.get("content-length") ?? "0");
     if (Number.isFinite(contentLength) && contentLength > 8_192) return json({ error: { code: "EVENT_INVALID" } }, 413);
 
+    let acceptedEventName: ClientProductEventV1["eventName"] | null = null;
     try {
       const raw = await request.json();
       const input = clientProductEventV1Schema.parse(raw);
+      acceptedEventName = input.eventName;
       if (isSignupClientEvent(input.eventName) && request.headers.has("authorization")) {
         return json({ error: { code: "EVENT_INVALID" } }, 400);
       }
@@ -43,6 +58,9 @@ export function createRecordProductEventHandler(dependencies: ProductEventRouteD
     } catch (error) {
       if (error instanceof AuthError) return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status);
       if (error instanceof ProductEventRepositoryError) {
+        if (error.code === "IDEMPOTENCY_CONFLICT" && acceptedEventName) {
+          logIdempotencyConflict(acceptedEventName);
+        }
         return json({ error: { code: error.code } }, error.code === "IDEMPOTENCY_CONFLICT" ? 409 : 503);
       }
       return json({ error: { code: "EVENT_INVALID" } }, 400);

@@ -588,22 +588,30 @@ export function LiveEventScreen({
       if (controller.signal.aborted) return;
       setCollectible(data.viewer.collectible ?? null);
       setView({ kind: "ready", data });
-      if (trackPageView) void recordProductEventV1(
-        {
-          eventName: "live_page_view",
-          celebrityId: null,
-          liveEventId: data.live.id,
-          missionId: null,
-          benefitId: null,
-          source: "fan.live.detail",
-          idempotencyKey: pageViewIdempotencyKey(
-            "live_page_view",
-            `/live/${data.live.id}`,
-          ),
-          properties: { provider: data.live.watch.provider },
-        },
-        token,
-      );
+      if (trackPageView) void (async () => {
+        if (controller.signal.aborted) return;
+        const ownerId = token ? user?.id : null;
+        if (token && !ownerId) return;
+        const idempotencyKey = await pageViewIdempotencyKey(
+          "live_page_view",
+          `/live/${data.live.id}`,
+          ownerId ?? null,
+        );
+        if (controller.signal.aborted) return;
+        await recordProductEventV1(
+          {
+            eventName: "live_page_view",
+            celebrityId: null,
+            liveEventId: data.live.id,
+            missionId: null,
+            benefitId: null,
+            source: "fan.live.detail",
+            idempotencyKey,
+            properties: { provider: data.live.watch.provider },
+          },
+          token,
+        );
+      })().catch(() => undefined);
     } catch (error) {
       reportRecoveryFailure("live.load", error);
       if (!controller.signal.aborted && !background) setView({ kind: "error", notFound: false });

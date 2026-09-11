@@ -92,8 +92,17 @@ describe("product event HTTP boundary", () => {
     expect(await replayResponse.json()).toEqual({ event: { id: "33333333-3333-4333-8333-333333333333", replayed: true } });
 
     const conflict = repository({ record: vi.fn().mockRejectedValue(new ProductEventRepositoryError("IDEMPOTENCY_CONFLICT")) });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const conflictResponse = await createRecordProductEventHandler({ identify: vi.fn().mockResolvedValue(null), repository: conflict, now: () => now })(request(input));
     expect(conflictResponse.status).toBe(409);
+    expect(warning).toHaveBeenCalledWith("product_event_idempotency_conflict", {
+      eventName: "creator_page_view",
+      reason: "strict_replay_mismatch",
+      status: 409,
+    });
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(input.idempotencyKey);
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(input.anonymousSessionId);
+    warning.mockRestore();
   });
 
   it("fails closed for an invalid bearer token", async () => {
@@ -105,5 +114,20 @@ describe("product event HTTP boundary", () => {
     })(request(input, "Bearer invalid"));
     expect(response.status).toBe(401);
     expect(repo.record).not.toHaveBeenCalled();
+  });
+
+  it("keeps a handled conflict response when sanitized logging fails", async () => {
+    const conflict = repository({ record: vi.fn().mockRejectedValue(new ProductEventRepositoryError("IDEMPOTENCY_CONFLICT")) });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => { throw new Error("logger unavailable"); });
+
+    const response = await createRecordProductEventHandler({
+      identify: vi.fn().mockResolvedValue(null),
+      repository: conflict,
+      now: () => now,
+    })(request(input));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: { code: "IDEMPOTENCY_CONFLICT" } });
+    warning.mockRestore();
   });
 });
