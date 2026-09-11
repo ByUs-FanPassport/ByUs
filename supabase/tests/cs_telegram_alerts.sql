@@ -38,6 +38,17 @@ begin
   if item->>'inquiry_id' is distinct from inquiry::text then raise exception 'wrong deep link'; end if;
   if item->>'actor_name' is not null or item->>'actor_email' is not null or item::text like '%PRIVATE%' then raise exception 'private CS data leaked'; end if;
  end loop;
+ if public.claim_telegram_alert_batch_with_cs_content('-1001234567890') is not null then raise exception 'content worker bypassed room lock'; end if;
+ -- Simulate an old worker stopping before send; the new claim recovers its lease.
+ update public.telegram_alert_outbox set lease_expires_at=now()-interval '1 second' where batch_id=(batch->>'batch_id')::uuid;
+ update public.telegram_alert_settings set lease_expires_at=now()-interval '1 second';
+ batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
+ if jsonb_array_length(batch->'alerts')<>2 then raise exception 'content batch missing'; end if;
+ for item in select value from jsonb_array_elements(batch->'alerts') loop
+  if item->>'message_body' is distinct from (case when item->>'kind'='cs_inquiry_created' then 'PRIVATE BODY' else 'PRIVATE FOLLOWUP' end) then raise exception 'wrong approved message body'; end if;
+  if item->>'inquiry_id' is distinct from inquiry::text or item->>'actor_email' is not null or item ? 'subject' then raise exception 'content DTO exposed extra data'; end if;
+ end loop;
+ if has_function_privilege('anon','public.claim_telegram_alert_batch_with_cs_content(text)','execute') or has_function_privilege('authenticated','public.claim_telegram_alert_batch_with_cs_content(text)','execute') then raise exception 'public content claim access'; end if;
  if not public.begin_telegram_alert_send((batch->>'batch_id')::uuid,'-1001234567890') then raise exception 'begin rejected'; end if;
  perform public.finish_telegram_alert_batch((batch->>'batch_id')::uuid,'sent',1,null);
  if public.claim_telegram_alert_batch_with_cs('-1001234567890') is not null then raise exception 'resent acknowledged messages'; end if;

@@ -20,8 +20,8 @@ const alerts: TelegramAlertBatch["alerts"] = [
 ];
 const inquiryId = "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19";
 const csAlerts: TelegramAlertBatch["alerts"] = [
-  { kind: "cs_inquiry_created", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:05:00.000Z", inquiry_id: inquiryId },
-  { kind: "cs_user_replied", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:06:00.000Z", inquiry_id: inquiryId },
+  { kind: "cs_inquiry_created", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:05:00.000Z", inquiry_id: inquiryId, message_body: "문의 내용을 확인해 주세요." },
+  { kind: "cs_user_replied", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:06:00.000Z", inquiry_id: inquiryId, message_body: "문의 내용을 확인해 주세요." },
 ];
 
 describe("renderTelegramAlertMessage", () => {
@@ -60,7 +60,7 @@ describe("renderTelegramAlertMessage", () => {
     expect(message.match(/• 이퓨 팬 가입/gu)).toHaveLength(2);
   });
 
-  it("renders CS creation and follow-up with only the validated inquiry URL", () => {
+  it("renders CS creation and follow-up with the approved message body and validated inquiry URL", () => {
     const message = renderTelegramAlertMessage(csAlerts.map((alert) => ({
       ...alert,
       subject: "Private subject",
@@ -72,8 +72,10 @@ describe("renderTelegramAlertMessage", () => {
       "🎉 ByUs 주요 소식",
       "",
       "• 새 CS 문의 접수",
+      "내용: 문의 내용을 확인해 주세요.",
       `https://byus.kr/admin/inquiries/${inquiryId}`,
       "• CS 문의에 새 메시지",
+      "내용: 문의 내용을 확인해 주세요.",
       `https://byus.kr/admin/inquiries/${inquiryId}`,
       "",
       "관리자에서 확인하기",
@@ -82,10 +84,21 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).not.toMatch(/Private|name@example\.com/u);
   });
 
+  it("bounds five long CS bodies including astral characters and control characters", () => {
+    const message = renderTelegramAlertMessage(Array.from({ length: 5 }, () => ({
+      ...csAlerts[0]!, message_body: "확인\n\u202e" + "😀".repeat(3995),
+    })));
+    expect(message.length).toBeLessThanOrEqual(4000);
+    expect(message.match(/…/gu)).toHaveLength(5);
+    expect(message).not.toContain("\u202e");
+    expect(message).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])/u);
+    expect(message.match(new RegExp(inquiryId, "g"))).toHaveLength(5);
+  });
+
   it("preserves existing event rendering in a mixed CS batch", () => {
     const message = renderTelegramAlertMessage([alerts[0]!, csAlerts[0]!, alerts[4]!]);
     expect(message).toContain("• 신규 회원 가입\n  제이\n  jay@example.com");
-    expect(message).toContain(`• 새 CS 문의 접수\nhttps://byus.kr/admin/inquiries/${inquiryId}`);
+    expect(message).toContain(`• 새 CS 문의 접수\n내용: 문의 내용을 확인해 주세요.\nhttps://byus.kr/admin/inquiries/${inquiryId}`);
     expect(message).toContain("• 엘리나 · 서울 팬미팅 추첨 결과 공개 · 당첨 5명");
     expect(message).not.toContain("draw@example.com");
   });
@@ -228,13 +241,15 @@ describe("SupabaseTelegramAlertQueue", () => {
     await expect(q.begin(claimed!.batchId, "-1001234567890")).resolves.toBe(true);
     await q.finish(claimed!.batchId, "sent", 321n, null);
     expect(rpc.mock.calls).toEqual([
-      ["claim_telegram_alert_batch_with_cs", { p_chat_id: "-1001234567890" }],
+      ["claim_telegram_alert_batch_with_cs_content", { p_chat_id: "-1001234567890" }],
       ["begin_telegram_alert_send", { p_batch_id: claimed!.batchId, p_chat_id: "-1001234567890" }],
       ["finish_telegram_alert_batch", { p_batch_id: claimed!.batchId, p_outcome: "sent", p_provider_message_id: 321, p_retry_after: null }],
     ]);
   });
 
   it.each([
+    ["missing CS message body", { ...csAlerts[0], message_body: undefined }],
+    ["message body on an existing kind", { ...alerts[0], message_body: "not allowed" }],
     ["missing CS inquiry id", { ...csAlerts[0], inquiry_id: undefined }],
     ["invalid CS inquiry id", { ...csAlerts[0], inquiry_id: "https://evil.example/admin/inquiries/private" }],
     ["inquiry id on an existing kind", { ...alerts[0], inquiry_id: inquiryId }],
