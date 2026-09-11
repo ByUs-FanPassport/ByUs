@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; role?: string | string[] }> }) {
   const { locale: requestedLocale, owned, role } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
-  const initialOwnedOnly = owned === "1";
+  const initialOwnedOnly = owned === "1" ? true : owned !== undefined || role !== undefined ? false : undefined;
   const environment = loadServerEnv();
   const liveRepository = createLiveEventRepositoryFromEnvironment({
     url: environment.SUPABASE_URL,

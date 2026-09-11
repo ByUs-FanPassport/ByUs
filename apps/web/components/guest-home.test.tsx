@@ -837,6 +837,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function favoriteSummary() {
+  return {
+    profile: { nickname: "Fan" },
+    creators: [
+      { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
+      { celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
+    ],
+    live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] },
+    collection: { passportCount: 1, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+  };
+}
+
 it("places My favorites first and sends guests to login with a restorable Home filter", () => {
   render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
@@ -847,17 +859,9 @@ it("places My favorites first and sends guests to login with a restorable Home f
   expect(login.searchParams.get("returnTo")).toBe("/?locale=ko&owned=1");
 });
 
-it("shows only Passport owners in My favorites and excludes first-reaction-only creators", async () => {
+it("defaults to My favorites after loading and excludes first-reaction-only creators", async () => {
   privy.authenticated = true;
-  const summary = {
-    profile: { nickname: "Fan" },
-    creators: [
-      { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
-      { celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
-    ],
-    live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] },
-    collection: { passportCount: 1, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
-  };
+  const summary = favoriteSummary();
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
     if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
@@ -866,7 +870,8 @@ it("shows only Passport owners in My favorites and excludes first-reaction-only 
   }));
   const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
-  await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
+  await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toHaveAttribute("aria-pressed", "true"));
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("heading", { name: "KARA" })).toBeInTheDocument();
@@ -874,6 +879,52 @@ it("shows only Passport owners in My favorites and excludes first-reaction-only 
   expect(within(container.querySelector("#celebrities") as HTMLElement).getByRole("link", { name: "최애 전체 보기" })).toHaveAttribute("href", "/celebrities?locale=ko&owned=1");
   expect(new URL(window.location.href).searchParams.get("owned")).toBe("1");
   expect(new URL(window.location.href).searchParams.get("role")).toBeNull();
+});
+
+it.each(["none", "explicit-all", "role"] as const)("keeps the appropriate default for %s", async (mode) => {
+  privy.authenticated = true;
+  const summary = favoriteSummary();
+  if (mode === "none") {
+    summary.creators = [];
+    summary.collection.passportCount = 0;
+  }
+  vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+    if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+    return Response.json({ summary });
+  }));
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]}
+    initialOwnedOnly={mode === "explicit-all" ? false : undefined} initialRole={mode === "role" ? "creator" : "all"} />);
+  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
+  expect(within(filters).getByRole("button", { name: mode === "role" ? "크리에이터" : "전체" })).toHaveAttribute("aria-pressed", "true");
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(mode === "role" ? 2 : 3);
+});
+
+it("preserves All selected while personal data is still loading", async () => {
+  privy.authenticated = true;
+  let resolveSummary!: (response: Response) => void;
+  const pendingSummary = new Promise<Response>((resolve) => { resolveSummary = resolve; });
+  vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+    if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+    return pendingSummary;
+  }));
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  expect(within(filters).getByRole("button", { name: "내 최애" })).toBeDisabled();
+  fireEvent.click(within(filters).getByRole("button", { name: "전체" }));
+  await act(async () => { resolveSummary(Response.json({ summary: favoriteSummary() })); });
+  await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
+  expect(within(filters).getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(3);
+  expect(new URL(window.location.href).searchParams.get("role")).toBe("all");
+  fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
+  fireEvent.click(within(filters).getByRole("button", { name: "전체" }));
+  expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(3);
 });
 
 it("shows honest loading and error states for a personal Home deep link", async () => {
