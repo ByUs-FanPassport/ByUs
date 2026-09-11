@@ -40,7 +40,7 @@
 .flag > span { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(4, 1fr); width: 66px; height: 56px; padding: 3px; background: #6387bb; color: white; }
 .flag > span > span { display: grid; place-items: center; font-size: 9px; line-height: 1; }
 @media (hover: hover) { .guide:hover { background: #f3eaf1; } .fanmeeting:hover, .eventGuide:hover { border-color: #c2a4b8; } }
-@media (max-width: 767px) { .guideCopy strong { font-size: 22px; } }
+@media (max-width: 767px) { .guideCopy strong { font-size: 22px; } .fanmeeting { display: none; } }
 @media (max-width: 374px) { .guideCopy { padding-left: 16px; padding-right: 12px; } .guideCopy strong { font-size: 19px; } .fanmeeting { padding: 16px; gap: 10px; } .fanmeetingCopy strong { font-size: 14px; } }
 
 .carousel .carouselPrevious,.carousel .carouselNext { position:absolute; top:60%; z-index:2; transform:translateY(-50%); width:44px; height:44px; color:#fff; background:transparent; isolation:isolate; }

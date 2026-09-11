@@ -44,7 +44,7 @@ const copy = {
     privacy: "개인정보처리방침",
     terms: "이용약관",
     nav: "ByUs 하단 메뉴",
-    fanmeetings: "미국 팬미팅 문의",
+    fanmeetings: "팬미팅 협업 문의",
     serviceGuide: "이용 가이드",
   },
   en: {
@@ -60,7 +60,7 @@ const copy = {
     privacy: "Privacy Policy",
     terms: "Terms of Use",
     nav: "ByUs footer navigation",
-    fanmeetings: "U.S. fan meeting inquiries",
+    fanmeetings: "Fan meeting partnerships",
     serviceGuide: "Service guide",
   },
 } as const;
