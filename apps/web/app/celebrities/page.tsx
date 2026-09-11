@@ -23,6 +23,6 @@ export default async function CelebritiesPage({ searchParams }: { searchParams: 
     ...celebrity,
     upcomingLive: livesByCelebrity.get(celebrity.slug) ?? null,
   }));
-  const initialOwnedOnly = owned === "1";
+  const initialOwnedOnly = owned === "1" ? true : owned !== undefined || role !== undefined || q !== undefined || sort !== undefined ? false : undefined;
   return <CelebrityDirectory celebrities={celebrities} locale={locale} initialRole={initialOwnedOnly ? "all" : parseCreatorRoleFilter(role)} initialOwnedOnly={initialOwnedOnly} initialQuery={typeof q === "string" ? q : q?.[0] ?? ""} initialSort={sort === "name-asc" || sort === "live-first" ? sort : "published"} />;
 }

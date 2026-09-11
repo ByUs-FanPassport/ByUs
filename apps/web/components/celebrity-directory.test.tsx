@@ -100,10 +100,58 @@ describe("published celebrity directory", () => {
     await waitFor(() => expect(screen.getByText("패스포트 보유")).toBeInTheDocument());
     const filter = screen.getByRole("button", { name: "내 최애" });
     expect(filter).toBeEnabled();
+    expect(filter).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(filter);
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledWith("/api/passports?locale=ko", expect.objectContaining({ headers: { Authorization: "Bearer token" } }));
+    expect(fetch).toHaveBeenCalledWith("/api/passports?locale=ko&tierStages=1", expect.objectContaining({ headers: { Authorization: "Bearer token" } }));
+  });
+
+  it("ranks owned creators first in All and exposes their real stage outside the card link", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    const stageProgress = { policyVersion: 2, current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 }, next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 }, remaining: 10, progressPercent: 33 };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ passports: [{ ...ownedPassport, score: { level: "Silver", points: 20, stageProgress } }] }) }));
+    render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" initialOwnedOnly={false} />);
+    const trigger = await screen.findByRole("button", { name: /KARA.*20점/ });
+    expect(trigger.closest("a")).toBeNull();
+    expect(screen.getAllByRole("article")[0]).toHaveTextContent("KARA");
+    expect(screen.getAllByRole("article")[0]).toHaveAttribute("data-passport-owned", "true");
+    expect(screen.getAllByRole("article")[1]).not.toHaveAttribute("data-passport-owned");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("20점");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("10점");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "name-asc" } });
+    expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
+    expect(publishedCelebrityFixtures[0].slug).toBe("kara");
+  });
+
+  it("defaults to All when the signed-in user has no Passport", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ passports: [] }) }));
+    render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "내 최애" })).toBeEnabled());
+    expect(screen.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+    expect(screen.queryByText("패스포트 보유")).not.toBeInTheDocument();
+  });
+
+  it("does not replace a manual All choice when Passport data arrives", async () => {
+    authenticated = true;
+    getAccessToken.mockResolvedValue("token");
+    let resolve!: (value: unknown) => void;
+    const pending = new Promise((done) => { resolve = done; });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => pending }));
+    render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
+    fireEvent.click(screen.getByRole("button", { name: "전체" }));
+    await act(async () => resolve({ passports: [ownedPassport] }));
+    await screen.findByText("패스포트 보유");
+    expect(screen.getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+    expect(new URL(window.location.href).searchParams.get("role")).toBe("all");
   });
 
   it("keeps the Passport filter unavailable when the API DTO is malformed", async () => {
@@ -236,7 +284,7 @@ it("keeps the selected role in the URL without losing locale, sort or history st
   expect(new URL(window.location.href).searchParams.get("role")).toBe("creator");
   expect(screen.getAllByRole("article")).toHaveLength(2);
   fireEvent.click(screen.getByRole("button", { name: "All" }));
-  expect(window.location.pathname + window.location.search + window.location.hash).toBe("/celebrities?locale=en&sort=name-asc#directory-results");
+  expect(window.location.pathname + window.location.search + window.location.hash).toBe("/celebrities?locale=en&sort=name-asc&role=all#directory-results");
   expect(window.history.state).toEqual({ entry: "directory" });
   window.history.replaceState({}, "", "/");
 });
@@ -251,7 +299,7 @@ it("clears deep-linked filters from the URL so reloading cannot restore an old r
   expect(screen.getAllByRole("article")).toHaveLength(3);
   expect(screen.getByRole("searchbox")).toHaveValue("");
   expect(screen.getByRole("combobox")).toHaveValue("name-asc");
-  expect(window.location.pathname + window.location.search).toBe("/celebrities?locale=ko&sort=name-asc");
+  expect(window.location.pathname + window.location.search).toBe("/celebrities?locale=ko&role=all&sort=name-asc");
   window.history.replaceState({}, "", "/");
 });
 
