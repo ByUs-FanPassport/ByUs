@@ -9,7 +9,13 @@
 
 검증: UI·경로 관련 40개 통과. 새 migration 30000→30001의 빈 로컬 PostgreSQL 재생 및 `fan_community_cheers_behavior.sql` 통과(기존 이메일 충돌 검사의 별도 실행기 제한은 아래 기록과 동일). 기존 `fanpage_community_behavior.sql`도 변경된 공개 정책·언어 조건에 맞춰 갱신한 뒤 통과했다. 독립 결과 검토에서 P1/P2 없음. 전체 공개 정책은 새로 검증했으며 변경하지 않은 물리·터치·댓글 동작의 기존 성공 근거는 재사용한다.
 
-로그: `/tmp/byus-fan-community-public-profiles.log`. 화면 증거: `apps/web/test-results/fan-public-profiles/`. 운영 적용·푸시 결과와 통합 검증은 배포 단계에서 기록한다. 실제 OAuth 및 운영 UI 동작은 별도 검증하지 않는다.
+최신 main `584f145`에 구현을 통합했으며, 엘리나 미션 진입 컴포넌트와 응원댓글을 함께 유지했다. 통합 테스트 81개, 변경 파일 ESLint, Next production build(전체 TypeScript 포함)가 통과했다. KO/EN × 390/1440px 전체 공개 화면을 확인했고, 초기 캡처는 페인트 완료를 기다린 최종 이미지로 교체했다. 작업용 node_modules 외부 심볼릭 링크 때문에 발생한 Turbopack 오류는 해당 링크만 APFS 복사본으로 바꿔 해결했다.
+
+운영 DB에 `20260912030000`과 `20260912030001`, migration ledger를 한 트랜잭션으로 적용하고 COMMIT을 확인했다. 새 조회/작성 RPC는 service_role 전용이며 기존 visibility RPC는 service_role도 실행할 수 없다. 기존 설정 기록·댓글·개인 데이터는 삭제하지 않았다. 운영 테스트 데이터를 만들지 않았다. 현재 기록은 웹 푸시 직전이며 정확한 푸시 커밋과 자동 배포 시작 상태는 완료 응답에 기록한다.
+
+- migration SHA256: 30000 `ad31a1a79064807ca63576934de0bc00c3c784f4497a4ccd644c5bcc5b14e25e`, 30001 `a66672fd2308b892b85036686354f0b125877a13c8f41487377724e40a44459f`.
+- 로그: `/tmp/byus-fan-community-public-profiles.log`, `/tmp/byus-public-integration-tests.log`, `/tmp/byus-public-integration-build-final.log`, `/tmp/byus-public-profiles-production-apply.log`.
+- 화면 증거: `apps/web/test-results/fan-public-profiles/`. 실제 OAuth 및 운영 UI 동작은 별도 검증하지 않았다.
 
 ## 이전 팬 커뮤니티 로컬 구현
 
