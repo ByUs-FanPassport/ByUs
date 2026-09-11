@@ -4,6 +4,7 @@ import type { NotificationWorkerEnv } from "./notification-env.js";
 
 export interface BusinessInquiry {
   id: string; attempt_token: string; locale: "ko" | "en";
+  inquiry_type?: "fanmeeting" | "creator" | "partner";
   contact_name: string; company: string; email: string; message: string;
 }
 export type InquiryOutcome = "sent" | "throttled" | "rejected" | "unknown";
@@ -54,7 +55,9 @@ export class SupabaseInquiryQueue implements InquiryQueue {
     if (!data.length) return null;
     const row = data[0] as Record<string, unknown>;
     if (!["id", "attempt_token", "contact_name", "company", "email", "message"].every((key) => typeof row[key] === "string") || !["ko", "en"].includes(String(row.locale))) throw new Error("BUSINESS_INQUIRY_INVALID_JOB");
-    return row as unknown as BusinessInquiry;
+    const inquiryType = row.inquiry_type ?? "fanmeeting";
+    if (!["fanmeeting", "creator", "partner"].includes(String(inquiryType))) throw new Error("BUSINESS_INQUIRY_INVALID_JOB");
+    return { ...row, inquiry_type: inquiryType } as unknown as BusinessInquiry;
   }
   async begin(job: BusinessInquiry) {
     return await this.call("begin_business_inquiry_send", { p_id: job.id, p_token: job.attempt_token }) === true;
@@ -72,6 +75,13 @@ export class SesInquirySender implements InquirySender {
   })) {}
   async send(job: BusinessInquiry) {
     if (job.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(job.email) || /[\r\n]/.test(job.email)) throw new InquirySendError("rejected");
+    const inquiryType = job.inquiry_type ?? "fanmeeting";
+    const label = {
+      fanmeeting: "미국 팬미팅 문의",
+      creator: "ByUs 시작 문의",
+      partner: "파트너 문의",
+    }[inquiryType];
+    if (!label) throw new InquirySendError("rejected");
     let result: { MessageId?: string };
     try {
       result = await this.client.send(new SendEmailCommand({
@@ -79,9 +89,9 @@ export class SesInquirySender implements InquirySender {
         Destination: { ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] },
         ReplyToAddresses: [job.email],
         Content: { Simple: {
-          Subject: { Data: `[ByUs] 미국 팬미팅 문의 · ${job.id}`, Charset: "UTF-8" },
+          Subject: { Data: `[ByUs] ${label} · ${job.id}`, Charset: "UTF-8" },
           Body: { Text: { Charset: "UTF-8", Data: [
-            "ByUs 미국 팬미팅 문의", `문의 번호: ${job.id}`, `언어: ${job.locale}`,
+            `ByUs ${label}`, `문의 번호: ${job.id}`, `언어: ${job.locale}`,
             `담당자: ${job.contact_name}`, `회사: ${job.company}`, `회신 이메일: ${job.email}`,
             "", "문의 내용", job.message,
           ].join("\n") } },

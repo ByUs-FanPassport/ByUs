@@ -1,23 +1,35 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { createInquiryHandler, InquiryError, normalizedClientIp } from "./fanmeeting-route";
+import { createInquiryHandler, InquiryError, normalizedClientIp, type InquiryType } from "./fanmeeting-route";
 const input = { idempotencyKey: "11111111-1111-4111-8111-111111111111", locale: "ko", name: "담당자", company: "Company", email: "sender@example.com", message: "문의합니다", consent: true };
 function request(body: unknown = input, headers: Record<string, string> = {}, url = "https://byus.kr/api/inquiries/fanmeeting") {
   return new Request(url, { method: "POST", headers: { origin: "https://byus.kr", "content-type": "application/json", "x-vercel-forwarded-for": "192.0.2.1", ...headers }, body: typeof body === "string" ? body : JSON.stringify(body) });
 }
-function setup() { const submit = vi.fn().mockResolvedValue(false); return { submit, handle: createInquiryHandler({ repository: { submit }, secret: "test-key", vercel: true }) }; }
+function setup(inquiryType: InquiryType = "fanmeeting") { const submit = vi.fn().mockResolvedValue(false); return { submit, handle: createInquiryHandler({ repository: { submit }, secret: "test-key", vercel: true, inquiryType }) }; }
 describe("public inquiry API", () => {
   it("accepts validated payload and hashes IP and payload server-side", async () => {
     const { submit, handle } = setup(); const result = await handle(request());
     expect(result.status).toBe(202); expect(await result.json()).toEqual({ status: "accepted" });
     expect(result.headers.get("cache-control")).toBe("no-store");
-    expect(submit).toHaveBeenCalledWith(input, expect.stringMatching(/^[a-f0-9]{64}$/), expect.stringMatching(/^[a-f0-9]{64}$/));
+    expect(submit).toHaveBeenCalledWith(input, expect.stringMatching(/^[a-f0-9]{64}$/), expect.stringMatching(/^[a-f0-9]{64}$/), "fanmeeting");
     expect(submit.mock.calls[0][1]).not.toEqual(submit.mock.calls[0][2]);
+  });
+  it("preserves the legacy fanmeeting payload hash and binds new categories server-side", async () => {
+    const legacy = setup("fanmeeting");
+    const creator = setup("creator");
+    await legacy.handle(request());
+    await creator.handle(request());
+    const hash = (value: string) => createHmac("sha256", "test-key").update(`byus-inquiry-v1:payload:${value}`).digest("hex");
+    const legacyPayload = [input.locale, input.name, input.company, input.email, input.message, input.consent];
+    expect(legacy.submit.mock.calls[0][2]).toBe(hash(JSON.stringify(legacyPayload)));
+    expect(creator.submit.mock.calls[0][2]).toBe(hash(JSON.stringify(["creator", ...legacyPayload])));
+    expect(creator.submit.mock.calls[0][3]).toBe("creator");
   });
   it("replays as 200 and forwards exact idempotency identity", async () => {
     const { submit, handle } = setup(); submit.mockResolvedValue(true);
     expect((await handle(request())).status).toBe(200); expect(submit.mock.calls[0][0].idempotencyKey).toBe(input.idempotencyKey);
   });
-  it.each([{ consent: false }, { name: "" }, { email: "person@example.com\r\nBcc:other@example.com" }, { message: "a".repeat(4001) }, { recipients: ["other@example.com"] }, { locale: "fr" }, { idempotencyKey: "bad" }])("rejects invalid or extra fields %j", async (change) => {
+  it.each([{ consent: false }, { name: "" }, { email: "person@example.com\r\nBcc:other@example.com" }, { message: "a".repeat(4001) }, { recipients: ["other@example.com"] }, { inquiryType: "partner" }, { locale: "fr" }, { idempotencyKey: "bad" }])("rejects invalid or extra fields %j", async (change) => {
     const { submit, handle } = setup(); expect((await handle(request({ ...input, ...change }))).status).toBe(400); expect(submit).not.toHaveBeenCalled();
   });
   it("bounds actual bytes despite a small declared Content-Length", async () => {

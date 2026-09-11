@@ -6,6 +6,7 @@ import { ArrowRight, Radio, Ticket } from "lucide-react";
 import { z } from "zod";
 import { flattenLiveCatalog } from "../domain/live-catalog";
 import { raffleListSchema } from "@/features/benefit/domain/raffle";
+import { creatorRaffleHref, creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
 import { bypassImageOptimization } from "@/components/fan-ui/public-image-policy";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "@/server/content/content-domain";
 import { NoticeComments } from "./notice-comments";
@@ -39,12 +40,12 @@ export function RafflePanel({ slug, name, locale, preview = false, ticketBalance
   const ko = locale === "ko";
   const resource = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${locale}`, parseRaffles);
   const statusText = { preparing: ko ? "이벤트 준비 중" : "Preparing", open: ko ? "응모 진행 중" : "Entries open", closed: ko ? "응모 종료" : "Closed", cancelled: ko ? "운영 취소 · 응모권 반환" : "Cancelled · tickets refunded" };
-  return <section><div className={styles.sectionHeading}><h2>{ko ? "래플 응모" : "Raffles"}</h2>{preview && <Link href={`/c/${slug}?tab=raffles&locale=${locale}#celebrity-content`}>{ko ? "전체 래플 보기" : "All raffles"} →</Link>}</div>{!preview && <p className={styles.intro}>{ko ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : `Choose a prize and enter using your ${name} raffle tickets.`}</p>}
+  return <section><div className={styles.sectionHeading}><h2>{ko ? "래플 응모" : "Raffles"}</h2>{preview && <Link href={creatorRafflesHref(slug, locale)}>{ko ? "전체 래플 보기" : "All raffles"} →</Link>}</div>{!preview && <p className={styles.intro}>{ko ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : `Choose a prize and enter using your ${name} raffle tickets.`}</p>}
     {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><Ticket aria-hidden="true" /><h3>{ko ? "새 래플을 준비하고 있어요." : "New raffles are coming."}</h3><p>{ko ? "경품과 일정이 공개되면 이곳에서 확인해 주세요." : "Check here for prizes and entry dates."}</p></div> : <div className={preview ? styles.featuredRaffle : styles.raffleGrid}>{resource.state.data.slice(0, preview ? 1 : undefined).map((raffle) => <article className={styles.raffleCard} key={raffle.id} data-status={raffle.status}>
       <div className={styles.raffleImage}>{raffle.imageUrl ? <Image src={raffle.imageUrl} alt="" fill sizes={preview ? "(min-width:768px) 280px, calc(100vw - 64px)" : "(min-width:768px) 400px, calc(100vw - 64px)"} unoptimized={bypassImageOptimization(raffle.imageUrl)} /> : <><Ticket aria-hidden="true" /><span>{ko ? "경품 안내" : "Prize"}</span></>}</div>
       <div className={styles.raffleBody}><span className={styles.statusPill}>{statusText[raffle.status]}</span><h3>{raffle.title}</h3><p>{raffle.summary}</p><p>{ko ? `${raffle.winnerQuantity}명 추첨` : `${raffle.winnerQuantity} winners`}</p>{raffle.entryClosesAt && <small>{formatDate(raffle.entryClosesAt, locale)} {ko ? "마감" : "deadline"}</small>}
         <div className={styles.ticketBalance}><Ticket aria-hidden="true" />{ticketBalance !== null ? (ko ? `내 ${name} 응모권 ${ticketBalance}장` : `${ticketBalance} ${name} tickets`) : (ko ? "로그인하고 내 응모권 확인" : "Sign in to check your tickets")}</div>
-        {raffle.benefitId && raffle.status !== "preparing" ? <Link className={styles.darkButton} href={`/benefits/${raffle.benefitId}?locale=${locale}`}>{ko ? "래플 자세히 보기" : "View raffle"}<ArrowRight aria-hidden="true" /></Link> : <p className={styles.preparing}>{ko ? "응모 일정은 공지에서 안내해요." : "Entry dates will be announced in Notices."}</p>}
+        {raffle.benefitId && raffle.status !== "preparing" ? <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId, locale)}>{ko ? "래플 자세히 보기" : "View raffle"}<ArrowRight aria-hidden="true" /></Link> : <p className={styles.preparing}>{ko ? "응모 일정은 공지에서 안내해요." : "Entry dates will be announced in Notices."}</p>}
       </div>
     </article>)}</div>}
   </section>;

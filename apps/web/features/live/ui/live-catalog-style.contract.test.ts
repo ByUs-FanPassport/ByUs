@@ -21,7 +21,9 @@ describe("LIVE catalog repeated action style contract", () => {
   });
 
   it("preserves the desktop and mobile target contracts", () => {
-    expect(css).toMatch(/\.action\s*\{[^}]*width:44px;[^}]*height:44px;/);
+    // Mobile actions now show their label, so the target grows with its text.
+    expect(css).toMatch(/\.action\s*\{[^}]*width:auto;[^}]*min-width:76px;[^}]*min-height:44px;/);
+    expect(css).toMatch(/\.actionLabel\s*\{[^}]*display:inline-flex;/);
     expect(css).toMatch(
       /@media \(min-width:48rem\)[\s\S]*?\.action\s*\{[^}]*min-width:184px;[^}]*min-height:48px;/,
     );

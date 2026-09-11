@@ -34,8 +34,8 @@ import {
   type LiveEventResponse,
 } from "@/features/live/domain/live-event";
 import {
-  ifewBenefitId,
   ifewLiveSlug,
+  ifewRafflesHref,
   ifewPrizeName,
 } from "@/features/live/domain/ifew-event";
 import { elinaLiveSlug, elinaRafflesHref } from "@/features/live/domain/elina-event";
@@ -1142,7 +1142,7 @@ export function LiveEventScreen({
                 variant="neutral"
                 className={styles.missionLink}
                 fullWidth
-                href={`/benefits/${ifewBenefitId}?locale=${locale}` as Route}
+                href={ifewRafflesHref(locale)}
                 helperText={eventCopy?.prizeHelper}
               >
                 <span className={styles.missionLinkContent}><span>{eventCopy?.prizeAction}</span><ArrowRight aria-hidden="true" /></span>
@@ -1282,7 +1282,7 @@ export function LiveEventScreen({
                       <FanAction
                         variant="primary"
                         href={(isIfewLive
-                          ? `/benefits/${ifewBenefitId}?locale=${locale}`
+                          ? ifewRafflesHref(locale)
                           : isElinaLive
                             ? elinaRafflesHref(locale)
                           : live.missionsAvailable !== false

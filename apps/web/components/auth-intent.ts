@@ -102,7 +102,11 @@ export const authIntentSchema = z
       && value.targetType === "passport"
       && value.targetId === "collection"
       && value.sourcePath === "/my";
-    if (value.sourcePath !== expectedPath && !isMyCollectionEntry && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
+    const creatorRafflePath = /^\/c\/[a-z0-9][a-z0-9-]{0,127}\/raffles\/([a-z0-9-]+)$/i.exec(value.sourcePath);
+    const isCreatorRaffleEntry = value.actionType === "APPLY_BENEFIT"
+      && value.targetType === "benefit"
+      && creatorRafflePath?.[1] === value.targetId;
+    if (value.sourcePath !== expectedPath && !isMyCollectionEntry && !isCreatorRaffleEntry && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
       context.addIssue({ code: "custom", path: ["sourcePath"], message: "Intent action and source path do not match" });
     }
     if (value.draftPayload.draftRef && value.actionType !== "SUBMIT_FAN_CODE") {

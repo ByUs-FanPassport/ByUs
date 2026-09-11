@@ -1,7 +1,10 @@
 import { publicMetadata } from "@/seo/metadata";
 import { loadSeoCreator } from "@/server/seo/public-content";
 import { resolvePhoto } from "@/features/media/domain/public-image";
-import { notFound } from "next/navigation";
+import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+import { sanitizeAuthIntentId } from "@/components/login-intent";
+import { notFound, redirect } from "next/navigation";
+import type { Route } from "next";
 import { CelebrityFanPage, type CelebrityFanTab } from "../../../components/celebrity-fan-page";
 import { createPublishedContentRepositoryFromEnvironment } from "../../../server/content/published-content-repository";
 
@@ -20,10 +23,14 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     locales: translated ? ["ko", "en"] : [locale] });
 }
 
-export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string }> }) {
+export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; authIntent?: string }> }) {
   const { slug } = await params;
-  const { locale: requestedLocale, tab: requestedTab } = await searchParams;
+  const { locale: requestedLocale, tab: requestedTab, authIntent: requestedAuthIntent } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
+  if (requestedTab === "raffles" || requestedTab === "benefits") {
+    const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
+    redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
+  }
   const initialTab: CelebrityFanTab = requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" || requestedTab === "certifications" || requestedTab === "raffles" || requestedTab === "leaderboard" ? requestedTab : "home";
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [celebrity, primaryLives] = await Promise.all([
