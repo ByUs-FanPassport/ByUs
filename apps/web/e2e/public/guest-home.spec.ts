@@ -36,7 +36,6 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
     await expect(page.getByText("새로운 LIVE를 준비하고 있어요.")).toBeVisible();
     await expect(page.getByText("현재 공개된 LIVE가 없습니다.")).toBeVisible();
   }
-  await expect(page.getByRole("link", { name: /Fan Passport 발급받기/ }).first()).toBeVisible();
 
   const viewport = page.viewportSize();
   expect(viewport?.width).toBe(testInfo.project.name.endsWith("-360") ? 360 : 1440);
@@ -57,20 +56,19 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
   });
   const secondaryAction =
     viewport?.width === 360 ? googleActions.first() : googleActions.last();
-  const secondaryPassportAction =
-    viewport?.width === 360 ? passportActions.first() : passportActions.last();
   const secondaryActionBox = await secondaryAction.boundingBox();
-  const secondaryPassportActionBox = await secondaryPassportAction.boundingBox();
   expect(secondaryActionBox).not.toBeNull();
-  expect(secondaryPassportActionBox).not.toBeNull();
   expect(secondaryActionBox!.height).toBe(viewport?.width === 360 ? 48 : 44);
-  expect(secondaryPassportActionBox!.height).toBe(
-    viewport?.width === 360 ? 48 : 44,
-  );
-  expect(secondaryActionBox!.width).toBe(
-    secondaryPassportActionBox!.width,
-  );
-  if (viewport?.width === 1440) {
+  if (viewport?.width === 360) {
+    await expect(passportActions).toBeHidden();
+    const favorites = page.locator("#celebrities");
+    const guide = page.locator("[data-home-guide-carousel]").first();
+    expect((await favorites.boundingBox())!.y).toBeLessThan((await guide.boundingBox())!.y);
+  } else {
+    const passportBox = await passportActions.boundingBox();
+    expect(passportBox).not.toBeNull();
+    expect(passportBox!.height).toBe(44);
+    expect(secondaryActionBox!.width).toBe(passportBox!.width);
     expect(secondaryActionBox!.width).toBe(280);
   }
 

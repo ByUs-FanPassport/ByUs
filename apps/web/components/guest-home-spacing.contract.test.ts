@@ -54,7 +54,7 @@ describe("guest home compact icon-only action spacing", () => {
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
     expect(metaRow).toMatch(/\balign-items:\s*center\b/);
-    expect(status).toMatch(/\bmin-height:\s*24px\b/);
+    expect(status).toMatch(/\bmin-height:\s*44px\b/);
     expect(status).toMatch(/\bgap:\s*4px\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
       /\bfont-weight:\s*400\b/,
@@ -81,13 +81,8 @@ describe("guest home compact icon-only action spacing", () => {
       /\bfont-weight:\s*650\b/,
     );
 
-    const title = declarationBlock(".ownedPassportLink h3");
-    expect(title).toMatch(/\bfont-size:\s*16px\b/);
-    expect(title).toMatch(/\bfont-weight:\s*800\b/);
-
-    const value = declarationBlock(".passportValue");
-    expect(value).toMatch(/\bfont-size:\s*12px\b/);
-    expect(value).toMatch(/\bfont-weight:\s*600\b/);
+    expect(declarationBlock(".ownedPassportPreview")).toMatch(/\bwidth:\s*min\(100%,\s*320px\)/);
+    expect(declarationBlock(".ownedPassportLink")).toMatch(/\bwidth:\s*100%/);
 
     expect(declarationBlock(".summaryTextLink")).toMatch(
       /\bfont-weight:\s*650\b/,
@@ -104,7 +99,7 @@ describe("guest home compact icon-only action spacing", () => {
       /\bwidth:\s*min\(var\(--carousel-width\),\s*100%\)/,
     );
     expect(declarationBlock(".carouselControls .carouselDot")).toMatch(
-      /\bmin-width:\s*24px\b/,
+      /\bmin-width:\s*44px\b/,
     );
     expect(declarationBlock(".carouselPrevious")).toMatch(/\bleft:\s*8px\b/);
     expect(declarationBlock(".carouselNext")).toMatch(/\bright:\s*8px\b/);

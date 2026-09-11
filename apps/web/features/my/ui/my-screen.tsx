@@ -106,19 +106,40 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
   return <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
     {!ready ? <>{heading}<FanState kind="loading" title={t.loading} /></>
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
-      : state.status === "loading" ? <>{heading}<FanState kind="loading" title={t.loading} /></>
-      : state.status === "error" ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={resource.retry}><RotateCcw/>{t.retry}</FanAction>} /></>
-      : <Dashboard key={auth.user?.id ?? "current-owner"} summary={state.data} locale={locale} avatarResource={avatarResource} refreshSummary={resource.retry}/>}
+      : <OwnerScopedDashboard
+        key={auth.user?.id ?? "current-owner"}
+        summary={state.status === "ready" ? state.data : null}
+        fallback={state.status === "error"
+          ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={resource.retry}><RotateCcw/>{t.retry}</FanAction>} /></>
+          : <>{heading}<FanState kind="loading" title={t.loading} /></>}
+        locale={locale}
+        avatarResource={avatarResource}
+        refreshSummary={resource.retry}
+      />}
   </FanContentContainer></FanAppFrame>;
 }
 
-function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summary: MySummary; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar>; refreshSummary: () => void }) {
+function OwnerScopedDashboard({ summary, fallback, locale, avatarResource, refreshSummary }: { summary: MySummary | null; fallback: ReactNode; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar>; refreshSummary: () => void }) {
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!summary) return;
+    setSelectedSlug((current) => current && summary.creators.some((creator) => creator.celebrity.slug === current)
+      ? current
+      : summary.creators[0]?.celebrity.slug ?? null);
+  }, [summary]);
+
+  return summary
+    ? <Dashboard summary={summary} locale={locale} avatarResource={avatarResource} refreshSummary={refreshSummary} selectedSlug={selectedSlug} onSelectSlug={setSelectedSlug}/>
+    : fallback;
+}
+
+function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSlug, onSelectSlug }: { summary: MySummary; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar>; refreshSummary: () => void; selectedSlug: string | null; onSelectSlug: (slug: string) => void }) {
   const t = copy[locale];
   const nickname = summary.profile.nickname?.trim() || null;
   const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
   const hasRewards = summary.rewards.items.length > 0 || summary.rewards.availableCount > 0 || summary.rewards.entries > 0;
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
-  const [selectedSlug, setSelectedSlug] = useState(summary.creators[0]?.celebrity.slug ?? null);
   const selected = summary.creators.find((creator) => creator.celebrity.slug === selectedSlug) ?? summary.creators[0] ?? null;
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const visibleCreators = favoritesOpen ? summary.creators : summary.creators.slice(0, 6);
@@ -150,12 +171,6 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
       if (collectionFrame.current !== null) cancelAnimationFrame(collectionFrame.current);
     };
   }, [openRecent]);
-
-  useEffect(() => {
-    if (selectedSlug && !summary.creators.some((creator) => creator.celebrity.slug === selectedSlug)) {
-      setSelectedSlug(summary.creators[0]?.celebrity.slug ?? null);
-    }
-  }, [selectedSlug, summary.creators]);
 
   return <div className={styles.dashboard}>
     <header className={styles.profileHeader}>
@@ -194,7 +209,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
     <FanSurface appearance="plain" className={`${styles.section} ${styles.favoritesSection}`} id="my-creators">
       <SectionTitle title={<>{t.creators} <span className={styles.sectionCount}>{summary.creators.length}</span></>} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
       {summary.creators.length ? <div className={styles.favoriteSelector} role="group" id="my-favorite-selector" aria-label={t.creators}>{visibleCreators.map((creator) =>
-        <button type="button" aria-pressed={selected?.celebrity.slug === creator.celebrity.slug} onClick={() => setSelectedSlug(creator.celebrity.slug)} key={creator.celebrity.slug}>
+        <button type="button" aria-pressed={selected?.celebrity.slug === creator.celebrity.slug} onClick={() => onSelectSlug(creator.celebrity.slug)} key={creator.celebrity.slug}>
           <CreatorImage slug={creator.celebrity.slug} src={creator.celebrity.image} photos={creator.celebrity.photos} position={creator.celebrity.imagePosition} alt="" width={48} height={48} sizes="(max-width: 639px) 40px, 48px" presentation="portrait" framed/><strong>{creator.celebrity.name}</strong>{selected?.celebrity.slug === creator.celebrity.slug ? <Check className={styles.selectedCheck} aria-hidden="true"/> : null}
         </button>)}</div>
         : <Empty text={t.noCreators} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>}

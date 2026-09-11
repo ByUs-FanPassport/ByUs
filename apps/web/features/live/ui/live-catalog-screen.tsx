@@ -96,7 +96,7 @@ function action(item: LiveEventResponse, locale: FanLocale) {
   if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true, state: "watch" as const };
   if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true, state: "watch" as const };
   if (item.viewer.reservation) return { label: t.details, icon: <Eye />, external: false, state: "reserved" as const };
-  return { label: t.reserve, icon: <CalendarDays />, external: false, state: "reserve" as const };
+  return { label: t.details, icon: <Eye />, external: false, state: "reserve" as const };
 }
 
 function LiveGroup({

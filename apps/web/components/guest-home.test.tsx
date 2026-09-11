@@ -132,11 +132,11 @@ describe("canonical 03 guest home", () => {
     consoleWarn.mockRestore();
   });
 
-  it("keeps the approved service actions and exact Passport label in both responsive placements", () => {
+  it("keeps one mobile sign-in action and the desktop Passport action", () => {
     render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(screen.getAllByRole("link", { name: "Google로 계속하기" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(1);
     expect(
       screen.getByRole("img", {
         name: "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport",
