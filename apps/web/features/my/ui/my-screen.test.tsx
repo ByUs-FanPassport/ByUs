@@ -89,14 +89,14 @@ describe("unified MY hub", () => {
     expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "KARA 응모권" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "KARA 이벤트" })).toBeInTheDocument();
     expect(screen.getByText("응모")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 최애 1" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveLength(1);
     expect(screen.getByRole("link", { name: /^스탬프 2$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
     expect(screen.getByText("4장")).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("heading", { name: "KARA 응모권" })).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("link", { name: "응모 혜택 보기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("heading", { name: "KARA 이벤트" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("link", { name: "이벤트 보러 가기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
     expect(screen.queryByRole("link", { name: /^디지털 기념품 0$/ })).not.toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
@@ -225,8 +225,8 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="en" />);
 
     expect(await screen.findByText("Entries")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "KARA raffle tickets" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View raffle benefits" })).toHaveAttribute("href", "/c/kara/raffles?locale=en");
+    expect(screen.getByRole("heading", { name: "KARA events" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Explore events" })).toHaveAttribute("href", "/c/kara/raffles?locale=en");
     expect(within(screen.getByRole("region", { name: "KARA fan activity" })).getByText("4")).toBeInTheDocument();
   });
 
@@ -266,12 +266,13 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="ko"/>);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(raffleReads).toBe(1);
-    expect(screen.queryByRole("link", { name: "래플 자세히 보기" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/응모할 수 있는 선물/)).not.toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
     expect(raffleReads).toBe(1);
     await act(async () => { await vi.advanceTimersByTimeAsync(501); });
     expect(raffleReads).toBe(2);
-    expect(screen.getByRole("link", { name: "래플 자세히 보기" })).toHaveAttribute("href", `/c/kara/raffles/${benefitId}?locale=ko`);
+    expect(screen.getByRole("link", { name: "이벤트 보러 가기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(screen.getByText(/응모할 수 있는 선물/)).toHaveTextContent("1종");
   });
 });
 
@@ -372,4 +373,24 @@ it("groups indistinguishable stamps while preserving a Passport destination and 
   expect(group.querySelector("img")).not.toBeNull();
   expect(screen.getByRole("link", { name: "스탬프 2" })).toHaveAttribute("href", "/passports?locale=ko#collection");
   expect(screen.queryByRole("heading", { name: "활동 요약" })).not.toBeInTheDocument();
+});
+
+it("counts all open gifts and routes to the list without recommending a paid membership or tier prize", async () => {
+  const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes('/raffles?')) return Response.json({ raffles: [0,1,2,3].map(i => ({
+      id: `60000000-0000-4000-8000-00000000000${i}`, benefitId: `70000000-0000-4000-8000-00000000000${i}`,
+      title: `Prize ${i}`, summary: "Gift", imageUrl: null, winnerQuantity: 1, status: i === 3 ? "closed" : "open",
+      entryOpensAt: "2020-01-01T00:00:00Z", entryClosesAt: "2099-01-01T00:00:00Z", fulfillmentMethod: "digital", perFanTicketLimit: null,
+    })) });
+    return Response.json({ summary });
+  });
+  vi.stubGlobal("fetch", fetcher);
+  render(<MyScreen locale="ko"/>);
+  expect(await screen.findByText(/응모할 수 있는 선물/)).toHaveTextContent("3종");
+  expect(screen.getByRole("link", { name: "이벤트 보러 가기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+  expect(screen.getByRole("link", { name: "참여할 팬 활동 보기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
+  expect(screen.queryByText("등급 혜택")).not.toBeInTheDocument();
+  expect(screen.queryByText("다음 팬 활동")).not.toBeInTheDocument();
+  expect(fetcher.mock.calls.some(([url]) => /certifications|\/api\/passports\//.test(String(url)))).toBe(false);
 });

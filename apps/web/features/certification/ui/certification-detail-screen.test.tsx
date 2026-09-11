@@ -19,6 +19,19 @@ const pendingId = "44444444-4444-4444-8444-444444444444";
 const uploadId = "55555555-5555-4555-8555-555555555555";
 const approvedId = "77777777-7777-4777-8777-777777777777";
 const karaPassportId = "88888888-8888-4888-8888-888888888888";
+const availableMission = {
+  id: missionId,
+  kind: "manual",
+  celebrity: { slug: "kara", name: "KARA" },
+  category: "공연",
+  title: "콘서트 인증",
+  description: "현장 사진을 제출하세요.",
+  instructions: "티켓과 현장을 함께 찍어 주세요.",
+  status: "available",
+  opensAt: "2026-09-08T00:00:00+09:00",
+  closesAt: "2026-09-09T00:00:00+09:00",
+  reward: { scorePoints: 2, ticketAmount: 1 },
+} as const;
 
 const history = [
   {
@@ -103,6 +116,15 @@ function approvedFetch(passports: unknown[] | Response) {
   });
 }
 
+function openSubmissionForm() {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.startsWith(`/api/certifications/${missionId}?`)) return Response.json({ certification: availableMission });
+    if (url.includes("/api/me/")) return Response.json({ certifications: [] });
+    throw new Error(`Unexpected request: ${url}`);
+  });
+}
+
 describe("CertificationDetailScreen", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -168,19 +190,7 @@ describe("CertificationDetailScreen", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.startsWith(`/api/certifications/${missionId}?`)) {
-        return Response.json({ certification: {
-          id: missionId,
-          kind: "manual",
-          celebrity: { slug: "kara", name: "KARA" },
-          category: "공연",
-          title: "콘서트 인증",
-          description: "현장 사진을 제출하세요.",
-          instructions: "티켓과 현장을 함께 찍어 주세요.",
-          status: "available",
-          opensAt: "2026-09-08T00:00:00+09:00",
-          closesAt: "2026-09-09T00:00:00+09:00",
-          reward: { scorePoints: 2, ticketAmount: 1 },
-        } });
+        return Response.json({ certification: availableMission });
       }
       if (url.includes("/api/me/")) return Response.json({ certifications: [] });
       if (url.endsWith(`/api/certifications/${missionId}/uploads`)) {
@@ -198,8 +208,9 @@ describe("CertificationDetailScreen", () => {
     });
 
     render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
-    const picker = await screen.findByLabelText("이미지 선택 (최대 3장, 장당 3MB)");
+    const picker = await screen.findByLabelText("이미지 선택");
     fireEvent.change(picker, { target: { files: [new File(["proof"], "proof.webp", { type: "image/webp" })] } });
+    expect(screen.getByAltText("선택한 이미지 1")).toHaveAttribute("src", "blob:proof");
     const submit = screen.getByRole("button", { name: "인증 자료 제출하기" });
     fireEvent.click(submit);
     fireEvent.click(submit);
@@ -207,6 +218,54 @@ describe("CertificationDetailScreen", () => {
     releaseUpload(Response.json({ uploadId }));
     expect(await screen.findByText("인증 자료를 제출했어요.")).toBeInTheDocument();
     expect(uploadCalls).toHaveLength(1);
+  });
+
+  it("keeps image proof required even when an optional note is present", async () => {
+    const fetchMock = openSubmissionForm();
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+
+    expect(await screen.findByText("인증 이미지 (필수)")).toBeInTheDocument();
+    expect(screen.getByText("위 인증 안내에 맞는 이미지 자료를 1장 이상 첨부해 주세요.")).toBeInTheDocument();
+    expect(screen.queryByText(/유료 멤버십 상태, 다음 결제일/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("설명 (선택)"), { target: { value: "설명만 작성" } });
+    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeDisabled();
+    expect(fetchMock.mock.calls.some(([input, init]) => String(input) === "/api/certification-submissions" && init?.method === "POST")).toBe(false);
+  });
+
+  it("rejects unsupported, oversized, and excess images instead of silently accepting them", async () => {
+    openSubmissionForm();
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+    const picker = await screen.findByLabelText("이미지 선택");
+
+    fireEvent.change(picker, { target: { files: [new File(["pdf"], "proof.pdf", { type: "application/pdf" })] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요.");
+    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeDisabled();
+
+    fireEvent.change(picker, { target: { files: [new File([new Uint8Array(3 * 1024 * 1024 + 1)], "large.png", { type: "image/png" })] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("이미지 한 장의 용량은 3MB 이하여야 해요.");
+
+    fireEvent.change(picker, { target: { files: Array.from({ length: 4 }, (_, index) => new File(["image"], `${index}.png`, { type: "image/png" })) } });
+    expect(screen.getByRole("alert")).toHaveTextContent("이미지는 최대 3장까지 선택할 수 있어요.");
+    expect(screen.queryByAltText("선택한 이미지 1")).not.toBeInTheDocument();
+  });
+
+  it("previews replacement images and makes proof required again after removal", async () => {
+    openSubmissionForm();
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:first").mockReturnValueOnce("blob:replacement");
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+    const picker = await screen.findByLabelText("이미지 선택");
+
+    fireEvent.change(picker, { target: { files: [new File(["first"], "first.png", { type: "image/png" })] } });
+    expect(screen.getByAltText("선택한 이미지 1")).toHaveAttribute("src", "blob:first");
+    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeEnabled();
+
+    fireEvent.change(screen.getByLabelText("이미지 다시 선택"), { target: { files: [new File(["next"], "next.webp", { type: "image/webp" })] } });
+    expect(screen.getByAltText("선택한 이미지 1")).toHaveAttribute("src", "blob:replacement");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first");
+
+    fireEvent.click(screen.getByRole("button", { name: "next.webp 삭제" }));
+    expect(screen.queryByAltText("선택한 이미지 1")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeDisabled();
   });
 
   it("opens the matching issued Passport after manual approval when exactly one is owned", async () => {
@@ -313,6 +372,12 @@ describe("CertificationDetailScreen", () => {
     expect(screen.getByText("보완 필요")).toBeInTheDocument();
     expect(screen.getByText("보완 요청 사유")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "보완 자료 제출하기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보완 자료 제출하기" })).toBeDisabled();
+    expect(screen.getByText("인증 이미지 (필수)")).toBeInTheDocument();
+    expect(screen.getByText(/크리에이터와 내 계정, 유료 멤버십 상태/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("이미지 선택"), { target: { files: [new File(["proof"], "membership.png", { type: "image/png" })] } });
+    expect(screen.getByRole("button", { name: "보완 자료 제출하기" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "membership.png 삭제" }));
     expect(screen.getByRole("button", { name: "보완 자료 제출하기" })).toBeDisabled();
   });
 });

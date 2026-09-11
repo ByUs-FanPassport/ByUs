@@ -212,7 +212,7 @@ export function PlatformDashboard({ locale = "ko" }: { locale?: AdminLocale }) {
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale={locale} />;
   const ko = locale === "ko";
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <div className={styles.dashboard}>
         <header className={styles.hero}><div><p className={styles.eyebrow}>{ko ? "상세 분석" : "Detailed analytics"}</p><h1>{ko ? "팬 여정 성과" : "Fan journey performance"}</h1><p>{ko ? "팬 성장과 LIVE 참여, 운영 작업을 한국 시간 기준으로 확인합니다." : "Review fan growth, LIVE participation, and operations in Asia/Seoul time."}</p></div></header>
         <AnalyticsWindowControl value={windowValue} onApply={setWindow} locale={locale} />

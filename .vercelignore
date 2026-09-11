@@ -22,6 +22,7 @@ scripts
 scripts/*
 !scripts/local-production-env.mjs
 !scripts/local-production-env.d.mts
+!scripts/vercel-ignore-build.mjs
 *.tsbuildinfo
 design-preview.html
 design-qa.md

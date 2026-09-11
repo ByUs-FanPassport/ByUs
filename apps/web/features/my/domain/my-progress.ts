@@ -44,14 +44,18 @@ export function fanTierProgress(passport: PassportCreator["passport"]) {
   } as const;
 }
 
-export function selectOpenRaffle(raffles: RaffleList["raffles"], now = new Date()) {
+export function selectOpenRaffles(raffles: RaffleList["raffles"], now = new Date()) {
   const timestamp = now.getTime();
   return raffles.filter((raffle) => {
     if (raffle.status !== "open" || !raffle.benefitId || !raffle.entryOpensAt || !raffle.entryClosesAt) return false;
     const opensAt = Date.parse(raffle.entryOpensAt);
     const closesAt = Date.parse(raffle.entryClosesAt);
     return Number.isFinite(opensAt) && Number.isFinite(closesAt) && opensAt <= timestamp && timestamp < closesAt;
-  }).toSorted((a, b) => Date.parse(a.entryClosesAt!) - Date.parse(b.entryClosesAt!) || a.id.localeCompare(b.id))[0] ?? null;
+  }).toSorted((a, b) => Date.parse(a.entryClosesAt!) - Date.parse(b.entryClosesAt!) || a.id.localeCompare(b.id));
+}
+
+export function selectOpenRaffle(raffles: RaffleList["raffles"], now = new Date()) {
+  return selectOpenRaffles(raffles, now)[0] ?? null;
 }
 
 export function nextRaffleBoundary(raffles: RaffleList["raffles"], now: number) {

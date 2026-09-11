@@ -34,6 +34,7 @@ describe("admin business overview", () => {
     vi.stubGlobal("fetch", fetcher);
     render(<AdminOverviewDashboard />);
     expect(await screen.findByRole("heading", { name: "총 가입자" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "관리자 관리" })).toHaveAttribute("href", "/admin/administrators");
     fireEvent.click(screen.getByRole("button", { name: "최근 7일" }));
     await waitFor(() => expect(fetcher).toHaveBeenLastCalledWith("/api/admin/analytics/overview?days=7", expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) })));
     expect(await screen.findByText("최근 7일 · 오늘 포함")).toBeInTheDocument();

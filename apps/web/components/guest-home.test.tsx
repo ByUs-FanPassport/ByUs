@@ -417,7 +417,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
     const guideCarousels = screen.getAllByRole("region", { name: "참여 가이드" });
-    const fanmeetingCards = screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" });
+    const fanmeetingCards = screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" });
     expect(guideCarousels).toHaveLength(2);
     expect(fanmeetingCards).toHaveLength(2);
     for (const carousel of guideCarousels) {
@@ -524,7 +524,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "이퓨의 틱톡 100일 기념 LIVE 참여 가이드" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "우리 아티스트의 첫 미국 팬미팅" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" })).toHaveLength(2);
   });
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {
@@ -846,6 +846,60 @@ function favoriteSummary() {
   };
 }
 
+it.each(["owned", "empty", "error", "guest"] as const)("hides intermediate filters until auth and personalization resolve: %s", async (mode) => {
+  privy.ready = false;
+  privy.authenticated = mode !== "guest";
+  let resolveSummary!: (response: Response) => void;
+  const pendingSummary = new Promise<Response>(resolve => { resolveSummary = resolve; });
+  const fetcher = vi.fn(async (input: string | URL | Request) => String(input).startsWith("/api/passports/")
+    ? Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } }) : pendingSummary);
+  vi.stubGlobal("fetch", fetcher);
+  const view = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+  const expectSkeleton = () => {
+    const section = screen.getByRole("region", { name: "당신의 최애" });
+    expect(within(section).getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(within(section).queryByRole("group", { name: "직군으로 찾기" })).not.toBeInTheDocument();
+    expect(within(section).queryByRole("article")).not.toBeInTheDocument();
+    expect(within(section).queryByRole("link")).not.toBeInTheDocument();
+  };
+  expectSkeleton();
+  expect(fetcher).not.toHaveBeenCalled();
+  privy.ready = true;
+  view.rerender(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+  if (mode !== "guest") {
+    await waitFor(() => expect(fetcher).toHaveBeenCalled());
+    expectSkeleton();
+    const summary = favoriteSummary();
+    if (mode === "empty") { summary.creators = []; summary.collection.passportCount = 0; }
+    await act(async () => resolveSummary(mode === "error" ? Response.json({}, { status: 500 }) : Response.json({ summary })));
+  }
+  const section = screen.getByRole("region", { name: "당신의 최애" });
+  expect(within(section).queryByRole("status")).not.toBeInTheDocument();
+  expect(within(section).getByRole("button", { name: mode === "owned" ? "내 최애" : "전체" })).toHaveAttribute("aria-pressed", "true");
+  expect(within(section).getAllByRole("article")).toHaveLength(mode === "owned" ? 1 : 3);
+});
+
+it("keeps the chosen filter and cards visible during background personalization refresh", async () => {
+  privy.authenticated = true;
+  let resolveSummary!: (response: Response) => void;
+  const pending = new Promise<Response>(resolve => { resolveSummary = resolve; });
+  let summaryReads = 0;
+  vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+    if (String(input).startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+    summaryReads += 1;
+    return summaryReads === 1 ? Response.json({ summary: favoriteSummary() }) : pending;
+  }));
+  render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+  const section = screen.getByRole("region", { name: "당신의 최애" });
+  fireEvent.click(await within(section).findByRole("button", { name: "전체" }));
+  fireEvent.focus(window);
+  await waitFor(() => expect(summaryReads).toBe(2));
+  expect(within(section).queryByRole("status")).not.toBeInTheDocument();
+  expect(within(section).getAllByRole("article")).toHaveLength(3);
+  await act(async () => resolveSummary(Response.json({ summary: favoriteSummary() })));
+  expect(within(section).getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
+});
+
 it("places My favorites first and sends guests to login with a restorable Home filter", () => {
   render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
@@ -866,7 +920,7 @@ it("defaults to My favorites after loading and excludes first-reaction-only crea
     return Response.json({ summary });
   }));
   const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
-  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toHaveAttribute("aria-pressed", "true"));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
@@ -893,13 +947,13 @@ it.each(["none", "explicit-all", "role"] as const)("keeps the appropriate defaul
   }));
   const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]}
     initialOwnedOnly={mode === "explicit-all" ? false : undefined} initialRole={mode === "role" ? "creator" : "all"} />);
-  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
   expect(within(filters).getByRole("button", { name: mode === "role" ? "크리에이터" : "전체" })).toHaveAttribute("aria-pressed", "true");
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(mode === "role" ? 2 : 3);
 });
 
-it("preserves All selected while personal data is still loading", async () => {
+it("preserves an explicit All choice once personal data resolves", async () => {
   privy.authenticated = true;
   let resolveSummary!: (response: Response) => void;
   const pendingSummary = new Promise<Response>((resolve) => { resolveSummary = resolve; });
@@ -909,15 +963,13 @@ it("preserves All selected while personal data is still loading", async () => {
     if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
     return pendingSummary;
   }));
-  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
-  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
-  expect(within(filters).getByRole("button", { name: "내 최애" })).toBeDisabled();
-  fireEvent.click(within(filters).getByRole("button", { name: "전체" }));
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} initialOwnedOnly={false} />);
+  expect(screen.queryByRole("group", { name: "직군으로 찾기" })).not.toBeInTheDocument();
   await act(async () => { resolveSummary(Response.json({ summary: favoriteSummary() })); });
+  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
   expect(within(filters).getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(3);
-  expect(new URL(window.location.href).searchParams.get("role")).toBe("all");
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   fireEvent.click(within(filters).getByRole("button", { name: "전체" }));

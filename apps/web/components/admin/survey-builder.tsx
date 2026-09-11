@@ -229,7 +229,7 @@ export function SurveyBuilder({ liveEventId }: { liveEventId: string }) {
   if (session.status !== "authorized")
     return <AdminAccessState status={session.status} locale={locale} />;
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
       <header className={styles.heading}>
         <p>{t.eyebrow}</p>
         <h1>{t.title}</h1>

@@ -82,7 +82,7 @@ export function BlockchainJobsManager() {
   }
 
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale={locale} />;
-  return <AdminOperationsShell locale={locale}>
+  return <AdminOperationsShell locale={locale} adminRole={session.admin.role}>
     <header className={styles.pageHeading}><p>{t.eyebrow}</p><h1>{t.title}</h1><span>{t.description}</span></header>
     <form className={styles.filterBar} action={applyFilters}>
       <label><span>{locale === "ko" ? "상태" : "Status"}</span><select key={status ?? "all"} name="status" defaultValue={status ?? ""}><option value="">{t.all}</option>{statusOptions.map((item) => <option key={item}>{item}</option>)}</select></label>

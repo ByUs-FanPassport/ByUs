@@ -89,4 +89,15 @@ describe("AdminOperationsShell navigation", () => {
     expect(within(navigation).getByRole("link", { name: "Issuance history" })).toBeInTheDocument();
     expect(within(navigation).getByRole("link", { name: "Admin activity log" })).toBeInTheDocument();
   });
+
+  it("shows admin management only when an admin role is provided", () => {
+    pathname = "/admin/administrators";
+    const view = render(<AdminOperationsShell locale="ko" adminRole="admin"><p>content</p></AdminOperationsShell>);
+    expect(screen.getByRole("link", { name: "관리자 관리" })).toHaveAttribute("href", "/admin/administrators");
+    expect(screen.getByRole("link", { name: "관리자 관리" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("navigation", { name: "현재 위치" })).toHaveTextContent("관리자 관리");
+
+    view.rerender(<AdminOperationsShell locale="ko" adminRole="operator"><p>content</p></AdminOperationsShell>);
+    expect(screen.queryByRole("link", { name: "관리자 관리" })).not.toBeInTheDocument();
+  });
 });

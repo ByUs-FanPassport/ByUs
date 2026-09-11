@@ -2,8 +2,6 @@
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Check,
-  Crown,
-  Image as ImageIcon,
   Plus,
   RefreshCw,
   Save,
@@ -16,6 +14,7 @@ import { AdminOperationsShell } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import { membershipPlatformLabel, type MembershipPlatform } from "@/features/certification/domain/certification";
 import styles from "./certification-manager.module.css";
+import { CertificationReviewWorkspace, reviewStatusLabel, type CertificationReviewSubmission as Submission, type ReviewStatus } from "./certification-review-workspace";
 
 type Mission = {
   id: string;
@@ -35,21 +34,6 @@ type Mission = {
   closesAt: string;
   reward: { scorePoints: number; ticketAmount: number; stampCount?: 1 };
   membershipPlatform?: MembershipPlatform;
-};
-type Submission = {
-  id: string;
-  missionId: string;
-  missionTitle: string;
-  celebritySlug: string;
-  appUserId: string;
-  status: "pending" | "approved" | "rejected";
-  attemptNumber: number;
-  note: string | null;
-  revision: number;
-  submittedAt: string;
-  reward: { scorePoints: number; ticketAmount: number; stampCount?: 1 };
-  membershipPlatform?: MembershipPlatform;
-  uploads: { id: string; width: number; height: number }[];
 };
 const blank = {
   id: "",
@@ -108,26 +92,46 @@ function membershipPreset(platform: MembershipPlatform) {
 export function AuthorizedCertificationManager() {
   const locale = useSearchParams().get("lang") === "en" ? "en" : "ko";
   const session = useAdminSession();
+  const { user } = usePrivy();
   if (session.status !== "authorized")
     return <AdminAccessState locale={locale} status={session.status} />;
   return (
     <CertificationManager
+      key={`${user?.id ?? session.admin.email}:${session.admin.role}`}
       locale={locale}
       canWrite={session.admin.role !== "viewer"}
+      adminRole={session.admin.role}
     />
   );
 }
 function CertificationManager({
   locale,
   canWrite,
+  adminRole,
 }: {
   locale: "ko" | "en";
   canWrite: boolean;
+  adminRole: string;
 }) {
   const { getAccessToken } = usePrivy();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [queue, setQueue] = useState<Submission[]>([]);
-  const [form, setForm] = useState(blank);
+  const [form, setForm] = useState(() => ({ ...blank, immutableKey: `cert-${crypto.randomUUID()}` }));
+  const [tab, setTab] = useState<"review" | "missions">("review");
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("pending");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [fatalAccess, setFatalAccess] = useState<"denied" | "unauthenticated" | null>(null);
+  const loadVersion = useRef(0);
+  const [creators, setCreators] = useState<{ id: string; slug: string; localizations: { ko: { name: string }; en: { name: string } } }[]>([]);
+  const [creatorSearch, setCreatorSearch] = useState("");
+  const [creatorError, setCreatorError] = useState(false);
+  const lifetime = useRef(new AbortController());
+  useEffect(() => {
+    const controller = new AbortController();
+    lifetime.current = controller;
+    return () => controller.abort();
+  }, []);
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
   const [pending, setPending] = useState(false);
@@ -135,13 +139,16 @@ function CertificationManager({
   const pendingRef = useRef(false);
   const reconcileMissionIdRef = useRef<string | null>(null);
   const reviewKeysRef = useRef(new Map<string, { fingerprint: string; key: string }>());
-  const [reason, setReason] = useState<Record<string, string>>({});
   const request = useCallback(
-    async (url: string, method = "GET", body?: unknown) => {
+    async (url: string, method = "GET", body?: unknown, signal?: AbortSignal) => {
+      const requestSignal = signal ? AbortSignal.any([signal, lifetime.current.signal]) : lifetime.current.signal;
+      if (requestSignal.aborted) throw new DOMException("Aborted", "AbortError");
       const token = await getAccessToken();
-      if (!token) throw new Error("Authentication required");
+      if (requestSignal.aborted) throw new DOMException("Aborted", "AbortError");
+      if (!token) { setFatalAccess("unauthenticated"); throw new Error("Authentication required"); }
       const response = await fetch(url, {
         method,
+        signal: requestSignal,
         headers: {
           authorization: `Bearer ${token}`,
           "content-type": "application/json",
@@ -150,17 +157,21 @@ function CertificationManager({
         body: body ? JSON.stringify(body) : undefined,
         cache: "no-store",
       });
+      if (response.status === 401 || response.status === 403) setFatalAccess(response.status === 401 ? "unauthenticated" : "denied");
       if (!response.ok) throw new Error();
       return response.json();
     },
     [getAccessToken],
   );
   const refresh = useCallback(async (reconcileMissionId?: string) => {
+    const version = ++loadVersion.current;
+    setLoading(true); setLoadError(false);
     try {
       const [m, q] = await Promise.all([
         request("/api/admin/certification-missions"),
-        request("/api/admin/certification-submissions?status=pending"),
+        request(`/api/admin/certification-submissions?status=${reviewStatus}`),
       ]);
+      if (version !== loadVersion.current) return false;
       setMissions(m.missions ?? []);
       setQueue(q.submissions ?? []);
       if (reconcileMissionId) {
@@ -169,6 +180,8 @@ function CertificationManager({
       }
       return true;
     } catch {
+      if (version !== loadVersion.current) return false;
+      setQueue([]); setLoadError(true);
       setMessageIsError(true);
       setMessage(
         locale === "ko"
@@ -176,11 +189,21 @@ function CertificationManager({
           : "Could not load certification operations.",
       );
       return false;
-    }
-  }, [locale, request]);
+    } finally { if (version === loadVersion.current) setLoading(false); }
+  }, [locale, request, reviewStatus]);
   useEffect(() => {
     void refresh();
+    return () => { loadVersion.current += 1; };
   }, [refresh]);
+  useEffect(() => {
+    if (tab !== "missions") return;
+    const controller = new AbortController();
+    setCreatorError(false);
+    void request("/api/admin/celebrities", "GET", undefined, controller.signal).then(payload => {
+      if (!controller.signal.aborted) setCreators(payload.items ?? []);
+    }).catch(() => { if (!controller.signal.aborted) setCreatorError(true); });
+    return () => controller.abort();
+  }, [request, tab]);
   function select(m: Mission) {
     setForm(missionForm(m));
   }
@@ -230,18 +253,19 @@ function CertificationManager({
       closesAt: new Date(form.closesAt).toISOString(),
     });
   }
-  async function review(item: Submission, decision: "approve" | "reject") {
-    if (pendingRef.current || needsRefresh) return;
+  async function review(item: Submission, decision: "approve" | "reject", reason?: string) {
+    if (pendingRef.current || needsRefresh || !canWrite || item.status !== "pending") return;
     pendingRef.current = true;
     setPending(true);
     setMessageIsError(false);
     setMessage(locale === "ko" ? "검토 결과를 처리 중입니다." : "Saving review.");
-    const rejectionReason = decision === "reject" ? reason[item.id] : undefined;
+    const rejectionReason = decision === "reject" ? reason : undefined;
     const fingerprint = JSON.stringify({ decision, expectedRevision: item.revision, rejectionReason });
     const savedKey = reviewKeysRef.current.get(item.id);
     const idem = savedKey?.fingerprint === fingerprint ? savedKey.key : crypto.randomUUID();
     reviewKeysRef.current.set(item.id, { fingerprint, key: idem });
     let postSucceeded = false;
+    setNeedsRefresh(true);
     try {
       await request(
         `/api/admin/certification-submissions/${item.id}/review`,
@@ -269,7 +293,7 @@ function CertificationManager({
           ? locale === "ko"
             ? "변경은 처리됐지만 최신 상태를 불러오지 못했습니다."
             : "The change was processed, but the latest state could not be loaded."
-          : locale === "ko" ? "검토 결과를 반영하지 못했습니다." : "Review failed.",
+          : locale === "ko" ? "심사 결과를 확인하지 못했습니다. 최신 상태를 불러온 뒤 다시 확인해 주세요." : "The review result is uncertain. Refresh the latest state before continuing.",
       );
     } finally {
       pendingRef.current = false;
@@ -292,47 +316,54 @@ function CertificationManager({
       setPending(false);
     }
   }
-  async function openProof(item: Submission, uploadId: string) {
-    try {
-      const token = await getAccessToken();
-      const response = await fetch(
-        `/api/admin/certification-submissions/${item.id}/proofs/${uploadId}`,
-        { headers: { authorization: `Bearer ${token}` }, cache: "no-store" },
-      );
-      if (!response.ok) throw new Error();
-      const url = URL.createObjectURL(await response.blob());
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch {
-      setMessage(
-        locale === "ko"
-          ? "인증 이미지를 열지 못했습니다."
-          : "Could not open proof image.",
-      );
-    }
-  }
+  const loadProof = useCallback(async (submissionId: string, uploadId: string, signal: AbortSignal) => {
+    const token = await getAccessToken();
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    if (!token) { setFatalAccess("unauthenticated"); throw new Error("Authentication required"); }
+    const response = await fetch(`/api/admin/certification-submissions/${submissionId}/proofs/${uploadId}`, {
+      headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
+    });
+    if (response.status === 401 || response.status === 403) setFatalAccess(response.status === 401 ? "unauthenticated" : "denied");
+    if (!response.ok) throw new Error("Proof unavailable");
+    return response.blob();
+  }, [getAccessToken]);
+  if (fatalAccess) return <AdminAccessState locale={locale} status={fatalAccess} />;
   return (
-    <AdminOperationsShell locale={locale}>
+    <AdminOperationsShell locale={locale} adminRole={adminRole}>
       <main className={styles.page}>
         <header>
-          <p>Certification operations</p>
+          <p>{locale === "ko" ? "회원 인증" : "Member verification"}</p>
           <h1>
-            {locale === "ko" ? "수동 팬 인증" : "Manual fan certification"}
+            {locale === "ko" ? "인증 심사" : "Certification reviews"}
           </h1>
           <span>
             {locale === "ko"
-              ? "미션 조건, 고정 보상과 제출 자료를 관리합니다."
-              : "Manage mission conditions, frozen rewards, and submitted proof."}
+              ? "팬이 제출한 이미지를 확인하고 인증 결과를 알려 주세요."
+              : "Review submitted images and let fans know the result."}
           </span>
         </header>
-        <p role={messageIsError ? "alert" : "status"} className={styles.message}>
-          {message}
-        </p>
+        <div className={styles.toolbar}>
+          <div className={styles.tabs} role="tablist" aria-label={locale === "ko" ? "인증 관리" : "Certification management"} onKeyDown={event => {
+            if (pending || needsRefresh || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? "review" : event.key === "End" ? "missions" : tab === "review" ? "missions" : "review";
+            setTab(next); document.getElementById(`${next}-tab`)?.focus();
+          }}>
+            <button id="review-tab" aria-controls="review-panel" role="tab" aria-selected={tab === "review"} tabIndex={tab === "review" ? 0 : -1} type="button" disabled={pending || needsRefresh} onClick={() => setTab("review")}>{locale === "ko" ? "인증 심사" : "Reviews"}</button>
+            <button id="missions-tab" aria-controls="missions-panel" role="tab" aria-selected={tab === "missions"} tabIndex={tab === "missions" ? 0 : -1} type="button" disabled={pending || needsRefresh} onClick={() => setTab("missions")}>{locale === "ko" ? "미션 설정" : "Mission settings"}</button>
+          </div>
+          <button type="button" disabled={pending || loading} onClick={() => void refreshFromButton()}><RefreshCw aria-hidden="true" />{needsRefresh ? (locale === "ko" ? "최신 상태 불러오기" : "Load latest state") : (locale === "ko" ? "새로고침" : "Refresh")}</button>
+        </div>
+        <p role={messageIsError ? "alert" : "status"} className={styles.message} data-error={messageIsError}>{message}</p>
+        {tab === "review" ? <div id="review-panel" role="tabpanel" aria-labelledby="review-tab">
+          <div className={styles.statusTabs} role="group" aria-label={locale === "ko" ? "심사 상태" : "Review status"}>{(["pending", "rejected", "approved"] as const).map(status => <button type="button" key={status} aria-pressed={reviewStatus === status} disabled={pending || needsRefresh || loading} onClick={() => { setQueue([]); setReviewStatus(status); }}>{reviewStatusLabel(status, locale)}</button>)}</div>
+          {loading ? <p className={styles.loadState}>{locale === "ko" ? "인증 자료를 불러오는 중입니다…" : "Loading submissions…"}</p> : loadError ? <p className={styles.loadState}>{locale === "ko" ? "자료를 불러오지 못했습니다. 새로고침해 주세요." : "Could not load submissions. Please refresh."}</p> : <CertificationReviewWorkspace key={reviewStatus} submissions={queue} locale={locale} status={reviewStatus} busy={pending || needsRefresh} canWrite={canWrite} loadProof={loadProof} onReview={review} />}
+        </div> : <div id="missions-panel" role="tabpanel" aria-labelledby="missions-tab">
         <div className={styles.workspace}>
           <section className={styles.missions}>
             <div className={styles.sectionHeading}>
               <h2>{locale === "ko" ? "인증 미션" : "Missions"}</h2>
-              <button type="button" disabled={pending || needsRefresh} onClick={() => setForm(blank)}>
+              <button type="button" disabled={pending || needsRefresh} onClick={() => setForm({ ...blank, immutableKey: `cert-${crypto.randomUUID()}` })}>
                 <Plus /> {locale === "ko" ? "새 미션" : "New"}
               </button>
             </div>
@@ -345,12 +376,12 @@ function CertificationManager({
                 aria-pressed={form.id === m.id}
               >
                 <span>
-                  <strong>{m.titleKo}</strong>
+                  <strong>{locale === "ko" ? m.titleKo : m.titleEn}</strong>
                   <small>
-                    {m.celebritySlug}{m.membershipPlatform ? ` · ${membershipPlatformLabel(m.membershipPlatform)}` : ""} · r{m.revision}
+                    {m.celebritySlug}{m.membershipPlatform ? ` · ${membershipPlatformLabel(m.membershipPlatform)}` : ""} · {locale === "ko" ? "버전" : "v"} {m.revision}
                   </small>
                 </span>
-                <em data-status={m.status}>{m.status}</em>
+                <em data-status={m.status}>{locale === "ko" ? { active: "진행 중", draft: "초안", closed: "종료" }[m.status] : { active: "Active", draft: "Draft", closed: "Closed" }[m.status]}</em>
               </button>
             ))}
           </section>
@@ -382,13 +413,13 @@ function CertificationManager({
                 <option value="youtube">YouTube</option>
               </select>
             </label>
+            <label><span>{locale === "ko" ? "크리에이터 검색" : "Search creators"}</span><input value={creatorSearch} disabled={!canWrite || pending || needsRefresh} onChange={event => setCreatorSearch(event.target.value)} placeholder={locale === "ko" ? "이름 또는 계정으로 검색" : "Search by name or handle"} /></label>
+            <label><span>{locale === "ko" ? "크리에이터" : "Creator"}</span><select required value={form.celebrityId} disabled={!canWrite || pending || needsRefresh || Boolean(form.id)} onChange={event => setForm(value => ({ ...value, celebrityId: event.target.value }))}><option value="">{locale === "ko" ? "크리에이터 선택" : "Select a creator"}</option>{form.celebrityId && !creators.some(item => item.id === form.celebrityId) ? <option value={form.celebrityId}>{missions.find(item => item.id === form.id)?.celebritySlug || (locale === "ko" ? "선택한 크리에이터" : "Selected creator")}</option> : null}{creators.filter(item => item.id === form.celebrityId || `${item.slug} ${item.localizations.ko.name} ${item.localizations.en.name}`.toLowerCase().includes(creatorSearch.trim().toLowerCase())).map(item => <option key={item.id} value={item.id}>{item.localizations[locale].name} · @{item.slug}</option>)}</select>{creatorError ? <small>{locale === "ko" ? "크리에이터를 불러오지 못했습니다. 심사 탭으로 이동한 뒤 다시 열어 주세요." : "Could not load creators. Reopen this tab to retry."}</small> : null}</label>
             <div className={styles.grid}>
               {Object.entries({
-                celebrityId: "Celebrity UUID",
-                immutableKey: "Immutable key",
                 category: locale === "ko" ? "카테고리" : "Category",
-                titleKo: "제목",
-                titleEn: "Title",
+                titleKo: locale === "ko" ? "제목 (한국어)" : "Title (Korean)",
+                titleEn: locale === "ko" ? "제목 (영어)" : "Title (English)",
               }).map(([key, label]) => (
                 <label key={key}>
                   <span>{label}</span>
@@ -405,7 +436,7 @@ function CertificationManager({
                 </label>
               ))}
               <label>
-                <span>Open</span>
+                <span>{locale === "ko" ? "시작 일시" : "Starts at"}</span>
                 <input
                   required
                   type="datetime-local"
@@ -417,7 +448,7 @@ function CertificationManager({
                 />
               </label>
               <label>
-                <span>Close</span>
+                <span>{locale === "ko" ? "종료 일시" : "Ends at"}</span>
                 <input
                   required
                   type="datetime-local"
@@ -429,7 +460,7 @@ function CertificationManager({
                 />
               </label>
               <label>
-                <span>Score</span>
+                <span>{locale === "ko" ? "팬 점수" : "Fan score"}</span>
                 <input
                   required
                   type="number"
@@ -446,7 +477,7 @@ function CertificationManager({
                 />
               </label>
               <label>
-                <span>Tickets</span>
+                <span>{locale === "ko" ? "응모권 수량" : "Ticket quantity"}</span>
                 <input
                   required
                   type="number"
@@ -472,7 +503,7 @@ function CertificationManager({
               ] as const
             ).map((key) => (
               <label key={key}>
-                <span>{key}</span>
+                <span>{locale === "ko" ? { descriptionKo: "설명 (한국어)", descriptionEn: "설명 (영어)", instructionsKo: "인증 안내 (한국어)", instructionsEn: "인증 안내 (영어)" }[key] : { descriptionKo: "Description (Korean)", descriptionEn: "Description (English)", instructionsKo: "Instructions (Korean)", instructionsEn: "Instructions (English)" }[key]}</span>
                 <textarea
                   required
                   disabled={!canWrite || pending || needsRefresh}
@@ -483,6 +514,7 @@ function CertificationManager({
                 />
               </label>
             ))}
+            <details className={styles.advanced}><summary>{locale === "ko" ? "미션 식별 정보" : "Mission identifiers"}</summary><p>{form.immutableKey}</p>{form.id ? <p>{form.id}</p> : null}</details>
             <div className={styles.actions}>
               <button type="submit" disabled={!canWrite || pending || needsRefresh}>
                 <Save />
@@ -523,95 +555,7 @@ function CertificationManager({
             </div>
           </form>
         </div>
-        <section className={styles.queue}>
-          <div className={styles.sectionHeading}>
-            <div>
-              <h2>{locale === "ko" ? "검토 대기" : "Review queue"}</h2>
-              <p>{queue.length} pending</p>
-            </div>
-            <button type="button" disabled={pending} onClick={() => void refreshFromButton()}>
-              <RefreshCw />
-              {needsRefresh ? (locale === "ko" ? "최신 상태 불러오기" : "Load latest state") : (locale === "ko" ? "새로고침" : "Refresh")}
-            </button>
-          </div>
-          {queue.length ? (
-            queue.map((item) => (
-              <article key={item.id}>
-                <header>
-                  <div>
-                    <strong>{item.missionTitle}</strong>
-                    <span>
-                      {item.celebritySlug}{item.membershipPlatform ? ` · ${membershipPlatformLabel(item.membershipPlatform)}` : ""} · #{item.attemptNumber}
-                    </span>
-                    <span>Submission ID: {item.id}</span>
-                  </div>
-                  {item.reward.scorePoints > 0 || item.reward.ticketAmount > 0 || item.reward.stampCount ? <span className={styles.queueReward}>
-                    {item.reward.scorePoints > 0 ? <span>+{item.reward.scorePoints} score</span> : null}
-                    {item.reward.stampCount ? <span><Crown aria-hidden="true" />1 Membership Stamp</span> : null}
-                    {item.reward.ticketAmount > 0 ? <span>+{item.reward.ticketAmount} ticket</span> : null}
-                  </span> : null}
-                </header>
-                <div className={styles.proofs}>
-                  {item.uploads.map((upload) => (
-                    <button
-                      type="button"
-                      key={upload.id}
-                      onClick={() => void openProof(item, upload.id)}
-                    >
-                      <ImageIcon />
-                      <span>
-                        {upload.width} × {upload.height}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {item.note ? <p>{item.note}</p> : null}
-                <label>
-                  <span>
-                    {item.membershipPlatform
-                      ? locale === "ko" ? "보완 요청 사유" : "Reason more proof is needed"
-                      : locale === "ko" ? "반려 사유" : "Rejection reason"}
-                  </span>
-                  <textarea
-                    disabled={!canWrite || pending || needsRefresh}
-                    value={reason[item.id] ?? ""}
-                    onChange={(e) =>
-                      setReason((v) => ({ ...v, [item.id]: e.target.value }))
-                    }
-                  />
-                </label>
-                <div className={styles.reviewActions}>
-                  <button
-                    type="button"
-                    disabled={!canWrite || pending || needsRefresh}
-                    onClick={() => void review(item, "approve")}
-                  >
-                    <Check />
-                    {locale === "ko" ? "승인" : "Approve"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={
-                      !canWrite || pending || needsRefresh || (reason[item.id]?.trim().length ?? 0) < 3
-                    }
-                    onClick={() => void review(item, "reject")}
-                  >
-                    <X />
-                    {item.membershipPlatform
-                      ? locale === "ko" ? "보완 요청" : "Request more proof"
-                      : locale === "ko" ? "반려" : "Reject"}
-                  </button>
-                </div>
-              </article>
-            ))
-          ) : (
-            <p className={styles.empty}>
-              {locale === "ko"
-                ? "검토할 제출이 없습니다."
-                : "No submissions to review."}
-            </p>
-          )}
-        </section>
+        </div>}
       </main>
     </AdminOperationsShell>
   );

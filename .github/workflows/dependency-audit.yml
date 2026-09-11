@@ -36,3 +36,9 @@ jobs:
 
       - name: Check editor and wallet patch regressions
         run: node --test scripts/security-patch-regression.test.mjs
+
+      - name: Check conservative web build skipping
+        run: node --test scripts/vercel-ignore-build.test.mjs
+
+      - name: Check public telemetry privacy boundary
+        run: npm run test --workspace @byus/web -- features/analytics/client/vercel-telemetry.test.tsx
