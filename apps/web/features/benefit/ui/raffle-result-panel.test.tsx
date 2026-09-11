@@ -108,3 +108,21 @@ it("shows only the winner's shipping carrier and tracking number", () => {
   render(<RaffleResultPanel locale="ko" result={result({state:"won",method:"physical_shipping",publishedAt:"2026-09-21T00:00:00+09:00",winnerId:"33333333-3333-4333-8333-333333333333",fulfillmentStatus:"shipping_in_transit",recipientSubmitted:true,carrier:"CJ대한통운",trackingNumber:"123456789012"})} />);
   expect(screen.getByText("CJ대한통운")).toBeInTheDocument(); expect(screen.getByText("123456789012")).toBeInTheDocument();
 });
+
+it("keeps the embedded empty result concise without repeating the product or closing date", () => {
+  render(<RaffleResultPanel embedded locale="ko" result={result({ state: "not_entered", enteredTickets: 0 })} />);
+  expect(screen.getByRole("status")).toHaveTextContent("응모 내역이 없어요");
+  expect(screen.queryByText(base.title)).not.toBeInTheDocument();
+  expect(screen.queryByText("응모 마감")).not.toBeInTheDocument();
+});
+
+it("preserves winner deadlines and recipient actions in the embedded result", () => {
+  render(<RaffleResultPanel embedded locale="en" result={result({
+    state: "won", publishedAt: "2026-09-21T00:00:00+09:00",
+    winnerId: "33333333-3333-4333-8333-333333333333",
+    fulfillmentStatus: "information_required", recipientDeadlineAt: "2099-09-28T00:00:00+09:00",
+  })} />);
+  expect(screen.getByText("Recipient details due")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Enter recipient details" })).toHaveAttribute("href", "/my/rewards/33333333-3333-4333-8333-333333333333/recipient?locale=en");
+  expect(screen.queryByText(base.title)).not.toBeInTheDocument();
+});

@@ -3,6 +3,7 @@ vi.mock("server-only", () => ({}));
 import {
   DefaultBenefitRepository,
   BenefitRepositoryError,
+  SupabaseBenefitDataSource,
   type BenefitDataSource,
 } from "./benefit-repository";
 
@@ -286,5 +287,60 @@ describe("benefit repository", () => {
       ticketAmount: 2,
       now: new Date("2026-07-21T12:00:00Z"),
     })).resolves.toMatchObject({ benefitTicketTotal: 5, resultingBalance: 20 });
+  });
+});
+
+describe("Supabase benefit catalog artwork", () => {
+  it("maps existing raffle artwork by exact benefit id", async () => {
+    const rpc = vi.fn(async (name: string) => {
+      if (name === "get_published_benefits") return { data: [raw], error: null };
+      return {
+        data: {
+          raffles: [
+            {
+              benefitId: id,
+              imageUrl: "/images/raffles/reward.webp",
+            },
+          ],
+        },
+        error: null,
+      };
+    });
+    const source = new SupabaseBenefitDataSource({ rpc } as never);
+
+    await expect(
+      source.getPublished("kara", "ko", new Date("2026-07-21T12:00:00Z")),
+    ).resolves.toEqual([
+      { ...raw, imageUrl: "/images/raffles/reward.webp" },
+    ]);
+    expect(rpc).toHaveBeenCalledWith(
+      "get_public_raffles",
+      expect.objectContaining({ p_celebrity_slug: "kara", p_locale: "ko" }),
+    );
+  });
+
+  it("keeps the published catalog available when optional artwork lookup fails", async () => {
+    const rpc = vi.fn(async (name: string) =>
+      name === "get_published_benefits"
+        ? { data: [raw], error: null }
+        : { data: null, error: { message: "not available" } },
+    );
+    const source = new SupabaseBenefitDataSource({ rpc } as never);
+
+    await expect(
+      source.getPublished("kara", "ko", new Date("2026-07-21T12:00:00Z")),
+    ).resolves.toEqual([raw]);
+  });
+
+  it("keeps the published catalog available when optional artwork lookup rejects", async () => {
+    const rpc = vi.fn(async (name: string) => {
+      if (name === "get_public_raffles") throw new Error("network unavailable");
+      return { data: [raw], error: null };
+    });
+    const source = new SupabaseBenefitDataSource({ rpc } as never);
+
+    await expect(
+      source.getPublished("kara", "ko", new Date("2026-07-21T12:00:00Z")),
+    ).resolves.toEqual([raw]);
   });
 });

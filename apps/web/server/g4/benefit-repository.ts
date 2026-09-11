@@ -35,6 +35,15 @@ const rawBenefitSchema = benefitCatalogItemSchema
   .omit({ state: true, applicationStatus: true })
   .extend({ available: z.boolean() });
 
+const publicRaffleArtworkSchema = z.object({
+  raffles: z.array(
+    z.object({
+      benefitId: z.string().uuid().nullable(),
+      imageUrl: benefitCatalogItemSchema.shape.imageUrl,
+    }),
+  ),
+});
+
 function normalizeExternalDelivery<T>(value: T): T {
   if (!value || typeof value !== "object") return value;
   const record = value as Record<string, unknown>;
@@ -348,14 +357,38 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
     locale: BenefitLocale,
     now: Date,
   ): Promise<unknown[]> {
-    const { data, error } = await this.database.rpc("get_published_benefits", {
+    const parameters = {
       p_celebrity_slug: celebritySlug,
       p_locale: locale,
       p_now: now.toISOString(),
-    });
+    };
+    const optionalArtwork = Promise.resolve()
+      .then(() => this.database.rpc("get_public_raffles", parameters))
+      .catch(() => null);
+    const [{ data, error }, raffleResult] = await Promise.all([
+      this.database.rpc("get_published_benefits", parameters),
+      optionalArtwork,
+    ]);
     if (error || !Array.isArray(data))
       throw new BenefitRepositoryError("BENEFIT_UNAVAILABLE");
-    return data;
+
+    if (!raffleResult) return data;
+    const artwork = publicRaffleArtworkSchema.safeParse(raffleResult.data);
+    if (raffleResult.error || !artwork.success) return data;
+
+    const imageByBenefitId = new Map<string, string>();
+    for (const raffle of artwork.data.raffles) {
+      if (raffle.benefitId && raffle.imageUrl && !imageByBenefitId.has(raffle.benefitId)) {
+        imageByBenefitId.set(raffle.benefitId, raffle.imageUrl);
+      }
+    }
+    return data.map((item) => {
+      if (!item || typeof item !== "object") return item;
+      const benefitId = (item as { id?: unknown }).id;
+      if (typeof benefitId !== "string") return item;
+      const imageUrl = imageByBenefitId.get(benefitId);
+      return imageUrl ? { ...item, imageUrl } : item;
+    });
   }
 
   async findCelebritySlug(benefitId: string): Promise<string | null> {
