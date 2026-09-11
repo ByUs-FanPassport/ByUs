@@ -336,7 +336,7 @@ slot registry는 `identity.hero.desktop → creator.landscape`, `identity.hero.m
 - [x] 검증된 이미지 등록, 역할별 원자적 적용, 충돌·삭제 버전 및 공개 projection 구현.
 - [x] CMS 역할 편집기와 공개 화면 slot 연결.
 - [x] 권한·DB 회귀, 타입·lint·관련 테스트, 로컬 PC/모바일 렌더 확인.
-- [ ] 운영 additive migration 성공 및 웹 배포 최종 성공.
+- [x] 운영 additive migration 성공 및 웹 배포 최종 성공.
 
 구도는 편집기 안에서 수정하고 ‘적용’ 시에만 공개 연결을 바꾼다. 최초 적용도 revision=0부터 보호하며 제거는 tombstone을 남긴다. 사진 등록 시 검증한 bytes를 불변 hash 경로에 저장한다. 신규 콘텐츠는 초안 생성 후 역할을 적용하고 공개한다. 기존 LIVE 일정·상태·참여 이력과 개인 아바타·증빙은 보존한다. 운영 검증을 자동 확대하지 않는다.
 
@@ -372,3 +372,12 @@ slot registry는 `identity.hero.desktop → creator.landscape`, `identity.hero.m
 - [x] 최종 production 빌드 통과. 배포 완료 기준은 main 푸시 후 해당 커밋의 Vercel `READY` 확인이다.
 
 공유 프로필은 `profile`, 세로 인물 사진은 `portrait`, 가로 인물 사진은 `landscape`, 행사 포스터는 LIVE의 `poster`에 속한다. 경품 이미지·장식·개인 아바타·영상 파생 프리뷰는 셀럽 역할 사진으로 바꾸지 않는다. 새 하위 화면은 공통 렌더러에 상위의 전체 `photos`를 전달하고, 등록된 역할 소스를 화면 내부의 고정 주소로 덮어쓰지 않는다.
+
+
+### 배포 완료
+
+- 커밋: `999bc2644661b62bb19ee2c6881e5cfca9556567` (`main` push 완료)
+- Vercel: `dpl_3nE6joHxiYmq3CPKvwtMPrti287t` — **READY**
+- 운영 별칭: https://byus.kr
+- 배포 기록: https://vercel.com/sallylab/byus/3nE6joHxiYmq3CPKvwtMPrti287t
+- 기본 완료 범위인 로컬 검증과 배포 최종 상태까지 확인했다. 배포 후 운영 화면·로그인·동일 API 재검사를 추가로 수행하지 않았다.
