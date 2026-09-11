@@ -85,8 +85,8 @@ export function HomeGuideCarousel({ locale, slides }: {
       data-home-guide-carousel
       data-rotation={rotating ? "playing" : "paused"}
       data-reduced-motion={reducedMotion}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovered(true); }}
+      onPointerLeave={() => setHovered(false)}
       onFocusCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setUserPaused(true);
       }}

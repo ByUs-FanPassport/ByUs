@@ -69,6 +69,10 @@ describe("published celebrity directory", () => {
     expect(screen.getByText(/7월 24일/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("published");
+    const karaCard = screen.getByRole("heading", { name: "KARA" }).closest("article");
+    expect(karaCard?.querySelector("h2")?.compareDocumentPosition(karaCard.querySelector("img")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(within(karaCard!).getByText("KARA 만나보기").compareDocumentPosition(karaCard!.querySelector("img")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(within(karaCard!).getAllByRole("heading", { name: "KARA" })).toHaveLength(1);
   });
 
   it("filters by name and teaches recovery from a zero-result filter", () => {

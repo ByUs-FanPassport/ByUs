@@ -162,6 +162,44 @@ describe("unified MY hub", () => {
     expect(fetcher.mock.calls.some(([url]) => String(url) === "/api/me/summary?locale=ko&tierStages=1")).toBe(true);
   });
 
+  it("preserves the selected favorite through a locale reload and resets it for a different owner", async () => {
+    avatarOwner.id = "owner-a";
+    const katseye = {
+      ...summary.creators[0],
+      celebrity: { ...summary.creators[0].celebrity, slug: "katseye", name: "KATSEYE" },
+    };
+    const elina = {
+      ...summary.creators[0],
+      celebrity: { ...summary.creators[0].celebrity, slug: "elina", name: "Elina" },
+    };
+    let resolveEnglish!: (response: Response) => void;
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/avatar")) return Response.json({ avatar: null });
+      if (!url.startsWith("/api/me/summary")) return Response.json({ certifications: [], raffles: [] });
+      if (avatarOwner.id === "owner-b") return Response.json({ summary: { ...summary, creators: [elina, katseye] } });
+      if (url.includes("locale=en")) return await new Promise<Response>((resolve) => { resolveEnglish = resolve; });
+      return Response.json({ summary: { ...summary, creators: [katseye, elina] } });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const view = render(<MyScreen locale="ko" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Elina" }));
+    fireEvent.click(screen.getByRole("button", { name: "KATSEYE" }));
+    expect(screen.getByRole("button", { name: "KATSEYE" })).toHaveAttribute("aria-pressed", "true");
+
+    view.rerender(<MyScreen locale="en" />);
+    expect(await screen.findByText("Loading your fan activity.")).toBeInTheDocument();
+    await act(async () => {
+      resolveEnglish(Response.json({ summary: { ...summary, creators: [elina, katseye] } }));
+    });
+    expect(await screen.findByRole("button", { name: "KATSEYE" })).toHaveAttribute("aria-pressed", "true");
+
+    avatarOwner.id = "owner-b";
+    view.rerender(<MyScreen locale="en" />);
+    expect(await screen.findByRole("button", { name: "Elina" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("renders natural, explicit empty states", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
       summary: {

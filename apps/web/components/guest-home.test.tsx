@@ -132,11 +132,11 @@ describe("canonical 03 guest home", () => {
     consoleWarn.mockRestore();
   });
 
-  it("keeps the approved service actions and exact Passport label in both responsive placements", () => {
+  it("keeps one mobile sign-in action and the desktop Passport action", () => {
     render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(screen.getAllByRole("link", { name: "Google로 계속하기" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(1);
     expect(
       screen.getByRole("img", {
         name: "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport",
@@ -153,17 +153,14 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
   });
 
-  it("adds the Banksy campaign as one slide in the LIVE hero", () => {
+  it("uses the Elina participation guide as the final LIVE hero slide", () => {
     render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
-
     fireEvent.click(screen.getByRole("button", { name: "2번째 LIVE 보기" }));
-    expect(screen.getByRole("heading", { name: "엘리나와 함께 만나는 뱅크시" })).toBeInTheDocument();
-    expect(screen.getByText("9월 18일 금요일 · 오후 5시")).toBeInTheDocument();
-    expect(screen.getByText("11월 전시 종료까지")).toBeInTheDocument();
-    expect(screen.getByRole("img", {
-      name: "어두운 콘크리트 공간에 스트리트아트 작품이 전시된 현대 미술관",
-    })).toHaveAttribute("src", expect.stringContaining("banksy-exhibition-campaign.webp"));
-    expect(screen.getByRole("link", { name: /이벤트 살펴보기/ })).toHaveAttribute("href", "/c/elina?locale=ko");
+    const hero = screen.getByRole("region", { name: "주요 LIVE" });
+    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
+    expect(within(hero).getByText("팬 인증부터 선물 응모까지")).toBeInTheDocument();
+    expect(within(hero).getByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" }))
+      .toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
   });
 
   it("localizes the nine-empty-stamp Passport image description", () => {

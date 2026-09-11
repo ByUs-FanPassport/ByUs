@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomeEntryCards } from "./home-entry-cards";
 import type { ComponentProps } from "react";
@@ -7,6 +7,11 @@ vi.mock("embla-carousel-react", () => ({ default: () => [vi.fn(), null] }));
 vi.mock("next/link", () => ({ default: ({ children, ...props }: ComponentProps<"a">) => <a {...props}>{children}</a> }));
 
 const advance = (ms = 3_000) => act(() => { vi.advanceTimersByTime(ms); });
+const pointerEnter = (element: HTMLElement, pointerType: string) => {
+  const event = createEvent.pointerOver(element);
+  Object.defineProperty(event, "pointerType", { value: pointerType });
+  fireEvent(element, event);
+};
 const activeLink = () => document.querySelector('[data-active="true"] a');
 
 beforeEach(() => {
@@ -45,14 +50,25 @@ describe("home entry cards", () => {
   it("pauses on hover and requires explicit restart after keyboard focus leaves", () => {
     render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     const root = screen.getByRole("region");
-    fireEvent.mouseEnter(root); advance();
+    pointerEnter(root, "mouse"); advance();
     expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
-    fireEvent.mouseLeave(root); advance();
+    fireEvent.pointerLeave(root); advance();
     expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     fireEvent.focus(activeLink()!); fireEvent.blur(activeLink()!); advance(12_000);
     expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     fireEvent.click(screen.getByRole("button", { name: "Start autoplay" })); advance();
     expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
+  });
+
+  it("does not leave touch playback stuck in a mouse hover pause", () => {
+    render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
+    pointerEnter(screen.getByRole("region"), "touch");
+    const pause = screen.getByRole("button", { name: "Pause autoplay" });
+    fireEvent.pointerDown(pause); fireEvent.focus(pause); fireEvent.click(pause);
+    advance();
+    expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
+    fireEvent.pointerDown(pause); fireEvent.click(pause); advance();
+    expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
   });
 
   it("preserves a pointer pause when the same click also focuses the rotation button", () => {

@@ -86,40 +86,18 @@ it("updates a resumed countdown from the current clock and has no inactive inter
   expect(screen.getByText("00:00:50")).toBeInTheDocument();
 });
 
-it("distinguishes complete poster fallback from an approved mobile portrait crop", () => {
-  const portraitLive = { ...live, live: { ...live.live, slug: "portrait", photos: { portrait: {
+it("uses the shared banner and creator portrait role for LIVE slides", () => {
+  const portraitLive = { ...live, live: { ...live.live, celebrity: { ...live.live.celebrity, photos: { portrait: {
     asset: { id: "portrait-asset", url: "/images/guest-home/elina-card.jpg", width: 1080, height: 1350, mimeType: "image/jpeg", revision: 1 },
     alt: { ko: "승인된 세로 사진", en: "Approved portrait" }, revision: 1,
-    frames: { "event.home.mobile": { fit: "cover" as const, x: 50, y: 40, approvedAssetRevision: 1 } },
-  } } } } as LiveEventResponse;
-  const { container } = render(<LiveHeroCarousel featuredLives={[live, portraitLive]} locale="ko" />);
+    frames: { "creator.hero.mobile": { fit: "cover" as const, x: 50, y: 40, approvedAssetRevision: 1 } },
+  } } } } } as LiveEventResponse;
+  const { container } = render(<LiveHeroCarousel featuredLives={[portraitLive]} locale="ko" />);
   const slides = container.querySelectorAll("article");
-  expect(slides[0]).toHaveAttribute("data-mobile-contained", "true");
-  expect(slides[1]).toHaveAttribute("data-mobile-contained", "false");
-  expect(slides[1].querySelector("picture")).toHaveStyle({ "--event-photo-mobile-fit": "cover" });
-});
-
-it("fits mobile height and arrows to the active poster and updates after image resize", () => {
-  vi.stubGlobal("matchMedia", vi.fn((query: string) => ({ matches: query === "(max-width: 767px)", addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-  let height = 410;
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-    return { width: 358, height: this.tagName === "PICTURE" ? 180 : this.dataset.mobileContained === "true" ? height : 450 } as DOMRect;
-  });
-  let resize = () => {};
-  const disconnect = vi.fn();
-  vi.stubGlobal("ResizeObserver", class {
-    constructor(callback: () => void) { resize = callback; }
-    observe() {}
-    disconnect = disconnect;
-  });
-  const view = render(<LiveHeroCarousel featuredLives={[live]} locale="ko" />);
-  const root = screen.getByRole("region");
-  expect(root).toHaveStyle({ "--mobile-hero-height": "410px", "--mobile-controls-top": "68px" });
-  height = 430;
-  act(() => resize());
-  expect(root).toHaveStyle({ "--mobile-hero-height": "430px" });
-  fireEvent.click(screen.getByRole("button", { name: "다음 LIVE" }));
-  expect(root).toHaveStyle({ "--mobile-hero-height": "450px", "--mobile-controls-top": "203px" });
-  view.unmount();
-  expect(disconnect).toHaveBeenCalled();
+  expect(slides).toHaveLength(2);
+  for (const slide of slides) expect(slide.querySelector("[data-home-hero-banner]")).toBeInTheDocument();
+  const portrait = slides[0].querySelector("img");
+  expect(portrait).toHaveAttribute("data-image-presentation", "editorial");
+  expect(portrait).toHaveAttribute("src", expect.stringContaining("elina-card.jpg"));
+  expect(portrait).toHaveStyle({ objectFit: "cover", objectPosition: "50% 40%" });
 });

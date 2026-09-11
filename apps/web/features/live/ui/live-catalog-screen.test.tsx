@@ -79,12 +79,12 @@ describe("LIVE catalog", () => {
 
     expect(screen.getByRole("heading", { name: "전체 LIVE" })).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "지금 LIVE 중" })).getByRole("link", { name: /LIVE 시청하기/ })).toHaveAttribute("href", base.live.watch.url);
-    const reserveAction = within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: /라이브 예약하기/ });
+    const reserveAction = within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", { name: "상세 보기: KARA × NUALEAF LIVE" });
     expect(reserveAction).toHaveAttribute("href", "/live/kara-live?locale=ko");
     expect(reserveAction).toHaveAttribute("data-fan-action-emphasis", "secondary");
     expect(reserveAction).toHaveAttribute("data-action-state", "reserve");
-    expect(within(reserveAction).getByText("라이브 예약하기")).toBeInTheDocument();
-    expect(within(reserveAction).getByText("라이브 예약하기").previousElementSibling).toHaveAttribute("aria-hidden", "true");
+    expect(within(reserveAction).getByText("상세 보기")).toBeInTheDocument();
+    expect(within(reserveAction).getByText("상세 보기").previousElementSibling).toHaveAttribute("aria-hidden", "true");
     expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", {
       name: "KARA × NUALEAF LIVE 상세 보기",
     })).toHaveAttribute("href", "/live/kara-live?locale=ko");
@@ -106,7 +106,7 @@ describe("LIVE catalog", () => {
     render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [base], replay: [] }} />);
 
     expect(screen.getByRole("status", { name: "예약 상태 확인 중" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /라이브 예약하기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^상세 보기:/ })).not.toBeInTheDocument();
 
     await waitFor(() => expect(resolveCatalog).toBeDefined());
     resolveCatalog?.(new Response(JSON.stringify({ catalog: {
@@ -151,7 +151,7 @@ describe("LIVE catalog", () => {
     expect(await screen.findByRole("status", { name: "예약 상태 확인 필요" })).toBeInTheDocument();
     expect(screen.queryByText("예약 완료")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "내 예약 상태 다시 불러오기" }));
-    expect(await screen.findByRole("link", { name: /^라이브 예약하기:/ })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /^상세 보기:/ })).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 

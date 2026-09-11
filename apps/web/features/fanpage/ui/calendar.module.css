@@ -54,4 +54,4 @@
 .calendarUpcoming time{font-size:12px}
 @media(max-width:767px){.heroCalendar{padding:20px}}
 
-.heroCalendar{gap:10px}.calendarHeading{min-height:44px}.calendarFooter{padding-top:8px;min-height:44px}.calendarFooter>a{min-height:44px}.calendarEventDay[data-upcoming="true"] time{background:#ff0080;color:#fff}.calendarEventDay>span{background:#ff0080}
+.heroCalendar{gap:10px}.calendarHeading{min-height:44px}.calendarFooter{padding-top:8px;min-height:44px}.calendarFooter>a{min-height:44px}.calendarEventDay[data-upcoming="true"] time{background:var(--fanpage-action-solid,#ce0066);color:#fff}.calendarEventDay>span{background:#ff0080}

@@ -6,7 +6,7 @@
 .count { display:grid; min-width:24px; height:24px; padding-inline:6px; place-items:center; border-radius:999rem; background:var(--color-soft); color:var(--color-muted); font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
 .group[data-empty="true"] .groupHeader { --fan-heading-size:16px; --fan-heading-size-wide:16px; margin-bottom:8px; }
 .list { display:grid; gap:10px; }
-.row { display:grid; grid-template-columns:52px minmax(0,1fr) 44px; gap:12px; align-items:center; min-height:88px; padding:12px 14px; border:1px solid var(--color-line-subtle); border-radius:12px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
+.row { display:grid; grid-template-columns:52px minmax(0,1fr) max-content; gap:10px; align-items:center; min-height:88px; padding:12px; border:1px solid var(--color-line-subtle); border-radius:12px; background:#fff; box-shadow:0 1px 2px oklch(18% 0 0 / .05),0 4px 12px oklch(18% 0 0 / .03); }
 
 .details { display:grid; min-width:0; gap:2px; border-radius:8px; color:inherit; text-decoration:none; }
 .meta { display:flex; min-width:0; flex-wrap:wrap; align-items:center; gap:4px 8px; }
@@ -16,10 +16,10 @@
 .details h3 { display:-webkit-box; overflow:hidden; margin:0; font-size:15px; font-weight:750; letter-spacing:-.02em; line-height:1.4; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .schedule { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:4px; }
 .dateRange { color:var(--color-muted); font-size:13px; font-weight:400; line-height:1.5; }
-.action { display:grid; width:44px; height:44px; place-items:center; border:1px solid transparent; border-radius:12px; background:linear-gradient(#fff,#fff) padding-box,var(--color-primary-action) border-box; color:var(--color-service-ink); font-size:14px; font-weight:750; line-height:1; text-decoration:none; touch-action:manipulation; transition:background-color 160ms cubic-bezier(.2,0,0,1),color 160ms cubic-bezier(.2,0,0,1),transform 160ms cubic-bezier(.2,0,0,1); }
+.action { display:inline-flex; width:auto; min-width:76px; min-height:44px; align-items:center; justify-content:center; padding-inline:11px; border:1px solid transparent; border-radius:12px; background:linear-gradient(#fff,#fff) padding-box,var(--color-primary-action) border-box; color:var(--color-service-ink); font-size:13px; font-weight:750; line-height:1; text-decoration:none; touch-action:manipulation; transition:background-color 160ms cubic-bezier(.2,0,0,1),color 160ms cubic-bezier(.2,0,0,1),transform 160ms cubic-bezier(.2,0,0,1); }
 .action svg { width:20px; height:20px; stroke-width:1.9; }
-.actionIcon { display:grid; place-items:center; }
-.actionLabel,.action > svg:last-child { display:none; }
+.actionIcon,.action > svg:last-child { display:none; }
+.actionLabel { display:inline-flex; min-width:0; align-items:center; justify-content:center; white-space:nowrap; }
 .actionSkeleton,.actionUnavailable { display:grid; width:44px; height:44px; place-items:center; border-radius:12px; }
 .actionSkeleton { position:relative; overflow:hidden; background:oklch(94.5% 0 0); }
 .actionSkeleton::after { position:absolute; inset:0; background:linear-gradient(100deg,transparent 20%,rgb(255 255 255 / 72%) 48%,transparent 76%); content:""; transform:translateX(-100%); animation:reservation-shimmer 1.35s ease-in-out infinite; }
@@ -45,8 +45,9 @@
   .row { grid-template-columns:64px minmax(0,1fr) auto; gap:16px; min-height:104px; padding:14px 20px; }
 
   .details { gap:4px; }
-  .action { width:auto; min-width:184px; min-height:48px; grid-template-columns:20px minmax(0,1fr) 20px; column-gap:8px; padding-inline:16px; border-radius:999rem; }
+  .action { display:grid; width:auto; min-width:184px; min-height:48px; grid-template-columns:20px minmax(0,1fr) 20px; column-gap:8px; padding-inline:16px; border-radius:999rem; font-size:14px; }
   .action svg { width:18px; height:18px; }
+  .actionIcon { display:grid; place-items:center; }
   .actionLabel,.action > svg:last-child { display:inline-flex; }
   .actionLabel { min-width:0; align-items:center; justify-content:center; white-space:nowrap; }
   .actionSkeleton,.actionUnavailable { width:184px; min-height:48px; border-radius:999rem; }
