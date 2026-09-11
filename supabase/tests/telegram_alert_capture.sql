@@ -161,6 +161,44 @@ begin
   end if;
 end $$;
 
+-- Existing pending rows gain current actor identity without backfill or new PII columns.
+insert into public.user_profiles(app_user_id,nickname,nickname_normalized) values
+  ('f1000000-0000-4000-8000-000000000003','예약팬','예약팬');
+do $$
+declare batch jsonb; item jsonb; n integer:=0;
+begin
+  if has_function_privilege('anon','public.claim_telegram_alert_batch_with_identity(text)','execute')
+    or has_function_privilege('authenticated','public.claim_telegram_alert_batch_with_identity(text)','execute')
+    or not has_function_privilege('service_role','public.claim_telegram_alert_batch_with_identity(text)','execute') then
+    raise exception 'TELEGRAM_IDENTITY_RPC_ACL';
+  end if;
+  if public.claim_telegram_alert_batch_with_identity('-999') is not null then raise exception 'TELEGRAM_IDENTITY_WRONG_ROOM'; end if;
+  batch:=public.claim_telegram_alert_batch_with_identity('-1001234567890');
+  if jsonb_array_length(batch->'alerts')<>5 then raise exception 'TELEGRAM_IDENTITY_BATCH_LIMIT'; end if;
+  for item in select value from jsonb_array_elements(batch->'alerts') loop
+    n:=n+1;
+    if item->>'kind' in ('member_joined','fan_joined') then
+      if item->>'actor_email' is distinct from 'telegram-member@example.test' or item->>'actor_name' is not null then
+        raise exception 'TELEGRAM_IDENTITY_MEMBER_MAPPING';
+      end if;
+    elsif item->>'kind' in ('live_reserved','live_attended') then
+      if item->>'actor_email' is distinct from 'telegram-reserved@example.test' or item->>'actor_name' is distinct from '예약팬' then
+        raise exception 'TELEGRAM_IDENTITY_LIVE_ACTOR_MAPPING';
+      end if;
+    elsif item->>'kind'='draw_published' then
+      if item->>'actor_email' is not null or item->>'actor_name' is not null then raise exception 'TELEGRAM_IDENTITY_DRAW_OPERATOR_LEAK'; end if;
+    end if;
+    if item ?| array['app_user_id','source_id','wallet','privy_user_id'] then raise exception 'TELEGRAM_IDENTITY_UNREQUESTED_DATA'; end if;
+  end loop;
+  if n<>5 or public.claim_telegram_alert_batch_with_identity('-1001234567890') is not null
+    or public.claim_telegram_alert_batch('-1001234567890') is not null then raise exception 'TELEGRAM_IDENTITY_SHARED_FENCE'; end if;
+  if not public.begin_telegram_alert_send((batch->>'batch_id')::uuid,'-1001234567890')
+    or not public.finish_telegram_alert_batch((batch->>'batch_id')::uuid,'sent',321) then raise exception 'TELEGRAM_IDENTITY_SEND_LIFECYCLE'; end if;
+  update public.telegram_alert_settings set next_send_at='-infinity';
+  if public.claim_telegram_alert_batch_with_identity('-1001234567890') is not null then raise exception 'TELEGRAM_IDENTITY_EMPTY_QUEUE'; end if;
+  raise notice 'PASS Telegram identity mapping, nickname absence, draw privacy, private RPC, shared claim fence and empty queue';
+end $$;
+
 -- The capture function catches secondary outbox failures, preserving its source row.
 create function pg_temp.fail_telegram_outbox_fixture() returns trigger language plpgsql as $$
 begin

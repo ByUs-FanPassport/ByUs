@@ -6,7 +6,7 @@ const ADMIN_URL = "https://byus.kr/admin";
 const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
 const TELEGRAM_TIMEOUT_MS = 8_000;
 const TELEGRAM_MESSAGE_LIMIT = 4_000;
-const TELEGRAM_BATCH_LIMIT = 20;
+const TELEGRAM_BATCH_LIMIT = 5;
 const PROD_SUPABASE_HOST = "gmrykvmtmuaeswpajteq.supabase.co";
 const BOT_TOKEN = /^[1-9]\d{5,11}:[A-Za-z0-9_-]{35}$/;
 const GROUP_OR_CHANNEL_CHAT_ID = /^-[1-9]\d{5,19}$/;
@@ -22,6 +22,8 @@ const alertSchema = z.object({
   kind: kindSchema,
   creator_name: z.string().nullable(),
   live_title: z.string().nullable(),
+  actor_name: z.string().nullable(),
+  actor_email: z.string().nullable(),
   winner_count: z.number().int().nonnegative().nullable(),
   occurred_at: z.iso.datetime({ offset: true }),
 }).strict().superRefine((alert, context) => {
@@ -62,39 +64,24 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
   if (input.length < 1 || input.length > TELEGRAM_BATCH_LIMIT) {
     throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
   }
-  const groups = new Map<string, {
-    kind: TelegramAlertSnapshot["kind"];
-    creatorName: string;
-    liveTitle: string;
-    events: number;
-    winners: number;
-  }>();
-  for (const alert of input) {
+  const lines = input.flatMap((alert) => {
     const creatorName = cleanPublicName(alert.creator_name, 48);
     const liveTitle = cleanPublicName(alert.live_title, 72);
-    const key = JSON.stringify([alert.kind, creatorName, liveTitle]);
-    const group = groups.get(key) ?? {
-      kind: alert.kind,
-      creatorName,
-      liveTitle,
-      events: 0,
-      winners: 0,
-    };
-    group.events += 1;
-    if (alert.kind === "draw_published") group.winners += alert.winner_count ?? 0;
-    groups.set(key, group);
-  }
-
-  const lines = [...groups.values()].map((group) => {
-    const context = publicContext(group.creatorName, group.liveTitle);
+    const context = publicContext(creatorName, liveTitle);
     const prefix = context ? `${context} ` : "";
-    switch (group.kind) {
-      case "member_joined": return `• 신규 회원 ${group.events}명 가입`;
-      case "fan_joined": return `• ${prefix}팬 가입 ${group.events}명`;
-      case "live_reserved": return `• ${prefix}예약 ${group.events}건`;
-      case "live_attended": return `• ${prefix}출석 ${group.events}명`;
-      case "draw_published": return `• ${prefix}추첨 결과 공개 · 당첨 ${group.winners}명`;
+    if (alert.kind === "draw_published") {
+      return [`• ${prefix}추첨 결과 공개 · 당첨 ${alert.winner_count ?? 0}명`];
     }
+    const actorName = cleanPublicName(alert.actor_name, 48) || "닉네임 미설정";
+    const actorEmail = cleanPublicName(alert.actor_email, 320) || "이메일 미등록";
+    let event: string;
+    switch (alert.kind) {
+      case "member_joined": event = "신규 회원 가입"; break;
+      case "fan_joined": event = `${prefix}팬 가입`; break;
+      case "live_reserved": event = `${prefix}예약`; break;
+      case "live_attended": event = `${prefix}출석`; break;
+    }
+    return [`• ${event}`, `  ${actorName}`, `  ${actorEmail}`];
   });
   const message = [
     "🎉 ByUs 주요 소식",
@@ -215,7 +202,7 @@ export class SupabaseTelegramAlertQueue implements TelegramAlertQueue {
   }
 
   async claim(chatId: string): Promise<TelegramAlertBatch | null> {
-    const data = await this.call("claim_telegram_alert_batch", { p_chat_id: chatId });
+    const data = await this.call("claim_telegram_alert_batch_with_identity", { p_chat_id: chatId });
     if (data === null) return null;
     const parsed = claimedBatchSchema.safeParse(data);
     if (!parsed.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
