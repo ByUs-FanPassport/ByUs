@@ -63,7 +63,7 @@ export const serviceGuideContent = {
     ],
     contactTitle: "도움이 더 필요하신가요?",
     contactDescription: "계정이나 서비스 이용 문의는 ByUs 운영팀에서 확인해 드릴게요.",
-    contactAction: "이메일로 문의하기",
+    contactAction: "문의하기",
   },
   en: {
     metadataTitle: "Guide and Frequently Asked Questions",
@@ -99,6 +99,6 @@ export const serviceGuideContent = {
     ],
     contactTitle: "Need more help?",
     contactDescription: "Contact the ByUs team with questions about your account or use of the service.",
-    contactAction: "Contact us by email",
+    contactAction: "Contact support",
   },
 } as const satisfies Record<FanLocale, ServiceGuideContent>;

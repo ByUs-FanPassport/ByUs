@@ -1,0 +1,58 @@
+name: CS inquiry flow
+on:
+  pull_request:
+    paths:
+      - 'apps/web/features/support/**'
+      - 'apps/web/server/support/**'
+      - 'apps/web/server/auth/**'
+      - 'apps/web/server/admin/**'
+      - 'apps/web/server/fan-auth/**'
+      - 'apps/web/app/**/inquiries/**'
+      - 'apps/web/e2e/cs-local/**'
+      - 'apps/web/components/fan-shell/**'
+      - 'apps/web/components/fan-ui/**'
+      - 'supabase/migrations/**'
+      - 'supabase/tests/cs_inquiries.sql'
+      - 'scripts/verify-cs-*.sh'
+      - 'package*.json'
+      - '.github/workflows/cs-inquiries.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/features/support/**'
+      - 'apps/web/server/support/**'
+      - 'apps/web/app/**/inquiries/**'
+      - 'apps/web/e2e/cs-local/**'
+      - 'supabase/migrations/**'
+      - 'scripts/verify-cs-*.sh'
+      - '.github/workflows/cs-inquiries.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cs-inquiries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test --workspace @byus/web -- features/support server/support --maxWorkers=3
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y postgresql
+      - name: Local SQL, authority, concurrency and browser flow
+        run: bash scripts/verify-cs-local.sh
+      - name: Build ordinary application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_PRIVY_APP_ID: cs-build-check
+      - name: Ordinary build rejects local test identities
+        run: node apps/web/e2e/cs-local/production-auth.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cs-inquiry-evidence
+          path: apps/web/test-results/cs-local

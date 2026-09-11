@@ -1,0 +1,73 @@
+.main { max-width: 900px; padding-block: 36px 56px; }
+.adminMain { max-width: 1120px; margin-inline: auto; padding: 32px; }
+.heading { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.heading h1, .conversationHeading h1, .guest h1 { margin: 0; color: #242424; font-size: 28px; line-height: 1.4; font-weight: 750; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.heading p, .guest p { color: #626262; font-size: 15px; line-height: 1.7; margin: 10px 0 0; }
+.heading > div { min-width: 0; }
+.heading > :last-child { flex-shrink: 0; }
+.toolbar, .rowMeta, .sectionHeading, .formActions, .pagination { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.toolbar { justify-content: flex-end; margin-block: 12px; }
+.filter { display: flex; align-items: center; gap: 12px; margin-right: auto; font-size: 14px; font-weight: 600; }
+.filter select { min-height: 44px; border: 1px solid #d9d9d9; border-radius: 12px; padding: 8px 32px 8px 12px; color: #242424; background: white; font: inherit; }
+.list { margin: 0; padding: 0; list-style: none; border-top: 1px solid #e5e5e5; }
+.inquiryRow { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 8px; border-bottom: 1px solid #e5e5e5; text-decoration: none; color: #242424; }
+.inquiryRow > svg { width: 20px; height: 20px; flex-shrink: 0; }
+.rowContent { min-width: 0; }
+.rowContent h2 { font-size: 17px; font-weight: 650; line-height: 1.5; margin: 12px 0 0; overflow-wrap: anywhere; }
+.rowMeta { color: #626262; font-size: 12px; line-height: 1.6; }
+.badge { display: inline-flex; align-items: center; border: 1px solid #dedede; border-radius: 999px; padding: 3px 10px; font-size: 12px; line-height: 1.5; font-weight: 650; white-space: nowrap; color: #555; background: #f7f7f7; }
+.badge[data-status="open"] { background: white; color: #242424; border-color: #888; }
+.badge[data-status="answered"] { color: #6d237b; border-color: #d5bfdc; background: #faf5fc; }
+.empty { padding: 56px 24px; text-align: center; color: #626262; line-height: 1.7; }
+.empty > svg { width: 28px; height: 28px; margin-inline: auto; }
+.pagination { justify-content: flex-end; margin-top: 24px; }
+.compose { padding: 24px; border: 1px solid #e5e5e5; border-radius: 16px; margin-bottom: 32px; }
+.sectionHeading { justify-content: space-between; margin-bottom: 20px; }
+.sectionHeading h2 { margin: 0; font-size: 20px; line-height: 1.5; font-weight: 700; }
+.form { border-top: 1px solid #e5e5e5; padding-top: 24px; margin-top: 20px; }
+.compose .form { margin-top: 0; padding-top: 0; border: 0; }
+.form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 20px; }
+.field { display: grid; gap: 8px; }
+.field label { font-size: 14px; font-weight: 650; line-height: 1.5; color: #242424; }
+.field input, .field textarea { width: 100%; box-sizing: border-box; border: 1px solid #bdbdbd; border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 16px; line-height: 1.6; color: #242424; background: #fff; }
+.field textarea { resize: vertical; min-height: 120px; }
+.field p { margin: 0; font-size: 13px; line-height: 1.65; color: #626262; }
+.field [aria-invalid="true"] { border-color: #a12626; }
+.formActions { justify-content: space-between; margin-top: 16px; }
+.formActions > :last-child { margin-left: auto; }
+.warning { font-size: 14px; line-height: 1.7; color: #912323; background: #fff7f7; border: 1px solid #ecd4d4; border-radius: 12px; padding: 12px 16px; }
+.notice { color: #4e4e4e; font-size: 14px; line-height: 1.6; margin: 0; }
+.notice:empty { display: block; }
+.back { margin-bottom: 20px; }
+.conversationHeading h1 { margin-top: 14px; font-size: 26px; }
+.earlier { text-align: center; margin: 24px 0; }
+.messages { list-style: none; padding: 20px 0; margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+.message { max-width: 88%; min-width: 0; }
+.message[data-own="true"] { align-self: flex-end; }
+.messageMeta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 11px; color: #626262; margin-bottom: 8px; line-height: 1.6; }
+.messageMeta strong { color: #414141; font-size: 13px; }
+.message p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; padding: 16px 20px; border-radius: 16px; background: #f5f5f5; color: #242424; line-height: 1.75; font-size: 15px; }
+.message[data-own="true"] p { border: 1px solid #e1dbe7; background: #fbf9fd; }
+.resolvedHelp { padding: 16px 0; border-top: 1px solid #e5e5e5; color: #626262; font-size: 14px; line-height: 1.75; }
+.guest { padding: 48px 0; max-width: 580px; }
+.guest p { margin-bottom: 24px; }
+.main :is(input, textarea, select, a, button):focus-visible, .adminMain :is(input, textarea, select, a, button):focus-visible { outline: 3px solid #242424; outline-offset: 3px; }
+@media (hover: hover) { .inquiryRow:hover { background: #fafafa; } }
+@media (max-width: 640px) {
+  .main { padding-block: 24px 36px; }
+  .adminMain { padding: 20px 16px; }
+  .heading { flex-direction: column; gap: 20px; }
+  .heading h1, .guest h1 { font-size: 24px; }
+  .heading p { font-size: 14px; }
+  .heading > :last-child { max-width: 100%; }
+  .compose { padding: 20px 16px; }
+  .rowMeta { gap: 8px; }
+  .rowMeta time { flex-basis: 100%; }
+  .inquiryRow { padding-block: 20px; }
+  .conversationHeading h1 { font-size: 23px; }
+  .message { max-width: 94%; }
+  .message p { padding: 14px 16px; }
+  .messageMeta { gap: 4px 8px; }
+  .formActions { align-items: stretch; }
+  .formActions > :last-child { width: 100%; }
+}
