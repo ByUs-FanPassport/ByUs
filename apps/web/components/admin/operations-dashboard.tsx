@@ -96,12 +96,12 @@ const copy = {
     creator: "크리에이터",
     brand: "브랜드",
     content: "셀럽 콘텐츠",
-    jobs: "블록체인 작업",
-    audit: "감사 로그",
+    jobs: "디지털 발급 내역",
+    audit: "관리자 활동 기록",
     signedIn: "활성 관리자 세션",
-    heading: "오늘 확인할 운영 상태",
+    heading: "시스템 상태",
     headingBody:
-      "실제 운영 API에서 확인된 항목만 표시합니다. 조회되지 않은 값은 추정하지 않습니다.",
+      "발급·알림 처리와 정기 작업 결과를 확인하세요.",
     dashboardHeading: "성과 분석",
     dashboardBody:
       "조회 범위와 데이터 출처를 함께 확인하세요. 0은 측정된 값이며 N/A와 조회 불가는 별도 상태입니다.",
@@ -127,7 +127,7 @@ const copy = {
     to: "종료",
     apply: "분석 조회",
     invalidScope: "올바른 UUID와 시작·종료 시각을 입력하세요.",
-    jobsTitle: "민팅 작업",
+    jobsTitle: "디지털 발급 작업",
     jobsBody: "실패 또는 재시도 상태를 확인합니다.",
     auditTitle: "감사 기록",
     auditBody: "최근 운영 변경 기록의 조회 가능 여부를 확인합니다.",
@@ -152,7 +152,7 @@ const copy = {
     jobs: "Blockchain jobs",
     audit: "Audit log",
     signedIn: "Active admin session",
-    heading: "Operations requiring attention",
+    heading: "System status",
     headingBody:
       "Only facts returned by live operations APIs are shown. Missing values are never estimated.",
     dashboardHeading: "Performance analytics",
@@ -388,11 +388,11 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
                   </p>
                   <dl>
                     <div>
-                      <dt>FAILED</dt>
+                      <dt>{locale === "ko" ? "실패" : "Failed"}</dt>
                       <dd>{ready.data.jobs.failed}</dd>
                     </div>
                     <div>
-                      <dt>RETRYING</dt>
+                      <dt>{locale === "ko" ? "재시도 중" : "Retrying"}</dt>
                       <dd>{ready.data.jobs.retrying}</dd>
                     </div>
                   </dl>
@@ -416,7 +416,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
               <div>
                 <h2>{t.notificationTitle}</h2>
                 <p>{ready.data.notifications === null ? t.unavailable : ready.data.notifications.failed ? t.notificationWarning : t.notificationHealthy}</p>
-                {ready.data.notifications && <dl><div><dt>FAILED</dt><dd>{ready.data.notifications.failed}</dd></div><div><dt>PENDING</dt><dd>{ready.data.notifications.pending}</dd></div></dl>}
+                {ready.data.notifications && <dl><div><dt>{locale === "ko" ? "실패" : "Failed"}</dt><dd>{ready.data.notifications.failed}</dd></div><div><dt>{locale === "ko" ? "대기" : "Pending"}</dt><dd>{ready.data.notifications.pending}</dd></div></dl>}
                 <Link href={"/admin/notifications?status=failed" as Route}>{locale === "ko" ? "알림 전송" : "Notification delivery"}<ChevronRight aria-hidden="true" /></Link>
               </div>
             </section>
@@ -424,7 +424,7 @@ export function AdminOverview({ locale = "ko" }: { locale?: Locale }) {
               <Trash2 aria-hidden="true" />
               <div>
                 <h2>{t.purgeTitle}</h2>
-                {ready.data.purge ? <><p>{ready.data.purge.state} · {ready.data.purge.source}</p><dl><div><dt>{t.purgeCadence}</dt><dd>{ready.data.purge.cadenceHours}h</dd></div><div><dt>{t.purgeSuccess}</dt><dd>{ready.data.purge.lastSuccessAt ? new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(new Date(ready.data.purge.lastSuccessAt)) : "—"}</dd></div><div><dt>{t.purgeError}</dt><dd>{ready.data.purge.lastErrorCode ?? "—"}</dd></div></dl></> : <p>{t.unavailable}</p>}
+                {ready.data.purge ? <><p>{locale === "ko" ? ({ healthy: "정상 실행", never_run: "실행 이력 없음", overdue: "실행 지연", error: "실행 오류" })[ready.data.purge.state] : ({ healthy: "Running normally", never_run: "Not run yet", overdue: "Overdue", error: "Run failed" })[ready.data.purge.state]}</p><dl><div><dt>{t.purgeCadence}</dt><dd>{ready.data.purge.cadenceHours}h</dd></div><div><dt>{t.purgeSuccess}</dt><dd>{ready.data.purge.lastSuccessAt ? new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(new Date(ready.data.purge.lastSuccessAt)) : "—"}</dd></div><div><dt>{t.purgeError}</dt><dd>{ready.data.purge.lastErrorCode ?? "—"}</dd></div></dl></> : <p>{t.unavailable}</p>}
               </div>
             </section>
             <section className={styles.operation}>
