@@ -24,6 +24,7 @@ type ScreenState = "checking" | "empty" | "typing" | "valid" | "duplicate" | "pr
 
 type Copy = {
   home: string; language: string; heading: (name: string) => string; subtitle: (name: string) => string; preview: string;
+  genericHeading: string; genericSubtitle: string;
   progress: string;
   verification: string; pending: string; owner: string; placeholderOwner: string; issuance: string;
   field: string; counter: (count: number) => string; rule: string; privacy: string;
@@ -35,6 +36,8 @@ const copy: Record<"ko" | "en", Copy> = {
   ko: {
     home: "ByUs 홈", language: "언어", heading: (name) => `${name} 팬 인증에 사용할 닉네임을 정해 주세요.`,
     subtitle: (name) => `팬 인증을 통과하면 ${name} Fan Passport와 활동 기록에 표시돼요.`, preview: "발급 예정 Fan Passport 미리보기",
+    genericHeading: "ByUs에서 사용할 닉네임을 정해 주세요.",
+    genericSubtitle: "프로필을 완성하면 이전 화면으로 돌아가 계속할 수 있어요.",
     progress: "프로필 설정 · 1 / 1",
     verification: "팬 인증 준비", pending: "발급 예정", owner: "공개 이름", placeholderOwner: "닉네임",
     issuance: "팬 인증 완료 후 발급", field: "닉네임", counter: (count) => `${count}/32자`,
@@ -52,6 +55,8 @@ const copy: Record<"ko" | "en", Copy> = {
   en: {
     home: "ByUs home", language: "Language", heading: (name) => `Choose a display name for your ${name} fan verification.`,
     subtitle: (name) => `After verification, it will appear in your ${name} Fan Passport and activity history.`, preview: "Fan Passport preview before issuance",
+    genericHeading: "Choose the display name you'll use on ByUs.",
+    genericSubtitle: "Complete your profile to return and continue where you left off.",
     progress: "Profile setup · 1 / 1",
     verification: "Fan verification", pending: "Pending issuance", owner: "Public name", placeholderOwner: "Display name",
     issuance: "Issued after fan verification", field: "Display name", counter: (count) => `${count}/32 characters`,
@@ -75,7 +80,7 @@ async function jsonBody(response: Response) {
   catch { return {}; }
 }
 
-export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCelebrity }) {
+export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCelebrity | null }) {
   const { replace } = useRouter();
   const searchParams = useSearchParams();
   const { ready, authenticated, getAccessToken } = usePrivy();
@@ -272,14 +277,15 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
       }
     >
 
-      <main className={styles.main} id="profile-onboarding-main" tabIndex={-1} data-state={state}>
+      <main className={styles.main} id="profile-onboarding-main" tabIndex={-1} data-state={state} data-generic={celebrity ? undefined : "true"}>
         <section className={styles.intro} aria-labelledby="profile-heading">
           <p className={styles.progress} aria-label={t.progress}>{t.progress}</p>
-          <h1 id="profile-heading">{t.heading(celebrity.name)}</h1><p>{t.subtitle(celebrity.name)}</p>
+          <h1 id="profile-heading">{celebrity ? t.heading(celebrity.name) : t.genericHeading}</h1>
+          <p>{celebrity ? t.subtitle(celebrity.name) : t.genericSubtitle}</p>
         </section>
 
         <div className={styles.composition}>
-          <section className={styles.preview} aria-label={t.preview} aria-live="polite">
+          {celebrity ? <section className={styles.preview} aria-label={t.preview} aria-live="polite">
             <div className={styles.celebrityContext}>
               <CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} photos={celebrity.image.photos} position={celebrity.image.position} size={{ mobile: 48, desktop: 56 }} alt={celebrity.image.alt} />
               <div><span>{t.verification}</span><strong>{celebrity.name}</strong></div>
@@ -299,7 +305,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
               <div className={styles.ownerRow}><dt>{t.owner}</dt><dd dir="auto">{displayOwner}</dd></div>
               <div><dt>{locale === "ko" ? "상태" : "Status"}</dt><dd>{t.issuance}</dd></div>
             </dl>
-          </section>
+          </section> : null}
 
           <form className={styles.form} onSubmit={submit} noValidate aria-busy={state === "checking" || state === "saving"}>
             <div className={styles.fieldHead}><label htmlFor="nickname">{t.field}</label><span aria-label={t.counter(count)}>{count}/32</span></div>

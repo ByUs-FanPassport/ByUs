@@ -14,16 +14,19 @@ export default async function ProfileOnboardingRoute({
 }) {
   const query = await searchParams;
   const locale = sanitizeLocale(typeof query.locale === "string" ? query.locale : null);
-  const entity = sanitizeEntity(typeof query.entity === "string" ? query.entity : null);
-  if (!entity) redirect(`/?locale=${locale}`);
+  const rawEntity = typeof query.entity === "string" ? query.entity : null;
+  const entity = sanitizeEntity(rawEntity);
+  if (rawEntity && !entity) redirect(`/?locale=${locale}`);
 
   let celebrity = null;
-  try {
-    celebrity = await createPublishedContentRepositoryFromEnvironment().findBySlug(locale, entity);
-  } catch {
-    redirect(`/?locale=${locale}`);
+  if (entity) {
+    try {
+      celebrity = await createPublishedContentRepositoryFromEnvironment().findBySlug(locale, entity);
+    } catch {
+      redirect(`/?locale=${locale}`);
+    }
+    if (!celebrity) redirect(`/?locale=${locale}`);
   }
-  if (!celebrity) redirect(`/?locale=${locale}`);
 
   return (
     <Suspense fallback={<FanRouteLoading locale={locale} />}>
