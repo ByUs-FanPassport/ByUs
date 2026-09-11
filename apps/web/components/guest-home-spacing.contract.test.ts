@@ -40,20 +40,20 @@ describe("guest home compact icon-only action spacing", () => {
     expect(icon).toMatch(/\bheight:\s*20px\b/);
   });
 
-  it("uses two regular-weight metadata rows and disables live animation for reduced motion", () => {
+  it("groups identity text compactly without shrinking action targets", () => {
     const info = declarationBlock(".celebrityInfo");
-    const metaRow = declarationBlock(".celebrityMetaRow");
+    const identity = declarationBlock(".celebrityIdentity");
     const status = declarationBlock(
       ".celebrityFanLink",
     );
     expect(declarationBlock(".fanCount")).toContain("var(--muted)");
 
-    expect(info).toMatch(/\bgap:\s*4px\b/);
+    expect(identity).toMatch(/\bgap:\s*4px\b/);
     expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
-    expect(metaRow).toMatch(
+    expect(info).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
-    expect(metaRow).toMatch(/\balign-items:\s*center\b/);
+    expect(info).toMatch(/\balign-items:\s*center\b/);
     expect(status).toMatch(/\bmin-height:\s*44px\b/);
     expect(status).toMatch(/\bgap:\s*4px\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
