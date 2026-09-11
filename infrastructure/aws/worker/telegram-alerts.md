@@ -1,0 +1,42 @@
+# Telegram 운영 알림
+
+회원가입, 최애 Fan Passport 최초 발급, LIVE 예약·출석, 추첨 결과 공개를 기존 notification Lambda에서 운영 방으로 알린다. 로그인 반복이나 온체인 민팅 완료는 가입으로 세지 않는다. 추첨 실행만으로는 발송하지 않으며 결과 공개 시 당첨자 수를 알린다.
+
+## 수집과 발송
+
+- DB migration: `20260911121807_telegram_major_event_alerts.sql`.
+- `configure_telegram_alerts(chat_id, true)` 실행 이후 새로 발생한 이벤트만 수집한다. 기존 데이터를 소급 전송하지 않는다.
+- 한 메시지에 최대 20건을 묶고 방 전체에서 최소 60초 간격을 둔다. 실제 발송은 기존 매분 스케줄에 따른다.
+- 공개된 셀럽·LIVE 이름과 건수만 보낸다. 팬 이름, 이메일, 계정·지갑 ID, 설문 답변, 비공개 추첨 정보는 포함하지 않는다.
+- 수집 트리거 오류는 SQLSTATE만 기록하고 본래 가입·예약·출석 트랜잭션을 막지 않는다. 트랜잭션이 롤백되면 알림도 남지 않는다.
+- 대기 24시간이 지난 알림은 건너뛰고 종료 기록은 30일 보관한다.
+
+## 설정
+
+기존 AWS Secrets Manager `byus/notification/prod` JSON에 아래 필드를 병합한다. 기존 필드는 유지한다. 토큰을 Git, 로그, 쉘 인자, 문서에 기록하지 않는다.
+
+| 필드 | 값 |
+| --- | --- |
+| `TELEGRAM_ALERT_MODE` | `enabled` 또는 `disabled` (기본값) |
+| `TELEGRAM_BOT_TOKEN` | 기존 봇 토큰 |
+| `TELEGRAM_CHAT_ID` | 검증한 그룹의 음수 숫자 ID |
+
+실운영 발송에는 기존 `NOTIFICATION_EXTERNAL_ENVIRONMENT=prod`와 운영 Supabase 주소도 일치해야 한다. Telegram 설정이 잘못돼도 기존 팬 알림·문의 메일 분기는 계속 실행한다.
+
+1. 봇 `getMe`와 지정 그룹을 확인한다. 초대 URL은 Bot API 목적지가 아니므로 그룹에서 봇 명령을 보내 받은 업데이트로 숫자 ID를 확인한다. 기존 webhook과 업데이트 소비 정책은 변경하지 않는다.
+2. 테스트를 통과한 migration을 트랜잭션과 migration ledger로 적용한다. 초기 수집 상태는 꺼짐이다.
+3. 기존 notification Lambda 코드와 비밀 설정을 갱신한다. 기존 IAM, 예약 동시 실행 수, EventBridge 스케줄, 다른 Lambda는 유지한다.
+4. `configure_telegram_alerts(chat_id, true)`로 수집을 켜고 `telegram_alert_health()`로 상태를 확인한다.
+5. 연결 완료 안내 1건을 전송한다. 안내 메시지와 실제 회원 이벤트 수신 검증을 구분해 보고한다.
+
+## 실패와 재설정
+
+`claim → begin → send → finish` 순서다. `begin` 전에 멈춘 작업은 60초 lease 만료 후 다시 가져갈 수 있다. `sending` 상태에서 120초 안에 확정되지 않으면 `delivery_unknown`으로 종료한다. 네트워크 오류·5xx·응답 파싱 오류·전송 후 DB 확인 실패는 자동 재전송하지 않는다. Telegram의 중복 방지 키 부재 때문에 중복 발송 방지를 우선한다.
+
+명시적인 429만 `retry_after`와 최소 60초를 지켜 최대 3회 시도한다. 확정적인 4xx 거절은 실패로 끝낸다. `telegram_alert_health()`의 `failed`, `delivery_unknown` 증가 시 설정과 제공자 상태를 확인하되 기존 알림을 임의로 재전송하지 않는다.
+
+즉시 수집 중지는 `configure_telegram_alerts(chat_id, false)`, 발송 중지는 비밀 설정 `TELEGRAM_ALERT_MODE=disabled`로 처리한다. 중지·방 변경 시 기존 대기/claim 알림은 건너뛴다. 이미 외부 요청이 시작된 메시지는 도착할 수 있다. 재활성화로 건너뛴 알림을 복구하지 않는다. 롤백은 먼저 비활성화하고 이전 Lambda 코드와 Secrets Manager 버전을 복구한다. 사업 이벤트 테이블은 삭제하거나 수정하지 않는다.
+
+## 검증
+
+로컬 전체 migration replay에 `supabase/tests/telegram_alert_capture.sql`와 `supabase/tests/telegram_alert_lifecycle.sql`를 적용한다. 워커 테스트는 메시지 크기·개인정보 제외·응답 분류·중복 실행·다른 알림 분기 격리를 검증한다. 운영에서는 설정, 함수 배포 상태와 실제 연결 안내의 Telegram 메시지 ID를 확인한다. 가짜 회원·당첨자를 운영 DB에 생성하지 않는다.
