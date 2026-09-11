@@ -44,6 +44,8 @@ describe("FanOperations", () => {
               nickname: "Kamilia",
               accountStatus: "active",
               maskedWallet: "0x1234…abcd",
+              email: "kamilia@example.com",
+              loginProviders: ["google"],
               createdAt: "2026-09-11T01:00:00Z",
               celebritySummaries: [
                 {
@@ -66,6 +68,8 @@ describe("FanOperations", () => {
               nickname: "Alpha",
               accountStatus: "disabled",
               maskedWallet: null,
+              email: "apple-user@privaterelay.appleid.com",
+              loginProviders: ["apple"],
               createdAt: "2026-09-10T01:00:00Z",
               celebritySummaries: [
                 {
@@ -92,13 +96,21 @@ describe("FanOperations", () => {
       }),
     );
   });
-  it("renders privacy-minimal fan rows with no email column", async () => {
+  it("shows account email and login methods without repeating normal or mint status", async () => {
     render(<FanOperations />);
     await waitFor(() =>
       expect(screen.getByText("Kamilia")).toBeInTheDocument(),
     );
     const row = screen.getByText("Kamilia").closest("tr");
-    expect(row).toHaveTextContent("이용 가능 · 0x1234…abcd");
+    expect(row).toHaveTextContent("kamilia@example.com");
+    expect(row).toHaveTextContent("Google");
+    expect(row).not.toHaveTextContent("이용 가능");
+    expect(row).not.toHaveTextContent("minted");
+    const disabledRow = screen.getByText("Alpha").closest("tr");
+    expect(disabledRow).toHaveTextContent("Apple");
+    expect(disabledRow).toHaveTextContent("apple-user@privaterelay.appleid.com");
+    expect(disabledRow).toHaveTextContent("이용 중지");
+    expect(screen.getByRole("columnheader", { name: "로그인 수단" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "회원 관리" })).toBeInTheDocument();
     expect(screen.getByText("현재 불러온 2명")).toBeInTheDocument();
     expect(

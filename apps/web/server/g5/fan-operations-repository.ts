@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { FanLoginProvider } from "./fan-account-info";
 
 export type AdminFanActor = { appUserId: string; allowlistId: string };
 export type FanCursor = { createdAt: string; id: string };
@@ -9,6 +10,8 @@ export type FanSummary = {
   nickname: string | null;
   accountStatus: "active" | "disabled";
   maskedWallet: string | null;
+  email?: string | null;
+  loginProviders?: FanLoginProvider[] | null;
   createdAt: string;
   celebritySummaries: Array<Record<string, unknown>>;
   cursor: FanCursor;
