@@ -2,6 +2,8 @@ import type { BlockchainJob, EntityType, JobPayload, PreparedSubmission } from "
 
 export interface QueuePort {
   claim(workerId: string, batchSize: number, leaseSeconds: number): Promise<BlockchainJob[]>;
+  admitMint(job: BlockchainJob): Promise<boolean>;
+  holdFeePolicy(job: BlockchainJob): Promise<void>;
   recordPrepared(job: BlockchainJob, submission: PreparedSubmission): Promise<BlockchainJob>;
   complete(job: BlockchainJob, txHash: string, tokenId: bigint): Promise<void>;
   retry(job: BlockchainJob, code: string, message: string, retryable: boolean): Promise<void>;
