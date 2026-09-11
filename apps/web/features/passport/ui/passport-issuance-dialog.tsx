@@ -22,10 +22,10 @@ const copy = {
   ko: {
     skip: "건너뛰기",
     progress: "Passport 발급 과정",
-    completeTitle: (name: string) => `${name} Fan Passport 발급 완료`,
-    completeBody: "팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.",
-    score: "팬 점수",
-    level: "Level",
+    completeTitle: (name: string) => `${name} Passport 발급 완료`,
+    completeBody: "첫 팬 인증 Stamp와 팬 점수 +1이 기록됐어요.",
+    score: "이번 인증으로 받은 점수",
+    level: "시작 등급",
     fanId: "Fan ID",
     copyFanId: "전체 Fan ID 복사",
     copiedFanId: "Fan ID를 복사했어요.",
@@ -33,29 +33,30 @@ const copy = {
     stampEarned: "팬 인증 Stamp 획득",
     open: "Passport 열기",
     continueLive: "LIVE 예약 이어가기",
-    myHint: "MY의 내 패스포트에서 언제든 다시 볼 수 있어요.",
+    myHint: "내 Passport는 MY에서 다시 볼 수 있어요.",
     openMy: "MY에서 보기",
-    waiting: "Passport에 첫 기록을 남기고 있어요.",
+    waiting: "첫 팬 인증 기록을 보여드릴게요.",
     mintComplete: "디지털 발급 완료",
     mintChecking: "발급 상태 확인 중",
     mintProcessing: "디지털 발급 확인 중",
     mintPreparing: "디지털 발급 준비 중",
+    passportAvailable: "Passport는 지금 사용할 수 있어요.",
     loadingTitle: "발급된 Passport 확인 중",
     loadingBody: "이미 완료된 팬 인증 결과를 안전하게 불러오고 있어요.",
     authTitle: "로그인이 필요해요.",
     authBody: "내 계정에 이미 발급된 Passport를 확인하려면 로그인해 주세요.",
     authAction: "로그인하고 발급 결과 확인하기",
     errorTitle: "발급 결과를 불러오지 못했어요.",
-    errorBody: "이 화면에서는 Passport를 새로 발급하지 않아요. 내 Passport 화면에서 상태를 다시 확인할 수 있어요.",
+    errorBody: "잠시 후 다시 확인하거나, 내 Passport를 열어보세요.",
     retry: "다시 확인",
   },
   en: {
     skip: "Skip",
     progress: "Passport issuance progress",
-    completeTitle: (name: string) => `${name} Fan Passport issued`,
-    completeBody: "Fan verification is complete. Your first Stamp and Passport have been issued.",
-    score: "Fan Score",
-    level: "Level",
+    completeTitle: (name: string) => `${name} Passport issued`,
+    completeBody: "Your first fan verification Stamp and +1 fan score are recorded.",
+    score: "Points earned from verification",
+    level: "Starting level",
     fanId: "Fan ID",
     copyFanId: "Copy full Fan ID",
     copiedFanId: "Fan ID copied.",
@@ -63,20 +64,21 @@ const copy = {
     stampEarned: "Fan Verification Stamp earned",
     open: "Open Passport",
     continueLive: "Continue LIVE reservation",
-    myHint: "You can return to it anytime from My Passports in MY.",
+    myHint: "Find your Passport again in MY.",
     openMy: "View in MY",
-    waiting: "Adding your first record to the Passport.",
+    waiting: "Showing your first fan verification record.",
     mintComplete: "Digital issuance complete",
     mintChecking: "Checking issuance status",
     mintProcessing: "Confirming digital issuance",
     mintPreparing: "Preparing digital issuance",
+    passportAvailable: "Your Passport is ready to use.",
     loadingTitle: "Checking your issued Passport",
     loadingBody: "Loading the fan verification result that has already been completed.",
     authTitle: "Sign in required",
     authBody: "Sign in to view the Passport already issued to your account.",
     authAction: "Sign in and view issuance",
     errorTitle: "We couldn’t load the issuance result.",
-    errorBody: "This screen never issues a new Passport. You can check the existing status from your Passport.",
+    errorBody: "Try again in a moment, or open your Passport.",
     retry: "Try again",
   },
 } as const;
@@ -158,8 +160,8 @@ export function PassportIssuanceCeremony({
       return;
     }
     const timers = [
-      window.setTimeout(() => setStage(1), 450),
-      window.setTimeout(() => setStage(2), 900),
+      window.setTimeout(() => setStage((current) => Math.max(current, 1)), 450),
+      window.setTimeout(() => setStage((current) => Math.max(current, 2)), 900),
       window.setTimeout(() => {
         completePresentation(document.activeElement === skipRef.current);
       }, 1_350),
@@ -203,12 +205,12 @@ export function PassportIssuanceCeremony({
       aria-labelledby="passport-issuance-title"
     >
       <div className={styles.frame}>
+        <header className={styles.ceremonyIntro}>
+          <h1 id="passport-issuance-title">{t.completeTitle(issuance.celebrity.name)}</h1>
+          <p>{t.completeBody}</p>
+        </header>
         <div className={styles.content}>
           <div className={styles.visualColumn}>
-            <header className={styles.ceremonyIntro}>
-              <h1 id="passport-issuance-title">{t.completeTitle(issuance.celebrity.name)}</h1>
-              <p>{t.completeBody}</p>
-            </header>
             <section className={styles.passport} aria-label={`${issuance.celebrity.name} Fan Passport`}>
               <PassportStampCanvas
                 celebrityName={issuance.celebrity.name}
@@ -267,47 +269,52 @@ export function PassportIssuanceCeremony({
             </section>
           </div>
 
-          <aside className={styles.summary} aria-live="polite" aria-atomic="true">
-            <div className={styles.scoreSummary}>
-              <span>{t.score}</span>
-              <strong><s>0</s> <b aria-label={locale === "ko" ? "에서" : "to"}>→</b> {stage >= 2 ? issuance.score.points : 0}</strong>
-            </div>
-            <p className={styles.stampStatus}>{stage >= 1 ? t.stampEarned : t.waiting}</p>
-            <dl className={styles.summaryFacts}>
-              <div><dt>{t.level}</dt><dd>{level}</dd></div>
-              <div>
-                <dt>{t.fanId}</dt>
-                <dd>
-                  <button type="button" onClick={() => void copyPassportId()} aria-label={t.copyFanId}>
-                    <span data-wrap-anywhere>{shortPassportId(issuance.passport.id)}</span>
-                    {copyStatus === "copied" ? <Check aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
-                  </button>
-                </dd>
+          <div className={styles.sideColumn}>
+            <aside className={styles.summary} aria-label={locale === "ko" ? "팬 인증 기록" : "Fan verification record"}>
+              <div className={styles.scoreSummary}>
+                <span>{t.score}</span>
+                <strong aria-live="polite">+{stage >= 2 ? issuance.score.points : 0}</strong>
               </div>
-            </dl>
-            <span className={styles.mintStatus}>{issuanceStatus(issuance, locale)}</span>
-            <span className={styles.copyResult} aria-live="polite">
-              {copyStatus === "copied" ? t.copiedFanId : copyStatus === "failed" ? t.copyFanIdFailed : ""}
-            </span>
-          </aside>
-        </div>
+              <p className={styles.stampStatus} aria-live="polite">{stage >= 1 && <Check aria-hidden="true" />}{stage >= 1 ? t.stampEarned : t.waiting}</p>
+              <dl className={styles.summaryFacts}>
+                <div><dt>{t.level}</dt><dd>{level}</dd></div>
+                <div>
+                  <dt>{t.fanId}</dt>
+                  <dd>
+                    <button type="button" onClick={() => void copyPassportId()} aria-label={t.copyFanId}>
+                      <span data-wrap-anywhere>{shortPassportId(issuance.passport.id)}</span>
+                      {copyStatus === "copied" ? <Check aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
+                    </button>
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.mintStatus}>
+                <span>{issuanceStatus(issuance, locale)}</span>
+                <p>{t.passportAvailable}</p>
+              </div>
+              <span className={styles.copyResult} aria-live="polite">
+                {copyStatus === "copied" ? t.copiedFanId : copyStatus === "failed" ? t.copyFanIdFailed : ""}
+              </span>
+            </aside>
 
-        <div className={styles.actionRail} aria-live="polite">
-          {stage >= 3 ? (
-            <div className={styles.completedActions}>
-              <div className={styles.actionLinks}>
-                <Link ref={openPassportRef} className={fanActionClassName(liveReturnTo ? "primary" : "passport", { className: styles.openPassport })} href={finalHref}>
-                  <span>{finalLabel}</span><ArrowRight aria-hidden="true" />
-                </Link>
-                {liveReturnTo ? <Link className={fanActionClassName("passport", { className: styles.openPassport })} href={passportHref}>
-                  <span>{t.open}</span><ArrowRight aria-hidden="true" />
-                </Link> : null}
-              </div>
-              <p className={styles.revisitHint}>{t.myHint} <Link href={withLocale("/my", locale)}>{t.openMy}</Link></p>
+            <div className={styles.actionRail} aria-live="polite">
+              {stage >= 3 ? (
+                <div className={styles.completedActions}>
+                  <div className={styles.actionLinks}>
+                    <Link ref={openPassportRef} className={fanActionClassName("primary", { fullWidth: true, className: styles.openPassport })} href={finalHref}>
+                      <span>{finalLabel}</span><ArrowRight aria-hidden="true" />
+                    </Link>
+                    {liveReturnTo ? <Link className={fanActionClassName("neutral", { fullWidth: true, className: styles.openPassport })} href={passportHref}>
+                      <span>{t.open}</span><ArrowRight aria-hidden="true" />
+                    </Link> : null}
+                  </div>
+                  <p className={styles.revisitHint}>{t.myHint} <Link href={withLocale("/my", locale)}>{t.openMy}</Link></p>
+                </div>
+              ) : (
+                <span className={styles.actionStatus}>{t.waiting}</span>
+              )}
             </div>
-          ) : (
-            <span className={styles.actionStatus}>{t.waiting}</span>
-          )}
+          </div>
         </div>
       </div>
     </main>

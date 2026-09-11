@@ -47,8 +47,8 @@ describe("PassportIssuanceCeremony", () => {
 
   it("can skip state motion and then reaches the locale-preserving Passport detail route", () => {
     render(<PassportIssuanceCeremony issuance={aggregate} />);
-    expect(screen.getByRole("main", { name: "KARA Fan Passport 발급 완료" })).toBeInTheDocument();
-    expect(screen.getByText("팬 인증이 완료되어 첫 Stamp와 Passport가 이미 발급되었어요.")).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "KARA Passport 발급 완료" })).toBeInTheDocument();
+    expect(screen.getByText("첫 팬 인증 Stamp와 팬 점수 +1이 기록됐어요.")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
     expect(screen.getByRole("progressbar", { name: "Passport 발급 과정" })).toHaveAttribute("value", "1");
     expect(screen.queryByRole("link", { name: "Passport 열기" })).not.toBeInTheDocument();
@@ -58,7 +58,7 @@ describe("PassportIssuanceCeremony", () => {
     expect(screen.getByText("발급 상태 확인 중")).toBeInTheDocument();
     const openPassport = screen.getByRole("link", { name: "Passport 열기" });
     expect(openPassport).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
-    expect(screen.getByText(/MY의 내 패스포트에서 언제든 다시 볼 수 있어요/)).toBeInTheDocument();
+    expect(screen.getByText(/내 Passport는 MY에서 다시 볼 수 있어요/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "MY에서 보기" })).toHaveAttribute("href", "/my?locale=ko");
     expect(openPassport).toHaveFocus();
   });
@@ -107,6 +107,28 @@ describe("PassportIssuanceCeremony", () => {
     vi.useRealTimers();
   });
 
+  it("keeps the completed screen stable after Skip while earlier animation timers finish", () => {
+    vi.useFakeTimers();
+    render(<PassportIssuanceCeremony issuance={aggregate} />);
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    for (const elapsed of [450, 450, 450]) {
+      act(() => vi.advanceTimersByTime(elapsed));
+      expect(screen.getByRole("link", { name: "Passport 열기" })).toBeInTheDocument();
+      expect(screen.getByRole("progressbar")).toHaveAttribute("value", "4");
+    }
+    vi.useRealTimers();
+  });
+
+  it.each(["queued", "processing", "minted", "retryable", "permanent_failure"] as const)("separates usable Passport access from %s digital issuance", (mintStatus) => {
+    render(<PassportIssuanceCeremony issuance={{ ...aggregate, passport: { ...aggregate.passport, mintStatus, tokenId: mintStatus === "minted" ? "1" : null }, firstStamp: { ...aggregate.firstStamp, mintStatus, tokenId: mintStatus === "minted" ? "2" : null } }} />);
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    expect(screen.getByText("Passport는 지금 사용할 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByText("이번 인증으로 받은 점수")).toBeInTheDocument();
+    expect(screen.getByText("+1")).toBeInTheDocument();
+    expect(screen.getByText("시작 등급")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Passport 열기" })).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
+  });
+
   it("restores the large data-driven Stamp impact before settling the record into the first Passport slot", () => {
     vi.useFakeTimers();
     const { container } = render(<PassportIssuanceCeremony issuance={aggregate} />);
@@ -142,7 +164,7 @@ describe("PassportIssuanceCeremony", () => {
   it("keeps completion copy outside the Passport artwork and maps values to its printed fields", () => {
     const { container } = render(<PassportIssuanceCeremony issuance={aggregate} />);
 
-    const title = screen.getByRole("heading", { name: "KARA Fan Passport 발급 완료" });
+    const title = screen.getByRole("heading", { name: "KARA Passport 발급 완료" });
     const passport = container.querySelector("section[aria-label='KARA Fan Passport']");
     expect(passport).not.toContainElement(title);
     expect(container.querySelector("[data-passport-field='star']")).toHaveTextContent("KARA");
@@ -194,14 +216,14 @@ describe("PassportIssuanceCeremony", () => {
       "href",
       `/passports/${aggregate.passport.id}?locale=ko`,
     );
-    expect(screen.getByText(String(aggregate.score.points))).toBeInTheDocument();
+    expect(screen.getByText(`+${aggregate.score.points}`)).toBeInTheDocument();
   });
 
   it("recovers the same owner-scoped aggregate on direct entry without a mutation", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json({ issuance: aggregate }));
     render(<PassportIssuanceScreen passportId={aggregate.passport.id} />);
 
-    expect(await screen.findByRole("main", { name: "KARA Fan Passport 발급 완료" })).toBeInTheDocument();
+    expect(await screen.findByRole("main", { name: "KARA Passport 발급 완료" })).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       `/api/passports/${aggregate.passport.id}/issuance?locale=ko`,
       expect.objectContaining({ method: "GET", headers: { authorization: "Bearer access-token" } }),
@@ -227,7 +249,7 @@ describe("PassportIssuanceCeremony", () => {
     render(<PassportIssuanceScreen passportId={aggregate.passport.id} />);
 
     await waitFor(() => expect(screen.getByRole("heading", { name: "발급 결과를 불러오지 못했어요." })).toBeInTheDocument());
-    expect(screen.getByText("이 화면에서는 Passport를 새로 발급하지 않아요. 내 Passport 화면에서 상태를 다시 확인할 수 있어요.")).toBeInTheDocument();
+    expect(screen.getByText("잠시 후 다시 확인하거나, 내 Passport를 열어보세요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Passport 열기/ })).toHaveAttribute("href", `/passports/${aggregate.passport.id}?locale=ko`);
   });
 
@@ -236,7 +258,7 @@ describe("PassportIssuanceCeremony", () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json({ issuance: aggregate }));
     render(<PassportIssuanceScreen passportId={aggregate.passport.id} />);
 
-    expect(await screen.findByRole("main", { name: "KARA Fan Passport issued" })).toBeInTheDocument();
+    expect(await screen.findByRole("main", { name: "KARA Passport issued" })).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       `/api/passports/${aggregate.passport.id}/issuance?locale=en`,
       expect.objectContaining({ method: "GET" }),

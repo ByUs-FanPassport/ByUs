@@ -59,18 +59,15 @@ const copy = {
     errorTitle: "결과 정보를 확인할 수 없어요.",
     errorBody: "퀴즈 결과 링크를 다시 확인하거나 팬페이지에서 새로 시작해 주세요.",
     fanPage: (name: string) => `${name} 팬페이지로 돌아가기`,
-    completionAria: "팬 인증 3단계 중 3단계 완료",
+    completionAria: "팬 인증 3단계 중 3단계, 결과 확인",
     completion: "팬 인증 · 3 / 3",
-    passed: (name: string) => `${name} Official Fan 인증 완료`,
+    passed: (name: string) => `${name} 팬 인증 완료`,
     failed: "조금만 더 알아보고 다시 도전해 볼까요?",
     score: (score: number) => `3문항 중 ${score}문항을 맞혔어요.`,
-    passedHelper: (name: string) => `팬 인증이 완료되어 ${name} 팬 Passport가 발급되었어요.`,
-    passedActionHelper: "버튼을 누르면 첫 Stamp와 Passport를 확인할 수 있어요.",
-    issued: "발급 완료",
-    earned: "적립 완료",
-    applied: "반영 완료",
+    passedHelper: "첫 Stamp와 팬 점수가 Passport에 기록됐어요.",
+    rewards: "팬 인증으로 받은 혜택",
     fanScore: "팬 점수 +1",
-    receivePassport: "Passport 받기",
+    receivePassport: "Passport 확인하기",
     failedHelper: "정답과 해설은 공개하지 않아요. 새 문항으로 다시 도전할 수 있습니다.",
     retrying: "새 문항 준비 중",
     retry: "다시 도전",
@@ -86,16 +83,13 @@ const copy = {
     errorTitle: "We couldn't verify this result.",
     errorBody: "Check the quiz result link or start again from the fan page.",
     fanPage: (name: string) => `Back to ${name} fan page`,
-    completionAria: "Fan verification step 3 of 3 complete",
+    completionAria: "Fan verification step 3 of 3, result",
     completion: "Fan verification · 3 / 3",
-    passed: (name: string) => `${name} Official Fan verification complete`,
+    passed: (name: string) => `${name} fan verification complete`,
     failed: "Almost there. Ready to try again?",
     score: (score: number) => `You answered ${score} of 3 questions correctly.`,
-    passedHelper: (name: string) => `Your ${name} Fan Passport was issued after verification.`,
-    passedActionHelper: "Open it to see your first Stamp and Passport.",
-    issued: "Issued",
-    earned: "Earned",
-    applied: "Applied",
+    passedHelper: "Your first Stamp and fan score are recorded in your Passport.",
+    rewards: "Fan verification rewards",
     fanScore: "Fan Score +1",
     receivePassport: "Open Passport",
     failedHelper: "Answers and explanations aren't shown. You can retry with new questions.",
@@ -257,34 +251,33 @@ export function QuizResultScreen({
   const passed = attempt.status === "passed";
   return (
     <ResultFrame locale={locale}>
-      <section className={styles.result}>
+      <section className={styles.result} data-result={passed ? "passed" : "failed"}>
         <p className={styles.completion} aria-label={t.completionAria}>{t.completion}</p>
         <div className={styles.resultIcon} aria-hidden="true">
           {passed ? <Check /> : <RefreshCw />}
         </div>
         <h1>{passed ? t.passed(displayName) : t.failed}</h1>
-        <p className={passed ? styles.scorePass : styles.score}>{t.score(attempt.score)}</p>
-        {passed ? (
-          <>
-            <p className={styles.helper}>{t.passedHelper(displayName)}<br />{t.passedActionHelper}</p>
-            <div className={styles.rewards}>
-              <div><span>Passport</span><strong>{displayName} Passport</strong><small>{t.issued}</small></div>
-              <div><span>Stamp</span><strong>{locale === "ko" ? "팬 인증 Stamp" : "Fan Verification Stamp"}</strong><small>{t.earned}</small></div>
-              <div><span>Score</span><strong>{t.fanScore}</strong><small>{t.applied}</small></div>
-            </div>
-            <FanAction className={styles.resultAction} variant="primary" href={appendLiveReturnTo(withLocale(`/passports/${passportId}/issuance`, locale), liveReturnTo) as Route}>
+        <p className={styles.score}>{t.score(attempt.score)}</p>
+        <p className={styles.helper}>{passed ? t.passedHelper : t.failedHelper}</p>
+        {passed && (
+          <dl className={styles.rewards} aria-label={t.rewards}>
+            <div><dt>Passport</dt><dd>{displayName} Passport</dd></div>
+            <div><dt>Stamp</dt><dd>{locale === "ko" ? "팬 인증 Stamp" : "Fan Verification Stamp"}</dd></div>
+            <div><dt>Score</dt><dd>{t.fanScore}</dd></div>
+          </dl>
+        )}
+        <div className={styles.actions}>
+          {passed ? (
+            <FanAction fullWidth variant="primary" href={appendLiveReturnTo(withLocale(`/passports/${passportId}/issuance`, locale), liveReturnTo) as Route}>
               {t.receivePassport}
             </FanAction>
-          </>
-        ) : (
-          <>
-            <p className={styles.helper}>{t.failedHelper}</p>
-            <FanAction className={styles.resultAction} variant="primary" disabled={actionPending} ariaBusy={actionPending} onClick={() => void retry()}>
+          ) : (
+            <FanAction fullWidth variant="primary" disabled={actionPending} ariaBusy={actionPending} onClick={() => void retry()}>
               {actionPending ? t.retrying : t.retry}
             </FanAction>
-          </>
-        )}
-        <Link className={styles.secondary} href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
+          )}
+          <FanAction fullWidth className={styles.secondary} variant="neutral" href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</FanAction>
+        </div>
         {!passed && <p className={styles.note}><Info aria-hidden="true" />{t.retryNote}</p>}
         {actionError && <p ref={actionErrorRef} className={styles.actionError} role="alert" tabIndex={-1}>{actionError}</p>}
       </section>

@@ -5,8 +5,8 @@ import { renderToString } from "react-dom/server";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatKoreanLiveDate, formatPassportTier, GuestHome } from "./guest-home";
-import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
 import { notifyFanActivityUpdated } from "./fan-ui/fan-activity-updates";
+import { formatHeroLiveTitle, formatLiveCountdown } from "./live-hero-carousel";
 
 const privy = vi.hoisted(() => ({
   ready: true,
@@ -715,7 +715,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })).toHaveLength(2);
   });
 
-  it("shares one reaction batch and one selected Passport detail between mobile and desktop", async () => {
+  it("shares one summary and one selected Passport detail without reaction requests", async () => {
     privy.authenticated = true;
     const passportId = "11111111-1111-4111-8111-111111111111";
     const summary = {
@@ -733,67 +733,38 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(await screen.findAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     await screen.findByRole("link", { name: "KARA 입덕 완료" });
-    expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/creator-reactions"))).toHaveLength(1);
+    expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/creator-reactions"))).toHaveLength(0);
+    expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/summary"))).toHaveLength(1);
     expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith(`/api/passports/${passportId}`))).toHaveLength(1);
   });
 
-  it("aborts a previous owner reaction batch and ignores its late response", async () => {
+  it("ignores a late summary from the previous owner", async () => {
     privy.authenticated = true;
-    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    const empty = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
     let resolveOld!: (response: Response) => void;
-    const oldBatch = new Promise<Response>((resolve) => { resolveOld = resolve; });
-    let batchCount = 0;
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
-      batchCount += 1;
-      if (batchCount === 1) return oldBatch;
-      return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
-    }));
+    const oldSummary = new Promise<Response>((resolve) => { resolveOld = resolve; });
+    const fetcher = vi.fn().mockReturnValueOnce(oldSummary).mockResolvedValue(Response.json({ summary: empty }));
+    vi.stubGlobal("fetch", fetcher);
     const view = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
-    await act(async () => { privy.user.id = "owner-b"; view.rerender(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />); });
-    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
-    await act(async () => { resolveOld(Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"))); });
-    expect(screen.getByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
+    await act(async () => {});
+    privy.user.id = "owner-b";
+    view.rerender(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
+    await act(async () => { resolveOld(Response.json({ summary: { ...empty, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 0, firstReaction: null }] } })); });
+    expect(screen.getByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
   });
 
-  it("coalesces a burst of owner activity updates into one follow-up reaction batch", async () => {
+  it("does not mark reaction-only creators complete and removes role text only inside cards", async () => {
     privy.authenticated = true;
-    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
-    let resolveInitial!: (response: Response) => void;
-    const initial = new Promise<Response>((resolve) => { resolveInitial = resolve; });
-    let batchCount = 0;
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
-      batchCount += 1;
-      if (batchCount === 1) return initial;
-      return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
-    }));
-    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
-    await act(async () => {
-      notifyFanActivityUpdated("owner-a", ["reactions"]);
-      notifyFanActivityUpdated("owner-a", ["reactions"]);
-      notifyFanActivityUpdated("owner-a", ["reactions"]);
-      resolveInitial(Response.json(reactionStates(celebrities.map(({ slug }) => slug))));
-    });
-    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).toBeInTheDocument();
-    await waitFor(() => expect(batchCount).toBe(2));
-  });
-
-  it("retains a successful reaction state when a background refresh fails", async () => {
-    privy.authenticated = true;
-    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
-    let batchCount = 0;
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      if (!String(input).startsWith("/api/me/creator-reactions")) return Response.json({ summary });
-      batchCount += 1;
-      if (batchCount > 1) return Response.json({ error: { code: "REACTION_UNAVAILABLE" } }, { status: 503 });
-      return Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"));
-    }));
-    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
-    expect(await screen.findByRole("link", { name: "KARA 입덕 완료" })).toHaveAttribute("data-reacted", "true");
-    act(() => notifyFanActivityUpdated("owner-a", ["reactions"]));
-    await waitFor(() => expect(batchCount).toBe(2));
-    expect(screen.getByRole("link", { name: "KARA 입덕 완료" })).toHaveAttribute("data-reacted", "true");
+    const summary = { profile: { nickname: null }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-01T00:00:00Z", txHash: null } }], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
+    const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
+    expect(screen.queryByRole("link", { name: "KARA 입덕 완료" })).not.toBeInTheDocument();
+    for (const card of container.querySelectorAll("#home-creator-rail article")) expect(card.textContent).not.toMatch(/크리에이터|아이돌/);
+    const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+    expect(within(filters).getByRole("button", { name: "아이돌" })).toBeInTheDocument();
+    expect(within(filters).getByRole("button", { name: "크리에이터" })).toBeInTheDocument();
   });
 
   it("does not fetch private Home state until an authenticated owner id is known", async () => {
@@ -805,24 +776,6 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     await act(async () => {});
     expect(fetcher).not.toHaveBeenCalled();
-  });
-
-  it("splits more than 50 Home creator badges into valid batch requests", async () => {
-    privy.authenticated = true;
-    const roster = Array.from({ length: 51 }, (_, index) => ({ ...celebrities[0], slug: `creator-${index}`, name: `Creator ${index}`, displayOrder: index }));
-    const summary = { profile: { nickname: null }, creators: [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
-    const batchUrls: string[] = [];
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      const url = String(input);
-      if (!url.startsWith("/api/me/creator-reactions")) return Response.json({ summary });
-      batchUrls.push(url);
-      const slugs = new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",");
-      return Response.json(reactionStates(slugs));
-    }));
-    render(<GuestHome guideEventPhotos={undefined} celebrities={roster} featuredLives={[]} locale="ko" />);
-    expect(await screen.findByRole("link", { name: "Creator 50 입덕하기" })).toBeInTheDocument();
-    expect(batchUrls).toHaveLength(2);
-    expect(batchUrls.map((url) => new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",").length)).toEqual([50, 1]);
   });
 
   it("shows retry UI for failed LIVE data without presenting it as an empty LIVE list", () => {
@@ -870,7 +823,7 @@ it("filters any assigned role and carries it into the directory without exposing
   expect(within(filters).getByRole("button", { name: "크리에이터" })).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(within(filters).getByRole("button", { name: "아이돌" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
-  expect(container.querySelectorAll("[data-creator-roles]")).toHaveLength(1);
+  expect(container.querySelectorAll("[data-creator-roles]")).toHaveLength(0);
 });
 
 describe("Home favorites filter", () => {

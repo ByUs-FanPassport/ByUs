@@ -7,7 +7,7 @@ import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 import { LiveTimeIndicator } from "@/features/live/ui/live-time-indicator";
 
 import { CreatorPortrait } from "./fan-ui/creator-portrait";
-import { CreatorRoleFilterControl, CreatorRolesText } from "./fan-ui/creator-roles";
+import { CreatorRoleFilterControl } from "./fan-ui/creator-roles";
 import { availableCreatorRoles, matchesCreatorRole, type CreatorRoleFilter } from "@/features/creator/domain/creator-role";
 import { HomeOwnerProvider, useHomeOwner } from "./fan-ui/home-owner-provider";
 
@@ -187,8 +187,7 @@ function ContentLoadError({ locale }: { locale: ContentLocale }) {
 type GuestHomeProps = { guideEventPhotos: PhotoSet | undefined; celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale; contentErrors?: HomeContentErrors; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter };
 
 export function GuestHome(props: GuestHomeProps) {
-  const creatorSlugs = props.celebrities.map((celebrity) => celebrity.slug);
-  return <HomeOwnerProvider creatorSlugs={creatorSlugs} locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
+  return <HomeOwnerProvider locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
 }
 
 function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {}, initialOwnedOnly = false, initialRole = "all" }: GuestHomeProps) {
@@ -342,7 +341,6 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
                       <h3>{celebrity.name}</h3>
                       <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
                     </div>
-                    <CreatorRolesText roles={celebrity.roles} locale={locale} />
                     <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
