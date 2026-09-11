@@ -34,6 +34,7 @@ const schema=baseSchema.superRefine((v,ctx)=>{if(v.BUSINESS_INQUIRY_MODE==="ses_
 export type NotificationWorkerEnv = z.infer<typeof schema> & {
   telegram: Readonly<{
     mode: string | undefined;
+    commandMode: string | undefined;
     token: string | undefined;
     chatId: string | undefined;
   }>;
@@ -50,6 +51,7 @@ export function parseNotificationEnv(
     // branch so a bad optional config cannot stop the existing queues.
     telegram: {
       mode: source.TELEGRAM_ALERT_MODE,
+      commandMode: source.TELEGRAM_COMMAND_MODE,
       token: source.TELEGRAM_BOT_TOKEN,
       chatId: source.TELEGRAM_CHAT_ID,
     },

@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const state=vi.hoisted(()=>({queue:vi.fn(),external:vi.fn(),ses:vi.fn(),http:vi.fn(),inquiry:vi.fn(),reminders:vi.fn(),telegram:vi.fn()}));
+const state=vi.hoisted(()=>({queue:vi.fn(),external:vi.fn(),ses:vi.fn(),http:vi.fn(),inquiry:vi.fn(),reminders:vi.fn(),telegram:vi.fn(),commands:vi.fn()}));
 vi.mock("../src/adapters/supabase-notification-queue.js",()=>({SupabaseNotificationQueue:{create:()=>({})}}));
 vi.mock("../src/adapters/web-push-sender.js",()=>({WebPushSender:class {}}));
 vi.mock("../src/notification-worker.js",()=>({NotificationWorker:class {async runOnce(){return 2;}}}));
@@ -12,14 +12,16 @@ vi.mock("../src/external-notification-worker.js",()=>({ExternalNotificationWorke
 vi.mock("../src/business-inquiry-worker.js",()=>({runBusinessInquiryOnce:state.inquiry}));
 vi.mock("../src/raffle-recipient-reminders.js",()=>({runRaffleRecipientRemindersOnce:state.reminders}));
 vi.mock("../src/telegram-alert-worker.js",()=>({runTelegramAlertWorkerOnce:state.telegram}));
+vi.mock("../src/telegram-command-worker.js",()=>({runTelegramCommandWorkerOnce:state.commands}));
 import {runNotificationWorkerOnce} from "../src/notification-runtime.js";
 import {parseNotificationEnv} from "../src/notification-env.js";
 const source={NOTIFICATION_WORKER_ID:"runtime-test",SUPABASE_URL:"https://example.supabase.co",SUPABASE_SERVICE_ROLE_KEY:"s".repeat(48),WEB_PUSH_VAPID_SUBJECT:"mailto:ops@byus.kr",WEB_PUSH_VAPID_PUBLIC_KEY:"a".repeat(88),WEB_PUSH_VAPID_PRIVATE_KEY:"b".repeat(43)};
-beforeEach(()=>{vi.clearAllMocks();state.inquiry.mockResolvedValue(0);state.reminders.mockResolvedValue(0);state.telegram.mockResolvedValue(0);});
+beforeEach(()=>{vi.clearAllMocks();state.inquiry.mockResolvedValue(0);state.reminders.mockResolvedValue(0);state.telegram.mockResolvedValue(0);state.commands.mockResolvedValue(0);});
 it("keeps all external providers dormant by default",async()=>{
  expect(await runNotificationWorkerOnce(parseNotificationEnv(source))).toBe(2);
  expect(state.queue).not.toHaveBeenCalled();expect(state.ses).not.toHaveBeenCalled();
  expect(state.telegram).toHaveBeenCalledExactlyOnceWith(parseNotificationEnv(source));
+ expect(state.commands).toHaveBeenCalledExactlyOnceWith(parseNotificationEnv(source));
 });
 it("wires SES to the email-only queue without HTTP/Kakao provider configuration",async()=>{
  const env=parseNotificationEnv({...source,NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2",SES_REGION:"ap-northeast-2",SES_FROM_EMAIL:"notifications@byus.kr"});
@@ -58,4 +60,10 @@ it("isolates invalid Telegram configuration until all existing branches run", as
  await expect(runNotificationWorkerOnce(parseNotificationEnv(source))).rejects.toThrow("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
  expect(state.inquiry).toHaveBeenCalledOnce();
  expect(state.reminders).toHaveBeenCalledOnce();
+});
+
+it("isolates Telegram command failures after all existing branches run", async () => {
+ state.commands.mockRejectedValueOnce(new Error("TELEGRAM_COMMAND_CONFIG_INVALID"));
+ await expect(runNotificationWorkerOnce(parseNotificationEnv(source))).rejects.toThrow("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
+ expect(state.inquiry).toHaveBeenCalledOnce(); expect(state.reminders).toHaveBeenCalledOnce(); expect(state.telegram).toHaveBeenCalledOnce();
 });

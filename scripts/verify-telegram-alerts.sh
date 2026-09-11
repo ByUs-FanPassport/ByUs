@@ -3,6 +3,7 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_capture.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_lifecycle.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_operator_commands.sql"
 python3 <<'PY'
 import concurrent.futures, json, subprocess, threading
 
@@ -36,6 +37,15 @@ status=sql(f"select status from public.telegram_alert_outbox where batch_id='{to
 assert status==('sending' if outcomes[0]=='t' else 'skipped'), (outcomes,status)
 assert sql(f"select public.begin_telegram_alert_send('{token}','-100123')")=='f'
 assert sql("select public.claim_telegram_alert_batch_with_identity('-100456')")==''
+sql("select public.configure_telegram_commands(true)")
+stamp=sql("select floor(extract(epoch from clock_timestamp()))::bigint")
+requests=race(f"select public.begin_telegram_command_reply('-100456',501,'users',{stamp})",
+              f"select public.begin_telegram_command_reply('-100456',501,'users',{stamp})")
+assert sum(bool(x) for x in requests)==1, 'Concurrent command allowed more than one reply'
+race("select public.acknowledge_telegram_command_updates('-100456',502)",
+     "select public.acknowledge_telegram_command_updates('-100456',500)")
+assert json.loads(sql("select public.read_telegram_command_state('-100456')"))['last_update_id']==502
+sql("delete from public.telegram_command_receipts; select public.configure_telegram_commands(false)")
 sql("delete from public.telegram_alert_outbox; select public.configure_telegram_alerts(null,false)")
-print('PASS Telegram two-session claim, begin and destination-switch races')
+print('PASS Telegram two-session claim, begin, destination-switch, command dedupe and cursor races')
 PY

@@ -259,21 +259,25 @@ export class TelegramAlertWorker {
   }
 }
 
-function validatedConfig(env: NotificationWorkerEnv): { token: string; chatId: string } | null {
+export function validatedTelegramConfig(
+  env: NotificationWorkerEnv,
+  mode = env.telegram.mode,
+  errorCode = "TELEGRAM_ALERT_CONFIG_INVALID",
+): { token: string; chatId: string } | null {
   const raw = env.telegram;
-  if (raw.mode === undefined || raw.mode === "disabled") return null;
+  if (mode === undefined || mode === "disabled") return null;
   if (
-    raw.mode !== "enabled" ||
+    mode !== "enabled" ||
     env.NOTIFICATION_EXTERNAL_ENVIRONMENT !== "prod" ||
     new URL(env.SUPABASE_URL).hostname !== PROD_SUPABASE_HOST ||
     !raw.token || !BOT_TOKEN.test(raw.token) ||
     !raw.chatId || !GROUP_OR_CHANNEL_CHAT_ID.test(raw.chatId)
-  ) throw new Error("TELEGRAM_ALERT_CONFIG_INVALID");
+  ) throw new Error(errorCode);
   return { token: raw.token, chatId: raw.chatId };
 }
 
 export function createTelegramSender(env: NotificationWorkerEnv, fetcher: Fetch = fetch): TelegramHttpSender | null {
-  const config = validatedConfig(env);
+  const config = validatedTelegramConfig(env);
   return config ? new TelegramHttpSender(config, fetcher) : null;
 }
 
@@ -287,7 +291,7 @@ export async function runTelegramAlertWorkerOnce(
   env: NotificationWorkerEnv,
   dependencies: { queue?: TelegramAlertQueue; sender?: TelegramAlertSender } = {},
 ): Promise<number> {
-  const config = validatedConfig(env);
+  const config = validatedTelegramConfig(env);
   if (!config) return 0;
   const db = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },

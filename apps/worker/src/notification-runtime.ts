@@ -11,6 +11,7 @@ import { ExternalNotificationWorker } from "./external-notification-worker.js";
 import { runRaffleRecipientRemindersOnce } from "./raffle-recipient-reminders.js";
 import { runBusinessInquiryOnce } from "./business-inquiry-worker.js";
 import { runTelegramAlertWorkerOnce } from "./telegram-alert-worker.js";
+import { runTelegramCommandWorkerOnce } from "./telegram-command-worker.js";
 
 async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const push = await new NotificationWorker(
@@ -45,6 +46,7 @@ export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
     runBusinessInquiryOnce(env),
     runRaffleRecipientRemindersOnce(env),
     runTelegramAlertWorkerOnce(env),
+    runTelegramCommandWorkerOnce(env),
   ]);
   if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
   return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);
