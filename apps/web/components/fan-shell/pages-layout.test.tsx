@@ -31,7 +31,7 @@ describe("public pages layout", () => {
     expect(within(footer).getByRole("link", { name: /Privacy Policy|개인정보처리방침/ })).toHaveAttribute("href", `/privacy?locale=${locale}`);
     expect(within(footer).getByRole("link", { name: /Terms of Use|이용약관/ })).toHaveAttribute("href", `/terms?locale=${locale}`);
     expect(footer).toHaveTextContent("© 2026 ByUs. All rights reserved.");
-    expect(within(footer).getByRole("link", { name: /ByUs 시작 문의|Start with ByUs/ })).toHaveAttribute("href", `/pages/creator-onboarding?locale=${locale}`);
+    expect(within(footer).getByRole("link", { name: /팬이 있는 당신에게|For everyone with fans/ })).toHaveAttribute("href", `/pages/creator-onboarding?locale=${locale}`);
     expect(within(footer).getByRole("link", { name: /파트너 협업 제안|Partnership proposals/ })).toHaveAttribute("href", `/pages/partners?locale=${locale}`);
     expect(screen.getAllByRole("main")).toHaveLength(1);
   });

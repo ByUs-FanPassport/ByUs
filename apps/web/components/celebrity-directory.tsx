@@ -69,6 +69,8 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
     : { status: state.status }, [ready, authenticated, state]);
   const hasOwnedPassport = passportState.status === "ready" && passportState.passports.size > 0;
   const ownedOnly = ownedOnlyOverride ?? (role === "all" && hasOwnedPassport);
+  // Resolve auth, ownership badges, ordering and the default filter before revealing results.
+  const isDirectoryLoading = passportState.status === "loading";
 
   const visibleCelebrities = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("ko-KR");
@@ -165,8 +167,27 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
         <div className={styles.intro}><FanHeading as="h1" id="directory-heading" variant="personal-page">{t.heading}</FanHeading><p>{t.intro}</p></div>
         {celebrities.length === 0 ? (
           <div className={styles.empty} role="status"><h2>{t.noPublished}</h2><p>{t.noPublishedHelp}</p><Link href={`/${localeQuery}`}>{t.back}</Link></div>
+        ) : isDirectoryLoading ? (
+          <div role="status" aria-label={t.loadingPassport} aria-busy="true">
+            <span className={styles.srOnly}>{t.loadingPassport}</span>
+            <div aria-hidden="true">
+              <div className={styles.skeletonFilters}>{Array.from({ length: 4 }, (_, index) => <span key={index} className={`${styles.skeletonBlock} ${styles.skeletonChip}`} />)}</div>
+              <div className={styles.controls}>{[0, 1].map(index => <div key={index} className={styles.searchField}><span className={`${styles.skeletonBlock} ${styles.skeletonLabel}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonInput}`} /></div>)}</div>
+              <div className={styles.filterMeta}><span className={`${styles.skeletonBlock} ${styles.skeletonLabel}`} /></div>
+              <div className={styles.grid}>{Array.from({ length: 3 }, (_, index) => (
+                <div key={index} className={styles.card}>
+                  <div className={styles.cardLink}>
+                    <div className={styles.cardPrimary}><span className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonLabel}`} /></div>
+                    <div className={styles.cardAction}><span className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} /></div>
+                    <div className={`${styles.media} ${styles.skeletonBlock}`} />
+                    <div className={styles.cardBody}><span className={`${styles.skeletonBlock} ${styles.skeletonSummary}`} /></div>
+                  </div>
+                </div>
+              ))}</div>
+            </div>
+          </div>
         ) : <>
-          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" ownedOnly={ownedOnly} onSelectOwned={selectOwned} ownedDisabled={!ownedOnly && (!ready || (authenticated && passportState.status === "loading"))} />
+          <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="directory-results" ownedOnly={ownedOnly} onSelectOwned={selectOwned} />
           <form className={styles.controls} role="search" onSubmit={(event) => event.preventDefault()}>
             <label className={styles.searchField} htmlFor="celebrity-search"><span>{t.search}</span><input id="celebrity-search" type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={t.searchPlaceholder} /></label>
             <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><select id="celebrity-sort" value={sort} onChange={(event) => changeSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select></label>
@@ -176,8 +197,6 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
           </div>
           {ownedOnly && passportState.status === "guest" ? (
             <div id="directory-results" className={styles.ownedState} role="status"><p>{t.guestFilter}</p><Link href={passportLoginHref}>{t.signIn}</Link></div>
-          ) : ownedOnly && passportState.status === "loading" ? (
-            <div id="directory-results" className={styles.ownedState} role="status"><p>{t.loadingPassport}</p></div>
           ) : ownedOnly && passportState.status === "error" ? (
             <div id="directory-results" className={styles.ownedState} role="alert"><p>{t.retryPrefix}</p><button type="button" onClick={retry}>{t.retry}</button></div>
           ) : visibleCelebrities.length === 0 ? (

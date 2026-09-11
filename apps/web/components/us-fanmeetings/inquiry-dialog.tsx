@@ -64,14 +64,14 @@ const copy = {
 const inquiryDetails = {
   creator: {
     ko: {
-      title: "ByUs 시작 문의",
+      title: "팬 활동 상담",
       description: "활동 중인 채널과 팬들과 해보고 싶은 일을 알려주세요.",
       name: "이름 / 담당자명", company: "활동명 / 팀·브랜드명",
       companyPlaceholder: "팬들에게 알려진 이름을 입력해 주세요",
       messagePlaceholder: "활동 채널 링크, 소개, 팬들과 해보고 싶은 활동을 알려주세요.",
     },
     en: {
-      title: "Start with ByUs",
+      title: "Fan activity inquiry",
       description: "Tell us about your channels and what you would like to do with your fans.",
       name: "Name / contact person", company: "Public name / team / brand",
       companyPlaceholder: "The name your fans know you by",

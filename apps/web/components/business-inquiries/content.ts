@@ -35,11 +35,11 @@ type Content = {
 export const businessPageContent: Record<BusinessPageKind, Record<FanLocale, Content>> = {
   creator: {
     ko: {
-      title: "ByUs 시작 문의",
+      title: "팬이 있는 당신에게",
       eyebrow: "FOR EVERYONE WITH FANS",
       hero: "팬이 있는 누구나,\nByUs에서 함께해요",
       description: "나를, 우리 팀을, 우리의 이야기를 좋아하는 팬이 있다면.\n팬과 함께할 다음 활동을 ByUs에서 준비하세요.",
-      cta: "ByUs 시작 문의하기",
+      cta: "팬 활동 상담하기",
       scope: "함께할 수 있는 활동 보기",
       audience: "크리에이터 · 아티스트 · 운동선수 · 작가 · 팀 · 브랜드와 IP, 그리고 그 팬들",
       visualTitle: "함께한 순간이\n팬의 기록으로",
@@ -75,11 +75,11 @@ export const businessPageContent: Record<BusinessPageKind, Record<FanLocale, Con
       related: "브랜드·기업 협업을 찾고 계신가요?",
     },
     en: {
-      title: "Start with ByUs",
+      title: "For everyone with fans",
       eyebrow: "FOR EVERYONE WITH FANS",
       hero: "If you have fans,\nthere’s a place to start",
       description: "For everyone with people who love their work, team, or story.\nPlan your next fan activity with ByUs.",
-      cta: "Talk to us about getting started",
+      cta: "Talk to us about fan activities",
       scope: "Explore fan activities",
       audience: "CREATORS · ARTISTS · ATHLETES · WRITERS · TEAMS · BRANDS & IP — AND THEIR FANS",
       visualTitle: "Shared moments.\nLasting fan memories.",
