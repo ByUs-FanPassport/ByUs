@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 vi.mock("embla-carousel-react", () => ({ default: () => [vi.fn(), null] }));
 vi.mock("next/link", () => ({ default: ({ children, ...props }: ComponentProps<"a">) => <a {...props}>{children}</a> }));
 
-const advance = (ms = 6_000) => act(() => { vi.advanceTimersByTime(ms); });
+const advance = (ms = 3_000) => act(() => { vi.advanceTimersByTime(ms); });
 const activeLink = () => document.querySelector('[data-active="true"] a');
 
 beforeEach(() => {
@@ -36,7 +36,8 @@ describe("home entry cards", () => {
 
   it("automatically rotates and loops while leaving the fan meeting link available", () => {
     render(<HomeEntryCards locale="en" />);
-    advance(); expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
+    advance(2_999); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
+    advance(1); expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     advance(); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     expect(screen.getByRole("link", { name: "Your artist’s first U.S. fan meeting" })).toBeVisible();
   });

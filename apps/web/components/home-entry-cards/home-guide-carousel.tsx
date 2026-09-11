@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import type { ContentLocale } from "@/server/content/content-domain";
 import styles from "./home-entry-cards.module.css";
 
-const ROTATION_INTERVAL = 6_000;
+const ROTATION_INTERVAL = 3_000;
 const copy = {
   ko: { label: "참여 가이드", previous: "이전 가이드", next: "다음 가이드", pause: "자동 재생 정지", resume: "자동 재생 시작", reduced: "동작 줄이기 설정으로 자동 재생이 꺼져 있어요." },
   en: { label: "Participation guides", previous: "Previous guide", next: "Next guide", pause: "Pause autoplay", resume: "Start autoplay", reduced: "Autoplay is off because reduced motion is enabled." },
@@ -108,9 +108,9 @@ export function HomeGuideCarousel({ locale, slides }: {
         >
           {userPaused || reducedMotion ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
         </button>
-        <button type="button" className={styles.carouselButton} aria-label={t.previous} onClick={() => goTo(activeIndex - 1, true)}><ChevronLeft size={16} aria-hidden="true" /></button>
-        <button type="button" className={styles.carouselButton} aria-label={t.next} onClick={() => goTo(activeIndex + 1, true)}><ChevronRight size={16} aria-hidden="true" /></button>
       </div>
+      <button type="button" className={`${styles.carouselButton} ${styles.carouselPrevious}`} aria-label={t.previous} onClick={() => goTo(activeIndex - 1, true)}><ChevronLeft size={16} aria-hidden="true" /></button>
+      <button type="button" className={`${styles.carouselButton} ${styles.carouselNext}`} aria-label={t.next} onClick={() => goTo(activeIndex + 1, true)}><ChevronRight size={16} aria-hidden="true" /></button>
       <div className={styles.carouselViewport} ref={viewportRef}>
         <div className={styles.carouselTrack} aria-live={rotating ? "off" : "polite"} aria-atomic="false">
           {slides.map((slide, index) => (
