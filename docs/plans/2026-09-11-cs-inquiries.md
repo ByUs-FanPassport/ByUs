@@ -39,3 +39,12 @@
 - 새 `.github/workflows/cs-inquiries.yml`은 CS route/UI, SQL/로컬 브라우저 흐름, 일반 빌드의 합성 인증 거부를 자동 확인한다. 원격 CI는 푸시하지 않아 실행하지 않았다.
 - 독립 보안 검토에서 발견한 생성/추가 메시지 작업 종류별 멱등성 충돌과 50건 이상 새 메시지로 인한 이력 단절은 수정·회귀 검증했으며 잔여 지적 없음.
 - 커밋·푸시·운영 migration 적용·배포는 수행하지 않았다. 실패 로그는 보존했고 로컬 통합용 DB/서버/브라우저는 종료 시 정리된다.
+
+
+## 배포 진행 (2026-09-11, 사용자 승인: 배포)
+- 후속 사용자 요청으로 운영 DB 적용 및 main 자동 배포를 승인받았다. 위 운영 배포 제외·미수행 기록은 최초 로컬 구현 단계의 범위와 결과다.
+- 구현 커밋 `6268989`, 최신 `origin/main` `4ceb755`와 충돌 없이 통합. CS 소스·인증 경로·의존성 변경 없음. 기존 검증을 재사용했다.
+- 통합 추가 확인: `bash scripts/verify-cs-local.sh` DB/브라우저 10개 시나리오 PASS, `npm run typecheck` PASS. `/tmp/byus-cs-deploy-integration.log`, `/tmp/byus-cs-deploy-typecheck.log`.
+- 운영 프로젝트 `gmrykvmtmuaeswpajteq`에 `20260911140430_cs_inquiries.sql`과 migration ledger를 하나의 transaction으로 적용했다. schema reload 통지 완료.
+- 적용 후 두 테이블의 forced RLS, 세 역할의 직접 테이블 접근 금지, 다섯 RPC의 service_role 전용 실행 권한을 확인했다. `/tmp/byus-cs-production-migration.log`.
+- 애플리케이션 rollback 시 이전 배포로 되돌려도 신규 CS 테이블은 이력 보존을 위해 유지한다. 이번 migration은 기존 테이블·데이터를 변경하지 않는다.
