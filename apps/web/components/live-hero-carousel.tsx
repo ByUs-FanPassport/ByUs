@@ -14,6 +14,7 @@ import { homeHeroSizes } from "./fan-ui/public-image-policy";
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Radio } from "./icons";
 import styles from "./guest-home.module.css";
 import { EventPhoto } from "./fan-ui/event-photo";
+import { resolvePhoto } from "@/features/media/domain/public-image";
 import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
@@ -219,6 +220,37 @@ export function LiveHeroCarousel({
     setActiveIndex(0);
   }, [activeIndex, emblaApi, total]);
 
+  // A complete poster has its own aspect ratio; measure the active slide instead
+  // of reserving a portrait-sized black canvas below a landscape image.
+  useEffect(() => {
+    const root = rootRef.current;
+    const slide = root?.querySelector<HTMLElement>('[data-active="true"]');
+    if (!root || !slide) return;
+    const mobile = window.matchMedia("(max-width: 767px)");
+    const updateSize = () => {
+      if (!mobile.matches) {
+        root.style.removeProperty("--mobile-hero-height");
+        root.style.removeProperty("--mobile-controls-top");
+        return;
+      }
+      const height = slide.getBoundingClientRect().height;
+      if (height > 0) root.style.setProperty("--mobile-hero-height", `${height}px`);
+      const photo = slide.querySelector<HTMLElement>('[data-event-photo="home"]');
+      const controlHeight = slide.dataset.mobileContained === "true" && photo ? photo.getBoundingClientRect().height : height;
+      root.style.setProperty("--mobile-controls-top", `${Math.max(0, controlHeight / 2 - 22)}px`);
+    };
+    updateSize();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateSize);
+    observer?.observe(slide);
+    slide.addEventListener("load", updateSize, true);
+    mobile.addEventListener("change", updateSize);
+    return () => {
+      observer?.disconnect();
+      slide.removeEventListener("load", updateSize, true);
+      mobile.removeEventListener("change", updateSize);
+    };
+  }, [activeIndex, featuredLives]);
+
   const goTo = useCallback((index: number, manual: boolean) => {
     if (total < 1) return;
     const nextIndex = (index + total) % total;
@@ -283,6 +315,7 @@ export function LiveHeroCarousel({
               aria-label={t.position(index + 1, total)}
               inert={!isActive}
               data-active={isActive ? "true" : "false"}
+              data-mobile-contained={resolvePhoto(featuredLive.live.photos, "event.home.mobile", featuredLive.live.heroImage.url).fit === "contain" ? "true" : "false"}
             >
               <EventPhoto photos={featuredLive.live.photos} src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} locale={locale} priority={index === 0} sizes={imageSizes} />
               <div className={styles.heroOverlay} aria-hidden="true" />

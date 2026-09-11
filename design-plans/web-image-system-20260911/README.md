@@ -381,3 +381,7 @@ slot registry는 `identity.hero.desktop → creator.landscape`, `identity.hero.m
 - 운영 별칭: https://byus.kr
 - 배포 기록: https://vercel.com/sallylab/byus/3nE6joHxiYmq3CPKvwtMPrti287t
 - 기본 완료 범위인 로컬 검증과 배포 최종 상태까지 확인했다. 배포 후 운영 화면·로그인·동일 API 재검사를 추가로 수행하지 않았다.
+
+### 모바일 홈 포스터 여백 보정 (2026-09-11)
+
+모바일 `event.home.mobile`에 승인된 `portrait` cover 구도가 없는 LIVE는 전체 포스터를 표시하되, 고정 4:5 캔버스의 빈 공간을 남기지 않는다. 원본 비율의 사진 아래에 LIVE 정보를 일반 흐름으로 배치하고 캐러셀 높이를 현재 슬라이드에 맞춘다. 이전·다음 컨트롤은 사진 영역 안에 배치한다. 등록된 세로형 사진의 승인된 cover 구도와 데스크톱 2:1 표시는 유지한다. 역할 등록이 없다는 이유로 다른 사진을 자동 crop하거나 포스터의 글자를 잘라내지 않는다.

@@ -391,3 +391,16 @@
   .celebrityMetaRow:first-child { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .celebrityMetaRow:first-child .celebrityFanLink { justify-self: start; justify-content: flex-start; }
 }
+
+/* Missing/unapproved portrait crops retain the whole poster without a fixed 4:5 void. */
+@media (max-width: 767px) {
+  .heroViewport { aspect-ratio:auto; height:var(--mobile-hero-height, auto); }
+  .heroTrack { height:auto; align-items:flex-start; }
+  .heroCarousel .heroCard { height:auto; aspect-ratio:4 / 5; }
+  .heroCarousel .heroCard[data-mobile-contained="true"] { display:block; aspect-ratio:auto; }
+  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] { position:relative; inset:auto; }
+  .heroCard[data-mobile-contained="true"] [data-event-photo="home"] img { position:relative !important; display:block; width:100% !important; height:auto !important; }
+  .heroCard[data-mobile-contained="true"] .heroOverlay { display:none; }
+  .heroCard[data-mobile-contained="true"] .heroContent { padding:20px 24px 24px; }
+  .carouselControls > button { top:var(--mobile-controls-top, calc(50% - 22px)); }
+}
