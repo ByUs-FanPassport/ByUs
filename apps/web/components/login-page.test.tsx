@@ -229,6 +229,99 @@ describe("Privy login page", () => {
     expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko");
   });
 
+  it.each(["resolve", "reject"])("continues after wallet reconciliation and ignores late SDK %s", async (settlement) => {
+    vi.useFakeTimers();
+    authenticated = true;
+    refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] })
+      .mockResolvedValue({ id: currentUserId, linkedAccounts: [embeddedWallet] });
+    let finishWallet!: (value: unknown) => void;
+    createWallet.mockImplementation(() => new Promise((resolve, reject) => { finishWallet = settlement === "resolve" ? resolve : reject; }));
+    render(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(refreshUser).toHaveBeenCalledTimes(2);
+    expect(createWallet).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await act(async () => { finishWallet(embeddedWallet); });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["missing", "external", "solana", "foreign-client", "wrong-user", "rejected", "stalled"])(
+    "does not establish a session when wallet reconciliation is %s", async (scenario) => {
+      vi.useFakeTimers();
+      authenticated = true;
+      refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] });
+      if (scenario === "rejected") refreshUser.mockRejectedValue(new Error("private SDK error"));
+      else if (scenario === "stalled") refreshUser.mockImplementation(() => new Promise(() => {}));
+      else refreshUser.mockResolvedValue({
+        id: scenario === "wrong-user" ? "another-fan" : currentUserId,
+        linkedAccounts: scenario === "missing" ? [] : [{ ...embeddedWallet, connectorType: scenario === "external" ? "injected" : "embedded", chainType: scenario === "solana" ? "solana" : "ethereum", walletClientType: scenario === "foreign-client" ? "other" : "privy" }],
+      });
+      createWallet.mockImplementation(() => new Promise(() => {}));
+      render(<LoginPage />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(35_000); });
+      expect(refreshUser).toHaveBeenCalledTimes(2);
+      expect(getAccessToken).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+      expect(replace).not.toHaveBeenCalled();
+      if (scenario !== "wrong-user") expect(screen.getByRole("alert")).toHaveTextContent("로그인 연결이 오래 걸리고 있어요.");
+    },
+  );
+
+  it("does not refresh or synchronize after unmount during the wallet wait", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    refreshUser.mockResolvedValue({ id: currentUserId, linkedAccounts: [] });
+    createWallet.mockImplementation(() => new Promise(() => {}));
+    const { unmount } = render(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(35_000); });
+    expect(refreshUser).toHaveBeenCalledTimes(1);
+    expect(getAccessToken).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("ignores a reconciliation result after switching away from and back to the same account", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    const originalUserId = currentUserId;
+    let finishReconciliation!: (value: unknown) => void;
+    refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] })
+      .mockImplementationOnce(() => new Promise((resolve) => { finishReconciliation = resolve; }));
+    createWallet.mockImplementation(() => new Promise(() => {}));
+    const { rerender } = render(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    currentUserId = "different-fan";
+    rerender(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    currentUserId = originalUserId;
+    rerender(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await act(async () => { finishReconciliation({ id: originalUserId, linkedAccounts: [embeddedWallet] }); });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(replace).toHaveBeenCalledTimes(2);
+    expect(createWallet).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a reconciled wallet after unmount", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    let finishReconciliation!: (value: unknown) => void;
+    refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] })
+      .mockImplementationOnce(() => new Promise((resolve) => { finishReconciliation = resolve; }));
+    createWallet.mockImplementation(() => new Promise(() => {}));
+    const { unmount } = render(<LoginPage />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    unmount();
+    await act(async () => { finishReconciliation({ id: currentUserId, linkedAccounts: [embeddedWallet] }); });
+    expect(getAccessToken).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it("releases the session state when token retrieval stalls", async () => {
     vi.useFakeTimers();
     authenticated = true;

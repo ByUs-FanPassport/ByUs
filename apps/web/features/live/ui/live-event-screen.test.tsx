@@ -8,12 +8,18 @@ const getAccessToken = vi.fn(async () => "access-token");
 let authenticated = true;
 let authReady = true;
 let userId = "owner-a";
+let userAvailable = true;
 const push = vi.fn();
 let query = "locale=ko";
+const analytics = vi.hoisted(() => ({
+  pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:live_page_view:11111111-1111-4111-8111-111111111111"),
+  recordProductEventV1: vi.fn(async () => true),
+}));
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: authReady, authenticated, getAccessToken, user: authenticated ? { id: userId } : null }),
+  usePrivy: () => ({ ready: authReady, authenticated, getAccessToken, user: authenticated && userAvailable ? { id: userId } : null }),
 }));
+vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
@@ -270,12 +276,49 @@ describe("LiveEventScreen", () => {
     authenticated = true;
     authReady = true;
     userId = "owner-a";
+    userAvailable = true;
     query = "locale=ko";
     push.mockReset();
     sessionStorage.clear();
     vi.restoreAllMocks();
+    getAccessToken.mockReset().mockResolvedValue("access-token");
+    analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:live_page_view:11111111-1111-4111-8111-111111111111");
+    analytics.recordProductEventV1.mockReset().mockResolvedValue(true);
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); });
     HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); });
+  });
+
+  it("keeps LIVE content visible when page-view storage fails", async () => {
+    analytics.pageViewIdempotencyKey.mockRejectedValueOnce(new Error("storage unavailable"));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(payload()));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
+  });
+
+  it("waits for the authenticated owner before loading LIVE details", async () => {
+    userAvailable = false;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(payload()));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(screen.getByRole("main", { name: "LIVE 불러오는 중" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(analytics.pageViewIdempotencyKey).not.toHaveBeenCalled();
+  });
+
+  it("does not send LIVE telemetry after unmount while its key is pending", async () => {
+    let resolveKey!: (key: string) => void;
+    analytics.pageViewIdempotencyKey.mockReturnValueOnce(
+      new Promise<string>((resolve) => { resolveKey = resolve; }),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(payload()));
+    const view = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    await waitFor(() => expect(analytics.pageViewIdempotencyKey).toHaveBeenCalledTimes(1));
+
+    view.unmount();
+    resolveKey("page:live_page_view:22222222-2222-4222-8222-222222222222");
+    await Promise.resolve();
+
+    expect(analytics.recordProductEventV1).not.toHaveBeenCalled();
   });
 
   it("keeps details visible during start refresh and does not record another page view", async () => {

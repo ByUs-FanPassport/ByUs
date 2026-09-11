@@ -46,6 +46,7 @@ const APPLE_REAUTHENTICATION_REQUIRED = "APPLE_REAUTHENTICATION_REQUIRED";
 const LOGIN_READINESS_TIMEOUT = "LOGIN_READINESS_TIMEOUT";
 const SESSION_SYNCHRONIZATION_TIMEOUT = "SESSION_SYNCHRONIZATION_TIMEOUT";
 const SDK_OPERATION_TIMEOUT_MS = 30_000;
+const WALLET_RECONCILIATION_TIMEOUT_MS = 5_000;
 
 class StaleLoginIdentityError extends Error {
   constructor() {
@@ -211,11 +212,11 @@ export function LoginPage({
         const currentUser = await withOperationDeadline(refreshUser(), SDK_OPERATION_TIMEOUT_MS);
         assertCurrentIdentity(expectedUserId, generation);
         if (currentUser.id !== expectedUserId) throw new StaleLoginIdentityError();
-        const hasWallet = currentUser.linkedAccounts.some((account) =>
+        const hasEmbeddedWallet = (candidate: typeof currentUser) => candidate.linkedAccounts.some((account) =>
           account.type === "wallet" && account.chainType === "ethereum"
           && account.connectorType === "embedded" && account.walletClientType === "privy",
         );
-        if (!hasWallet) {
+        if (!hasEmbeddedWallet(currentUser)) {
           // Never create an additional wallet or replace an existing identity.
           stage = "login.wallet";
           let walletCreation = walletCreationsRef.current.get(expectedUserId);
@@ -229,7 +230,24 @@ export function LoginPage({
               }
             }).catch(() => undefined);
           }
-          await withOperationDeadline(walletCreation, SDK_OPERATION_TIMEOUT_MS);
+          try {
+            await withOperationDeadline(walletCreation, SDK_OPERATION_TIMEOUT_MS);
+          } catch (walletError) {
+            if (!(walletError instanceof RequestTimeoutError)) throw walletError;
+            assertCurrentIdentity(expectedUserId, generation);
+            // The SDK promise may still be pending after provisioning completed.
+            // Reconcile once from the same user's current state; never create again.
+            try {
+              const reconciledUser = await withOperationDeadline(refreshUser(), WALLET_RECONCILIATION_TIMEOUT_MS);
+              assertCurrentIdentity(expectedUserId, generation);
+              if (reconciledUser.id !== expectedUserId) throw new StaleLoginIdentityError();
+              if (!hasEmbeddedWallet(reconciledUser)) throw walletError;
+            } catch (reconciliationError) {
+              assertCurrentIdentity(expectedUserId, generation);
+              if (reconciliationError instanceof StaleLoginIdentityError) throw reconciliationError;
+              throw walletError;
+            }
+          }
           assertCurrentIdentity(expectedUserId, generation);
         }
         stage = "login.token";

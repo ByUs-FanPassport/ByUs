@@ -617,8 +617,10 @@ function BenefitDetailOwnerScreen({
   const [copied, setCopied] = useState(false);
   const claimRef = useRef<Promise<void> | null>(null);
   const resumedIntentRef = useRef<string | null>(null);
+  const telemetryGenerationRef = useRef(0);
   const load = useCallback(async () => {
     if (!ready) return;
+    const telemetryGeneration = ++telemetryGenerationRef.current;
     setView({ kind: "loading" });
     try {
       const token = authenticated ? await getAccessToken() : null;
@@ -648,28 +650,37 @@ function BenefitDetailOwnerScreen({
         setOwnedApplication(owned);
       } else setOwnedApplication(null);
       setView({ kind: "ready", benefit: body.benefit });
-      void recordProductEventV1(
-        {
-          eventName: "benefit_page_view",
-          celebrityId: null,
-          liveEventId: null,
-          missionId: null,
-          benefitId: body.benefit.id,
-          source: "fan.benefit.detail",
-          idempotencyKey: pageViewIdempotencyKey(
-            "benefit_page_view",
-            `/benefits/${body.benefit.id}`,
-          ),
-          properties: { presentation: presentation ?? "page" },
-        },
-        token,
-      );
+      void (async () => {
+        if (telemetryGeneration !== telemetryGenerationRef.current) return;
+        const ownerId = token ? auth.user?.id : null;
+        if (token && !ownerId) return;
+        const idempotencyKey = await pageViewIdempotencyKey(
+          "benefit_page_view",
+          `/benefits/${body.benefit.id}`,
+          ownerId ?? null,
+        );
+        if (telemetryGeneration !== telemetryGenerationRef.current) return;
+        await recordProductEventV1(
+          {
+            eventName: "benefit_page_view",
+            celebrityId: null,
+            liveEventId: null,
+            missionId: null,
+            benefitId: body.benefit.id,
+            source: "fan.benefit.detail",
+            idempotencyKey,
+            properties: { presentation: presentation ?? "page" },
+          },
+          token,
+        );
+      })().catch(() => undefined);
     } catch {
       setView({ kind: "error", notFound: false });
     }
-  }, [authenticated, benefitId, getAccessToken, locale, presentation, ready]);
+  }, [authenticated, benefitId, getAccessToken, locale, presentation, ready, auth.user?.id]);
   useEffect(() => {
     void load();
+    return () => { telemetryGenerationRef.current += 1; };
   }, [load]);
 
   const claimBenefit = useCallback(async () => {

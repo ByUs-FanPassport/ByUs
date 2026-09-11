@@ -7,6 +7,10 @@ import { createSupabaseSessionSyncRepository } from "../../../../server/auth/sup
 import { loadServerEnv } from "../../../../server/config/env";
 import { AppleReauthenticationRequiredError } from "../../../../server/auth/apple-notifications/apple-lifecycle";
 import {
+  createSessionTimingDiagnostics,
+  normalizedSessionError,
+} from "../../../../server/auth/session-diagnostics";
+import {
   reportRecoveryFailure,
   withOperationDeadline,
 } from "../../../../features/reliability/client/request-deadline";
@@ -17,6 +21,7 @@ const SESSION_REQUEST_TIMEOUT_MS = 30_000;
 
 export async function POST(request: Request): Promise<Response> {
   const env = loadServerEnv();
+  const diagnostics = createSessionTimingDiagnostics({ timeoutMs: SESSION_REQUEST_TIMEOUT_MS });
   try {
     const rawBody = await request.text();
     const requestedLocale = rawBody
@@ -26,20 +31,31 @@ export async function POST(request: Request): Promise<Response> {
       authorization: request.headers.get("authorization") ?? "",
       chainId: env.GIWA_CHAIN_ID,
       preferredLocale: requestedLocale,
-      resolver: createPrivyNodeSessionResolver({
+      resolver: diagnostics.wrapResolver(createPrivyNodeSessionResolver({
         appId: env.PRIVY_APP_ID, appSecret: env.PRIVY_APP_SECRET,
         appEnvironment: env.PRIVY_APP_ENVIRONMENT,
         testAccountLoginEnabled: env.PRIVY_TEST_ACCOUNT_LOGIN_ENABLED, appleLoginEnabled: env.PRIVY_APPLE_LOGIN_ENABLED,
-      }),
-      repository: createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY }),
+      })),
+      repository: diagnostics.wrapRepository(createSupabaseSessionSyncRepository({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY })),
     }), SESSION_REQUEST_TIMEOUT_MS);
+    diagnostics.success();
     return Response.json({ profile }, { status: 200, headers: { "cache-control": "no-store", vary: "Authorization" } });
   } catch (error) {
-    reportRecoveryFailure("session.request", error);
-    console.error("[auth/session] synchronization failed", {
-      name: error instanceof Error ? error.name : "UnknownError",
-      code: error instanceof AuthError ? error.code : "SESSION_SYNC_FAILED",
-    });
+    diagnostics.failure(error);
+    try {
+      reportRecoveryFailure("session.request", error);
+    } catch {
+      // Logging must not replace the authentication response.
+    }
+    const logError = normalizedSessionError(error, SESSION_REQUEST_TIMEOUT_MS);
+    try {
+      console.error("[auth/session] synchronization failed", {
+        name: logError.name,
+        code: logError.code,
+      });
+    } catch {
+      // Logging must not replace the authentication response.
+    }
     const invalidRequest =
       error instanceof SyntaxError ||
       (error instanceof Error && error.name === "ZodError");

@@ -10,9 +10,15 @@ import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 const getAccessToken = vi.fn(async () => "token");
 const routerBack = vi.hoisted(() => vi.fn());
 let authenticated = true;
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated, getAccessToken }),
+let userId: string | null = "owner-a";
+const analytics = vi.hoisted(() => ({
+  pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:benefit_page_view:11111111-1111-4111-8111-111111111111"),
+  recordProductEventV1: vi.fn(async () => true),
 }));
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: () => ({ ready: true, authenticated, getAccessToken, user: userId ? { id: userId } : null }),
+}));
+vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 vi.mock("next/navigation", () => ({
   usePathname: () => "/benefits",
   useSearchParams: () => new URLSearchParams(),
@@ -68,12 +74,45 @@ describe("benefit screens", () => {
     vi.restoreAllMocks();
     routerBack.mockReset();
     authenticated = true;
+    userId = "owner-a";
+    getAccessToken.mockReset().mockResolvedValue("token");
+    analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:benefit_page_view:11111111-1111-4111-8111-111111111111");
+    analytics.recordProductEventV1.mockReset().mockResolvedValue(true);
     sessionStorage.clear();
     window.history.replaceState({}, "", "/benefits");
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText: vi.fn(async () => undefined) },
     });
+  });
+  it("keeps benefit content visible when page-view storage fails", async () => {
+    analytics.pageViewIdempotencyKey.mockRejectedValueOnce(new Error("storage unavailable"));
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit }));
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    expect(await screen.findByRole("heading", { name: benefit.title })).toBeInTheDocument();
+  });
+  it("skips only benefit telemetry when a token has no resolved owner", async () => {
+    userId = null;
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit }));
+    render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    expect(await screen.findByRole("heading", { name: benefit.title })).toBeInTheDocument();
+    expect(analytics.pageViewIdempotencyKey).not.toHaveBeenCalled();
+  });
+  it("does not send benefit telemetry after unmount while its key is pending", async () => {
+    let resolveKey!: (key: string) => void;
+    analytics.pageViewIdempotencyKey.mockReturnValueOnce(
+      new Promise<string>((resolve) => { resolveKey = resolve; }),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit }));
+    const view = render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
+    await screen.findByRole("heading", { name: benefit.title });
+    await waitFor(() => expect(analytics.pageViewIdempotencyKey).toHaveBeenCalledTimes(1));
+
+    view.unmount();
+    resolveKey("page:benefit_page_view:22222222-2222-4222-8222-222222222222");
+    await Promise.resolve();
+
+    expect(analytics.recordProductEventV1).not.toHaveBeenCalled();
   });
   it("opens the intercepted detail as a labelled drawer and closes through browser history", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(

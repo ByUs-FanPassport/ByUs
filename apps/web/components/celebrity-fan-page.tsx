@@ -63,11 +63,18 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const portrait = (size: number) => avatar.state.status === "ready" ? <Avatar avatar={avatar.state.avatar} imageUrl={avatar.state.imageUrl} label="" size={size} /> : <AvatarPlaceholder size={size} />;
   useEffect(() => {
     if (!ready) return;
+    let cancelled = false;
     void (async () => {
       const token = authenticated ? await getAccessToken() : null;
-      await recordProductEventV1({ eventName: "creator_page_view", celebrityId: null, liveEventId: null, missionId: null, benefitId: null, source: "fan.creator.detail", idempotencyKey: pageViewIdempotencyKey("creator_page_view", `/c/${celebrity.slug}`), properties: { celebritySlug: celebrity.slug } }, token);
-    })();
-  }, [ready, authenticated, getAccessToken, celebrity.slug]);
+      if (cancelled) return;
+      const ownerId = token ? auth.user?.id : null;
+      if (token && !ownerId) return;
+      const idempotencyKey = await pageViewIdempotencyKey("creator_page_view", `/c/${celebrity.slug}`, ownerId ?? null);
+      if (cancelled) return;
+      await recordProductEventV1({ eventName: "creator_page_view", celebrityId: null, liveEventId: null, missionId: null, benefitId: null, source: "fan.creator.detail", idempotencyKey, properties: { celebritySlug: celebrity.slug } }, token);
+    })().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [ready, authenticated, getAccessToken, celebrity.slug, auth.user?.id]);
   const hero = resolveCreatorHeroImage(celebrity.slug, celebrity.image);
   const verifyLink = <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}>{ko ? "퀴즈 풀고 팬 인증하기" : "Verify fandom"}<ArrowRight aria-hidden="true" /></AuthIntentLink>;
   const recent = <RecentLive celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />;
