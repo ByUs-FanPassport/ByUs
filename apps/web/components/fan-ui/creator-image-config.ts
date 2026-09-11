@@ -20,6 +20,11 @@ function isPreviousParkSource(source: string | null | undefined) {
     || /^https:\/\/(gmrykvmtmuaeswpajteq|xcppyedwusirqnfpbtit)\.supabase\.co\/storage\/v1\/object\/public\/cms-assets\/celebrities\/park-myungho\/profile-dcc87957756c27df\.jpg$/.test(source);
 }
 
+function isPreviousJennySource(source: string) {
+  return calendarPortraits["jenny-jeong"]!.includes(source)
+    || /^https:\/\/(gmrykvmtmuaeswpajteq|xcppyedwusirqnfpbtit)\.supabase\.co\/storage\/v1\/object\/public\/cms-assets\/celebrities\/jenny-jeong\/profile-88d6cd4994afe602\.jpg$/.test(source);
+}
+
 export function resolveCreatorImage({ slug, src, presentation = "portrait", position }: {
   slug: string;
   src: string | null | undefined;
@@ -71,6 +76,7 @@ const calendarPortraits: Readonly<Record<string, readonly string[]>> = {
 };
 
 export function creatorCalendarPhotos(slug: string, src: string) {
+  if (slug === "jenny-jeong" && !isPreviousJennySource(src)) return [src];
   return calendarPortraits[slug] ?? [resolveCreatorImage({ slug, src }).src ?? src];
 }
 
@@ -105,7 +111,8 @@ export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
 
 export function resolveCreatorHeroImage(slug: string, image: { url: string; position: string }): CreatorHeroImage | undefined {
   const hero = creatorHeroImages[slug];
-  if (slug === "park-myungho" && !isPreviousParkSource(image.url)) {
+  if ((slug === "park-myungho" && !isPreviousParkSource(image.url))
+    || (slug === "jenny-jeong" && !isPreviousJennySource(image.url))) {
     return { src: image.url, desktopPosition: image.position, mobilePosition: image.position };
   }
   return hero;

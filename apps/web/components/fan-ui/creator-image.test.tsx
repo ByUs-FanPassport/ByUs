@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CreatorImage } from "./creator-image";
-import { creatorImageSizes, parkMyunghoProfile, resolveCreatorHeroImage, resolveCreatorImage, type CreatorImagePresentation } from "./creator-image-config";
+import { creatorCalendarPhotos, creatorImageSizes, parkMyunghoProfile, resolveCreatorHeroImage, resolveCreatorImage, type CreatorImagePresentation } from "./creator-image-config";
 
 const previous = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-dcc87957756c27df.jpg";
 
@@ -27,6 +27,14 @@ describe("shared creator photography", () => {
   it("scales source sizes while preserving breakpoint conditions and calc geometry", () => {
     expect(creatorImageSizes("(min-width: 768px) 64px, 24px", 2.3)).toBe("(min-width: 768px) 147.2px, 55.2px");
     expect(creatorImageSizes("(min-width: 1440px) 438px, calc(100vw - 32px)", 2.3)).toBe("(min-width: 1440px) 1007.4px, calc(230vw - 73.6px)");
+  });
+
+  it("uses Jenny's CMS replacement in the banner and calendar instead of her previous dedicated photos", () => {
+    const oldPhoto = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-88d6cd4994afe602.jpg";
+    const replacement = oldPhoto.replace("profile-88d6cd4994afe602.jpg", "new-profile.jpg");
+    expect(resolveCreatorHeroImage("jenny-jeong", { url: oldPhoto, position: "center" })?.src).toBe("/images/celebrities/jenny-jeong/hero-source.jpg");
+    expect(resolveCreatorHeroImage("jenny-jeong", { url: replacement, position: "50% 30%" })).toEqual({ src: replacement, desktopPosition: "50% 30%", mobilePosition: "50% 30%" });
+    expect(creatorCalendarPhotos("jenny-jeong", replacement)).toEqual([replacement]);
   });
 
   it("owns the clipping frame and recovers from a failed source when the source changes", () => {
