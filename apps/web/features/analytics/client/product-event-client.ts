@@ -4,6 +4,7 @@ import {
 } from "../domain/product-event";
 
 const SESSION_KEY = "byus.product-event.session.v1";
+const PAGE_VIEW_KEY_PREFIX = "byus.product-event.page-view.v1";
 export const PAGE_VIEW_WINDOW_MS = 30 * 60_000;
 
 function anonymousSessionId(): string {
@@ -57,5 +58,11 @@ export function pageViewIdempotencyKey(
   now = Date.now(),
 ): string {
   const safeRoute = routeKey.replace(/[^A-Za-z0-9_.:-]/g, "-").slice(0, 80);
-  return `page:${eventName}:${safeRoute}:${anonymousSessionId()}:${Math.floor(now / PAGE_VIEW_WINDOW_MS)}`;
+  const windowKey = Math.floor(now / PAGE_VIEW_WINDOW_MS);
+  const storageKey = `${PAGE_VIEW_KEY_PREFIX}:${eventName}:${safeRoute}:${windowKey}`;
+  const existing = window.sessionStorage.getItem(storageKey);
+  if (existing) return existing;
+  const created = `page:${eventName}:${crypto.randomUUID()}`;
+  window.sessionStorage.setItem(storageKey, created);
+  return created;
 }

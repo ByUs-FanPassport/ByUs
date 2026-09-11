@@ -45,6 +45,7 @@ const copy = {
     terms: "이용약관",
     nav: "ByUs 하단 메뉴",
     fanmeetings: "미국 팬미팅 문의",
+    serviceGuide: "이용 가이드",
   },
   en: {
     tagline: "Keep every moment with your favorite and continue your fan journey.",
@@ -60,6 +61,7 @@ const copy = {
     terms: "Terms of Use",
     nav: "ByUs footer navigation",
     fanmeetings: "U.S. fan meeting inquiries",
+    serviceGuide: "Service guide",
   },
 } as const;
 
@@ -74,7 +76,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
       <FanContentContainer className={styles.inner}>
         <div className={styles.brandColumn}>
           <Link className={styles.brand} href={fanHref("/", locale)} aria-label={locale === "ko" ? "ByUs 홈" : "ByUs home"}>
-            <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} />
+            <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={39} />
           </Link>
           <p>{t.tagline}</p>
         </div>
@@ -95,6 +97,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           </section>
           <section>
             <h2>{t.guide}</h2>
+            <Link href={fanHref("/guide", locale)}>{t.serviceGuide}</Link>
             <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
             <Link href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
             <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>

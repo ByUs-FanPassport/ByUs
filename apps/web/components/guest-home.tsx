@@ -308,7 +308,7 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
           </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{t.all} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : "View all favorites"} <ChevronRight /></Link>} />
             {!contentErrors.celebrities && celebrities.length > 0 ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="home-creator-rail" ownedOnly={ownedOnly} onSelectOwned={selectOwned} ownedDisabled={!ownedOnly && (personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading")} /> : null}
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             {contentErrors.celebrities || contentErrors.celebrityLives ? <ContentLoadError locale={locale} /> : null}

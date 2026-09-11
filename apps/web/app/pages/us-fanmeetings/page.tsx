@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/seo/metadata";
 import type { Metadata } from "next";
 import { fanmeetingContent } from "@/components/us-fanmeetings/content";
 import { UsFanmeetingsPage } from "@/components/us-fanmeetings/us-fanmeetings-page";
@@ -11,25 +12,7 @@ export async function generateMetadata({
   const content = fanmeetingContent[locale];
   const title = `${content.hero.replace(/\n/g, " ")} | ByUs`;
   const description = content.desc.replace(/\n/g, " ");
-  const url = `https://byus.kr/pages/us-fanmeetings?locale=${locale}`;
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-      languages: {
-        ko: "https://byus.kr/pages/us-fanmeetings?locale=ko",
-        en: "https://byus.kr/pages/us-fanmeetings?locale=en",
-      },
-    },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      locale: locale === "en" ? "en_US" : "ko_KR",
-    },
-  };
+  return publicMetadata({ path: "/pages/us-fanmeetings", locale, title, description });
 }
 
 export default async function Page({ searchParams }: Props) {

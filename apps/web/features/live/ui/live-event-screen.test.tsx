@@ -6,11 +6,12 @@ import { createAuthIntent, persistAuthIntent } from "@/components/auth-intent";
 
 const getAccessToken = vi.fn(async () => "access-token");
 let authenticated = true;
+let authReady = true;
 const push = vi.fn();
 let query = "locale=ko";
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated, getAccessToken }),
+  usePrivy: () => ({ ready: authReady, authenticated, getAccessToken }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -243,6 +244,7 @@ describe("LiveEventScreen", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-07-23T00:00:00Z"));
     authenticated = true;
+    authReady = true;
     query = "locale=ko";
     push.mockReset();
     sessionStorage.clear();
@@ -750,4 +752,35 @@ it("shortens only same-KST-day deadlines and keeps other dates explicit", () => 
   expect(formatReservationDeadline("2026-09-18T11:20:00Z", "2026-09-18T11:30:00Z", "en")).toBe("Same day 8:20 PM");
   expect(formatReservationDeadline("2026-12-31T14:50:00Z", "2026-12-31T15:30:00Z", "ko")).toContain("2026년 12월 31일");
   expect(formatReservationDeadline("2026-12-31T23:50:00Z", "2027-01-01T00:30:00Z", "ko")).toBe("당일 08:50");
+});
+describe("public initial LIVE content", () => {
+  it("renders the title and participation copy before auth hydration or a browser API response", () => {
+    authReady = false;
+    authenticated = false;
+    try {
+      const data = payload("sign_in_to_reserve");
+      render(<LiveEventScreen slug="kara-nualeaf" locale="ko" initialData={data as unknown as import("@/features/live/domain/live-event").LiveEventResponse} />);
+      expect(screen.getByRole("heading", { level: 1, name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
+      expect(screen.getByText("KARA와 함께하는 특별한 LIVE를 준비했어요.")).toBeInTheDocument();
+    } finally {
+      authReady = true;
+    }
+  });
+
+  it("keeps the SSR detail layout visible while viewer data refreshes in the background", async () => {
+    const data = payload("sign_in_to_reserve");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () => new Promise<Response>(() => undefined),
+    );
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" initialData={data as unknown as import("@/features/live/domain/live-event").LiveEventResponse} />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("LIVE 불러오는 중")).not.toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/live-events/kara-nualeaf?locale=ko",
+      expect.objectContaining({ method: "GET", cache: "no-store" }),
+    ));
+    expect(screen.getByRole("heading", { level: 1, name: "KARA × NUALEAF LIVE" })).toBeInTheDocument();
+  });
 });

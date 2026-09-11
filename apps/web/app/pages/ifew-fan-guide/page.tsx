@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/seo/metadata";
 import { loadGuideImages } from "@/server/media/guide-images";
 import { resolvePhoto } from "@/features/media/domain/public-image";
 export const dynamic = "force-dynamic";
@@ -14,16 +15,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const content = ifewFanGuideContent[locale];
   const title = `${content.heroTitle.replace(/\n/g, " ")} | ByUs`;
   const description = `${content.heroDescription.replace(/\n/g, " ")} ${content.heroSchedule}`;
-  const url = `https://byus.kr/pages/ifew-fan-guide?locale=${locale}`;
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-      languages: { ko: "https://byus.kr/pages/ifew-fan-guide?locale=ko", en: "https://byus.kr/pages/ifew-fan-guide?locale=en" },
-    },
-    openGraph: { title, description, url, type: "website", locale: locale === "en" ? "en_US" : "ko_KR", images: [{ url: resolvePhoto(images.eventPhotos, "event.poster", ifewEventBanner, locale).src, alt: content.eventImageAlt }] },
-  };
+  return publicMetadata({ path: "/pages/ifew-fan-guide", locale, title, description, image: resolvePhoto(images.eventPhotos, "event.poster", ifewEventBanner, locale).src, imageAlt: content.eventImageAlt });
 }
 
 export default async function Page({ searchParams }: Props) {
