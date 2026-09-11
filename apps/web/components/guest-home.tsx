@@ -190,7 +190,7 @@ export function GuestHome(props: GuestHomeProps) {
   return <HomeOwnerProvider locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
 }
 
-function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {}, initialOwnedOnly = false, initialRole = "all" }: GuestHomeProps) {
+function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {}, initialOwnedOnly, initialRole = "all" }: GuestHomeProps) {
   const t = copy[locale];
   const router = useRouter();
   const refreshLiveStatus = useCallback(() => router.refresh(), [router]);
@@ -199,12 +199,15 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
   const owner = useHomeOwner();
   const personalization = { state: owner.personalization, retry: owner.retryPersonalization };
   const orderedCreators = orderCreatorsForDiscovery(celebrities);
-  const [ownedOnly, setOwnedOnly] = useState(initialOwnedOnly);
+  const [ownedOnlyOverride, setOwnedOnly] = useState(initialOwnedOnly);
   const [role, setRole] = useState<CreatorRoleFilter>(initialOwnedOnly ? "all" : initialRole);
   const ownedSlugs = personalization.state.status === "authenticated-ready"
     ? new Set(personalization.state.summary.creators.flatMap((creator) => creator.passport ? [creator.celebrity.slug] : []))
     : new Set<string>();
   const hasOwnedPassport = personalization.state.status === "authenticated-ready" && personalization.state.summary.collection.passportCount > 0;
+  // Resolve the default after personal data arrives; explicit URL/manual choices
+  // take precedence, including choosing All while personal data is loading.
+  const ownedOnly = ownedOnlyOverride ?? (role === "all" && hasOwnedPassport);
   const visibleCreators = orderedCreators.filter((creator) => matchesCreatorRole(creator.roles, role) && (!ownedOnly || (personalization.state.status === "authenticated-ready" && ownedSlugs.has(creator.slug))));
   const directoryQuery = new URLSearchParams({ locale });
   if (ownedOnly) directoryQuery.set("owned", "1");
@@ -217,7 +220,7 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
     const url = new URL(window.location.href);
     if (nextOwnedOnly) url.searchParams.set("owned", "1");
     else url.searchParams.delete("owned");
-    if (!nextOwnedOnly && nextRole !== "all") url.searchParams.set("role", nextRole);
+    if (!nextOwnedOnly) url.searchParams.set("role", nextRole);
     else url.searchParams.delete("role");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   };
