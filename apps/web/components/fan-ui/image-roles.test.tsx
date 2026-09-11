@@ -25,7 +25,7 @@ describe("independent image roles", () => {
     expect(creatorCalendarPhotos("elina", "/profile.jpg", { portrait: null })).toEqual(["/profile.jpg"]);
     expect(resolveCreatorImage({ slug: "ifewknow", src: "/profile.jpg", presentation: "collection" }).crop).toMatchObject({ fit: "cover", scale: 1 });
     const jenny = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/jenny-jeong/profile-a9daf680da1fe99b.jpg";
-    expect(resolveCreatorHeroImage("jenny-jeong", { url: jenny, position: "50% 30%" })).toMatchObject({ src: jenny, desktopFit: "contain", mobileFit: "contain", mobileScale: 1 });
+    expect(resolveCreatorHeroImage("jenny-jeong", { url: jenny, position: "50% 30%", photos: { landscape: null, portrait: null } })).toMatchObject({ src: jenny, mobileSrc: jenny, desktopFit: "contain", mobileFit: "contain", mobileScale: 1 });
   });
   it("selects independent event sources and contains a landscape fallback on mobile", () => {
     const view = render(<EventPhoto photos={photos} src="/poster.jpg" alt="LIVE" />);

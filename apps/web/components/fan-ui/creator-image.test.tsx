@@ -46,4 +46,22 @@ describe("shared creator photography", () => {
     rerender(<CreatorImage photos={undefined} slug="elina" src="/second.jpg" alt="Elina" width={48} height={48} sizes="48px" framed />);
     expect(screen.getByRole("img", { name: "Elina" })).toBeInTheDocument();
   });
+
+  it.each([
+    ["jenny-jeong", "profile-a9daf680da1fe99b.jpg"],
+    ["park-myungho", "profile-536c3c1765064266.jpg"],
+  ])("binds %s editorial heroes to the current source while preserving identity and calendar", (slug, filename) => {
+    const src = `https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/${slug}/${filename}`;
+    expect(resolveCreatorHeroImage(slug, { url: src, position: "center" })).toMatchObject({
+      src: `/images/celebrities/${slug}/hero-editorial-20260911.webp`,
+      mobileSrc: `/images/celebrities/${slug}/hero-editorial-portrait-20260911.webp`,
+      desktopFit: "cover", mobileFit: "cover", mobileScale: 1,
+    });
+    expect(resolveCreatorImage({ slug, src, presentation: "avatar" }).src).toBe(src);
+    expect(creatorCalendarPhotos(slug, src)).toEqual([src]);
+    for (const replacement of [src.replace(filename, "future-profile.jpg"), src.replace("gmrykvmtmuaeswpajteq.supabase.co", "example.com")]) {
+      expect(resolveCreatorHeroImage(slug, { url: replacement, position: "50% 30%" })).toMatchObject({ src: replacement, mobileSrc: replacement, desktopFit: "contain", mobileFit: "contain" });
+    }
+    expect(resolveCreatorHeroImage(slug, { url: src, position: "center", photos: { landscape: null, portrait: null } })).toMatchObject({ src, mobileSrc: src });
+  });
 });

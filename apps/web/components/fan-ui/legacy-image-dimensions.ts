@@ -177,5 +177,16 @@ export const legacyImageDimensions: Readonly<Record<string, readonly [number, nu
   "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/thisisj-official/profile-b0e528d586a167fb.jpg": [
     540,
     540
-  ]
+  ],
+  "/images/celebrities/changha/hero-editorial-20260911.webp": [1672, 940],
+  "/images/celebrities/aryeom/hero-editorial-20260911.webp": [1672, 941],
+  "/images/celebrities/jenny-jeong/hero-editorial-20260911.webp": [1672, 941],
+  "/images/celebrities/park-myungho/hero-editorial-20260911.webp": [1672, 941],
+  "/images/celebrities/thisisj-official/hero-editorial-20260911.webp": [1672, 941],
+  "/images/celebrities/yuna/hero-editorial-portrait-20260911.webp": [1122, 1402],
+  "/images/celebrities/changha/hero-editorial-portrait-20260911.webp": [1122, 1402],
+  "/images/celebrities/aryeom/hero-editorial-portrait-20260911.webp": [1122, 1402],
+  "/images/celebrities/jenny-jeong/hero-editorial-portrait-20260911.webp": [1122, 1402],
+  "/images/celebrities/park-myungho/hero-editorial-portrait-20260911.webp": [1122, 1402],
+  "/images/celebrities/thisisj-official/hero-editorial-portrait-20260911.webp": [1122, 1402],
 };

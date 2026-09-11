@@ -127,22 +127,39 @@ export type CreatorHeroImage = Readonly<{
 
 export const creatorHeroImages: Readonly<Record<string, CreatorHeroImage>> = {
   katseye: { src: "/images/celebrities/katseye/hero-desktop.webp", mobileSrc: "/images/celebrities/katseye/hero-mobile.webp", desktopPosition: "50% 50%", mobilePosition: "50% 50%" },
-  "thisisj-official": { src: "/images/celebrities/thisisj-official/hero-source.webp", desktopPosition: "50% 28%", mobilePosition: "40% 35%" },
+  "thisisj-official": { src: "/images/celebrities/thisisj-official/hero-editorial-20260911.webp", mobileSrc: "/images/celebrities/thisisj-official/hero-editorial-portrait-20260911.webp", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
   kara: { src: "/images/guest-home/kara-card.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 50%" },
-  changha: { src: "/images/celebrities/changha/hero-source.jpg", mobileSrc: "/images/celebrities/changha/hero-mobile.jpg", desktopPosition: "50% 0%", mobilePosition: "50% 10%" },
+  changha: { src: "/images/celebrities/changha/hero-editorial-20260911.webp", mobileSrc: "/images/celebrities/changha/hero-editorial-portrait-20260911.webp", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
   elina: { src: "/images/celebrities/elina/hero-beach.jpg", mobileSrc: "/images/celebrities/elina/hero-source.jpg", desktopPosition: "50% 25%", mobilePosition: "50% 100%" },
-  yuna: { src: "/images/celebrities/yuna/hero-beach.jpg", mobileSrc: "/images/celebrities/yuna/hero-studio-mobile.jpg", background: "#ececec", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
+  yuna: { src: "/images/celebrities/yuna/hero-beach.jpg", mobileSrc: "/images/celebrities/yuna/hero-editorial-portrait-20260911.webp", background: "#ececec", desktopPosition: "50% 8%", mobilePosition: "50% 0%" },
   "jenny-jeong": { src: "/images/celebrities/jenny-jeong/hero-source.jpg", desktopPosition: "50% 25%", mobilePosition: "53% 25%" },
   xin: { src: "/images/celebrities/xin/hero-concept.jpg", mobileSrc: "/images/celebrities/xin/hero-concept-mobile.jpg", desktopPosition: "50% 15%", mobilePosition: "50% 25%" },
-  aryeom: { src: "/images/celebrities/aryeom/hero-portrait.jpg", desktopFit: "contain", background: "#887b69", desktopPosition: "right center", mobilePosition: "50% 20%" },
+  aryeom: { src: "/images/celebrities/aryeom/hero-editorial-20260911.webp", mobileSrc: "/images/celebrities/aryeom/hero-editorial-portrait-20260911.webp", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
   ifewknow: { src: "/images/celebrities/ifewknow/hero-editorial-soft-20260911.webp", mobileSrc: "/images/celebrities/ifewknow/hero-editorial-portrait-20260911.webp", desktopPosition: "50% 0%", mobilePosition: "50% 0%" },
   "park-myungho": { src: parkMyunghoProfile, background: "#f6ead2", desktopPosition: "50% 0%", mobilePosition: "50% 0%", mobileScale: 2.3, mobileOrigin: "56% 14%" },
 };
 
+/** These compositions belong to the exact current CMS photos, never a future replacement. */
+const sourceBoundHeroPhotos: Readonly<Record<string, string>> = {
+  "jenny-jeong": "profile-a9daf680da1fe99b.jpg",
+  "park-myungho": "profile-536c3c1765064266.jpg",
+};
+
+function sourceBoundHero(slug: string, source: string): CreatorHeroImage | undefined {
+  const filename = sourceBoundHeroPhotos[slug];
+  if (!filename || !["gmrykvmtmuaeswpajteq", "xcppyedwusirqnfpbtit"].some((ref) =>
+    source === `https://${ref}.supabase.co/storage/v1/object/public/cms-assets/celebrities/${slug}/${filename}`)) return undefined;
+  return {
+    src: `/images/celebrities/${slug}/hero-editorial-20260911.webp`,
+    mobileSrc: `/images/celebrities/${slug}/hero-editorial-portrait-20260911.webp`,
+    desktopPosition: "50% 0%", mobilePosition: "50% 0%",
+  };
+}
+
 export function resolveCreatorHeroImage(slug: string, image: { url: string; position: string; photos?: PhotoSet }): CreatorHeroImage | undefined {
   const dedicated = creatorHeroImages[slug];
   const replaced = (slug === "park-myungho" && !isPreviousParkSource(image.url)) || (slug === "jenny-jeong" && !isPreviousJennySource(image.url));
-  const legacy = replaced ? undefined : dedicated;
+  const legacy = sourceBoundHero(slug, image.url) ?? (replaced ? undefined : dedicated);
   const desktopSource = legacy?.src ?? image.url;
   const mobileSource = legacy?.mobileSrc ?? desktopSource;
   const desktopDimensions = legacyImageDimensions[desktopSource];
