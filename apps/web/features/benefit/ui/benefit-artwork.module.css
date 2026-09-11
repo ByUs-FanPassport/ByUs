@@ -54,7 +54,7 @@
 }
 
 .statue {
-  background: #fff;
+  background: oklch(0.95 0.008 80);
 }
 
 .statue .image {
