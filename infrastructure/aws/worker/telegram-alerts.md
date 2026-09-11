@@ -80,3 +80,5 @@
 ### 본문 미리보기 추가 — 2026-09-11
 
 사용자가 Telegram에서 메시지 내용도 확인하도록 요청했다. `20260911145206_cs_telegram_message_content.sql`과 `claim_telegram_alert_batch_with_cs_content`가 발송 시 원본 메시지를 읽는다. 기존 RPC는 본문 없는 응답을 유지하므로 배포·롤백 중 DTO 충돌이 없다. outbox에 본문을 복제하지 않는다. 줄바꿈·제어문자는 공백으로 정리하며, 5건 묶음의 최대 길이가 Telegram 한도를 넘지 않도록 각 본문을 제한한다. 이전 본문 미포함 운영 검증은 당시 전송 결과의 기록이다.
+
+본문 포함 버전 운영 검증: migration `20260911145206`과 notification Lambda 코드 반영 후 `Active`/`Successful` 및 ZIP 해시 일치를 확인했다. CS 워커 27테스트·typecheck·lint·bundle과 로컬 SQL·기존 Telegram 회귀/경쟁 검사가 통과했다. 기존 테스트 문의에 추가한 본문 표시 테스트가 예약 Lambda를 통해 Telegram 메시지 `337`로 한 번 전송됐다(`sent`, 시도 1회, 오류 없음). 검증 후 문의는 다시 처리 완료로 정리했다. 근거는 `/tmp/byus-cs-tg-content-{tests,sql-2,deploy,receipt,resolve}.log`이며 이전 코드 ZIP은 `/tmp/byus-cs-tg-content-rollout/previous.zip`에 보존했다.
