@@ -96,6 +96,7 @@ describe("unified MY hub", () => {
     expect(screen.getByRole("link", { name: /^스탬프 2$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
     expect(screen.getByText("4장")).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("heading", { name: "KARA 응모권" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("link", { name: "응모 혜택 보기" })).toHaveAttribute("href", "/c/kara?tab=raffles&locale=ko#celebrity-content");
     expect(screen.queryByRole("link", { name: /^디지털 기념품 0$/ })).not.toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
@@ -225,6 +226,7 @@ describe("unified MY hub", () => {
 
     expect(await screen.findByText("Entries")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA raffle tickets" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View raffle benefits" })).toHaveAttribute("href", "/c/kara?tab=raffles&locale=en#celebrity-content");
     expect(within(screen.getByRole("region", { name: "KARA fan activity" })).getByText("4")).toBeInTheDocument();
   });
 

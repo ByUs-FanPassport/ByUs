@@ -277,18 +277,20 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
   return <FanSurface className={styles.selectedDetails} aria-label={locale === "ko" ? `${creator.celebrity.name} 팬 활동` : `${creator.celebrity.name} fan activity`}>
     <div className={styles.corePanels}>
     <div className={styles.growthPanel}>
+      <div className={styles.panelContent}>
       <SectionTitle title={t.fanTier(creator.celebrity.name)} href={creator.passport ? `/passports/${creator.passport.id}?locale=${locale}` : undefined} action={creator.passport ? t.myPassport : undefined}/>
       {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <div className={styles.startPassport}><p>{locale === "ko" ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : `Start ${creator.celebrity.name} fan verification to earn your first tier.`}</p><Link href={`/c/${creator.celebrity.slug}?tab=certifications&locale=${locale}#celebrity-content` as Route}>{t.startPassport}<ArrowRight/></Link></div>}
-
+      </div>
+      {creator.passport ? <div className={styles.selectedBenefit}><MyBenefitProgress creator={creator as PassportCreator} locale={locale} compact/></div> : null}
     </div>
     <div className={styles.activityPanel}>
+    <div className={styles.panelContent}>
     <div className={styles.rafflePanel}>
-      <div className={styles.ticketHeading}><h3>{t.ticketPanel(creator.celebrity.name)}</h3><strong className={styles.ticketBalance}>{creator.ticketBalance}{locale === "ko" ? "장" : ""}</strong></div>
+      <FanSectionHeader variant="personal" title={t.ticketPanel(creator.celebrity.name)} accessory={<strong className={styles.ticketBalance}>{creator.ticketBalance}{locale === "ko" ? "장" : ""}</strong>}/>
       {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "래플을 불러오는 중이에요." : "Loading raffles."}</p>
         : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{locale === "ko" ? "래플을 불러오지 못했어요." : "We couldn’t load raffles."}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
         : raffle ? <div className={styles.rafflePreview}>{raffle.imageUrl ? <Image src={raffle.imageUrl} width={112} height={112} alt=""/> : <span className={styles.rafflePlaceholder} aria-hidden="true"><Ticket/></span>}<div><span>{t.raffleOpen}</span><strong>{raffle.title}</strong><small>{raffle.winnerQuantity}{locale === "ko" ? "명 " : " "}{t.raffleDraw}</small><time dateTime={raffle.entryClosesAt!}>{formatClosing(raffle.entryClosesAt!, locale)}</time></div><Link href={`/benefits/${raffle.benefitId}?locale=${locale}` as Route}>{t.raffleView}<ArrowRight/></Link></div>
         : <div className={styles.raffleEmpty}><p>{t.raffleEmpty}</p></div>}
-      {raffle ? <><p className={styles.raffleHelp}>{t.raffleHelp}</p><Link className={styles.allRaffles} href={raffleAllHref}>{t.allRaffles}<ArrowRight aria-hidden="true"/></Link></> : null}
     </div>
       <div className={styles.nextAction}><span>{t.nextAction}</span>{missionState === "loading" ? <p role="status">{t.missionLoading}</p>
         : missionState === "error" ? <><p role="alert">{t.missionError}</p><button type="button" onClick={() => { missions.retry(); history.retry(); }}>{t.retry}</button></>
@@ -296,8 +298,13 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
         : <><strong>{t.noMission}</strong><Link href={liveHref}>{locale === "ko" ? `${creator.celebrity.name} LIVE 일정 보기` : `View ${creator.celebrity.name} LIVE schedule`}<ArrowRight/></Link></>}
       </div>
     </div>
+      <div className={`${styles.selectedBenefit} ${styles.raffleBenefits}`}>
+        <strong>{locale === "ko" ? "응모 혜택" : "Raffle benefits"}</strong>
+        <p className={styles.raffleHelp}>{t.raffleHelp}</p>
+        <Link className={styles.allRaffles} href={raffleAllHref}>{locale === "ko" ? "응모 혜택 보기" : "View raffle benefits"}<ArrowRight aria-hidden="true"/></Link>
+      </div>
     </div>
-    {creator.passport ? <div className={styles.selectedBenefit}><MyBenefitProgress creator={creator as PassportCreator} locale={locale} compact/></div> : null}
+    </div>
   </FanSurface>;
 }
 

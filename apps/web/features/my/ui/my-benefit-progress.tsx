@@ -77,7 +77,7 @@ function SelectedBenefit({ creator, locale, compact }: { creator: PassportCreato
   if (!benefit) return <div className={compact ? styles.compactMessage : styles.message}>
     {compact ? <strong>{locale === "ko" ? "등급 혜택" : "Tier benefits"}</strong> : null}
     <p>{compact ? (locale === "ko" ? `현재 ${creator.celebrity.name}의 다음 혜택이 없어요.` : `No next benefit for ${creator.celebrity.name} right now.`) : t.empty}</p>
-    <Link className={styles.link} href={allHref}>{compact ? (locale === "ko" ? "혜택 보기" : "View benefits") : t.all}<ArrowRight aria-hidden="true"/></Link>
+    <Link className={styles.link} href={allHref}>{t.all}<ArrowRight aria-hidden="true"/></Link>
   </div>;
   const percent = benefitScorePercent(passport.score.points, benefit.minimumScore);
   const otherConditions = benefit.missingConditions.filter(condition => condition.type !== "score");
