@@ -79,3 +79,5 @@
 @media(max-width:767px){.livePhoto{aspect-ratio:1.5}}
 
 .fanbar > p > button, .muted > button { min-height: 44px; min-width: 44px; }
+
+.homeGrid{grid-template-areas:"main lounge" "main side";align-items:start}.homeGrid>.mainColumn{grid-area:main}.loungePreview{grid-area:lounge;min-width:0}.homeGrid>.sideColumn{grid-area:side}@media(max-width:767px){.homeGrid{grid-template-areas:"lounge" "main" "side"}}

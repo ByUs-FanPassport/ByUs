@@ -1,0 +1,9 @@
+import { createRoot } from "react-dom/client";
+import { LoungeScreen } from "../../features/lounge/ui/lounge-screen";
+import { CelebrityFanPage } from "../../components/celebrity-fan-page";
+import { LoungeMessageManager } from "../../components/admin/lounge-message-manager";
+import "../../app/globals.css";
+const locale: "ko" | "en" = new URLSearchParams(location.search).get("locale") === "en" ? "en" : "ko";
+const celebrity = { slug: "elina", locale, name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }], displayOrder: 0, fanCount: 0 } as const;
+document.documentElement.lang = locale;
+createRoot(document.getElementById("root")!).render(location.pathname.startsWith("/admin") ? <LoungeMessageManager /> : location.pathname.endsWith("/lounge") ? <LoungeScreen celebrity={celebrity} locale={locale} /> : <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} />);
