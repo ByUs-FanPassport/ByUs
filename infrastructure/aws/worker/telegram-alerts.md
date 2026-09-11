@@ -6,8 +6,10 @@
 
 - DB migration: `20260911121807_telegram_major_event_alerts.sql`.
 - `configure_telegram_alerts(chat_id, true)` 실행 이후 새로 발생한 이벤트만 수집한다. 기존 데이터를 소급 전송하지 않는다.
-- 한 메시지에 최대 20건을 묶고 방 전체에서 최소 60초 간격을 둔다. 실제 발송은 기존 매분 스케줄에 따른다.
-- 공개된 셀럽·LIVE 이름과 건수만 보낸다. 팬 이름, 이메일, 계정·지갑 ID, 설문 답변, 비공개 추첨 정보는 포함하지 않는다.
+- 한 메시지에 최대 5건을 묶고 방 전체에서 최소 60초 간격을 둔다. 매분 새 이벤트를 확인하며, 이벤트가 없으면 아무 메시지도 보내지 않는다.
+- 가입·팬 가입·예약·출석은 한 건씩 닉네임과 가입 이메일, 공개된 셀럽·LIVE 이름을 표시한다. 닉네임 미설정 상태도 그대로 표시한다. 사용자가 지정한 운영 방에 이 정보를 보내도록 명시적으로 요청했다.
+- `20260911124147_telegram_alert_actor_identity.sql`의 서버 전용 `claim_telegram_alert_batch_with_identity`가 원천 이벤트의 회원과 `user_profiles`를 조회한다. 이메일을 outbox에 중복 저장하지 않는다. 기존 대기 이벤트도 처리하며 이미 종료된 이벤트를 다시 보내지 않는다.
+- 계정·지갑 ID, 설문 답변, 비공개 추첨 정보는 포함하지 않는다. 추첨 공개 알림은 공개 당첨자 수를 유지한다.
 - 수집 트리거 오류는 SQLSTATE만 기록하고 본래 가입·예약·출석 트랜잭션을 막지 않는다. 트랜잭션이 롤백되면 알림도 남지 않는다.
 - 대기 24시간이 지난 알림은 건너뛰고 종료 기록은 30일 보관한다.
 
@@ -39,4 +41,4 @@
 
 ## 검증
 
-로컬 전체 migration replay에 `supabase/tests/telegram_alert_capture.sql`와 `supabase/tests/telegram_alert_lifecycle.sql`를 적용한다. 워커 테스트는 메시지 크기·개인정보 제외·응답 분류·중복 실행·다른 알림 분기 격리를 검증한다. 운영에서는 설정, 함수 배포 상태와 실제 연결 안내의 Telegram 메시지 ID를 확인한다. 가짜 회원·당첨자를 운영 DB에 생성하지 않는다.
+로컬 전체 migration replay에 `supabase/tests/telegram_alert_capture.sql`와 `supabase/tests/telegram_alert_lifecycle.sql`를 적용한다. 워커 테스트는 메시지 크기·요청한 신원 필드·그 외 정보 제외·빈 큐 무발송·응답 분류·중복 실행·다른 알림 분기 격리를 검증한다. 운영에서는 설정과 함수 배포 상태를 확인한다. 최초 연결 안내 발송과 실제 회원 이벤트 수신 검증을 구분하며, 가짜 회원·당첨자를 운영 DB에 생성하지 않는다.
