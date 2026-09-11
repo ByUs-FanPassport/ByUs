@@ -45,7 +45,7 @@ begin
  batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
  if jsonb_array_length(batch->'alerts')<>2 then raise exception 'content batch missing'; end if;
  for item in select value from jsonb_array_elements(batch->'alerts') loop
-  if item->>'message_body' is distinct from case when item->>'kind'='cs_inquiry_created' then 'PRIVATE BODY' else 'PRIVATE FOLLOWUP' end then raise exception 'wrong approved message body'; end if;
+  if item->>'message_body' is distinct from (case when item->>'kind'='cs_inquiry_created' then 'PRIVATE BODY' else 'PRIVATE FOLLOWUP' end) then raise exception 'wrong approved message body'; end if;
   if item->>'inquiry_id' is distinct from inquiry::text or item->>'actor_email' is not null or item ? 'subject' then raise exception 'content DTO exposed extra data'; end if;
  end loop;
  if has_function_privilege('anon','public.claim_telegram_alert_batch_with_cs_content(text)','execute') or has_function_privilege('authenticated','public.claim_telegram_alert_batch_with_cs_content(text)','execute') then raise exception 'public content claim access'; end if;
