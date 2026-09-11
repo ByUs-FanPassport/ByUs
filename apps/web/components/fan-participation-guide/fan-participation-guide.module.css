@@ -62,7 +62,7 @@
 .schedule svg { flex-shrink: 0; color: var(--guide-pink); }
 .heroImage { display: block; width: 580px; height: 560px; border-radius: 20px; object-fit: cover; object-position: center; }
 .eventHero { min-height: 0; }
-.eventImage { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; border-radius: 20px; object-fit: contain; }
+.eventImage { position: relative; overflow: hidden; display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; border-radius: 20px; object-fit: contain; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .action {
   display: inline-flex;

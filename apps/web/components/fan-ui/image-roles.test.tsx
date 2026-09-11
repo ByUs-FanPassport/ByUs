@@ -31,7 +31,7 @@ describe("independent image roles", () => {
     const view = render(<EventPhoto photos={photos} src="/poster.jpg" alt="LIVE" />);
     expect(view.container.querySelector("source")?.getAttribute("srcset")).toContain("landscape.jpg");
     expect(view.container.querySelector("img")?.getAttribute("srcset")).toContain("portrait.jpg");
-    view.rerender(<EventPhoto src="/poster.jpg" alt="LIVE" />);
+    view.rerender(<EventPhoto photos={undefined} src="/poster.jpg" alt="LIVE" />);
     expect(view.container.querySelector("picture")?.style.getPropertyValue("--event-photo-mobile-fit")).toBe("contain");
   });
 });

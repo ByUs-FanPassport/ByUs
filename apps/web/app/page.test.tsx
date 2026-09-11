@@ -4,6 +4,7 @@ const repositories = vi.hoisted(() => ({
   listFeaturedPublished: vi.fn(),
   list: vi.fn(),
   listPrimaryLives: vi.fn(),
+  guidePhotos: vi.fn(),
 }));
 
 vi.mock("../server/config/env", () => ({ loadServerEnv: () => ({ SUPABASE_URL: "https://db.test", SUPABASE_SERVICE_ROLE_KEY: "secret" }) }));
@@ -14,6 +15,7 @@ import HomePage from "./page";
 
 describe("Home server content isolation", () => {
   beforeEach(() => {
+    repositories.guidePhotos.mockReset().mockResolvedValue(undefined);
     repositories.listFeaturedPublished.mockReset().mockResolvedValue([]);
     repositories.list.mockReset().mockResolvedValue([]);
     repositories.listPrimaryLives.mockReset().mockResolvedValue([]);
@@ -31,9 +33,18 @@ describe("Home server content isolation", () => {
     expect(result.props.contentErrors).toMatchObject({ celebrityLives: true });
   });
 
+  it("isolates a failed guide role read without falling back to stale artwork", async () => {
+    repositories.guidePhotos.mockRejectedValue(new Error("images unavailable"));
+    const result = await HomePage({ searchParams: Promise.resolve({}) });
+    expect(result.props.contentErrors.guideImages).toBe(true);
+    expect(result.props.celebrities).toEqual([]);
+  });
+
   it("uses the existing route error boundary when both main lists fail", async () => {
     repositories.listFeaturedPublished.mockRejectedValue(new Error("live unavailable"));
     repositories.list.mockRejectedValue(new Error("creators unavailable"));
     await expect(HomePage({ searchParams: Promise.resolve({}) })).rejects.toThrow("Home content unavailable");
   });
 });
+
+vi.mock("../server/media/guide-images", () => ({ loadGuideEventPhotos: repositories.guidePhotos }));

@@ -353,3 +353,22 @@ slot registry는 `identity.hero.desktop → creator.landscape`, `identity.hero.m
 - 기존 원본 URL 필드는 호환 데이터로 남기며 저장된 콘텐츠의 CMS 화면에서는 변경을 잠근다. 새 이미지 역할 API가 검증·적용을 담당한다. SNS·래플·개인 이미지 저장 체계의 전면 이행은 포함하지 않았다.
 
 증거: `implementation-evidence/{public-proof.json,cms-proof.json,database-proof.json}` 및 같은 폴더의 PC/모바일 캡처. 초기 조사와 구현 후 증거는 폴더를 구분했다.
+
+
+## 2026-09-11 하위 화면 역할 전달 보강
+
+사용자 기준: **상위 역할군에 속한 하위 컴포넌트가 역할별 사진 전달에서 빠지면 안 된다.** 서로 다른 역할에 같은 원본을 강제하지 않는다.
+
+- [x] `CreatorImage`, `CreatorAvatar`, `EventPhoto`의 `photos` 입력을 필수로 변경. 아직 역할을 등록하지 않은 레거시 데이터만 `undefined`를 명시적으로 전달한다.
+- [x] 용도 → 슬롯 → 역할을 `creatorPresentationSlots`와 `imageSlots`에서 결정. 사진 소스와 대체 텍스트가 같은 역할 매핑을 사용한다.
+- [x] 온보딩 셀럽 선택에 상위 `celebrity.image.photos`와 위치 전달.
+- [x] 엘리나·이퓨 가이드의 작은 사진은 `CreatorAvatar` / `profile` 사용. 가이드의 큰 인물 사진과 홈 인물 카드는 `portrait` 사용.
+- [x] 홈·이퓨 가이드 행사 배너 및 공유 이미지에 LIVE `poster` 역할 전달. 가이드 서버 읽기는 요청 내에서만 공유하여 수정 후 영구 캐시에 남지 않게 한다.
+- [x] 셀럽 소개의 최근 LIVE 카드에 등록된 행사 포스터 사용. 활성 영상 미리보기는 영상 파생 자산으로 별도 유지한다.
+- [x] 캘린더 API가 공개 LIVE → 공개 셀럽 연결을 배치 조회하여 셀럽 역할 사진과 위치를 자체 제공. 별도 화면에서 목록을 다시 합쳐야만 이미지가 보강되는 의존성 제거.
+- [x] 상위 역할 사진 교체 → 하위 실제 이미지 변경 회귀 검사: 모든 CreatorImage 용도, 홈 가이드, 두 참여 가이드, 온보딩.
+- [x] 공개 데이터 조회, 명시적 역할 제거(null), 역할 읽기 실패, 최근 LIVE 영상 프리뷰 우선순위 검사.
+- [x] 로컬 실제 화면 확인: 홈·두 가이드 PC1440 / 모바일390, 캘린더 PC. 상위 사진 교체 검증·공개 조회 검증·타입 검사·ESLint 통과.
+- [x] 최종 production 빌드 통과. 배포 완료 기준은 main 푸시 후 해당 커밋의 Vercel `READY` 확인이다.
+
+공유 프로필은 `profile`, 세로 인물 사진은 `portrait`, 가로 인물 사진은 `landscape`, 행사 포스터는 LIVE의 `poster`에 속한다. 경품 이미지·장식·개인 아바타·영상 파생 프리뷰는 셀럽 역할 사진으로 바꾸지 않는다. 새 하위 화면은 공통 렌더러에 상위의 전체 `photos`를 전달하고, 등록된 역할 소스를 화면 내부의 고정 주소로 덮어쓰지 않는다.

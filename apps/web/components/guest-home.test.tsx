@@ -90,7 +90,7 @@ describe("canonical 03 guest home", () => {
   it("refreshes server status once when the same LIVE reaches its start in hero and list", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(Date.parse(featuredLive.live.startsAt) - 500));
-    const { unmount } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    const { unmount } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
     expect(routerRefresh).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
     expect(routerRefresh).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("shows LIVE NOW in the countdown position for an active LIVE", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[{
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[{
       ...featuredLive,
       live: { ...featuredLive.live, effectiveStatus: "live" },
       primaryAction: "watch_live",
@@ -117,11 +117,11 @@ describe("canonical 03 guest home", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const container = document.createElement("div");
-    container.innerHTML = renderToString(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    container.innerHTML = renderToString(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
     document.body.append(container);
 
     let root!: ReturnType<typeof hydrateRoot>;
-    await act(async () => { root = hydrateRoot(container, <GuestHome {...defaultProps} featuredLives={[featuredLive]} />); });
+    await act(async () => { root = hydrateRoot(container, <GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />); });
 
     expect(container).toHaveTextContent("7월 24일 오후 8:00");
     expect(consoleError.mock.calls.flat().join(" ")).not.toMatch(/hydration|did not match|server rendered html/i);
@@ -133,7 +133,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("keeps the approved service actions and exact Passport label in both responsive placements", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(screen.getAllByRole("link", { name: "Google로 계속하기" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(2);
@@ -154,7 +154,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("adds the Banksy campaign as one slide in the LIVE hero", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "2번째 LIVE 보기" }));
     expect(screen.getByRole("heading", { name: "엘리나와 함께 만나는 뱅크시" })).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe("canonical 03 guest home", () => {
 
   it("localizes the nine-empty-stamp Passport image description", () => {
     render(
-      <GuestHome
+      <GuestHome guideEventPhotos={undefined}
         celebrities={celebrities}
         featuredLives={[featuredLive]}
         locale="en"
@@ -186,7 +186,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("uses the same product destinations in desktop and mobile navigation", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
     expect(within(primary).getByRole("link", { name: "HOME" })).toHaveAttribute(
@@ -211,7 +211,7 @@ describe("canonical 03 guest home", () => {
 
   it("shows KO / EN in a fixed order and emphasizes the current language", () => {
     const { rerender } = render(
-      <GuestHome {...defaultProps} featuredLives={[featuredLive]} />,
+      <GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />,
     );
 
     const koreanLanguageLink = screen.getByRole("link", {
@@ -222,7 +222,7 @@ describe("canonical 03 guest home", () => {
     expect(koreanLanguageLink.querySelector("strong")).toHaveTextContent("KO");
 
     rerender(
-      <GuestHome
+      <GuestHome guideEventPhotos={undefined}
         celebrities={celebrities}
         featuredLives={[featuredLive]}
         locale="en"
@@ -281,7 +281,7 @@ describe("canonical 03 guest home", () => {
     };
 
     render(
-      <GuestHome
+      <GuestHome guideEventPhotos={undefined}
         {...defaultProps}
         featuredLives={[activeLive, elinaLive, changhaLive]}
       />,
@@ -320,7 +320,7 @@ describe("canonical 03 guest home", () => {
       },
     }));
 
-    render(<GuestHome {...defaultProps} featuredLives={lives} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={lives} />);
 
     const upcoming = screen.getByRole("heading", { name: "다가오는 LIVE" }).closest("section");
     expect(upcoming).not.toBeNull();
@@ -347,7 +347,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("renders two regular-weight metadata rows with compact fans, fan detail links, and icon-only social controls", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
       { slug: "kara-live", celebritySlug: "kara", locale: "ko", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "live" },
       { slug: "elina-live", celebritySlug: "elina", locale: "ko", title: "Elina LIVE", startsAt: "2026-07-25T11:00:00.000Z", effectiveStatus: "scheduled" },
     ]} />);
@@ -381,7 +381,7 @@ describe("canonical 03 guest home", () => {
         removeEventListener: vi.fn(),
       }),
     );
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} celebrityLives={[
       {
         slug: "kara-live",
         celebritySlug: "kara",
@@ -414,7 +414,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("keeps the desktop context panel available without a toggle and preserves mobile actions", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(screen.getByRole("complementary", { name: "로그인 전 팬 활동" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
@@ -434,14 +434,14 @@ describe("canonical 03 guest home", () => {
   });
 
   it("renders a truthful empty state without inventing a Live link", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(screen.getByText("현재 공개된 LIVE가 없습니다.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /라이브 예약하기/ })).not.toBeInTheDocument();
 
   });
 
   it("uses the effective state to avoid presenting an ended Live as reservable", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[{
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[{
       ...featuredLive,
       live: { ...featuredLive.live, effectiveStatus: "ended" },
       primaryAction: "live_ended",
@@ -452,7 +452,7 @@ describe("canonical 03 guest home", () => {
 
   it("renders English CMS content and preserves locale through public and auth links", () => {
     const englishCelebrities = celebrities.map((celebrity) => ({ ...celebrity, locale: "en" as const, name: celebrity.slug === "kara" ? "KARA EN" : celebrity.name }));
-    render(<GuestHome celebrities={englishCelebrities} featuredLives={[featuredLive]} locale="en" />);
+    render(<GuestHome guideEventPhotos={undefined} celebrities={englishCelebrities} featuredLives={[featuredLive]} locale="en" />);
     expect(screen.getByRole("heading", { name: "Your favorites" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA EN" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KARA EN details" })).toHaveAttribute("href", "/c/kara?locale=en");
@@ -460,7 +460,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("uses Enter LIVE for the English active-LIVE Hero without changing the detail route", () => {
-    render(<GuestHome {...defaultProps} locale="en" featuredLives={[{
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} locale="en" featuredLives={[{
       ...featuredLive,
       live: { ...featuredLive.live, effectiveStatus: "live" },
       primaryAction: "watch_live",
@@ -483,7 +483,7 @@ describe("canonical 03 guest home", () => {
         celebrity: { ...featuredLive.live.celebrity, slug: "elina", name: "Elina" },
       },
     };
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
 
     expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(6_000));
@@ -509,7 +509,7 @@ describe("canonical 03 guest home", () => {
       addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => mediaListeners.add(listener),
       removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => mediaListeners.delete(listener),
     }));
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
 
     const carousel = screen.getByRole("region", { name: "주요 LIVE" });
     expect(carousel).toHaveAttribute("data-reduced-motion", "true");
@@ -522,7 +522,7 @@ describe("canonical 03 guest home", () => {
 
   it("does not flash guest actions while authentication is still loading", () => {
     privy.ready = false;
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
@@ -547,7 +547,7 @@ describe("canonical 03 guest home", () => {
     });
     vi.stubGlobal("fetch", fetcher);
 
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
     const guideCards = screen.getAllByRole("link", { name: "이퓨의 틱톡 100일 기념 LIVE 참여 가이드" });
@@ -585,7 +585,7 @@ describe("canonical 03 guest home", () => {
       collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
     } })));
     const match = { ...featuredLive, live: { ...featuredLive.live, id: reserved.id, celebrity: { ...featuredLive.live.celebrity, slug: "elina", name: "Elina", image: "/images/guest-home/elina-card.jpg" } } };
-    render(<GuestHome {...defaultProps} locale="en" featuredLives={hasMatchingLive ? [featuredLive, match] : [featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} locale="en" featuredLives={hasMatchingLive ? [featuredLive, match] : [featuredLive]} />);
     const reservations = await screen.findAllByRole("link", { name: `${reserved.title} View LIVE details` });
     reservations.forEach((reservation) => {
       expect(reservation).toHaveAttribute("href", "/live/reserved-live?locale=en");
@@ -607,7 +607,7 @@ describe("canonical 03 guest home", () => {
     vi.stubGlobal("fetch", (url: string) => url.includes("/creator-reactions")
       ? Promise.resolve(Response.json(reactionStates(celebrities.map(({ slug }) => slug))))
       : fetcher(url));
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(await screen.findAllByRole("heading", { name: "이전님, 반가워요." })).toHaveLength(2);
     await act(async () => { notifyFanActivityUpdated("owner-a"); });
     expect(await screen.findAllByRole("heading", { name: "갱신님, 반가워요." })).toHaveLength(2);
@@ -630,7 +630,7 @@ describe("canonical 03 guest home", () => {
     } });
     }));
 
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
 
     const carousels = await screen.findAllByRole("group", { name: "내 패스포트" });
     expect(carousels).toHaveLength(2);
@@ -669,7 +669,7 @@ describe("canonical 03 guest home", () => {
       ? Promise.resolve(Response.json(reactionStates(celebrities.map(({ slug }) => slug))))
       : fetchMock(url));
 
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
     const retryButtons = await screen.findAllByRole("button", { name: "다시 시도" });
     fireEvent.click(retryButtons[0]);
 
@@ -707,7 +707,7 @@ describe("canonical 03 guest home", () => {
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 10, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
       } }) };
     }));
-    const { container } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[featuredLive]} />);
     expect(await screen.findAllByRole("link", { name: /패스포트, 골드 · 50점/ })).toHaveLength(2);
     expect(await screen.findAllByRole("img", { name: /전체 10개 중 최근 9개 표시/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(18);
@@ -730,7 +730,7 @@ describe("canonical 03 guest home", () => {
       return Response.json({ summary });
     });
     vi.stubGlobal("fetch", fetcher);
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(await screen.findAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     await screen.findByRole("link", { name: "KARA 입덕 완료" });
     expect(fetcher.mock.calls.filter(([input]) => String(input).startsWith("/api/me/creator-reactions"))).toHaveLength(1);
@@ -749,8 +749,8 @@ describe("canonical 03 guest home", () => {
       if (batchCount === 1) return oldBatch;
       return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
     }));
-    const view = render(<GuestHome {...defaultProps} featuredLives={[]} />);
-    await act(async () => { privy.user.id = "owner-b"; view.rerender(<GuestHome {...defaultProps} featuredLives={[]} />); });
+    const view = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
+    await act(async () => { privy.user.id = "owner-b"; view.rerender(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />); });
     expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
     await act(async () => { resolveOld(Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"))); });
     expect(screen.getByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-reacted");
@@ -768,7 +768,7 @@ describe("canonical 03 guest home", () => {
       if (batchCount === 1) return initial;
       return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
     }));
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     await act(async () => {
       notifyFanActivityUpdated("owner-a", ["reactions"]);
       notifyFanActivityUpdated("owner-a", ["reactions"]);
@@ -789,7 +789,7 @@ describe("canonical 03 guest home", () => {
       if (batchCount > 1) return Response.json({ error: { code: "REACTION_UNAVAILABLE" } }, { status: 503 });
       return Response.json(reactionStates(celebrities.map(({ slug }) => slug), (slug) => slug === "kara"));
     }));
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(await screen.findByRole("link", { name: "KARA 입덕 완료" })).toHaveAttribute("data-reacted", "true");
     act(() => notifyFanActivityUpdated("owner-a", ["reactions"]));
     await waitFor(() => expect(batchCount).toBe(2));
@@ -801,7 +801,7 @@ describe("canonical 03 guest home", () => {
     privy.user.id = "";
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
-    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     await act(async () => {});
     expect(fetcher).not.toHaveBeenCalled();
@@ -819,14 +819,14 @@ describe("canonical 03 guest home", () => {
       const slugs = new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",");
       return Response.json(reactionStates(slugs));
     }));
-    render(<GuestHome celebrities={roster} featuredLives={[]} locale="ko" />);
+    render(<GuestHome guideEventPhotos={undefined} celebrities={roster} featuredLives={[]} locale="ko" />);
     expect(await screen.findByRole("link", { name: "Creator 50 입덕하기" })).toBeInTheDocument();
     expect(batchUrls).toHaveLength(2);
     expect(batchUrls.map((url) => new URL(url, "https://byus.test").searchParams.get("slugs")!.split(",").length)).toEqual([50, 1]);
   });
 
   it("shows retry UI for failed LIVE data without presenting it as an empty LIVE list", () => {
-    render(<GuestHome {...defaultProps} featuredLives={[]} contentErrors={{ featuredLives: true }} />);
+    render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} contentErrors={{ featuredLives: true }} />);
     expect(screen.queryByText("현재 공개된 LIVE가 없습니다.")).not.toBeInTheDocument();
     const buttons = screen.getAllByRole("button", { name: "다시 시도" });
     fireEvent.click(buttons[0]);
@@ -837,7 +837,7 @@ describe("canonical 03 guest home", () => {
 it("uses identical cards for all creators with editorial ordering only", () => {
   const base = defaultProps.celebrities[0];
   const roster = ["elina", "changha", "yuna", "aryeom", "park-myung-ho", "ifewknow", "jung-jenny", "xin"].map((slug, index) => ({ ...base, slug, name: slug, displayOrder:index, fanCount:index * 100 }));
-  const { container } = render(<GuestHome celebrities={roster} featuredLives={[]} locale="ko" />);
+  const { container } = render(<GuestHome guideEventPhotos={undefined} celebrities={roster} featuredLives={[]} locale="ko" />);
   expect(screen.queryByRole("heading", { name:"함께 만날 크리에이터" })).not.toBeInTheDocument();
   const section = container.querySelector("#celebrities")!;
   expect(section.querySelectorAll("article")).toHaveLength(8);
@@ -851,7 +851,7 @@ it("uses identical cards for all creators with editorial ordering only", () => {
 
 it("renders the verified CHZZK channel with its icon and keeps Instagram", () => {
  const socialLinks = [{platform:"instagram" as const,url:"https://www.instagram.com/jen2jen2_/"},{platform:"chzzk" as const,url:"https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045"}];
- render(<GuestHome {...defaultProps} featuredLives={[]} celebrities={[{...defaultProps.celebrities[0]!,slug:"jenny-jeong",name:"정제니",socialLinks}]} />);
+ render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} celebrities={[{...defaultProps.celebrities[0]!,slug:"jenny-jeong",name:"정제니",socialLinks}]} />);
  const link=screen.getByRole("link",{name:"정제니 치지직 공식 채널"});
  expect(link).toHaveAttribute("href",socialLinks[1]!.url);
  expect(link).toHaveAttribute("target","_blank");
@@ -861,7 +861,7 @@ it("renders the verified CHZZK channel with its icon and keeps Instagram", () =>
 });
 
 it("filters any assigned role and carries it into the directory without exposing empty roles", () => {
-  const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
   expect(within(filters).queryByRole("button", { name: "쇼호스트" })).not.toBeInTheDocument();
   fireEvent.click(within(filters).getByRole("button", { name: "크리에이터" }));
@@ -885,7 +885,7 @@ afterEach(() => {
 });
 
 it("places My favorites first and sends guests to login with a restorable Home filter", () => {
-  render(<GuestHome {...defaultProps} featuredLives={[]} />);
+  render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
   expect(within(filters).getAllByRole("button").slice(0, 2).map((button) => button.textContent)).toEqual(["내 최애", "전체"]);
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
@@ -911,7 +911,7 @@ it("shows only Passport owners in My favorites and excludes first-reaction-only 
     if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
     return Response.json({ summary });
   }));
-  const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} />);
   const filters = screen.getByRole("group", { name: "직군으로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
@@ -926,14 +926,14 @@ it("shows only Passport owners in My favorites and excludes first-reaction-only 
 it("shows honest loading and error states for a personal Home deep link", async () => {
   privy.authenticated = true;
   vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
-  const loading = render(<GuestHome {...defaultProps} featuredLives={[]} initialOwnedOnly />);
+  const loading = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} initialOwnedOnly />);
   const loadingSection = loading.container.querySelector("#celebrities") as HTMLElement;
   expect(within(loadingSection).getByText("보유한 Fan Passport를 확인하고 있어요.")).toBeInTheDocument();
   expect(loadingSection.querySelectorAll("article")).toHaveLength(0);
   loading.unmount();
 
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) }));
-  const failed = render(<GuestHome {...defaultProps} featuredLives={[]} initialOwnedOnly />);
+  const failed = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} initialOwnedOnly />);
   const failedSection = failed.container.querySelector("#celebrities") as HTMLElement;
   expect(await within(failedSection).findByRole("alert")).toHaveTextContent("보유한 Fan Passport를 확인하지 못했어요.");
   expect(within(failedSection).queryByText("아직 보유한 Fan Passport가 없어요.")).not.toBeInTheDocument();
@@ -950,7 +950,7 @@ it.each([0, 1])("offers the full roster when no owned profile is published and P
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => String(input).startsWith("/api/me/creator-reactions")
     ? Response.json(reactionStates(celebrities.map(({ slug }) => slug)))
     : Response.json({ summary })));
-  const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} initialOwnedOnly />);
+  const { container } = render(<GuestHome guideEventPhotos={undefined} {...defaultProps} featuredLives={[]} initialOwnedOnly />);
   const section = container.querySelector("#celebrities") as HTMLElement;
   expect(await within(section).findByText(passportCount > 0 ? "지금 공개된 내 최애가 없어요." : "아직 보유한 Fan Passport가 없어요.")).toBeInTheDocument();
   fireEvent.click(within(section).getByRole("button", { name: "전체 보기" }));

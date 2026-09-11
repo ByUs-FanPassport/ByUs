@@ -17,7 +17,7 @@
 .guide:focus-visible, .eventGuide:focus-visible, .fanmeeting:focus-visible { outline: 3px solid #b22161; outline-offset: 4px; }
 .guide { height: 216px; border-radius: 16px; background: #f8f2f6; }
 .eventGuide { border: 1px solid #e7e2eb; border-radius: 16px; background: #fff; }
-.eventBanner { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; object-fit: contain; }
+.eventBanner { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; object-fit: contain; }
 .eventGuideCopy { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
 .eventGuideCopy > span { display: grid; min-width: 0; gap: 5px; }
 .eventGuideCopy strong { font-size: 15px; font-weight: 700; line-height: 1.35; }

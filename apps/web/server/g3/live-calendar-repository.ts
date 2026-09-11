@@ -8,6 +8,7 @@ import {
   type LiveCalendarMonth,
 } from "../../features/live/domain/live-calendar";
 import type { LiveLocale } from "../../features/live/domain/live-event";
+import { SupabaseCalendarCreatorImageLookup, type CalendarCreatorImageClient, type CalendarCreatorImageLookup } from "../media/calendar-creator-images";
 import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 export interface LiveCalendarRepository {
@@ -96,6 +97,7 @@ export class PublicImageLiveCalendarRepository implements LiveCalendarRepository
   constructor(
     private readonly repository: LiveCalendarRepository,
     private readonly images: PublicImageRoleReader,
+    private readonly creators: CalendarCreatorImageLookup,
   ) {}
 
   async readMonth(input: {
@@ -108,14 +110,32 @@ export class PublicImageLiveCalendarRepository implements LiveCalendarRepository
     const slugs = calendar.days.flatMap(({ events }) =>
       events.map(({ slug }) => slug),
     );
-    const photosBySlug = await this.images.readLivePhotoSetsBySlug(slugs);
+    const [photosBySlug, creatorsByLiveSlug] = await Promise.all([
+      this.images.readLivePhotoSetsBySlug(slugs),
+      this.creators.readByLiveSlugs(slugs),
+    ]);
+    const creatorPhotosBySlug = await this.images.readCelebrityPhotoSetsBySlug(
+      Object.values(creatorsByLiveSlug).map(({ celebritySlug }) => celebritySlug),
+    );
     return {
       ...calendar,
       days: calendar.days.map((day) => ({
         ...day,
         events: day.events.map((event) => {
           const photos = photosBySlug[event.slug];
-          return photos === undefined ? event : { ...event, photos };
+          const creator = creatorsByLiveSlug[event.slug];
+          if (photos === undefined && creator === undefined) return event;
+          return {
+            ...event,
+            ...(photos === undefined ? {} : { photos }),
+            celebrity: {
+              ...event.celebrity,
+              ...(creator === undefined ? {} : {
+                imagePosition: creator.imagePosition,
+                ...(creatorPhotosBySlug[creator.celebritySlug] === undefined ? {} : { photos: creatorPhotosBySlug[creator.celebritySlug] }),
+              }),
+            },
+          };
         }),
       })),
     };
@@ -132,5 +152,6 @@ export function createLiveCalendarRepositoryFromEnvironment(config: {
   return new PublicImageLiveCalendarRepository(
     new SupabaseLiveCalendarRepository(database as unknown as RpcClient),
     createPublicImageRoleReader(config, database as unknown as SupabaseClient),
+    new SupabaseCalendarCreatorImageLookup(database as unknown as CalendarCreatorImageClient),
   );
 }

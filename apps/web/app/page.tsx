@@ -1,3 +1,4 @@
+import { loadGuideEventPhotos } from "../server/media/guide-images";
 import { GuestHome, type HomeContentErrors } from "../components/guest-home";
 import { parseCreatorRoleFilter } from "../features/creator/domain/creator-role";
 import { loadServerEnv } from "../server/config/env";
@@ -16,18 +17,21 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
   });
   const celebrityRepository = createPublishedContentRepositoryFromEnvironment();
-  const [featuredLivesResult, celebritiesResult, celebrityLivesResult] = await Promise.allSettled([
+  const [featuredLivesResult, celebritiesResult, celebrityLivesResult, guideEventPhotosResult] = await Promise.allSettled([
     liveRepository.listFeaturedPublished({ locale, now: new Date() }),
     celebrityRepository.list(locale),
     celebrityRepository.listPrimaryLives(locale),
+    loadGuideEventPhotos(),
   ]);
   if (featuredLivesResult.status === "rejected" && celebritiesResult.status === "rejected") throw new Error("Home content unavailable");
   const contentErrors: HomeContentErrors = {
     featuredLives: featuredLivesResult.status === "rejected" || undefined,
     celebrities: celebritiesResult.status === "rejected" || undefined,
     celebrityLives: celebrityLivesResult.status === "rejected" || undefined,
+    guideImages: guideEventPhotosResult.status === "rejected" || undefined,
   };
   return <GuestHome
+    guideEventPhotos={guideEventPhotosResult.status === "fulfilled" ? guideEventPhotosResult.value : undefined}
     celebrities={celebritiesResult.status === "fulfilled" ? celebritiesResult.value : []}
     celebrityLives={celebrityLivesResult.status === "fulfilled" ? celebrityLivesResult.value : []}
     featuredLives={featuredLivesResult.status === "fulfilled" ? featuredLivesResult.value : []}

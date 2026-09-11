@@ -6,7 +6,7 @@ import styles from "./event-photo.module.css";
 
 /** Event photography is independent from creator identity. Missing roles retain the whole supplied image. */
 export function EventPhoto({ photos, src, alt, locale = "ko", surface = "home", priority = false, sizes }: {
-  photos?: PhotoSet; src: string; alt: string; locale?: "ko" | "en"; surface?: "home" | "detail" | "poster"; priority?: boolean; sizes?: string;
+  photos: PhotoSet | undefined; src: string; alt: string; locale?: "ko" | "en"; surface?: "home" | "detail" | "poster"; priority?: boolean; sizes?: string;
 }) {
   const desktopSlot: ImageSlot = surface === "home" ? "event.home.desktop" : surface === "poster" ? "event.poster" : "event.detail";
   const desktop = resolvePhoto(photos, desktopSlot, src, locale);

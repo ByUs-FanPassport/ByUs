@@ -17,7 +17,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstub
 
 describe("home entry cards", () => {
   it.each(["ko", "en"] as const)("makes each complete card one localized link (%s)", (locale) => {
-    const { container } = render(<HomeEntryCards locale={locale} />);
+    const { container } = render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale={locale} />);
     const links = container.querySelectorAll("a");
     expect(links).toHaveLength(3);
     expect(links[0]).toHaveAttribute("href", `/pages/ifew-fan-guide?locale=${locale}`);
@@ -35,7 +35,7 @@ describe("home entry cards", () => {
   });
 
   it("automatically rotates and loops while leaving the fan meeting link available", () => {
-    render(<HomeEntryCards locale="en" />);
+    render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     advance(2_999); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     advance(1); expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     advance(); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
@@ -43,7 +43,7 @@ describe("home entry cards", () => {
   });
 
   it("pauses on hover and requires explicit restart after keyboard focus leaves", () => {
-    render(<HomeEntryCards locale="en" />);
+    render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     const root = screen.getByRole("region");
     fireEvent.mouseEnter(root); advance();
     expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
@@ -56,7 +56,7 @@ describe("home entry cards", () => {
   });
 
   it("preserves a pointer pause when the same click also focuses the rotation button", () => {
-    render(<HomeEntryCards locale="en" />);
+    render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     const pause = screen.getByRole("button", { name: "Pause autoplay" });
     fireEvent.pointerDown(pause); fireEvent.focus(pause); fireEvent.click(pause);
     advance(12_000);
@@ -74,7 +74,7 @@ describe("home entry cards", () => {
       disconnect = disconnect;
     });
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
-    const view = render(<HomeEntryCards locale="en" />);
+    const view = render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     act(() => intersect([{ isIntersecting: false }])); advance();
     expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     expect(vi.getTimerCount()).toBe(0);
@@ -88,7 +88,7 @@ describe("home entry cards", () => {
 
   it("respects reduced motion and keeps manual navigation available", () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-    render(<HomeEntryCards locale="en" />);
+    render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     advance(12_000);
     expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     expect(screen.getByRole("button", { name: "Start autoplay" })).toBeDisabled();
