@@ -46,7 +46,7 @@ const copy = {
     nav: "ByUs 하단 메뉴",
     fanmeetings: "팬미팅 협업 문의",
     serviceGuide: "이용 가이드",
-    creatorOnboarding: "ByUs 시작 문의",
+    creatorOnboarding: "팬이 있는 당신에게",
     partners: "파트너 협업 제안",
   },
   en: {
@@ -64,7 +64,7 @@ const copy = {
     nav: "ByUs footer navigation",
     fanmeetings: "Fan meeting partnerships",
     serviceGuide: "Service guide",
-    creatorOnboarding: "Start with ByUs",
+    creatorOnboarding: "For everyone with fans",
     partners: "Partnership proposals",
   },
 } as const;
