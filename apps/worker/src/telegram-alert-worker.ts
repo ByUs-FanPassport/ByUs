@@ -30,11 +30,19 @@ const alertSchema = z.object({
   winner_count: z.number().int().nonnegative().nullable(),
   occurred_at: z.iso.datetime({ offset: true }),
   inquiry_id: z.uuid().nullable().optional(),
+  // PostgreSQL permits 4000 Unicode characters, up to 8000 UTF-16 units.
+  message_body: z.string().min(1).max(8000).nullable().optional(),
 }).strict().superRefine((alert, context) => {
   if (alert.kind === "draw_published" && alert.winner_count === null) {
     context.addIssue({ code: "custom", path: ["winner_count"], message: "missing draw winner count" });
   }
   const isCsAlert = alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied";
+  if (isCsAlert && alert.message_body == null) {
+    context.addIssue({ code: "custom", path: ["message_body"], message: "missing CS message body" });
+  }
+  if (!isCsAlert && alert.message_body != null) {
+    context.addIssue({ code: "custom", path: ["message_body"], message: "unexpected message body" });
+  }
   if (isCsAlert && alert.inquiry_id == null) {
     context.addIssue({ code: "custom", path: ["inquiry_id"], message: "missing CS inquiry id" });
   }
@@ -87,7 +95,8 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
       const inquiryId = z.uuid().safeParse(alert.inquiry_id);
       if (!inquiryId.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
       const event = alert.kind === "cs_inquiry_created" ? "새 CS 문의 접수" : "CS 문의에 새 메시지";
-      return [`• ${event}`, `${ADMIN_INQUIRY_URL}/${inquiryId.data}`];
+      const preview = cleanPublicName(alert.message_body ?? null, 600);
+      return [`• ${event}`, `내용: ${preview}`, `${ADMIN_INQUIRY_URL}/${inquiryId.data}`];
     }
     const creatorName = cleanPublicName(alert.creator_name, 48);
     const liveTitle = cleanPublicName(alert.live_title, 72);
@@ -226,7 +235,7 @@ export class SupabaseTelegramAlertQueue implements TelegramAlertQueue {
   }
 
   async claim(chatId: string): Promise<TelegramAlertBatch | null> {
-    const data = await this.call("claim_telegram_alert_batch_with_cs", { p_chat_id: chatId });
+    const data = await this.call("claim_telegram_alert_batch_with_cs_content", { p_chat_id: chatId });
     if (data === null) return null;
     const parsed = claimedBatchSchema.safeParse(data);
     if (!parsed.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");

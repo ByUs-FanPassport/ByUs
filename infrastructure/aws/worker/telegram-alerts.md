@@ -63,7 +63,7 @@
 ## CS 문의 알림
 
 - 새 문의 접수와 사용자가 남긴 추가 메시지를 같은 운영 방으로 알린다. 운영자의 답변과 처리 완료에는 별도 알림을 보내지 않는다.
-- 알림에는 이벤트 종류와 `https://byus.kr/admin/inquiries/{문의 ID}`만 넣는다. 문의 제목·본문·사용자 이름·이메일은 포함하지 않으며, 링크 열람에는 기존 관리자 인증이 필요하다.
+- 알림에는 이벤트 종류, 문의 메시지 본문 미리보기(최대 600 UTF-16 단위), `https://byus.kr/admin/inquiries/{문의 ID}`를 넣는다. 긴 본문에는 생략 부호를 붙이며 전체 대화는 관리자에서 확인한다. 문의 제목·별도 사용자 이름·이메일 필드는 추가하지 않는다. 사용자가 본문에 직접 작성한 정보는 미리보기에 포함될 수 있다. 링크 열람에는 기존 관리자 인증이 필요하다.
 - `20260911144306_cs_telegram_alerts.sql`이 신규 사용자 메시지를 기존 outbox에 저장한다. 이전 문의는 소급 발송하지 않으며, 동일 전송의 재시도는 알림을 중복 생성하지 않는다. 기존 매분 확인·최대 5건 묶음·방 단위 60초 간격·결과 불명 자동 재전송 금지 정책을 유지한다.
 - DB migration을 먼저 적용한 뒤 notification Lambda 코드만 갱신한다. `claim_telegram_alert_batch_with_cs`가 새 DTO를 반환하며 이전 claim RPC는 CS를 제외하므로 이전 워커도 기존 이벤트를 계속 처리한다. 롤백 시 이전 코드로 복구하면 CS 알림은 대기하며 기존 이벤트는 유지된다.
 - `bash scripts/verify-cs-telegram-local.sh`: CS 접수/추가 메시지/재개, 중복·원자성, 개인정보 제외, 운영자 제외, 이전 워커 호환, 오류 격리와 기존 Telegram lifecycle·명령·경쟁 검증을 실행한다. 기존 backend-security CI에도 포함된다.
@@ -76,3 +76,7 @@
 - 두 이벤트는 기존 운영 방의 Telegram 메시지 `334`로 묶여 전송됐다. 두 건 모두 `sent`, `attempt_count=1`, 오류 없음. 문의 제목·본문·개인정보를 포함하지 않았다. Telegram 전송 결과를 확인한 것이며 사람의 열람 여부는 확인하지 않았다.
 - 테스트 문의는 검증 후 기존 관리자 RPC로 `resolved` 처리했고 대화·감사·발송 이력은 보존했다.
 - 근거: `/tmp/byus-cs-telegram-sql-2.log`, `/tmp/byus-cs-telegram-worker.log`, `/tmp/byus-cs-tg-production-migration.log`, `/tmp/byus-cs-tg-deploy.log`, `/tmp/byus-cs-tg-live-test.log`, `/tmp/byus-cs-tg-receipts.log`, `/tmp/byus-cs-tg-resolve.log`. 이전 Lambda ZIP은 `/tmp/byus-cs-tg-rollout/previous.zip`에 보존했다.
+
+### 본문 미리보기 추가 — 2026-09-11
+
+사용자가 Telegram에서 메시지 내용도 확인하도록 요청했다. `20260911145206_cs_telegram_message_content.sql`과 `claim_telegram_alert_batch_with_cs_content`가 발송 시 원본 메시지를 읽는다. 기존 RPC는 본문 없는 응답을 유지하므로 배포·롤백 중 DTO 충돌이 없다. outbox에 본문을 복제하지 않는다. 줄바꿈·제어문자는 공백으로 정리하며, 5건 묶음의 최대 길이가 Telegram 한도를 넘지 않도록 각 본문을 제한한다. 이전 본문 미포함 운영 검증은 당시 전송 결과의 기록이다.
