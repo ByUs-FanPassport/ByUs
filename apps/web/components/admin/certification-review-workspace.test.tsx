@@ -217,3 +217,13 @@ describe("CertificationReviewWorkspace", () => {
     expect(onReview).not.toHaveBeenCalled();
   });
 });
+
+it("moves review selection with the page and resets pagination after a search", async () => {
+  const submissions = Array.from({ length: 21 }, (_, index) => submission({ id: `review-${index}`, applicantName: `심사 팬 ${index}`, uploads: [] }));
+  setup({ submissions });
+  expect(screen.queryByText("심사 팬 20", { exact: true })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+  expect(screen.getAllByText("심사 팬 20", { exact: true }).find(node => node.closest("button"))!.closest("button")).toHaveAttribute("aria-pressed", "true");
+  fireEvent.change(screen.getByRole("textbox", { name: "제출 검색" }), { target: { value: "심사 팬 0" } });
+  expect(screen.getAllByText("심사 팬 0", { exact: true }).find(node => node.closest("button"))!.closest("button")).toHaveAttribute("aria-pressed", "true");
+});

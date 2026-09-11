@@ -13,6 +13,7 @@ import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import { membershipPlatformLabel, type MembershipPlatform } from "@/features/certification/domain/certification";
+import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pagination";
 import styles from "./certification-manager.module.css";
 import { CertificationReviewWorkspace, reviewStatusLabel, type CertificationReviewSubmission as Submission, type ReviewStatus } from "./certification-review-workspace";
 
@@ -114,7 +115,9 @@ function CertificationManager({
   adminRole: string;
 }) {
   const { getAccessToken } = usePrivy();
+  const [missionQuery, setMissionQuery] = useState("");
   const [missions, setMissions] = useState<Mission[]>([]);
+  const missionPages = useAdminPagination(missions.filter(item => [item.titleKo, item.titleEn, item.celebritySlug].join(" ").toLowerCase().includes(missionQuery.trim().toLowerCase())), missionQuery);
   const [queue, setQueue] = useState<Submission[]>([]);
   const [form, setForm] = useState(() => ({ ...blank, immutableKey: `cert-${crypto.randomUUID()}` }));
   const [tab, setTab] = useState<"review" | "missions">("review");
@@ -367,7 +370,9 @@ function CertificationManager({
                 <Plus /> {locale === "ko" ? "새 미션" : "New"}
               </button>
             </div>
-            {missions.map((m) => (
+            <AdminListSearch value={missionQuery} onChange={setMissionQuery} locale={locale} disabled={pending || needsRefresh} />
+            {!loading && !loadError && missionPages.total === 0 && <p>{locale === "ko" ? "인증 미션이 없습니다." : "No missions found."}</p>}
+            {missionPages.items.map((m) => (
               <button
                 type="button"
                 key={m.id}
@@ -384,6 +389,7 @@ function CertificationManager({
                 <em data-status={m.status}>{locale === "ko" ? { active: "진행 중", draft: "초안", closed: "종료" }[m.status] : { active: "Active", draft: "Draft", closed: "Closed" }[m.status]}</em>
               </button>
             ))}
+            <AdminPagination {...missionPages} locale={locale} disabled={pending || needsRefresh || loading} />
           </section>
           <form className={styles.editor} onSubmit={save}>
             <h2>

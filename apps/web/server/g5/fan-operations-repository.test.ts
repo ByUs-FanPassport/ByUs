@@ -37,10 +37,41 @@ describe("Supabase Fan Operations repository", () => {
     });
     expect(rpc).toHaveBeenCalledWith(
       "get_admin_fans",
-      expect.objectContaining({ p_query: "fan@example.com", p_limit: 50 }),
+      expect.objectContaining({ p_query: "fan@example.com", p_limit: 51 }),
     );
     expect(result.items[0]).toEqual(row);
     expect(JSON.stringify(result)).not.toContain("fan@example.com");
+  });
+
+  it("uses a lookahead row so an exact page does not advertise a false next page", async () => {
+    const rows = Array.from({ length: 50 }, (_, index) => ({
+      fanId: `fan-${index}`,
+      cursor: { createdAt: "2026-07-21T00:00:00Z", id: fanId },
+    }));
+    const rpc = vi.fn().mockResolvedValue({ data: rows, error: null });
+    const repo = createSupabaseFanOperationsRepository(
+      { url: "url", serviceRoleKey: "key" },
+      { rpc } as never,
+    );
+    await expect(repo.list({ actor, correlationId: actor.appUserId, locale: "ko", query: null, celebrityId: null, accountStatus: null, cursor: null, limit: 50 }))
+      .resolves.toMatchObject({ items: rows, nextCursor: null });
+    expect(rpc).toHaveBeenCalledWith("get_admin_fans", expect.objectContaining({ p_limit: 51 }));
+  });
+
+  it("trims lookahead rows and supports the public maximum page size", async () => {
+    const rows = Array.from({ length: 101 }, (_, index) => ({
+      fanId: `fan-${index}`,
+      cursor: { createdAt: "2026-07-21T00:00:00Z", id: fanId },
+    }));
+    const rpc = vi.fn().mockResolvedValue({ data: rows, error: null });
+    const repo = createSupabaseFanOperationsRepository(
+      { url: "url", serviceRoleKey: "key" },
+      { rpc } as never,
+    );
+    const result = await repo.list({ actor, correlationId: actor.appUserId, locale: "ko", query: null, celebrityId: null, accountStatus: null, cursor: null, limit: 100 });
+    expect(result.items).toHaveLength(100);
+    expect(result.nextCursor).toEqual(rows[99].cursor);
+    expect(rpc).toHaveBeenCalledWith("get_admin_fans", expect.objectContaining({ p_limit: 101 }));
   });
 
   it("maps detail and atomic adjustment RPCs", async () => {

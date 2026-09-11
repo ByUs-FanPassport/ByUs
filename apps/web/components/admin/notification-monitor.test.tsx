@@ -118,4 +118,18 @@ describe("notification monitor retry lifecycle", () => {
     render(<NotificationMonitor />);
     expect(await screen.findByText("접수 완료 / 배달 확인 중 · 2000")).toBeInTheDocument();
   });
+
+  it("loads an older cursor page and appends it to the table", async () => {
+    const olderId = "33333333-3333-4333-8333-333333333333";
+    const older = { ...data.items[0], id: olderId, kind: "live_changed" };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ ...data, nextCursor: "opaque-next" }))
+      .mockResolvedValueOnce(Response.json({ ...data, items: [older], nextCursor: null }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<NotificationMonitor />);
+    fireEvent.click(await screen.findByRole("button", { name: "이전 전송 더 보기" }));
+    expect(await screen.findByRole("button", { name: `재시도 ${olderId}` })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `재시도 ${id}` })).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock.mock.calls[1][0]).toContain("cursor=opaque-next"));
+  });
 });

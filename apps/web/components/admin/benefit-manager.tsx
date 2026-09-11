@@ -7,6 +7,7 @@ import { RafflePolicyEditor, PickupRosterExport, RaffleWinnerOperations } from "
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
+import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pagination";
 import styles from "./benefit-manager.module.css";
 import type { BenefitDrawResult } from "@/features/benefit/domain/weighted-draw";
 type Loc = {
@@ -294,6 +295,8 @@ function BenefitManager({
   const { getAccessToken } = usePrivy(),
     t = copy[locale],
     canWrite = role !== "viewer";
+  const [benefitQuery, setBenefitQuery] = useState("");
+  const [campaignQuery, setCampaignQuery] = useState("");
   const [data, setData] = useState<Data | null>(null),
     [form, setForm] = useState(blank),
     [campaign, setCampaign] = useState(blankCampaign),
@@ -441,6 +444,8 @@ function BenefitManager({
       await refresh();
     } catch { setError(t.failure); } finally { setPending(false); }
   }
+  const benefitPages = useAdminPagination((data?.benefits ?? []).filter(item => [item.slug, item.localizations.ko.title, item.localizations.en.title].join(" ").toLowerCase().includes(benefitQuery.trim().toLowerCase())), benefitQuery);
+  const campaignPages = useAdminPagination((data?.campaigns ?? []).filter(item => [item.liveEventId, item.status].join(" ").toLowerCase().includes(campaignQuery.trim().toLowerCase())), campaignQuery);
   async function archive() {
     if (
       selected &&
@@ -480,13 +485,15 @@ function BenefitManager({
         </p>
       )}
       {!data ? (
-        <div className={styles.skeleton} aria-busy="true" />
+        error ? <button type="button" onClick={() => void refresh()}>{locale === "ko" ? "다시 시도" : "Retry"}</button> : <div className={styles.skeleton} aria-busy="true" />
       ) : (
         <>
         <section className={styles.history} aria-busy={pending}>
           <h2>{t.campaigns} · {data.campaigns.length}</h2>
+          <AdminListSearch value={campaignQuery} onChange={setCampaignQuery} locale={locale} disabled={pending} />
+          {campaignPages.total === 0 && <p>{locale === "ko" ? "응모 내역이 없습니다." : "No campaigns found."}</p>}
           <ul className={styles.rows}>
-            {data.campaigns.map((item) => (
+            {campaignPages.items.map((item) => (
               <li key={item.id} className={styles.campaignRow}>
                 <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
                   {item.liveEventId} · {item.status}
@@ -507,6 +514,7 @@ function BenefitManager({
               </li>
             ))}
           </ul>
+          <AdminPagination {...campaignPages} locale={locale} disabled={pending} label={locale === "ko" ? "응모 페이지 이동" : "Campaign pagination"} />
           <form onSubmit={submitCampaign}>
             <fieldset disabled={!canWrite || pending || Boolean(campaign.id && data.campaigns.find((c) => c.id === campaign.id)?.status === "published")}>
               <legend>{t.campaigns}</legend>
@@ -539,8 +547,10 @@ function BenefitManager({
             <h2>
               {t.list} · {data.benefits.length}
             </h2>
+            <AdminListSearch value={benefitQuery} onChange={setBenefitQuery} locale={locale} disabled={pending} />
+            {benefitPages.total === 0 && <p>{locale === "ko" ? "혜택이 없습니다." : "No benefits found."}</p>}
             <ul>
-              {data.benefits.map((b) => (
+              {benefitPages.items.map((b) => (
                 <li key={b.id}>
                   <button
                     data-selected={b.id === form.id}
@@ -555,6 +565,7 @@ function BenefitManager({
                 </li>
               ))}
             </ul>
+            <AdminPagination {...benefitPages} locale={locale} disabled={pending} label={locale === "ko" ? "혜택 페이지 이동" : "Benefit pagination"} />
           </section>
           <section className={styles.editor} aria-busy={pending}>
             <form onSubmit={submit}>

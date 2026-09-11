@@ -1,0 +1,32 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
+import { AuthorizedLiveManager } from "./live-manager";
+import { AuthorizedBenefitManager } from "./benefit-manager";
+const auth = vi.hoisted(() => ({ getAccessToken: vi.fn(async () => "token") }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => auth }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
+vi.mock("./use-admin-session", () => ({ useAdminSession: () => ({ status: "authorized", admin: { role: "viewer" } }) }));
+vi.mock("./operations-shell", () => ({ AdminOperationsShell: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
+afterEach(() => vi.unstubAllGlobals());
+const titles = (title: string) => ({ ko: { title, summary: "소개", heroAlt: "이미지" }, en: { title, summary: "Description", heroAlt: "Image" } });
+it("pages and searches LIVE events across the full returned list", async () => {
+  const lives = Array.from({ length: 21 }, (_, i) => ({ id: `live-${i}`, slug: `live-${i}`, localizations: titles(`라이브 ${i}`), publicationStatus: "draft", scheduleRevision: 1, archivedAt: null }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ lives, celebrities: [], brands: [], rewardSettings: [], journeyRequirements: [] }) }));
+  render(<AuthorizedLiveManager />);
+  await screen.findByRole("button", { name: /라이브 0.*live-0/ });
+  expect(screen.queryByRole("button", { name: /라이브 20.*live-20/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+  expect(screen.getByRole("button", { name: /라이브 20.*live-20/ })).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("searchbox", { name: "목록 검색" }), { target: { value: "live-0" } });
+  expect(screen.getByRole("button", { name: /라이브 0.*live-0/ })).toBeInTheDocument();
+});
+it("paginates benefits independently from campaigns", async () => {
+  const benefits = Array.from({ length: 21 }, (_, i) => ({ id: `benefit-${i}`, slug: `benefit-${i}`, localizations: titles(`혜택 ${i}`), publicationStatus: "draft", archivedAt: null }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ benefits, celebrities: [], campaigns: [], applications: [], claims: [] }) }));
+  render(<AuthorizedBenefitManager />);
+  await screen.findByRole("button", { name: /혜택 0.*benefit-0/ });
+  const nav = screen.getByRole("navigation", { name: "혜택 페이지 이동" });
+  fireEvent.click(within(nav).getByRole("button", { name: "다음 페이지" }));
+  expect(screen.getByRole("button", { name: /혜택 20.*benefit-20/ })).toBeInTheDocument();
+});

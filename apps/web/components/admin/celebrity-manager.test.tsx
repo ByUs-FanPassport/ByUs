@@ -46,7 +46,7 @@ it("makes list scope and new-versus-edit mode explicit", async () => {
   render(<AuthorizedCelebrityManager environment="Development" />);
   expect(screen.getByRole("heading", { name: "새 크리에이터 등록" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "초안 저장" })).toBeDisabled();
-  expect(await screen.findByText("1개 표시 · 전체 1개")).toBeInTheDocument();
+  expect(await screen.findByText("1개 검색 결과 · 전체 1개")).toBeInTheDocument();
   const status = screen.getByRole("combobox", { name: "공개 상태" });
   fireEvent.change(status, { target: { value: "published" } });
   expect(screen.getByText("조건에 맞는 크리에이터가 없습니다.")).toBeInTheDocument();
@@ -57,4 +57,23 @@ it("makes list scope and new-versus-edit mode explicit", async () => {
     screen.getByRole("heading", { name: "직군 검증 편집" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "변경 저장" })).toBeEnabled();
+});
+
+it("pages the full creator list and resets to the first page when filters change", async () => {
+  const items = Array.from({ length: 41 }, (_, index) => ({ ...celebrity, id: `creator-${index}`, slug: `creator-${index}`, localizations: { ...celebrity.localizations, ko: { ...celebrity.localizations.ko, name: `크리에이터 ${index}` } } }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items }) }));
+  render(<AuthorizedCelebrityManager environment="Development" />);
+  expect(await screen.findByRole("button", { name: /크리에이터 0.*가수/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /크리에이터 20.*가수/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+  expect(screen.getByRole("button", { name: /크리에이터 20.*가수/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /크리에이터 0.*가수/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "마지막 페이지" }));
+  expect(screen.getByRole("button", { name: /크리에이터 40.*가수/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "다음 페이지" })).toBeDisabled();
+  fireEvent.change(screen.getByRole("textbox", { name: "이름 또는 주소 검색" }), { target: { value: "creator-0" } });
+  expect(screen.getByRole("button", { name: /크리에이터 0.*가수/ })).toBeInTheDocument();
+  expect(screen.getByText("전체 1건 중 1–1건")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "조건 지우기" }));
+  expect(screen.getByRole("button", { name: "1페이지" })).toHaveAttribute("aria-current", "page");
 });

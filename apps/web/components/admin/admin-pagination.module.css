@@ -1,0 +1,8 @@
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 0; font-size: 12px; color: var(--muted, #666); }
+.controls { display: flex; flex-wrap: wrap; gap: 4px; }
+.controls button { display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 28px; min-height: 40px; margin: 0; padding: 4px 6px; border: 1px solid var(--line, #ddd); border-radius: 8px; background: #fff; color: var(--ink, #17171a); font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
+.controls button[aria-current="page"] { background: var(--ink, #17171a); border-color: var(--ink, #17171a); color: #fff; font-weight: 700; }
+.controls button:disabled { opacity: .4; cursor: not-allowed; }
+.controls button:focus-visible, .search input:focus-visible { outline: 2px solid var(--ink, #17171a); outline-offset: 2px; }
+.search { display: grid; gap: 6px; margin: 10px 0; font-size: 12px; font-weight: 600; }
+.search input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line, #ddd); border-radius: 8px; background: #fff; color: var(--ink, #17171a); font: inherit; }

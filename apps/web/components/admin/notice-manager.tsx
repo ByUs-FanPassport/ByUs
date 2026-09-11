@@ -7,6 +7,7 @@ import { noticeExtensions } from "../notice/tiptap-extensions";
 import { NoticeBody } from "../notice/notice-body";
 import type { TiptapDocument } from "../../server/notice/notice-domain";
 import type { AdminLocale } from "./operations-shell";
+import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pagination";
 import styles from "./notice-manager.module.css";
 
 type Document = Record<string, unknown>;
@@ -39,6 +40,8 @@ function normalize(row: any): Notice {
 export function NoticeManager({ celebrityId, celebrityName, role, locale }: { celebrityId: string; celebrityName: string; role: string; locale: AdminLocale }) {
   const { getAccessToken } = usePrivy();
   const canEdit = role !== "viewer";
+  const [query, setQuery] = useState("");
+  const [listState, setListState] = useState<"loading" | "ready" | "error">("loading");
   const [items, setItems] = useState<Notice[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [language, setLanguage] = useState<"ko" | "en">("ko");
@@ -53,6 +56,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   const pendingRef = useRef(false);
   const recoveryTargetRef = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const pagination = useAdminPagination(items.filter(item => [item.slug, item.localizations.ko.title, item.localizations.en.title].join(" ").toLowerCase().includes(query.trim().toLowerCase())), query);
   const current = useMemo(() => items.find((item) => item.id === selectedId) ?? null, [items, selectedId]);
   const request = useCallback(async (method: string, body?: unknown) => {
     const token = await getAccessToken();
@@ -68,13 +72,16 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     return payload;
   }, [celebrityId, getAccessToken]);
   const load = useCallback(async () => {
+    setListState("loading");
     try {
       const payload = await request("GET");
       setItems((payload.notices ?? []).map(normalize));
+      setListState("ready");
       return true;
     } catch (error) {
       setMessageIsError(true);
       setMessage(error instanceof Error ? error.message : "Notice load failed");
+      setListState("error");
       return false;
     }
   }, [request]);
@@ -205,7 +212,11 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   return <section className={styles.manager} aria-labelledby="notice-manager-title">
     <header><div><p>ADM · Notice CMS</p><h2 id="notice-manager-title">{celebrityName} {locale === "ko" ? "공지" : "Notices"}</h2></div>{canEdit && <button type="button" disabled={interactionLocked} onClick={reset}>{locale === "ko" ? "새 공지" : "New Notice"}</button>}</header>
     <div className={styles.layout}>
-      <div className={styles.list}>{items.map((item) => <button type="button" key={item.id} disabled={interactionLocked} aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}</div>
+      <div className={styles.list}><AdminListSearch value={query} onChange={setQuery} locale={locale} disabled={interactionLocked} />
+        {listState === "loading" && !pending && <p role="status">{locale === "ko" ? "공지를 불러오는 중입니다." : "Loading notices."}</p>}
+        {listState === "error" && <button type="button" disabled={interactionLocked} onClick={() => void load()}>{locale === "ko" ? "다시 시도" : "Retry"}</button>}
+        {listState === "ready" && pagination.total === 0 && <p>{locale === "ko" ? "공지가 없습니다." : "No notices found."}</p>}
+        {listState === "ready" && pagination.items.map((item) => <button type="button" key={item.id} disabled={interactionLocked} aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}{listState === "ready" && <AdminPagination {...pagination} locale={locale} disabled={interactionLocked} />}</div>
       <div className={styles.editor}>
         <div className={styles.language}><button type="button" disabled={interactionLocked} aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" disabled={interactionLocked} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
         <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>

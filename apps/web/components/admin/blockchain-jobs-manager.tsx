@@ -4,7 +4,7 @@ import { AlertCircle, ChevronRight, Clock3, RefreshCw, X } from "lucide-react";
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
@@ -15,8 +15,8 @@ type Status = "PENDING" | "PROCESSING" | "COMPLETED" | "RETRYING" | "FAILED";
 type Job = { id: string; entityType: "passport" | "stamp" | "reaction" | "collectible"; entityId: string; status: Status; attempts: number; maxAttempts: number; nextAttemptAt: string; createdAt: string; updatedAt: string; completedAt: string | null; transactionReference: string | null; chainState: "not_submitted" | "prepared_reconciliation_required" | "confirmed"; errorCode: string | null; errorSummary: string | null; manuallyRetryable: boolean; attemptHistory: Array<{ attemptNumber: number; event: string; fromStatus: Status | null; toStatus: Status; errorCode: string | null; createdAt: string; correlationId: string | null }> };
 
 const labels = {
-  ko: { eyebrow: "운영 안정성", title: "블록체인 작업", description: "발급·민팅 작업의 상태와 시도 이력을 확인하고, 안전한 조건에서만 재시도합니다.", all: "전체 상태", search: "작업 ID", apply: "필터 적용", reset: "초기화", loading: "작업 목록을 불러오는 중입니다.", empty: "조건에 맞는 작업이 없습니다.", emptyHelp: "필터를 초기화하거나 다른 상태를 선택해 보세요.", error: "작업 목록을 불러오지 못했습니다.", again: "다시 시도", detail: "작업 상세", close: "상세 닫기", entity: "대상", attempts: "시도", chain: "체인 상태", created: "생성", updated: "최근 변경", completed: "완료", transaction: "안전한 트랜잭션 참조", noTransaction: "아직 제출된 트랜잭션이 없습니다.", errorLabel: "정제된 오류", noError: "표시할 안전한 오류 정보가 없습니다.", history: "시도 이력", retry: "재시도 요청", retryUnavailable: "현재 상태에서는 재시도할 수 없습니다.", viewer: "Viewer 역할은 조회만 가능합니다.", confirmTitle: "이 작업을 재시도할까요?", confirmBody: "현재 작업의 안전 상태를 다시 검증한 뒤 큐에 넣습니다. 기존 시도 이력은 변경되지 않습니다.", cancel: "취소", confirm: "재시도", retryError: "재시도 요청을 처리하지 못했습니다.", loadMore: "이전 작업 더 보기" },
-  en: { eyebrow: "Operational reliability", title: "Blockchain jobs", description: "Review issuance and minting status, attempt history, and retry only when safe.", all: "All statuses", search: "Job ID", apply: "Apply filters", reset: "Reset", loading: "Loading blockchain jobs.", empty: "No jobs match these filters.", emptyHelp: "Reset the filters or select another status.", error: "Blockchain jobs could not be loaded.", again: "Try again", detail: "Job details", close: "Close details", entity: "Entity", attempts: "Attempts", chain: "Chain state", created: "Created", updated: "Last updated", completed: "Completed", transaction: "Safe transaction reference", noTransaction: "No transaction has been submitted yet.", errorLabel: "Redacted error", noError: "No safe error details are available.", history: "Attempt history", retry: "Request retry", retryUnavailable: "This job is not eligible for retry.", viewer: "Viewer role is read-only.", confirmTitle: "Retry this job?", confirmBody: "The server will re-check its safe state before queueing it. Existing attempt history remains immutable.", cancel: "Cancel", confirm: "Retry", retryError: "The retry request could not be processed.", loadMore: "Load older jobs" },
+  ko: { eyebrow: "운영 안정성", title: "블록체인 작업", description: "발급·민팅 작업의 상태와 시도 이력을 확인하고, 안전한 조건에서만 재시도합니다.", all: "전체 상태", search: "작업 ID", apply: "필터 적용", reset: "초기화", loading: "작업 목록을 불러오는 중입니다.", empty: "조건에 맞는 작업이 없습니다.", emptyHelp: "필터를 초기화하거나 다른 상태를 선택해 보세요.", error: "작업 목록을 불러오지 못했습니다.", again: "다시 시도", detail: "작업 상세", close: "상세 닫기", entity: "대상", attempts: "시도", chain: "체인 상태", created: "생성", updated: "최근 변경", completed: "완료", transaction: "안전한 트랜잭션 참조", noTransaction: "아직 제출된 트랜잭션이 없습니다.", errorLabel: "정제된 오류", noError: "표시할 안전한 오류 정보가 없습니다.", history: "시도 이력", retry: "재시도 요청", retryUnavailable: "현재 상태에서는 재시도할 수 없습니다.", viewer: "Viewer 역할은 조회만 가능합니다.", confirmTitle: "이 작업을 재시도할까요?", confirmBody: "현재 작업의 안전 상태를 다시 검증한 뒤 큐에 넣습니다. 기존 시도 이력은 변경되지 않습니다.", cancel: "취소", confirm: "재시도", retryError: "재시도 요청을 처리하지 못했습니다.", loadMore: "이전 작업 더 보기", loadMoreError: "이전 작업을 불러오지 못했습니다. 다시 시도해 주세요." },
+  en: { eyebrow: "Operational reliability", title: "Blockchain jobs", description: "Review issuance and minting status, attempt history, and retry only when safe.", all: "All statuses", search: "Job ID", apply: "Apply filters", reset: "Reset", loading: "Loading blockchain jobs.", empty: "No jobs match these filters.", emptyHelp: "Reset the filters or select another status.", error: "Blockchain jobs could not be loaded.", again: "Try again", detail: "Job details", close: "Close details", entity: "Entity", attempts: "Attempts", chain: "Chain state", created: "Created", updated: "Last updated", completed: "Completed", transaction: "Safe transaction reference", noTransaction: "No transaction has been submitted yet.", errorLabel: "Redacted error", noError: "No safe error details are available.", history: "Attempt history", retry: "Request retry", retryUnavailable: "This job is not eligible for retry.", viewer: "Viewer role is read-only.", confirmTitle: "Retry this job?", confirmBody: "The server will re-check its safe state before queueing it. Existing attempt history remains immutable.", cancel: "Cancel", confirm: "Retry", retryError: "The retry request could not be processed.", loadMore: "Load older jobs", loadMoreError: "Older jobs could not be loaded. Try again." },
 } as const;
 
 function localeFrom(value: string | null): AdminLocale { return value === "en" ? "en" : "ko"; }
@@ -25,6 +25,8 @@ function date(value: string | null, locale: AdminLocale) { return value ? new In
 export function BlockchainJobsManager() {
   const session = useAdminSession();
   const { getAccessToken } = usePrivy();
+  const getAccessTokenRef = useRef(getAccessToken);
+  useEffect(() => { getAccessTokenRef.current = getAccessToken; }, [getAccessToken]);
   const params = useSearchParams();
   const router = useRouter();
   const locale = localeFrom(params.get("lang"));
@@ -37,24 +39,52 @@ export function BlockchainJobsManager() {
   const [retrying, setRetrying] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [retryError, setRetryError] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  const listRequestId = useRef(0);
+  const listController = useRef<AbortController | null>(null);
 
-  const fetchJobs = useCallback(async () => {
-    setState("loading");
+  const fetchJobs = useCallback(async (cursor?: string) => {
+    const requestId = ++listRequestId.current;
+    listController.current?.abort();
+    const controller = new AbortController();
+    listController.current = controller;
+    cursor ? setLoadingMore(true) : setState("loading");
+    setLoadMoreError(false);
     try {
-      const token = await getAccessToken();
+      const token = await getAccessTokenRef.current();
       if (!token) throw new Error("missing token");
       const query = new URLSearchParams({ limit: "50" });
       if (status) query.set("status", status);
       if (jobId) query.set("jobId", jobId);
-      const response = await fetch(`/api/admin/blockchain-jobs?${query}`, { headers: { authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (cursor) query.set("cursor", cursor);
+      const response = await fetch(`/api/admin/blockchain-jobs?${query}`, { headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal });
       if (!response.ok) throw new Error("request failed");
-      const body = await response.json() as { jobs?: Job[]; job?: Job };
-      setJobs(body.job ? [body.job] : body.jobs ?? []);
+      const body = await response.json() as { jobs?: Job[]; job?: Job; nextCursor?: string | null };
+      if (requestId !== listRequestId.current || controller.signal.aborted) return;
+      const page = body.job ? [body.job] : body.jobs ?? [];
+      setJobs((current) => cursor ? Array.from(new Map([...current, ...page].map((job) => [job.id, job])).values()) : page);
+      setNextCursor(body.nextCursor ?? null);
       setState("ready");
-    } catch { setState("error"); }
-  }, [getAccessToken, jobId, status]);
+    } catch {
+      if (requestId !== listRequestId.current || controller.signal.aborted) return;
+      if (cursor) setLoadMoreError(true); else setState("error");
+    } finally {
+      if (requestId === listRequestId.current) {
+        setLoadingMore(false);
+        if (listController.current === controller) listController.current = null;
+      }
+    }
+  }, [jobId, status]);
 
-  useEffect(() => { if (session.status === "authorized") void fetchJobs(); }, [fetchJobs, session.status]);
+  useEffect(() => {
+    if (session.status === "authorized") {
+      setJobs([]); setNextCursor(null); setSelected(null); setLoadMoreError(false);
+      void fetchJobs();
+    }
+    return () => { listRequestId.current += 1; listController.current?.abort(); listController.current = null; };
+  }, [fetchJobs, session.status]);
   const canRetry = selected?.manuallyRetryable && session.status === "authorized" && session.admin.role !== "viewer";
   const statusOptions = useMemo(() => ["PENDING", "PROCESSING", "RETRYING", "FAILED", "COMPLETED"] as const, []);
 
@@ -93,7 +123,7 @@ export function BlockchainJobsManager() {
     {state === "loading" && <div className={styles.skeletonList} aria-label={t.loading}>{[1,2,3,4,5].map((n) => <div key={n} />)}</div>}
     {state === "error" && <StateMessage icon={<AlertCircle aria-hidden="true" />} title={t.error} action={<button type="button" onClick={() => void fetchJobs()}>{t.again}</button>} />}
     {state === "ready" && jobs.length === 0 && <StateMessage icon={<Clock3 aria-hidden="true" />} title={t.empty} body={t.emptyHelp} />}
-    {state === "ready" && jobs.length > 0 && <div className={styles.tableWrap}><table><thead><tr><th>{locale === "ko" ? "상태" : "Status"}</th><th>{t.entity}</th><th>{t.attempts}</th><th>{t.updated}</th><th><span className={styles.srOnly}>{t.detail}</span></th></tr></thead><tbody>{jobs.map((job) => <tr key={job.id}><td><StatusBadge status={job.status} /></td><td><strong>{job.entityType}</strong><code>{job.entityId}</code></td><td>{job.attempts} / {job.maxAttempts}</td><td>{date(job.updatedAt, locale)}</td><td><button className={styles.iconButton} type="button" aria-label={`${t.detail}: ${job.id}`} onClick={() => setSelected(job)}><ChevronRight aria-hidden="true" /></button></td></tr>)}</tbody></table></div>}
+    {state === "ready" && jobs.length > 0 && <><div className={styles.tableWrap}><table><thead><tr><th>{locale === "ko" ? "상태" : "Status"}</th><th>{t.entity}</th><th>{t.attempts}</th><th>{t.updated}</th><th><span className={styles.srOnly}>{t.detail}</span></th></tr></thead><tbody>{jobs.map((job) => <tr key={job.id}><td><StatusBadge status={job.status} /></td><td><strong>{job.entityType}</strong><code>{job.entityId}</code></td><td>{job.attempts} / {job.maxAttempts}</td><td>{date(job.updatedAt, locale)}</td><td><button className={styles.iconButton} type="button" aria-label={`${t.detail}: ${job.id}`} onClick={() => setSelected(job)}><ChevronRight aria-hidden="true" /></button></td></tr>)}</tbody></table></div>{loadMoreError && <p className={styles.inlineError} role="alert">{t.loadMoreError}</p>}{nextCursor && <button className={styles.loadMore} type="button" disabled={loadingMore} onClick={() => void fetchJobs(nextCursor)}>{loadingMore ? "…" : t.loadMore}</button>}</>}
     {selected && <Drawer open onClose={() => setSelected(null)} labelledBy="job-detail-title" backdropClassName={styles.drawerBackdrop} contentClassName={styles.drawer}><div className={styles.drawerHeader}><div><p>{selected.id}</p><h2 id="job-detail-title">{t.detail}</h2></div><button className={styles.iconButton} type="button" aria-label={t.close} data-autofocus onClick={() => setSelected(null)}><X aria-hidden="true" /></button></div><div className={styles.drawerBody}>
       <StatusBadge status={selected.status} />
       <dl className={styles.detailGrid}><div><dt>{t.entity}</dt><dd>{selected.entityType}<code>{selected.entityId}</code></dd></div><div><dt>{t.attempts}</dt><dd>{selected.attempts} / {selected.maxAttempts}</dd></div><div><dt>{t.chain}</dt><dd>{selected.chainState}</dd></div><div><dt>{t.created}</dt><dd>{date(selected.createdAt, locale)}</dd></div><div><dt>{t.updated}</dt><dd>{date(selected.updatedAt, locale)}</dd></div><div><dt>{t.completed}</dt><dd>{date(selected.completedAt, locale)}</dd></div></dl>

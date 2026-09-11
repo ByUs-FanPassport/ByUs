@@ -23,6 +23,16 @@ async function optionalOwner(request: Request, dependencies: FanpageDependencies
   return authorization === null ? null : (await dependencies.authorize(authorization)).appUserId;
 }
 const cursorSchema = z.object({ at: z.iso.datetime({ offset: true }), id: z.uuid() }).strict();
+const adminCommentSchema = z.object({
+  id: z.uuid(), body: z.string(), nickname: z.string(), celebritySlug: celebritySlugSchema,
+  noticeSlug: celebritySlugSchema, createdAt: z.iso.datetime({ offset: true }),
+}).strict();
+function decodeCursor(value: string) {
+  return cursorSchema.parse(JSON.parse(Buffer.from(z.string().max(240).parse(value), "base64url").toString("utf8")));
+}
+function encodeCursor(value: z.infer<typeof cursorSchema>) {
+  return Buffer.from(JSON.stringify(value)).toString("base64url");
+}
 function locale(request: Request): "ko" | "en" {
   const values = new URL(request.url).searchParams.getAll("locale");
   if (values.length > 1) throw new Error("FANPAGE_INVALID_REQUEST");
@@ -89,14 +99,14 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
         const contentLocale = locale(request);
         const limit = z.coerce.number().int().min(1).max(50).parse(url.searchParams.get("limit") ?? 20);
         const cursor = url.searchParams.get("cursor");
-        const before = cursor ? cursorSchema.parse(JSON.parse(Buffer.from(z.string().max(240).parse(cursor), "base64url").toString("utf8"))) : null;
+        const before = cursor ? decodeCursor(cursor) : null;
         const result = await dependencies.rpc("read_celebrity_notice_comments", {
           p_slug: slug, p_notice_slug: noticeSlug, p_app_user_id: owner, p_limit: limit, p_before: before?.at ?? null, p_before_id: before?.id ?? null, p_locale: contentLocale,
         });
         if (!result) return fanpageJson({ error: { code: "FANPAGE_NOT_FOUND" } }, 404);
         const body = parseResult(commentsSchema, result);
         const last = body.comments.at(-1);
-        return fanpageJson({ ...body, nextCursor: body.comments.length === limit && last ? Buffer.from(JSON.stringify({ at: last.createdAt, id: last.id })).toString("base64url") : null });
+        return fanpageJson({ ...body, nextCursor: body.comments.length === limit && last ? encodeCursor({ at: last.createdAt, id: last.id }) : null });
       } catch (error) { return fanpageFailure(error); }
     },
     async postComment(request: Request, slug: string, noticeSlug: string) {
@@ -135,9 +145,25 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
         const admin = await dependencies.authorizeAdmin(request.headers.get("authorization"), correlationId);
         const url = new URL(request.url);
         const slug = celebritySlugSchema.optional().parse(url.searchParams.get("celebrity") ?? undefined);
-        const before = z.iso.datetime({ offset: true }).optional().parse(url.searchParams.get("before") ?? undefined);
-        const result = await dependencies.rpc("read_admin_notice_comments", { p_actor_app_user_id: admin.appUserId, p_actor_admin_allowlist_id: admin.allowlistId, p_slug: slug ?? null, p_before: before ?? null });
-        return fanpageJson(parseResult(z.object({ comments: z.array(z.object({ id: z.uuid(), body: z.string(), nickname: z.string(), celebritySlug: celebritySlugSchema, noticeSlug: celebritySlugSchema, createdAt: z.iso.datetime({ offset: true }) }).strict()).max(50) }).strict(), result));
+        const encodedCursor = url.searchParams.get("cursor");
+        const legacyBefore = z.iso.datetime({ offset: true }).optional().parse(url.searchParams.get("before") ?? undefined);
+        if (encodedCursor && legacyBefore) throw new Error("FANPAGE_INVALID_REQUEST");
+        const before = encodedCursor ? decodeCursor(encodedCursor) : null;
+        const baseArgs = {
+          p_actor_app_user_id: admin.appUserId,
+          p_actor_admin_allowlist_id: admin.allowlistId,
+          p_slug: slug ?? null,
+        };
+        const result = await dependencies.rpc("read_admin_notice_comments", legacyBefore
+          ? { ...baseArgs, p_before: legacyBefore }
+          : { ...baseArgs, p_before: before?.at ?? null, p_before_id: before?.id ?? null, p_limit: 51 });
+        const page = parseResult(z.object({ comments: z.array(adminCommentSchema).max(51) }).strict(), result);
+        const comments = page.comments.slice(0, 50);
+        const last = comments.at(-1);
+        return fanpageJson({
+          comments,
+          nextCursor: page.comments.length > 50 && last ? encodeCursor({ at: last.createdAt, id: last.id }) : null,
+        });
       } catch (error) { return fanpageFailure(error); }
     },
   };

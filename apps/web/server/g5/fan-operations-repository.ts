@@ -144,13 +144,14 @@ export function createSupabaseFanOperationsRepository(
         p_account_status: input.accountStatus,
         p_cursor_created_at: input.cursor?.createdAt ?? null,
         p_cursor_id: input.cursor?.id ?? null,
-        p_limit: input.limit,
+        p_limit: Math.min(input.limit + 1, 101),
       });
-      const items = rpcData<FanSummary[]>(data ?? [], error);
+      const rows = rpcData<FanSummary[]>(data ?? [], error);
+      const items = rows.slice(0, input.limit);
       return {
         items,
         nextCursor:
-          items.length === input.limit ? (items.at(-1)?.cursor ?? null) : null,
+          rows.length > input.limit ? (items.at(-1)?.cursor ?? null) : null,
       };
     },
     async detail(input) {

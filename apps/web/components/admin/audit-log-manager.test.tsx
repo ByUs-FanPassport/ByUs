@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditLogManager } from "./audit-log-manager";
 
@@ -19,5 +19,16 @@ describe("ADM-012 audit log", () => {
     expect(screen.getByText(/\[REDACTED\]/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /삭제|수정/ })).not.toBeInTheDocument();
   });
+  it("uses the opaque cursor and appends older logs without duplicating rows", async () => {
+    const older = { ...item, id: "90", action: "live.override.ended" };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ items: [item], nextCursor: "opaque-next" }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ items: [item, older], nextCursor: null }) });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<AuditLogManager />);
+    fireEvent.click(await screen.findByRole("button", { name: "이전 로그 더 보기" }));
+    await screen.findByText("live.override.ended");
+    expect(screen.getAllByText("live.override.created")).toHaveLength(1);
+    await waitFor(() => expect(fetchMock.mock.calls[1][0]).toContain("cursor=opaque-next"));
+  });
 });
-

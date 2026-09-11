@@ -3,6 +3,7 @@
 import { Check, ChevronLeft, ChevronRight, ImageOff, Maximize2, RotateCcw, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { membershipPlatformLabel, type MembershipPlatform } from "@/features/certification/domain/certification";
+import { AdminPagination, useAdminPagination } from "./admin-pagination";
 import styles from "./certification-review-workspace.module.css";
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
@@ -46,7 +47,8 @@ export function CertificationReviewWorkspace({ submissions, locale, status, busy
   const filtered = submissions.filter(item => (!platform || (item.membershipPlatform ?? "generic") === platform)
     && (!creatorFilter || item.celebritySlug === creatorFilter)
     && [item.applicantName, item.appUserId, item.missionTitle, item.missionTitleEn, item.celebritySlug, item.creatorNameKo, item.creatorNameEn, item.id].some(value => value?.toLocaleLowerCase().includes(query)));
-  const selected = filtered.find(item => item.id === selectedId) ?? filtered[0];
+  const pagination = useAdminPagination(filtered, JSON.stringify([search, platform, creatorFilter, status]));
+  const selected = pagination.items.find(item => item.id === selectedId) ?? pagination.items[0];
   const creators = [...new Map(submissions.map(item => [item.celebritySlug, creator(item, locale)])).entries()];
   return <section className={styles.review} aria-label={locale === "ko" ? "인증 심사 목록과 상세" : "Certification review list and details"}>
     <div className={styles.filters}>
@@ -57,9 +59,9 @@ export function CertificationReviewWorkspace({ submissions, locale, status, busy
     </div>
     {!selected ? <div className={styles.empty}><ImageOff aria-hidden="true" /><h2>{submissions.length ? (locale === "ko" ? "검색 결과가 없습니다" : "No matching submissions") : (locale === "ko" ? "표시할 제출이 없습니다" : "No submissions to show")}</h2><p>{submissions.length ? (locale === "ko" ? "검색어나 필터를 바꿔 주세요." : "Try another search or filter.") : status === "pending" ? (locale === "ko" ? "팬이 인증 이미지를 제출하면 이곳에서 확인하고 심사할 수 있습니다." : "When a fan submits proof images, you can review them here.") : (locale === "ko" ? "이 상태의 심사 내역이 없습니다." : "There is no review history with this status.")}</p></div>
       : <div className={styles.workspace}>
-        <div className={styles.list} aria-label={locale === "ko" ? "제출 목록" : "Submissions"}>
-          {filtered.map(item => <button type="button" key={item.id} aria-pressed={selected.id === item.id} disabled={busy} onClick={() => setSelectedId(item.id)}><span className={styles.listTop}><strong>{applicant(item, locale)}</strong><span>{item.uploads.length}{locale === "ko" ? "장" : " images"}</span></span><span>{creator(item, locale)} · {item.membershipPlatform ? membershipPlatformLabel(item.membershipPlatform) : (locale === "ko" ? "일반 인증" : "Other proof")}</span><small>{date(item.submittedAt, locale)} · {locale === "ko" ? `${item.attemptNumber}차 제출` : `Attempt ${item.attemptNumber}`}</small></button>)}
-        </div>
+        <div><div className={styles.list} aria-label={locale === "ko" ? "제출 목록" : "Submissions"}>
+          {pagination.items.map(item => <button type="button" key={item.id} aria-pressed={selected.id === item.id} disabled={busy} onClick={() => setSelectedId(item.id)}><span className={styles.listTop}><strong>{applicant(item, locale)}</strong><span>{item.uploads.length}{locale === "ko" ? "장" : " images"}</span></span><span>{creator(item, locale)} · {item.membershipPlatform ? membershipPlatformLabel(item.membershipPlatform) : (locale === "ko" ? "일반 인증" : "Other proof")}</span><small>{date(item.submittedAt, locale)} · {locale === "ko" ? `${item.attemptNumber}차 제출` : `Attempt ${item.attemptNumber}`}</small></button>)}
+        </div><AdminPagination {...pagination} locale={locale} disabled={busy} /></div>
         <ReviewDetail key={`${selected.id}:${selected.revision}`} item={selected} locale={locale} busy={busy} canWrite={canWrite} loadProof={loadProof} onReview={onReview} />
       </div>}
   </section>;

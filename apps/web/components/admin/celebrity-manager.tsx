@@ -11,6 +11,7 @@ import { NoticeManager } from "./notice-manager";
 import { ImageRoleEditor } from "./image-role-editor";
 import { CREATOR_ROLES, creatorRoleLabel, type CreatorRole } from "@/features/creator/domain/creator-role";
 import styles from "./admin.module.css";
+import { AdminPagination, useAdminPagination } from "./admin-pagination";
 import localStyles from "./celebrity-manager.module.css";
 export type DeploymentEnvironment = "Development" | "Preview" | "Production";
 type Loc = { name: string; summary: string; imageAlt: string };
@@ -219,6 +220,7 @@ function CelebrityCms({
       return matchesPublication && matchesQuery;
     });
   }, [items, publicationFilter, query]);
+  const pagination = useAdminPagination(filtered, JSON.stringify([query, publicationFilter]));
   const draftIsValid = useMemo(() => isDraftValid(draft), [draft]);
   async function command(body: unknown) {
     setState("saving");
@@ -278,8 +280,8 @@ function CelebrityCms({
             <strong>{locale === "ko" ? "크리에이터 목록" : "Creators"}</strong>
             <span>
               {locale === "ko"
-                ? `${filtered.length}개 표시 · 전체 ${items.length}개`
-                : `${filtered.length} shown · ${items.length} total`}
+                ? `${filtered.length}개 검색 결과 · 전체 ${items.length}개`
+                : `${filtered.length} results · ${items.length} total`}
             </span>
           </div>
           <div className={localStyles.listFilters}>
@@ -334,6 +336,7 @@ function CelebrityCms({
               {locale === "ko"
                 ? "크리에이터 목록을 불러오지 못했습니다."
                 : "Creator list could not be loaded."}
+              <button type="button" onClick={() => void load()}>{locale === "ko" ? "다시 시도" : "Retry"}</button>
             </p>
           ) : filtered.length === 0 ? (
             <p>
@@ -342,7 +345,7 @@ function CelebrityCms({
                 : "No celebrities match these filters."}
             </p>
           ) : (
-            filtered.map((x) => (
+            pagination.items.map((x) => (
               <button
                 key={x.id}
                 className={selected === x.id ? styles.cmsListActive : ""}
@@ -361,6 +364,7 @@ function CelebrityCms({
               </button>
             ))
           )}
+          {(state === "ready" || state === "saving") && <AdminPagination {...pagination} locale={locale} disabled={state === "saving"} />}
         </section>
         <section className={styles.cmsEditor}>
           <div className={localStyles.editorIdentity}>

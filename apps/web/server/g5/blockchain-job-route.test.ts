@@ -16,12 +16,23 @@ const session = { email: "ops@byus.example", role: "operator" as const, appUserI
 
 describe("blockchain job admin routes", () => {
   it("allows viewer reads and returns private no-store responses", async () => {
-    const repository = { list: vi.fn().mockResolvedValue([]), retry: vi.fn() };
+    const repository = { list: vi.fn().mockResolvedValue({ jobs: [], nextCursor: null }), retry: vi.fn() };
     const handler = createGetBlockchainJobsHandler({ repository, authorize: vi.fn().mockResolvedValue({ ...session, role: "viewer" }) });
     const response = await handler(new Request("https://byus.example/api/admin/blockchain-jobs?status=FAILED&limit=25", { headers: { authorization: "Bearer token" } }));
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
-    expect(await response.json()).toEqual({ jobs: [] });
+    expect(await response.json()).toEqual({ jobs: [], nextCursor: null });
+  });
+
+  it("returns and accepts a stable created-at plus id cursor", async () => {
+    const cursor = { createdAt: "2026-07-21T00:00:00.000Z", id: ids.job };
+    const repository = { list: vi.fn().mockResolvedValue({ jobs: [], nextCursor: cursor }), retry: vi.fn() };
+    const handler = createGetBlockchainJobsHandler({ repository, authorize: vi.fn().mockResolvedValue(session) });
+    const first = await handler(new Request("https://byus.example/api/admin/blockchain-jobs?limit=25"));
+    const firstBody = await first.json();
+    expect(firstBody.nextCursor).toEqual(expect.any(String));
+    await handler(new Request(`https://byus.example/api/admin/blockchain-jobs?limit=25&cursor=${encodeURIComponent(firstBody.nextCursor)}`));
+    expect(repository.list).toHaveBeenLastCalledWith(expect.objectContaining({ cursor }));
   });
 
   it("blocks viewers before retry reaches the repository", async () => {

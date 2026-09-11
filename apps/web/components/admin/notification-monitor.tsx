@@ -16,6 +16,8 @@ const providerStatusLabel:Record<ProviderStatus,string>={prepared:"준비됨",se
 export function NotificationMonitor() {
   const session = useAdminSession();
   const { getAccessToken } = usePrivy();
+  const getAccessTokenRef = useRef(getAccessToken);
+  useEffect(() => { getAccessTokenRef.current = getAccessToken; }, [getAccessToken]);
   const params = useSearchParams();
   const initialStatus = params.get("status");
   const [status, setStatus] = useState<Status|"">(
@@ -25,27 +27,57 @@ export function NotificationMonitor() {
   const [state, setState] = useState<"loading"|"ready"|"error">("loading");
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const [retryError, setRetryError] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const retryingIdsRef = useRef(new Set<string>());
   const retryKeysRef = useRef(new Map<string,string>());
+  const listRequestId = useRef(0);
+  const listController = useRef<AbortController | null>(null);
 
-  const load = useCallback(async () => {
-    setState("loading");
+  const load = useCallback(async (cursor?: string) => {
+    const requestId = ++listRequestId.current;
+    listController.current?.abort();
+    const controller = new AbortController();
+    listController.current = controller;
+    cursor ? setLoadingMore(true) : setState("loading");
+    setLoadMoreError(false);
     try {
-      const token = await getAccessToken();
+      const token = await getAccessTokenRef.current();
       if (!token) throw new Error("missing token");
-      const query = status ? `?status=${status}` : "";
-      const response = await fetch(`/api/admin/notification-deliveries${query}`, { headers:{authorization:`Bearer ${token}`}, cache:"no-store" });
+      const query = new URLSearchParams({ limit: "50" });
+      if (status) query.set("status", status);
+      if (cursor) query.set("cursor", cursor);
+      const response = await fetch(`/api/admin/notification-deliveries?${query}`, { headers:{authorization:`Bearer ${token}`}, cache:"no-store", signal:controller.signal });
       if (!response.ok) throw new Error("load failed");
-      setData(await response.json());
+      const body = await response.json() as { counts:Record<Status,number>;items:Delivery[];nextCursor:string|null };
+      if (requestId !== listRequestId.current || controller.signal.aborted) return false;
+      setData((current) => ({
+        counts: body.counts,
+        items: cursor && current ? Array.from(new Map([...current.items, ...body.items].map((item) => [item.id, item])).values()) : body.items,
+      }));
+      setNextCursor(body.nextCursor ?? null);
       setState("ready");
       return true;
     } catch {
-      setState("error");
+      if (requestId !== listRequestId.current || controller.signal.aborted) return false;
+      if (cursor) setLoadMoreError(true); else setState("error");
       return false;
+    } finally {
+      if (requestId === listRequestId.current) {
+        setLoadingMore(false);
+        if (listController.current === controller) listController.current = null;
+      }
     }
-  }, [getAccessToken, status]);
+  }, [status]);
 
-  useEffect(() => { if (session.status === "authorized") void load(); }, [load, session.status]);
+  useEffect(() => {
+    if (session.status === "authorized") {
+      setData(null); setNextCursor(null); setLoadMoreError(false);
+      void load();
+    }
+    return () => { listRequestId.current += 1; listController.current?.abort(); listController.current = null; };
+  }, [load, session.status]);
 
   async function retry(id:string) {
     if (retryingIdsRef.current.has(id)) return;
@@ -90,6 +122,6 @@ export function NotificationMonitor() {
     {state === "loading" && <p role="status">알림 전송을 불러오는 중입니다.</p>}
     {state === "error" && <button type="button" onClick={() => void load()}>다시 시도</button>}
     {state === "ready" && data?.items.length === 0 && <p>조건에 맞는 전송이 없습니다.</p>}
-    {state === "ready" && data && data.items.length > 0 && <div className={styles.tableWrap}><table><thead><tr><th>상태</th><th>제공사 상태</th><th>채널</th><th>알림</th><th>수신 대상</th><th>시도</th><th>오류</th><th>작업</th></tr></thead><tbody>{data.items.map((delivery) => <tr key={delivery.id}><td>{delivery.status}</td><td>{delivery.providerStatus ? providerStatusLabel[delivery.providerStatus] : "—"}{delivery.providerStatusCode ? ` · ${delivery.providerStatusCode}` : ""}</td><td>{delivery.channel}</td><td>{delivery.kind}</td><td>{delivery.destinationLabel}</td><td>{delivery.attemptCount}</td><td>{delivery.errorCode ?? "—"}</td><td><button type="button" disabled={delivery.channel==="kakao" || !delivery.manuallyRetryable || session.admin.role === "viewer" || retryingIds.has(delivery.id)} onClick={() => void retry(delivery.id)} aria-label={`재시도 ${delivery.id}`}><RefreshCw aria-hidden="true"/>{retryingIds.has(delivery.id) ? "재시도 중" : "재시도"}</button></td></tr>)}</tbody></table></div>}
+    {state === "ready" && data && data.items.length > 0 && <><div className={styles.tableWrap}><table><thead><tr><th>상태</th><th>제공사 상태</th><th>채널</th><th>알림</th><th>수신 대상</th><th>시도</th><th>오류</th><th>작업</th></tr></thead><tbody>{data.items.map((delivery) => <tr key={delivery.id}><td>{delivery.status}</td><td>{delivery.providerStatus ? providerStatusLabel[delivery.providerStatus] : "—"}{delivery.providerStatusCode ? ` · ${delivery.providerStatusCode}` : ""}</td><td>{delivery.channel}</td><td>{delivery.kind}</td><td>{delivery.destinationLabel}</td><td>{delivery.attemptCount}</td><td>{delivery.errorCode ?? "—"}</td><td><button type="button" disabled={delivery.channel==="kakao" || !delivery.manuallyRetryable || session.admin.role === "viewer" || retryingIds.has(delivery.id)} onClick={() => void retry(delivery.id)} aria-label={`재시도 ${delivery.id}`}><RefreshCw aria-hidden="true"/>{retryingIds.has(delivery.id) ? "재시도 중" : "재시도"}</button></td></tr>)}</tbody></table></div>{loadMoreError && <p className={styles.inlineError} role="alert">이전 전송을 불러오지 못했습니다. 다시 시도해 주세요.</p>}{nextCursor && <button className={styles.loadMore} type="button" disabled={loadingMore} onClick={() => void load(nextCursor)}>{loadingMore ? "불러오는 중…" : "이전 전송 더 보기"}</button>}</>}
   </AdminOperationsShell>;
 }

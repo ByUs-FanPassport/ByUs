@@ -47,5 +47,18 @@ describe("ADM-011 blockchain jobs", () => {
     expect(screen.getByRole("textbox", { name: "작업 ID" })).toHaveValue(
       "11111111-1111-4111-8111-111111111111",
     );
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+  });
+  it("loads the next cursor page and keeps both jobs visible", async () => {
+    const older = { ...failedJob, id: "33333333-3333-4333-8333-333333333333", entityId: "44444444-4444-4444-8444-444444444444" };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ jobs: [failedJob], nextCursor: "opaque-next" }))
+      .mockResolvedValueOnce(Response.json({ jobs: [older], nextCursor: null }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<BlockchainJobsManager />);
+    fireEvent.click(await screen.findByRole("button", { name: "이전 작업 더 보기" }));
+    expect(await screen.findByRole("button", { name: `작업 상세: ${older.id}` })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `작업 상세: ${failedJob.id}` })).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock.mock.calls[1][0]).toContain("cursor=opaque-next"));
   });
 });

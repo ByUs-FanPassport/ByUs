@@ -36,6 +36,11 @@ export interface AdminBlockchainJob {
   }>;
 }
 
+export interface BlockchainJobCursor {
+  createdAt: string;
+  id: string;
+}
+
 export class BlockchainJobRepositoryError extends Error {
   constructor(readonly code: "NOT_FOUND" | "NOT_RETRYABLE" | "FORBIDDEN" | "UNAVAILABLE") {
     super(code);
@@ -50,7 +55,8 @@ export interface BlockchainJobRepository {
     status: BlockchainJobStatus | null;
     limit: number;
     beforeCreatedAt: string | null;
-  }): Promise<AdminBlockchainJob[]>;
+    cursor?: BlockchainJobCursor;
+  }): Promise<{ jobs: AdminBlockchainJob[]; nextCursor: BlockchainJobCursor | null }>;
   retry(input: { actor: AdminJobActor; jobId: string; correlationId: string }): Promise<{
     id: string;
     status: "RETRYING";
@@ -112,11 +118,20 @@ export function createSupabaseBlockchainJobRepository(
         target_actor_admin_allowlist_id: input.actor.allowlistId,
         target_job_id: input.jobId,
         target_status: input.status,
-        target_limit: input.limit,
-        target_before_created_at: input.beforeCreatedAt,
+        target_limit: input.limit + 1,
+        target_before_created_at: input.cursor?.createdAt ?? input.beforeCreatedAt,
+        target_before_id: input.cursor?.id ?? null,
       });
       if (error) throw classify(error.message);
-      return ((data ?? []) as Row[]).map(mapJob);
+      const rows = (data ?? []) as Row[];
+      const visible = rows.slice(0, input.limit).map(mapJob);
+      const last = visible.at(-1);
+      return {
+        jobs: visible,
+        nextCursor: rows.length > input.limit && last
+          ? { createdAt: last.createdAt, id: last.id }
+          : null,
+      };
     },
 
     async retry(input) {

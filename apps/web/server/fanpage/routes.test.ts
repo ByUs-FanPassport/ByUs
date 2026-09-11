@@ -90,6 +90,57 @@ describe("fanpage server authority", () => {
     expect(rpc).toHaveBeenCalledWith("hide_admin_notice_comment", expect.objectContaining({ p_actor_app_user_id: owner, p_actor_admin_allowlist_id: other, p_comment_id: commentId, p_reason: "운영 기준 위반" }));
     expect((await api.hideComment(request("/api", { reason: " " }), commentId)).status).toBe(400);
   });
+  it("uses a stable tuple cursor and an explicit lookahead for admin comments", async () => {
+    const comments = Array.from({ length: 51 }, (_, index) => ({
+      id: `33333333-3333-4333-8333-${String(index + 1).padStart(12, "0")}`,
+      body: `comment ${index + 1}`,
+      nickname: "fan",
+      celebritySlug: "elina",
+      noticeSlug: "notice",
+      createdAt: now,
+    }));
+    rpc.mockResolvedValueOnce({ comments });
+    const first = await api.adminComments(request("/api", undefined, true, "GET"));
+    const body = await first.json();
+    expect(body.comments).toHaveLength(50);
+    expect(JSON.parse(Buffer.from(body.nextCursor, "base64url").toString())).toEqual({
+      at: now,
+      id: comments[49].id,
+    });
+    expect(rpc).toHaveBeenLastCalledWith("read_admin_notice_comments", expect.objectContaining({
+      p_before: null,
+      p_before_id: null,
+      p_limit: 51,
+    }));
+
+    rpc.mockResolvedValueOnce({ comments: [] });
+    const second = await api.adminComments(request(`/api?cursor=${encodeURIComponent(body.nextCursor)}`, undefined, true, "GET"));
+    expect(second.status).toBe(200);
+    expect(rpc).toHaveBeenLastCalledWith("read_admin_notice_comments", expect.objectContaining({
+      p_before: now,
+      p_before_id: comments[49].id,
+    }));
+
+    rpc.mockResolvedValueOnce({ comments: comments.slice(0, 50) });
+    const exactPage = await api.adminComments(request("/api", undefined, true, "GET"));
+    expect((await exactPage.json()).nextCursor).toBeNull();
+  });
+  it("rejects malformed admin comment cursors before calling the RPC", async () => {
+    expect((await api.adminComments(request("/api?cursor=broken", undefined, true, "GET"))).status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("forwards the legacy timestamp cursor to the compatible four-argument RPC", async () => {
+    rpc.mockResolvedValueOnce({ comments: [] });
+    expect((await api.adminComments(request(`/api?before=${encodeURIComponent(now)}`, undefined, true, "GET"))).status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("read_admin_notice_comments", {
+      p_actor_app_user_id: owner,
+      p_actor_admin_allowlist_id: other,
+      p_slug: null,
+      p_before: now,
+    });
+
+    expect((await api.adminComments(request(`/api?before=${encodeURIComponent(now)}&cursor=broken`, undefined, true, "GET"))).status).toBe(400);
+  });
   it("requires an explicit boolean to change activity visibility", async () => {
     rpc.mockResolvedValueOnce({ enabled: false });
     expect((await api.visibility(request("/api", undefined, true, "GET"))).status).toBe(200);

@@ -7,8 +7,8 @@
 .manager > header > button { padding:0 16px; background:#161616; color:#fff; }
 .layout { display:grid; gap:20px; }
 .list { display:grid; align-content:start; gap:8px; }
-.list button { display:grid; justify-items:start; gap:4px; padding:10px 12px; text-align:left; }
-.list button[aria-pressed="true"] { border-color:#161616; background:#f7f7f7; }
+.list > button { display:grid; justify-items:start; gap:4px; padding:10px 12px; text-align:left; }
+.list > button[aria-pressed="true"] { border-color:#161616; background:#f7f7f7; }
 .list span { color:#666; font-size:12px; }
 .editor { min-width:0; }
 .language { display:flex; gap:8px; margin-bottom:16px; }

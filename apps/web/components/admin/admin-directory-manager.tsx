@@ -10,6 +10,7 @@ import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
 import { AlertDialog } from "../ui/overlay/accessible-overlay";
+import { AdminPagination, useAdminPagination } from "./admin-pagination";
 import styles from "./admin-directory-manager.module.css";
 
 type DirectoryItem = AdminDirectoryEntry;
@@ -232,6 +233,7 @@ function DirectoryContent({ locale, getAccessToken, onAccessDenied }: { locale: 
     const normalized = query.trim().toLocaleLowerCase();
     return normalized ? items.filter((item) => item.email.toLocaleLowerCase().includes(normalized)) : items;
   }, [items, query]);
+  const pagination = useAdminPagination(filtered, query);
   const dialog = pending?.kind === "role"
     ? { title: t.confirmRoleTitle, body: t.confirmRoleBody(pending.item.email, pending.role) }
     : pending?.kind === "active" && pending.active
@@ -256,11 +258,12 @@ function DirectoryContent({ locale, getAccessToken, onAccessDenied }: { locale: 
       {state === "loading" && <div className={styles.skeletonList} role="status" aria-label={t.loading}>{[1,2,3,4].map((number) => <div key={number} />)}</div>}
       {state === "error" && <StateMessage title={t.loadError} action={<button type="button" onClick={() => void load()}>{t.retry}</button>} />}
       {state === "ready" && filtered.length === 0 && <StateMessage title={query ? t.emptySearch : t.empty} body={query ? t.emptySearchHelp : t.emptyHelp} />}
-      {state === "ready" && filtered.length > 0 && <div className={styles.tableWrap}><table><thead><tr><th>{t.email}</th><th>{t.role}</th><th>{t.status}</th><th>{t.updated}</th><th>{t.actions}</th></tr></thead><tbody>{filtered.map((item) => {
+      {state === "ready" && filtered.length > 0 && <div className={styles.tableWrap}><table><thead><tr><th>{t.email}</th><th>{t.role}</th><th>{t.status}</th><th>{t.updated}</th><th>{t.actions}</th></tr></thead><tbody>{pagination.items.map((item) => {
         const self = item.id === actorId;
         const draftRole = draftRoles[item.id] ?? item.role;
         return <tr key={item.id} className={!item.active ? styles.inactiveRow : undefined}><td data-label={t.email}><strong>{item.email}</strong>{self && <span className={styles.selfBadge}>{t.self}</span>}{self && <small>{t.selfHelp}</small>}</td><td data-label={t.role}><select aria-label={`${t.role}: ${item.email}`} value={draftRole} disabled={busy || self} onChange={(event) => setDraftRoles((current) => ({ ...current, [item.id]: event.target.value as AdminRole }))}>{roles.map((role) => <option key={role} value={role}>{role}</option>)}</select></td><td data-label={t.status}><span className={item.active ? styles.activeBadge : styles.inactiveBadge}><i aria-hidden="true" />{item.active ? t.active : t.inactive}</span></td><td data-label={t.updated}><time dateTime={item.updatedAt}>{formatDate(item.updatedAt, locale)}</time></td><td data-label={t.actions}><div className={styles.rowActions}><button type="button" disabled={busy || self || draftRole === item.role} onClick={() => setPending({ kind: "role", item, role: draftRole })}>{t.saveRole}</button><button className={item.active ? styles.revokeButton : undefined} type="button" disabled={busy || self} onClick={() => setPending({ kind: "active", item, active: !item.active })}>{item.active ? t.deactivate : t.reactivate}</button></div></td></tr>;
       })}</tbody></table></div>}
+      {state === "ready" && <AdminPagination {...pagination} locale={locale} disabled={busy} />}
     </section>
     {pending && dialog && <AlertDialog open onClose={() => setPending(null)} labelledBy="admin-change-title" describedBy="admin-change-description" backdropClassName={styles.confirmBackdrop} contentClassName={styles.confirmDialog} busy={busy}><h2 id="admin-change-title">{dialog.title}</h2><p id="admin-change-description">{dialog.body}</p><div><button type="button" data-autofocus disabled={busy} onClick={() => setPending(null)}>{t.cancel}</button><button className={pending.kind === "active" && !pending.active ? styles.confirmDanger : styles.confirmPrimary} type="button" disabled={busy} onClick={() => void applyChange()}>{busy ? t.saving : t.confirm}</button></div></AlertDialog>}
   </AdminOperationsShell>;

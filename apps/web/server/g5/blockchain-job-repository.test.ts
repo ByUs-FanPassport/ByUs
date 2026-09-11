@@ -17,15 +17,17 @@ describe("blockchain job repository", () => {
       manually_retryable: true, attempt_history: [],
     }], error: null });
     const repository = createSupabaseBlockchainJobRepository({ url: "https://db.test", serviceRoleKey: "secret" }, { rpc } as never);
-    const jobs = await repository.list({ actor, jobId: null, status: "FAILED", limit: 50, beforeCreatedAt: null });
+    const page = await repository.list({ actor, jobId: null, status: "FAILED", limit: 50, beforeCreatedAt: null });
 
     expect(rpc).toHaveBeenCalledWith("get_admin_blockchain_jobs", expect.objectContaining({
       target_actor_app_user_id: actor.appUserId,
       target_actor_admin_allowlist_id: actor.allowlistId,
       target_status: "FAILED",
+      target_limit: 51,
+      target_before_id: null,
     }));
-    expect(jobs[0]).toMatchObject({ status: "FAILED", transactionReference: "0x12345678…abcdef00", errorCode: "GIWA_RPC_READ_FAILED" });
-    expect(JSON.stringify(jobs)).not.toMatch(/recipient|signedTransaction|private|last_error_message/i);
+    expect(page.jobs[0]).toMatchObject({ status: "FAILED", transactionReference: "0x12345678…abcdef00", errorCode: "GIWA_RPC_READ_FAILED" });
+    expect(JSON.stringify(page)).not.toMatch(/recipient|signedTransaction|private|last_error_message/i);
   });
 
   it("returns the accepted retry without changing identifiers in application code", async () => {
