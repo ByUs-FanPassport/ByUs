@@ -10,7 +10,7 @@ const delivery = {
   notificationId: "22222222-2222-4222-8222-222222222222",
   kind: "live_10m" as const,
   locale: "en" as const,
-  endpoint: "https://push.example/sub",
+  endpoint: "https://fcm.googleapis.com/fcm/send/sub",
   p256dh: "p".repeat(40),
   authSecret: "a".repeat(16),
   attemptCount: 1,
@@ -46,7 +46,11 @@ describe("WebPushSender", () => {
       body: "Your LIVE is about to begin.",
     });
     expect(JSON.parse(payload)).not.toHaveProperty("deepLink");
-    expect(options).toMatchObject({ urgency: "high", TTL: 86400 });
+    expect(options).toMatchObject({
+      urgency: "high",
+      TTL: 86400,
+      timeout: 10_000,
+    });
   });
   it.each(["ko", "en"] as const)("has complete %s copy for every notification kind", async (locale) => {
     sendNotification.mockResolvedValue({ statusCode: 201 });
@@ -72,5 +76,42 @@ describe("WebPushSender", () => {
       retryable: false,
       disableSubscription: true,
     });
+  });
+  it("does not retry a provider redirect response", async () => {
+    sendNotification.mockRejectedValue({ statusCode: 302 });
+    const sender = new WebPushSender({
+      subject: "mailto:ops@byus.example",
+      publicKey: "A".repeat(88),
+      privateKey: "B".repeat(43),
+    });
+    await expect(sender.send(delivery)).rejects.toMatchObject({
+      code: "PUSH_REJECTED",
+      retryable: false,
+      disableSubscription: false,
+    });
+    expect(sendNotification).toHaveBeenCalledOnce();
+  });
+  it.each([
+    "https://127.0.0.1/sub",
+    "https://[::1]/sub",
+    "https://169.254.169.254/latest/meta-data",
+    "https://fcm.googleapis.com.evil.example/sub",
+    "https://user:password@fcm.googleapis.com/sub",
+    "https://fcm.googleapis.com:8443/sub",
+    "https://fcm.googleapis.com/sub#fragment",
+    " https://fcm.googleapis.com/sub",
+    "https://fcm.googleapis.com\\@127.0.0.1/sub",
+  ])("permanently disables hostile endpoint %s before network access", async (endpoint) => {
+    const sender = new WebPushSender({
+      subject: "mailto:ops@byus.example",
+      publicKey: "A".repeat(88),
+      privateKey: "B".repeat(43),
+    });
+    await expect(sender.send({ ...delivery, endpoint })).rejects.toMatchObject({
+      code: "INVALID_PUSH_ENDPOINT",
+      retryable: false,
+      disableSubscription: true,
+    });
+    expect(sendNotification).not.toHaveBeenCalled();
   });
 });

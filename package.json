@@ -40,6 +40,7 @@
     "lint:web": "eslint apps/web --max-warnings=0",
     "lint:worker": "eslint apps/worker --max-warnings=0",
     "security:audit": "npm audit --omit=dev --ignore-scripts",
+    "security:backend-db": "bash scripts/verify-backend-security.sh",
     "security:audit:baseline": "node scripts/verify-npm-audit-baseline.mjs",
     "security:tree": "npm ls @aws-sdk/client-secrets-manager fast-xml-parser axios ws postcss uuid --all",
     "security:verify": "node scripts/verify-security-dependencies.mjs",

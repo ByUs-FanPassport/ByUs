@@ -96,7 +96,7 @@ describe("notification routes", () => {
       notificationId: "22222222-2222-4222-8222-222222222222",
     });
   });
-  it("accepts canonical HTTPS subscriptions and rejects unsafe endpoints", async () => {
+  it("accepts trusted browser push subscriptions and rejects unsafe endpoints", async () => {
     const deps = dependencies();
     const good = new Request("https://byus.example", {
       method: "PUT",
@@ -105,7 +105,7 @@ describe("notification routes", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        endpoint: "https://push.example/subscription",
+        endpoint: "https://fcm.googleapis.com/fcm/send/subscription",
         keys: { p256dh: "a".repeat(40), auth: "b".repeat(16) },
       }),
     });
@@ -122,6 +122,36 @@ describe("notification routes", () => {
       }),
     });
     expect((await createPutSubscriptionHandler(deps)(bad)).status).toBe(400);
+    expect(deps.repository.putSubscription).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    "https://127.0.0.1/subscription",
+    "https://[::1]/subscription",
+    "https://169.254.169.254/latest/meta-data",
+    "https://fcm.googleapis.com.evil.example/subscription",
+    "https://evilfcm.googleapis.com/subscription",
+    "https://user:password@fcm.googleapis.com/subscription",
+    "https://fcm.googleapis.com:8443/subscription",
+    "https://fcm.googleapis.com/subscription#redirect",
+    " https://fcm.googleapis.com/subscription",
+    "https://fcm.googleapis.com\\@127.0.0.1/subscription",
+  ])("rejects hostile push endpoint %s", async (unsafeEndpoint) => {
+    const deps = dependencies();
+    const response = await createPutSubscriptionHandler(deps)(
+      new Request("https://byus.example", {
+        method: "PUT",
+        headers: {
+          authorization: "Bearer token",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          endpoint: unsafeEndpoint,
+          keys: { p256dh: "a".repeat(40), auth: "b".repeat(16) },
+        }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(deps.repository.putSubscription).not.toHaveBeenCalled();
   });
   it("persists explicit preference patches and subscription deletion", async () => {
     const deps = dependencies();
@@ -144,7 +174,9 @@ describe("notification routes", () => {
         authorization: "Bearer token",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ endpoint: "https://push.example/subscription" }),
+      body: JSON.stringify({
+        endpoint: "https://fcm.googleapis.com/fcm/send/subscription",
+      }),
     });
     expect((await createDeleteSubscriptionHandler(deps)(del)).status).toBe(200);
   });
