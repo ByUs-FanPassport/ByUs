@@ -37,6 +37,7 @@ import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
 import { fanStageLabel } from "../features/rewards/domain/fan-stage";
 import styles from "./guest-home.module.css";
 import { HomeEntryCards } from "./home-entry-cards/home-entry-cards";
+import { ObservedLiveStrip } from "@/features/live/ui/observed-live-strip";
 
 const socialLabel = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", chzzk: "치지직" } as const;
 const UPCOMING_LIVE_PAGE_SIZE = 3;
@@ -295,6 +296,8 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
             <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
             {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <LiveHeroCarousel elina={celebrities.find(celebrity => celebrity.slug === "elina")} featuredLives={featuredLives} locale={locale} onStartReached={refreshLiveStatus} />}
           </section>
+
+          <ObservedLiveStrip locale={locale} />
 
           <div className={styles.mobilePersonalization}>
             {personalization.state.status === "guest" ? (

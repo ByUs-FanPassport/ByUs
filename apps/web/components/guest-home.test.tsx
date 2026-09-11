@@ -1011,3 +1011,4 @@ it.each([0, 1])("offers the full roster when no owned profile is published and P
   expect(new URL(window.location.href).searchParams.get("owned")).toBeNull();
 });
 });
+vi.mock("@/features/live/ui/observed-live-strip", () => ({ ObservedLiveStrip: () => null }));
