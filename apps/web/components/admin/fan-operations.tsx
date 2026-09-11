@@ -114,7 +114,6 @@ const copy = {
     loadingMore: "불러오는 중…",
     loadMoreError: "다음 회원을 불러오지 못했습니다. 다시 시도해 주세요.",
     fan: "회원",
-    noNickname: "닉네임 미설정",
     loginMethod: "로그인 수단",
     providerUnknown: "확인 불가",
     providerNone: "연결 없음",
@@ -175,7 +174,6 @@ const copy = {
     loadingMore: "Loading…",
     loadMoreError: "More members could not be loaded. Try again.",
     fan: "Member",
-    noNickname: "Nickname not set",
     loginMethod: "Login method",
     providerUnknown: "Unavailable",
     providerNone: "None linked",
@@ -205,6 +203,10 @@ const copy = {
     unavailable: "Disabled fans and archived celebrities cannot be corrected.",
   },
 } as const;
+function memberName(fan: Fan) {
+  return fan.nickname?.trim() || fan.email?.trim() || fan.fanId;
+}
+
 function formatDate(value: string, locale: AdminLocale) {
   return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     dateStyle: "medium",
@@ -372,7 +374,7 @@ export function FanOperations() {
       );
     return [...fans].sort((a, b) => {
       if (sort === "name")
-        return (a.nickname ?? "").localeCompare(b.nickname ?? "", locale);
+        return memberName(a).localeCompare(memberName(b), locale);
       if (sort === "score") return scoreTotal(b) - scoreTotal(a);
       if (sort === "activity") return activityTotal(b) - activityTotal(a);
       return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
@@ -552,7 +554,7 @@ export function FanOperations() {
             <div className={ops.drawerHeader}>
               <div>
                 <p>{selected.fanId}</p>
-                <h2 id="fan-title">{selected.nickname?.trim() || t.noNickname}</h2>
+                <h2 id="fan-title">{memberName(selected)}</h2>
               </div>
               <button
                 ref={closeButtonRef}
@@ -677,10 +679,12 @@ function FanTable({
                     </span>
                     <div className={styles.memberIdentity}>
                       <div className={styles.memberName}>
-                        <strong>{fan.nickname?.trim() || labels.noNickname}</strong>
+                        <strong>{memberName(fan)}</strong>
                         {fan.accountStatus === "disabled" && <span className={styles.disabledLabel}>{labels.disabled}</span>}
                       </div>
-                      <span className={styles.memberEmail} title={fan.email ?? undefined}>{fan.email ?? "—"}</span>
+                      {fan.nickname?.trim() && fan.email?.trim() && (
+                        <span className={styles.memberEmail} title={fan.email}>{fan.email}</span>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -709,7 +713,7 @@ function FanTable({
                   <button
                     className={ops.iconButton}
                     type="button"
-                    aria-label={`${labels.detail}: ${fan.nickname?.trim() || fan.email || fan.fanId}`}
+                    aria-label={`${labels.detail}: ${memberName(fan)}`}
                     onClick={() => void open(fan)}
                   >
                     <ChevronRight aria-hidden="true" />
