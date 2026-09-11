@@ -69,12 +69,31 @@
   width: 18px;
 }
 
-.heroGrid {
+.detailLayout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
   gap: 32px;
   align-items: start;
 }
+
+.detailAside {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  min-width: 0;
+  gap: 16px;
+}
+
+.eventStatusRow { display:flex; align-items:center; gap:8px; min-height:28px; }
+.actionState { margin-top:24px; }
+.actionState .actionStatus { margin-top:0; }
+.actionStatus[data-reserved] { color:var(--color-ink); }
+.attendanceShortcut { display:flex; align-items:center; gap:8px; min-height:44px; margin-top:12px; color:var(--color-ink); font-size:14px; font-weight:650; text-decoration:none; }
+.attendanceShortcut svg { width:18px; height:18px; flex:none; }
+.attendanceShortcut svg:last-child { margin-left:auto; }
+@media (hover:hover) { .attendanceShortcut:hover { text-decoration:underline; text-underline-offset:3px; } }
+@media (min-width:1024px) and (min-height:900px) { .detailAside { position:sticky; top:88px; } }
 
 .heroMedia {
   position: relative;
@@ -269,24 +288,19 @@
   line-height: 1.5;
 }
 
-.contentGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
-  gap: 32px;
-  margin-top: 64px;
-}
-
 .contentMain {
+  grid-column: 1;
+  grid-row: 2;
   min-width: 0;
 }
 .section {
-  padding: 0 4px 64px;
+  padding: 0 0 40px;
 }
 
 .benefitAction { margin-top: 20px; }
 .section + .section {
   border-top: 1px solid oklch(93% 0 0);
-  padding-top: 48px;
+  padding-top: 32px;
 }
 .section h2,
 .fanCode h2 {
@@ -308,15 +322,18 @@
 }
 .section .productContext {
   margin-top: 12px;
-  color: oklch(18% 0 0);
-  font-weight: 700;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 400;
 }
+.section .participationNote { margin-top:16px; color:var(--color-muted); font-size:13px; line-height:1.6; }
+.section .prizeName { margin-bottom:8px; color:var(--color-ink); font-size:18px; font-weight:750; }
 
 .journey {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1px;
-  margin: 28px 0 0;
+  margin: 20px 0 0;
   padding: 0;
   list-style: none;
   background: oklch(93% 0 0);
@@ -331,10 +348,10 @@
 
 .journey li {
   display: flex;
-  min-height: 148px;
+  min-height: 132px;
   flex-direction: column;
   gap: 10px;
-  padding: 20px;
+  padding: 16px;
   background: #fff;
 }
 .journey span {
@@ -360,7 +377,8 @@
 }
 
 .fanCode {
-  margin: 0 0 64px;
+  scroll-margin-top: 96px;
+  margin: 0 0 40px;
   padding: 20px;
   border: 1px solid oklch(90% 0 0);
   border-radius: 16px;
@@ -530,8 +548,6 @@
 }
 
 .identity {
-  position: sticky;
-  top: 96px;
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr) 44px;
   gap: 16px;
@@ -769,7 +785,7 @@
 }
 
 @media (max-width: 1023px) {
-  .heroGrid {
+  .detailLayout {
     grid-template-columns: 1fr;
     gap: 20px;
   }
@@ -780,16 +796,8 @@
   .actionRail {
     padding: 24px;
   }
-  .contentGrid {
-    grid-template-columns: 1fr;
-  }
-  .identity {
-    position: static;
-    grid-row: 1;
-  }
-  .contentMain {
-    grid-row: 2;
-  }
+  .detailAside { grid-column:1; grid-row:2; gap:16px; }
+  .contentMain { grid-column:1; grid-row:3; }
 }
 
 @media (max-width: 767px) {
@@ -805,22 +813,18 @@
     object-position: center;
   }
   .actionRail {
-    padding: 24px 20px;
+    padding: 4px 0 0;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
-  .actionRail h1 {
-    font-size: 20px;
-  }
-  .contentGrid {
-    margin-top: 48px;
-  }
+  .actionRail h1 { font-size:24px; }
+  .detailLayout { gap:24px; }
   .section {
-    padding: 0 0 48px;
+    padding: 0 0 32px;
   }
   .section + .section {
-    padding-top: 40px;
+    padding-top: 28px;
   }
   .section h2 {
     font-size: 20px;
@@ -834,6 +838,8 @@
   .journey li {
     min-height: auto;
     display: grid;
+    padding:14px 16px;
+    gap:6px 12px;
     grid-template-columns: 28px minmax(0, 1fr);
     align-items: center;
   }
@@ -841,7 +847,7 @@
     grid-column: 2;
   }
   .fanCode {
-    margin: 0 0 48px;
+    margin: 0 0 32px;
     padding: 20px;
   }
   .fanCode:has([data-before-live]) .fanCodeContent { gap:12px; }
@@ -916,29 +922,23 @@
 }
 
 .collectible {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: center;
-  margin: 0 0 48px;
-  padding: 20px;
-  border: 1px solid oklch(88% 0.03 285);
-  border-radius: 16px;
-  background: linear-gradient(135deg, oklch(98% 0.015 285), white);
+  min-width:0;
+  padding-block:4px;
+  border-block:1px solid var(--color-line-subtle);
 }
-
-.collectible h2,
-.collectible p { margin: 0; }
-.collectibleHeading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); }
-.collectible h2 { min-width:0; font-size:20px; font-weight:800; line-height:1.3; }
-.collectible p { margin-top: 8px; color: oklch(38% 0 0); font-size:15px; line-height:1.65; }
-.collectible small { display: block; margin-top: 8px; color:var(--color-muted); font-size:12px; line-height:1.5; }
-.collectibleHeading > svg { width:20px; height:20px; flex:none; color: oklch(52% 0.18 285); }
-.collectible > button { justify-self:start; }
-.collectible .actionError { grid-column: 1 / -1; }
-
-@media (max-width: 600px) {
-  .collectible button { width: 100%; }
+.collectible summary { display:flex; min-height:64px; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; list-style:none; }
+.collectible summary::-webkit-details-marker { display:none; }
+.collectible summary:focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
+.collectible h2 { margin:0; min-width:0; color:var(--color-ink); font-size:18px; font-weight:750; line-height:1.4; }
+.collectibleState { display:flex; flex:none; align-items:center; gap:6px; color:var(--color-muted); font-size:12px; }
+.collectibleState svg { width:16px; height:16px; flex:none; }
+.collectible details[open] .collectibleState svg:last-child { rotate:180deg; }
+.collectibleContent { display:grid; justify-items:start; gap:12px; padding-bottom:20px; }
+.collectible p { margin:0; color:var(--color-muted); font-size:14px; line-height:1.65; }
+.collectible small { color:var(--color-muted); font-size:12px; line-height:1.5; }
+@media (max-width:600px) {
+  .collectible h2 { font-size:16px; }
+  .collectibleContent button { width:100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -952,10 +952,7 @@
   }
 }
 
-/* Hallmark · component: reservation card · theme: Fan Pulse Spectrum
- * Existing async/error/success flows retained; visual acceptance requires rendered QA.
- * Schedule prioritizes event and close time; full period remains disclosed.
- */
+/* Shared reservation controls retain the existing async and recovery flows. */
 .actionRail { border-color:var(--color-line); border-radius:var(--radius-collection); box-shadow:none; }
 .titleGroup { margin-top:var(--space-3); }
 .scheduleGroup { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--color-line-subtle); }
@@ -978,3 +975,22 @@
 .deadlineSchedule dt { font-size:14px; line-height:1.6; white-space:nowrap; }
 .scheduleMeta { margin-top:var(--space-2); }
 .actionHelper { margin-bottom:0; }
+
+@media (max-width: 767px) {
+  .main { padding-top: 0; padding-bottom: 48px; }
+  .back { margin-bottom: 8px; }
+  .detailLayout { gap: 16px; }
+  .detailAside { gap: 8px; }
+  .scheduleGroup { margin-top: 16px; padding-top: 12px; }
+  .scheduleMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .reservationDetails { min-width: 0; }
+  .reservationDetails summary { margin-left: auto; white-space: nowrap; }
+  .reservationDetails[open] { flex-basis: 100%; }
+  .scheduleMeta:has(.reservationDetails[open]) { flex-wrap: wrap; }
+  .primaryActionSlot { margin-top: 12px; padding-top: 0; }
+  .actionState { margin-top: 12px; }
+  .actionState .actionStatus { min-height: 24px; }
+  .actionHelper { margin-top: 8px; }
+  .calendarAction { margin-top: 12px; }
+  .identity { grid-template-columns: 48px minmax(0, 1fr) 44px; gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--color-line-subtle); border-radius: 0; box-shadow: none; }
+}

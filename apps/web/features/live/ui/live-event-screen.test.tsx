@@ -138,13 +138,17 @@ describe("LiveEventScreen", () => {
     };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, viewer: { ...response.viewer, collectible } }), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
-    const card = await screen.findByRole("region", { name: "Digital Collectible" });
-    expect(within(card).getByText(/KST까지$/)).toBeVisible();
-    const action = within(card).queryByRole("button", { name: "Collectible 받기" });
+    const card = await screen.findByRole("region", { name: "디지털 소장품" });
+    if (state === "locked") {
+      expect(card.querySelector("details")).not.toHaveAttribute("open");
+      fireEvent.click(card.querySelector("summary")!);
+    }
+    expect(within(card).getByText(/^받기 마감 · /)).toBeVisible();
+    const action = within(card).queryByRole("button", { name: "소장품 받기" });
     if (state === "eligible") expect(action).toBeEnabled();
     else expect(action).not.toBeInTheDocument();
-    if (state === "locked") expect(within(card).getByText("Journey 완료와 LIVE 종료 후 받을 수 있어요.")).toBeVisible();
-    if (state === "claimed") expect(within(card).getByLabelText("Claim 완료")).toBeVisible();
+    if (state === "locked") expect(within(card).getByText("참여 조건을 완료하고 LIVE가 끝나면 받을 수 있어요.")).toBeVisible();
+    if (state === "claimed") expect(within(card).getByLabelText("받기 완료")).toBeVisible();
   });
   it.each([
     ["ko", "라이브", "/live?locale=ko"],
@@ -168,8 +172,8 @@ describe("LiveEventScreen", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ...response, viewer: { ...response.viewer, collectible } }), { status: 200 }));
     render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
 
-    const card = await screen.findByRole("region", { name: "Digital Collectible" });
-    expect(within(card).getByText(/KST deadline$/)).toBeVisible();
+    const card = await screen.findByRole("region", { name: "Digital collectible" });
+    expect(within(card).getByText(/^Claim deadline · .*KST$/)).toBeVisible();
   });
   it.each([false, true, null])("keeps mission availability truthful: %s", async (available) => {
     const response = payload();
@@ -202,7 +206,7 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("heading", { name: "출석 코드" })).toBeInTheDocument();
     expect(screen.getByText("LIVE가 시작되면 방송에서 알려주는 출석 코드를 이 화면에 입력해 주세요.")).toBeVisible();
     expect(screen.getByText("팬 인증")).toBeVisible();
-    expect(screen.getByText("예약", { selector: "strong" })).toBeVisible();
+    expect(screen.getByText("LIVE 예약", { selector: "strong" })).toBeVisible();
     expect(screen.getByText("LIVE 출석", { selector: "strong" })).toBeVisible();
     expect(screen.getByText("선물 응모", { selector: "strong" })).toBeVisible();
     expect(screen.queryByText("설문", { selector: "strong" })).not.toBeInTheDocument();
@@ -690,6 +694,43 @@ describe("LiveEventScreen", () => {
     expect(screen.queryByText(/취소하기/)).not.toBeInTheDocument();
   });
 
+  it.each(["ko", "en"] as const)("keeps IfeW guest attendance closed before the LIVE in %s", async (locale) => {
+    authenticated = false;
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(ifewPayload("sign_in_to_reserve")));
+    render(<LiveEventScreen slug="ifew-100-days-tiktok-20260912" locale={locale} />);
+    const attendanceSection = await screen.findByRole("region", { name: locale === "ko" ? "출석 코드" : "Attendance code" });
+    expect(within(attendanceSection).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(attendanceSection.querySelector("[data-before-live]")).toBeVisible();
+    expect(screen.getByRole("link", { name: locale === "ko" ? "로그인하기" : "Sign in" })).toBeVisible();
+  });
+
+  it("separates IfeW reservation confirmation from the single prize entry action", async () => {
+    const response = ifewPayload("reserved");
+    response.viewer.reservation = reservation;
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(response));
+    render(<LiveEventScreen slug="ifew-100-days-tiktok-20260912" locale="ko" />);
+    const status = await screen.findByRole("status");
+    expect(status).toHaveAttribute("data-reserved", "true");
+    expect(status.querySelector(".lucide-check")).not.toBeNull();
+    const rail = screen.getByRole("complementary", { name: "LIVE 예약 정보" });
+    expect(within(rail).queryByRole("link", { name: "뱅크시 관람권 추첨 응모하기" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "뱅크시 관람권 추첨 응모하기" })).toHaveLength(1);
+    expect(screen.getByText(/예약 없이도 출석할 수 있어요/)).toBeVisible();
+    expect(screen.getByText(/자동 응모되지는 않아요/)).toBeVisible();
+  });
+
+  it("provides a direct IfeW attendance anchor while watching and keeps the external watch link", async () => {
+    const response = ifewPayload("watch_live");
+    response.live.effectiveStatus = "live";
+    response.live.watch = { available: true, provider: "tiktok", url: "https://www.tiktok.com/@ifewknow/live" };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(response));
+    render(<LiveEventScreen slug="ifew-100-days-tiktok-20260912" locale="ko" />);
+    const shortcut = await screen.findByRole("link", { name: "출석 코드 입력" });
+    expect(shortcut).toHaveAttribute("href", "#fan-code");
+    expect(screen.getByRole("textbox", { name: "출석 코드 입력" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: /LIVE 보러가기: ifew/ })).toHaveAttribute("target", "_blank");
+  });
+
   it("opens an external LIVE safely and stores the exact fan-code return route", async () => {
     const watchPayload = payload("watch_live", true);
     watchPayload.live.effectiveStatus = "live";
@@ -774,8 +815,8 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
     expect(screen.getByText("LIVE 출석이 기록되고 이퓨 응모권 2장을 받았어요.")).toBeVisible();
     const prizeActions = screen.getAllByRole("link", { name: "뱅크시 관람권 추첨 응모하기" });
-    expect(prizeActions).toHaveLength(2);
-    expect(prizeActions[1]).toHaveAttribute("href", "/c/ifewknow/raffles?locale=ko");
+    expect(prizeActions).toHaveLength(1);
+    expect(prizeActions[0]).toHaveAttribute("href", "/c/ifewknow/raffles?locale=ko");
     expect(screen.queryByRole("link", { name: /설문 참여/ })).not.toBeInTheDocument();
   });
 
