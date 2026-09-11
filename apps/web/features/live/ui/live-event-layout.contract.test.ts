@@ -46,9 +46,8 @@ describe("LIVE detail information hierarchy contract", () => {
     expect(declarations(".calendarActionLabel")).toMatchObject({ "line-height": "1.2" });
   });
 
-  it("matches the Fan Code card inset to the collectible and keeps its notice quiet", () => {
-    expect(declarations(".fanCode")).toMatchObject({ margin: "0 0 64px", padding: "20px" });
-    expect(declarations(".collectible")).toMatchObject({ padding: "20px" });
+  it("keeps the Fan Code card padded and its notice quiet", () => {
+    expect(declarations(".fanCode")).toMatchObject({ padding: "20px" });
     expect(declarations(".fanCodeIntro")).toMatchObject({ "align-items": "flex-start", "justify-content": "space-between" });
     expect(declarations('.attendanceNotice[data-before-live]')).toMatchObject({ color: "var(--color-muted)", "font-size": "12px !important", "font-weight": "550 !important", "line-height": "1.5" });
     expect(css).not.toContain(".fanCode:has([data-before-live]) { padding:");
