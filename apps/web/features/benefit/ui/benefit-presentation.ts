@@ -12,6 +12,21 @@ export function formatBenefitDateTime(value: string, locale: BenefitLocale) {
   }).format(new Date(value))} (KST)`;
 }
 
+export function formatRaffleDateTime(value: string, locale: BenefitLocale) {
+  const parts = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Asia/Seoul",
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}.${part("month")}.${part("day")} ${part("hour")}:${part("minute")} (KST)`;
+}
+
 /** Keep editorial conditions, but render an equivalent midnight deadline consistently. */
 export function benefitEligibilityLabel(benefit: BenefitCatalogItem, locale: BenefitLocale) {
   const closesAt = benefit.entry?.entryClosesAt ?? benefit.claimClosesAt;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { raffleFulfillmentPolicySchema } from "./raffle-fulfillment-policy";
 
 export const raffleSchema = z.object({
   id: z.string().uuid(),
@@ -11,6 +12,7 @@ export const raffleSchema = z.object({
   entryOpensAt: z.string().datetime({ offset: true }).nullable(),
   entryClosesAt: z.string().datetime({ offset: true }).nullable(),
   fulfillmentMethod: z.enum(["digital", "physical_shipping", "on_site_pickup"]),
+  fulfillmentPolicy: raffleFulfillmentPolicySchema.nullable().optional(),
   perFanTicketLimit: z.number().int().positive().nullable(),
 });
 

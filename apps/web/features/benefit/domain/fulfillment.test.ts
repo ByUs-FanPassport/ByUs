@@ -40,6 +40,43 @@ describe("Benefit fulfillment domain", () => {
     expect(() => recipientInputSchema.parse({ consentVersion: "2026-09-v1", consented: false, name: "A", phone: "01012345678" })).toThrow();
   });
 
+  it("accepts a normalized v2 international contact and Unicode recipient name", () => {
+    expect(recipientInputSchema.parse({
+      consentVersion: BENEFIT_RECIPIENT_CONSENT_VERSION,
+      consented: true,
+      name: "山田 太郎",
+      phone: "+819012345678",
+      phoneCountry: "JP",
+      expectedRevision: 0,
+    })).toMatchObject({ name: "山田 太郎", phoneCountry: "JP", expectedRevision: 0 });
+  });
+
+  it("requires normalized phone and Korean address fields for v2 shipping", () => {
+    expect(recipientInputSchema.parse({
+      consentVersion: BENEFIT_RECIPIENT_CONSENT_VERSION,
+      consented: true,
+      name: "Alex Kim",
+      phone: "+12133734253",
+      phoneCountry: "US",
+      shippingCountry: "KR",
+      expectedRevision: 2,
+      postalCode: "04524",
+      address1: "서울특별시 중구 세종대로 110",
+    })).toMatchObject({ shippingCountry: "KR", postalCode: "04524" });
+
+    expect(() => recipientInputSchema.parse({
+      consentVersion: BENEFIT_RECIPIENT_CONSENT_VERSION,
+      consented: true,
+      name: "Alex Kim",
+      phone: "2133734253",
+      phoneCountry: "US",
+      shippingCountry: "KR",
+      expectedRevision: 2,
+      postalCode: "1234",
+      address1: "",
+    })).toThrow();
+  });
+
   it("accepts only the non-digital ready result returned by recipient submission", () => {
     expect(recipientSaveResultSchema.parse({
       winnerId: "11111111-1111-4111-8111-111111111111",

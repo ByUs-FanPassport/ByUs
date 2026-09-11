@@ -3,6 +3,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Archive, Gift, Plus, Save } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { RafflePolicyEditor, PickupRosterExport, RaffleWinnerOperations } from "./raffle-operations-panel";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminOperationsShell, type AdminLocale } from "./operations-shell";
 import { useAdminSession } from "./use-admin-session";
@@ -281,7 +282,7 @@ export function AuthorizedBenefitManager() {
     s = useAdminSession();
   if (s.status !== "authorized")
     return <AdminAccessState locale={locale} status={s.status} />;
-  return <BenefitManager locale={locale} role={s.admin.role} />;
+  return <BenefitManager key={s.admin.email} locale={locale} role={s.admin.role} />;
 }
 function BenefitManager({
   locale,
@@ -297,7 +298,6 @@ function BenefitManager({
     [form, setForm] = useState(blank),
     [campaign, setCampaign] = useState(blankCampaign),
     [draws, setDraws] = useState<Record<string, BenefitDrawResult>>({}),
-    [winnerDetails, setWinnerDetails] = useState<Record<string, Record<string, unknown>>>({}),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
     [codes, setCodes] = useState("");
@@ -441,40 +441,6 @@ function BenefitManager({
       await refresh();
     } catch { setError(t.failure); } finally { setPending(false); }
   }
-  async function readWinner(winnerId: string, reveal: boolean) {
-    try {
-      setPending(true);
-      const token = await getAccessToken();
-      if (!token) throw new Error();
-      const response = await fetch(`/api/admin/benefit-winners/${winnerId}?reveal=${reveal}`, {
-        headers: { authorization: `Bearer ${token}`, "x-correlation-id": crypto.randomUUID() },
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error();
-      const detail = await response.json() as Record<string, unknown>;
-      setWinnerDetails((current) => ({ ...current, [winnerId]: detail }));
-    } catch { setError(t.failure); } finally { setPending(false); }
-  }
-  async function transitionWinner(winnerId: string, expectedRevision: number) {
-    const toStatus = window.prompt("Next fulfillment status");
-    const operatorMemo = window.prompt("Operator memo (10+ chars)");
-    if (!toStatus || !operatorMemo) return;
-    try {
-      setPending(true);
-      const token = await getAccessToken();
-      if (!token) throw new Error();
-      const carrier = toStatus === "shipping_in_transit" ? window.prompt("Carrier") ?? "" : undefined;
-      const trackingNumber = toStatus === "shipping_in_transit" ? window.prompt("Tracking number") ?? "" : undefined;
-      const response = await fetch(`/api/admin/benefit-winners/${winnerId}`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json", "x-correlation-id": crypto.randomUUID() },
-        body: JSON.stringify({ expectedRevision, toStatus, operatorMemo, carrier, trackingNumber }),
-      });
-      if (!response.ok) throw new Error();
-      await refresh();
-      await readWinner(winnerId, false);
-    } catch { setError(t.failure); } finally { setPending(false); }
-  }
   async function archive() {
     if (
       selected &&
@@ -521,7 +487,7 @@ function BenefitManager({
           <h2>{t.campaigns} · {data.campaigns.length}</h2>
           <ul className={styles.rows}>
             {data.campaigns.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className={styles.campaignRow}>
                 <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
                   {item.liveEventId} · {item.status}
                 </button>
@@ -535,15 +501,9 @@ function BenefitManager({
                 {draws[item.id] && (
                   <small>{draws[item.id].candidateCount} candidates · {draws[item.id].winners.length} winners · {draws[item.id].seedHash}</small>
                 )}
-                {item.draw?.winners.map((winner) => (
-                  <div key={winner.winnerId}>
-                    <small>{winner.benefitId} · {winner.method} · {winner.status}</small>
-                    <button type="button" disabled={pending} onClick={() => void readWinner(winner.winnerId, false)}>Masked recipient</button>
-                    <button type="button" disabled={!canWrite || pending} onClick={() => void readWinner(winner.winnerId, true)}>Reveal + audit</button>
-                    <button type="button" disabled={!canWrite || pending} onClick={() => void transitionWinner(winner.winnerId, winner.revision)}>Advance status</button>
-                    {winnerDetails[winner.winnerId] && <pre>{JSON.stringify(winnerDetails[winner.winnerId])}</pre>}
-                  </div>
-                ))}
+                {item.benefits.map(benefit => <RafflePolicyEditor key={benefit.benefitId} campaignId={item.id} benefitId={benefit.benefitId} title={data.benefits.find(b => b.id === benefit.benefitId)?.localizations[locale].title ?? benefit.benefitId} method={benefit.fulfillmentMethod} revision={item.revision} canWrite={canWrite && !item.cancelledAt} onSaved={refresh} locale={locale} />)}
+                {item.drawPublishedAt && item.benefits.some(b => b.fulfillmentMethod === "on_site_pickup") && <PickupRosterExport campaignId={item.id} canWrite={canWrite} locale={locale} />}
+                {item.draw?.winners.map(winner => <RaffleWinnerOperations key={winner.winnerId} winnerId={winner.winnerId} title={data.benefits.find(b => b.id === winner.benefitId)?.localizations[locale].title ?? winner.benefitId} status={winner.status} published={Boolean(item.drawPublishedAt)} canWrite={canWrite} onSaved={refresh} locale={locale} />)}
               </li>
             ))}
           </ul>

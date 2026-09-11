@@ -42,6 +42,8 @@ import {
   type BenefitOwnedApplicationResponse,
 } from "../domain/benefit";
 import { benefitEligibilityLabel, formatBenefitDateTime } from "./benefit-presentation";
+import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
+import { BenefitRaffleResult } from "./raffle-result-panel";
 import styles from "./benefit-screen.module.css";
 import {
   benefitEntryResultSchema,
@@ -142,6 +144,11 @@ const copy = {
     entryLimitReached: "이 혜택의 응모 한도에 도달했어요.",
     entryClosed: "응모가 종료됐어요.",
     entryError: "응모하지 못했어요. 응모권 잔액과 응모 기간을 확인해 주세요.",
+    shippingOnly: "한국 주소로만 배송",
+    shippingOnlyHelp: "당첨 후 대한민국 내 배송지를 입력해야 합니다. 해외 배송은 지원하지 않습니다.",
+    pickupMethod: "현장 수령",
+    shippingAck: "대한민국 내 주소로 받을 수 있음을 확인했습니다.",
+    entryPolicyRefresh: "경품 수령 조건이 변경됐어요. 최신 조건을 확인하고 다시 동의해 주세요.",
     delivered: "혜택이 안전하게 전달되었어요",
     text: "혜택 내용",
     code: "혜택 코드",
@@ -223,6 +230,11 @@ const copy = {
     entryClosed: "This raffle has ended.",
     entryError:
       "Entry failed. Check your raffle ticket balance and entry window.",
+    shippingOnly: "Ships to Korean addresses only",
+    shippingOnlyHelp: "If selected, you must provide a delivery address in South Korea. International shipping is not available.",
+    pickupMethod: "On-site pickup",
+    shippingAck: "I confirm that I can receive this prize at an address in South Korea.",
+    entryPolicyRefresh: "The collection policy changed. Review the latest policy and confirm it again.",
     delivered: "Your benefit was delivered securely",
     text: "Benefit details",
     code: "Benefit code",
@@ -541,21 +553,30 @@ type DetailView =
   | { kind: "error"; notFound: boolean }
   | { kind: "ready"; benefit: BenefitCatalogItem };
 
-export function BenefitDetailScreen({
-  benefitId,
-  locale,
-  celebrity,
-  presentation = "page",
-  onBusyChange,
-}: {
+type BenefitDetailScreenProps = {
   benefitId: string;
   locale: BenefitLocale;
   celebrity?: string;
   presentation?: "page" | "overlay";
   onBusyChange?: (busy: boolean) => void;
-}) {
+};
+
+export function BenefitDetailScreen(props: BenefitDetailScreenProps) {
+  const auth = usePrivy();
+  const identityKey = `${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${props.benefitId}`;
+  return <BenefitDetailOwnerScreen key={identityKey} {...props} auth={auth} />;
+}
+
+function BenefitDetailOwnerScreen({
+  benefitId,
+  locale,
+  celebrity,
+  presentation = "page",
+  onBusyChange,
+  auth,
+}: BenefitDetailScreenProps & { auth: ReturnType<typeof usePrivy> }) {
   const c = copy[locale];
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken } = auth;
   const mobileEntryConfirmation = useMobileBenefitOverlay();
   const EntryConfirmationOverlay = mobileEntryConfirmation ? BottomSheet : Dialog;
   const [view, setView] = useState<DetailView>({ kind: "loading" });
@@ -570,6 +591,8 @@ export function BenefitDetailScreen({
   const [ownedApplication, setOwnedApplication] =
     useState<BenefitOwnedApplicationResponse | null>(null);
   const [actionError, setActionError] = useState(false);
+  const [entryPolicyError, setEntryPolicyError] = useState(false);
+  const [policyAcknowledged, setPolicyAcknowledged] = useState(false);
   const [entryAmount, setEntryAmount] = useState("1");
   const [entryResult, setEntryResult] = useState<BenefitEntryResult | null>(
     null,
@@ -768,6 +791,7 @@ export function BenefitDetailScreen({
     const operation = (async () => {
       setPending(true);
       setActionError(false);
+      setEntryPolicyError(false);
       try {
         const token = await getAccessToken();
         if (!token) throw new Error();
@@ -777,6 +801,7 @@ export function BenefitDetailScreen({
           idempotencyKey = crypto.randomUUID();
           sessionStorage.setItem(keyName, idempotencyKey);
         }
+          const policy = currentEntry.fulfillmentPolicy ?? null;
           const response = await fetch(
             `/api/benefits/${encodeURIComponent(benefitId)}/entries`,
             {
@@ -785,12 +810,49 @@ export function BenefitDetailScreen({
                 authorization: `Bearer ${token}`,
                 "content-type": "application/json",
               },
-          body: JSON.stringify({ idempotencyKey, ticketAmount }),
+          body: JSON.stringify({
+            idempotencyKey,
+            ticketAmount,
+            ...(policy
+              ? {
+                  policyAcknowledgment: {
+                    policyVersion: policy.version,
+                    canReceiveInKorea: policy.requiresShippingAcknowledgment
+                      ? policyAcknowledged
+                      : false,
+                  },
+                }
+              : {}),
+          }),
             },
           );
-        if (!response.ok) throw new Error();
+        if (!response.ok) {
+          const errorBody = (await response
+            .clone()
+            .json()
+            .catch(() => null)) as {
+            code?: string;
+            error?: string | { code?: string };
+          } | null;
+          const errorCode =
+            errorBody?.code ??
+            (typeof errorBody?.error === "string"
+              ? errorBody.error
+              : errorBody?.error?.code);
+          if (
+            errorCode === "RAFFLE_POLICY_ACK_REQUIRED"
+          ) {
+            setPolicyAcknowledged(false);
+            setEntryConfirmation(null);
+            setEntryPolicyError(true);
+            await load();
+            return;
+          }
+          throw new Error();
+        }
         const result = benefitEntryResultSchema.parse(await response.json());
         setEntryResult(result);
+        notifyFanActivityUpdated(auth.user?.id);
           setEntryConfirmation(null);
         sessionStorage.removeItem(keyName);
         setView({
@@ -823,7 +885,7 @@ export function BenefitDetailScreen({
     claimRef.current = operation;
     await operation;
     },
-    [benefitId, getAccessToken, pending, view],
+    [auth.user, benefitId, getAccessToken, load, pending, policyAcknowledged, view],
   );
 
   useEffect(() => {
@@ -1024,22 +1086,10 @@ export function BenefitDetailScreen({
             </dl>
           </section>
         </div>
-        {!authenticated && benefit.entry ? (
-          <AuthIntentLink
-            className={fanActionClassName("primary")}
-            emphasis="primary"
-            locale={locale}
-            input={{
-              sourcePath: `/benefits/${benefitId}`,
-              sourceQuery: `?locale=${locale}${celebrity ? `&celebrity=${encodeURIComponent(celebrity)}` : ""}`,
-              actionType: "CLAIM_BENEFIT",
-              targetType: "benefit",
-              targetId: benefitId,
-            }}
-          >
-            {c.signInToEnter}
-          </AuthIntentLink>
-        ) : benefit.entry ? (
+        {benefit.entry ? (
+          <BenefitRaffleResult benefitId={benefitId} locale={locale} />
+        ) : null}
+        {!authenticated && benefit.entry ? null : benefit.entry ? (
           <section className={styles.delivery} aria-live="polite">
             <FanMotionIcon name="ticket" size={24} />
             <div>
@@ -1053,6 +1103,19 @@ export function BenefitDetailScreen({
                     ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
                     : "Use this creator’s raffle tickets to enter for this benefit."}
               </p>
+              {benefit.entry.fulfillmentPolicy?.method === "physical_shipping" ? (
+                <div className={styles.fulfillmentNotice}>
+                  <strong>{c.shippingOnly}</strong>
+                  <span>{c.shippingOnlyHelp}</span>
+                </div>
+              ) : benefit.entry.fulfillmentPolicy?.method === "on_site_pickup" ? (
+                <div className={styles.fulfillmentNotice}>
+                  <strong>{c.pickupMethod}</strong>
+                  {benefit.entry.fulfillmentPolicy.pickupVenue[locale] ? (
+                    <span>{benefit.entry.fulfillmentPolicy.pickupVenue[locale]}</span>
+                  ) : null}
+                </div>
+              ) : null}
               <dl className={styles.period}>
                 <div>
                   <dt>{c.tickets}</dt>
@@ -1174,7 +1237,11 @@ export function BenefitDetailScreen({
                           Number(entryAmount))
                 }
                 ariaBusy={pending}
-                    onClick={() => setEntryConfirmation(Number(entryAmount))}
+                    onClick={() => {
+                      setPolicyAcknowledged(false);
+                      setEntryPolicyError(false);
+                      setEntryConfirmation(Number(entryAmount));
+                    }}
                 trailingIcon={<ArrowRight />}
               >
                     {!benefit.entry.canEnter
@@ -1244,6 +1311,20 @@ export function BenefitDetailScreen({
                   </dd>
                 </div>
               </dl>
+              {benefit.entry.fulfillmentPolicy?.requiresShippingAcknowledgment ? (
+                <div className={styles.entryPolicyConfirmation}>
+                  <p>{c.shippingOnlyHelp}</p>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={policyAcknowledged}
+                      disabled={pending}
+                      onChange={(event) => setPolicyAcknowledged(event.target.checked)}
+                    />
+                    <span>{c.shippingAck}</span>
+                  </label>
+                </div>
+              ) : null}
               <div className={styles.entryConfirmActions}>
                 <button
                   type="button"
@@ -1254,7 +1335,13 @@ export function BenefitDetailScreen({
                 </button>
                 <button
                   type="button"
-                  disabled={pending}
+                  disabled={
+                    pending ||
+                    Boolean(
+                      benefit.entry.fulfillmentPolicy
+                        ?.requiresShippingAcknowledgment && !policyAcknowledged,
+                    )
+                  }
                   onClick={() =>
                     entryConfirmation !== null &&
                     void enterBenefit(entryConfirmation)
@@ -1365,6 +1452,11 @@ export function BenefitDetailScreen({
               : benefit.allocationMode === "application_selection"
                 ? c.applyError
                 : c.claimError}
+          </p>
+        )}
+        {entryPolicyError && (
+          <p className={styles.actionError} role="alert">
+            {c.entryPolicyRefresh}
           </p>
         )}
       </article>

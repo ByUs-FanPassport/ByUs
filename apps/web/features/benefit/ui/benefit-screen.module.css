@@ -430,6 +430,17 @@
   width: fit-content;
   margin-top: 2px;
 }
+.fulfillmentNotice {
+  display: grid;
+  gap: 5px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: oklch(97% 0.02 75);
+  color: oklch(30% 0.04 60);
+}
+.fulfillmentNotice strong { font-size: 14px; }
+.fulfillmentNotice span { font-size: 13px; line-height: 1.55; }
 .delivery .entryEmpty a[data-fan-action-emphasis="primary"] {
   color: #fff;
 }
@@ -543,6 +554,38 @@
 }
 .entryConfirmSummary div:nth-child(2) dd {
   color: #d91268;
+}
+.entryPolicyConfirmation {
+  margin: -4px 0 22px;
+  padding: 16px;
+  border-radius: 12px;
+  background: oklch(97% 0.02 75);
+}
+.entryPolicyConfirmation p {
+  margin: 0 0 13px;
+  color: oklch(35% 0.03 60);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.entryPolicyConfirmation label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: oklch(24% 0 0);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.entryPolicyConfirmation input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: #d91268;
+}
+.entryPolicyConfirmation input:focus-visible {
+  outline: 3px solid oklch(62% 0.18 330 / 35%);
+  outline-offset: 2px;
 }
 .entryConfirmActions {
   display: grid;

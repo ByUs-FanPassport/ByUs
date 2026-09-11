@@ -402,6 +402,8 @@ describe("benefit screens", () => {
     ).toHaveAttribute("href", "/live/ifew-100-days-tiktok-20260912?locale=ko");
   });
   it("enters campaign Tickets once on rapid clicks and refreshes balance and history", async () => {
+    let resultRefreshes = 0;
+    let entryDone = false;
     let resolveEntry!: (response: Response) => void;
     const entryResponse = new Promise<Response>((resolve) => {
       resolveEntry = resolve;
@@ -420,12 +422,17 @@ describe("benefit screens", () => {
         entries: [],
       },
     };
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ benefit: campaignBenefit })),
-      )
-      .mockImplementationOnce(() => entryResponse);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+      if (url.endsWith("/result?locale=ko")) { resultRefreshes += 1; return Promise.resolve(Response.json({
+        benefitId: benefit.id, campaignId: campaignBenefit.entry.campaignId, title: benefit.title, benefitHref: `/benefits/${benefit.id}`,
+        state: "pending", enteredTickets: entryDone ? 5 : 3, entryClosesAt: campaignBenefit.entry.entryClosesAt,
+        publishedAt: null, winnerId: null, method: "digital", fulfillmentStatus: null, claimDisposition: "active",
+        recipientDeadlineAt: null, recipientSubmitted: false, recipientEditable: false, policy: null,
+      })); }
+      if (url.endsWith("/entries")) return entryResponse;
+      return Promise.resolve(new Response(JSON.stringify({ benefit: campaignBenefit })));
+    });
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
     const amount = await screen.findByRole("spinbutton", {
       name: "사용할 응모권 수",
@@ -451,7 +458,8 @@ describe("benefit screens", () => {
     });
     fireEvent.click(confirm);
     fireEvent.click(confirm);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith("/entries"))).toBe(true));
+    entryDone = true;
     resolveEntry(
       new Response(
         JSON.stringify({
@@ -469,9 +477,11 @@ describe("benefit screens", () => {
       ),
     );
     expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
+    await waitFor(() => expect(resultRefreshes).toBeGreaterThanOrEqual(2));
+    expect(screen.getByText("사용한 응모권").nextElementSibling).toHaveTextContent("5");
     expect(screen.getAllByText(/2 응모/)).toHaveLength(2);
     expect(screen.getAllByText("23").length).toBeGreaterThan(0);
-    const call = fetchMock.mock.calls[1];
+    const call = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/entries"))!;
     expect(call[0]).toContain("/entries");
     expect(JSON.parse(String(call[1]?.body))).toMatchObject({
       ticketAmount: 2,
@@ -492,14 +502,14 @@ describe("benefit screens", () => {
         entries: [],
       },
     };
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ benefit: campaignBenefit })),
-      )
-      .mockResolvedValueOnce(new Response(null, { status: 503 }))
-      .mockResolvedValueOnce(
-        new Response(
+    let entryAttempt = 0;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+      if (url.endsWith("/result?locale=ko")) return Promise.resolve(new Response(null, { status: 503 }));
+      if (!url.endsWith("/entries")) return Promise.resolve(new Response(JSON.stringify({ benefit: campaignBenefit })));
+      entryAttempt += 1;
+      if (entryAttempt === 1) return Promise.resolve(new Response(null, { status: 503 }));
+      return Promise.resolve(new Response(
           JSON.stringify({
             entryId: "44444444-4444-4444-8444-444444444444",
             benefitId: benefit.id,
@@ -512,8 +522,8 @@ describe("benefit screens", () => {
             resultingBalance: 2,
             replayed: false,
           }),
-        ),
-      );
+        ));
+    });
     render(<BenefitDetailScreen benefitId={benefit.id} locale="ko" />);
     fireEvent.change(
       await screen.findByRole("spinbutton", { name: "사용할 응모권 수" }),
@@ -530,13 +540,150 @@ describe("benefit screens", () => {
       screen.getByRole("button", { name: "이 수량으로 응모 확정" }),
     );
     expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
-    const first = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
-    const second = JSON.parse(String(fetchMock.mock.calls[2][1]?.body));
+    const entryCalls = fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/entries"));
+    const first = JSON.parse(String(entryCalls[0][1]?.body));
+    const second = JSON.parse(String(entryCalls[1][1]?.body));
     expect(first).toEqual({
       idempotencyKey: expect.any(String),
       ticketAmount: 3,
   });
     expect(second).toEqual(first);
+  });
+  it("requires the Korean-address acknowledgment and posts the active shipping policy version", async () => {
+    const shippingBenefit = {
+      ...ifewBenefit,
+      entry: {
+        ...ifewBenefit.entry,
+        creatorTicketBalance: 3,
+        fulfillmentPolicy: {
+          version: "shipping-v2",
+          method: "physical_shipping",
+          shippingCountry: "KR",
+          requiresShippingAcknowledgment: true,
+          recipientWindowDays: 7,
+          pickupEndsOn: null,
+          pickupVenue: { ko: "", en: "" },
+          pickupInstructions: { ko: "", en: "" },
+        },
+      },
+    } as const;
+    const entryResult = {
+      entryId: "44444444-4444-4444-8444-444444444444",
+      benefitId: shippingBenefit.id,
+      campaignId: shippingBenefit.entry.campaignId,
+      ticketAmount: 1,
+      benefitTicketTotal: 1,
+      perFanTicketLimit: null,
+      remainingBenefitTickets: null,
+      ticketLedgerId: "66666666-6666-4666-8666-666666666666",
+      resultingBalance: 2,
+      replayed: false,
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+      if (url.endsWith("/result?locale=ko")) return Promise.resolve(new Response(null, { status: 503 }));
+      if (url.endsWith("/entries")) return Promise.resolve(Response.json(entryResult));
+      return Promise.resolve(Response.json({ benefit: shippingBenefit }));
+    });
+    render(<BenefitDetailScreen benefitId={shippingBenefit.id} locale="ko" />);
+    expect(await screen.findByText("한국 주소로만 배송")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "응모권으로 응모하기" }));
+    const confirm = screen.getByRole("button", { name: "이 수량으로 응모 확정" });
+    expect(confirm).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "대한민국 내 주소로 받을 수 있음을 확인했습니다." }));
+    expect(confirm).toBeEnabled();
+    fireEvent.click(confirm);
+    expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
+    const entryCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/entries"))!;
+    expect(JSON.parse(String(entryCall[1]?.body))).toMatchObject({
+      policyAcknowledgment: { policyVersion: "shipping-v2", canReceiveInKorea: true },
+    });
+  });
+  it("posts an onsite policy version without showing a Korean-address checkbox", async () => {
+    const onsiteBenefit = {
+      ...ifewBenefit,
+      entry: {
+        ...ifewBenefit.entry,
+        creatorTicketBalance: 2,
+        fulfillmentPolicy: {
+          version: "onsite-v1",
+          method: "on_site_pickup",
+          shippingCountry: null,
+          requiresShippingAcknowledgment: false,
+          recipientWindowDays: 7,
+          pickupEndsOn: "2026-11-03",
+          pickupVenue: { ko: "전시장 입장 데스크", en: "Exhibition entrance desk" },
+          pickupInstructions: { ko: "성명과 휴대폰 뒤 4자리로 확인", en: "Confirm your name and phone digits" },
+        },
+      },
+    } as const;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+      if (url.endsWith("/result?locale=ko")) return Promise.resolve(new Response(null, { status: 503 }));
+      if (url.endsWith("/entries")) return Promise.resolve(Response.json({
+        entryId: "44444444-4444-4444-8444-444444444444", benefitId: onsiteBenefit.id,
+        campaignId: onsiteBenefit.entry.campaignId, ticketAmount: 1, benefitTicketTotal: 1,
+        perFanTicketLimit: null, remainingBenefitTickets: null,
+        ticketLedgerId: "66666666-6666-4666-8666-666666666666", resultingBalance: 1, replayed: false,
+      }));
+      return Promise.resolve(Response.json({ benefit: onsiteBenefit }));
+    });
+    render(<BenefitDetailScreen benefitId={onsiteBenefit.id} locale="ko" />);
+    expect(await screen.findByText("현장 수령")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "응모권으로 응모하기" }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "이 수량으로 응모 확정" }));
+    expect(await screen.findByText("응모가 완료됐어요")).toBeInTheDocument();
+    const entryCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/entries"))!;
+    expect(JSON.parse(String(entryCall[1]?.body))).toMatchObject({
+      policyAcknowledgment: { policyVersion: "onsite-v1", canReceiveInKorea: false },
+    });
+  });
+  it("refreshes a stale policy and clears the shipping acknowledgment", async () => {
+    const policy = (version: string) => ({
+      version,
+      method: "physical_shipping" as const,
+      shippingCountry: "KR" as const,
+      requiresShippingAcknowledgment: true,
+      recipientWindowDays: 7 as const,
+      pickupEndsOn: null,
+      pickupVenue: { ko: "", en: "" },
+      pickupInstructions: { ko: "", en: "" },
+    });
+    let benefitReads = 0;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+      if (url.endsWith("/result?locale=ko")) return Promise.resolve(new Response(null, { status: 503 }));
+      if (url.endsWith("/entries")) return Promise.resolve(Response.json(
+        { error: { code: "RAFFLE_POLICY_ACK_REQUIRED" } },
+        { status: 409 },
+      ));
+      benefitReads += 1;
+      return Promise.resolve(Response.json({
+        benefit: {
+          ...ifewBenefit,
+          entry: {
+            ...ifewBenefit.entry,
+            creatorTicketBalance: 2,
+            fulfillmentPolicy: policy(benefitReads === 1 ? "shipping-v1" : "shipping-v2"),
+          },
+        },
+      }));
+    });
+    render(<BenefitDetailScreen benefitId={ifewBenefit.id} locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "응모권으로 응모하기" }));
+    const checkbox = screen.getByRole("checkbox", { name: "대한민국 내 주소로 받을 수 있음을 확인했습니다." });
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "이 수량으로 응모 확정" }));
+    expect(await screen.findByText(/경품 수령 조건이 변경됐어요/)).toBeInTheDocument();
+    expect(benefitReads).toBe(2);
+    fireEvent.click(screen.getByRole("button", { name: "응모권으로 응모하기" }));
+    expect(screen.getByRole("checkbox", { name: "대한민국 내 주소로 받을 수 있음을 확인했습니다." })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "이 수량으로 응모 확정" })).toBeDisabled();
+    const entryCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/entries"))!;
+    expect(JSON.parse(String(entryCall[1]?.body))).toMatchObject({
+      policyAcknowledgment: { policyVersion: "shipping-v1" },
+    });
   });
   it.each([
     [
@@ -572,7 +719,7 @@ describe("benefit screens", () => {
       expect(
         screen.queryByRole("link", { name: "팬 인증하고 LIVE 참여하기" }),
       ).not.toBeInTheDocument();
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/entries"))).toHaveLength(0);
     },
   );
   it.each([
