@@ -205,9 +205,9 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
     ? new Set(personalization.state.summary.creators.flatMap((creator) => creator.passport ? [creator.celebrity.slug] : []))
     : new Set<string>();
   const hasOwnedPassport = personalization.state.status === "authenticated-ready" && personalization.state.summary.collection.passportCount > 0;
-  // Resolve the default after personal data arrives; explicit URL/manual choices
-  // take precedence, including choosing All while personal data is loading.
+  // Resolve the default before revealing the roster; explicit choices take precedence.
   const ownedOnly = ownedOnlyOverride ?? (role === "all" && hasOwnedPassport);
+  const favoritesLoading = personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading";
   const visibleCreators = orderedCreators.filter((creator) => matchesCreatorRole(creator.roles, role) && (!ownedOnly || (personalization.state.status === "authenticated-ready" && ownedSlugs.has(creator.slug))));
   const directoryQuery = new URLSearchParams({ locale });
   if (ownedOnly) directoryQuery.set("owned", "1");
@@ -258,7 +258,7 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
     observer?.observe(rail);
     window.addEventListener("resize", updateCreatorScroll);
     return () => { observer?.disconnect(); window.removeEventListener("resize", updateCreatorScroll); };
-  }, [updateCreatorScroll, visibleCreators.length, ownedOnly, role]);
+  }, [updateCreatorScroll, visibleCreators.length, ownedOnly, role, favoritesLoading]);
   const moveCreators = (direction: number) => {
     const rail = creatorRailRef.current;
     const card = rail?.querySelector<HTMLElement>("article");
@@ -308,15 +308,26 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
           </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={<Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : "View all favorites"} <ChevronRight /></Link>} />
-            {!contentErrors.celebrities && celebrities.length > 0 ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="home-creator-rail" ownedOnly={ownedOnly} onSelectOwned={selectOwned} ownedDisabled={!ownedOnly && (personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading")} /> : null}
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={favoritesLoading ? null : <Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : "View all favorites"} <ChevronRight /></Link>} />
+            {!contentErrors.celebrities && celebrities.length > 0 && favoritesLoading ? (
+              <div role="status" aria-label={t.myFavoritesLoading} aria-busy="true">
+                <span className={styles.srOnly}>{t.myFavoritesLoading}</span>
+                <div aria-hidden="true">
+                  <div className={styles.favoriteSkeletonFilters}>{[0, 1, 2, 3].map(index => <span key={index} className={`${styles.stateSkeleton} ${styles.favoriteSkeletonChip}`} />)}</div>
+                  <div className={styles.celebrityRail}>{[0, 1, 2].map(index => <div key={index} className={styles.celebrityCard}>
+                    <div className={`${styles.celebrityMediaBox} ${styles.stateSkeleton} ${styles.favoriteSkeletonMedia}`} />
+                    <div className={styles.celebrityInfo}><div className={styles.celebrityIdentity}><span className={`${styles.stateSkeleton} ${styles.favoriteSkeletonName}`} /><span className={`${styles.stateSkeleton} ${styles.favoriteSkeletonCount}`} /></div></div>
+                  </div>)}</div>
+                </div>
+              </div>
+            ) : null}
+            {!contentErrors.celebrities && celebrities.length > 0 && !favoritesLoading ? <CreatorRoleFilterControl roles={availableCreatorRoles(celebrities)} value={role} onChange={changeRole} locale={locale} controls="home-creator-rail" ownedOnly={ownedOnly} onSelectOwned={selectOwned} /> : null}
             <ActivePreviewCoordinator initialActiveId={firstPreviewId}>
             {contentErrors.celebrities || contentErrors.celebrityLives ? <ContentLoadError locale={locale} /> : null}
             {!contentErrors.celebrities && ownedOnly && personalization.state.status === "guest" ? <div className={styles.favoriteFilterState} role="status"><p>{t.myFavoritesGuest}</p><Link href={ownedLoginHref}>{t.signIn}</Link></div> : null}
-            {!contentErrors.celebrities && ownedOnly && (personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading") ? <div className={styles.favoriteFilterState} role="status"><p>{t.myFavoritesLoading}</p></div> : null}
             {!contentErrors.celebrities && ownedOnly && personalization.state.status === "authenticated-error" ? <div className={styles.favoriteFilterState} role="alert"><p>{t.myFavoritesError}</p><button type="button" onClick={personalization.retry}>{t.retry}</button></div> : null}
             {!contentErrors.celebrities && ownedOnly && personalization.state.status === "authenticated-ready" && visibleCreators.length === 0 ? <div className={styles.favoriteFilterState} role="status"><strong>{hasOwnedPassport ? t.myFavoritesUnavailable : t.myFavoritesEmpty}</strong><p>{hasOwnedPassport ? t.myFavoritesUnavailableHelp : t.myFavoritesHelp}</p><button type="button" onClick={() => changeRole("all")}>{t.all}</button></div> : null}
-            {!contentErrors.celebrities && (!ownedOnly || (personalization.state.status === "authenticated-ready" && visibleCreators.length > 0)) ? <div className={styles.celebrityCarousel}>
+            {!contentErrors.celebrities && (!favoritesLoading || celebrities.length === 0) && (!ownedOnly || (personalization.state.status === "authenticated-ready" && visibleCreators.length > 0)) ? <div className={styles.celebrityCarousel}>
             <div id="home-creator-rail" ref={creatorRailRef} className={styles.celebrityRail} aria-label={t.celebrityList} onScroll={updateCreatorScroll}>
               {visibleCreators.map((celebrity) => {
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
@@ -338,12 +349,12 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
-                    <div className={styles.celebrityMetaRow}>
+                    <div className={styles.celebrityIdentity}>
                       <h3>{celebrity.name}</h3>
-                      <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
-                    </div>
-                    <div className={styles.celebrityMetaRow}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
+                    </div>
+                    <div className={styles.celebrityActions}>
+                      <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
                         {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale === "en" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>

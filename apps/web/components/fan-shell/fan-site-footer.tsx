@@ -32,7 +32,7 @@ const SOCIAL_CHANNELS = [
 
 const copy = {
   ko: {
-    tagline: "최애와 함께한 순간을 기록하고, 다음 팬 활동으로 이어가세요.",
+    tagline: "최애와 함께한 순간을 기록하는 곳.",
     explore: "둘러보기",
     activity: "나의 활동",
     guide: "안내",
@@ -50,7 +50,7 @@ const copy = {
     partners: "파트너 협업 제안",
   },
   en: {
-    tagline: "Keep every moment with your favorite and continue your fan journey.",
+    tagline: "A place to record moments with your favorite.",
     explore: "Explore",
     activity: "My activity",
     guide: "Guide",

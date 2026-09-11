@@ -44,7 +44,7 @@ describe("home entry cards", () => {
     advance(2_999); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     advance(1); expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     advance(); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
-    expect(screen.getByRole("link", { name: "Your artist’s first U.S. fan meeting" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Plan your U.S. fan meeting with ByUs" })).toBeVisible();
   });
 
   it("pauses on hover and requires explicit restart after keyboard focus leaves", () => {
