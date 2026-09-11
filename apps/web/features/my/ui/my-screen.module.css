@@ -41,7 +41,7 @@
 .workspace,.primaryColumn,.activityRail { display:grid; min-width:0; gap:var(--space-10); align-content:start; }
 .section { min-width:0; scroll-margin-top:96px; }
 
-.creatorList,.rows,.emptyText,.empty { overflow:hidden; border:1px solid var(--color-line-subtle); border-radius:var(--radius-collection); }
+.creatorList,.rows,.empty { overflow:hidden; border:1px solid var(--color-line-subtle); border-radius:var(--radius-collection); }
 .creator,.rows>a { display:grid; min-width:0; grid-template-columns:56px minmax(0,1fr) var(--min-target); align-items:center; gap:var(--space-3); padding:var(--space-4); border-bottom:1px solid var(--color-line-subtle); background:var(--color-canvas); transition:background-color var(--motion-control) var(--motion-easing),transform var(--motion-control) var(--motion-easing); }
 .creator:last-child,.rows>a:last-child { border-bottom:0; }
 .creator img { width:56px; height:56px; border-radius:var(--radius-pill); object-fit:cover; }
@@ -54,21 +54,14 @@
 .rows>a { min-height:76px; grid-template-columns:32px minmax(0,1fr) var(--min-target); }
 .rows>a>svg:first-child { width:19px; height:19px; justify-self:center; color:var(--color-muted); }
 
-.collectionCounts,.rewardMetrics { display:grid; overflow:hidden; grid-template-columns:repeat(3,minmax(0,1fr)); margin-block-end:var(--space-3); border:1px solid var(--color-line-subtle); border-radius:var(--radius-control); }
+.collectionCounts { display:grid; overflow:hidden; grid-template-columns:repeat(3,minmax(0,1fr)); margin-block-end:var(--space-3); border:1px solid var(--color-line-subtle); border-radius:var(--radius-control); }
 .collectionCounts span { display:grid; min-width:0; gap:var(--space-1); padding:var(--space-4) var(--space-2); border-right:1px solid var(--color-line-subtle); color:var(--color-muted); font-size:11px; text-align:center; }
 .collectionCounts span:last-child { border-right:0; }
 .collectionCounts strong { color:var(--color-ink); font-size:22px; font-variant-numeric:tabular-nums; }
-.rewardMetrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.rewardMetrics>a,.rewardMetrics>div { display:grid; min-width:0; min-height:88px; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:var(--space-2); padding:var(--space-3); border-right:1px solid var(--color-line-subtle); background:var(--color-soft); }
-.rewardMetrics>div { border-right:0; }
-.rewardMetrics svg { width:18px; height:18px; }
-.rewardMetrics span { min-width:0; overflow:hidden; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-.rewardMetrics strong { font-size:20px; font-variant-numeric:tabular-nums; }
 
 .empty { display:flex; min-height:96px; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-5); color:var(--color-muted); font-size:14px; }
 .empty a { display:flex; min-height:var(--min-target); align-items:center; gap:var(--space-2); color:var(--color-ink); font-weight:800; white-space:nowrap; }
 .empty svg { width:17px; height:17px; }
-.emptyText { margin:0; padding:var(--space-5); color:var(--color-muted); font-size:14px; }
 .history { margin-block-start:var(--space-3); border-top:1px solid var(--color-line-subtle); }
 .history summary { min-height:var(--min-target); padding:var(--space-3) var(--space-1); cursor:pointer; font-weight:750; }
 .history a { display:flex; min-height:var(--min-target); align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-2) var(--space-1); font-size:14px; }
@@ -87,14 +80,14 @@
   .activityRail { gap:var(--space-8); }
 }
 @media(hover:hover) and (pointer:fine) {
-  .creator:hover,.rows>a:hover,.rewardMetrics>a:hover,.notificationLink:hover { background:var(--color-soft); }
+  .creator:hover,.rows>a:hover,.notificationLink:hover { background:var(--color-soft); }
 }
 @media(prefers-reduced-motion:reduce) {
 }
 
 /* The personal workspace uses one surface per section, not boxed rows inside cards. */
 .dashboard { gap:var(--space-8); }
-.section :is(.creatorList,.rows,.emptyText,.empty) { border:0; border-radius:0; }
+.section :is(.creatorList,.rows,.empty) { border:0; border-radius:0; }
 .section :is(.creator,.rows>a) { background:transparent; padding-inline:0; }
 .creator strong,.rows strong,.creator span,.rows span { white-space:normal; overflow-wrap:anywhere; }
 .overviewGrid { display:flex; flex-wrap:wrap; gap:12px 24px; border:0; }
@@ -108,8 +101,6 @@
 .stat[data-kind="ticket"] .statIcon { color:oklch(52% .17 300); }
 .stat[data-kind="collectible"] .statIcon { color:oklch(55% .16 18); }
 .overview>h2 { font-size:16px; }
-.rewardMetrics { display:flex; flex-direction:column; border:0; }
-.rewardMetrics>a,.rewardMetrics>div { min-height:56px; border:0; }
 
 .guest { background:var(--color-surface); }
 .history .rows a { display:grid; }
@@ -137,9 +128,6 @@
 .activityMark > span { color:inherit; }
 .activityMark[data-kind="stamp"] { color:oklch(48% .14 52); background:oklch(96% .035 65); }
 .activityMark[data-kind="collectible"] { color:oklch(48% .16 285); background:oklch(96% .025 285); }
-.metricIcon[data-kind="gift"] { color:oklch(48% .16 285); }
-.metricIcon[data-kind="ticket"] { color:oklch(48% .17 300); }
-.metricIcon > span { color:inherit; }
 .recentDisclosure { border-top:1px solid var(--color-line-subtle); }
 .recentDisclosure summary { display:flex; min-height:var(--min-target); align-items:center; justify-content:space-between; gap:var(--space-3); cursor:pointer; list-style:none; font-size:14px; font-weight:700; }
 .recentDisclosure summary::-webkit-details-marker { display:none; }
@@ -187,8 +175,6 @@
 
 .workspace .section[data-appearance="card"] { padding:var(--space-5); border:1px solid var(--color-line); border-radius:var(--radius-collection); }
 .activityRail { gap:var(--space-5); }
-.activityRail .rewardMetrics { border-radius:0; background:transparent; }
-.activityRail .rewardMetrics > a,.activityRail .rewardMetrics > div { padding-inline:0; background:transparent; border-bottom:1px solid var(--color-line-subtle); }
 .section[data-appearance="card"] .rows strong { font-size:14px; }
 
 /* Owner assets are a single summary group directly below the profile. */

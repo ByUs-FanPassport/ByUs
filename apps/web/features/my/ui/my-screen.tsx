@@ -42,7 +42,7 @@ const copy = {
     creators: "내 최애", creatorsHelp: "크리에이터별 패스포트와 응모권 잔액을 확인하세요.",
     noCreators: "아직 등록한 최애가 없어요.", findCreator: "최애 찾기", live: "내 예약 LIVE", upcoming: "예약 완료",
     history: "지난 LIVE", noLive: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", rewards: "받은 혜택",
-    available: "사용 가능한 혜택", entries: "응모", noRewards: "아직 받은 혜택이 없어요.", collection: "최근 수집",
+    collection: "최근 수집",
     passports: "내 패스포트", stamps: "스탬프", collectibles: "디지털 기념품", noCollection: "아직 수집한 기록이 없어요.",
     notifications: "새 알림", settings: "설정", tickets: "응모권", firstReaction: "첫 반응",
     avatarSettings: "프로필 수정",
@@ -63,7 +63,7 @@ const copy = {
     creators: "My favorites", creatorsHelp: "Check each Fan Passport and its raffle ticket balance.",
     noCreators: "No favorites added yet.", findCreator: "Find favorites", live: "My reserved LIVE", upcoming: "Reserved",
     history: "Past LIVE", noLive: "No reserved LIVE events.", browseLive: "Browse LIVE", rewards: "My rewards",
-    available: "Available rewards", entries: "Entries", noRewards: "No rewards received yet.", collection: "Recent collection",
+    collection: "Recent collection",
     passports: "Fan Passports", stamps: "Stamps", collectibles: "Collectibles", noCollection: "Nothing collected yet.",
     notifications: "New alerts", settings: "Settings", tickets: "Raffle tickets", firstReaction: "First Reaction",
     avatarSettings: "Edit profile",
@@ -138,7 +138,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
   const nickname = summary.profile.nickname?.trim() || null;
   const stampCount = summary.collection.stampCount + boundFirstLikeCount(summary.creators);
   const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
-  const hasRewards = summary.rewards.items.length > 0 || summary.rewards.availableCount > 0 || summary.rewards.entries > 0;
+  const receivedRewards = summary.rewards.items.filter((reward) => reward.result === "won");
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
   const selected = summary.creators.find((creator) => creator.celebrity.slug === selectedSlug) ?? summary.creators[0] ?? null;
   const [favoritesOpen, setFavoritesOpen] = useState(false);
@@ -200,7 +200,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         <span><strong>{t.reservedLive}</strong><small>{reservedLives.length ? t.reservationCount(reservedLives.length) : t.noReservedLive}</small></span>
         <ArrowRight aria-hidden="true" />
       </Link>
-      <Link href={`/benefits?locale=${locale}` as Route}>
+      <Link href={`/my/raffles?locale=${locale}` as Route}>
         <span className={styles.destinationIcon} data-kind="benefit" aria-hidden="true"><Ticket /></span>
         <span><strong>{t.benefitEntry}</strong><small>{t.benefitSummary(summary.rewards.availableCount, summary.rewards.entries)}</small></span>
         <ArrowRight aria-hidden="true" />
@@ -234,14 +234,13 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       </FanSurface> : null}
     </div> : null}
 
-    {hasRewards ? <FanSurface className={styles.section}>
+    {receivedRewards.length > 0 ? <FanSurface className={styles.section}>
       <SectionTitle title={t.rewards}/>
-      <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="gift" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><Link href={`/my/raffles?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="ticket" aria-hidden="true"><FanMotionIcon name="ticket" size={20}/></span><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></Link></div>
-      {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) => {
+      <div className={styles.rows}>{receivedRewards.slice(0, 4).map((reward) => {
         const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;
         const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : "Enter recipient details") : rewardStatusCopy[reward.status][locale];
         return <Link href={withLocalePath(recipientHref ?? reward.benefitHref, locale) as Route} key={reward.rewardResultId}><span className={styles.activityMark} data-kind="collectible" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><div><strong>{reward.title}</strong><span>{status}</span></div><ArrowRight/></Link>;
-      })}</div> : <p className={styles.emptyText}>{t.noRewards}</p>}
+      })}</div>
     </FanSurface> : null}
   </div>;
 }
