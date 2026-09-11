@@ -4,6 +4,7 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_capture.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_lifecycle.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_operator_commands.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/cs_telegram_alerts.sql"
 python3 <<'PY'
 import concurrent.futures, json, subprocess, threading
 
@@ -23,7 +24,7 @@ def enqueue():
 
 sql("select public.configure_telegram_alerts('-100123',true)")
 enqueue()
-claims=race("select public.claim_telegram_alert_batch_with_identity('-100123')", "select public.claim_telegram_alert_batch_with_identity('-100123')")
+claims=race("select public.claim_telegram_alert_batch_with_cs('-100123')", "select public.claim_telegram_alert_batch_with_identity('-100123')")
 assert sum(bool(x) for x in claims)==1, claims
 token=json.loads(next(x for x in claims if x))['batch_id']
 begins=race(f"select public.begin_telegram_alert_send('{token}','-100123')",f"select public.begin_telegram_alert_send('{token}','-100123')")

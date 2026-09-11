@@ -149,7 +149,7 @@ describe("Benefit recipient screen", () => {
     render(<BenefitRecipientScreen winnerId={winnerId} locale="ko" />);
     expect(await screen.findByRole("heading", { name: "수령 정보 제출 기한이 지났어요." })).toBeInTheDocument();
     expect(screen.getByText(/당첨 이력은 유지돼요/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "ByUs에 문의하기" })).toHaveAttribute("href", "mailto:biz@sallylab.io");
+    expect(screen.getByRole("link", { name: "ByUs에 문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 

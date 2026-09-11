@@ -5,6 +5,7 @@ import Page, { generateMetadata } from "../../app/pages/elina-fan-guide/page";
 import { ElinaFanGuidePage } from "./elina-fan-guide-page";
 
 vi.mock("@/server/media/guide-images", () => ({ loadGuideImages: vi.fn(async () => ({ celebrity: null, eventPhotos: undefined })) }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false }) }));
 
 describe("Elina fan guide", () => {
   it.each(["ko", "en"] as const)("renders approved %s copy and real action destinations", (locale) => {

@@ -19,15 +19,11 @@ import {
   type PassportStampType,
 } from "../domain/passport-read-model";
 import styles from "./passport-stamp-artwork.module.css";
+import { displayStampLabel, type PassportDisplayStamp, type PassportDisplayStampType } from "../domain/first-like-stamp";
 
 export type { PassportStampType } from "../domain/passport-read-model";
 
-export interface PassportStampRecord {
-  id?: string;
-  type: PassportStampType;
-  issuedAt: string;
-  points?: number;
-}
+export type PassportStampRecord = PassportDisplayStamp;
 
 const stampIcons: Record<PassportStampType, LucideIcon> = {
   knowledge: BadgeCheck,
@@ -47,7 +43,7 @@ export function StampArtwork({
   compact = false,
   decorative = false,
 }: {
-  type: PassportStampType;
+  type: PassportDisplayStampType;
   locale: PassportLocale;
   label?: string;
   celebrityName?: string;
@@ -56,8 +52,7 @@ export function StampArtwork({
   compact?: boolean;
   decorative?: boolean;
 }) {
-  const Icon = stampIcons[type];
-  const accessibleLabel = label ?? stampTypeLabel(locale, type);
+  const accessibleLabel = label ?? displayStampLabel(locale, type);
   const accessibleDate = issuedAt
     ? new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
         year: "numeric",
@@ -69,12 +64,20 @@ export function StampArtwork({
     celebrityName,
     `${accessibleLabel} Stamp`,
     accessibleDate,
-    typeof points === "number"
+    type !== "first_reaction" && typeof points === "number"
       ? locale === "ko"
         ? `${points}점 획득`
         : `${points} ${points === 1 ? "point" : "points"} earned`
       : null,
   ].filter(Boolean).join(", ");
+  if (type === "first_reaction") {
+    return <span className={styles.stamp} data-compact={compact} data-stamp-type={type}
+      aria-hidden={decorative || undefined} role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : stampDescription}>
+      <Image className={styles.stampAsset} src={`/images/stamps/first-like-${locale}.webp`} width={512} height={512} alt="" aria-hidden="true" />
+    </span>;
+  }
+  const Icon = stampIcons[type];
   const stampStyle = {
     "--stamp-ink": STAMP_METADATA[type].inkToken,
   } as CSSProperties;
@@ -191,13 +194,13 @@ export function PassportStampCanvas({
       : `Showing the latest 9 of ${totalCount}`
     : countLabel;
   const visibleStampDescriptions = visibleStamps.map((stamp) => {
-    const stampName = stampTypeLabel(locale, stamp.type);
+    const stampName = displayStampLabel(locale, stamp.type);
     const stampDate = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     }).format(new Date(stamp.issuedAt));
-    const pointText = typeof stamp.points === "number"
+    const pointText = stamp.type !== "first_reaction" && typeof stamp.points === "number"
       ? locale === "ko"
         ? `${stamp.points}점 획득`
         : `${stamp.points} ${stamp.points === 1 ? "point" : "points"} earned`

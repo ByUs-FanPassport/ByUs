@@ -54,6 +54,7 @@ describe("ReactionAction", () => {
 
     expect(await screen.findByRole("button", { name: /좋아요를 남겼어요/ })).toBeDisabled();
     expect(fetch.mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("settles the ownership lookup when Privy returns a new token-provider function on every render", async () => {
@@ -89,7 +90,7 @@ describe("ReactionAction", () => {
     const fetch = vi.fn((_: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "POST") return post;
       reads += 1;
-      return Promise.resolve(response({ reaction: reads === 1 ? null : existing("queued") }));
+      return Promise.resolve(response({ reaction: reads === 1 ? null : { ...existing("queued"), passportExists: false } }));
     });
     vi.stubGlobal("fetch", fetch);
     const update = vi.fn();
@@ -102,9 +103,23 @@ describe("ReactionAction", () => {
     resolvePost(response({ ...existing("queued"), created: true, passportExists: false }));
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("첫 좋아요 도장을 보관했어요");
+    expect(screen.getByRole("link", { name: "Fan Passport 만들기" })).toHaveAttribute("href", `/c/kara/verify?locale=ko&source=reaction&reactionId=${reactionId}`);
     expect(fetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
     expect(update).toHaveBeenCalledTimes(1);
     window.removeEventListener(FAN_ACTIVITY_UPDATED, update);
+  });
+
+  it.each(["ko", "en"] as const)("shows the localized stamp and Passport destination after a new like with an existing Passport (%s)", async (locale) => {
+    const fetcher = vi.fn(async (_: RequestInfo | URL, init?: RequestInit) => response(init?.method === "POST" ? { ...existing(), created: true } : { reaction: null }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<ReactionAction slug="kara" locale={locale} />);
+    const button = await screen.findByRole("button", { name: locale === "ko" ? "좋아요 남기기" : "Leave a like" });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+    expect(await screen.findByRole("dialog")).toHaveTextContent(locale === "ko" ? "첫 좋아요 도장을 받았어요" : "You earned your First Like Stamp");
+    expect(screen.getByRole("link", { name: locale === "ko" ? "내 패스포트 보기" : "View my Passports" })).toHaveAttribute("href", `/passports?locale=${locale}#collection`);
+    expect(decodeURIComponent(screen.getByRole("dialog").querySelector("img")!.getAttribute("src")!)).toContain(`/images/stamps/first-like-${locale}.webp`);
   });
 
   it("remounts state for an in-place Privy owner change instead of retaining the prior done CTA", async () => {

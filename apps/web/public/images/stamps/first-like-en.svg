@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="title">
+  <title id="title">First Like Stamp</title>
+  <defs>
+    <mask id="ink-wear" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+      <rect width="256" height="256" fill="white"/>
+      <g fill="black">
+        <path d="M56 42h4v1.1h-4zM170 27h3v1.1h-3zM227 84h2v1.2h-2zM25 173h3v1h-3zM181 226h4v1h-4zM88 218h2v1h-2zM94 80h3v.9h-3zM163 91h2v1h-2zM112 126h3v.8h-3z"/>
+        <circle cx="60" cy="212" r=".8"/><circle cx="222" cy="163" r=".8"/><circle cx="106" cy="23" r=".7"/><circle cx="147" cy="70" r=".6"/>
+      </g>
+    </mask>
+  </defs>
+  <g stroke="#c62868" stroke-linecap="round" mask="url(#ink-wear)">
+    <circle cx="128" cy="128" r="108" stroke-width="9" stroke-dasharray="118 3 54 2 82 4 29 2 76 3 48 2"/>
+    <circle cx="128" cy="128" r="96" stroke-width="3" stroke-dasharray="86 2 64 3 112 2 41 2 71 3"/>
+    <path d="M31 89c-8 13-12 27-12 39s4 26 12 39" stroke-width="5" stroke-dasharray="34 3 19 2 31"/>
+    <path d="M225 89c8 13 12 27 12 39s-4 26-12 39" stroke-width="5" stroke-dasharray="25 2 22 3 35"/>
+    <path d="M128 144c-8-6-42-28-42-51 0-15 10-25 23-25 9 0 15 5 19 12 4-7 10-12 19-12 13 0 23 10 23 25 0 23-34 45-42 51Z" stroke-width="8" stroke-linejoin="round"/>
+  </g>
+  <g fill="#c62868">
+    <circle cx="53" cy="126" r="4.5"/><circle cx="203" cy="126" r="4.5"/>
+    <text x="128" y="185" text-anchor="middle" font-family="'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif" font-size="20" font-weight="800" letter-spacing=".3">FIRST LIKE</text>
+  </g>
+</svg>

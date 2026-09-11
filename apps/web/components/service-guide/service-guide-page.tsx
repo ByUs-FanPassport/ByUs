@@ -81,7 +81,7 @@ export function ServiceGuidePage({ locale }: { locale: FanLocale }) {
         <section className={styles.contact} aria-labelledby="service-guide-contact">
           <Mail aria-hidden="true" />
           <div><h2 id="service-guide-contact">{t.contactTitle}</h2><p>{t.contactDescription}</p></div>
-          <a href="mailto:biz@sallylab.io">{t.contactAction}</a>
+          <a href={`/my/inquiries?locale=${locale}`}>{t.contactAction}</a>
         </section>
       </FanContentContainer>
     </FanAppFrame>

@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { basePassportSchema, levelLabel, mintStatusLabel, type PassportLocale } from "./passport-read-model";
 
-export const passportCollectionRecordSchema = basePassportSchema;
+export const passportCollectionRecordSchema = basePassportSchema.extend({
+  firstReactionRecorded: z.boolean().optional().default(false),
+});
 export const passportCollectionSchema = z.array(passportCollectionRecordSchema);
 export type PassportCollection = ReturnType<typeof parsePassportCollection>;
 const passportCollectionDisplaySchema = z.object({
@@ -9,7 +11,7 @@ const passportCollectionDisplaySchema = z.object({
   mintStatus: z.string().trim().min(1).max(120),
 }).strict();
 export const passportCollectionResponseSchema = z.object({
-  passports: z.array(basePassportSchema.extend({
+  passports: z.array(passportCollectionRecordSchema.extend({
     display: passportCollectionDisplaySchema,
   }).strict()),
 }).strict();

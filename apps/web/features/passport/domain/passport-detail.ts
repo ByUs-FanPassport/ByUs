@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ACTIVITY_SOURCE_BY_TYPE, activityTypeSchema, basePassportSchema, levelLabel, mintFactsSchema, mintStatusLabel, mintStatusSchema, passportActivityContextSchema, stampTypeLabel, stampTypeSchema, type PassportLocale } from "./passport-read-model";
+import { ACTIVITY_SOURCE_BY_TYPE, activityTypeSchema, basePassportSchema, levelLabel, mintFactsSchema, mintStatusLabel, passportActivityContextSchema, stampTypeLabel, stampTypeSchema, type PassportLocale } from "./passport-read-model";
+import { firstReactionStampSchema } from "./first-like-stamp";
 
 const stampSchema = z.object({
   id: z.uuid(),
@@ -22,11 +23,7 @@ export const passportDetailRecordSchema = basePassportSchema.extend({
   stamps: z.array(stampSchema),
   activities: z.array(activitySchema),
   nextBenefit: z.unknown(),
-  firstReaction: z.object({
-    reactionId: z.uuid(), stampId: z.uuid(), activityId: z.uuid(),
-    reactionType: z.literal("FirstReaction"), mintStatus: mintStatusSchema,
-    txHash: z.string().nullable(), issuedAt: z.iso.datetime({ offset: true }),
-  }).strict().nullable().optional().default(null),
+  firstReaction: firstReactionStampSchema.nullable().optional().default(null),
 }).strict().superRefine((passport, context) => {
   for (const stamp of passport.stamps) {
     if (stamp.context.sourceType !== ACTIVITY_SOURCE_BY_TYPE[stamp.type]) {

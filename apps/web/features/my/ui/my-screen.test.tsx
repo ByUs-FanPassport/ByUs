@@ -93,7 +93,7 @@ describe("unified MY hub", () => {
     expect(screen.getByText("응모")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "내 최애 1" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: /^스탬프 2$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
+    expect(screen.getByRole("link", { name: /^스탬프 3$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
     expect(screen.getByText("4장")).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("heading", { name: "KARA 이벤트" })).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("link", { name: "이벤트 보러 가기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
@@ -371,7 +371,7 @@ it("groups indistinguishable stamps while preserving a Passport destination and 
   const group = await screen.findByRole("link", { name: /KARA 스탬프 2개/ });
   expect(group).toHaveAttribute("href", `/passports/${id}?locale=ko`);
   expect(group.querySelector("img")).not.toBeNull();
-  expect(screen.getByRole("link", { name: "스탬프 2" })).toHaveAttribute("href", "/passports?locale=ko#collection");
+  expect(screen.getByRole("link", { name: "스탬프 3" })).toHaveAttribute("href", "/passports?locale=ko#collection");
   expect(screen.queryByRole("heading", { name: "활동 요약" })).not.toBeInTheDocument();
 });
 

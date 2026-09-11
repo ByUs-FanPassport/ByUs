@@ -24,7 +24,7 @@ describe("ServiceGuidePage", () => {
     expect(main).toHaveTextContent("예약이나 출석만으로 자동 응모되지 않아요");
     expect(main).toHaveTextContent("배송 가능 국가");
     expect(screen.getByRole("link", { name: "최애 찾기" })).toHaveAttribute("href", "/celebrities?locale=ko");
-    expect(screen.getByRole("link", { name: "이메일로 문의하기" })).toHaveAttribute("href", "mailto:biz@sallylab.io");
+    expect(within(main).getByRole("link", { name: "문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");
 
     const jsonLd = container.querySelector("#byus-guide-faq-structured-data");
     expect(jsonLd).toHaveAttribute("type", "application/ld+json");

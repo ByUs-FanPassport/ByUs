@@ -483,7 +483,7 @@ function BenefitRecipientOwnerScreen({
       </dl>
       <div className={styles.actions}>
         <FanAction variant="primary" href={withLocalePath("/my", locale)}>{t.backMy}</FanAction>
-        {showContact ? <FanAction href="mailto:biz@sallylab.io">{t.contact}</FanAction> : <FanAction href={detailUrl}>{t.benefit}</FanAction>}
+        {showContact ? <FanAction href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : <FanAction href={detailUrl}>{t.benefit}</FanAction>}
       </div>
     </FanSurface>);
   }

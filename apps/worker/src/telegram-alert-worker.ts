@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { NotificationWorkerEnv } from "./notification-env.js";
 
 const ADMIN_URL = "https://byus.kr/admin";
+const ADMIN_INQUIRY_URL = `${ADMIN_URL}/inquiries`;
 const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
 const TELEGRAM_TIMEOUT_MS = 8_000;
 const TELEGRAM_MESSAGE_LIMIT = 4_000;
@@ -17,6 +18,8 @@ const kindSchema = z.enum([
   "live_reserved",
   "live_attended",
   "draw_published",
+  "cs_inquiry_created",
+  "cs_user_replied",
 ]);
 const alertSchema = z.object({
   kind: kindSchema,
@@ -26,9 +29,24 @@ const alertSchema = z.object({
   actor_email: z.string().nullable(),
   winner_count: z.number().int().nonnegative().nullable(),
   occurred_at: z.iso.datetime({ offset: true }),
+  inquiry_id: z.uuid().nullable().optional(),
 }).strict().superRefine((alert, context) => {
   if (alert.kind === "draw_published" && alert.winner_count === null) {
     context.addIssue({ code: "custom", path: ["winner_count"], message: "missing draw winner count" });
+  }
+  const isCsAlert = alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied";
+  if (isCsAlert && alert.inquiry_id == null) {
+    context.addIssue({ code: "custom", path: ["inquiry_id"], message: "missing CS inquiry id" });
+  }
+  if (!isCsAlert && alert.inquiry_id != null) {
+    context.addIssue({ code: "custom", path: ["inquiry_id"], message: "unexpected inquiry id" });
+  }
+  if (isCsAlert) {
+    for (const field of ["creator_name", "live_title", "actor_name", "actor_email", "winner_count"] as const) {
+      if (alert[field] !== null) {
+        context.addIssue({ code: "custom", path: [field], message: "unexpected CS alert content" });
+      }
+    }
   }
 });
 const claimedBatchSchema = z.object({
@@ -65,6 +83,12 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
     throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
   }
   const lines = input.flatMap((alert) => {
+    if (alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied") {
+      const inquiryId = z.uuid().safeParse(alert.inquiry_id);
+      if (!inquiryId.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
+      const event = alert.kind === "cs_inquiry_created" ? "새 CS 문의 접수" : "CS 문의에 새 메시지";
+      return [`• ${event}`, `${ADMIN_INQUIRY_URL}/${inquiryId.data}`];
+    }
     const creatorName = cleanPublicName(alert.creator_name, 48);
     const liveTitle = cleanPublicName(alert.live_title, 72);
     const context = publicContext(creatorName, liveTitle);
@@ -202,7 +226,7 @@ export class SupabaseTelegramAlertQueue implements TelegramAlertQueue {
   }
 
   async claim(chatId: string): Promise<TelegramAlertBatch | null> {
-    const data = await this.call("claim_telegram_alert_batch_with_identity", { p_chat_id: chatId });
+    const data = await this.call("claim_telegram_alert_batch_with_cs", { p_chat_id: chatId });
     if (data === null) return null;
     const parsed = claimedBatchSchema.safeParse(data);
     if (!parsed.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");

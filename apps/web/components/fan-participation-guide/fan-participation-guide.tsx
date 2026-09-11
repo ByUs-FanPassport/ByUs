@@ -13,6 +13,8 @@ import { elinaFanGuideContent } from "../elina-fan-guide/content";
 import { ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
 import { ifewRafflesHref, ifewVerificationHref } from "@/features/live/domain/ifew-event";
 import { elinaLiveHref, elinaRafflesHref, elinaVerificationHref } from "@/features/live/domain/elina-event";
+import { SignupGuideLink, SignupGuideView } from "@/features/analytics/client/signup-guide-tracking";
+import type { SignupAction, SignupGuide, SignupPlacement } from "@/features/analytics/domain/signup-funnel-event";
 import styles from "./fan-participation-guide.module.css";
 
 const actionTargets = (locale: FanLocale) => ({
@@ -24,12 +26,19 @@ const actionTargets = (locale: FanLocale) => ({
 
 type GuideHref = Route | `#${string}` | `https://${string}`;
 
-function ActionLink({ children, href, primary = false }: { children: React.ReactNode; href: GuideHref; primary?: boolean }) {
+function ActionLink({ children, href, primary = false, guide, locale, placement }: {
+  children: React.ReactNode; href: GuideHref; primary?: boolean;
+  guide: SignupGuide; locale: FanLocale; placement: SignupPlacement;
+}) {
+  const action: SignupAction = href === "#steps" ? "steps" : href.startsWith("https://") ? "certifications"
+    : href.startsWith("/my") ? "my" : href.includes("/verify") ? "verify"
+      : href.includes("/raffles") ? "raffles" : "live";
   return (
-    <Link className={`${styles.action} ${primary ? styles.primaryAction : ""}`} href={href}>
+    <SignupGuideLink className={`${styles.action} ${primary ? styles.primaryAction : ""}`} href={href}
+      guide={guide} locale={locale} action={action} placement={placement}>
       {children}
       <ArrowRight aria-hidden="true" size={17} />
-    </Link>
+    </SignupGuideLink>
   );
 }
 
@@ -58,6 +67,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
 
   return (
     <div className={styles.page} lang={locale} data-fan-surface>
+      <SignupGuideView guide={creator} locale={locale} />
       <FocusFlowHeader locale={locale} mainId={`${creator}-guide-main`} innerClassName={styles.headerInner}>
         <nav className={styles.navigation} aria-label={locale === "ko" ? "주요 메뉴" : "Primary navigation"}>
           <Link href={`/?locale=${locale}` as Route}>HOME</Link>
@@ -81,8 +91,8 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
             {"heroSchedule" in t ? <p className={styles.schedule}><CalendarDays aria-hidden="true" size={18} /><time dateTime={creator === "elina" ? "2026-09-18T20:30:00+09:00" : "2026-09-12T08:00:00+09:00"}>{t.heroSchedule}</time></p> : null}
             {creator === "elina" ? <p className={styles.prizeSummary}>{elinaFanGuideContent[locale].prizeSummary}</p> : null}
             <div className={styles.actions}>
-              <ActionLink href={creator === "elina" ? href.verify : "#steps"} primary>{t.howToJoin}</ActionLink>
-              <ActionLink href={href.raffles}>{t.viewPrizes}</ActionLink>
+              <ActionLink guide={creator} locale={locale} placement="hero" href={creator === "elina" ? href.verify : "#steps"} primary>{t.howToJoin}</ActionLink>
+              <ActionLink guide={creator} locale={locale} placement="hero" href={href.raffles}>{t.viewPrizes}</ActionLink>
             </div>
             <p className={styles.note}>{t.heroNote}</p>
           </div>
@@ -129,7 +139,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
                 <p className={styles.stepBody}>{step.body}</p>
                 {step.actions.map((label, actionIndex) => (
                   <div className={styles.stepActionRow} key={label}>
-                    <ActionLink href={stepTargets[index][actionIndex]}>{label}</ActionLink>
+                    <ActionLink guide={creator} locale={locale} placement="step" href={stepTargets[index][actionIndex]}>{label}</ActionLink>
                     {actionIndex === 0 && "note" in step && step.note ? <p className={styles.note}>{step.note}</p> : null}
                   </div>
                 ))}
@@ -141,7 +151,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
         <section className={styles.history} aria-labelledby="history-title">
           <BookOpen aria-hidden="true" />
           <div><h2 id="history-title">{t.historyTitle}</h2><p>{t.historyBody}</p></div>
-          <ActionLink href={href.my}>{t.historyAction}</ActionLink>
+          <ActionLink guide={creator} locale={locale} placement="history" href={href.my}>{t.historyAction}</ActionLink>
         </section>
 
         <section className={styles.faq} aria-labelledby="guide-faq-title">
@@ -151,7 +161,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
 
         <section className={styles.closing} aria-labelledby="guide-closing-title">
           <h2 id="guide-closing-title">{t.closingTitle}</h2>
-          <ActionLink href={creator === "elina" ? href.verify : href.live}>{t.closingAction}</ActionLink>
+          <ActionLink guide={creator} locale={locale} placement="closing" href={creator === "elina" ? href.verify : href.live}>{t.closingAction}</ActionLink>
         </section>
       </main>
 

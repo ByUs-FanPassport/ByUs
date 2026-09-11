@@ -174,7 +174,7 @@ export function RaffleResultPanel({ result, locale, embedded = false }: { result
         ? <p className={styles.instructions}>{result.policy.pickupInstructions[locale]}</p> : null}
       <div className={styles.actions}>
         {showRecipientAction ? <FanAction variant="primary" href={recipientHref} trailingIcon={<ArrowRight />}>{recipientLabel}</FanAction> : null}
-        {isClosed ? <FanAction variant="neutral" href="mailto:biz@sallylab.io">{t.contact}</FanAction> : null}
+        {isClosed ? <FanAction variant="neutral" href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : null}
         {result.state === "not_won" ? <FanAction variant="neutral" href={withLocalePath("/benefits", locale)}>{t.other}</FanAction> : null}
       </div>
     </section>

@@ -59,3 +59,11 @@
 `20260911125938_telegram_operator_commands.sql`을 적용한 뒤 기존 notification 비밀 JSON에 `TELEGRAM_COMMAND_MODE=enabled`를 추가하고 `configure_telegram_commands(true)`로 수신을 켠다. 기본값은 비활성이다. 활성화 전 기존 webhook과 다른 수신 처리기의 사용 여부를 확인한다. 봇 업데이트 수신은 이 워커가 담당하므로 다른 polling/webhook 수신기를 동시에 연결하지 않는다. 기존 webhook·허용 업데이트 종류를 자동으로 변경하지 않는다.
 
 명령 update ID는 응답 전 서버 전용 receipt에 기록한다. 동일 update와 발송 결과 불명 요청은 자동 재전송하지 않는다. 실패 시 사용자가 명령을 다시 입력할 수 있다. 처리한 구간까지만 cursor를 저장하며 정상 완료한 구간을 다음 요청에서 확인 처리한다. 일반 메시지 본문·사용자 정보는 저장하지 않고 receipt는 30일 후 제거한다. `/today` KST 경계와 권한·TTL·중복·cursor 검증은 `supabase/tests/telegram_operator_commands.sql`에 있다.
+
+## CS 문의 알림
+
+- 새 문의 접수와 사용자가 남긴 추가 메시지를 같은 운영 방으로 알린다. 운영자의 답변과 처리 완료에는 별도 알림을 보내지 않는다.
+- 알림에는 이벤트 종류와 `https://byus.kr/admin/inquiries/{문의 ID}`만 넣는다. 문의 제목·본문·사용자 이름·이메일은 포함하지 않으며, 링크 열람에는 기존 관리자 인증이 필요하다.
+- `20260911144306_cs_telegram_alerts.sql`이 신규 사용자 메시지를 기존 outbox에 저장한다. 이전 문의는 소급 발송하지 않으며, 동일 전송의 재시도는 알림을 중복 생성하지 않는다. 기존 매분 확인·최대 5건 묶음·방 단위 60초 간격·결과 불명 자동 재전송 금지 정책을 유지한다.
+- DB migration을 먼저 적용한 뒤 notification Lambda 코드만 갱신한다. `claim_telegram_alert_batch_with_cs`가 새 DTO를 반환하며 이전 claim RPC는 CS를 제외하므로 이전 워커도 기존 이벤트를 계속 처리한다. 롤백 시 이전 코드로 복구하면 CS 알림은 대기하며 기존 이벤트는 유지된다.
+- `bash scripts/verify-cs-telegram-local.sh`: CS 접수/추가 메시지/재개, 중복·원자성, 개인정보 제외, 운영자 제외, 이전 워커 호환, 오류 격리와 기존 Telegram lifecycle·명령·경쟁 검증을 실행한다. 기존 backend-security CI에도 포함된다.

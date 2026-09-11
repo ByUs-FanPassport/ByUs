@@ -22,6 +22,29 @@ const stamps = [
 const stampDetail = { id: stamps[0].id, type: "knowledge", businessStatus: "issued", mint, issuedAt: "2026-07-20T00:00:00.000Z", passport: { id: passport.id }, owner: { nickname: null }, celebrity, activity: { id: stamps[0].activityId, type: "knowledge", occurredAt: "2026-07-20T00:00:00.000Z", points: 1, context, display: { type: "팬 인증" } }, display: { type: "팬 인증", mintStatus: "발급 완료" } };
 
 describe("passport fan screens", () => {
+  it.each(["ko", "en"])("renders one First Like beside normal stamps without changing the score (%s)", async (selectedLocale) => {
+    locale = selectedLocale;
+    const detail = { ...passport, stamps, activities: [], progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false }, nextBenefit: null,
+      firstReaction: { reactionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1", stampId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2", activityId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3", reactionType: "FirstReaction", mintStatus: "minted", txHash: `0x${"b".repeat(64)}`, issuedAt: "2026-07-19T00:00:00Z" } };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ passport: detail })));
+    const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl="javascript:alert(1)" />);
+    const card = await screen.findByRole("button", { name: selectedLocale === "ko" ? "첫 좋아요" : "First Like" });
+    expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(3);
+    expect(decodeURIComponent(card.querySelector("img")!.getAttribute("src")!)).toContain(`/images/stamps/first-like-${selectedLocale}.webp`);
+    expect(within(card).queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: selectedLocale === "ko" ? /^3\s*스탬프$/ : /^3\s*Stamps$/ })).toHaveAttribute("href", "#stamp-book");
+    expect(screen.getByText(selectedLocale === "ko" ? "팬 점수" : "Fan Score").previousSibling).toHaveTextContent("15");
+    expect(detail.stampSummary.total).toBe(2);
+    expect(card).not.toHaveTextContent(/디지털|Digital|0x/);
+    fireEvent.click(card);
+    const dialog = await screen.findByRole("dialog", { name: selectedLocale === "ko" ? "스탬프 상세" : "Stamp details" });
+    expect(within(dialog).getByRole("heading", { name: selectedLocale === "ko" ? "첫 좋아요" : "First Like" })).toBeInTheDocument();
+    expect(within(dialog).queryByText(/팬 점수|Fan Score/)).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByText(selectedLocale === "ko" ? "디지털 발급 정보" : "Digital issuance details"));
+    expect(within(dialog).queryByRole("link")).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: selectedLocale === "ko" ? "상세 닫기" : "Close details" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
   beforeEach(() => {
     locale = "ko";
     vi.clearAllMocks();
@@ -72,7 +95,7 @@ describe("passport fan screens", () => {
     fireEvent.click(stageButton);
     expect(screen.getByRole("tooltip")).toHaveTextContent("골드 1까지 12점");
     expect([...container.querySelectorAll("img")].some((image) => decodeURIComponent(image.src).includes("/opal-heart/128/silver-2.png"))).toBe(true);
-    expect(fetcher).toHaveBeenCalledWith("/api/passports?locale=ko&tierStages=1", expect.any(Object));
+    expect(fetcher).toHaveBeenCalledWith("/api/passports?locale=ko&tierStages=1&firstLikeStamp=1", expect.any(Object));
   });
 
   it("optimizes allowlisted HTTPS and local collection photos through the shared policy", async () => {
@@ -129,7 +152,7 @@ describe("passport fan screens", () => {
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("2");
   });
 
-  it("renders a pending First Reaction as relationship history without a transaction link or Stamp count", async () => {
+  it("renders a pending First Reaction as one display stamp without a transaction link", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
       passport: {
         ...passport,
@@ -152,14 +175,16 @@ describe("passport fan screens", () => {
 
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    expect(await screen.findByRole("heading", { name: "첫 반응" })).toBeInTheDocument();
-    expect(screen.getByText("첫 마음을 남긴 날")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "첫 좋아요" })).toBeInTheDocument();
+    expect(screen.getByLabelText("첫 좋아요를 남긴 날")).toBeInTheDocument();
+    expect(screen.queryByText("안전하게 발급을 준비하고 있어요")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "첫 좋아요" }));
     expect(screen.getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
-    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
-    expect(screen.queryByRole("link", { name: /첫 반응 거래 기록/ })).not.toBeInTheDocument();
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
+    expect(screen.queryByRole("link", { name: /첫 좋아요 거래 기록/ })).not.toBeInTheDocument();
   });
 
-  it("links a minted First Reaction to its validated transaction without adding a normal Stamp", async () => {
+  it("links a minted First Reaction to its validated transaction while counting exactly one display stamp", async () => {
     const firstReactionTx = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
       passport: {
@@ -183,13 +208,22 @@ describe("passport fan screens", () => {
 
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
 
-    expect(await screen.findByRole("heading", { name: "첫 반응" })).toBeInTheDocument();
-    const transactionLink = screen.getByRole("link", {
-      name: `첫 반응 거래 기록 ${firstReactionTx}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+    expect(await screen.findByRole("button", { name: "첫 좋아요" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /첫 좋아요 거래 기록/ })).not.toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "첫 좋아요" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", { name: "스탬프 상세" });
+    fireEvent.click(within(dialog).getByText("디지털 발급 정보"));
+    const transactionLink = within(dialog).getByRole("link", {
+      name: `첫 좋아요 거래 기록 ${firstReactionTx}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
     });
     expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
     expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
-    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
   });
 
   it("refreshes a pending First Reaction on return and keeps the displayed history while reading", async () => {
@@ -211,7 +245,9 @@ describe("passport fan screens", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
-    const history = await screen.findByRole("region", { name: "첫 반응" });
+    fireEvent.click(await screen.findByRole("button", { name: "첫 좋아요" }));
+    const history = await screen.findByRole("dialog", { name: "스탬프 상세" });
+    fireEvent.click(within(history).getByText("디지털 발급 정보"));
     expect(within(history).getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.any(Object)));
     expect(container.querySelector("[data-fan-avatar] img")).toBeNull();
@@ -221,7 +257,7 @@ describe("passport fan screens", () => {
     await act(async () => { finish(Response.json({ passport: { ...detail, firstReaction: { ...detail.firstReaction, mintStatus: "minted", txHash: tx } } })); });
     expect(await within(history).findByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
     expect(within(history).getByRole("link")).toHaveAttribute("href", `${explorerBaseUrl}/tx/${tx}`);
-    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("0");
+    expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
   });
 
   it("preserves an archived LIVE title without exposing a dead detail link", async () => {

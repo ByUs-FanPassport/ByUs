@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SIGNUP_CLIENT_EVENT_NAMES, SIGNUP_SERVER_EVENT_NAMES, validateSignupEvent } from "./signup-funnel-event";
 
 export const PRODUCT_EVENT_NAMES = [
   "creator_page_view",
@@ -17,6 +18,8 @@ export const PRODUCT_EVENT_NAMES = [
   "benefit_entered",
   "benefit_won",
   "fulfillment_completed",
+  ...SIGNUP_CLIENT_EVENT_NAMES,
+  ...SIGNUP_SERVER_EVENT_NAMES,
 ] as const;
 
 export const productEventNameSchema = z.enum(PRODUCT_EVENT_NAMES);
@@ -27,6 +30,7 @@ export const CLIENT_PRODUCT_EVENT_NAMES = [
   "live_page_view",
   "live_cta_click",
   "benefit_page_view",
+  ...SIGNUP_CLIENT_EVENT_NAMES,
 ] as const satisfies readonly ProductEventName[];
 
 const clientProductEventNameSchema = z.enum(CLIENT_PRODUCT_EVENT_NAMES);
@@ -61,6 +65,7 @@ export const productEventV1Schema = productEventV1BaseSchema.superRefine((event,
   if ((event.appUserId === null) === (event.anonymousSessionId === null)) {
     context.addIssue({ code: "custom", message: "Exactly one event owner is required" });
   }
+  validateSignupEvent(event, context);
 });
 
 export const clientProductEventV1Schema = productEventV1BaseSchema
@@ -68,7 +73,7 @@ export const clientProductEventV1Schema = productEventV1BaseSchema
   .refine((event) => clientProductEventNameSchema.safeParse(event.eventName).success, {
     message: "Completion events are server-only",
     path: ["eventName"],
-  });
+  }).superRefine(validateSignupEvent);
 
 export type ProductEventV1 = z.infer<typeof productEventV1Schema>;
 export type ClientProductEventV1 = z.infer<typeof clientProductEventV1Schema>;

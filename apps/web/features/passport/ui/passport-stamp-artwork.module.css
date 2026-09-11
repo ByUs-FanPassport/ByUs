@@ -168,6 +168,12 @@
   width: 76%;
 }
 
+.stampAsset {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .stamp[data-compact="true"] .inner {
   gap: 2px;
 }

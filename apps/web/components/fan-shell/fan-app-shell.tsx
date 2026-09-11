@@ -48,7 +48,7 @@ export function activeFanSection(pathname: string): FanSection {
   if (pathname === "/live" || pathname.startsWith("/live/")) return "live";
   if (pathname === "/celebrities" || pathname.startsWith("/c/")) return "favorites";
   if (
-    pathname === "/my" ||
+    pathname === "/my" || pathname.startsWith("/my/") ||
     pathname.startsWith("/passports") ||
     pathname.startsWith("/stamps") ||
     pathname.startsWith("/benefits") ||

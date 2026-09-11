@@ -6,6 +6,7 @@ import { z } from "zod";
 import { mySummarySchema, type MySummary } from "../../features/my/domain/my-summary";
 import type { ContentLocale } from "../../server/content/content-domain";
 import { stampTypeSchema } from "../../features/passport/domain/passport-read-model";
+import { firstReactionStampSchema, passportStampDisplay } from "../../features/passport/domain/first-like-stamp";
 import type { PassportStampRecord } from "../../features/passport/ui/passport-stamp-artwork";
 import { useOwnedFanResource } from "./use-owned-fan-resource";
 
@@ -30,6 +31,7 @@ const passportPreviewResponseSchema = z.object({
     stamps: z.array(z.object({ id: z.uuid(), type: stampTypeSchema, issuedAt: z.iso.datetime({ offset: true }) }).loose()),
     activities: z.array(z.object({ stampId: z.uuid().nullable(), points: z.number().int() }).loose()),
     stampSummary: z.object({ total: z.number().int().nonnegative() }).loose(),
+    firstReaction: firstReactionStampSchema.nullable().optional(),
   }).loose(),
 }).loose();
 
@@ -37,7 +39,7 @@ const parseHomeSummary = (body: unknown) => mySummarySchema.parse((body as { sum
 const parseHomePassportPreview = (body: unknown): PassportPreview => {
   const parsed = passportPreviewResponseSchema.parse(body);
   const pointsByStamp = new Map(parsed.passport.activities.flatMap((activity) => activity.stampId ? [[activity.stampId, activity.points] as const] : []));
-  return { stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })), totalCount: parsed.passport.stampSummary.total };
+  return passportStampDisplay({ ...parsed.passport, stamps: parsed.passport.stamps.map((stamp) => ({ ...stamp, points: pointsByStamp.get(stamp.id) })) });
 };
 
 type HomeAuth = ReturnType<typeof usePrivy>;

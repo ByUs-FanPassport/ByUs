@@ -7,6 +7,7 @@ import { passportLocaleSchema, type PassportLocale } from "../../features/passpo
 import { parseStampDetail, type StampDetail } from "../../features/passport/domain/stamp-detail";
 import { attachPassportGrowth } from "./passport-growth";
 import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
+import { SupabaseCreatorReactionBatchRepository } from "../reaction/creator-reaction-batch-repository";
 
 export interface PassportReadRepository {
   findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection>;
@@ -15,7 +16,7 @@ export interface PassportReadRepository {
 }
 
 interface RpcClient {
-  rpc(name: string, parameters: Record<string, string>): PromiseLike<{ data: unknown; error: unknown }>;
+  rpc(name: string, parameters: Record<string, string | readonly string[]>): PromiseLike<{ data: unknown; error: { message?: string } | null }>;
 }
 
 function oneRow(value: unknown): unknown | null {
@@ -33,8 +34,18 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
     const locale = passportLocaleSchema.parse(input.locale);
     const { data, error } = await this.client.rpc(input.includeStages ? "get_owned_passport_collection_with_stages" : "get_owned_passport_collection", { p_app_user_id: input.appUserId, p_locale: locale });
     if (error) throw new Error("Passport collection query failed");
-    try { return parsePassportCollection(data ?? [], locale); }
+    let passports: PassportCollection;
+    try { passports = parsePassportCollection(data ?? [], locale); }
     catch { throw new Error("Passport collection projection is invalid"); }
+    const reactions = new SupabaseCreatorReactionBatchRepository(this.client);
+    const recorded = new Map<string, boolean>();
+    const slugs = [...new Set(passports.map((passport) => passport.celebrity.slug))];
+    // The existing owner-scoped batch contract accepts up to 50 creators.
+    for (let offset = 0; offset < slugs.length; offset += 50) {
+      const states = await reactions.findMany({ appUserId: input.appUserId, celebritySlugs: slugs.slice(offset, offset + 50) });
+      for (const state of states) recorded.set(state.slug, state.reacted);
+    }
+    return passports.map((passport) => ({ ...passport, firstReactionRecorded: recorded.get(passport.celebrity.slug) === true }));
   }
 
   async findPassport(input: { id: string; appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportDetail | null> {

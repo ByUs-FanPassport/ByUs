@@ -46,6 +46,7 @@ const copy = {
     nav: "ByUs 하단 메뉴",
     fanmeetings: "팬미팅 협업 문의",
     serviceGuide: "이용 가이드",
+    support: "문의하기",
     creatorOnboarding: "팬이 있는 당신에게",
     partners: "파트너 협업 제안",
   },
@@ -64,6 +65,7 @@ const copy = {
     nav: "ByUs footer navigation",
     fanmeetings: "Fan meeting partnerships",
     serviceGuide: "Service guide",
+    support: "Contact support",
     creatorOnboarding: "For everyone with fans",
     partners: "Partnership proposals",
   },
@@ -102,6 +104,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           <section>
             <h2>{t.guide}</h2>
             <Link href={fanHref("/guide", locale)}>{t.serviceGuide}</Link>
+            <Link href={fanHref("/my/inquiries", locale)}>{t.support}</Link>
             <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
             <Link href={fanHref("/pages/creator-onboarding", locale)}>{t.creatorOnboarding}</Link>
             <Link href={fanHref("/pages/partners", locale)}>{t.partners}</Link>
