@@ -34,10 +34,10 @@
 - [x] 구현 `fb0e7ac`와 최신 main `cb7babc` 통합 후 `be8f1f7`을 main에 push. Vercel `dpl_GpR4bFvmPPSamo4yyL59w2SgjWWs` READY, byus.kr/www 연결. GitHub Fan design system 및 Dependency audit 성공.
 - [x] Google Search Console: `biz@sallylab.io`, `https://byus.kr/` 인증된 소유자 확인. 기존 HTML 방식 재사용.
 - [x] Bing Webmaster: Google Search Console의 byus.kr만 가져오기, 등록·소유권 확인 완료.
-- [ ] 네이버: 기존 KimBeautySong 계정과 서비스 발급 HTML verification 파일(HTTP200) 준비. 이미지 CAPTCHA 1회 자동입력 후 완료되지 않았고 사이트목록에서도 소유확인 진행 상태. 사용자의 보안문자 직접 입력이 남음.
+- [x] 네이버: 기존 KimBeautySong 계정과 공개 HTML verification 파일 사용. 사용자의 보안문자 입력 후 소유권 완료 및 사이트 관리 화면 진입 확인.
 - [x] Google: sitemap 제출 후 최초 가져올 수 없음에서 최종 성공으로 전환, 36개URL 발견. 홈·이퓨가이드·LIVE·이퓨채널 KO canonical 4개 색인 요청 접수.
 - [x] Bing: sitemap 제출 및 같은4개KO URL 제출 접수(당일4개, 잔여쿼터96). 사이트맵 최종 Success·36URL 확인.
-- [ ] Naver: 보안문자 직접 입력으로 소유권 인증 후 sitemap·4URL 수집 요청을 이어간다. Google·Bing과 달리 네이버 제출 완료로 표기하지 않는다.
+- [x] Naver: sitemap 등록 2026-09-11 15:29:45 KST, 핵심4개KO URL 15:30:03~15:30:51 요청 내역 등록 확인. 네이버는 처리 상태/발견URL 수를 아직 표시하지 않으므로 수집·색인 완료로 단정하지 않는다.
 - [x] 카카오 공식 공유 디버거: 주요4페이지 기본/KO/EN 12개 + 공통가이드KO/EN 2개, 총14 URL 캐시 삭제·재수집 완료. 입력URL/실제스크랩URL, canonical언어,제목·설명·og:image·site_name·type 일치 및 대표4카드 이미지 확인.
 - [x] Meta 공식 공유 디버거: 주요4개KO URL 재수집,HTTP200·canonical·새카드 확인. fb:app_id 미설정 경고만 기록. Kakao/Meta 증거 `artifacts/seo-20260911/search/share-cache-results.json`.
 - 실제 메시지 전송은 하지 않았다. X·Telegram은 봇 HTTP/메타 응답 검증이며 앱 내 발송 미리보기 확인과 구분한다.
@@ -62,8 +62,8 @@
 
 Google sitemap 오류 확인에는 [공식 Sitemaps 보고서 안내](https://support.google.com/webmasters/answer/7451001?hl=en)의 마지막 가져오기 상태·상세 확인 절차를 참고했다. 최종 성공·36URL 확인으로 추가 재제출하지 않았다.
 
-## 남은 작업과 재개 지점
+## 최종 완료 상태
 
-- 네이버 Aside 탭에서 사용자가 이미지 보안문자 입력·소유권 확인을 완료하면 `https://byus.kr/sitemap.xml`과 위4개KO URL을 제출한다.
-- 검색 제출 증거: `artifacts/seo-20260911/search/search-engine-registration.json`. Google·Bing 최종 성공36URL, 4URL씩 접수.
-- 검색 색인·AI 인용의 후속 발생 시점은 완료 조건에 포함하지 않는다. 실제 결과는 각서비스가수집한뒤 확인할수있다.
+- Google·네이버·Bing 소유권 및 sitemap 제출, 각4개KO 핵심URL 수집·색인 요청 접수까지 완료.
+- 검색 제출 증거: `artifacts/seo-20260911/search/search-engine-registration.json`. Google·Bing 최종 성공36URL, Naver 제출내역 등록, 세서비스4URL씩 접수.
+- 검색 색인·AI 인용의 후속 발생 시점은 완료 조건에 포함하지 않는다. 실제 결과는 각 서비스가 수집한 뒤 확인할 수 있다.
