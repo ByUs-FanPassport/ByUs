@@ -31,6 +31,10 @@ export class MintWorker {
       await this.process(job);
     } catch (error) {
       const classified = classifyError(error);
+      if (classified.code === "MINT_FEE_POLICY_BLOCKED") {
+        await this.queue.holdFeePolicy(job);
+        return;
+      }
       await this.queue.retry(job, classified.code, classified.message, classified.retryable);
     }
   }
@@ -56,6 +60,8 @@ export class MintWorker {
         return;
       }
     }
+
+    if (!(await this.queue.admitMint(job))) return;
 
     if (!submission) {
       if (job.txHash) {

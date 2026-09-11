@@ -36,6 +36,9 @@ const validEnv = {
   KAKAO_CLIENT_SECRET: "",
   KAKAO_REDIRECT_URI: "",
   KAKAO_TEST_SINK_SECRET: "",
+  GOOGLE_SITE_VERIFICATION: "",
+  NAVER_SITE_VERIFICATION: "",
+  BING_SITE_VERIFICATION: "",
 } as const;
 
 describe("public environment", () => {
@@ -97,7 +100,7 @@ describe("server environment", () => {
   it("covers every key declared by .env.example", () => {
     const exampleKeys = readFileSync(resolve(process.cwd(), ".env.example"), "utf8")
       .split("\n")
-      .filter(Boolean)
+      .filter((line) => /^[A-Z][A-Z0-9_]*=/.test(line))
       .map((line) => line.split("=", 1)[0])
       .sort();
 
@@ -173,6 +176,7 @@ describe("server environment", () => {
       (key) =>
         !key.startsWith("NEXT_PUBLIC_") &&
         !key.startsWith("KAKAO_") &&
+        !key.endsWith("_SITE_VERIFICATION") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
         key !== "PRIVY_APPLE_LOGIN_ENABLED" &&
         key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",

@@ -38,7 +38,7 @@ describe("Viem Collectible binding", () => {
     const workerSubmission = await submission();
     const client = {
       readContract: vi.fn(async ({ functionName }: { functionName: string }) => functionName === "tokenByClaimId" ? 1n : functionName === "ownerOf" ? recipient : "ipfs://wrong"),
-      getLogs: vi.fn().mockResolvedValue([{ transactionHash: workerSubmission.txHash, args: { claimKey, tokenId: 1n, to: recipient, metadataUri: "ipfs://expected" } }]),
+      getLogs: vi.fn().mockResolvedValue([{ address: contract, transactionHash: workerSubmission.txHash, args: { claimKey, tokenId: 1n, to: recipient, metadataUri: "ipfs://expected" } }]),
     };
     const payload: CollectiblePayloadV1 = { recipient, celebritySlug: "kara", liveSlug: "kara-live", claimId, metadataVersion: 1, workerSubmission };
     await expect(adapter(client).findExisting("collectible", payload)).rejects.toMatchObject({ code: "COLLECTIBLE_CHAIN_STATE_MISMATCH", retryable: false });
@@ -48,7 +48,7 @@ describe("Viem Collectible binding", () => {
     const workerSubmission = await submission();
     const client = {
       readContract: vi.fn(async ({ functionName }: { functionName: string }) => functionName === "tokenByClaimId" ? 1n : functionName === "ownerOf" ? recipient : "ipfs://expected"),
-      getLogs: vi.fn().mockResolvedValue([{ transactionHash: workerSubmission.txHash, args: { claimKey, tokenId: 1n, to: recipient, metadataUri: "ipfs://expected" } }]),
+      getLogs: vi.fn().mockResolvedValue([{ address: contract, transactionHash: workerSubmission.txHash, args: { claimKey, tokenId: 1n, to: recipient, metadataUri: "ipfs://expected" } }]),
     };
     const payload: CollectiblePayloadV1 = { recipient, celebritySlug: "kara", liveSlug: "kara-live", claimId, metadataVersion: 1, workerSubmission };
 

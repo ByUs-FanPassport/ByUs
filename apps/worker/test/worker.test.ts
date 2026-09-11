@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { BlockchainJob, JobPayload, PreparedSubmission } from "../src/domain.js";
+import { WorkerError, type BlockchainJob, type JobPayload, type PreparedSubmission } from "../src/domain.js";
 import type { ChainPort, ClockPort, MetadataDocument, MetadataPort, MintReceipt, QueuePort } from "../src/ports.js";
 import { MintWorker } from "../src/worker.js";
 
@@ -31,11 +31,21 @@ class FakeQueue implements QueuePort {
   jobs: BlockchainJob[];
   completed: Array<{ txHash: string; tokenId: bigint }> = [];
   retried: Array<{ code: string; retryable: boolean }> = [];
+  held: string[] = [];
   prepared: PreparedSubmission[] = [];
   events: string[] = [];
+  admitted = true;
+  admitCalls = 0;
 
   constructor(initial: BlockchainJob[]) { this.jobs = initial; }
   async claim(): Promise<BlockchainJob[]> { return this.jobs; }
+  async admitMint(): Promise<boolean> {
+    this.admitCalls += 1;
+    return this.admitted;
+  }
+  async holdFeePolicy(current: BlockchainJob): Promise<void> {
+    this.held.push(current.id);
+  }
   async recordPrepared(current: BlockchainJob, submission: PreparedSubmission): Promise<BlockchainJob> {
     this.events.push("record-prepared");
     this.prepared.push(submission);
@@ -66,11 +76,13 @@ class FakeChain implements ChainPort {
   broadcastCount = 0;
   events: string[] = [];
   broadcastError: Error | null = null;
+  prepareError: Error | null = null;
   preparedJobs: Array<{ entityType: string; payload: JobPayload; metadataUri: string }> = [];
   async findExisting(): Promise<MintReceipt | null> { return this.existing; }
   async prepare(entityType: "passport" | "stamp" | "reaction" | "collectible", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
     this.prepareCount += 1;
     this.events.push("prepare");
+    if (this.prepareError) throw this.prepareError;
     this.preparedJobs.push({ entityType, payload, metadataUri });
     return { txHash, signedTransaction };
   }
@@ -158,6 +170,57 @@ describe("MintWorker", () => {
     expect(queue.completed).toEqual([{ txHash, tokenId: 44n }]);
     expect(metadata.documents).toHaveLength(0);
     expect(chain.prepareCount).toBe(0);
+    expect(chain.broadcastCount).toBe(0);
+    expect(queue.admitCalls).toBe(0);
+  });
+
+  it("stops before metadata or chain work when the daily dispatch budget is full", async () => {
+    const queue = new FakeQueue([job()]);
+    queue.admitted = false;
+    const metadata = new FakeMetadata();
+    const chain = new FakeChain();
+
+    await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
+
+    expect(queue.admitCalls).toBe(1);
+    expect(metadata.documents).toHaveLength(0);
+    expect(chain.prepareCount).toBe(0);
+    expect(chain.broadcastCount).toBe(0);
+    expect(queue.completed).toHaveLength(0);
+    expect(queue.retried).toHaveLength(0);
+  });
+
+  it("requires admission before rebroadcasting an existing signed transaction", async () => {
+    const queue = new FakeQueue([
+      job({ ...basePayload, workerSubmission: { txHash, signedTransaction } }),
+    ]);
+    queue.admitted = false;
+    const metadata = new FakeMetadata();
+    const chain = new FakeChain();
+    chain.receiptResult = null;
+
+    await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
+
+    expect(queue.admitCalls).toBe(1);
+    expect(metadata.documents).toHaveLength(0);
+    expect(chain.prepareCount).toBe(0);
+    expect(chain.broadcastCount).toBe(0);
+  });
+
+  it("holds a fee-policy block without consuming the normal retry path", async () => {
+    const queue = new FakeQueue([job()]);
+    const chain = new FakeChain();
+    chain.prepareError = new WorkerError(
+      "MINT_FEE_POLICY_BLOCKED",
+      "Current network fee exceeds policy",
+      true,
+    );
+
+    await expect(worker(queue, new FakeMetadata(), chain).runOnce()).resolves.toBe(1);
+
+    expect(queue.admitCalls).toBe(1);
+    expect(queue.held).toEqual([job().id]);
+    expect(queue.retried).toHaveLength(0);
     expect(chain.broadcastCount).toBe(0);
   });
 

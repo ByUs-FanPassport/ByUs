@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const booleanString = z.enum(["true", "false"]).transform((value) => value === "true");
 const positiveInteger = z.coerce.number().int().positive();
+const positiveBigInt = z.coerce.bigint().positive();
 const url = z.string().url();
 
 const envSchema = z.object({
@@ -22,18 +23,25 @@ const envSchema = z.object({
   BYUS_PASSPORT_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   BYUS_STAMP_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   GIWA_DEPLOYMENT_BLOCK: z.coerce.bigint().nonnegative(),
+  GIWA_MINT_MAX_GAS: positiveBigInt.default(1_000_000n),
+  GIWA_MINT_MAX_FEE_PER_GAS_WEI: positiveBigInt.default(100_000_000n),
+  GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI: positiveBigInt.default(100_000_000n),
+  GIWA_MINT_MAX_EXECUTION_FEE_WEI: positiveBigInt.default(100_000_000_000_000n),
   BYUS_COLLECTIBLE_CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional(),
   GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: z.coerce.bigint().nonnegative().optional(),
 }).strict().superRefine((value, context) => {
   if ((value.BYUS_COLLECTIBLE_CONTRACT_ADDRESS === undefined) !== (value.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK === undefined)) {
     context.addIssue({ code: "custom", message: "Collectible contract address and deployment block must be configured together" });
   }
+  if (value.GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI > value.GIWA_MINT_MAX_FEE_PER_GAS_WEI) {
+    context.addIssue({ code: "custom", message: "Priority fee cap must not exceed max fee cap" });
+  }
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;
 
 export function parseEnv(source: NodeJS.ProcessEnv): WorkerEnv {
-  const knownKeys = ["WORKER_ENABLED", "WORKER_ID", "WORKER_BATCH_SIZE", "WORKER_LEASE_SECONDS", "WORKER_POLL_INTERVAL_MS", "WORKER_RECEIPT_POLL_ATTEMPTS", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "PINATA_JWT", "PINATA_API_URL", "METADATA_ASSET_BASE_URI", "GIWA_RPC_URL", "GIWA_CHAIN_ID", "GIWA_RELAYER_PRIVATE_KEY", "BYUS_PASSPORT_CONTRACT_ADDRESS", "BYUS_STAMP_CONTRACT_ADDRESS", "GIWA_DEPLOYMENT_BLOCK", "BYUS_COLLECTIBLE_CONTRACT_ADDRESS", "GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK"] as const;
+  const knownKeys = ["WORKER_ENABLED", "WORKER_ID", "WORKER_BATCH_SIZE", "WORKER_LEASE_SECONDS", "WORKER_POLL_INTERVAL_MS", "WORKER_RECEIPT_POLL_ATTEMPTS", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "PINATA_JWT", "PINATA_API_URL", "METADATA_ASSET_BASE_URI", "GIWA_RPC_URL", "GIWA_CHAIN_ID", "GIWA_RELAYER_PRIVATE_KEY", "BYUS_PASSPORT_CONTRACT_ADDRESS", "BYUS_STAMP_CONTRACT_ADDRESS", "GIWA_DEPLOYMENT_BLOCK", "GIWA_MINT_MAX_GAS", "GIWA_MINT_MAX_FEE_PER_GAS_WEI", "GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI", "GIWA_MINT_MAX_EXECUTION_FEE_WEI", "BYUS_COLLECTIBLE_CONTRACT_ADDRESS", "GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK"] as const;
   const known = Object.fromEntries(knownKeys.map((key) => [key, source[key]]));
   return envSchema.parse(known);
 }

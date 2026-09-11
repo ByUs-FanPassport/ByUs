@@ -44,6 +44,8 @@ describe("FanOperations", () => {
               nickname: "Kamilia",
               accountStatus: "active",
               maskedWallet: "0x1234…abcd",
+              email: "kamilia@example.com",
+              loginProviders: ["google"],
               createdAt: "2026-09-11T01:00:00Z",
               celebritySummaries: [
                 {
@@ -66,6 +68,8 @@ describe("FanOperations", () => {
               nickname: "Alpha",
               accountStatus: "disabled",
               maskedWallet: null,
+              email: "apple-user@privaterelay.appleid.com",
+              loginProviders: ["apple"],
               createdAt: "2026-09-10T01:00:00Z",
               celebritySummaries: [
                 {
@@ -92,13 +96,21 @@ describe("FanOperations", () => {
       }),
     );
   });
-  it("renders privacy-minimal fan rows with no email column", async () => {
+  it("shows account email and login methods without repeating normal or mint status", async () => {
     render(<FanOperations />);
     await waitFor(() =>
       expect(screen.getByText("Kamilia")).toBeInTheDocument(),
     );
     const row = screen.getByText("Kamilia").closest("tr");
-    expect(row).toHaveTextContent("이용 가능 · 0x1234…abcd");
+    expect(row).toHaveTextContent("kamilia@example.com");
+    expect(row).toHaveTextContent("Google");
+    expect(row).not.toHaveTextContent("이용 가능");
+    expect(row).not.toHaveTextContent("minted");
+    const disabledRow = screen.getByText("Alpha").closest("tr");
+    expect(disabledRow).toHaveTextContent("Apple");
+    expect(disabledRow).toHaveTextContent("apple-user@privaterelay.appleid.com");
+    expect(disabledRow).toHaveTextContent("이용 중지");
+    expect(screen.getByRole("columnheader", { name: "로그인 수단" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "회원 관리" })).toBeInTheDocument();
     expect(screen.getByText("현재 불러온 2명")).toBeInTheDocument();
     expect(
@@ -141,6 +153,31 @@ describe("FanOperations", () => {
     expect(
       screen.getAllByRole("link").find((link) => link.getAttribute("aria-current") === "page"),
     ).toHaveAttribute("href", "/admin/fans");
+  });
+  it.each([
+    ["", "패스포트 미발급", "아직 발급된 패스포트가 없습니다.", "회원 상세: New member"],
+    ["lang=en", "No Passport issued", "This member has not issued a Passport yet.", "Member detail: New member"],
+  ])("shows members without passports and their empty detail (%s)", async (params, label, description, trigger) => {
+    searchParamsState.current = params;
+    const member = {
+      fanId: "33333333-3333-4333-8333-333333333333",
+      nickname: "New member", accountStatus: "active", maskedWallet: null,
+      createdAt: "2026-09-11T02:00:00Z", celebritySummaries: [],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => String(input).includes(member.fanId)
+        ? { fan: { ...member, wallets: [], passports: [] } }
+        : { items: [member], nextCursor: null },
+    })));
+    render(<FanOperations />);
+    const row = (await screen.findByText("New member")).closest("tr")!;
+    expect(within(row).getByText(label)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: trigger }));
+    const dialog = await screen.findByRole("dialog");
+    expect(await within(dialog).findByText(description)).toBeInTheDocument();
+    expect(within(dialog).queryByRole("combobox")).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
   });
   it("moves focus into the dialog, closes with Escape, and restores the row trigger", async () => {
     render(<FanOperations />);

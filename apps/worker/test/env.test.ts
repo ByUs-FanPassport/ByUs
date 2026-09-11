@@ -15,6 +15,10 @@ describe("worker environment", () => {
     const env = parseEnv(valid);
     expect(env.WORKER_ENABLED).toBe(false);
     expect(env.WORKER_LEASE_SECONDS).toBe(120);
+    expect(env.GIWA_MINT_MAX_GAS).toBe(1_000_000n);
+    expect(env.GIWA_MINT_MAX_FEE_PER_GAS_WEI).toBe(100_000_000n);
+    expect(env.GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI).toBe(100_000_000n);
+    expect(env.GIWA_MINT_MAX_EXECUTION_FEE_WEI).toBe(100_000_000_000_000n);
   });
 
   it("rejects the wrong chain", () => {
@@ -34,5 +38,18 @@ describe("worker environment", () => {
     expect(() => parseEnv({ ...valid, BYUS_COLLECTIBLE_CONTRACT_ADDRESS: `0x${"4".repeat(40)}` })).toThrow("Collectible");
     const env = parseEnv({ ...valid, BYUS_COLLECTIBLE_CONTRACT_ADDRESS: `0x${"4".repeat(40)}`, GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK: "200" });
     expect(env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK).toBe(200n);
+  });
+
+  it.each([
+    ["GIWA_MINT_MAX_GAS", "0"],
+    ["GIWA_MINT_MAX_FEE_PER_GAS_WEI", "-1"],
+    ["GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI", "1.5"],
+    ["GIWA_MINT_MAX_EXECUTION_FEE_WEI", "not-a-number"],
+  ])("rejects an invalid %s", (name, value) => {
+    expect(() => parseEnv({ ...valid, [name]: value })).toThrow();
+  });
+
+  it("requires the priority fee cap not to exceed the max fee cap", () => {
+    expect(() => parseEnv({ ...valid, GIWA_MINT_MAX_FEE_PER_GAS_WEI: "10", GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI: "11" })).toThrow("Priority fee cap");
   });
 });
