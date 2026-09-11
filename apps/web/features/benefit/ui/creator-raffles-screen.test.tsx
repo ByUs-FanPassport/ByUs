@@ -334,7 +334,7 @@ describe("creator raffle catalog and entry integration", () => {
 
     await chooseAndConfirm(2);
     const failedDialog = await screen.findByRole("alertdialog");
-    fireEvent.click(within(failedDialog).getByRole("button", { name: "수량 다시 선택" }));
+    fireEvent.click(within(failedDialog).getByRole("button", { name: "닫기" }));
     const retry = await screen.findByRole("button", { name: "같은 응모 요청 확인" });
     expect(screen.getByText("확인할 요청: 2장")).toBeInTheDocument();
     fireEvent.click(retry);

@@ -11,7 +11,7 @@ function renderInquiry(locale: "ko" | "en" = "ko") {
 async function fillValid(locale: "ko" | "en" = "ko") {
   fireEvent.change(await screen.findByLabelText(locale === "ko" ? "담당자명" : "Contact name"), { target: { value: "Jewel" } });
   fireEvent.change(screen.getByLabelText(locale === "ko" ? "회사명" : "Company"), { target: { value: "Sally Lab" } });
-  fireEvent.change(screen.getByLabelText(locale === "ko" ? "회신 이메일" : "Reply email"), { target: { value: "jewel@example.com" } });
+  fireEvent.change(screen.getByLabelText(locale === "ko" ? "회신 이메일" : "Email address"), { target: { value: "jewel@example.com" } });
   fireEvent.change(screen.getByLabelText(locale === "ko" ? "문의 내용" : "Project details"), { target: { value: "New York fan meeting" } });
   fireEvent.click(screen.getByRole("checkbox"));
 }

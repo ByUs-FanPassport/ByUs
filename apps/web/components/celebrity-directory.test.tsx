@@ -288,7 +288,7 @@ describe("published celebrity directory", () => {
     render(<CelebrityDirectory celebrities={english} locale="en" />);
     expect(screen.getByRole("heading", { name: "Find your favorite" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Search celebrities" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Meet KARA" })).toHaveAttribute("href", "/c/kara?locale=en");
+    expect(screen.getByRole("link", { name: "View KARA’s fan page" })).toHaveAttribute("href", "/c/kara?locale=en");
   });
 });
 

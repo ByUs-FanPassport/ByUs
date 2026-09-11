@@ -44,7 +44,7 @@ const copy = {
   },
   en: {
     title: "Notifications", subtitle: "LIVE reminders and fan benefit updates, all in one place.", all: "Mark all as read", readingAll: "Marking all as read…",
-    empty: "No notifications yet.", emptyHelp: "Reserve a LIVE to receive a reminder before it starts.", today: "Today", previous: "Earlier notifications",
+    empty: "No notifications yet.", emptyHelp: "Reserve a spot for a LIVE to get a reminder before it starts.", today: "Today", previous: "Earlier notifications",
     enable: "Enable browser notifications", enabling: "Enabling notifications…", enabled: "On", permission: "We only request permission after a reservation, when you select this button.",
     subscribed: "Browser notifications are on.", denied: "Allow notifications in your browser settings.", unsupported: "This browser does not support push notifications.", failed: "We couldn't save your notification settings.",
     readAllFailed: "We couldn't mark all notifications as read. Please try again.", signIn: "Sign in to view notifications.", signInHelp: "Sign in to continue viewing unread updates and reminders for your reserved LIVE events.",

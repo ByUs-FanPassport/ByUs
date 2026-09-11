@@ -310,7 +310,7 @@ describe("FAN-007 quiz questions", () => {
 
     render(<QuizQuestionsScreen locale="en" slug="katseye" />);
 
-    expect(await screen.findByRole("heading", { name: "How well do you know your favorite?" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "How well do you know your favorite creator?" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Which song introduced KATSEYE?" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Exit verification and return to the fan page" })).toHaveAttribute(
       "href",

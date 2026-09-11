@@ -46,11 +46,11 @@ const carouselCopy = {
     next: "Next LIVE",
     goTo: (index: number) => `View LIVE ${index}`,
     position: (index: number, total: number) => `${index} of ${total}`,
-    reserve: "Reserve LIVE",
+    reserve: "Reserve a spot",
     enter: "Enter LIVE",
     details: "View LIVE details",
-    noneStatus: "No published LIVE",
-    noneTitle: "A new LIVE is in preparation.",
+    noneStatus: "No LIVE events available",
+    noneTitle: "We’re preparing a new LIVE.",
   },
 } as const;
 

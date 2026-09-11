@@ -30,7 +30,7 @@ const copy = {
     remaining: "Remaining conditions", ready: "Conditions met", locked: "Complete the conditions to unlock it.",
     applyReady: "Conditions met · Applications open", applyLocked: "Meet the conditions to apply",
     submitted: "Applied · Awaiting selection", selected: "Selected", notSelected: "Not selected",
-    selectionHelp: "Benefits are provided based on the selection result after you apply.",
+    selectionHelp: "If you apply, the benefit is provided only if you are selected.",
     stale: "We couldn’t refresh the conditions.",
   },
 } as const;

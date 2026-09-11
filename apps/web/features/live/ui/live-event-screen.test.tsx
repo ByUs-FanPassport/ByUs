@@ -860,7 +860,7 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="en" />);
 
     expect(await screen.findByText("Create a Fan Passport before joining.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Get Fan Passport" }))
+    expect(screen.getByRole("link", { name: "Get your Fan Passport" }))
       .toHaveAttribute("href", "/c/kara/verify?locale=en&returnTo=%2Flive%2Fkara-nualeaf%3Flocale%3Den");
   });
 

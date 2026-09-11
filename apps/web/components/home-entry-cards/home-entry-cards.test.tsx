@@ -39,12 +39,12 @@ describe("home entry cards", () => {
     expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
-  it("automatically rotates and loops while leaving the fan meeting link available", () => {
+  it("automatically rotates and loops while leaving the fanmeeting link available", () => {
     render(<HomeEntryCards celebrities={[]} eventPhotos={undefined} locale="en" />);
     advance(2_999); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
     advance(1); expect(activeLink()).toHaveAttribute("href", "/pages/elina-fan-guide?locale=en");
     advance(); expect(activeLink()).toHaveAttribute("href", "/pages/ifew-fan-guide?locale=en");
-    expect(screen.getByRole("link", { name: "Plan your U.S. fan meeting with ByUs" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Plan your U.S. fanmeeting with ByUs" })).toBeVisible();
   });
 
   it("pauses on hover and requires explicit restart after keyboard focus leaves", () => {

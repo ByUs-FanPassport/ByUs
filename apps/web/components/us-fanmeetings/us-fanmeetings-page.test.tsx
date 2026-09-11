@@ -10,7 +10,7 @@ describe("U.S. fanmeeting inquiries", () => {
     (locale) => {
       const { container } = render(<UsFanmeetingsPage locale={locale} />);
       expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
-      expect(screen.getByRole("button", { name: locale === "ko" ? "팬미팅 문의하기" : "Discuss your fan meeting" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: locale === "ko" ? "팬미팅 문의하기" : "Discuss your fanmeeting" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "biz@sallylab.io" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: locale === "ko" ? "프로젝트 문의하기" : "Tell us about your project" })).toBeInTheDocument();
       expect(
@@ -37,10 +37,10 @@ describe("U.S. fanmeeting inquiries", () => {
     const searchParams = Promise.resolve({ locale: "en" });
     render(await Page({ searchParams }));
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Bring your fan meeting to the U.S.",
+      "Bring your fanmeeting to the U.S.",
     );
     const metadata = await generateMetadata({ searchParams });
-    expect(metadata.title).toContain("Bring your fan meeting to the U.S.");
+    expect(metadata.title).toContain("Bring your fanmeeting to the U.S.");
     expect(metadata.alternates?.canonical).toBe(
       "https://byus.kr/pages/us-fanmeetings?locale=en",
     );

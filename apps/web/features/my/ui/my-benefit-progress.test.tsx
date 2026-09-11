@@ -64,7 +64,7 @@ describe("MY next benefit", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(payload(0, { ...benefit, allocationMode: "application_selection", applicationStatus: status, state: "eligible", minimumScore: 0, missingConditions: [] }))));
     render(<MyBenefitProgress creator={creators[0]} locale="en"/>);
     expect(await screen.findByText(text)).toBeInTheDocument();
-    expect(screen.getByText("Benefits are provided based on the selection result after you apply.")).toBeInTheDocument();
+    expect(screen.getByText("If you apply, the benefit is provided only if you are selected.")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View benefit" })).toHaveAttribute("href", `/benefits/${benefit.id}?locale=en`);
   });

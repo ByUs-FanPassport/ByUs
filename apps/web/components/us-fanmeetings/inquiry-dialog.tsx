@@ -41,11 +41,11 @@ const copy = {
     },
   },
   en: {
-    title: "Tell us about your U.S. fan meeting",
+    title: "Tell us about your U.S. fanmeeting",
     description: "Share what you know so far. Our team will review it and reply by email.",
-    name: "Contact name", company: "Company", email: "Reply email", message: "Project details",
+    name: "Contact name", company: "Company", email: "Email address", message: "Project details",
     namePlaceholder: "Your name", companyPlaceholder: "Company name", emailPlaceholder: "name@company.com",
-    messagePlaceholder: "Tell us about the talent, preferred city and timing, and the support you need.",
+    messagePlaceholder: "Tell us who will be appearing, your preferred city and dates, and the support you need.",
     consent: "I agree that the information I provide may be used to respond to this inquiry.",
     submit: "Send inquiry", pending: "Sending", close: "Close inquiry dialog",
     successTitle: "Your inquiry has been received",
@@ -54,9 +54,9 @@ const copy = {
     errors: {
       INQUIRY_INVALID: "Please review the information you entered.",
       INQUIRY_RATE_LIMITED: "Please wait a moment and try again.",
-      INQUIRY_IDEMPOTENCY_CONFLICT: "Your message changed. Please submit it again.",
-      INQUIRY_UNAVAILABLE: "We can’t receive inquiries right now. Your message has been kept here.",
-      TIMEOUT: "The response is taking longer than expected. Please retry with the same details.",
+      INQUIRY_IDEMPOTENCY_CONFLICT: "Your inquiry details have changed. Please submit them again.",
+      INQUIRY_UNAVAILABLE: "We can’t accept inquiries right now. Your details are still in this form. Please try again later.",
+      TIMEOUT: "Your inquiry is taking longer than expected. Please try again with the same details.",
     },
   },
 } as const;
@@ -71,7 +71,7 @@ const inquiryDetails = {
       messagePlaceholder: "활동 채널 링크, 소개, 팬들과 해보고 싶은 활동을 알려주세요.",
     },
     en: {
-      title: "Fan activity inquiry",
+      title: "Plan activities with your fans",
       description: "Tell us about your channels and what you would like to do with your fans.",
       name: "Name / contact person", company: "Public name / team / brand",
       companyPlaceholder: "The name your fans know you by",
@@ -89,12 +89,12 @@ const inquiryDetails = {
       title: "Partnership proposal",
       description: "Introduce your brand or project and the collaboration you have in mind.",
       company: "Company / brand", companyPlaceholder: "Company or brand name",
-      messagePlaceholder: "Share your products or content, preferred partners or fans, sales or content channels, and any timing, budget, or offer terms you have.",
+      messagePlaceholder: "Tell us about your products or content, who you’d like to work with, the fans you want to reach, and your sales or publishing channels. Include any dates, budget, or terms you’ve decided on.",
     },
   },
 } as const;
 
-const inquiryEyebrows = { fanmeeting: "U.S. FAN MEETINGS", creator: "FOR EVERYONE WITH FANS", partner: "PARTNERSHIPS" };
+const inquiryEyebrows = { fanmeeting: "U.S. FANMEETINGS", creator: "FOR EVERYONE WITH FANS", partner: "PARTNERSHIPS" };
 
 const InquiryContext = createContext<{ open: () => void } | null>(null);
 

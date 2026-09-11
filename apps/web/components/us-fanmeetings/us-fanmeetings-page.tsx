@@ -62,7 +62,7 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
         <section className={styles.hero} aria-labelledby="fanmeeting-title">
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>
-              ByUs <span aria-hidden="true">/</span> U.S. FAN MEETINGS
+              ByUs <span aria-hidden="true">/</span> U.S. FANMEETINGS
             </p>
             <h1 id="fanmeeting-title">{t.hero}</h1>
             <p className={styles.description}>{t.desc}</p>
@@ -184,12 +184,12 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
               <h3>
                 {locale === "ko"
                   ? "팬이 쌓아가는 참여의 기록"
-                  : "A record of every fan’s participation"}
+                  : "A record of fan activities"}
               </h3>
               <p>
                 {locale === "ko"
                   ? "Fan Passport에 쌓인 참여를 바탕으로\n다음 캠페인과 팬 경험을 함께 기획합니다."
-                  : "Plan future campaigns and fan experiences\nwith participation recorded in Fan Passport."}
+                  : "Use Fan Passport activity records\nto plan future campaigns and fan experiences."}
               </p>
             </div>
           </div>

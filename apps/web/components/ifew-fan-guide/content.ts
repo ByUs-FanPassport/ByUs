@@ -75,7 +75,7 @@ export const ifewFanGuideContent = {
     howToJoin: "How to join",
     viewPrizes: "View Banksy tickets",
     heroNote: "Banksy exhibition at The Hyundai Seoul · 5 winners, 2 admission tickets each (10 total)",
-    stages: ["Fan verification", "Reserve LIVE", "LIVE attendance", "Prize entry"],
+    stages: ["Fan verification", "Reserve a spot", "LIVE attendance", "Prize entry"],
     steps: [
       {
         label: "01  /  GET READY",
@@ -86,9 +86,9 @@ export const ifewFanGuideContent = {
       {
         label: "02  /  SAVE THE DATE",
         title: "A Saturday morning\nto look forward to.",
-        body: "Saturday, September 12, from 8 AM to 1 PM. Reserve ifew’s 100-day celebration LIVE on ByUs and find your reservation in MY.",
-        actions: ["Reserve the LIVE", "View my reservations"],
-        note: "All times are Korean Standard Time (KST, UTC+9).\nAn ifew Passport is required to reserve on ByUs.",
+        body: "Saturday, September 12, from 8 AM to 1 PM. Reserve your spot on ByUs for ifew’s 100-day celebration LIVE, then find your reservation in MY.",
+        actions: ["Reserve a spot", "View my reservations"],
+        note: "All times are Korea Standard Time (KST, UTC+9).\nAn ifew Passport is required to reserve on ByUs.",
       },
       {
         label: "03  /  CHECK IN TOGETHER",
@@ -108,28 +108,28 @@ export const ifewFanGuideContent = {
     liveCard: {
       title: "ifew’s 100-day TikTok LIVE",
       flow: "SAT, SEP 12, 2026 · TikTok LIVE",
-      code: "Korean Standard Time · KST (UTC+9)",
+      code: "Korea Standard Time · KST (UTC+9)",
       value: "08:00 – 13:00",
     },
     missionCards: [
       ["Watch the LIVE on TikTok", "Look for the attendance code during the broadcast"],
       ["Enter your code on ByUs", "September 12, 08:00–13:00 KST"],
     ],
-    historyTitle: "Your reservations and entries, in MY.",
+    historyTitle: "Find your reservations and entries in MY.",
     historyBody: "Find your Passport, reserved LIVE events and prize entries.",
     historyAction: "View my history",
     faqTitle: "Before you join",
     faqs: [
-      ["Where does the LIVE take place?", "On TikTok @ifewknow, Saturday, September 12 from 8 AM to 1 PM. All times are Korean Standard Time (KST, UTC+9)."],
+      ["Where does the LIVE take place?", "On TikTok @ifewknow, Saturday, September 12 from 8 AM to 1 PM. All times are Korea Standard Time (KST, UTC+9)."],
       ["Does reserving the LIVE enter me in the draw?", "No. Reservations and prize entries are separate. Choose how many ifew raffle tickets to use and confirm your entry. If you already have tickets, you can enter before the LIVE."],
       ["How do I get raffle tickets?", "Earn ifew raffle tickets through fan verification and LIVE attendance. Raffle tickets are used to enter the draw; they are different from the exhibition admission tickets awarded to winners. Another creator’s raffle tickets cannot be used."],
       ["When do entries close?", "At the end of Saturday, September 19: September 20 at 00:00 KST. Check the prize page for entry conditions and your entry history."],
     ],
     closingTitle: "Celebrate 100 days with ifew.\nSee you this Saturday.",
-    closingAction: "View the LIVE",
+    closingAction: "View LIVE details",
     footer: "ByUs. Your Bias.    ·    KO / English",
     imageAlt: "ifew’s profile photo taken outdoors",
-    eventImageAlt: "ifew 100 Days on TikTok LIVE poster, September 12, 2026",
+    eventImageAlt: "Poster for ifew’s 100-day TikTok LIVE on September 12, 2026",
     prizeAlt: "A visitor viewing artwork in an exhibition space",
   },
 } as const;

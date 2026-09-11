@@ -188,9 +188,9 @@ describe("CertificationPanel", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(Response.json({ certifications: [] }));
     render(<CertificationPanel slug="kara" locale="en" />);
-    await screen.findByText("No certifications are available.");
+    await screen.findByText("No verification missions are available.");
     const missions = screen.getByRole("tab", {
-      name: "Available certifications",
+      name: "Available verification missions",
     });
     missions.focus();
     fireEvent.keyDown(missions, { key: "ArrowRight" });

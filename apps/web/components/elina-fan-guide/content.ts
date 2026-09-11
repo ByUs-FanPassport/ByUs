@@ -68,7 +68,7 @@ export const elinaFanGuideContent = {
   },
   en: {
     heroTitle: "Banksy LIVE\nwith Elina",
-    heroDescription: "Verify your fandom and reserve the LIVE to earn 2 raffle tickets. Enter for your favorite prize now.",
+    heroDescription: "Verify your fandom and reserve your spot to earn 2 raffle tickets. Enter for your favorite prize now.",
     heroSchedule: "September 18 · 8:30 PM KST · Instagram LIVE",
     prizeSummary: "60 exhibition ticket winners · 10 Beepio random case winners · 3 Banksy limited-edition statue winners",
     howToJoin: "Verify and get started",
@@ -85,9 +85,9 @@ export const elinaFanGuideContent = {
       },
       {
         label: "02  /  BEFORE THE LIVE",
-        title: "Reserve the LIVE.\nEarn 1 more ticket.",
-        body: "Reserve Elina’s Instagram LIVE on September 18 at 8:30 PM KST. Your first completed reservation earns 1 raffle ticket.",
-        actions: ["Reserve Elina’s LIVE"],
+        title: "Reserve your spot.\nEarn 1 more ticket.",
+        body: "Reserve a spot for Elina’s Instagram LIVE on September 18 at 8:30 PM KST. Your first completed reservation earns 1 raffle ticket.",
+        actions: ["Reserve a spot"],
         note: "Reservations close September 18 at 8:20 PM KST. An Elina Passport is required.",
       },
       {
@@ -95,14 +95,14 @@ export const elinaFanGuideContent = {
         title: "Use your 2 tickets.\nChoose your prize.",
         body: "After completing fan verification and this LIVE reservation for the first time, you can enter with 2 tickets right away. No need to wait for the broadcast. Choose a prize and review how many tickets to use.",
         actions: ["Choose a prize and enter"],
-        note: "All 3 prizes share your Elina ticket balance. Tickets used for one prize are deducted from that balance. Entries close September 28 at 00:00 KST, the midnight between September 27 and 28.",
+        note: "Your Elina ticket balance is shared across all 3 prizes. Tickets used for one prize are deducted from that balance. Entries close at midnight KST at the end of September 27 (September 28, 00:00).",
       },
       {
         label: "04  /  SEPTEMBER 18",
         title: "Watch and check in.\nEarn 2 more tickets.",
         body: "Watch the LIVE on Instagram, then return to the ByUs LIVE page and enter the code shared during the broadcast. Complete check-in to earn 2 raffle tickets, then use them to enter for your favorite prize.",
         actions: ["Open the LIVE check-in page", "Enter for a prize"],
-        note: "Code entry is open September 18, 8:30–9:30 PM KST. Return to this ByUs page from Instagram. Check-in is separate from reservation and requires an Elina Passport.",
+        note: "Code entry is open September 18, 8:30–9:30 PM KST. Return to the ByUs LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
       },
     ],
     liveCard: {
@@ -127,7 +127,7 @@ export const elinaFanGuideContent = {
       ["Can I receive prizes overseas?", "Exhibition tickets must be collected and used at The Hyundai Seoul. Shipped prizes require an address in South Korea. Check each prize’s collection conditions before entering."],
       ["How do I check whether I won?", "After results are announced, check your entries in MY. Winners must submit recipient details within 7 days of the announcement."],
     ],
-    closingTitle: "Start with fan verification,\nthen reserve the LIVE.",
+    closingTitle: "Start with fan verification,\nthen reserve your spot.",
     closingAction: "Verify and get started",
     footer: "ByUs. Your Bias.    ·    KO / English",
     imageAlt: "Elina standing by the sea",

@@ -76,7 +76,7 @@ const copy = {
     retryError: "새 퀴즈를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.",
   },
   en: {
-    favorite: "your favorite",
+    favorite: "your favorite creator",
     loginTitle: "Sign in required",
     loginBody: "Sign in to securely view your fan verification result and issued Passport.",
     login: "Sign in to view result",

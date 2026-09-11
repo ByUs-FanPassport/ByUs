@@ -452,8 +452,8 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome guideEventPhotos={undefined} celebrities={englishCelebrities} featuredLives={[featuredLive]} locale="en" />);
     expect(screen.getByRole("heading", { name: "Your favorites" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA EN" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "KARA EN details" })).toHaveAttribute("href", "/c/kara?locale=en");
-    expect(screen.getByRole("link", { name: /Reserve LIVE/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
+    expect(screen.getByRole("link", { name: "View KARA EN details" })).toHaveAttribute("href", "/c/kara?locale=en");
+    expect(screen.getByRole("link", { name: /Reserve a spot/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
   });
 
   it("uses Enter LIVE for the English active-LIVE Hero without changing the detail route", () => {
