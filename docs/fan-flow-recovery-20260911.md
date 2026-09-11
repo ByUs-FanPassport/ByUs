@@ -27,7 +27,7 @@ User authorized the recommended login/participation recovery fixes and productio
 - [x] Storage read/write failures no longer prevent login navigation or nickname editing.
 - [x] Locale failures and proven-safe notification failures do not block valid identity/profile; critical failures and unproven recipients reject; logs contain only stage/code.
 - [x] Scoped tests, typecheck, targeted lint; local desktop/mobile rendered recovery evidence.
-- [ ] Independent final review, origin/main push, exact-commit deployment start.
+- [x] Independent final review. Release evidence (pushed commit and exact Vercel status URL) is recorded in `artifacts/fan-flow-recovery-20260911/release.json` after pushing.
 
 ## Existing evidence
 
@@ -55,3 +55,9 @@ Actual source components and CSS are served by an isolated Vite harness at port 
 - Browser evidence: login timeout/retry KO/EN at 390/1440; raffle timeout + explicit retry at 390/1440 with identical serialized request bodies, enabled retry, zero page errors, and no horizontal overflow. Modal width: 358px mobile, 470px desktop. Main visually inspected final screenshots.
 - Aside desktop verified reservation success survives failed follow-up GET. Quiz browser route spy confirmed POST submit -> GET same attempt -> `/c/kara/verify/result?attempt=...&locale=ko`. The harness router records navigation rather than changing documents; initial Aside apparent quiz failure was this harness limitation, resolved by inspecting the captured route. No claim of a live result-page roundtrip.
 - DB migration `20260911130228` applied atomically with its migration ledger. Read-only owner/recipient/ACL assertions passed inside the transaction; security advisors returned no issues before/after.
+
+## Final integration
+
+- Integrated concurrent `origin/main` changes through `b0ea2a7` without conflicts. The shared profile onboarding merge preserves both generic setup and exception-safe storage.
+- Final merged web typecheck passed. Focused integration verification (profile onboarding, global next-action guide, raffle dialog) passed 3 files / 26 tests. Earlier unchanged auth/participation suites were reused.
+- Source change: `b205f15`; merged tree: `1c1c887` before this documentation-only release checkpoint.
