@@ -33,3 +33,70 @@
   .banner[data-kind] .action > a { width:100%; min-height:48px; padding:0 20px; border-radius:999px; background:linear-gradient(#0003,#0003),var(--spectrum); color:#fff !important; font-size:15px; text-shadow:none; }
   .action svg { width:16px; height:16px; }
 }
+
+/* LIVE information follows a compact reading path below the artist's face. */
+.banner[data-kind="live"] { container-type:inline-size; }
+.banner[data-kind="live"] .copy {
+  padding:24px;
+  gap:12px;
+  text-shadow:0 1px 3px rgb(10 10 12 / 62%);
+}
+.banner[data-kind="live"] .copy h2 {
+  min-width:0;
+  font-size:clamp(28px, 4.5cqi, 48px);
+  line-height:1.12;
+  overflow-wrap:anywhere;
+  text-wrap:pretty;
+}
+.banner[data-kind="live"] .eyebrow { min-height:28px; }
+.banner[data-kind="live"] .description {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 12px;
+  font-size:16px;
+  font-weight:550;
+}
+.banner[data-kind="live"] .description [data-tone="on-image"] {
+  flex:none;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+}
+.banner[data-kind="live"] .action { margin-top:8px; }
+.banner[data-kind="live"] .action > a {
+  width:fit-content;
+  max-width:100%;
+  min-height:48px;
+  gap:24px;
+  padding:0 24px;
+  text-shadow:none;
+}
+.banner[data-kind="live"] .action svg { width:16px; height:16px; }
+@media (min-width:768px) {
+  .banner[data-kind="live"] .copy { padding:32px 48px; }
+}
+@media (min-width:768px) {
+@container (min-width:640px) {
+  .banner[data-kind="live"] .copy {
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    grid-template-areas:"status schedule" "title action";
+    align-items:end;
+    gap:16px 32px;
+    padding:40px 48px 40px 64px;
+  }
+  .banner[data-kind="live"] .eyebrow { grid-area:status; }
+  .banner[data-kind="live"] .copy h2 { grid-area:title; }
+  .banner[data-kind="live"] .description {
+    grid-area:schedule;
+    max-width:280px;
+    justify-content:flex-end;
+  }
+  .banner[data-kind="live"] .action { grid-area:action; justify-self:end; margin-top:0; }
+}
+}
+@media (max-width:767px) {
+  .banner[data-kind="live"] .copy h2 { font-size:clamp(28px, 8cqi, 36px); }
+  .banner[data-kind="live"] .description { font-size:14px; }
+  .banner[data-kind="live"] .action > a { width:100%; }
+}

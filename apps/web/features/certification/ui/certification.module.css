@@ -362,6 +362,20 @@
   border-radius: 12px;
   object-fit: cover;
 }
+.requiredFieldHeading {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.requiredFieldHeading strong {
+  font-size: 15px;
+}
+.requiredFieldHeading span,
+.fileHint {
+  color: #686462;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .filePicker {
   display: grid;
   min-height: 148px;
@@ -393,14 +407,34 @@
   list-style: none;
 }
 .fileList li {
-  display: flex;
-  min-height: 44px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 36px;
+  min-height: 64px;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
+  gap: 10px;
+  padding: 8px 10px;
   border-radius: 9px;
   background: #f4f3f2;
   font-size: 13px;
+}
+.fileList img {
+  width: 64px;
+  height: 52px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+.fileList span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.fileList strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileList small {
+  color: #777270;
 }
 .fileList button {
   display: grid;
@@ -412,6 +446,17 @@
 }
 .fileList svg {
   width: 16px;
+}
+.fileHint {
+  margin: 10px 0 0;
+}
+.fileError {
+  min-height: 20px;
+  margin: 4px 0 0;
+  color: #a81743;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 .note {
   display: grid;

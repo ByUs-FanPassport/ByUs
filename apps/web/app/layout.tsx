@@ -9,6 +9,7 @@ import { PwaRegistration } from "../components/pwa-registration";
 import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
 import { readPublicPrivyAppleLoginPolicy } from "../components/privy-apple-login-policy";
 import { AcquisitionSessionTracker } from "../features/analytics/client/acquisition-session-tracker";
+import { VercelTelemetry } from "../features/analytics/client/vercel-telemetry";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
 import "./globals.css";
 
@@ -62,6 +63,7 @@ export default async function RootLayout({
           testAccountLoginEnabled={testAccountLoginEnabled}
         >
           <PwaRegistration />
+          {process.env.VERCEL_ENV === "production" && <VercelTelemetry />}
           <Suspense fallback={null}>
             <AcquisitionSessionTracker />
           </Suspense>
