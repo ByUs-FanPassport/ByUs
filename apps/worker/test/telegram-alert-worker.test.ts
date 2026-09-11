@@ -18,6 +18,11 @@ const alerts: TelegramAlertBatch["alerts"] = [
   { kind: "live_attended", creator_name: "엘리나", live_title: "서울 팬미팅", actor_name: "솔", actor_email: "sol@example.com", winner_count: null, occurred_at: "2026-09-11T10:03:00.000Z" },
   { kind: "draw_published", creator_name: "엘리나", live_title: "서울 팬미팅", actor_name: "노출 금지", actor_email: "draw@example.com", winner_count: 5, occurred_at: "2026-09-11T10:04:00.000Z" },
 ];
+const inquiryId = "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19";
+const csAlerts: TelegramAlertBatch["alerts"] = [
+  { kind: "cs_inquiry_created", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:05:00.000Z", inquiry_id: inquiryId },
+  { kind: "cs_user_replied", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:06:00.000Z", inquiry_id: inquiryId },
+];
 
 describe("renderTelegramAlertMessage", () => {
   it("shows each actor and full email while keeping draw results identity-free", () => {
@@ -53,6 +58,36 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).toContain("하나\n  hana@example.com");
     expect(message).toContain("둘\n  dul@example.com");
     expect(message.match(/• 이퓨 팬 가입/gu)).toHaveLength(2);
+  });
+
+  it("renders CS creation and follow-up with only the validated inquiry URL", () => {
+    const message = renderTelegramAlertMessage(csAlerts.map((alert) => ({
+      ...alert,
+      subject: "Private subject",
+      body: "Private inquiry body",
+      requester_name: "Private requester",
+      requester_email: "name@example.com",
+    })));
+    expect(message).toBe([
+      "🎉 ByUs 주요 소식",
+      "",
+      "• 새 CS 문의 접수",
+      `https://byus.kr/admin/inquiries/${inquiryId}`,
+      "• CS 문의에 새 메시지",
+      `https://byus.kr/admin/inquiries/${inquiryId}`,
+      "",
+      "관리자에서 확인하기",
+      "https://byus.kr/admin",
+    ].join("\n"));
+    expect(message).not.toMatch(/Private|name@example\.com/u);
+  });
+
+  it("preserves existing event rendering in a mixed CS batch", () => {
+    const message = renderTelegramAlertMessage([alerts[0]!, csAlerts[0]!, alerts[4]!]);
+    expect(message).toContain("• 신규 회원 가입\n  제이\n  jay@example.com");
+    expect(message).toContain(`• 새 CS 문의 접수\nhttps://byus.kr/admin/inquiries/${inquiryId}`);
+    expect(message).toContain("• 엘리나 · 서울 팬미팅 추첨 결과 공개 · 당첨 5명");
+    expect(message).not.toContain("draw@example.com");
   });
 
   it("limits a batch to 5 and sanitizes the longest identity messages within 4000 UTF-16 units", () => {
@@ -193,10 +228,30 @@ describe("SupabaseTelegramAlertQueue", () => {
     await expect(q.begin(claimed!.batchId, "-1001234567890")).resolves.toBe(true);
     await q.finish(claimed!.batchId, "sent", 321n, null);
     expect(rpc.mock.calls).toEqual([
-      ["claim_telegram_alert_batch_with_identity", { p_chat_id: "-1001234567890" }],
+      ["claim_telegram_alert_batch_with_cs", { p_chat_id: "-1001234567890" }],
       ["begin_telegram_alert_send", { p_batch_id: claimed!.batchId, p_chat_id: "-1001234567890" }],
       ["finish_telegram_alert_batch", { p_batch_id: claimed!.batchId, p_outcome: "sent", p_provider_message_id: 321, p_retry_after: null }],
     ]);
+  });
+
+  it.each([
+    ["missing CS inquiry id", { ...csAlerts[0], inquiry_id: undefined }],
+    ["invalid CS inquiry id", { ...csAlerts[0], inquiry_id: "https://evil.example/admin/inquiries/private" }],
+    ["inquiry id on an existing kind", { ...alerts[0], inquiry_id: inquiryId }],
+    ["private content on a CS event", { ...csAlerts[0], actor_name: "Private Person", actor_email: "name@example.com", subject: "Private subject", body: "Private body" }],
+  ])("rejects %s before sending", async (_label, alert) => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { batch_id: "559fe228-ff92-4a85-a3e9-ad83d9e60f8b", alerts: [alert] },
+      error: null,
+    });
+    const sender: TelegramAlertSender = { sendText: vi.fn() };
+    const worker = new TelegramAlertWorker(
+      new SupabaseTelegramAlertQueue({ rpc }),
+      sender,
+      "-1001234567890",
+    );
+    await expect(worker.runOnce()).rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+    expect(sender.sendText).not.toHaveBeenCalled();
   });
 
   it("rejects unexpected private fields from a claimed snapshot", async () => {
