@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import type { NotificationWorkerEnv } from "./notification-env.js";
+import { inquiryEmailLabels, renderBusinessInquiryEmail } from "./business-inquiry-email.js";
 
 export interface BusinessInquiry {
   id: string; attempt_token: string; locale: "ko" | "en";
@@ -76,12 +77,8 @@ export class SesInquirySender implements InquirySender {
   async send(job: BusinessInquiry) {
     if (job.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(job.email) || /[\r\n]/.test(job.email)) throw new InquirySendError("rejected");
     const inquiryType = job.inquiry_type ?? "fanmeeting";
-    const label = {
-      fanmeeting: "미국 팬미팅 문의",
-      creator: "ByUs 시작 문의",
-      partner: "파트너 문의",
-    }[inquiryType];
-    if (!label) throw new InquirySendError("rejected");
+    if (!Object.hasOwn(inquiryEmailLabels, inquiryType)) throw new InquirySendError("rejected");
+    const email = renderBusinessInquiryEmail(job);
     let result: { MessageId?: string };
     try {
       result = await this.client.send(new SendEmailCommand({
@@ -89,12 +86,11 @@ export class SesInquirySender implements InquirySender {
         Destination: { ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] },
         ReplyToAddresses: [job.email],
         Content: { Simple: {
-          Subject: { Data: `[ByUs] ${label} · ${job.id}`, Charset: "UTF-8" },
-          Body: { Text: { Charset: "UTF-8", Data: [
-            `ByUs ${label}`, `문의 번호: ${job.id}`, `언어: ${job.locale}`,
-            `담당자: ${job.contact_name}`, `회사: ${job.company}`, `회신 이메일: ${job.email}`,
-            "", "문의 내용", job.message,
-          ].join("\n") } },
+          Subject: { Data: email.subject, Charset: "UTF-8" },
+          Body: {
+            Text: { Charset: "UTF-8", Data: email.text },
+            Html: { Charset: "UTF-8", Data: email.html },
+          },
         } },
       }));
     } catch (error) {
