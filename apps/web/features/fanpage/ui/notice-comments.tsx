@@ -9,11 +9,11 @@ import { useFanpageResource } from "./use-fanpage-resource";
 import styles from "./fanpage.module.css";
 
 const parseComments = (value: unknown) => commentsSchema.extend({ nextCursor: z.string().nullable() }).parse(value);
-export function NoticeComments({ slug, noticeSlug, locale, preview = false }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview?: boolean }) {
+export function NoticeComments({ slug, noticeSlug, locale, preview = false, welcome = false }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview?: boolean; welcome?: boolean }) {
   const auth = usePrivy();
-  return <CommentsForOwner key={`${slug}:${noticeSlug}:${auth.user?.id ?? "guest"}`} {...{ slug, noticeSlug, locale, preview }} />;
+  return <CommentsForOwner key={`${slug}:${noticeSlug}:${auth.user?.id ?? "guest"}`} {...{ slug, noticeSlug, locale, preview, welcome }} />;
 }
-function CommentsForOwner({ slug, noticeSlug, locale, preview }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview: boolean }) {
+function CommentsForOwner({ slug, noticeSlug, locale, preview, welcome }: { slug: string; noticeSlug: string; locale: "ko" | "en"; preview: boolean; welcome: boolean }) {
   const { authenticated, ready, getAccessToken } = usePrivy();
   const ko = locale === "ko";
   const [cursor, setCursor] = useState<string | null>(null);
@@ -42,10 +42,10 @@ function CommentsForOwner({ slug, noticeSlug, locale, preview }: { slug: string;
     finally { submitting.current = false; setBusy(false); }
   }
   return <section className={styles.comments} aria-label={ko ? "공지 댓글" : "Notice comments"}>
-    <div className={styles.sectionHeading}><h3>{ko ? "댓글" : "Comments"}{resource.state.status === "ready" ? ` ${resource.state.data.total}` : ""}</h3>{preview && <Link href={`/c/${slug}/notices/${noticeSlug}?locale=${locale}#comments`}>{ko ? "댓글 전체 보기" : "All comments"} →</Link>}</div>
+    <div className={styles.sectionHeading}><h3>{ko ? "댓글" : "Comments"}{resource.state.status === "ready" ? ` ${resource.state.data.total}` : ""}</h3>{preview && <Link href={`/c/${slug}/notices/${noticeSlug}?locale=${locale}#comments`}>{welcome ? (ko ? "인사 남기기" : "Say hello") : (ko ? "댓글 전체 보기" : "All comments")} →</Link>}</div>
     <div id={preview ? undefined : "comments"}>
       {resource.state.status === "loading" ? <p role="status" className={styles.muted}>{ko ? "댓글을 불러오고 있어요." : "Loading comments."}</p> : resource.state.status === "error" ? <p role="alert">{ko ? "댓글을 불러오지 못했어요." : "Couldn't load comments."} <button onClick={resource.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : <>
-        {!resource.state.data.comments.length && <p className={styles.muted}>{ko ? "첫 댓글로 이야기를 시작해 보세요." : "Start the conversation with the first comment."}</p>}
+        {!resource.state.data.comments.length && <p className={styles.muted}>{welcome ? (ko ? "어떤 순간에 팬이 되셨나요? 첫 인사를 남겨주세요." : "What made you a fan? Say hello in the comments.") : (ko ? "첫 댓글로 이야기를 시작해 보세요." : "Start the conversation with the first comment.")}</p>}
         <ul className={styles.commentList}>{resource.state.data.comments.map((comment) => <li key={comment.id}><img src={comment.avatarUrl} width={32} height={32} alt="" /><div><div className={styles.commentMeta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} onClick={() => void mutate(comment.id)}>{ko ? "삭제" : "Delete"}</button>}</div><p>{comment.body}</p></div></li>)}</ul>
         {!preview && <div className={styles.pagination}>{cursor && <button onClick={() => setCursor(null)}>{ko ? "최신 댓글" : "Newest"}</button>}{resource.state.data.nextCursor && <button onClick={() => { if (resource.state.status === "ready") setCursor(resource.state.data.nextCursor); }}>{ko ? "이전 댓글" : "Older comments"}</button>}</div>}
       </>}

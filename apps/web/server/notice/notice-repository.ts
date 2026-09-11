@@ -31,6 +31,7 @@ export class NoticeRepository {
     locale: NoticeLocale;
     cursor?: string | null;
     limit?: number;
+    surface?: "home";
   }): Promise<{ notices: PublicNoticeSummary[]; nextCursor: string | null }> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 20);
     const offset = input.cursor
@@ -41,14 +42,16 @@ export class NoticeRepository {
     }
     let query = this.db
       .from("celebrity_notices")
-      .select("id,slug,pinned,published_at,celebrities!inner(slug,status,archived_at),celebrity_notice_localizations!inner(locale,title)")
+      .select("id,slug,notice_kind,pinned,published_at,celebrities!inner(slug,status,archived_at),celebrity_notice_localizations!inner(locale,title)")
       .eq("celebrities.slug", input.celebritySlug)
       .eq("celebrities.status", "published")
       .is("celebrities.archived_at", null)
       .eq("publication_status", "published")
       .is("archived_at", null)
-      .eq("celebrity_notice_localizations.locale", input.locale)
-      .order("pinned", { ascending: false })
+      .eq("celebrity_notice_localizations.locale", input.locale);
+    // Order before pagination so a welcome notice cannot hide news on home.
+    if (input.surface === "home") query = query.order("notice_kind", { ascending: true });
+    query = query.order("pinned", { ascending: false })
       .order("published_at", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + limit);
@@ -58,6 +61,7 @@ export class NoticeRepository {
     const notices = rows.slice(0, limit).map((row: any) => ({
       slug: row.slug,
       pinned: row.pinned,
+      kind: row.notice_kind,
       publishedAt: row.published_at,
       title: Array.isArray(row.celebrity_notice_localizations)
         ? row.celebrity_notice_localizations[0]?.title
@@ -78,7 +82,7 @@ export class NoticeRepository {
   }): Promise<PublicNoticeDetail | null> {
     const { data, error } = await this.db
       .from("celebrity_notices")
-      .select("slug,pinned,published_at,celebrities!inner(slug,status,archived_at),celebrity_notice_localizations!inner(locale,title,body_json)")
+      .select("slug,notice_kind,pinned,published_at,celebrities!inner(slug,status,archived_at),celebrity_notice_localizations!inner(locale,title,body_json)")
       .eq("slug", input.noticeSlug)
       .eq("celebrities.slug", input.celebritySlug)
       .eq("celebrities.status", "published")
@@ -97,6 +101,7 @@ export class NoticeRepository {
       title: localization.title,
       body: parseNoticeDocument(localization.body_json),
       pinned: data.pinned,
+      kind: data.notice_kind,
       publishedAt: data.published_at!,
     };
   }

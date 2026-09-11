@@ -16,6 +16,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     const result = await repository.listPublic({
       celebritySlug: slug,
       locale,
+      ...(url.searchParams.get("surface") === "home" ? { surface: "home" as const, limit: 1 } : {}),
       cursor: url.searchParams.get("cursor"),
     });
     return Response.json(result, { headers: publicContentCacheHeaders() });
