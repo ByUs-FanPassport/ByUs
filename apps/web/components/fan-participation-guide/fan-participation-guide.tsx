@@ -12,14 +12,13 @@ import { CreatorImage } from "../fan-ui/creator-image";
 import { elinaFanGuideContent } from "../elina-fan-guide/content";
 import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
 import { ifewVerificationHref } from "@/features/live/domain/ifew-event";
+import { elinaLiveHref, elinaRafflesHref, elinaVerificationHref } from "@/features/live/domain/elina-event";
 import styles from "./fan-participation-guide.module.css";
 
 const actionTargets = (locale: FanLocale) => ({
-  verify: `/c/elina/verify?locale=${locale}` as Route,
-  live: `/c/elina?tab=live&locale=${locale}#celebrity-content` as Route,
-  certifications:
-    `/c/elina?tab=certifications&locale=${locale}#celebrity-content` as Route,
-  raffles: `/c/elina?tab=raffles&locale=${locale}#celebrity-content` as Route,
+  verify: elinaVerificationHref(locale) as Route,
+  live: elinaLiveHref(locale) as Route,
+  raffles: elinaRafflesHref(locale) as Route,
   my: `/my?locale=${locale}` as Route,
 });
 
@@ -45,10 +44,15 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
     my: `/my?locale=${locale}` as Route,
   } as const;
   const nextLocale = locale === "ko" ? "en" : "ko";
-  const stepTargets: ReadonlyArray<ReadonlyArray<GuideHref>> = [
+  const stepTargets: ReadonlyArray<ReadonlyArray<GuideHref>> = creator === "elina" ? [
     [href.verify],
-    [href.live, creator === "elina" ? href.live : href.my],
-    creator === "elina" ? [href.live, href.certifications] : [`${href.live}#fan-code` as Route, ifewTikTokEvent],
+    [href.live],
+    [href.raffles],
+    [`${href.live}#fan-code` as Route, href.raffles],
+  ] : [
+    [href.verify],
+    [href.live, href.my],
+    [`${href.live}#fan-code` as Route, ifewTikTokEvent],
     [href.raffles],
   ] as const;
 
@@ -74,10 +78,11 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
             <p className={styles.eyebrow}>BYUS GUIDE&nbsp;&nbsp;/&nbsp;&nbsp;{creator.toUpperCase()}</p>
             <h1 id={`${creator}-guide-title`}>{t.heroTitle}</h1>
             <p className={styles.heroDescription}>{t.heroDescription}</p>
-            {"heroSchedule" in t ? <p className={styles.schedule}><CalendarDays aria-hidden="true" size={18} /><time dateTime="2026-09-12T08:00:00+09:00">{t.heroSchedule}</time></p> : null}
+            {"heroSchedule" in t ? <p className={styles.schedule}><CalendarDays aria-hidden="true" size={18} /><time dateTime={creator === "elina" ? "2026-09-18T20:30:00+09:00" : "2026-09-12T08:00:00+09:00"}>{t.heroSchedule}</time></p> : null}
+            {creator === "elina" ? <p className={styles.prizeSummary}>{elinaFanGuideContent[locale].prizeSummary}</p> : null}
             <div className={styles.actions}>
-              <ActionLink href="#steps" primary>{t.howToJoin}</ActionLink>
-              <ActionLink href="#prizes">{t.viewPrizes}</ActionLink>
+              <ActionLink href={creator === "elina" ? href.verify : "#steps"} primary>{t.howToJoin}</ActionLink>
+              <ActionLink href={creator === "elina" ? href.raffles : "#prizes"}>{t.viewPrizes}</ActionLink>
             </div>
             <p className={styles.note}>{t.heroNote}</p>
           </div>
@@ -94,7 +99,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
 
         <div className={styles.steps} id="steps">
           {t.steps.map((step, index) => (
-            <section className={styles.step} id={index === 3 ? "prizes" : undefined} key={step.label} aria-labelledby={`guide-step-${index + 1}`}>
+            <section className={styles.step} id={index === (creator === "elina" ? 2 : 3) ? "prizes" : undefined} key={step.label} aria-labelledby={`guide-step-${index + 1}`}>
               <div className={styles.visual}>
                 {index === 0 ? (
                   <Image className={styles.passport} src="/images/guest-home/passport-open-blank-9-transparent.png" alt="Fan Passport" width={460} height={307} />
@@ -107,7 +112,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
                     <p>{t.liveCard.flow}</p>
                     <div className={styles.code}><small>{t.liveCard.code}</small>{"value" in t.liveCard ? <span>{t.liveCard.value}</span> : <span aria-hidden="true">— &nbsp; — &nbsp; — &nbsp; — &nbsp; — &nbsp; —</span>}</div>
                   </div>
-                ) : index === 2 ? (
+                ) : index === (creator === "elina" ? 3 : 2) ? (
                   <div className={styles.missionCards}>
                     {t.missionCards.map(([title, caption], cardIndex) => {
                       const Icon = cardIndex === 0 ? MessageCircle : creator === "elina" ? BadgeCheck : CalendarDays;

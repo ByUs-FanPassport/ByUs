@@ -59,10 +59,15 @@ import {
   ifewPrizeName,
   ifewVerificationHref,
 } from "@/features/live/domain/ifew-event";
+import {
+  elinaLiveHref,
+  elinaVerificationHref,
+} from "@/features/live/domain/elina-event";
 
 export type BenefitLocale = "ko" | "en";
 
 const benefitUpdatedEvent = "byus:benefit-updated";
+const elinaBanksyCampaignId = "14d6ae96-a168-494a-be85-f02f8050fbfa";
 
 type BenefitUpdatedDetail = Pick<
   BenefitCatalogItem,
@@ -1019,6 +1024,7 @@ function BenefitDetailOwnerScreen({
     );
   const benefit = view.benefit;
   const isIfewRaffle = benefit.id === ifewBenefitId && benefit.entry !== null;
+  const isElinaRaffle = benefit.entry?.campaignId === elinaBanksyCampaignId;
   const detailTitle = isIfewRaffle ? ifewPrizeName[locale] : benefit.title;
   const detailSummary = isIfewRaffle
     ? locale === "ko"
@@ -1086,10 +1092,27 @@ function BenefitDetailOwnerScreen({
             </dl>
           </section>
         </div>
-        {benefit.entry ? (
+        {benefit.entry && (authenticated || !benefit.entry.canEnter) ? (
           <BenefitRaffleResult benefitId={benefitId} locale={locale} />
         ) : null}
-        {!authenticated && benefit.entry ? null : benefit.entry ? (
+        {!authenticated && benefit.entry ? (
+          benefit.entry.canEnter ? (
+            <AuthIntentLink
+              className={fanActionClassName("primary")}
+              emphasis="primary"
+              locale={locale}
+              input={{
+                sourcePath: `/benefits/${benefitId}`,
+                sourceQuery: `?locale=${locale}${celebrity ? `&celebrity=${encodeURIComponent(celebrity)}` : ""}`,
+                actionType: "CLAIM_BENEFIT",
+                targetType: "benefit",
+                targetId: benefitId,
+              }}
+            >
+              {c.signInToEnter}
+            </AuthIntentLink>
+          ) : null
+        ) : benefit.entry ? (
           <section className={styles.delivery} aria-live="polite">
             <FanMotionIcon name="ticket" size={24} />
             <div>
@@ -1174,7 +1197,7 @@ function BenefitDetailOwnerScreen({
                         ? c.entryLimitReached
                         : c.entryZero}
                   </strong>
-                  {isIfewRaffle &&
+                  {(isIfewRaffle || isElinaRaffle) &&
                     benefit.entry.canEnter &&
                     benefit.entry.remainingBenefitTickets !== 0 &&
                     benefit.entry.creatorTicketBalance === 0 && (
@@ -1182,24 +1205,47 @@ function BenefitDetailOwnerScreen({
                         {benefit.entry.enteredTickets === 0 ? (
                           <>
                             <p>
-                              {locale === "ko"
-                                ? "팬 인증이나 LIVE 출석 등 팬 활동에서 이퓨 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
-                                : "You can get ifew raffle tickets through fan verification or LIVE attendance. Choose how many to use and submit your entry yourself."}
+                              {isElinaRaffle
+                                ? locale === "ko"
+                                  ? "팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
+                                  : "You can get raffle tickets through fan verification and an Elina LIVE reservation. Choose how many to use and submit your entry yourself."
+                                : locale === "ko"
+                                  ? "팬 인증이나 LIVE 출석 등 팬 활동에서 이퓨 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
+                                  : "You can get ifew raffle tickets through fan verification or LIVE attendance. Choose how many to use and submit your entry yourself."}
                             </p>
-                            <FanAction
-                              variant="primary"
-                              href={ifewVerificationHref(locale)}
-                            >
-                              {locale === "ko"
-                                ? "팬 인증하고 LIVE 참여하기"
-                                : "Verify your fandom and join the LIVE"}
-                            </FanAction>
+                            {isElinaRaffle ? (
+                              <>
+                                <FanAction variant="primary" href={elinaVerificationHref(locale)}>
+                                  {locale === "ko"
+                                    ? "팬 인증하고 응모권 받기"
+                                    : "Verify your fandom and get a raffle ticket"}
+                                </FanAction>
+                                <FanAction variant="neutral" href={elinaLiveHref(locale)}>
+                                  {locale === "ko"
+                                    ? "LIVE 예약하고 응모권 받기"
+                                    : "Reserve the LIVE and get a raffle ticket"}
+                                </FanAction>
+                              </>
+                            ) : (
+                              <FanAction
+                                variant="primary"
+                                href={ifewVerificationHref(locale)}
+                              >
+                                {locale === "ko"
+                                  ? "팬 인증하고 LIVE 참여하기"
+                                  : "Verify your fandom and join the LIVE"}
+                              </FanAction>
+                            )}
                           </>
                         ) : (
-                          <Link href={ifewLiveHref(locale)}>
-                            {locale === "ko"
-                              ? "이퓨 LIVE 자세히 보기"
-                              : "View the ifew LIVE"}
+                          <Link href={isElinaRaffle ? elinaLiveHref(locale) : ifewLiveHref(locale)}>
+                            {isElinaRaffle
+                              ? locale === "ko"
+                                ? "엘리나 LIVE 자세히 보기"
+                                : "View the Elina LIVE"
+                              : locale === "ko"
+                                ? "이퓨 LIVE 자세히 보기"
+                                : "View the ifew LIVE"}
                           </Link>
                         )}
                       </>

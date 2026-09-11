@@ -38,6 +38,7 @@ import {
   ifewLiveSlug,
   ifewPrizeName,
 } from "@/features/live/domain/ifew-event";
+import { elinaLiveSlug, elinaRafflesHref } from "@/features/live/domain/elina-event";
 import {
   buildAuthLoginHref,
   consumeAuthIntent,
@@ -377,6 +378,7 @@ function ReservationDialog({
   const closeRef = useRef<HTMLButtonElement>(null);
   const [pushState, setPushState] = useState<PushEnableResult | null>(null);
   const [pushPending, setPushPending] = useState(false);
+  const isElinaReservation = data.live.slug === elinaLiveSlug;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -410,7 +412,9 @@ function ReservationDialog({
         locale={locale}
         stampType="reservation"
         title={c.reservedTitle}
-        description={c.reservedHelper}
+        description={isElinaReservation
+          ? locale === "ko" ? "보유 응모권으로 지금 원하는 선물에 직접 응모할 수 있어요." : "Use your raffle tickets to enter for your favorite prize now."
+          : c.reservedHelper}
         headingId="reservation-title"
         scoreDelta={completion.scoreDelta}
         updatedScore={completion.updatedScore}
@@ -474,9 +478,15 @@ function ReservationDialog({
                 : "Could not save notification settings. Please try again. Your LIVE reservation is complete."}
         </p>
       )}
-      <FanAction variant="primary" className={styles.dialogPrimary} fullWidth onClick={() => dialogRef.current?.close()}>
-        {c.continue}
-      </FanAction>
+      {isElinaReservation ? (
+        <FanAction variant="primary" className={styles.dialogPrimary} fullWidth href={elinaRafflesHref(locale)}>
+          {locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter"}
+        </FanAction>
+      ) : (
+        <FanAction variant="primary" className={styles.dialogPrimary} fullWidth onClick={() => dialogRef.current?.close()}>
+          {c.continue}
+        </FanAction>
+      )}
     </dialog>
   );
 }
@@ -904,12 +914,19 @@ export function LiveEventScreen({
   const data = view.data;
   const { live, viewer, primaryAction } = data;
   const isIfewLive = live.slug === ifewLiveSlug;
+  const isElinaLive = live.slug === elinaLiveSlug;
   const eventCopy = isIfewLive ? ifewLiveCopy[locale] : null;
   const attendanceCopy = eventCopy
     ? { ...c.attendance, ...eventCopy.attendance }
     : c.attendance;
-  const journeySteps = eventCopy?.steps ?? c.steps;
-  const journeyStepHelpers = eventCopy?.stepHelpers ?? c.stepHelpers;
+  const elinaSteps = locale === "ko"
+    ? ["팬 인증", "LIVE 예약", "선물 응모", "방송 당일 출석"]
+    : ["Verify", "Reserve", "Enter for prizes", "LIVE check-in"];
+  const elinaStepHelpers = locale === "ko"
+    ? ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "ByUs에 코드 입력하고 2장 추가"]
+    : ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to ByUs, enter the code and earn 2"];
+  const journeySteps = eventCopy?.steps ?? (isElinaLive ? elinaSteps : c.steps.filter((_, index) => live.missionsAvailable !== false || index !== 3));
+  const journeyStepHelpers = eventCopy?.stepHelpers ?? (isElinaLive ? elinaStepHelpers : c.stepHelpers.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const statusLabel =
     live.effectiveStatus === "scheduled"
       ? c.scheduled
@@ -1266,6 +1283,8 @@ export function LiveEventScreen({
                         variant="primary"
                         href={(isIfewLive
                           ? `/benefits/${ifewBenefitId}?locale=${locale}`
+                          : isElinaLive
+                            ? elinaRafflesHref(locale)
                           : live.missionsAvailable !== false
                             ? `/live/${slug}/survey?locale=${locale}`
                             : `/passports/${attendance.result.completion.passportId}?locale=${locale}`) as Route}
@@ -1273,6 +1292,8 @@ export function LiveEventScreen({
                       >
                         {isIfewLive
                           ? eventCopy?.prizeAction
+                          : isElinaLive
+                            ? locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter"
                           : live.missionsAvailable !== false
                             ? attendanceCopy.survey
                             : locale === "ko"

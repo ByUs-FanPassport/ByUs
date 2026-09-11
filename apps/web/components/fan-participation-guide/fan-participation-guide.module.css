@@ -58,6 +58,7 @@
 .heroDescription { color: #62626b; font-size: 19px; font-weight: 500; line-height: 1.35; white-space: pre-line; }
 .schedule { display: flex; align-items: center; gap: 10px; color: #252528; font-size: 16px; font-weight: 650; line-height: 1.45; }
 .schedule svg { flex-shrink: 0; color: var(--guide-pink); }
+.prizeSummary { color: var(--guide-ink); font-size: 15px; font-weight: 650; line-height: 1.5; }
 .heroImage { display: block; width: 580px; height: 560px; border-radius: 20px; object-fit: cover; object-position: center; }
 .eventHero { min-height: 0; }
 .eventImage { position: relative; overflow: hidden; display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; border-radius: 20px; object-fit: contain; }
@@ -103,6 +104,7 @@
 .code { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 12px; background: #f7f7f9; }
 .code small { color: #686873; font-size: 12px; font-weight: 600; }
 .code span { color: #686873; font-size: 24px; font-weight: 600; line-height: 1.35; white-space: nowrap; }
+.liveCard .code span { white-space: normal; overflow-wrap: anywhere; }
 .missionCards { display: flex; width: calc(100% - 64px); flex-direction: column; gap: 16px; }
 .missionCards > div { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 14px; background: #fff; }
 .missionCards svg { width: 28px; height: 28px; flex-shrink: 0; color: var(--guide-pink); }
@@ -146,6 +148,7 @@
   .hero h1 { font-size: 36px; letter-spacing: -1px; line-height: 1.28; }
   .heroDescription { font-size: 14px; line-height: 1.45; }
   .schedule { gap: 8px; font-size: 13px; }
+  .prizeSummary { font-size: 13px; }
   .actions { gap: 8px; }
   .action { min-height: 44px; padding-inline: 18px; font-size: 13px; }
   .note { font-size: 11px; }
@@ -170,6 +173,7 @@
   .missionCards svg { width: 22px; height: 22px; }
   .missionCards strong { font-size: 14px; }
   .missionCards small { font-size: 11px; }
+  .missionCards span { min-width: 0; }
   .prizeImage { height: 100%; }
   .stepCopy { gap: 12px; }
   .stepCopy h2 { font-size: 26px; letter-spacing: -.5px; line-height: 1.3; }

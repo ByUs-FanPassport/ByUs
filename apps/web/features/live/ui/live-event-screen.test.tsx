@@ -211,6 +211,25 @@ describe("LiveEventScreen", () => {
       .toHaveAttribute("href", "/benefits/41ae7883-098e-49f2-9229-4f6962160141?locale=ko");
   });
 
+  it.each(["ko", "en"] as const)("shows Elina's real reward path and returns attendance to prize selection (%s)", async (locale) => {
+    const livePayload = payload("watch_live");
+    livePayload.live.slug = "elina-banksy-instagram-20260918";
+    livePayload.live.effectiveStatus = "live";
+    livePayload.live.missionsAvailable = false;
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(livePayload))
+      .mockResolvedValueOnce(Response.json(attendanceResult));
+
+    render(<LiveEventScreen slug={livePayload.live.slug} locale={locale} />);
+    const field = await screen.findByRole("textbox", { name: locale === "ko" ? "Fan Code 입력" : "Enter Fan Code" });
+    expect(screen.getByText(locale === "ko" ? "선물 응모" : "Enter for prizes", { selector: "strong" })).toBeVisible();
+    expect(screen.queryByText(locale === "ko" ? "설문" : "Survey", { selector: "strong" })).not.toBeInTheDocument();
+    fireEvent.change(field, { target: { value: "TESTCODE" } });
+    fireEvent.click(screen.getByRole("button", { name: locale === "ko" ? "출석 인증하기" : "Verify attendance" }));
+    expect(await screen.findByRole("link", { name: locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter" }))
+      .toHaveAttribute("href", `/c/elina?tab=raffles&locale=${locale}#celebrity-content`);
+  });
+
   it("uses attendance code throughout the IfeW English attendance form and error", async () => {
     const response = ifewPayload("live_ended");
     response.live.effectiveStatus = "ended";
@@ -483,6 +502,23 @@ describe("LiveEventScreen", () => {
       body: expect.any(String),
     }));
     expect(JSON.parse(String(request[1]?.body))).toEqual({ idempotencyKey: expect.any(String) });
+  });
+
+  it("offers prize entry immediately after an Elina reservation", async () => {
+    const initial = payload();
+    initial.live.slug = "elina-banksy-instagram-20260918";
+    const reserved = payload("reserved", true);
+    reserved.live.slug = initial.live.slug;
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(initial))
+      .mockResolvedValueOnce(Response.json({ reservation, completion: reservationCompletion }))
+      .mockResolvedValueOnce(Response.json(reserved));
+    render(<LiveEventScreen slug={initial.live.slug} locale="ko" />);
+    fireEvent.click(await screen.findByRole("button", { name: "LIVE 예약하기" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("link", { name: "선물 고르고 응모하기" }))
+      .toHaveAttribute("href", "/c/elina?tab=raffles&locale=ko#celebrity-content");
+    expect(within(dialog).getByText("보유 응모권으로 지금 원하는 선물에 직접 응모할 수 있어요.")).toBeVisible();
   });
 
   it("automatically resumes one matching reservation action after login", async () => {

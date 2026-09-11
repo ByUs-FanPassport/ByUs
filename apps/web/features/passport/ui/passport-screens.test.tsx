@@ -305,6 +305,43 @@ describe("passport fan screens", () => {
     );
   });
 
+  it.each([
+    ["ko", "application_selection", "지금 참여할 수 있어요."],
+    ["en", "application_selection", "You can participate now."],
+    ["ko", "direct_claim", "지금 받을 수 있어요."],
+  ] as const)("uses allocation-specific ready copy in %s for %s", async (selectedLocale, allocationMode, readyCopy) => {
+    locale = selectedLocale;
+    const detail = {
+      ...passport,
+      stamps: [],
+      activities: [],
+      progress: { currentScore: 15, currentLevel: "Silver", nextLevel: "Gold", nextThreshold: 50, remainingPoints: 35, percent: 30, maxed: false },
+      nextBenefit: {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        slug: allocationMode === "direct_claim" ? "special-wallpaper" : "fan-event-entry",
+        title: "추천 혜택",
+        state: "eligible",
+        allocationMode,
+        applicationStatus: null,
+        eligibilityLabel: "별도 조건 없음",
+        minimumScore: 0,
+        minimumLevel: "Bronze",
+        requiredStampType: null,
+        requiredActivityType: null,
+        missingConditions: [],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) =>
+      String(input) === "/api/me/avatar"
+        ? new Response(null, { status: 503 })
+        : Response.json({ passport: detail }),
+    ));
+
+    render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByText(readyCopy)).toBeInTheDocument();
+  });
+
   it("shows nearest-stage progress and keeps the next tier goal in Passport details", async () => {
     const stageProgress = {
       policyVersion: 2,

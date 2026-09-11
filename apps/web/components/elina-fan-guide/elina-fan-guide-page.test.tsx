@@ -10,18 +10,28 @@ describe("Elina fan guide", () => {
   it.each(["ko", "en"] as const)("renders approved %s copy and real action destinations", (locale) => {
     const { container } = render(<ElinaFanGuidePage locale={locale} images={{ celebrity: null, eventPhotos: undefined }} />);
     const expected = locale === "ko" ? {
-      title: "좋아하는 마음이, 함께한 순간으로.", verify: "팬 인증하기", live: "LIVE 일정 보기", checkIn: "코드 출석하기", missions: "미션 살펴보기", activity: "활동 인증 보기", prize: "선물 고르기", history: "내 기록 보기",
+      title: "엘리나와 함께하는 뱅크시 LIVE", verify: "팬 인증하기", live: "엘리나 LIVE 예약하기", checkIn: "출석할 LIVE 화면 보기", prize: "선물 고르고 응모하기", history: "내 기록 보기", start: "팬 인증하고 시작하기", prizes: "경품 3종 보기",
     } : {
-      title: "Turn your fandom into shared moments.", verify: "Verify your fandom", live: "Explore LIVE events", checkIn: "Check in with a code", missions: "Explore missions", activity: "View fan activity", prize: "Choose a prize", history: "View my history",
+      title: "Banksy LIVE with Elina", verify: "Verify your fandom", live: "Reserve Elina’s LIVE", checkIn: "Open the LIVE check-in page", prize: "Choose a prize and enter", history: "View my history", start: "Verify and get started", prizes: "View all 3 prizes",
     };
+    const liveHref = `/live/elina-banksy-instagram-20260918?locale=${locale}`;
+    const verifyHref = `/c/elina/verify?${new URLSearchParams({ locale, returnTo: liveHref })}`;
+    const raffleHref = `/c/elina?tab=raffles&locale=${locale}#celebrity-content`;
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(expected.title);
-    expect(screen.getAllByRole("link", { name: expected.verify })[0]).toHaveAttribute("href", `/c/elina/verify?locale=${locale}`);
-    expect(screen.getByRole("link", { name: expected.live })).toHaveAttribute("href", `/c/elina?tab=live&locale=${locale}#celebrity-content`);
-    expect(screen.getByRole("link", { name: expected.checkIn })).toHaveAttribute("href", `/c/elina?tab=live&locale=${locale}#celebrity-content`);
-    expect(screen.getByRole("link", { name: expected.missions })).toHaveAttribute("href", `/c/elina?tab=live&locale=${locale}#celebrity-content`);
-    expect(screen.getByRole("link", { name: expected.activity })).toHaveAttribute("href", `/c/elina?tab=certifications&locale=${locale}#celebrity-content`);
-    expect(screen.getByRole("link", { name: expected.prize })).toHaveAttribute("href", `/c/elina?tab=raffles&locale=${locale}#celebrity-content`);
+    expect(screen.getByRole("link", { name: expected.verify })).toHaveAttribute("href", verifyHref);
+    expect(screen.getAllByRole("link", { name: expected.start })[0]).toHaveAttribute("href", verifyHref);
+    expect(screen.getByRole("link", { name: expected.live })).toHaveAttribute("href", liveHref);
+    expect(screen.getByRole("link", { name: expected.checkIn })).toHaveAttribute("href", `${liveHref}#fan-code`);
+    expect(screen.getByRole("link", { name: expected.prize })).toHaveAttribute("href", raffleHref);
+    expect(screen.getByRole("link", { name: expected.prizes })).toHaveAttribute("href", raffleHref);
     expect(screen.getByRole("link", { name: expected.history })).toHaveAttribute("href", `/my?locale=${locale}`);
+    expect(container.querySelector("time")).toHaveAttribute("datetime", "2026-09-18T20:30:00+09:00");
+    expect(container.textContent).not.toMatch(/미션|멤버십|설문|missions|membership|survey/i);
+    expect(container.textContent).toContain(locale === "ko" ? "방송까지 기다릴 필요 없어요." : "No need to wait for the broadcast.");
+    expect(container.textContent).toContain(locale === "ko" ? "처음 완료할 때" : "granted once");
+    expect(container.textContent).toContain(locale === "ko" ? "60명" : "60 exhibition");
+    expect(container.textContent).toContain(locale === "ko" ? "10명" : "10 collaboration");
+    expect(container.textContent).toContain(locale === "ko" ? "3명" : "3 limited-edition");
     expect(container.querySelectorAll("h1")).toHaveLength(1);
     expect(container.querySelector("form")).toBeNull();
   });
@@ -29,7 +39,7 @@ describe("Elina fan guide", () => {
   it("uses URL locale for route content and metadata", async () => {
     const searchParams = Promise.resolve({ locale: "en" });
     render(await Page({ searchParams }));
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Turn your fandom into shared moments.");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Banksy LIVE with Elina");
     const metadata = await generateMetadata({ searchParams });
     expect(metadata.alternates?.canonical).toBe("https://byus.kr/pages/elina-fan-guide?locale=en");
   });

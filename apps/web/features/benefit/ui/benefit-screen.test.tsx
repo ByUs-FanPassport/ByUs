@@ -368,6 +368,36 @@ describe("benefit screens", () => {
       "/c/ifewknow/verify?locale=ko&returnTo=%2Flive%2Fifew-100-days-tiktok-20260912%3Flocale%3Dko",
     );
   });
+  it("gives an authenticated Elina fan with no raffle tickets both current earning paths", async () => {
+    const elinaBenefit = {
+      ...ifewBenefit,
+      id: "fff318a6-24c7-4012-8290-3494a55e287c",
+      slug: "elina-banksy-exhibition-ticket",
+      title: "뱅크시 전시 관람권",
+      entry: {
+        ...ifewBenefit.entry,
+        campaignId: "14d6ae96-a168-494a-be85-f02f8050fbfa",
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) =>
+      String(input).includes("/result?")
+        ? new Response(null, { status: 503 })
+        : Response.json({ benefit: elinaBenefit }),
+    );
+
+    render(<BenefitDetailScreen benefitId={elinaBenefit.id} locale="ko" />);
+
+    expect(await screen.findByText("현재 보유한 응모권이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText(/팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "팬 인증하고 응모권 받기" })).toHaveAttribute(
+      "href",
+      "/c/elina/verify?locale=ko&returnTo=%2Flive%2Felina-banksy-instagram-20260918%3Flocale%3Dko",
+    );
+    expect(screen.getByRole("link", { name: "LIVE 예약하고 응모권 받기" })).toHaveAttribute(
+      "href",
+      "/live/elina-banksy-instagram-20260918?locale=ko",
+    );
+  });
   it("keeps prior IfeW entry history when the current balance is zero", async () => {
     const entered = {
       ...ifewBenefit,
@@ -753,6 +783,56 @@ describe("benefit screens", () => {
 
     expect(await screen.findByText(label)).toBeInTheDocument();
     expect(screen.queryByText("잠김")).not.toBeInTheDocument();
+  });
+  it.each([
+    ["ko", "로그인하고 응모하기"],
+    ["en", "Sign in to enter"],
+  ] as const)("shows the open guest raffle entry CTA in %s and preserves the exact return path", async (locale, label) => {
+    authenticated = false;
+    const guestRaffle = {
+      ...ifewBenefit,
+      state: "locked" as const,
+      entry: { ...ifewBenefit.entry, canEnter: true },
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit: guestRaffle }));
+
+    render(
+      <BenefitDetailScreen
+        benefitId={guestRaffle.id}
+        locale={locale}
+        celebrity="elina"
+      />,
+    );
+
+    const entryLink = await screen.findByRole("link", { name: label });
+    const destination = new URL(entryLink.getAttribute("href")!, "https://byus.kr");
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("returnTo")).toBe(
+      `/benefits/${guestRaffle.id}?locale=${locale}&celebrity=elina`,
+    );
+    expect(screen.queryByRole("link", { name: /응모 결과|raffle result/i })).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith("/entries"))).toBe(false);
+  });
+  it("retains the results sign-in intent when a guest raffle is closed", async () => {
+    authenticated = false;
+    const closedRaffle = {
+      ...ifewBenefit,
+      state: "expired" as const,
+      entry: { ...ifewBenefit.entry, canEnter: false },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({ benefit: closedRaffle }));
+
+    render(<BenefitDetailScreen benefitId={closedRaffle.id} locale="ko" />);
+
+    const resultLink = await screen.findByRole("link", {
+      name: "로그인하고 내 응모 결과 확인하기",
+    });
+    const destination = new URL(resultLink.getAttribute("href")!, "https://byus.kr");
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("returnTo")).toBe(
+      `/benefits/${closedRaffle.id}?locale=ko`,
+    );
+    expect(screen.queryByRole("link", { name: "로그인하고 응모하기" })).not.toBeInTheDocument();
   });
   it("keeps non-baseline raffle requirements visible", async () => {
     const constrainedRaffle = {
