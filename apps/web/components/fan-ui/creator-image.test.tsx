@@ -38,12 +38,12 @@ describe("shared creator photography", () => {
   });
 
   it("owns the clipping frame and recovers from a failed source when the source changes", () => {
-    const { container, rerender } = render(<CreatorImage slug="elina" src="/first.jpg" alt="Elina" width={48} height={48} sizes="48px" framed fallback={<span>Image unavailable</span>} />);
+    const { container, rerender } = render(<CreatorImage photos={undefined} slug="elina" src="/first.jpg" alt="Elina" width={48} height={48} sizes="48px" framed fallback={<span>Image unavailable</span>} />);
     expect(container.firstElementChild).toHaveAttribute("data-creator-image-frame", "elina");
     fireEvent.error(screen.getByRole("img", { name: "Elina" }));
     expect(screen.getByText("Image unavailable")).toBeInTheDocument();
     expect(container.firstElementChild).toHaveAttribute("data-creator-image-frame", "elina");
-    rerender(<CreatorImage slug="elina" src="/second.jpg" alt="Elina" width={48} height={48} sizes="48px" framed />);
+    rerender(<CreatorImage photos={undefined} slug="elina" src="/second.jpg" alt="Elina" width={48} height={48} sizes="48px" framed />);
     expect(screen.getByRole("img", { name: "Elina" })).toBeInTheDocument();
   });
 });

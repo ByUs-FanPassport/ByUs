@@ -1,7 +1,15 @@
-import { resolvePhoto, type PhotoSet, type ImageSlot } from "../../features/media/domain/public-image";
+import { imageSlots, resolvePhoto, type PhotoSet, type ImageSlot } from "../../features/media/domain/public-image";
 import { legacyImageDimensions } from "./legacy-image-dimensions";
 /** Creator photo sources and reviewed framing. Surfaces choose a presentation, never a crop. */
-export type CreatorImagePresentation = "portrait" | "avatar" | "passport" | "collection" | "vertical" | "calendar";
+export const creatorPresentationSlots = {
+  portrait: "identity.square", avatar: "identity.avatar", passport: "identity.passport",
+  collection: "creator.collection", vertical: "creator.vertical", calendar: "creator.calendar",
+  editorial: "creator.hero.mobile",
+} as const satisfies Record<string, ImageSlot>;
+export type CreatorImagePresentation = keyof typeof creatorPresentationSlots;
+export function creatorPresentationRole(presentation: CreatorImagePresentation) {
+  return imageSlots[creatorPresentationSlots[presentation]].role;
+}
 
 export const parkMyunghoProfile = "/images/celebrities/park-myungho/profile-20260910.png";
 
@@ -34,8 +42,8 @@ export function resolveCreatorImage({ slug, src, presentation = "portrait", posi
   position?: string;
   photos?: PhotoSet;
 }): Readonly<{ src: string | null | undefined; crop: Crop }> {
-  const slot: ImageSlot = { portrait: "identity.square", avatar: "identity.avatar", passport: "identity.passport", collection: "creator.collection", vertical: "creator.vertical", calendar: "creator.calendar" }[presentation] as ImageSlot;
-  const role = presentation === "collection" ? "landscape" : presentation === "vertical" || presentation === "calendar" ? "portrait" : "profile";
+  const slot = creatorPresentationSlots[presentation];
+  const role = creatorPresentationRole(presentation);
   if (photos && Object.hasOwn(photos, role)) {
     const resolved = resolvePhoto(photos, slot, src ?? "");
     return { src: resolved.src, crop: { ...neutralCrop, fit: resolved.fit, position: resolved.position } };

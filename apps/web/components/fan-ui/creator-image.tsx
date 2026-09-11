@@ -3,7 +3,7 @@
 import type { PhotoSet } from "@/features/media/domain/public-image";
 import Image, { type ImageProps } from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { creatorImageSizes, resolveCreatorImage, type CreatorImagePresentation } from "./creator-image-config";
+import { creatorImageSizes, creatorPresentationRole, resolveCreatorImage, type CreatorImagePresentation } from "./creator-image-config";
 import { bypassImageOptimization } from "./public-image-policy";
 import styles from "./creator-image.module.css";
 
@@ -12,7 +12,7 @@ type Props = Pick<ImageProps, "alt" | "width" | "height" | "fill" | "priority" |
   src: string | null | undefined;
   presentation?: CreatorImagePresentation;
   position?: string;
-  photos?: PhotoSet;
+  photos: PhotoSet | undefined;
   locale?: "ko" | "en";
   sizes: string;
   fallback?: ReactNode;
@@ -22,7 +22,7 @@ type Props = Pick<ImageProps, "alt" | "width" | "height" | "fill" | "priority" |
 /** All creator identity photos share source selection, framing, sizing and load recovery. */
 export function CreatorImage({ slug, src, presentation = "portrait", position, photos, locale = "ko", sizes, fallback = null, framed = false, ...imageProps }: Props) {
   const image = resolveCreatorImage({ slug, src, presentation, position, photos });
-  const role = presentation === "collection" ? "landscape" : presentation === "vertical" || presentation === "calendar" ? "portrait" : "profile";
+  const role = creatorPresentationRole(presentation);
   const alt = imageProps.alt === "" ? "" : photos?.[role]?.alt[locale] ?? imageProps.alt;
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const photo = !image.src || image.src === failedSource ? fallback : <Image {...imageProps} alt={alt} className={framed ? undefined : imageProps.className} src={image.src} sizes={creatorImageSizes(sizes, image.crop.scale)}

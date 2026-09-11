@@ -22,8 +22,9 @@ export function ResourceMessage({ locale, error, retry }: { locale: ContentLocal
 }
 export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null }) {
   const ko = locale === "ko";
+  const registeredPoster = upcomingLive?.photos?.poster;
   return <section><div className={styles.sectionHeading}><h2>{ko ? "최근 활동" : "Recent activity"}</h2><Link href={`/live?locale=${locale}`}>{ko ? "LIVE 전체 보기" : "All LIVE"} →</Link></div>{upcomingLive ? <Link className={styles.liveCard} href={`/live/${upcomingLive.slug}?locale=${locale}`}>
-    {upcomingLive.preview?.square.posterUrl ? <Image src={upcomingLive.preview.square.posterUrl} alt="" width={340} height={340} unoptimized={bypassImageOptimization(upcomingLive.preview.square.posterUrl)} /> : <div className={styles.liveArt}><Radio aria-hidden="true" /><span>LIVE</span></div>}
+    {upcomingLive.preview?.square.posterUrl ? <Image src={upcomingLive.preview.square.posterUrl} alt="" width={340} height={340} unoptimized={bypassImageOptimization(upcomingLive.preview.square.posterUrl)} /> : registeredPoster ? <div className={styles.livePhoto}><EventPhoto photos={upcomingLive.photos} src={registeredPoster.asset.url} alt={registeredPoster.alt[locale]} locale={locale} surface="poster" sizes="340px" /></div> : <div className={styles.liveArt}><Radio aria-hidden="true" /><span>LIVE</span></div>}
     <div><span className={styles.eyebrow}>{upcomingLive.effectiveStatus === "live" ? "LIVE NOW" : (ko ? "다가오는 LIVE" : "Upcoming LIVE")}</span><h3>{upcomingLive.title}</h3><p>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { dateStyle: "long", timeStyle: "short", hourCycle: "h23", timeZone: "Asia/Seoul" }).format(new Date(upcomingLive.startsAt))}</p><span>{ko ? "LIVE 자세히 보기" : "View LIVE details"} →</span></div>
   </Link> : <div className={styles.empty}><Radio aria-hidden="true" /><h3>{ko ? "새로운 활동을 기다리고 있어요." : "New moments are on the way."}</h3><p>{ko ? `${celebrity.name}의 새 소식과 LIVE가 공개되면 이곳에서 만나요.` : `See ${celebrity.name}'s updates and LIVE events here when published.`}</p></div>}</section>;
 }

@@ -5,10 +5,12 @@ import { ArrowRight, BadgeCheck, BookOpen, CalendarDays, MessageCircle } from "l
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
 import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
-import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
+import type { GuideImages } from "@/server/media/guide-images";
+import { CreatorAvatar } from "../fan-ui/creator-avatar";
+import { EventPhoto } from "../fan-ui/event-photo";
 import { CreatorImage } from "../fan-ui/creator-image";
 import { elinaFanGuideContent } from "../elina-fan-guide/content";
-import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewGuideImage, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
+import { ifewBenefitId, ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } from "../ifew-fan-guide/content";
 import { ifewVerificationHref } from "@/features/live/domain/ifew-event";
 import styles from "./fan-participation-guide.module.css";
 
@@ -32,9 +34,9 @@ function ActionLink({ children, href, primary = false }: { children: React.React
   );
 }
 
-export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; creator: "elina" | "ifew" }) {
+export function FanParticipationGuide({ locale, creator, images }: { locale: FanLocale; creator: "elina" | "ifew"; images: GuideImages }) {
   const t = creator === "elina" ? elinaFanGuideContent[locale] : ifewFanGuideContent[locale];
-  const image = creator === "elina" ? "/images/home-entry/elina.jpg" : ifewGuideImage;
+  const celebrity = images.celebrity;
   const href = creator === "elina" ? actionTargets(locale) : {
     verify: ifewVerificationHref(locale) as Route,
     live: `/live/${ifewLiveSlug}?locale=${locale}` as Route,
@@ -80,9 +82,9 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
             <p className={styles.note}>{t.heroNote}</p>
           </div>
           {creator === "elina" ? (
-            <Image className={styles.heroImage} src={image} alt={t.imageAlt} width={580} height={560} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority />
+            celebrity ? <CreatorImage className={styles.heroImage} slug={celebrity.slug} src={celebrity.image.url} photos={celebrity.image.photos} position={celebrity.image.position} presentation="editorial" locale={locale} alt={t.imageAlt} width={580} height={560} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority /> : null
           ) : (
-            <Image className={styles.eventImage} src={ifewEventBanner} alt={ifewFanGuideContent[locale].eventImageAlt} width={1774} height={887} sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority />
+            <div className={styles.eventImage}><EventPhoto photos={images.eventPhotos} src={ifewEventBanner} alt={ifewFanGuideContent[locale].eventImageAlt} locale={locale} surface="poster" sizes="(max-width: 959px) calc(100vw - 40px), (max-width: 1199px) 48vw, 580px" priority /></div>
           )}
         </section>
 
@@ -99,7 +101,7 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
                 ) : index === 1 ? (
                   <div className={styles.liveCard}>
                     <div className={styles.liveTitle}>
-                      {creator === "elina" ? <Image src={image} alt="" width={48} height={48} /> : <CreatorImage slug="ifewknow" src={image} presentation="collection" alt="" width={48} height={48} sizes="48px" />}
+                      {celebrity ? <CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} photos={celebrity.image.photos} position={celebrity.image.position} size={{ mobile: 40, desktop: 48 }} /> : null}
                       <strong>{t.liveCard.title}</strong>
                     </div>
                     <p>{t.liveCard.flow}</p>
@@ -148,7 +150,6 @@ export function FanParticipationGuide({ locale, creator }: { locale: FanLocale; 
         </section>
       </main>
 
-      <footer className={styles.footer}><div className={styles.footerInner}><FanWordmarkLink locale={locale} /><p>{t.footer}</p></div></footer>
     </div>
   );
 }

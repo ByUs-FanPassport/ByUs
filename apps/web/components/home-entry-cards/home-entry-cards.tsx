@@ -1,4 +1,7 @@
-import Image from "next/image";
+import type { PublishedCelebrity } from "@/server/content/content-domain";
+import type { PhotoSet } from "@/features/media/domain/public-image";
+import { CreatorImage } from "../fan-ui/creator-image";
+import { EventPhoto } from "../fan-ui/event-photo";
 import Link from "next/link";
 import type { Route } from "next";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
@@ -32,20 +35,21 @@ const copy = {
   },
 };
 
-export function HomeEntryCards({ locale }: { locale: ContentLocale }) {
+export function HomeEntryCards({ locale, celebrities, eventPhotos }: { locale: ContentLocale; celebrities: readonly PublishedCelebrity[]; eventPhotos: PhotoSet | undefined }) {
   const t = copy[locale];
+  const elina = celebrities.find(celebrity => celebrity.slug === "elina");
   return (
     <div className={styles.cards} data-home-entry-cards>
       <HomeGuideCarousel locale={locale} slides={[
         { key: "ifew", label: t.ifewLabel, content: <Link className={styles.eventGuide} href={`/pages/ifew-fan-guide?locale=${locale}` as Route} aria-label={t.ifewLabel}>
-        <Image className={styles.eventBanner} src={ifewEventBanner} alt="" width={1774} height={887} sizes="(max-width: 767px) calc(100vw - 32px), 384px" />
+        <span className={styles.eventBanner}><EventPhoto photos={eventPhotos} src={ifewEventBanner} alt="" locale={locale} surface="poster" sizes="(max-width: 767px) calc(100vw - 32px), 384px" /></span>
         <span className={styles.eventGuideCopy}>
           <span><strong>{t.ifewTitle}</strong><small>{t.ifewDescription}</small></span>
           <ArrowRight size={18} aria-hidden="true" />
         </span>
       </Link> },
         { key: "elina", label: t.label, content: <Link className={styles.guide} href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}>
-        <span className={styles.portrait}><Image src="/images/home-entry/elina.jpg" alt="" fill sizes="154px" /></span>
+        <span className={styles.portrait}>{elina ? <CreatorImage slug={elina.slug} src={elina.image.url} photos={elina.image.photos} position={elina.image.position} presentation="editorial" locale={locale} alt="" fill sizes="154px" /> : null}</span>
         <span className={styles.guideCopy}>
           <small>ELINA × BYUS</small>
           <strong>{t.title}</strong>

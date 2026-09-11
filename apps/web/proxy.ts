@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPrivatePath, isRehearsalPath } from "./seo/metadata";
 import { requestLocale } from "./components/locale-path";
 
 export function proxy(request: NextRequest): NextResponse {
@@ -10,7 +11,12 @@ export function proxy(request: NextRequest): NextResponse {
     const locale = requestLocale(request.nextUrl.pathname, requestedLocale, request.cookies.get("byus_locale")?.value);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-byus-locale", locale);
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    requestHeaders.set("x-byus-pathname", request.nextUrl.pathname);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    if (isPrivatePath(request.nextUrl.pathname) || isRehearsalPath(request.nextUrl.pathname)) {
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+    return response;
   }
 
   const authorization = request.headers.get("authorization")?.trim() ?? "";

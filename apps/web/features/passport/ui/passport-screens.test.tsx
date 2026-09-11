@@ -45,9 +45,11 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passports: [passport] }), { status: 200 })));
     const { container } = render(<PassportCollectionScreen />);
     expect(await screen.findByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /KARA/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
+    expect(screen.getByRole("link", { name: "KARA · 패스포트 보기" })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
     expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#activity`);
     expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#stamp-book`);
+    expect(screen.getByRole("link", { name: "패스포트 보기" })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
+    expect(container.querySelector("img[data-image-presentation=portrait]")).toBeInTheDocument();
     expect(container.querySelector("#collection")).toBeInTheDocument();
     expect(container.querySelector("a a")).toBeNull();
     expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
@@ -65,8 +67,7 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", fetcher);
     const { container } = render(<PassportCollectionScreen />);
 
-    expect(await screen.findByText("실버 2")).toBeInTheDocument();
-    const stageButton = screen.getByRole("button", { name: /KARA · 실버 2/ });
+    const stageButton = await screen.findByRole("button", { name: /KARA · 실버 2/ });
     expect(stageButton.closest("a")).toBeNull();
     fireEvent.click(stageButton);
     expect(screen.getByRole("tooltip")).toHaveTextContent("골드 1까지 12점");
@@ -86,7 +87,7 @@ describe("passport fan screens", () => {
     const remotePhoto = await screen.findByRole("img", { name: external.celebrity.image.alt });
     expect(remotePhoto.getAttribute("src")).toContain("/_next/image?");
     expect(remotePhoto.getAttribute("srcset")).toContain(encodeURIComponent(external.celebrity.image.url));
-    expect(remotePhoto).toHaveStyle({ objectPosition: "center bottom" });
+    expect(remotePhoto).toHaveStyle({ objectPosition: "50% 100%" });
     const localPhoto = screen.getByRole("img", { name: "KARA" });
     expect(localPhoto.getAttribute("src")).toContain("/_next/image?");
     expect(localPhoto.getAttribute("srcset")).toContain(encodeURIComponent(celebrity.image.url));

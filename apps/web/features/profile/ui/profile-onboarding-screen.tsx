@@ -281,7 +281,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
         <div className={styles.composition}>
           <section className={styles.preview} aria-label={t.preview} aria-live="polite">
             <div className={styles.celebrityContext}>
-              <CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} size={{ mobile: 48, desktop: 56 }} alt={celebrity.image.alt} />
+              <CreatorAvatar slug={celebrity.slug} src={celebrity.image.url} photos={celebrity.image.photos} position={celebrity.image.position} size={{ mobile: 48, desktop: 56 }} alt={celebrity.image.alt} />
               <div><span>{t.verification}</span><strong>{celebrity.name}</strong></div>
               <em>{t.pending}</em>
             </div>

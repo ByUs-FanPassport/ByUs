@@ -373,8 +373,8 @@
 .creatorControls button:disabled { opacity: .3; cursor: default; }
 .creatorControls button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-.celebrityFanLink[data-reacted="true"] { color: #dc2626; }
-.celebrityFanLink[data-reacted="true"] svg { fill: currentColor; }
+.celebrityFanLink[data-verified="true"] { color: #dc2626; }
+.celebrityFanLink[data-verified="true"] svg { fill: currentColor; }
 
 /* Stable owner-state slots; the two responsive views share their data. */
 .celebrityFanLink { min-inline-size: 6.25rem; }

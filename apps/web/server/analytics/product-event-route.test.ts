@@ -68,11 +68,15 @@ describe("product event HTTP boundary", () => {
     expect(identify).toHaveBeenCalledWith("Bearer valid");
   });
 
-  it("rejects owner injection, Ticket events, nested properties, and unsafe timestamps", async () => {
+  it("rejects owner injection, completion events, nested properties, and unsafe timestamps", async () => {
     const repo = repository();
     const handler = createRecordProductEventHandler({ identify: vi.fn().mockResolvedValue(null), repository: repo, now: () => now });
     const cases = [
       { ...input, appUserId },
+      { ...input, eventName: "reservation_completed" },
+      { ...input, eventName: "attendance_completed" },
+      { ...input, eventName: "passport_issued" },
+      { ...input, eventName: "benefit_entered" },
       { ...input, eventName: "ticket_credited" },
       { ...input, properties: { nested: { no: true } } },
       { ...input, occurredAt: "2026-09-03T09:05:00.001Z" },

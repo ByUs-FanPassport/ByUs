@@ -13,7 +13,7 @@ export function CreatorAvatar({ slug, src, size, photos, position, alt = "" }: {
   src: string | null | undefined;
   size: AvatarSize;
   alt?: string;
-  photos?: PhotoSet;
+  photos: PhotoSet | undefined;
   position?: string;
 }) {
   const mobile = typeof size === "number" ? size : size.mobile;

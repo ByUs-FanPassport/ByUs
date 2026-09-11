@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CLIENT_PRODUCT_EVENT_NAMES,
   PRODUCT_EVENT_NAMES,
   assertSafeProductEventTime,
   clientProductEventV1Schema,
@@ -42,11 +43,20 @@ describe("ProductEventV1", () => {
     expect(productEventV1Schema.safeParse({ ...base, properties: { body: "x".repeat(2_049) } }).success).toBe(false);
   });
 
-  it("keeps Ticket events off the public client boundary", () => {
+  it("keeps every committed completion event off the public client boundary", () => {
     const client = { ...base } as Record<string, unknown>;
     delete client.appUserId;
-    expect(clientProductEventV1Schema.safeParse({ ...client, eventName: "ticket_credited" }).success).toBe(false);
-    expect(clientProductEventV1Schema.safeParse({ ...client, eventName: "ticket_debited" }).success).toBe(false);
+    expect(CLIENT_PRODUCT_EVENT_NAMES).toEqual([
+      "creator_page_view",
+      "live_page_view",
+      "live_cta_click",
+      "benefit_page_view",
+    ]);
+    for (const eventName of PRODUCT_EVENT_NAMES.filter(
+      (name) => !CLIENT_PRODUCT_EVENT_NAMES.includes(name as (typeof CLIENT_PRODUCT_EVENT_NAMES)[number]),
+    )) {
+      expect(clientProductEventV1Schema.safeParse({ ...client, eventName }).success).toBe(false);
+    }
   });
 
   it("accepts only a bounded client clock skew", () => {

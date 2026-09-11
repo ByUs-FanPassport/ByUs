@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Page, { generateMetadata } from "../../app/pages/ifew-fan-guide/page";
 import { sanitizeLiveReturnTo } from "@/features/quiz/domain/live-return-context";
+
+vi.mock("@/server/media/guide-images", () => ({ loadGuideImages: vi.fn(async () => ({ celebrity: null, eventPhotos: undefined })) }));
 
 describe("ifew Saturday LIVE guide", () => {
   it.each(["ko", "en"] as const)("shows the confirmed schedule and separate actions publicly (%s)", async (locale) => {

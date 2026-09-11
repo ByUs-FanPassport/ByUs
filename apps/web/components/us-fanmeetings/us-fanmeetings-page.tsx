@@ -10,7 +10,6 @@ import {
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 import { FocusFlowHeader } from "../fan-shell/focus-flow-header";
 import { FanLanguageSwitch } from "../fan-shell/fan-language-switch";
-import { FanWordmarkLink } from "../fan-shell/fan-wordmark-link";
 import { fanmeetingContent } from "./content";
 import { FanmeetingInquiryProvider, InquiryButton } from "./inquiry-dialog";
 import styles from "./us-fanmeetings-page.module.css";
@@ -265,12 +264,6 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
           </div>
         </section>
       </main>
-      <footer className={styles.footer}>
-        <div className={styles.footerInner}>
-          <FanWordmarkLink locale={locale} />
-          <p>{t.footer}</p>
-        </div>
-      </footer>
     </div>
     </FanmeetingInquiryProvider>
   );

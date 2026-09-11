@@ -21,6 +21,15 @@ describe("admin API proxy prefilter", () => {
 });
 
 describe("page locale proxy", () => {
+  it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
+    const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { "x-byus-pathname": "/" } }));
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("x-middleware-request-x-byus-pathname")).toBe(path);
+  });
+  it("keeps public pages indexable", () => {
+    const response = proxy(new NextRequest("https://byus.example/live/ifew?locale=en"));
+    expect(response.headers.has("x-robots-tag")).toBe(false);
+  });
   it("forwards a validated query locale to SSR", () => {
     const response = proxy(new NextRequest("https://byus.example/c/kara?locale=en"));
 

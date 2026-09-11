@@ -40,6 +40,15 @@ describe("FAN-005 profile onboarding", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ profile: { completed: false, nickname: null } }));
   });
 
+
+  it("receives changed profile roles from the parent celebrity", async () => {
+    const profile = (revision: number) => ({ asset: { id: "profile", url: `/profile-${revision}.jpg`, width: 800, height: 800, mimeType: "image/jpeg", revision }, alt: { ko: "프로필", en: "Profile" }, frames: {}, revision });
+    const view = render(<ProfileOnboardingScreen celebrity={{ ...celebrity, image: { ...celebrity.image, photos: { profile: profile(1) } } }} />);
+    await waitFor(() => expect(view.container.querySelector('[data-creator-avatar="kara"] img')?.getAttribute("srcset")).toContain("profile-1.jpg"));
+    view.rerender(<ProfileOnboardingScreen celebrity={{ ...celebrity, image: { ...celebrity.image, photos: { profile: profile(2) } } }} />);
+    expect(view.container.querySelector('[data-creator-avatar="kara"] img')?.getAttribute("srcset")).toContain("profile-2.jpg");
+  });
+
   it("requires authentication and preserves the sanitized continuation context", async () => {
     authenticated = false;
     const { rerender } = render(<ProfileOnboardingScreen celebrity={celebrity} />);

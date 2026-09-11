@@ -24,6 +24,17 @@ function payload(index: number, nextBenefit: NextPassportBenefit | null = benefi
 }
 
 describe("MY next benefit", () => {
+  it("shows a compact creator-specific empty benefit without hiding an available benefit's conditions", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => Response.json(url.includes(ids[1]) ? payload(1) : payload(0, null))));
+    const view = render(<MyBenefitProgress creator={creators[0]} locale="ko" compact/>);
+    expect(await screen.findByText("현재 KARA의 다음 혜택이 없어요.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "혜택 보기" })).toHaveAttribute("href", "/benefits?locale=ko&celebrity=kara");
+    view.rerender(<MyBenefitProgress creator={creators[1]} locale="ko" compact/>);
+    expect(await screen.findByRole("heading", { name: benefit.title })).toBeInTheDocument();
+    expect(screen.queryByText("현재 KARA의 다음 혜택이 없어요.")).not.toBeInTheDocument();
+    expect(screen.getByText("7점 더 필요해요.")).toBeInTheDocument();
+    expect(screen.getByText("후기 참여 완료 필요")).toBeInTheDocument();
+  });
   it("fetches only the controlled favorite and follows a shared selection change", async () => {
     const fetcher = vi.fn(async (url: string) => Response.json(url.includes(ids[1]) ? payload(1, { ...benefit, title: "다른 최애의 혜택", state: "eligible", missingConditions: [] }, 20) : payload(0, null)));
     vi.stubGlobal("fetch", fetcher);

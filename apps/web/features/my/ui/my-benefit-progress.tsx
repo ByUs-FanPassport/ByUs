@@ -56,11 +56,11 @@ function conditionLabel(condition: NextPassportBenefit["missingConditions"][numb
   }
 }
 
-export function MyBenefitProgress({ creator, locale }: { creator: PassportCreator; locale: FanLocale }) {
-  return <div className={styles.panel}><SelectedBenefit creator={creator} locale={locale}/></div>;
+export function MyBenefitProgress({ creator, locale, compact = false }: { creator: PassportCreator; locale: FanLocale; compact?: boolean }) {
+  return <div className={styles.panel}><SelectedBenefit creator={creator} locale={locale} compact={compact}/></div>;
 }
 
-function SelectedBenefit({ creator, locale }: { creator: PassportCreator; locale: FanLocale }) {
+function SelectedBenefit({ creator, locale, compact }: { creator: PassportCreator; locale: FanLocale; compact: boolean }) {
   const auth = usePrivy();
   const parse = useCallback((body: unknown) => {
     const { passport } = myBenefitPassportSchema.parse(body);
@@ -74,10 +74,15 @@ function SelectedBenefit({ creator, locale }: { creator: PassportCreator; locale
   if (resource.state.status === "error") return <div className={styles.message} role="status"><p>{t.error}</p><FanAction variant="neutral" onClick={resource.retry} leadingIcon={<RotateCcw/>}>{t.retry}</FanAction></div>;
   const passport = resource.state.data;
   const benefit = passport.nextBenefit;
-  if (!benefit) return <div className={styles.message}><p>{t.empty}</p><Link className={styles.link} href={allHref}>{t.all}<ArrowRight aria-hidden="true"/></Link></div>;
+  if (!benefit) return <div className={compact ? styles.compactMessage : styles.message}>
+    {compact ? <strong>{locale === "ko" ? "등급 혜택" : "Tier benefits"}</strong> : null}
+    <p>{compact ? (locale === "ko" ? `현재 ${creator.celebrity.name}의 다음 혜택이 없어요.` : `No next benefit for ${creator.celebrity.name} right now.`) : t.empty}</p>
+    <Link className={styles.link} href={allHref}>{compact ? (locale === "ko" ? "혜택 보기" : "View benefits") : t.all}<ArrowRight aria-hidden="true"/></Link>
+  </div>;
   const percent = benefitScorePercent(passport.score.points, benefit.minimumScore);
   const otherConditions = benefit.missingConditions.filter(condition => condition.type !== "score");
   return <div className={styles.benefit}>
+    {compact ? <p className={styles.compactLabel}>{locale === "ko" ? "등급 혜택" : "Tier benefits"}</p> : null}
     <h3>{benefit.title}</h3>
     <p className={styles.eligibility}>{benefit.eligibilityLabel}</p>
     {percent !== null ? <div className={styles.score}>

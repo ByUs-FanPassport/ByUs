@@ -1,12 +1,14 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Page, { generateMetadata } from "../../app/pages/elina-fan-guide/page";
 import { ElinaFanGuidePage } from "./elina-fan-guide-page";
 
+vi.mock("@/server/media/guide-images", () => ({ loadGuideImages: vi.fn(async () => ({ celebrity: null, eventPhotos: undefined })) }));
+
 describe("Elina fan guide", () => {
   it.each(["ko", "en"] as const)("renders approved %s copy and real action destinations", (locale) => {
-    const { container } = render(<ElinaFanGuidePage locale={locale} />);
+    const { container } = render(<ElinaFanGuidePage locale={locale} images={{ celebrity: null, eventPhotos: undefined }} />);
     const expected = locale === "ko" ? {
       title: "좋아하는 마음이, 함께한 순간으로.", verify: "팬 인증하기", live: "LIVE 일정 보기", checkIn: "코드 출석하기", missions: "미션 살펴보기", activity: "활동 인증 보기", prize: "선물 고르기", history: "내 기록 보기",
     } : {

@@ -77,7 +77,8 @@ describe("SupabaseLiveCalendarRepository", () => {
     });
     const repository = new PublicImageLiveCalendarRepository(
       new SupabaseLiveCalendarRepository({ rpc: vi.fn().mockResolvedValue({ data: [event], error: null }) }),
-      { readLivePhotoSetsBySlug, readCelebrityPhotoSetsBySlug: vi.fn() },
+      { readLivePhotoSetsBySlug, readCelebrityPhotoSetsBySlug: vi.fn().mockResolvedValue({}) },
+      { readByLiveSlugs: vi.fn().mockResolvedValue({}) },
     );
 
     const result = await repository.readMonth({
@@ -89,6 +90,49 @@ describe("SupabaseLiveCalendarRepository", () => {
 
     expect(readLivePhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([event.slug]);
     expect(result.days.find(({ date }) => date === "2026-09-15")?.events[0]?.photos).toEqual({ poster: null });
+  });
+
+  it("attaches creator role photos and position with the event role photos in bounded batches", async () => {
+    const secondEvent = {
+      ...event,
+      id: "22222222-2222-4222-8222-222222222222",
+      slug: "other-live",
+      celebrity: { name: "Other", image: "/images/other.jpg" },
+    };
+    const readLivePhotoSetsBySlug = vi.fn().mockResolvedValue({
+      [event.slug]: { poster: null },
+    });
+    const readCelebrityPhotoSetsBySlug = vi.fn().mockResolvedValue({
+      creator: { profile: null, portrait: null },
+      other: { landscape: null },
+    });
+    const readByLiveSlugs = vi.fn().mockResolvedValue({
+      [event.slug]: { celebritySlug: "creator", imagePosition: "50% 35%" },
+      [secondEvent.slug]: { celebritySlug: "other", imagePosition: "center" },
+    });
+    const repository = new PublicImageLiveCalendarRepository(
+      new SupabaseLiveCalendarRepository({ rpc: vi.fn().mockResolvedValue({ data: [event, secondEvent], error: null }) }),
+      { readLivePhotoSetsBySlug, readCelebrityPhotoSetsBySlug },
+      { readByLiveSlugs },
+    );
+
+    const result = await repository.readMonth({ month: "2026-09", locale: "ko", appUserId: null, now: new Date("2026-09-03T00:00:00.000Z") });
+    const events = result.days.find(({ date }) => date === "2026-09-15")!.events;
+
+    expect(readLivePhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith([event.slug, secondEvent.slug]);
+    expect(readByLiveSlugs).toHaveBeenCalledExactlyOnceWith([event.slug, secondEvent.slug]);
+    expect(readCelebrityPhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith(["creator", "other"]);
+    expect(events).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        slug: event.slug,
+        photos: { poster: null },
+        celebrity: expect.objectContaining({ imagePosition: "50% 35%", photos: { profile: null, portrait: null } }),
+      }),
+      expect.objectContaining({
+        slug: secondEvent.slug,
+        celebrity: expect.objectContaining({ imagePosition: "center", photos: { landscape: null } }),
+      }),
+    ]));
   });
 
   it("passes only the authenticated owner to the RPC and projects reserved/not-reserved without identifiers", async () => {

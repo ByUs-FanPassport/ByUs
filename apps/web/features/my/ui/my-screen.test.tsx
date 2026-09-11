@@ -70,32 +70,33 @@ describe("unified MY hub", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     render(<MyScreen locale="ko" />);
-    expect(await screen.findByText(/첫 반응/)).toBeInTheDocument();
-    expect(screen.getByText(/첫 반응/).closest("button")).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("button", { name: "KARA" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "팬 인증 시작하기" })[0]).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
   });
-  it("prioritizes profile identity, activity totals, and the four owner activity sections", async () => {
+  it("keeps each total in its corresponding section and groups the selected favorite", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     render(<MyScreen locale="ko" />);
 
     expect(await screen.findByRole("heading", { name: "카밀리아님", level: 1 })).toBeInTheDocument();
     expect(screen.getByText("최애와 함께한 기록을 한눈에 모았어요.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "KARA · 실버" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /KARA실버/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("heading", { name: "활동 요약" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "내 최애" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "KARA" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("heading", { name: "활동 요약" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 최애 1" })).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "다음 팬등급 진행률" })).toHaveAttribute("value", "30");
     expect(screen.getByText("골드까지 35점")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
-    expect(screen.getAllByText("응모권").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "KARA 응모권" })).toBeInTheDocument();
     expect(screen.getByText("응모")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /^1\s*내 최애$/ })).toHaveAttribute("href", "#my-creators");
-    expect(screen.getByRole("link", { name: /^1\s*내 패스포트$/ })).toHaveAttribute("href", "/passports?locale=ko");
-    expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
-    expect(screen.getByRole("link", { name: /^4\s*응모권$/ })).toHaveAttribute("href", "#my-creators");
-    expect(screen.queryByRole("link", { name: /^0\s*디지털 기념품$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 최애 1" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /^스탬프 2$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
+    expect(screen.getByText("4장")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "KARA 팬 활동" })).getByRole("heading", { name: "KARA 응모권" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^디지털 기념품 0$/ })).not.toBeInTheDocument();
     expect(screen.queryByText("pickup_completed")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "최근 활동" })).not.toBeInTheDocument();
     const settings = screen.getByRole("link", { name:"설정" });
@@ -110,12 +111,12 @@ describe("unified MY hub", () => {
 
     const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveAttribute("href", "/passports?locale=ko");
-    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음.*LIVE 둘러보기/ })).toHaveAttribute("href", "/live?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음/ })).toHaveAttribute("href", "/live?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /응모·혜택.*혜택 2.*응모 내역 3/ })).toHaveAttribute("href", "/benefits?locale=ko");
     expect(within(shortcuts).queryByText("응모 가능")).not.toBeInTheDocument();
   });
 
-  it("opens the nearest actual reservation and summarizes multiple Passports without hiding the collection", async () => {
+  it("links reservation count to the owned schedule and preserves its nearest event", async () => {
     const later = { id: "77777777-7777-4777-8777-777777777777", slug: "later-live", title: "두 번째 예약", startsAt: "2026-09-20T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
     const sooner = { id: "88888888-8888-4888-8888-888888888888", slug: "sooner-live", title: "가장 가까운 예약", startsAt: "2026-09-18T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
@@ -125,7 +126,8 @@ describe("unified MY hub", () => {
 
     const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 2개/ })).toHaveAttribute("href", "/passports?locale=ko");
-    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*가장 가까운 예약/ })).toHaveAttribute("href", "/live/sooner-live?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 2건/ })).toHaveAttribute("href", "#my-reserved-live");
+    expect(within(screen.getByRole("region", { name: "내 예약 LIVE" })).getByRole("link", { name: /가장 가까운 예약/ })).toHaveAttribute("href", "/live/sooner-live?locale=ko");
   });
 
   it("follows the selected favorite and trusts its server stage label, segment, and artwork", async () => {
@@ -151,7 +153,7 @@ describe("unified MY hub", () => {
     vi.stubGlobal("fetch", fetcher);
     const { container } = render(<MyScreen locale="ko" />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /Elina골드 2/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Elina" }));
     expect(screen.getByText("골드 2", { selector: "strong" })).toBeInTheDocument();
     expect(screen.getByText("골드 3까지 15점")).toBeInTheDocument();
     expect(screen.getByText("플래티넘 등급까지 40점")).toBeInTheDocument();
@@ -184,8 +186,8 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="en" />);
 
     expect(await screen.findByText("Entries")).toBeInTheDocument();
-    expect(screen.getAllByText("Raffle tickets").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /^4\s*Raffle tickets$/ })).toHaveAttribute("href", "#my-creators");
+    expect(screen.getByRole("heading", { name: "KARA raffle tickets" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "KARA fan activity" })).getByText("4")).toBeInTheDocument();
   });
 
   it("links an information-required reward to its localized recipient route", async () => {
@@ -233,12 +235,13 @@ describe("unified MY hub", () => {
   });
 });
 
-it("places the selected favorite panels before LIVE and compact totals after owned records", async () => {
+it("places selected favorite details before the owner-wide records without a repeated overview", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
   render(<MyScreen locale="ko"/>);
   const event=await screen.findByText("내 예약 LIVE", { selector: "strong" });
-  expect(screen.getByRole("heading",{name:"내 최애"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(event.compareDocumentPosition(screen.getByRole("heading",{name:"활동 요약"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByRole("heading",{name:"내 최애 1"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.queryByRole("heading",{name:"활동 요약"})).not.toBeInTheDocument();
+  expect(screen.getByRole("region",{name:"KARA 팬 활동"}).compareDocumentPosition(event) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
 
@@ -252,7 +255,7 @@ it("shows a date-led reserved event and keeps recent records below favorites in 
   const {container} = render(<MyScreen locale="ko"/>);
   await screen.findByText("내 예약 LIVE", { selector: "strong" });
   expect(container.querySelector('time[datetime="2026-09-18T11:30:00.000Z"]')).toHaveTextContent("9월18");
-  expect(screen.getByText("KARA Stamp").closest("aside")).toBeNull();
+  expect(screen.getByText("KARA 스탬프").closest("aside")).toBeNull();
   expect(container.querySelector("#my-creators")!.compareDocumentPosition(container.querySelector("#my-collection")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelector("#my-collection")!.parentElement?.className).toContain("lowerGrid");
   expect(within(container.querySelector("#my-creators")!).getByText("KARA").closest("button")?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("%2Fkara.jpg"));
@@ -270,12 +273,12 @@ it("links the collectible total only when a real recent collectible supplies a d
   } })));
   render(<MyScreen locale="ko"/>);
 
-  expect(await screen.findByRole("link", { name: /^1\s*디지털 기념품$/ })).toHaveAttribute("href", "#my-collection");
+  expect(await screen.findByRole("link", { name: /^디지털 기념품 1$/ })).toHaveAttribute("href", "#my-collection");
   expect(document.querySelector("#my-collection")).toHaveTextContent("KARA 디지털 기념품");
   expect(screen.getByText("KARA 디지털 기념품")).toBeVisible();
   const scroll = vi.fn();
   document.querySelector("#my-collection")!.scrollIntoView = scroll;
-  fireEvent.click(screen.getByRole("link", { name: /^1\s*디지털 기념품$/ }));
+  fireEvent.click(screen.getByRole("link", { name: /^디지털 기념품 1$/ }));
   expect(screen.getByText("KARA 디지털 기념품")).toBeVisible();
   await waitFor(() => expect(scroll).toHaveBeenCalled());
   expect(document.activeElement).toBe(document.querySelector("#my-collection"));
@@ -299,4 +302,34 @@ it("keeps all twelve recent items accessible inside the disclosure and follows i
   expect(screen.getByText("팬 활동 12")).toBeVisible();
   await waitFor(() => expect(document.activeElement).toBe(collection));
   window.history.replaceState(null,"","/my");
+});
+
+it("keeps a selected favorite outside the initial six visible when the selector collapses", async () => {
+  const creators = Array.from({ length: 10 }, (_, index) => ({
+    ...summary.creators[0], celebrity: { ...summary.creators[0].celebrity, slug: `favorite-${index}`, name: `Favorite ${index}` },
+  }));
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, creators } })));
+  render(<MyScreen locale="en"/>);
+  const selector = await screen.findByRole("group", { name: "My favorites" });
+  expect(within(selector).getAllByRole("button")).toHaveLength(6);
+  fireEvent.click(screen.getByRole("button", { name: "View all (10)" }));
+  fireEvent.click(within(selector).getByRole("button", { name: "Favorite 9" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+  expect(within(selector).getAllByRole("button")).toHaveLength(6);
+  expect(within(selector).getByRole("button", { name: "Favorite 9" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("region", { name: "Favorite 9 fan activity" })).toBeInTheDocument();
+});
+
+it("groups indistinguishable stamps while preserving a Passport destination and the collection total", async () => {
+  const stamps = Array.from({ length: 2 }, (_, index) => ({
+    id: `11111111-1111-4111-8111-${String(index).padStart(12, "0")}`, kind: "stamp", title: "KARA Stamp",
+    occurredAt: `2026-09-01T00:00:${index ? "10" : "40"}.000Z`, href: `/passports/${id}`,
+  }));
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, collection: { ...summary.collection, recent: stamps } } })));
+  render(<MyScreen locale="ko"/>);
+  const group = await screen.findByRole("link", { name: /KARA 스탬프 2개/ });
+  expect(group).toHaveAttribute("href", `/passports/${id}?locale=ko`);
+  expect(group.querySelector("img")).not.toBeNull();
+  expect(screen.getByRole("link", { name: "스탬프 2" })).toHaveAttribute("href", "/passports?locale=ko#collection");
+  expect(screen.queryByRole("heading", { name: "활동 요약" })).not.toBeInTheDocument();
 });
