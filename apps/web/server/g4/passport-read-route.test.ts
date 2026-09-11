@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { AuthError } from "../../features/auth/domain/auth-errors";
+import { z } from "zod";
+import { basePassportSchema } from "../../features/passport/domain/passport-read-model";
 import { createPassportCollectionHandler, createPassportDetailHandler, createStampDetailHandler } from "./passport-read-route";
 
 const passportId = "10000000-0000-4000-8000-000000000001";
@@ -18,6 +20,28 @@ function dependencies() {
 function request(path: string, token = "Bearer token") { return new Request(`https://byus.kr${path}`, { headers: { authorization: token } }); }
 
 describe("G4 owner read HTTP handlers", () => {
+  it("keeps the pre-First-Like strict client contract readable across a deployment", async () => {
+    const deps = dependencies();
+    const projected = {
+      id: passportId, owner: { nickname: null }, celebrity: { slug: "kara", name: "KARA", image: { url: "/kara.jpg", alt: "KARA", position: "center" } },
+      businessStatus: "issued", mint: { status: "queued", txHash: null, tokenId: null }, issuedAt: "2026-09-11T00:00:00Z",
+      score: { points: 1, level: "Bronze" }, stampSummary: { knowledge: 1, reservation: 0, attendance: 0, survey: 0, total: 1 },
+      display: { level: "브론즈", mintStatus: "발급 대기" }, firstReactionRecorded: true,
+    };
+    deps.repository.findCollection.mockResolvedValue([projected]);
+    // This is the exact strict envelope used before the First Like UI shipped.
+    const legacyClientSchema = z.object({ passports: z.array(basePassportSchema.extend({ display: z.object({ level: z.string(), mintStatus: z.string() }).strict() }).strict()) }).strict();
+    const handler = createPassportCollectionHandler(deps);
+    for (const suffix of ["", "&firstLikeStamp=true"]) {
+      const response = await handler(request(`/api/passports?locale=ko&tierStages=1${suffix}`));
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(legacyClientSchema.safeParse(body).success).toBe(true);
+      expect(body.passports[0]).not.toHaveProperty("firstReactionRecorded");
+    }
+    const upgraded = await handler(request("/api/passports?locale=ko&tierStages=1&firstLikeStamp=1"));
+    expect(await upgraded.json()).toMatchObject({ passports: [{ firstReactionRecorded: true, stampSummary: { total: 1 }, score: { points: 1 } }] });
+  });
   it("enables stage projection only for the exact opt-in and keeps authenticated owner scope", async () => {
     const deps = dependencies();
     await createPassportCollectionHandler(deps)(request("/api/passports?tierStages=1&app_user_id=other"));
