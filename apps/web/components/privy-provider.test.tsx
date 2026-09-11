@@ -12,7 +12,10 @@ describe("ByUs Privy provider policy", () => {
   it("keeps production authentication Google-only", () => {
     render(<ByUsPrivyProvider appId="app-production"><span>child</span></ByUsPrivyProvider>);
     expect(provider).toHaveBeenLastCalledWith(expect.objectContaining({
-      config: expect.objectContaining({ loginMethods: ["google"] }),
+      config: expect.objectContaining({
+        loginMethods: ["google"],
+        allowOAuthInEmbeddedBrowsers: true,
+      }),
     }));
   });
 
