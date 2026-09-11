@@ -8,6 +8,7 @@ import { SesEmailSender } from "./adapters/ses-email-sender.js";
 import { EmailSender } from "./adapters/email-sender.js";
 import { KakaoSender } from "./adapters/kakao-sender.js";
 import { ExternalNotificationWorker } from "./external-notification-worker.js";
+import { runRaffleRecipientRemindersOnce } from "./raffle-recipient-reminders.js";
 import { runBusinessInquiryOnce } from "./business-inquiry-worker.js";
 
 async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
@@ -37,8 +38,8 @@ async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
 }
 
 export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
-  // Start both independently; an unrelated fan queue failure cannot starve inquiries.
-  const results = await Promise.allSettled([runFanNotificationsOnce(env), runBusinessInquiryOnce(env)]);
+  // Each queue advances independently. Newly queued reminders can dispatch next tick.
+  const results = await Promise.allSettled([runFanNotificationsOnce(env), runBusinessInquiryOnce(env), runRaffleRecipientRemindersOnce(env)]);
   if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
   return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);
 }

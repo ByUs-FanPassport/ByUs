@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAdminSession } from "./use-admin-session";
 
 const getAccessToken = vi.fn();
-let privyState = { ready: true, authenticated: true };
+let privyState: { ready: boolean; authenticated: boolean; user?: { id: string } } = { ready: true, authenticated: true };
 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ...privyState, getAccessToken }),
@@ -54,4 +54,18 @@ describe("useAdminSession", () => {
     await waitFor(() => expect(result.current.status).toBe("unauthenticated"));
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  it("hides previous authorization immediately when the signed-in owner changes", async () => {
+    privyState.user = { id: "owner-a" };
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(Response.json({ admin: { email: "a@example.test", role: "admin" } }))
+      .mockImplementation(() => new Promise(() => {}));
+    const { result, rerender } = renderHook(() => useAdminSession());
+    await waitFor(() => expect(result.current.status).toBe("authorized"));
+    privyState.user = { id: "owner-b" }; rerender();
+    expect(result.current.status).toBe("loading");
+    privyState.authenticated = false; rerender();
+    expect(result.current.status).toBe("unauthenticated");
+  });
+
 });

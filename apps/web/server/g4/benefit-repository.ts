@@ -18,6 +18,7 @@ import {
   type BenefitListResponse,
   type BenefitLocale,
 } from "../../features/benefit/domain/benefit";
+import type { EntryPolicyAcknowledgment } from "../../features/benefit/domain/raffle-fulfillment-policy";
 import { FAN_TIERS } from "../../features/rewards/domain/reward-policy";
 import {
   benefitEntryResultSchema,
@@ -51,6 +52,7 @@ export type BenefitFailureCode =
   | "IDEMPOTENCY_KEY_CONFLICT"
   | "BENEFIT_ENTRY_LIMIT_REACHED"
   | "INSUFFICIENT_TICKETS"
+  | "RAFFLE_POLICY_ACK_REQUIRED"
   | "BENEFIT_UNAVAILABLE";
 
 export class BenefitRepositoryError extends Error {
@@ -94,6 +96,7 @@ export interface BenefitRepository {
     appUserId: string;
     idempotencyKey: string;
     ticketAmount: number;
+    policyAcknowledgment?: EntryPolicyAcknowledgment;
     now: Date;
   }): Promise<BenefitEntryResult>;
 }
@@ -131,6 +134,7 @@ export interface BenefitDataSource {
     appUserId: string;
     idempotencyKey: string;
     ticketAmount: number;
+    policyAcknowledgment?: EntryPolicyAcknowledgment;
     now: Date;
   }): Promise<unknown>;
 }
@@ -269,6 +273,7 @@ export class DefaultBenefitRepository implements BenefitRepository {
     appUserId: string;
     idempotencyKey: string;
     ticketAmount: number;
+    policyAcknowledgment?: EntryPolicyAcknowledgment;
     now: Date;
   }): Promise<BenefitEntryResult> {
     try {
@@ -320,6 +325,8 @@ const rpcFailureMarkers: ReadonlyArray<readonly [string, BenefitFailureCode]> =
     ["PHASE1_TICKET_NEGATIVE_BALANCE", "INSUFFICIENT_TICKETS"],
     ["PHASE4_BENEFIT_ENTRY_WINDOW_CLOSED", "BENEFIT_EXPIRED"],
     ["PHASE4_BENEFIT_ENTRY_UNAVAILABLE", "BENEFIT_NOT_FOUND"],
+    ["RAFFLE_POLICY_ACK_REQUIRED", "RAFFLE_POLICY_ACK_REQUIRED"],
+    ["RAFFLE_POLICY_VERSION_CONFLICT", "RAFFLE_POLICY_ACK_REQUIRED"],
   ];
 
 function mapClaimFailure(message = ""): BenefitRepositoryError {
@@ -525,13 +532,15 @@ export class SupabaseBenefitDataSource implements BenefitDataSource {
     appUserId: string;
     idempotencyKey: string;
     ticketAmount: number;
+    policyAcknowledgment?: EntryPolicyAcknowledgment;
     now: Date;
   }): Promise<unknown> {
-    const { data, error } = await this.database.rpc("enter_owned_benefit", {
+    const { data, error } = await this.database.rpc(input.policyAcknowledgment ? "enter_owned_benefit_v2" : "enter_owned_benefit", {
       p_app_user_id: input.appUserId,
       p_benefit_id: input.benefitId,
       p_idempotency_key: input.idempotencyKey,
       p_ticket_amount: input.ticketAmount,
+      ...(input.policyAcknowledgment ? { p_policy_version: input.policyAcknowledgment.policyVersion, p_can_receive_in_korea: input.policyAcknowledgment.canReceiveInKorea } : {}),
       p_now: input.now.toISOString(),
     });
     if (error) throw mapClaimFailure(error.message);

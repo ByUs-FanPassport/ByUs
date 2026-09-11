@@ -18,7 +18,7 @@ describe("FanSiteFooter", () => {
     const footer = screen.getByRole("contentinfo");
     const navigation = within(footer).getByRole("navigation", { name: "ByUs 하단 메뉴" });
     expect(within(navigation).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", "/live?locale=ko");
-    expect(within(navigation).getByRole("link", { name: "미국 팬미팅 문의" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
+    expect(within(navigation).getByRole("link", { name: "팬미팅 협업 문의" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
     expect(within(navigation).getByRole("link", { name: "이용 가이드" })).toHaveAttribute("href", "/guide?locale=ko");
     expect(within(navigation).getByRole("link", { name: "Fan Passport" })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(navigation).getByRole("link", { name: "개인정보처리방침 열기" })).toHaveAttribute("href", "/privacy?locale=ko");
@@ -43,7 +43,7 @@ describe("FanSiteFooter", () => {
 
     const navigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
     expect(within(navigation).getByRole("link", { name: "Favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
-    expect(within(navigation).getByRole("link", { name: "U.S. fan meeting inquiries" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
+    expect(within(navigation).getByRole("link", { name: "Fan meeting partnerships" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
     expect(within(navigation).getByRole("link", { name: "Service guide" })).toHaveAttribute("href", "/guide?locale=en");
     expect(within(navigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(within(navigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");

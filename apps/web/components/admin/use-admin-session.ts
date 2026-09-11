@@ -10,7 +10,8 @@ export type AdminSessionState =
   | { status: "authorized"; admin: { email: string; role: string } };
 
 export function useAdminSession(): AdminSessionState {
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, user } = usePrivy();
+  const [verifiedOwner, setVerifiedOwner] = useState<string | null>(null);
   const [state, setState] = useState<AdminSessionState>({ status: "loading" });
 
   useEffect(() => {
@@ -60,6 +61,8 @@ export function useAdminSession(): AdminSessionState {
         if (typeof payload.admin?.email !== "string" || typeof payload.admin.role !== "string") {
           throw new Error("Invalid admin session response");
         }
+        if (!active) return;
+        setVerifiedOwner(user?.id ?? null);
         setState({ status: "authorized", admin: { email: payload.admin.email, role: payload.admin.role } });
       } catch (error) {
         if (active && !(error instanceof DOMException && error.name === "AbortError")) {
@@ -72,7 +75,9 @@ export function useAdminSession(): AdminSessionState {
       active = false;
       controller.abort();
     };
-  }, [authenticated, getAccessToken, ready]);
+  }, [authenticated, getAccessToken, ready, user?.id]);
 
-  return state;
+  if (!ready) return { status: "loading" };
+  if (!authenticated) return { status: "unauthenticated" };
+  return state.status === "authorized" && verifiedOwner !== (user?.id ?? null) ? { status: "loading" } : state;
 }

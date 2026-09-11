@@ -220,7 +220,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary }: { summar
 
     {hasRewards ? <FanSurface className={styles.section}>
       <SectionTitle title={t.rewards}/>
-      <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="gift" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><div><span className={styles.metricIcon} data-kind="ticket" aria-hidden="true"><FanMotionIcon name="ticket" size={20}/></span><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></div></div>
+      <div className={styles.rewardMetrics}><Link href={`/benefits?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="gift" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><span>{t.available}</span><strong>{summary.rewards.availableCount}</strong></Link><Link href={`/my/raffles?locale=${locale}` as Route}><span className={styles.metricIcon} data-kind="ticket" aria-hidden="true"><FanMotionIcon name="ticket" size={20}/></span><span>{t.entries}</span><strong>{summary.rewards.entries}</strong></Link></div>
       {summary.rewards.items.length ? <div className={styles.rows}>{summary.rewards.items.slice(0, 4).map((reward) => {
         const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;
         const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : "Enter recipient details") : rewardStatusCopy[reward.status][locale];

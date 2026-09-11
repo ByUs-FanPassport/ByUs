@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { entryPolicyAcknowledgmentSchema, raffleFulfillmentPolicySchema } from "./raffle-fulfillment-policy";
 
 export const enterBenefitRequestSchema = z
   .object({
     idempotencyKey: z.string().uuid(),
     ticketAmount: z.number().int().positive(),
+    policyAcknowledgment: entryPolicyAcknowledgmentSchema.optional(),
   })
   .strict();
 
@@ -23,6 +25,7 @@ export const benefitEntryResultSchema = z.object({
 export type BenefitEntryResult = z.infer<typeof benefitEntryResultSchema>;
 
 export const benefitEntryStateSchema = z.object({
+  fulfillmentPolicy: raffleFulfillmentPolicySchema.nullable().optional(),
   campaignId: z.string().uuid(),
   creatorTicketBalance: z.number().int().nonnegative(),
   enteredTickets: z.number().int().nonnegative(),

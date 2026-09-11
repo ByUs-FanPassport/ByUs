@@ -28,7 +28,29 @@ export function createPostOwnedBenefitRecipientHandler(dependencies: BenefitFulf
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (/NOT_FOUND/.test(message)) return json({ error: { code: "REWARD_NOT_FOUND" } }, 404);
-      if (/CONSENT|ADDRESS|INVALID|STATE_CONFLICT|NOT_REQUIRED/.test(message)) return json({ error: { code: "RECIPIENT_REJECTED" } }, 409);
+      if (/CONSENT|ADDRESS|INVALID|STATE_CONFLICT|NOT_REQUIRED|DEADLINE|CLOSED|REVISION|PHONE|POLICY/.test(message)) return json({ error: { code: "RECIPIENT_REJECTED" } }, 409);
+      return json({ error: { code: "REWARD_UNAVAILABLE" } }, 503);
+    }
+  };
+}
+
+
+export function createGetOwnedBenefitRecipientHandler(dependencies: BenefitFulfillmentRouteDependencies) {
+  return async (request: Request, input: { winnerId: string }) => {
+    if (!uuid.test(input.winnerId)) return json({ error: { code: "REWARD_NOT_FOUND" } }, 404);
+    let owner;
+    try { owner = await dependencies.authorize(request.headers.get("authorization")); }
+    catch (error) {
+      if (error instanceof FanAuthUnavailableError) return json({ error: { code: "REWARD_UNAVAILABLE" } }, 503);
+      if (error instanceof AuthError) return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status);
+      return json({ error: { code: "REWARD_UNAVAILABLE" } }, 503);
+    }
+    try {
+      if (!dependencies.repository.readRecipient) throw new Error("Recipient reader unavailable");
+      const detail = await dependencies.repository.readRecipient({ appUserId: owner.appUserId, winnerId: input.winnerId });
+      return detail ? json(detail, 200) : json({ error: { code: "REWARD_NOT_FOUND" } }, 404);
+    } catch (error) {
+      if (/NOT_FOUND|NOT_PUBLISHED/.test(error instanceof Error ? error.message : "")) return json({ error: { code: "REWARD_NOT_FOUND" } }, 404);
       return json({ error: { code: "REWARD_UNAVAILABLE" } }, 503);
     }
   };

@@ -1,8 +1,10 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Clock3, ShieldCheck, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { isSupportedCountry } from "libphonenumber-js";
+import type { Country } from "react-phone-number-input";
 import { z } from "zod";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
@@ -17,17 +19,23 @@ import {
   recipientSaveResultSchema,
 } from "../domain/fulfillment";
 import { myRewardsSchema, type MyReward } from "../domain/my-reward";
+import { isRecipientOverdue } from "../domain/raffle-fulfillment-policy";
+import { ownedRecipientDetailsSchema, type OwnedRecipientDetails } from "../domain/raffle-result";
+import { normalizeRecipientPhone } from "../domain/recipient-phone";
 import {
+  formatRecipientDeadline,
   fulfillmentStatusLabel,
   recipientCopy,
   selectOwnedRecipientReward,
 } from "./benefit-recipient-presentation";
+import { RecipientPhoneField } from "./recipient-phone-field";
 import styles from "./benefit-recipient-screen.module.css";
 
 const rewardsResponseSchema = z.object({ rewards: myRewardsSchema }).strict();
 
 type Draft = {
   name: string;
+  phoneCountry: Country;
   phone: string;
   postalCode: string;
   address1: string;
@@ -37,15 +45,16 @@ type Draft = {
 type Field = keyof Draft;
 type FieldErrors = Partial<Record<Field, string>>;
 type ReadResult =
-  | { kind: "reward"; reward: MyReward }
+  | { kind: "reward"; reward: MyReward; details: OwnedRecipientDetails }
   | { kind: "auth" | "missing" | "unavailable" };
 type View =
   | { kind: "loading" | "auth" | "missing" | "unavailable" }
-  | { kind: "reward"; reward: MyReward };
+  | { kind: "reward"; reward: MyReward; details: OwnedRecipientDetails };
 type SubmitPhase = "idle" | "posting" | "reconciling" | "confirmation_required";
 
 const emptyDraft = (): Draft => ({
   name: "",
+  phoneCountry: "KR",
   phone: "",
   postalCode: "",
   address1: "",
@@ -69,7 +78,20 @@ async function readReward(input: {
     if (!response.ok) return { kind: "unavailable" };
     const { rewards } = rewardsResponseSchema.parse(await response.json());
     const reward = selectOwnedRecipientReward(rewards, input.winnerId);
-    return reward ? { kind: "reward", reward } : { kind: "missing" };
+    if (!reward) return { kind: "missing" };
+    const detailsResponse = await fetch(`/api/me/rewards/${input.winnerId}/recipient`, {
+      headers: { Authorization: `Bearer ${input.token}` },
+      cache: "no-store",
+      signal: input.signal,
+    });
+    if (detailsResponse.status === 401 || detailsResponse.status === 403) return { kind: "auth" };
+    if (detailsResponse.status === 404) return { kind: "missing" };
+    if (!detailsResponse.ok) return { kind: "unavailable" };
+    const details = ownedRecipientDetailsSchema.parse(await detailsResponse.json());
+    if (details.winnerId !== input.winnerId || (details.policy && details.policy.method !== reward.method)) {
+      return { kind: "unavailable" };
+    }
+    return { kind: "reward", reward, details };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     return { kind: "unavailable" };
@@ -146,6 +168,26 @@ function BenefitRecipientOwnerScreen({
     setMessage(null);
   }, []);
 
+  const hydrateDraft = useCallback((details: OwnedRecipientDetails) => {
+    const recipient = details.recipient;
+    if (!recipient) {
+      setDraft(emptyDraft());
+      return;
+    }
+    const phoneCountry = recipient.phoneCountry && isSupportedCountry(recipient.phoneCountry)
+      ? recipient.phoneCountry as Country
+      : "KR";
+    setDraft({
+      name: recipient.name,
+      phoneCountry,
+      phone: recipient.phone,
+      postalCode: recipient.postalCode ?? "",
+      address1: recipient.address1 ?? "",
+      address2: recipient.address2 ?? "",
+      consented: false,
+    });
+  }, []);
+
   const load = useCallback(async (selectedLocale: FanLocale, signal?: AbortSignal): Promise<ReadResult> => {
     if (!authenticated) return { kind: "auth" };
     try {
@@ -190,6 +232,7 @@ function BenefitRecipientOwnerScreen({
         return;
       }
       setView(nextView(result));
+      if (result.kind === "reward" && !retainedReward) hydrateDraft(result.details);
       setSubmitPhase("idle");
     }).catch(() => {});
     return () => {
@@ -199,12 +242,19 @@ function BenefitRecipientOwnerScreen({
   // `view` is intentionally retained across locale reads; request ownership is
   // guarded by the keyed component and request key rather than effect closure.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, load, locale, ownerKey, ready, t.confirmBody]);
+  }, [authenticated, hydrateDraft, load, locale, ownerKey, ready, t.confirmBody]);
 
   const reward = view.kind === "reward" ? view.reward : null;
+  const details = view.kind === "reward" ? view.details : null;
+  const submitted = Boolean(details?.recipient);
+  const overdue = Boolean(details
+    && details.claimDisposition === "active"
+    && isRecipientOverdue(details.deadlineAt, submitted, new Date()));
   const needsForm = Boolean(
-    reward?.recipientRequired
-      && reward.status === "information_required"
+    reward
+      && details?.editable
+      && details.claimDisposition === "active"
+      && !overdue
       && reward.method !== "digital",
   );
 
@@ -222,11 +272,18 @@ function BenefitRecipientOwnerScreen({
     else if (name.length > 120) result.name = t.nameTooLong;
     if (!phone) result.phone = t.requiredError;
     else if (phone.length < 7 || phone.length > 40) result.phone = t.phoneLength;
+    else {
+      try {
+        normalizeRecipientPhone(draft.phoneCountry, phone);
+      } catch {
+        result.phone = t.phoneInvalid;
+      }
+    }
     if (method === "physical_shipping") {
       const postalCode = draft.postalCode.trim();
       const address1 = draft.address1.trim();
       if (!postalCode) result.postalCode = t.requiredError;
-      else if (postalCode.length > 20) result.postalCode = t.postalTooLong;
+      else if (!/^\d{5}$/.test(postalCode)) result.postalCode = t.postalTooLong;
       if (!address1) result.address1 = t.requiredError;
       else if (address1.length > 300) result.address1 = t.addressTooLong;
       if (draft.address2.trim().length > 300) result.address2 = t.addressTooLong;
@@ -247,15 +304,16 @@ function BenefitRecipientOwnerScreen({
     if (!mounted.current || currentOwnerKey.current !== requestKey) return;
     const currentCopy = recipientCopy[selectedLocale];
     if (result.kind === "reward") {
-      setView({ kind: "reward", reward: result.reward });
-      if (result.reward.status !== "information_required" || !result.reward.recipientRequired) {
+      setView({ kind: "reward", reward: result.reward, details: result.details });
+      if (!result.details.editable || result.details.claimDisposition === "unclaimed") {
         clearPrivateState();
         setSubmitPhase("idle");
         return;
       }
-      setDraft((current) => ({ ...current, consented: false }));
+      if (result.details.recipient) hydrateDraft(result.details);
+      else setDraft((current) => ({ ...current, consented: false }));
       setErrors({});
-      setMessage(currentCopy.retrySubmit);
+      setMessage(result.details.recipient ? currentCopy.success : currentCopy.retrySubmit);
       setSubmitPhase("idle");
       return;
     }
@@ -267,11 +325,11 @@ function BenefitRecipientOwnerScreen({
     }
     setMessage(currentCopy.confirmBody);
     setSubmitPhase("confirmation_required");
-  }, [clearPrivateState, load]);
+  }, [clearPrivateState, hydrateDraft, load]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (postInFlight.current || !reward || !needsForm || submitPhase !== "idle") return;
+    if (postInFlight.current || !reward || !details || !needsForm || submitPhase !== "idle") return;
     const nextErrors = validate(reward.method);
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
@@ -296,13 +354,16 @@ function BenefitRecipientOwnerScreen({
           setSubmitPhase("idle");
           return;
         }
+        const normalizedPhone = normalizeRecipientPhone(draft.phoneCountry, draft.phone);
         const input = recipientInputSchema.parse({
           consentVersion: BENEFIT_RECIPIENT_CONSENT_VERSION,
           consented: true,
           name: draft.name,
-          phone: draft.phone,
+          phone: normalizedPhone.e164,
+          ...(details.policy ? { phoneCountry: normalizedPhone.country, expectedRevision: details.revision } : {}),
           ...(reward.method === "physical_shipping"
             ? {
+                ...(details.policy ? { shippingCountry: "KR" } : {}),
                 postalCode: draft.postalCode,
                 address1: draft.address1,
                 ...(draft.address2.trim() ? { address2: draft.address2 } : {}),
@@ -400,19 +461,42 @@ function BenefitRecipientOwnerScreen({
 
   const detailUrl = withLocalePath(reward.benefitHref, locale);
   if (!needsForm) {
-    const title = reward.method === "digital" || reward.status === "information_required" ? t.noInput : t.success;
+    const state = reward.method === "digital"
+      ? { title: t.noInput, description: "" }
+      : details?.claimDisposition === "unclaimed"
+        ? { title: t.unclaimed, description: t.unclaimedBody }
+        : overdue
+          ? { title: t.deadlinePassed, description: t.deadlinePassedBody }
+          : submitted
+            ? { title: details?.editable ? t.success : t.locked, description: details?.editable ? t.successBody : t.lockedBody }
+            : { title: t.locked, description: t.lockedBody };
+    const showContact = reward.method !== "digital" && (overdue || details?.claimDisposition === "unclaimed" || !details?.editable);
+    const StateIcon = details?.claimDisposition === "unclaimed" ? XCircle : overdue ? Clock3 : CheckCircle2;
     return main(<FanSurface className={styles.result}>
-      <CheckCircle2 aria-hidden="true" />
-      <FanHeading as="h1" variant="personal-page">{title}</FanHeading>
+      <StateIcon aria-hidden="true" />
+      <FanHeading as="h1" variant="personal-page">{state.title}</FanHeading>
       <p>{reward.title}</p>
-      <dl><div><dt>{t.currentStatus}</dt><dd>{fulfillmentStatusLabel[reward.status][locale]}</dd></div></dl>
-      <div className={styles.actions}><FanAction variant="primary" href={withLocalePath("/my", locale)}>{t.backMy}</FanAction><FanAction href={detailUrl}>{t.benefit}</FanAction></div>
+      {state.description ? <p>{state.description}</p> : null}
+      <dl>
+        <div><dt>{t.currentStatus}</dt><dd>{fulfillmentStatusLabel[reward.status][locale]}</dd></div>
+        {details?.deadlineAt ? <div><dt>{t.deadline}</dt><dd><time dateTime={details.deadlineAt}>{formatRecipientDeadline(details.deadlineAt, locale)}</time></dd></div> : null}
+      </dl>
+      <div className={styles.actions}>
+        <FanAction variant="primary" href={withLocalePath("/my", locale)}>{t.backMy}</FanAction>
+        {showContact ? <FanAction href="mailto:biz@sallylab.io">{t.contact}</FanAction> : <FanAction href={detailUrl}>{t.benefit}</FanAction>}
+      </div>
     </FanSurface>);
   }
 
   const shipping = reward.method === "physical_shipping";
   const busy = submitPhase === "posting" || submitPhase === "reconciling";
   const locked = submitPhase === "confirmation_required";
+  let phoneLast4: string | null = null;
+  try {
+    phoneLast4 = normalizeRecipientPhone(draft.phoneCountry, draft.phone).last4;
+  } catch {
+    phoneLast4 = null;
+  }
   const field = (name: Exclude<Field, "consented">, label: string, props: React.InputHTMLAttributes<HTMLInputElement>) => {
     const errorId = `${name}-error`;
     return <label className={styles.field} htmlFor={name}>
@@ -424,21 +508,50 @@ function BenefitRecipientOwnerScreen({
 
   return main(<div className={styles.layout}>
     <header className={styles.heading}>
-      <FanHeading as="h1" variant="personal-page">{t.title}</FanHeading>
+      <FanHeading as="h1" variant="personal-page">{submitted ? t.editTitle : t.title}</FanHeading>
       <strong>{reward.title}</strong>
       <p>{shipping ? t.shippingIntro : t.pickupIntro}</p>
+      {details?.deadlineAt ? <p className={styles.deadline}><span>{t.deadline}</span><time dateTime={details.deadlineAt}>{formatRecipientDeadline(details.deadlineAt, locale)}</time></p> : null}
     </header>
     <FanSurface className={styles.formSurface}>
       <form onSubmit={submit} noValidate aria-busy={busy}>
         <div className={styles.fields}>
           {field("name", t.name, { required: true, maxLength: 120, autoComplete: "name" })}
-          {field("phone", t.phone, { required: true, minLength: 7, maxLength: 40, type: "tel", autoComplete: "tel", inputMode: "tel" })}
+          <RecipientPhoneField
+            id="phone"
+            locale={locale}
+            label={t.phone}
+            requiredLabel={t.required}
+            country={draft.phoneCountry}
+            value={draft.phone}
+            disabled={busy || locked}
+            error={errors.phone}
+            inputRef={(node) => { fieldRefs.current.phone = node; }}
+            onCountryChange={(country) => {
+              setDraft((current) => ({ ...current, phoneCountry: country }));
+              setErrors((current) => ({ ...current, phone: undefined }));
+              setMessage(null);
+            }}
+            onChange={(value) => updateField("phone", value)}
+          />
           {shipping ? <>
+            <div className={styles.shippingCountry}>
+              <span>{t.shippingCountry}</span>
+              <strong>{t.korea}</strong>
+              <small>{t.koreaOnly}</small>
+            </div>
             {field("postalCode", t.postalCode, { required: true, maxLength: 20, autoComplete: "postal-code" })}
             {field("address1", t.address1, { required: true, maxLength: 300, autoComplete: "address-line1" })}
             {field("address2", t.address2, { maxLength: 300, autoComplete: "address-line2" })}
           </> : null}
         </div>
+        {draft.name.trim() && phoneLast4 ? <section className={styles.review} aria-labelledby="recipient-review-heading">
+          <h2 id="recipient-review-heading">{t.reviewTitle}</h2>
+          <dl>
+            <div><dt>{t.reviewName}</dt><dd>{draft.name.trim()}</dd></div>
+            <div><dt>{t.reviewPhone}</dt><dd>{phoneLast4}</dd></div>
+          </dl>
+        </section> : null}
         <section className={styles.privacy} aria-labelledby="recipient-privacy-heading">
           <ShieldCheck aria-hidden="true" />
           <div><h2 id="recipient-privacy-heading">{locale === "ko" ? "개인정보 수집·이용" : "Collection and use of personal information"}</h2><p>{t.privacy} <a href={withLocalePath("/privacy", locale)}>{t.privacyLink}</a></p></div>

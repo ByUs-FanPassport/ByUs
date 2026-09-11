@@ -1,0 +1,27 @@
+.panel {
+  margin-top: 32px;
+  padding: clamp(20px, 4vw, 28px);
+  border: 1px solid oklch(87% 0.015 330);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff 52%, oklch(98% 0.018 330));
+}
+.eyebrow { color: oklch(43% 0 0); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.status { display: flex; gap: 14px; margin-top: 14px; }
+.status > span { width: 40px; height: 40px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; background: oklch(95% 0.035 330); color: oklch(48% 0.18 345); }
+.status > span svg { width: 21px; height: 21px; }
+.status h2 { margin: 0; font-size: clamp(20px, 4vw, 26px); letter-spacing: -.03em; }
+.status p { margin: 7px 0 0; color: oklch(42% 0 0); line-height: 1.55; }
+.panel > h3 { margin: 26px 0 10px; font-size: 16px; }
+.facts { margin: 0; border-top: 1px solid oklch(89% 0 0); }
+.facts div { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid oklch(91% 0 0); }
+.facts dt { color: oklch(45% 0 0); font-size: 13px; }
+.facts dd { min-width: 0; margin: 0; text-align: right; font-size: 14px; font-weight: 750; overflow-wrap: anywhere; }
+.facts time { white-space: nowrap; }
+.instructions { margin: 18px 0 0; padding: 14px 16px; border-radius: 12px; background: oklch(97% 0.012 264); color: oklch(32% 0 0); font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+@media (max-width: 480px) {
+  .facts div { align-items: flex-start; flex-direction: column; gap: 5px; padding: 12px 0; }
+  .facts dd { text-align: left; }
+  .facts time { white-space: normal; }
+  .actions > * { width: 100%; }
+}

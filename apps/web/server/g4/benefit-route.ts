@@ -149,6 +149,7 @@ export function createGetBenefitHandler(
 }
 
 const claimFailures = {
+  RAFFLE_POLICY_ACK_REQUIRED: ["RAFFLE_POLICY_ACK_REQUIRED", 409],
   BENEFIT_NOT_FOUND: ["BENEFIT_NOT_FOUND", 404],
   BENEFIT_LOCKED: ["BENEFIT_LOCKED", 403],
   BENEFIT_SOLD_OUT: ["BENEFIT_SOLD_OUT", 409],
@@ -193,6 +194,7 @@ export function createPostBenefitEntryHandler(
         appUserId: owner.appUserId,
         idempotencyKey: body.idempotencyKey,
         ticketAmount: body.ticketAmount,
+        ...(body.policyAcknowledgment ? { policyAcknowledgment: body.policyAcknowledgment } : {}),
         now: dependencies.now(),
       }), 200, true);
     } catch (error) {

@@ -1,0 +1,204 @@
+.field {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  color: oklch(24% 0 0);
+  font-size: 14px;
+  font-weight: 750;
+}
+.field > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.field > label small {
+  color: oklch(45% 0 0);
+  font-size: 12px;
+  font-weight: 650;
+}
+.phoneInput {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 48px;
+  border: 1px solid oklch(80% 0 0);
+  border-radius: 12px;
+  background: #fff;
+}
+.phoneInput:focus-within {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 3px;
+}
+.phoneInput:has(input[aria-invalid="true"]) {
+  border-color: oklch(52% 0.18 25);
+}
+.phoneInput > input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0 11px 11px 0;
+  background: transparent;
+  color: oklch(18% 0 0);
+  font: inherit;
+  font-size: 16px;
+  outline: 0;
+}
+.countrySelect {
+  position: relative;
+  min-width: 126px;
+}
+.countryTrigger {
+  width: 100%;
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: auto auto 16px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 0;
+  border-right: 1px solid oklch(86% 0 0);
+  border-radius: 11px 0 0 11px;
+  background: oklch(98% 0 0);
+  color: oklch(22% 0 0);
+  font: inherit;
+  cursor: pointer;
+}
+.countryTrigger strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.countryTrigger svg {
+  width: 16px;
+  height: 16px;
+}
+.countryTrigger:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+.countryPopup {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(360px, calc(100vw - 64px));
+  padding: 10px;
+  border: 1px solid oklch(86% 0 0);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 14%);
+}
+.countrySearch {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid oklch(80% 0 0);
+  border-radius: 10px;
+}
+.countrySearch:focus-within {
+  outline: 3px solid oklch(18% 0 0);
+  outline-offset: 2px;
+}
+.countrySearch svg {
+  width: 18px;
+  height: 18px;
+  color: oklch(45% 0 0);
+}
+.countrySearch input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: 15px;
+}
+.countryOptions {
+  max-height: 280px;
+  margin-top: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.countryOption,
+.countryOptionActive {
+  width: 100%;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: oklch(22% 0 0);
+  text-align: left;
+  cursor: pointer;
+}
+.countryOptionActive {
+  background: oklch(96% 0 0);
+}
+.countryOption small {
+  color: oklch(43% 0 0);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.countryOption svg,
+.countryOptionActive svg {
+  width: 18px;
+  height: 18px;
+}
+.countryEmpty {
+  margin: 0;
+  padding: 20px 10px;
+  color: oklch(45% 0 0);
+  text-align: center;
+}
+.field em {
+  margin: 0;
+  color: oklch(44% 0.18 25);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 650;
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 420px) {
+  .countrySelect {
+    min-width: 112px;
+  }
+  .countryTrigger {
+    padding-inline: 10px;
+  }
+  .countryPopup {
+    width: min(320px, calc(100vw - 68px));
+  }
+}
+
+@media (max-width: 420px) {
+  .phoneInput {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .countryTrigger {
+    justify-content: start;
+    border-right: 0;
+    border-bottom: 1px solid oklch(86% 0 0);
+    border-radius: 11px 11px 0 0;
+  }
+  .phoneInput > input {
+    border-radius: 0 0 11px 11px;
+  }
+}
