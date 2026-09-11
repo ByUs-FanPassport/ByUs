@@ -1,6 +1,6 @@
 export const FAN_ACTIVITY_UPDATED = "byus:fan-activity-updated";
 
-export type FanActivityResource = "summary" | "reactions" | "passports";
+export type FanActivityResource = "summary" | "reactions" | "passports" | "community";
 
 export function notifyFanActivityUpdated(ownerId: string | undefined, resources?: readonly FanActivityResource[]) {
   window.dispatchEvent(new CustomEvent(FAN_ACTIVITY_UPDATED, { detail: { ownerId, resources } }));

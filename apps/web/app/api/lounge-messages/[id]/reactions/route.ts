@@ -1,15 +1,8 @@
-import { createFanpageDependencies } from "@/server/fanpage/dependencies";
-import { fanpageFailure } from "@/server/fanpage/routes";
-import { createLoungeHandlers } from "@/server/lounge/routes";
+import { fanpageJson } from "@/server/fanpage/routes";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await context.params;
-    return await createLoungeHandlers(createFanpageDependencies()).react(request, id);
-  } catch (error) {
-    return fanpageFailure(error);
-  }
+export async function PUT() {
+  return fanpageJson({ error: { code: "LOUNGE_NOT_AVAILABLE" } }, 404);
 }

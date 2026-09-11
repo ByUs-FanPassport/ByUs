@@ -20,6 +20,7 @@ declare creator uuid:=extensions.gen_random_uuid();quiz uuid:=extensions.gen_ran
 begin
   insert into public.celebrities(id,slug,status,image_url,published_at,fan_count,roles,primary_role)
     values(creator,slug,'published','/images/guest-home/kara-card.jpg',now(),12800000,'{artist}','idol');
+  insert into public.celebrity_localizations(celebrity_id,locale,name,summary,image_alt) values(creator,'ko','QA 팬페이지','QA','QA');
   insert into public.celebrity_quizzes(id,celebrity_id,version,status,published_at) values(quiz,creator,1,'published',now());
   for i in 1..501 loop
     owner:=extensions.gen_random_uuid();attempt:=extensions.gen_random_uuid();pass:=extensions.gen_random_uuid();
@@ -51,14 +52,14 @@ begin
   if result#>>'{me,rank}'<>'1' or result#>>'{me,points}'<>'1' then raise exception 'Lifetime score ordering failed'; end if;
   raise notice 'PASS leaderboard 500/501, Top100, own rank outside100, inactive exclusion, lifetime score, no private fields';
 
-  if public.read_celebrity_fanpage(slug)->'activity'<>'[]'::jsonb then raise exception 'Default activity consent was not OFF'; end if;
-  if public.read_owned_fan_activity_visibility(first_owner)->>'enabled'<>'false' then raise exception 'Missing visibility default incorrect'; end if;
-  perform public.set_owned_fan_activity_visibility(first_owner,true);
   result:=public.read_celebrity_fanpage(slug);
-  if jsonb_array_length(result->'activity')<>1 or result#>>'{activity,0,kind}'<>'joined' then raise exception 'Opt-in activity missing'; end if;
-  perform public.set_owned_fan_activity_visibility(first_owner,false);
-  if public.read_celebrity_fanpage(slug)->'activity'<>'[]'::jsonb then raise exception 'Revoked activity still public'; end if;
-  raise notice 'PASS activity defaultOFF, opt-in and revocation';
+  if jsonb_array_length(result->'activity')<>6 then raise exception 'Public activity without legacy settings missing'; end if;
+  insert into public.fan_activity_visibility(app_user_id,enabled) values(first_owner,false),(last_owner,false);
+  again:=public.read_celebrity_fanpage(slug);
+  if again is distinct from result then raise exception 'Legacy opt-out changed public activity'; end if;
+  if result::text ~ '(appUserId|privy|email|wallet)' then raise exception 'Public activity leaked private identity'; end if;
+  if public.read_celebrity_fanpage(slug,'en') is not null then raise exception 'Unpublished locale visible'; end if;
+  raise notice 'PASS public activity without settings, legacy opt-outs ignored, locale gate and safe DTO';
 
   insert into public.celebrity_notices(id,celebrity_id,slug,publication_status,published_at,ever_published_at)
     values(notice,creator,'qa-notice','published',now(),now());

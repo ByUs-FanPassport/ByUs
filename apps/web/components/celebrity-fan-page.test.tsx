@@ -75,6 +75,8 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   const request = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     const ok = (body: unknown) => ({ ok: true, json: async () => body });
+    if (url.includes("/fans?")) return ok({ likeCount: membershipCount, fanCount: membershipCount, publicFanCount: 0, fans: [] });
+    if (url.includes("/cheers?")) return ok({ total: 0, comments: [], nextCursor: null });
     if (url.includes("/comments")) return ok({ total: 0, comments: [], nextCursor: null });
     if (url.includes("/notices")) return ok({ notices });
     if (url.includes("/raffles")) return ok({ raffles });
@@ -154,13 +156,13 @@ describe("approved fanpage", () => {
     expect(analytics.recordProductEventV1.mock.calls[0]?.[0].idempotencyKey)
       .toBe("page:creator_page_view:22222222-2222-4222-8222-222222222222");
   });
-  it("shows approved navigation and disables the leaderboard without trusting social followers", async () => {
+  it("opens the fan gathering tab before ranking eligibility without trusting social followers", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });
-    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "찐팬 인증", "래플 응모"]);
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "찐팬 인증", "래플 응모", "리더보드"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
     expect(within(menu).getByRole("link", { name: "래플 응모" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
-    expect(within(menu).getByRole("button", { name: "리더보드" })).toBeDisabled();
+    expect(within(menu).getByRole("link", { name: "리더보드" })).toHaveAttribute("href", "/c/kara?tab=leaderboard&locale=ko#celebrity-content");
     expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 등록된 공지가 없어요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "인증 미션 보기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
@@ -173,10 +175,12 @@ describe("approved fanpage", () => {
     expect(await screen.findByText("선두팬")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
-  it("keeps direct leaderboard visits locked at 500 without a ranking table", async () => {
+  it("shows the gathering at 500 while keeping the ranking table locked", async () => {
     membershipCount = 500;
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="leaderboard" />);
     expect(await screen.findByText("현재 500명 / 501명")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "좋아하는 마음으로 모인 팬들" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
   it("shows actual owned score, remaining points and nickname with one summary request", async () => {

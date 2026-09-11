@@ -5,5 +5,6 @@ import { LoungeMessageManager } from "../../components/admin/lounge-message-mana
 import "../../app/globals.css";
 const locale: "ko" | "en" = new URLSearchParams(location.search).get("locale") === "en" ? "en" : "ko";
 const celebrity = { slug: "elina", locale, name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }], displayOrder: 0, fanCount: 0 } as const;
+const communityMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_COMMUNITY_MODE === "true";
 document.documentElement.lang = locale;
-createRoot(document.getElementById("root")!).render(location.pathname.startsWith("/admin") ? <LoungeMessageManager /> : location.pathname.endsWith("/lounge") ? <LoungeScreen celebrity={celebrity} locale={locale} /> : <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} />);
+createRoot(document.getElementById("root")!).render(location.pathname.startsWith("/admin") ? <LoungeMessageManager /> : !communityMode && location.pathname.endsWith("/lounge") ? <LoungeScreen celebrity={celebrity} locale={locale} /> : <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} initialTab={new URLSearchParams(location.search).get("tab") === "leaderboard" ? "leaderboard" : "home"} />);

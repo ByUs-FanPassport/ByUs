@@ -10,14 +10,13 @@ import { AuthIntentLink } from "./auth-intent-link";
 import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
 import { resolveCreatorHeroImage } from "./fan-ui/creator-image-config";
 import { CreatorHeroPicture } from "./fan-ui/creator-hero-picture";
-import { LoungeHome } from "@/features/lounge/ui/lounge-screen";
+import { FanCommunity } from "@/features/fanpage/ui/fan-community";
+import { CheerComments } from "@/features/fanpage/ui/cheer-comments";
 import { ReactionAction } from "@/features/reaction/ui/reaction-action";
 import { Avatar, AvatarPlaceholder } from "@/features/profile/ui/avatar";
 import { useAvatar } from "@/features/profile/ui/use-avatar";
 import { mySummarySchema } from "@/features/my/domain/my-summary";
 import { levelLabel } from "@/features/passport/domain/passport-read-model";
-import { fanpageSummarySchema } from "@/features/fanpage/domain/community";
-import { useFanpageResource } from "@/features/fanpage/ui/use-fanpage-resource";
 import { CelebrityMiniCalendar } from "@/features/fanpage/ui/celebrity-calendar";
 import { LeaderboardPanel } from "@/features/fanpage/ui/leaderboard-panel";
 import { FanActivityPanel } from "@/features/fanpage/ui/fan-activity-panel";
@@ -43,7 +42,6 @@ const socialLabels = {
   en: { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", chzzk: "CHZZK" },
 } as const;
 const parseSummary = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
-const parseFanpage = (body: unknown) => fanpageSummarySchema.parse(body);
 
 export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab = "home", instagramEnabled = false }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null; initialTab?: CelebrityFanTab; instagramEnabled?: boolean }) {
   const auth = usePrivy();
@@ -51,7 +49,6 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const ko = locale === "ko";
   const my = useOwnedFanResource(`/api/me/summary?locale=${locale}&tierStages=1`, parseSummary, auth);
   const avatar = useAvatar();
-  const fanpage = useFanpageResource(`/api/celebrities/${celebrity.slug}/fanpage?locale=${locale}`, parseFanpage);
   const tab = initialTab === "benefits" ? "raffles" : initialTab;
   const creator = my.state.status === "ready" ? my.state.data.creators.find((item) => item.celebrity.slug === celebrity.slug) : undefined;
   const nickname = my.state.status === "ready" ? my.state.data.profile.nickname : null;
@@ -84,10 +81,9 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
     <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
       <section className={styles.hero} data-dedicated-hero={hero ? celebrity.slug : undefined} style={{ "--hero-desktop-position": hero?.desktopPosition ?? celebrity.image.position, "--hero-mobile-position": hero?.mobilePosition ?? celebrity.image.position, "--hero-desktop-fit": hero?.desktopFit ?? "cover", backgroundColor: hero?.background } as CSSProperties} aria-labelledby="celebrity-heading">
         <CreatorHeroPicture locale={locale} slug={celebrity.slug} image={celebrity.image} className={styles.heroPicture} priority /><div className={styles.scrim} aria-hidden="true" />
-        <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><CreatorRolesText roles={celebrity.roles} locale={locale} /><p>{ko ? "최근 활동과 LIVE 소식을 한곳에서" : "Recent activity and LIVE updates in one place."}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { const socialLabel = socialLabels[locale][social.platform]; return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabel}, ${ko ? "새 창" : "new window"}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel}</span></a>; })}</div><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /><LoungeHome slug={celebrity.slug} locale={locale} variant="count" /></div>
+        <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><CreatorRolesText roles={celebrity.roles} locale={locale} /><p>{ko ? "최근 활동과 LIVE 소식을 한곳에서" : "Recent activity and LIVE updates in one place."}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { const socialLabel = socialLabels[locale][social.platform]; return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabel}, ${ko ? "새 창" : "new window"}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel}</span></a>; })}</div><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /><FanCommunity slug={celebrity.slug} locale={locale} /></div>
       </section>
-      <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => value === "leaderboard" && !(fanpage.state.status === "ready" && fanpage.state.data.leaderboardAvailable) ? <button key={value} disabled aria-describedby="leaderboard-lock-hint">{labels[locale][value]}</button> : <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>
-      <span id="leaderboard-lock-hint" className={styles.srOnly}>{ko ? "ByUs 패스포트 보유 팬 501명부터 리더보드가 열려요." : "Leaderboard opens at 501 ByUs Passport holders."}</span>
+      <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>
       <section className={`${styles.fanbar} ${passport ? styles.ownedFanbar : ""}`} aria-label={ko ? "내 팬 활동" : "My fan activity"}>
         {!auth.ready || (auth.authenticated && my.state.status === "loading") ? <p role="status">{ko ? "내 팬 활동을 확인하고 있어요." : "Loading your fan activity."}</p> : auth.authenticated && my.state.status === "error" ? <p role="alert">{ko ? "내 팬 활동을 불러오지 못했어요." : "Couldn't load your fan activity."} <button onClick={my.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : passport ? <>
           <div className={styles.fanIdentity}>{portrait(48)}<strong>{nickname ?? (ko ? "내 팬 활동" : "My activity")}</strong></div>
@@ -102,7 +98,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
         </> : <><div><strong>{ko ? `${celebrity.name} 팬 인증하고, 함께한 순간을 모아 보세요.` : `Verify your ${celebrity.name} fandom and collect your moments.`}</strong><p>{ko ? "퀴즈로 패스포트를 만들고 팬 활동을 시작하세요." : "Create a Passport with a quiz and start your fan journey."}</p></div>{verifyLink}</>}
       </section>
       <div id="celebrity-content" className={styles.content}>
-        {tab === "home" ? <><ElinaMissionEntry celebritySlug={celebrity.slug} locale={locale} /><div className={styles.homeGrid}><div className={styles.loungePreview}><LoungeHome slug={celebrity.slug} locale={locale} /></div><div className={styles.mainColumn}>
+        {tab === "home" ? <><ElinaMissionEntry celebritySlug={celebrity.slug} locale={locale} /><div className={styles.homeGrid}><div className={styles.cheerPreview}><CheerComments slug={celebrity.slug} name={celebrity.name} locale={locale} /></div><div className={styles.mainColumn}>
           {instagramEnabled ? <InstagramRecentActivity slug={celebrity.slug} locale={locale} fallback={recent} /> : recent}
           <NoticePanel slug={celebrity.slug} locale={locale} /><RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} preview ticketBalance={ticketBalance} />
         </div><aside className={styles.sideColumn}><CelebrityMiniCalendar key={celebrity.slug} celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /><section className={styles.certificationCta}><p className={styles.eyebrow}><BadgeCheck aria-hidden="true" />{ko ? "찐팬 인증" : "Fan verification"}</p><h2>{ko ? <>좋아하는 마음을<br />찐팬 인증으로 남겨요</> : "Make your fandom part of your story."}</h2><p>{ko ? "멤버십 · 티켓 · 현장 인증으로 팬 활동을 기록하세요." : "Record memberships, tickets, and on-site moments."}</p><Link className={styles.primaryButton} href={tabHref("certifications")}>{ko ? "인증 미션 보기" : "View verification missions"}<ArrowRight aria-hidden="true" /></Link><Link className={styles.historyLink} href={`/c/${celebrity.slug}/certifications?locale=${locale}`}>{ko ? "내 인증 내역" : "My verifications"} →</Link></section><FanActivityPanel slug={celebrity.slug} locale={locale} /></aside></div></>
