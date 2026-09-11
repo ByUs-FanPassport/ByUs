@@ -152,7 +152,7 @@
   -webkit-mask: url("/images/stamps/vintage-seal-distress-mask.svg") center / cover;
 }
 
-.inner svg {
+.stamp .inner svg {
   width: 38%;
   height: auto;
   stroke-width: 1.8;
@@ -166,6 +166,8 @@
 
 .stamp[data-compact="true"] {
   width: 76%;
+  container-type: inline-size;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .stampAsset {
@@ -175,11 +177,14 @@
 }
 
 .stamp[data-compact="true"] .inner {
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4cqi;
 }
 
 .stamp[data-compact="true"] .inner span {
-  font-size: clamp(3px, 0.42vw, 7px);
+  /* Scale with the seal, including when a desktop panel is narrower than mobile. */
+  font-size: 13cqi;
+  white-space: nowrap;
 }
 
 .verificationSeal {
@@ -253,12 +258,6 @@
   text-align: center;
   font-size: 14px;
   line-height: 1.5;
-}
-
-@media (max-width: 767px) {
-  .stamp[data-compact="true"] .inner span {
-    font-size: clamp(3px, 1vw, 6px);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

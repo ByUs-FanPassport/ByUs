@@ -407,6 +407,7 @@
 .passportVisual {
   position: relative;
   grid-row: 1/5;
+  container-type: inline-size;
 }
 .passportVisual img {
   display: block;
@@ -505,7 +506,7 @@
   display: block;
   overflow: hidden;
   color: oklch(28% 0.02 65);
-  font-size: clamp(8px, 1.05vw, 15px);
+  font-size: clamp(6px, 3.1cqi, 15px);
   font-weight: 750;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -976,9 +977,6 @@
   }
   .passportCard {
     min-height: 450px;
-  }
-  .passportFields > span {
-    font-size: clamp(6px, 2.4vw, 10px);
   }
   .skeletonGrid {
     grid-template-columns: 1fr;
