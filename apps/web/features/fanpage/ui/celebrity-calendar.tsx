@@ -9,8 +9,10 @@ import { CalendarDayNumber, CalendarMonthHeader } from "@/components/fan-calenda
 import { liveCalendarMonthSchema, type LiveCalendarDay } from "@/features/live/domain/live-calendar";
 import { LiveReservationLegend, LiveReservationMark } from "@/features/live/ui/live-reservation-mark";
 import { LiveTimeIndicator } from "@/features/live/ui/live-time-indicator";
+import { DailyCheckin } from "@/features/community-stamps/ui/daily-checkin";
 import type { PublishedCelebrity, PublishedCelebrityLive, ContentLocale } from "@/server/content/content-domain";
 import styles from "./calendar.module.css";
+import dailyStyles from "@/features/community-stamps/ui/daily-checkin.module.css";
 type AsyncState<T> = { status: "idle" | "loading" } | { status: "ready"; data:T } | {status:"error"};
 const copy = {
 ko: { calendarTitle:"LIVE 일정", calendarOpen:"캘린더 크게 보기", calendarLoading:"LIVE 일정을 확인하고 있어요", calendarError:"일정을 불러오지 못했어요.", calendarUpcoming:"다가오는 일정", calendarUpcomingEmpty:"이번 달에는 예정된 LIVE가 없어요.", previousMonth:"이전 달", nextMonth:"다음 달", weekdays:["일","월","화","수","목","금","토"] },
@@ -82,6 +84,7 @@ export function CelebrityMiniCalendar({
   const [month, setMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [state, setState] = useState<AsyncState<LiveCalendarDay[]>>({ status: "loading" });
+  const [checkedDates, setCheckedDates] = useState<readonly string[]>([]);
   const refreshController = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -134,7 +137,12 @@ export function CelebrityMiniCalendar({
     void refreshCalendar();
   }, [refreshCalendar]);
 
+  const handleCheckedDatesChange = useCallback((dates: readonly string[]) => {
+    setCheckedDates((current) => current.join(",") === dates.join(",") ? current : dates);
+  }, []);
+
   const days = state.status === "ready" ? state.data : emptyCalendarDays(month);
+  const checkedDateSet = new Set(checkedDates);
   const firstWeekday = calendarWeekday(days[0]?.date ?? `${month}-01`);
   const previousMonth = adjacentCalendarMonth(month, -1);
   const nextMonth = adjacentCalendarMonth(month, 1);
@@ -167,9 +175,10 @@ export function CelebrityMiniCalendar({
         {days.map((day, index) => {
           const dayNumber = Number(day.date.slice(-2));
           const firstEvent = day.events[0];
+          const checkedIn = checkedDateSet.has(day.date);
           const style = index === 0 ? { gridColumnStart: firstWeekday + 1 } : undefined;
           if (firstEvent) {
-            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE` : `${dayNumber}, ${day.events.length} LIVE`;
+            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE${checkedIn ? ", 출석 완료" : ""}` : `${dayNumber}, ${day.events.length} LIVE${checkedIn ? ", checked in" : ""}`;
             return (
               <button
                 type="button"
@@ -177,6 +186,7 @@ export function CelebrityMiniCalendar({
                 data-upcoming={day.events.some(event => event.effectiveStatus === "scheduled" || event.effectiveStatus === "live") ? "true" : undefined}
                 data-multiple={day.events.length > 1 ? "true" : undefined}
                 data-today={day.date === today ? "true" : undefined}
+                data-checked-in={checkedIn ? "true" : undefined}
                 aria-pressed={selectedDay?.date === day.date}
                 aria-controls={calendarListId}
                 onClick={() => setSelectedDate(selectedDay?.date === day.date ? null : day.date)}
@@ -186,16 +196,19 @@ export function CelebrityMiniCalendar({
               >
                 <CalendarDayNumber date={day.date} today={today} />
                 <span aria-hidden="true">{day.events.length > 1 ? day.events.length : ""}</span>
+                {checkedIn ? <i className={dailyStyles.checkinMark} aria-hidden="true">✓</i> : null}
               </button>
             );
           }
           return (
-            <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} key={day.date} style={style}>
+            <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} data-checked-in={checkedIn ? "true" : undefined} key={day.date} style={style} aria-label={checkedIn ? (locale === "ko" ? `${dayNumber}일, 출석 완료` : `${dayNumber}, checked in`) : undefined}>
               <CalendarDayNumber date={day.date} today={today} />
+              {checkedIn ? <i className={dailyStyles.checkinMark} aria-hidden="true">✓</i> : null}
             </span>
           );
         })}
       </div>
+      <DailyCheckin creator={celebrity.slug} locale={locale} month={month} onCheckedDatesChange={handleCheckedDatesChange} />
       {state.status !== "ready" ? <p className={styles.calendarMessage} role={state.status === "error" ? "alert" : "status"}>
         {state.status === "loading" ? t.calendarLoading : t.calendarError}
       </p> : null}

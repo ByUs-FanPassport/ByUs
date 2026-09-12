@@ -79,7 +79,7 @@ class FakeChain implements ChainPort {
   prepareError: Error | null = null;
   preparedJobs: Array<{ entityType: string; payload: JobPayload; metadataUri: string }> = [];
   async findExisting(): Promise<MintReceipt | null> { return this.existing; }
-  async prepare(entityType: "passport" | "stamp" | "reaction" | "collectible", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
+  async prepare(entityType: "passport" | "stamp" | "reaction" | "collectible" | "community_stamp", payload: JobPayload, metadataUri: string): Promise<PreparedSubmission> {
     this.prepareCount += 1;
     this.events.push("prepare");
     if (this.prepareError) throw this.prepareError;
@@ -271,6 +271,36 @@ describe("MintWorker", () => {
     await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
     expect(chain.preparedJobs).toEqual([{ entityType: "collectible", payload: collectiblePayload, metadataUri: "ipfs://bafy-metadata" }]);
     expect(metadata.documents[0]).toMatchObject({ name: "ByUs Digital Collectible" });
+  });
+
+  it("decodes a celebrity-scoped Community Stamp through the existing stamp mint pipeline", async () => {
+    const communityStampPayload = {
+      recipient: `0x${"1".repeat(40)}`,
+      celebritySlug: "kara",
+      issuanceId: `0x${"4".repeat(64)}`,
+      stampKind: "first_comment" as const,
+    };
+    const communityStampJob: BlockchainJob = {
+      ...job(communityStampPayload),
+      entityType: "community_stamp",
+      operationKey: "community-stamp:first-comment:3ff058e6-8865-46c5-ae01-94a93f1dbe3c",
+    };
+    const queue = new FakeQueue([communityStampJob]);
+    const metadata = new FakeMetadata();
+    const chain = new FakeChain();
+
+    await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
+
+    expect(chain.preparedJobs).toEqual([{
+      entityType: "community_stamp",
+      payload: communityStampPayload,
+      metadataUri: "ipfs://bafy-metadata",
+    }]);
+    expect(metadata.documents[0]).toMatchObject({
+      name: "ByUs First Comment Stamp",
+      image: "https://byus.kr/images/community-stamps/first-comment.png",
+    });
+    expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
   });
 
   it.each(["Attendance", "Survey", "Membership"] as const)(

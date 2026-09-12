@@ -6,6 +6,17 @@ export const hashSchema = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 export const signedTransactionSchema = z.string().regex(/^0x[0-9a-fA-F]+$/);
 const publicSlugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
 
+export const communityStampKinds = [
+  "welcome",
+  "first_comment",
+  "subscription",
+  "support",
+  "share",
+  "invite",
+  "daily_checkin",
+] as const;
+export const communityStampKindSchema = z.enum(communityStampKinds);
+
 const preparedSubmissionSchema = z.object({
   txHash: hashSchema,
   signedTransaction: signedTransactionSchema,
@@ -37,13 +48,30 @@ export const collectiblePayloadV1Schema = basePayload.extend({
   metadataVersion: z.literal(1),
 }).strict();
 
+export const communityStampPayloadV1Schema = z.object({
+  recipient: addressSchema,
+  issuanceId: bytes32Schema,
+  stampKind: communityStampKindSchema,
+  celebritySlug: publicSlugSchema.nullable(),
+  workerSubmission: preparedSubmissionSchema.optional(),
+}).strict().superRefine((payload, context) => {
+  const isGlobal = payload.stampKind === "welcome" || payload.stampKind === "invite";
+  if (isGlobal && payload.celebritySlug !== null) {
+    context.addIssue({ code: "custom", path: ["celebritySlug"], message: `${payload.stampKind} must be global` });
+  }
+  if (!isGlobal && payload.celebritySlug === null) {
+    context.addIssue({ code: "custom", path: ["celebritySlug"], message: `${payload.stampKind} requires a celebrity` });
+  }
+});
+
 export type PreparedSubmission = z.infer<typeof preparedSubmissionSchema>;
 export type PassportPayloadV1 = z.infer<typeof passportPayloadV1Schema>;
 export type StampPayloadV1 = z.infer<typeof stampPayloadV1Schema>;
 export type ReactionPayloadV1 = z.infer<typeof reactionPayloadV1Schema>;
 export type CollectiblePayloadV1 = z.infer<typeof collectiblePayloadV1Schema>;
-export type JobPayload = PassportPayloadV1 | StampPayloadV1 | ReactionPayloadV1 | CollectiblePayloadV1;
-export type EntityType = "passport" | "stamp" | "reaction" | "collectible";
+export type CommunityStampPayloadV1 = z.infer<typeof communityStampPayloadV1Schema>;
+export type JobPayload = PassportPayloadV1 | StampPayloadV1 | ReactionPayloadV1 | CollectiblePayloadV1 | CommunityStampPayloadV1;
+export type EntityType = "passport" | "stamp" | "reaction" | "collectible" | "community_stamp";
 
 export interface BlockchainJob {
   id: string;
@@ -67,6 +95,7 @@ export function parseJobPayload(job: BlockchainJob): JobPayload {
   if (job.entityType === "reaction") return reactionPayloadV1Schema.parse(job.payload);
   if (job.entityType === "stamp") return stampPayloadV1Schema.parse(job.payload);
   if (job.entityType === "collectible") return collectiblePayloadV1Schema.parse(job.payload);
+  if (job.entityType === "community_stamp") return communityStampPayloadV1Schema.parse(job.payload);
   throw new WorkerError("UNSUPPORTED_ENTITY_TYPE", `Unsupported entity type: ${String(job.entityType)}`, false);
 }
 

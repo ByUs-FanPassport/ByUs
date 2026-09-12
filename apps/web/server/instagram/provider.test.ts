@@ -57,13 +57,26 @@ describe("Instagram Login HTTP provider", () => {
     }
   });
 
-  it("reports unsafe numeric ID shape without exposing the ID or token", async () => {
+  it.each(["flat", "envelope"])("preserves exact large numeric IDs in %s short-token JSON", async (shape) => {
+    const raw = '{"access_token":"short-test","user_id":9007199254740993,"permissions":["instagram_business_basic"]}';
+    const responses = [new Response(shape === "flat" ? raw : `{"data":[${raw}]}`), Response.json(longToken), Response.json({ ...identity, id: "9007199254740993" })];
+    const request = vi.fn<typeof fetch>().mockImplementation(async () => responses.shift()!);
+    const result = await createInstagramProvider(config, request).exchange("test-code");
+    expect(result.identity.id).toBe("9007199254740993");
+  });
+
+  it("rejects a profile matching only the rounded ID", async () => {
+    const responses = [new Response('{"access_token":"short-test","user_id":9007199254740993,"permissions":["instagram_business_basic"]}'), Response.json(longToken), Response.json({ ...identity, id: "9007199254740992" })];
+    const request = vi.fn<typeof fetch>().mockImplementation(async () => responses.shift()!);
+    await expect(createInstagramProvider(config, request).exchange("test-code")).rejects.toMatchObject({ code: "ACCOUNT_MISMATCH" });
+  });
+
+  it.each(["1e20", "123.0", "0", "-123", "1000000000000000000000000000000"])("rejects noncanonical numeric ID %s without leaking its response", async (rawId) => {
+    const request = vi.fn<typeof fetch>().mockResolvedValue(new Response(`{"access_token":"private-token","user_id":${rawId},"permissions":["instagram_business_basic"]}`));
     const diagnostics: unknown[] = [];
-    const request = transport({ access_token: "private-token", user_id: 17840000000000100, permissions: ["instagram_business_basic"] });
-    await expect(createInstagramProvider(config, request, (event) => diagnostics.push(event)).exchange("private-code"))
-      .rejects.toMatchObject({ code: "INVALID_RESPONSE" });
-    expect(diagnostics).toEqual([{ stage: "short_token", reason: "schema_invalid", invalidFields: ["user_id"], unsafeNumericId: true }]);
-    expect(JSON.stringify(diagnostics)).not.toMatch(/178400|private/);
+    await expect(createInstagramProvider(config, request, (event) => diagnostics.push(event)).exchange("private-code")).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(diagnostics).toEqual([{ stage: "short_token", reason: "response_json_invalid", httpStatus: 200 }]);
   });
 
   it("reports only numeric provider metadata and never the provider body", async () => {
@@ -107,8 +120,8 @@ describe("Instagram Login HTTP provider", () => {
     { data: [{ access_token: "short-test", user_id: identity.id, permissions: "instagram_business_manage_messages" }] },
     { data: [{ access_token: "short-test", user_id: identity.id }] },
     { data: [] },
-    { access_token: "short-test", user_id: 17840000000000100, permissions: ["instagram_business_basic"] },
-  ])("rejects missing permission, invalid envelopes and unsafe numeric IDs", async (short) => {
+    { access_token: "short-test", user_id: 1e31, permissions: ["instagram_business_basic"] },
+  ])("rejects missing permission, invalid envelopes and out-of-range numeric IDs", async (short) => {
     const request = transport(short);
     await expect(createInstagramProvider(config, request).exchange("test-code")).rejects.toBeInstanceOf(InstagramError);
     expect(request).toHaveBeenCalledTimes(1);
