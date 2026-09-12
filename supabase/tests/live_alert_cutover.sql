@@ -124,6 +124,48 @@ do $$ declare f regprocedure; role_name text; begin
   end loop;
  end loop;
 end $$;
+-- A LIVE-only rollout must not silently activate other service notifications.
+do $$ declare ch text; n uuid; k text; j jsonb; before_hash text; begin
+ foreach ch in array array['email','kakao'] loop
+  perform public.configure_fan_notification_delivery(ch,'disabled');
+  update public.fan_notification_delivery_control set allowed_kinds=array['live_reserved','live_24h','live_10m','live_changed','live_cancelled'] where channel=ch;
+  perform public.configure_fan_notification_delivery(ch,'enabled');
+  n:=alert_safety_test.fresh_notification(alert_safety_test.owner('en'));
+  foreach k in array array['live_reserved','live_24h','live_10m','live_changed','live_cancelled'] loop
+   update public.fan_notifications set kind=k::public.notification_kind where id=n;
+   perform alert_safety_test.assert(public.fan_notification_is_released(n,ch),'new LIVE kind released: '||k);
+  end loop;
+  foreach k in array array['survey_reminder'] loop
+   update public.fan_notifications set kind=k::public.notification_kind where id=n;
+   perform alert_safety_test.assert(not public.fan_notification_is_released(n,ch),'non-LIVE kind blocked: '||k);
+  end loop;
+  if ch='email' then
+   perform alert_safety_test.assert(not exists(select 1 from public.claim_email_notification_deliveries_safely('scope-check',2,120) where notification_id=n),'non-LIVE Email not claimed');
+  else
+   perform alert_safety_test.assert(not exists(select 1 from public.claim_kakao_notification_deliveries('scope-check',2,120) where notification_id=n),'non-LIVE Kakao not claimed');
+  end if;
+  n:=alert_safety_test.fresh_notification(alert_safety_test.owner(case when ch='kakao' then 'ko' else 'en' end,ch='kakao'));
+  if ch='email' then
+   select to_jsonb(q) into j from public.claim_email_notification_deliveries_safely('scope-begin',2,120) q where notification_id=n;
+  else
+   select to_jsonb(q) into j from public.claim_kakao_notification_deliveries('scope-begin',2,120) q where notification_id=n;
+  end if;
+  perform alert_safety_test.assert(j is not null,'LIVE scope candidate claimed');
+  select md5(to_jsonb(d)::text) into before_hash from public.external_notification_delivery_outbox d where id=(j->>'id')::uuid;
+  update public.fan_notification_delivery_control set allowed_kinds=array['live_reserved'] where channel=ch;
+  if ch='email' then
+   perform alert_safety_test.assert(not public.begin_email_notification_send((j->>'id')::uuid,'scope-begin',(j->>'attempt_count')::int,encode(extensions.digest(j->>'destination','sha256'),'hex')),'Email scope rechecked before send');
+  else
+   perform alert_safety_test.assert(not public.begin_kakao_notification_send((j->>'id')::uuid,(j->>'attempt_token')::uuid,j->>'template_id',repeat('a',64)),'Kakao scope rechecked before send');
+  end if;
+  perform alert_safety_test.assert((select md5(to_jsonb(d)::text)=before_hash from public.external_notification_delivery_outbox d where id=(j->>'id')::uuid),'scope-blocked send preserves delivery');
+  update public.fan_notification_delivery_control set allowed_kinds=array['live_reserved','live_24h','live_10m','live_changed','live_cancelled'] where channel=ch;
+  perform public.configure_fan_notification_delivery(ch,'disabled');
+  perform public.configure_fan_notification_delivery(ch,'enabled');
+  perform alert_safety_test.assert((select cardinality(allowed_kinds)=5 from public.fan_notification_delivery_control where channel=ch),'reactivation preserves kind scope');
+ end loop;
+ begin update public.fan_notification_delivery_control set allowed_kinds=array['level_up'];raise exception 'invalid kind accepted';exception when check_violation then null;end;
+end $$;
 set local role service_role;
 do $$ begin
  begin perform public.configure_fan_notification_delivery('email','enabled');raise exception 'runtime activated';exception when insufficient_privilege then null;end;
