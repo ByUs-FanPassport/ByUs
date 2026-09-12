@@ -42,6 +42,20 @@ function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSour
 }
 
 describe("DefaultLiveEventRepository", () => {
+  it("keeps ended IfeW history without presenting the TikTok event listing as a replay", async () => {
+    const slug = "ifew-100-days-tiktok-20260912";
+    const repository = new DefaultLiveEventRepository(source({
+      findPublishedEvent: async () => ({ ...event, slug, liveProvider: "tiktok", externalLiveUrl: "https://www.tiktok.com/live/event/7680769355085185044" }),
+    }));
+    const result = await repository.findPublishedBySlug({ slug, locale: "ko", appUserId: null, now: new Date("2026-09-13T00:00:00Z") });
+    expect(result?.live.effectiveStatus).toBe("ended");
+    expect(result?.live.description).toContain("LIVE가 종료됐어요");
+    expect(result?.live.watch).toMatchObject({ available: false, mode: "unavailable" });
+    expect(result?.primaryAction).toBe("live_ended");
+    const catalog = await repository.listPublishedCatalog({ locale: "ko", appUserId: null, now: new Date("2026-09-13T00:00:00Z") });
+    expect(catalog).toEqual({ liveNow: [], upcoming: [], replay: [] });
+  });
+
   it.each([false, true])("projects only the public mission availability %s", async (available) => {
     const repository = new DefaultLiveEventRepository(source({ findMissionsAvailable: async () => available }));
     const result = await repository.findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: null, now: new Date("2026-07-21T00:00:00Z") });

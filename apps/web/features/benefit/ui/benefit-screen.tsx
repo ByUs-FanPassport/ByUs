@@ -60,7 +60,6 @@ import {
   ifewBenefitId,
   ifewLiveHref,
   ifewPrizeName,
-  ifewVerificationHref,
 } from "@/features/live/domain/ifew-event";
 import {
   elinaLiveHref,
@@ -1240,8 +1239,8 @@ function BenefitDetailOwnerScreen({
                                   ? "팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
                                   : "You can get raffle tickets through fan verification and an Elina LIVE reservation. Choose how many to use and submit your entry yourself."
                                 : locale === "ko"
-                                  ? "팬 인증이나 LIVE 출석 등 팬 활동에서 이퓨 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
-                                  : "You can get ifew raffle tickets through fan verification or LIVE attendance. Choose how many to use and submit your entry yourself."}
+                                  ? "아직 이퓨 팬 인증을 하지 않았다면 첫 인증으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
+                                  : "If you haven’t verified your ifew fandom yet, you can earn raffle tickets through your first verification. Choose how many to use and submit your entry yourself."}
                             </p>
                             {isElinaRaffle ? (
                               <>
@@ -1259,11 +1258,11 @@ function BenefitDetailOwnerScreen({
                             ) : (
                               <FanAction
                                 variant="primary"
-                                href={ifewVerificationHref(locale)}
+                                href={`/c/ifewknow/verify?locale=${locale}` as Route}
                               >
                                 {locale === "ko"
-                                  ? "팬 인증하고 LIVE 참여하기"
-                                  : "Verify fandom & join LIVE"}
+                                  ? "이퓨 팬 인증하기"
+                                  : "Verify your ifew fandom"}
                               </FanAction>
                             )}
                           </>

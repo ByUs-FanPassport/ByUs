@@ -1,4 +1,5 @@
 import "server-only";
+import { ifewEndedDescription, ifewLiveSlug } from "../../features/live/domain/ifew-event";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
@@ -183,6 +184,8 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       record.liveProvider,
       record.externalLiveUrl,
     );
+    // This TikTok URL is the past event listing, not a replay recording.
+    const replayAvailable = effectiveStatus === "ended" && record.slug !== ifewLiveSlug;
     const response: LiveEventResponse = {
       live: {
         id: record.id,
@@ -194,7 +197,9 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
         reservationOpensAt: record.reservationOpensAt,
         reservationClosesAt: record.reservationClosesAt,
         title: record.title,
-        description: record.description,
+        description: record.slug === ifewLiveSlug && effectiveStatus === "ended"
+          ? ifewEndedDescription[input.locale]
+          : record.description,
         productContext: record.brand.productContext,
         heroImage: { url: record.heroUrl, alt: record.heroAlt },
         celebrity: {
@@ -211,8 +216,8 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
           websiteUrl: record.brand.websiteUrl,
         },
         watch: {
-          available: effectiveStatus === "live" || effectiveStatus === "ended",
-          mode: effectiveStatus === "live" ? "live" : effectiveStatus === "ended" ? "replay" : "unavailable",
+          available: effectiveStatus === "live" || replayAvailable,
+          mode: effectiveStatus === "live" ? "live" : replayAvailable ? "replay" : "unavailable",
           provider: record.liveProvider,
           url: watchUrl,
         },

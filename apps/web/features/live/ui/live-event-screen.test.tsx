@@ -241,9 +241,26 @@ describe("LiveEventScreen", () => {
       .toHaveAttribute("href", `/c/elina/raffles?locale=${locale}`);
   });
 
-  it("uses attendance code throughout the IfeW English attendance form and error", async () => {
+  it.each(["ko", "en"] as const)("preserves ended IfeW history and raffles without LIVE participation actions (%s)", async (locale) => {
     const response = ifewPayload("live_ended");
     response.live.effectiveStatus = "ended";
+    response.live.watch.available = true; // Also protects against older cached projections.
+    response.viewer.reservation = reservation;
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(response));
+    const { container } = render(<LiveEventScreen slug={response.live.slug} locale={locale} />);
+    await screen.findByRole("heading", { name: response.live.title });
+    expect(screen.getByText(locale === "ko" ? "이퓨의 틱톡 100일 기념 LIVE가 종료됐어요. 함께해 주셔서 감사합니다." : "ifew’s 100-day TikTok LIVE has ended. Thank you for joining us.")).toBeVisible();
+    expect(container.querySelector("#fan-code")).toBeNull();
+    expect(container.querySelector("form")).toBeNull();
+    expect(container.querySelector('a[href*="/verify"], a[href*="calendar.google"], a[href*="youtube.com"]')).toBeNull();
+    expect(screen.queryByText(locale === "ko" ? "LIVE 예약" : "Reserve", { selector: "strong" })).not.toBeInTheDocument();
+    expect(container.querySelector('a[href="/c/ifewknow/raffles?locale=' + locale + '"]')).not.toBeNull();
+    expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === "GET")).toBe(true);
+  });
+
+  it("uses attendance code throughout the IfeW English attendance form and error", async () => {
+    const response = ifewPayload("watch_live");
+    response.live.effectiveStatus = "live";
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(Response.json(response))
       .mockResolvedValueOnce(Response.json({ error: { code: "ATTENDANCE_CODE_INVALID" } }, { status: 422 }));
