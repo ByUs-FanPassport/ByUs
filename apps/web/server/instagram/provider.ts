@@ -33,6 +33,8 @@ type ProviderDiagnostic = {
   reason: ProviderDiagnosticReason;
   httpStatus?: number;
   providerCode?: number;
+  invalidFields?: Array<"envelope" | "access_token" | "user_id" | "permissions">;
+  unsafeNumericId?: boolean;
 };
 type ProviderDiagnosticLogger = (event: ProviderDiagnostic) => void;
 
@@ -124,7 +126,18 @@ export function createInstagramProvider(
       });
       const shortResponse = shortResponseSchema.safeParse(result);
       if (!shortResponse.success) {
-        report({ stage: "short_token", reason: "schema_invalid" });
+        const envelope = z.object({ data: z.array(z.unknown()).length(1) }).safeParse(result);
+        const candidate = envelope.success ? envelope.data.data[0] : result;
+        const row = z.record(z.string(), z.unknown()).safeParse(candidate);
+        const invalidFields: NonNullable<ProviderDiagnostic["invalidFields"]> = [];
+        if (!row.success) invalidFields.push("envelope");
+        else {
+          if (!shortTokenSchema.shape.access_token.safeParse(row.data.access_token).success) invalidFields.push("access_token");
+          if (!shortTokenSchema.shape.user_id.safeParse(row.data.user_id).success) invalidFields.push("user_id");
+          if (!shortTokenSchema.shape.permissions.safeParse(row.data.permissions).success) invalidFields.push("permissions");
+        }
+        report({ stage: "short_token", reason: "schema_invalid", invalidFields,
+          unsafeNumericId: row.success && typeof row.data.user_id === "number" && !Number.isSafeInteger(row.data.user_id) });
         throw new InstagramError("INVALID_RESPONSE");
       }
       const short = shortResponse.data;

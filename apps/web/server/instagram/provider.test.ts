@@ -20,7 +20,7 @@ describe("Instagram Login HTTP provider", () => {
     {
       name: "short-token parse",
       request: transport({ access_token: "private-token", user_id: identity.id }),
-      expected: { stage: "short_token", reason: "schema_invalid" },
+      expected: { stage: "short_token", reason: "schema_invalid", invalidFields: ["permissions"], unsafeNumericId: false },
     },
     {
       name: "short-token permission",
@@ -55,6 +55,15 @@ describe("Instagram Login HTTP provider", () => {
     for (const secret of ["secret-code", "secret-state", "private-token", "private-short-token", "private-long-token", "private-permission", "private invalid username"]) {
       expect(serialized).not.toContain(secret);
     }
+  });
+
+  it("reports unsafe numeric ID shape without exposing the ID or token", async () => {
+    const diagnostics: unknown[] = [];
+    const request = transport({ access_token: "private-token", user_id: 17840000000000100, permissions: ["instagram_business_basic"] });
+    await expect(createInstagramProvider(config, request, (event) => diagnostics.push(event)).exchange("private-code"))
+      .rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+    expect(diagnostics).toEqual([{ stage: "short_token", reason: "schema_invalid", invalidFields: ["user_id"], unsafeNumericId: true }]);
+    expect(JSON.stringify(diagnostics)).not.toMatch(/178400|private/);
   });
 
   it("reports only numeric provider metadata and never the provider body", async () => {
