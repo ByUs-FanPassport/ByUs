@@ -14,11 +14,17 @@ describe("worker environment", () => {
   it("parses a complete, explicitly disabled configuration", () => {
     const env = parseEnv(valid);
     expect(env.WORKER_ENABLED).toBe(false);
+    expect(env.WORKER_CAPABILITY_VERSION).toBe("v1");
     expect(env.WORKER_LEASE_SECONDS).toBe(120);
     expect(env.GIWA_MINT_MAX_GAS).toBe(1_000_000n);
     expect(env.GIWA_MINT_MAX_FEE_PER_GAS_WEI).toBe(100_000_000n);
     expect(env.GIWA_MINT_MAX_PRIORITY_FEE_PER_GAS_WEI).toBe(100_000_000n);
     expect(env.GIWA_MINT_MAX_EXECUTION_FEE_WEI).toBe(100_000_000_000_000n);
+  });
+
+  it("requires the explicit community stamp capability version", () => {
+    expect(parseEnv({ ...valid, WORKER_CAPABILITY_VERSION: "community-stamp-v1" }).WORKER_CAPABILITY_VERSION).toBe("community-stamp-v1");
+    expect(() => parseEnv({ ...valid, WORKER_CAPABILITY_VERSION: "latest" })).toThrow();
   });
 
   it("rejects the wrong chain", () => {

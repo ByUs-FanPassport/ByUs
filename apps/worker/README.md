@@ -4,6 +4,12 @@ One-shot, lease-based Passport/Stamp mint worker. It is disabled unless
 `WORKER_ENABLED=true` is supplied explicitly. The package does not schedule
 itself; Supabase remains the single cron/queue source of truth.
 
+The default `WORKER_CAPABILITY_VERSION=v1` claims only the existing Passport,
+Stamp, Reaction, and configured Collectible jobs. Set it to
+`community-stamp-v1` only after the matching database migration is active; that
+explicit capability adds `community_stamp` jobs while preserving the existing
+claim set.
+
 ## Recovery invariant
 
 The worker signs locally, then persists both the expected transaction hash and

@@ -188,10 +188,10 @@ export class ViemChainAdapter implements ChainPort {
       }
       const expected = payload.workerSubmission ? await this.validateSubmission(entityType, payload, payload.workerSubmission) : null;
       const [ownerOrBalance, metadataUri, logs] = await Promise.all([
-        entityType === "stamp" || entityType === "reaction"
+        entityType === "stamp" || entityType === "reaction" || entityType === "community_stamp"
           ? this.client.readContract({ address: binding.address, abi: stampAbi, functionName: "balanceOf", args: [payload.recipient as Address, tokenId] })
           : this.client.readContract({ address: binding.address, abi: entityType === "passport" ? passportAbi : collectibleAbi, functionName: "ownerOf", args: [tokenId] }),
-        entityType === "stamp" || entityType === "reaction"
+        entityType === "stamp" || entityType === "reaction" || entityType === "community_stamp"
           ? this.client.readContract({ address: binding.address, abi: stampAbi, functionName: "uri", args: [tokenId] })
           : this.client.readContract({ address: binding.address, abi: entityType === "passport" ? passportAbi : collectibleAbi, functionName: "tokenURI", args: [tokenId] }),
         this.client.getLogs({ address: binding.address, event: binding.event, args: { [binding.keyName]: binding.key }, fromBlock: binding.deploymentBlock, toBlock: "latest" }),
@@ -200,7 +200,7 @@ export class ViemChainAdapter implements ChainPort {
       if (!log?.transactionHash) {
         throw new WorkerError("MINT_EVENT_NOT_FOUND", `${entityType} token ${tokenId} exists but its mint event was not found`, true);
       }
-      const ownsToken = entityType === "stamp" || entityType === "reaction"
+      const ownsToken = entityType === "stamp" || entityType === "reaction" || entityType === "community_stamp"
         ? ownerOrBalance === 1n
         : getAddress(ownerOrBalance as Address) === getAddress(payload.recipient);
       const args = log.args as { passportId?: Hash; issuanceId?: Hash; claimKey?: Hash; tokenId?: bigint; to?: Address; metadataUri?: string };

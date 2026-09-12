@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, keccak256, type Address, type Hash, type Hex, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { ViemChainAdapter } from "../src/adapters/viem-chain.js";
-import type { JobPayload, PassportPayloadV1, PreparedSubmission, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
+import type { CommunityStampPayloadV1, JobPayload, PassportPayloadV1, PreparedSubmission, ReactionPayloadV1, StampPayloadV1 } from "../src/domain.js";
 
 const privateKey = `0x${"1".repeat(64)}` as Hex;
 const passportAddress = `0x${"2".repeat(40)}` as Address;
@@ -21,6 +21,7 @@ const stampEventAbi = [{ type: "event", name: "StampMinted", inputs: [{ indexed:
 const passportPayload: PassportPayloadV1 = { recipient, celebritySlug: "kara", passportId };
 const stampPayload: StampPayloadV1 = { recipient, celebritySlug: "kara", issuanceId, stampType: "Attendance" };
 const reactionPayload: ReactionPayloadV1 = { recipient, celebritySlug: "kara", issuanceId, reactionType: "FirstReaction" };
+const communityStampPayload: CommunityStampPayloadV1 = { recipient, celebritySlug: "kara", issuanceId, stampKind: "daily_checkin" };
 
 function adapter(client: unknown) {
   return new ViemChainAdapter({
@@ -37,7 +38,7 @@ function adapter(client: unknown) {
 }
 
 async function submission(
-  entityType: "passport" | "stamp" | "reaction",
+  entityType: "passport" | "stamp" | "reaction" | "community_stamp",
   overrides: { chainId?: number; to?: Address; recipient?: Address; key?: Hash; metadataUri?: string; value?: bigint; nonce?: number; gas?: bigint; maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint } = {},
 ): Promise<PreparedSubmission> {
   const isPassport = entityType === "passport";
@@ -59,7 +60,7 @@ async function submission(
   return { txHash: keccak256(signedTransaction), signedTransaction };
 }
 
-function mintLog(entityType: "passport" | "stamp" | "reaction", overrides: { address?: Address; recipient?: Address; key?: Hash; metadataUri?: string; tokenId?: bigint } = {}) {
+function mintLog(entityType: "passport" | "stamp" | "reaction" | "community_stamp", overrides: { address?: Address; recipient?: Address; key?: Hash; metadataUri?: string; tokenId?: bigint } = {}) {
   const isPassport = entityType === "passport";
   const tokenId = overrides.tokenId ?? 7n;
   return {
@@ -76,6 +77,7 @@ describe("Viem mint transaction and receipt integrity", () => {
     ["passport", passportPayload],
     ["stamp", stampPayload],
     ["reaction", reactionPayload],
+    ["community_stamp", communityStampPayload],
   ] as const)("accepts only the matching %s contract event and business identity", async (entityType, payload) => {
     const prepared = await submission(entityType);
     const validClient = { getTransactionReceipt: vi.fn().mockResolvedValue({ status: "success", logs: [mintLog(entityType)] }) };
@@ -96,6 +98,7 @@ describe("Viem mint transaction and receipt integrity", () => {
     ["passport", passportPayload],
     ["stamp", stampPayload],
     ["reaction", reactionPayload],
+    ["community_stamp", communityStampPayload],
   ] as const)("rejects a stored %s transaction for the wrong chain, target, recipient, key, or value", async (entityType, payload) => {
     const invalidSubmissions = await Promise.all([
       submission(entityType, { chainId: 1 }),
@@ -129,6 +132,7 @@ describe("Viem mint transaction and receipt integrity", () => {
   it.each([
     ["stamp", stampPayload],
     ["reaction", reactionPayload],
+    ["community_stamp", communityStampPayload],
   ] as const)("reconciles legacy %s state through balance, event, recipient, and URI", async (entityType, payload) => {
     const transactionHash = `0x${"c".repeat(64)}` as Hash;
     const client = {
@@ -145,6 +149,7 @@ describe("Viem mint transaction and receipt integrity", () => {
     ["passport", passportPayload],
     ["stamp", stampPayload],
     ["reaction", reactionPayload],
+    ["community_stamp", communityStampPayload],
   ] as const)("keeps a missing %s mint event retryable while RPC indexing catches up", async (entityType, payload) => {
     const client = {
       readContract: vi.fn(async ({ functionName }: { functionName: string }) => functionName === "tokenByPassportId" || functionName === "tokenByIssuanceId"

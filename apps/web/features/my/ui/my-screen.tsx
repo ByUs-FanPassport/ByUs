@@ -1,5 +1,8 @@
 "use client";
 
+import { CommunityStampCollection } from "@/features/community-stamps/ui/community-stamp-collection";
+import { useCommunityStamps } from "@/features/community-stamps/ui/use-community-stamps";
+
 import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
 import { boundFirstLikeCount } from "../../passport/domain/first-like-stamp";
 
@@ -136,7 +139,8 @@ function OwnerScopedDashboard({ summary, fallback, locale, avatarResource, refre
 function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSlug, onSelectSlug }: { summary: MySummary; locale: FanLocale; avatarResource: ReturnType<typeof useAvatar>; refreshSummary: () => void; selectedSlug: string | null; onSelectSlug: (slug: string) => void }) {
   const t = copy[locale];
   const nickname = summary.profile.nickname?.trim() || null;
-  const stampCount = summary.collection.stampCount + boundFirstLikeCount(summary.creators);
+  const communityStamps = useCommunityStamps();
+  const stampCount = summary.collection.stampCount + boundFirstLikeCount(summary.creators) + (communityStamps.state.status === "ready" ? communityStamps.state.data.stamps.length : 0);
   const identity = nickname ? (locale === "ko" ? `${nickname}님` : nickname) : t.profileSummary;
   const receivedRewards = summary.rewards.items.filter((reward) => reward.result === "won");
   const reservedLives = prioritizeReservedLives(summary.live.upcoming);
@@ -217,6 +221,8 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       {summary.creators.length > 6 ? <button type="button" className={styles.moreFavorites} aria-expanded={favoritesOpen} aria-controls="my-favorite-selector" onClick={() => setFavoritesOpen(!favoritesOpen)}>{favoritesOpen ? t.fewerFavorites : `${t.moreFavorites} (${summary.creators.length})`}{favoritesOpen ? <Minus aria-hidden="true"/> : <Plus aria-hidden="true"/>}</button> : null}
       {selected ? <SelectedFavoritePanels key={selected.celebrity.slug} creator={selected} locale={locale}/> : null}
     </FanSurface>
+
+    <CommunityStampCollection locale={locale} resource={communityStamps}/>
 
     {hasLive || hasCollection ? <div className={styles.lowerGrid} data-single-section={!hasLive || !hasCollection}>
       {hasLive ? <ReservedLiveSection events={reservedLives} history={summary.live.history} locale={locale} onStartReached={refreshSummary}/> : null}

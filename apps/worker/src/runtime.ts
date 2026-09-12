@@ -7,8 +7,12 @@ import { MintWorker } from "./worker.js";
 
 export async function runWorkerOnce(env: WorkerEnv): Promise<number> {
   const collectibleEnabled = Boolean(env.BYUS_COLLECTIBLE_CONTRACT_ADDRESS && env.GIWA_COLLECTIBLE_DEPLOYMENT_BLOCK !== undefined);
+  const communityStampEnabled = env.WORKER_CAPABILITY_VERSION === "community-stamp-v1";
+  const supportedEntityTypes = ["passport", "stamp", "reaction"];
+  if (collectibleEnabled) supportedEntityTypes.push("collectible");
+  if (communityStampEnabled) supportedEntityTypes.push("community_stamp");
   const queue = SupabaseQueueAdapter.create(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY,
-    collectibleEnabled ? ["passport", "stamp", "reaction", "collectible"] : ["passport", "stamp", "reaction"]);
+    supportedEntityTypes);
   const metadata = new PinataMetadataAdapter(env.PINATA_API_URL, env.PINATA_JWT);
   const chain = new ViemChainAdapter({
     rpcUrl: env.GIWA_RPC_URL,
