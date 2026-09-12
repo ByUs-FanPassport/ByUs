@@ -3,7 +3,7 @@ import{ExternalNotificationError,type ExternalNotificationJob}from"../src/extern
 import type{ExternalNotificationQueue}from"../src/external-notification-ports.js";
 import{ExternalNotificationWorker}from"../src/external-notification-worker.js";
 const job:ExternalNotificationJob={id:"d",notificationId:"n",planId:"p",channel:"kakao",sequence:1,templateKey:"live:reserved",locale:"ko",destination:"test:kakao",payload:{title:"t",detail:"d",deepLink:"/my"},attemptCount:1,leaseOwner:"worker",leaseExpiresAt:"2099-01-01T00:00:00Z"};
-function queue(items=[job]):ExternalNotificationQueue{return{claim:vi.fn(async()=>items),revalidateEmail:vi.fn(async()=>true),complete:vi.fn(),fail:vi.fn(),recordSink:vi.fn()};}
+function queue(items=[job]):ExternalNotificationQueue{return{claim:vi.fn(async()=>items),revalidateEmail:vi.fn(async()=>true),beginEmail:vi.fn(async()=>true),finishEmail:vi.fn(),complete:vi.fn(),fail:vi.fn(),recordSink:vi.fn()};}
 describe("ExternalNotificationWorker",()=>{
  it("completes a leased Kakao primary once",async()=>{const q=queue();const send=vi.fn(async()=>({providerMessageId:"m"}));expect(await new ExternalNotificationWorker(q,{kakao:{send},email:{send}}, {workerId:"worker",batchSize:25,leaseSeconds:120}).runOnce()).toBe(1);expect(q.complete).toHaveBeenCalledWith(job,"m");});
  it("does not prematurely fallback for retryable failures",async()=>{const q=queue();const send=vi.fn(async()=>{throw new ExternalNotificationError("KAKAO_RETRYABLE",true)});await new ExternalNotificationWorker(q,{kakao:{send},email:{send}}, {workerId:"worker",batchSize:25,leaseSeconds:120}).runOnce();expect(q.fail).toHaveBeenCalledWith(job,{code:"KAKAO_RETRYABLE",retryable:true});});

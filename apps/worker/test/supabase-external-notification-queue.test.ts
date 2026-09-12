@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import { SupabaseExternalNotificationQueue } from "../src/adapters/supabase-external-notification-queue.js";
 
 describe("external notification channel isolation", () => {
-  it.each([[false,"claim_external_notification_deliveries"],[true,"claim_email_notification_deliveries"]] as const)("routes email-only=%s to the matching claim RPC", async (emailOnly, name) => {
+  it.each([false,true])("uses the guarded protocol for email-only=%s", async (emailOnly) => {
     const rpc = vi.fn(async () => ({data: [], error:null}));
     const queue = new SupabaseExternalNotificationQueue({rpc} as never,"dev",emailOnly);
     await expect(queue.claim("ses-worker",25,120)).resolves.toEqual([]);
-    expect(rpc).toHaveBeenCalledExactlyOnceWith(name,{p_worker_id:"ses-worker",p_batch_size:25,p_lease_seconds:120});
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("claim_email_notification_deliveries_safely",{p_worker_id:"ses-worker",p_batch_size:25,p_lease_seconds:120});
   });
   it("does not fall back to claiming every channel if the email RPC is missing", async () => {
     const rpc=vi.fn(async () => ({data:null,error:{code:"PGRST202"}}));
