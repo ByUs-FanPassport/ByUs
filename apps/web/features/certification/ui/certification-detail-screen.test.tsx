@@ -232,40 +232,101 @@ describe("CertificationDetailScreen", () => {
     expect(fetchMock.mock.calls.some(([input, init]) => String(input) === "/api/certification-submissions" && init?.method === "POST")).toBe(false);
   });
 
-  it("rejects unsupported, oversized, and excess images instead of silently accepting them", async () => {
+  it("keeps valid images from a mixed batch and identifies excluded files", async () => {
     openSubmissionForm();
     render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
     const picker = await screen.findByLabelText("이미지 선택");
+    const valid = new File(["proof"], "valid.png", { type: "image/png" });
+    const oversized = new File([new Uint8Array(3 * 1024 * 1024 + 1)], "large.png", { type: "image/png" });
+    fireEvent.change(picker, { target: { files: [valid, oversized, new File(["pdf"], "proof.pdf", { type: "application/pdf" })] } });
 
-    fireEvent.change(picker, { target: { files: [new File(["pdf"], "proof.pdf", { type: "application/pdf" })] } });
-    expect(screen.getByRole("alert")).toHaveTextContent("JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요.");
-    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeDisabled();
-
-    fireEvent.change(picker, { target: { files: [new File([new Uint8Array(3 * 1024 * 1024 + 1)], "large.png", { type: "image/png" })] } });
-    expect(screen.getByRole("alert")).toHaveTextContent("이미지 한 장의 용량은 3MB 이하여야 해요.");
-
-    fireEvent.change(picker, { target: { files: Array.from({ length: 4 }, (_, index) => new File(["image"], `${index}.png`, { type: "image/png" })) } });
-    expect(screen.getByRole("alert")).toHaveTextContent("이미지는 최대 3장까지 선택할 수 있어요.");
-    expect(screen.queryByAltText("선택한 이미지 1")).not.toBeInTheDocument();
+    expect(screen.getByText("valid.png")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("large.png");
+    expect(screen.getByRole("alert")).toHaveTextContent("3MB");
+    expect(screen.getByRole("alert")).toHaveTextContent("proof.pdf");
+    expect(screen.getByRole("alert")).toHaveTextContent("JPG, PNG, WEBP");
+    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeEnabled();
   });
 
-  it("previews replacement images and makes proof required again after removal", async () => {
+  it("adds three images across selections, skips duplicates, and releases only removed previews", async () => {
     openSubmissionForm();
-    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:first").mockReturnValueOnce("blob:replacement");
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:first").mockReturnValueOnce("blob:second").mockReturnValueOnce("blob:third");
+    const view = render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+    const picker = await screen.findByLabelText("이미지 선택");
+    const images = ["first", "second", "third"].map((name) => new File([name], `${name}.png`, { type: "image/png" }));
+    fireEvent.change(picker, { target: { files: [images[0]] } });
+    fireEvent.change(screen.getByLabelText("이미지 추가"), { target: { files: images } });
+    expect(screen.getAllByAltText(/선택한 이미지/)).toHaveLength(3);
+    expect(screen.getByText("3/3장 첨부됨")).toBeInTheDocument();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:first");
+
+    fireEvent.change(picker, { target: { files: [] } });
+    expect(screen.getAllByAltText(/선택한 이미지/)).toHaveLength(3);
+    fireEvent.click(screen.getByRole("button", { name: "second.png 삭제" }));
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second");
+    expect(screen.getAllByAltText(/선택한 이미지/)).toHaveLength(2);
+    view.unmount();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:third");
+  });
+
+  it("accepts up to three images and explains which excess image was excluded", async () => {
+    openSubmissionForm();
     render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
     const picker = await screen.findByLabelText("이미지 선택");
+    fireEvent.change(picker, { target: { files: Array.from({ length: 4 }, (_, index) => new File(["image"], `${index}.png`, { type: "image/png" })) } });
+    expect(screen.getAllByAltText(/선택한 이미지/)).toHaveLength(3);
+    expect(screen.getByRole("alert")).toHaveTextContent("3.png");
+    expect(screen.getByRole("alert")).toHaveTextContent("최대 3장");
+    fireEvent.click(screen.getByRole("button", { name: "1.png 삭제" }));
+    fireEvent.change(picker, { target: { files: [new File(["image"], "replacement.png", { type: "image/png" })] } });
+    expect(screen.getByText("replacement.png")).toBeInTheDocument();
+    expect(screen.getAllByAltText(/선택한 이미지/)).toHaveLength(3);
+    expect(screen.getByRole("alert")).toBeEmptyDOMElement();
+  });
 
-    fireEvent.change(picker, { target: { files: [new File(["first"], "first.png", { type: "image/png" })] } });
-    expect(screen.getByAltText("선택한 이미지 1")).toHaveAttribute("src", "blob:first");
-    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeEnabled();
+  it("preserves an existing image after a rejected addition without blocking submission", async () => {
+    openSubmissionForm();
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="en" />);
+    const picker = await screen.findByLabelText("Choose images");
+    fireEvent.change(picker, { target: { files: [new File(["image"], "valid.png", { type: "image/png" })] } });
+    fireEvent.change(picker, { target: { files: [new File([], "empty.png", { type: "image/png" })] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("empty.png");
+    expect(screen.getByRole("alert")).toHaveTextContent("empty");
+    expect(screen.getByLabelText("Add images")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit proof" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "valid.png remove" }));
+    expect(screen.getByRole("button", { name: "Submit proof" })).toBeDisabled();
+  });
 
-    fireEvent.change(screen.getByLabelText("이미지 다시 선택"), { target: { files: [new File(["next"], "next.webp", { type: "image/webp" })] } });
-    expect(screen.getByAltText("선택한 이미지 1")).toHaveAttribute("src", "blob:replacement");
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first");
-
-    fireEvent.click(screen.getByRole("button", { name: "next.webp 삭제" }));
-    expect(screen.queryByAltText("선택한 이미지 1")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "인증 자료 제출하기" })).toBeDisabled();
+  it("uploads all three images separately and submits their IDs together", async () => {
+    const uploadIds = [uploadId, "99999999-9999-4999-8999-999999999999", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"];
+    const uploadedNames: string[] = [];
+    let submittedIds: string[] = [];
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith(`/api/certifications/${missionId}?`)) return Response.json({ certification: availableMission });
+      if (url.includes("/api/me/")) return Response.json({ certifications: [] });
+      if (url.endsWith("/uploads")) {
+        uploadedNames.push(((init?.body as FormData).get("file") as File).name);
+        return Response.json({ uploadId: uploadIds[uploadedNames.length - 1] });
+      }
+      if (url === "/api/certification-submissions" && init?.method === "POST") {
+        submittedIds = JSON.parse(String(init.body)).uploadIds;
+        return Response.json({ submission: { id: pendingId } });
+      }
+      if (url.includes("/proofs/")) return new Response(new Blob(["image"], { type: "image/png" }));
+      if (url.includes(`/api/certification-submissions/${pendingId}`)) return Response.json({ submission: { ...detail(pendingId, "pending", 1), uploads: uploadIds.map((id) => ({ id, contentType: "image/webp", width: 800, height: 600 })) } });
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
+    const picker = await screen.findByLabelText("이미지 선택");
+    // The limit applies to each file, not to their combined size (9MB).
+    fireEvent.change(picker, { target: { files: Array.from({ length: 3 }, (_, i) => new File([new Uint8Array(3 * 1024 * 1024)], `${i}.png`, { type: "image/png" })) } });
+    fireEvent.click(screen.getByRole("button", { name: "인증 자료 제출하기" }));
+    expect(await screen.findByText("인증 자료를 제출했어요.")).toBeInTheDocument();
+    expect(uploadedNames).toEqual(["0.png", "1.png", "2.png"]);
+    expect(submittedIds).toEqual(uploadIds);
   });
 
   it("opens the matching issued Passport after manual approval when exactly one is owned", async () => {

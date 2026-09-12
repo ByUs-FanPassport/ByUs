@@ -583,6 +583,8 @@ a.card:active {
   margin: 10px 0 0;
 }
 .fileError {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
   min-height: 20px;
   margin: 4px 0 0;
   color: #a81743;

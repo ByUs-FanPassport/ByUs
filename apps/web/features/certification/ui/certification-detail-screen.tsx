@@ -182,29 +182,31 @@ function CertificationDetailForOwner({
   }, []);
 
   function selectFiles(nextFiles: File[]) {
-    const error = nextFiles.length > 3
-      ? (locale === "ko" ? "이미지는 최대 3장까지 선택할 수 있어요." : "You can select up to 3 images.")
-      : nextFiles.some((file) => !allowedProofTypes.has(file.type))
-        ? (locale === "ko" ? "JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요." : "Attach JPG, PNG, or WEBP image files only.")
-        : nextFiles.some((file) => file.size <= 0)
-          ? (locale === "ko" ? "내용이 없는 이미지 파일은 첨부할 수 없어요." : "Empty image files cannot be attached.")
-          : nextFiles.some((file) => file.size > maxProofBytes)
-            ? (locale === "ko" ? "이미지 한 장의 용량은 3MB 이하여야 해요." : "Each image must be 3MB or smaller.")
-            : "";
-    if (error) {
-      setFileError(error);
-      return;
+    // Cancelling the native picker must preserve both the selection and feedback.
+    if (!nextFiles.length) return;
+    const selected = [...files];
+    const errors: string[] = [];
+    for (const file of nextFiles) {
+      if (selected.some((item) => item.file.name === file.name && item.file.size === file.size
+        && item.file.type === file.type && item.file.lastModified === file.lastModified)) continue;
+      const reason = !allowedProofTypes.has(file.type)
+        ? (locale === "ko" ? "JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요." : "Use a JPG, PNG, or WEBP image.")
+        : file.size <= 0
+          ? (locale === "ko" ? "내용이 없는 이미지 파일은 첨부할 수 없어요." : "This image file is empty.")
+          : file.size > maxProofBytes
+            ? (locale === "ko" ? "3MB를 초과했어요. 용량을 줄여 다시 첨부해 주세요." : "This image exceeds 3MB. Reduce its size and add it again.")
+            : selected.length >= 3
+              ? (locale === "ko" ? "이미지는 최대 3장까지 첨부할 수 있어요. 기존 이미지를 삭제한 뒤 추가해 주세요." : "You can attach up to 3 images. Remove an image before adding another.")
+              : "";
+      if (reason) {
+        errors.push(locale === "ko" ? `${file.name} 첨부 안 됨: ${reason}` : `${file.name} was not added: ${reason}`);
+        continue;
+      }
+      selected.push({ id: nextSelectedProofId.current++, file, url: URL.createObjectURL(file) });
     }
-
-    for (const url of selectedProofUrls.current) URL.revokeObjectURL(url);
-    const selected = nextFiles.map((file) => ({
-      id: nextSelectedProofId.current++,
-      file,
-      url: URL.createObjectURL(file),
-    }));
     selectedProofUrls.current = selected.map(({ url }) => url);
     setFiles(selected);
-    setFileError("");
+    setFileError(errors.join("\n"));
   }
 
   function removeFile(id: number) {
@@ -225,7 +227,7 @@ function CertificationDetailForOwner({
         await login();
         return;
       }
-      if (!files.length || files.length > 3 || fileError || !mission) {
+      if (!files.length || files.length > 3 || !mission) {
         if (!files.length) setFileError(locale === "ko" ? "인증 이미지를 1장 이상 첨부해 주세요." : "Attach at least 1 proof image.");
         return;
       }
@@ -366,14 +368,15 @@ function CertificationDetailForOwner({
                   <strong>{locale === "ko" ? "인증 이미지 (필수)" : "Proof images (required)"}</strong>
                   <span>{locale === "ko" ? "1~3장 · JPG, PNG, WEBP · 장당 3MB 이하" : "1–3 images · JPG, PNG, WEBP · 3MB each"}</span>
                 </div>
-                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{files.length ? (locale === "ko" ? "이미지 다시 선택" : "Choose different images") : (locale === "ko" ? "이미지 선택" : "Choose images")}</span><input aria-describedby="proof-file-hint proof-file-error" type="file" accept="image/jpeg,image/png,image/webp" multiple required disabled={busy} onChange={(event)=>{selectFiles([...(event.currentTarget.files??[])]);event.currentTarget.value="";}}/></label>
+                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{files.length ? (locale === "ko" ? "이미지 추가" : "Add images") : (locale === "ko" ? "이미지 선택" : "Choose images")}</span><input aria-describedby="proof-file-hint proof-file-count proof-file-error" type="file" accept="image/jpeg,image/png,image/webp" multiple required disabled={busy} onChange={(event)=>{selectFiles([...(event.currentTarget.files??[])]);event.currentTarget.value="";}}/></label>
                 <p className={styles.fileHint} id="proof-file-hint">{isMembership
                   ? locale === "ko" ? "크리에이터와 내 계정, 유료 멤버십 상태, 다음 결제일 또는 유효기간이 보이는 캡처를 첨부해 주세요." : "Attach screenshots showing the creator, your account, paid membership status, and next billing or expiration date."
                   : locale === "ko" ? "위 인증 안내에 맞는 이미지 자료를 1장 이상 첨부해 주세요." : "Attach at least one image that meets the proof requirements above."}</p>
+                <p className={styles.fileHint} id="proof-file-count" role="status">{locale === "ko" ? `${files.length}/3장 첨부됨` : `${files.length}/3 images attached`}</p>
                 <p className={styles.fileError} id="proof-file-error" role="alert">{fileError}</p>
                 <ul className={styles.fileList}>{files.map((selected,index)=><li key={selected.id}><img src={selected.url} alt={locale === "ko" ? `선택한 이미지 ${index+1}` : `Selected image ${index+1}`} /><span><strong>{selected.file.name}</strong><small>{(selected.file.size/1024/1024).toFixed(1)}MB</small></span><button type="button" disabled={busy} aria-label={`${selected.file.name} ${locale==="ko"?"삭제":"remove"}`} onClick={()=>removeFile(selected.id)}><X /></button></li>)}</ul>
                 <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : "Note (optional)"}</span><textarea maxLength={1000} disabled={busy} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
-                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||Boolean(fileError)||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
+                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
               </section>
             ) : null}
           </>
