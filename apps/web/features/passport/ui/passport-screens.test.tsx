@@ -139,7 +139,8 @@ describe("passport fan screens", () => {
     expect(screen.getAllByRole("link", { name: /받은 스탬프 보기/ })).toHaveLength(2);
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(2);
     expect(screen.getByLabelText("STAR: KARA")).toHaveTextContent("KARA");
-    expect(screen.getByLabelText(`FAN ID: ${passport.id}`)).toHaveTextContent("11111111…1111");
+    expect(screen.getByLabelText(`FAN ID: ${passport.id}`)).toHaveTextContent(passport.id);
+    expect(screen.getByLabelText("FAN NAME: —")).toHaveTextContent("—");
     expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", "#activity");
     expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", "#stamp-book");
@@ -327,7 +328,7 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", fetcher);
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    expect(await screen.findByText("눈부신팬")).toBeInTheDocument();
+    expect(await screen.findByLabelText("FAN NAME: 눈부신팬")).toHaveTextContent("눈부신팬");
     expect(await screen.findByRole("img", { name: "눈부신팬 프로필 아바타" })).toHaveAttribute("src", "/images/avatars/heart-pink.webp");
     expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
     expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.objectContaining({ cache: "no-store" }));
