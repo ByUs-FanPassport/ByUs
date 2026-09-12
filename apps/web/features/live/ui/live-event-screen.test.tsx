@@ -772,6 +772,22 @@ describe("LiveEventScreen", () => {
     expect(shortcut).toHaveAttribute("href", "#fan-code");
     expect(screen.getByRole("textbox", { name: "출석 코드 입력" })).toBeEnabled();
     expect(screen.getByRole("link", { name: /LIVE 보러가기: ifew/ })).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: /LIVE 보러가기: ifew/ })).toHaveAttribute("href", "https://www.tiktok.com/@ifewknow/live");
+  });
+
+  it.each(["ko", "en"] as const)("resolves scheduled TikTok links on click and preserves the return flow (%s)", async (locale) => {
+    query = `locale=${locale}`;
+    const response = ifewPayload("watch_live");
+    response.live.effectiveStatus = "live";
+    response.live.watch = { available: true, provider: "tiktok", url: "https://www.tiktok.com/live/event/7680769355085185044" };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(response));
+    render(<LiveEventScreen slug={response.live.slug} locale={locale} />);
+    const watch = await screen.findByRole("link", { name: locale === "ko" ? /LIVE 보러가기: ifew/ : /Watch LIVE: ifew/ });
+    expect(watch).toHaveAttribute("href", `/api/live-events/${response.live.slug}/watch?locale=${locale}`);
+    expect(watch).toHaveAttribute("target", "_blank");
+    expect(watch).toHaveAttribute("rel", "noopener noreferrer");
+    fireEvent.click(watch);
+    await waitFor(() => expect(JSON.parse(sessionStorage.getItem("byus:live-return") ?? "{}").route).toBe(`/live/kara-nualeaf?locale=${locale}#fan-code`));
   });
 
   it("opens an external LIVE safely and stores the exact fan-code return route", async () => {

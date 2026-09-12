@@ -1,6 +1,7 @@
 "use client";
 
 import { LiveTimeIndicator } from "./live-time-indicator";
+import { liveWatchHref } from "../domain/live-watch-link";
 
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
@@ -1015,6 +1016,7 @@ export function LiveEventScreen({
 
   const data = view.data;
   const { live, viewer, primaryAction } = data;
+  const watchHref = liveWatchHref(live, locale);
   const isIfewLive = live.slug === ifewLiveSlug;
   const isElinaLive = live.slug === elinaLiveSlug;
   const eventCopy = isIfewLive ? ifewLiveCopy[locale] : null;
@@ -1122,7 +1124,7 @@ export function LiveEventScreen({
       live.watch.url ? (
       <div className={styles.primaryActionBlock}>
         <FanAction
-          href={live.watch.url}
+          href={watchHref}
           external
           variant="primary"
           fullWidth
@@ -1301,7 +1303,7 @@ export function LiveEventScreen({
               primaryAction !== "watch_live" && (
                 <a
                   className={styles.watchAction}
-                  href={live.watch.url}
+                  href={watchHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={externalActionLabel(c.watch, live.title, locale)}
