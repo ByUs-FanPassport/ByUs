@@ -11,6 +11,13 @@ describe("LIVE watch links", () => {
     expect(liveWatchHref(live, "en")).toBe(`/api/live-events/${live.slug}/watch?locale=en`);
     expect(live.watch.url).toContain("/live/event/");
   });
+  it("resolves active YouTube channel URLs and preserves inactive channels and Instagram profiles", () => {
+    const youtube = { ...live, watch: { provider: "youtube", url: "https://youtube.com/@creator" } };
+    expect(liveWatchHref(youtube, "en")).toContain("/watch?locale=en");
+    expect(liveWatchHref({ ...youtube, effectiveStatus: "ended" }, "ko")).toBe(youtube.watch.url);
+    const instagram = { ...live, watch: { provider: "instagram", url: "https://www.instagram.com/creator/" } };
+    expect(liveWatchHref(instagram, "ko")).toBe(instagram.watch.url);
+  });
   it.each(["scheduled", "ended", "cancelled"])("preserves the URL for %s events", (effectiveStatus) => {
     expect(liveWatchHref({ ...live, effectiveStatus }, "ko")).toBe(live.watch.url);
   });

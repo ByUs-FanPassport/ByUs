@@ -2,6 +2,7 @@ import { createPublishedContentRepositoryFromEnvironment } from "../../../../../
 import { createLiveEventRepositoryFromEnvironment } from "../../../../../server/g3/live-event-repository";
 import { createGetLiveWatchHandler } from "../../../../../server/g3/live-watch-route";
 import { getCachedTikTokLiveObservation } from "../../../../../server/tiktok/cached-tiktok-live-source";
+import { getCachedYouTubeLiveObservation } from "../../../../../server/youtube/cached-youtube-live-source";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export async function GET(
       repository: createLiveEventRepositoryFromEnvironment({ url, serviceRoleKey }),
       creators: createPublishedContentRepositoryFromEnvironment(),
       observe: getCachedTikTokLiveObservation,
+      observeYouTube: getCachedYouTubeLiveObservation,
       now: () => new Date(),
     })(request, { slug });
   } catch {

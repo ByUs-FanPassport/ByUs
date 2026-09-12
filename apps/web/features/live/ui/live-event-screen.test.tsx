@@ -775,11 +775,16 @@ describe("LiveEventScreen", () => {
     expect(screen.getByRole("link", { name: /LIVE 보러가기: ifew/ })).toHaveAttribute("href", "https://www.tiktok.com/@ifewknow/live");
   });
 
-  it.each(["ko", "en"] as const)("resolves scheduled TikTok links on click and preserves the return flow (%s)", async (locale) => {
+  it.each([
+    ["ko", "tiktok", "https://www.tiktok.com/live/event/7680769355085185044"],
+    ["en", "tiktok", "https://www.tiktok.com/live/event/7680769355085185044"],
+    ["ko", "youtube", "https://www.youtube.com/@creator"],
+    ["en", "youtube", "https://www.youtube.com/@creator"],
+  ] as const)("resolves %s %s links on click and preserves the return flow", async (locale, provider, url) => {
     query = `locale=${locale}`;
     const response = ifewPayload("watch_live");
     response.live.effectiveStatus = "live";
-    response.live.watch = { available: true, provider: "tiktok", url: "https://www.tiktok.com/live/event/7680769355085185044" };
+    response.live.watch = { available: true, provider, url };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(response));
     render(<LiveEventScreen slug={response.live.slug} locale={locale} />);
     const watch = await screen.findByRole("link", { name: locale === "ko" ? /LIVE 보러가기: ifew/ : /Watch LIVE: ifew/ });

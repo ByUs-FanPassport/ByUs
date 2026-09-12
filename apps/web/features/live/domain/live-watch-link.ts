@@ -1,3 +1,5 @@
+import { parseYouTubeChannelUrl } from "./youtube-channel";
+
 type WatchableLive = Readonly<{
   slug: string;
   effectiveStatus: string;
@@ -18,7 +20,8 @@ export function isTikTokScheduledEventUrl(value: string): boolean {
 }
 
 export function liveWatchHref(live: WatchableLive, locale: string): string {
-  if (live.watch.provider !== "tiktok" || live.effectiveStatus !== "live" ||
-      !isTikTokScheduledEventUrl(live.watch.url)) return live.watch.url;
+  const discoverable = (live.watch.provider === "tiktok" && isTikTokScheduledEventUrl(live.watch.url)) ||
+    (live.watch.provider === "youtube" && parseYouTubeChannelUrl(live.watch.url) !== null);
+  if (!discoverable || live.effectiveStatus !== "live") return live.watch.url;
   return `/api/live-events/${encodeURIComponent(live.slug)}/watch?locale=${encodeURIComponent(locale)}`;
 }

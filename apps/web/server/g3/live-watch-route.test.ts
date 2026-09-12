@@ -5,6 +5,7 @@ vi.mock("server-only", () => ({}));
 import { OBSERVED_LIVE_MAX_AGE_MS } from "../../features/live/domain/observed-live";
 import type { LiveEventResponse } from "../../features/live/domain/live-event";
 import type { PublishedCelebrity } from "../content/content-domain";
+import type { YouTubeLiveObservation } from "../youtube/youtube-live-source";
 import { createGetLiveWatchHandler } from "./live-watch-route";
 
 const fallback = "https://www.tiktok.com/live/event/7611111111111111111";
@@ -78,6 +79,8 @@ function setup(options: {
   observeError?: Error;
   repositoryError?: Error;
   times?: string[];
+  youtubeResult?: YouTubeLiveObservation;
+  youtubeError?: Error;
 } = {}) {
   const findPublishedBySlug = options.repositoryError
     ? vi.fn().mockRejectedValue(options.repositoryError)
@@ -96,14 +99,19 @@ function setup(options: {
   const times = options.times ?? [current, current, current];
   let timeIndex = 0;
   const now = vi.fn(() => new Date(times[Math.min(timeIndex++, times.length - 1)]!));
+  const observeYouTube = options.youtubeError ? vi.fn().mockRejectedValue(options.youtubeError) : vi.fn().mockResolvedValue(options.youtubeResult ?? {
+    state: "live", observedAt: current, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,
+  });
   return {
     findPublishedBySlug,
     findBySlug,
     observe,
+    observeYouTube,
     run: createGetLiveWatchHandler({
       repository: { findPublishedBySlug },
       creators: { findBySlug },
       observe,
+      observeYouTube,
       now,
     }),
   };
@@ -246,5 +254,65 @@ describe("GET live watch handler", () => {
     );
     expect(failed.status).toBe(503);
     expect(failed.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
+describe("YouTube watch discovery", () => {
+  const channelUrl = "https://www.youtube.com/@creator";
+  function youtube(options: Parameters<typeof setup>[0] = {}) {
+    return setup({
+      result: live({ watch: { available: true, mode: "live", provider: "youtube", url: channelUrl } }),
+      creatorResult: creator([{ platform: "youtube", url: channelUrl }]),
+      ...options,
+    });
+  }
+  it("redirects the matching channel's fresh active video", async () => {
+    const target = youtube();
+    await expect(location(target)).resolves.toBe("https://www.youtube.com/watch?v=abcdefghijk");
+    expect(target.observeYouTube).toHaveBeenCalledWith({ kind: "handle", value: "creator" });
+    expect(target.observe).not.toHaveBeenCalled();
+  });
+  it.each([
+    { state: "offline" }, { state: "unavailable" }, { videoId: "../../evil" },
+    { channelId: "invalid" }, { actualStartTime: "2026-09-11T01:00:00Z" },
+    { actualStartTime: "2026-09-12T01:31:00Z" },
+    { observedAt: "2026-09-12T01:28:30Z" }, { observedAt: "2026-09-12T01:31:00Z" },
+  ] as const)("falls back for invalid/unrelated observations %j", async (overrides) => {
+    await expect(location(youtube({ youtubeResult: {
+      state: "live", observedAt: current, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,
+      ...overrides,
+    } }))).resolves.toBe(channelUrl);
+  });
+  it("does not observe another creator or ambiguous channel configuration", async () => {
+    for (const links of [[], [{ platform: "youtube", url: "https://youtube.com/@other" }], [
+      { platform: "youtube", url: channelUrl }, { platform: "youtube", url: "https://youtube.com/@other" },
+    ]] as PublishedCelebrity["socialLinks"][]) {
+      const target = youtube({ creatorResult: creator(links) });
+      await expect(location(target)).resolves.toBe(channelUrl);
+      expect(target.observeYouTube).not.toHaveBeenCalled();
+    }
+  });
+  it("rejects a valid but different channel ID returned for an ID target", async () => {
+    const url = "https://youtube.com/channel/UCabcdefghijklmnopqrstuv";
+    const target = youtube({
+      result: live({ watch: { available: true, mode: "live", provider: "youtube", url } }),
+      creatorResult: creator([{ platform: "youtube", url }]),
+      youtubeResult: { state: "live", observedAt: current, channelId: "UCxxxxxxxxxxxxxxxxxxxxxx", videoId: "abcdefghijk", actualStartTime: startsAt },
+    });
+    await expect(location(target)).resolves.toBe(url);
+  });
+  it("fails closed on upstream errors and when event ends during lookup", async () => {
+    await expect(location(youtube({ youtubeError: new Error("private detail") }))).resolves.toBe(channelUrl);
+    await expect(location(youtube({ times: [current, current, endsAt], youtubeResult: {
+      state: "live", observedAt: endsAt, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,
+    } }))).resolves.toBe(channelUrl);
+  });
+  it("preserves Instagram profile and direct LIVE links without looking up credentials", async () => {
+    for (const url of ["https://www.instagram.com/creator/", "https://www.instagram.com/creator/live/"]) {
+      const target = setup({ result: live({ watch: { available: true, mode: "live", provider: "instagram", url } }) });
+      await expect(location(target)).resolves.toBe(url);
+      expect(target.findBySlug).not.toHaveBeenCalled();
+      expect(target.observeYouTube).not.toHaveBeenCalled();
+    }
   });
 });

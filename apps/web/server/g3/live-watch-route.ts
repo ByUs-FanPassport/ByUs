@@ -6,6 +6,8 @@ import {
   parseLiveLocale,
 } from "../../features/live/domain/live-event";
 import { isTikTokScheduledEventUrl } from "../../features/live/domain/live-watch-link";
+import { parseYouTubeChannelUrl } from "../../features/live/domain/youtube-channel";
+import type { YouTubeLiveObserver } from "../youtube/youtube-live-source";
 import type { PublishedContentRepository } from "../content/published-content-repository";
 import {
   parseCanonicalTikTokProfileUrl,
@@ -17,6 +19,7 @@ export type LiveWatchRouteDependencies = Readonly<{
   repository: Pick<LiveEventRepository, "findPublishedBySlug">;
   creators: Pick<PublishedContentRepository, "findBySlug">;
   observe: TikTokLiveObserver;
+  observeYouTube?: YouTubeLiveObserver;
   now: () => Date;
 }>;
 
@@ -82,9 +85,10 @@ export function createGetLiveWatchHandler(
       return errorResponse("LIVE_UNAVAILABLE", 503);
     }
 
+    const youtubeChannel = live.watch.provider === "youtube" ? parseYouTubeChannelUrl(fallbackUrl) : null;
+    const discoverable = (live.watch.provider === "tiktok" && isTikTokScheduledEventUrl(fallbackUrl)) || youtubeChannel;
     if (
-      live.watch.provider !== "tiktok" ||
-      !isTikTokScheduledEventUrl(fallbackUrl) ||
+      !discoverable ||
       live.effectiveStatus !== "live" ||
       !live.watch.available ||
       !isInsideEventWindow(live.startsAt, live.endsAt, dependencies.now())
@@ -103,6 +107,32 @@ export function createGetLiveWatchHandler(
     }
     if (!creator || creator.slug !== live.celebrity.slug) {
       return redirect(fallbackUrl);
+    }
+
+    if (youtubeChannel) {
+      const channels = creator.socialLinks.filter(({ platform }) => platform === "youtube")
+        .map(({ url }) => parseYouTubeChannelUrl(url));
+      if (!dependencies.observeYouTube || channels.length === 0 || channels.some((channel) =>
+        !channel || channel.kind !== youtubeChannel.kind || channel.value !== youtubeChannel.value)) {
+        return redirect(fallbackUrl);
+      }
+      try {
+        const observation = await dependencies.observeYouTube(youtubeChannel);
+        const checkedAt = dependencies.now();
+        const age = checkedAt.getTime() - Date.parse(observation.observedAt);
+        const actualStart = Date.parse(observation.actualStartTime ?? "");
+        if (observation.state !== "live" || !Number.isFinite(age) || age < 0 ||
+            age >= OBSERVED_LIVE_MAX_AGE_MS ||
+            !/^UC[A-Za-z0-9_-]{22}$/.test(observation.channelId ?? "") ||
+            (youtubeChannel.kind === "id" && observation.channelId !== youtubeChannel.value) ||
+            !/^[A-Za-z0-9_-]{11}$/.test(observation.videoId ?? "") ||
+            !Number.isFinite(actualStart) || actualStart < Date.parse(live.startsAt) ||
+            actualStart > checkedAt.getTime() ||
+            !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)) return redirect(fallbackUrl);
+        return redirect(`https://www.youtube.com/watch?v=${observation.videoId}`);
+      } catch {
+        return redirect(fallbackUrl);
+      }
     }
 
     const tiktokLinks = creator.socialLinks.filter(

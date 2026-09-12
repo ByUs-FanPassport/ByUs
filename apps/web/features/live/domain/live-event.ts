@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseYouTubeChannelUrl } from "./youtube-channel";
 import { livePreviewKindSchema } from "./live-preview";
 import { collectibleOwnedStateSchema } from "../../collectible/domain/collectible";
 import type { PhotoSet } from "../../media/domain/public-image";
@@ -215,12 +216,13 @@ export function parseExternalLiveUrl(
   } else if (provider === "youtube") {
     const watchId = url.pathname === "/watch" ? url.searchParams.get("v") : null;
     const pathId = /^\/(?:live|embed)\/([A-Za-z0-9_-]+)$/.exec(url.pathname)?.[1];
-    if (!watchId?.match(/^[A-Za-z0-9_-]+$/) && !pathId) throw new Error("unsafe YouTube URL");
+    if (!watchId?.match(/^[A-Za-z0-9_-]+$/) && !pathId && !parseYouTubeChannelUrl(value)) throw new Error("unsafe YouTube URL");
   }
   return url.toString();
 }
 
 export function parseExactYouTubeUrl(value: string): string {
+  if (parseYouTubeChannelUrl(value)) throw new Error("expected a specific YouTube video URL");
   return parseExternalLiveUrl("youtube", value);
 }
 
