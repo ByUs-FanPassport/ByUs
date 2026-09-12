@@ -1,0 +1,7 @@
+.panel{display:grid;gap:10px;margin-top:16px;padding:16px;border:1px solid var(--color-line);border-radius:12px;background:var(--color-soft);min-width:0}
+.panel h4,.panel p{margin:0;line-height:1.5}.panel h4{font-size:15px}.panel p,.panel label,.panel small{font-size:13px;line-height:1.5}
+.panel>input{width:100%;min-width:0;box-sizing:border-box;height:44px;padding:10px 12px;border:1px solid var(--color-line);border-radius:8px;background:var(--color-background,#fff);font-size:16px;color:inherit}
+.panel button{min-height:44px;padding:10px 14px;border:1px solid var(--color-line);border-radius:10px;background:var(--color-background,#fff);color:inherit;font-size:13px;font-weight:700;cursor:pointer;line-height:1.4}
+.panel button:disabled{opacity:.5;cursor:not-allowed}.panel input:focus-visible,.panel button:focus-visible{outline:2px solid var(--color-ink,#222);outline-offset:3px}
+.consent{display:flex!important;align-items:flex-start!important;gap:10px!important;padding:8px 0!important;border:0!important}.consent input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0;accent-color:var(--color-ink,#222)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{flex:1}

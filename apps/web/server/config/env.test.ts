@@ -38,6 +38,15 @@ const validEnv = {
   KAKAO_TEST_SINK_SECRET: "",
   KAKAO_ALIMTALK_ENROLLMENT_ENABLED: "false",
   SOLAPI_WEBHOOK_SECRET: "",
+  YOUTUBE_DATA_API_KEY: "",
+  VERCEL_ANALYTICS_TOKEN: "",
+  VERCEL_ANALYTICS_PROJECT_ID: "",
+  VERCEL_ANALYTICS_TEAM_ID: "",
+  PHONE_SMS_ENROLLMENT_MODE: "disabled",
+  PHONE_SMS_SOLAPI_API_KEY: "",
+  PHONE_SMS_SOLAPI_API_SECRET: "",
+  PHONE_SMS_SENDER: "",
+  PHONE_SMS_OTP_SECRET: "",
   GOOGLE_SITE_VERIFICATION: "",
   NAVER_SITE_VERIFICATION: "",
   BING_SITE_VERIFICATION: "",
@@ -99,6 +108,17 @@ describe("public environment", () => {
 });
 
 describe("server environment", () => {
+  it("keeps SMS enrollment off by default and requires complete server-only configuration", () => {
+    const legacy: Record<string, string> = { ...validEnv };
+    for (const key of Object.keys(legacy)) if (key.startsWith("PHONE_SMS_")) delete legacy[key];
+    expect(parseServerEnv(legacy).PHONE_SMS_ENROLLMENT_MODE).toBe("disabled");
+    expect(() => parseServerEnv({ ...validEnv, PHONE_SMS_ENROLLMENT_MODE: "solapi" })).toThrowError(/PHONE_SMS_ENROLLMENT_MODE/);
+    const configured = { ...validEnv, PHONE_SMS_ENROLLMENT_MODE: "solapi", PHONE_SMS_SOLAPI_API_KEY: "provider-key", PHONE_SMS_SOLAPI_API_SECRET: "provider-secret", PHONE_SMS_SENDER: "01012345678", PHONE_SMS_OTP_SECRET: "x".repeat(32) };
+    expect(parseServerEnv(configured).PHONE_SMS_ENROLLMENT_MODE).toBe("solapi");
+    expect(Object.keys(parsePublicEnv(configured)).some((key) => key.includes("SMS"))).toBe(false);
+    expect(() => parseServerEnv({ ...configured, PHONE_SMS_OTP_SECRET: "short" })).toThrow();
+    expect(() => parseServerEnv({ ...configured, PHONE_SMS_SENDER: "+821012345678" })).toThrow();
+  });
   it("covers every key declared by .env.example", () => {
     const exampleKeys = readFileSync(resolve(process.cwd(), ".env.example"), "utf8")
       .split("\n")
@@ -178,6 +198,9 @@ describe("server environment", () => {
       (key) =>
         !key.startsWith("NEXT_PUBLIC_") &&
         !key.startsWith("KAKAO_") &&
+        !key.startsWith("PHONE_SMS_") &&
+        !key.startsWith("VERCEL_ANALYTICS_") &&
+        key !== "YOUTUBE_DATA_API_KEY" &&
         key !== "SOLAPI_WEBHOOK_SECRET" &&
         !key.endsWith("_SITE_VERIFICATION") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&

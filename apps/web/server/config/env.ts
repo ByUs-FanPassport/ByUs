@@ -119,12 +119,20 @@ const serverEnvSchema = publicEnvSchema
       z.string().min(16).optional(),
     ),
     KAKAO_ALIMTALK_ENROLLMENT_ENABLED: booleanFlag,
+    PHONE_SMS_ENROLLMENT_MODE: z.enum(["disabled", "solapi"]).default("disabled"),
+    PHONE_SMS_SOLAPI_API_KEY: optionalNonEmptyString,
+    PHONE_SMS_SOLAPI_API_SECRET: optionalNonEmptyString,
+    PHONE_SMS_SENDER: z.preprocess((value) => value === "" ? undefined : value, z.string().regex(/^\d{8,12}$/).optional()),
+    PHONE_SMS_OTP_SECRET: z.preprocess((value) => value === "" ? undefined : value, z.string().min(32).max(256).optional()),
     SOLAPI_WEBHOOK_SECRET: z.preprocess(
       (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
       z.string().min(16).max(256).optional(),
     ),
   })
   .superRefine((value, context) => {
+    if (value.PHONE_SMS_ENROLLMENT_MODE === "solapi" && (!value.PHONE_SMS_SOLAPI_API_KEY || !value.PHONE_SMS_SOLAPI_API_SECRET || !value.PHONE_SMS_SENDER || !value.PHONE_SMS_OTP_SECRET)) {
+      context.addIssue({ code: "custom", message: "SMS enrollment requires provider credentials, a registered sender and an OTP secret", path: ["PHONE_SMS_ENROLLMENT_MODE"] });
+    }
     if (value.PRIVY_APP_ID !== value.NEXT_PUBLIC_PRIVY_APP_ID) {
       context.addIssue({
         code: "custom",

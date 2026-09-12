@@ -167,6 +167,29 @@ describe("FAN-020 settings", () => {
     render(<SettingsScreen locale="ko" />);
     await screen.findByRole("heading", { name: "설정" });
     expect(screen.queryByText("카카오 알림톡")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("휴대폰 번호")).not.toBeInTheDocument();
+  });
+
+  it("offers manual phone enrollment without a Kakao account and shares the settings mutation lock", async () => {
+    let finish!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections: { accounts: [], channels: [] }, phoneSmsEnrollment: { enabled: true }, kakaoEnrollment: { enabled: true, pending: null } });
+      if (url.endsWith("/phone/request")) return new Promise<Response>((resolve) => { finish = resolve; });
+      throw new Error("Unexpected local route");
+    });
+    render(<SettingsScreen locale="ko" />);
+    const phone = await screen.findByLabelText("휴대폰 번호");
+    expect(screen.queryByRole("button", { name: "카카오에서 전화번호 확인" })).not.toBeInTheDocument();
+    fireEvent.change(phone, { target: { value: "01012345678" } });
+    fireEvent.click(screen.getByRole("button", { name: "인증번호 받기" }));
+    await waitFor(() => expect(finish).toBeDefined());
+    expect(screen.getByRole("button", { name: "Kakao 연결" })).toBeDisabled();
+    await act(async () => finish(Response.json({ challenge: { challengeId: "11111111-1111-4111-8111-111111111111", destinationLabel: "010-****-5678", expiresAt: new Date(Date.now() + 300000).toISOString(), resendAt: new Date(Date.now() + 60000).toISOString(), status: "accepted" } })));
+    expect(await screen.findByLabelText("문자로 받은 인증번호")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Kakao 연결" })).toBeEnabled();
   });
 
   it("requires confirmation consent and confirms only the pending id", async () => {

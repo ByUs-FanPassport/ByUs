@@ -5,4 +5,5 @@ update public.fan_notification_delivery_control set mode='enabled',activated_at=
 \ir security_function_privileges.sql
 \ir mint_dispatch_budget.sql
 \ir kakao_alimtalk.sql
+\ir phone_sms_enrollment.sql
 \ir welcome_notices.sql

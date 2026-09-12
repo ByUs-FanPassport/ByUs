@@ -26,6 +26,7 @@ import {
 } from "../../notification/ui/push-subscription";
 import styles from "./settings-screen.module.css";
 import type { NotificationConnections } from "../../notification/domain/connected-account";
+import { PhoneSmsEnrollment } from "./phone-sms-enrollment";
 import { AvatarSettings } from "./avatar-settings";
 import { useAvatar } from "./use-avatar";
 
@@ -279,6 +280,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [connections, setConnections] = useState<NotificationConnections | null>(null);
   const [kakaoEnrollment, setKakaoEnrollment] = useState<KakaoEnrollmentState>({ enabled: false, pending: null });
+  const [phoneSmsEnabled, setPhoneSmsEnabled] = useState(false);
   const [kakaoEnrollmentConsent, setKakaoEnrollmentConsent] = useState(false);
   const [state, setState] = useState<"loading" | "ready" | "profile_required" | "error">("loading");
   const [editing, setEditing] = useState(false);
@@ -292,7 +294,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [languageError, setLanguageError] = useState(false);
   const [message, setMessage] = useState("");
   const [preferencePending, setPreferencePending] = useState(false);
-  const [connectionAction, setConnectionAction] = useState<"channel" | "kakao-connect" | "kakao-disconnect" | "kakao-enroll" | "kakao-confirm" | "kakao-cancel" | null>(null);
+  const [connectionAction, setConnectionAction] = useState<"channel" | "phone-sms" | "kakao-connect" | "kakao-disconnect" | "kakao-enroll" | "kakao-confirm" | "kakao-cancel" | null>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
     null,
   );
@@ -399,12 +401,13 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       const preferenceBody = (await preferenceResponse.json()) as {
         preferences: Preferences;
       };
-      const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState };
+      const connectionBody = (await connectionResponse.json()) as { connections: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState; phoneSmsEnrollment?: { enabled: boolean } };
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       setSettings(settingsBody.settings);
       setNickname(settingsBody.settings.nickname);
       setPreferences(preferenceBody.preferences);
       setConnections(connectionBody.connections);
+      setPhoneSmsEnabled(connectionBody.phoneSmsEnrollment?.enabled === true);
       setKakaoEnrollment(connectionBody.kakaoEnrollment ?? { enabled: false, pending: null });
       setState("ready");
     } catch {
@@ -721,10 +724,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         if (!response.ok) throw new Error("disconnect");
         const connectionResponse = await fetch("/api/me/notification-channels", { headers: authHeaders(token), cache: "no-store" });
         if (!connectionResponse.ok) throw new Error("connections");
-        const body = await connectionResponse.json() as { connections?: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState };
+        const body = await connectionResponse.json() as { connections?: NotificationConnections; kakaoEnrollment?: KakaoEnrollmentState; phoneSmsEnrollment?: { enabled: boolean } };
         if (!body.connections) throw new Error("connections");
         if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
         setConnections(body.connections);
+        setPhoneSmsEnabled(body.phoneSmsEnrollment?.enabled === true);
         setKakaoEnrollment(body.kakaoEnrollment ?? { enabled: false, pending: null });
         setKakaoEnrollmentConsent(false);
         setMessage(t.saved);
@@ -1182,7 +1186,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             })()}
             {connectionAction && (
               <p id="connection-save-status" className={styles.inlineStatus} role="status" aria-live="polite">
-                {connectionAction === "channel"
+                {(connectionAction === "channel" || connectionAction === "phone-sms")
                   ? t.channelSaving
                   : connectionAction === "kakao-disconnect"
                     ? t.kakaoDisconnecting
@@ -1196,7 +1200,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               </p>
             )}
             {connections.channels.map((channel) => <label key={channel.id}><span><strong>{channel.kind === "email" ? t.emailChannel : t.kakaoChannel}</strong><small>{channel.destinationLabel}{channel.status === "needs_verification" ? ` · ${t.needsEnrollment}` : ""}</small></span><input type="checkbox" role="switch" aria-label={channel.kind === "email" ? t.emailChannel : t.kakaoChannel} aria-describedby={connectionAction ? "connection-save-status" : undefined} checked={channel.consented} disabled={connectionAction !== null || channel.status !== "eligible"} onChange={(event) => void updateChannel(channel.id, event.target.checked)} /></label>)}
-            {kakaoEnrollment.enabled && <div className={styles.kakaoEnrollment}>
+            {phoneSmsEnabled && <PhoneSmsEnrollment key={ownerId} locale={locale} disabled={connectionAction !== null} getAccessToken={getAccessToken}
+              acquire={() => { if (connectionPendingRef.current) return false; connectionPendingRef.current = true; setConnectionAction("phone-sms"); return true; }}
+              release={() => { if (ownerRef.current !== ownerId) return; connectionPendingRef.current = false; setConnectionAction(null); }}
+              onRegistered={(channel) => { setConnections((current) => current ? { ...current, channels: [...current.channels.filter((item) => item.kind !== "kakao"), channel] } : current); setKakaoEnrollmentConsent(false); setKakaoEnrollment((current) => ({ ...current, pending: null })); }} />}
+            {kakaoEnrollment.enabled && (!phoneSmsEnabled || kakaoEnrollment.pending) && <div className={styles.kakaoEnrollment}>
               <strong>{t.kakaoEnrollmentTitle}</strong>
               <small>{t.kakaoEnrollmentHelp}</small>
               {kakaoEnrollment.pending ? <>
