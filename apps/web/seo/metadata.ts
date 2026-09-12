@@ -21,7 +21,7 @@ export function isRehearsalPath(path: string): boolean {
 }
 
 export function isPrivatePath(path: string): boolean {
-  return /^\/(?:admin|my|passports|stamps|settings|notifications|onboarding|login|creator|connect)(?:\/|$)/.test(path)
+  return /^\/(?:admin|my|passports|stamps|settings|notifications|onboarding|login|creator|connect|s)(?:\/|$)/.test(path)
     || /^\/c\/[^/]+\/verify(?:\/|$)/.test(path)
     || /^\/live\/[^/]+\/(?:missions|survey)(?:\/|$)/.test(path);
 }

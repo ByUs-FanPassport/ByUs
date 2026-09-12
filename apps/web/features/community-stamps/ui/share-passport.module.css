@@ -1,0 +1,38 @@
+.sender { display:grid; gap:8px; width:100%; min-width:0; }
+.sender *, .landing, .landing * { box-sizing:border-box; }
+.primary { min-height:44px; border:0; border-radius:12px; background:#7e318f; color:#fff; font:inherit; font-size:13px; font-weight:700; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; cursor:pointer; box-shadow:0 8px 20px rgb(126 49 143 / 18%); transition:transform 160ms, background-color 160ms; }
+.primary:hover:not(:disabled) { background:#692579; }
+.primary:active:not(:disabled) { transform:scale(.98); }
+.primary:disabled { cursor:default; opacity:.7; }
+.primary svg { width:17px; height:17px; }
+.primary:focus-visible,.secondary:focus-visible { outline:3px solid #292929; outline-offset:3px; }
+.status,.error { margin:0; font-size:12px; line-height:1.55; text-align:left; }
+.status { color:#5d4b62; }
+.status svg { width:14px; height:14px; vertical-align:-2px; margin-right:4px; color:#813193; }
+.error { color:#a0293c; }
+.shareUrlLabel { display:block; width:100%; min-width:0; }
+.shareUrl { width:100%; min-width:0; min-height:44px; border:1px solid #d9c9dd; border-radius:12px; background:#fbf8fc; color:#49394d; font:inherit; font-size:12px; padding:10px 12px; }
+.shareUrl:focus-visible { outline:3px solid #292929; outline-offset:3px; }
+.shareActions { display:flex; flex-wrap:wrap; gap:8px; min-width:0; }
+.shareActions > * { flex:1; min-width:0; padding-inline:10px; }
+.secondaryButton { min-height:44px; border:1px solid #d9c9dd; border-radius:12px; background:#fff; color:#49394d; font:inherit; font-size:13px; font-weight:700; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
+.secondaryButton:hover { background:#fbf8fc; }
+.secondaryButton:focus-visible { outline:3px solid #292929; outline-offset:3px; }
+.secondaryButton svg { width:17px; height:17px; }
+.srOnly { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.landing { font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; min-height:100dvh; display:grid; place-items:center; padding:24px 16px; background:radial-gradient(circle at 10% 5%,#f5eafa 0,transparent 34%),#f6f6f5; color:#292929; }
+.landingCard { min-width:0; width:min(100%,460px); padding:30px 24px 24px; text-align:center; background:#fff; border:1px solid #e8e8e8; border-radius:28px; box-shadow:0 16px 48px rgb(42 26 48 / 10%); }
+.eyebrow { display:flex; align-items:center; justify-content:center; gap:6px; color:#813193; font-size:11px; font-weight:800; letter-spacing:.1em; }
+.eyebrow svg { width:15px; height:15px; fill:currentColor; }
+.creatorPortrait { width:112px; height:112px; margin:20px auto 12px; border-radius:50%; overflow:hidden; border:5px solid #f1e5f4; background:#ede8ee; }
+.creatorPortrait img { width:100%; height:100%; object-fit:cover; }
+.creatorName { margin:0; color:#813193; font-size:14px; font-weight:750; }
+.landingCard h1 { margin:12px auto 0; max-width:330px; font-size:27px; line-height:1.22; letter-spacing:-.045em; }
+.landingBody { margin:14px auto 24px; max-width:350px; color:#6c6a6a; font-size:14px; line-height:1.65; }
+.shareArtwork { display:block; width:80px; height:80px; object-fit:contain; margin:-14px auto 10px; }
+.landingCard .primary { width:100%; font-size:14px; }
+.proof { margin:10px auto 0; max-width:330px; color:#6a576e; font-size:12px; line-height:1.55; }
+.secondary { display:inline-flex; min-height:44px; align-items:center; justify-content:center; margin-top:8px; color:#5c5260; font-size:13px; font-weight:650; text-underline-offset:3px; }
+.landingCard .error { margin-top:12px; text-align:center; }
+@media (max-width:380px) { .landing { padding:16px 12px; } .landingCard { padding:24px 18px 20px; border-radius:22px; } .landingCard h1 { font-size:24px; } }
+@media (prefers-reduced-motion:reduce) { .primary { transition:none; } .primary:active:not(:disabled) { transform:none; } }

@@ -37,6 +37,30 @@ describe("community stamp authority", () => {
     expect((await api.action(request({ code: " abc123 " }), "redeem-invite")).status).toBe(200);
     expect(rpc).toHaveBeenCalledWith("redeem_community_stamp_invite", { p_app_user_id: owner, p_code: "ABC123" });
   });
+  it("creates a link for the verified owner without accepting award facts", async () => {
+    const token = "a".repeat(32);
+    rpc.mockResolvedValueOnce({ token });
+    expect(await (await api.action(request({ creator: "elina" }), "share-link")).json()).toEqual({ token });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_community_stamp_share_link", { p_app_user_id: owner, p_celebrity_slug: "elina" });
+  });
+  it("confirms a visit using only the authenticated visitor and opaque token", async () => {
+    const token = "b".repeat(32);
+    rpc.mockResolvedValueOnce({ creator: "elina" });
+    expect(await (await api.action(request({ token }), "share-visit")).json()).toEqual({ creator: "elina" });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("visit_community_stamp_share_link", { p_app_user_id: owner, p_token: token });
+  });
+  it.each([{ token: "a".repeat(32), senderId: owner }, { token: "a".repeat(32), awarded: true }, { token: "short" }])("rejects forged share evidence %j", async body => {
+    expect((await api.action(request(body), "share-visit")).status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("requires a session to confirm a share and rejects private projections", async () => {
+    expect((await api.action(request({ token: "a".repeat(32) }, "", false), "share-visit")).status).toBe(401);
+    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValueOnce({ creator: "elina", senderId: owner });
+    const result = await api.action(request({ token: "a".repeat(32) }), "share-visit");
+    expect(result.status).toBe(503);
+    expect(await result.text()).not.toContain(owner);
+  });
   it("bounds streamed bodies", async () => {
     expect((await api.action(request({ code: "x".repeat(2000) }), "redeem-invite")).status).toBe(400);
     expect(rpc).not.toHaveBeenCalled();

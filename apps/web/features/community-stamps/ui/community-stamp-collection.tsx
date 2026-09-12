@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
 import { AVAILABLE_COMMUNITY_STAMPS, COMMUNITY_STAMPS, communityAwardResultSchema, communityInviteSchema, type CommunityStamp, type CommunityStampKind } from "../domain/community-stamps";
 import { CommunityStampArtwork } from "./community-stamp-artwork";
+import { SharePassport } from "./share-passport";
 import { communityStampAction, useCommunityStamps } from "./use-community-stamps";
 import styles from "./community-stamps.module.css";
 
@@ -71,12 +72,12 @@ function OwnerCollection({ locale, creator, resource }: { locale: Locale; creato
       {resource.refreshFailed && <p role="alert" className={styles.status}>{ko ? "최신 기록을 확인하지 못했어요." : "Couldn’t refresh your Stamps."} <button className={styles.action} onClick={resource.retry}>{ko ? "다시 시도" : "Retry"}</button></p>}
       <ul className={styles.grid}>{kinds.map(kind => {
         const stamp = earned(kind); const info = COMMUNITY_STAMPS[kind];
-        const href = creator ? `/c/${creator}?locale=${locale}${kind === "daily_checkin" ? "#daily-checkin" : "#cheers"}` : `/celebrities?locale=${locale}`;
+        const href = creator ? `/c/${creator}?locale=${locale}${kind === "daily_checkin" ? "#daily-checkin" : "#cheers"}` : kind === "share" ? `/passports?locale=${locale}` : `/celebrities?locale=${locale}`;
         return <li className={styles.card} data-earned={!!stamp} key={kind}>
           <CommunityStampArtwork kind={kind} locale={locale} className={styles.art} decorative/>
           <h3>{info[locale]}</h3>{stamp && <span className={styles.state}><Check aria-hidden="true"/>{ko ? "획득" : "Earned"}</span>}
           <p>{ko ? info.koHelp : info.enHelp}</p>
-          {stamp ? <button className={styles.action} onClick={() => setSelected(stamp)}>{ko ? "스탬프 보기" : "View Stamp"}</button> : kind === "welcome" ? <button className={styles.action} disabled={busy} onClick={() => void run("welcome")}>{ko ? "가입 스탬프 받기" : "Get welcome Stamp"}</button> : kind === "invite" ? <button className={styles.action} disabled={busy} onClick={() => { setInviteOpen(true); void run("invite-code"); }}>{ko ? "친구 초대하기" : "Invite a friend"}</button> : <Link className={styles.action} href={href as Route}>{kind === "daily_checkin" ? (ko ? "출석하러 가기" : "Check in") : (ko ? "댓글 남기기" : "Leave a comment")}</Link>}
+          {stamp ? <button className={styles.action} onClick={() => setSelected(stamp)}>{ko ? "스탬프 보기" : "View Stamp"}</button> : kind === "welcome" ? <button className={styles.action} disabled={busy} onClick={() => void run("welcome")}>{ko ? "가입 스탬프 받기" : "Get welcome Stamp"}</button> : kind === "invite" ? <button className={styles.action} disabled={busy} onClick={() => { setInviteOpen(true); void run("invite-code"); }}>{ko ? "친구 초대하기" : "Invite a friend"}</button> : kind === "share" && creator ? <SharePassport creator={{ slug: creator, name: creator }} locale={locale}/> : <Link className={styles.action} href={href as Route}>{kind === "daily_checkin" ? (ko ? "출석하러 가기" : "Check in") : kind === "share" ? (ko ? "패스포트 고르기" : "Choose a Passport") : (ko ? "댓글 남기기" : "Leave a comment")}</Link>}
         </li>;
       })}</ul>
       {!creator && earned("invite") && !inviteOpen && <button className={styles.action} onClick={() => { setInviteOpen(true); void run("invite-code"); }}>{ko ? "내 초대코드" : "My invite code"}</button>}

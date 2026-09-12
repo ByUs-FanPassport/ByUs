@@ -67,6 +67,19 @@
 - DB clean158 migrations+신규 behavior 및 기존 전체 backend security PASS. 교차검토로 invitee redeemed boolean, tokenId string projection, 자정 source/issuedAt 정합성을 수정하고 clean replay+behavior 재통과.
 - Web typecheck/lint/build PASS. 출석 중복 클릭 guard 4tests와 최종 typecheck PASS. 전체 lint의 hook dependency 경고1건 수정 후 해당 파일 eslint PASS. localhost 실제 production component/CSS + synthetic auth/API에서 KO/EN360/1440 렌더, 모달 Escape, 복사 미지급, axe PASS. 근거 `test-results/community-stamps-local/`. 실제 계정/온체인/운영 증거 아님.
 - 운영 DB 마지막 migration `20260912152008` 확인. 최종 SQL clean replay158+behavior PASS. 기존 초대 스탬프 보유자가 다른 코드를 사용할 때 awarded=false 반환도 검증. 배포 준비 완료. 운영 schema migration `20260912155839`와 history 반영 완료. main `dd8ec80` 푸시, Vercel `dpl_2NFRq9Ce8ANShPRE4X2kiqEwfwr8` 자동배포 시작. AWS worker 동일 commit 배포 Active/Successful 및 bundle hash 일치 확인. Vercel READY 및 byus.kr alias 확인. AWS Secret의 capability만 community-stamp-v1으로 갱신하고 기존 필드 보존 확인. 신규 동시성 테스트도 실제 두 PostgreSQL 세션 Lock 대기를 관찰: 체크인 stamp/job 각각1, 초대 redemption1 및 승자+invitee stamp/job 각각2, 패자ledger0. 운영 사용자 행동/실제 민팅 거래를 시험 생성하지 않음.
-- 공유 기준 질문 pending: 기기 공유창 완료반환 지급 vs 실제 SNS 게시 인증. 답변 전 공개·지급 없음.
+- 공유 기준은 후속 사용자 “벤치마킹 리서치하고 권장안으로 진행” 승인에 따라 확정: 다른 로그인 회원의 공유 링크 방문 확인 시 최애별 1회 지급. 링크 생성·복사·기기 공유창 응답·GET·본인 방문은 무보상. SNS 게시 완료로 표현하지 않는다.
 
-전체 7종 목표의 남은 범위는 공유 지급 기준 확인, YouTube/Instagram 팬 구독 자동증명, TikTok 후원 자동증명이다. 4종 공개 완료를 7종 구현 완료로 기록하지 않는다.
+## 남은 스탬프 벤치마킹과 권장안 (2026-09-13 후속)
+
+- Gleam의 [Viral Share](https://gleam.io/docs/actions/viral-share)는 공유 버튼 클릭이 아닌 실제 추천 유입 완료를 보상한다. ByUs는 고유 링크를 받은 다른 회원이 로그인 후 명시적으로 최애 보기를 누를 때 보낸 회원에게 최애별 한 번 지급한다. [MDN Web Share](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share)의 promise 완료는 실제 SNS 게시 완료 증명이 아니므로 사용하지 않는다.
+- 디자인: Gleam의 행동명·조건·완료 구분, Manychat의 한 카드 한 행동 구조를 참고했다. 기존 흰 카드와 보라색 도장 계열을 유지하며 공유 준비, 기기 공유/복사, 수신자 확인을 분리한다. 공식 도움말 원본 이미지 4장과 URL은 `artifacts/stamp-remaining-20260913/benchmark/README.md`. 실제 계정 상호작용을 관찰한 자료는 아니다.
+- YouTube 구독 보상은 공식 API 정책 III.F.3에 의해 제외한다. Instagram은 inbound DM nonce와 IGSID 기반 서버 팔로우 확인을 권장하며 Messaging 권한·심사·webhook·creator 재동의가 선행된다. TikTok은 특정 후원 수신자 증명값이 있는 정식 파트너 API가 필요하다. 자세한 근거·다음 구현·공개 게이트: [외부 인증 준비](stamp-external-readiness-20260913.md).
+- 공유 구현: issued Passport 소유자별 난수 token, 개인 정보 없는 공개 creator projection, 서버 인증 recipient POST, immutable 증거와 원자적 원장/작업 생성. 기본 worker는 이미 share를 지원하므로 변경하지 않는다.
+- 전체 7종 완료가 아니다. 공유 구현·검증·배포 진행 중이며 Instagram 자동 인증 연결 및 TikTok 파트너 증거 확보가 남는다. YouTube 구독 보상은 정책상 구현하지 않는다.
+
+### 공유 후속 검증 결과
+- 웹 route/domain/privacy/소유자 전환/StrictMode UI 113 tests PASS. build(내장 TypeScript 포함) 및 대상 eslint PASS.
+- 기존 community behavior + 신규 share behavior를 같은 clean DB replay에서 PASS. 기존 미검증 share 오류 assertion을 새 INVALID_REQUEST 계약으로 수정했고 미지급 검증은 유지했다.
+- 실제 PostgreSQL 동시 세션 Lock 대기 확인: 같은 방문자 visits1/stamp1/job1, 서로 다른 방문자 visits2/stamp1/job1. 재현 스크립트 `scripts/verify-community-stamp-share-concurrency.sh`.
+- KO/EN 360/1440 localhost production UI/CSS + synthetic auth/API: 링크 생성과 native share의 별도 클릭, 복사·취소·익명 방문 무지급, 로그인 returnTo, 명시적 확인 POST 1회, 이미지 로딩·뷰포트/카드 넘침·axe PASS. `apps/web/test-results/community-stamp-share-local/`.
+- 검증 중 링크 input의 content-box 넘침과 랜딩 영문 폰트 누락을 실제 캡처로 확인해 CSS sizing/폰트를 보정했다. 실제 회원, 운영 방문·스탬프, 민팅 거래는 시험 생성하지 않았다.
