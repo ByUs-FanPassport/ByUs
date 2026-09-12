@@ -404,12 +404,12 @@ describe("benefit screens", () => {
       screen.getByText(/받은 응모권은 수량을 선택해 직접 응모해야 해요/),
     ).toBeInTheDocument();
     const nextAction = screen.getByRole("link", {
-      name: "팬 인증하고 LIVE 참여하기",
+      name: "이퓨 팬 인증하기",
     });
     expect(nextAction).toHaveAttribute("data-fan-action-emphasis", "primary");
     expect(nextAction).toHaveAttribute(
       "href",
-      "/c/ifewknow/verify?locale=ko&returnTo=%2Flive%2Fifew-100-days-tiktok-20260912%3Flocale%3Dko",
+      "/c/ifewknow/verify?locale=ko",
     );
   });
   it("gives an authenticated Elina fan with no raffle tickets both current earning paths", async () => {
@@ -469,7 +469,7 @@ describe("benefit screens", () => {
     expect(screen.getByRole("heading", { name: "응모 이력" })).toBeInTheDocument();
     expect(screen.getByText(/3 응모/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "팬 인증하고 LIVE 참여하기" }),
+      screen.queryByRole("link", { name: "이퓨 팬 인증하기" }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "이퓨 LIVE 자세히 보기" }),
@@ -791,7 +791,7 @@ describe("benefit screens", () => {
       expect(await screen.findByText(label)).toBeInTheDocument();
       expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: "팬 인증하고 LIVE 참여하기" }),
+        screen.queryByRole("link", { name: "이퓨 팬 인증하기" }),
       ).not.toBeInTheDocument();
       expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/entries"))).toHaveLength(0);
     },

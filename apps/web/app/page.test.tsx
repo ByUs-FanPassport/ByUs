@@ -33,10 +33,9 @@ describe("Home server content isolation", () => {
     expect(result.props.children[1].props.contentErrors).toMatchObject({ celebrityLives: true });
   });
 
-  it("isolates a failed guide role read without falling back to stale artwork", async () => {
-    repositories.guidePhotos.mockRejectedValue(new Error("images unavailable"));
+  it("no longer reads retired event artwork for the home page", async () => {
     const result = await HomePage({ searchParams: Promise.resolve({}) });
-    expect(result.props.children[1].props.contentErrors.guideImages).toBe(true);
+    expect(repositories.guidePhotos).not.toHaveBeenCalled();
     expect(result.props.children[1].props.celebrities).toEqual([]);
   });
 

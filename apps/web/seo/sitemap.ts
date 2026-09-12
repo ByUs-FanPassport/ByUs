@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { canonicalUrl, isPrivatePath, isRehearsalPath, languageAlternates, type SeoLocale } from "./metadata";
 
-export const STATIC_PUBLIC_PATHS = ["/", "/celebrities", "/live", "/guide", "/pages/ifew-fan-guide", "/pages/elina-fan-guide", "/pages/us-fanmeetings", "/pages/creator-onboarding", "/pages/partners"];
+export const STATIC_PUBLIC_PATHS = ["/", "/celebrities", "/live", "/guide", "/pages/elina-fan-guide", "/pages/us-fanmeetings", "/pages/creator-onboarding", "/pages/partners"];
 
 export function buildSitemap(content: readonly { path: string; locale: SeoLocale }[]): MetadataRoute.Sitemap {
   const paths = new Map<string, Set<SeoLocale>>();
