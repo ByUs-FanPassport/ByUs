@@ -19,13 +19,13 @@ describe("role propagation from parent content", () => {
     view.rerender(<CreatorImage {...props} photos={photoSet(2)} />);
     expectImage(view.container.querySelector("img"), `/roles/${imageSlots[slot].role}-2.jpg`);
   });
-  it("keeps the selected Elina guide portrait and propagates event poster updates", () => {
-    const view = render(<HomeEntryCards locale="ko" celebrities={[celebrity()]} eventPhotos={photoSet()} />);
+  it("keeps the selected Elina guide portrait without the retired event poster", () => {
+    const view = render(<HomeEntryCards locale="ko" celebrities={[celebrity()]} />);
     expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-blue-beret-20260912.webp");
-    expectImage(view.container.querySelector('[data-event-photo="poster"] img'), "/roles/poster-1.jpg");
-    view.rerender(<HomeEntryCards locale="ko" celebrities={[celebrity(2)]} eventPhotos={photoSet(2)} />);
+    expect(view.container.querySelector('[data-event-photo="poster"]')).toBeNull();
+    view.rerender(<HomeEntryCards locale="ko" celebrities={[celebrity(2)]} />);
     expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-blue-beret-20260912.webp");
-    expectImage(view.container.querySelector('[data-event-photo="poster"] img'), "/roles/poster-2.jpg");
+    expect(view.container.querySelector('[data-event-photo="poster"]')).toBeNull();
   });
   it.each(["elina", "ifew"] as const)("keeps %s guide identity separate from editorial imagery", creator => {
     const view = render(<FanParticipationGuide locale="ko" creator={creator} images={{ celebrity: celebrity(), eventPhotos: photoSet() }} />);

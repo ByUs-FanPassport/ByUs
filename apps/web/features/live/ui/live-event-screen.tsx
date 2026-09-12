@@ -37,6 +37,7 @@ import {
 } from "@/features/live/domain/live-event";
 import {
   ifewLiveSlug,
+  ifewEndedDescription,
   ifewRafflesHref,
   ifewPrizeName,
 } from "@/features/live/domain/ifew-event";
@@ -1018,6 +1019,7 @@ export function LiveEventScreen({
   const { live, viewer, primaryAction } = data;
   const watchHref = liveWatchHref(live, locale);
   const isIfewLive = live.slug === ifewLiveSlug;
+  const isIfewClosed = isIfewLive && live.effectiveStatus === "ended";
   const isElinaLive = live.slug === elinaLiveSlug;
   const eventCopy = isIfewLive ? ifewLiveCopy[locale] : null;
   const attendanceCopy = eventCopy
@@ -1284,7 +1286,7 @@ export function LiveEventScreen({
                 <ArrowRight aria-hidden="true" />
               </a>
             ) : null}
-            {viewer.reservation && (
+            {viewer.reservation && !isIfewClosed && (
               <a
                 className={styles.calendarAction}
                 href={calendarUrl}
@@ -1298,7 +1300,7 @@ export function LiveEventScreen({
                 <span className={styles.calendarActionLabel}>{c.calendar}</span>
               </a>
             )}
-            {live.watch.available &&
+            {!isIfewClosed && live.watch.available &&
               live.watch.url &&
               primaryAction !== "watch_live" && (
                 <a
@@ -1341,10 +1343,10 @@ export function LiveEventScreen({
           <div className={styles.contentMain}>
             <section className={styles.section}>
               <h2>{c.introduction}</h2>
-              <p>{live.description}</p>
+              <p>{isIfewClosed ? ifewEndedDescription[locale] : live.description}</p>
               <p className={styles.productContext}>{live.productContext}</p>
             </section>
-            <section className={styles.section}>
+            {!isIfewClosed && <section className={styles.section}>
               <h2>{c.howTo}</h2>
               <ol className={styles.journey} data-step-count={journeySteps.length}>
                 {journeySteps.map((step, index) => (
@@ -1358,8 +1360,8 @@ export function LiveEventScreen({
               {isIfewLive ? <p className={styles.participationNote}>
                 {locale === "ko" ? "Fan Passport가 있으면 예약 없이도 출석할 수 있어요. 선물은 응모권으로 별도 신청해 주세요." : "With a Fan Passport, you can check in without a reservation. Use your raffle tickets to enter the prize draw separately."}
               </p> : null}
-            </section>
-            <section
+            </section>}
+            {(!isIfewClosed || attendance.kind === "success") && <section
               ref={fanCodeRef}
               id="fan-code"
               className={styles.fanCode}
@@ -1518,7 +1520,7 @@ export function LiveEventScreen({
                   )}
                 </div>
               )}
-            </section>
+            </section>}
             <section className={styles.section}>
               <h2>{c.benefit}</h2>
               {isIfewLive ? (
