@@ -11,7 +11,7 @@ import type {
 } from "./types.js";
 
 export const SOLAPI_SEND_MANY_DETAIL_URL = "https://api.solapi.com/messages/v4/send-many/detail";
-export const SOLAPI_MESSAGE_LIST_URL = "https://api.solapi.com/messages/v4/list";
+export const SOLAPI_MESSAGE_GROUPS_URL = "https://api.solapi.com/messages/v4/groups";
 export const SOLAPI_REQUEST_TIMEOUT_MS = 8_000;
 const RECONCILIATION = "DO_NOT_RESEND_OR_FALL_BACK_PENDING_MANUAL_RECONCILIATION" as const;
 const SAFE_PROVIDER_ID = /^[A-Za-z0-9_-]{2,128}$/;
@@ -226,11 +226,12 @@ export class SolapiClient {
 
   async lookup(expected: SolapiCorrelation): Promise<SolapiLookupResult> {
     const authorization = this.authorization();
-    if (!authorization || !SAFE_PROVIDER_ID.test(expected.providerMessageId)) {
+    if (!authorization || !SAFE_PROVIDER_ID.test(expected.providerMessageId) || !SAFE_PROVIDER_ID.test(expected.groupId)) {
       return {status:"unknown",statusCode:null};
     }
-    const url = new URL(SOLAPI_MESSAGE_LIST_URL);
-    url.searchParams.set("messageIds", JSON.stringify([expected.providerMessageId]));
+    // Every submitted group contains one message. The acknowledged group lookup
+    // exposes its canonical result even when the global list has not indexed it.
+    const url = new URL(`${SOLAPI_MESSAGE_GROUPS_URL}/${encodeURIComponent(expected.groupId)}/messages`);
     let response: Response;
     try {
       response = await this.fetchImpl(url, {
