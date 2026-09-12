@@ -243,6 +243,36 @@ inconsistent_results as (
         and result.occurred_at>=attempt.started_at
     )
 ),
+wallet_result_observations as (
+  select result.properties
+  from login_attempts attempt
+  join signup_events result
+    on result.event_name='login_result' and result.source='signup.login'
+   and result.anonymous_session_hash=attempt.anonymous_session_hash
+   and result.properties->>'guide'=attempt.properties->>'guide'
+   and result.properties->>'provider'=attempt.properties->>'provider'
+   and result.properties->>'trigger'=attempt.properties->>'trigger'
+   and result.idempotency_key='signup-login:'||attempt.attempt_nonce||':'||(result.properties->>'outcome')
+   and result.occurred_at>=attempt.started_at
+),
+wallet_diagnostic_metrics as (
+  select jsonb_build_object(
+    'semantics','wallet_wait_in_observed_login_results_not_unique_users',
+    'instrumentedResultObservations',(select count(*) from wallet_result_observations where properties ? 'walletWaitOutcome'),
+    'withoutDiagnosticResultObservations',(select count(*) from wallet_result_observations where not (properties ? 'walletWaitOutcome')),
+    'groups',coalesce((select jsonb_agg(t) from (
+      select properties->>'provider' provider,properties->>'browser' browser,
+        properties->>'outcome' outcome,properties->>'stage' stage,
+        properties->>'walletWaitOutcome' wallet_wait_outcome,
+        properties->>'walletReconciliation' wallet_reconciliation,
+        count(*) observations,
+        max((properties->>'walletWaitMs')::numeric) max_capped_wait_ms,
+        max((properties->>'walletReconciliationMs')::numeric) max_capped_reconciliation_ms
+      from wallet_result_observations where properties ? 'walletWaitOutcome'
+      group by 1,2,3,4,5,6 order by 1,2,3,4,5,6
+    ) t),'[]'::jsonb)
+  ) as value
+),
 canonical_accounts as (
   select account.id,account.verified_email,account.created_at
   from public.app_users account,parameters
@@ -316,6 +346,7 @@ select jsonb_build_object(
     'failuresByBrowserProviderStageReason',failure_breakdown.value,
     'unmatchedOrInconsistentResultObservations',inconsistent_results.observations
   ),
+  'walletDiagnostics',wallet_diagnostic_metrics.value,
   'canonicalSignupProgress',jsonb_build_object(
     'cohort','app_users_created_in_window',
     'accounts',canonical_metrics.accounts,
@@ -339,7 +370,7 @@ select jsonb_build_object(
 ) as signup_conversion_funnel
 from guide_metrics cross join guide_dimensions cross join verify_cta_metrics cross join guest_signup_funnel
 cross join attempt_metrics cross join attempt_triggers cross join failure_breakdown
-cross join inconsistent_results cross join canonical_metrics cross join profile_projection_metrics
+cross join wallet_diagnostic_metrics cross join inconsistent_results cross join canonical_metrics cross join profile_projection_metrics
 \gset signup_report_
 
 select :'signup_report_signup_conversion_funnel'::jsonb as signup_conversion_funnel;

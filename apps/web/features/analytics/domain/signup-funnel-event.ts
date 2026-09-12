@@ -31,6 +31,31 @@ export type SignupStage = z.infer<typeof signupStageSchema>;
 export const signupReasonSchema = z.enum(["none", "timeout", "provider_error", "session_error", "verified_email_required", "reauthentication_required", "unknown"]);
 export type SignupReason = z.infer<typeof signupReasonSchema>;
 
+export const walletDiagnosticShape = {
+  walletWaitOutcome: z.enum(["succeeded", "timeout", "error"]),
+  walletWaitMs: z.number().int().min(0).max(120_000),
+  walletReconciliation: z.enum(["not_needed", "wallet_found", "wallet_missing", "timeout", "error"]),
+  walletReconciliationMs: z.number().int().min(0).max(30_000),
+};
+const walletDiagnosticSchema = z.object(walletDiagnosticShape).strict().refine((value) =>
+  value.walletWaitOutcome === "timeout"
+    ? value.walletReconciliation !== "not_needed"
+    : value.walletReconciliation === "not_needed" && value.walletReconciliationMs === 0,
+);
+export type WalletDiagnostic = z.infer<typeof walletDiagnosticSchema>;
+
+/** Invalid optional diagnostics are omitted by the client, rejected at the API boundary. */
+export function parseWalletDiagnostic(input: unknown, outcome: string, stage: string, reason: string): WalletDiagnostic | undefined {
+  const parsed = walletDiagnosticSchema.safeParse(input);
+  if (!parsed.success || !["wallet", "token", "session"].includes(stage)) return undefined;
+  const value = parsed.data;
+  const ready = value.walletWaitOutcome === "succeeded"
+    || (value.walletWaitOutcome === "timeout" && value.walletReconciliation === "wallet_found");
+  if (!ready && (outcome !== "failed" || stage !== "wallet")) return undefined;
+  if (!ready && value.walletWaitOutcome === "timeout" && reason !== "timeout") return undefined;
+  return value;
+}
+
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
 const loginProperties = signupContextSchema.extend({ provider: signupProviderSchema, trigger: signupTriggerSchema }).strict();
 const detailsSchema = z.discriminatedUnion("eventName", [
@@ -54,6 +79,10 @@ const detailsSchema = z.discriminatedUnion("eventName", [
     idempotencyKey: z.string().regex(new RegExp(`^signup-login:${uuid}:(succeeded|failed)$`)),
     properties: loginProperties.extend({
       outcome: z.enum(["succeeded", "failed"]), stage: signupStageSchema, reason: signupReasonSchema,
+      walletWaitOutcome: walletDiagnosticShape.walletWaitOutcome.optional(),
+      walletWaitMs: walletDiagnosticShape.walletWaitMs.optional(),
+      walletReconciliation: walletDiagnosticShape.walletReconciliation.optional(),
+      walletReconciliationMs: walletDiagnosticShape.walletReconciliationMs.optional(),
     }).strict(),
   }),
 ]);
@@ -80,6 +109,14 @@ export function validateSignupEvent(input: {
   }
   if (parsed.data.eventName === "login_result") {
     const { outcome, stage, reason } = parsed.data.properties;
+    const diagnosticKeys = Object.keys(walletDiagnosticShape);
+    if (diagnosticKeys.some((key) => key in parsed.data.properties)) {
+      const diagnostic = Object.fromEntries(diagnosticKeys.map((key) => [key,
+        (parsed.data.properties as Record<string, unknown>)[key]]));
+      if (!parseWalletDiagnostic(diagnostic, outcome, stage, reason)) {
+        context.addIssue({ code: "custom", message: "Invalid wallet diagnostic" });
+      }
+    }
     if (!input.idempotencyKey.endsWith(`:${outcome}`)
       || (outcome === "succeeded" ? stage !== "session" || reason !== "none" : reason === "none")) {
       context.addIssue({ code: "custom", message: "Invalid observed login result" });

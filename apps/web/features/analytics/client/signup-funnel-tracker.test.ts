@@ -81,6 +81,49 @@ describe("best-effort signup observations", () => {
     await Promise.resolve();
   });
 
+  it("attaches diagnostics to the captured anonymous result once without persisting them", () => {
+    const f = fixture();
+    const attempt = f.tracker.beginLogin("google", "provider", "ko")!;
+    const diagnostic = { walletWaitOutcome: "timeout", walletWaitMs: 30000,
+      walletReconciliation: "wallet_found", walletReconciliationMs: 5 } as const;
+    f.tracker.result(attempt, "succeeded", "session", "none", diagnostic);
+    f.tracker.result(attempt, "succeeded", "session", "none", diagnostic);
+    expect(f.record).toHaveBeenCalledTimes(2);
+    const last = f.record.mock.calls.at(-1) as unknown as [{ properties: object }];
+    expect(last[0].properties).toMatchObject(diagnostic);
+    expect(f.record.mock.calls.at(-1)?.length).toBe(1);
+    expect(JSON.stringify(Object.values(window.sessionStorage))).not.toContain("walletWait");
+  });
+
+  it("drops malformed diagnostics without losing the ordinary login result", () => {
+    const f = fixture();
+    f.tracker.result(f.tracker.beginLogin("google", "provider", "ko"), "succeeded", "session", "none",
+      { walletWaitOutcome: "private-error" } as never);
+    const last = f.record.mock.calls.at(-1) as unknown as [{ properties: object }];
+    expect(last[0].properties).toMatchObject({ outcome: "succeeded" });
+    expect(JSON.stringify(last)).not.toMatch(/walletWait|private-error/);
+  });
+
+  it("omits inconsistent diagnostics and isolates a failed diagnostic delivery", async () => {
+    const f = fixture();
+    const attempt = f.tracker.beginLogin("google", "provider", "ko");
+    f.tracker.result(attempt, "succeeded", "session", "none", {
+      walletWaitOutcome: "timeout", walletWaitMs: 30000,
+      walletReconciliation: "wallet_missing", walletReconciliationMs: 50,
+    });
+    const last = f.record.mock.calls.at(-1) as unknown as [{ properties: object }];
+    expect(last[0].properties).toMatchObject({ outcome: "succeeded" });
+    expect(JSON.stringify(last)).not.toContain("walletReconciliation");
+    const next = f.tracker.beginLogin("google", "retry", "ko");
+    f.record.mockRejectedValueOnce(new Error("offline"));
+    expect(() => f.tracker.result(next, "failed", "wallet", "timeout", {
+      walletWaitOutcome: "timeout", walletWaitMs: 30000,
+      walletReconciliation: "error", walletReconciliationMs: 50,
+    })).not.toThrow();
+    expect(next?.failed).toBe(true);
+    await Promise.resolve();
+  });
+
   it("expires old attempts and never reuses another browser's absent state", () => {
     const f = fixture();
     const first = f.tracker.beginLogin("google", "provider", "ko")!;

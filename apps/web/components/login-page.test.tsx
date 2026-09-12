@@ -207,6 +207,7 @@ describe("Privy login page", () => {
   it("reuses a still-running wallet creation when its bounded wait is retried", async () => {
     vi.useFakeTimers();
     authenticated = true;
+    const observed = vi.spyOn(signupFunnelTracker, "result").mockImplementation(() => undefined);
     refreshUser.mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [] }));
     let finishWallet!: (value: unknown) => void;
     createWallet.mockImplementation(() => new Promise((resolve) => { finishWallet = resolve; }));
@@ -222,9 +223,12 @@ describe("Privy login page", () => {
     expect(createWallet).toHaveBeenCalledTimes(1);
 
     await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
       finishWallet(embeddedWallet);
       await vi.advanceTimersByTimeAsync(0);
     });
+    expect(observed.mock.calls.map((call) => call[4]?.walletWaitMs)).toEqual([30_000, 2_000]);
+    observed.mockRestore();
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko");
   });
@@ -702,6 +706,75 @@ describe("Privy login page", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it.each(["created", "sdk_error", "found", "missing", "read_error", "read_timeout", "token_error"])(
+    "captures bounded wallet diagnostics without changing auth when %s", async (scenario) => {
+      vi.useFakeTimers();
+      window.sessionStorage.clear();
+      authenticated = true;
+      const observed = vi.spyOn(signupFunnelTracker, "result").mockImplementation(() => undefined);
+      try {
+        refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] });
+        if (scenario === "missing") refreshUser.mockResolvedValue({ id: currentUserId, linkedAccounts: [] });
+        if (scenario === "read_error") refreshUser.mockRejectedValue(new Error("private-sdk-message"));
+        if (scenario === "read_timeout") refreshUser.mockImplementation(() => new Promise(() => {}));
+        if (scenario === "sdk_error") createWallet.mockImplementation(() => { throw new Error("private-wallet-error"); });
+        else if (scenario !== "created") createWallet.mockImplementation(() => new Promise(() => {}));
+        if (scenario === "token_error") getAccessToken.mockRejectedValue(new Error("private-token-error"));
+        render(<LoginPage />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(35_000); });
+        expect(observed).toHaveBeenCalledTimes(1);
+        const call = observed.mock.calls[0];
+        const diag = call[4]!;
+        expect(diag).toMatchObject({
+          walletWaitOutcome: scenario === "created" ? "succeeded" : scenario === "sdk_error" ? "error" : "timeout",
+          walletReconciliation: scenario === "created" || scenario === "sdk_error" ? "not_needed"
+            : scenario === "missing" ? "wallet_missing" : scenario === "read_error" ? "error"
+              : scenario === "read_timeout" ? "timeout" : "wallet_found",
+        });
+        expect(diag.walletWaitMs).toBe(scenario === "created" || scenario === "sdk_error" ? 0 : 30_000);
+        expect(diag.walletWaitMs).toBeLessThanOrEqual(120_000);
+        expect(diag.walletReconciliationMs).toBe(scenario === "read_timeout" ? 5_000 : 0);
+        expect(diag.walletReconciliationMs).toBeLessThanOrEqual(30_000);
+        expect(JSON.stringify(diag)).not.toMatch(/private|restored-fan|0x/);
+        const success = scenario === "created" || scenario === "found";
+        expect(call[1]).toBe(success ? "succeeded" : "failed");
+        expect(fetch).toHaveBeenCalledTimes(success ? 1 : 0);
+        expect(createWallet).toHaveBeenCalledTimes(1);
+        if (scenario === "token_error") expect(call[2]).toBe("token");
+      } finally { observed.mockRestore(); }
+    },
+  );
+
+  it("omits diagnostics when the monotonic clock is unavailable", async () => {
+    authenticated = true;
+    refreshUser.mockResolvedValue({ id: currentUserId, linkedAccounts: [] });
+    const now = vi.spyOn(performance, "now").mockReturnValue(Number.NaN);
+    const observed = vi.spyOn(signupFunnelTracker, "result").mockImplementation(() => undefined);
+    try {
+      render(<LoginPage />);
+      await act(async () => { await Promise.resolve(); });
+      expect(replace).toHaveBeenCalledTimes(1);
+      expect(observed.mock.calls[0][4]).toBeUndefined();
+    } finally { now.mockRestore(); observed.mockRestore(); }
+  });
+
+  it("never emits wallet diagnostics after unmount during reconciliation", async () => {
+    vi.useFakeTimers();
+    authenticated = true;
+    const observed = vi.spyOn(signupFunnelTracker, "result").mockImplementation(() => undefined);
+    try {
+      refreshUser.mockResolvedValueOnce({ id: currentUserId, linkedAccounts: [] })
+        .mockImplementation(() => new Promise(() => {}));
+      createWallet.mockImplementation(() => new Promise(() => {}));
+      const view = render(<LoginPage />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+      view.unmount();
+      await act(async () => { await vi.advanceTimersByTimeAsync(5_000); });
+      expect(observed).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    } finally { observed.mockRestore(); }
+  });
+
   it("observes provider start and session success on the same anonymous attempt", async () => {
     window.sessionStorage.clear();
     const result = vi.spyOn(signupFunnelTracker, "result");
@@ -711,7 +784,7 @@ describe("Privy login page", () => {
     expect(attempt).toMatchObject({ provider: "google", trigger: "provider" });
     await act(async () => { await onOAuthComplete?.(); });
     await waitFor(() => expect(replace).toHaveBeenCalled());
-    expect(result).toHaveBeenCalledWith(expect.objectContaining({ nonce: attempt?.nonce }), "succeeded", "session", "none");
+    expect(result).toHaveBeenCalledWith(expect.objectContaining({ nonce: attempt?.nonce }), "succeeded", "session", "none", undefined);
     expect(getAccessToken).toHaveBeenCalledTimes(1); // Analytics never asks for another token.
     result.mockRestore();
   });
@@ -724,7 +797,7 @@ describe("Privy login page", () => {
     const start = vi.spyOn(signupFunnelTracker, "beginLogin");
     render(<LoginPage />);
     await screen.findByText("로그인 정보를 안전하게 연결하지 못했어요.");
-    expect(result).toHaveBeenCalledWith(expect.anything(), "failed", "session", "session_error");
+    expect(result).toHaveBeenCalledWith(expect.anything(), "failed", "session", "session_error", undefined);
     const failed = signupFunnelTracker.pendingLogin()?.nonce;
     let finishRetry!: (response: Response) => void;
     vi.mocked(globalThis.fetch).mockImplementationOnce(() => new Promise((resolve) => { finishRetry = resolve; }));

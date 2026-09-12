@@ -40,6 +40,38 @@ describe("signup measurement privacy boundary", () => {
       properties: { ...properties, outcome: "failed", stage: "oauth", reason: "timeout" } }).success).toBe(true);
   });
 
+  it("validates the complete bounded wallet diagnostic group and success semantics", () => {
+    const diagnostic = { walletWaitOutcome: "timeout", walletWaitMs: 30000,
+      walletReconciliation: "wallet_found", walletReconciliationMs: 120 };
+    const event = { ...started, eventName: "login_result", idempotencyKey: `signup-login:${nonce}:succeeded`,
+      properties: { ...properties, outcome: "succeeded", stage: "session", reason: "none", ...diagnostic } };
+    expect(clientProductEventV1Schema.safeParse(event).success).toBe(true);
+    for (const patch of [
+      { walletWaitMs: -1 }, { walletWaitMs: 120001 }, { walletWaitMs: 1.5 },
+      { walletReconciliationMs: 30001 }, { walletReconciliationMs: null },
+      { walletWaitOutcome: "private SDK error" }, { walletReconciliation: "wallet_missing" },
+      { walletWaitOutcome: "succeeded" }, { walletWaitMs: undefined },
+      { walletAddress: "private-wallet" },
+    ]) expect(clientProductEventV1Schema.safeParse({ ...event, properties: { ...event.properties, ...patch } }).success).toBe(false);
+  });
+
+  it("delivers validated diagnostics through the real anonymous API handler", async () => {
+    const diagnostic = { walletWaitOutcome: "timeout", walletWaitMs: 30000,
+      walletReconciliation: "wallet_missing", walletReconciliationMs: 100 };
+    const event = { ...started, eventName: "login_result", idempotencyKey: `signup-login:${nonce}:failed`,
+      properties: { ...properties, outcome: "failed", stage: "wallet", reason: "timeout", ...diagnostic } };
+    const identify = vi.fn(async () => null);
+    const record = vi.fn(async () => ({ id: nonce, replayed: false }));
+    const handler = createRecordProductEventHandler({ identify, repository: { record }, now: () => new Date(started.occurredAt) });
+    const response = await handler(new Request("https://byus.test/api/events", {
+      method: "POST", body: JSON.stringify(event),
+    }));
+    expect(response.status).toBe(201);
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls[0]).toEqual([expect.objectContaining({ appUserId: null,
+      properties: expect.objectContaining(diagnostic) })]);
+  });
+
   it.each(["account_created", "profile_completed"])("keeps %s server-only", (eventName) => {
     expect(clientProductEventV1Schema.safeParse({ ...started, eventName }).success).toBe(false);
   });

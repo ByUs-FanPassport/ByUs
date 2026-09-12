@@ -81,6 +81,186 @@ begin
 end;
 $$;
 
+-- login_result accepts either the legacy eleven-property shape or the exact
+-- fifteen-property shape with all four bounded wallet diagnostics.
+do $$
+declare
+  hash text := repeat('7',64);
+  observed_at timestamptz := statement_timestamp() - interval '30 seconds';
+  login_common jsonb := '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider"}'::jsonb;
+  diagnostic_cases jsonb[] := array[
+    '{"outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":0,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb,
+    '{"outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"timeout","walletWaitMs":120000,"walletReconciliation":"wallet_found","walletReconciliationMs":30000}'::jsonb,
+    '{"outcome":"failed","stage":"wallet","reason":"timeout","walletWaitOutcome":"timeout","walletWaitMs":120000,"walletReconciliation":"wallet_missing","walletReconciliationMs":1}'::jsonb,
+    '{"outcome":"failed","stage":"wallet","reason":"timeout","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"timeout","walletReconciliationMs":30000}'::jsonb,
+    '{"outcome":"failed","stage":"wallet","reason":"timeout","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"error","walletReconciliationMs":1}'::jsonb,
+    '{"outcome":"failed","stage":"wallet","reason":"session_error","walletWaitOutcome":"error","walletWaitMs":1,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb
+  ];
+  diagnostic_case jsonb;
+  case_number integer := 0;
+begin
+  foreach diagnostic_case in array diagnostic_cases loop
+    case_number := case_number + 1;
+    perform public.record_product_event_v1(
+      1::smallint,'login_started',null,hash,null,null,null,null,'signup.login',
+      'signup-login:71000000-0000-4000-8000-' || lpad(case_number::text,12,'0') || ':started',
+      observed_at + (case_number - 1) * interval '1 second',login_common
+    );
+    perform public.record_product_event_v1(
+      1::smallint,'login_result',null,hash,null,null,null,null,
+      'signup.login',
+      'signup-login:71000000-0000-4000-8000-' || lpad(case_number::text,12,'0') ||
+        case diagnostic_case->>'outcome' when 'succeeded' then ':succeeded' else ':failed' end,
+      observed_at + case_number * interval '1 second',login_common || diagnostic_case
+    );
+  end loop;
+end;
+$$;
+
+-- Wallet-diagnostic events retain exact replay and conflict semantics without
+-- emitting returned event identifiers from the test harness.
+do $$
+declare
+  hash text := repeat('8',64);
+  observed_at timestamptz := statement_timestamp() - interval '20 seconds';
+  event_properties jsonb := '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"timeout","walletWaitMs":5000,"walletReconciliation":"wallet_found","walletReconciliationMs":250}'::jsonb;
+  first_result jsonb;
+  replay_result jsonb;
+begin
+  first_result := public.record_product_event_v1(
+    1::smallint,'login_result',null,hash,null,null,null,null,
+    'signup.login','signup-login:72000000-0000-4000-8000-000000000001:succeeded',
+    observed_at,event_properties
+  );
+  replay_result := public.record_product_event_v1(
+    1::smallint,'login_result',null,hash,null,null,null,null,
+    'signup.login','signup-login:72000000-0000-4000-8000-000000000001:succeeded',
+    observed_at,event_properties
+  );
+  if (first_result->>'replayed')::boolean or not (replay_result->>'replayed')::boolean
+     or first_result->>'id' is distinct from replay_result->>'id' then
+    raise exception 'Wallet diagnostic replay contract failed';
+  end if;
+end;
+$$;
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('8',64),null,null,null,null,
+    'signup.login','signup-login:72000000-0000-4000-8000-000000000001:succeeded',now()-interval '20 seconds',
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":1,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_IDEMPOTENCY_CONFLICT');
+
+-- Partial/extra shapes, unsafe number coercions, invalid taxonomies, invalid
+-- state combinations, and authenticated ownership are rejected.
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000001:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded"}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000002:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":1,"walletReconciliation":"not_needed","walletReconciliationMs":0,"extra":true}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000003:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":"1","walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000004:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":1.5,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000005:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":1e1000,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000006:failed',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"failed","stage":"wallet","reason":"timeout","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"wallet_missing","walletReconciliationMs":30001}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000007:failed',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"failed","stage":"oauth","reason":"timeout","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"wallet_missing","walletReconciliationMs":1}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000008:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"wallet_missing","walletReconciliationMs":1}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000009:failed',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"failed","stage":"wallet","reason":"session_error","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"error","walletReconciliationMs":1}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result','73000000-0000-4000-8000-000000000010',null,null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000010:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":1,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000011:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"succeeded","walletWaitMs":null,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000012:failed',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"failed","stage":"wallet","reason":"unknown","walletWaitOutcome":"pending","walletWaitMs":1,"walletReconciliation":"not_needed","walletReconciliationMs":0}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+select pg_temp.expect_signup_event_error($sql$
+  select public.record_product_event_v1(
+    1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+    'signup.login','signup-login:73000000-0000-4000-8000-000000000013:succeeded',now(),
+    '{"channel":"direct","landing":"fan_guide","guide":"elina","browser":"safari","os":"ios","locale":"ko","provider":"apple","trigger":"provider","outcome":"succeeded","stage":"session","reason":"none","walletWaitOutcome":"timeout","walletWaitMs":1,"walletReconciliation":"wallet_found","walletReconciliationMs":-1}'::jsonb)
+$sql$,'PRODUCT_EVENT_INVALID');
+
+do $$
+declare
+  invalid_stage text;
+  case_number integer := 20;
+  event_properties jsonb;
+begin
+  foreach invalid_stage in array array['oauth','user','ready','reauthentication'] loop
+    case_number := case_number + 1;
+    event_properties := jsonb_build_object(
+      'channel','direct','landing','fan_guide','guide','elina','browser','safari',
+      'os','ios','locale','ko','provider','apple','trigger','provider',
+      'outcome','failed','stage',invalid_stage,'reason','session_error',
+      'walletWaitOutcome','error','walletWaitMs',1,
+      'walletReconciliation','not_needed','walletReconciliationMs',0
+    );
+    begin
+      perform public.record_product_event_v1(
+        1::smallint,'login_result',null,repeat('9',64),null,null,null,null,
+        'signup.login',
+        'signup-login:73000000-0000-4000-8000-' || lpad(case_number::text,12,'0') || ':failed',
+        statement_timestamp(),event_properties
+      );
+      raise exception 'Wallet diagnostics accepted pre-wait stage %',invalid_stage;
+    exception when sqlstate '22023' then
+      null;
+    end;
+  end loop;
+end;
+$$;
+
 -- Fixed shapes, sources, anonymous ownership, entity absence, taxonomies, and
 -- name/outcome-specific UUID-v4 keys are all enforced inside the RPC.
 select pg_temp.expect_signup_event_error($sql$
@@ -391,6 +571,31 @@ begin
   if report::text like '%52000000-0000-4000-8000-000000000001%'
      or report::text like '%'||repeat('d',64)||'%' then
     raise exception 'Aggregate report leaked an identifier';
+  end if;
+end;
+$$;
+
+-- Diagnostic groups require matching starts; the separate replay fixture has no
+-- start and must not inflate this matched-result report.
+select (statement_timestamp()-interval '5 minutes')::text as diagnostic_from,
+       statement_timestamp()::text as diagnostic_to
+\gset
+\set from :diagnostic_from
+\set to :diagnostic_to
+\ir ../../scripts/report-signup-conversion-funnel.sql
+select set_config('byus.wallet_report_fixture', :'signup_report_signup_conversion_funnel', true);
+do $$
+declare d jsonb := current_setting('byus.wallet_report_fixture')::jsonb->'walletDiagnostics';
+begin
+  if (d->>'instrumentedResultObservations')::integer <> 6
+     or (d->>'withoutDiagnosticResultObservations')::integer <> 2
+     or jsonb_array_length(d->'groups') <> 6
+     or not exists(select 1 from jsonb_array_elements(d->'groups') g
+       where g->>'wallet_reconciliation'='wallet_found'
+         and (g->>'max_capped_wait_ms')::integer=120000
+         and (g->>'max_capped_reconciliation_ms')::integer=30000)
+     or exists(select 1 from jsonb_array_elements(d->'groups') g where (g->>'observations')::integer<>1) then
+    raise exception 'Wallet diagnostic report fixture mismatch';
   end if;
 end;
 $$;

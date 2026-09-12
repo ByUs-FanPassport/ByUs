@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { acquisitionLanding, classifyAcquisitionChannel, readStoredAcquisitionTouch } from "../domain/acquisition-attribution";
 import {
-  signupContextSchema, signupProviderSchema, signupTriggerSchema,
+  signupContextSchema, signupProviderSchema, signupTriggerSchema, parseWalletDiagnostic, type WalletDiagnostic,
   type SignupAction, type SignupAudience, type SignupContext, type SignupGuide,
   type SignupPlacement, type SignupProvider, type SignupReason, type SignupStage, type SignupTrigger,
 } from "../domain/signup-funnel-event";
@@ -128,7 +128,7 @@ export function createSignupFunnelTracker(environment: TrackerEnvironment) {
     try { environment.storage().removeItem(ATTEMPT_KEY); } catch { /* Auth state still changes normally. */ }
   }
   function result(attempt: LoginMeasurementAttempt | null, outcome: "succeeded" | "failed",
-    stage: SignupStage, reason: SignupReason): void {
+    stage: SignupStage, reason: SignupReason, walletDiagnostic?: WalletDiagnostic): void {
     if (!attempt) return;
     try {
       if (!fresh(attempt.at)) return;
@@ -136,13 +136,14 @@ export function createSignupFunnelTracker(environment: TrackerEnvironment) {
       const stored = read(ATTEMPT_KEY, attemptSchema);
       if (outcomes.has(key) || attempt[outcome] || (stored?.nonce === attempt.nonce && stored[outcome])) return;
       if (outcome === "failed" && (attempt.succeeded || (stored?.nonce === attempt.nonce && stored.succeeded))) return;
+      const diagnostic = parseWalletDiagnostic(walletDiagnostic, outcome, stage, reason);
       outcomes.add(key);
       attempt[outcome] = true;
       // Late outcomes retain their captured attempt, never replacing a newer attempt in storage.
       if (stored?.nonce === attempt.nonce) write(ATTEMPT_KEY, { ...stored, [outcome]: true });
       deliver({ ...emptyEntities, eventName: "login_result", source: "signup.login",
         idempotencyKey: key, occurredAt: new Date(environment.now()).toISOString(),
-        properties: { ...attempt.context, provider: attempt.provider, trigger: attempt.trigger, outcome, stage, reason } });
+        properties: { ...attempt.context, provider: attempt.provider, trigger: attempt.trigger, outcome, stage, reason, ...diagnostic } });
     } catch { /* Telemetry does not establish or revoke a session. */ }
   }
   return { guideView, guideCta, beginLogin, pendingLogin, resumeLogin, forgetLoginAttempt, result };

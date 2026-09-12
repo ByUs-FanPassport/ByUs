@@ -25,7 +25,7 @@ import {
 import { getSessionStorage } from "../features/reliability/client/session-storage";
 import { getOAuthStartGuard } from "../features/reliability/client/oauth-start";
 import { signupFunnelTracker, type LoginMeasurementAttempt } from "../features/analytics/client/signup-funnel-tracker";
-import { signupStageSchema, type SignupReason } from "../features/analytics/domain/signup-funnel-event";
+import { signupStageSchema, type SignupReason, type WalletDiagnostic } from "../features/analytics/domain/signup-funnel-event";
 import styles from "./login-page.module.css";
 
 const loginBackground = {
@@ -206,6 +206,18 @@ export function LoginPage({
     let promise!: Promise<void>;
     promise = (async () => {
       let stage = "login.user";
+      let walletDiagnostic: WalletDiagnostic | undefined;
+      // Monotonic wait time for this attempt, not the age of a shared SDK mutation.
+      let diagnosticClockValid = true;
+      const diagnosticNow = () => {
+        try {
+          const now = performance.now();
+          if (Number.isFinite(now)) return now;
+        } catch { /* Missing clocks must not affect authentication. */ }
+        diagnosticClockValid = false;
+        return 0;
+      };
+      const elapsed = (start: number, cap: number) => Math.min(cap, Math.max(0, Math.round(diagnosticNow() - start))) || 0;
       try {
         // Headless OAuth does not run Privy's createOnLogin policy. Prepare the
         // same user-owned EVM wallet before the server establishes its session.
@@ -219,34 +231,44 @@ export function LoginPage({
         if (!hasEmbeddedWallet(currentUser)) {
           // Never create an additional wallet or replace an existing identity.
           stage = "login.wallet";
-          let walletCreation = walletCreationsRef.current.get(expectedUserId);
-          if (!walletCreation) {
-            const underlying = Promise.resolve(createWallet({ createAdditional: false }));
-            walletCreation = underlying;
-            walletCreationsRef.current.set(expectedUserId, underlying);
-            void underlying.finally(() => {
-              if (walletCreationsRef.current.get(expectedUserId) === underlying) {
-                walletCreationsRef.current.delete(expectedUserId);
-              }
-            }).catch(() => undefined);
-          }
+          const waitStarted = diagnosticNow();
           try {
+            let walletCreation = walletCreationsRef.current.get(expectedUserId);
+            if (!walletCreation) {
+              const underlying = Promise.resolve(createWallet({ createAdditional: false }));
+              walletCreation = underlying;
+              walletCreationsRef.current.set(expectedUserId, underlying);
+              void underlying.finally(() => {
+                if (walletCreationsRef.current.get(expectedUserId) === underlying) {
+                  walletCreationsRef.current.delete(expectedUserId);
+                }
+              }).catch(() => undefined);
+            }
             await withOperationDeadline(walletCreation, SDK_OPERATION_TIMEOUT_MS);
+            walletDiagnostic = { walletWaitOutcome: "succeeded", walletWaitMs: elapsed(waitStarted, 120_000),
+              walletReconciliation: "not_needed", walletReconciliationMs: 0 };
           } catch (walletError) {
+            walletDiagnostic = { walletWaitOutcome: walletError instanceof RequestTimeoutError ? "timeout" : "error",
+              walletWaitMs: elapsed(waitStarted, 120_000), walletReconciliation: "not_needed", walletReconciliationMs: 0 };
             if (!(walletError instanceof RequestTimeoutError)) throw walletError;
             assertCurrentIdentity(expectedUserId, generation);
-            // The SDK promise may still be pending after provisioning completed.
-            // Reconcile once from the same user's current state; never create again.
+            // A timeout leaves the SDK operation running. Inspect once, never create again.
+            const reconciliationStarted = diagnosticNow();
+            let reconciliation: WalletDiagnostic["walletReconciliation"];
             try {
               const reconciledUser = await withOperationDeadline(refreshUser(), WALLET_RECONCILIATION_TIMEOUT_MS);
               assertCurrentIdentity(expectedUserId, generation);
               if (reconciledUser.id !== expectedUserId) throw new StaleLoginIdentityError();
-              if (!hasEmbeddedWallet(reconciledUser)) throw walletError;
+              reconciliation = hasEmbeddedWallet(reconciledUser) ? "wallet_found" : "wallet_missing";
             } catch (reconciliationError) {
               assertCurrentIdentity(expectedUserId, generation);
               if (reconciliationError instanceof StaleLoginIdentityError) throw reconciliationError;
-              throw walletError;
+              reconciliation = reconciliationError instanceof RequestTimeoutError ? "timeout" : "error";
             }
+            walletDiagnostic = { ...walletDiagnostic, walletReconciliation: reconciliation,
+              walletReconciliationMs: elapsed(reconciliationStarted, 30_000) };
+            // Preserve the original error and recovery behavior; missing is not a read error.
+            if (reconciliation !== "wallet_found") throw walletError;
           }
           assertCurrentIdentity(expectedUserId, generation);
         }
@@ -287,7 +309,7 @@ export function LoginPage({
           throw new Error("Session synchronization failed");
         }
         assertCurrentIdentity(expectedUserId, generation);
-        signupFunnelTracker.result(measurement, "succeeded", "session", "none");
+        signupFunnelTracker.result(measurement, "succeeded", "session", "none", diagnosticClockValid ? walletDiagnostic : undefined);
         markAvatarSessionReady(expectedUserId);
         const returnPathname = new URL(returnTo, "https://byus.local").pathname;
         const storedIntent = typeof window === "undefined" ? null : readAuthIntent(getSessionStorage(), authIntent);
@@ -308,7 +330,7 @@ export function LoginPage({
           : caught instanceof Error && caught.message === VERIFIED_EMAIL_REQUIRED ? "verified_email_required"
             : caught instanceof Error && caught.message === APPLE_REAUTHENTICATION_REQUIRED ? "reauthentication_required" : "session_error";
         const observedStage = signupStageSchema.safeParse(stage.replace(/^login\./, ""));
-        signupFunnelTracker.result(measurement, "failed", observedStage.success ? observedStage.data : "session", reason);
+        signupFunnelTracker.result(measurement, "failed", observedStage.success ? observedStage.data : "session", reason, diagnosticClockValid ? walletDiagnostic : undefined);
         setError(
           caught instanceof Error && [VERIFIED_EMAIL_REQUIRED, APPLE_REAUTHENTICATION_REQUIRED].includes(caught.message)
             ? caught.message
