@@ -12,13 +12,20 @@ const actor = "33333333-3333-4333-8333-333333333333";
 const identity = { id: "1234", user_id: "5678", username: "creator", account_type: "BUSINESS" as const };
 const vault = tokenVault(Buffer.alloc(32, 71).toString("base64"));
 function setup() {
+  const diagnostics: unknown[] = [];
   const repository = {
     transition: vi.fn<InstagramOwnerRepository["transition"]>().mockResolvedValue({ celebrity_id: celebrityId, generation, locale: "ko" }),
     disconnect: vi.fn<InstagramOwnerRepository["disconnect"]>().mockResolvedValue({ celebrity_id: celebrityId, identity, token_ciphertext: vault.seal("provider-fixture-token", tokenBinding(celebrityId, identity)) }),
   };
   const provider = { exchange: vi.fn().mockResolvedValue({ identity, token: { accessToken: "provider-fixture-token", expiresIn: 3600 } }), revoke: vi.fn().mockResolvedValue(undefined) };
-  const service = createInstagramOwnerService({ repository: repository as unknown as InstagramOwnerRepository, provider: provider as unknown as InstagramProvider, vault, now: () => Date.parse("2026-09-13T00:00:00Z") });
-  return { service, repository, provider };
+  const service = createInstagramOwnerService({
+    repository: repository as unknown as InstagramOwnerRepository,
+    provider: provider as unknown as InstagramProvider,
+    vault,
+    now: () => Date.parse("2026-09-13T00:00:00Z"),
+    diagnostic: (event) => diagnostics.push(event),
+  });
+  return { service, repository, provider, diagnostics };
 }
 describe("owner Instagram service boundary", () => {
   it("consumes browser state before exchange, binds ciphertext to resolved creator, returns only pending nonce", async () => {
@@ -42,11 +49,24 @@ describe("owner Instagram service boundary", () => {
     expect(provider.exchange).not.toHaveBeenCalled();
   });
   it("cancels unmatched identity without persisting token or damaging an existing connection", async () => {
-    const { service, repository } = setup();
+    const { service, repository, diagnostics } = setup();
     repository.transition.mockResolvedValueOnce({ locale: "ko" }).mockRejectedValueOnce(new Error("OWNER_ACCOUNT_MISMATCH"));
     await expect(service.callback("provider-code", newSecret(), newSecret())).rejects.toThrow("OWNER_ACCOUNT_MISMATCH");
     expect(repository.transition.mock.calls.map(call => call[0])).toEqual(["consume", "resolve", "cancel"]);
     expect(repository.disconnect).not.toHaveBeenCalled();
+    expect(diagnostics).toEqual([{ stage: "resolve", reason: "account_mismatch" }]);
+  });
+  it("reports sanitized pending storage failures without logging callback secrets", async () => {
+    const { service, repository, diagnostics } = setup();
+    repository.transition
+      .mockResolvedValueOnce({ locale: "ko" })
+      .mockResolvedValueOnce({ celebrity_id: celebrityId, generation, locale: "ko" })
+      .mockRejectedValueOnce(new Error("private database payload provider-code creator"));
+
+    await expect(service.callback("private-provider-code", newSecret(), newSecret())).rejects.toThrow("private database payload");
+
+    expect(diagnostics).toEqual([{ stage: "pending", reason: "unknown" }]);
+    expect(JSON.stringify(diagnostics)).not.toMatch(/private|provider-code|creator|database|payload/);
   });
   it("erases owner connection first and reports unconfirmed remote revocation honestly", async () => {
     const { service, repository, provider } = setup();
