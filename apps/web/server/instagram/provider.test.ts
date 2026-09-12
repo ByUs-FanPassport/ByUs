@@ -11,6 +11,65 @@ function transport(...bodies: unknown[]) {
 }
 
 describe("Instagram Login HTTP provider", () => {
+  it.each([
+    {
+      name: "short-token transport",
+      request: vi.fn<typeof fetch>().mockRejectedValue(new Error("secret-code secret-state private-token")),
+      expected: { stage: "short_token", reason: "transport_error" },
+    },
+    {
+      name: "short-token parse",
+      request: transport({ access_token: "private-token", user_id: identity.id }),
+      expected: { stage: "short_token", reason: "schema_invalid" },
+    },
+    {
+      name: "short-token permission",
+      request: transport({ access_token: "private-token", user_id: identity.id, permissions: ["private-permission"] }),
+      expected: { stage: "short_token", reason: "permission_missing" },
+    },
+    {
+      name: "long-token parse",
+      request: transport(
+        { access_token: "private-short-token", user_id: identity.id, permissions: ["instagram_business_basic"] },
+        { access_token: "private-long-token", expires_in: -1 },
+      ),
+      expected: { stage: "long_token", reason: "schema_invalid" },
+    },
+    {
+      name: "profile parse",
+      request: transport(
+        { access_token: "private-short-token", user_id: identity.id, permissions: ["instagram_business_basic"] },
+        longToken,
+        { ...identity, username: "private invalid username" },
+      ),
+      expected: { stage: "profile", reason: "schema_invalid" },
+    },
+  ])("reports a sanitized diagnostic for $name", async ({ request, expected }) => {
+    const diagnostics: unknown[] = [];
+    const provider = createInstagramProvider(config, request, (event) => diagnostics.push(event));
+
+    await expect(provider.exchange("secret-code")).rejects.toBeInstanceOf(InstagramError);
+
+    expect(diagnostics).toEqual([expected]);
+    const serialized = JSON.stringify(diagnostics);
+    for (const secret of ["secret-code", "secret-state", "private-token", "private-short-token", "private-long-token", "private-permission", "private invalid username"]) {
+      expect(serialized).not.toContain(secret);
+    }
+  });
+
+  it("reports only numeric provider metadata and never the provider body", async () => {
+    const diagnostics: unknown[] = [];
+    const request = vi.fn<typeof fetch>().mockResolvedValue(Response.json({
+      error: { code: 190, message: "private provider message", trace_id: "private-trace" },
+    }, { status: 400 }));
+
+    await expect(createInstagramProvider(config, request, (event) => diagnostics.push(event)).exchange("private-code"))
+      .rejects.toEqual(new InstagramError("REAUTH_REQUIRED"));
+
+    expect(diagnostics).toEqual([{ stage: "short_token", reason: "provider_error", httpStatus: 400, providerCode: 190 }]);
+    expect(JSON.stringify(diagnostics)).not.toMatch(/private|trace|message|code\"/);
+  });
+
   it("requests only basic read permission with the current forced account-selection parameter", () => {
     const url = new URL(createInstagramProvider(config).authorizationUrl("state-value"));
     expect(url.origin + url.pathname).toBe("https://www.instagram.com/oauth/authorize");
