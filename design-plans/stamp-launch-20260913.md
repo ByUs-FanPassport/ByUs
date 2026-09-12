@@ -75,7 +75,7 @@
 - 디자인: Gleam의 행동명·조건·완료 구분, Manychat의 한 카드 한 행동 구조를 참고했다. 기존 흰 카드와 보라색 도장 계열을 유지하며 공유 준비, 기기 공유/복사, 수신자 확인을 분리한다. 공식 도움말 원본 이미지 4장과 URL은 `artifacts/stamp-remaining-20260913/benchmark/README.md`. 실제 계정 상호작용을 관찰한 자료는 아니다.
 - YouTube 구독 보상은 공식 API 정책 III.F.3에 의해 제외한다. Instagram은 inbound DM nonce와 IGSID 기반 서버 팔로우 확인을 권장하며 Messaging 권한·심사·webhook·creator 재동의가 선행된다. TikTok은 특정 후원 수신자 증명값이 있는 정식 파트너 API가 필요하다. 자세한 근거·다음 구현·공개 게이트: [외부 인증 준비](stamp-external-readiness-20260913.md).
 - 공유 구현: issued Passport 소유자별 난수 token, 개인 정보 없는 공개 creator projection, 서버 인증 recipient POST, immutable 증거와 원자적 원장/작업 생성. 기본 worker는 이미 share를 지원하므로 변경하지 않는다.
-- 전체 7종 완료가 아니다. 공유 구현·검증·배포 진행 중이며 Instagram 자동 인증 연결 및 TikTok 파트너 증거 확보가 남는다. YouTube 구독 보상은 정책상 구현하지 않는다.
+- 전체 7종 완료가 아니다. 공유 구현·로컬 검증·운영 DB 반영 완료, 웹 배포 단계이며 Instagram 자동 인증 연결 및 TikTok 파트너 증거 확보가 남는다. YouTube 구독 보상은 정책상 구현하지 않는다.
 
 ### 공유 후속 검증 결과
 - 웹 route/domain/privacy/소유자 전환/StrictMode UI 113 tests PASS. build(내장 TypeScript 포함) 및 대상 eslint PASS.
@@ -83,3 +83,4 @@
 - 실제 PostgreSQL 동시 세션 Lock 대기 확인: 같은 방문자 visits1/stamp1/job1, 서로 다른 방문자 visits2/stamp1/job1. 재현 스크립트 `scripts/verify-community-stamp-share-concurrency.sh`.
 - KO/EN 360/1440 localhost production UI/CSS + synthetic auth/API: 링크 생성과 native share의 별도 클릭, 복사·취소·익명 방문 무지급, 로그인 returnTo, 명시적 확인 POST 1회, 이미지 로딩·뷰포트/카드 넘침·axe PASS. `apps/web/test-results/community-stamp-share-local/`.
 - 검증 중 링크 input의 content-box 넘침과 랜딩 영문 폰트 누락을 실제 캡처로 확인해 CSS sizing/폰트를 보정했다. 실제 회원, 운영 방문·스탬프, 민팅 거래는 시험 생성하지 않았다.
+- 운영 DB `gmrykvmtmuaeswpajteq`에 migration `20260912162951_community_stamp_share` 및 history를 동일 트랜잭션으로 반영했다. service_role 전용 RPC 권한 확인. 기존 worker capability/코드는 변경하지 않았다. 최신 main의 별도 SOLAPI 수정 `0e5a86d`를 충돌 없이 보존했고 해당 9tests PASS. 웹 자동 배포 시작은 최종 커밋 푸시 후 확인한다.
