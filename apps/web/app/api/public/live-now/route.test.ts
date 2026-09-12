@@ -191,6 +191,7 @@ describe("observed LIVE feed projection", () => {
     expect(feed).toEqual({
       items: [
         {
+          platform: "tiktok",
           celebritySlug: "ifewknow",
           creatorName: "이퓨",
           handle: "ifewknow",
@@ -202,6 +203,7 @@ describe("observed LIVE feed projection", () => {
           expiresAt: "2026-09-11T01:01:30.000Z",
         },
       ],
+      targets: [{ celebritySlug: "ifewknow", platform: "tiktok", handle: "ifewknow", state: "live", observedAt }],
       checkedAt: "2026-09-11T01:00:30.000Z",
       coverage: { live: 1, offline: 0, unavailable: 0, stale: 0 },
     });
@@ -330,6 +332,7 @@ describe("GET /api/public/live-now", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       items: [],
+      targets: [{ celebritySlug: "ifewknow", platform: "tiktok", handle: "ifewknow", state: "offline", observedAt }],
       checkedAt: "2026-09-11T01:00:10.000Z",
       coverage: { live: 0, offline: 1, unavailable: 0, stale: 0 },
     });
@@ -353,5 +356,36 @@ describe("GET /api/public/live-now", () => {
     expect(unavailable.status).toBe(503);
     expect(unavailable.headers.get("cache-control")).toBe("no-store");
     expect(await unavailable.json()).toEqual({ error: "content_unavailable" });
+  });
+});
+
+
+describe("multi-platform observed feed", () => {
+  const channelId = "UCaaaaaaaaaaaaaaaaaaaaaa";
+  const videoId = "abcdefghijk";
+  function mixed() { const creator = celebrity("ifewknow", "https://www.tiktok.com/@ifewknow"); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "youtube" as const, url: `https://www.youtube.com/channel/${channelId}` }] }; }
+  it("shows both platforms for one creator without registered events and preserves source proof", async () => {
+    const feed = await buildObservedLiveFeed([mixed()], "ko", async () => ({ state: "live", observedAt, title: "", thumbnailUrl: null }), () => new Date(observedAt), async () => ({ state: "live", observedAt, channelId, videoId, title: "Confirmed title", thumbnailUrl: "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg" }));
+    expect(feed.items.map((item) => [item.platform, item.watchUrl])).toEqual([["tiktok", "https://www.tiktok.com/@ifewknow/live"], ["youtube", "https://www.youtube.com/watch?v=abcdefghijk"]]);
+    expect(feed.items[1]).toMatchObject({ title: "Confirmed title", observedAt });
+    expect(feed.targets).toHaveLength(2);
+  });
+  it("keeps successful TikTok results on YouTube errors and reports unknown separately from offline", async () => {
+    const feed = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "live", observedAt, title: "", thumbnailUrl: null }), () => new Date(observedAt), async () => { throw new Error("upstream"); });
+    expect(feed.items).toHaveLength(1);
+    expect(feed.targets?.[1]).toMatchObject({ platform: "youtube", state: "unavailable", observedAt: null });
+  });
+  it("never turns stale or foreign-channel YouTube results into cards", async () => {
+    const feed = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(Date.parse(observedAt) + 90000), async () => ({ state: "live", observedAt, channelId, videoId }));
+    expect(feed.items).toEqual([]); expect(feed.coverage.stale).toBe(2);
+    const foreign = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), async () => ({ state: "live", observedAt, channelId: "UCbbbbbbbbbbbbbbbbbbbbbb", videoId }));
+    expect(foreign.items).toEqual([]); expect(foreign.coverage.unavailable).toBe(1);
+  });
+  it("only v2 opts into YouTube so old cached clients never mislabel YouTube cards", async () => {
+    const observeYouTube = vi.fn(async () => ({ state: "live" as const, observedAt, channelId, videoId }));
+    const handler = createGetObservedLiveNow({ repository: { list: async () => [mixed()] }, observe: async () => ({ state: "offline", observedAt }), observeYouTube, now: () => new Date(observedAt) });
+    await handler(new Request("https://byus.kr/api/public/live-now")); expect(observeYouTube).not.toHaveBeenCalled();
+    const response = await handler(new Request("https://byus.kr/api/public/live-now?v=2"));
+    expect((await response.json()).items[0].platform).toBe("youtube");
   });
 });

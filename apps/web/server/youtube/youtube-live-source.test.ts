@@ -13,10 +13,10 @@ const OTHER_CHANNEL_ID = `UC${"b".repeat(22)}`;
 const VIDEO_ID = "abcDEF123_-";
 const NOW = new Date("2026-09-12T12:00:00.000Z");
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = 200, fetchedAt?: string): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(fetchedAt ? { "x-byus-youtube-fetched-at": fetchedAt } : {}) },
   });
 }
 
@@ -39,6 +39,10 @@ function liveVideo(overrides: Record<string, unknown> = {}): Record<string, unkn
         snippet: {
           channelId: CHANNEL_ID,
           liveBroadcastContent: "live",
+          title: "  ByUs LIVE  ",
+          thumbnails: {
+            high: { url: `https://i.ytimg.com/vi/${VIDEO_ID}/hqdefault.jpg` },
+          },
         },
         status: { privacyStatus: "public" },
         liveStreamingDetails: {
@@ -83,6 +87,8 @@ describe("fetchYouTubeLiveObservation", () => {
       channelId: CHANNEL_ID,
       videoId: VIDEO_ID,
       actualStartTime: "2026-09-12T11:30:00.000Z",
+      title: "ByUs LIVE",
+      thumbnailUrl: `https://i.ytimg.com/vi/${VIDEO_ID}/hqdefault.jpg`,
     });
 
     expect(fetcher).toHaveBeenCalledTimes(3);
@@ -103,7 +109,8 @@ describe("fetchYouTubeLiveObservation", () => {
   });
 
   it("returns offline for no search candidates and skips channel resolution for an id", async () => {
-    const fetcher = queueFetcher(jsonResponse({ items: [] }));
+    const fetchedAt = "2026-09-12T11:59:15.000Z";
+    const fetcher = queueFetcher(jsonResponse({ items: [] }, 200, fetchedAt));
 
     await expect(
       fetchYouTubeLiveObservation(
@@ -112,7 +119,7 @@ describe("fetchYouTubeLiveObservation", () => {
       ),
     ).resolves.toEqual({
       state: "offline",
-      observedAt: NOW.toISOString(),
+      observedAt: fetchedAt,
       channelId: CHANNEL_ID,
     });
     expect(fetcher).toHaveBeenCalledOnce();
@@ -151,40 +158,16 @@ describe("fetchYouTubeLiveObservation", () => {
 
   it.each([
     [
-      "ended",
-      liveVideo({
-        liveStreamingDetails: {
-          actualStartTime: "2026-09-12T11:30:00.000Z",
-          actualEndTime: "2026-09-12T11:59:00.000Z",
-        },
-      }),
-    ],
-    [
-      "private",
-      liveVideo({ status: { privacyStatus: "private" } }),
-    ],
-    [
-      "not currently broadcasting",
-      liveVideo({
-        snippet: {
-          channelId: CHANNEL_ID,
-          liveBroadcastContent: "none",
-        },
-      }),
-    ],
-    [
-      "from the future",
-      liveVideo({
-        liveStreamingDetails: {
-          actualStartTime: "2026-09-12T12:00:01.000Z",
-        },
-      }),
-    ],
-    [
       "a mismatched id",
       liveVideo({ id: "zyxWVU987_-" }),
     ],
-  ])("does not confirm a video that is %s", async (_label, videoBody) => {
+    [
+      "from the future",
+      liveVideo({ liveStreamingDetails: { actualStartTime: "2026-09-12T12:00:01.000Z" } }),
+    ],
+    ["an unknown broadcast state", liveVideo({ snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "mystery" } })],
+    ["an unknown privacy state", liveVideo({ status: { privacyStatus: "mystery" } })],
+  ])("treats malformed confirmation for a video that is %s as unavailable", async (_label, videoBody) => {
     const fetcher = queueFetcher(
       jsonResponse(liveSearch()),
       jsonResponse(videoBody),
@@ -196,6 +179,28 @@ describe("fetchYouTubeLiveObservation", () => {
 
     expect(observation.state).toBe("unavailable");
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["ended", liveVideo({ liveStreamingDetails: { actualStartTime: "2026-09-12T11:30:00.000Z", actualEndTime: "2026-09-12T11:59:00.000Z" } })],
+    ["private", liveVideo({ status: { privacyStatus: "private" } })],
+    ["not currently broadcasting", liveVideo({ snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "none", title: "Ended" } })],
+  ])("returns offline for a real confirmed video that is %s", async (_label, videoBody) => {
+    const fetchedAt = "2026-09-12T11:59:45.000Z";
+    const fetcher = queueFetcher(jsonResponse(liveSearch()), jsonResponse(videoBody, 200, fetchedAt));
+    await expect(fetchYouTubeLiveObservation(
+      { kind: "id", value: CHANNEL_ID },
+      { apiKey: "key", fetcher, now: () => NOW },
+    )).resolves.toEqual({ state: "offline", observedAt: fetchedAt, channelId: CHANNEL_ID });
+  });
+
+  it("omits an unsafe confirmed thumbnail without rejecting the live video", async () => {
+    const fetcher = queueFetcher(jsonResponse(liveSearch()), jsonResponse(liveVideo({
+      snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "live", title: "Safe title", thumbnails: { high: { url: "https://evil.test/private.jpg" } } },
+    })));
+    const result = await fetchYouTubeLiveObservation({ kind: "id", value: CHANNEL_ID }, { apiKey: "key", fetcher, now: () => NOW });
+    expect(result).toMatchObject({ state: "live", title: "Safe title" });
+    expect(result).not.toHaveProperty("thumbnailUrl");
   });
 
   it("does not call the API without a key", async () => {
@@ -300,7 +305,7 @@ describe("createCachedYouTubeLiveObserver", () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(cached.observedAt).toBe(first.observedAt);
 
-    clock += 21_000;
+    clock += 51_000;
     const refreshed = await observe(target);
     expect(fetcher).toHaveBeenCalledTimes(4);
     expect(refreshed.observedAt).toBe(new Date(clock).toISOString());
@@ -308,7 +313,7 @@ describe("createCachedYouTubeLiveObserver", () => {
       "/youtube/v3/videos",
     );
 
-    clock += 270_000;
+    clock += 3_540_000;
     await observe(target);
     expect(fetcher).toHaveBeenCalledTimes(6);
     const laterPaths = vi.mocked(fetcher).mock.calls.slice(4).map(
@@ -316,4 +321,59 @@ describe("createCachedYouTubeLiveObserver", () => {
     );
     expect(laterPaths).toEqual(["/youtube/v3/search", "/youtube/v3/videos"]);
   });
+
+  it("preserves a shared negative result timestamp and does not extend its one-hour lifetime", async () => {
+    let clock = NOW.getTime();
+    const fetchedAt = new Date(clock - 30 * 60_000).toISOString();
+    const fetcher = vi.fn(async () => jsonResponse({ items: [] }, 200, fetchedAt)) as unknown as typeof fetch;
+    const observe = createCachedYouTubeLiveObserver({ apiKey: "key", fetcher, now: () => new Date(clock) });
+    const target: YouTubeChannelTarget = { kind: "id", value: CHANNEL_ID };
+    expect((await observe(target)).observedAt).toBe(fetchedAt);
+    clock += 10 * 60_000;
+    expect((await observe(target)).observedAt).toBe(fetchedAt);
+    expect(fetcher).toHaveBeenCalledOnce();
+    clock += 21 * 60_000;
+    expect((await observe(target)).observedAt).toBe(fetchedAt);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("awaits a direct confirmation when shared video evidence is at least 90 seconds old", async () => {
+    const staleAt = "2026-09-12T11:58:00.000Z";
+    const fetcher = queueFetcher(
+      jsonResponse(liveSearch()),
+      jsonResponse(liveVideo({ snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "live", title: "Stale" } }), 200, staleAt),
+      jsonResponse(liveVideo({ snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "live", title: "Fresh" } })),
+    );
+    const observe = createCachedYouTubeLiveObserver({ apiKey: "key", fetcher, now: () => NOW });
+    await expect(observe({ kind: "id", value: CHANNEL_ID })).resolves.toMatchObject({
+      state: "live", observedAt: NOW.toISOString(), title: "Fresh",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(fetcher).mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual([
+      "/youtube/v3/search", "/youtube/v3/videos", "/youtube/v3/videos",
+    ]);
+  });
+
+  it("does not redate or serve video evidence that remains stale after direct confirmation", async () => {
+    const staleAt = "2026-09-12T11:58:00.000Z";
+    const fetcher = queueFetcher(
+      jsonResponse(liveSearch()),
+      jsonResponse(liveVideo(), 200, staleAt),
+      jsonResponse(liveVideo(), 200, staleAt),
+    );
+    const observe = createCachedYouTubeLiveObserver({ apiKey: "key", fetcher, now: () => NOW });
+    await expect(observe({ kind: "id", value: CHANNEL_ID })).resolves.toEqual({
+      state: "unavailable", observedAt: NOW.toISOString(), channelId: CHANNEL_ID,
+    });
+  });
+  it("normalizes a failed direct refresh without leaving an unhandled cleanup rejection", async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse(liveSearch()))
+      .mockResolvedValueOnce(jsonResponse(liveVideo(), 200, "2026-09-12T11:58:00.000Z"))
+      .mockRejectedValueOnce(new Error("network unavailable"));
+    const observe = createCachedYouTubeLiveObserver({ apiKey: "key", fetcher, now: () => NOW });
+    await expect(observe({ kind: "id", value: CHANNEL_ID })).resolves.toMatchObject({ state: "unavailable" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
 });

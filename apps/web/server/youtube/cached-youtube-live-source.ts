@@ -1,15 +1,19 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import {
+  fetchYouTubeApiJson,
   fetchYouTubeLiveObservation,
   type YouTubeChannelTarget,
   type YouTubeLiveObservation,
   type YouTubeLiveObserver,
 } from "./youtube-live-source";
+import { fetchSharedYouTubeApi } from "./shared-api-cache";
 
 const CHANNEL_CACHE_MS = 24 * 60 * 60 * 1_000;
-const SEARCH_CACHE_MS = 5 * 60 * 1_000;
-const VIDEO_CACHE_MS = 30 * 1_000;
+const SEARCH_CACHE_MS = 60 * 60 * 1_000;
+const VIDEO_CACHE_MS = 60 * 1_000;
 const MAX_CACHE_ENTRIES = 128;
 const FETCHED_AT_HEADER = "x-byus-youtube-fetched-at";
 
@@ -34,9 +38,10 @@ function stageTtl(url: URL): number | null {
 
 function cacheKey(url: URL): string {
   const safeUrl = new URL(url);
+  const apiKeyHash = createHash("sha256").update(safeUrl.searchParams.get("key") ?? "missing").digest("hex");
   safeUrl.searchParams.delete("key");
   safeUrl.searchParams.sort();
-  return safeUrl.toString();
+  return `${apiKeyHash}:${safeUrl.toString()}`;
 }
 
 function pruneCache(cache: Map<string, CacheEntry>, nowMs: number): void {
@@ -55,6 +60,7 @@ export function createCachedYouTubeLiveObserver(
 ): YouTubeLiveObserver {
   const cache = new Map<string, CacheEntry>();
   const inFlight = new Map<string, Promise<Response>>();
+  const freshInFlight = new Map<string, ReturnType<typeof fetchYouTubeApiJson>>();
   const underlyingFetcher = options.fetcher ?? fetch;
   const now = options.now ?? (() => new Date());
 
@@ -82,17 +88,20 @@ export function createCachedYouTubeLiveObserver(
       const response = await underlyingFetcher(input, init);
       if (response.ok) {
         const headers = new Headers(response.headers);
-        headers.set(FETCHED_AT_HEADER, new Date(nowMs).toISOString());
+        const existingFetchedAt = headers.get(FETCHED_AT_HEADER);
+        const fetchedAtMs = existingFetchedAt === null ? nowMs : Date.parse(existingFetchedAt);
+        if (!Number.isFinite(fetchedAtMs)) return response;
+        if (existingFetchedAt === null) headers.set(FETCHED_AT_HEADER, new Date(fetchedAtMs).toISOString());
         const taggedResponse = new Response(response.body, {
           status: response.status,
           statusText: response.statusText,
           headers,
         });
-        pruneCache(cache, nowMs);
-        cache.set(key, {
-          expiresAt: nowMs + ttl,
-          response: taggedResponse.clone(),
-        });
+        const expiresAt = Math.min(nowMs + ttl, fetchedAtMs + ttl);
+        if (expiresAt > nowMs) {
+          pruneCache(cache, nowMs);
+          cache.set(key, { expiresAt, response: taggedResponse.clone() });
+        }
         return taggedResponse;
       }
       return response;
@@ -108,12 +117,22 @@ export function createCachedYouTubeLiveObserver(
   return (target) =>
     fetchYouTubeLiveObservation(target, {
       apiKey: options.apiKey,
-      fetcher: cachedFetcher,
       now,
+      apiFetcher: (_stage, url) => fetchYouTubeApiJson(url, cachedFetcher, now().getTime()),
+      freshApiFetcher: (stage, url) => {
+        void stage;
+        const key = cacheKey(url);
+        const existing = freshInFlight.get(key);
+        if (existing) return existing;
+        const request = fetchYouTubeApiJson(url, underlyingFetcher, now().getTime());
+        freshInFlight.set(key, request);
+        void request.then(() => freshInFlight.delete(key), () => freshInFlight.delete(key));
+        return request;
+      },
     });
 }
 
-const productionObserver = createCachedYouTubeLiveObserver();
+const productionObserver = createCachedYouTubeLiveObserver({ fetcher: fetchSharedYouTubeApi });
 
 export async function getCachedYouTubeLiveObservation(
   target: YouTubeChannelTarget,

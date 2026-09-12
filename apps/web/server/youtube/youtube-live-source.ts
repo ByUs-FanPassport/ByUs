@@ -17,6 +17,8 @@ export type YouTubeLiveObservation = Readonly<{
   channelId?: string;
   videoId?: string;
   actualStartTime?: string;
+  title?: string;
+  thumbnailUrl?: string;
 }>;
 
 export type YouTubeLiveObserver = (
@@ -27,7 +29,19 @@ type FetchOptions = Readonly<{
   apiKey?: string;
   fetcher?: typeof fetch;
   now?: () => Date;
+  apiFetcher?: YouTubeApiFetcher;
+  freshApiFetcher?: YouTubeApiFetcher;
 }>;
+
+export type YouTubeApiStage = "channels" | "search" | "videos";
+export type YouTubeApiJson = Readonly<{
+  payload: Record<string, unknown>;
+  fetchedAtMs: number;
+}>;
+export type YouTubeApiFetcher = (
+  stage: YouTubeApiStage,
+  url: URL,
+) => Promise<YouTubeApiJson | null>;
 
 const channelIdPattern = /^UC[A-Za-z0-9_-]{22}$/;
 const videoIdPattern = /^[A-Za-z0-9_-]{11}$/;
@@ -88,15 +102,11 @@ function endpoint(path: "channels" | "search" | "videos", params: Record<string,
   return url;
 }
 
-type ApiJson = Readonly<{
-  payload: Record<string, unknown>;
-  fetchedAtMs: number | null;
-}>;
-
-async function fetchApiJson(
+export async function fetchYouTubeApiJson(
   url: URL,
   fetcher: typeof fetch,
-): Promise<ApiJson | null> {
+  fallbackFetchedAtMs: number,
+): Promise<YouTubeApiJson | null> {
   const controller = new AbortController();
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
@@ -107,7 +117,7 @@ async function fetchApiJson(
   });
 
   try {
-    const request = (async (): Promise<ApiJson | null> => {
+    const request = (async (): Promise<YouTubeApiJson | null> => {
       const response = await fetcher(url, {
         cache: "no-store",
         redirect: "error",
@@ -127,7 +137,7 @@ async function fetchApiJson(
         fetchedAtHeader === null ? Number.NaN : Date.parse(fetchedAtHeader);
       return {
         payload,
-        fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
+        fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : fallbackFetchedAtMs,
       };
     })();
     return await Promise.race([request, timeout]);
@@ -145,17 +155,17 @@ function validTarget(target: YouTubeChannelTarget): boolean {
 async function resolveChannelId(
   target: YouTubeChannelTarget,
   apiKey: string,
-  fetcher: typeof fetch,
+  apiFetcher: YouTubeApiFetcher,
 ): Promise<string | null> {
   if (target.kind === "id") return target.value;
 
-  const result = await fetchApiJson(
+  const result = await apiFetcher(
+    "channels",
     endpoint("channels", {
       part: "id",
       forHandle: target.value,
       key: apiKey,
     }),
-    fetcher,
   );
   const items = result?.payload.items;
   if (!Array.isArray(items) || items.length !== 1) return null;
@@ -164,16 +174,17 @@ async function resolveChannelId(
 }
 
 type SearchResult =
-  | Readonly<{ state: "offline" }>
+  | Readonly<{ state: "offline"; observedAtMs: number }>
   | Readonly<{ state: "candidate"; videoId: string }>
   | Readonly<{ state: "unavailable" }>;
 
 async function searchLiveVideo(
   channelId: string,
   apiKey: string,
-  fetcher: typeof fetch,
+  apiFetcher: YouTubeApiFetcher,
 ): Promise<SearchResult> {
-  const result = await fetchApiJson(
+  const result = await apiFetcher(
+    "search",
     endpoint("search", {
       part: "snippet",
       channelId,
@@ -182,7 +193,6 @@ async function searchLiveVideo(
       maxResults: "2",
       key: apiKey,
     }),
-    fetcher,
   );
   const payload = result?.payload;
   if (!payload || payload.nextPageToken !== undefined) {
@@ -190,7 +200,7 @@ async function searchLiveVideo(
   }
   const items = payload.items;
   if (!Array.isArray(items)) return { state: "unavailable" };
-  if (items.length === 0) return { state: "offline" };
+  if (items.length === 0) return { state: "offline", observedAtMs: result.fetchedAtMs };
   if (items.length !== 1) return { state: "unavailable" };
 
   const item = objectValue(items[0]);
@@ -208,58 +218,99 @@ async function searchLiveVideo(
 }
 
 type ConfirmedVideo = Readonly<{
+  state: "live";
   videoId: string;
   actualStartTime: string;
   observedAtMs: number;
+  title?: string;
+  thumbnailUrl?: string;
 }>;
+
+type VideoConfirmation = ConfirmedVideo | Readonly<{ state: "offline"; observedAtMs: number }> |
+  Readonly<{ state: "unavailable" }>;
+
+function safeThumbnail(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  try {
+    const url = new URL(value);
+    return url.href === value && url.protocol === "https:" && !url.username && !url.password && !url.port &&
+      (url.hostname === "ytimg.com" || url.hostname.endsWith(".ytimg.com")) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function thumbnailFromSnippet(snippet: Record<string, unknown>): string | undefined {
+  const thumbnails = objectValue(snippet.thumbnails);
+  if (!thumbnails) return undefined;
+  for (const name of ["maxres", "standard", "high", "medium", "default"]) {
+    const url = safeThumbnail(objectValue(thumbnails[name])?.url);
+    if (url) return url;
+  }
+  return undefined;
+}
 
 async function confirmLiveVideo(
   channelId: string,
   videoId: string,
   apiKey: string,
-  fetcher: typeof fetch,
+  apiFetcher: YouTubeApiFetcher,
+  freshApiFetcher: YouTubeApiFetcher | undefined,
   observedAtMs: number,
-): Promise<ConfirmedVideo | null> {
-  const result = await fetchApiJson(
-    endpoint("videos", {
+): Promise<VideoConfirmation> {
+  const url = endpoint("videos", {
       part: "snippet,status,liveStreamingDetails",
       id: videoId,
       key: apiKey,
-    }),
-    fetcher,
-  );
+    });
+  let result = await apiFetcher("videos", url);
+  if (result && freshApiFetcher && observedAtMs - result.fetchedAtMs >= 90_000) {
+    result = await freshApiFetcher("videos", url);
+  }
+  if (result && observedAtMs - result.fetchedAtMs >= 90_000) {
+    return { state: "unavailable" };
+  }
   const items = result?.payload.items;
-  if (!Array.isArray(items) || items.length !== 1) return null;
+  if (!result || !Array.isArray(items) || items.length !== 1) return { state: "unavailable" };
 
   const item = objectValue(items[0]);
   const snippet = objectValue(item?.snippet);
   const status = objectValue(item?.status);
   const liveStreamingDetails = objectValue(item?.liveStreamingDetails);
+  if (!item || !snippet || !status || item.id !== videoId || snippet.channelId !== channelId ||
+      typeof snippet.liveBroadcastContent !== "string" || typeof status.privacyStatus !== "string") {
+    return { state: "unavailable" };
+  }
+  if (!["live", "none", "upcoming"].includes(snippet.liveBroadcastContent) ||
+      !["public", "private", "unlisted"].includes(status.privacyStatus)) {
+    return { state: "unavailable" };
+  }
+  const actualEndTime = liveStreamingDetails?.actualEndTime;
+  const actualEndTimeMs = typeof actualEndTime === "string" ? Date.parse(actualEndTime) : Number.NaN;
+  if (snippet.liveBroadcastContent !== "live" || status.privacyStatus !== "public" ||
+      (typeof actualEndTime === "string" && Number.isFinite(actualEndTimeMs))) {
+    return { state: "offline", observedAtMs: result.fetchedAtMs };
+  }
   const actualStartTime = liveStreamingDetails?.actualStartTime;
   const actualStartTimeMs =
     typeof actualStartTime === "string" ? Date.parse(actualStartTime) : Number.NaN;
   if (
-    item?.id !== videoId ||
-    snippet?.channelId !== channelId ||
-    snippet?.liveBroadcastContent !== "live" ||
-    status?.privacyStatus !== "public" ||
     typeof actualStartTime !== "string" ||
     !Number.isFinite(actualStartTimeMs) ||
-    actualStartTimeMs >= observedAtMs ||
+    actualStartTimeMs >= result.fetchedAtMs ||
     liveStreamingDetails?.actualEndTime !== undefined
   ) {
-    return null;
+    return { state: "unavailable" };
   }
-  const evidenceTime = result?.fetchedAtMs;
+  const title = typeof snippet.title === "string" ? snippet.title.trim().slice(0, 160) : "";
+  const thumbnailUrl = thumbnailFromSnippet(snippet);
   return {
+    state: "live",
     videoId,
     actualStartTime,
-    observedAtMs:
-      evidenceTime !== null &&
-      evidenceTime !== undefined &&
-      evidenceTime <= observedAtMs
-        ? evidenceTime
-        : observedAtMs,
+    observedAtMs: result.fetchedAtMs,
+    ...(title ? { title } : {}),
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
   };
 }
 
@@ -281,13 +332,18 @@ export async function fetchYouTubeLiveObservation(
   }
 
   const fetcher = options.fetcher ?? fetch;
+  const directApiFetcher: YouTubeApiFetcher = (stage, url) => {
+    void stage;
+    return fetchYouTubeApiJson(url, fetcher, now().getTime());
+  };
+  const apiFetcher = options.apiFetcher ?? directApiFetcher;
   try {
-    const channelId = await resolveChannelId(target, apiKey, fetcher);
+    const channelId = await resolveChannelId(target, apiKey, apiFetcher);
     if (channelId === null) return unavailable();
 
-    const searchResult = await searchLiveVideo(channelId, apiKey, fetcher);
+    const searchResult = await searchLiveVideo(channelId, apiKey, apiFetcher);
     if (searchResult.state === "offline") {
-      return { state: "offline", observedAt, channelId };
+      return { state: "offline", observedAt: new Date(searchResult.observedAtMs).toISOString(), channelId };
     }
     if (searchResult.state === "unavailable") return unavailable(channelId);
 
@@ -295,16 +351,20 @@ export async function fetchYouTubeLiveObservation(
       channelId,
       searchResult.videoId,
       apiKey,
-      fetcher,
+      apiFetcher,
+      options.freshApiFetcher,
       observedAtDate.getTime(),
     );
-    if (confirmed === null) return unavailable(channelId);
+    if (confirmed.state === "unavailable") return unavailable(channelId);
+    if (confirmed.state === "offline") return { state: "offline", observedAt: new Date(confirmed.observedAtMs).toISOString(), channelId };
     return {
       state: "live",
       observedAt: new Date(confirmed.observedAtMs).toISOString(),
       channelId,
       videoId: confirmed.videoId,
       actualStartTime: confirmed.actualStartTime,
+      ...(confirmed.title ? { title: confirmed.title } : {}),
+      ...(confirmed.thumbnailUrl ? { thumbnailUrl: confirmed.thumbnailUrl } : {}),
     };
   } catch {
     return unavailable();

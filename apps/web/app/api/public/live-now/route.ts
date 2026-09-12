@@ -9,10 +9,14 @@ import { getCachedTikTokLiveObservation } from "../../../../server/tiktok/cached
 import { buildObservedLiveFeed } from "../../../../server/tiktok/observed-live-feed";
 import type { TikTokLiveObserver } from "../../../../server/tiktok/tiktok-live-source";
 
+import { getCachedYouTubeLiveObservation } from "../../../../server/youtube/cached-youtube-live-source";
+import type { YouTubeLiveObserver } from "../../../../server/youtube/youtube-live-source";
+
 type LiveNowDependencies = Readonly<{
   repository: Pick<PublishedContentRepository, "list">;
   observe?: TikTokLiveObserver;
   now?: () => Date;
+  observeYouTube?: YouTubeLiveObserver;
 }>;
 
 const noStoreHeaders = { "Cache-Control": "no-store" } as const;
@@ -38,6 +42,7 @@ export function createGetObservedLiveNow(dependencies: LiveNowDependencies) {
         locale,
         dependencies.observe ?? getCachedTikTokLiveObservation,
         dependencies.now ?? (() => new Date()),
+        new URL(request.url).searchParams.get("v") === "2" ? dependencies.observeYouTube ?? getCachedYouTubeLiveObservation : undefined,
       );
       return NextResponse.json(feed, {
         status: 200,
