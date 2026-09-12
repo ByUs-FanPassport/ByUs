@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import type { ExternalNotificationJob } from "../external-notification-domain.js";
-import type { ExternalNotificationQueue } from "../external-notification-ports.js";
+import type { EmailSendResult, ExternalNotificationQueue } from "../external-notification-ports.js";
 
 type Rpc = Pick<SupabaseClient, "rpc">;
 function job(value: Record<string, unknown>): ExternalNotificationJob {
@@ -27,7 +27,7 @@ export class SupabaseExternalNotificationQueue implements ExternalNotificationQu
     return new this(createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }), environment, emailOnly);
   }
   async claim(workerId: string, batchSize: number, leaseSeconds: number) {
-    const { data, error } = await this.client.rpc(this.emailOnly ? "claim_email_notification_deliveries" : "claim_external_notification_deliveries", {
+    const { data, error } = await this.client.rpc("claim_email_notification_deliveries_safely", {
       p_worker_id: workerId, p_batch_size: batchSize, p_lease_seconds: leaseSeconds,
     });
     if (error) throw new Error("external notification claim failed");
@@ -39,6 +39,21 @@ export class SupabaseExternalNotificationQueue implements ExternalNotificationQu
     });
     if (error) throw new Error("email revalidation failed");
     return data === true;
+  }
+  async beginEmail(value: ExternalNotificationJob) {
+    const { data, error } = await this.client.rpc("begin_email_notification_send", {
+      p_delivery_id: value.id, p_worker_id: value.leaseOwner, p_attempt_count: value.attemptCount,
+      p_destination_fingerprint: createHash("sha256").update(value.destination).digest("hex"),
+    });
+    if (error) throw new Error("email send permission unavailable");
+    return data === true;
+  }
+  async finishEmail(value: ExternalNotificationJob, result: EmailSendResult) {
+    const { data, error } = await this.client.rpc("finish_email_notification_send", {
+      p_delivery_id: value.id, p_worker_id: value.leaseOwner, p_attempt_count: value.attemptCount,
+      p_outcome: result.outcome, p_provider_message_id: result.providerMessageId, p_error_code: result.errorCode,
+    });
+    if (error || data !== true) throw new Error("email send acknowledgement unavailable");
   }
   async complete(value: ExternalNotificationJob, providerMessageId: string) {
     const { data, error } = await this.client.rpc("complete_external_notification_delivery", {

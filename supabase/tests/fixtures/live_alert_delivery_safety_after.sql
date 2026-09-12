@@ -1,0 +1,4 @@
+select alert_safety_test.assert((select count(*)>0 from alert_safety_test.outbox_before),'nonempty historical pending fixture');
+select alert_safety_test.assert(not exists(select 1 from alert_safety_test.outbox_before b full join public.external_notification_delivery_outbox d on d.id=b.id where b.snapshot is distinct from to_jsonb(d)),'migration preserves every existing outbox row');
+select alert_safety_test.assert(not exists(select 1 from alert_safety_test.plans_before b full join public.notification_delivery_plans d on d.id=b.id where b.snapshot is distinct from to_jsonb(d)),'migration preserves every existing plan');
+select alert_safety_test.assert(not exists(select 1 from alert_safety_test.channels_before b full join public.fan_notification_channels d on d.id=b.id where b.snapshot is distinct from to_jsonb(d)),'migration preserves existing channel consent');

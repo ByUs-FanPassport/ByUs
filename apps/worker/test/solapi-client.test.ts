@@ -4,7 +4,6 @@ import {
   SOLAPI_CHANNEL_ID,
   SOLAPI_PENDING_TEMPLATES,
   SOLAPI_REQUEST_TIMEOUT_MS,
-  SOLAPI_MESSAGE_LIST_URL,
   SOLAPI_SEND_MANY_DETAIL_URL,
   SolapiClient,
   type SolapiApprovalRecord,
@@ -225,14 +224,22 @@ describe("SolapiClient", () => {
       return {fetchImpl,instance:client(fetchImpl)};
     }
 
-    it("uses the official object-keyed list query and records only COMPLETE 4000 as delivered", async () => {
-      const {instance,fetchImpl} = lookupClient({messageList:{M4Vsafe:message()}});
+    it("uses the acknowledged group when the global list omits a delivered message", async () => {
+      const fetchImpl = vi.fn<typeof fetch>(async (input) => Response.json({messageList:
+        new URL(String(input)).pathname === "/messages/v4/groups/G4Vsafe/messages" ? {M4Vsafe:message()} : {},
+      }));
+      const instance = client(fetchImpl);
       await expect(instance.lookup(expected)).resolves.toEqual({status:"delivered",statusCode:"4000"});
       const [rawUrl,init] = fetchImpl.mock.calls[0]!;
       const url = new URL(String(rawUrl));
-      expect(`${url.origin}${url.pathname}`).toBe(SOLAPI_MESSAGE_LIST_URL);
-      expect(url.searchParams.get("messageIds")).toBe(JSON.stringify([expected.providerMessageId]));
+      expect(url.href).toBe("https://api.solapi.com/messages/v4/groups/G4Vsafe/messages");
       expect(init?.method).toBe("GET");
+    });
+
+    it.each(["../other", "G4V?next=other", "", "G4V/other"])("rejects unsafe group id %s before HTTP", async (groupId) => {
+      const {instance,fetchImpl} = lookupClient({});
+      await expect(instance.lookup({...expected,groupId})).resolves.toEqual({status:"unknown",statusCode:null});
+      expect(fetchImpl).not.toHaveBeenCalled();
     });
 
     it.each(["1010","2024","3010","3104"])("records documented correlated COMPLETE %s as terminal failure", async (statusCode) => {

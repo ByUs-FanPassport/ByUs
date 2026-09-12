@@ -7,7 +7,7 @@ create schema kakao_test;
 create function kakao_test.assert(ok boolean, message text) returns void language plpgsql as $$
 begin if ok is distinct from true then raise exception 'KAKAO_TEST: %',message; end if; end $$;
 create table kakao_test.jobs(case_name text primary key,delivery_id uuid not null,app_user_id uuid not null,channel_id uuid not null);
-create table kakao_test.email_before as select id,to_jsonb(o) as snapshot from public.external_notification_delivery_outbox o where channel='email';
+create table kakao_test.email_before as select id,to_jsonb(o) as snapshot from public.external_notification_delivery_outbox o with no data;
 
 begin;
 insert into public.celebrities(id,slug,status,image_url,published_at,roles,primary_role) values
@@ -70,7 +70,7 @@ insert into public.fan_notifications(app_user_id,kind,source_key,live_event_id,s
  '91000000-0000-4000-8000-000000000003',now(),'/live/alimtalk-test-live','{"title":"Email retained","detail":"Not sent"}');
 update public.external_notification_delivery_outbox set available_at=now()+interval '1 year' where channel='email';
 insert into kakao_test.email_before select id,to_jsonb(o) from public.external_notification_delivery_outbox o where channel='email';
-select kakao_test.assert((select count(*)=1 from kakao_test.email_before),'nonempty Email preservation fixture');
+select kakao_test.assert(exists(select 1 from kakao_test.email_before b join public.fan_notifications n on n.id=(b.snapshot->>'notification_id')::uuid where n.app_user_id='91000000-0000-4000-8000-000000000010'),'dedicated Email preservation fixture retained alongside existing pending');
 
 -- Enrollment owner binding, cancellation and privilege boundaries.
 do $$

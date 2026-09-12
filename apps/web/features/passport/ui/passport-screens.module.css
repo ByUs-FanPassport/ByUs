@@ -496,37 +496,59 @@
   color: var(--muted);
   font-size: 12px;
 }
+/* Keep the original book, replacing its printed three-row form with real text. */
 .passportFields {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.passportFields > span {
-  position: absolute;
-  display: block;
-  overflow: hidden;
+  top: 29%;
+  left: 22%;
+  display: grid;
+  width: 27%;
+  gap: 0.4cqi;
+  margin: 0;
   color: oklch(28% 0.02 65);
-  font-size: clamp(6px, 3.1cqi, 15px);
+  isolation: isolate;
+}
+.passportFields::before {
+  position: absolute;
+  z-index: -1;
+  inset: -0.7cqi -0.6cqi;
+  min-height: 25cqi;
+  /* Reuse the blank paper strip above the original labels, preserving its texture. */
+  background-image: url("/images/guest-home/passport-open-blank-9-transparent.png");
+  background-size: 100cqi 400cqi;
+  background-position: -21.4cqi -114cqi;
+  content: "";
+}
+.passportFields > div {
+  min-width: 0;
+  padding-bottom: 0.35cqi;
+  box-shadow: 0 0.1cqi 0 #c5af91;
+}
+.passportFields dt {
+  color: #736e68;
+  font-size: min(1.5cqi, 9px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+.passportFields dd {
+  margin: 0.3cqi 0 0;
+  font-size: min(2.5cqi, 14px);
   font-weight: 750;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-.starValue {
-  top: 40.7%;
-  left: 22%;
-  width: 27%;
+.passportFields .fanNameValue {
+  unicode-bidi: plaintext;
+}
+.passportFields .fanNameValue[data-long-name="true"] {
+  font-size: min(1.6cqi, 10px);
 }
 .issueDateValue {
-  top: 51.1%;
-  left: 22%;
-  width: 27%;
   font-variant-numeric: tabular-nums;
 }
-.fanIdValue {
-  top: 61.4%;
-  left: 22%;
-  width: 27%;
+.passportFields .fanIdValue {
+  font-size: min(1.8cqi, 10px);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }

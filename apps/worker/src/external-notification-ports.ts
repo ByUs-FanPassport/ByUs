@@ -6,8 +6,15 @@ export interface ExternalNotificationSender {
 export interface ExternalNotificationQueue {
   claim(workerId: string, batchSize: number, leaseSeconds: number): Promise<ExternalNotificationJob[]>;
   revalidateEmail(job: ExternalNotificationJob): Promise<boolean>;
+  beginEmail(job: ExternalNotificationJob): Promise<boolean>;
+  finishEmail(job: ExternalNotificationJob, result: EmailSendResult): Promise<void>;
   complete(job: ExternalNotificationJob, providerMessageId: string): Promise<void>;
   fail(job: ExternalNotificationJob, error: { code: string; retryable: boolean }): Promise<void>;
   recordSink(job: ExternalNotificationJob, result: "sent" | "permanent_failure" | "retryable_failure"): Promise<void>;
+}
+export interface EmailSendResult {
+  outcome: "accepted" | "unknown";
+  providerMessageId: string | null;
+  errorCode: string | null;
 }
 export type ExternalSenders = Record<ExternalChannel, ExternalNotificationSender>;
