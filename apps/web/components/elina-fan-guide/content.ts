@@ -1,6 +1,6 @@
 export const elinaFanGuideContent = {
   ko: {
-    heroTitle: "엘리나와 함께하는\n뱅크시 LIVE",
+    heroTitle: "엘리나와 함께하는\nInstagram LIVE",
     heroDescription: "팬 인증하고 LIVE를 예약하면 응모권 2장.\n지금 원하는 선물에 응모해 보세요.",
     heroSchedule: "9월 18일(금) 오후 8:30 · Instagram LIVE · KST",
     prizeSummary: "뱅크시 관람권 60명 · 비피오 랜덤 케이스 10명 · 뱅크시 한정판 스태츄 3명 추첨",
@@ -39,7 +39,7 @@ export const elinaFanGuideContent = {
       },
     ],
     liveCard: {
-      title: "엘리나와 함께하는 뱅크시 LIVE",
+      title: "엘리나와 함께하는 Instagram LIVE",
       flow: "9월 18일(금) 오후 8:30 · Instagram",
       code: "예약 마감 · KST",
       value: "9월 18일 오후 8:20",
@@ -64,10 +64,10 @@ export const elinaFanGuideContent = {
     closingAction: "팬 인증하고 시작하기",
     footer: "ByUs. Your Bias.    ·    한국어 / EN",
     imageAlt: "바다를 배경으로 선 엘리나",
-    prizeAlt: "전시 공간에 걸린 작품을 바라보는 관람객",
+    prizeAlt: "뱅크시 관람권, 비피오 케이스, 뱅크시 한정판 스태츄",
   },
   en: {
-    heroTitle: "Banksy LIVE\nwith Elina",
+    heroTitle: "Instagram LIVE\nwith Elina",
     heroDescription: "Verify your fandom and reserve your spot to earn 2 raffle tickets. Enter for your favorite prize now.",
     heroSchedule: "September 18 · 8:30 PM KST · Instagram LIVE",
     prizeSummary: "60 exhibition ticket winners · 10 Beepio random case winners · 3 Banksy limited-edition statue winners",
@@ -106,7 +106,7 @@ export const elinaFanGuideContent = {
       },
     ],
     liveCard: {
-      title: "Banksy LIVE with Elina",
+      title: "Instagram LIVE with Elina",
       flow: "September 18 · 8:30 PM KST · Instagram",
       code: "Reservations close",
       value: "Sep 18 · 8:20 PM KST",
@@ -131,6 +131,6 @@ export const elinaFanGuideContent = {
     closingAction: "Verify and get started",
     footer: "ByUs. Your Bias.    ·    KO / English",
     imageAlt: "Elina standing by the sea",
-    prizeAlt: "A visitor viewing artwork in an exhibition space",
+    prizeAlt: "Banksy exhibition ticket, Beepio cases, and a Banksy limited-edition statue",
   },
 } as const;

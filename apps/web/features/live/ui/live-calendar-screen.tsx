@@ -89,7 +89,7 @@ const platformLabel: Record<ExternalLiveProvider, string> = {
 
 const calendarTitlesKo = new Map([
   ["ifew-100-days-tiktok-20260912", "이퓨 틱톡100일 기념"],
-  ["elina-banksy-instagram-20260918", "엘리나 x 뱅크시 전시회 LIVE"],
+  ["elina-banksy-instagram-20260918", "엘리나 Instagram LIVE"],
 ]);
 
 function calendarHref(month: string, locale: FanLocale, celebritySlugs: readonly string[]) {

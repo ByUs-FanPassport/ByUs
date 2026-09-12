@@ -130,7 +130,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
                     })}
                   </div>
                 ) : (
-                  <Image className={styles.prizeImage} src="/images/guest-home/banksy-exhibition-campaign.webp" alt={t.prizeAlt} width={560} height={340} />
+                  <Image className={styles.prizeImage} src={creator === "elina" ? "/images/raffles/elina-prize-collection-20260912.webp" : "/images/guest-home/banksy-exhibition-campaign.webp"} alt={t.prizeAlt} width={560} height={340} />
                 )}
               </div>
               <div className={styles.stepCopy}>
