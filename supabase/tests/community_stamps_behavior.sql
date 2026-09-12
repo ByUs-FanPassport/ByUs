@@ -188,6 +188,13 @@ begin
     raise exception 'wallet failure left a partial invite binding';
   end if;
 
+  -- An existing inviter can redeem a different friend's code without claiming
+  -- that another copy of their once-per-account stamp was awarded.
+  if public.redeem_community_stamp_invite(owner_a,
+      public.get_community_stamp_invite_code(owner_d)->>'code')->>'awarded'<>'false' then
+    raise exception 'already rewarded inviter reported a duplicate award';
+  end if;
+
   -- Direct inserts cannot forge another wallet or another owner's source.
   operation_key:='byus:community-stamp:v1:'||invalid_stamp_id::text;
   insert into public.blockchain_jobs(

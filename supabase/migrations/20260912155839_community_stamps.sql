@@ -501,6 +501,7 @@ declare
   v_code text:=upper(pg_catalog.btrim(coalesce(p_code,'')));
   v_inviter uuid;
   v_redemption_id uuid:=extensions.gen_random_uuid();
+  v_awarded boolean;
 begin
   if v_code !~ '^[A-F0-9]{24}$' then
     raise exception 'COMMUNITY_STAMP_INVALID_REQUEST' using errcode='22023';
@@ -543,9 +544,9 @@ begin
   values(v_redemption_id,v_inviter,p_app_user_id,v_code);
   perform public.issue_community_stamp(v_inviter,null,'invite',
     'invite:'||v_redemption_id::text||':inviter');
-  perform public.issue_community_stamp(p_app_user_id,null,'invite',
+  v_awarded:=public.issue_community_stamp(p_app_user_id,null,'invite',
     'invite:'||v_redemption_id::text||':invitee');
-  return jsonb_build_object('awarded',true);
+  return jsonb_build_object('awarded',v_awarded);
 end $$;
 
 -- Include community stamps only for workers that explicitly advertise the new

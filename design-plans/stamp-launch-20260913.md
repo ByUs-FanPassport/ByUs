@@ -65,6 +65,6 @@
 - Worker 새 `community_stamp` capability opt-in, 기존 ERC1155 발급·복구. 전체 529 tests/typecheck/build PASS.
 - Web owner-only route/domain 19 tests PASS; 기존 MY/Passport 50 tests PASS. MY/Passport 수집목록 및 캘린더 출석 통합.
 - DB clean158 migrations+신규 behavior 및 기존 전체 backend security PASS. 교차검토로 invitee redeemed boolean, tokenId string projection, 자정 source/issuedAt 정합성을 수정하고 clean replay+behavior 재통과.
-- Web typecheck/lint/build PASS. 이후 출석 중복 클릭 guard와 테스트 수정의 영향 검증 중. localhost 실제 production component/CSS + synthetic auth/API에서 KO/EN360/1440 렌더, 모달 Escape, 복사 미지급, axe PASS. 근거 `test-results/community-stamps-local/`. 실제 계정/온체인/운영 증거 아님.
-- 운영 DB 마지막 migration `20260912152008` 확인. 운영 변경/배포는 아직 하지 않음.
+- Web typecheck/lint/build PASS. 출석 중복 클릭 guard 4tests와 최종 typecheck PASS. 전체 lint의 hook dependency 경고1건 수정 후 해당 파일 eslint PASS. localhost 실제 production component/CSS + synthetic auth/API에서 KO/EN360/1440 렌더, 모달 Escape, 복사 미지급, axe PASS. 근거 `test-results/community-stamps-local/`. 실제 계정/온체인/운영 증거 아님.
+- 운영 DB 마지막 migration `20260912152008` 확인. 최종 SQL clean replay158+behavior PASS. 기존 초대 스탬프 보유자가 다른 코드를 사용할 때 awarded=false 반환도 검증. 배포 준비 완료.
 - 공유 기준 질문 pending: 기기 공유창 완료반환 지급 vs 실제 SNS 게시 인증. 답변 전 공개·지급 없음.

@@ -137,12 +137,13 @@ function OwnerDailyCheckin({
     onCheckedDatesChange(checkedDatesKey ? checkedDatesKey.split(",") : []);
   }, [checkedDatesKey, onCheckedDatesChange]);
 
+  const serverToday = data?.today;
   useEffect(() => {
-    if (!data) return;
-    const delay = Math.max(1_000, Math.min(nextKstMidnight(data.today) - Date.now() + 1_000, 2_147_483_647));
+    if (!serverToday) return;
+    const delay = Math.max(1_000, Math.min(nextKstMidnight(serverToday) - Date.now() + 1_000, 2_147_483_647));
     const timer = window.setTimeout(resource.retry, delay);
     return () => window.clearTimeout(timer);
-  }, [data?.today, resource.retry]);
+  }, [serverToday, resource.retry]);
 
   async function checkIn() {
     if (inFlight.current || checkedToday) return;
