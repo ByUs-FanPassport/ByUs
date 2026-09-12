@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       {
         // OAuth flow documents supply their own hashed-style, script-free CSP.
         // A second global form-action 'self' would block their external 303.
-        source: "/connect/instagram/:path*",
+        source: "/connect/instagram/:path+",
         headers: [
           ...responseSecurityHeaders.filter((header) => !["Content-Security-Policy", "Referrer-Policy"].includes(header.key)),
           { key: "Referrer-Policy", value: "same-origin" },

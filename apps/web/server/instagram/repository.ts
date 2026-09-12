@@ -12,6 +12,7 @@ export interface InstagramRepository {
   deletionStatus(hash: string): Promise<boolean>;
   claimSync(celebrityId?: string): Promise<InstagramConnection[]>;
   finishSync(connection: InstagramConnection, result: Record<string, unknown>): Promise<boolean>;
+  expireCredentials(celebrityId: string, generation: string): Promise<boolean>;
 }
 
 export function createInstagramRepository(db: SupabaseClient): InstagramRepository {
@@ -24,7 +25,7 @@ export function createInstagramRepository(db: SupabaseClient): InstagramReposito
   return {
     async cleanup() {
       const now = new Date().toISOString();
-      const results = await Promise.all(["instagram_connection_flows", "instagram_deletion_receipts", "instagram_revocations"].map((table) => db.from(table).delete().lte("expires_at", now)));
+      const results = await Promise.all(["instagram_connection_flows", "instagram_owner_flows", "instagram_deletion_receipts", "instagram_revocations"].map((table) => db.from(table).delete().lte("expires_at", now)));
       if (results.some((result) => result.error)) throw new Error("Instagram cleanup unavailable");
     },
     async issueInvite(input) {
@@ -52,6 +53,9 @@ export function createInstagramRepository(db: SupabaseClient): InstagramReposito
     },
     async finishSync(connection, result) {
       return z.boolean().parse(await rpc("instagram_finish_sync", { p_celebrity_id: connection.celebrity_id, p_generation: connection.generation, p_lease_id: connection.lease_id, p_result: result }));
+    },
+    async expireCredentials(celebrityId, generation) {
+      return z.boolean().parse(await rpc("instagram_expire_credentials", { p_celebrity_id: celebrityId, p_generation: generation }));
     },
   };
 }

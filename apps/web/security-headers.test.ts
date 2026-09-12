@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { responseSecurityHeaders } from "./security-headers";
+import { unstable_getResponseFromNextConfig } from "next/experimental/testing/server";
+import nextConfig from "./next.config";
 
 function header(name: string): string {
   const value = responseSecurityHeaders.find(
@@ -10,6 +12,16 @@ function header(name: string): string {
 }
 
 describe("response security headers", () => {
+  it("allows app scripts on the connection landing while OAuth documents remain script-free", async () => {
+    const landing = await unstable_getResponseFromNextConfig({ url: "https://byus.kr/connect/instagram", nextConfig });
+    expect(landing.headers.get("content-security-policy")).toContain("https://auth.privy.io");
+    expect(landing.headers.get("content-security-policy")).not.toContain("default-src 'none'");
+    for (const route of ["start", "callback", "confirm", "deletion-status"]) {
+      const document = await unstable_getResponseFromNextConfig({ url: `https://byus.kr/connect/instagram/${route}`, nextConfig });
+      expect(document.headers.get("content-security-policy")).toContain("default-src 'none'");
+      expect(document.headers.get("content-security-policy")).not.toContain("https://auth.privy.io");
+    }
+  });
   it("denies framing and constrains executable content", () => {
     const csp = header("Content-Security-Policy");
 

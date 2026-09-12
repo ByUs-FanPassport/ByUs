@@ -21,6 +21,13 @@ describe("admin API proxy prefilter", () => {
 });
 
 describe("page locale proxy", () => {
+  it.each(["/creator/instagram", "/connect/instagram", "/connect/instagram/callback"])("keeps %s private and prevents framing/referrer leakage", (path) => {
+    const response = proxy(new NextRequest(`https://byus.example${path}`));
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("same-origin");
+    expect(response.headers.get("x-frame-options")).toBe("DENY");
+  });
   it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
     const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { "x-byus-pathname": "/" } }));
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");

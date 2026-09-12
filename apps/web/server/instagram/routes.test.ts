@@ -13,7 +13,7 @@ const flow = { celebrity_id: "11111111-1111-4111-8111-111111111111", generation:
 function setup() {
   const repository = {
     issueInvite: vi.fn<InstagramRepository["issueInvite"]>(async () => undefined), transition: vi.fn<InstagramRepository["transition"]>(async () => flow), disconnect: vi.fn(),
-    deleteSubject: vi.fn(), deletionStatus: vi.fn(), claimSync: vi.fn(), finishSync: vi.fn(),
+    deleteSubject: vi.fn(), deletionStatus: vi.fn(), claimSync: vi.fn(), finishSync: vi.fn(), expireCredentials: vi.fn(), cleanup: vi.fn(),
   };
   const service = { callback: vi.fn(async () => pending), disconnect: vi.fn(), sync: vi.fn(async () => []) };
   const deps = {

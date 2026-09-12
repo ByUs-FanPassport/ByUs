@@ -14,7 +14,7 @@ function setup(overrides: Partial<InstagramConnection> = {}) {
   const repository = {
     transition: vi.fn<InstagramRepository["transition"]>(async () => ({ celebrity_id: celebrityId, generation: connection.generation, expected_username: "creator_test", expected_user_id: identity.user_id, locale: "ko", payload: {}, expires_at: new Date(now + 600000).toISOString() })),
     disconnect: vi.fn(async () => ({ celebrity_id: celebrityId, identity, token_ciphertext: connection.token_ciphertext })),
-    claimSync: vi.fn(async () => [connection]), finishSync: vi.fn<InstagramRepository["finishSync"]>(async () => true),
+    claimSync: vi.fn(async () => [connection]), finishSync: vi.fn<InstagramRepository["finishSync"]>(async () => true), expireCredentials: vi.fn(async () => false),
   };
   const provider = { exchange: vi.fn(async () => ({ identity, token: { accessToken: "new-test-token", expiresIn: 5184000 } })), refresh: vi.fn(async () => ({ accessToken: "refreshed-test-token", expiresIn: 5184000 })), media: vi.fn(async () => []), revoke: vi.fn(async () => undefined) };
   const service = createInstagramService({ repository: repository as unknown as InstagramRepository, provider: provider as unknown as InstagramProvider, vault, now: () => now });
