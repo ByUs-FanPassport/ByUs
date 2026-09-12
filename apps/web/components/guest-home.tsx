@@ -352,12 +352,12 @@ function GuestHomeContent({ guideEventPhotos, celebrities, celebrityLives = [], 
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
-                    <div className={styles.celebrityIdentity}>
+                    <div className={styles.celebrityInfoRow}>
                       <h3>{celebrity.name}</h3>
-                      <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
-                    </div>
-                    <div className={styles.celebrityActions}>
                       <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
+                    </div>
+                    <div className={`${styles.celebrityInfoRow} ${styles.celebrityAudienceRow}`}>
+                      <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
                         {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale === "en" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>

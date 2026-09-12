@@ -33,7 +33,7 @@ describe("guest home compact icon-only action spacing", () => {
     const icon = declarationBlock(".socialLink img");
 
     expect(target).toMatch(/\bwidth:\s*44px\b/);
-    expect(target).toMatch(/\bmin-width:\s*44px\b/);
+    expect(target).toMatch(/\bmin-width:\s*24px\b/);
     expect(target).toMatch(/\bheight:\s*44px\b/);
     expect(target).toMatch(/\bmin-height:\s*44px\b/);
     expect(icon).toMatch(/\bwidth:\s*20px\b/);
@@ -42,19 +42,18 @@ describe("guest home compact icon-only action spacing", () => {
 
   it("aligns identity rows with the status and social action targets", () => {
     const info = declarationBlock(".celebrityInfo");
-    const identity = declarationBlock(".celebrityIdentity");
+    const row = declarationBlock(".celebrityInfoRow");
     const status = declarationBlock(
       ".celebrityFanLink",
     );
     expect(declarationBlock(".fanCount")).toContain("var(--muted)");
 
-    expect(identity).toMatch(/\bgrid-template-rows:\s*repeat\(2,\s*44px\)/);
-    expect(identity).toMatch(/\balign-items:\s*center\b/);
+    expect(row).toMatch(/\bmin-height:\s*44px\b/);
+    expect(row).toMatch(/\balign-items:\s*center\b/);
     expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
-    expect(info).toMatch(
+    expect(row).toMatch(
       /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
     );
-    expect(info).toMatch(/\balign-items:\s*center\b/);
     expect(status).toMatch(/\bmin-height:\s*44px\b/);
     expect(status).toMatch(/\bgap:\s*4px\b/);
     expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
