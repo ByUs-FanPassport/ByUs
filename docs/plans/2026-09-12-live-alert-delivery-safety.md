@@ -49,3 +49,16 @@ Completed locally on 2026-09-13 KST. Production activation and delivery remain e
 - Deploy the already validated node24 bundle as ZIP-root `index.cjs` to the unqualified notification Lambda with revision guard; verify Active/Successful and ZIP hash. Preserve the previous ZIP for code-only rollback; never restore the prior secret version because it would re-enable Kakao.
 - Keep historical pending untouched and both fan sending modes disabled. Cutover/exclusion policy, Kakao enrollment and recipient tests remain separate future work.
 - Evidence directory: `/tmp/byus-live-alert-rollout-20260913/`.
+
+### Production result
+
+Completed 2026-09-13 00:16 KST. Deployed source: `a315c75bc72d73d976c95bd54b7c4f664531b270`.
+
+- Both fan modes explicitly `disabled`, read back before and after deployment. All other secret keys preserved; Telegram/business inquiry branches and EventBridge target/schedule unchanged. No worker invocation or recipient test was performed.
+- After more than the previous Lambda's 60-second timeout: Email pending 71, attempt total 0, processing 0, Kakao attempt ledger 0.
+- Applied only `20260912144419_live_alert_delivery_safety` and its migration-ledger row in one transaction. Temporary before/after full-row hash assertions passed. Migration source SHA-256: `8029cc5450d13948cf190a4a11994742cd1da207267e9879603f155d62968bd0`.
+- Final comparison: existing outbox 71/71, plans 71/71, channels 104/104 exactly preserved, no additional rows. Email/Kakao send-attempt ledgers both 0. Guarded claim/begin/finish permissions, old claim denial, ledger direct-access denial and forced RLS all verified read-only.
+- `byus-notification-worker-prod`: `Active / Successful`; verified ZIP-root `index.cjs`, nodejs24.x. Uploaded and deployed CodeSha256: `3QiwLPx1Uoe+bp2NVtNnvWZgPkjSlTSt2pcx9RwX8xc=`. Code-only deployment preserved existing Lambda environment/role/runtime/handler/timeout/memory/architecture. Existing BUILD_COMMIT/BUILD_TIMESTAMP environment metadata was preserved, so identify this deployment by the code hash and source commit above.
+- Previous ZIP is retained at `/tmp/byus-live-alert-rollout-20260913/previous.zip`; its CodeSha256 is `REA/LqBEmW/sOxoYv5I99fMHCzAw8fuxMb4hXdETcOk=`. Recovery must keep both fan modes disabled and legacy Email claim permissions denied.
+- Read-only deployment wrapper review found no blockers. All original local tests were reused because code/dependencies had not changed; the final documentation update does not change runtime behavior.
+- Source is retained on `codex/live-alert-delivery-safety-20260912`; this rollout does not merge or deploy unrelated web work. Integrate this branch before a future routine worker release. Fan activation still requires a separately approved historical-backlog cutover policy and controlled receipt verification.
