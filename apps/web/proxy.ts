@@ -16,6 +16,11 @@ export function proxy(request: NextRequest): NextResponse {
     if (isPrivatePath(request.nextUrl.pathname) || isRehearsalPath(request.nextUrl.pathname)) {
       response.headers.set("X-Robots-Tag", "noindex, nofollow");
     }
+    if (/^\/(?:creator|connect)(?:\/|$)/.test(request.nextUrl.pathname)) {
+      response.headers.set("Cache-Control", "private, no-store, max-age=0");
+      response.headers.set("Referrer-Policy", "same-origin");
+      response.headers.set("X-Frame-Options", "DENY");
+    }
     return response;
   }
 

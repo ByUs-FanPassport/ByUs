@@ -65,7 +65,9 @@ export function createInstagramService(deps: { repository: InstagramRepository; 
           outcomes.push({ celebrityId: connection.celebrity_id, status: saved ? "updated" : "superseded" });
         } catch (error) {
           if (error instanceof InstagramError && error.code === "REAUTH_REQUIRED") {
-            await repository.disconnect(connection.celebrity_id, connection.generation);
+            if (!await repository.expireCredentials(connection.celebrity_id, connection.generation)) {
+              await repository.disconnect(connection.celebrity_id, connection.generation);
+            }
             outcomes.push({ celebrityId: connection.celebrity_id, status: "reauth_required" });
           } else {
             // Keep refreshed ciphertext even if fetching media failed. Hide old media immediately.
