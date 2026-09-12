@@ -9,7 +9,8 @@ const SAFE_PROVIDER_ID = /^[A-Za-z0-9_-]{2,128}$/;
 const receiptSchema = z.object({
   messageId: z.string().regex(SAFE_PROVIDER_ID),
   groupId: z.string().regex(SAFE_PROVIDER_ID),
-  customFields: z.object({ deliveryKey: z.string().uuid() }).passthrough(),
+  type: z.string().optional(),
+  customFields: z.object({ deliveryKey: z.string().uuid().optional() }).passthrough().optional(),
 }).passthrough();
 const payloadSchema = z.array(receiptSchema).min(1).max(100);
 
@@ -62,6 +63,9 @@ export function createSolapiWebhookHandler(dependencies: SolapiWebhookDependenci
     try {
       let recorded = 0;
       for (const receipt of receipts) {
+        // SINGLE-REPORT covers the whole provider account, including SMS OTPs.
+        // Acknowledge unrelated results without making them Alimtalk candidates.
+        if ((receipt.type && receipt.type !== "ATA") || !receipt.customFields?.deliveryKey) continue;
         const { data, error } = await dependencies.client.rpc("record_kakao_notification_receipt", {
           p_delivery_id: receipt.customFields.deliveryKey,
           p_provider_message_id: receipt.messageId,

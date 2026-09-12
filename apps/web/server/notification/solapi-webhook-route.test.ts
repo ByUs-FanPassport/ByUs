@@ -22,6 +22,26 @@ describe("SOLAPI receipt webhook", () => {
     expect(await response.json()).toEqual({ accepted: 2, recorded: 0 });
     expect(rpc).toHaveBeenCalledTimes(2);
   });
+  it("acknowledges SMS OTP and unrelated account reports without recording Alimtalk candidates", async () => {
+    const rpc = vi.fn();
+    const response = await createSolapiWebhookHandler({ secret, client: { rpc } })(request([
+      { messageId: "M4Votp", groupId: "G4Votp", type: "SMS" },
+      { ...receipt, type: "SMS" },
+      { messageId: "M4Vother", groupId: "G4Vother", type: "ATA", customFields: {} },
+    ]));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ accepted: 3, recorded: 0 });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("records only the correlated Alimtalk receipt in a mixed batch", async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const response = await createSolapiWebhookHandler({ secret, client: { rpc } })(request([
+      { messageId: "M4Votp", groupId: "G4Votp", type: "SMS", customFields: {} },
+      { ...receipt, type: "ATA" },
+    ]));
+    expect(await response.json()).toEqual({ accepted: 2, recorded: 1 });
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
   it.each([[Array.from({ length: 101 }, () => receipt), 400], [[{ ...receipt, customFields: { deliveryKey: "bad" } }], 400], [[{ ...receipt, messageId: "bad id" }], 400], ["x".repeat(65537), 413]] as const)("rejects invalid or oversized input", async (body, status) => {
     expect((await createSolapiWebhookHandler({ secret, client: { rpc: vi.fn() } })(request(body))).status).toBe(status);
   });
