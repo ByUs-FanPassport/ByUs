@@ -1,4 +1,5 @@
 import "server-only";
+import { YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
 
 const YOUTUBE_API_ORIGIN = "https://www.googleapis.com";
 const YOUTUBE_API_PATH = "/youtube/v3";
@@ -264,10 +265,10 @@ async function confirmLiveVideo(
       key: apiKey,
     });
   let result = await apiFetcher("videos", url);
-  if (result && freshApiFetcher && observedAtMs - result.fetchedAtMs >= 90_000) {
+  if (result && freshApiFetcher && observedAtMs - result.fetchedAtMs >= YOUTUBE_LIVE_MAX_AGE_MS) {
     result = await freshApiFetcher("videos", url);
   }
-  if (result && observedAtMs - result.fetchedAtMs >= 90_000) {
+  if (result && observedAtMs - result.fetchedAtMs >= YOUTUBE_LIVE_MAX_AGE_MS) {
     return { state: "unavailable" };
   }
   const items = result?.payload.items;

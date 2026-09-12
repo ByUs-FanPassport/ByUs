@@ -271,6 +271,11 @@ describe("YouTube watch discovery", () => {
       ...options,
     });
   }
+  it("keeps a four-minute YouTube observation usable before five-minute expiry", async () => {
+    await expect(location(youtube({ youtubeResult: {
+      state: "live", observedAt: "2026-09-12T01:26:00Z", channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: "2026-09-12T01:05:00Z",
+    } }))).resolves.toBe("https://www.youtube.com/watch?v=abcdefghijk");
+  });
   it("redirects the matching channel's fresh active video", async () => {
     const target = youtube();
     await expect(location(target)).resolves.toBe("https://www.youtube.com/watch?v=abcdefghijk");
@@ -281,7 +286,7 @@ describe("YouTube watch discovery", () => {
     { state: "offline" }, { state: "unavailable" }, { videoId: "../../evil" },
     { channelId: "invalid" }, { actualStartTime: "2026-09-11T01:00:00Z" },
     { actualStartTime: "2026-09-12T01:31:00Z" },
-    { observedAt: "2026-09-12T01:28:30Z" }, { observedAt: "2026-09-12T01:31:00Z" },
+    { observedAt: "2026-09-12T01:25:00Z" }, { observedAt: "2026-09-12T01:31:00Z" },
   ] as const)("falls back for invalid/unrelated observations %j", async (overrides) => {
     await expect(location(youtube({ youtubeResult: {
       state: "live", observedAt: current, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,

@@ -8,7 +8,7 @@ import {
   isObservedLiveCardFresh,
   mergeObservedLiveFeed,
   observedLiveKey,
-  OBSERVED_LIVE_MAX_AGE_MS,
+  observedLiveMaxAge,
   OBSERVED_LIVE_POLL_MS,
   type ObservedLiveCard,
 } from "../domain/observed-live";
@@ -81,7 +81,7 @@ export function ObservedLiveStrip({ locale }: { locale: "ko" | "en" }) {
   // must not leave an old observation labelled LIVE indefinitely.
   useEffect(() => {
     const expiries = items.filter((item) => fresh(item, now)).map((item) =>
-      Math.min(Date.parse(item.expiresAt), Date.parse(item.observedAt) + OBSERVED_LIVE_MAX_AGE_MS));
+      Math.min(Date.parse(item.expiresAt), Date.parse(item.observedAt) + observedLiveMaxAge(item.platform)));
     if (!expiries.length) return;
     const timer = setTimeout(() => setNow(Date.now()), Math.max(0, Math.min(...expiries) - Date.now()));
     return () => clearTimeout(timer);

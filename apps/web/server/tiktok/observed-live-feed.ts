@@ -6,7 +6,7 @@ import {
   type ObservedLiveFeed,
   type ObservedLiveTarget,
 } from "../../features/live/domain/observed-live";
-import { parseYouTubeChannelUrl } from "../../features/live/domain/youtube-channel";
+import { parseYouTubeChannelUrl, YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
 import type { YouTubeLiveObserver } from "../youtube/youtube-live-source";
 import type {
   ContentLocale,
@@ -160,7 +160,7 @@ export async function buildObservedLiveFeed(
     statuses.push(status);
     const at = Date.parse(status.observedAt ?? "");
     if (!observation || observation.state === "unavailable") status.state = "unavailable";
-    else if (!Number.isFinite(at) || at > checkedAtMs || checkedAtMs - at >= OBSERVED_LIVE_MAX_AGE_MS) status.state = "stale";
+    else if (!Number.isFinite(at) || at > checkedAtMs || checkedAtMs - at >= YOUTUBE_LIVE_MAX_AGE_MS) status.state = "stale";
     else if (observation.state === "offline") status.state = "offline";
     else if (observation.videoId && /^[A-Za-z0-9_-]{11}$/.test(observation.videoId) && observation.channelId && (target?.kind !== "id" || target.value === observation.channelId)) {
       status.state = "live";
@@ -169,7 +169,7 @@ export async function buildObservedLiveFeed(
         title: observation.title || (locale === "ko" ? `${celebrity.name}의 YouTube LIVE` : `${celebrity.name}'s YouTube LIVE`),
         thumbnailUrl: observation.thumbnailUrl ?? celebrity.image.url, fallbackThumbnailUrl: celebrity.image.url,
         watchUrl: `https://www.youtube.com/watch?v=${observation.videoId}`,
-        observedAt: observation.observedAt, expiresAt: new Date(at + OBSERVED_LIVE_MAX_AGE_MS).toISOString(),
+        observedAt: observation.observedAt, expiresAt: new Date(at + YOUTUBE_LIVE_MAX_AGE_MS).toISOString(),
       });
     }
     coverage[status.state] += 1;

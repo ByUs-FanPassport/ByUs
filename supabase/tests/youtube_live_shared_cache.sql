@@ -44,9 +44,9 @@ begin
   a := public.youtube_claim_live_api(repeat('f',64),'videos');
   if not public.youtube_finish_live_api(repeat('f',64),(a->>'leaseId')::uuid,'{"items":[]}') then raise exception 'Video write failed'; end if;
   if (select fetched_at from public.youtube_live_api_cache where cache_key=repeat('f',64)) <> (a->>'fetchedAt')::timestamptz then raise exception 'Claim proof origin changed'; end if;
-  update public.youtube_live_api_cache set fetched_at=clock_timestamp()-interval '59 seconds' where cache_key=repeat('f',64);
+  update public.youtube_live_api_cache set fetched_at=clock_timestamp()-interval '179 seconds' where cache_key=repeat('f',64);
   if public.youtube_claim_live_api(repeat('f',64),'videos')->>'state' <> 'cached' then raise exception 'Video TTL too short'; end if;
-  update public.youtube_live_api_cache set fetched_at=clock_timestamp()-interval '60 seconds' where cache_key=repeat('f',64);
+  update public.youtube_live_api_cache set fetched_at=clock_timestamp()-interval '180 seconds' where cache_key=repeat('f',64);
   if public.youtube_claim_live_api(repeat('f',64),'videos')->>'state' <> 'claimed' then raise exception 'Video TTL too long'; end if;
   raise notice 'YouTube cache ACL, lease, freshness, failure, recovery, both budgets and rolling expiry passed';
 end $$;

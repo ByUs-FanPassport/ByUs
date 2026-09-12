@@ -1,4 +1,5 @@
 import "server-only";
+import { YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
 
 import { OBSERVED_LIVE_MAX_AGE_MS } from "../../features/live/domain/observed-live";
 import {
@@ -146,7 +147,7 @@ export function createGetLiveWatchHandler(
         const age = checkedAt.getTime() - Date.parse(observation.observedAt);
         const actualStart = Date.parse(observation.actualStartTime ?? "");
         if (observation.state !== "live" || !Number.isFinite(age) || age < 0 ||
-            age >= OBSERVED_LIVE_MAX_AGE_MS ||
+            age >= YOUTUBE_LIVE_MAX_AGE_MS ||
             !/^UC[A-Za-z0-9_-]{22}$/.test(observation.channelId ?? "") ||
             (youtubeChannel.kind === "id" && observation.channelId !== youtubeChannel.value) ||
             !/^[A-Za-z0-9_-]{11}$/.test(observation.videoId ?? "") ||

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   mergeObservedLiveFeed,
+  isObservedLiveCardFresh,
   observedLiveKey,
   type ObservedLiveCard,
   type ObservedLiveFeed,
@@ -88,4 +89,15 @@ describe("observed LIVE feed merging", () => {
     expect(mergeObservedLiveFeed([expired], undefined, now)).toEqual([]);
     expect(mergeObservedLiveFeed([tiktok], undefined, now)).toEqual([tiktok]);
   });
+});
+
+
+it("retains YouTube through five minutes without extending TikTok or legacy expiries", () => {
+  const card = { ...youtube, observedAt: new Date(now).toISOString(), expiresAt: new Date(now + 300000).toISOString() };
+  expect(isObservedLiveCardFresh(card, now + 299999)).toBe(true);
+  expect(isObservedLiveCardFresh(card, now + 300000)).toBe(false);
+  expect(isObservedLiveCardFresh({ ...card, platform: "tiktok" }, now + 120000)).toBe(false);
+  expect(isObservedLiveCardFresh({ ...card, expiresAt: new Date(now + 90000).toISOString() }, now + 90000)).toBe(false);
+  expect(mergeObservedLiveFeed([card], feed([], [targetFor(card, "unavailable", null)]), now + 299999)).toEqual([card]);
+  expect(mergeObservedLiveFeed([card], feed([], [targetFor(card, "offline", new Date(now + 240000).toISOString())]), now + 240000)).toEqual([]);
 });

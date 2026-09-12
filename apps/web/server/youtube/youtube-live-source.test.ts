@@ -305,7 +305,10 @@ describe("createCachedYouTubeLiveObserver", () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(cached.observedAt).toBe(first.observedAt);
 
-    clock += 51_000;
+    clock += 169_000;
+    await observe(target);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    clock += 1_000;
     const refreshed = await observe(target);
     expect(fetcher).toHaveBeenCalledTimes(4);
     expect(refreshed.observedAt).toBe(new Date(clock).toISOString());
@@ -337,8 +340,8 @@ describe("createCachedYouTubeLiveObserver", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("awaits a direct confirmation when shared video evidence is at least 90 seconds old", async () => {
-    const staleAt = "2026-09-12T11:58:00.000Z";
+  it("awaits a direct confirmation when shared video evidence is at least five minutes old", async () => {
+    const staleAt = "2026-09-12T11:55:00.000Z";
     const fetcher = queueFetcher(
       jsonResponse(liveSearch()),
       jsonResponse(liveVideo({ snippet: { channelId: CHANNEL_ID, liveBroadcastContent: "live", title: "Stale" } }), 200, staleAt),
@@ -355,7 +358,7 @@ describe("createCachedYouTubeLiveObserver", () => {
   });
 
   it("does not redate or serve video evidence that remains stale after direct confirmation", async () => {
-    const staleAt = "2026-09-12T11:58:00.000Z";
+    const staleAt = "2026-09-12T11:55:00.000Z";
     const fetcher = queueFetcher(
       jsonResponse(liveSearch()),
       jsonResponse(liveVideo(), 200, staleAt),
@@ -369,7 +372,7 @@ describe("createCachedYouTubeLiveObserver", () => {
   it("normalizes a failed direct refresh without leaving an unhandled cleanup rejection", async () => {
     const fetcher = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse(liveSearch()))
-      .mockResolvedValueOnce(jsonResponse(liveVideo(), 200, "2026-09-12T11:58:00.000Z"))
+      .mockResolvedValueOnce(jsonResponse(liveVideo(), 200, "2026-09-12T11:55:00.000Z"))
       .mockRejectedValueOnce(new Error("network unavailable"));
     const observe = createCachedYouTubeLiveObserver({ apiKey: "key", fetcher, now: () => NOW });
     await expect(observe({ kind: "id", value: CHANNEL_ID })).resolves.toMatchObject({ state: "unavailable" });

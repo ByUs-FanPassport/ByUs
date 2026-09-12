@@ -1,4 +1,5 @@
 import "server-only";
+import { YOUTUBE_LIVE_RECHECK_MS } from "../../features/live/domain/youtube-channel";
 
 import { createHash } from "node:crypto";
 
@@ -13,7 +14,7 @@ import { fetchSharedYouTubeApi } from "./shared-api-cache";
 
 const CHANNEL_CACHE_MS = 24 * 60 * 60 * 1_000;
 const SEARCH_CACHE_MS = 60 * 60 * 1_000;
-const VIDEO_CACHE_MS = 60 * 1_000;
+const VIDEO_CACHE_MS = YOUTUBE_LIVE_RECHECK_MS;
 const MAX_CACHE_ENTRIES = 128;
 const FETCHED_AT_HEADER = "x-byus-youtube-fetched-at";
 

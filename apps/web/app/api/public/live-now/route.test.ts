@@ -376,7 +376,7 @@ describe("multi-platform observed feed", () => {
     expect(feed.targets?.[1]).toMatchObject({ platform: "youtube", state: "unavailable", observedAt: null });
   });
   it("never turns stale or foreign-channel YouTube results into cards", async () => {
-    const feed = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(Date.parse(observedAt) + 90000), async () => ({ state: "live", observedAt, channelId, videoId }));
+    const feed = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(Date.parse(observedAt) + 300000), async () => ({ state: "live", observedAt, channelId, videoId }));
     expect(feed.items).toEqual([]); expect(feed.coverage.stale).toBe(2);
     const foreign = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), async () => ({ state: "live", observedAt, channelId: "UCbbbbbbbbbbbbbbbbbbbbbb", videoId }));
     expect(foreign.items).toEqual([]); expect(foreign.coverage.unavailable).toBe(1);

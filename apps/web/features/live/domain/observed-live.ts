@@ -1,3 +1,4 @@
+import { YOUTUBE_LIVE_MAX_AGE_MS } from "./youtube-channel";
 import { z } from "zod";
 
 export const OBSERVED_LIVE_MAX_AGE_MS = 90_000;
@@ -31,9 +32,12 @@ export type ObservedLiveFeed = {
 export function observedLiveKey(item: Pick<ObservedLiveCard, "platform" | "celebritySlug" | "handle">): string {
   return JSON.stringify([item.platform ?? "tiktok", item.celebritySlug, item.handle]);
 }
-export function isObservedLiveCardFresh(card: Pick<ObservedLiveCard, "observedAt" | "expiresAt">, now = Date.now()): boolean {
+export function observedLiveMaxAge(platform?: ObservedLivePlatform): number {
+  return platform === "youtube" ? YOUTUBE_LIVE_MAX_AGE_MS : OBSERVED_LIVE_MAX_AGE_MS;
+}
+export function isObservedLiveCardFresh(card: Pick<ObservedLiveCard, "platform" | "observedAt" | "expiresAt">, now = Date.now()): boolean {
   const observedAt = Date.parse(card.observedAt), expiresAt = Date.parse(card.expiresAt);
-  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now && now < expiresAt && expiresAt - observedAt === OBSERVED_LIVE_MAX_AGE_MS;
+  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now && now < expiresAt && (expiresAt - observedAt === observedLiveMaxAge(card.platform) || expiresAt - observedAt === OBSERVED_LIVE_MAX_AGE_MS);
 }
 const label = z.string().max(2048);
 const platform = z.enum(["tiktok", "youtube"]);
@@ -68,7 +72,7 @@ export function mergeObservedLiveFeed(previous: ObservedLiveCard[], response: un
   for (const target of feed.targets) {
     const key = observedLiveKey(target), prior = old.get(key), next = incoming.get(key);
     const at = target.observedAt === null ? NaN : Date.parse(target.observedAt);
-    const targetFresh = Number.isFinite(at) && at <= now && now - at < OBSERVED_LIVE_MAX_AGE_MS;
+    const targetFresh = Number.isFinite(at) && at <= now && now - at < observedLiveMaxAge(target.platform);
     if (target.state === "live" && next && next.observedAt === target.observedAt) {
       merged.push(prior && Date.parse(prior.observedAt) > Date.parse(next.observedAt) ? prior : next);
     } else if (prior && !(target.state === "offline" && targetFresh && at >= Date.parse(prior.observedAt))) {

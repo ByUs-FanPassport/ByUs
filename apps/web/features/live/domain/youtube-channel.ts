@@ -1,3 +1,6 @@
+export const YOUTUBE_LIVE_RECHECK_MS = 180_000;
+export const YOUTUBE_LIVE_MAX_AGE_MS = 300_000;
+
 export type YouTubeChannelTarget = Readonly<{ kind: "id" | "handle"; value: string }>;
 
 /** Channel URLs opt in to discovery; a specific video always remains authoritative. */
