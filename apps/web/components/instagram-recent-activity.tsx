@@ -47,8 +47,6 @@ export function InstagramRecentActivity({ slug, locale, fallback = null }: { slu
             onError={() => setFailedImages((previous) => new Set(previous).add(item.imageUrl))} />
           {item.mediaType === "VIDEO" && <span className={styles.play} aria-hidden="true"><Play /></span>}
         </div>
-        {item.caption && <p className={styles.caption}>{item.caption}</p>}
-        <div className={styles.meta}><span>@{item.sourceAccount.username}</span><time dateTime={item.timestamp}>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(item.timestamp))}</time></div>
       </a>)}
     </div>
   </section>;
