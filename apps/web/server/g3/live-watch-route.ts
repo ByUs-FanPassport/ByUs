@@ -7,6 +7,8 @@ import {
 } from "../../features/live/domain/live-event";
 import { isTikTokScheduledEventUrl } from "../../features/live/domain/live-watch-link";
 import { parseYouTubeChannelUrl } from "../../features/live/domain/youtube-channel";
+import { parseCanonicalInstagramProfileUrl, instagramLiveObservationSchema } from "../../features/live/domain/instagram-live";
+import type { InstagramLiveObserver } from "../instagram/cached-live-source";
 import type { YouTubeLiveObserver } from "../youtube/youtube-live-source";
 import type { PublishedContentRepository } from "../content/published-content-repository";
 import {
@@ -20,6 +22,7 @@ export type LiveWatchRouteDependencies = Readonly<{
   creators: Pick<PublishedContentRepository, "findBySlug">;
   observe: TikTokLiveObserver;
   observeYouTube?: YouTubeLiveObserver;
+  observeInstagram?: InstagramLiveObserver;
   now: () => Date;
 }>;
 
@@ -86,7 +89,8 @@ export function createGetLiveWatchHandler(
     }
 
     const youtubeChannel = live.watch.provider === "youtube" ? parseYouTubeChannelUrl(fallbackUrl) : null;
-    const discoverable = (live.watch.provider === "tiktok" && isTikTokScheduledEventUrl(fallbackUrl)) || youtubeChannel;
+    const instagramUsername = live.watch.provider === "instagram" ? parseCanonicalInstagramProfileUrl(fallbackUrl) : null;
+    const discoverable = (live.watch.provider === "tiktok" && isTikTokScheduledEventUrl(fallbackUrl)) || youtubeChannel || instagramUsername;
     if (
       !discoverable ||
       live.effectiveStatus !== "live" ||
@@ -107,6 +111,26 @@ export function createGetLiveWatchHandler(
     }
     if (!creator || creator.slug !== live.celebrity.slug) {
       return redirect(fallbackUrl);
+    }
+
+    if (instagramUsername) {
+      const profiles = creator.socialLinks.filter(({ platform }) => platform === "instagram")
+        .map(({ url }) => parseCanonicalInstagramProfileUrl(url));
+      if (!dependencies.observeInstagram || profiles.length === 0 || profiles.some((username) => username !== instagramUsername)) {
+        return redirect(fallbackUrl);
+      }
+      try {
+        const parsed = instagramLiveObservationSchema.safeParse(await dependencies.observeInstagram(creator.slug, instagramUsername));
+        const checkedAt = dependencies.now();
+        if (!parsed.success || parsed.data.state !== "live") return redirect(fallbackUrl);
+        const observation = parsed.data;
+        const age = checkedAt.getTime() - Date.parse(observation.observedAt);
+        const actualStart = Date.parse(observation.actualStartTime);
+        if (observation.username !== instagramUsername || !Number.isFinite(age) || age < 0 || age >= OBSERVED_LIVE_MAX_AGE_MS ||
+            actualStart < Date.parse(live.startsAt) || actualStart > Date.parse(observation.observedAt) ||
+            !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)) return redirect(fallbackUrl);
+        return redirect(observation.permalink);
+      } catch { return redirect(fallbackUrl); }
     }
 
     if (youtubeChannel) {

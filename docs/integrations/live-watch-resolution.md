@@ -37,22 +37,64 @@ The script exits successfully only when the real API returns `live` and `offline
 - The initial guessed handle `@FRANCE24English` returned `unavailable`; the correct channel ID was obtained from official video metadata. No fallback or test assertion was weakened to make the check pass.
 - Source/API evidence is separate from the earlier rendered local component/redirect check, which used injected repositories and observation fixtures. Production end-to-end navigation has not been tested for this extension.
 
-## Instagram activation boundary
+## Instagram automatic watch links
 
 Creator `social_links` are public navigation addresses. `instagram_connections` separately stores the credentials and cached media obtained after account-owner consent. These are different registrations.
 
 On 2026-09-12, a read-only production query found 8 published Korean creator Instagram profile links and 0 rows in `instagram_connections`. No tokens or profile records were modified. This does not imply that creator profiles are missing.
 
-The existing integration requests `instagram_business_basic` through Instagram Login and decrypts tokens only in its private sync service. An SDK `getLiveMedia` method alone is insufficient evidence that the configured host, API version, login flow and scope support LIVE lookup. Current official materials did not establish that contract in this investigation. Do not add anonymous-request token decryption, construct a `/live/` URL and call it detection, or display scheduled events as observed-live on this basis.
+The integration uses the existing `instagram_business_basic` Instagram Login connection. A bare Instagram profile URL in both the LIVE watch target and the creator's active Instagram social link opts into automatic switching. Explicit stories, video, or LIVE URLs remain authoritative. The returned official API permalink is used directly; the application does not construct a viewer URL.
 
-Before implementing automatic Instagram discovery:
+The private `/api/internal/instagram/live-sync` cron runs once per minute on the verified Vercel Pro team, separately from hourly media collection. It only claims published creators with a valid connected token, a matching active profile, and a published Instagram event inside its scheduled time window. Each invocation claims at most 25 accounts, processes five concurrently, and bounds each source request to five seconds. Separate 45-second leases and generation/token checks reject duplicate or late writes. More than 25 eligible accounts can delay detection; stale observations always fall back rather than extending freshness.
 
-1. Choose a consenting professional account and complete the existing ByUs connection flow. Preserve unrelated Meta apps and accounts; follow `instagram-login-runbook.md`.
-2. Verify the supported LIVE endpoint, required scope, live-state semantics and permalink against the configured Graph API version with an actual broadcast and an offline control.
-3. Extend the existing private sync/cache boundary with a short-lived, whitelisted observation. Never expose encrypted or decrypted tokens through the public watch endpoint.
-4. Verify identity, ended/expired/error fallback and mobile navigation before enabling the adapter.
+The public watch handler reads only whitelisted cached observation fields. It never retrieves or decrypts an Instagram token. Automatic redirects require a matching creator/account, an actual broadcast start within the event window, and an observation younger than 90 seconds; the window is checked again after the read. Successful empty responses, failures, expired cache/token, disconnected accounts, and missing connections preserve the stored profile URL. Connection or token changes invalidate previous observations. Detection and end propagation follow the minute polling schedule; this is not instantaneous detection.
 
-Instagram automatic detection remains pending these checks; the current implementation preserves its existing manual behavior.
+**Audience policy approved by the user:** do not distinguish Everyone, Close Friends, or Practice in the redirect decision. Both tested Everyone and Practice broadcasts appear in `live_media` with `BROADCAST + FEED`. The actual same-owner `/stories/{username}/{id}` permalink is accepted. Instagram controls who can view the destination; a redirect does not prove that every fan can play the broadcast. Close Friends behavior was not separately tested.
+
+Activation uses the existing `INSTAGRAM_INTEGRATION_ENABLED=true` gate and the normal creator OAuth connection flow. The dedicated `mirrorworld.ai` developer credential is only a capability-test credential and was not stored against an unrelated production creator. A fresh production query still found 0 connected accounts. Merely registering an Instagram social URL is not OAuth consent; unconnected accounts continue using their stored URL.
+
+Verification for this extension: actual Everyone and Practice start/end API responses; current-source replay of those four captured responses; source/domain, worker/read/cron, redirect and existing screen tests; isolated PostgreSQL leases, identity, expiry, erasure and access checks; TypeScript and lint. The broadcaster browser showed the profile/LIVE badge, not playback, so fan-account playback is not claimed. This does not block the user-approved automatic-link behavior.
+
+Migration `20260912120819_instagram_live_observations.sql` was applied to production `gmrykvmtmuaeswpajteq` with its history recorded. The post-application query confirmed five LIVE columns, zero claims for unconnected accounts, null fallback for a missing connection, and no anon/authenticated RPC access. Supabase CLI security advisors reported no issues. A scoped rollback is in `supabase/rollback/20260912120819_instagram_live_observations.sql`; disable the integration/revert the application before removing the database objects.
+
+Local rendered verification passed at KO 375px using the actual `LiveEventScreen` and `createGetLiveWatchHandler` with fixture repositories and the captured response shape. Keyboard activation opened a new tab through the internal watch route (307) to the exact Instagram stories permalink; ended/error observations redirected to the configured profile. The CTA was 343×48px, with no overflow or page errors. External destination navigation was intercepted, so this proves the local application flow, not Instagram playback. Evidence: `artifacts/instagram-live-20260912/local-rendered-cta-result.json`.
+
+Checks passed: 183 focused web tests (43 source/domain, 14 sync/read/cron, 126 route/link/existing screen), 8 probe tests, existing PostgreSQL OAuth lifecycle/concurrency checks, new PostgreSQL LIVE checks, web TypeScript checking, and targeted ESLint. Existing unchanged successes were reused; no new public broadcast was requested.
+
+The chronological capability-test notes below preserve what was known at each checkpoint; their earlier pending audience/parser conditions are superseded by the implementation and user-approved policy above.
+
+### Owned-account validation checkpoint, 2026-09-12
+
+- The user selected `mirrorworld.ai` and authorized continuing the basic-read integration test. The existing Instagram session confirmed a public Creator account with 1,406 followers and access to the LIVE preparation screen. No broadcast was started.
+- Dedicated ByUs Meta app `1732948291088067` / Instagram app `3397133600468084` was reused. The exact account is now an accepted Instagram tester. An initial generic role-save error was caused by submitting the typed username without selecting its autocomplete result; selecting the exact account resolved it. The unrelated existing Sally Social API-IG tester relationship was preserved.
+- Basic-read consent and a dedicated developer test token were completed. Every optional message, comment, publishing and insights permission was deselected in the consent UI. This developer test connection does not create a production creator connection.
+- At `2026-09-12T09:12:37.945Z`, the actual `graph.instagram.com/v25.0` API confirmed `mirrorworld.ai` as `MEDIA_CREATOR`, then returned HTTP 200 with an empty `live_media` list. The offline control passed. This establishes access to the endpoint under the tested basic-read setup; nonempty LIVE fields, watch navigation and the end transition remain unverified until the owner starts a test broadcast. Evidence: `artifacts/instagram-live-20260912/offline-proof.json`.
+- `scripts/probe-instagram-live.mjs` performs read-only identity and `live_media` requests against an explicit `graph.instagram.com` version. It requires a private credential JSON file (`accessToken`, `graphVersion`), checks the expected username, and prints only whitelisted evidence. No token, raw upstream message, or paging URL is logged. A successful empty result is an offline control; errors remain unavailable, and a nonempty result remains a live candidate until broadcast semantics and navigation are verified.
+- Local validation: `node --test scripts/probe-instagram-live.test.mjs` (6 passed), syntax check, and targeted ESLint passed. These mocked tests are separate from the real offline API proof above.
+- Meta's generated-token input initially contains masked text until the acknowledgment checkbox is selected. A first capture failed locally before any authenticated HTTP request because of non-ASCII mask characters. The valid token was subsequently captured and verified by the real API. The probe now rejects masked credential strings before constructing a request; token values are kept only in the private temporary file and secure vault.
+- Next required action after the practice test below: compare a user-started public broadcast and establish public-audience eligibility before automatic link promotion. Do not enable the adapter on endpoint presence alone.
+- The private `server/instagram/live-source.ts` module is now prepared. It bounds the complete request/body read to five seconds and 64 KiB, validates account identity, LIVE media type, an explicit timestamp and a safe Instagram permalink, and rejects pagination or multiple candidates. A nonempty valid record is deliberately named `candidate`, and its time is named `mediaTimestamp`; actual broadcast start semantics have not yet been established. It is not wired into the anonymous watch route or a token-loading path.
+- Source validation: 17 focused tests, targeted ESLint and web TypeScript checking passed. The actual module also returned `offline` at `2026-09-12T09:19:08.578Z` using the dedicated test credential (`artifacts/instagram-live-20260912/source-offline-proof.json`). On this continuation, the account was still offline; no start/end or live-button navigation evidence exists yet.
+
+```sh
+node scripts/probe-instagram-live.mjs --credentials <private-json-file> --username mirrorworld.ai --expect offline
+```
+
+### Practice broadcast start/end evidence, 2026-09-12
+
+- The owner started a Practice broadcast and confirmed it in the conversation. At `11:58:41Z` and `11:58:59Z`, the official `live_media` endpoint returned one matching `mirrorworld.ai` broadcast: `media_type=BROADCAST`, `media_product_type=FEED`, timestamp `2026-09-12T11:58:27+0000`, with an actual `/stories/mirrorworld.ai/{id}` permalink. Sanitized evidence: `artifacts/instagram-live-20260912/practice-live-proof.json`.
+- After the owner confirmed ending it, the same endpoint returned HTTP 200 and an empty list at `11:59:56.962Z`. The offline expectation passed. Evidence: `artifacts/instagram-live-20260912/practice-ended-proof.json`. These observations establish a practice broadcast appearing and disappearing; they do not measure exact detection latency.
+- The prepared source and probe had assumed `media_product_type=LIVE` and the source did not accept a stories permalink. Consequently the probe reported a candidate with `matches=false`; the source is not yet validated for actual nonempty responses. Its earlier mocked test successes must not be presented as real LIVE acceptance.
+- Practice broadcasts also appear in this endpoint, so a nonempty list does not prove that general fans can view a broadcast. Public-audience discrimination and actual viewer navigation remain unverified. Do not simply allow `FEED` plus stories URLs and activate automatic redirects; preserve the manual fallback until eligibility is established.
+
+### Public broadcast comparison, 2026-09-12
+
+- The owner selected Everyone and confirmed starting another broadcast. At `12:01:40.326Z`, the official API returned one matching broadcast: `media_type=BROADCAST`, `media_product_type=FEED`, timestamp `2026-09-12T12:01:14+0000`, with a `/stories/mirrorworld.ai/{id}` permalink. Evidence: `artifacts/instagram-live-20260912/public-live-proof.json`. The queried fields have the same shape as the practice response and do not distinguish audience.
+- A read-only media request with `metadata=1` returned HTTP 200 but no metadata field list; it did not establish any audience discriminator. Evidence: `artifacts/instagram-live-20260912/public-metadata-proof.json`. This is not proof that every possible API field lacks audience information.
+- Aside navigated the existing Instagram tab to the exact returned permalink. Both initial and settled inspections showed the broadcaster's profile and LIVE badge. The settled page had zero video elements; playback was not observed. Because this session was signed in as the broadcaster (profile-edit controls visible), this does not establish independent viewer behavior or prove that the permalink is broken.
+- Browser evidence: `/Users/jewel/.aside/u/0/sessions/2026-09-12_hPgYwNVr2kc5O2oP/tmp/mirrorworld_instagram_settled_check.png`. No comments, account changes, or broadcast controls were used. Independent viewer navigation and public eligibility remain pending; automatic redirects remain disabled.
+
+- After the owner confirmed ending the public broadcast, `live_media` returned HTTP 200 with an empty list and no next page at `2026-09-12T12:03:57.529Z`; the offline expectation passed. Evidence: `artifacts/instagram-live-20260912/public-ended-proof.json`. Both tested audiences now have observed start/end transitions. Exact transition latency was not measured.
 
 ## Official references
 

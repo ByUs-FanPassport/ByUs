@@ -7,6 +7,7 @@
   "outputDirectory": "apps/web/.next",
   "regions": ["icn1"],
   "crons": [
-    { "path": "/api/internal/instagram/sync", "schedule": "15 * * * *" }
+    { "path": "/api/internal/instagram/sync", "schedule": "15 * * * *" },
+    { "path": "/api/internal/instagram/live-sync", "schedule": "* * * * *" }
   ]
 }

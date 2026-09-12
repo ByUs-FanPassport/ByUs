@@ -1,0 +1,74 @@
+begin;
+create function pg_temp.assert_true(value boolean,message text) returns void language plpgsql as $$
+begin if value is distinct from true then raise exception '%',message; end if; end $$;
+select pg_temp.assert_true(not has_table_privilege('anon','public.instagram_connections','select'),'anon cannot read credentials or observations');
+select pg_temp.assert_true(not has_function_privilege('authenticated','public.instagram_read_live_observation(text,text)','execute'),'browser cannot invoke read RPC');
+select pg_temp.assert_true(not has_function_privilege('anon','public.instagram_claim_live_sync(integer)','execute'),'browser cannot claim tokens');
+select pg_temp.assert_true(not has_function_privilege('anon','public.instagram_finish_live_sync(uuid,uuid,uuid,timestamptz,jsonb)','execute'),'browser cannot write observations');
+insert into public.celebrities values('11111111-1111-4111-8111-111111111111','ig-test','published');
+insert into public.celebrity_social_links values('11111111-1111-4111-8111-111111111111','instagram','https://www.instagram.com/mirrorworld.ai/',true);
+insert into public.live_events values('11111111-1111-4111-8111-111111111111','published','instagram',now()-interval '5 minutes',now()+interval '5 minutes','https://www.instagram.com/mirrorworld.ai/');
+insert into public.instagram_connections(celebrity_id,identity,ig_user_id,ig_scoped_id,token_ciphertext,token_issued_at,token_expires_at,authorization_started_at,connected_at)
+values('11111111-1111-4111-8111-111111111111','{"id":"11","user_id":"22","username":"mirrorworld.ai","account_type":"MEDIA_CREATOR"}', '22','11','test-ciphertext',now()-interval '2 days',now()+interval '30 days',now()-interval '2 days',now()-interval '2 days');
+-- Scope controls: only an active event with a matching published profile is polled.
+update public.celebrities set status='draft';
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(null)),'unpublished creator not polled');
+update public.celebrities set status='published';
+update public.celebrity_social_links set active=false;
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'inactive profile not polled');
+update public.celebrity_social_links set active=true,url='https://www.instagram.com/other/';
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'different profile not polled');
+update public.celebrity_social_links set url='https://www.instagram.com/mirrorworld.ai/';
+update public.live_events set ends_at=now();
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'ended event not polled');
+update public.live_events set ends_at=now()+interval '5 minutes',external_live_url='https://www.instagram.com/stories/mirrorworld.ai/123';
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'explicit manual permalink not polled');
+update public.live_events set external_live_url='https://www.instagram.com/mirrorworld.ai/';
+update public.instagram_connections set token_expires_at=now()-interval '1 second';
+select pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'expired token not polled');
+update public.instagram_connections set token_expires_at=now()+interval '30 days';
+set local role service_role;
+do $$
+declare c public.instagram_connections; changed public.instagram_connections; ob jsonb; result jsonb;
+begin
+  select * into c from public.instagram_claim_live_sync(25);
+  perform pg_temp.assert_true(c.live_lease_id is not null,'eligible profile claimed');
+  perform pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'duplicate delivery cannot claim lease');
+  ob:=jsonb_build_object('state','live','observedAt',now(),'userId','22','username','mirrorworld.ai','mediaId','18086854778246758',
+    'actualStartTime',now()-interval '1 minute','permalink','https://www.instagram.com/stories/mirrorworld.ai/3984542264785618047','token_ciphertext','must_not_escape');
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,extensions.gen_random_uuid(),c.token_issued_at,ob),'wrong lease rejected');
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob||'{"username":"other"}'),'mismatched owner rejected');
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob||'{"permalink":"https://evil.test/path"}'),'unsafe URL rejected');
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob||'{"permalink":"https://www.instagram.com/stories/other/123"}'),'wrong story owner rejected');
+  perform pg_temp.assert_true(public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'valid broadcast stored');
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'duplicate finish rejected');
+  result:=public.instagram_read_live_observation('ig-test','mirrorworld.ai');
+  perform pg_temp.assert_true(result->>'state'='live' and not result ? 'token_ciphertext','read is whitelisted');
+  perform pg_temp.assert_true(public.instagram_read_live_observation('ig-test','other') is null,'read owner mismatch');
+  update public.instagram_connections set live_observation=jsonb_set(live_observation,'{observedAt}',to_jsonb(now()-interval '90 seconds'));
+  perform pg_temp.assert_true(public.instagram_read_live_observation('ig-test','mirrorworld.ai') is null,'90 second boundary falls back');
+  update public.instagram_connections set live_next_sync_at=now()-interval '1 second';
+  select * into c from public.instagram_claim_live_sync(25);
+  perform pg_temp.assert_true(public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,jsonb_build_object('state','offline','observedAt',now())),'end overwrites live');
+  perform pg_temp.assert_true(public.instagram_read_live_observation('ig-test','mirrorworld.ai') is null,'offline is not redirectable');
+  update public.instagram_connections set live_next_sync_at=now()-interval '1 second';
+  select * into c from public.instagram_claim_live_sync(25);
+  update public.instagram_connections set token_issued_at=now(),token_ciphertext='refreshed-test-ciphertext';
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'old token result cannot win after refresh');
+  select * into c from public.instagram_claim_live_sync(25);
+  update public.instagram_connections set live_lease_until=now();
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'expired lease cannot write');
+  update public.instagram_connections set live_next_sync_at=now()-interval '1 second';
+  select * into c from public.instagram_claim_live_sync(25);
+  perform pg_temp.assert_true(public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'fresh token can write');
+  update public.instagram_connections set live_next_sync_at=now()-interval '1 second';
+  select * into c from public.instagram_claim_live_sync(25);
+  perform public.instagram_disconnect(c.celebrity_id,c.generation);
+  perform pg_temp.assert_true(not public.instagram_finish_live_sync(c.celebrity_id,c.generation,c.live_lease_id,c.token_issued_at,ob),'late result cannot revive disconnected identity');
+  select * into changed from public.instagram_connections;
+  perform pg_temp.assert_true(changed.live_observation is null and changed.live_lease_id is null,'disconnect erases observation and lease');
+  perform pg_temp.assert_true((select count(*)=0 from public.instagram_claim_live_sync(25)),'disconnected never claimed');
+  perform pg_temp.assert_true(public.instagram_read_live_observation('ig-test','mirrorworld.ai') is null,'disconnected read falls back');
+end $$;
+reset role;
+rollback;

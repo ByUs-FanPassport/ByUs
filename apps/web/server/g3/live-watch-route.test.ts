@@ -81,6 +81,8 @@ function setup(options: {
   times?: string[];
   youtubeResult?: YouTubeLiveObservation;
   youtubeError?: Error;
+  instagramResult?: unknown;
+  instagramError?: Error;
 } = {}) {
   const findPublishedBySlug = options.repositoryError
     ? vi.fn().mockRejectedValue(options.repositoryError)
@@ -102,7 +104,9 @@ function setup(options: {
   const observeYouTube = options.youtubeError ? vi.fn().mockRejectedValue(options.youtubeError) : vi.fn().mockResolvedValue(options.youtubeResult ?? {
     state: "live", observedAt: current, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,
   });
+  const observeInstagram = options.instagramError ? vi.fn().mockRejectedValue(options.instagramError) : vi.fn().mockResolvedValue(options.instagramResult ?? { state: "unavailable", observedAt: current });
   return {
+    observeInstagram,
     findPublishedBySlug,
     findBySlug,
     observe,
@@ -112,6 +116,7 @@ function setup(options: {
       creators: { findBySlug },
       observe,
       observeYouTube,
+      observeInstagram,
       now,
     }),
   };
@@ -307,12 +312,54 @@ describe("YouTube watch discovery", () => {
       state: "live", observedAt: endsAt, channelId: "UCabcdefghijklmnopqrstuv", videoId: "abcdefghijk", actualStartTime: startsAt,
     } }))).resolves.toBe(channelUrl);
   });
-  it("preserves Instagram profile and direct LIVE links without looking up credentials", async () => {
-    for (const url of ["https://www.instagram.com/creator/", "https://www.instagram.com/creator/live/"]) {
+  it("preserves direct Instagram links without discovery", async () => {
+    for (const url of ["https://www.instagram.com/stories/creator/123", "https://www.instagram.com/creator/live/"]) {
       const target = setup({ result: live({ watch: { available: true, mode: "live", provider: "instagram", url } }) });
       await expect(location(target)).resolves.toBe(url);
       expect(target.findBySlug).not.toHaveBeenCalled();
       expect(target.observeYouTube).not.toHaveBeenCalled();
     }
+  });
+});
+
+
+describe("Instagram automatic watch redirect", () => {
+  const profile = "https://www.instagram.com/mirrorworld.ai/";
+  const permalink = "https://www.instagram.com/stories/mirrorworld.ai/3984542264785618047";
+  const observation = { state: "live", observedAt: current, userId: "17841429121248890", username: "mirrorworld.ai",
+    mediaId: "18086854778246758", actualStartTime: startsAt, permalink };
+  const options = () => ({ result: live({ watch: { available: true, mode: "live" as const, provider: "instagram" as const, url: profile } }),
+    creatorResult: creator([{ platform: "instagram" as const, url: profile }]), instagramResult: observation });
+  it("redirects the configured profile to the observed same-owner permalink", async () => {
+    const target = setup(options());
+    expect(await location(target)).toBe(permalink);
+    expect(target.observeInstagram).toHaveBeenCalledWith("ifewknow", "mirrorworld.ai");
+    expect(target.observe).not.toHaveBeenCalled();
+    expect(target.observeYouTube).not.toHaveBeenCalled();
+  });
+  it.each([
+    { state: "offline", observedAt: current }, { state: "unavailable", observedAt: current },
+    { ...observation, username: "other" }, { ...observation, userId: "invalid" },
+    { ...observation, permalink: "https://evil.test/watch" },
+    { ...observation, permalink: "https://www.instagram.com/stories/other/123" },
+    { ...observation, observedAt: "2026-09-12T01:28:30.000Z" },
+    { ...observation, observedAt: "2026-09-12T01:30:01.000Z" },
+    { ...observation, actualStartTime: "2026-09-12T00:59:59.000Z" },
+    { ...observation, actualStartTime: "2026-09-12T01:30:01.000Z" },
+    { ...observation, token_ciphertext: "must_not_escape" },
+  ])("preserves the configured URL for an ineligible observation %j", async (instagramResult) => {
+    expect(await location(setup({ ...options(), instagramResult }))).toBe(profile);
+  });
+  it("preserves explicit links without querying observations", async () => {
+    const configured = options(); configured.result.live.watch.url = permalink;
+    const target = setup(configured);
+    expect(await location(target)).toBe(permalink);
+    expect(target.observeInstagram).not.toHaveBeenCalled();
+  });
+  it("falls back on repository failure, mismatched social profile and event end during read", async () => {
+    expect(await location(setup({ ...options(), instagramError: new Error("private upstream text") }))).toBe(profile);
+    const mismatch = setup({ ...options(), creatorResult: creator([{ platform: "instagram", url: "https://instagram.com/other/" }]) });
+    expect(await location(mismatch)).toBe(profile); expect(mismatch.observeInstagram).not.toHaveBeenCalled();
+    expect(await location(setup({ ...options(), times: [current, current, endsAt] }))).toBe(profile);
   });
 });
