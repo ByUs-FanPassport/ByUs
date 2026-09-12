@@ -27,6 +27,14 @@ const youtube: ObservedLiveCard = {
   thumbnailUrl: "https://i.ytimg.com/vi/abcDEF123_-/hqdefault.jpg",
   watchUrl: "https://www.youtube.com/watch?v=abcDEF123_-",
 };
+const instagram: ObservedLiveCard = {
+  ...tiktok,
+  platform: "instagram",
+  title: "Instagram LIVE",
+  thumbnailUrl: "https://cdn.example/instagram.jpg",
+  watchUrl: "https://www.instagram.com/stories/creator.live/3984542264785618047",
+  expiresAt: new Date(now + 280_000).toISOString(),
+};
 const targetFor = (item: ObservedLiveCard, state: ObservedLiveTarget["state"] = "live", observedAt: string | null = item.observedAt): ObservedLiveTarget => ({
   platform: item.platform ?? "tiktok",
   celebritySlug: item.celebritySlug,
@@ -42,11 +50,12 @@ const feed = (items: ObservedLiveCard[], targets = items.map((item) => targetFor
 });
 
 describe("observed LIVE feed merging", () => {
-  it("defaults legacy cards to TikTok while distinguishing the same creator on YouTube", () => {
+  it("defaults legacy cards to TikTok while distinguishing one creator across three platforms", () => {
     const legacy = { ...tiktok, platform: undefined };
     expect(observedLiveKey(legacy)).toBe(observedLiveKey(tiktok));
     expect(observedLiveKey(youtube)).not.toBe(observedLiveKey(tiktok));
-    expect(mergeObservedLiveFeed([], feed([tiktok, youtube]), now)).toEqual([tiktok, youtube]);
+    expect(observedLiveKey(instagram)).not.toBe(observedLiveKey(youtube));
+    expect(mergeObservedLiveFeed([], feed([tiktok, youtube, instagram]), now)).toEqual([tiktok, youtube, instagram]);
   });
 
   it("removes fresh explicit offline evidence and prunes targets absent from the roster", () => {
@@ -76,8 +85,10 @@ describe("observed LIVE feed merging", () => {
 
   it("keeps a fresh prior card when a response is malformed or has an unsafe watch URL", () => {
     const unsafe = { ...youtube, watchUrl: "https://evil.example/watch?v=abcDEF123_-" };
+    const spoofedInstagram = { ...instagram, watchUrl: "https://www.instagram.com/stories/other/3984542264785618047" };
     expect(mergeObservedLiveFeed([tiktok], { items: [] }, now)).toEqual([tiktok]);
     expect(mergeObservedLiveFeed([tiktok], feed([unsafe], [targetFor(unsafe)]), now)).toEqual([tiktok]);
+    expect(mergeObservedLiveFeed([instagram], feed([spoofedInstagram], [targetFor(spoofedInstagram)]), now)).toEqual([instagram]);
   });
 
   it("never extends prior expiry and drops expired evidence even on failure", () => {
@@ -92,12 +103,16 @@ describe("observed LIVE feed merging", () => {
 });
 
 
-it("retains YouTube through five minutes without extending TikTok or legacy expiries", () => {
+it("retains YouTube and Instagram unknown states through five minutes without extending TikTok or legacy expiries", () => {
   const card = { ...youtube, observedAt: new Date(now).toISOString(), expiresAt: new Date(now + 300000).toISOString() };
+  const instagramCard = { ...instagram, observedAt: new Date(now).toISOString(), expiresAt: new Date(now + 300000).toISOString() };
   expect(isObservedLiveCardFresh(card, now + 299999)).toBe(true);
   expect(isObservedLiveCardFresh(card, now + 300000)).toBe(false);
   expect(isObservedLiveCardFresh({ ...card, platform: "tiktok" }, now + 120000)).toBe(false);
   expect(isObservedLiveCardFresh({ ...card, expiresAt: new Date(now + 90000).toISOString() }, now + 90000)).toBe(false);
   expect(mergeObservedLiveFeed([card], feed([], [targetFor(card, "unavailable", null)]), now + 299999)).toEqual([card]);
+  expect(isObservedLiveCardFresh(instagramCard, now + 299999)).toBe(true);
+  expect(isObservedLiveCardFresh(instagramCard, now + 300000)).toBe(false);
+  expect(mergeObservedLiveFeed([instagramCard], feed([], [targetFor(instagramCard, "unavailable", null)]), now + 299999)).toEqual([instagramCard]);
   expect(mergeObservedLiveFeed([card], feed([], [targetFor(card, "offline", new Date(now + 240000).toISOString())]), now + 240000)).toEqual([]);
 });

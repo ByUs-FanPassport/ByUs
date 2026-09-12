@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const INSTAGRAM_LIVE_MAX_AGE_MS = 300_000;
+
 const instagramUsernamePattern = /^[a-z0-9_](?:[a-z0-9._]{0,28}[a-z0-9_])?$/;
 const instagramIdPattern = /^\d{1,30}$/;
 const reservedProfileNames = new Set([

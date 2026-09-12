@@ -1,9 +1,10 @@
 import { YOUTUBE_LIVE_MAX_AGE_MS } from "./youtube-channel";
+import { INSTAGRAM_LIVE_MAX_AGE_MS, parseInstagramLivePermalink } from "./instagram-live";
 import { z } from "zod";
 
 export const OBSERVED_LIVE_MAX_AGE_MS = 90_000;
 export const OBSERVED_LIVE_POLL_MS = 30_000;
-export type ObservedLivePlatform = "tiktok" | "youtube";
+export type ObservedLivePlatform = "tiktok" | "youtube" | "instagram";
 export type ObservedLiveCard = {
   platform?: ObservedLivePlatform;
   celebritySlug: string;
@@ -33,14 +34,18 @@ export function observedLiveKey(item: Pick<ObservedLiveCard, "platform" | "celeb
   return JSON.stringify([item.platform ?? "tiktok", item.celebritySlug, item.handle]);
 }
 export function observedLiveMaxAge(platform?: ObservedLivePlatform): number {
-  return platform === "youtube" ? YOUTUBE_LIVE_MAX_AGE_MS : OBSERVED_LIVE_MAX_AGE_MS;
+  if (platform === "youtube") return YOUTUBE_LIVE_MAX_AGE_MS;
+  if (platform === "instagram") return INSTAGRAM_LIVE_MAX_AGE_MS;
+  return OBSERVED_LIVE_MAX_AGE_MS;
 }
 export function isObservedLiveCardFresh(card: Pick<ObservedLiveCard, "platform" | "observedAt" | "expiresAt">, now = Date.now()): boolean {
   const observedAt = Date.parse(card.observedAt), expiresAt = Date.parse(card.expiresAt);
-  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now && now < expiresAt && (expiresAt - observedAt === observedLiveMaxAge(card.platform) || expiresAt - observedAt === OBSERVED_LIVE_MAX_AGE_MS);
+  const duration = expiresAt - observedAt;
+  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now && now < expiresAt &&
+    (duration === observedLiveMaxAge(card.platform) || (card.platform === "youtube" && duration === OBSERVED_LIVE_MAX_AGE_MS));
 }
 const label = z.string().max(2048);
-const platform = z.enum(["tiktok", "youtube"]);
+const platform = z.enum(["tiktok", "youtube", "instagram"]);
 const httpsUrl = label.refine((value) => {
   if (/^\/(?!\/)[^\\]*$/.test(value)) return true;
   try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password; } catch { return false; }
@@ -49,9 +54,11 @@ const cardSchema = z.object({
   platform: platform.optional(), celebritySlug: label, creatorName: label, handle: label,
   title: label, thumbnailUrl: httpsUrl, fallbackThumbnailUrl: httpsUrl.optional(), watchUrl: label,
   observedAt: label, expiresAt: label,
-}).refine((card) => card.platform === "youtube"
-  ? /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(card.watchUrl)
-  : /^[A-Za-z0-9._]{2,24}$/.test(card.handle) && card.watchUrl === `https://www.tiktok.com/@${card.handle}/live`);
+}).refine((card) => {
+  if (card.platform === "youtube") return /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(card.watchUrl);
+  if (card.platform === "instagram") return parseInstagramLivePermalink(card.watchUrl, card.handle) === card.watchUrl;
+  return /^[A-Za-z0-9._]{2,24}$/.test(card.handle) && card.watchUrl === `https://www.tiktok.com/@${card.handle}/live`;
+});
 const feedSchema = z.object({
   items: z.array(cardSchema).max(1000),
   targets: z.array(z.object({ platform, celebritySlug: label, handle: label, state: z.enum(["live", "offline", "unavailable", "stale"]), observedAt: label.nullable() })).max(1000),

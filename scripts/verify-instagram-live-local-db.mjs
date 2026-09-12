@@ -20,6 +20,6 @@ try {
     create table public.live_events(celebrity_id uuid,publication_status text,live_provider text,starts_at timestamptz,ends_at timestamptz,external_live_url text);
     grant usage on schema public,extensions to anon,authenticated,service_role;
     grant select on public.celebrities,public.celebrity_localizations,public.celebrity_social_links,public.live_events to service_role;`);
-  for (const path of ['supabase/migrations/20260908020000_instagram_creator_connections.sql', 'supabase/migrations/20260912120819_instagram_live_observations.sql', 'supabase/tests/instagram_live_observations.sql']) sql(await readFile(path, 'utf8'));
+  for (const path of ['supabase/migrations/20260908020000_instagram_creator_connections.sql', 'supabase/migrations/20260912120819_instagram_live_observations.sql', 'supabase/migrations/20260912131855_instagram_live_home_discovery.sql', 'supabase/tests/instagram_live_observations.sql']) sql(await readFile(path, 'utf8'));
   console.log('PASS: isolated PostgreSQL LIVE claims, leases, generation/token races, ACL, identity/profile checks, freshness, erasure, whitelist, and offline/error fallback');
 } finally { sql(`drop database if exists ${database} with (force)`, rootUrl); }

@@ -26,7 +26,7 @@ export async function syncInstagramLive(deps: {
             { accessToken, graphVersion: deps.graphVersion, now },
           );
         }
-      } catch { /* Overwrite a formerly live observation on decryption or provider failure. */ }
+      } catch { /* Storage keeps prior valid proof on failures without extending its timestamp. */ }
       const saved = await deps.repository.finish(connection, observation);
       outcomes.push({ celebrityId: connection.celebrity_id, status: saved ? observation.state : "superseded" });
     }));

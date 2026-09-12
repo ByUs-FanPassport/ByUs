@@ -335,6 +335,9 @@ describe("Instagram automatic watch redirect", () => {
     mediaId: "18086854778246758", actualStartTime: startsAt, permalink };
   const options = () => ({ result: live({ watch: { available: true, mode: "live" as const, provider: "instagram" as const, url: profile } }),
     creatorResult: creator([{ platform: "instagram" as const, url: profile }]), instagramResult: observation });
+  it("uses a four-minute Instagram observation until its five-minute limit", async () => {
+    expect(await location(setup({ ...options(), instagramResult: { ...observation, observedAt: "2026-09-12T01:26:00.000Z" } }))).toBe(permalink);
+  });
   it("redirects the configured profile to the observed same-owner permalink", async () => {
     const target = setup(options());
     expect(await location(target)).toBe(permalink);
@@ -347,7 +350,7 @@ describe("Instagram automatic watch redirect", () => {
     { ...observation, username: "other" }, { ...observation, userId: "invalid" },
     { ...observation, permalink: "https://evil.test/watch" },
     { ...observation, permalink: "https://www.instagram.com/stories/other/123" },
-    { ...observation, observedAt: "2026-09-12T01:28:30.000Z" },
+    { ...observation, observedAt: "2026-09-12T01:25:00.000Z" },
     { ...observation, observedAt: "2026-09-12T01:30:01.000Z" },
     { ...observation, actualStartTime: "2026-09-12T00:59:59.000Z" },
     { ...observation, actualStartTime: "2026-09-12T01:30:01.000Z" },

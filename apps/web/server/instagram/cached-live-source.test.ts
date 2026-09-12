@@ -52,3 +52,29 @@ describe("cached Instagram LIVE reader", () => {
     }
   });
 });
+
+describe("Instagram home discovery reader", () => {
+  it("uses the private discovery projection and passes confirmed offline without extra fields", async () => {
+    const { createInstagramLiveDiscoveryReader } = await import("./cached-live-source");
+    const offline = { state: "offline", observedAt: now().toISOString() };
+    const rpc = vi.fn(async () => ({ data: offline, error: null }));
+    await expect(createInstagramLiveDiscoveryReader({ rpc } as never, true, now)("mirrorworld-ai", "mirrorworld.ai")).resolves.toEqual(offline);
+    expect(rpc).toHaveBeenCalledWith("instagram_read_live_discovery", { p_creator_slug: "mirrorworld-ai", p_username: "mirrorworld.ai" });
+  });
+  it("does not disclose eligibility, database errors or a foreign account's live proof", async () => {
+    const { createInstagramLiveDiscoveryReader } = await import("./cached-live-source");
+    for (const response of [
+      { data: { ...live, token_expires_at: "private" }, error: null },
+      { data: { state: "ineligible", reason: "disconnected" }, error: null },
+      { data: { ...live, username: "other", permalink: "https://www.instagram.com/stories/other/123" }, error: null },
+      { data: null, error: { message: "private failure" } },
+      { data: { state: "unavailable", observedAt: now().toISOString() }, error: null },
+    ]) {
+      const rpc = vi.fn(async () => response);
+      await expect(createInstagramLiveDiscoveryReader({ rpc } as never, true, now)("mirrorworld-ai", "mirrorworld.ai")).resolves.toEqual({ state: "unavailable", observedAt: now().toISOString() });
+    }
+    const rpc = vi.fn();
+    await expect(createInstagramLiveDiscoveryReader({ rpc } as never, false, now)("mirrorworld-ai", "mirrorworld.ai")).resolves.toEqual({ state: "unavailable", observedAt: now().toISOString() });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+});

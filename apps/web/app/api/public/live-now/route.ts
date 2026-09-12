@@ -8,6 +8,10 @@ import {
 import { getCachedTikTokLiveObservation } from "../../../../server/tiktok/cached-tiktok-live-source";
 import { buildObservedLiveFeed } from "../../../../server/tiktok/observed-live-feed";
 import type { TikTokLiveObserver } from "../../../../server/tiktok/tiktok-live-source";
+import {
+  getCachedInstagramLiveDiscoveryObservation,
+  type InstagramLiveDiscoveryObserver,
+} from "../../../../server/instagram/cached-live-source";
 
 import { getCachedYouTubeLiveObservation } from "../../../../server/youtube/cached-youtube-live-source";
 import type { YouTubeLiveObserver } from "../../../../server/youtube/youtube-live-source";
@@ -17,6 +21,7 @@ type LiveNowDependencies = Readonly<{
   observe?: TikTokLiveObserver;
   now?: () => Date;
   observeYouTube?: YouTubeLiveObserver;
+  observeInstagram?: InstagramLiveDiscoveryObserver;
 }>;
 
 const noStoreHeaders = { "Cache-Control": "no-store" } as const;
@@ -37,12 +42,14 @@ export function createGetObservedLiveNow(dependencies: LiveNowDependencies) {
 
     try {
       const celebrities = await dependencies.repository.list(locale);
+      const version = new URL(request.url).searchParams.get("v");
       const feed = await buildObservedLiveFeed(
         celebrities,
         locale,
         dependencies.observe ?? getCachedTikTokLiveObservation,
         dependencies.now ?? (() => new Date()),
-        new URL(request.url).searchParams.get("v") === "2" ? dependencies.observeYouTube ?? getCachedYouTubeLiveObservation : undefined,
+        version === "2" || version === "3" ? dependencies.observeYouTube ?? getCachedYouTubeLiveObservation : undefined,
+        version === "3" ? dependencies.observeInstagram ?? getCachedInstagramLiveDiscoveryObservation : undefined,
       );
       return NextResponse.json(feed, {
         status: 200,

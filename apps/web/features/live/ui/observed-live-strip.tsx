@@ -44,7 +44,7 @@ export function ObservedLiveStrip({ locale }: { locale: "ko" | "en" }) {
       controller = new AbortController();
       const timeout = setTimeout(() => controller?.abort(), 12_000);
       try {
-        const response = await fetch(`/api/public/live-now?locale=${locale}&v=2`, {
+        const response = await fetch(`/api/public/live-now?locale=${locale}&v=3`, {
           cache: "no-store", signal: controller.signal,
         });
         if (!response.ok) throw new Error("LIVE unavailable");
@@ -151,6 +151,6 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
 }
 
 function watchLabel(item: ObservedLiveCard, locale: "ko" | "en"): string {
-  const provider = item.platform === "youtube" ? "YouTube" : "TikTok";
+  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : "TikTok";
   return locale === "ko" ? `${provider}에서 시청` : `Watch on ${provider}`;
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { INSTAGRAM_LIVE_MAX_AGE_MS } from "../../features/live/domain/instagram-live";
 import { YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
 
 import { OBSERVED_LIVE_MAX_AGE_MS } from "../../features/live/domain/observed-live";
@@ -127,7 +128,7 @@ export function createGetLiveWatchHandler(
         const observation = parsed.data;
         const age = checkedAt.getTime() - Date.parse(observation.observedAt);
         const actualStart = Date.parse(observation.actualStartTime);
-        if (observation.username !== instagramUsername || !Number.isFinite(age) || age < 0 || age >= OBSERVED_LIVE_MAX_AGE_MS ||
+        if (observation.username !== instagramUsername || !Number.isFinite(age) || age < 0 || age >= INSTAGRAM_LIVE_MAX_AGE_MS ||
             actualStart < Date.parse(live.startsAt) || actualStart > Date.parse(observation.observedAt) ||
             !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)) return redirect(fallbackUrl);
         return redirect(observation.permalink);

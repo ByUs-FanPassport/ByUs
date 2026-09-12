@@ -364,6 +364,16 @@ describe("multi-platform observed feed", () => {
   const channelId = "UCaaaaaaaaaaaaaaaaaaaaaa";
   const videoId = "abcdefghijk";
   function mixed() { const creator = celebrity("ifewknow", "https://www.tiktok.com/@ifewknow"); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "youtube" as const, url: `https://www.youtube.com/channel/${channelId}` }] }; }
+  function allPlatforms() { const creator = mixed(); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "instagram" as const, url: "https://www.instagram.com/ifewknow/" }] }; }
+  const instagramLive = {
+    state: "live" as const,
+    observedAt,
+    userId: "17841429121248890",
+    username: "ifewknow",
+    mediaId: "18086854778246758",
+    actualStartTime: observedAt,
+    permalink: "https://www.instagram.com/stories/ifewknow/3984542264785618047",
+  };
   it("shows both platforms for one creator without registered events and preserves source proof", async () => {
     const feed = await buildObservedLiveFeed([mixed()], "ko", async () => ({ state: "live", observedAt, title: "", thumbnailUrl: null }), () => new Date(observedAt), async () => ({ state: "live", observedAt, channelId, videoId, title: "Confirmed title", thumbnailUrl: "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg" }));
     expect(feed.items.map((item) => [item.platform, item.watchUrl])).toEqual([["tiktok", "https://www.tiktok.com/@ifewknow/live"], ["youtube", "https://www.youtube.com/watch?v=abcdefghijk"]]);
@@ -383,9 +393,98 @@ describe("multi-platform observed feed", () => {
   });
   it("only v2 opts into YouTube so old cached clients never mislabel YouTube cards", async () => {
     const observeYouTube = vi.fn(async () => ({ state: "live" as const, observedAt, channelId, videoId }));
-    const handler = createGetObservedLiveNow({ repository: { list: async () => [mixed()] }, observe: async () => ({ state: "offline", observedAt }), observeYouTube, now: () => new Date(observedAt) });
-    await handler(new Request("https://byus.kr/api/public/live-now")); expect(observeYouTube).not.toHaveBeenCalled();
-    const response = await handler(new Request("https://byus.kr/api/public/live-now?v=2"));
-    expect((await response.json()).items[0].platform).toBe("youtube");
+    const observeInstagram = vi.fn(async () => instagramLive);
+    const handler = createGetObservedLiveNow({ repository: { list: async () => [allPlatforms()] }, observe: async () => ({ state: "offline", observedAt }), observeYouTube, observeInstagram, now: () => new Date(observedAt) });
+    await handler(new Request("https://byus.kr/api/public/live-now"));
+    expect(observeYouTube).not.toHaveBeenCalled();
+    expect(observeInstagram).not.toHaveBeenCalled();
+    const v2 = await handler(new Request("https://byus.kr/api/public/live-now?v=2"));
+    expect((await v2.json()).items.map((item: { platform: string }) => item.platform)).toEqual(["youtube"]);
+    expect(observeInstagram).not.toHaveBeenCalled();
+    const v3 = await handler(new Request("https://byus.kr/api/public/live-now?v=3"));
+    expect((await v3.json()).items.map((item: { platform: string }) => item.platform)).toEqual(["youtube", "instagram"]);
+  });
+
+  it("projects a safe Instagram card for the same creator without requiring a ByUs event", async () => {
+    const feed = await buildObservedLiveFeed(
+      [allPlatforms()],
+      "ko",
+      async () => ({ state: "live", observedAt, title: "TikTok title", thumbnailUrl: null }),
+      () => new Date(Date.parse(observedAt) + 30_000),
+      async () => ({ state: "live", observedAt, channelId, videoId, title: "YouTube title" }),
+      async () => instagramLive,
+    );
+    expect(feed.items.map((item) => item.platform)).toEqual(["tiktok", "youtube", "instagram"]);
+    expect(feed.items[2]).toEqual({
+      platform: "instagram",
+      celebritySlug: "ifewknow",
+      creatorName: "이퓨",
+      handle: "ifewknow",
+      title: "이퓨의 Instagram LIVE",
+      thumbnailUrl: "/ifewknow.jpg",
+      fallbackThumbnailUrl: "/ifewknow.jpg",
+      watchUrl: instagramLive.permalink,
+      observedAt,
+      expiresAt: "2026-09-11T01:05:00.000Z",
+    });
+  });
+
+  it("rejects mismatched or unsafe Instagram live proof and preserves offline versus unknown states", async () => {
+    const creator = allPlatforms();
+    const observations = [
+      { ...instagramLive, username: "someoneelse", permalink: "https://www.instagram.com/stories/someoneelse/3984542264785618047" },
+      { ...instagramLive, permalink: "https://www.instagram.com/stories/someoneelse/3984542264785618047" },
+      { state: "offline" as const, observedAt },
+      { state: "unavailable" as const, observedAt },
+    ];
+    const expected = ["unavailable", "unavailable", "offline", "unavailable"];
+    for (const [index, observation] of observations.entries()) {
+      const feed = await buildObservedLiveFeed(
+        [creator], "ko", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), undefined,
+        async () => observation,
+      );
+      expect(feed.items).toEqual([]);
+      expect(feed.targets?.find((target) => target.platform === "instagram")?.state).toBe(expected[index]);
+    }
+  });
+
+  it("keeps every published Instagram profile indistinguishably unavailable and bounds duplicate reads", async () => {
+    const invalid = { ...celebrity("invalid-instagram", null), socialLinks: [{ platform: "instagram" as const, url: "https://instagram.com/not-canonical" }] };
+    const duplicate = { ...allPlatforms(), socialLinks: [...allPlatforms().socialLinks, { platform: "instagram" as const, url: "https://www.instagram.com/ifewknow/" }] };
+    const observeInstagram = vi.fn(async () => ({ state: "unavailable" as const, observedAt }));
+    const feed = await buildObservedLiveFeed(
+      [invalid, duplicate], "en", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), undefined, observeInstagram,
+    );
+    expect(observeInstagram).toHaveBeenCalledTimes(1);
+    expect(feed.targets?.filter((target) => target.platform === "instagram")).toEqual([
+      { celebritySlug: "invalid-instagram", platform: "instagram", handle: "", state: "unavailable", observedAt: null },
+      { celebritySlug: "ifewknow", platform: "instagram", handle: "ifewknow", state: "unavailable", observedAt },
+    ]);
+  });
+
+  it("limits Instagram discovery reads to three concurrent creator bindings", async () => {
+    let active = 0;
+    let maximum = 0;
+    const releases: Array<() => void> = [];
+    const observeInstagram = vi.fn(async () => {
+      active += 1;
+      maximum = Math.max(maximum, active);
+      await new Promise<void>((resolve) => releases.push(resolve));
+      active -= 1;
+      return { state: "unavailable" as const, observedAt };
+    });
+    const creators = Array.from({ length: 5 }, (_, index) => ({
+      ...celebrity(`instagram-${index}`, null),
+      socialLinks: [{ platform: "instagram" as const, url: `https://www.instagram.com/creator${index}/` }],
+    }));
+    const pending = buildObservedLiveFeed(
+      creators, "ko", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), undefined, observeInstagram,
+    );
+    await vi.waitFor(() => expect(observeInstagram).toHaveBeenCalledTimes(3));
+    releases.splice(0).forEach((release) => release());
+    await vi.waitFor(() => expect(observeInstagram).toHaveBeenCalledTimes(5));
+    releases.splice(0).forEach((release) => release());
+    await pending;
+    expect(maximum).toBe(3);
   });
 });

@@ -49,10 +49,10 @@ describe("observed LIVE cards", () => {
     expect(link).toHaveAttribute("href", card.watchUrl);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=2`, expect.objectContaining({ cache: "no-store" }));
+    expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=3`, expect.objectContaining({ cache: "no-store" }));
   });
 
-  it("uses a mixed-platform heading and keeps two providers for the same creator", async () => {
+  it("uses a mixed-platform heading and keeps three providers for the same creator", async () => {
     const youtube: ObservedLiveCard = {
       ...card,
       platform: "youtube",
@@ -60,14 +60,23 @@ describe("observed LIVE cards", () => {
       thumbnailUrl: "https://i.ytimg.com/vi/abcDEF123_-/hqdefault.jpg",
       watchUrl: "https://www.youtube.com/watch?v=abcDEF123_-",
     };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([card, youtube])));
+    const instagram: ObservedLiveCard = {
+      ...card,
+      platform: "instagram",
+      title: "Instagram 라이브",
+      thumbnailUrl: "/images/instagram-live.jpg",
+      watchUrl: "https://www.instagram.com/stories/ifewknow/3984542264785618047",
+      expiresAt: new Date(start + 300_000).toISOString(),
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([card, youtube, instagram])));
     render(<ObservedLiveStrip locale="ko" />);
     await settle();
 
     expect(screen.getByRole("heading", { name: "지금 LIVE 중" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(screen.getAllByRole("link")).toHaveLength(3);
     expect(screen.getByRole("link", { name: /TikTok에서 시청, 새 창/ })).toHaveAttribute("href", card.watchUrl);
     expect(screen.getByRole("link", { name: /YouTube에서 시청, 새 창/ })).toHaveAttribute("href", youtube.watchUrl);
+    expect(screen.getByRole("link", { name: /Instagram에서 시청, 새 창/ })).toHaveAttribute("href", instagram.watchUrl);
     expect(screen.getByRole("button", { name: "다음 LIVE" })).toBeInTheDocument();
   });
 
