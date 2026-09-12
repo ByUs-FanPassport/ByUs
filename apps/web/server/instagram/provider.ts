@@ -9,7 +9,7 @@ const shortTokenSchema = z.object({
   permissions: z.union([z.string().transform((value) => value.split(",").map((permission) => permission.trim())), z.array(z.string())]),
 });
 // Current documented data[0] and the earlier flat response are both supported.
-// A missing permission list or imprecise numeric ID is never silently accepted.
+// A missing permission list is never silently accepted. Numeric IDs are read losslessly below.
 const shortResponseSchema = z.union([
   z.object({ data: z.array(shortTokenSchema).length(1) }).transform((value) => value.data[0]),
   shortTokenSchema,
@@ -94,7 +94,16 @@ export function createInstagramProvider(
     }
     let body: unknown;
     try {
-      body = await response.json();
+      // Node 24 exposes the original numeric lexeme through reviver context.
+      // Instagram may send IDs beyond Number.MAX_SAFE_INTEGER as JSON numbers;
+      // response.json() would round them before identity verification can run.
+      body = stage === "short_token"
+        ? JSON.parse(await response.text(), (key: string, value: unknown, context?: { source?: string }) => {
+          if (key !== "user_id" || typeof value !== "number") return value;
+          if (!context?.source || !/^[1-9]\d{0,29}$/.test(context.source)) throw new InstagramError("INVALID_RESPONSE");
+          return context.source;
+        })
+        : await response.json();
     } catch {
       report({ stage, reason: "response_json_invalid", httpStatus: response.status });
       throw new InstagramError("INVALID_RESPONSE");
