@@ -71,3 +71,7 @@ Main271a49b integrated; branchcodex/recurring-live-schedules-20260913. Architect
 - 독립 risk review의 마지막 두 P1(writer guard 및 manual-after-generation 충돌) 수정 확인, 실행 통과 조건 충족.
 - 통합 앱 59 tests, 최종 hiatus/admin API 9 tests, CLI 4 tests, lint/typegen/typecheck/build 통과. UI20렌더 및 기존 worker/contracts 성공 근거 재사용. 추가 main worker 변경은 2349500 Backend security CI success로 확인.
 - DB source hash와 exact source ledger를 포함한 guarded SQL 준비. 기존 LIVE·예약·출석·배너 보존 assertion 포함. 아직 운영 mutation/push/자동화 생성 전.
+
+## 운영 import 계약 보완
+실제 24개 출처 입력에서 선택 메타정보 `sourceAccount=null`과 프로필 URL 경로의 `@`를 기존 foundation 제약이 거부했다. 실패한 import는 transaction 전체 rollback되어 정기 회차는 아직 0이다. 이미 적용한 migration은 수정하지 않고 `20260914102000_recurring_live_optional_evidence.sql`로 nullable 입력 계약을 복원했다. verified는 공식 URL·원문을 필수로 유지한다. CLI 길이·경로 검증도 DB와 맞췄으며 @ 프로필과 null 메타정보를 포함한 fixture 및 전체 backend DB pipeline이 통과했다. 이 forward diff는 독립 risk review에서 차단 사항 없음으로 확인됐다.
+CI의 별도 Anvil 미채굴 receipt race는 `1ced6f1`에서 명시적 receipt 대기로 수정하고 실제 로컬 Anvil 통과를 확인했다. Web 배포 `9880264`는 READY이며 이후 변경은 테스트/운영 입력·DB 계약이다.

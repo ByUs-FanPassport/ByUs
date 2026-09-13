@@ -56,10 +56,12 @@ export function validateRecurringInput(input) {
     for (const observation of creator.observations) {
       keys(observation, ["sourceUrl", "sourceAccount", "sourcePublishedAt", "observedAt", "originalText", "evidencePath", "contentHash"], "observation");
       if (observation.sourceUrl !== null) validateSourceUrl(observation.sourceUrl);
+      if (creator.verification === "verified") requireValue(observation.sourceUrl !== null && observation.originalText !== null, "Verified evidence requires a source and original text");
+      if (observation.evidencePath !== null) requireValue(!/(^|\/)\.\.(\/|$)/.test(observation.evidencePath), "Invalid evidence path");
       requireValue(instant(observation.observedAt) && (observation.sourcePublishedAt === null || instant(observation.sourcePublishedAt)), "Invalid observation date");
-      requireValue(observation.originalText === null || typeof observation.originalText === "string" && observation.originalText.length <= 8000, "Invalid observation text");
+      requireValue(observation.originalText === null || typeof observation.originalText === "string" && observation.originalText.length > 0 && observation.originalText.length <= 8000, "Invalid observation text");
       requireValue(typeof observation.contentHash === "string" && /^[a-f0-9]{64}$/.test(observation.contentHash), "Invalid evidence hash");
-      for (const key of ["sourceAccount", "evidencePath"]) requireValue(observation[key] === null || typeof observation[key] === "string" && observation[key].length <= 2000, `Invalid ${key}`);
+      for (const key of ["sourceAccount", "evidencePath"]) requireValue(observation[key] === null || typeof observation[key] === "string" && observation[key].trim().length > 0 && observation[key].length <= (key === "sourceAccount" ? 240 : 1024), `Invalid ${key}`);
     }
     requireValue(creator.expectedCurrentRevisionId === null || uuid.test(creator.expectedCurrentRevisionId), "Invalid expected revision");
     requireValue(creator.seriesKey === null || typeof creator.seriesKey === "string" && /^[a-z0-9][a-z0-9-]{0,79}$/.test(creator.seriesKey), "Invalid series key");

@@ -54,8 +54,8 @@ begin
     raise exception 'CHZZK URL validation failed'; end if;
   input:=jsonb_build_object('version',1,'runId',import_run,'rosterObservedAt','2029-12-31T00:00:00Z','creators',jsonb_build_array(
     jsonb_build_object('celebrityId',creator,'result','regular','verification','verified','observations',jsonb_build_array(
-      jsonb_build_object('sourceUrl','https://www.youtube.com/channel/official','sourceAccount','official','sourcePublishedAt',null,
-        'observedAt','2029-12-31T00:00:00Z','originalText','Every Friday at 07:00','evidencePath','work/fixtures/official.txt','contentHash',repeat('a',64))),
+      jsonb_build_object('sourceUrl','https://www.youtube.com/@official','sourceAccount',null,'sourcePublishedAt',null,
+        'observedAt','2029-12-31T00:00:00Z','originalText','Every Friday at 07:00','evidencePath',null,'contentHash',repeat('a',64))),
       'seriesKey','weekly-live','proposedRule',jsonb_build_object('timeZone','Asia/Seoul','effectiveFrom','2030-01-01','effectiveUntil',null,
         'provider','youtube','channelUrl','https://www.youtube.com/@official/live','slots',jsonb_build_array(
           jsonb_build_object('id',slot_id,'isoWeekday',5,'localStartTime','07:00','end',null))),
