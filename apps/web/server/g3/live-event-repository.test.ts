@@ -254,3 +254,27 @@ describe("DefaultLiveEventRepository", () => {
     expect(result).toBeNull();
   });
 });
+
+
+describe("reservable recurring LIVE", () => {
+  const recurring: LiveEventRecord = { ...event, liveType: "recurring", endsAt: null, brand: null, attendanceConfigured: false };
+  it("uses the canonical detail and reservation action without invented end or brand", async () => {
+    const repository = new DefaultLiveEventRepository(source({ findPublishedEvent: async () => recurring, findViewer: async () => ({ hasPassport: true, reservation: null }) }));
+    const result = await repository.findPublishedBySlug({ slug: event.slug, locale: "ko", appUserId: "owner", now: new Date("2026-07-23T00:00:00Z") });
+    expect(result?.live).toMatchObject({ id: event.id, liveType: "recurring", endsAt: null, brand: null, attendanceConfigured: false });
+    expect(result?.primaryAction).toBe("reserve");
+  });
+  it("keeps past unknown-end history without presenting it as upcoming, live or replay", async () => {
+    const repository = new DefaultLiveEventRepository(source({ findPublishedEvent: async () => recurring }));
+    const input = { locale: "ko" as const, appUserId: null, now: new Date("2026-07-25T00:00:00Z") };
+    const result = await repository.findPublishedBySlug({ ...input, slug: event.slug });
+    expect(result?.live.effectiveStatus).toBe("scheduled"); expect(result?.primaryAction).toBe("reservation_closed");
+    expect(await repository.listPublishedCatalog(input)).toEqual({liveNow: [], upcoming: [], replay: []});
+    expect(await repository.listFeaturedPublished(input)).toEqual([]);
+  });
+  it("preserves explicit status overrides but does not treat a recurring channel as a recording", async () => {
+    const repository = new DefaultLiveEventRepository(source({ findPublishedEvent: async () => ({ ...recurring, overrides: [{ effectiveStatus: "ended", effectiveFrom: "2026-07-24T12:00:00Z", effectiveUntil: null, createdAt: "2026-07-24T12:00:00Z" }] }) }));
+    const result=await repository.findPublishedBySlug({slug:event.slug,locale:"ko",appUserId:null,now:new Date("2026-07-25T00:00:00Z")});
+    expect(result?.live.effectiveStatus).toBe("ended");expect(result?.live.watch.available).toBe(false);
+  });
+});

@@ -1,5 +1,5 @@
 import { createPublicClient, decodeAbiParameters, decodeEventLog, defineChain, encodeAbiParameters, getAddress, http, keccak256, type Address, type Hash, type PublicClient } from "viem";
-import { actionHubAbi, easAbi } from "./adapters/viem-action-hub.js";
+import { actionHubAbi, easAbi } from "./action-abi.js";
 import type { IndexedFanAction } from "./action-metrics.js";
 
 type Recorded = { actionId: Hash; fan: Address; occurrenceId: Hash; revision: number; actionCode: number; origin: number; transactionHash: Hash; blockNumber: bigint; blockHash: Hash };

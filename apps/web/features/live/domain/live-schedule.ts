@@ -33,12 +33,12 @@ export function isLiveWindowOrdered(input: {
   reservationOpensAt: string;
   reservationClosesAt: string;
   startsAt: string;
-  endsAt: string;
+  endsAt: string | null;
 }): boolean {
   const reservationOpen = Date.parse(input.reservationOpensAt);
   const reservationClose = Date.parse(input.reservationClosesAt);
   const startsAt = Date.parse(input.startsAt);
-  const endsAt = Date.parse(input.endsAt);
+  const endsAt = input.endsAt === null ? Infinity : Date.parse(input.endsAt);
   return reservationOpen < reservationClose
     && reservationClose <= startsAt
     && startsAt < endsAt;
@@ -52,19 +52,19 @@ export const liveScheduleRevisionSchema = z
     reservationOpensAt: instant,
     reservationClosesAt: instant,
     startsAt: instant,
-    endsAt: instant,
-    attendanceValidFrom: instant,
-    attendanceValidUntil: instant,
+    endsAt: instant.nullable(),
+    attendanceValidFrom: instant.nullable(),
+    attendanceValidUntil: instant.nullable(),
   })
   .strict()
   .superRefine((value, ctx) => {
-    const attendanceFrom = Date.parse(value.attendanceValidFrom);
-    const attendanceUntil = Date.parse(value.attendanceValidUntil);
+    const attendanceFrom = value.attendanceValidFrom === null ? null : Date.parse(value.attendanceValidFrom);
+    const attendanceUntil = value.attendanceValidUntil === null ? null : Date.parse(value.attendanceValidUntil);
 
     if (!isLiveWindowOrdered(value)) {
       ctx.addIssue({ code: "custom", path: ["startsAt"], message: "INVALID_SCHEDULE" });
     }
-    if (!(attendanceFrom < attendanceUntil)) {
+    if (!(attendanceFrom === null && attendanceUntil === null) && !(attendanceFrom !== null && attendanceUntil !== null && attendanceFrom < attendanceUntil)) {
       ctx.addIssue({ code: "custom", path: ["attendanceValidUntil"], message: "INVALID_ATTENDANCE_WINDOW" });
     }
   });

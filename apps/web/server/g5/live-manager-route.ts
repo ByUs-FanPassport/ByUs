@@ -36,9 +36,9 @@ const save = z
     id: uuid.nullable().optional(),
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     celebrityId: uuid,
-    brandId: uuid,
+    brandId: uuid.nullable(),
     startsAt: instant,
-    endsAt: instant,
+    endsAt: instant.nullable(),
     reservationOpensAt: instant,
     reservationClosesAt: instant,
     liveProvider: externalLiveProviderSchema,
@@ -52,6 +52,7 @@ const save = z
     heroAltEn: z.string().trim().min(1).max(300),
   })
   .superRefine((value, ctx) => {
+    if (!value.id && (value.brandId === null || value.endsAt === null)) ctx.addIssue({ code: "custom", message: "General LIVE requires a brand and end time" });
     if (!isLiveWindowOrdered(value))
       ctx.addIssue({
         code: "custom",

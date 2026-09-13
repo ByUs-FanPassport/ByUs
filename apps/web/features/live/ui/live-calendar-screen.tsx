@@ -86,6 +86,7 @@ const platformLabel: Record<ExternalLiveProvider, string> = {
   youtube: "YouTube",
   instagram: "Instagram",
   tiktok: "TikTok",
+  chzzk: "CHZZK",
 };
 
 const calendarTitlesKo = new Map([
@@ -351,7 +352,7 @@ export function LiveCalendarScreen({
             aria-label={`${t.platformLabel}: ${platformNames.join(", ")}`}
           >
             {platforms.map((platform) => <Image
-              src={`/images/guest-home/${platform}.svg`}
+              src={`/images/guest-home/${platform}.${platform === "chzzk" ? "png" : "svg"}`}
               alt=""
               width={14}
               height={14}

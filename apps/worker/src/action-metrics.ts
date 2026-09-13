@@ -1,5 +1,5 @@
 import { getAddress } from "viem";
-import { actionCodes, linkOrigins } from "./action-domain.js";
+import { actionCodes, linkOrigins } from "./action-constants.ts";
 
 export interface IndexedCredential {
   credentialKey: string;
@@ -31,10 +31,33 @@ export interface IndexedFanAction {
   credentials: readonly IndexedCredential[];
 }
 
+export interface FinalizedIndexedFanAction extends IndexedFanAction {
+  sourceOccurrence: string;
+  easUid: string;
+  creatorId: string;
+  campaignId: string;
+  occurredDay: number;
+  blockNumber: bigint;
+  blockHash: string;
+  originalRecipient: string;
+}
+
+export interface ActionLifecycleTransaction {
+  hubProxy: string;
+  txHash: string;
+  blockNumber: bigint;
+  blockHash: string;
+  kind: "record" | "invalidate" | "correct";
+  actionIds: string[];
+  recipients: string[];
+  origin: "NATIVE" | "HISTORICAL";
+}
+
 export interface MetricTrustBoundary {
   chainId: number;
   environmentId: string;
   hubProxy: string;
+  hubProxies?: readonly string[];
   schemaUid: string;
   asOfEpochSeconds: bigint;
 }
@@ -51,8 +74,9 @@ export interface FanActionMetrics {
 }
 
 export function isTrustedCurrentAction(action: IndexedFanAction, boundary: MetricTrustBoundary): boolean {
-  const issuerMatches = getAddress(action.hubProxy) === getAddress(boundary.hubProxy)
-    && getAddress(action.easAttester) === getAddress(boundary.hubProxy);
+  const allowedHubs = boundary.hubProxies ?? [boundary.hubProxy];
+  const issuerMatches = allowedHubs.some((hub) => getAddress(action.hubProxy) === getAddress(hub))
+    && getAddress(action.easAttester) === getAddress(action.hubProxy);
   const recipientMatches = getAddress(action.easRecipient) === getAddress(action.recipient);
   const expirationValid = action.easExpirationTime === 0n || action.easExpirationTime > boundary.asOfEpochSeconds;
   return action.chainId === boundary.chainId
@@ -68,11 +92,12 @@ export function isTrustedCurrentAction(action: IndexedFanAction, boundary: Metri
 }
 
 function belongsToTrustDomain(action: IndexedFanAction, boundary: MetricTrustBoundary): boolean {
+  const allowedHubs = boundary.hubProxies ?? [boundary.hubProxy];
   return action.chainId === boundary.chainId
     && action.environmentId.toLowerCase() === boundary.environmentId.toLowerCase()
     && action.schemaUid.toLowerCase() === boundary.schemaUid.toLowerCase()
-    && getAddress(action.hubProxy) === getAddress(boundary.hubProxy)
-    && getAddress(action.easAttester) === getAddress(boundary.hubProxy);
+    && allowedHubs.some((hub) => getAddress(action.hubProxy) === getAddress(hub))
+    && getAddress(action.easAttester) === getAddress(action.hubProxy);
 }
 
 export function aggregateFanActionMetrics(actions: readonly IndexedFanAction[], boundary: MetricTrustBoundary, options: { includeHistorical?: boolean } = {}): FanActionMetrics {

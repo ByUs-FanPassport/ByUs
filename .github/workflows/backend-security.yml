@@ -45,6 +45,7 @@ jobs:
           features/auth server/auth server/fan-auth
           features/community-stamps server/community-stamps
           server/notice/notice-admin-security.test.ts server/notification
+          server/onchain app/api/public/onchain
       - run: npm run test --workspace @byus/worker
       - run: npm run build --workspace @byus/worker
       - run: sudo apt-get update && sudo apt-get install -y postgresql
@@ -54,6 +55,8 @@ jobs:
         with:
           version: stable
       - run: forge test --root contracts
+      - name: Verify immediate-registration deployment plan guards
+        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs
       - name: Exercise worker to ActionHub on local Anvil
         run: RUN_ACTION_ANVIL_INTEGRATION=1 npm run test --workspace @byus/worker -- test/action-anvil.integration.test.ts
       - name: Validate ActionHub namespace upgrade compatibility

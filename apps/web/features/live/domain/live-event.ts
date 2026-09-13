@@ -19,6 +19,7 @@ export const EXTERNAL_LIVE_PROVIDERS = [
   "youtube",
   "instagram",
   "tiktok",
+  "chzzk",
 ] as const;
 export const externalLiveProviderSchema = z.enum(EXTERNAL_LIVE_PROVIDERS);
 export type ExternalLiveProvider = z.infer<typeof externalLiveProviderSchema>;
@@ -67,14 +68,16 @@ const publishedLandscapePreviewSchema = z.object({
 export const publicLiveEventSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  liveType: z.enum(["general", "recurring"]).optional(),
+  attendanceConfigured: z.boolean().optional(),
   effectiveStatus: effectiveLiveStatusSchema,
   startsAt: isoTimestamp,
-  endsAt: isoTimestamp,
+  endsAt: isoTimestamp.nullable(),
   reservationOpensAt: isoTimestamp,
   reservationClosesAt: isoTimestamp,
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1200),
-  productContext: z.string().trim().min(1).max(1000),
+  productContext: z.string().trim().min(1).max(1000).nullable(),
   photos: z.custom<PhotoSet>().optional(),
   heroImage: z.object({ url: safeAssetUrlSchema, alt: z.string().trim().min(1).max(300) }),
   celebrity: z.object({
@@ -90,7 +93,7 @@ export const publicLiveEventSchema = z.object({
     name: z.string().trim().min(1).max(120),
     logo: safeAssetUrlSchema,
     websiteUrl: z.string().url().startsWith("https://").nullable(),
-  }),
+  }).nullable(),
   watch: z.object({
     available: z.boolean(),
     mode: z.enum(["live", "replay", "unavailable"]).optional(),
@@ -100,6 +103,10 @@ export const publicLiveEventSchema = z.object({
   preview: publishedLandscapePreviewSchema.nullable().optional(),
   // Public visibility only; personal completion/eligibility stays owner-scoped.
   missionsAvailable: z.boolean().nullable().optional(),
+}).superRefine((live, ctx) => {
+  if (live.liveType !== "recurring" && (live.endsAt === null || live.brand === null || live.productContext === null)) {
+    ctx.addIssue({ code: "custom", message: "General LIVE requires an end time and brand" });
+  }
 });
 
 export const liveReservationSummarySchema = z.object({
@@ -140,7 +147,7 @@ export interface LiveStatusOverride {
 export function deriveEffectiveLiveStatus(input: {
   sourceStatus: EffectiveLiveStatus;
   startsAt: string;
-  endsAt: string;
+  endsAt: string | null;
   overrides: readonly LiveStatusOverride[];
   now: Date;
 }): EffectiveLiveStatus {
@@ -159,7 +166,7 @@ export function deriveEffectiveLiveStatus(input: {
     })[0];
   if (activeOverride) return activeOverride.effectiveStatus;
 
-  if (now < Date.parse(input.startsAt)) return "scheduled";
+  if (input.endsAt === null || now < Date.parse(input.startsAt)) return "scheduled";
   if (now < Date.parse(input.endsAt)) return "live";
   return "ended";
 }
@@ -206,11 +213,13 @@ export function parseExternalLiveUrl(
     youtube: ["youtube.com", "www.youtube.com", "youtu.be"],
     instagram: ["instagram.com", "www.instagram.com"],
     tiktok: ["tiktok.com", "www.tiktok.com"],
+    chzzk: ["chzzk.naver.com"],
   };
   if (!allowedHosts[provider].includes(host)) {
     throw new Error("provider URL mismatch");
   }
 
+  if (provider === "chzzk" && (!/^\/(?:live\/)?[a-f0-9]{32}\/?$/.test(url.pathname) || url.search)) throw new Error("unsafe CHZZK URL");
   if (provider === "youtube" && host === "youtu.be") {
     if (!/^\/[A-Za-z0-9_-]+$/.test(url.pathname)) throw new Error("unsafe YouTube URL");
   } else if (provider === "youtube") {
