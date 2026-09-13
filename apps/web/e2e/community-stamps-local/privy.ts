@@ -1,2 +1,5 @@
 const getAccessToken = async () => "community-stamps-loopback";
-export const usePrivy = () => ({ ready:true,authenticated:true,user:{id:"did:privy:community-stamps-loopback"},getAccessToken });
+export const usePrivy = () => {
+ const signedIn = new URLSearchParams(location.search).get("auth") !== "off";
+ return { ready:true, authenticated:signedIn, user:signedIn?{id:"did:privy:community-stamps-loopback"}:null, getAccessToken };
+};

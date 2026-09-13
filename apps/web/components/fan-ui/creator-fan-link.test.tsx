@@ -57,10 +57,10 @@ it("never displays the previous owner's completion when switching accounts", asy
 it("keeps errors distinct from unverified and preserves the fan page route", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({}, { status: 503 })));
   render(<CreatorFanLink slug="elina" name="엘리나" locale="ko" />);
-  expect(await screen.findByRole("link", { name: "엘리나 팬페이지 보기" })).toHaveAttribute("href", "/c/elina?locale=ko");
+  expect(await screen.findByRole("link", { name: "엘리나 팬페이지 보기" })).toHaveAttribute("href", "/elina?locale=ko");
 });
 it("uses verification wording in English", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: summary(true) })));
   render(<CreatorFanLink slug="elina" name="Elina" locale="en" />);
-  expect(await screen.findByRole("link", { name: "Elina Fan verified" })).toHaveAttribute("href", "/c/elina?locale=en");
+  expect(await screen.findByRole("link", { name: "Elina Fan verified" })).toHaveAttribute("href", "/elina?locale=en");
 });

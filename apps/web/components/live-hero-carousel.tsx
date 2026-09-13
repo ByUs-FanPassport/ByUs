@@ -1,79 +1,44 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
 import useEmblaCarousel from "embla-carousel-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
 import type { ContentLocale, PublishedCelebrity } from "../server/content/content-domain";
-import { AuthIntentLink } from "./auth-intent-link";
 import { Pause } from "lucide-react";
-import { ArrowRight, ChevronLeft, ChevronRight, Play, Radio } from "./icons";
+import { ChevronLeft, ChevronRight, Play } from "./icons";
 import styles from "./guest-home.module.css";
 import { ElinaGuideCard } from "./home-entry-cards/home-entry-cards";
-import { EventPhoto } from "./fan-ui/event-photo";
-import { homeHeroSizes } from "./fan-ui/public-image-policy";
-import { CreatorImage } from "./fan-ui/creator-image";
-import { HomeHeroBanner } from "./home-entry-cards/home-hero-banner";
 import { formatDetailedLiveCountdown, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
+
+import type { HomeBanner } from "../features/home/domain/home-banner";
+import { ManagedHomeBanner } from "./home-entry-cards/managed-home-banner";
 
 const AUTOPLAY_INTERVAL_MS = 6_000;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 const carouselCopy = {
   ko: {
-    label: "주요 LIVE",
+    label: "홈 배너",
     pause: "자동 재생 정지",
     resume: "자동 재생 시작",
-    previous: "이전 LIVE",
-    next: "다음 LIVE",
-    goTo: (index: number) => `${index}번째 LIVE 보기`,
+    previous: "이전 배너",
+    next: "다음 배너",
+    goTo: (index: number) => `${index}번째 배너 보기`,
     position: (index: number, total: number) => `${index} / ${total}`,
-    reserve: "라이브 예약하기",
-    enter: "라이브 입장하기",
-    details: "LIVE 상세보기",
-    noneStatus: "공개된 LIVE 없음",
-    noneTitle: "새로운 LIVE를 준비하고 있어요.",
   },
   en: {
-    label: "Featured LIVE events",
+    label: "Home banners",
     pause: "Pause autoplay",
     resume: "Start autoplay",
-    previous: "Previous LIVE",
-    next: "Next LIVE",
-    goTo: (index: number) => `View LIVE ${index}`,
+    previous: "Previous banner",
+    next: "Next banner",
+    goTo: (index: number) => `View banner ${index}`,
     position: (index: number, total: number) => `${index} of ${total}`,
-    reserve: "Reserve a spot",
-    enter: "Enter LIVE",
-    details: "View LIVE details",
-    noneStatus: "No LIVE events available",
-    noneTitle: "We’re preparing a new LIVE.",
   },
 } as const;
-
-function formatKoreanLiveDate(value: string) {
-  const instant = new Date(value);
-  if (Number.isNaN(instant.getTime())) throw new Error("Invalid LIVE timestamp");
-  const kst = new Date(instant.getTime() + 9 * 60 * 60 * 1000);
-  const hour = kst.getUTCHours();
-  const period = hour < 12 ? "오전" : "오후";
-  const displayHour = hour % 12 || 12;
-  return `${kst.getUTCMonth() + 1}월 ${kst.getUTCDate()}일 ${period} ${displayHour}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
-}
-
-function formatLiveDate(value: string, locale: ContentLocale) {
-  if (locale === "ko") return formatKoreanLiveDate(value);
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "Asia/Seoul",
-  }).format(new Date(value));
-}
 
 export function formatLiveCountdown(startsAt: string, now: number, locale: ContentLocale = "ko") {
   return formatDetailedLiveCountdown(startsAt, now, locale);
@@ -114,18 +79,16 @@ export function LiveCountdown({
 }
 
 export function LiveHeroCarousel({
-  featuredLives,
+  homeBanners,
   locale,
-  onStartReached,
   elina,
 }: {
   elina?: PublishedCelebrity;
-  featuredLives: readonly LiveEventResponse[];
+  homeBanners: readonly HomeBanner[];
   locale: ContentLocale;
-  onStartReached?: (event: LiveStartEvent) => void;
 }) {
   const t = carouselCopy[locale];
-  const total = featuredLives.length + 1;
+  const total = homeBanners.length + 1;
   const hasControls = total > 1;
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -241,69 +204,23 @@ export function LiveHeroCarousel({
     >
       <div className={styles.heroViewport} ref={viewportRef}>
         <div className={styles.heroTrack}>
-          {featuredLives.map((featuredLive, index) => {
-          const isActive = index === activeIndex;
-          const detailHref = `/live/${featuredLive.live.slug}`;
-          const statusLabel = featuredLive.live.effectiveStatus === "live" ? "LIVE" : "UPCOMING";
-          const heroActionLabel =
-            featuredLive.primaryAction === "watch_live"
-              ? t.enter
-              : featuredLive.primaryAction === "sign_in_to_reserve"
-                ? t.reserve
-                : t.details;
-
-            return (
-              <article
-              className={styles.heroCard}
-              key={featuredLive.live.slug}
-              aria-hidden={!isActive}
-              aria-roledescription="slide"
-              aria-label={t.position(index + 1, total)}
-              inert={!isActive}
-              data-active={isActive ? "true" : "false"}
-            >
-              <HomeHeroBanner kind="live"
-                desktopImage={<EventPhoto photos={featuredLive.live.photos} src={featuredLive.live.heroImage.url} alt={featuredLive.live.heroImage.alt} locale={locale} priority={index === 0} sizes={homeHeroSizes()} />}
-                image={<CreatorImage slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} photos={featuredLive.live.celebrity.photos} position={featuredLive.live.celebrity.imagePosition} presentation="editorial" locale={locale} alt="" fill priority={index === 0} sizes="(max-width: 767px) calc(100vw - 32px), 1px" />}
-                eyebrow={<span><Radio />{statusLabel}</span>}
-                title={formatHeroLiveTitle(featuredLive.live.celebrity.name)}
-                description={<>
-                  <span>{formatLiveDate(featuredLive.live.startsAt, locale)}</span>
-                  <LiveCountdown id={featuredLive.live.id} effectiveStatus={featuredLive.live.effectiveStatus} startsAt={featuredLive.live.startsAt} active={isActive && visible} locale={locale} onStartReached={onStartReached} />
-                </>}
-                action={featuredLive.primaryAction === "sign_in_to_reserve" ? (
-                  <AuthIntentLink
-                    emphasis="primary"
-                    locale={locale}
-                    pendingHref={`${detailHref}?locale=${locale}`}
-                    input={{
-                      sourcePath: detailHref,
-                      sourceQuery: `?locale=${locale}`,
-                      actionType: "RESERVE_LIVE",
-                      targetType: "live_event",
-                      targetId: featuredLive.live.slug,
-                    }}
-                  >
-                    <span><Play />{heroActionLabel}</span><ArrowRight />
-                  </AuthIntentLink>
-                ) : (
-                  <Link data-fan-action-emphasis="primary" href={`${detailHref}?locale=${locale}` as Route}>
-                    <span><Play />{heroActionLabel}</span><ArrowRight />
-                  </Link>
-                )}
-              />
-              </article>
-            );
-          })}
+          {homeBanners.map((banner, index) => (
+            <article className={styles.heroCard} key={banner.id}
+              aria-hidden={index !== activeIndex} aria-roledescription="slide"
+              aria-label={t.position(index + 1, total)} inert={index !== activeIndex}
+              data-active={index === activeIndex ? "true" : "false"}>
+              <ManagedHomeBanner banner={banner} locale={locale} priority={index === 0} />
+            </article>
+          ))}
           <article
             className={`${styles.heroCard} ${styles.campaignHeroCard}`}
-            aria-hidden={activeIndex !== featuredLives.length}
+            aria-hidden={activeIndex !== homeBanners.length}
             aria-roledescription="slide"
             aria-label={t.position(total, total)}
-            inert={activeIndex !== featuredLives.length}
-            data-active={activeIndex === featuredLives.length ? "true" : "false"}
+            inert={activeIndex !== homeBanners.length}
+            data-active={activeIndex === homeBanners.length ? "true" : "false"}
           >
-            <ElinaGuideCard locale={locale} elina={elina} hero priority={featuredLives.length === 0} />
+            <ElinaGuideCard locale={locale} elina={elina} hero priority={homeBanners.length === 0} />
           </article>
         </div>
       </div>
@@ -317,7 +234,7 @@ export function LiveHeroCarousel({
             className={styles.carouselDots}
             style={{ "--carousel-width": `${total * 44 + 44}px` } as CSSProperties}
           >
-            {[...featuredLives.map((featuredLive) => featuredLive.live.slug), "elina-guide"].map((key, index) => (
+            {[...homeBanners.map((banner) => banner.id), "elina-guide"].map((key, index) => (
               <button
                 type="button"
                 className={styles.carouselDot}

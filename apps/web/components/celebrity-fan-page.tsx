@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,7 +61,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const ticketBalance = auth.authenticated && my.state.status === "ready" ? creator?.ticketBalance ?? 0 : null;
   const tabHref = (value: CelebrityFanTab) => value === "raffles"
     ? creatorRafflesHref(celebrity.slug, locale)
-    : `/c/${celebrity.slug}?tab=${value}&locale=${locale}#celebrity-content` as Route;
+    : `${creatorHomeHref(celebrity.slug)}?tab=${value}&locale=${locale}#celebrity-content` as Route;
   const portrait = (size: number) => avatar.state.status === "ready" ? <Avatar avatar={avatar.state.avatar} imageUrl={avatar.state.imageUrl} label="" size={size} /> : <AvatarPlaceholder size={size} />;
   useEffect(() => {
     if (!ready) return;
@@ -77,7 +80,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const hero = resolveCreatorHeroImage(celebrity.slug, celebrity.image);
   const verifyLink = <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}>{ko ? "퀴즈 풀고 팬 인증하기" : "Verify fandom"}<ArrowRight aria-hidden="true" /></AuthIntentLink>;
   const recent = <RecentLive celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />;
-  return <FanAppFrame locale={locale} mainId="celebrity-detail-main" actions={auth.ready && auth.authenticated ? <Link className={styles.headerIdentity} href={`/my?locale=${locale}`}>{portrait(36)}<span>{nickname ?? "MY"}</span></Link> : auth.ready ? <Link className={styles.headerLogin} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(`/c/${celebrity.slug}?locale=${locale}`)}` as Route}>{ko ? "로그인" : "Sign in"}</Link> : undefined}>
+  return <FanAppFrame locale={locale} mainId="celebrity-detail-main" actions={auth.ready && auth.authenticated ? <Link className={styles.headerIdentity} href={`/my?locale=${locale}`}>{portrait(36)}<span>{nickname ?? "MY"}</span></Link> : auth.ready ? <Link className={styles.headerLogin} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(`${creatorHomeHref(celebrity.slug)}?locale=${locale}`)}` as Route}>{ko ? "로그인" : "Sign in"}</Link> : undefined}>
     <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
       <section className={styles.hero} data-dedicated-hero={hero ? celebrity.slug : undefined} style={{ "--hero-desktop-position": hero?.desktopPosition ?? celebrity.image.position, "--hero-mobile-position": hero?.mobilePosition ?? celebrity.image.position, "--hero-desktop-fit": hero?.desktopFit ?? "cover", backgroundColor: hero?.background } as CSSProperties} aria-labelledby="celebrity-heading">
         <CreatorHeroPicture locale={locale} slug={celebrity.slug} image={celebrity.image} className={styles.heroPicture} priority /><div className={styles.scrim} aria-hidden="true" />

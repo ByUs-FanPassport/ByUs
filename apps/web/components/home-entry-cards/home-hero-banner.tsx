@@ -2,9 +2,10 @@ import type { ReactNode } from "react";
 import styles from "./home-hero-banner.module.css";
 
 /** Every homepage slide uses the same image, information and action geometry. */
-export function HomeHeroBanner({ image, eyebrow, title, description, action, desktopImage, kind = "guide" }: {
+export function HomeHeroBanner({ image, eyebrow, title, description, action, desktopImage, fullImage, kind = "guide" }: {
   image: ReactNode;
   desktopImage?: ReactNode;
+  fullImage?: ReactNode;
   kind?: "live" | "guide";
   eyebrow: ReactNode;
   title: ReactNode;
@@ -14,6 +15,7 @@ export function HomeHeroBanner({ image, eyebrow, title, description, action, des
   return <div className={styles.banner} data-home-hero-banner data-kind={kind}>
     <div className={styles.image} data-hero-mobile-image>{image}</div>
     {desktopImage ? <div className={styles.desktopImage}>{desktopImage}</div> : null}
+    {fullImage ? <div className={styles.fullImage}>{fullImage}</div> : null}
     <div className={styles.overlay} aria-hidden="true" />
     <div className={styles.copy}>
       <div className={styles.eyebrow}>{eyebrow}</div>

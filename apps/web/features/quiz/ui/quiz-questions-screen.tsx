@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
@@ -321,7 +323,7 @@ export function QuizQuestionsScreen({
   return (
     <QuizFrame locale={locale} topAligned>
       <section className={styles.quiz} aria-labelledby="question-heading">
-        <Link className={styles.exitLink} href={withLocale(`/c/${slug}`, locale)}><ArrowLeft aria-hidden="true" />{t.exit}</Link>
+        <Link className={styles.exitLink} href={withLocale(creatorHomeHref(slug), locale)}><ArrowLeft aria-hidden="true" />{t.exit}</Link>
         <header className={styles.quizHeader}>
           <div><p>{t.eyebrow}</p><h1>{t.title}</h1></div>
           <strong aria-label={t.progressValue(questionIndex + 1, totalQuestions)}>{questionIndex + 1} / {totalQuestions}</strong>

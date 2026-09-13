@@ -1,3 +1,4 @@
+import { createHomeBannerRepository } from "../server/content/home-banner-repository";
 import { publicMetadata, pageCopy } from "@/seo/metadata";
 import { homeStructuredData, serializeStructuredData } from "@/seo/structured-data";
 import { GuestHome, type HomeContentErrors } from "../components/guest-home";
@@ -23,13 +24,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
   });
   const celebrityRepository = createPublishedContentRepositoryFromEnvironment();
-  const [featuredLivesResult, celebritiesResult, celebrityLivesResult] = await Promise.allSettled([
+  const [featuredLivesResult, celebritiesResult, celebrityLivesResult, homeBannersResult] = await Promise.allSettled([
     liveRepository.listFeaturedPublished({ locale, now: new Date() }),
     celebrityRepository.list(locale),
     celebrityRepository.listPrimaryLives(locale),
+    createHomeBannerRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }).list(locale),
   ]);
-  if (featuredLivesResult.status === "rejected" && celebritiesResult.status === "rejected") throw new Error("Home content unavailable");
+  if (featuredLivesResult.status === "rejected" && celebritiesResult.status === "rejected" && homeBannersResult.status === "rejected") throw new Error("Home content unavailable");
   const contentErrors: HomeContentErrors = {
+    homeBanners: homeBannersResult.status === "rejected" || undefined,
     featuredLives: featuredLivesResult.status === "rejected" || undefined,
     celebrities: celebritiesResult.status === "rejected" || undefined,
     celebrityLives: celebrityLivesResult.status === "rejected" || undefined,
@@ -41,6 +44,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       dangerouslySetInnerHTML={{ __html: serializeStructuredData(homeStructuredData()) }}
     />
     <GuestHome
+      homeBanners={homeBannersResult.status === "fulfilled" ? homeBannersResult.value : []}
       celebrities={celebritiesResult.status === "fulfilled" ? celebritiesResult.value : []}
       celebrityLives={celebrityLivesResult.status === "fulfilled" ? celebrityLivesResult.value : []}
       featuredLives={featuredLivesResult.status === "fulfilled" ? featuredLivesResult.value : []}

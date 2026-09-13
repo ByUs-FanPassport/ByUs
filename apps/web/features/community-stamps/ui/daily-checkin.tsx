@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, RotateCcw } from "lucide-react";
 import type { Route } from "next";
@@ -87,7 +89,7 @@ export function DailyCheckin({
     return <section className={styles.panel} id="daily-checkin" aria-labelledby="daily-checkin-title"><div><h3 id="daily-checkin-title">{t.title}</h3><p role="status">{t.loading}</p></div></section>;
   }
   if (!auth.authenticated) {
-    const returnTo = `/c/${creator}?locale=${locale}#daily-checkin`;
+    const returnTo = `${creatorHomeHref(creator)}?locale=${locale}#daily-checkin`;
     return <section className={styles.panel} id="daily-checkin" aria-labelledby="daily-checkin-title"><div><h3 id="daily-checkin-title">{t.title}</h3><p>{t.help}</p></div><Link className={styles.primary} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(returnTo)}` as Route}>{t.login}</Link></section>;
   }
   if (!ownerId) {

@@ -72,6 +72,6 @@ it("preserves notice navigation and comment preview when a notice is published",
   mock.notices = [{ slug: "live-guide", title: "LIVE 참여 안내", pinned: true, publishedAt: "2026-09-11T00:00:00Z" }];
   render(<NoticePanel slug="ifewknow" locale="ko" />);
   expect(screen.getByRole("link", { name: /LIVE 참여 안내/ })).toHaveAttribute("href", "/c/ifewknow/notices/live-guide?locale=ko");
-  expect(screen.getByRole("link", { name: /공지 전체 보기/ })).toHaveAttribute("href", "/c/ifewknow?tab=notice&locale=ko#celebrity-content");
+  expect(screen.getByRole("link", { name: /공지 전체 보기/ })).toHaveAttribute("href", "/ifewknow?tab=notice&locale=ko#celebrity-content");
   expect(screen.getByText("Comments preview")).toBeInTheDocument();
 });

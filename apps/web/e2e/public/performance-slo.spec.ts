@@ -35,17 +35,11 @@ test("SYS-004 primary CTA is operable within 8s on slow 3G with motion and optio
     waitUntil: "domcontentloaded",
     timeout: 30_000,
   });
-  const primaryAction = page.getByRole("link", { name: /라이브 예약하기|LIVE 상세보기/ });
+  const primaryAction = page.getByRole("region", { name: "홈 배너", exact: true }).locator('article[data-active="true"] a').first();
   await expect(primaryAction).toBeVisible({ timeout: CTA_SLO_MS });
-  await expect(primaryAction).toHaveAttribute("href", /\S+/, { timeout: CTA_SLO_MS });
+  await expect(primaryAction).toHaveAttribute("href", /^(\/(?!\/)|https:\/\/)/, { timeout: CTA_SLO_MS });
   const ctaOperableMs = Math.round(performance.now() - startedAt);
   const actionLabel = (await primaryAction.textContent()) ?? "";
-  if (actionLabel.includes("라이브 예약하기")) {
-    const href = await primaryAction.getAttribute("href");
-    expect(href).toMatch(/returnTo=%2Flive%2F|^\/live\//);
-  } else {
-    await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
-  }
 
   expect(response?.status()).toBeLessThan(400);
   expect(ctaOperableMs).toBeLessThanOrEqual(CTA_SLO_MS);

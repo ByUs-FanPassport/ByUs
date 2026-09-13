@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { BadgeCheck, Radio, Images, Check, Unplug, CircleAlert, ArrowLeft } from "lucide-react";
@@ -115,7 +117,7 @@ export function ConnectionScreen(props: Props) {
           <hr /><div><h2>{t("방송 전에도 연결 상태는 유지돼요", "Stay connected between broadcasts")}</h2><p>{t("지금 방송 중이 아니어도 괜찮아요. 연결은 자동으로 갱신하고, 다시 동의가 필요하면 이 화면에서 확인할 수 있어요.", "You don't need to be live now. We refresh access automatically; this page shows when you need to reconnect.")}</p></div>
           <div className={styles.mediaRow}><h2>{t("최근 사진과 릴스", "Recent photos and reels")}</h2><span>{account.needsReconnect ? t("다시 연결 필요", "Reconnect required") : account.mediaStatus === "connected" ? t("연동 중", "Connected") : account.mediaStatus === "syncing" ? t("확인 중", "Syncing") : t("일시적으로 확인할 수 없어요", "Temporarily unavailable")}</span></div>
         </section>
-        <div className={styles.mainAction}>{account.needsReconnect ? <FanAction variant="primary" fullWidth disabled={busy} onClick={onStart}>{t("Instagram 다시 연결하기", "Reconnect Instagram")}</FanAction> : <FanAction variant="primary" fullWidth href={`/c/${account.slug}?locale=${locale}`}>{t("내 팬페이지 보기", "View my fan page")}</FanAction>}</div>
+        <div className={styles.mainAction}>{account.needsReconnect ? <FanAction variant="primary" fullWidth disabled={busy} onClick={onStart}>{t("Instagram 다시 연결하기", "Reconnect Instagram")}</FanAction> : <FanAction variant="primary" fullWidth href={`${creatorHomeHref(account.slug)}?locale=${locale}`}>{t("내 팬페이지 보기", "View my fan page")}</FanAction>}</div>
         <section className={styles.disconnectArea}><button className={styles.textButton} disabled={busy} onClick={() => onScreen("disconnect")}>{t("Instagram 연결 해제", "Disconnect Instagram")}</button><p>{t("연결을 해제하면 Instagram 정보 조회와 자동 표시가 중단돼요.\nByUs의 팬 활동 기록은 삭제되지 않아요.", "Disconnecting stops Instagram updates and automatic display. Fan activity on ByUs is not deleted.")}</p></section>
       </div>}
       {screen === "permissions" && <div className={styles.stack}>{permissions.map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}<FanAction variant="primary" fullWidth onClick={back}>{t("돌아가기", "Back")}</FanAction><a className={styles.textButton} href={`/privacy?locale=${locale}`}>{t("개인정보처리방침 보기", "Privacy policy")}</a></div>}

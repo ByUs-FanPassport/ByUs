@@ -1,16 +1,12 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LiveEventResponse } from "../features/live/domain/live-event";
+import { bannerFixture as banner } from "../e2e/banner-local/fixture";
 import { LiveCountdown, LiveHeroCarousel } from "./live-hero-carousel";
 
 vi.mock("next/link", () => ({ default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a> }));
 vi.mock("embla-carousel-react", () => ({ default: () => [vi.fn(), null] }));
 vi.mock("./auth-intent-link", () => ({ AuthIntentLink: ({ children }: { children: React.ReactNode }) => <a href="/live/test">{children}</a> }));
 
-const live = {
-  live: { slug: "test", effectiveStatus: "scheduled", startsAt: "2027-01-02T00:00:00Z", heroImage: { url: "/images/guest-home/kara-card.jpg", alt: "KARA" }, celebrity: { slug: "kara", name: "KARA" } },
-  primaryAction: "sign_in_to_reserve",
-} as LiveEventResponse;
 const advance = (ms = 6_000) => act(() => { vi.advanceTimersByTime(ms); });
 const activeSlide = () => document.querySelector('[data-active="true"]')?.getAttribute("aria-label");
 
@@ -24,7 +20,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstub
 
 describe("hero visibility and independent pause reasons", () => {
   it("keeps user pause through hover, pointer release and blur", () => {
-    render(<LiveHeroCarousel featuredLives={[live]} locale="ko" />);
+    render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" />);
     const root = screen.getByRole("region");
     fireEvent.click(screen.getByRole("button", { name: "자동 재생 정지" }));
     fireEvent.mouseEnter(root); fireEvent.pointerDown(root);
@@ -37,7 +33,7 @@ describe("hero visibility and independent pause reasons", () => {
   });
 
   it("does not clear keyboard pause when hover ends", () => {
-    render(<LiveHeroCarousel featuredLives={[live]} locale="en" />);
+    render(<LiveHeroCarousel homeBanners={[banner]} locale="en" />);
     const root = screen.getByRole("region");
     fireEvent.focus(root); fireEvent.mouseEnter(root); fireEvent.mouseLeave(root);
     advance(); expect(activeSlide()).toBe("1 of 2");
@@ -53,7 +49,7 @@ describe("hero visibility and independent pause reasons", () => {
       disconnect = disconnect;
     });
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
-    const view = render(<LiveHeroCarousel featuredLives={[live]} locale="en" />);
+    const view = render(<LiveHeroCarousel homeBanners={[banner]} locale="en" />);
     act(() => intersect([{ isIntersecting: false }]));
     expect(vi.getTimerCount()).toBe(0);
     advance(); expect(activeSlide()).toBe("1 of 2");
@@ -67,10 +63,10 @@ describe("hero visibility and independent pause reasons", () => {
 
   it("keeps reduced-motion manual navigation and gives only the first image high priority", () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-    render(<LiveHeroCarousel featuredLives={[live]} locale="en" />);
+    render(<LiveHeroCarousel homeBanners={[banner]} locale="en" />);
     advance(12_000); expect(activeSlide()).toBe("1 of 2");
     expect(screen.getByRole("button", { name: "Pause autoplay" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Next LIVE" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next banner" }));
     expect(activeSlide()).toBe("2 of 2");
     expect(document.querySelectorAll('img[fetchpriority="high"]')).toHaveLength(1);
   });
@@ -86,18 +82,24 @@ it("updates a resumed countdown from the current clock and has no inactive inter
   expect(screen.getByText("00:00:50")).toBeInTheDocument();
 });
 
-it("uses the shared banner and creator portrait role for LIVE slides", () => {
-  const portraitLive = { ...live, live: { ...live.live, celebrity: { ...live.live.celebrity, photos: { portrait: {
-    asset: { id: "portrait-asset", url: "/images/guest-home/elina-card.jpg", width: 1080, height: 1350, mimeType: "image/jpeg", revision: 1 },
-    alt: { ko: "승인된 세로 사진", en: "Approved portrait" }, revision: 1,
-    frames: { "creator.hero.mobile": { fit: "cover" as const, x: 50, y: 40, approvedAssetRevision: 1 } },
-  } } } } } as LiveEventResponse;
-  const { container } = render(<LiveHeroCarousel featuredLives={[portraitLive]} locale="ko" />);
-  const slides = container.querySelectorAll("article");
-  expect(slides).toHaveLength(2);
-  for (const slide of slides) expect(slide.querySelector("[data-home-hero-banner]")).toBeInTheDocument();
-  const portrait = slides[0].querySelector("img");
-  expect(portrait).toHaveAttribute("data-image-presentation", "editorial");
-  expect(portrait).toHaveAttribute("src", expect.stringContaining("elina-card.jpg"));
-  expect(portrait).toHaveStyle({ objectFit: "cover", objectPosition: "50% 40%" });
+it("renders a managed banner with its own artwork and preserves the guide", () => {
+  const { container } = render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" />);
+  expect(container.querySelectorAll("article")).toHaveLength(2);
+  expect(container.querySelectorAll("[data-home-hero-banner]")).toHaveLength(2);
+  expect(screen.getByRole("link", { name: "방송 일정 보기" })).toHaveAttribute("href", "/live/calendar?celebrity=elina&locale=ko");
+  expect(container.querySelector("picture img")).toHaveAttribute("src", expect.stringContaining("elina-card.jpg"));
+  expect(container.querySelector('article[aria-hidden="true"]')).toHaveAttribute("inert");
+});
+
+it("retains copy and the CTA when an image cannot load", () => {
+  const { container } = render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" />);
+  fireEvent.error(container.querySelector("picture img")!);
+  expect(container.querySelector("[data-banner-image-unavailable]")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "방송 일정 보기" })).toBeInTheDocument();
+});
+
+it("uses the same locale desktop source when the mobile asset is absent", () => {
+  const { container } = render(<LiveHeroCarousel homeBanners={[{ ...banner, mobileImage: null }]} locale="en" />);
+  expect(container.querySelector("picture")).toHaveAttribute("data-mobile-fallback", "true");
+  expect(container.querySelector("picture img")).toHaveAttribute("src", expect.stringContaining("kara-hero.png"));
 });

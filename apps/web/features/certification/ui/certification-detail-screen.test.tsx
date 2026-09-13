@@ -343,7 +343,7 @@ describe("CertificationDetailScreen", () => {
     render(<CertificationDetailScreen id={missionId} slug="kara" locale="ko" />);
 
     expect(await screen.findByText("이번 인증 승인과 패스포트 발급은 별개예요. 팬 인증에서 발급 과정을 확인하세요.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "팬 인증 확인하기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
+    expect(screen.getByRole("link", { name: "팬 인증 확인하기" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
   });
 
   it("chooses the current creator Passport from multiple owned Passports", async () => {

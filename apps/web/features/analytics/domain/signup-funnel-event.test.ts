@@ -87,4 +87,20 @@ describe("signup measurement privacy boundary", () => {
     expect(identify).not.toHaveBeenCalled();
     expect(record).not.toHaveBeenCalled();
   });
+  it("allows only optional fixed login entry values and preserves legacy contracts", () => {
+    for (const entryAction of ["daily_checkin", "cheer", "passport_share", "other"]) {
+      const event = { ...started, properties: { ...properties, entryAction } };
+      expect(clientProductEventV1Schema.safeParse(event).success).toBe(true);
+      expect(clientProductEventV1Schema.safeParse({ ...event, eventName: "login_result", idempotencyKey: `signup-login:${nonce}:succeeded`,
+        properties: { ...event.properties, outcome: "succeeded", stage: "session", reason: "none" } }).success).toBe(true);
+    }
+    for (const entryAction of [null, [], {}, 1, "invite", "/s/private", "user@example.test"]) {
+      expect(clientProductEventV1Schema.safeParse({ ...started, properties: { ...properties, entryAction } }).success).toBe(false);
+    }
+    expect(clientProductEventV1Schema.safeParse(started).success).toBe(true);
+    const { provider: _provider, trigger: _trigger, ...context } = properties;
+    expect(clientProductEventV1Schema.safeParse({ ...started, eventName: "signup_guide_view", source: "signup.guide",
+      idempotencyKey: `signup-guide:${nonce}:view`, properties: { ...context, audience: "guest", entryAction: "cheer" } }).success).toBe(false);
+  });
+
 });

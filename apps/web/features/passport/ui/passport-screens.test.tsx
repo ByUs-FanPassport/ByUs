@@ -141,7 +141,7 @@ describe("passport fan screens", () => {
     expect(screen.getByLabelText("STAR: KARA")).toHaveTextContent("KARA");
     expect(screen.getByLabelText(`FAN ID: ${passport.id}`)).toHaveTextContent(passport.id);
     expect(screen.getByLabelText("FAN NAME: —")).toHaveTextContent("—");
-    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", "#activity");
     expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", "#stamp-book");
     expect(container.querySelector("#activity")).toBeInTheDocument();
@@ -330,7 +330,7 @@ describe("passport fan screens", () => {
 
     expect(await screen.findByLabelText("FAN NAME: 눈부신팬")).toHaveTextContent("눈부신팬");
     expect(await screen.findByRole("img", { name: "눈부신팬 프로필 아바타" })).toHaveAttribute("src", "/images/avatars/heart-pink.webp");
-    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "KARA 최애 페이지 보기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.objectContaining({ cache: "no-store" }));
     expect(screen.getByRole("progressbar", { name: "다음 등급: 골드" })).toHaveAttribute("value", "30");
     expect(screen.getByText("35 점 남음")).toBeInTheDocument();

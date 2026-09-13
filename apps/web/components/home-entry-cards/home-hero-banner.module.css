@@ -100,3 +100,5 @@
   .banner[data-kind="live"] .description { font-size:14px; }
   .banner[data-kind="live"] .action > a { width:100%; }
 }
+
+.fullImage { position:absolute; inset:0; }

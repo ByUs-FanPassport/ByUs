@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { AuthError } from "@/features/auth/domain/auth-errors";
-import { communityAwardResultSchema, communityCreatorSlugSchema, communityInviteSchema, communityStampCollectionSchema } from "@/features/community-stamps/domain/community-stamps";
+import { communityShareTokenSchema, communityShareLinkSchema, communityShareDestinationSchema, communityAwardResultSchema, communityCreatorSlugSchema, communityInviteSchema, communityStampCollectionSchema } from "@/features/community-stamps/domain/community-stamps";
 
 export interface CommunityStampDependencies {
   authorize(authorization: string | null): Promise<{ appUserId: string }>;
@@ -13,7 +13,7 @@ export function communityStampFailure(error: unknown) {
   if (error instanceof AuthError) return json({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status);
   if (error instanceof z.ZodError || error instanceof SyntaxError) return json({ error: { code: "COMMUNITY_STAMP_INVALID_REQUEST" } }, 400);
   const code = error instanceof Error ? error.message : "";
-  const status = ({ COMMUNITY_STAMP_NOT_FOUND: 404, COMMUNITY_STAMP_WALLET_NOT_READY: 409, COMMUNITY_STAMP_INVALID_REQUEST: 400, COMMUNITY_STAMP_SELF_INVITE: 400, COMMUNITY_STAMP_ALREADY_REDEEMED: 409, COMMUNITY_STAMP_RATE_LIMITED: 429 } as Record<string, number>)[code];
+  const status = ({ COMMUNITY_STAMP_NOT_FOUND: 404, COMMUNITY_STAMP_WALLET_NOT_READY: 409, COMMUNITY_STAMP_INVALID_REQUEST: 400, COMMUNITY_STAMP_SELF_INVITE: 400, COMMUNITY_STAMP_SELF_SHARE: 400, COMMUNITY_STAMP_PASSPORT_REQUIRED: 409, COMMUNITY_STAMP_ALREADY_REDEEMED: 409, COMMUNITY_STAMP_RATE_LIMITED: 429 } as Record<string, number>)[code];
   return json({ error: { code: status ? code : "COMMUNITY_STAMP_UNAVAILABLE" } }, status ?? 503);
 }
 async function readBody(request: Request) {
@@ -58,6 +58,12 @@ export function createCommunityStampHandlers(deps: CommunityStampDependencies) {
         } else if (action === "check-in") {
           const input = z.object({ creator: communityCreatorSlugSchema }).strict().parse(raw);
           result = await deps.rpc("check_in_community_stamp", { p_app_user_id: appUserId, p_celebrity_slug: input.creator });
+        } else if (action === "share-link") {
+          const input = z.object({ creator: communityCreatorSlugSchema }).strict().parse(raw);
+          return json(parseResponse(communityShareLinkSchema, await deps.rpc("create_community_stamp_share_link", { p_app_user_id: appUserId, p_celebrity_slug: input.creator })));
+        } else if (action === "share-visit") {
+          const input = z.object({ token: communityShareTokenSchema }).strict().parse(raw);
+          return json(parseResponse(communityShareDestinationSchema, await deps.rpc("visit_community_stamp_share_link", { p_app_user_id: appUserId, p_token: input.token })));
         } else if (action === "invite-code") {
           z.object({}).strict().parse(raw);
           return json(parseResponse(communityInviteSchema, await deps.rpc("get_community_stamp_invite_code", { p_app_user_id: appUserId })));

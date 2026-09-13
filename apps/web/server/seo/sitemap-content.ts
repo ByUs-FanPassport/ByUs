@@ -1,3 +1,4 @@
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { SeoLocale } from "@/seo/metadata";
@@ -17,7 +18,7 @@ export async function loadSitemapContent(): Promise<IndexablePage[]> {
       const { data, error } = await client.from("published_celebrities")
         .select("slug").eq("locale", locale).order("slug").range(offset, offset + pageSize - 1);
       if (error || !data) throw new Error("Sitemap creator query failed");
-      pages.push(...data.map(({ slug }) => ({ path: `/c/${slug}`, locale })));
+      pages.push(...data.map(({ slug }) => ({ path: creatorHomeHref(slug), locale })));
       if (data.length < pageSize) break;
     }
     for (let offset = 0; ; offset += pageSize) {

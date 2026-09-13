@@ -1,3 +1,4 @@
+import { creatorHomeHref, isCreatorHandle } from "@/features/creator/domain/creator-navigation";
 import { withLocalePath } from "./locale-path";
 import { z } from "zod";
 import type { SessionStorageAccess } from "../features/reliability/client/session-storage";
@@ -82,7 +83,7 @@ export const authIntentSchema = z
       OPEN_PASSPORT: "passport",
     };
     const expectedPath = value.actionType === "CREATE_REACTION"
-      ? `/c/${value.targetId}`
+      ? creatorHomeHref(value.targetId)
       : value.actionType === "START_FAN_VERIFICATION"
       ? `/c/${value.targetId}/verify`
       : value.actionType === "RESERVE_LIVE" || value.actionType === "SUBMIT_FAN_CODE"
@@ -107,7 +108,12 @@ export const authIntentSchema = z
     const isCreatorRaffleEntry = value.actionType === "APPLY_BENEFIT"
       && value.targetType === "benefit"
       && creatorRafflePath?.[1] === value.targetId;
-    if (value.sourcePath !== expectedPath && !isMyCollectionEntry && !isCreatorRaffleEntry && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
+    const isLegacyReactionEntry = value.actionType === "CREATE_REACTION"
+      && value.sourcePath === `/c/${value.targetId}`;
+    if (value.actionType === "CREATE_REACTION" && !isCreatorHandle(value.targetId)) {
+      context.addIssue({ code: "custom", path: ["targetId"], message: "Invalid creator handle" });
+    }
+    if (value.sourcePath !== expectedPath && !isLegacyReactionEntry && !isMyCollectionEntry && !isCreatorRaffleEntry && !(value.actionType === "OPEN_PASSPORT" && value.sourcePath === `${expectedPath}/issuance`)) {
       context.addIssue({ code: "custom", path: ["sourcePath"], message: "Intent action and source path do not match" });
     }
     if (value.draftPayload.draftRef && value.actionType !== "SUBMIT_FAN_CODE") {

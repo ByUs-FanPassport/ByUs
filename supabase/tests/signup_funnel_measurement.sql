@@ -606,3 +606,5 @@ select jsonb_build_object(
 ) as signup_funnel_measurement_result;
 
 rollback;
+
+\ir login_entry_action.sql

@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import type { Route } from "next";
@@ -25,7 +27,7 @@ function LinkView({ slug, name, locale, state }: { slug: string; name: string; l
     : unavailable ? (locale === "ko" ? "팬페이지 보기" : "View fan page")
     : (locale === "ko" ? "입덕하기" : "Become a fan");
   return <Link className={styles.celebrityFanLink} data-verified={verified || undefined}
-    href={`/c/${slug}?locale=${locale}` as Route} aria-label={`${name} ${label}`} aria-busy={checking || undefined}>
+    href={`${creatorHomeHref(slug)}?locale=${locale}` as Route} aria-label={`${name} ${label}`} aria-busy={checking || undefined}>
     <Heart aria-hidden="true" /><span>{label}</span>
   </Link>;
 }

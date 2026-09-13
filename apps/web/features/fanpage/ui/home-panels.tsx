@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { EventPhoto } from "@/components/fan-ui/event-photo";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,7 +69,7 @@ export function NoticePanel({ slug, locale, full = false }: { slug: string; loca
     <section className={panels.notices}>
       <div className={styles.sectionHeading}>
         <h2>{ko ? "공지와 댓글" : "Notices & comments"}</h2>
-        {!full && !empty && <Link href={`/c/${slug}?tab=notice&locale=${locale}#celebrity-content`}>{ko ? "공지 전체 보기" : "All notices"}<ArrowRight size={16} aria-hidden="true" /></Link>}
+        {!full && !empty && <Link href={`${creatorHomeHref(slug)}?tab=notice&locale=${locale}#celebrity-content`}>{ko ? "공지 전체 보기" : "All notices"}<ArrowRight size={16} aria-hidden="true" /></Link>}
       </div>
       {resource.state.status !== "ready" ? <div className={panels.noticeFeedback}><ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /></div>
         : empty ? <div className={panels.emptyState} role="status">

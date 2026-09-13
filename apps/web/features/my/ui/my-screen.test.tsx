@@ -72,7 +72,7 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="ko" />);
     expect(await screen.findByRole("button", { name: "KARA" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "팬 인증 시작하기" })[0]).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
+    expect(screen.getAllByRole("link", { name: "팬 인증 시작하기" })[0]).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
   });
   it("keeps each total in its corresponding section and groups the selected favorite", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
@@ -411,7 +411,7 @@ it("counts all open gifts and routes to the list without recommending a paid mem
   render(<MyScreen locale="ko"/>);
   expect(await screen.findByText(/응모할 수 있는 선물/)).toHaveTextContent("3종");
   expect(screen.getByRole("link", { name: "이벤트 보러 가기" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
-  expect(screen.getByRole("link", { name: "참여할 팬 활동 보기" })).toHaveAttribute("href", "/c/kara?tab=certifications&locale=ko#celebrity-content");
+  expect(screen.getByRole("link", { name: "참여할 팬 활동 보기" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
   expect(screen.queryByText("등급 혜택")).not.toBeInTheDocument();
   expect(screen.queryByText("다음 팬 활동")).not.toBeInTheDocument();
   expect(fetcher.mock.calls.some(([url]) => /certifications|\/api\/passports\//.test(String(url)))).toBe(false);

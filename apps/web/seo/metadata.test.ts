@@ -16,8 +16,8 @@ describe("public search and sharing metadata", () => {
     expect(meta.twitter).toMatchObject({ card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE }] });
   });
   it("does not advertise missing translations", () => {
-    const meta = publicMetadata({ path: "/c/ifew", locale: "ko", locales: ["ko"], title: "이퓨", description: "이퓨 소식" });
-    expect(meta.alternates?.languages).toEqual({ ko: "https://byus.kr/c/ifew?locale=ko" });
+    const meta = publicMetadata({ path: "/ifew", locale: "ko", locales: ["ko"], title: "이퓨", description: "이퓨 소식" });
+    expect(meta.alternates?.languages).toEqual({ ko: "https://byus.kr/ifew?locale=ko" });
     expect(meta.openGraph).toMatchObject({ alternateLocale: [] });
   });
   it("resizes approved public assets without changing their source or crop", () => {
@@ -40,7 +40,7 @@ describe("public search and sharing metadata", () => {
 describe("sitemap URL inclusion", () => {
   it("deduplicates, excludes personal/rehearsal URLs, includes ended URLs and only real language pairs", () => {
     const map = buildSitemap([
-      { path: "/c/ifew", locale: "ko" }, { path: "/c/ifew", locale: "en" }, { path: "/c/ifew", locale: "ko" },
+      { path: "/ifew", locale: "ko" }, { path: "/ifew", locale: "en" }, { path: "/ifew", locale: "ko" },
       { path: "/live/ended-event", locale: "ko" }, { path: "/live/ifew-rehearsal", locale: "ko" },
       { path: "/my", locale: "ko" }, { path: "/c/ifew/verify", locale: "ko" },
     ]);

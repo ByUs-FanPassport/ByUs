@@ -21,10 +21,20 @@ afterEach(() => {
 });
 
 describe("public Vercel telemetry boundary", () => {
+  it("allows a root handle only when supplied by the published creator page", () => {
+    window.history.replaceState(null, "", "/ifewknow");
+    const event = { type: "pageview", url: "https://byus.kr/ifewknow?authIntent=private#cheers", route: "/[slug]" };
+    expect(sanitizeVercelTelemetry(event)).toBeNull();
+    expect(sanitizeVercelTelemetry(event, "ifewknow")).toEqual({ type: "pageview", url: "https://byus.kr/ifewknow", route: "/ifewknow" });
+    expect(sanitizeVercelTelemetry(event, "elina")).toBeNull();
+    window.history.replaceState(null, "", "/my");
+    expect(sanitizeVercelTelemetry(event, "ifewknow")).toBeNull();
+    expect(isPublicTelemetryPath("/login", "login")).toBe(false);
+  });
   it.each(["/", "/celebrities", "/c/elina", "/c/elina/raffles/gift-1", "/c/elina/notices/hello", "/c/elina/leaderboard", "/live/calendar", "/benefits/gift", "/pages/us-fanmeetings"])("allows %s", (path) => {
     expect(isPublicTelemetryPath(path)).toBe(true);
   });
-  it.each(["/admin", "/admin/fans", "/my", "/my/rewards/private/recipient", "/login", "/settings/kakao/callback", "/passports/user", "/stamps/user", "/notifications", "/onboarding/profile", "/c/elina/verify", "/c/elina/certifications/id", "/live/elina/missions", "/live/elina/survey", "/live/elina-rehearsal", "/c/test-creator", "/unknown", "/c/elina%2Fmy"])("rejects %s", (path) => {
+  it.each(["/admin", "/admin/fans", "/my", "/my/rewards/private/recipient", "/login", "/settings/kakao/callback", "/passports/user", "/stamps/user", "/notifications", "/onboarding/profile", "/c/elina/verify", "/c/elina/certifications/id", "/live/elina/missions", "/live/elina/survey", "/live/elina-rehearsal", "/c/test-creator", "/s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "/unknown", "/c/elina%2Fmy"])("rejects %s", (path) => {
     expect(sanitizeVercelTelemetry({ type: "pageview", url: `https://byus.kr${path}?token=secret` })).toBeNull();
   });
   it("removes query/hash from public measurements without mutating input", () => {

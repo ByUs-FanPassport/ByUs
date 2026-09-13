@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { loginEntryActionSchema } from "./login-entry-action";
 
 export const SIGNUP_CLIENT_EVENT_NAMES = [
   "signup_guide_view", "signup_guide_cta", "login_started", "login_result",
@@ -57,7 +58,7 @@ export function parseWalletDiagnostic(input: unknown, outcome: string, stage: st
 }
 
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
-const loginProperties = signupContextSchema.extend({ provider: signupProviderSchema, trigger: signupTriggerSchema }).strict();
+const loginProperties = signupContextSchema.extend({ provider: signupProviderSchema, trigger: signupTriggerSchema, entryAction: loginEntryActionSchema.optional() }).strict();
 const detailsSchema = z.discriminatedUnion("eventName", [
   z.object({
     eventName: z.literal("signup_guide_view"), source: z.literal("signup.guide"),

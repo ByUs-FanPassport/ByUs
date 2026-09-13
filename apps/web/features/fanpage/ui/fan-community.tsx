@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import Link from "next/link";
 import type { Route } from "next";
 import { Heart, MoreHorizontal } from "lucide-react";
@@ -15,7 +18,7 @@ export function FanCommunity({ slug, locale }: { slug: string; locale: "ko" | "e
     : <span>{ko ? "팬 수 확인 중" : "Loading fans"}</span>}</div>;
   const { fanCount, fans } = resource.state.data;
   return <div className={styles.fans} data-fan-community>
-    <Link href={`/c/${slug}?tab=leaderboard&locale=${locale}#celebrity-content` as Route} className={styles.fanTrigger} aria-label={ko ? `함께하는 팬 ${fanCount.toLocaleString("ko-KR")}명 보기` : `View ${fanCount.toLocaleString("en-US")} fans`}>
+    <Link href={`${creatorHomeHref(slug)}?tab=leaderboard&locale=${locale}#celebrity-content` as Route} className={styles.fanTrigger} aria-label={ko ? `함께하는 팬 ${fanCount.toLocaleString("ko-KR")}명 보기` : `View ${fanCount.toLocaleString("en-US")} fans`}>
       <Heart size={15} aria-hidden="true" />
       {fans.length > 0 && <span className={styles.avatars} aria-hidden="true">
         {fans.slice(0, 5).map((fan, index) => <span key={`${fan.nickname}:${index}`}><img src={fan.avatarUrl} width={24} height={24} alt="" /></span>)}

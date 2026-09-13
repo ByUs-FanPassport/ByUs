@@ -1,3 +1,4 @@
+import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { z } from "zod";
 
 export const acquisitionChannelSchema = z.enum([
@@ -66,7 +67,7 @@ function normalizedHostname(hostname: string): string {
 export function acquisitionLanding(pathname: string): AcquisitionLanding | null {
   if (pathname === "/") return "home";
   if (pathname === "/celebrities") return "creator_directory";
-  if (/^\/c\/[^/]+\/?$/.test(pathname)) return "creator";
+  if (creatorSlugFromHomePath(pathname) !== null) return "creator";
   if (pathname === "/live") return "live_directory";
   if (/^\/live\/[^/]+\/?$/.test(pathname)) return "live";
   if (/^\/benefits\/[^/]+\/?$/.test(pathname)) return "benefit";

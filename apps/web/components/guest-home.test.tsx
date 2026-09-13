@@ -1,3 +1,4 @@
+import { bannerFixture } from "../e2e/banner-local/fixture";
 import "@testing-library/jest-dom/vitest";
 import { act } from "react";
 import { hydrateRoot } from "react-dom/client";
@@ -42,7 +43,7 @@ const celebrities = [
   { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000 },
   { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000 },
 ] as const;
-const defaultProps = { celebrities, locale: "ko" as const };
+const defaultProps = { homeBanners: [bannerFixture], celebrities, locale: "ko" as const };
 const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boolean = () => false) => ({
   states: Object.fromEntries(slugs.map((slug) => [slug, { reacted: reacted(slug) }])),
 });
@@ -87,27 +88,27 @@ describe("canonical 03 guest home", () => {
     ]);
   });
 
-  it("refreshes server status once when the same LIVE reaches its start in hero and list", async () => {
+  it("refreshes server status once when the LIVE reaches its start in the upcoming list", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(Date.parse(featuredLive.live.startsAt) - 500));
     const { unmount } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     expect(routerRefresh).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
     expect(routerRefresh).toHaveBeenCalledTimes(1);
-    expect(screen.getAllByText("시작 확인 중")).toHaveLength(2);
+    expect(screen.getAllByText("시작 확인 중")).toHaveLength(1);
     expect(screen.queryByText("LIVE NOW")).not.toBeInTheDocument();
     unmount();
   });
 
-  it("shows LIVE NOW in the countdown position for an active LIVE", () => {
+  it("keeps active LIVE details separate from the regular broadcast banner", () => {
     render(<GuestHome {...defaultProps} featuredLives={[{
       ...featuredLive,
       live: { ...featuredLive.live, effectiveStatus: "live" },
       primaryAction: "watch_live",
     }]} />);
-    expect(screen.getByText("LIVE NOW")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "엘리나의 정기 LIVE" })).toBeInTheDocument();
     expect(screen.queryByText("KARA × NUALEAF")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /라이브 입장하기/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute(
       "href",
       "/live/admin-created-live?locale=ko",
     );
@@ -146,21 +147,37 @@ describe("canonical 03 guest home", () => {
       expect.stringContaining("passport-open-blank-9-transparent.png"),
     );
     expect(screen.queryByText("로그인하고 내 Passport 확인하기")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /라이브 예약하기/ }))
-      .toHaveAttribute("href", "/login?returnTo=%2Flive%2Fadmin-created-live%3Flocale%3Dko&locale=ko&intent=reserve&entity=admin-created-live");
-    expect(screen.getByRole("link", { name: /라이브 예약하기/ }))
-      .toHaveAttribute("data-fan-action-emphasis", "primary");
+    expect(screen.getByRole("link", { name: "방송 일정 보기" })).toHaveAttribute("href", "/live/calendar?celebrity=elina&locale=ko");
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
   });
 
   it("uses the Elina participation guide as the final LIVE hero slide", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
-    fireEvent.click(screen.getByRole("button", { name: "2번째 LIVE 보기" }));
-    const hero = screen.getByRole("region", { name: "주요 LIVE" });
+    fireEvent.click(screen.getByRole("button", { name: "2번째 배너 보기" }));
+    const hero = screen.getByRole("region", { name: "홈 배너" });
     expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
     expect(within(hero).getByText("팬 인증부터 선물 응모까지")).toBeInTheDocument();
     expect(within(hero).getByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" }))
       .toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
+  });
+
+  it("does not turn four published occurrences into four home banners", () => {
+    const occurrences = Array.from({ length: 4 }, (_, index) => ({ ...featuredLive, live: { ...featuredLive.live,
+      id: `event-${index}`, slug: `event-${index}`, startsAt: `2026-09-${14 + index * 5}T11:00:00.000Z`, title: `정기 LIVE ${index + 1}` } }));
+    const view = render(<GuestHome {...defaultProps} featuredLives={occurrences} />);
+    expect(document.querySelectorAll("[data-managed-home-banner]")).toHaveLength(1);
+    const hero = screen.getByRole("region", { name: "홈 배너" });
+    expect(hero.querySelectorAll("article")).toHaveLength(2);
+    view.rerender(<GuestHome {...defaultProps} homeBanners={[]} featuredLives={occurrences} />);
+    expect(document.querySelectorAll("[data-managed-home-banner]")).toHaveLength(0);
+    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "정기 LIVE 1" })).toBeInTheDocument();
+  });
+
+  it("preserves the guide and live list when independent banner loading fails", () => {
+    render(<GuestHome {...defaultProps} homeBanners={[]} featuredLives={[featuredLive]} contentErrors={{ homeBanners: true }} />);
+    expect(within(screen.getByRole("region", { name: "홈 배너" })).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toBeInTheDocument();
   });
 
   it("localizes the nine-empty-stamp Passport image description", () => {
@@ -359,12 +376,12 @@ describe("canonical 03 guest home", () => {
     expect(card.queryByText("TikTok")).not.toBeInTheDocument();
     expect(card.queryByText("Instagram")).not.toBeInTheDocument();
     expect(card.queryByText("12.8M Fans")).toBeInTheDocument();
-    expect(card.getByRole("link", { name: "KARA 입덕하기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(card.getByRole("link", { name: "KARA 입덕하기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(screen.queryByText("3.2M Fans")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Elina 입덕하기" })).toHaveAttribute("href", "/c/elina?locale=ko");
+    expect(screen.getByRole("link", { name: "Elina 입덕하기" })).toHaveAttribute("href", "/elina?locale=ko");
     expect(screen.queryByText("1.5M Fans")).toBeInTheDocument();
     const changhaCard = screen.getByRole("heading", { name: "Changha", level: 3 }).closest("article");
-    expect(within(changhaCard!).getByRole("link", { name: "Changha 입덕하기" })).toHaveAttribute("href", "/c/changha?locale=ko");
+    expect(within(changhaCard!).getByRole("link", { name: "Changha 입덕하기" })).toHaveAttribute("href", "/changha?locale=ko");
   });
 
   it("uses a published square Preview only inside the matching favorite card", () => {
@@ -440,7 +457,7 @@ describe("canonical 03 guest home", () => {
       primaryAction: "live_ended",
     }]} />);
     expect(screen.queryByRole("link", { name: /라이브 예약하기/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "LIVE 상세보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
+    expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toHaveAttribute("href", "/live/admin-created-live?locale=ko");
   });
 
   it("renders English CMS content and preserves locale through public and auth links", () => {
@@ -448,17 +465,17 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome celebrities={englishCelebrities} featuredLives={[featuredLive]} locale="en" />);
     expect(screen.getByRole("heading", { name: "Your favorites" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA EN" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View KARA EN details" })).toHaveAttribute("href", "/c/kara?locale=en");
-    expect(screen.getByRole("link", { name: /Reserve a spot/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
+    expect(screen.getByRole("link", { name: "View KARA EN details" })).toHaveAttribute("href", "/kara?locale=en");
+    expect(screen.getByRole("link", { name: "View 관리자가 등록한 LIVE details" })).toHaveAttribute("href", expect.stringContaining("locale=en"));
   });
 
-  it("uses Enter LIVE for the English active-LIVE Hero without changing the detail route", () => {
+  it("preserves the English active LIVE detail link in the upcoming list", () => {
     render(<GuestHome {...defaultProps} locale="en" featuredLives={[{
       ...featuredLive,
       live: { ...featuredLive.live, effectiveStatus: "live" },
       primaryAction: "watch_live",
     }]} />);
-    expect(screen.getByRole("link", { name: /Enter LIVE/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View 관리자가 등록한 LIVE details" })).toHaveAttribute(
       "href",
       "/live/admin-created-live?locale=en",
     );
@@ -476,16 +493,16 @@ describe("canonical 03 guest home", () => {
         celebrity: { ...featuredLive.live.celebrity, slug: "elina", name: "Elina" },
       },
     };
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
+    render(<GuestHome {...defaultProps} homeBanners={[bannerFixture, { ...bannerFixture, id: "second", title: "다음 정기 방송" }]} featuredLives={[featuredLive, secondLive]} />);
 
-    expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "엘리나의 정기 LIVE", level: 2 })).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(6_000));
-    expect(screen.getByRole("heading", { name: "Elina LIVE", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "다음 정기 방송", level: 2 })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "이전 LIVE" }));
-    expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "1번째 LIVE 보기" })).toHaveAttribute("aria-current", "true");
-    expect(within(screen.getByRole("region", { name: "주요 LIVE" })).getByRole("button", { name: "자동 재생 정지" }))
+    fireEvent.click(screen.getByRole("button", { name: "이전 배너" }));
+    expect(screen.getByRole("heading", { name: "엘리나의 정기 LIVE", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1번째 배너 보기" })).toHaveAttribute("aria-current", "true");
+    expect(within(screen.getByRole("region", { name: "홈 배너" })).getByRole("button", { name: "자동 재생 정지" }))
       .toHaveAttribute("aria-pressed", "false");
   });
 
@@ -502,15 +519,15 @@ describe("canonical 03 guest home", () => {
       addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => mediaListeners.add(listener),
       removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => mediaListeners.delete(listener),
     }));
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive, secondLive]} />);
+    render(<GuestHome {...defaultProps} homeBanners={[bannerFixture, { ...bannerFixture, id: "second", title: "다음 정기 방송" }]} featuredLives={[featuredLive, secondLive]} />);
 
-    const carousel = screen.getByRole("region", { name: "주요 LIVE" });
+    const carousel = screen.getByRole("region", { name: "홈 배너" });
     expect(carousel).toHaveAttribute("data-reduced-motion", "true");
     fireEvent.mouseEnter(carousel);
     act(() => vi.advanceTimersByTime(12_000));
     fireEvent.mouseLeave(carousel);
     act(() => vi.advanceTimersByTime(6_000));
-    expect(screen.getByRole("heading", { name: "KARA LIVE", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "엘리나의 정기 LIVE", level: 2 })).toBeInTheDocument();
   });
 
   it("does not flash guest actions while authentication is still loading", () => {
@@ -790,7 +807,7 @@ it("uses identical cards for all creators with editorial ordering only", () => {
   expect([...section.querySelectorAll("article h3")].slice(0,3).map(h => h.textContent)).toEqual(["changha", "elina", "yuna"]);
   expect(new Set([...section.querySelectorAll("article")].map(a => a.className)).size).toBe(1);
   for (const slug of roster.slice(3).map(c => c.slug)) {
-    expect(section.querySelector(`a[href="/c/${slug}?locale=ko"]`)).not.toBeNull();
+    expect(section.querySelector(`a[href="/${slug}?locale=ko"]`)).not.toBeNull();
   }
   expect(section.textContent).not.toMatch(/인기순|팔로워순|순위/);
 });
