@@ -97,7 +97,7 @@ export function createGetLiveWatchHandler(
       !discoverable ||
       live.effectiveStatus !== "live" ||
       !live.watch.available ||
-      !isInsideEventWindow(live.startsAt, live.endsAt, dependencies.now())
+      !(live.endsAt !== null && isInsideEventWindow(live.startsAt, live.endsAt, dependencies.now()))
     ) {
       return redirect(fallbackUrl);
     }
@@ -130,7 +130,7 @@ export function createGetLiveWatchHandler(
         const actualStart = Date.parse(observation.actualStartTime);
         if (observation.username !== instagramUsername || !Number.isFinite(age) || age < 0 || age >= INSTAGRAM_LIVE_MAX_AGE_MS ||
             actualStart < Date.parse(live.startsAt) || actualStart > Date.parse(observation.observedAt) ||
-            !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)) return redirect(fallbackUrl);
+            !(live.endsAt !== null && isInsideEventWindow(live.startsAt, live.endsAt, checkedAt))) return redirect(fallbackUrl);
         return redirect(observation.permalink);
       } catch { return redirect(fallbackUrl); }
     }
@@ -154,7 +154,7 @@ export function createGetLiveWatchHandler(
             !/^[A-Za-z0-9_-]{11}$/.test(observation.videoId ?? "") ||
             !Number.isFinite(actualStart) || actualStart < Date.parse(live.startsAt) ||
             actualStart > checkedAt.getTime() ||
-            !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)) return redirect(fallbackUrl);
+            !(live.endsAt !== null && isInsideEventWindow(live.startsAt, live.endsAt, checkedAt))) return redirect(fallbackUrl);
         return redirect(`https://www.youtube.com/watch?v=${observation.videoId}`);
       } catch {
         return redirect(fallbackUrl);
@@ -192,7 +192,7 @@ export function createGetLiveWatchHandler(
       !Number.isFinite(observedAtMs) ||
       ageMs < 0 ||
       ageMs >= OBSERVED_LIVE_MAX_AGE_MS ||
-      !isInsideEventWindow(live.startsAt, live.endsAt, checkedAt)
+      !(live.endsAt !== null && isInsideEventWindow(live.startsAt, live.endsAt, checkedAt))
     ) {
       return redirect(fallbackUrl);
     }

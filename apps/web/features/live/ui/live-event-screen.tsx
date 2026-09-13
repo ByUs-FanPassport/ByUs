@@ -370,13 +370,14 @@ function externalActionLabel(action: string, target: string, locale: Locale) {
 }
 
 function googleCalendarUrl(data: LiveEventResponse["live"]) {
+  if (data.endsAt === null) return null;
   const compact = (iso: string) =>
     new Date(iso).toISOString().replaceAll(/[-:]/g, "").replace(".000", "");
   const query = new URLSearchParams({
     action: "TEMPLATE",
     text: data.title,
     dates: `${compact(data.startsAt)}/${compact(data.endsAt)}`,
-    details: `${data.description}\n\n${data.brand.name}`,
+    details: `${data.description}${data.brand ? `\n\n${data.brand.name}` : ""}`,
   });
   return `https://calendar.google.com/calendar/render?${query.toString()}`;
 }
@@ -450,16 +451,16 @@ function ReservationDialog({
           {formatDateTime(data.live.startsAt, locale)}
         </span>
       </div>
-      <a
+      {data.live.endsAt !== null && <a
         className={styles.dialogSecondary}
-        href={googleCalendarUrl(data.live)}
+        href={googleCalendarUrl(data.live) ?? undefined}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={externalActionLabel(c.calendar, data.live.title, locale)}
       >
         <FanMotionIcon name="calendar" />
         {c.calendar}
-      </a>
+      </a>}
       <button
         className={styles.dialogSecondary}
         type="button"
@@ -1033,8 +1034,8 @@ export function LiveEventScreen({
   const elinaStepHelpers = locale === "ko"
     ? ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "ByUs에 코드 입력하고 2장 추가"]
     : ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to ByUs, enter the code and earn 2"];
-  const journeySteps = eventCopy?.steps ?? (isElinaLive ? elinaSteps : c.steps.filter((_, index) => live.missionsAvailable !== false || index !== 3));
-  const journeyStepHelpers = eventCopy?.stepHelpers ?? (isElinaLive ? elinaStepHelpers : c.stepHelpers.filter((_, index) => live.missionsAvailable !== false || index !== 3));
+  const journeySteps = live.attendanceConfigured === false ? c.steps.slice(0, 2) : eventCopy?.steps ?? (isElinaLive ? elinaSteps : c.steps.filter((_, index) => live.missionsAvailable !== false || index !== 3));
+  const journeyStepHelpers = live.attendanceConfigured === false ? c.stepHelpers.slice(0, 2) : eventCopy?.stepHelpers ?? (isElinaLive ? elinaStepHelpers : c.stepHelpers.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const statusLabel =
     live.effectiveStatus === "scheduled"
       ? c.scheduled
@@ -1279,7 +1280,7 @@ export function LiveEventScreen({
                 <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
               </FanAction>
             ))}
-            {primaryAction === "watch_live" ? (
+            {primaryAction === "watch_live" && live.attendanceConfigured !== false ? (
               <a className={styles.attendanceShortcut} href="#fan-code">
                 <TicketCheck aria-hidden="true" />
                 {attendance.kind === "success"
@@ -1288,7 +1289,7 @@ export function LiveEventScreen({
                 <ArrowRight aria-hidden="true" />
               </a>
             ) : null}
-            {viewer.reservation && !isIfewClosed && (
+            {viewer.reservation && !isIfewClosed && calendarUrl && (
               <a
                 className={styles.calendarAction}
                 href={calendarUrl}
@@ -1346,7 +1347,9 @@ export function LiveEventScreen({
             <section className={styles.section}>
               <h2>{c.introduction}</h2>
               <p>{isIfewClosed ? ifewEndedDescription[locale] : live.description}</p>
-              <p className={styles.productContext}>{live.productContext}</p>
+              {live.productContext && <p className={styles.productContext}>{live.productContext}</p>}
+              {live.liveType === "recurring" && <p>{locale === "ko" ? "정기 방송" : "Recurring LIVE"}{live.endsAt === null ? (locale === "ko" ? " · 종료 시간 미정" : " · End time unconfirmed") : ""}</p>}
+              {live.liveType === "recurring" && <a href={live.watch.url} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "방송 채널" : "Broadcast channel"}</a>}
             </section>
             {!isIfewClosed && <section className={styles.section}>
               <h2>{c.howTo}</h2>
@@ -1363,7 +1366,7 @@ export function LiveEventScreen({
                 {locale === "ko" ? "Fan Passport가 있으면 예약 없이도 출석할 수 있어요. 선물은 응모권으로 별도 신청해 주세요." : "With a Fan Passport, you can check in without a reservation. Use your raffle tickets to enter the prize draw separately."}
               </p> : null}
             </section>}
-            {(!isIfewClosed || attendance.kind === "success") && <section
+            {((!isIfewClosed && live.attendanceConfigured !== false) || attendance.kind === "success") && <section
               ref={fanCodeRef}
               id="fan-code"
               className={styles.fanCode}

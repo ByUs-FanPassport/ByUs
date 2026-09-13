@@ -69,7 +69,6 @@ const copy = {
 
 function dateRange(item: LiveEventResponse, locale: FanLocale) {
   const startsAt = new Date(item.live.startsAt);
-  const endsAt = new Date(item.live.endsAt);
   const formatter = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     month: "short",
     day: "numeric",
@@ -78,6 +77,8 @@ function dateRange(item: LiveEventResponse, locale: FanLocale) {
     hour12: locale !== "ko",
     timeZone: "Asia/Seoul",
   });
+  if (item.live.endsAt === null) return `${formatter.format(startsAt)} · ${locale === "ko" ? "종료 시간 미정" : "End time unconfirmed"}`;
+  const endsAt = new Date(item.live.endsAt);
   const sameDay = startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })
     === endsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
   if (sameDay) {
@@ -153,7 +154,7 @@ function LiveGroup({
                   }
                 >
                   <div className={styles.meta}>
-                    <span className={styles.creatorName}>{item.live.celebrity.name}{item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
+                    <span className={styles.creatorName}>{item.live.celebrity.name}{!item.live.brand || item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
                     {isReserved ? <span className={styles.reservationStatus}><CircleCheck aria-hidden="true" />{t.reserved}</span> : null}
                     {item.live.effectiveStatus === "live" ? (
                       <LiveStatusIndicator

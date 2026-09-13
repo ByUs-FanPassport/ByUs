@@ -46,7 +46,7 @@ describe("ADM-005 Phase 1 reward settings UI contract", () => {
     expect(source).toContain('selected.publicationStatus === "draft"');
     expect(source).toContain("selected.everPublishedAt");
     expect(source).toContain("validFrom: selected.attendanceValidFrom");
-    expect(source).toContain("disabled={Boolean(selected.everPublishedAt)}");
+    expect(source).toContain("disabled={Boolean(selected.everPublishedAt) && selected.fanCodeConfigured}");
   });
 
   it("edits and publishes non-empty revision-aware Journey requirements", () => {

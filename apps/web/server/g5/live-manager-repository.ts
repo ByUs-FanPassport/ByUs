@@ -61,8 +61,8 @@ export function createSupabaseLiveManagerRepository(config: { url: string; servi
         ...managerResult,
         lives: ((managerResult.lives ?? []) as Array<Record<string, unknown>>).map((live) => ({
           ...live,
-          attendanceValidFrom: attendanceByLive.get(live.id)?.validFrom ?? live.startsAt,
-          attendanceValidUntil: attendanceByLive.get(live.id)?.validUntil ?? live.endsAt,
+          attendanceValidFrom: attendanceByLive.get(live.id)?.validFrom ?? (live.liveType === "recurring" ? null : live.startsAt),
+          attendanceValidUntil: attendanceByLive.get(live.id)?.validUntil ?? (live.liveType === "recurring" ? null : live.endsAt),
         })),
         rewardSettings: assert(settings.data, settings.error),
         journeyRequirements: assert(journeyRequirements.data, journeyRequirements.error),

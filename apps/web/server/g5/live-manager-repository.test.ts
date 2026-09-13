@@ -162,3 +162,12 @@ describe("LiveManagerRepository", () => {
     expect(sql).not.toMatch(/update\s+(?:public\.)?live_reservations/i);
   });
 });
+
+
+it("keeps both attendance endpoints null for an unconfigured recurring LIVE with a known end", async () => {
+  const live = { id: "33333333-3333-4333-8333-333333333333", liveType: "recurring", startsAt: "2026-09-14T00:00:00Z", endsAt: "2026-09-14T01:00:00Z", attendanceValidFrom: null, attendanceValidUntil: null };
+  const rpc = vi.fn(async (name: string) => ({ data: name === "get_admin_live_manager" ? { lives: [live] } : name === "get_admin_live_attendance_settings" ? [{liveEventId:live.id,validFrom:null,validUntil:null}] : [], error: null }));
+  const repository = createSupabaseLiveManagerRepository({url:"https://supabase.example",serviceRoleKey:"test"},{rpc} as never);
+  const result = await repository.read({appUserId:live.id,allowlistId:live.id});
+  expect((result.lives as unknown[])[0]).toMatchObject({attendanceValidFrom:null,attendanceValidUntil:null});
+});

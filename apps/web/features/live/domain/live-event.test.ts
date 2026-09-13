@@ -157,3 +157,11 @@ describe("live event domain", () => {
     ).toThrow();
   });
 });
+
+
+it("accepts only canonical CHZZK channels and live paths", () => {
+  const id = "0a3f97086cb81d3360c69fdf5d020045";
+  expect(parseExternalLiveUrl("chzzk", `https://chzzk.naver.com/${id}`)).toContain(id);
+  expect(parseExternalLiveUrl("chzzk", `https://chzzk.naver.com/live/${id}`)).toContain(id);
+  for (const url of [`https://chzzk.naver.com.evil.test/${id}`, `https://chzzk.naver.com/${id}?redirect=evil`, "https://chzzk.naver.com/not-a-channel"]) expect(() => parseExternalLiveUrl("chzzk",url)).toThrow();
+});
