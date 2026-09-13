@@ -273,14 +273,6 @@
   font-weight: 650;
   line-height: 1.5;
 }
-.pill {
-  border-radius: 20px;
-  background: #f7f7f9;
-  padding: 7px 14px;
-  font-size: 13px;
-  color: #70707c;
-  white-space: nowrap;
-}
 .intro {
   font-size: 16px;
   color: #73737f;
@@ -870,11 +862,6 @@
     font-size: 24px;
     letter-spacing: -0.6px;
     line-height: 1.5;
-  }
-  .pill {
-    display: inline-block;
-    margin-top: 14px;
-    font-size: 12px;
   }
   .intro {
     font-size: 15px;

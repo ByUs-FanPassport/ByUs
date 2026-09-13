@@ -413,17 +413,11 @@ export function PromotionPage({
                   "02  Share it in a way that works for you",
                 )}
               </h2>
-              <span className={styles.pill}>
-                {t(
-                  "아래 세 가지 중 최소 하나",
-                  "Choose at least one of these three",
-                )}
-              </span>
             </div>
             <p className={styles.intro}>
               {t(
-                "이벤트가 없어도 괜찮아요. 팬들이 내 소식과 참여할 활동을 찾을 수 있도록 링크를 알려주세요.",
-                "You don't need an event to share your link. Help fans find your updates and activities.",
+                "아래 방법 중 편한 것 하나부터 시작해 보세요. 팬들이 내 소식과 참여할 활동을 더 쉽게 찾을 수 있어요.",
+                "Start with the option that works best for you. Help your fans find your updates and activities more easily.",
               )}
             </p>
             {methods.map((method, index) => (
