@@ -54,3 +54,8 @@ jobs:
         with:
           version: stable
       - run: forge test --root contracts
+      - name: Exercise worker to ActionHub on local Anvil
+        run: RUN_ACTION_ANVIL_INTEGRATION=1 npm run test --workspace @byus/worker -- test/action-anvil.integration.test.ts
+      - name: Validate ActionHub namespace upgrade compatibility
+        working-directory: contracts
+        run: bash scripts/verify-storage.sh

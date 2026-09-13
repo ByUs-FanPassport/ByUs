@@ -57,6 +57,31 @@ export class SupabaseQueueAdapter implements QueuePort {
     return data;
   }
 
+  async admitWriter(job: BlockchainJob, chainId: number, relayer: string, leaseSeconds: number): Promise<boolean> {
+    const { data, error } = await this.client.rpc("admit_chain_writer", {
+      p_job_family: "legacy",
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_chain_id: chainId,
+      p_relayer: relayer.toLowerCase(),
+      p_lease_seconds: leaseSeconds,
+    });
+    if (error) throw dbError("admit_chain_writer", error);
+    if (typeof data !== "boolean") throw dbError("admit_chain_writer", { message: "database returned no admission decision" });
+    return data;
+  }
+
+  async releaseWriter(job: BlockchainJob, chainId: number, relayer: string): Promise<void> {
+    const { error } = await this.client.rpc("release_chain_writer", {
+      p_job_family: "legacy",
+      p_job_id: job.id,
+      p_worker_id: job.leaseOwner,
+      p_chain_id: chainId,
+      p_relayer: relayer.toLowerCase(),
+    });
+    if (error) throw dbError("release_chain_writer", error);
+  }
+
   async holdFeePolicy(job: BlockchainJob): Promise<void> {
     const { data, error } = await this.client.rpc("hold_mint_fee_policy", {
       p_job_id: job.id,

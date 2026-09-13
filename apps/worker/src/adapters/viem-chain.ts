@@ -65,10 +65,14 @@ export class ViemChainAdapter implements ChainPort {
   private readonly collectibleAddress: Address | undefined;
   private readonly feePolicy: MintFeePolicy;
   private readonly approvedTransactions = new Set<string>();
+  readonly chainId: number;
+  readonly relayerAddress: string;
 
   constructor(private readonly options: ViemChainOptions) {
     const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
     this.account = privateKeyToAccount(options.privateKey);
+    this.chainId = options.chainId;
+    this.relayerAddress = this.account.address;
     this.client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 2 }) });
     this.passportAddress = getAddress(options.passportAddress);
     this.stampAddress = getAddress(options.stampAddress);

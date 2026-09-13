@@ -63,30 +63,37 @@ export class MintWorker {
 
     if (!(await this.queue.admitMint(job))) return;
 
-    if (!submission) {
-      if (job.txHash) {
-        throw new WorkerError("MISSING_SIGNED_TRANSACTION", `Job ${job.id} has tx_hash but no recoverable signed transaction; awaiting chain reconciliation`, true);
-      }
-      const document = renderMetadata(job, payload, this.options.assetBaseUri);
-      const metadataUri = await this.metadata.pin(document, job.operationKey);
-      submission = await this.chain.prepare(job.entityType, payload, metadataUri);
-      job = await this.queue.recordPrepared(job, submission);
-    }
+    const writerHeld = await this.queue.admitWriter(job, this.chain.chainId, this.chain.relayerAddress, this.options.leaseSeconds);
+    if (!writerHeld) return;
 
-    const broadcastHash = await this.chain.broadcast(submission.signedTransaction);
-    if (broadcastHash.toLowerCase() !== submission.txHash.toLowerCase()) {
-      throw new WorkerError("TRANSACTION_HASH_MISMATCH", `Broadcast hash ${broadcastHash} did not match prepared hash ${submission.txHash}`, false);
-    }
-    for (let attempt = 0; attempt < this.options.receiptPollAttempts; attempt += 1) {
-      const receipt = await this.chain.receipt(submission.txHash, job.entityType, payload, submission);
-      if (receipt) {
-        await this.queue.complete(job, receipt.txHash, receipt.tokenId);
-        return;
+    try {
+      if (!submission) {
+        if (job.txHash) {
+          throw new WorkerError("MISSING_SIGNED_TRANSACTION", `Job ${job.id} has tx_hash but no recoverable signed transaction; awaiting chain reconciliation`, true);
+        }
+        const document = renderMetadata(job, payload, this.options.assetBaseUri);
+        const metadataUri = await this.metadata.pin(document, job.operationKey);
+        submission = await this.chain.prepare(job.entityType, payload, metadataUri);
+        job = await this.queue.recordPrepared(job, submission);
       }
-      if (attempt + 1 < this.options.receiptPollAttempts) {
-        await this.clock.sleep(this.options.receiptPollIntervalMs);
+
+      const broadcastHash = await this.chain.broadcast(submission.signedTransaction);
+      if (broadcastHash.toLowerCase() !== submission.txHash.toLowerCase()) {
+        throw new WorkerError("TRANSACTION_HASH_MISMATCH", `Broadcast hash ${broadcastHash} did not match prepared hash ${submission.txHash}`, false);
       }
+      for (let attempt = 0; attempt < this.options.receiptPollAttempts; attempt += 1) {
+        const receipt = await this.chain.receipt(submission.txHash, job.entityType, payload, submission);
+        if (receipt) {
+          await this.queue.complete(job, receipt.txHash, receipt.tokenId);
+          return;
+        }
+        if (attempt + 1 < this.options.receiptPollAttempts) {
+          await this.clock.sleep(this.options.receiptPollIntervalMs);
+        }
+      }
+      throw new Error(`Receipt was not available for ${submission.txHash}`);
+    } finally {
+      await this.queue.releaseWriter(job, this.chain.chainId, this.chain.relayerAddress);
     }
-    throw new Error(`Receipt was not available for ${submission.txHash}`);
   }
 }

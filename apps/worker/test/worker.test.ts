@@ -36,6 +36,8 @@ class FakeQueue implements QueuePort {
   events: string[] = [];
   admitted = true;
   admitCalls = 0;
+  writerAdmitCalls = 0;
+  writerReleaseCalls = 0;
 
   constructor(initial: BlockchainJob[]) { this.jobs = initial; }
   async claim(): Promise<BlockchainJob[]> { return this.jobs; }
@@ -43,6 +45,8 @@ class FakeQueue implements QueuePort {
     this.admitCalls += 1;
     return this.admitted;
   }
+  async admitWriter(): Promise<boolean> { this.writerAdmitCalls += 1; return true; }
+  async releaseWriter(): Promise<void> { this.writerReleaseCalls += 1; }
   async holdFeePolicy(current: BlockchainJob): Promise<void> {
     this.held.push(current.id);
   }
@@ -70,6 +74,8 @@ class FakeMetadata implements MetadataPort {
 }
 
 class FakeChain implements ChainPort {
+  readonly chainId = 91342;
+  readonly relayerAddress = `0x${"9".repeat(40)}`;
   existing: MintReceipt | null = null;
   receiptResult: MintReceipt | null = { txHash, tokenId: 7n };
   prepareCount = 0;

@@ -140,7 +140,7 @@ begin
     owner_a,creator_id,'support','provider:unverified'),'COMMUNITY_STAMP_UNAVAILABLE');
   perform pg_temp.expect_error(format(
     'select public.issue_community_stamp(%L,%L,%L::public.community_stamp_kind,%L)',
-    owner_a,creator_id,'share','share:unverified'),'COMMUNITY_STAMP_UNAVAILABLE');
+    owner_a,creator_id,'share','share:unverified'),'COMMUNITY_STAMP_INVALID_REQUEST');
   if exists(select 1 from public.community_stamps
       where kind in ('subscription','support','share')) then
     raise exception 'unavailable reward kind was persisted';

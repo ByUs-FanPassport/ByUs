@@ -13,3 +13,9 @@ bash "$root_dir/scripts/verify-live-alert-cutover-concurrency.sh"
 
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/community_stamps_behavior.sql"
 BYUS_COMMUNITY_STAMP_CONCURRENCY_MODE=1 bash "$root_dir/scripts/verify-community-stamp-concurrency.sh"
+
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_ledger.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_producers.sql"
+bash "$root_dir/scripts/verify-fan-action-snapshots.sh"
+BYUS_ACTION_CONCURRENCY_MODE=1 bash "$root_dir/scripts/verify-fan-action-concurrency.sh"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_canary.sql"

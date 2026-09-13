@@ -12,6 +12,8 @@ select set_config('byus.security_expect_denied', :'expect_denied', true);
 insert into public.app_users(id,privy_user_id,verified_email) values
 ('a9100000-0000-4000-8000-000000000001','did:privy:security-fixture-owner','security-owner@example.invalid'),
 ('a9100000-0000-4000-8000-000000000002','did:privy:security-fixture-admin','security-admin@example.invalid');
+insert into public.user_wallets(app_user_id,chain_id,address,provider,wallet_type) values
+('a9100000-0000-4000-8000-000000000001',91342,'0xa910000000000000000000000000000000000001','privy','embedded');
 insert into public.admin_allowlist(id,email,role,active) values
 ('a9100000-0000-4000-8000-000000000003','security-admin@example.invalid','admin',true);
 insert into public.celebrities(id,slug,status,image_url,roles,primary_role) values
@@ -22,8 +24,14 @@ insert into public.quiz_attempts(id,app_user_id,celebrity_id,quiz_id,quiz_versio
 ('a9100000-0000-4000-8000-000000000006','a9100000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000004','a9100000-0000-4000-8000-000000000005',1,'a9100000-0000-4000-8000-000000000007','passed',3,now());
 insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id) values
 ('a9100000-0000-4000-8000-000000000008','a9100000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000004','a9100000-0000-4000-8000-000000000006');
-insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id) values
-('a9100000-0000-4000-8000-000000000009','a9100000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000004','a9100000-0000-4000-8000-000000000008');
+insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload_version,payload) values
+('a9100000-0000-4000-8000-000000000012','passport','a9100000-0000-4000-8000-000000000009',
+ 'byus:passport:v1:a9100000-0000-4000-8000-000000000001:security-acl-fixture',1,
+ jsonb_build_object('recipient','0xa910000000000000000000000000000000000001','celebritySlug','security-acl-fixture',
+   'passportId','0x'||repeat('9',64)));
+insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id) values
+('a9100000-0000-4000-8000-000000000009','a9100000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000004',
+ 'a9100000-0000-4000-8000-000000000008','a9100000-0000-4000-8000-000000000012');
 insert into public.benefits(id,slug,celebrity_id,delivery_type,claim_opens_at,claim_closes_at) values
 ('a9100000-0000-4000-8000-000000000010','security-acl-benefit','a9100000-0000-4000-8000-000000000004','text',now()-interval '1 hour',now()+interval '1 day');
 

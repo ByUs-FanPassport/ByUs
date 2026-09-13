@@ -47,6 +47,8 @@ begin
   insert into public.app_users(id,privy_user_id,verified_email,status) values
     (operator_id,'did:privy:telegram-operator','telegram-operator@example.test','active'),
     (reserved_fan,'did:privy:telegram-reserved','telegram-reserved@example.test','active');
+  insert into public.user_wallets(app_user_id,chain_id,address,provider,wallet_type) values
+    (reserved_fan,91342,'0xf100000000000000000000000000000000000003','privy','embedded');
   insert into public.admin_allowlist(id,email,role,active) values
     (admin_id,'telegram-operator@example.test','admin',true);
   insert into public.celebrities(id,slug,status,image_url,published_at,roles,primary_role) values
@@ -82,8 +84,12 @@ begin
     (reserved_attempt_id,reserved_fan,creator_id,quiz_id,1,'f1500000-0000-4000-8000-000000000011','passed',3,pg_catalog.clock_timestamp());
   insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id) values
     (reserved_pass_id,reserved_fan,creator_id,reserved_attempt_id);
-  insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,issued_at) values
-    (reserved_passport_id,reserved_fan,creator_id,reserved_pass_id,pg_catalog.clock_timestamp());
+  insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload_version,payload) values
+    ('f1700000-0000-4000-8000-000000000011','passport',reserved_passport_id,
+      'byus:passport:v1:'||reserved_fan::text||':telegram-public-creator',1,
+      jsonb_build_object('recipient','0xf100000000000000000000000000000000000003','celebritySlug','telegram-public-creator','passportId','0x'||repeat('1',64)));
+  insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id,issued_at) values
+    (reserved_passport_id,reserved_fan,creator_id,reserved_pass_id,'f1700000-0000-4000-8000-000000000011',pg_catalog.clock_timestamp());
   if exists (select 1 from public.telegram_alert_outbox where source_id=reserved_passport_id) then
     raise exception 'TELEGRAM_BACKFILLED_PREACTIVATION_PASSPORT';
   end if;
@@ -94,6 +100,8 @@ begin
   insert into public.app_users(id,privy_user_id,verified_email,status,created_at) values
     (new_member,'did:privy:telegram-member','telegram-member@example.test','active',activation_time+interval '1 second'),
     (old_member,'did:privy:telegram-old','telegram-old@example.test','active',activation_time-interval '1 second');
+  insert into public.user_wallets(app_user_id,chain_id,address,provider,wallet_type) values
+    (new_member,91342,'0xf100000000000000000000000000000000000004','privy','embedded');
   if not exists (select 1 from public.telegram_alert_outbox where kind='member_joined' and source_id=new_member and chat_id='-1001234567890' and creator_name is null and live_title is null and winner_count is null and occurred_at=activation_time+interval '1 second') then
     raise exception 'TELEGRAM_MEMBER_CAPTURE_MISSING_OR_UNSAFE';
   end if;
@@ -107,9 +115,16 @@ begin
   insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id) values
     (new_pass_id,new_member,creator_id,new_attempt_id),
     (private_pass_id,new_member,private_creator_id,private_attempt_id);
-  insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,issued_at) values
-    (new_passport_id,new_member,creator_id,new_pass_id,activation_time+interval '2 seconds'),
-    (private_passport_id,new_member,private_creator_id,private_pass_id,activation_time+interval '2 seconds');
+  insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload_version,payload) values
+    ('f1700000-0000-4000-8000-000000000012','passport',new_passport_id,
+      'byus:passport:v1:'||new_member::text||':telegram-public-creator',1,
+      jsonb_build_object('recipient','0xf100000000000000000000000000000000000004','celebritySlug','telegram-public-creator','passportId','0x'||repeat('2',64))),
+    ('f1700000-0000-4000-8000-000000000013','passport',private_passport_id,
+      'byus:passport:v1:'||new_member::text||':telegram-private-creator',1,
+      jsonb_build_object('recipient','0xf100000000000000000000000000000000000004','celebritySlug','telegram-private-creator','passportId','0x'||repeat('3',64)));
+  insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id,issued_at) values
+    (new_passport_id,new_member,creator_id,new_pass_id,'f1700000-0000-4000-8000-000000000012',activation_time+interval '2 seconds'),
+    (private_passport_id,new_member,private_creator_id,private_pass_id,'f1700000-0000-4000-8000-000000000013',activation_time+interval '2 seconds');
   if not exists (select 1 from public.telegram_alert_outbox where kind='fan_joined' and source_id=new_passport_id and creator_name='공개 크리에이터' and live_title is null and winner_count is null and occurred_at=activation_time+interval '2 seconds') then
     raise exception 'TELEGRAM_FAN_CAPTURE_MISSING_OR_UNSAFE';
   end if;

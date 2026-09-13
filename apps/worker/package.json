@@ -12,7 +12,9 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "historical:dry-run": "npm run build --silent && node dist/historical-action-dry-run.js",
+    "action:read-model": "npm run build --silent && node dist/action-read-model-cli.js"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "3.1091.0",

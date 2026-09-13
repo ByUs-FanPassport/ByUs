@@ -3,6 +3,8 @@ import type { BlockchainJob, EntityType, JobPayload, PreparedSubmission } from "
 export interface QueuePort {
   claim(workerId: string, batchSize: number, leaseSeconds: number): Promise<BlockchainJob[]>;
   admitMint(job: BlockchainJob): Promise<boolean>;
+  admitWriter(job: BlockchainJob, chainId: number, relayer: string, leaseSeconds: number): Promise<boolean>;
+  releaseWriter(job: BlockchainJob, chainId: number, relayer: string): Promise<void>;
   holdFeePolicy(job: BlockchainJob): Promise<void>;
   recordPrepared(job: BlockchainJob, submission: PreparedSubmission): Promise<BlockchainJob>;
   complete(job: BlockchainJob, txHash: string, tokenId: bigint): Promise<void>;
@@ -10,8 +12,8 @@ export interface QueuePort {
 }
 
 export interface MetadataDocument {
-  schema: "https://byus.kr/schemas/credential-metadata-v1.json";
-  version: 1;
+  schema: "https://byus.kr/schemas/credential-metadata-v1.json" | "https://byus.kr/schemas/credential-metadata-v2.json";
+  version: 1 | 2;
   name: string;
   description: string;
   image: string;
@@ -30,6 +32,8 @@ export interface MintReceipt {
 }
 
 export interface ChainPort {
+  readonly chainId: number;
+  readonly relayerAddress: string;
   findExisting(entityType: EntityType, payload: JobPayload): Promise<MintReceipt | null>;
   prepare(entityType: EntityType, payload: JobPayload, metadataUri: string): Promise<PreparedMint>;
   broadcast(signedTransaction: string): Promise<string>;
