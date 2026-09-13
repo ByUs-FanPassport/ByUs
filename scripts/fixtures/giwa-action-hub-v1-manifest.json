@@ -1,0 +1,108 @@
+{
+  "format": "byus-action-hub-giwa-manifest-v1",
+  "chainId": 91342,
+  "addresses": {
+    "timelock": "0x40eaeb0b73c50da5053502eb3b836a6effe54642",
+    "contextRegistry": "0xeacd59a9388c962885201f0d708cb3dd54b1761b",
+    "codec": "0x4e44a1c183bac430f30033bd1a639c696b93612a",
+    "hubImplementation": "0x049b758b3d1cc0c66408b264c7f9a96ea479860b",
+    "hubProxy": "0x7e076e9e7583fa9de2a944fbee8fa84d5d27504c"
+  },
+  "existingContracts": {
+    "eas": "0x4200000000000000000000000000000000000021",
+    "schemaRegistry": "0x4200000000000000000000000000000000000020",
+    "passport": "0x17f9fb7658a326dd88db523739c227faf50fca20",
+    "stamp": "0x1adcde3473c4e884e60205b397ece744d8892285",
+    "collectible": "0x0000000000000000000000000000000000000000"
+  },
+  "schema": {
+    "text": "bytes32 occurrenceId,bytes32 actionId,uint32 revision,uint16 actionCode,uint16 schemaVersion,uint32 policyVersion,bytes32 environmentId,bytes32 creatorId,bytes32 campaignId,uint32 occurredDay,uint8 origin,bytes32 evidenceCommitment,bytes32 credentialRefsHash,bytes32 migrationBatchId",
+    "uid": "0xbd97671d89c9f4bb246e33369389332486f406ab821a0c7f88860034759c5c0b",
+    "resolver": "0x0000000000000000000000000000000000000000",
+    "revocable": true,
+    "reused": false
+  },
+  "artifacts": {
+    "timelock": {
+      "creationBytecodeHash": "0x0e1f814e34f87394d6d9166625a541593126b8b77b4093d57ce3760f552da6b7",
+      "runtimeTemplateCodeHash": "0x0e3a4d6350ada4a2eb17e084770058b2b6f5bb487036eb19b0de7f1363f63900",
+      "expectedRuntimeCodeHash": "0x0e3a4d6350ada4a2eb17e084770058b2b6f5bb487036eb19b0de7f1363f63900",
+      "artifactSha256": "0xd6ebec20b8928613419cbd7c97e236047deb7938e1c2469b596f6e7bfc040ca1"
+    },
+    "contextRegistry": {
+      "creationBytecodeHash": "0xc8b03ba8ddbc79110b6213248823d5f24c0bddcbd3a71b801e02d4d19efbf667",
+      "runtimeTemplateCodeHash": "0x3439d6cb4560c25e036c1429e16451f36ca9f6acaee4d5a1531261d0f234f647",
+      "expectedRuntimeCodeHash": "0x8fce4a8951cef86064f61bb6d5532107277ec8f77beea2196d3c8f379e5f95b1",
+      "artifactSha256": "0x7c1a50505446bf4dc140d070ebe2fe1482fd7bfe3293095b8e5be69adfee8d70"
+    },
+    "codec": {
+      "creationBytecodeHash": "0x96ee6604a96ed298bdab409b6ba4b8b4551bbc82daf9617d89135e7dc07f49ba",
+      "runtimeTemplateCodeHash": "0xe3095c9a1847be6e857e06f7182d417597094331c3a2ab5b2058253ab248bc39",
+      "expectedRuntimeCodeHash": "0xe3095c9a1847be6e857e06f7182d417597094331c3a2ab5b2058253ab248bc39",
+      "artifactSha256": "0x41b2a098551e6f13ee374f67d787301b3b57fee0f1af0736d5df4afe0295f86e"
+    },
+    "hubImplementation": {
+      "creationBytecodeHash": "0xcc4db3158c8f00cc24466c20db3ada73862529d2141dfd0061f55df884fdba88",
+      "runtimeTemplateCodeHash": "0x52b911a981e2d217e41ce4c55490a3adf575998ac503fb2956f471ecce63ff7f",
+      "expectedRuntimeCodeHash": "0x3e50e0def7b3823e63bca919f5ecc1a09a709b4b62eb7dae1c710cb1c20d17d9",
+      "artifactSha256": "0x59bd97cf175d8e9e72b8acf0db8d481a32dc120d39bef7e5f48b9dfdc00bc6b6"
+    },
+    "proxy": {
+      "creationBytecodeHash": "0xd83284862b30da386fb04786a1cd4e8a393fb547a0db9b47a32d7b2b30d87d0d",
+      "runtimeTemplateCodeHash": "0x2373de27ebdd05a3665c30eb6afdc555833cb5e0f60a663ff23f0f2825a412a7",
+      "expectedRuntimeCodeHash": "0x2373de27ebdd05a3665c30eb6afdc555833cb5e0f60a663ff23f0f2825a412a7",
+      "artifactSha256": "0xa6c91a7c5e86163dba19463fd66900ae8bc06a062091ebc8353e43491241412a"
+    }
+  },
+  "postflight": {
+    "assertions": {
+      "timelockDelay": true,
+      "deployerHasNoTimelockAdmin": true,
+      "governanceAdminHasNoDirectTimelockAdmin": true,
+      "governanceAdminIsProposer": true,
+      "governanceAdminIsExecutor": true,
+      "contextRegistryAdminIsTimelock": true,
+      "hubEnvironmentMatches": true,
+      "hubEasMatches": true,
+      "hubSchemaMatches": true,
+      "hubPassportMatches": true,
+      "hubStampMatches": true,
+      "hubCollectibleMatches": true,
+      "deployedRuntimeHashesMatch": true
+    },
+    "governance": {
+      "timelockDelay": "172800",
+      "deployerHasTimelockAdmin": false,
+      "governanceAdminHasTimelockAdmin": false,
+      "governanceAdminIsProposer": true,
+      "governanceAdminIsExecutor": true,
+      "proxyImplementation": "0x049b758b3d1cc0c66408b264c7f9a96ea479860b",
+      "hubRoles": {
+        "expectedAssignments": true,
+        "deployerHasAnyRole": false
+      }
+    },
+    "deployedCodes": {
+      "timelock": {
+        "address": "0x40eaeb0b73c50da5053502eb3b836a6effe54642",
+        "runtimeCodeHash": "0x0e3a4d6350ada4a2eb17e084770058b2b6f5bb487036eb19b0de7f1363f63900"
+      },
+      "contextRegistry": {
+        "address": "0xeacd59a9388c962885201f0d708cb3dd54b1761b",
+        "runtimeCodeHash": "0x8fce4a8951cef86064f61bb6d5532107277ec8f77beea2196d3c8f379e5f95b1"
+      },
+      "codec": {
+        "address": "0x4e44a1c183bac430f30033bd1a639c696b93612a",
+        "runtimeCodeHash": "0xe3095c9a1847be6e857e06f7182d417597094331c3a2ab5b2058253ab248bc39"
+      },
+      "hubImplementation": {
+        "address": "0x049b758b3d1cc0c66408b264c7f9a96ea479860b",
+        "runtimeCodeHash": "0x3e50e0def7b3823e63bca919f5ecc1a09a709b4b62eb7dae1c710cb1c20d17d9"
+      },
+      "hubProxy": {
+        "address": "0x7e076e9e7583fa9de2a944fbee8fa84d5d27504c",
+        "runtimeCodeHash": "0x2373de27ebdd05a3665c30eb6afdc555833cb5e0f60a663ff23f0f2825a412a7"
+      }
+    }
+  }
+}

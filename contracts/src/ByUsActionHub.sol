@@ -831,7 +831,7 @@ contract ByUsActionHub is Initializable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 
-    function _getStorage() private pure returns (HubStorage storage $) {
+    function _getStorage() internal pure returns (HubStorage storage $) {
         bytes32 slot = HUB_STORAGE;
         assembly {
             $.slot := slot

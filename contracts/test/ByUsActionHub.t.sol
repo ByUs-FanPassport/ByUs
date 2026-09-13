@@ -17,6 +17,9 @@ import { ByUsCollectible } from "../src/ByUsCollectible.sol";
 import { IEAS } from "../src/interfaces/IEAS.sol";
 import { MockEAS } from "../src/mocks/MockEAS.sol";
 
+import { ByUsActionHubContextV2 } from "../src/ByUsActionHubContextV2.sol";
+import { ByUsPublicContextRegistryV2 } from "../src/ByUsPublicContextRegistryV2.sol";
+
 contract ByUsActionHubV2 is ByUsActionHub {
     function implementationVersion() external pure returns (uint256) {
         return 2;
@@ -574,6 +577,154 @@ contract ByUsActionHubTest is Test {
         implementation.initialize(config);
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         hub.initialize(config);
+    }
+
+    function testFreshHubUsesImmediateRegistryAndExistingNfts() public {
+        ByUsPublicContextRegistryV2 next = new ByUsPublicContextRegistryV2(admin, address(this));
+        ByUsActionHub.InitializationConfig memory config = ByUsActionHub.InitializationConfig({
+            admin: admin,
+            writer: writer,
+            migrator: migrator,
+            corrector: corrector,
+            pauser: pauser,
+            easAddress: address(eas),
+            environmentId: keccak256("REPLACEMENT_ENV"),
+            schemaUID: SCHEMA_UID,
+            passport: address(passport),
+            stamp: address(stamp),
+            collectible: address(0),
+            codec: address(codec),
+            contextRegistry: address(next)
+        });
+        ByUsActionHub replacement = ByUsActionHub(
+            address(
+                new ERC1967Proxy(
+                    address(implementation), abi.encodeCall(ByUsActionHub.initialize, config)
+                )
+            )
+        );
+        assertEq(
+            replacement.getAssetBinding(1, ByUsActionHub.CredentialKind.PASSPORT), address(passport)
+        );
+        assertEq(replacement.getAssetBinding(1, ByUsActionHub.CredentialKind.STAMP), address(stamp));
+        vm.startPrank(admin);
+        passport.grantRole(passport.MINTER_ROLE(), address(replacement));
+        stamp.grantRole(stamp.MINTER_ROLE(), address(replacement));
+        vm.stopPrank();
+        uint256 timestamp = block.timestamp;
+        next.registerCreator(CREATOR_ID, "creator-public");
+        ByUsActionHub.ActionRequest memory request = _request(keccak256("fresh-immediate"), 10, fan);
+        request.campaignId = 0;
+        vm.prank(writer);
+        ByUsActionHub.ActionResult memory result =
+            replacement.recordAndIssue(request, _stampIntent("fresh-immediate"));
+        assertEq(block.timestamp, timestamp);
+        assertTrue(result.easUID != bytes32(0));
+        assertEq(stamp.balanceOf(fan, 1), 1);
+        assertTrue(stamp.hasRole(stamp.MINTER_ROLE(), writer));
+        assertEq(hub.environmentId(), ENVIRONMENT_ID);
+        assertEq(replacement.environmentId(), keccak256("REPLACEMENT_ENV"));
+    }
+
+    function testContextUpgradePreservesRecordsAndAllowsImmediateNewCreator() public {
+        // Use a context-free existing action: the production transition requires an empty registry.
+        ByUsActionHub.ActionRequest memory request =
+            _request(keccak256("before-context-upgrade"), 7, fan);
+        request.creatorId = 0;
+        request.campaignId = 0;
+        vm.prank(writer);
+        ByUsActionHub.ActionResult memory result =
+            hub.recordAndIssue(request, _stampIntent("before-context-upgrade"));
+        bytes32 recordBefore = keccak256(abi.encode(hub.getAction(result.actionId)));
+        bytes32 occurrence = hub.computeOccurrenceId(request.sourceOccurrence);
+        ByUsPublicContextRegistryV2 next = new ByUsPublicContextRegistryV2(admin, address(this));
+        ByUsActionHubContextV2 upgraded =
+            new ByUsActionHubContextV2(address(contextRegistry), address(next));
+        bytes memory migration = abi.encodeCall(upgraded.migrateContextRegistry, ());
+        bytes memory data = abi.encodeWithSignature(
+            "upgradeToAndCall(address,bytes)", address(upgraded), migration
+        );
+        bytes32 salt = keccak256("context-upgrade");
+        vm.prank(writer);
+        vm.expectRevert(ByUsActionHub.AccessDenied.selector);
+        hub.upgradeToAndCall(address(upgraded), migration);
+        timelock.schedule(address(hub), 0, data, 0, salt, 2 days);
+        vm.expectRevert();
+        timelock.execute(address(hub), 0, data, 0, salt);
+        vm.warp(block.timestamp + 2 days);
+        timelock.execute(address(hub), 0, data, 0, salt);
+        assertEq(ByUsActionHubContextV2(address(hub)).contextRegistry(), address(next));
+        assertEq(hub.environmentId(), ENVIRONMENT_ID);
+        assertEq(hub.eas(), address(eas));
+        assertEq(hub.getSchema(1), SCHEMA_UID);
+        assertEq(hub.getAssetBinding(1, ByUsActionHub.CredentialKind.PASSPORT), address(passport));
+        assertEq(hub.getAssetBinding(1, ByUsActionHub.CredentialKind.STAMP), address(stamp));
+        assertEq(keccak256(abi.encode(hub.getAction(result.actionId))), recordBefore);
+        assertEq(hub.latestActionId(occurrence), result.actionId);
+        assertEq(stamp.balanceOf(fan, 1), 1);
+        vm.expectRevert();
+        ByUsActionHubContextV2(address(hub)).migrateContextRegistry();
+        vm.expectRevert();
+        upgraded.migrateContextRegistry();
+        bytes32 newCreator = keccak256("new-immediate-creator");
+        next.registerCreator(newCreator, "new-creator");
+        request = _request(keccak256("after-context-upgrade"), 10, fan);
+        request.creatorId = newCreator;
+        request.campaignId = 0;
+        vm.prank(writer);
+        ByUsActionHub.ActionResult memory afterResult =
+            hub.recordAndIssue(request, _stampIntent("after-context-upgrade"));
+        request.revision = 2;
+        ByUsActionHub.CredentialIntent[] memory links = new ByUsActionHub.CredentialIntent[](1);
+        links[0] = ByUsActionHub.CredentialIntent({
+            kind: ByUsActionHub.CredentialKind.STAMP,
+            mode: ByUsActionHub.IntentMode.LINK_EXISTING,
+            issuanceKey: keccak256("after-context-upgrade"),
+            tokenId: 2,
+            metadataUri: "ipfs://after-context-upgrade"
+        });
+        vm.prank(corrector);
+        hub.correct(afterResult.actionId, request, links);
+    }
+
+    function testContextUpgradeWrongRegistryRevertsAtomically() public {
+        ByUsPublicContextRegistry wrong = new ByUsPublicContextRegistry(admin);
+        ByUsPublicContextRegistryV2 next = new ByUsPublicContextRegistryV2(admin, address(this));
+        ByUsActionHubContextV2 upgraded = new ByUsActionHubContextV2(address(wrong), address(next));
+        bytes memory data = abi.encodeWithSignature(
+            "upgradeToAndCall(address,bytes)",
+            address(upgraded),
+            abi.encodeCall(upgraded.migrateContextRegistry, ())
+        );
+        timelock.schedule(address(hub), 0, data, 0, 0, 2 days);
+        vm.warp(block.timestamp + 2 days);
+        bytes32 slot = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        bytes32 before = vm.load(address(hub), slot);
+        vm.expectRevert(ByUsActionHubContextV2.InvalidRegistryTransition.selector);
+        timelock.execute(address(hub), 0, data, 0, 0);
+        assertEq(vm.load(address(hub), slot), before);
+    }
+
+    function testContextUpgradeRejectsWrongGovernanceAndUnprivilegedMigration() public {
+        address[] memory operators = new address[](1);
+        operators[0] = address(this);
+        TimelockController other = new TimelockController(2 days, operators, operators, address(0));
+        ByUsPublicContextRegistryV2 wrong =
+            new ByUsPublicContextRegistryV2(address(other), stranger);
+        vm.expectRevert(ByUsActionHubContextV2.InvalidRegistryTransition.selector);
+        new ByUsActionHubContextV2(address(contextRegistry), address(wrong));
+        ByUsPublicContextRegistryV2 next = new ByUsPublicContextRegistryV2(admin, address(this));
+        ByUsActionHubContextV2 upgraded =
+            new ByUsActionHubContextV2(address(contextRegistry), address(next));
+        // Deliberately split the operation to prove a stranger cannot consume the reinitializer.
+        vm.prank(admin);
+        hub.upgradeToAndCall(address(upgraded), "");
+        vm.prank(stranger);
+        vm.expectRevert(ByUsActionHub.AccessDenied.selector);
+        ByUsActionHubContextV2(address(hub)).migrateContextRegistry();
+        vm.prank(admin);
+        ByUsActionHubContextV2(address(hub)).migrateContextRegistry();
+        assertEq(ByUsActionHubContextV2(address(hub)).contextRegistry(), address(next));
     }
 
     function testInitializerRequiresReal48HourTimelockAndSeparatedWriter() public {
