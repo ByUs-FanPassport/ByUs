@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { CreatorFanLink } from "./fan-ui/creator-fan-link";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
@@ -335,7 +337,7 @@ function GuestHomeContent({ celebrities, celebrityLives = [], featuredLives, loc
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
                 return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
-                  <Link className={styles.celebrityMediaBox} href={`/c/${celebrity.slug}${localeQuery}` as Route} aria-label={locale === "ko" ? `${celebrity.name} ${t.detail}` : `View ${celebrity.name} details`}>
+                  <Link className={styles.celebrityMediaBox} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}` as Route} aria-label={locale === "ko" ? `${celebrity.name} ${t.detail}` : `View ${celebrity.name} details`}>
                     {celebrityLive?.preview ? (
                       <ActivePreviewVideo
                         id={celebrity.slug}

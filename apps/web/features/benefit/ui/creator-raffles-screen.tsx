@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -69,7 +71,7 @@ function OwnedCreatorRaffles({ celebrity, locale, raffles, benefitId, deliveryIn
   const selected = raffles.find((raffle) => raffle.benefitId === benefitId);
   const benefit = data?.benefits.find((item) => item.id === benefitId) ?? null;
   const balance = known ? data?.benefits.find((item) => item.entry)?.entry?.creatorTicketBalance : undefined;
-  const fanHref = `/c/${celebrity.slug}?locale=${locale}`;
+  const fanHref = `${creatorHomeHref(celebrity.slug)}?locale=${locale}`;
   const earnHref = `${fanHref}&tab=live`;
   const historyHref = `/my/raffles?locale=${locale}`;
   const onAccepted = useCallback((result: BenefitEntryResult) => {

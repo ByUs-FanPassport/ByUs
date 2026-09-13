@@ -25,12 +25,12 @@ const existing = (mintStatus: "queued" | "minted" = "queued") => ({
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 const reactionIntentId = "33333333-3333-4333-8333-333333333333";
 
-function prepareReactionIntent() {
+function prepareReactionIntent(sourcePath = "/c/kara") {
   const intent = createAuthIntent({
-    sourcePath: "/c/kara", sourceQuery: "?locale=ko", actionType: "CREATE_REACTION", targetType: "celebrity", targetId: "kara",
+    sourcePath, sourceQuery: "?locale=ko", actionType: "CREATE_REACTION", targetType: "celebrity", targetId: "kara",
   }, { id: reactionIntentId });
   persistAuthIntent(sessionStorage, intent);
-  window.history.replaceState({}, "", `/c/kara?locale=ko&authIntent=${intent.id}`);
+  window.history.replaceState({}, "", `${sourcePath}?locale=ko&authIntent=${intent.id}`);
 }
 
 describe("ReactionAction", () => {
@@ -211,7 +211,7 @@ describe("ReactionAction", () => {
     window.removeEventListener(FAN_ACTIVITY_UPDATED, update);
   });
 
-  it("resumes a pending auth intent once after a focus refresh confirms no existing record", async () => {
+  it.each(["/kara", "/c/kara"])("resumes %s once after a focus refresh confirms no existing record", async (sourcePath) => {
     let resolveInitial!: (value: Response) => void;
     const initial = new Promise<Response>((resolve) => { resolveInitial = resolve; });
     let reads = 0;
@@ -221,7 +221,7 @@ describe("ReactionAction", () => {
       return reads === 1 ? initial : Promise.resolve(response({ reaction: null }));
     });
     vi.stubGlobal("fetch", fetch);
-    prepareReactionIntent();
+    prepareReactionIntent(sourcePath);
     render(<ReactionAction slug="kara" locale="ko" />);
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
 

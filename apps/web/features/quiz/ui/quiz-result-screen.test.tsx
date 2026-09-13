@@ -85,7 +85,7 @@ describe("QuizResultScreen", () => {
     expect(screen.getByLabelText("팬 인증으로 받은 혜택").tagName).toBe("DL");
     expect(screen.getByText("팬 점수 +1")).toBeInTheDocument();
     expect(screen.queryByText("발급 완료")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/kara?locale=ko");
 
     expect(screen.getByRole("link", { name: "Passport 확인하기" })).toHaveAttribute(
       "href",

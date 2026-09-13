@@ -1,4 +1,6 @@
 "use client";
+import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
+
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
@@ -46,7 +48,7 @@ export function localeSwitchHref(
 
 export function activeFanSection(pathname: string): FanSection {
   if (pathname === "/live" || pathname.startsWith("/live/")) return "live";
-  if (pathname === "/celebrities" || pathname.startsWith("/c/")) return "favorites";
+  if (pathname === "/celebrities" || pathname.startsWith("/c/") || creatorSlugFromHomePath(pathname) !== null) return "favorites";
   if (
     pathname === "/my" || pathname.startsWith("/my/") ||
     pathname.startsWith("/passports") ||

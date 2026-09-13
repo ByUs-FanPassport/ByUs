@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { LiveStatusIndicator } from "./live-status-indicator";
 import { useOwnedFanResource } from "./fan-ui/use-owned-fan-resource";
@@ -142,7 +144,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
   const renderCreator = (celebrity: DirectoryCelebrity) => {
     const passport = passportState.status === "ready" ? passportState.passports.get(celebrity.slug) : undefined;
     return (<article key={celebrity.slug} className={styles.card} data-passport-owned={passport ? "true" : undefined}>
-                  <Link className={styles.cardLink} href={`/c/${celebrity.slug}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `View ${celebrity.name}’s fan page`}>
+                  <Link className={styles.cardLink} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `View ${celebrity.name}’s fan page`}>
                   <div className={styles.cardPrimary}><h2>{celebrity.name}</h2><CreatorRolesText roles={celebrity.roles} locale={locale} />{celebrity.upcomingLive ? <p className={styles.liveSchedule}><LiveStatusIndicator status={celebrity.upcomingLive.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" />{formatLiveDate(celebrity.upcomingLive.startsAt, locale)}</p> : null}</div>
                   <span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span>
                   <div className={styles.media}>

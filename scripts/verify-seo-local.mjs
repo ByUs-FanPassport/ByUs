@@ -9,7 +9,7 @@ const output = new URL('../artifacts/seo-20260911/', import.meta.url);
 await mkdir(output, { recursive: true });
 const report = { origin, pages: [], crawlers: [], private: [], images: [], sitemapUrls: 0 };
 const agent = 'kakaotalk-scrap/1.0';
-const paths = ['/', '/live', '/celebrities', '/c/ifewknow', '/live/ifew-100-days-tiktok-20260912', '/guide', '/pages/ifew-fan-guide', '/pages/elina-fan-guide', '/pages/us-fanmeetings'];
+const paths = ['/', '/live', '/celebrities', '/ifewknow', '/live/ifew-100-days-tiktok-20260912', '/guide', '/pages/ifew-fan-guide', '/pages/elina-fan-guide', '/pages/us-fanmeetings'];
 for (const path of paths) {
   for (const locale of ['ko', 'en']) {
     const response = await fetch(`${origin}${path}?locale=${locale}&utm_source=seo-check`, { headers: { 'user-agent': agent } });
@@ -96,7 +96,7 @@ for (const path of ['/api/me/rewards', '/api/admin/session', '/api/passports']) 
   const response = await fetch(`${origin}${path}`);
   assert.equal(response.status, 401, `Unauthenticated ${path}`);
 }
-for (const path of ['/live/nonexistent-seo-check', '/c/nonexistent-seo-check']) {
+for (const path of ['/live/nonexistent-seo-check', '/nonexistent-seo-check']) {
   const response = await fetch(`${origin}${path}`, { headers: { 'user-agent': agent } });
   assert.equal(response.status, 404, path);
 }

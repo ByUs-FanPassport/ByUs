@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { LiveTimeIndicator } from "./live-time-indicator";
 import { liveWatchHref } from "../domain/live-watch-link";
 
@@ -1329,7 +1331,7 @@ export function LiveEventScreen({
               <strong>{formatFanCount(live.celebrity.fanCount)}</strong>
             </div>
             <Link
-              href={withLocalePath(`/c/${live.celebrity.slug}`, locale) as Route}
+              href={withLocalePath(creatorHomeHref(live.celebrity.slug), locale) as Route}
               aria-label={
                 locale === "ko"
                   ? `팬페이지 보기: ${live.celebrity.name}`

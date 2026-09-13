@@ -44,7 +44,7 @@ describe("Creator Instagram connection", () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ celebrityId: account.celebrityId, generation: account.generation, liveEnabled: false });
     await act(async () => finish(response({ account: { ...account, liveEnabled: false } })));
     expect(toggle).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("link", { name: "내 팬페이지 보기" })).toHaveAttribute("href", "/c/elina?locale=ko");
+    expect(screen.getByRole("link", { name: "내 팬페이지 보기" })).toHaveAttribute("href", "/elina?locale=ko");
   });
   it("keeps prior preference on save failure and reports an actionable error", async () => {
     fetchMock.mockResolvedValueOnce(response({ connections: [account] })).mockResolvedValueOnce(response({ error: { code: "STALE" } }, 409));

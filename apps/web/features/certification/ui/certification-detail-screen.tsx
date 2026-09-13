@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, CheckCircle2, Crown, ExternalLink, ImagePlus, Ticket, X } from "lucide-react";
 import Link from "next/link";
@@ -428,7 +431,7 @@ function ApprovedNextStep({
   const href = ownedPassport
     ? `/passports/${ownedPassport.id}?locale=${locale}`
     : passportState.status === "ready"
-      ? `/c/${slug}?tab=certifications&locale=${locale}#celebrity-content`
+      ? `${creatorHomeHref(slug)}?tab=certifications&locale=${locale}#celebrity-content`
       : `/my?locale=${locale}`;
   const body = ownedPassport
     ? (locale === "ko" ? "발급된 내 패스포트를 다시 열어볼 수 있어요." : "You can reopen your issued Passport.")

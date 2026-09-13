@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -57,7 +60,7 @@ function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; 
     }
   }
   const data = resource.state.status === "ready" ? resource.state.data : null;
-  const returnTo = `/c/${slug}?locale=${locale}#cheers`;
+  const returnTo = `${creatorHomeHref(slug)}?locale=${locale}#cheers`;
   return <section id="cheers" className={styles.cheers} aria-labelledby="cheers-heading">
     <header className={styles.heading}><Heart aria-hidden="true" /><h2 id="cheers-heading">{ko ? "응원댓글" : "Cheers"}</h2>{data && <span>{data.total.toLocaleString(ko ? "ko-KR" : "en-US")}</span>}</header>
     <p className={styles.intro}>{ko ? `${name}에게 응원의 한마디를 남겨 주세요.` : `Leave a little encouragement for ${name}.`}</p>

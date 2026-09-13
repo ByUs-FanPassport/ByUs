@@ -96,7 +96,7 @@ it("runs the image vote then quiz, using server reward values on the final resul
  expect(screen.getByRole("status")).toHaveTextContent("정답이에요");
  expect(screen.getByText("+3")).toBeInTheDocument();
  expect(screen.getByText("+2")).toBeInTheDocument();
- expect(screen.getByRole("link", { name: "엘리나 팬페이지로" })).toHaveAttribute("href", "/c/elina?locale=ko");
+ expect(screen.getByRole("link", { name: "엘리나 팬페이지로" })).toHaveAttribute("href", "/elina?locale=ko");
  expect(fetcher.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(2);
 });
 
@@ -117,7 +117,7 @@ it("shows a truthful already-completed state with no reconstructed rewards", asy
  expect(await screen.findByRole("heading", { name: /Both missions.*complete/ })).toBeInTheDocument();
  expect(screen.queryByRole("region", { name: "Rewards from this mission" })).not.toBeInTheDocument();
  expect(screen.queryByText(/^\+\d/)).not.toBeInTheDocument();
- expect(screen.getByRole("link", { name: "Back to Elina" })).toHaveAttribute("href", "/c/elina?locale=en");
+ expect(screen.getByRole("link", { name: "Back to Elina" })).toHaveAttribute("href", "/elina?locale=en");
  expect(fetcher.mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
 });
 

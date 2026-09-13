@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -90,12 +93,12 @@ function RoomForOwner({ celebrity, locale }: { celebrity: Pick<PublishedCelebrit
     } catch { if (alive.current) setError(ko ? "연결을 확인하고 다시 시도해 주세요." : "Check your connection and try again."); }
     finally { controllers.current.delete(controller); if (alive.current) { sending.current = false; setBusy(false); } }
   }
-  const home = `/c/${celebrity.slug}?locale=${locale}` as const;
+  const home = `${creatorHomeHref(celebrity.slug)}?locale=${locale}` as const;
   const chooseReply = (message: LoungeMessage) => { setReply(message); setPicker(null); composer.current?.focus(); };
   return <FanAppFrame locale={locale} mainId="fan-lounge-main" className={styles.frame}><FanContentContainer as="main" id="fan-lounge-main" tabIndex={-1} className={styles.page}>
-    <aside className={styles.sidebar}><img src={celebrity.image.url} alt={celebrity.image.alt} className={styles.creatorPhoto} /><h2>{celebrity.name}</h2><LoungeHome slug={celebrity.slug} locale={locale} variant="count" /><Link href={home}><ArrowLeft aria-hidden="true" />{ko ? "팬페이지로" : "Fan page"}</Link><Link className={styles.noticeLink} href={`/c/${celebrity.slug}?tab=notice&locale=${locale}`}><MessageCircle aria-hidden="true" />{ko ? "공지와 댓글" : "Notices & comments"}</Link><p>{ko ? "새 소식은 공지에서, 팬들과의 이야기는 라운지에서 나눠요." : "Find updates in notices and chat with fellow fans here."}</p></aside>
+    <aside className={styles.sidebar}><img src={celebrity.image.url} alt={celebrity.image.alt} className={styles.creatorPhoto} /><h2>{celebrity.name}</h2><LoungeHome slug={celebrity.slug} locale={locale} variant="count" /><Link href={home}><ArrowLeft aria-hidden="true" />{ko ? "팬페이지로" : "Fan page"}</Link><Link className={styles.noticeLink} href={`${creatorHomeHref(celebrity.slug)}?tab=notice&locale=${locale}`}><MessageCircle aria-hidden="true" />{ko ? "공지와 댓글" : "Notices & comments"}</Link><p>{ko ? "새 소식은 공지에서, 팬들과의 이야기는 라운지에서 나눠요." : "Find updates in notices and chat with fellow fans here."}</p></aside>
     <section className={styles.room} aria-label={ko ? "팬 대화" : "Fan conversation"}>
-      <header className={styles.roomHeader}><Link href={home} aria-label={ko ? "팬페이지로 돌아가기" : "Back to fan page"}><ArrowLeft /></Link><div><h1>{ko ? `${celebrity.name} 라운지` : `${celebrity.name} lounge`}</h1><p>{ko ? `${celebrity.name} 얘기, 편하게 나눠요.` : `Talk about ${celebrity.name} with fellow fans.`}</p></div><Link className={styles.mobileNotice} href={`/c/${celebrity.slug}?tab=notice&locale=${locale}`}>{ko ? "공지" : "Notices"}</Link></header>
+      <header className={styles.roomHeader}><Link href={home} aria-label={ko ? "팬페이지로 돌아가기" : "Back to fan page"}><ArrowLeft /></Link><div><h1>{ko ? `${celebrity.name} 라운지` : `${celebrity.name} lounge`}</h1><p>{ko ? `${celebrity.name} 얘기, 편하게 나눠요.` : `Talk about ${celebrity.name} with fellow fans.`}</p></div><Link className={styles.mobileNotice} href={`${creatorHomeHref(celebrity.slug)}?tab=notice&locale=${locale}`}>{ko ? "공지" : "Notices"}</Link></header>
       <div className={styles.starter}><Pin aria-hidden="true" /><p>{ko ? "어떤 순간에 처음 팬이 되셨나요?" : "What first made you a fan?"}</p></div>
       <div className={styles.feedWrap}>
         <div className={styles.feed} ref={scrolling} role="log" aria-label={ko ? "라운지 메시지" : "Lounge messages"} aria-live="off" onScroll={() => { const el = scrolling.current; if (el) { atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 70; if (atBottom.current && !cursor) { setNewCount(0); setUnknownNew(false); } } }}>

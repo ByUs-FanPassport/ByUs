@@ -10,6 +10,7 @@ import { useAdminSession } from "./use-admin-session";
 import { NoticeManager } from "./notice-manager";
 import { ImageRoleEditor } from "./image-role-editor";
 import { CREATOR_ROLES, creatorRoleLabel, type CreatorRole } from "@/features/creator/domain/creator-role";
+import { isCreatorHandle } from "@/features/creator/domain/creator-navigation";
 import styles from "./admin.module.css";
 import { AdminPagination, useAdminPagination } from "./admin-pagination";
 import localStyles from "./celebrity-manager.module.css";
@@ -31,6 +32,7 @@ type Celebrity = {
   displayOrder: number;
   fanCount: number | null;
   primaryRole: CreatorRole | null;
+  everPublishedAt?: string | null;
   archivedAt: string | null;
   updatedAt: string;
   localizations: { ko: Loc; en: Loc };
@@ -39,7 +41,7 @@ type Celebrity = {
 };
 type CelebrityDraft = Omit<
   Celebrity,
-  "id" | "status" | "archivedAt" | "updatedAt"
+  "id" | "status" | "everPublishedAt" | "archivedAt" | "updatedAt"
 >;
 type PublicationFilter = "all" | "draft" | "published" | "archived";
 const blank: CelebrityDraft = {
@@ -98,7 +100,7 @@ function isDraftValid(draft: CelebrityDraft): boolean {
     });
   return (
     localizationValid &&
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.slug) &&
+    isCreatorHandle(draft.slug) &&
     (draft.imageUrl.startsWith("/") || draft.imageUrl.startsWith("https://")) &&
     draft.imagePosition.trim().length >= 1 &&
     draft.imagePosition.trim().length <= 100 &&
@@ -473,11 +475,19 @@ function CelebrityCms({
                   <input
                     required
                     pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                    disabled={Boolean(current?.everPublishedAt)}
+                    aria-label={locale === "ko" ? "주소 경로" : "URL path"}
+                    aria-describedby="celebrity-slug-help"
                     value={draft.slug}
                     onChange={(e) =>
                       setDraft((d) => ({ ...d, slug: e.target.value }))
                     }
                   />
+                  <small id="celebrity-slug-help">
+                    {locale === "ko"
+                      ? "소문자 영문, 숫자, 하이픈만 사용할 수 있으며 최초 공개 후에는 변경할 수 없습니다."
+                      : "Use lowercase letters, numbers, and hyphens. The path cannot change after first publication."}
+                  </small>
                 </label>
                 <label>
                   <span>{locale === "ko" ? "정렬 순서" : "Sort order"}</span>

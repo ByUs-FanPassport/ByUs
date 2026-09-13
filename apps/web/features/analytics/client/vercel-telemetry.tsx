@@ -5,9 +5,9 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { usePathname } from "next/navigation";
 import { isPublicTelemetryPath, sanitizeVercelTelemetry } from "./vercel-telemetry-policy";
 
-export function VercelTelemetry() {
+export function VercelTelemetry({ publicCreatorSlug }: { publicCreatorSlug?: string } = {}) {
   const pathname = usePathname();
-  if (!pathname || !isPublicTelemetryPath(pathname)) return null;
+  if (!pathname || !isPublicTelemetryPath(pathname, publicCreatorSlug)) return null;
 
   // Scripts outlive SPA unmounts: the stable callback must also reject private URLs.
   // Explicit pathname tracking keeps query strings out of the SDK's pageview queue.
@@ -20,7 +20,7 @@ export function VercelTelemetry() {
       path={pathname}
       scriptSrc="/_vercel/insights/script.js"
       endpoint="/_vercel/insights"
-      beforeSend={sanitizeVercelTelemetry}
+      beforeSend={(event) => sanitizeVercelTelemetry(event, publicCreatorSlug)}
     />
     <SpeedInsights
       framework="next"
@@ -28,7 +28,7 @@ export function VercelTelemetry() {
       route={pathname}
       scriptSrc="/_vercel/speed-insights/script.js"
       endpoint="/_vercel/speed-insights/vitals"
-      beforeSend={sanitizeVercelTelemetry}
+      beforeSend={(event) => sanitizeVercelTelemetry(event, publicCreatorSlug)}
     />
   </>;
 }

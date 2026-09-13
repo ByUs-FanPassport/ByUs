@@ -21,6 +21,20 @@ class MemoryStorage implements Storage {
 
 const id = "11111111-1111-4111-8111-111111111111";
 
+describe("creator home login compatibility", () => {
+  it.each(["/ifewknow", "/c/ifewknow"])("restores and consumes %s with the same internal target", (sourcePath) => {
+    const storage = new MemoryStorage();
+    const intent = createAuthIntent({ sourcePath, sourceQuery: "?locale=en", actionType: "CREATE_REACTION", targetType: "celebrity", targetId: "ifewknow", returnAnchor: "#first-reaction" }, { id });
+    persistAuthIntent(storage, intent);
+    expect(authIntentReturnTo(readAuthIntent(storage, id)!)).toBe(`${sourcePath}?locale=en&authIntent=${id}#first-reaction`);
+    expect(consumeAuthIntent(storage, id)?.targetId).toBe("ifewknow");
+    expect(consumeAuthIntent(storage, id)).toBeNull();
+  });
+  it.each([["/elina", "ifewknow"], ["/login", "login"], ["/c/admin", "admin"], ["/ifew", "ifewknow"]])("rejects mismatched or reserved target %s %s", (sourcePath, targetId) => {
+    expect(() => createAuthIntent({ sourcePath, sourceQuery: "", actionType: "CREATE_REACTION", targetType: "celebrity", targetId }, { id })).toThrow();
+  });
+});
+
 describe("durable auth intent", () => {
   it("does not throw when browser storage reads or writes are unavailable", () => {
     const storage = new MemoryStorage();

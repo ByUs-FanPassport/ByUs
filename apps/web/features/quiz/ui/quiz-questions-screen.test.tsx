@@ -93,7 +93,7 @@ describe("FAN-007 quiz questions", () => {
       .closest('[data-content-alignment="top"]')).not.toBeNull();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "팬 인증 진행률" })).toHaveAttribute("aria-valuenow", "2");
-    expect(screen.getByRole("link", { name: "인증을 나가고 팬페이지로 돌아가기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "인증을 나가고 팬페이지로 돌아가기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(screen.queryByText("KARA의 데뷔곡은?")).not.toBeInTheDocument();
     const options = screen.getAllByRole("radio");
     expect(options.map((option) => option.getAttribute("value"))).toEqual([ids.o21, ids.o22]);
@@ -314,7 +314,7 @@ describe("FAN-007 quiz questions", () => {
     expect(screen.getByRole("group", { name: "Which song introduced KATSEYE?" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Exit verification and return to the fan page" })).toHaveAttribute(
       "href",
-      "/c/katseye?locale=en",
+      "/katseye?locale=en",
     );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/celebrities/katseye/quiz/attempts?locale=en",

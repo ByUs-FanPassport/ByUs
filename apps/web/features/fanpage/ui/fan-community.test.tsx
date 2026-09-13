@@ -51,7 +51,7 @@ it("shows guest login returning to cheers without reply or reaction controls", a
   authenticated = false; vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...empty, total: 1, comments: [{ ...comment, isOwner: false }] })));
   render(<CheerComments slug="elina" name="Elina" locale="en" />);
   await screen.findByText("늘 응원해요");
-  expect(screen.getByRole("link", { name: "Sign in to leave a cheer" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Fc%2Felina%3Flocale%3Den%23cheers");
+  expect(screen.getByRole("link", { name: "Sign in to leave a cheer" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Felina%3Flocale%3Den%23cheers");
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
@@ -71,7 +71,7 @@ it("shows the same participants without a public-count label or visibility contr
   const fetcher = vi.fn(async () => Response.json({ likeCount: 7, fanCount: 8, publicFanCount: 8, fans: [{ nickname: "별빛팬", avatarUrl: comment.avatarUrl }] }));
   vi.stubGlobal("fetch", fetcher);
   render(<><FanCommunity slug="elina" locale="ko" /><FanGatheringPanel slug="elina" locale="ko" /></>);
-  expect(await screen.findByRole("link", { name: "함께하는 팬 8명 보기" })).toHaveAttribute("href", "/c/elina?tab=leaderboard&locale=ko#celebrity-content");
+  expect(await screen.findByRole("link", { name: "함께하는 팬 8명 보기" })).toHaveAttribute("href", "/elina?tab=leaderboard&locale=ko#celebrity-content");
   expect(await screen.findByRole("button", { name: "별빛팬" })).toBeInTheDocument();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   expect(screen.queryByText(/프로필 공개/)).not.toBeInTheDocument();

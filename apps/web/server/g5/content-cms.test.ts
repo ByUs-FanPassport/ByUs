@@ -43,6 +43,18 @@ describe("content CMS", () => {
     ).toThrow();
   });
 
+  it("rejects top-level routes and asset directories as celebrity slugs", () => {
+    const base = {
+      imageUrl: "/kara.jpg", imagePosition: "center", displayOrder: 0, fanCount: null,
+      localizations: { ko: { name: "카라", summary: "소개", imageAlt: "카라" }, en: { name: "KARA", summary: "Profile", imageAlt: "KARA" } },
+      primaryRole: "idol" as const, themes: [], socialLinks: [],
+    };
+    expect(celebrityPayload.safeParse({ ...base, slug: "kara" }).success).toBe(true);
+    for (const slug of ["admin", "api", "creator", "images", "share"]) {
+      expect(celebrityPayload.safeParse({ ...base, slug }).success).toBe(false);
+    }
+  });
+
   it("accepts an omitted draft fan count but rejects invalid fan counts", () => {
     const base = {
       slug: "kara",
@@ -123,5 +135,20 @@ describe("content CMS", () => {
       p_celebrity: "55555555-5555-4555-8555-555555555555",
       p_quiz: "44444444-4444-4444-8444-444444444444",
     });
+  });
+
+  it("classifies database reserved-handle rejection as invalid input", async () => {
+    const repository = new ContentCmsRepository({
+      rpc: vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: "reserved celebrity handle conflicts: admin" },
+      }),
+    } as never);
+    await expect(repository.saveCelebrity(
+      actor,
+      "33333333-3333-4333-8333-333333333333",
+      null,
+      {} as never,
+    )).rejects.toMatchObject({ code: "INVALID" });
   });
 });

@@ -1,4 +1,7 @@
 "use client";
+
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, Copy, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
@@ -72,7 +75,7 @@ function OwnerCollection({ locale, creator, resource }: { locale: Locale; creato
       {resource.refreshFailed && <p role="alert" className={styles.status}>{ko ? "최신 기록을 확인하지 못했어요." : "Couldn’t refresh your Stamps."} <button className={styles.action} onClick={resource.retry}>{ko ? "다시 시도" : "Retry"}</button></p>}
       <ul className={styles.grid}>{kinds.map(kind => {
         const stamp = earned(kind); const info = COMMUNITY_STAMPS[kind];
-        const href = creator ? `/c/${creator}?locale=${locale}${kind === "daily_checkin" ? "#daily-checkin" : "#cheers"}` : kind === "share" ? `/passports?locale=${locale}` : `/celebrities?locale=${locale}`;
+        const href = creator ? `${creatorHomeHref(creator)}?locale=${locale}${kind === "daily_checkin" ? "#daily-checkin" : "#cheers"}` : kind === "share" ? `/passports?locale=${locale}` : `/celebrities?locale=${locale}`;
         return <li className={styles.card} data-earned={!!stamp} key={kind}>
           <CommunityStampArtwork kind={kind} locale={locale} className={styles.art} decorative/>
           <h3>{info[locale]}</h3>{stamp && <span className={styles.state}><Check aria-hidden="true"/>{ko ? "획득" : "Earned"}</span>}

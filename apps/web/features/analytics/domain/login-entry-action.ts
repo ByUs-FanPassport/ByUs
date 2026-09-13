@@ -1,3 +1,4 @@
+import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { z } from "zod";
 
 export const loginEntryActionSchema = z.enum(["daily_checkin", "cheer", "passport_share", "other"]);
@@ -12,7 +13,7 @@ export function classifyLoginEntryAction(href: string): LoginEntryAction {
     if (!raw?.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "other";
     const target = new URL(raw, login.origin);
     if (target.origin !== login.origin) return "other";
-    if (/^\/c\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(target.pathname)) {
+    if (creatorSlugFromHomePath(target.pathname) !== null) {
       if (target.hash === "#daily-checkin") return "daily_checkin";
       if (target.hash === "#cheers") return "cheer";
     }

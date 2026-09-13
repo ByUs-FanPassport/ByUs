@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -283,12 +285,12 @@ export function QuizEntryScreen({
           <section className={styles.message}>
             <h1>{t.unavailableTitle}</h1>
             <p>{t.unavailableBody(screen.intro.celebrity.name)}</p>
-            <Link className={styles.secondaryAction} href={withLocale(`/c/${slug}`, locale)}>{t.fanPage()}</Link>
+            <Link className={styles.secondaryAction} href={withLocale(creatorHomeHref(slug), locale)}>{t.fanPage()}</Link>
           </section>
         )}
         {screen.kind === "ready" && screen.intro.quiz.availability === "available" && (
           <section className={styles.entry} aria-labelledby="quiz-entry-heading">
-            <Link className={styles.returnLink} href={withLocale(`/c/${slug}`, locale)}><ArrowLeft aria-hidden="true" />{t.fanPage(screen.intro.celebrity.name)}</Link>
+            <Link className={styles.returnLink} href={withLocale(creatorHomeHref(slug), locale)}><ArrowLeft aria-hidden="true" />{t.fanPage(screen.intro.celebrity.name)}</Link>
             <header>
               <p>{t.eyebrow}</p>
               <h1

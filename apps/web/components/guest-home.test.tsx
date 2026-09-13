@@ -359,12 +359,12 @@ describe("canonical 03 guest home", () => {
     expect(card.queryByText("TikTok")).not.toBeInTheDocument();
     expect(card.queryByText("Instagram")).not.toBeInTheDocument();
     expect(card.queryByText("12.8M Fans")).toBeInTheDocument();
-    expect(card.getByRole("link", { name: "KARA 입덕하기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(card.getByRole("link", { name: "KARA 입덕하기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(screen.queryByText("3.2M Fans")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Elina 입덕하기" })).toHaveAttribute("href", "/c/elina?locale=ko");
+    expect(screen.getByRole("link", { name: "Elina 입덕하기" })).toHaveAttribute("href", "/elina?locale=ko");
     expect(screen.queryByText("1.5M Fans")).toBeInTheDocument();
     const changhaCard = screen.getByRole("heading", { name: "Changha", level: 3 }).closest("article");
-    expect(within(changhaCard!).getByRole("link", { name: "Changha 입덕하기" })).toHaveAttribute("href", "/c/changha?locale=ko");
+    expect(within(changhaCard!).getByRole("link", { name: "Changha 입덕하기" })).toHaveAttribute("href", "/changha?locale=ko");
   });
 
   it("uses a published square Preview only inside the matching favorite card", () => {
@@ -448,7 +448,7 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome celebrities={englishCelebrities} featuredLives={[featuredLive]} locale="en" />);
     expect(screen.getByRole("heading", { name: "Your favorites" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA EN" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View KARA EN details" })).toHaveAttribute("href", "/c/kara?locale=en");
+    expect(screen.getByRole("link", { name: "View KARA EN details" })).toHaveAttribute("href", "/kara?locale=en");
     expect(screen.getByRole("link", { name: /Reserve a spot/ })).toHaveAttribute("href", expect.stringContaining("locale=en"));
   });
 
@@ -790,7 +790,7 @@ it("uses identical cards for all creators with editorial ordering only", () => {
   expect([...section.querySelectorAll("article h3")].slice(0,3).map(h => h.textContent)).toEqual(["changha", "elina", "yuna"]);
   expect(new Set([...section.querySelectorAll("article")].map(a => a.className)).size).toBe(1);
   for (const slug of roster.slice(3).map(c => c.slug)) {
-    expect(section.querySelector(`a[href="/c/${slug}?locale=ko"]`)).not.toBeNull();
+    expect(section.querySelector(`a[href="/${slug}?locale=ko"]`)).not.toBeNull();
   }
   expect(section.textContent).not.toMatch(/인기순|팔로워순|순위/);
 });

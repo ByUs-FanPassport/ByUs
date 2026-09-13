@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { CommunityStampCollection } from "@/features/community-stamps/ui/community-stamp-collection";
 import { useCommunityStamps } from "@/features/community-stamps/ui/use-community-stamps";
 
@@ -262,7 +264,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
   const retryRaffles = raffles.retry;
   const openRaffles = raffleState.status === "ready" ? selectOpenRaffles(raffleState.data, new Date(now)) : [];
   const raffleAllHref = creatorRafflesHref(creator.celebrity.slug, locale);
-  const activityHref = `/c/${slug}?tab=certifications&locale=${locale}#celebrity-content` as Route;
+  const activityHref = `${creatorHomeHref(slug)}?tab=certifications&locale=${locale}#celebrity-content` as Route;
   useEffect(() => {
     if (raffleState.status !== "ready") return;
     const scheduledNow = Date.now();
