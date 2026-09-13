@@ -1,5 +1,5 @@
 import { getAddress } from "viem";
-import { actionCodes, linkOrigins } from "./action-domain.js";
+import { actionCodes, linkOrigins } from "./action-constants.ts";
 
 export interface IndexedCredential {
   credentialKey: string;
@@ -29,6 +29,26 @@ export interface IndexedFanAction {
   finality: "included" | "safe" | "finalized";
   txHash: string;
   credentials: readonly IndexedCredential[];
+}
+
+export interface FinalizedIndexedFanAction extends IndexedFanAction {
+  easUid: string;
+  creatorId: string;
+  campaignId: string;
+  occurredDay: number;
+  blockNumber: bigint;
+  blockHash: string;
+  originalRecipient: string;
+}
+
+export interface ActionLifecycleTransaction {
+  txHash: string;
+  blockNumber: bigint;
+  blockHash: string;
+  kind: "record" | "invalidate" | "correct";
+  actionIds: string[];
+  recipients: string[];
+  origin: "NATIVE" | "HISTORICAL";
 }
 
 export interface MetricTrustBoundary {

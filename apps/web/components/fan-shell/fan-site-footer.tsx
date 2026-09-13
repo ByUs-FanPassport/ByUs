@@ -49,6 +49,7 @@ const copy = {
     support: "문의하기",
     creatorOnboarding: "팬이 있는 당신에게",
     partners: "파트너 협업 제안",
+    onchain: "온체인 기록",
   },
   en: {
     tagline: "Keep a record of moments with your favorites.",
@@ -68,6 +69,7 @@ const copy = {
     support: "Contact support",
     creatorOnboarding: "For everyone with fans",
     partners: "Partnership proposals",
+    onchain: "Onchain records",
   },
 } as const;
 
@@ -108,6 +110,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             <Link href={fanHref("/pages/us-fanmeetings", locale)}>{t.fanmeetings}</Link>
             <Link href={fanHref("/pages/creator-onboarding", locale)}>{t.creatorOnboarding}</Link>
             <Link href={fanHref("/pages/partners", locale)}>{t.partners}</Link>
+            <Link href={fanHref("/pages/onchain", locale)}>{t.onchain}</Link>
           </section>
           <section>
             <h2>{t.social}</h2>

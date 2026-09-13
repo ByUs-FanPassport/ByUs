@@ -38,6 +38,8 @@ jobs:
           npm run test --workspace @byus/web -- --maxWorkers=3
           components/fan-ui
           components/fan-calendar
+          components/onchain
+          components/fan-shell/fan-site-footer.test.tsx
           components/celebrity-fan-page.test.tsx
           components/live-status-indicator.test.tsx
           components/guest-home.test.tsx
