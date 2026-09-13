@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { classifyLoginEntryAction, loginEntryActionSchema } from "../domain/login-entry-action";
 import { acquisitionLanding, classifyAcquisitionChannel, readStoredAcquisitionTouch } from "../domain/acquisition-attribution";
 import {
   signupContextSchema, signupProviderSchema, signupTriggerSchema, parseWalletDiagnostic, type WalletDiagnostic,
@@ -14,7 +15,7 @@ export const SIGNUP_CONTEXT_TTL_MS = 30 * 60_000;
 const contextRecordSchema = z.object({ context: signupContextSchema, at: z.number() }).strict();
 const attemptSchema = z.object({
   nonce: z.uuidv4(), at: z.number(), context: signupContextSchema,
-  provider: signupProviderSchema, trigger: signupTriggerSchema,
+  provider: signupProviderSchema, trigger: signupTriggerSchema, entryAction: loginEntryActionSchema.optional(),
   succeeded: z.boolean(), failed: z.boolean(),
 }).strict();
 export type LoginMeasurementAttempt = z.infer<typeof attemptSchema>;
@@ -102,14 +103,14 @@ export function createSignupFunnelTracker(environment: TrackerEnvironment) {
   function beginLogin(provider: SignupProvider, trigger: SignupTrigger, locale: "ko" | "en"): LoginMeasurementAttempt | null {
     try {
       const attempt = attemptSchema.parse({
-        nonce: environment.uuid(), at: environment.now(), context: context(locale), provider, trigger,
+        nonce: environment.uuid(), at: environment.now(), context: context(locale), provider, trigger, entryAction: classifyLoginEntryAction(environment.location().href),
         succeeded: false, failed: false,
       });
       write(ATTEMPT_KEY, attempt);
       pendingInvalidated = false;
       deliver({ ...emptyEntities, eventName: "login_started", source: "signup.login",
         idempotencyKey: `signup-login:${attempt.nonce}:started`, occurredAt: new Date(attempt.at).toISOString(),
-        properties: { ...attempt.context, provider, trigger } });
+        properties: { ...attempt.context, provider, trigger, ...(attempt.entryAction === undefined ? {} : { entryAction: attempt.entryAction }) } });
       return attempt;
     } catch { return null; }
   }
@@ -143,7 +144,8 @@ export function createSignupFunnelTracker(environment: TrackerEnvironment) {
       if (stored?.nonce === attempt.nonce) write(ATTEMPT_KEY, { ...stored, [outcome]: true });
       deliver({ ...emptyEntities, eventName: "login_result", source: "signup.login",
         idempotencyKey: key, occurredAt: new Date(environment.now()).toISOString(),
-        properties: { ...attempt.context, provider: attempt.provider, trigger: attempt.trigger, outcome, stage, reason, ...diagnostic } });
+        properties: { ...attempt.context, provider: attempt.provider, trigger: attempt.trigger,
+          ...(attempt.entryAction === undefined ? {} : { entryAction: attempt.entryAction }), outcome, stage, reason, ...diagnostic } });
     } catch { /* Telemetry does not establish or revoke a session. */ }
   }
   return { guideView, guideCta, beginLogin, pendingLogin, resumeLogin, forgetLoginAttempt, result };

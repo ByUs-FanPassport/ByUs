@@ -204,6 +204,20 @@ attempt_triggers as (
     'pending',pending,'recovered',recovered
   ) order by trigger_name) as value from attempt_trigger_rows
 ),
+entry_action_groups as (
+  select coalesce(status.properties->>'entryAction','unknown') as entry_action,
+    status.properties->>'provider' as provider,status.properties->>'trigger' as trigger,
+    case when status.started_at<=parameters.to_at-interval '30 minutes' then 'at_least_30m' else 'recent' end as observation_age,
+    count(*) as attempts,count(*) filter(where has_success) as succeeded,
+    count(*) filter(where has_failure and not has_success) as failed_without_success,
+    count(*) filter(where not has_failure and not has_success) as pending,
+    count(*) filter(where has_failure and has_success) as recovered
+  from attempt_status status cross join parameters group by 1,2,3,4
+),
+entry_action_metrics as (
+  select jsonb_build_object('semantics','category_captured_at_login_started; results_observed_only_within_window; not_unique_people_or_activity_completion',
+    'legacyMissing','unknown','groups',coalesce((select jsonb_agg(g order by entry_action,provider,trigger,observation_age) from entry_action_groups g),'[]'::jsonb)) as value
+),
 matched_failure_rows as (
   select result.properties->>'browser' as browser,
          result.properties->>'provider' as provider,
@@ -346,6 +360,7 @@ select jsonb_build_object(
     'failuresByBrowserProviderStageReason',failure_breakdown.value,
     'unmatchedOrInconsistentResultObservations',inconsistent_results.observations
   ),
+  'loginEntryActions',(select value from entry_action_metrics),
   'walletDiagnostics',wallet_diagnostic_metrics.value,
   'canonicalSignupProgress',jsonb_build_object(
     'cohort','app_users_created_in_window',

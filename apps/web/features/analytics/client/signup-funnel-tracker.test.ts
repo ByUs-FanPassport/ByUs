@@ -137,4 +137,43 @@ describe("best-effort signup observations", () => {
     expect(restore.provider).toBe("unknown");
     expect(restore.trigger).toBe("session_restore");
   });
+  it("captures entry per attempt, reuses it across refresh, and never stores a share token", () => {
+    const f = fixture();
+    const secret = "0123456789abcdef0123456789abcdef";
+    f.environment.location = () => ({ href: `https://byus.test/login?returnTo=${encodeURIComponent(`/s/${secret}?locale=ko`)}`, referrer: "" });
+    const first = f.tracker.beginLogin("google", "provider", "ko")!;
+    expect(first.entryAction).toBe("passport_share");
+    const restored = createSignupFunnelTracker(f.environment).resumeLogin("ko")!;
+    expect(restored.nonce).toBe(first.nonce);
+    expect(restored.entryAction).toBe("passport_share");
+    f.environment.location = () => ({ href: "https://byus.test/login?returnTo=%2Fc%2Felina%23cheers", referrer: "" });
+    f.advance();
+    const second = f.tracker.beginLogin("google", "retry", "ko")!;
+    expect(second.entryAction).toBe("cheer");
+    f.tracker.result(first, "succeeded", "session", "none");
+    expect(f.tracker.pendingLogin()?.nonce).toBe(second.nonce);
+    const events = (f.record.mock.calls as unknown as Array<[{ properties: Record<string, unknown> }]>).map(([e]) => e);
+    expect(events.map(e => e.properties.entryAction)).toEqual(["passport_share", "cheer", "passport_share"]);
+    expect(JSON.stringify(events)).not.toContain(secret);
+    expect(JSON.stringify(Object.values(window.sessionStorage))).not.toContain(secret);
+    f.advance(SIGNUP_CONTEXT_TTL_MS);
+    expect(f.tracker.pendingLogin()).toBeNull();
+  });
+
+  it("keeps legacy stored attempts unclassified and does not add entry to guide events", () => {
+    const f = fixture();
+    f.tracker.beginLogin("google", "provider", "ko");
+    const stored = JSON.parse(window.sessionStorage.getItem("byus.signup.attempt.v1")!);
+    delete stored.entryAction;
+    window.sessionStorage.setItem("byus.signup.attempt.v1", JSON.stringify(stored));
+    const next = createSignupFunnelTracker(f.environment);
+    const old = next.resumeLogin("ko")!;
+    expect(old.entryAction).toBeUndefined();
+    next.result(old, "succeeded", "session", "none");
+    next.guideView("elina", "ko", "guest");
+    const calls = f.record.mock.calls as unknown as Array<[{ properties: Record<string, unknown> }]>;
+    expect(calls.at(-2)![0].properties).not.toHaveProperty("entryAction");
+    expect(calls.at(-1)![0].properties).not.toHaveProperty("entryAction");
+  });
+
 });
