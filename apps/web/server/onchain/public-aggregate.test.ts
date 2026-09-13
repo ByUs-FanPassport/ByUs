@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { FinalizedActionSnapshot } from "../../../worker/src/action-public-snapshot";
+import type { ActionLifecycleTransaction, FinalizedIndexedFanAction } from "../../../worker/src/action-metrics";
 import { projectPublicOnchainSnapshot } from "./public-aggregate";
 import { onchainConfig as config } from "./public-config";
 
 const hash = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as const;
 const fan = "0x0000000000000000000000000000000000000001";
-function action(overrides: Record<string, unknown> = {}) {
+function action(overrides: Partial<FinalizedIndexedFanAction> = {}): FinalizedIndexedFanAction {
   return {
-    chainId: config.chainId, occurrenceId: hash(1), actionId: hash(2), revision: 1, actionCode: 10,
+    chainId: config.chainId, sourceOccurrence: hash(12), occurrenceId: hash(1), actionId: hash(2), revision: 1, actionCode: 10,
     recipient: fan, originalRecipient: fan, environmentId: config.environmentId, hubProxy: config.hubAddress, schemaUid: config.schemaUid,
     easAttester: config.hubAddress, easRecipient: fan, easRevocationTime: 0n, easExpirationTime: 0n,
     easIsAttestationValid: true, status: "ACTIVE", origin: "NATIVE", finality: "finalized", txHash: hash(3),
@@ -16,8 +17,12 @@ function action(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
-function snapshot(actions = [action()], transactions = [{ txHash: hash(3), blockNumber: 100n, blockHash: hash(6), kind: "record", actionIds: [hash(2)], recipients: [fan], origin: "NATIVE" }]) {
-  return { blockNumber: 101n, blockHash: hash(8), timestamp: 1789300000n, actions, lifecycleTransactions: transactions } as FinalizedActionSnapshot;
+function snapshot(actions = [action()], transactions: ActionLifecycleTransaction[] = [{ hubProxy: config.hubAddress, txHash: hash(3), blockNumber: 100n, blockHash: hash(6), kind: "record", actionIds: [hash(2)], recipients: [fan], origin: "NATIVE" }]) {
+  return {
+    blockNumber: 101n, blockHash: hash(8), timestamp: 1789300000n, actions, lifecycleTransactions: transactions,
+    deployments: [{ hubAddress: config.hubAddress, fromBlock: config.deployments[1].fromBlock, label: config.deployments[1].label, actionCount: actions.length }],
+    sourceCollisions: [],
+  } as FinalizedActionSnapshot;
 }
 
 describe("public chain-only projection", () => {
@@ -45,14 +50,33 @@ describe("public chain-only projection", () => {
     const source = snapshot([action({ origin: "HISTORICAL" })]);
     source.lifecycleTransactions[0].origin = "HISTORICAL";
     const result = projectPublicOnchainSnapshot(source);
-    expect(result.business.mintedCredentials).toBe(0);
-    expect(result.business.lifecycleTransactions).toBe(0);
+    expect(result.business?.mintedCredentials).toBe(0);
+    expect(result.business?.lifecycleTransactions).toBe(0);
     expect(result.raw.actionCounts[10]).toBe(1);
     expect(result.historicalActions).toBe(1);
   });
   it("uses the block timestamp for expiry, not the later server time", () => {
     const result = projectPublicOnchainSnapshot(snapshot([action({ easExpirationTime: 1789300001n })]), new Date("2030-01-01"));
-    expect(result.business.uniqueActiveWallets).toBe(1);
+    expect(result.business?.uniqueActiveWallets).toBe(1);
     expect(result.blockTimestamp).toBe(new Date(1789300000000).toISOString());
+  });
+  it("suppresses business aggregates while preserving raw evidence for a cross-Hub native source collision", () => {
+    const legacy = config.deployments[0];
+    const current = config.deployments[1];
+    const source = snapshot([
+      action({ hubProxy: legacy.hubAddress, easAttester: legacy.hubAddress }),
+      action({ hubProxy: current.hubAddress, easAttester: current.hubAddress, occurrenceId: hash(13), actionId: hash(14), txHash: hash(15) }),
+    ], [
+      { hubProxy: legacy.hubAddress, txHash: hash(3), blockNumber: 100n, blockHash: hash(6), kind: "record", actionIds: [hash(2)], recipients: [fan], origin: "NATIVE" },
+      { hubProxy: current.hubAddress, txHash: hash(15), blockNumber: 100n, blockHash: hash(6), kind: "record", actionIds: [hash(14)], recipients: [fan], origin: "NATIVE" },
+    ]);
+    source.deployments = config.deployments.map((deployment) => ({ ...deployment, actionCount: 1 }));
+    source.sourceCollisions = [hash(12)];
+    const result = projectPublicOnchainSnapshot(source);
+    expect(result.business).toBeNull();
+    expect(result.businessUnavailableReason).toBe("cross_hub_source_collision");
+    expect(result.raw.uniqueActiveWallets).toBe(1);
+    expect(result.raw.mintedCredentials).toBe(1);
+    expect(result.actions).toHaveLength(2);
   });
 });

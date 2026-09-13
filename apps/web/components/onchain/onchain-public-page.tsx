@@ -17,6 +17,7 @@ const copy = {
     testnetDetail: "공개 지표는 ActionHub 배포 이후의 선언된 블록 범위를 집계합니다. 이전 Passport·Stamp 활동은 포함하지 않습니다.",
     available: "최종 확정 블록 기준",
     unavailable: "현재 온체인 스냅샷을 불러올 수 없습니다. 수치를 0으로 표시하지 않습니다.",
+    aggregateUnavailable: "여러 ActionHub에서 같은 원본 행동이 확인되어 운영 지표를 표시하지 않습니다. 검증된 원장 근거는 아래에 그대로 표시합니다.",
     download: "전체 JSON 다운로드",
     metricsTitle: "현재 유효한 기록",
     metricsDescription: "현재 지표는 명시된 QA 지갑과 역사 이관 기록을 제외합니다. 정정된 행동은 원래 민팅 수를 유지하며 다시 민팅한 것으로 세지 않습니다.",
@@ -38,7 +39,7 @@ const copy = {
     qaOnly: "QA 기록만 확인",
     active: (count: number) => `현재 유효 기록 ${count.toLocaleString("ko-KR")}건`,
     missingContract: "운영 발급 계약 미설정",
-    statusAsOf: "2026년 9월 13일 검증 상태. 현재 원장 근거가 확인될 때만 상태가 바뀝니다.",
+    statusAsOf: "확정된 온체인 원장을 기준으로 표시합니다. 실제 팬 기록이 확인되면 상태가 바뀝니다.",
     evidenceTitle: "원장 근거",
     evidenceDescription: "최근 20개 항목만 화면에 표시합니다. 전체 원장은 JSON에서 확인할 수 있습니다.",
     shown: (shown: number, total: number) => `${total.toLocaleString("ko-KR")}개 중 ${shown.toLocaleString("ko-KR")}개 표시`,
@@ -56,6 +57,7 @@ const copy = {
     transaction: "트랜잭션",
     attestation: "EAS 발행 로그",
     easUid: "EAS UID",
+    source: "기록 ActionHub",
     credential: "NFT",
     openNew: "새 창에서 열기",
     directoryTitle: "공식 주소 디렉터리",
@@ -73,6 +75,7 @@ const copy = {
     generatedAt: "생성 시각",
     exclusions: "제외 기준",
     exclusionsValue: (wallets: number, actions: number, historical: number) => `명시된 QA 지갑 ${wallets.toLocaleString("ko-KR")}개에서 발생한 행동 ${actions.toLocaleString("ko-KR")}건과 역사 이관 ${historical.toLocaleString("ko-KR")}건`,
+    deploymentStatus: { current: "현재 기록 경로", historical: "이전 기록 경로", pending_activation: "운영 전환 대기" },
     lifecycleTitle: "수명주기 트랜잭션",
     lifecycleDescription: (total: number, qa: number, historical: number) => `전체 ${total.toLocaleString("ko-KR")}건 · QA 포함 ${qa.toLocaleString("ko-KR")}건 · 역사 이관 ${historical.toLocaleString("ko-KR")}건. 기록·정정·무효화 트랜잭션을 각각 표시합니다.`,
     lifecycleShown: (shown: number, total: number) => `${total.toLocaleString("ko-KR")}건 중 최근 ${shown.toLocaleString("ko-KR")}건 표시`,
@@ -87,6 +90,7 @@ const copy = {
     testnetDetail: "Public metrics cover the declared block range since the ActionHub deployment. Earlier Passport and Stamp activity is excluded.",
     available: "At the latest finalized block",
     unavailable: "The onchain snapshot is currently unavailable. Missing figures are not shown as zero.",
+    aggregateUnavailable: "The same source action appears in more than one ActionHub, so operational metrics are unavailable. Verified ledger evidence remains visible below.",
     download: "Download full JSON",
     metricsTitle: "Current valid records",
     metricsDescription: "Current metrics exclude the declared QA wallet and historical imports. A corrected action retains its original mint count and is not counted as a new mint.",
@@ -108,7 +112,7 @@ const copy = {
     qaOnly: "QA record only",
     active: (count: number) => `${count.toLocaleString("en-US")} current valid record${count === 1 ? "" : "s"}`,
     missingContract: "Production issuance contract not configured",
-    statusAsOf: "Verification status as of September 13, 2026. A status changes only when current ledger evidence is confirmed.",
+    statusAsOf: "Status reflects the finalized onchain ledger and changes when actual fan records are confirmed.",
     evidenceTitle: "Ledger evidence",
     evidenceDescription: "The page shows the first 20 recent entries. Download the JSON for the complete ledger.",
     shown: (shown: number, total: number) => `Showing ${shown.toLocaleString("en-US")} of ${total.toLocaleString("en-US")}`,
@@ -126,6 +130,7 @@ const copy = {
     transaction: "Transaction",
     attestation: "EAS issuance log",
     easUid: "EAS UID",
+    source: "Record ActionHub",
     credential: "NFT",
     openNew: "open in a new tab",
     directoryTitle: "Official address directory",
@@ -143,6 +148,7 @@ const copy = {
     generatedAt: "Generated at",
     exclusions: "Exclusions",
     exclusionsValue: (wallets: number, actions: number, historical: number) => `${actions.toLocaleString("en-US")} actions from ${wallets.toLocaleString("en-US")} explicitly declared QA wallet, plus ${historical.toLocaleString("en-US")} historical imports`,
+    deploymentStatus: { current: "Current write route", historical: "Previous write route", pending_activation: "Pending activation" },
     lifecycleTitle: "Lifecycle transactions",
     lifecycleDescription: (total: number, qa: number, historical: number) => `${total.toLocaleString("en-US")} total · ${qa.toLocaleString("en-US")} QA · ${historical.toLocaleString("en-US")} historical. Record, correction, and invalidation transactions are listed separately.`,
     lifecycleShown: (shown: number, total: number) => `Showing the latest ${shown.toLocaleString("en-US")} of ${total.toLocaleString("en-US")}`,
@@ -183,10 +189,10 @@ function metricValue(value: number | undefined, locale: FanLocale) {
   return value === undefined ? "—" : value.toLocaleString(locale === "ko" ? "ko-KR" : "en-US");
 }
 
-function statusFor(code: number, actionCount: number, hasQaEvidence: boolean, locale: FanLocale) {
+function statusFor(code: number, actionCount: number | undefined, hasQaEvidence: boolean, locale: FanLocale) {
   const t = copy[locale];
   if (code === 11) return { label: t.missingContract, tone: "blocked" } as const;
-  if (actionCount > 0) return { label: t.active(actionCount), tone: "active" } as const;
+  if (actionCount !== undefined && actionCount > 0) return { label: t.active(actionCount), tone: "active" } as const;
   if (hasQaEvidence) return { label: t.qaOnly, tone: "qa" } as const;
   return { label: t.unconfirmed, tone: "idle" } as const;
 }
@@ -228,6 +234,7 @@ function EvidenceItem({ action, locale }: { action: PublicOnchainAction; locale:
         <div><dt>{t.occurredDay}</dt><dd>{occurredDayLabel(action.occurredDay, locale)}</dd></div>
         <div><dt>{t.block}</dt><dd><a href={explorer(`/block/${action.blockNumber}`)} target="_blank" rel="noopener noreferrer" aria-label={`${t.block} ${action.blockNumber}, ${t.openNew}`}>{action.blockNumber}</a></dd></div>
         <div><dt>{t.easUid}</dt><dd>{action.easUid}</dd></div>
+        <div><dt>{t.source}</dt><dd><a href={explorer(`/address/${action.hubAddress}`)} target="_blank" rel="noopener noreferrer" aria-label={`${action.sourceDeployment} ${action.hubAddress}, ${t.openNew}`}>{action.sourceDeployment}</a></dd></div>
       </dl>
       <div className={styles.evidenceLinks}>
         <a href={explorer(`/tx/${action.txHash}`)} target="_blank" rel="noopener noreferrer">{t.transaction}<span aria-hidden="true"> ↗</span><span className={styles.srOnly}>, {t.openNew}</span></a>
@@ -245,7 +252,7 @@ function EvidenceItem({ action, locale }: { action: PublicOnchainAction; locale:
 export function OnchainPublicPage({ locale, result }: { locale: FanLocale; result: PublicOnchainResult }) {
   const t = copy[locale];
   const snapshot = result.state === "available" ? result.snapshot : undefined;
-  const currentActionCount = snapshot
+  const currentActionCount = snapshot?.business
     ? Object.values(snapshot.business.actionCounts).reduce((total, count) => total + count, 0)
     : undefined;
   const recentActions = snapshot
@@ -264,15 +271,15 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
       }).slice(0, 20)
     : [];
   const metricCards = [
-    { label: t.metricWallets, value: snapshot?.business.uniqueActiveWallets, scope: t.currentScope },
+    { label: t.metricWallets, value: snapshot?.business?.uniqueActiveWallets, scope: t.currentScope },
     { label: t.metricActions, value: currentActionCount, scope: t.currentScope },
-    { label: t.metricCredentials, value: snapshot?.business.mintedCredentials, scope: t.currentScope },
-    { label: t.metricPassports, value: snapshot?.business.passportCredentials, scope: t.currentScope },
+    { label: t.metricCredentials, value: snapshot?.business?.mintedCredentials, scope: t.currentScope },
+    { label: t.metricPassports, value: snapshot?.business?.passportCredentials, scope: t.currentScope },
     { label: t.metricLifecycle, value: snapshot?.raw.lifecycleTransactions, scope: t.lifecycleScope },
   ];
   const snapshotDetails = [
     [t.network, snapshot?.network ?? onchainConfig.network],
-    [t.hub, snapshot?.hubAddress ?? onchainConfig.hubAddress],
+    [t.hub, snapshot ? snapshot.deployments.map((deployment) => `${deployment.label}: ${deployment.hubAddress} · ${t.deploymentStatus[deployment.writeStatus]}`).join(" | ") : onchainConfig.hubAddress],
     [t.environment, snapshot?.environmentId ?? onchainConfig.environmentId],
     [t.schema, snapshot?.schemaUid ?? onchainConfig.schemaUid],
     [t.coverage, snapshot ? `${snapshot.fromBlock}–${snapshot.blockNumber}` : t.unavailableValue],
@@ -311,6 +318,7 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
         <FanContentContainer className={styles.content}>
           <section className={styles.section} aria-labelledby="metrics-title">
             <div className={styles.sectionHeading}><p>01</p><div><h2 id="metrics-title">{t.metricsTitle}</h2><p>{t.metricsDescription}</p></div></div>
+            {snapshot?.businessUnavailableReason ? <p className={styles.statusNote} role="status">{t.aggregateUnavailable}</p> : null}
             <dl className={styles.metricGrid}>
               {metricCards.map((metric) => <div className={styles.metric} key={metric.label}><dt>{metric.label}</dt><dd>{metricValue(metric.value, locale)}</dd><dd className={styles.metricScope}>{metric.scope}</dd></div>)}
             </dl>
@@ -322,9 +330,9 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
               <table className={styles.actionTable} aria-labelledby="actions-title">
                 <thead><tr><th scope="col">{t.code}</th><th scope="col">{t.action}</th><th scope="col">{t.definition}</th><th scope="col">{t.count}</th><th scope="col">{t.rollout}</th></tr></thead>
                 <tbody>{actionDefinitions.map((definition) => {
-                  const actionCount = snapshot && definition.code <= 10 ? (snapshot.business.actionCounts[definition.code] ?? 0) : undefined;
+                  const actionCount = snapshot?.business && definition.code <= 10 ? (snapshot.business.actionCounts[definition.code] ?? 0) : undefined;
                   const hasQaEvidence = snapshot?.actions.some((action) => action.actionCode === definition.code && action.qa) ?? false;
-                  const status = statusFor(definition.code, actionCount ?? 0, hasQaEvidence, locale);
+                  const status = statusFor(definition.code, actionCount, hasQaEvidence, locale);
                   return <tr key={definition.code}><td><code>{definition.code}</code></td><th scope="row"><strong>{definition[locale]}</strong><span>{definition.name}</span></th><td>{locale === "ko" ? definition.descriptionKo : definition.descriptionEn}</td><td className={styles.countCell}>{metricValue(actionCount, locale)}</td><td><span className={styles.status} data-tone={status.tone}>{status.label}</span></td></tr>;
                 })}</tbody>
               </table>
@@ -334,7 +342,7 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
           <section className={styles.section} aria-labelledby="evidence-title">
             <div className={styles.sectionHeading}><p>03</p><div><h2 id="evidence-title">{t.evidenceTitle}</h2><p>{t.evidenceDescription}</p></div></div>
             {snapshot ? <p className={styles.resultCount}>{t.shown(recentActions.length, snapshot.actions.length)}</p> : null}
-            {recentActions.length > 0 ? <ol className={styles.evidenceList}>{recentActions.map((action) => <EvidenceItem key={`${action.actionId}-${action.revision}`} action={action} locale={locale} />)}</ol> : <p className={styles.empty}>{result.state === "available" ? t.noEvidence : t.unavailable}</p>}
+            {recentActions.length > 0 ? <ol className={styles.evidenceList}>{recentActions.map((action) => <EvidenceItem key={`${action.hubAddress}-${action.actionId}-${action.revision}`} action={action} locale={locale} />)}</ol> : <p className={styles.empty}>{result.state === "available" ? t.noEvidence : t.unavailable}</p>}
             {snapshot ? (
               <div className={styles.lifecycle}>
                 <h3>{t.lifecycleTitle}</h3>
@@ -342,7 +350,7 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
                 <p className={styles.resultCount}>{t.lifecycleShown(recentTransactions.length, snapshot.transactions.length)}</p>
                 <ul className={styles.lifecycleList}>
                   {recentTransactions.map((transaction) => (
-                    <li key={`${transaction.kind}-${transaction.txHash}`}>
+                    <li key={`${transaction.hubAddress}-${transaction.kind}-${transaction.txHash}`}>
                       <div><strong>{t.transactionKinds[transaction.kind]}</strong><span>{transaction.qa ? t.qa : transaction.origin === "HISTORICAL" ? t.history : t.current}</span></div>
                       <a href={explorer(`/tx/${transaction.txHash}`)} target="_blank" rel="noopener noreferrer" aria-label={`${t.transactionKinds[transaction.kind]} ${transaction.txHash}, ${t.openNew}`}>{transaction.txHash}<span aria-hidden="true"> ↗</span></a>
                       <span>#{transaction.blockNumber}</span>

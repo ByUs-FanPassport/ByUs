@@ -2,6 +2,7 @@ import { expect, it, vi } from "vitest";
 import {
   encodeAbiParameters,
   encodeEventTopics,
+  encodeFunctionData,
   getAddress,
   keccak256,
   type Address,
@@ -22,7 +23,11 @@ const passport = address("14");
 const stamp = address("15");
 const environmentId = hash("21");
 const schemaUid = hash("22");
-const occurrenceId = hash("23");
+const sourceOccurrence = hash("23");
+const occurrenceId = keccak256(encodeAbiParameters(
+  [{ type: "uint256" }, { type: "address" }, { type: "bytes32" }, { type: "bytes32" }],
+  [91342n, hub, environmentId, sourceOccurrence],
+));
 const actionId = keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint32" }], [occurrenceId, 1]));
 const easUid = hash("24");
 const creatorId = hash("25");
@@ -95,6 +100,15 @@ function makeFixture(options: {
     schemaUID: schemaUid, refUID: zeroHash, fan, revision: 1, actionCode: 10, schemaVersion: 1,
     policyVersion: 1, status: options.invalidated ? 3 : 2, origin: 0, migrationBatchId,
   };
+  const request = {
+    sourceOccurrence, revision: 1, actionCode: 10, schemaVersion: 1, policyVersion: 1,
+    fan, creatorId, campaignId, occurredDay: 1, evidenceCommitment: hash("41"),
+    migrationBatchId, bindingVersion: 1,
+  } as const;
+  const intents = refs.map((ref) => ({
+    kind: ref.kind, mode: ref.linkOrigin === 0 ? 0 : 1, issuanceKey: ref.issuanceKey,
+    tokenId: ref.tokenId, metadataUri: "",
+  }));
   const defaultLogs = [
     ...refs.map((ref) => hubLog("CredentialLinked", { ref }, options.credentialTransactionHash)),
     hubLog("FanActionRecorded", {}),
@@ -111,6 +125,7 @@ function makeFixture(options: {
       if (functionName === "getSchema") return schemaUid;
       if (functionName === "getAction") return record;
       if (functionName === "latestActionId") return options.latestActionId ?? actionId;
+      if (functionName === "hashRequest") return record.requestHash;
     }
     if (getAddress(target) === getAddress(eas)) {
       if (options.easFailure) throw new Error("EAS RPC unavailable");
@@ -139,6 +154,11 @@ function makeFixture(options: {
     getTransactionReceipt: vi.fn().mockResolvedValue({
       transactionHash: options.receiptTransactionHash ?? txHash, blockNumber: 100n, blockHash: eventBlockHash, status: "success", logs: options.receiptLogs ?? [],
     }),
+    getTransaction: vi.fn(async ({ hash: requestedHash }: { hash: Hash }) => ({
+      hash: requestedHash,
+      blockNumber: 100n, blockHash: eventBlockHash, to: hub,
+      input: encodeFunctionData({ abi: actionHubAbi, functionName: "recordAndIssue", args: [request, intents] }),
+    })),
   };
   return { client, options: {
     rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: hub, fromBlock: 1n,
@@ -150,7 +170,7 @@ it("returns a finalized, pinned snapshot and deduplicates lifecycle events by tr
   const fixture = makeFixture({ invalidated: true, includeInvalidation: true });
   const result = await readFinalizedActionSnapshot(fixture.options);
   expect(result).toMatchObject({ blockNumber: 120n, blockHash: finalBlockHash, timestamp: 200_000n });
-  expect(result.actions[0]).toMatchObject({ easUid, creatorId, campaignId, occurredDay: 1, originalRecipient: getAddress(fan), finality: "finalized" });
+  expect(result.actions[0]).toMatchObject({ sourceOccurrence, easUid, creatorId, campaignId, occurredDay: 1, originalRecipient: getAddress(fan), finality: "finalized" });
   expect(result.lifecycleTransactions).toEqual([expect.objectContaining({ kind: "invalidate", actionIds: [actionId], recipients: [getAddress(fan)] })]);
   expect(fixture.client.getLogs).toHaveBeenCalledWith(expect.objectContaining({ fromBlock: 1n, toBlock: 120n }));
 });
@@ -202,6 +222,7 @@ it("classifies a correction transaction once and rejects an older reported lates
       if (functionName === "getSchema") return schemaUid;
       if (functionName === "getAction") return records.get(String(args?.[0]).toLowerCase())!;
       if (functionName === "latestActionId") return reportedLatestActionId;
+      if (functionName === "hashRequest") return Number((args?.[1] as { revision: number }).revision) === 1 ? hash("42") : hash("43");
     }
     if (getAddress(target) === getAddress(eas)) {
       const item = sameUid(args?.[0], easUid) ? first.attestation : next.attestation;
@@ -209,6 +230,25 @@ it("classifies a correction transaction once and rejects an older reported lates
     }
     throw new Error(`Unexpected ${functionName}`);
   });
+  base.client.getTransaction.mockImplementation(async ({ hash: requestedHash }: { hash: Hash }) => ({
+    hash: requestedHash,
+    blockNumber: 100n, blockHash: eventBlockHash, to: hub,
+    input: requestedHash === correctionTx
+      ? encodeFunctionData({
+          abi: actionHubAbi, functionName: "correct", args: [actionId, {
+            sourceOccurrence, revision: 2, actionCode: 10, schemaVersion: 1, policyVersion: 1,
+            fan: nextFan, creatorId, campaignId, occurredDay: 1, evidenceCommitment: hash("41"),
+            migrationBatchId, bindingVersion: 1,
+          }, []],
+        })
+      : encodeFunctionData({
+          abi: actionHubAbi, functionName: "recordAndIssue", args: [{
+            sourceOccurrence, revision: 1, actionCode: 10, schemaVersion: 1, policyVersion: 1,
+            fan, creatorId, campaignId, occurredDay: 1, evidenceCommitment: hash("41"),
+            migrationBatchId, bindingVersion: 1,
+          }, []],
+        }),
+  }));
   const result = await readFinalizedActionSnapshot(base.options);
   expect(result.lifecycleTransactions).toHaveLength(2);
   expect(result.lifecycleTransactions.find((item) => item.txHash === correctionTx)).toMatchObject({
@@ -225,6 +265,14 @@ it("fails closed when the finalized block hash changes during the read", async (
 
 it("rejects a latest action id that is absent from the complete record log set", async () => {
   await expect(readFinalizedActionSnapshot(makeFixture({ latestActionId: hash("fa") }).options)).rejects.toThrow("latest action log incomplete");
+});
+
+it("rejects a recorded event whose canonical transaction did not call the allowlisted Hub directly", async () => {
+  const fixture = makeFixture();
+  fixture.client.getTransaction.mockResolvedValue({
+    hash: txHash, blockNumber: 100n, blockHash: eventBlockHash, to: address("77"), input: "0x",
+  });
+  await expect(readFinalizedActionSnapshot(fixture.options)).rejects.toThrow("transaction location mismatch");
 });
 
 it("rejects a latest action event belonging to a different occurrence", async () => {
@@ -323,6 +371,56 @@ it("rejects a zero-quantity ERC-1155 mint", async () => {
     blockNumber: 100n, blockHash: eventBlockHash, transactionHash: txHash, logIndex: 0, transactionIndex: 0,
   };
   await expect(readFinalizedActionSnapshot(makeFixture({ refs: [ref], receiptLogs: [transfer] }).options)).rejects.toThrow("mint provenance mismatch");
+});
+
+it("reads every allowlisted Hub at one common finalized block and keeps an empty new deployment available", async () => {
+  const newHub = address("17");
+  const getBlock = vi.fn(async ({ blockTag, blockNumber }: { blockTag?: string; blockNumber?: bigint }) => {
+    if (blockTag === "finalized" || blockNumber === 120n) return { number: 120n, hash: finalBlockHash, timestamp: 200_000n };
+    throw new Error("Unexpected block");
+  });
+  const client = {
+    getChainId: vi.fn().mockResolvedValue(91342), getBlock,
+    getLogs: vi.fn().mockResolvedValue([]),
+    readContract: vi.fn(async ({ functionName }: { functionName: string }) => {
+      if (functionName === "environmentId") return environmentId;
+      if (functionName === "eas") return eas;
+      throw new Error(`Unexpected ${functionName}`);
+    }),
+  };
+  const result = await readFinalizedActionSnapshot({
+    rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: newHub, fromBlock: 1n,
+    deployments: [
+      { label: "Legacy ActionHub", hubAddress: hub, fromBlock: 1n },
+      { label: "New ActionHub", hubAddress: newHub, fromBlock: 110n },
+    ],
+    environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp }, client: client as unknown as PublicClient,
+  });
+  expect(getBlock.mock.calls.filter(([request]) => request.blockTag === "finalized")).toHaveLength(1);
+  expect(client.getLogs).toHaveBeenCalledTimes(2);
+  expect(client.getLogs).toHaveBeenCalledWith(expect.objectContaining({ address: hub, fromBlock: 1n, toBlock: 120n }));
+  expect(result.deployments).toEqual([
+    expect.objectContaining({ label: "Legacy ActionHub", actionCount: 0 }),
+    expect.objectContaining({ label: "New ActionHub", actionCount: 0 }),
+  ]);
+});
+
+it("fails the whole multi-Hub snapshot when one source cannot be read", async () => {
+  const newHub = address("17");
+  const client = {
+    getChainId: vi.fn().mockResolvedValue(91342),
+    getBlock: vi.fn().mockResolvedValue({ number: 120n, hash: finalBlockHash, timestamp: 200_000n }),
+    getLogs: vi.fn(async ({ address: target }: { address: Address }) => {
+      if (getAddress(target) === getAddress(newHub)) throw new Error("new Hub RPC unavailable");
+      return [];
+    }),
+    readContract: vi.fn(async ({ functionName }: { functionName: string }) => functionName === "environmentId" ? environmentId : eas),
+  };
+  await expect(readFinalizedActionSnapshot({
+    rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: newHub, fromBlock: 1n,
+    deployments: [{ hubAddress: hub, fromBlock: 1n }, { hubAddress: newHub, fromBlock: 110n }],
+    environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp }, client: client as unknown as PublicClient,
+  })).rejects.toThrow("new Hub RPC unavailable");
 });
 
 function sameUid(value: unknown, expected: Hash): boolean {

@@ -47,6 +47,8 @@ export const actionHubAbi = [
   { type: "event", name: "CredentialLinked", inputs: [{ indexed: true, name: "actionId", type: "bytes32" }, { indexed: true, name: "nftContract", type: "address" }, { indexed: true, name: "tokenId", type: "uint256" }, { indexed: false, name: "credentialKind", type: "uint8" }, { indexed: false, name: "issuanceKey", type: "bytes32" }, { indexed: false, name: "linkOrigin", type: "uint8" }] },
   { type: "event", name: "FanActionInvalidated", inputs: [{ indexed: true, name: "actionId", type: "bytes32" }, { indexed: true, name: "easUID", type: "bytes32" }, { indexed: false, name: "reasonCode", type: "uint16" }] },
   { type: "event", name: "FanActionCorrected", inputs: [{ indexed: true, name: "previousActionId", type: "bytes32" }, { indexed: true, name: "newActionId", type: "bytes32" }, { indexed: true, name: "occurrenceId", type: "bytes32" }] },
+  { type: "function", name: "invalidate", stateMutability: "nonpayable", inputs: [{ name: "actionId", type: "bytes32" }, { name: "reasonCode", type: "uint16" }], outputs: [{ name: "changed", type: "bool" }] },
+  { type: "function", name: "correct", stateMutability: "nonpayable", inputs: [{ name: "expectedPreviousActionId", type: "bytes32" }, { name: "req", type: "tuple", components: requestComponents }, { name: "linkExisting", type: "tuple[]", components: intentComponents }], outputs: [{ name: "result", type: "tuple", components: [{ name: "actionId", type: "bytes32" }, { name: "easUID", type: "bytes32" }, { name: "requestHash", type: "bytes32" }, { name: "recordHash", type: "bytes32" }] }] },
 ] as const;
 
 export const easAbi = [

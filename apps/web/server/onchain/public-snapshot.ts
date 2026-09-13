@@ -10,7 +10,15 @@ let pending: Promise<PublicOnchainSnapshot> | undefined;
 const readSnapshot = unstable_cache(async () => {
   pending ??= readFinalizedActionSnapshot(onchainConfig).then((snapshot) => projectPublicOnchainSnapshot(snapshot)).finally(() => { pending = undefined; });
   return pending;
-}, ["byus-public-onchain-v2-finality-provenance", onchainConfig.hubAddress, onchainConfig.environmentId, ...onchainConfig.qaWallets], { revalidate: 300 });
+}, [
+  "byus-public-onchain-v3-multi-hub-calldata-provenance",
+  ...onchainConfig.deployments.flatMap(({ hubAddress, fromBlock, label, writeStatus }) => [hubAddress, fromBlock.toString(), label, writeStatus]),
+  onchainConfig.environmentId,
+  onchainConfig.schemaUid,
+  onchainConfig.easAddress,
+  ...Object.entries(onchainConfig.assets).flatMap(([kind, address]) => [kind, address]),
+  ...onchainConfig.qaWallets,
+], { revalidate: 300 });
 
 export async function getPublicOnchainResult(): Promise<PublicOnchainResult> {
   try {

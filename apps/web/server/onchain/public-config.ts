@@ -5,7 +5,12 @@ export const onchainConfig = {
   rpcUrl: "https://sepolia-rpc.giwa.io",
   explorer: "https://sepolia-explorer.giwa.io",
   fromBlock: 35954883n,
-  hubAddress: "0xba3d8f804a316ef0675083e0ed6a1b5435b7bf0d",
+  // Compatibility pointer for the currently active writer route. Multi-Hub reads use deployments below.
+  hubAddress: "0xbd9991a26d0a0bf744ecdb8ad4f59f60a9132956",
+  deployments: [
+    { label: "Legacy ActionHub", hubAddress: "0xba3d8f804a316ef0675083e0ed6a1b5435b7bf0d", fromBlock: 35954883n, writeStatus: "historical" },
+    { label: "New ActionHub", hubAddress: "0xbd9991a26d0a0bf744ecdb8ad4f59f60a9132956", fromBlock: 35969543n, writeStatus: "current" },
+  ],
   environmentId: "0xd5bc532db275cd70e5f55280b01cd2acc6b30b90d5aaa451adeb4b9a8f02c264",
   schemaUid: "0xbd97671d89c9f4bb246e33369389332486f406ab821a0c7f88860034759c5c0b",
   easAddress: "0x4200000000000000000000000000000000000021",
@@ -14,12 +19,13 @@ export const onchainConfig = {
 } as const;
 
 export const officialAddresses = [
-  { name: "ByUs ActionHub", role: "actionHub", address: onchainConfig.hubAddress },
+  { name: "ByUs ActionHub · new", role: "actionHub", address: onchainConfig.deployments[1].hubAddress },
+  { name: "ByUs ActionHub · legacy", role: "actionHub", address: onchainConfig.deployments[0].hubAddress },
   { name: "Fan Passport · ERC-721", role: "passport", address: onchainConfig.assets[0] },
   { name: "ByUs Stamp · ERC-1155", role: "stamp", address: onchainConfig.assets[1] },
   { name: "ByUs ActionHub implementation", role: "implementation", address: "0x049b758b3d1cc0c66408b264c7f9a96ea479860b" },
   { name: "ByUs ActionCodec", role: "codec", address: "0x4e44a1c183bac430f30033bd1a639c696b93612a" },
-  { name: "ByUs PublicContextRegistry V2", role: "registry", address: "0xc25bb560bd308e17810d6241af67f62c4227fa10" },
+  { name: "ByUs PublicContextRegistry V3", role: "registry", address: "0x4e104e5dfb3d466a2aac9ed0cf7572578068529b" },
   { name: "EAS", role: "eas", address: onchainConfig.easAddress },
   { name: "Schema Registry", role: "schema", address: "0x4200000000000000000000000000000000000020" },
   { name: "ByUs Timelock", role: "timelock", address: "0x40eaeb0b73c50da5053502eb3b836a6effe54642" },

@@ -115,6 +115,12 @@ begin
       '2','0x7777777777777777777777777777777777777777'));
   insert into public.fan_action_producer_routes(action_code,binding_id,enabled,policy_version,enabled_at)
     values(2,binding,true,1,clock_timestamp());
+  insert into public.fan_action_verified_creators(
+    binding_id,creator_id,verified_block_number,verified_block_hash,verified_at
+  ) values(binding,creator,123456,'0x'||repeat('8',64),clock_timestamp());
+  insert into public.fan_action_verified_campaigns(
+    binding_id,campaign_id,creator_id,verified_block_number,verified_block_hash,verified_at
+  ) values(binding,generated.id,creator,123456,'0x'||repeat('8',64),clock_timestamp());
   booking:=public.reserve_owned_live_event(actor,generated.id,booking_key,stamp,'byus:stamp:v1:'||stamp,'0x'||repeat('d',64));
   retried:=public.reserve_owned_live_event(actor,generated.id,gen_random_uuid(),gen_random_uuid(),'unused','unused');
   perform pg_temp.assert(booking=retried,'fresh transport retry changed booking result');

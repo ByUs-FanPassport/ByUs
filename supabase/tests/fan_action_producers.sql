@@ -154,6 +154,7 @@ end $$;
 do $$
 declare
   creator uuid:='fa110000-0000-4000-8000-000000000001';
+  binding uuid:='fa110000-0000-4000-8000-000000000004';
   private_creator uuid:='fa110000-0000-4000-8000-000000000014';
   owner uuid:='fa110000-0000-4000-8000-000000000003';
   invitee uuid:='fa110000-0000-4000-8000-000000000007';
@@ -270,6 +271,9 @@ begin
     if sqlerrm<>'FAN_ACTION_CAMPAIGN_NOT_PUBLIC' then raise; end if;
   end;
   update public.live_events set publication_status='published',published_at=observed,ever_published_at=observed where id=live_reserve;
+  insert into public.fan_action_verified_campaigns(
+    binding_id,campaign_id,creator_id,verified_block_number,verified_block_hash,verified_at
+  ) values(binding,live_reserve,creator,123456,'0x'||repeat('8',64),clock_timestamp());
   insert into public.live_reward_setting_revisions(live_event_id,revision,policy_version,lifecycle_status,
     mission_score,mission_ticket,journey_bonus_ticket,correlation_id,published_at)
     select live_reserve,2,activation.policy_version,'published',1,1,0,
@@ -279,6 +283,13 @@ begin
     'byus:stamp:v1:'||reservation_stamp::text,'0x'||repeat('d',64));
   perform pg_temp.assert(exists(select 1 from public.stamps where id=reservation_stamp and fan_action_outbox_id is not null and blockchain_job_id is null),
     'enabled reservation did not use v2');
+  result:=public.reserve_owned_live_event(owner,live_reserve,'fa130000-0000-4000-8000-000000000011',reservation_stamp,
+    'byus:stamp:v1:'||reservation_stamp::text,'0x'||repeat('d',64));
+  perform pg_temp.assert((select count(*) from public.live_reservations
+      where app_user_id=owner and live_event_id=live_reserve)=1
+      and (select count(*) from public.fan_action_occurrences
+        where app_user_id=owner and source_namespace='live_reservations')=1,
+    'verified campaign replay duplicated its business or native occurrence');
   result:=public.attend_owned_live_event(owner,'fan-action-live','fa130000-0000-4000-8000-000000000012','FAN2026',true,
     attendance_stamp,'byus:stamp:v1:'||attendance_stamp::text,'0x'||repeat('e',64));
   select id into strict attendance_id from public.live_attendances where app_user_id=owner and live_event_id=live_reserve;
@@ -315,6 +326,9 @@ begin
     select live_mission,locale,'Fan action mission','Fan action mission','Fan action mission'
     from (values('ko'::public.content_locale),('en'::public.content_locale)) locale(locale);
   update public.live_events set publication_status='published',published_at=observed,ever_published_at=observed where id=live_mission;
+  insert into public.fan_action_verified_campaigns(
+    binding_id,campaign_id,creator_id,verified_block_number,verified_block_hash,verified_at
+  ) values(binding,live_mission,creator,123456,'0x'||repeat('8',64),clock_timestamp());
   insert into public.live_reward_setting_revisions(live_event_id,revision,policy_version,lifecycle_status,
     mission_score,mission_ticket,journey_bonus_ticket,correlation_id,published_at)
     select live_mission,2,activation.policy_version,'published',1,1,0,
@@ -414,16 +428,21 @@ declare item record;definition text;
 begin
   for item in select * from (values
     ('public.submit_owned_quiz_attempt(uuid,uuid,uuid,text,text,text,text)'::regprocedure,'fan_action_native_enabled(1,p_app_user_id,attempt_record.celebrity_id)'),
-    ('public.reserve_owned_live_event(uuid,uuid,uuid,uuid,text,text)'::regprocedure,'fan_action_native_enabled(2,p_app_user_id)'),
-    ('public.attend_owned_live_event(uuid,text,uuid,text,uuid,text,text)'::regprocedure,'fan_action_native_enabled(3,p_app_user_id)'),
-    ('public.submit_owned_live_mission(uuid,uuid,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(4,p_app_user_id)'),
-    ('public.submit_owned_live_survey(uuid,text,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(5,p_app_user_id)'),
+    ('public.reserve_owned_live_event(uuid,uuid,uuid,uuid,text,text)'::regprocedure,'fan_action_native_enabled(2,p_app_user_id,live_record.celebrity_id,live_record.id)'),
+    ('public.attend_owned_live_event_before_recurring_live(uuid,text,uuid,text,uuid,text,text)'::regprocedure,'fan_action_native_enabled(3,p_app_user_id,live_record.celebrity_id,live_record.id)'),
+    ('public.submit_owned_live_mission(uuid,uuid,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(4,p_app_user_id,live_record.celebrity_id,mission.live_event_id)'),
+    ('public.submit_owned_live_survey(uuid,text,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(5,p_app_user_id,response_record.celebrity_id,response_record.live_event_id)'),
     ('public.react_to_creator(uuid,uuid,uuid,uuid,text)'::regprocedure,'fan_action_native_enabled(6,p_app_user_id,p_celebrity_id)'),
     ('public.claim_owned_live_collectible(uuid,text,uuid)'::regprocedure,'fan_action_native_enabled(11,p_app_user_id)')
   ) v(signature,marker) loop
     definition:=pg_get_functiondef(item.signature);
     perform pg_temp.assert(position(item.marker in definition)>0,item.signature::text||' is missing its v2 branch');
   end loop;
+  definition:=pg_get_functiondef('public.attend_owned_live_event(uuid,text,uuid,text,uuid,text,text)'::regprocedure);
+  perform pg_temp.assert(
+    (length(definition)-length(replace(definition,'public.attend_owned_live_event_before_recurring_live(','')))
+      / length('public.attend_owned_live_event_before_recurring_live(')=1,
+    'recurring LIVE attendance wrapper no longer delegates exactly once to the patched producer');
   definition:=pg_get_functiondef('public.issue_community_stamp(uuid,uuid,public.community_stamp_kind,text)'::regprocedure);
   perform pg_temp.assert(position('fan_action_native_enabled(v_action_code,p_app_user_id,p_celebrity_id)' in definition)>0,
     'community producer is missing action codes 7-10 branch');

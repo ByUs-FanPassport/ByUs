@@ -2,6 +2,7 @@ import {
   createPublicClient,
   decodeAbiParameters,
   decodeEventLog,
+  decodeFunctionData,
   defineChain,
   encodeAbiParameters,
   encodeEventTopics,
@@ -48,6 +49,14 @@ export interface FinalizedActionSnapshot {
   timestamp: bigint;
   actions: FinalizedIndexedFanAction[];
   lifecycleTransactions: ActionLifecycleTransaction[];
+  deployments: Array<{ hubAddress: Address; fromBlock: bigint; label: string; actionCount: number }>;
+  sourceCollisions: Hash[];
+}
+
+export interface FinalizedActionDeployment {
+  hubAddress: Address;
+  fromBlock: bigint;
+  label?: string;
 }
 
 export interface FinalizedActionSnapshotOptions {
@@ -59,6 +68,7 @@ export interface FinalizedActionSnapshotOptions {
   schemaUid: Hash;
   easAddress: Address;
   assets: Readonly<Record<number, Address>>;
+  deployments?: readonly FinalizedActionDeployment[];
   client?: PublicClient;
 }
 
@@ -205,11 +215,105 @@ function uniqueStrings(values: readonly string[]): string[] {
   return [...new Map(values.map((value) => [value.toLowerCase(), value])).values()];
 }
 
-async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshotOptions, signal: AbortSignal): Promise<FinalizedActionSnapshot> {
+type DecodedRequest = {
+  sourceOccurrence: Hash; revision: number; actionCode: number; schemaVersion: number;
+  policyVersion: number; fan: Address; creatorId: Hash; campaignId: Hash;
+  occurredDay: number; evidenceCommitment: Hash; migrationBatchId: Hash; bindingVersion: number;
+};
+type DecodedIntent = { kind: number; mode: number; issuanceKey: Hash; tokenId: bigint; metadataUri: string };
+
+function canonicalOccurrenceId(chainId: number, hubAddress: Address, environmentId: Hash, sourceOccurrence: Hash): Hash {
+  return keccak256(encodeAbiParameters(
+    [{ type: "uint256" }, { type: "address" }, { type: "bytes32" }, { type: "bytes32" }],
+    [BigInt(chainId), getAddress(hubAddress), environmentId, sourceOccurrence],
+  ));
+}
+
+function decodeDirectRecordCall(input: Hash) {
+  let decoded: ReturnType<typeof decodeFunctionData<typeof actionHubAbi>>;
+  try {
+    decoded = decodeFunctionData({ abi: actionHubAbi, data: input });
+  } catch (error) {
+    throw new Error("Action public snapshot transaction calldata decode failed", { cause: error });
+  }
+  if (decoded.functionName === "recordOnly") return { operation: 0, request: decoded.args[0] as DecodedRequest, intents: [] as DecodedIntent[], expectedPreviousActionId: undefined };
+  if (decoded.functionName === "recordAndIssue") return { operation: 1, request: decoded.args[0] as DecodedRequest, intents: decoded.args[1] as readonly DecodedIntent[], expectedPreviousActionId: undefined };
+  if (decoded.functionName === "importHistorical") return { operation: 2, request: decoded.args[0] as DecodedRequest, intents: decoded.args[1] as readonly DecodedIntent[], expectedPreviousActionId: undefined };
+  if (decoded.functionName === "correct") return { operation: 3, request: decoded.args[1] as DecodedRequest, intents: decoded.args[2] as readonly DecodedIntent[], expectedPreviousActionId: decoded.args[0] as Hash };
+  throw new Error("Action public snapshot transaction is not a direct record call");
+}
+
+function assertRequestMatchesRecord(request: DecodedRequest, record: ActionRecord, event: RecordedEvent, options: FinalizedActionSnapshotOptions) {
+  if (!sameHex(canonicalOccurrenceId(options.chainId, options.hubAddress, options.environmentId, request.sourceOccurrence), record.occurrenceId)
+    || request.revision !== record.revision || request.actionCode !== record.actionCode
+    || request.schemaVersion !== record.schemaVersion || request.policyVersion !== record.policyVersion
+    || getAddress(request.fan) !== getAddress(record.fan)
+    || !sameHex(request.creatorId, event.creatorId) || !sameHex(request.campaignId, event.campaignId)
+    || request.occurredDay !== event.occurredDay || !sameHex(request.migrationBatchId, record.migrationBatchId)) {
+    throw new Error("Action public snapshot transaction source mismatch");
+  }
+}
+
+async function verifyRecordedTransaction(
+  client: PublicClient,
+  options: FinalizedActionSnapshotOptions,
+  event: RecordedEvent,
+  record: ActionRecord,
+  corrected: readonly CorrectedEvent[],
+  blockNumber: bigint,
+): Promise<Hash> {
+  const transaction = await client.getTransaction({ hash: event.transactionHash });
+  if (!sameHex(transaction.hash, event.transactionHash) || !transaction.blockHash || transaction.blockNumber == null
+    || transaction.blockNumber !== event.blockNumber || !sameHex(transaction.blockHash, event.blockHash)
+    || !transaction.to || getAddress(transaction.to) !== getAddress(options.hubAddress)) {
+    throw new Error("Action public snapshot transaction location mismatch");
+  }
+  const decoded = decodeDirectRecordCall(transaction.input);
+  assertRequestMatchesRecord(decoded.request, record, event, options);
+  if ((record.origin === 1) !== (decoded.operation === 2) && decoded.operation !== 3) {
+    throw new Error("Action public snapshot transaction origin mismatch");
+  }
+  if (decoded.operation === 3) {
+    const correction = corrected.find((item) => sameHex(item.newActionId, record.actionId));
+    if (!correction || !decoded.expectedPreviousActionId || !sameHex(decoded.expectedPreviousActionId, correction.previousActionId)) {
+      throw new Error("Action public snapshot correction calldata mismatch");
+    }
+  }
+  const requestHash = await client.readContract({
+    address: options.hubAddress, abi: actionHubAbi, functionName: "hashRequest",
+    args: [decoded.operation, decoded.request, decoded.intents], blockNumber,
+  });
+  if (!sameHex(requestHash, record.requestHash)) throw new Error("Action public snapshot transaction request hash mismatch");
+  return decoded.request.sourceOccurrence;
+}
+
+async function verifyStandaloneInvalidation(client: PublicClient, hubAddress: Address, event: InvalidatedEvent): Promise<void> {
+  const transaction = await client.getTransaction({ hash: event.transactionHash });
+  if (!sameHex(transaction.hash, event.transactionHash) || transaction.blockNumber !== event.blockNumber
+    || !transaction.blockHash || !sameHex(transaction.blockHash, event.blockHash)
+    || !transaction.to || getAddress(transaction.to) !== getAddress(hubAddress)) {
+    throw new Error("Action public snapshot invalidation transaction provenance mismatch");
+  }
+  let decoded: ReturnType<typeof decodeFunctionData<typeof actionHubAbi>>;
+  try {
+    decoded = decodeFunctionData({ abi: actionHubAbi, data: transaction.input });
+  } catch (error) {
+    throw new Error("Action public snapshot invalidation transaction calldata decode failed", { cause: error });
+  }
+  if (decoded.functionName !== "invalidate" || !sameHex(decoded.args[0], event.actionId)) {
+    throw new Error("Action public snapshot invalidation transaction calldata mismatch");
+  }
+}
+
+async function readFinalizedActionSnapshotInner(
+  options: FinalizedActionSnapshotOptions,
+  signal: AbortSignal,
+  pinnedFinalized?: { number: bigint; hash: Hash; timestamp: bigint },
+): Promise<FinalizedActionSnapshot> {
   const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
   const client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 0, fetchOptions: { signal } }) });
   assertNotAborted(signal);
-  const finalized = await client.getBlock({ blockTag: "finalized" });
+  const finalized = pinnedFinalized ?? await client.getBlock({ blockTag: "finalized" });
   if (!finalized.hash) throw new Error("Action public snapshot finalized block has no hash");
   const blockNumber = finalized.number;
   const blockHash = finalized.hash;
@@ -340,6 +444,15 @@ async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshot
     }
   }
 
+  const recordedTransactions = new Set(events.recorded.map((event) => event.transactionHash.toLowerCase()));
+  const standaloneInvalidations = events.invalidated
+    .filter((event) => !recordedTransactions.has(event.transactionHash.toLowerCase()));
+  for (let index = 0; index < standaloneInvalidations.length; index += 8) {
+    assertNotAborted(signal);
+    await Promise.all(standaloneInvalidations.slice(index, index + 8)
+      .map((event) => verifyStandaloneInvalidation(client, options.hubAddress, event)));
+  }
+
   const receiptCache = new Map<string, Awaited<ReturnType<PublicClient["getTransactionReceipt"]>>>();
   const actions: FinalizedIndexedFanAction[] = [];
   for (let index = 0; index < events.recorded.length; index += 8) {
@@ -347,6 +460,7 @@ async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshot
     const batch = await Promise.all(events.recorded.slice(index, index + 8).map(async (event): Promise<FinalizedIndexedFanAction> => {
     const record = records.get(event.actionId.toLowerCase())!;
     const refs = refsByAction.get(event.actionId.toLowerCase()) ?? [];
+    const sourceOccurrence = await verifyRecordedTransaction(client, options, event, record, events.corrected, blockNumber);
     const [attestation, easValid] = await Promise.all([
       client.readContract({ address: options.easAddress, abi: easAbi, functionName: "getAttestation", args: [record.easUID], blockNumber }),
       client.readContract({ address: options.easAddress, abi: easAbi, functionName: "isAttestationValid", args: [record.easUID], blockNumber }),
@@ -401,7 +515,7 @@ async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshot
     }));
     const isLatest = sameHex(latestByOccurrence.get(record.occurrenceId.toLowerCase())!, record.actionId);
     return {
-      chainId: options.chainId, occurrenceId: record.occurrenceId, actionId: record.actionId,
+      chainId: options.chainId, sourceOccurrence, occurrenceId: record.occurrenceId, actionId: record.actionId,
       revision: record.revision, actionCode: record.actionCode, recipient: getAddress(record.fan),
       environmentId: options.environmentId, hubProxy: getAddress(options.hubAddress), schemaUid: record.schemaUID,
       easUid: record.easUID, easAttester: getAddress(attestation.attester), easRecipient: getAddress(attestation.recipient),
@@ -432,7 +546,7 @@ async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshot
     const origins = new Set(relatedRecords.map((record) => record.origin));
     if (origins.size !== 1 || ![0, 1].includes(relatedRecords[0]!.origin)) throw new Error("Action public snapshot lifecycle origin mismatch");
     return {
-      txHash: item.txHash, blockNumber: item.blockNumber, blockHash: item.blockHash,
+      hubProxy: getAddress(options.hubAddress), txHash: item.txHash, blockNumber: item.blockNumber, blockHash: item.blockHash,
       kind: item.kinds.has("correct") ? "correct" : item.kinds.has("invalidate") ? "invalidate" : "record",
       actionIds, recipients: uniqueStrings(relatedRecords.map((record) => getAddress(record.fan))),
       origin: relatedRecords[0]!.origin === 1 ? "HISTORICAL" : "NATIVE",
@@ -441,7 +555,11 @@ async function readFinalizedActionSnapshotInner(options: FinalizedActionSnapshot
 
   const finalCheck = await client.getBlock({ blockNumber });
   if (!finalCheck.hash || !sameHex(finalCheck.hash, blockHash)) throw new Error("Action public snapshot finalized block changed during read");
-  return { blockNumber, blockHash, timestamp, actions, lifecycleTransactions };
+  return {
+    blockNumber, blockHash, timestamp, actions, lifecycleTransactions,
+    deployments: [{ hubAddress: getAddress(options.hubAddress), fromBlock: options.fromBlock, label: "ActionHub", actionCount: actions.length }],
+    sourceCollisions: [],
+  };
 }
 
 export async function readFinalizedActionSnapshot(options: FinalizedActionSnapshotOptions): Promise<FinalizedActionSnapshot> {
@@ -455,7 +573,53 @@ export async function readFinalizedActionSnapshot(options: FinalizedActionSnapsh
     }, SNAPSHOT_DEADLINE_MS);
   });
   try {
-    return await Promise.race([readFinalizedActionSnapshotInner(options, controller.signal), deadline]);
+    const read = async () => {
+      const deployments = options.deployments ?? [{ hubAddress: options.hubAddress, fromBlock: options.fromBlock, label: "ActionHub" }];
+      if (deployments.length === 0) throw new Error("Action public snapshot requires at least one deployment");
+      const uniqueHubs = new Set(deployments.map((deployment) => getAddress(deployment.hubAddress).toLowerCase()));
+      if (uniqueHubs.size !== deployments.length) throw new Error("Action public snapshot duplicate Hub deployment");
+      if (deployments.length === 1 && !options.deployments) return readFinalizedActionSnapshotInner(options, controller.signal);
+
+      const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
+      const client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 0, fetchOptions: { signal: controller.signal } }) });
+      const finalized = await client.getBlock({ blockTag: "finalized" });
+      if (!finalized.hash) throw new Error("Action public snapshot finalized block has no hash");
+      const pinned = { number: finalized.number, hash: finalized.hash, timestamp: finalized.timestamp };
+      const snapshots = await Promise.all(deployments.map(async (deployment) => {
+        const { deployments: _ignoredDeployments, ...sharedOptions } = options;
+        const snapshot = await readFinalizedActionSnapshotInner({
+          ...sharedOptions, client, hubAddress: deployment.hubAddress, fromBlock: deployment.fromBlock,
+        }, controller.signal, pinned);
+        snapshot.deployments[0]!.label = deployment.label ?? "ActionHub";
+        return snapshot;
+      }));
+      const actions = snapshots.flatMap((snapshot) => snapshot.actions);
+      if (actions.length > MAX_ACTIONS) throw new Error("Action public snapshot combined action cap exceeded");
+      const nativeSources = new Map<string, Set<string>>();
+      for (const action of actions.filter((candidate) => candidate.origin === "NATIVE")) {
+        const hubs = nativeSources.get(action.sourceOccurrence.toLowerCase()) ?? new Set<string>();
+        hubs.add(getAddress(action.hubProxy).toLowerCase());
+        nativeSources.set(action.sourceOccurrence.toLowerCase(), hubs);
+      }
+      const sourceCollisions = [...nativeSources.entries()].filter(([, hubs]) => hubs.size > 1).map(([source]) => source as Hash);
+      const lifecycleByHash = new Map<string, ActionLifecycleTransaction>();
+      for (const transaction of snapshots.flatMap((snapshot) => snapshot.lifecycleTransactions)) {
+        const key = transaction.txHash.toLowerCase();
+        const prior = lifecycleByHash.get(key);
+        if (prior && (prior.blockNumber !== transaction.blockNumber || !sameHex(prior.blockHash, transaction.blockHash))) {
+          throw new Error("Action public snapshot cross-Hub transaction location mismatch");
+        }
+        lifecycleByHash.set(key, prior ?? transaction);
+      }
+      const finalCheck = await client.getBlock({ blockNumber: pinned.number });
+      if (!finalCheck.hash || !sameHex(finalCheck.hash, pinned.hash)) throw new Error("Action public snapshot common finalized block changed during read");
+      return {
+        blockNumber: pinned.number, blockHash: pinned.hash, timestamp: pinned.timestamp,
+        actions, lifecycleTransactions: [...lifecycleByHash.values()],
+        deployments: snapshots.flatMap((snapshot) => snapshot.deployments), sourceCollisions,
+      };
+    };
+    return await Promise.race([read(), deadline]);
   } finally {
     if (timer) clearTimeout(timer);
     if (!controller.signal.aborted) controller.abort();
