@@ -88,6 +88,16 @@ export function aggregateFanActionMetrics(actions: readonly IndexedFanAction[], 
   const txs = new Set<string>();
   const passports = new Set<string>();
   const minted = new Set<string>();
+  for (const action of actions) {
+    const recipientMatches = getAddress(action.easRecipient) === getAddress(action.recipient);
+    if (!belongsToTrustDomain(action, boundary)
+      || !recipientMatches
+      || action.finality !== "finalized"
+      || (!options.includeHistorical && action.origin === "HISTORICAL")) continue;
+    for (const credential of action.credentials) {
+      if (credential.linkOrigin === linkOrigins.MINTED_NOW) minted.add(credential.credentialKey.toLowerCase());
+    }
+  }
   let collectibleClaims = 0;
   for (const action of trusted) {
     wallets.add(getAddress(action.recipient));
@@ -96,7 +106,6 @@ export function aggregateFanActionMetrics(actions: readonly IndexedFanAction[], 
     let linkedCollectible = false;
     for (const credential of action.credentials) {
       if (credential.kind === 0) passports.add(credential.credentialKey.toLowerCase());
-      if (credential.linkOrigin === linkOrigins.MINTED_NOW) minted.add(credential.credentialKey.toLowerCase());
       if (credential.kind === 2) linkedCollectible = true;
     }
     if (action.actionCode === actionCodes.COLLECTIBLE_CLAIMED && linkedCollectible) collectibleClaims += 1;

@@ -31,6 +31,46 @@ describe("fan action read model", () => {
     expect(aggregateFanActionMetrics(rows, boundary).historicalActions).toBe(1);
     expect(aggregateFanActionMetrics(rows, boundary, { includeHistorical: true }).uniqueActiveWallets).toBe(1);
   });
+
+  it("preserves an original mint after its action is revoked and corrected by linking the same NFT", () => {
+    const credential = action().credentials[0]!;
+    const rows = [
+      action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false }),
+      action({ revision: 2, actionId: h("a"), credentials: [{ ...credential, linkOrigin: 1 }] }),
+    ];
+    const metrics = aggregateFanActionMetrics(rows, boundary);
+    expect(metrics.mintedCredentials).toBe(1);
+    expect(metrics.actionCounts[1]).toBe(1);
+  });
+
+  it("counts the same credential minted across revisions only once", () => {
+    const rows = [
+      action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false }),
+      action({ revision: 2, actionId: h("a") }),
+    ];
+    expect(aggregateFanActionMetrics(rows, boundary).mintedCredentials).toBe(1);
+  });
+
+  it("does not count a credential that was only linked", () => {
+    const linked = action().credentials.map((credential) => ({ ...credential, linkOrigin: 1 }));
+    expect(aggregateFanActionMetrics([action({ credentials: linked })], boundary).mintedCredentials).toBe(0);
+  });
+
+  it.each([
+    ["foreign domain", { environmentId: h("a") }],
+    ["foreign issuer", { easAttester: address("a") }],
+    ["foreign schema", { schemaUid: h("a") }],
+    ["wrong recipient", { easRecipient: address("a") }],
+    ["unfinalized evidence", { finality: "safe" as const }],
+  ])("excludes minted credentials with %s", (_label, overrides) => {
+    expect(aggregateFanActionMetrics([action(overrides)], boundary).mintedCredentials).toBe(0);
+  });
+
+  it("applies the historical inclusion option to minted credentials across all revisions", () => {
+    const historicalMint = action({ origin: "HISTORICAL", status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false });
+    expect(aggregateFanActionMetrics([historicalMint], boundary).mintedCredentials).toBe(0);
+    expect(aggregateFanActionMetrics([historicalMint], boundary, { includeHistorical: true }).mintedCredentials).toBe(1);
+  });
 });
 
 describe("historical dry-run", () => {
