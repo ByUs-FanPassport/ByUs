@@ -16,7 +16,13 @@ describe("creator public handles", () => {
     expect(creatorSlugFromHomePath(`/${slug}`)).toBeNull();
   });
   it("keeps SQL registration rules aligned with the application", () => {
-    const sql = readFileSync(resolve(process.cwd(), "../../supabase/migrations/20260913070000_celebrity_public_handle_policy.sql"), "utf8");
+    const migrationDirectory = resolve(process.cwd(), "../../supabase/migrations");
+    const latestPolicyMigration = readdirSync(migrationDirectory)
+      .filter((name) => name.includes("celebrity_public_handle") && name.endsWith(".sql"))
+      .sort()
+      .at(-1);
+    expect(latestPolicyMigration).toBeDefined();
+    const sql = readFileSync(resolve(migrationDirectory, latestPolicyMigration!), "utf8");
     for (const array of sql.matchAll(/array\[([\s\S]*?)\]::text\[\]/g)) {
       const values = [...array[1].matchAll(/'([^']+)'/g)].map((match) => match[1]);
       expect(values.sort()).toEqual([...RESERVED_CREATOR_HANDLES].sort());
