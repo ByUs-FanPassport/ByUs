@@ -36,3 +36,6 @@
 - 20260913120000_independent_home_banners를 운영 DB에 적용했다. DDL·migration ledger를 한 트랜잭션으로 처리하고 빈 초기 데이터, KO/EN 공개 조회, 강제 RLS 및 직접 쓰기 금지 조건을 검사했다. 운영 LIVE/예약/참여 데이터 변경이나 배너 seed 없음.
 - 최신 main dbf8e21(셀럽 root handle)을 통합했다. guest-home 테스트 한 곳의 충돌은 새 /kara 주소와 분리된 LIVE 목록 동작을 함께 유지하도록 해결했다. 통합 후 관련122tests, 전체 DB 보안·동시성 검사, build/typecheck/lint 통과. 근거 work/home-banners/integration-*.log 및 production-*.json.
 - 웹 배포 진행 및 최종 결과는 이 변경의 Git 배포 상태와 후속 작업 기록에서 확인한다.
+- 첫 운영 웹 빌드 f583bb7은 새 API의 모듈 로딩 시 환경검사 때문에 실패했다. Vercel 빌드 전용 VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG를 운영 환경 오설정으로 판단했으며, 기존 관리자 API처럼 요청 시 의존성을 초기화하도록 수정했다. 환경 보안 검사는 완화하지 않았다. 해당 빌드 변수를 넣은 로컬 build와 import 회귀 검사 포함53tests 통과.
+- 첫 backend CI는 runner에 rg가 없어 동시성 검사 로그 확인에서 실패했다. 표준 grep -Fq로 바꾸고 전체 로컬 DB 파이프라인 재통과. DB 운영 마이그레이션은 최초 적용 상태를 유지하며 반복 적용하지 않는다. Vercel 실패·CI 실패 로그와 수정 검증은 work/home-banners/vercel-failed.log, production-ci-failed.log, rollout-fix-*.log에 보존했다.
+- 동일 모듈 초기화 원인으로 CS CI의 환경변수 없는 build도 실패했음을 확인했다. 수정 후 환경변수 없는 npm run build 및 build 전용 VITE 변수를 넣은 build 모두 통과했다. 최종 typecheck/lint도 통과.

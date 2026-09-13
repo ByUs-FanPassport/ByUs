@@ -45,7 +45,7 @@ then
   echo 'Concurrent create was omitted by a successful stale reorder' >&2; exit 1
 fi
 wait "$create_pid"
-rg -q 'full reorder required' "$task_dir/reorder.log"
+grep -Fq 'full reorder required' "$task_dir/reorder.log"
 [[ "$(psql -X -Atq -c 'select count(*) from public.home_banners')" == '2' ]] || exit 1
 [[ "$(psql -X -Atq -c 'select min(revision) || chr(124) || max(revision) from public.home_banners')" == '1|1' ]] || exit 1
 psql -X -q -v ON_ERROR_STOP=1 <<SQL
