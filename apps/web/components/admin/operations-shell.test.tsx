@@ -26,6 +26,7 @@ describe("AdminOperationsShell navigation", () => {
     ["/admin/celebrities/kara/quiz", "크리에이터 관리"],
     ["/admin/lives", "LIVE 관리"],
     ["/admin/lives/live-1/survey", "LIVE 관리"],
+    ["/admin/home-banners", "홈 배너"],
     ["/admin/benefits", "혜택·경품"],
     ["/admin/dashboard", "상세 통계"],
     ["/admin/fans", "회원 관리"],
@@ -85,6 +86,7 @@ describe("AdminOperationsShell navigation", () => {
     render(<AdminOperationsShell locale="en"><p>content</p></AdminOperationsShell>);
     const navigation = screen.getByRole("navigation", { name: "Admin menu" });
     expect(within(navigation).getByRole("link", { name: "Creator management" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "Home banners" })).toBeInTheDocument();
     expect(within(navigation).getByRole("link", { name: "System status" })).toBeInTheDocument();
     expect(within(navigation).getByRole("link", { name: "Issuance history" })).toBeInTheDocument();
     expect(within(navigation).getByRole("link", { name: "Admin activity log" })).toBeInTheDocument();

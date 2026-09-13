@@ -1,0 +1,7 @@
+-- Data-preserving rollback for independent home banners.
+-- Revert application readers/writers first. The new tables and rows intentionally remain
+-- available for a later re-enable; no LIVE, reservation, notification, or participation
+-- records are changed by this rollback.
+--
+-- If permanent removal is separately approved, export home_banners and
+-- home_banner_localizations before dropping the RPCs, tables, and enum.

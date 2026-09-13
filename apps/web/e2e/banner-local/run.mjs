@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { chromium, expect } from "@playwright/test";
+import { startHarness } from "./server.mjs";
+const output = path.resolve("test-results/banner-local");
+await mkdir(output, { recursive: true });
+const harness = process.env.BANNER_LOCAL_URL ? { baseURL: process.env.BANNER_LOCAL_URL, close: async () => {} } : await startHarness();
+const result = { boundary: "Production GuestHome, carousel and calendar/CSS; synthetic four-occurrence data and guest Privy adapter on loopback. Existing local artwork is test input, not final campaign art. DB/API verified separately.", checks: [], screenshots: [] };
+const browser = await chromium.launch();
+try {
+ for (const locale of ["ko", "en"]) for (const width of [360, 1440]) {
+  const page = await browser.newPage({ viewport: { width, height: 1000 }, reducedMotion: "reduce" });
+  const errors = []; page.on("pageerror", e => errors.push(e.message));
+  await page.goto(`${harness.baseURL}/?locale=${locale}`);
+  const banner = page.locator("[data-managed-home-banner]");
+  await expect(banner).toHaveCount(1); await expect(banner).toBeVisible();
+  await expect(page.locator('[aria-roledescription="slide"]')).toHaveCount(2);
+  const img = banner.locator("img"); await expect(img).toBeVisible();
+  await expect.poll(() => img.evaluate(i => i.complete && i.naturalWidth > 0)).toBe(true);
+  const expected = width < 768 ? (locale === "ko" ? "elina-card.jpg" : "guide-blue-beret") : (locale === "ko" ? "hero-beach.jpg" : "hero-source.jpg");
+  assert((await img.evaluate(i => i.currentSrc)).includes(expected));
+  assert.equal(await img.evaluate(i => getComputedStyle(i).objectFit), "contain");
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await expect(banner.getByRole("link")).toHaveAttribute("href", `/live/calendar?celebrity=elina&locale=${locale}`);
+  const hidden = page.locator('article[aria-hidden="true"]'); await expect(hidden).toHaveAttribute("inert", "");
+  assert(await hidden.locator("a").evaluate(a => { a.focus(); return document.activeElement !== a; }));
+  await page.evaluate(() => document.fonts.ready);
+  const file = path.join(output, `${locale}-${width}.png`); await page.screenshot({ path: file, fullPage: true }); result.screenshots.push(file);
+  await page.getByRole("button", { name: locale === "ko" ? "다음 배너" : "Next banner", exact: true }).click();
+  await expect(page.getByRole("heading", { name: locale === "ko" ? "엘리나와 함께 ByUs 참여 가이드" : "Your ByUs guide with Elina" })).toBeVisible();
+  assert.deepEqual(errors, []); result.checks.push(`${locale}/${width}: artwork, contain, locale CTA, inert, guide navigation, no overflow/errors`); await page.close();
+ }
+ const page = await browser.newPage({ viewport: { width: 360, height: 1000 }, reducedMotion: "reduce" });
+ await page.goto(`${harness.baseURL}/?locale=en&scenario=fallback`);
+ await expect(page.locator('picture[data-mobile-fallback="true"]')).toBeVisible();
+ await expect.poll(() => page.locator('[data-managed-home-banner] img').evaluate(i => i.currentSrc)).toContain("hero-source.jpg");
+ await page.goto(`${harness.baseURL}/?locale=en&scenario=broken`);
+ await expect(page.locator("[data-banner-image-unavailable]")).toBeVisible();
+ await expect(page.getByRole("link", { name: "View the schedule" })).toBeVisible();
+ await page.goto(`${harness.baseURL}/?locale=ko&scenario=unpublished`);
+ await expect(page.locator("[data-managed-home-banner]")).toHaveCount(0);
+ await expect(page.getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeVisible();
+ await expect(page.getByRole("heading", { name: "엘리나 정기 LIVE 1" })).toBeVisible();
+ await page.setViewportSize({ width: 1440, height: 1000 });
+ await page.goto(`${harness.baseURL}/live/calendar?locale=ko`);
+ await expect(page.getByRole("heading", { name: "LIVE 캘린더", exact: true })).toBeVisible();
+ const slugs = await page.locator('a[href*="/live/elina-week-"]').evaluateAll(nodes => [...new Set(nodes.map(n => new URL(n.href).pathname))]); assert.equal(slugs.length, 4);
+ result.checks.push("same-language desktop fallback; failed image CTA; unpublished keeps guide/list; calendar four occurrences"); await page.close();
+ await writeFile(path.join(output, "evidence.json"), JSON.stringify(result, null, 2)); console.log(JSON.stringify(result, null, 2));
+} finally { await browser.close(); await harness.close(); }

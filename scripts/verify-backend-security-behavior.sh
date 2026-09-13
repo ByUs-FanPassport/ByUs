@@ -9,6 +9,8 @@ bash "$root_dir/scripts/verify-phone-sms-enrollment-concurrency.sh"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/live_alert_delivery_safety.sql"
 bash "$root_dir/scripts/verify-email-send-concurrency.sh"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/live_alert_cutover.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/home_banners.sql"
+bash "$root_dir/scripts/verify-home-banner-concurrency.sh"
 bash "$root_dir/scripts/verify-live-alert-cutover-concurrency.sh"
 
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/community_stamps_behavior.sql"

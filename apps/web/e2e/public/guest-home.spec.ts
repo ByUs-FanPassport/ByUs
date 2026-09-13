@@ -13,29 +13,14 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
   await page.goto("/");
 
   await expect(page).toHaveTitle(/ByUs/);
-  const heroLives = page.locator(
-    'section[aria-labelledby="live-heading"] article[aria-roledescription="slide"]',
-  );
-  const upcomingLives = page.locator("#upcoming article");
-  const heroLiveCount = await heroLives.count();
-  await expect(upcomingLives).toHaveCount(heroLiveCount);
-
-  const primaryAction = page.getByRole("link", { name: /라이브 입장하기|라이브 예약하기|LIVE 상세보기/ });
-  if (heroLiveCount > 0) {
-    await expect(primaryAction).toBeVisible();
-    const actionLabel = (await primaryAction.textContent()) ?? "";
-    if (actionLabel.includes("라이브 예약하기")) {
-      await expect(primaryAction).toHaveAttribute("href", /\/login\?returnTo=%2Flive%2F.+&intent=reserve/);
-    } else {
-      await expect(primaryAction).toHaveAttribute("href", /^\/live\//);
-      const hero = primaryAction.locator("xpath=ancestor::article[1]");
-      await expect(hero.locator("p").first()).toContainText(/종료|취소|LIVE/);
-    }
-  } else {
-    await expect(primaryAction).toHaveCount(0);
-    await expect(page.getByText("새로운 LIVE를 준비하고 있어요.")).toBeVisible();
-    await expect(page.getByText("현재 공개된 LIVE가 없습니다.")).toBeVisible();
-  }
+  const hero = page.getByRole("region", { name: "홈 배너", exact: true });
+  const managedBanners = hero.locator("[data-managed-home-banner]");
+  // Occurrences and banners are independent; the existing guide is the final slide.
+  await expect(hero.locator('article[aria-roledescription="slide"]')).toHaveCount(await managedBanners.count() + 1);
+  const primaryAction = hero.locator('article[data-active="true"] a').first();
+  await expect(primaryAction).toBeVisible();
+  await expect(primaryAction).toHaveAttribute("href", /^(\/(?!\/)|https:\/\/)/);
+  await expect(hero.locator('article[aria-hidden="true"]:not([inert])')).toHaveCount(0);
 
   const viewport = page.viewportSize();
   expect(viewport?.width).toBe(testInfo.project.name.endsWith("-360") ? 360 : 1440);

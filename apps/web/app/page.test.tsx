@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const repositories = vi.hoisted(() => ({
   listFeaturedPublished: vi.fn(),
+  homeBanners: vi.fn(),
   list: vi.fn(),
   listPrimaryLives: vi.fn(),
   guidePhotos: vi.fn(),
@@ -11,10 +12,13 @@ vi.mock("../server/config/env", () => ({ loadServerEnv: () => ({ SUPABASE_URL: "
 vi.mock("../server/g3/live-event-repository", () => ({ createLiveEventRepositoryFromEnvironment: () => ({ listFeaturedPublished: repositories.listFeaturedPublished }) }));
 vi.mock("../server/content/published-content-repository", () => ({ createPublishedContentRepositoryFromEnvironment: () => ({ list: repositories.list, listPrimaryLives: repositories.listPrimaryLives }) }));
 
+vi.mock("../server/content/home-banner-repository", () => ({ createHomeBannerRepository: () => ({ list: repositories.homeBanners }) }));
+
 import HomePage from "./page";
 
 describe("Home server content isolation", () => {
   beforeEach(() => {
+    repositories.homeBanners.mockReset().mockResolvedValue([]);
     repositories.guidePhotos.mockReset().mockResolvedValue(undefined);
     repositories.listFeaturedPublished.mockReset().mockResolvedValue([]);
     repositories.list.mockReset().mockResolvedValue([]);
@@ -39,6 +43,14 @@ describe("Home server content isolation", () => {
     expect(result.props.children[1].props.celebrities).toEqual([]);
   });
 
+  it("retains independent banners if live and creator lookups fail", async () => {
+    repositories.listFeaturedPublished.mockRejectedValue(new Error("live unavailable"));
+    repositories.list.mockRejectedValue(new Error("creator unavailable"));
+    repositories.homeBanners.mockResolvedValue([{ id: "independent" }]);
+    const result = await HomePage({ searchParams: Promise.resolve({}) });
+    expect(result.props.children[1].props.homeBanners).toEqual([{ id: "independent" }]);
+  });
+
   it.each([
     [{}, undefined, "all"],
     [{ role: "all" }, false, "all"],
@@ -50,9 +62,10 @@ describe("Home server content isolation", () => {
     expect(result.props.children[1].props).toMatchObject({ initialOwnedOnly, initialRole });
   });
 
-  it("uses the existing route error boundary when both main lists fail", async () => {
+  it("uses the existing route error boundary when all main content sources fail", async () => {
     repositories.listFeaturedPublished.mockRejectedValue(new Error("live unavailable"));
     repositories.list.mockRejectedValue(new Error("creators unavailable"));
+    repositories.homeBanners.mockRejectedValue(new Error("banners unavailable"));
     await expect(HomePage({ searchParams: Promise.resolve({}) })).rejects.toThrow("Home content unavailable");
   });
 });
