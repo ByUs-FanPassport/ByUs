@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { notifyAvatarChanged } from "./avatar-events";
 import { useAvatar } from "./use-avatar";
 
+const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
+
 const { auth, getAccessToken } = vi.hoisted(() => ({
   auth: { ready: true, authenticated: true, user: { id: "owner-a" } as { id: string } | undefined },
   getAccessToken: vi.fn(async () => "token" as string | null),
@@ -25,6 +28,7 @@ const avatar = (characterId = "star-cream", revision = 1, hasImage = true) => ({
 const flush = async () => { for (let index = 0; index < 10; index += 1) await Promise.resolve(); };
 
 beforeEach(() => {
+  Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 });
   auth.ready = true;
   auth.authenticated = true;
   auth.user = { id: "owner-a" };
@@ -39,6 +43,15 @@ afterEach(() => {
 });
 
 describe("private avatar resource", () => {
+  it("keeps the avatar loading without token or network access during a session transition", () => {
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-a", generation: 1 });
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const { result } = renderHook(() => useAvatar());
+    expect(result.current.state).toEqual({ status: "loading" });
+    expect(getAccessToken).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it("loads the authenticated image and refreshes only for the same owner", async () => {
     const fetcher = vi.fn(async (input: RequestInfo | URL) =>
       String(input).includes("/image?")

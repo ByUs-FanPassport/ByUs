@@ -22,7 +22,7 @@ function errorCopy(error: unknown, locale: Locale) {
     COMMUNITY_STAMP_SELF_INVITE: ["내 코드는 입력할 수 없어요.", "You can’t use your own code."],
     COMMUNITY_STAMP_ALREADY_REDEEMED: ["이미 친구 코드를 인증했어요.", "You’ve already used a friend’s code."],
     COMMUNITY_STAMP_NOT_FOUND: ["코드 또는 최애 정보를 확인해 주세요.", "Check the code or creator and try again."],
-    COMMUNITY_STAMP_WALLET_NOT_READY: ["지갑을 준비하고 있어요. 잠시 후 다시 시도해 주세요.", "Your wallet is being prepared. Please try again shortly."],
+    COMMUNITY_STAMP_WALLET_NOT_READY: ["스탬프를 받을 준비 중이에요. 잠시 후 다시 시도해 주세요.", "Your Stamps are getting ready. Please try again shortly."],
     AUTHENTICATION_REQUIRED: ["다시 로그인해 주세요.", "Please sign in again."],
   };
   return (messages[code] ?? ["완료하지 못했어요. 다시 시도해 주세요.", "Couldn’t complete this. Please try again."])[locale === "ko" ? 0 : 1];
@@ -97,6 +97,6 @@ function OwnerCollection({ locale, creator, resource }: { locale: Locale; creato
 function StampDialog({ stamp, locale, close }: { stamp: CommunityStamp; locale: Locale; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null); const ko = locale === "ko";
   useEffect(() => { const node = dialog.current; node?.showModal(); return () => { node?.close(); }; }, []);
-  const mintText = stamp.mint.status === "minted" ? (ko ? "디지털 발급이 완료됐어요." : "Digital issuance is complete.") : stamp.mint.status === "permanent_failure" ? (ko ? "디지털 발급 상태를 확인하고 있어요." : "We’re checking digital issuance.") : (ko ? "디지털 발급을 준비하고 있어요." : "Your digital edition is being prepared.");
+  const mintText = stamp.mint.status === "minted" ? (ko ? "스탬프 발급이 완료됐어요." : "Your Stamp has been issued.") : stamp.mint.status === "permanent_failure" ? (ko ? "스탬프 발급 상태를 확인하고 있어요." : "We’re checking your Stamp’s issuance status.") : (ko ? "스탬프 발급을 준비하고 있어요." : "Your Stamp is being prepared.");
   return <dialog ref={dialog} className={styles.dialog} onCancel={close} onClose={close} aria-labelledby="community-stamp-detail-title"><button className={styles.close} onClick={close} aria-label={ko ? "닫기" : "Close"}><X aria-hidden="true"/></button><CommunityStampArtwork kind={stamp.kind} locale={locale} className={styles.art} size={168} decorative/><h2 id="community-stamp-detail-title">{COMMUNITY_STAMPS[stamp.kind][locale]}</h2><p>{ko ? "받은 날" : "Earned on"} · <time dateTime={stamp.issuedAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { year:"numeric",month:"long",day:"numeric",timeZone:"Asia/Seoul" }).format(new Date(stamp.issuedAt))}</time></p><p>{mintText}</p>{stamp.mint.status === "minted" && stamp.mint.txHash && <a className={styles.action} href={`https://sepolia-explorer.giwa.io/tx/${stamp.mint.txHash}`} target="_blank" rel="noopener noreferrer">{ko ? "발급 기록 보기" : "View issuance record"}</a>}</dialog>;
 }

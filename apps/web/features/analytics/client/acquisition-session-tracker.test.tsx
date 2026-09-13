@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   record: vi.fn().mockResolvedValue(true),
   authenticated: false,
   getAccessToken: vi.fn().mockResolvedValue("token"),
+  session: { ready: true, pending: false, ownerId: null as string | null, generation: 0 },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -22,6 +23,7 @@ vi.mock("@privy-io/react-auth", () => ({
     getAccessToken: mocks.getAccessToken,
   }),
 }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => mocks.session }));
 vi.mock("./product-event-client", () => ({ recordProductEventV1: mocks.record }));
 
 import { AcquisitionSessionTracker } from "./acquisition-session-tracker";
@@ -39,6 +41,7 @@ describe("AcquisitionSessionTracker", () => {
     mocks.record.mockClear().mockResolvedValue(true);
     mocks.authenticated = false;
     mocks.getAccessToken.mockReset().mockResolvedValue("token");
+    Object.assign(mocks.session, { ready: true, pending: false, ownerId: null, generation: 0 });
   });
 
   it("records only bounded first-touch properties", async () => {
@@ -73,5 +76,20 @@ describe("AcquisitionSessionTracker", () => {
 
     await waitFor(() => expect(mocks.getAccessToken).toHaveBeenCalledTimes(1));
     expect(mocks.record).not.toHaveBeenCalled();
+  });
+
+  it("records anonymously during transition and waits for readiness before identified tracking", async () => {
+    mocks.authenticated = true;
+    Object.assign(mocks.session, { ready: false, pending: true, ownerId: "owner-a", generation: 1 });
+    const view = render(<AcquisitionSessionTracker />);
+    await waitFor(() => expect(mocks.record).toHaveBeenCalledTimes(1));
+    expect(mocks.record.mock.calls[0]).toHaveLength(1);
+    expect(mocks.getAccessToken).not.toHaveBeenCalled();
+
+    Object.assign(mocks.session, { ready: true, pending: false });
+    view.rerender(<AcquisitionSessionTracker />);
+    await waitFor(() => expect(mocks.getAccessToken).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.record).toHaveBeenCalledTimes(2));
+    expect(mocks.record.mock.calls[1]?.[1]).toBe("token");
   });
 });

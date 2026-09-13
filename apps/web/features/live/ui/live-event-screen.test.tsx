@@ -9,6 +9,7 @@ let authenticated = true;
 let authReady = true;
 let userId = "owner-a";
 let userAvailable = true;
+const session = { ready: true, pending: false, ownerId: "owner-a" as string | null, generation: 0 };
 const push = vi.fn();
 let query = "locale=ko";
 const analytics = vi.hoisted(() => ({
@@ -19,6 +20,7 @@ const analytics = vi.hoisted(() => ({
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: authReady, authenticated, getAccessToken, user: authenticated && userAvailable ? { id: userId } : null }),
 }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
 vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 
 vi.mock("next/navigation", () => ({
@@ -294,6 +296,7 @@ describe("LiveEventScreen", () => {
     authReady = true;
     userId = "owner-a";
     userAvailable = true;
+    Object.assign(session, { ready: true, pending: false, ownerId: "owner-a", generation: 0 });
     query = "locale=ko";
     push.mockReset();
     sessionStorage.clear();
@@ -632,6 +635,7 @@ describe("LiveEventScreen", () => {
     const eventId = payload().live.id;
     sessionStorage.setItem(`byus:live-reservation:${encodeURIComponent("owner-a")}:${eventId}`, "owner-a-key");
     userId = "owner-b";
+    Object.assign(session, { ownerId: "owner-b", generation: 1 });
     vi.spyOn(crypto, "randomUUID").mockReturnValue("owner-b-key");
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(Response.json(payload()))
@@ -668,6 +672,7 @@ describe("LiveEventScreen", () => {
     const signal = fetchMock.mock.calls[1][1]?.signal as AbortSignal;
 
     userId = "owner-b";
+    Object.assign(session, { ownerId: "owner-b", generation: 1 });
     rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     expect(signal.aborted).toBe(true);
     await act(async () => { resolvePost(Response.json({ reservation, completion: reservationCompletion })); });
@@ -702,11 +707,81 @@ describe("LiveEventScreen", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
 
     userId = "owner-b";
+    Object.assign(session, { ownerId: "owner-b", generation: 1 });
     rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "LIVE 예약하기" })).toBeEnabled();
+  });
+
+  it("hides owner A viewer state synchronously while owner B is pending and ignores the late anonymous response", async () => {
+    const ownerABase = payload("reserved", true);
+    const ownerA = { ...ownerABase, viewer: { ...ownerABase.viewer, collectible: {
+      eligible: true,
+      claimWindow: { from: "2026-09-18T12:30:00Z", until: "2026-09-20T12:30:00Z" },
+      claim: null,
+    } } };
+    let resolveAnonymous!: (response: Response) => void;
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(ownerA))
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => { resolveAnonymous = resolve; }))
+      .mockResolvedValueOnce(Response.json(payload()));
+    const view = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByText("예약 완료")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "디지털 소장품" })).toBeInTheDocument();
+    const tokenCallsBeforeTransition = getAccessToken.mock.calls.length;
+
+    userId = "owner-b";
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-b", generation: 1 });
+    view.rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(screen.getByRole("heading", { name: ownerA.live.title })).toBeInTheDocument();
+    expect(screen.queryByText("예약 완료")).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "디지털 소장품" })).not.toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(getAccessToken).toHaveBeenCalledTimes(tokenCallsBeforeTransition);
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toBeUndefined();
+
+    Object.assign(session, { ready: true, pending: false });
+    view.rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByRole("button", { name: "LIVE 예약하기" })).toBeEnabled();
+    await act(async () => { resolveAnonymous(Response.json(ownerA)); });
+    expect(screen.queryByText("예약 완료")).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "디지털 소장품" })).not.toBeInTheDocument();
+  });
+
+  it("clears owner A fan code and pending collectible claim before owner B becomes current", async () => {
+    const base = payload("watch_live");
+    const ownerData = {
+      ...base,
+      live: { ...base.live, effectiveStatus: "live", watch: { ...base.live.watch, available: true, mode: "live" } },
+      viewer: { ...base.viewer, collectible: {
+        eligible: true,
+        claimWindow: { from: "2026-09-18T12:30:00Z", until: "2026-09-20T12:30:00Z" },
+        claim: null,
+      } },
+    };
+    const pendingClaim = new Promise<Response>(() => undefined);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input).endsWith("/collectible") && init?.method === "POST") return pendingClaim;
+      return Promise.resolve(Response.json(ownerData));
+    });
+    const view = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    const fanCodeInput = await screen.findByRole("textbox", { name: "Fan Code 입력" });
+    fireEvent.change(fanCodeInput, { target: { value: "OWNERACODE" } });
+    fireEvent.click(await screen.findByRole("button", { name: "소장품 받기" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(true));
+
+    userId = "owner-b";
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-b", generation: 1 });
+    view.rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    Object.assign(session, { ready: true, pending: false });
+    view.rerender(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    const ownerBInput = await screen.findByRole("textbox", { name: "Fan Code 입력" });
+    expect(ownerBInput).toHaveValue("");
+    expect(await screen.findByRole("button", { name: "소장품 받기" })).toBeEnabled();
   });
 
   it("offers prize entry immediately after an Elina reservation", async () => {

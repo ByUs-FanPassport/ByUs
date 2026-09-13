@@ -89,7 +89,7 @@ describe("SupabaseSessionSyncRepository profile state", () => {
     expect(rpc).toHaveBeenCalledTimes(3);
   });
 
-  it("does not consume the login deadline when both optional projections stall", async () => {
+  it("waits for independent optional projections concurrently without skipping notification safety", async () => {
     vi.useFakeTimers();
     const rpc = vi.fn()
       .mockResolvedValueOnce({ data: [{ app_user_id: "user-1" }], error: null })
@@ -98,9 +98,36 @@ describe("SupabaseSessionSyncRepository profile state", () => {
       .mockResolvedValueOnce({ data: { completed: true, nickname: "Fan12" }, error: null });
     const repository = new SupabaseSessionSyncRepository({ rpc }, { canDeferNotificationSync: async () => true });
     const result = repository.sync(identity, wallet, "ko");
-    await vi.advanceTimersByTimeAsync(4_000);
+    await vi.advanceTimersByTimeAsync(2_000);
     await expect(result).resolves.toEqual({ completed: true, nickname: "Fan12" });
     expect(rpc).toHaveBeenCalledTimes(4);
+  });
+
+  it.each(["denied", "throws", "timeout"])("keeps notification failure closed while locale is pending (%s)", async (fallback) => {
+    vi.useFakeTimers();
+    const notificationError = new Error("notification failed");
+    const rpc = vi.fn((name: string) => {
+      if (name === "sync_privy_identity") return Promise.resolve({ data: [{ app_user_id: "user-1" }], error: null });
+      if (name === "initialize_owned_preferred_locale") return new Promise<{ data: unknown; error: null }>(() => {});
+      if (name === "sync_owned_google_notification_channel") return Promise.reject(notificationError);
+      throw new Error("Profile must not be read after an unsafe notification failure");
+    });
+    const repository = new SupabaseSessionSyncRepository({ rpc }, {
+      canDeferNotificationSync: async () => {
+        if (fallback === "throws") throw new Error("fallback failed");
+        if (fallback === "timeout") return new Promise<boolean>(() => {});
+        return false;
+      },
+    });
+    const result = repository.sync(identity, wallet, "ko");
+    const rejected = expect(result).rejects.toBe(notificationError);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual([
+      "sync_privy_identity", "initialize_owned_preferred_locale", "sync_owned_google_notification_channel",
+    ]);
+    await vi.advanceTimersByTimeAsync(2_000);
+    await rejected;
+    expect(rpc).toHaveBeenCalledTimes(3);
   });
 
   it("bounds an identity synchronization RPC that never settles", async () => {

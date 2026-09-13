@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
 import Link from "next/link";
 import type { Route } from "next";
 import { ArrowRight } from "@/components/icons";
@@ -76,6 +77,8 @@ export function CelebrityMiniCalendar({
   upcomingLive: PublishedCelebrityLive | null;
 }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
+  const session = useByUsSession();
+  const requestAuthenticated = ready && session.ready && authenticated;
   const t = copy[locale];
   const today = currentKstDate();
   const currentMonth = today.slice(0, 7);
@@ -101,9 +104,9 @@ export function CelebrityMiniCalendar({
     const controller = new AbortController();
     refreshController.current = controller;
     try {
-      const token = authenticated ? await getAccessToken() : null;
+      const token = requestAuthenticated ? await getAccessToken() : null;
       if (controller.signal.aborted) return;
-      if (authenticated && !token) throw new Error("Calendar authentication unavailable");
+      if (requestAuthenticated && !token) throw new Error("Calendar authentication unavailable");
       const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${locale}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         signal: controller.signal,
@@ -123,7 +126,9 @@ export function CelebrityMiniCalendar({
     } finally {
       if (refreshController.current === controller) refreshController.current = null;
     }
-  }, [abortCalendarRefresh, authenticated, celebrity.name, getAccessToken, locale, month]);
+  // Session generation deliberately restarts and aborts an otherwise identical public refresh.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abortCalendarRefresh, celebrity.name, getAccessToken, locale, month, requestAuthenticated, session.generation]);
 
   useEffect(() => {
     if (!ready) return;

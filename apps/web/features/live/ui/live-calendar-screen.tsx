@@ -9,6 +9,7 @@ import { CreatorImage } from "@/components/fan-ui/creator-image";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
 import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -164,6 +165,8 @@ export function LiveCalendarScreen({
   initialCelebritySlugs: readonly string[];
 }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
+  const session = useByUsSession();
+  const requestAuthenticated = ready && session.ready && authenticated;
   const [calendar, setCalendar] = useState(initialCalendar);
   const [selectedCelebritySlugs, setSelectedCelebritySlugs] = useState<string[]>([
     ...initialCelebritySlugs,
@@ -251,9 +254,9 @@ export function LiveCalendarScreen({
     const controller = new AbortController();
     refreshController.current = controller;
     try {
-      const token = authenticated ? await getAccessToken() : null;
+      const token = requestAuthenticated ? await getAccessToken() : null;
       if (controller.signal.aborted) return;
-      if (authenticated && !token) return;
+      if (requestAuthenticated && !token) return;
       const response = await fetch(
         `/api/live-events/calendar?month=${initialCalendar.month}&locale=${locale}`,
         {
@@ -270,18 +273,20 @@ export function LiveCalendarScreen({
     } finally {
       if (refreshController.current === controller) refreshController.current = null;
     }
-  }, [abortCalendarRefresh, authenticated, getAccessToken, initialCalendar.month, locale, ready]);
+  // Session generation deliberately restarts and aborts an otherwise identical public refresh.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abortCalendarRefresh, getAccessToken, initialCalendar.month, locale, ready, requestAuthenticated, session.generation]);
 
   useEffect(() => {
     if (!ready) return;
-    if (!authenticated) {
+    if (!requestAuthenticated && !session.pending) {
       abortCalendarRefresh();
       setCalendar(initialCalendar);
       return;
     }
     void refreshCalendar();
     return abortCalendarRefresh;
-  }, [abortCalendarRefresh, authenticated, initialCalendar, ready, refreshCalendar]);
+  }, [abortCalendarRefresh, initialCalendar, ready, refreshCalendar, requestAuthenticated, session.pending]);
 
   const handleStartReached = useCallback((event: LiveStartEvent) => {
     const key = `${event.id ?? "event"}:${event.startsAt}`;

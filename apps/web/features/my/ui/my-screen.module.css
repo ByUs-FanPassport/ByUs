@@ -334,3 +334,16 @@
 @media(max-width:47.99rem) {
   .activityPanel [data-fan-heading] { font-size:16px; }
 }
+
+.loadingDashboard { display:grid; gap:var(--space-8); }
+.loadingStatus { margin:0; color:var(--color-muted); font-size:14px; }
+.loadingProfile { display:grid; grid-template-columns:64px minmax(0,1fr); gap:var(--space-4); align-items:center; }
+.loadingProfile>div { display:grid; gap:12px; }
+.loadingAvatar { width:64px; height:64px; border-radius:50%; background:var(--color-soft); }
+.loadingLine { display:block; height:14px; max-width:200px; border-radius:4px; background:var(--color-soft); }
+.loadingLine:last-child { max-width:120px; }
+.loadingDashboard section { display:grid; gap:var(--space-4); }
+.loadingDashboard h2 { margin:0; font-size:18px; font-weight:700; }
+.loadingTiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); }
+.loadingTiles>span,.loadingRow { display:block; height:140px; border:1px solid var(--color-line); border-radius:var(--radius-card,16px); background:var(--color-soft); }
+.loadingRow { height:88px; }

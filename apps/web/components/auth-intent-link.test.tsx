@@ -12,9 +12,11 @@ import { getSessionStorage } from "../features/reliability/client/session-storag
 const push = vi.fn();
 let ready = true;
 let authenticated = false;
+const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready, authenticated }),
 }));
+vi.mock("./byus-session-provider", () => ({ useByUsSession: () => session }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 describe("AuthIntentLink", () => {
@@ -22,6 +24,7 @@ describe("AuthIntentLink", () => {
     push.mockReset();
     ready = true;
     authenticated = false;
+    Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 });
     takeOverlayTrigger();
     sessionStorage.clear();
     vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("11111111-1111-4111-8111-111111111111");
@@ -120,8 +123,8 @@ describe("AuthIntentLink", () => {
     expect(sessionStorage).toHaveLength(0);
   });
 
-  it("allows an explicitly safe source fallback while Privy restores", () => {
-    ready = false;
+  it("keeps even a safe fallback inert while the destination session is pending", () => {
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-a", generation: 1 });
     render(
       <AuthIntentLink locale="ko" input={input} pendingHref="/c/kara?locale=ko">
         KARA 상세보기
@@ -129,9 +132,9 @@ describe("AuthIntentLink", () => {
     );
 
     const link = screen.getByRole("link", { name: "KARA 상세보기" });
-    expect(link).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(link).not.toHaveAttribute("href");
     expect(link).toHaveAttribute("aria-busy", "true");
-    expect(link).not.toHaveAttribute("aria-disabled");
+    expect(link).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(link);
     expect(push).not.toHaveBeenCalled();
     expect(sessionStorage).toHaveLength(0);
@@ -155,6 +158,20 @@ describe("AuthIntentLink", () => {
       "/c/kara/verify?tab=home&locale=ko&authIntent=11111111-1111-4111-8111-111111111111",
     );
     expect(push).not.toHaveBeenCalledWith(expect.stringContaining("/login"));
+  });
+
+  it("starts a login intent only once across repeated activation", () => {
+    vi.useFakeTimers();
+    render(<AuthIntentLink locale="ko" input={input}>팬 인증하기</AuthIntentLink>);
+    const link = screen.getByRole("link", { name: "팬 인증하기" });
+    fireEvent.click(link);
+    fireEvent.click(link);
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(sessionStorage).toHaveLength(1);
+    vi.advanceTimersByTime(1_000);
+    fireEvent.click(link);
+    expect(push).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 
   it("exposes the shared primary emphasis and helper relationship", () => {

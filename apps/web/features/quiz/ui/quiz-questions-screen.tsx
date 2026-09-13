@@ -43,7 +43,7 @@ const copy = {
   ko: {
     sessionExpired: "로그인이 만료되었어요. 다시 로그인한 뒤 이어서 참여해 주세요.",
     closed: "이미 제출된 퀴즈예요. 결과 화면에서 인증 결과를 확인해 주세요.",
-    wallet: "Passport를 발급할 지갑을 준비하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    wallet: "Passport 발급을 준비하지 못했어요. 잠시 후 다시 시도해 주세요.",
     incomplete: "저장되지 않은 답변이 있어요. 세 문항을 다시 확인해 주세요.",
     unavailable: "현재 참여할 수 있는 팬 인증 퀴즈가 없어요.",
     loadError: "퀴즈 정보를 안전하게 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
@@ -74,7 +74,7 @@ const copy = {
   en: {
     sessionExpired: "Your sign-in expired. Sign in again to continue.",
     closed: "This quiz was already submitted. Check the result screen for your verification status.",
-    wallet: "We couldn't prepare a wallet for your Passport. Please try again in a moment.",
+    wallet: "We couldn't prepare your Passport. Please try again in a moment.",
     incomplete: "Some answers weren't saved. Review all three questions.",
     unavailable: "This fan verification quiz is not available right now.",
     loadError: "We couldn't load the quiz securely. Please try again in a moment.",

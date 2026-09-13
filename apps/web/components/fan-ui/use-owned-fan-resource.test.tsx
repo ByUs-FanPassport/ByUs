@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { notifyFanActivityUpdated } from "./fan-activity-updates";
 import { useOwnedFanResource } from "./use-owned-fan-resource";
 
+const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
+
 const parse = (value: unknown) => value as { status: string };
 const pending = (data: { status: string }) => data.status === "queued";
 const getAccessToken = async () => "token";
@@ -11,12 +14,26 @@ const response = (status: string) => Response.json({ status });
 const flush = async () => { for (let i = 0; i < 12; i += 1) await Promise.resolve(); };
 
 afterEach(() => {
+  Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 });
   vi.useRealTimers();
   vi.unstubAllGlobals();
   Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
 });
 
 describe("owned fan resource freshness", () => {
+  it("does not request or expose a private snapshot until the destination session is ready", async () => {
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-a", generation: 1 });
+    const fetcher = vi.fn(async () => response("owner-a-record"));
+    vi.stubGlobal("fetch", fetcher);
+    const { result, rerender } = renderHook(() => useOwnedFanResource("/owned", parse, auth));
+    expect(result.current.state).toEqual({ status: "loading" });
+    expect(fetcher).not.toHaveBeenCalled();
+
+    Object.assign(session, { ready: true, pending: false, generation: 1 });
+    rerender();
+    await waitFor(() => expect(result.current.state).toEqual({ status: "ready", data: { status: "owner-a-record" } }));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it("keeps a validated mutation response over an older read and allows later fresh reads", async () => {
     let resolveRead!: (response: Response) => void;
     const fetcher = vi.fn().mockResolvedValueOnce(response("before"))

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { subscribeFanActivityUpdates } from "./fan-activity-updates";
 
 type ResourceState<T> = { status: "loading" }
@@ -21,8 +22,10 @@ export function useOwnedFanResource<T>(
   shouldPoll?: (data: T) => boolean,
 ) {
   const { ready, authenticated, getAccessToken } = auth;
-  const ownerId = auth.user?.id;
-  const key = `${ready}:${authenticated}:${ownerId ?? ""}:${url ?? ""}`;
+  const session = useByUsSession();
+  const sessionReady = ready && session.ready;
+  const ownerId = session.ownerId ?? auth.user?.id;
+  const key = `${sessionReady}:${authenticated}:${ownerId ?? ""}:${session.generation}:${url ?? ""}`;
   const [snapshot, setSnapshot] = useState<{ key: string; state: ResourceState<T>; refreshFailed: boolean }>();
   const refreshRef = useRef<() => void>(() => {});
   const replaceRef = useRef<(data: T) => void>(() => {});
@@ -30,7 +33,7 @@ export function useOwnedFanResource<T>(
   const replaceData = useCallback((data: T) => replaceRef.current(data), []);
 
   useEffect(() => {
-    if (!ready || !authenticated || !url) return;
+    if (!sessionReady || !authenticated || !url) return;
     let active = true;
     let inFlight = false;
     let requestedAgain = false;
@@ -104,9 +107,9 @@ export function useOwnedFanResource<T>(
       refreshRef.current = () => {};
       replaceRef.current = () => {};
     };
-  }, [authenticated, getAccessToken, key, ownerId, parse, ready, shouldPoll, url]);
+  }, [authenticated, getAccessToken, key, ownerId, parse, sessionReady, shouldPoll, url]);
 
-  const state: ResourceState<T> = !ready ? { status: "loading" }
+  const state: ResourceState<T> = !sessionReady ? { status: "loading" }
     : !authenticated ? { status: "error", kind: "auth" }
     : !url ? { status: "error", kind: "missing" }
     : snapshot?.key === key ? snapshot.state : { status: "loading" };

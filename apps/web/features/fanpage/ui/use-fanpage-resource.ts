@@ -1,13 +1,18 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { useEffect, useState } from "react";
 
 type State<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; code: string; membershipCount?: number };
 /** Public reads may include owner context; a changed owner never sees an old snapshot. */
 export function useFanpageResource<T>(url: string | null, parse: (value: unknown) => T, keepPreviousData = false) {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
+  const session = useByUsSession();
+  const sessionReady = ready && session.ready;
+  const requestAuthenticated = sessionReady && authenticated;
+  const ownerId = requestAuthenticated ? session.ownerId ?? user?.id ?? null : null;
   const [revision, setRevision] = useState(0);
-  const ownerKey = `${url}:${ready}:${authenticated}:${user?.id ?? "guest"}`;
+  const ownerKey = `${url}:${sessionReady}:${requestAuthenticated}:${ownerId ?? "guest"}:${session.generation}`;
   const key = `${ownerKey}:${revision}`;
   const [snapshot, setSnapshot] = useState<{ key: string; ownerKey: string; state: State<T>; refreshFailed?: boolean }>();
   useEffect(() => {
@@ -15,9 +20,9 @@ export function useFanpageResource<T>(url: string | null, parse: (value: unknown
     const controller = new AbortController();
     void (async () => {
       try {
-        const token = authenticated ? await getAccessToken() : null;
+        const token = requestAuthenticated ? await getAccessToken() : null;
         if (controller.signal.aborted) return;
-        if (authenticated && !token) throw new Error("AUTHENTICATION_REQUIRED");
+        if (requestAuthenticated && !token) throw new Error("AUTHENTICATION_REQUIRED");
         const response = await fetch(url, { cache: "no-store", signal: controller.signal, headers: token ? { Authorization: `Bearer ${token}` } : undefined });
         const body = await response.json();
         if (controller.signal.aborted) return;
@@ -35,7 +40,7 @@ export function useFanpageResource<T>(url: string | null, parse: (value: unknown
       }
     })();
     return () => controller.abort();
-  }, [url, key, ownerKey, ready, authenticated, getAccessToken, parse, keepPreviousData]);
+  }, [url, key, ownerKey, ready, requestAuthenticated, getAccessToken, parse, keepPreviousData]);
   const hasCurrentData = snapshot?.key === key || (keepPreviousData && snapshot?.ownerKey === ownerKey && snapshot.state.status === "ready");
   return { state: hasCurrentData ? snapshot!.state : { status: "loading" } as State<T>, refreshFailed: snapshot?.ownerKey === ownerKey && snapshot.refreshFailed, retry: () => setRevision((value) => value + 1) };
 }

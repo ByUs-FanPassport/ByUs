@@ -11,6 +11,7 @@ import {
   type AcquisitionTouch,
 } from "../domain/acquisition-attribution";
 import { recordProductEventV1 } from "./product-event-client";
+import { useByUsSession } from "@/components/byus-session-provider";
 
 const STORAGE_KEY = "byus.acquisition.session.v1";
 const ENTRY_EVALUATED_KEY = "byus.acquisition.entry-evaluated.v1";
@@ -22,9 +23,13 @@ function storeTouch(touch: AcquisitionTouch): void {
 export function AcquisitionSessionTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, user } = usePrivy();
+  const session = useByUsSession();
+  const identifiedReady = ready && session.ready && authenticated;
+  const ownerId = session.ownerId ?? user?.id ?? null;
 
   useEffect(() => {
+    let cancelled = false;
     let touch: AcquisitionTouch | null;
     try {
       touch = readStoredAcquisitionTouch(window.sessionStorage.getItem(STORAGE_KEY));
@@ -53,10 +58,10 @@ export function AcquisitionSessionTracker() {
     if (!ready) return;
 
     void (async () => {
-      if (authenticated) {
+      if (identifiedReady) {
         if (touch.identifiedRecorded) return;
         const token = await getAccessToken();
-        if (!token) return;
+        if (cancelled || !token || !ownerId) return;
         const recorded = await recordProductEventV1(
           {
             eventName: "creator_page_view",
@@ -77,7 +82,7 @@ export function AcquisitionSessionTracker() {
           },
           token,
         );
-        if (recorded) storeTouch({ ...touch, identifiedRecorded: true });
+        if (!cancelled && recorded) storeTouch({ ...touch, identifiedRecorded: true });
         return;
       }
 
@@ -97,9 +102,10 @@ export function AcquisitionSessionTracker() {
           attribution: "session_first_touch",
         },
       });
-      if (recorded) storeTouch({ ...touch, anonymousRecorded: true });
+      if (!cancelled && recorded) storeTouch({ ...touch, anonymousRecorded: true });
     })().catch(() => undefined);
-  }, [authenticated, getAccessToken, pathname, ready, searchParams]);
+    return () => { cancelled = true; };
+  }, [getAccessToken, identifiedReady, ownerId, pathname, ready, searchParams, session.generation]);
 
   return null;
 }

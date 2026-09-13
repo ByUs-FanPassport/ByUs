@@ -3,11 +3,19 @@
 import { useOAuthTokens, usePrivy } from "@privy-io/react-auth";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-const SessionAvatarContext = createContext<(privyUserId: string) => void>(() => {});
+const SessionAvatarContext = createContext({
+  markReady: (_privyUserId: string) => {},
+  reset: () => {},
+});
 
 /** Login synchronization remains independent of this optional photo import. */
 export function useAvatarSessionReady() {
-  return useContext(SessionAvatarContext);
+  return useContext(SessionAvatarContext).markReady;
+}
+
+/** A fresh login generation must not inherit readiness from the same SDK owner. */
+export function useAvatarSessionReset() {
+  return useContext(SessionAvatarContext).reset;
 }
 
 interface PendingGrant {
@@ -23,6 +31,7 @@ export function AvatarSessionBridge({ children }: { children: ReactNode }) {
   const [synchronizedOwner, setSynchronizedOwner] = useState<string | null>(null);
   const previousOwner = useRef<string | null>(null);
   const markReady = useCallback((privyUserId: string) => setSynchronizedOwner(privyUserId), []);
+  const reset = useCallback(() => setSynchronizedOwner(null), []);
 
   useOAuthTokens({
     onOAuthTokenGrant: ({ oAuthTokens, user: oauthUser }) => {
@@ -79,5 +88,5 @@ export function AvatarSessionBridge({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [grant, owner, synchronizedOwner, getAccessToken]);
 
-  return <SessionAvatarContext.Provider value={markReady}>{children}</SessionAvatarContext.Provider>;
+  return <SessionAvatarContext.Provider value={{ markReady, reset }}>{children}</SessionAvatarContext.Provider>;
 }

@@ -1,0 +1,9 @@
+.status { position: fixed; z-index: 80; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: inline-flex; min-height: 40px; box-sizing: border-box; align-items: center; gap: 9px; padding: 9px 14px; border: 1px solid oklch(88% .012 315 / .85); border-radius: 999px; background: rgb(255 255 255 / 94%); box-shadow: 0 4px 16px rgb(23 25 28 / 9%); color: oklch(34% .02 315); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-size: 13px; font-weight: 700; backdrop-filter: blur(12px); }
+.spinner { width: 14px; height: 14px; flex: none; box-sizing: border-box; border: 2px solid oklch(80% .035 315); border-top-color: oklch(50% .16 315); border-radius: 50%; animation: session-spin .8s linear infinite; }
+.fallback { display: grid; min-height: 100svh; box-sizing: border-box; place-items: center; padding: 24px; background: #fff; color: oklch(34% .02 315); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.fallbackCard { display: flex; align-items: center; gap: 10px; }
+.fallbackCard p { margin: 0; font-size: 14px; font-weight: 700; }
+.status a, .fallbackCard a { color: oklch(42% .16 315); font-weight: 800; text-underline-offset: 3px; }
+@keyframes session-spin { to { transform: rotate(360deg); } }
+@media (max-width: 47.999rem) { .status { bottom: calc(80px + env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

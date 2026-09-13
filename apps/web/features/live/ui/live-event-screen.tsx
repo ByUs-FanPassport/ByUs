@@ -34,6 +34,7 @@ import {
 } from "react";
 
 import {
+  deriveLivePrimaryAction,
   liveEventResponseSchema,
   type LiveEventResponse,
 } from "@/features/live/domain/live-event";
@@ -52,6 +53,7 @@ import {
   readAuthIntent,
 } from "@/components/auth-intent";
 import { AuthIntentLink } from "@/components/auth-intent-link";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { withLocalePath } from "@/components/locale-path";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import {
@@ -94,7 +96,22 @@ type Locale = "ko" | "en";
 type ViewState =
   | { kind: "loading" }
   | { kind: "error"; notFound: boolean }
-  | { kind: "ready"; data: LiveEventResponse };
+  | { kind: "ready"; data: LiveEventResponse; viewerOwnerId: string | null; viewerGeneration: number };
+
+function anonymousLiveResponse(data: LiveEventResponse): LiveEventResponse {
+  const viewer = { authenticated: false, passport: "missing" as const, reservation: null };
+  return {
+    ...data,
+    viewer,
+    primaryAction: deriveLivePrimaryAction({
+      status: data.live.effectiveStatus,
+      reservationOpensAt: data.live.reservationOpensAt,
+      reservationClosesAt: data.live.reservationClosesAt,
+      now: new Date(),
+      viewer,
+    }),
+  };
+}
 
 const copy = {
   ko: {
@@ -523,21 +540,46 @@ export function LiveEventScreen({
 }) {
   const c = copy[locale];
   const { ready: authReady, authenticated, getAccessToken, user } = usePrivy();
+  const session = useByUsSession();
+  const sessionReady = authReady && session.ready;
+  const sessionOwnerId = session.ownerId ?? user?.id ?? null;
+  const requestAuthenticated = sessionReady && authenticated;
+  const privateOwnerKey = requestAuthenticated && sessionOwnerId
+    ? `${sessionOwnerId}:${session.generation}`
+    : null;
+  const interactionKey = sessionReady
+    ? `${authenticated ? sessionOwnerId ?? "missing-owner" : "guest"}:${session.generation}`
+    : null;
+  const sessionRef = useRef({ ready: sessionReady, ownerId: sessionOwnerId, generation: session.generation });
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<ViewState>(() => initialData ? { kind: "ready", data: initialData } : { kind: "loading" });
+  const [view, setView] = useState<ViewState>(() => initialData
+    ? { kind: "ready", data: anonymousLiveResponse(initialData), viewerOwnerId: null, viewerGeneration: -1 }
+    : { kind: "loading" });
+  const viewerMatchesSession = view.kind === "ready"
+    && sessionReady
+    && view.viewerOwnerId === sessionOwnerId
+    && view.viewerGeneration === session.generation;
   const [reservePending, setReservePending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [reservationCompletion, setReservationCompletion] =
     useState<FanActivityCompletion | null>(null);
   const [fanCode, setFanCode] = useState("");
-  const [attendance, setAttendance] = useState<AttendanceState>({
-    kind: "idle",
+  const [attendanceSnapshot, setAttendanceSnapshot] = useState<{ key: string | null; state: AttendanceState }>({
+    key: interactionKey, state: { kind: "idle" },
   });
+  const attendance = useMemo<AttendanceState>(
+    () => attendanceSnapshot.key === interactionKey ? attendanceSnapshot.state : { kind: "idle" },
+    [attendanceSnapshot, interactionKey],
+  );
+  const setAttendance = useCallback((state: AttendanceState) => {
+    setAttendanceSnapshot({ key: interactionKey, state });
+  }, [interactionKey]);
   const [retrySeconds, setRetrySeconds] = useState(0);
-  const [collectible, setCollectible] = useState<CollectibleOwnedState | null>(null);
+  const [collectibleSnapshot, setCollectibleSnapshot] = useState<{ key: string | null; data: CollectibleOwnedState | null }>({ key: null, data: null });
+  const collectible = collectibleSnapshot.key === privateOwnerKey ? collectibleSnapshot.data : null;
   const [collectiblePending, setCollectiblePending] = useState(false);
   const [collectibleError, setCollectibleError] = useState<string | null>(null);
   const fanCodeRef = useRef<HTMLElement>(null);
@@ -546,9 +588,22 @@ export function LiveEventScreen({
   const attendanceAttemptsRef = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
   const liveReadController = useRef<AbortController | null>(null);
+  const hasPublicViewRef = useRef(Boolean(initialData));
   const reservationControllerRef = useRef<AbortController | null>(null);
   const reservationOperationRef = useRef<Promise<void> | null>(null);
   const reservationGenerationRef = useRef(0);
+
+  useEffect(() => {
+    sessionRef.current = { ready: sessionReady, ownerId: sessionOwnerId, generation: session.generation };
+  }, [session.generation, sessionOwnerId, sessionReady]);
+
+  const getCurrentAccessToken = useCallback(async () => {
+    if (!sessionReady || !authenticated || !sessionOwnerId) return null;
+    const generation = session.generation;
+    const token = await getAccessToken();
+    const current = sessionRef.current;
+    return current.ready && current.generation === generation && current.ownerId === sessionOwnerId ? token : null;
+  }, [authenticated, getAccessToken, session.generation, sessionOwnerId, sessionReady]);
 
   useEffect(() => {
     reservationGenerationRef.current += 1;
@@ -558,22 +613,27 @@ export function LiveEventScreen({
     setActionError(null);
     setShowConfirmation(false);
     setReservationCompletion(null);
+    setFanCode("");
+    setCollectiblePending(false);
+    setCollectibleError(null);
     return () => {
       reservationGenerationRef.current += 1;
       reservationControllerRef.current?.abort();
       reservationOperationRef.current = null;
     };
-  }, [authenticated, slug, user?.id]);
+  }, [authenticated, session.generation, sessionOwnerId, slug]);
 
   const load = useCallback(async (background = false, trackPageView = !background) => {
     if (!authReady) return;
-    if (authenticated && !user?.id) return;
+    if (requestAuthenticated && !sessionOwnerId) return;
     liveReadController.current?.abort();
     const controller = new AbortController();
+    const requestGeneration = session.generation;
     liveReadController.current = controller;
-    if (!background) setView({ kind: "loading" });
+    const keepVisible = background || hasPublicViewRef.current;
+    if (!keepVisible) setView({ kind: "loading" });
     try {
-      const token = authenticated ? await withOperationDeadline(getAccessToken()) : null;
+      const token = requestAuthenticated ? await withOperationDeadline(getAccessToken()) : null;
       if (controller.signal.aborted) return;
       const result = await withRequestDeadline(async (signal) => {
         const response = await fetch(
@@ -585,16 +645,20 @@ export function LiveEventScreen({
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (!result.ok) {
-        if (!background) setView({ kind: "error", notFound: result.status === 404 });
+        if (!keepVisible) setView({ kind: "error", notFound: result.status === 404 });
         return;
       }
       const data = result.data;
       if (controller.signal.aborted) return;
-      setCollectible(data.viewer.collectible ?? null);
-      setView({ kind: "ready", data });
+      hasPublicViewRef.current = true;
+      setCollectibleSnapshot({
+        key: token && sessionOwnerId ? `${sessionOwnerId}:${requestGeneration}` : null,
+        data: token ? data.viewer.collectible ?? null : null,
+      });
+      setView({ kind: "ready", data, viewerOwnerId: token ? sessionOwnerId : null, viewerGeneration: requestGeneration });
       if (trackPageView) void (async () => {
         if (controller.signal.aborted) return;
-        const ownerId = token ? user?.id : null;
+        const ownerId = token ? sessionOwnerId : null;
         if (token && !ownerId) return;
         const idempotencyKey = await pageViewIdempotencyKey(
           "live_page_view",
@@ -618,9 +682,9 @@ export function LiveEventScreen({
       })().catch(() => undefined);
     } catch (error) {
       reportRecoveryFailure("live.load", error);
-      if (!controller.signal.aborted && !background) setView({ kind: "error", notFound: false });
+      if (!controller.signal.aborted && !keepVisible) setView({ kind: "error", notFound: false });
     }
-  }, [authReady, authenticated, getAccessToken, locale, slug, user?.id]);
+  }, [authReady, getAccessToken, locale, requestAuthenticated, session.generation, sessionOwnerId, slug]);
 
   useEffect(() => {
     // SSR data already fills the page. Refresh viewer-specific state without
@@ -631,22 +695,28 @@ export function LiveEventScreen({
   const refreshLiveStatus = useCallback(() => { void load(true); }, [load]);
 
   const claimCollectible = useCallback(async () => {
-    if (!collectible?.eligible || collectiblePending) return;
+    if (!sessionReady || !authenticated || !sessionOwnerId || !collectible?.eligible || collectiblePending) return;
+    const generation = session.generation;
+    const isCurrent = () => {
+      const current = sessionRef.current;
+      return current.ready && current.generation === generation && current.ownerId === sessionOwnerId;
+    };
     setCollectiblePending(true); setCollectibleError(null);
     try {
-      const token = await getAccessToken(); if (!token) throw new Error();
-      const storageKey = `byus:collectible-claim:${slug}:${user?.id ?? "unknown-owner"}`;
+      const token = await getAccessToken(); if (!token || !isCurrent()) return;
+      const storageKey = `byus:collectible-claim:${slug}:${sessionOwnerId}`;
       const idempotencyKey = window.sessionStorage.getItem(storageKey) ?? window.crypto.randomUUID();
       window.sessionStorage.setItem(storageKey, idempotencyKey);
       const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/collectible`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ idempotencyKey }) });
+      if (!isCurrent()) return;
       if (!response.ok) throw new Error();
       const result = await response.json() as { claim?: unknown };
       const claim = collectibleClaimSchema.parse(result.claim);
       window.sessionStorage.removeItem(storageKey);
-      setCollectible({ ...collectible, eligible: false, claim });
-    } catch { setCollectibleError(locale === "ko" ? "Collectible을 받지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요." : "Could not claim the Collectible. Check the status and try again."); }
-    finally { setCollectiblePending(false); }
-  }, [collectible, collectiblePending, getAccessToken, locale, slug, user]);
+      if (isCurrent()) setCollectibleSnapshot({ key: privateOwnerKey, data: { ...collectible, eligible: false, claim } });
+    } catch { if (isCurrent()) setCollectibleError(locale === "ko" ? "Collectible을 받지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요." : "Could not claim the Collectible. Check the status and try again."); }
+    finally { if (isCurrent()) setCollectiblePending(false); }
+  }, [authenticated, collectible, collectiblePending, getAccessToken, locale, privateOwnerKey, session.generation, sessionOwnerId, sessionReady, slug]);
 
   useEffect(() => {
     if (view.kind !== "ready" || window.location.hash !== "#fan-code") return;
@@ -679,12 +749,12 @@ export function LiveEventScreen({
     update();
     const interval = window.setInterval(update, 1000);
     return () => window.clearInterval(interval);
-  }, [attendance]);
+  }, [attendance, setAttendance]);
 
   const reserve = useCallback(() => {
-    if (view.kind !== "ready") return Promise.resolve();
+    if (!sessionReady || !authenticated || !viewerMatchesSession || view.kind !== "ready") return Promise.resolve();
     if (reservationOperationRef.current) return reservationOperationRef.current;
-    const ownerId = user?.id;
+    const ownerId = sessionOwnerId;
     if (!ownerId) {
       setActionError(c.reserveError);
       return Promise.resolve();
@@ -692,7 +762,11 @@ export function LiveEventScreen({
     const eventId = view.data.live.id;
     const originalData = view.data;
     const generation = reservationGenerationRef.current;
-    const isCurrent = () => generation === reservationGenerationRef.current;
+    const sessionGeneration = session.generation;
+    const isCurrent = () => generation === reservationGenerationRef.current
+      && sessionRef.current.ready
+      && sessionRef.current.generation === sessionGeneration
+      && sessionRef.current.ownerId === ownerId;
     const operation = (async () => {
       liveReadController.current?.abort();
       reservationControllerRef.current?.abort();
@@ -722,7 +796,7 @@ export function LiveEventScreen({
       let token: string | null = null;
       try {
         token = await withOperationDeadline(getAccessToken());
-        if (!token) throw new Error("Missing reservation token");
+        if (!token || !isCurrent()) throw new Error("Missing reservation token");
         const reservationResult = await withRequestDeadline(async (signal) => {
           const response = await fetch(`/api/live-events/${encodeURIComponent(eventId)}/reservation`, {
             method: "POST",
@@ -737,6 +811,8 @@ export function LiveEventScreen({
         clearReservationKey();
         setView({
           kind: "ready",
+          viewerOwnerId: ownerId,
+          viewerGeneration: sessionGeneration,
           data: {
             ...originalData,
             viewer: { ...originalData.viewer, reservation: reservationResult.reservation },
@@ -757,7 +833,7 @@ export function LiveEventScreen({
             if (!refreshed.ok) throw new Error("Reservation refresh failed");
             return liveEventResponseSchema.parse(await refreshed.json());
           }, { signal: refreshController.signal });
-          if (isCurrent() && data.viewer.reservation) setView({ kind: "ready", data });
+          if (isCurrent() && data.viewer.reservation) setView({ kind: "ready", data, viewerOwnerId: ownerId, viewerGeneration: sessionGeneration });
         } catch (error) {
           reportRecoveryFailure("reservation.reconcile", error);
         }
@@ -776,7 +852,7 @@ export function LiveEventScreen({
         const reconciliationController = new AbortController();
         reservationControllerRef.current = reconciliationController;
         if (!token) token = await withOperationDeadline(getAccessToken());
-        if (!token) throw new Error("Missing reconciliation token");
+        if (!token || !isCurrent()) throw new Error("Missing reconciliation token");
         const current = await withRequestDeadline(async (signal) => {
           const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, {
             method: "GET", headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
@@ -785,7 +861,7 @@ export function LiveEventScreen({
           return liveEventResponseSchema.parse(await response.json());
         }, { signal: reconciliationController.signal });
         if (!isCurrent()) return;
-        setView({ kind: "ready", data: current });
+        setView({ kind: "ready", data: current, viewerOwnerId: ownerId, viewerGeneration: sessionGeneration });
         if (current.viewer.reservation) {
           clearReservationKey();
           setActionError(null);
@@ -804,7 +880,7 @@ export function LiveEventScreen({
       if (isCurrent()) setReservePending(false);
     });
     return operation;
-  }, [c.reserveError, c.reserveUnknown, getAccessToken, locale, slug, user?.id, view]);
+  }, [authenticated, c.reserveError, c.reserveUnknown, getAccessToken, locale, session.generation, sessionOwnerId, sessionReady, slug, view, viewerMatchesSession]);
 
   function rememberWatchReturn() {
     const query = searchParams.toString();
@@ -817,7 +893,11 @@ export function LiveEventScreen({
       }),
     );
     if (view.kind === "ready") {
-      void getAccessToken().then((token) =>
+      const generation = session.generation;
+      void (async () => {
+        const token = requestAuthenticated ? await getAccessToken() : null;
+        if (sessionRef.current.generation !== generation || !sessionRef.current.ready) return;
+        await
         recordProductEventV1(
           {
             eventName: "live_cta_click",
@@ -833,13 +913,14 @@ export function LiveEventScreen({
             },
           },
           token,
-        ),
-      );
+        );
+      })();
     }
   }
 
   const submitAttendance = useCallback(async (rawCode: string) => {
     if (
+      !sessionReady ||
       view.kind !== "ready" ||
       attendance.kind === "pending" ||
       attendance.kind === "rate-limited"
@@ -869,11 +950,17 @@ export function LiveEventScreen({
       router.push(buildAuthLoginHref(intent, locale) as Route);
       return;
     }
+    if (!viewerMatchesSession) return;
 
     setAttendance({ kind: "pending" });
+    const generation = session.generation;
+    const ownerId = sessionOwnerId;
+    const isCurrent = () => sessionRef.current.ready
+      && sessionRef.current.generation === generation
+      && sessionRef.current.ownerId === ownerId;
     try {
       const token = await getAccessToken();
-      if (!token) {
+      if (!token || !isCurrent()) {
         setFanCode("");
         setAttendance({ kind: "error", code: "AUTHENTICATION_REQUIRED" });
         return;
@@ -895,6 +982,7 @@ export function LiveEventScreen({
           body: JSON.stringify({ code: normalizedCode }),
         },
       );
+      if (!isCurrent()) return;
       if (response.ok) {
         const result = createLiveAttendanceResponseSchema.parse(
           await response.json(),
@@ -943,7 +1031,7 @@ export function LiveEventScreen({
       setAttendance({ kind: "error", code: "ATTENDANCE_UNAVAILABLE" });
       window.requestAnimationFrame(() => fanCodeInputRef.current?.focus());
     }
-  }, [attendance.kind, authenticated, getAccessToken, locale, router, searchParams, slug, view]);
+  }, [attendance.kind, authenticated, getAccessToken, locale, router, searchParams, session.generation, sessionOwnerId, sessionReady, setAttendance, slug, view, viewerMatchesSession]);
 
   async function attend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -951,7 +1039,7 @@ export function LiveEventScreen({
   }
 
   useEffect(() => {
-    if (!authenticated || view.kind !== "ready") return;
+    if (!sessionReady || !authenticated || !viewerMatchesSession || view.kind !== "ready") return;
     const intentId = searchParams.get("authIntent");
     if (!intentId) return;
     const intent = readAuthIntent(getSessionStorage(), intentId);
@@ -977,7 +1065,7 @@ export function LiveEventScreen({
       setFanCode(draft);
       void submitAttendance(draft);
     }
-  }, [authenticated, reserve, searchParams, slug, submitAttendance, view]);
+  }, [authenticated, reserve, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
 
   if (view.kind === "loading") {
     return (
@@ -1017,7 +1105,9 @@ export function LiveEventScreen({
     );
   }
 
-  const data = view.data;
+  const data = view.viewerOwnerId === null || viewerMatchesSession
+    ? view.data
+    : anonymousLiveResponse(view.data);
   const { live, viewer, primaryAction } = data;
   const watchHref = liveWatchHref(live, locale);
   const isIfewLive = live.slug === ifewLiveSlug;
@@ -1149,7 +1239,7 @@ export function LiveEventScreen({
         <FanAction
           variant="primary"
           fullWidth
-          disabled={reservePending}
+          disabled={!sessionReady || reservePending}
           ariaBusy={reservePending}
           onClick={() => void reserve()}
           leadingIcon={<TicketCheck />}
@@ -1432,7 +1522,7 @@ export function LiveEventScreen({
                       <Clock3 aria-hidden="true" />
                       {attendanceCopy.beforeLive}
                     </p>
-                  ) : authenticated && viewer.passport === "missing" ? (
+                  ) : sessionReady && authenticated && viewer.passport === "missing" ? (
                     <div className={styles.attendanceGate}>
                       <p>{attendanceCopy.passport}</p>
                       <FanAction
@@ -1460,7 +1550,7 @@ export function LiveEventScreen({
                           id="fan-code-input"
                           name="fan-code"
                           type="text"
-                          value={fanCode}
+                          value={sessionReady && (!authenticated || viewerMatchesSession) ? fanCode : ""}
                           onChange={(event) => {
                             setFanCode(
                               event.target.value
@@ -1487,6 +1577,7 @@ export function LiveEventScreen({
                           }
                           aria-invalid={attendanceError ? true : undefined}
                           disabled={
+                            !sessionReady ||
                             attendance.kind === "pending" ||
                             attendance.kind === "rate-limited"
                           }
@@ -1494,12 +1585,15 @@ export function LiveEventScreen({
                         <button
                           type="submit"
                           disabled={
+                            !sessionReady ||
                             attendance.kind === "pending" ||
                             attendance.kind === "rate-limited" ||
                             fanCode.trim().length < 4
                           }
                         >
-                          {!authenticated
+                          {!sessionReady
+                            ? c.attendance.pending
+                            : !authenticated
                             ? attendanceCopy.signIn
                             : attendance.kind === "pending"
                             ? attendanceCopy.pending
@@ -1542,7 +1636,7 @@ export function LiveEventScreen({
                 {locale === "ko" ? `${live.celebrity.name} 혜택·응모 보기` : `View ${live.celebrity.name} benefits & entries`}
               </FanAction></>}
             </section>
-            {authenticated && collectible ? (
+            {sessionReady && authenticated && collectible ? (
               <section className={styles.collectible} aria-labelledby="collectible-title">
                 <details open={collectible.eligible || Boolean(collectible.claim) || undefined}>
                   <summary>
@@ -1566,7 +1660,7 @@ export function LiveEventScreen({
                         : locale === "ko" ? "참여 조건을 완료하고 LIVE가 끝나면 받을 수 있어요." : "Available after completing participation and the LIVE ends."}</p>
                     <small>{locale === "ko" ? "받기 마감 · " : "Claim deadline · "}{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST</small>
                     {!collectible.claim && collectible.eligible ? (
-                      <FanAction variant="primary" disabled={collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
+                      <FanAction variant="primary" disabled={!sessionReady || collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
                         {collectiblePending ? (locale === "ko" ? "받기 처리 중" : "Claiming") : (locale === "ko" ? "소장품 받기" : "Claim collectible")}
                       </FanAction>
                     ) : null}
@@ -1579,12 +1673,12 @@ export function LiveEventScreen({
 
         </div>
       </FanContentContainer>
-      {showConfirmation && reservationCompletion && (
+      {sessionReady && viewerMatchesSession && showConfirmation && reservationCompletion && (
         <ReservationDialog
           data={data}
           completion={reservationCompletion}
           locale={locale}
-          getAccessToken={getAccessToken}
+          getAccessToken={getCurrentAccessToken}
           onClose={() => setShowConfirmation(false)}
         />
       )}

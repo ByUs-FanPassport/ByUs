@@ -4,6 +4,7 @@ import { MyLiveCountdown } from "@/features/my/ui/my-live-countdown";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
 import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Eye, Play, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
@@ -232,12 +233,14 @@ export function LiveCatalogScreen({
   locale: FanLocale;
 }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
+  const session = useByUsSession();
+  const requestAuthenticated = ready && session.ready && authenticated;
   const [catalog, setCatalog] = useState(initialCatalog);
   const [failed, setFailed] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
   const refreshLiveStatus = useCallback(() => setRequestKey(value => value + 1), []);
   const [reservationStatus, setReservationStatus] = useState<"loading" | "ready" | "error">(
-    !ready || authenticated ? "loading" : "ready",
+    !ready || requestAuthenticated ? "loading" : "ready",
   );
   const t = copy[locale];
 
@@ -246,7 +249,7 @@ export function LiveCatalogScreen({
       setReservationStatus("loading");
       return;
     }
-    if (!authenticated && requestKey === 0) {
+    if (!requestAuthenticated && requestKey === 0 && !session.pending) {
       setCatalog(initialCatalog);
       setReservationStatus("ready");
       return;
@@ -256,15 +259,18 @@ export function LiveCatalogScreen({
     setReservationStatus("loading");
     void (async () => {
       try {
-        const token = authenticated ? await getAccessToken() : null;
-        if (authenticated && !token) throw new Error("access token unavailable");
+        const token = requestAuthenticated ? await getAccessToken() : null;
+        if (controller.signal.aborted) return;
+        if (requestAuthenticated && !token) throw new Error("access token unavailable");
         const response = await fetch(`/api/live-events?locale=${locale}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           cache: "no-store",
           signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
         if (!response.ok) throw new Error("catalog request failed");
         const body = await response.json() as { catalog: Catalog };
+        if (controller.signal.aborted) return;
         setCatalog(body.catalog);
         setReservationStatus("ready");
       } catch {
@@ -275,7 +281,7 @@ export function LiveCatalogScreen({
       }
     })();
     return () => controller.abort();
-  }, [ready, authenticated, getAccessToken, locale, requestKey, initialCatalog]);
+  }, [ready, requestAuthenticated, getAccessToken, locale, requestKey, initialCatalog, session.generation, session.pending]);
 
   const total = catalog.liveNow.length + catalog.upcoming.length + catalog.replay.length;
   return (

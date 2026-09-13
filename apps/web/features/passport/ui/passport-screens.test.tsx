@@ -40,7 +40,7 @@ describe("passport fan screens", () => {
     const dialog = await screen.findByRole("dialog", { name: selectedLocale === "ko" ? "스탬프 상세" : "Stamp details" });
     expect(within(dialog).getByRole("heading", { name: selectedLocale === "ko" ? "첫 좋아요" : "First Like" })).toBeInTheDocument();
     expect(within(dialog).queryByText(/팬 점수|Fan Score/)).not.toBeInTheDocument();
-    fireEvent.click(within(dialog).getByText(selectedLocale === "ko" ? "디지털 발급 정보" : "Digital issuance details"));
+    fireEvent.click(within(dialog).getByText(selectedLocale === "ko" ? "발급 정보" : "Issuance details"));
     expect(within(dialog).queryByRole("link")).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: selectedLocale === "ko" ? "상세 닫기" : "Close details" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -75,7 +75,7 @@ describe("passport fan screens", () => {
     expect(container.querySelector("img[data-image-presentation=portrait]")).toBeInTheDocument();
     expect(container.querySelector("#collection")).toBeInTheDocument();
     expect(container.querySelector("a a")).toBeNull();
-    expect(screen.queryByText("디지털 발급이 완료됐어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("발급이 완료됐어요")).not.toBeInTheDocument();
   });
 
   it("shows the server stage and committed badge asset in the opted-in collection", async () => {
@@ -182,7 +182,7 @@ describe("passport fan screens", () => {
     fireEvent.click(screen.getByRole("button", { name: "첫 좋아요" }));
     expect(screen.getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
-    expect(screen.queryByRole("link", { name: /첫 좋아요 거래 기록/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /첫 좋아요 발급 기록/ })).not.toBeInTheDocument();
   });
 
   it("links a minted First Reaction to its validated transaction while counting exactly one display stamp", async () => {
@@ -210,14 +210,14 @@ describe("passport fan screens", () => {
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
 
     expect(await screen.findByRole("button", { name: "첫 좋아요" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /첫 좋아요 거래 기록/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /첫 좋아요 발급 기록/ })).not.toBeInTheDocument();
     const trigger = screen.getByRole("button", { name: "첫 좋아요" });
     trigger.focus();
     fireEvent.click(trigger);
     const dialog = await screen.findByRole("dialog", { name: "스탬프 상세" });
-    fireEvent.click(within(dialog).getByText("디지털 발급 정보"));
+    fireEvent.click(within(dialog).getByText("발급 정보"));
     const transactionLink = within(dialog).getByRole("link", {
-      name: `첫 좋아요 거래 기록 ${firstReactionTx}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+      name: `첫 좋아요 발급 기록 ${firstReactionTx}, 발급 기록을 새 탭에서 열기`,
     });
     expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
     expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
@@ -248,7 +248,7 @@ describe("passport fan screens", () => {
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     fireEvent.click(await screen.findByRole("button", { name: "첫 좋아요" }));
     const history = await screen.findByRole("dialog", { name: "스탬프 상세" });
-    fireEvent.click(within(history).getByText("디지털 발급 정보"));
+    fireEvent.click(within(history).getByText("발급 정보"));
     expect(within(history).getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.any(Object)));
     expect(container.querySelector("[data-fan-avatar] img")).toBeNull();
@@ -256,7 +256,7 @@ describe("passport fan screens", () => {
     await waitFor(() => expect(passportReads).toBe(2));
     expect(history).toBeInTheDocument();
     await act(async () => { finish(Response.json({ passport: { ...detail, firstReaction: { ...detail.firstReaction, mintStatus: "minted", txHash: tx } } })); });
-    expect(await within(history).findByText("디지털 발급이 완료됐어요")).toBeInTheDocument();
+    expect(await within(history).findByText("발급이 완료됐어요")).toBeInTheDocument();
     expect(within(history).getByRole("link")).toHaveAttribute("href", `${explorerBaseUrl}/tx/${tx}`);
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
   });
@@ -411,12 +411,12 @@ describe("passport fan screens", () => {
   it("links the masked Stamp transaction to the validated GIWA Sepolia Explorer URL", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
-    const summary = await screen.findByText("디지털 발급 정보");
+    const summary = await screen.findByText("발급 정보");
     const disclosure = summary.closest("details");
     expect(disclosure).not.toHaveAttribute("open");
     fireEvent.click(summary);
     const transactionLink = screen.getByRole("link", {
-      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
     });
     expect(transactionLink).toHaveTextContent("0xaaaaaa…aaaaaa");
     expect(transactionLink).not.toHaveTextContent(mint.txHash);
@@ -438,10 +438,10 @@ describe("passport fan screens", () => {
     })));
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
 
-    const summary = await screen.findByText("디지털 발급 정보");
+    const summary = await screen.findByText("발급 정보");
     fireEvent.click(summary);
     expect(screen.getByRole("link", {
-      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
     })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
   });
 
@@ -462,9 +462,9 @@ describe("passport fan screens", () => {
     })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorer} />);
 
-    fireEvent.click(await screen.findByText("디지털 발급 정보"));
+    fireEvent.click(await screen.findByText("발급 정보"));
     expect(screen.getByText(maskedHash(transactionHash))).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /GIWA Sepolia Explorer/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /발급 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
   });
 
   it("renders no transaction link when the transaction hash is null", async () => {
@@ -473,9 +473,9 @@ describe("passport fan screens", () => {
     })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    fireEvent.click(await screen.findByText("디지털 발급 정보"));
-    expect(screen.queryByText("거래 기록")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /GIWA Sepolia Explorer/ })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByText("발급 정보"));
+    expect(screen.queryByText("발급 기록")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /발급 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
   });
 
   it("provides an English transaction-link name with the full hash and new-tab purpose", async () => {
@@ -483,9 +483,9 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: stampDetail })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    fireEvent.click(await screen.findByText("Digital issuance details"));
+    fireEvent.click(await screen.findByText("Issuance details"));
     expect(screen.getByRole("link", {
-      name: `Transaction ${mint.txHash}, open in GIWA Sepolia Explorer in a new tab`,
+      name: `Issuance record ${mint.txHash}, open issuance record in a new tab`,
     })).toHaveTextContent("0xaaaaaa…aaaaaa");
   });
 
@@ -517,9 +517,9 @@ describe("passport fan screens", () => {
     render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByRole("dialog", { name: "스탬프 상세" })).toBeInTheDocument();
-    fireEvent.click(screen.getByText("디지털 발급 정보"));
+    fireEvent.click(screen.getByText("발급 정보"));
     expect(screen.getByRole("link", {
-      name: `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`,
+      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
     })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
     const close = await screen.findByRole("button", { name: "상세 닫기" });
     fireEvent.click(close);

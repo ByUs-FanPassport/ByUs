@@ -40,25 +40,25 @@ const copy = {
     passports: "내 패스포트", passportsSub: "최애와 함께한 순간을 패스포트로 모아보세요.", discover: "최애 찾기", open: "패스포트 보기",
     emptyTitle: "아직 발급된 패스포트가 없어요.", emptyBody: "좋아하는 크리에이터의 팬 인증을 완료하면 첫 기록이 시작돼요.", emptyAction: "팬 인증 가능한 크리에이터 보기",
     retry: "다시 불러오기", loadError: "기록을 불러오지 못했어요.", loadErrorBody: "잠시 후 다시 시도해 주세요. 이미 저장된 기록은 사라지지 않아요.", login: "로그인하고 내 기록 보기",
-    issued: "발급", score: "팬 점수", stamps: "스탬프", digital: "디지털 발급", pending: "안전하게 발급을 준비하고 있어요", complete: "디지털 발급이 완료됐어요", needsHelp: "발급 상태를 확인하고 있어요",
+    issued: "발급", score: "팬 점수", stamps: "스탬프", digital: "발급 상태", pending: "안전하게 발급을 준비하고 있어요", complete: "발급이 완료됐어요", needsHelp: "발급 상태를 확인하고 있어요",
     detailSub: "함께한 활동과 스탬프를 한곳에서 확인하세요.", stampBook: "스탬프 모음", activity: "최근 활동", noActivity: "아직 활동 기록이 없어요.", noActivityBody: "팬 인증과 라이브 참여를 시작하면 이곳에 차곡차곡 남아요.",
     emptySlot: "다음 순간을 기다리는 중", earned: "받은 스탬프 보기",
-    points: "점", digitalInfo: "디지털 발급 정보", token: "Token ID", transaction: "거래 기록", explorer: "발급 기록 확인", noFacts: "발급이 완료되면 확인 정보가 표시돼요.",
+    points: "점", digitalInfo: "발급 정보", token: "발급 번호", transaction: "발급 기록", explorer: "발급 기록 확인", noFacts: "발급이 완료되면 확인 정보가 표시돼요.",
     stampDetail: "스탬프 상세", stampDetailSub: "이 스탬프가 남긴 순간을 확인하세요.", earnedOn: "받은 날", activityDate: "활동한 날", reward: "팬 점수", backPassport: "패스포트로 돌아가기", notFound: "기록을 찾을 수 없어요.", notFoundBody: "삭제되었거나 내 소유의 기록이 아닐 수 있어요.",
     nextLevel: "다음 등급", levelMax: "최고 등급에 도달했어요.", remaining: "점 남음", nextBenefit: "다음 혜택", benefitReady: "지금 받을 수 있어요.", participationReady: "지금 참여할 수 있어요.", benefitLocked: "조건을 달성하면 받을 수 있어요.", viewBenefit: "혜택 확인하기", relatedActivity: "관련 활동", currentScore: "현재", requiredScore: "필요", opensAt: "공개",
-    firstReaction: "첫 좋아요", firstReactionDate: "첫 좋아요를 남긴 날", firstReactionTransaction: "첫 좋아요 거래 기록",
+    firstReaction: "첫 좋아요", firstReactionDate: "첫 좋아요를 남긴 날", firstReactionTransaction: "첫 좋아요 발급 기록",
   },
   en: {
     passports: "My Passports", passportsSub: "Collect the moments you share with your favorite artists.", discover: "Discover artists", open: "Open Passport",
     emptyTitle: "No Passports yet", emptyBody: "Complete fan verification for an artist to begin your first record.", emptyAction: "Find artists to verify",
     retry: "Try again", loadError: "We couldn’t load your records.", loadErrorBody: "Please try again shortly. Your saved records are safe.", login: "Sign in to view my records",
-    issued: "Issued", score: "Fan Score", stamps: "Stamps", digital: "Digital issuance", pending: "Your digital Passport is being prepared", complete: "Digital issuance is complete", needsHelp: "We’re checking the issuance status",
+    issued: "Issued", score: "Fan Score", stamps: "Stamps", digital: "Issuance status", pending: "Issuance is in progress", complete: "Issuance is complete", needsHelp: "We’re checking the issuance status",
     detailSub: "See your activities and Stamps in one place.", stampBook: "Stamp Book", activity: "Recent activity", noActivity: "No activity yet", noActivityBody: "Fan verification and LIVE participation will appear here.",
     emptySlot: "Waiting for your next moment", earned: "View earned Stamp",
-    points: "pts", digitalInfo: "Digital issuance details", token: "Token ID", transaction: "Transaction", explorer: "View issuance record", noFacts: "Details will appear after issuance is complete.",
+    points: "pts", digitalInfo: "Issuance details", token: "Issuance ID", transaction: "Issuance record", explorer: "View issuance record", noFacts: "Details will appear after issuance is complete.",
     stampDetail: "Stamp details", stampDetailSub: "See the moment recorded by this Stamp.", earnedOn: "Issued", activityDate: "Activity date", reward: "Fan Score", backPassport: "Back to Passport", notFound: "Record not found", notFoundBody: "It may not exist or may not belong to your account.",
     nextLevel: "Next Level", levelMax: "You reached the highest Level.", remaining: "pts remaining", nextBenefit: "Next benefit", benefitReady: "Available now", participationReady: "You can participate now.", benefitLocked: "Complete the conditions to unlock it.", viewBenefit: "View benefit", relatedActivity: "Related activity", currentScore: "Current", requiredScore: "Required", opensAt: "Opens",
-    firstReaction: "First Like", firstReactionDate: "First like recorded", firstReactionTransaction: "First Like transaction",
+    firstReaction: "First Like", firstReactionDate: "First like recorded", firstReactionTransaction: "First Like issuance record",
   },
 } as const;
 
@@ -181,8 +181,8 @@ function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: 
   const transaction = mint.txHash ? maskHash(mint.txHash) : null;
   const explorerLabel = mint.txHash
     ? locale === "ko"
-      ? `거래 기록 ${mint.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`
-      : `Transaction ${mint.txHash}, open in GIWA Sepolia Explorer in a new tab`
+      ? `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`
+      : `Issuance record ${mint.txHash}, open issuance record in a new tab`
     : "";
   return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{transaction ? <p><span>{c.transaction}</span>{explorer ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{transaction}</strong><ExternalLink aria-hidden="true" /></a> : <strong data-wrap-anywhere>{transaction}</strong>}</p> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
@@ -204,8 +204,8 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
     : null;
   const explorerLabel = firstReaction.txHash
     ? locale === "ko"
-      ? `${c.firstReactionTransaction} ${firstReaction.txHash}, GIWA Sepolia Explorer에서 새 탭으로 열기`
-      : `${c.firstReactionTransaction} ${firstReaction.txHash}, open in GIWA Sepolia Explorer in a new tab`
+      ? `${c.firstReactionTransaction} ${firstReaction.txHash}, 발급 기록을 새 탭에서 열기`
+      : `${c.firstReactionTransaction} ${firstReaction.txHash}, open issuance record in a new tab`
     : "";
   return <>
     <button type="button" className={`${styles.stampSlot} ${styles.stampButton}`} id="first-like-stamp" aria-label={c.firstReaction} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>

@@ -85,40 +85,50 @@ export class SupabaseSessionSyncRepository implements SessionSyncRepository {
     if (!row || typeof row !== "object" || !("app_user_id" in row) || typeof row.app_user_id !== "string") {
       throwStageError("session.identity", "Identity synchronization returned an invalid owner");
     }
-    try {
-      const localeInitialization = await this.rpc("initialize_owned_preferred_locale", {
-        p_app_user_id: row.app_user_id,
-        p_locale: preferredLocale,
-      }, OPTIONAL_SYNC_TIMEOUT_MS);
-      if (localeInitialization.error) throw new Error("Preferred locale initialization failed");
-      if (!preferredLocaleSchema.safeParse(localeInitialization.data).success) {
-        throw new Error("Preferred locale initialization returned invalid data");
-      }
-    } catch (localeError) {
-      reportRecoveryFailure("session.locale", localeError);
-    }
-    try {
-      const notificationProjection = await this.failClosed("session.notification", this.rpc("sync_owned_google_notification_channel", {
-        p_app_user_id: row.app_user_id,
-        p_privy_user_id: identity.privyUserId,
-        p_verified_email: identity.verifiedEmail,
-        p_google_connected: identity.googleLinked === true,
-      }, OPTIONAL_SYNC_TIMEOUT_MS));
-      if (notificationProjection.error) throwStageError("session.notification", "Notification identity projection failed");
-    } catch (notificationError) {
-      let safeToDefer = false;
-      if (this.recovery.canDeferNotificationSync) {
+    // These projections share the validated owner but do not depend on each other.
+    // Await both, including notification fallback, before returning a usable session.
+    const projections = await Promise.allSettled([
+      (async () => {
         try {
-          safeToDefer = await withOperationDeadline(
-            this.recovery.canDeferNotificationSync(row.app_user_id, identity),
-            OPTIONAL_SYNC_TIMEOUT_MS,
-          );
-        } catch (fallbackError) {
-          reportRecoveryFailure("session.notification_fallback", fallbackError);
+          const localeInitialization = await this.rpc("initialize_owned_preferred_locale", {
+            p_app_user_id: row.app_user_id,
+            p_locale: preferredLocale,
+          }, OPTIONAL_SYNC_TIMEOUT_MS);
+          if (localeInitialization.error) throw new Error("Preferred locale initialization failed");
+          if (!preferredLocaleSchema.safeParse(localeInitialization.data).success) {
+            throw new Error("Preferred locale initialization returned invalid data");
+          }
+        } catch (localeError) {
+          reportRecoveryFailure("session.locale", localeError);
         }
-      }
-      if (!safeToDefer) throw notificationError;
-    }
+      })(),
+      (async () => {
+        try {
+          const notificationProjection = await this.failClosed("session.notification", this.rpc("sync_owned_google_notification_channel", {
+            p_app_user_id: row.app_user_id,
+            p_privy_user_id: identity.privyUserId,
+            p_verified_email: identity.verifiedEmail,
+            p_google_connected: identity.googleLinked === true,
+          }, OPTIONAL_SYNC_TIMEOUT_MS));
+          if (notificationProjection.error) throwStageError("session.notification", "Notification identity projection failed");
+        } catch (notificationError) {
+          let safeToDefer = false;
+          if (this.recovery.canDeferNotificationSync) {
+            try {
+              safeToDefer = await withOperationDeadline(
+                this.recovery.canDeferNotificationSync(row.app_user_id, identity),
+                OPTIONAL_SYNC_TIMEOUT_MS,
+              );
+            } catch (fallbackError) {
+              reportRecoveryFailure("session.notification_fallback", fallbackError);
+            }
+          }
+          if (!safeToDefer) throw notificationError;
+        }
+      })(),
+    ]);
+    const notification = projections[1];
+    if (notification.status === "rejected") throw notification.reason;
     const profileResult = await this.failClosed("session.profile", this.rpc("get_owned_user_profile", { p_app_user_id: row.app_user_id }));
     if (profileResult.error) throwStageError("session.profile", "Profile state lookup failed");
     const profile = fanProfileSchema.safeParse(profileResult.data);

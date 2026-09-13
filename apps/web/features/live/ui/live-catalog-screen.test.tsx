@@ -7,8 +7,10 @@ import { LiveCatalogScreen } from "./live-catalog-screen";
 vi.mock("./observed-live-strip", () => ({ ObservedLiveStrip: () => null }));
 
 const privy = { ready: true, authenticated: false, getAccessToken: vi.fn() };
+const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
 
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => privy }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
 
 const base = {
   live: {
@@ -44,6 +46,32 @@ describe("LIVE catalog", () => {
     privy.ready = true;
     privy.authenticated = false;
     privy.getAccessToken.mockReset();
+    Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 });
+  });
+
+  it("keeps SSR public content visible while pending, then refreshes only for the ready owner", async () => {
+    privy.authenticated = true;
+    privy.getAccessToken.mockResolvedValue("owner-token");
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-a", generation: 1 });
+    let resolveAnonymous!: (value: Response) => void;
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => { resolveAnonymous = resolve; }))
+      .mockResolvedValueOnce(Response.json({ catalog: { liveNow: [], upcoming: [base], replay: [] } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [base], replay: [] }} />);
+
+    expect(screen.getByText(base.live.title)).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(privy.getAccessToken).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toBeUndefined();
+
+    Object.assign(session, { ready: true, pending: false });
+    view.rerender(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [base], replay: [] }} />);
+    await waitFor(() => expect(privy.getAccessToken).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toEqual({ Authorization: "Bearer owner-token" });
+    await act(async () => { resolveAnonymous(Response.json({ catalog: { liveNow: [], upcoming: [], replay: [] } })); });
+    expect(screen.getByText(base.live.title)).toBeInTheDocument();
   });
 
   it("refreshes an anonymous catalog at the start and uses the returned LIVE group", async () => {

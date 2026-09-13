@@ -24,7 +24,7 @@ export const communityShareDestinationSchema = z.object({ creator: communityCrea
 export const communityAwardResultSchema = z.object({ awarded: z.boolean() }).strict();
 
 export const COMMUNITY_STAMPS = {
-  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", koHelp: "가입하고 지갑이 만들어지면 받아요.", enHelp: "Join ByUs and create your wallet." },
+  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", koHelp: "가입하면 받는 기념 스탬프예요.", enHelp: "A welcome Stamp for joining ByUs." },
   first_comment: { asset: "first-comment", ko: "첫 댓글", en: "First comment", scope: "creator", koHelp: "최애에게 첫 댓글을 남겨보세요.", enHelp: "Leave your first comment for your favorite." },
   subscription: { asset: "subscription", ko: "구독인증", en: "Subscription", scope: "creator", koHelp: "최애의 SNS 구독을 인증해요.", enHelp: "Verify your subscription to your favorite." },
   support: { asset: "support", ko: "후원", en: "Support", scope: "creator", koHelp: "최애에게 보낸 후원을 기록해요.", enHelp: "Keep a record of your support." },

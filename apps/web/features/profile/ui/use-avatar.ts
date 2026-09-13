@@ -2,6 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { avatarResponseSchema, type Avatar } from "../domain/avatar";
 import { subscribeAvatarChanged } from "./avatar-events";
 
@@ -15,14 +16,16 @@ type Snapshot = { key: string; state: AvatarState };
 /** Loads private avatar images without ever sharing a previous owner's blob URL. */
 export function useAvatar() {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
-  const ownerId = user?.id;
-  const key = `${ready}:${authenticated}:${ownerId ?? ""}`;
+  const session = useByUsSession();
+  const sessionReady = ready && session.ready;
+  const ownerId = session.ownerId ?? user?.id;
+  const key = `${sessionReady}:${authenticated}:${ownerId ?? ""}:${session.generation}`;
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const refreshRef = useRef<() => void>(() => undefined);
   const refresh = useCallback(() => refreshRef.current(), []);
 
   useEffect(() => {
-    if (!ready || !authenticated || !ownerId) return;
+    if (!sessionReady || !authenticated || !ownerId) return;
     let active = true;
     let inFlight = false;
     let requestedAgain = false;
@@ -106,10 +109,10 @@ export function useAvatar() {
       unsubscribe();
       refreshRef.current = () => undefined;
     };
-  }, [authenticated, getAccessToken, key, ownerId, ready]);
+  }, [authenticated, getAccessToken, key, ownerId, sessionReady]);
 
   const state: AvatarState =
-    !ready || (authenticated && snapshot?.key !== key)
+    !sessionReady || (authenticated && snapshot?.key !== key)
       ? { status: "loading" }
       : !authenticated || !ownerId
         ? { status: "error" }

@@ -4,7 +4,7 @@ import { withLocalePath } from "./locale-path";
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import type { MouseEvent, ReactNode } from "react";
+import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import {
   authIntentReturnTo,
   buildAuthLoginHref,
@@ -16,6 +16,7 @@ import {
 } from "./auth-intent";
 import { rememberOverlayTrigger } from "./ui/overlay/focus-return";
 import { getSessionStorage } from "../features/reliability/client/session-storage";
+import { useByUsSession } from "./byus-session-provider";
 
 function fallbackHref(input: CreateAuthIntentInput, locale: "ko" | "en"): string {
   const returnTo = `${input.sourcePath}${input.sourceQuery}${input.returnAnchor ?? ""}`;
@@ -68,7 +69,6 @@ export function AuthIntentLink({
   ariaDescribedBy,
   emphasis,
   focusKey,
-  pendingHref,
 }: {
   input: CreateAuthIntentInput;
   locale: "ko" | "en";
@@ -82,18 +82,31 @@ export function AuthIntentLink({
 }) {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
-  const authState = { ready, authenticated };
-  const href = ready ? resolveAuthIntentHref(input, locale, authState) : pendingHref;
+  const session = useByUsSession();
+  const sessionReady = ready && session.ready;
+  const authState = { ready: sessionReady, authenticated };
+  const href = sessionReady ? resolveAuthIntentHref(input, locale, authState) : undefined;
+  const beginningRef = useRef(false);
+  const beginningTimerRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (beginningTimerRef.current !== null) window.clearTimeout(beginningTimerRef.current);
+  }, []);
 
   function begin(event: MouseEvent<HTMLAnchorElement>) {
     if (event.defaultPrevented) return;
-    if (!ready) {
-      if (!pendingHref) event.preventDefault();
+    if (!sessionReady) {
+      event.preventDefault();
       return;
     }
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
     event.preventDefault();
+    if (beginningRef.current) return;
+    beginningRef.current = true;
+    beginningTimerRef.current = window.setTimeout(() => {
+      beginningRef.current = false;
+      beginningTimerRef.current = null;
+    }, 1_000);
     const intent = createAuthIntent(input);
     persistAuthIntent(getSessionStorage(), intent);
     rememberOverlayTrigger(
@@ -111,8 +124,8 @@ export function AuthIntentLink({
       role="link"
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedBy}
-      aria-busy={!ready || undefined}
-      aria-disabled={(!ready && !pendingHref) || undefined}
+      aria-busy={!sessionReady || undefined}
+      aria-disabled={!sessionReady || undefined}
       data-fan-action-emphasis={emphasis}
       data-overlay-focus-key={focusKey}
       onClick={begin}

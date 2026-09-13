@@ -98,6 +98,17 @@ const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> =
   not_selected: { ko: "미선정", en: "Not selected" },
 };
 
+function MyDashboardSkeleton({ locale }: { locale: FanLocale }) {
+  const t = copy[locale];
+  return <div className={styles.loadingDashboard} aria-busy="true">
+    <p role="status" className={styles.loadingStatus}>{t.loading}</p>
+    <div className={styles.loadingProfile} aria-hidden="true"><span className={styles.loadingAvatar}/><div><span className={styles.loadingLine}/><span className={styles.loadingLine}/></div></div>
+    <section><h2>{t.creators}</h2><div className={styles.loadingTiles} aria-hidden="true"><span/><span/></div></section>
+    <section><h2>{t.reservedLive}</h2><div className={styles.loadingRow} aria-hidden="true"/></section>
+    <section><h2>{t.collection}</h2><div className={styles.loadingTiles} aria-hidden="true"><span/><span/></div></section>
+  </div>;
+}
+
 export function MyScreen({ locale }: { locale: FanLocale }) {
   const auth = usePrivy();
   const { ready, authenticated } = auth;
@@ -108,14 +119,14 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
 
   const heading = <header className={styles.pageHeading}><FanHeading as="h1" variant="personal-page">{t.title}</FanHeading></header>;
   return <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
-    {!ready ? <>{heading}<FanState kind="loading" title={t.loading} /></>
+    {!ready ? <>{heading}<MyDashboardSkeleton locale={locale} /></>
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
       : <OwnerScopedDashboard
         key={auth.user?.id ?? "current-owner"}
         summary={state.status === "ready" ? state.data : null}
         fallback={state.status === "error"
           ? <>{heading}<FanState kind="error" title={t.error} actions={<FanAction variant="neutral" fullWidth onClick={resource.retry}><RotateCcw/>{t.retry}</FanAction>} /></>
-          : <>{heading}<FanState kind="loading" title={t.loading} /></>}
+          : <>{heading}<MyDashboardSkeleton locale={locale} /></>}
         locale={locale}
         avatarResource={avatarResource}
         refreshSummary={resource.retry}

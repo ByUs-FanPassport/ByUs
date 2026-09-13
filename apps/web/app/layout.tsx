@@ -12,6 +12,7 @@ import { AcquisitionSessionTracker } from "../features/analytics/client/acquisit
 import { VercelTelemetry } from "../features/analytics/client/vercel-telemetry";
 import { FanNextActionGuide } from "../features/onboarding/ui/fan-next-action-guide";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
+import { AuthTransitionBoundary } from "../components/auth-transition-boundary";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -71,8 +72,7 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <DocumentLocale />
           </Suspense>
-          {children}
-          {modal}
+          <AuthTransitionBoundary modal={modal}>{children}</AuthTransitionBoundary>
           <Suspense fallback={null}><FanNextActionGuide /></Suspense>
         </ByUsPrivyProvider>
         </LocaleProvider>

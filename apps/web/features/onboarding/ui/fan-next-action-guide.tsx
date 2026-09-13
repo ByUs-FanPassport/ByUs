@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/overlay/accessible-overlay";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { useOwnedFanResource } from "@/components/fan-ui/use-owned-fan-resource";
 import { useAppLocale } from "@/components/locale-provider";
+import { useByUsSession } from "@/components/byus-session-provider";
 import { mySummarySchema } from "@/features/my/domain/my-summary";
 import { liveEventResponseSchema } from "@/features/live/domain/live-event";
 import { nextFanAction, supportsFanGuide, type NextFanAction } from "../domain/next-fan-action";
@@ -97,7 +98,9 @@ function GuidePrompt({ action, ownerId, locale }: { action: NextFanAction; owner
 
 function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en" }) {
   const auth = usePrivy();
-  const enabled = auth.ready && auth.authenticated && Boolean(auth.user?.id);
+  const session = useByUsSession();
+  const ownerId = session.ownerId ?? auth.user?.id;
+  const enabled = session.ready && auth.ready && auth.authenticated && Boolean(ownerId);
   const summary = useOwnedFanResource(enabled ? `/api/me/summary?locale=${locale}` : null, parseSummary, auth);
   const needsCatalog = summary.state.status === "ready" && Boolean(summary.state.data.profile.nickname)
     && summary.state.data.creators.some((creator) => creator.passport);
@@ -112,7 +115,7 @@ function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en
   const action = nextFanAction({ summary: summary.state.data, pathname, locale, now,
     lives: catalog.state.status === "ready" && !catalog.refreshFailed ? catalog.state.data : undefined });
   if (!action) return null;
-  return <GuidePrompt key={`${auth.user!.id}:${action.step}`} action={action} ownerId={auth.user!.id} locale={locale} />;
+  return <GuidePrompt key={`${ownerId}:${session.generation}:${action.step}`} action={action} ownerId={ownerId!} locale={locale} />;
 }
 
 export function FanNextActionGuide() {

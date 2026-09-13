@@ -6,12 +6,14 @@ let authenticated = false;
 let ownerId: string | null = "owner-one";
 let membershipCount = 3;
 const getAccessToken = vi.fn();
+const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
 const routerPush = vi.fn();
 const analytics = vi.hoisted(() => ({
   pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:creator_page_view:11111111-1111-4111-8111-111111111111"),
   recordProductEventV1: vi.fn<typeof import("../features/analytics/client/product-event-client").recordProductEventV1>(async () => true),
 }));
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, getAccessToken, user: authenticated && ownerId ? { id: ownerId } : null }) }));
+vi.mock("./byus-session-provider", () => ({ useByUsSession: () => session }));
 vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 vi.mock("next/navigation", () => ({
   usePathname: () => "/kara",
@@ -72,7 +74,7 @@ function summaryPayload(passports: unknown[] = []) {
   return { summary: { profile: { nickname: "별빛팬" }, creators: passports.length ? [{ celebrity: { slug: "kara", name: "KARA", image: kara.image.url }, relationship: "passport", passport: { id: ownedPassport.id, tier: "Silver", score: 8, remainingToNextTier: 2, ...(supplied?.stageProgress ? { stageProgress: supplied.stageProgress } : {}) }, ticketBalance: 3, firstReaction: null }] : [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: passports.length, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 } };
 }
 function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffles = [] }: { notices?: unknown[]; passports?: unknown[]; calendarEvents?: unknown[]; raffles?: unknown[] } = {}) {
-  const request = vi.fn(async (input: RequestInfo | URL) => {
+  const request = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input);
     const ok = (body: unknown) => ({ ok: true, json: async () => body });
     if (url.includes("/fans?")) return ok({ likeCount: membershipCount, fanCount: membershipCount, publicFanCount: 0, fans: [] });
@@ -96,7 +98,19 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   return request;
 }
 describe("approved fanpage", () => {
-  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
+  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
+  it("loads the mini calendar anonymously while the destination session is pending", async () => {
+    authenticated = true;
+    Object.assign(session, { ready: false, pending: true, ownerId: "owner-one", generation: 1 });
+    const request = stubHubFetch();
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
+
+    expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
+    await waitFor(() => expect(request.mock.calls.some(([input, init]) =>
+      String(input).includes("/api/live-events/calendar") && !(init as RequestInit | undefined)?.headers,
+    )).toBe(true));
+    expect(getAccessToken).not.toHaveBeenCalled();
+  });
   it("keeps creator content visible when page-view storage fails", async () => {
     analytics.pageViewIdempotencyKey.mockRejectedValueOnce(new Error("storage unavailable"));
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);

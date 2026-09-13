@@ -4,6 +4,7 @@ import { ByUsPrivyProvider } from "./privy-provider";
 
 const provider = vi.fn(({ children }: { children: React.ReactNode }) => children);
 vi.mock("./avatar-session-bridge", () => ({ AvatarSessionBridge: ({ children }: { children: React.ReactNode }) => children }));
+vi.mock("./byus-session-provider", () => ({ ByUsSessionProvider: ({ children }: { children: React.ReactNode }) => children }));
 vi.mock("@privy-io/react-auth", () => ({
   PrivyProvider: (props: { children: React.ReactNode }) => provider(props),
 }));

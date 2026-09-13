@@ -45,6 +45,18 @@ vi.mock("@privy-io/react-auth", () => ({
 afterEach(() => { avatarOwner.id = undefined; vi.useRealTimers(); });
 
 describe("unified MY hub", () => {
+  it("shows the MY sections while personal data is still being prepared", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    render(<MyScreen locale="ko" />);
+    expect(screen.getByRole("heading", { name: "MY" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 최애" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "예약한 LIVE" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "최근 수집" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("팬 활동을 불러오는 중이에요.");
+    expect(screen.queryByText("카밀리아님")).not.toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+
   it("renders the same catalog avatar in the profile header and links it to settings", async () => {
     avatarOwner.id = "owner-a";
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) =>

@@ -148,10 +148,10 @@ const copy = {
     subscriptionLabel: "계정 알림 연결",
     subscriptionOn: "등록된 브라우저 알림이 있어요.",
     subscriptionOff: "등록된 브라우저 알림이 없어요.",
-    wallet: "연결된 지갑",
+    wallet: "발급 계정",
     walletHelp:
-      "Privy가 생성한 지갑은 변경하거나 출금할 수 없으며 주소는 일부만 표시됩니다.",
-    noWallet: "지갑 준비 중",
+      "패스포트와 스탬프를 받는 계정이에요. 변경할 수 없으며 주소는 일부만 표시돼요.",
+    noWallet: "발급 계정 준비 중",
     install: "앱 설치",
     installHelp: "홈 화면에 ByUs를 추가하면 더 빠르게 열 수 있어요.",
     installAction: "ByUs 설치하기",
@@ -235,10 +235,10 @@ const copy = {
     subscriptionLabel: "Account notification connection",
     subscriptionOn: "Your account has a registered browser notification.",
     subscriptionOff: "Your account has no registered browser notification.",
-    wallet: "Connected wallet",
+    wallet: "Issuance account",
     walletHelp:
-      "Your Privy wallet cannot be changed or withdrawn here. Only a masked address is shown.",
-    noWallet: "Wallet is being prepared",
+      "This account receives your Passports and Stamps. It cannot be changed here, and only part of the address is shown.",
+    noWallet: "Your issuance account is getting ready",
     install: "Install app",
     installHelp: "Add ByUs to your home screen for faster access.",
     installAction: "Install ByUs",
@@ -1233,7 +1233,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           <div className={styles.walletValue}>
             <code>{settings.wallet?.maskedAddress ?? t.noWallet}</code>
             {settings.wallet && (
-              <span>GIWA · Chain {settings.wallet.chainId}</span>
+              <span>{locale === "ko" ? "네트워크" : "Network"} · {settings.wallet.chainId}</span>
             )}
           </div>
         </section>
