@@ -9,7 +9,7 @@ const resolutionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("reject"), reason: z.string().trim().min(1).max(1000) }).strict(),
   z.object({ action: z.literal("link_existing"), eventId: z.string().uuid() }).strict(),
   z.object({ action: z.literal("distinct_events") }).strict(),
-  z.object({ action: z.literal("cancel_occurrences"), eventIds: z.array(z.string().uuid()).min(1).max(100).refine(ids => new Set(ids).size === ids.length), reason: z.string().trim().min(1).max(1000) }).strict(),
+  z.object({ action: z.literal("cancel_occurrences"), eventIds: z.array(z.string().uuid()).max(100).refine(ids => new Set(ids).size === ids.length), reason: z.string().trim().min(1).max(1000) }).strict(),
 ]);
 export const recurringReviewCommandSchema = z.object({
   revisionId: z.string().uuid(),
@@ -41,7 +41,7 @@ export function createRecurringLiveHandlers(deps: RecurringLiveRouteDependencies
       return Response.json(result, { headers });
     } catch (error) {
       if (error instanceof AuthError) return Response.json({ error: { code: error.code } }, { status: error.status, headers });
-      const conflict = error instanceof Error && /CONFLICT|stale|revision mismatch/i.test(error.message);
+      const conflict = error instanceof Error && /CONFLICT|ALREADY_RESOLVED|stale|revision mismatch/i.test(error.message);
       return Response.json({ error: { code: conflict ? "RECURRING_REVIEW_CONFLICT" : "RECURRING_SCHEDULE_UNAVAILABLE" } }, { status: conflict ? 409 : 503, headers });
     }
   }

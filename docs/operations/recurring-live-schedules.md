@@ -55,3 +55,5 @@ node scripts/recurring-live-schedules.mjs verify --required-days 42 --linked-wor
 잘못된 조사나 운영 실패가 있으면 해당 규칙의 추가 생성을 멈추고 검토합니다. 이미 예약된 회차를 삭제하거나 새 ID로 교체하지 않습니다. 출석 기록이 있는 회차를 규칙 변경 때문에 자동 수정하지 않습니다.
 
 운영에 nullable 정기 회차가 생긴 뒤에는 이 값을 모르는 과거 앱 버전으로 단순 되돌리지 않습니다. 자동화를 일시중지하고 nullable 지원 버전을 유지하며 기존 취소/일정 수정 절차를 사용합니다. 관찰·승인·예약·출석·audit 기록은 보존합니다.
+
+주간 자동화는 이 작업의 로컬 체크아웃과 Aside 로그인 세션을 사용합니다. 실행 시 컴퓨터와 Codex 앱이 켜져 있고 작업 폴더가 남아 있어야 합니다. [공식 예약 작업 안내](https://learn.chatgpt.com/docs/automations?surface=app).

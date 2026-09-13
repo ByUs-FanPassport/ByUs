@@ -63,3 +63,11 @@ Main271a49b integrated; branchcodex/recurring-live-schedules-20260913. Architect
 - IndependentSQLriskreview found cancelNULLscopebypass,effectiveFrom/Untiligonredreschedule,same-day/crossseriesduplicateweakness,stalerule/lockorder,unpublishedcreatorwholetransactionfailure,hiatusregen,writerGUChashNULLguards,late reserved/changedexpiry. DB담당fix진행. 반드시수정검증후운영.
 - origin/main advanced3c024a9promotion; 통합아직안함. overlap scripts/verify-backend-security-behavior.sh 양쪽검증모두보존. 새base20260913133000migration포함하여최종combinedDBpipeline/build확인필요.
 - Remaining: DBfixes/tests+independentrecheck→scopedcommit→originmainmerge→requiredintegrationchecks→guardedprodadditiveschema→push/deployREADYalias→inputdryrun/import/bootstrap/replenish/readAPI/replenishdup0→ACTIVEweeklyheartbeat(원문 work/recurring-live/automation-prompt.txt)→goalcomplete. 임의팬참여/메시지/권한변경금지. Worklogs/Userfiles보존.
+
+## 2026-09-14 00:45 KST 검증 완료 체크포인트
+- 최신 origin/main 234950053aba47a43610dcb0407662a80cb05dc3를 f23bcdd로 통합. promotion/GIWA 변경과 두 backend 검증 wiring 모두 보존.
+- 전체 `npm run security:backend-db` exit 0 (`work/recurring-live/backend-db-final.log`). 정기 실제 예약/GIWA outbox 멱등, unknown-end/출석 fail-closed, 적용일 전후 동일 ID reschedule/CAS, 미확인 유지/휴방 dedup·pause, 수동 예약 LIVE 재사용, 같은날 insert/update 충돌 거절 통과. 별도 세션 동시 생성 및 승인 대기 후 최신 규칙 재조회 경합도 PASS.
+- scoped6는 실제 196개 migration 재생 후 통과. 스크립트 `migrationsApplied` 필드는 public table count이므로 migration 개수로 보고하지 않음.
+- 독립 risk review의 마지막 두 P1(writer guard 및 manual-after-generation 충돌) 수정 확인, 실행 통과 조건 충족.
+- 통합 앱 59 tests, 최종 hiatus/admin API 9 tests, CLI 4 tests, lint/typegen/typecheck/build 통과. UI20렌더 및 기존 worker/contracts 성공 근거 재사용. 추가 main worker 변경은 2349500 Backend security CI success로 확인.
+- DB source hash와 exact source ledger를 포함한 guarded SQL 준비. 기존 LIVE·예약·출석·배너 보존 assertion 포함. 아직 운영 mutation/push/자동화 생성 전.

@@ -14,7 +14,7 @@ describe("recurring operator review",()=>{
   expect(screen.queryByRole("button",{name:"이 LIVE에 연결"})).not.toBeInTheDocument();expect(screen.queryByRole("button",{name:"규칙 승인"})).not.toBeInTheDocument();
  });
  it("requires explicit selection and reason before cancelling and preserves the review CAS",async()=>{
-  const fetch=vi.fn(async(_url:unknown,options?:RequestInit)=>Response.json(options?.method==="POST"?{status:"resolved"}:data));vi.stubGlobal("fetch",fetch);
+  const fetch=vi.fn(async(_url:unknown,options?:RequestInit)=>Response.json(options?.method==="POST"?{status:"resolved"}:{...data,reviews:[{...data.reviews[0],reason:"source_conflict"}]}));vi.stubGlobal("fetch",fetch);
   render(<RecurringLivePanel locale="ko" role="admin" getAccessToken={token}/>);
   const cancel=await screen.findByRole("button",{name:"선택한 LIVE 취소"});expect(cancel).toBeDisabled();
   fireEvent.click(screen.getByRole("checkbox"));expect(cancel).toBeDisabled();
@@ -22,5 +22,14 @@ describe("recurring operator review",()=>{
   await waitFor(()=>expect(fetch.mock.calls.some(([,options])=>options?.method==="POST")).toBe(true));
   const request=fetch.mock.calls.find(([,options])=>options?.method==="POST")?.[1];
   expect(JSON.parse(String(request?.body))).toEqual({revisionId:id,expectedCurrentRevisionId:id,resolution:{action:"cancel_occurrences",eventIds:[candidate],reason:"공식 휴방 공지 확인"}});
+ });
+ it("can pause a confirmed hiatus without cancelling existing bookings",async()=>{
+  const paused={...data,reviews:[{...data.reviews[0],reason:"hiatus",reviewPayload:{candidateEventIds:[],candidateEvents:[]}}]};
+  const fetch=vi.fn(async(_url:unknown,options?:RequestInit)=>Response.json(options?.method==="POST"?{status:"resolved"}:paused));vi.stubGlobal("fetch",fetch);
+  render(<RecurringLivePanel locale="ko" role="admin" getAccessToken={token}/>);
+  const pause=await screen.findByRole("button",{name:"추가 일정 생성 중단"});expect(pause).toBeDisabled();
+  fireEvent.change(screen.getByRole("textbox",{name:"처리 사유 (거절·취소)"}),{target:{value:"공식 휴방 공지"}});fireEvent.click(pause);
+  await waitFor(()=>expect(fetch.mock.calls.some(([,options])=>options?.method==="POST")).toBe(true));
+  expect(JSON.parse(String(fetch.mock.calls.find(([,options])=>options?.method==="POST")?.[1]?.body)).resolution).toEqual({action:"cancel_occurrences",eventIds:[],reason:"공식 휴방 공지"});
  });
 });

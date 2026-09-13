@@ -25,7 +25,9 @@ export function validateRecurringRule(rule) {
   requireValue(validDate(rule.effectiveFrom) && (rule.effectiveUntil === null || validDate(rule.effectiveUntil) && rule.effectiveUntil >= rule.effectiveFrom), "Invalid rule date");
   requireValue(["tiktok", "instagram", "youtube", "chzzk"].includes(rule.provider), "Invalid provider");
   validateSourceUrl(rule.channelUrl, rule.provider);
-  requireValue(Array.isArray(rule.slots) && rule.slots.length > 0 && rule.slots.length <= 28, "Invalid slots");
+  const channel = new URL(rule.channelUrl);
+  if (rule.provider === "chzzk") requireValue(/^\/(?:live\/)?[a-f0-9]{32}\/?$/.test(channel.pathname) && !channel.search, "Invalid CHZZK channel");
+  requireValue(Array.isArray(rule.slots) && rule.slots.length > 0 && rule.slots.length <= 14, "Invalid slots");
   const ids = new Set(); const starts = new Set();
   for (const slot of rule.slots) {
     keys(slot, ["id", "isoWeekday", "localStartTime", "end"], "slot");
@@ -44,7 +46,7 @@ export function validateRecurringRule(rule) {
 export function validateRecurringInput(input) {
   keys(input, ["version", "runId", "rosterObservedAt", "creators"], "input");
   requireValue(input.version === 1 && uuid.test(input.runId) && instant(input.rosterObservedAt), "Invalid input version/run/date");
-  requireValue(Array.isArray(input.creators) && input.creators.length > 0 && input.creators.length <= 1000, "Invalid creator count");
+  requireValue(Array.isArray(input.creators) && input.creators.length > 0 && input.creators.length <= 500, "Invalid creator count");
   const ids = new Set();
   for (const creator of input.creators) {
     keys(creator, ["celebrityId", "result", "verification", "observations", "seriesKey", "proposedRule", "expectedCurrentRevisionId"], "creator");
