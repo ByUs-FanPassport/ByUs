@@ -104,6 +104,8 @@ suite("ActionWorker to ActionHub local Anvil", () => {
     await expect(currentFeeCap.prepare(payload)).rejects.toMatchObject({ code: "MINT_FEE_POLICY_BLOCKED" });
     const submission = await chain.prepare(payload);
     expect(await chain.broadcast(submission.signedTransaction)).toBe(submission.txHash);
+    // Broadcast acceptance can precede Anvil mining on a busy CI runner.
+    await publicClient.waitForTransactionReceipt({ hash: submission.txHash, timeout: 30_000, pollingInterval: 100 });
     const receipt = await chain.receipt(payload, submission);
     expect(receipt?.credentials).toHaveLength(2);
     expect(new Set(receipt?.credentials.map((item) => item.kind))).toEqual(new Set([0, 1]));
