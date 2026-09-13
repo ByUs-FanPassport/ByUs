@@ -3,7 +3,7 @@ import { actionHubAbi, easAbi } from "./adapters/viem-action-hub.js";
 import type { IndexedFanAction } from "./action-metrics.js";
 
 type Recorded = { actionId: Hash; fan: Address; occurrenceId: Hash; revision: number; actionCode: number; origin: number; transactionHash: Hash; blockNumber: bigint; blockHash: Hash };
-type ActionRecord = { actionId: Hash; occurrenceId: Hash; easUID: Hash; schemaUID: Hash; fan: Address; revision: number; actionCode: number; status: number; recordHash: Hash; origin: number; migrationBatchId: Hash };
+type ActionRecord = { actionId: Hash; occurrenceId: Hash; easUID: Hash; schemaUID: Hash; refUID: Hash; fan: Address; revision: number; actionCode: number; status: number; recordHash: Hash; origin: number; migrationBatchId: Hash };
 type CredentialRef = { nftContract: Address; tokenId: bigint; kind: number; issuanceKey: Hash; linkOrigin: number };
 
 export class ViemActionLogReader {
@@ -50,6 +50,17 @@ export class ViemActionLogReader {
         this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "getAction", args: [event.actionId] }) as Promise<ActionRecord>,
         this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "latestActionId", args: [event.occurrenceId] }),
       ]);
+      const canonicalActionId = keccak256(encodeAbiParameters(
+        [{ type: "bytes32" }, { type: "uint32" }],
+        [event.occurrenceId, event.revision],
+      ));
+      if (event.revision < 1
+        || event.actionId.toLowerCase() !== canonicalActionId.toLowerCase()
+        || record.actionId.toLowerCase() !== event.actionId.toLowerCase()
+        || record.occurrenceId.toLowerCase() !== event.occurrenceId.toLowerCase()
+        || record.revision !== event.revision) {
+        throw new Error("Action read-model Hub record mismatch");
+      }
       const canonicalBlock = await this.client.getBlock({ blockNumber: event.blockNumber });
       if (canonicalBlock.hash?.toLowerCase() !== event.blockHash.toLowerCase()) throw new Error("Action read-model reorg during read");
       const refs = refsByAction.get(event.actionId.toLowerCase()) ?? [];
@@ -64,10 +75,34 @@ export class ViemActionLogReader {
         { type: "bytes32" }, { type: "bytes32" },
       ], attestation.data);
       const zero = `0x${"0".repeat(64)}`;
+      if (record.revision === 1) {
+        if (record.refUID.toLowerCase() !== zero || attestation.refUID.toLowerCase() !== zero) {
+          throw new Error("Action read-model correction chain mismatch");
+        }
+      } else {
+        const previousActionId = keccak256(encodeAbiParameters(
+          [{ type: "bytes32" }, { type: "uint32" }],
+          [record.occurrenceId, record.revision - 1],
+        ));
+        const previous = await this.client.readContract({
+          address: this.options.hubAddress,
+          abi: actionHubAbi,
+          functionName: "getAction",
+          args: [previousActionId],
+        }) as ActionRecord;
+        if (previous.actionId.toLowerCase() !== previousActionId.toLowerCase()
+          || previous.occurrenceId.toLowerCase() !== record.occurrenceId.toLowerCase()
+          || previous.revision !== record.revision - 1
+          || previous.status !== 3
+          || previous.easUID.toLowerCase() === zero
+          || record.refUID.toLowerCase() !== previous.easUID.toLowerCase()
+          || attestation.refUID.toLowerCase() !== previous.easUID.toLowerCase()) {
+          throw new Error("Action read-model correction chain mismatch");
+        }
+      }
       if (attestation.uid.toLowerCase() !== record.easUID.toLowerCase()
         || getAddress(attestation.recipient) !== getAddress(record.fan)
         || getAddress(attestation.attester) !== getAddress(this.options.hubAddress)
-        || attestation.refUID.toLowerCase() !== zero
         || keccak256(attestation.data).toLowerCase() !== record.recordHash.toLowerCase()
         || data[0].toLowerCase() !== record.occurrenceId.toLowerCase()
         || data[1].toLowerCase() !== record.actionId.toLowerCase()
