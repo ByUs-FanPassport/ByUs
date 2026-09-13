@@ -45,10 +45,12 @@ describe("sitemap URL inclusion", () => {
       { path: "/my", locale: "ko" }, { path: "/c/ifew/verify", locale: "ko" },
     ]);
     expect(map.some(({ url }) => url.includes("/pages/ifew-fan-guide"))).toBe(false);
-    expect(map).toHaveLength(19);
-    expect(new Set(map.map(({ url }) => url)).size).toBe(19);
+    expect(map).toHaveLength(21);
+    expect(new Set(map.map(({ url }) => url)).size).toBe(21);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=ko")).toBe(true);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=en")).toBe(true);
+    expect(map.some(({ url }) => url === "https://byus.kr/pages/onchain?locale=ko")).toBe(true);
+    expect(map.some(({ url }) => url === "https://byus.kr/pages/onchain?locale=en")).toBe(true);
     expect(map.some(({ url }) => /rehearsal|\/my|\/verify/.test(url))).toBe(false);
     expect(map.find(({ url }) => url.includes("ended-event"))?.alternates?.languages).toEqual({ ko: "https://byus.kr/live/ended-event?locale=ko" });
     expect(map.every(({ url }) => /\?locale=(ko|en)$/.test(url))).toBe(true);

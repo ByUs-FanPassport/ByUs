@@ -53,6 +53,9 @@ begin
     insert into public.fan_action_producer_routes(action_code,binding_id,enabled,policy_version,enabled_at)
       values(action_code,binding,true,1,clock_timestamp());
   end loop;
+  insert into public.fan_action_verified_creators(
+    binding_id,creator_id,verified_block_number,verified_block_hash,verified_at
+  ) values(binding,creator,123456,'0x'||repeat('8',64),clock_timestamp());
 
   -- Exercise every registered action code through the same atomic source adapter.
   for action_code in 1..11 loop
@@ -410,19 +413,19 @@ do $$
 declare item record;definition text;
 begin
   for item in select * from (values
-    ('public.submit_owned_quiz_attempt(uuid,uuid,uuid,text,text,text,text)'::regprocedure,'fan_action_native_enabled(1,p_app_user_id)'),
+    ('public.submit_owned_quiz_attempt(uuid,uuid,uuid,text,text,text,text)'::regprocedure,'fan_action_native_enabled(1,p_app_user_id,attempt_record.celebrity_id)'),
     ('public.reserve_owned_live_event(uuid,uuid,uuid,uuid,text,text)'::regprocedure,'fan_action_native_enabled(2,p_app_user_id)'),
     ('public.attend_owned_live_event(uuid,text,uuid,text,uuid,text,text)'::regprocedure,'fan_action_native_enabled(3,p_app_user_id)'),
     ('public.submit_owned_live_mission(uuid,uuid,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(4,p_app_user_id)'),
     ('public.submit_owned_live_survey(uuid,text,uuid,jsonb,uuid,text,text)'::regprocedure,'fan_action_native_enabled(5,p_app_user_id)'),
-    ('public.react_to_creator(uuid,uuid,uuid,uuid,text)'::regprocedure,'fan_action_native_enabled(6,p_app_user_id)'),
+    ('public.react_to_creator(uuid,uuid,uuid,uuid,text)'::regprocedure,'fan_action_native_enabled(6,p_app_user_id,p_celebrity_id)'),
     ('public.claim_owned_live_collectible(uuid,text,uuid)'::regprocedure,'fan_action_native_enabled(11,p_app_user_id)')
   ) v(signature,marker) loop
     definition:=pg_get_functiondef(item.signature);
     perform pg_temp.assert(position(item.marker in definition)>0,item.signature::text||' is missing its v2 branch');
   end loop;
   definition:=pg_get_functiondef('public.issue_community_stamp(uuid,uuid,public.community_stamp_kind,text)'::regprocedure);
-  perform pg_temp.assert(position('fan_action_native_enabled(v_action_code,p_app_user_id)' in definition)>0,
+  perform pg_temp.assert(position('fan_action_native_enabled(v_action_code,p_app_user_id,p_celebrity_id)' in definition)>0,
     'community producer is missing action codes 7-10 branch');
   perform pg_temp.assert(position('v_action_code is not null and' in definition)>0
       and position('p_kind in (''subscription'',''support'')' in definition)>0,

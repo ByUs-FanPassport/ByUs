@@ -22,4 +22,52 @@ describe("public image role reader", () => {
     await expect(new SupabasePublicImageRoleReader({ rpc: malformed } as never).readCelebrityPhotoSetsBySlug(["creator-a"]))
       .rejects.toThrow();
   });
+
+  it("reads a growing deduplicated roster in RPC chunks of at most 200", async () => {
+    const slugs = Array.from({ length: 205 }, (_, index) => `creator-${index}`);
+    const rpc = vi.fn(async (_name: string, args: { p_slugs: string[] }) => ({
+      data: args.p_slugs.map((ownerSlug) => ({ ownerSlug, record })),
+      error: null,
+    }));
+    const reader = new SupabasePublicImageRoleReader({ rpc } as never);
+
+    const result = await reader.readCelebrityPhotoSetsBySlug([
+      ...slugs,
+      "creator-0",
+      "creator-204",
+    ]);
+
+    expect(Object.keys(result)).toHaveLength(205);
+    expect(result["creator-0"]).toEqual({ profile: record.binding });
+    expect(result["creator-204"]).toEqual({ profile: record.binding });
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc.mock.calls.map(([, args]) => args.p_slugs.length)).toEqual([200, 5]);
+    expect(rpc.mock.calls.flatMap(([, args]) => args.p_slugs)).toEqual(slugs);
+  });
+
+  it("validates the whole input before reading any chunk", async () => {
+    const rpc = vi.fn();
+    const reader = new SupabasePublicImageRoleReader({ rpc } as never);
+    const slugs = [
+      ...Array.from({ length: 200 }, (_, index) => `creator-${index}`),
+      "Invalid-Slug",
+    ];
+
+    await expect(reader.readCelebrityPhotoSetsBySlug(slugs)).rejects.toThrow();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects the whole read when any chunk fails", async () => {
+    const slugs = Array.from({ length: 201 }, (_, index) => `creator-${index}`);
+    const rpc = vi.fn(async (_name: string, args: { p_slugs: string[] }) =>
+      args.p_slugs[0] === "creator-200"
+        ? { data: null, error: { message: "second chunk unavailable" } }
+        : { data: args.p_slugs.map((ownerSlug) => ({ ownerSlug, record })), error: null },
+    );
+    const reader = new SupabasePublicImageRoleReader({ rpc } as never);
+
+    await expect(reader.readCelebrityPhotoSetsBySlug(slugs))
+      .rejects.toThrow("public image role read failed: second chunk unavailable");
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
 });

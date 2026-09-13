@@ -16,16 +16,18 @@ import {
 
 const PUBLIC_COLUMNS =
   "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role";
+const PUBLIC_LIST_PAGE_SIZE = 500;
 
 type QueryResult = PromiseLike<{
   data: unknown;
   error: { message?: string } | null;
 }>;
 
-interface PublishedQuery {
+interface PublishedQuery extends QueryResult {
   select(columns: string): PublishedQuery;
   eq(column: string, value: string): PublishedQuery;
-  order(column: string, options: { ascending: boolean }): QueryResult;
+  order(column: string, options: { ascending: boolean }): PublishedQuery;
+  range(from: number, to: number): QueryResult;
   maybeSingle(): QueryResult;
 }
 
@@ -45,18 +47,25 @@ export class SupabasePublishedContentRepository
   constructor(private readonly client: PublishedContentClient) {}
 
   async list(locale: ContentLocale): Promise<readonly PublishedCelebrity[]> {
-    const { data, error } = await this.client
-      .from("published_celebrities")
-      .select(PUBLIC_COLUMNS)
-      .eq("locale", locale)
-      .order("display_order", { ascending: true });
+    const rows: unknown[] = [];
+    for (let from = 0; ; from += PUBLIC_LIST_PAGE_SIZE) {
+      const { data, error } = await this.client
+        .from("published_celebrities")
+        .select(PUBLIC_COLUMNS)
+        .eq("locale", locale)
+        .order("display_order", { ascending: true })
+        .order("slug", { ascending: true })
+        .range(from, from + PUBLIC_LIST_PAGE_SIZE - 1);
 
-    if (error || !Array.isArray(data)) {
-      throw new Error("Published content query failed");
+      if (error || !Array.isArray(data)) {
+        throw new Error("Published content query failed");
+      }
+      rows.push(...data);
+      if (data.length < PUBLIC_LIST_PAGE_SIZE) break;
     }
 
     try {
-      return data
+      return rows
         .map(parsePublishedCelebrity)
         .sort((left, right) => left.displayOrder - right.displayOrder || left.slug.localeCompare(right.slug));
     } catch (cause) {

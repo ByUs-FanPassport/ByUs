@@ -34,6 +34,7 @@ describe("FanSiteFooter", () => {
     expect(telegram.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(telegram.querySelector("path")).toHaveAttribute("fill", "currentColor");
     expect(within(navigation).getByRole("link", { name: "문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");
+    expect(within(navigation).getByRole("link", { name: "온체인 기록" })).toHaveAttribute("href", "/pages/onchain?locale=ko");
     expect(within(navigation).queryByRole("link", { name: "이미지 출처 열기" })).not.toBeInTheDocument();
     expect(footer).not.toHaveTextContent("biz@sallylab.io");
     expect(within(footer).getByText("© 2026 ByUs. All rights reserved.")).toBeInTheDocument();
@@ -48,6 +49,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).getByRole("link", { name: "Fanmeeting partnerships" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
     expect(within(navigation).getByRole("link", { name: "Service guide" })).toHaveAttribute("href", "/guide?locale=en");
     expect(within(navigation).getByRole("link", { name: "Contact support" })).toHaveAttribute("href", "/my/inquiries?locale=en");
+    expect(within(navigation).getByRole("link", { name: "Onchain records" })).toHaveAttribute("href", "/pages/onchain?locale=en");
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
     expect(within(navigation).getByRole("heading", { name: "Guides & contact" })).toBeInTheDocument();

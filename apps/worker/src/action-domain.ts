@@ -10,28 +10,15 @@ import {
   type JobPayload,
   WorkerError,
 } from "./domain.js";
+import { actionCodes, linkOrigins } from "./action-constants.js";
+export { actionCodes, linkOrigins } from "./action-constants.js";
 
 export const ACTION_PAYLOAD_VERSION = 1 as const;
-export const actionCodes = {
-  FAN_VERIFIED: 1,
-  LIVE_RESERVED: 2,
-  LIVE_ATTENDED: 3,
-  MISSION_COMPLETED: 4,
-  SURVEY_SUBMITTED: 5,
-  FIRST_REACTION: 6,
-  WELCOME_COMPLETED: 7,
-  FIRST_COMMENT: 8,
-  INVITE_COMPLETED: 9,
-  DAILY_CHECKIN: 10,
-  COLLECTIBLE_CLAIMED: 11,
-} as const;
-
 export type ActionCode = (typeof actionCodes)[keyof typeof actionCodes];
 export const operationKinds = { RECORD_ONLY: 0, RECORD_AND_ISSUE: 1, IMPORT_HISTORICAL: 2, CORRECT: 3 } as const;
 export const origins = { NATIVE: 0, HISTORICAL: 1 } as const;
 export const credentialKinds = { PASSPORT: 0, STAMP: 1, COLLECTIBLE: 2 } as const;
 export const intentModes = { MINT: 0, LINK_EXISTING: 1 } as const;
-export const linkOrigins = { MINTED_NOW: 0, LINKED_EXISTING: 1 } as const;
 
 const uint16 = z.number().int().min(0).max(65_535);
 const uint32 = z.number().int().min(0).max(4_294_967_295);

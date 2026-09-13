@@ -25,3 +25,5 @@ psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_producers.sql
 bash "$root_dir/scripts/verify-fan-action-snapshots.sh"
 BYUS_ACTION_CONCURRENCY_MODE=1 bash "$root_dir/scripts/verify-fan-action-concurrency.sh"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_canary.sql"
+
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/bias_celebrity_public_handle.sql"

@@ -3,7 +3,7 @@ import type { Route } from "next";
 // The existing immutable slug is also the public handle. Keep this list aligned
 // with top-level app routes and public asset directories (checked by tests).
 export const RESERVED_CREATOR_HANDLES = [
-  "admin", "api", "benefits", "c", "celebrities", "connect", "creator",
+  "admin", "api", "benefits", "bias", "c", "celebrities", "connect", "creator",
   "guide", "live", "login", "my", "notifications", "onboarding", "pages",
   "passports", "privacy", "s", "settings", "stamps", "terms",
   "fonts", "images", "share", "_next", ".well-known",

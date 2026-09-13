@@ -21,16 +21,20 @@ const row = {
   fan_count: 12_800_000,
 };
 
-function queryResult(data: unknown, error: unknown = null) {
+function queryResult(data: unknown, error: { message?: string } | null = null) {
+  const result = Promise.resolve({ data, error });
   const query = {
     select: vi.fn(),
     eq: vi.fn(),
     order: vi.fn(),
+    range: vi.fn(),
     maybeSingle: vi.fn(),
+    then: result.then.bind(result),
   };
   query.select.mockReturnValue(query);
   query.eq.mockReturnValue(query);
-  query.order.mockResolvedValue({ data, error });
+  query.order.mockReturnValue(query);
+  query.range.mockResolvedValue({ data, error });
   query.maybeSingle.mockResolvedValue({ data, error });
   return query;
 }
@@ -49,7 +53,9 @@ describe("SupabasePublishedContentRepository", () => {
       "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role",
     );
     expect(query.eq).toHaveBeenCalledWith("locale", "ko");
-    expect(query.order).toHaveBeenCalledWith("display_order", { ascending: true });
+    expect(query.order).toHaveBeenNthCalledWith(1, "display_order", { ascending: true });
+    expect(query.order).toHaveBeenNthCalledWith(2, "slug", { ascending: true });
+    expect(query.range).toHaveBeenCalledWith(0, 499);
   });
 
   it("finds one published projection by canonical locale and slug", async () => {
@@ -78,6 +84,55 @@ describe("SupabasePublishedContentRepository", () => {
       expect.objectContaining({ slug: "alpha" }),
       expect.objectContaining({ slug: "zeta" }),
     ]);
+  });
+
+  it("accumulates every stable page beyond the Supabase 1000-row response cap", async () => {
+    const rows = Array.from({ length: 1_001 }, (_, index) => ({
+      ...row,
+      slug: `creator-${String(index).padStart(4, "0")}`,
+      name: `Creator ${index}`,
+      display_order: Math.floor(index / 2),
+    }));
+    const ranges: Array<[number, number]> = [];
+    const client = {
+      from: vi.fn(() => {
+        const query = queryResult([]);
+        query.range.mockImplementation(async (from: number, to: number) => {
+          ranges.push([from, to]);
+          return { data: rows.slice(from, to + 1), error: null };
+        });
+        return query;
+      }),
+    };
+    const repository = new SupabasePublishedContentRepository(client);
+
+    const result = await repository.list("ko");
+
+    expect(result).toHaveLength(1_001);
+    expect(result.at(-1)).toEqual(expect.objectContaining({ slug: "creator-1000" }));
+    expect(ranges).toEqual([[0, 499], [500, 999], [1000, 1499]]);
+  });
+
+  it("fails the whole list when a later page fails", async () => {
+    const firstPage = Array.from({ length: 500 }, (_, index) => ({
+      ...row,
+      slug: `creator-${String(index).padStart(4, "0")}`,
+      display_order: index,
+    }));
+    let page = 0;
+    const client = {
+      from: vi.fn(() => {
+        const query = queryResult([]);
+        query.range.mockImplementation(async () => page++ === 0
+          ? { data: firstPage, error: null }
+          : { data: null, error: { message: "page unavailable" } });
+        return query;
+      }),
+    };
+
+    await expect(new SupabasePublishedContentRepository(client).list("ko"))
+      .rejects.toThrow("Published content query failed");
+    expect(client.from).toHaveBeenCalledTimes(2);
   });
 
   it("attaches approved photo roles after parsing with one batch per owner kind", async () => {
