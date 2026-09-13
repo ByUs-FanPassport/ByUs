@@ -52,7 +52,7 @@ try {
   const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[]);
   await page.screenshot({path:`${out}/${locale}-${width}-recipient.png`,fullPage:true});
   await page.getByRole('button',{name:locale==='ko'?'최애 보기':'View favorite',exact:true}).dblclick();
-  await page.waitForURL(`**/c/elina?locale=${locale}`);
+  await page.waitForURL(`**/elina?locale=${locale}`);
   assert.deepEqual(actions.map(a=>a.action),['share-link','share-visit'],'explicit confirmation sends one visit despite duplicate click');
   assert.deepEqual(actions[1].body,{token:'a'.repeat(32)});
   assert.deepEqual(errors,[]);

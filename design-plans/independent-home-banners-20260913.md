@@ -29,3 +29,10 @@
 - 최종 build/typecheck/lint 모두 exit 0. 최신 변경 관련8 files/64 tests 통과. 근거 work/home-banners/build-pass.log, typecheck-final.log, lint-final.log, final-targeted-tests.log, admin-browser-final.log. git diff --check 통과. 필수 검사와 연동된 로컬 검증을 실행했으며 원격 CI·운영 QA 실행 주장은 하지 않는다.
 - 운영 DB·배포·push는 수행하지 않음. 기존 production 기록과 사용자가 열어둔 포트3000 프로세스 보존.
 - 검증용으로 생성한 loopback4193 서버 종료 및 포트 해제 확인. Playwright 브라우저는 각 실행 종료 시 닫힘. 로컬 구현·검증 목표 완료.
+
+## 후속 운영 반영 승인 및 진행
+- 사용자가 코드 push 후 운영 DB 필요 사항을 확인하고 `진행.`으로 DB 적용과 웹 배포를 승인했다. 실제 배너 이미지·방송 일정 입력은 별도다.
+- 운영 Supabase gmrykvmtmuaeswpajteq preflight에서 신규 배너 테이블 부재 및 이번 마이그레이션만 미적용임을 확인했다.
+- 20260913120000_independent_home_banners를 운영 DB에 적용했다. DDL·migration ledger를 한 트랜잭션으로 처리하고 빈 초기 데이터, KO/EN 공개 조회, 강제 RLS 및 직접 쓰기 금지 조건을 검사했다. 운영 LIVE/예약/참여 데이터 변경이나 배너 seed 없음.
+- 최신 main dbf8e21(셀럽 root handle)을 통합했다. guest-home 테스트 한 곳의 충돌은 새 /kara 주소와 분리된 LIVE 목록 동작을 함께 유지하도록 해결했다. 통합 후 관련122tests, 전체 DB 보안·동시성 검사, build/typecheck/lint 통과. 근거 work/home-banners/integration-*.log 및 production-*.json.
+- 웹 배포 진행 및 최종 결과는 이 변경의 Git 배포 상태와 후속 작업 기록에서 확인한다.

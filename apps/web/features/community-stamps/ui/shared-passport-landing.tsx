@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Heart } from "lucide-react";
 import Image from "next/image";
@@ -34,7 +36,7 @@ function SharedPassportLandingInner({ token, creator, locale, authenticated, rea
   const [error, setError] = useState("");
   const inFlight = useRef(false);
   const alive = useRef(true);
-  const creatorHref = `/c/${creator.slug}?locale=${locale}`;
+  const creatorHref = `${creatorHomeHref(creator.slug)}?locale=${locale}`;
   const loginHref = `/login?locale=${locale}&returnTo=${encodeURIComponent(`/s/${token}?locale=${locale}`)}`;
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
@@ -44,7 +46,7 @@ function SharedPassportLandingInner({ token, creator, locale, authenticated, rea
     setBusy(true); setError("");
     try {
       const result = await communityStampAction(getAccessToken, "share-visit", { token }, (value) => communityShareDestinationSchema.parse(value));
-      if (alive.current) router.push(`/c/${result.creator}?locale=${locale}` as Route);
+      if (alive.current) router.push(`${creatorHomeHref(result.creator)}?locale=${locale}` as Route);
     } catch {
       inFlight.current = false;
       if (alive.current) { setBusy(false); setError(c.failed); }

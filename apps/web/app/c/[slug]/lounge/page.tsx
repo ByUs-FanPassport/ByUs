@@ -1,3 +1,4 @@
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 import { notFound, redirect } from "next/navigation";
 import { loadSeoCreator } from "@/server/seo/public-content";
 export const dynamic = "force-dynamic";
@@ -7,5 +8,5 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const locale = query.locale === "en" ? "en" : "ko";
   const celebrity = await loadSeoCreator(slug, locale);
   if (!celebrity) notFound();
-  redirect(`/c/${celebrity.slug}?locale=${locale}#cheers`);
+  redirect(`${creatorHomeHref(celebrity.slug)}?locale=${locale}#cheers`);
 }

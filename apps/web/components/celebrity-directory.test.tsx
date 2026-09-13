@@ -157,7 +157,7 @@ describe("published celebrity directory", () => {
     expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
-    expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/c/kara?locale=ko");
+    expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/kara?locale=ko");
     expect(screen.getByText("LIVE 예정")).toHaveAttribute("data-live-status", "scheduled");
     expect(screen.getByText(/7월 24일/)).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "이름으로 찾기" })).toBeInTheDocument();
@@ -288,7 +288,7 @@ describe("published celebrity directory", () => {
     render(<CelebrityDirectory celebrities={english} locale="en" />);
     expect(screen.getByRole("heading", { name: "Find your favorite" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Search celebrities" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View KARA’s fan page" })).toHaveAttribute("href", "/c/kara?locale=en");
+    expect(screen.getByRole("link", { name: "View KARA’s fan page" })).toHaveAttribute("href", "/kara?locale=en");
   });
 });
 

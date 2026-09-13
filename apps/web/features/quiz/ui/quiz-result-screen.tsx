@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
@@ -230,7 +232,7 @@ export function QuizResultScreen({
         <section className={styles.error} role="alert">
           <h1>{t.errorTitle}</h1>
           <p>{t.errorBody}</p>
-          <Link href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
+          <Link href={withLocale(creatorHomeHref(celebritySlug), locale)}>{t.fanPage(displayName)}</Link>
         </section>
       </ResultFrame>
     );
@@ -243,7 +245,7 @@ export function QuizResultScreen({
         <section className={styles.error} role="alert">
           <h1>{t.errorTitle}</h1>
           <p>{t.errorBody}</p>
-          <Link href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</Link>
+          <Link href={withLocale(creatorHomeHref(celebritySlug), locale)}>{t.fanPage(displayName)}</Link>
         </section>
       </ResultFrame>
     );
@@ -276,7 +278,7 @@ export function QuizResultScreen({
               {actionPending ? t.retrying : t.retry}
             </FanAction>
           )}
-          <FanAction fullWidth className={styles.secondary} variant="neutral" href={withLocale(`/c/${celebritySlug}`, locale)}>{t.fanPage(displayName)}</FanAction>
+          <FanAction fullWidth className={styles.secondary} variant="neutral" href={withLocale(creatorHomeHref(celebritySlug), locale)}>{t.fanPage(displayName)}</FanAction>
         </div>
         {!passed && <p className={styles.note}><Info aria-hidden="true" />{t.retryNote}</p>}
         {actionError && <p ref={actionErrorRef} className={styles.actionError} role="alert" tabIndex={-1}>{actionError}</p>}

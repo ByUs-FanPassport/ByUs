@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { isCreatorHandle } from "../../features/creator/domain/creator-navigation";
 import { creatorRoleSchema } from "../../features/creator/domain/creator-role";
 import type { AdminSession } from "../admin/admin-session-gate";
 
@@ -15,7 +16,7 @@ const localization = z.object({
   imageAlt: z.string().trim().min(1).max(300),
 });
 export const celebrityPayload = z.object({
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: z.string().refine(isCreatorHandle, "invalid or reserved celebrity slug"),
   imageUrl: z
     .string()
     .refine((v) => v.startsWith("/") || v.startsWith("https://")),
@@ -111,6 +112,7 @@ const classify = (message: string) =>
         : message.includes("requires") ||
             message.includes("duplicate key") ||
             message.includes("invalid") ||
+            message.includes("reserved") ||
             message.includes("immutable")
           ? "INVALID"
           : "UNAVAILABLE",

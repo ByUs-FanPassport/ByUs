@@ -1,3 +1,4 @@
+import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { deriveLivePrimaryAction, type LiveEventResponse } from "@/features/live/domain/live-event";
 import type { MySummary } from "@/features/my/domain/my-summary";
 import { appendLoginContext } from "@/components/login-intent";
@@ -14,7 +15,7 @@ export function supportsFanGuide(pathname: string, search: string) {
   const query = new URLSearchParams(search);
   if (query.has("authIntent") || query.has("intent")) return false;
   return ["/", "/my", "/celebrities", "/live"].includes(pathname)
-    || /^\/c\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname)
+    || creatorSlugFromHomePath(pathname) !== null
     || /^\/passports\/[0-9a-f-]{36}$/.test(pathname);
 }
 
@@ -26,7 +27,7 @@ export function nextFanAction({ summary, lives, pathname, locale, now = new Date
   now?: Date;
 }): NextFanAction | null {
   const owned = summary.creators.filter((creator) => creator.passport);
-  const creatorSlug = /^\/c\/([a-z0-9-]+)$/.exec(pathname)?.[1]
+  const creatorSlug = creatorSlugFromHomePath(pathname)
     ?? owned.find((creator) => pathname === `/passports/${creator.passport?.id}`)?.celebrity.slug;
   const creator = summary.creators.find((item) => item.celebrity.slug === creatorSlug);
   if (!summary.profile.nickname?.trim()) {

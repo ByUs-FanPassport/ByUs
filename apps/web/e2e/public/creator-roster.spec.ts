@@ -12,7 +12,7 @@ for (const width of [320, 375, 414, 768, 1440]) {
       await page.goto(path);
       const content = view === 'home' ? page.locator('#celebrities') : page.locator('#celebrity-directory-content');
       await expect(content.getByRole('heading',{name:'함께 만날 크리에이터'})).toHaveCount(0);
-      for (const slug of slugs) await expect(content.locator(`a[href="/c/${slug}?locale=ko"]`).first()).toBeVisible();
+      for (const slug of slugs) await expect(content.locator(`a[href="/${slug}?locale=ko"]`).first()).toBeVisible();
       await page.evaluate(()=>document.fonts.ready);
       for (const img of await content.locator('img').all()) await img.scrollIntoViewIfNeeded();
       await content.locator('img').first().scrollIntoViewIfNeeded();
@@ -33,7 +33,7 @@ for (const width of [320, 375, 414, 768, 1440]) {
         expect(Math.abs(measure.imageHeight-measures[0].imageHeight)).toBeLessThan(2);
       }
       for (const [index, slug] of ['changha','elina','yuna'].entries())
-        await expect(cards.nth(index).locator(`a[href="/c/${slug}?locale=ko"]`).first()).toHaveCount(1);
+        await expect(cards.nth(index).locator(`a[href="/${slug}?locale=ko"]`).first()).toHaveCount(1);
       if(view==='home') {
         const rail = content.locator('#home-creator-rail');
         await expect(content.locator('nav span')).toHaveCount(0);

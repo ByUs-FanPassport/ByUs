@@ -1,4 +1,5 @@
 "use client";
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -150,7 +151,7 @@ export function ArtMissionPlay({ missions, locale, answers, submissions, errors,
       </dl>
     </section>}
     <ul className={styles.completedStages}>{ordered.map(mission => <li key={mission.id}><CircleCheck aria-hidden="true" />{stageName(mission, ko)}</li>)}</ul>
-    <Link className={styles.primary} href={`/c/elina?locale=${locale}`}>{ko ? "엘리나 팬페이지로" : "Back to Elina"}<ArrowRight aria-hidden="true" /></Link>
+    <Link className={styles.primary} href={creatorHomeHref("elina", locale)}>{ko ? "엘리나 팬페이지로" : "Back to Elina"}<ArrowRight aria-hidden="true" /></Link>
     <Link className={styles.passportLink} href={`/passports?locale=${locale}`}>{ko ? "내 패스포트 보기" : "View my Passports"}<ArrowRight aria-hidden="true" /></Link>
   </main>;
 

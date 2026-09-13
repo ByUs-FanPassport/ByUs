@@ -59,6 +59,21 @@ it("makes list scope and new-versus-edit mode explicit", async () => {
   expect(screen.getByRole("button", { name: "변경 저장" })).toBeEnabled();
 });
 
+it("rejects reserved paths and locks a slug after first publication", async () => {
+  const publishedBefore = { ...celebrity, everPublishedAt: "2026-09-10T01:00:00Z" };
+  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [publishedBefore] }) });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<AuthorizedCelebrityManager environment="Development" />);
+
+  const newSlug = screen.getByRole("textbox", { name: "주소 경로" });
+  fireEvent.change(newSlug, { target: { value: "admin" } });
+  expect(screen.getByRole("button", { name: "초안 저장" })).toBeDisabled();
+
+  fireEvent.click(await screen.findByRole("button", { name: /직군 검증.*가수/ }));
+  expect(screen.getByRole("textbox", { name: "주소 경로" })).toBeDisabled();
+  expect(screen.getByText(/최초 공개 후에는 변경할 수 없습니다/)).toBeInTheDocument();
+});
+
 it("pages the full creator list and resets to the first page when filters change", async () => {
   const items = Array.from({ length: 41 }, (_, index) => ({ ...celebrity, id: `creator-${index}`, slug: `creator-${index}`, localizations: { ...celebrity.localizations, ko: { ...celebrity.localizations.ko, name: `크리에이터 ${index}` } } }));
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items }) }));

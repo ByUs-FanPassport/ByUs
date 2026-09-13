@@ -1,5 +1,7 @@
 "use client";
 
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -168,7 +170,7 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
     {variant === "card" && <><span className={styles.icon} aria-hidden="true"><Heart /></span>
     <div className={styles.copy}><h2 id="first-reaction-title">{t.title}</h2><span>{t.body}</span></div></>}
     {!ready ? <button disabled><Heart />{t.working}</button>
-      : !authenticated ? <AuthIntentLink focusKey="first-reaction" locale={locale} input={{ sourcePath: `/c/${slug}`, sourceQuery: `?locale=${locale}`, actionType: "CREATE_REACTION", targetType: "celebrity", targetId: slug, returnAnchor: "#first-reaction" }}><Heart />{t.action}<ArrowRight /></AuthIntentLink>
+      : !authenticated ? <AuthIntentLink focusKey="first-reaction" locale={locale} input={{ sourcePath: creatorHomeHref(slug), sourceQuery: `?locale=${locale}`, actionType: "CREATE_REACTION", targetType: "celebrity", targetId: slug, returnAnchor: "#first-reaction" }}><Heart />{t.action}<ArrowRight /></AuthIntentLink>
       : checkState === "error" ? <button type="button" onClick={() => void readExisting()}><Heart />{t.retry}<ArrowRight /></button>
       : <button type="button" onClick={() => void postReaction()} disabled={checking || actionState === "working" || actionState === "done"}><Heart />{checking ? t.checking : actionState === "working" ? t.working : actionState === "done" ? (variant === "compact" && locale === "ko" ? "좋아요 완료" : t.done) : t.action}<ArrowRight /></button>}
     {checkState === "error" ? <p role="alert" className={styles.error}>{t.statusError}</p> : null}

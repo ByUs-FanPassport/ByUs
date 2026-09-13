@@ -96,6 +96,14 @@ describe("Privy login page", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/my?locale=ko&authIntent=11111111-1111-4111-8111-111111111111"));
   });
 
+  it.each(["/ifewknow", "/c/ifewknow"])("returns a completed login to %s with reaction intent and anchor intact", async (path) => {
+    const destination = `${path}?locale=en&authIntent=11111111-1111-4111-8111-111111111111#first-reaction`;
+    query = new URLSearchParams({ returnTo: destination, locale: "en", entity: "ifewknow" }).toString();
+    render(<LoginPage />);
+    await act(async () => { await onComplete?.(); });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(destination));
+  });
+
   it("hands off the callback user even before usePrivy exposes authenticated user state", async () => {
     render(<LoginPage />);
     await act(async () => { await onComplete?.({ user: { id: "new-google-fan" } }); });

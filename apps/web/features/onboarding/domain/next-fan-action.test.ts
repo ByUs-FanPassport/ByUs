@@ -9,6 +9,12 @@ const live = { live: { slug: "kara-live", title: "KARA LIVE", celebrity: { slug:
 const resolve = (changes: Partial<Parameters<typeof nextFanAction>[0]> = {}) => nextFanAction({ summary, lives: [live], pathname: "/", locale: "ko", now, ...changes });
 
 describe("next fan action", () => {
+  it("keeps the new creator home attached to the existing verification journey", () => {
+    expect(supportsFanGuide("/ifewknow", "locale=en")).toBe(true);
+    expect(resolve({ pathname: "/ifewknow" })).toMatchObject({ step: "verify", href: "/c/ifewknow/verify?locale=ko" });
+    const action = resolve({ pathname: "/ifewknow", summary: { ...summary, profile: { nickname: null } } })!;
+    expect(new URL(action.href, "https://byus.test").searchParams.get("entity")).toBe("ifewknow");
+  });
   it("starts profile setup without inventing a favorite and preserves the destination", () => {
     const action = resolve({ summary: { ...summary, profile: { nickname: null }, creators: [] }, pathname: "/my", locale: "en" })!;
     const url = new URL(action.href, "https://byus.test");

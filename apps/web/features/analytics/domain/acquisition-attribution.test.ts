@@ -10,6 +10,9 @@ describe("acquisition attribution", () => {
   it("allows only public acquisition landing shapes and never retains a slug", () => {
     expect(acquisitionLanding("/")).toBe("home");
     expect(acquisitionLanding("/c/elina")).toBe("creator");
+    expect(acquisitionLanding("/elina")).toBe("creator");
+    expect(acquisitionLanding("/ifewknow")).toBe("creator");
+    expect(acquisitionLanding("/creator")).toBeNull();
     expect(acquisitionLanding("/live/private-live-code")).toBe("live");
     expect(acquisitionLanding("/guide")).toBe("fan_guide");
     expect(acquisitionLanding("/settings/kakao/callback")).toBeNull();
