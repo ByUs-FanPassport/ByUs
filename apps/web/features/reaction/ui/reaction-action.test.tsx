@@ -34,6 +34,29 @@ function prepareReactionIntent(sourcePath = "/c/kara") {
 }
 
 describe("ReactionAction", () => {
+  it("restores a Fan Action like with no legacy blockchain job", async () => {
+    const fetch = vi.fn(async () => response({ reaction: { ...existing("minted"), blockchainJobId: null } }));
+    vi.stubGlobal("fetch", fetch);
+    render(<ReactionAction slug="changha" locale="ko" variant="compact" />);
+    expect(await screen.findByRole("button", { name: "좋아요 완료" })).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows completion after saving a like through the Fan Action outbox", async () => {
+    const saved = { ...existing("queued"), blockchainJobId: null, fanActionOutboxId: reactionIntentId, created: true };
+    const fetch = vi.fn(async (_: RequestInfo | URL, init?: RequestInit) =>
+      response(init?.method === "POST" ? saved : { reaction: null }));
+    vi.stubGlobal("fetch", fetch);
+    render(<ReactionAction slug="changha" locale="ko" variant="compact" />);
+    fireEvent.click(await screen.findByRole("button", { name: "좋아요 남기기" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("첫 좋아요 도장을 받았어요");
+    fireEvent.click(screen.getByRole("button", { name: "나중에 할게요" }));
+    expect(await screen.findByRole("button", { name: "좋아요 완료" })).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(fetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+
   afterEach(() => {
     privy.ready = true;
     privy.authenticated = true;
