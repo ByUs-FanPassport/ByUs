@@ -98,3 +98,22 @@
 - 신청에는 공개 회원가입/개인정보처리방침 URL, 실제 구현한 개발환경 테스트 화면 1장, 선택 수신·별도 마스킹 확인·철회 시 삭제 시나리오를 제출했다. 브라우저의 원본 파일 접근 제한은 동일 검증 이미지를 /tmp로 복사해 해결했다. 운영에서 등록이 이미 활성화됐다고 설명하지 않았다.
 - 승인 후 Developers 동의 항목과 등록 기능 활성화를 확인하고 승인된 계정으로 실제 등록·철회 및 SOLAPI 최종 배달 결과를 검증해야 한다. 현재 실제 전화번호 등록·팬 메시지 발송·실수신 완료는 주장하지 않는다.
 - 제외 범위: 기존 Email 대기 건 발송/수정, 반려된 디지털 전달 템플릿, 불확실 결과 재발송, SMS 또는 Email 대체 발송.
+
+## 2026-09-14 비즈니스 정보 반려 보완 및 재심사
+
+- 사용자 승인: 이전 신청 맥락 확인, 사이트 반려 사유 해결, 운영 반영 및 재심사 접수까지.
+- 실제 콘솔 `https://developers.kakao.com/console/app/1568460/config/review`: 비즈니스 정보 반려 사유는 제출 사이트의 사업자 정보 미확인. 기존 `phone_number` 선택 동의 신청은 심사 중이며 이번 작업에서 변경하지 않는다.
+- 현재 카카오 비즈니스 정보와 원본 사업자등록증을 대조: 주식회사 셀리랩 / 김보석 / 736-86-03473 / 서울특별시 서초구 효령로31길 28, 3층 제이5호(방배동). 등록증 원본은 `/Users/jewel/Documents/AI멤버십제출서류/04-1_사업자등록증_주식회사셀리랩.pdf`.
+- 공통 FanSiteFooter에 위 4항목을 추가. KO/EN에서 등록 원문을 유지하고 항목 이름만 현지화했다. 빌드를 막던 기존 auth-transition-boundary의 recoveryPath 링크 2곳에는 Next Route 타입을 명시했다. 로그인 동작은 바꾸지 않았다.
+- 운영 커밋 `967e2c356751bd5efb8fdc11a1f06b59fffcc425`, main push 성공. Vercel Production `https://vercel.com/sallylab/byus/6nQHTtqADMFksU4Mmiiyc2oV52AE` completed/success, GitHub deployment `6429400974`. 운영 `byus.kr` KO/EN에서 사업자 정보 실제 표시 확인.
+- 새 검증: production build(타입 검사 포함) 성공, footer 7건 및 auth transition 21건 통과, 변경 TSX lint와 diff check 통과. 해당 커밋 Fan design system CI `34799494163`, Dependency audit CI `34799494202` 모두 성공.
+- 실제 로컬 Aside에서 KO/EN 360/1440 DOM 사업자 4항목 및 수평 넘침 없음 확인. Aside 모바일 screenshot 반복 타일은 증거에서 제외. Playwright JS-disabled SSR 렌더 4상태를 별도 캡처하여 사업자 정보 가독성 확인. Dev 데이터 로드 오류는 푸터 검증과 구분하며 운영 동작 검증으로 간주하지 않는다.
+- 화면 근거: `outputs/kakao-business-review-20260914/local-footer-{ko,en}-{360,1440}.png`, `local-verification.json`. 최초 빌드 실패와 수정 후 성공 로그는 `/tmp/byus-kakao-build-20260914.log`, `/tmp/byus-kakao-build-fixed-20260914.log`.
+- 재신청 진행: 기존 Aside 세션 `ONtSBGO84zG4tVJb`에서 운영 표시 확인 후 등록증 원본 사본, `https://byus.kr`, 반려 보완 설명으로 접수 중. 최종 접수 상태는 아래 완료 기록을 따른다.
+
+### 재심사 접수 완료
+
+- 2026-09-14 11:37 KST경 사업자등록증 PDF, 서비스 URL `https://byus.kr`, 공개 푸터의 4개 사업자 항목 보완 설명을 제출했다. 첨부 원본과 사본 바이트 일치를 유지했다.
+- 실제 콘솔에서 “비즈니스 정보 심사가 신청되었습니다” 확인 모달과 비즈니스 정보 **심사 중** 상태를 확인했다. 기존 개인정보 동의항목 역시 심사 중이며 이번 작업에서 변경하지 않았다.
+- 접수 증거: `outputs/kakao-business-review-20260914/resubmitted.png`. 카카오 안내: 영업일 약 3~5일, 앱 관리자 카카오계정 메일로 결과 통지. 심사 승인 완료를 뜻하지 않는다.
+- 이번 작업용 localhost:3014 서버 종료. 코드 수정·배포·운영 정보 확인·재심사 접수 완료. 전화번호 권한 활성화나 팬 메시지 발송은 수행하지 않았다.
