@@ -50,6 +50,11 @@ const copy = {
     creatorOnboarding: "팬이 있는 당신에게",
     partners: "파트너 협업 제안",
     onchain: "온체인 기록",
+    businessInfo: "사업자 정보",
+    operator: "운영사",
+    representative: "대표자",
+    registrationNumber: "사업자등록번호",
+    businessAddress: "사업장 소재지",
   },
   en: {
     tagline: "Keep a record of moments with your favorites.",
@@ -70,6 +75,11 @@ const copy = {
     creatorOnboarding: "For everyone with fans",
     partners: "Partnership proposals",
     onchain: "Onchain records",
+    businessInfo: "Business information",
+    operator: "Operator",
+    representative: "Representative",
+    registrationNumber: "Business registration number",
+    businessAddress: "Registered address",
   },
 } as const;
 
@@ -144,6 +154,18 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
             </div>
           </section>
         </nav>
+      </FanContentContainer>
+
+      <FanContentContainer className={styles.business}>
+        <dl aria-label={t.businessInfo}>
+          <div><dt>{t.operator}</dt><dd lang="ko">주식회사 셀리랩</dd></div>
+          <div><dt>{t.representative}</dt><dd lang="ko">김보석</dd></div>
+          <div><dt>{t.registrationNumber}</dt><dd>736-86-03473</dd></div>
+          <div className={styles.businessAddress}>
+            <dt>{t.businessAddress}</dt>
+            <dd lang="ko">서울특별시 서초구 효령로31길 28, 3층 제이5호(방배동)</dd>
+          </div>
+        </dl>
       </FanContentContainer>
 
       <FanContentContainer className={styles.legal}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { isCreatorHandle } from "@/features/creator/domain/creator-navigation";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
@@ -48,7 +49,7 @@ export function AuthTransitionBoundary({ children, modal }: { children: ReactNod
           <span>{session.error
             ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : "We couldn't finish sign-in."
             : locale === "ko" ? "로그인을 마무리하고 있어요." : "Finishing sign-in."}</span>
-          {session.error && session.recoveryPath ? <Link href={session.recoveryPath}>{locale === "ko" ? "다시 시도" : "Try again"}</Link> : null}
+          {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "다시 시도" : "Try again"}</Link> : null}
         </div>
       </>
     );
@@ -62,7 +63,7 @@ export function AuthTransitionBoundary({ children, modal }: { children: ReactNod
         <p role="status">{session.error
           ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : "We couldn't finish sign-in."
           : locale === "ko" ? "로그인을 마무리하고 있어요." : "Finishing sign-in."}</p>
-        {session.error && session.recoveryPath ? <Link href={session.recoveryPath}>{locale === "ko" ? "로그인 화면에서 다시 시도" : "Try again from sign-in"}</Link> : null}
+        {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "로그인 화면에서 다시 시도" : "Try again from sign-in"}</Link> : null}
       </div>
     </main>
   );

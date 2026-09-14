@@ -97,6 +97,40 @@
   height: 16px;
 }
 
+.business {
+  margin-top: 24px;
+  color: var(--footer-muted);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.6;
+}
+
+.business dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 0;
+}
+
+.business dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.business dt {
+  white-space: nowrap;
+}
+
+.business dd {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.businessAddress {
+  flex-basis: 100%;
+}
+
 .legal {
   display: flex;
   min-height: 44px;
