@@ -684,6 +684,7 @@ function PromotionPreview({
 }) {
   const en = locale === "en";
   const url = profile ? `byus.kr/${profile.slug}` : "byus.kr/…";
+  const previewCopy = promotionCopy(profile?.slug ?? "", locale);
   const instagram = profile?.socialLinks.find(
     (link) => link.platform === "instagram",
   );
@@ -728,9 +729,7 @@ function PromotionPreview({
             </div>
           </div>
           <p>
-            {en
-              ? "My updates and fan activities 💜"
-              : "내 소식과 팬 활동은 여기서 💜"}
+            {previewCopy.bio.split("\n")[0]}
           </p>
           <div className={styles.previewLink}>
             <LinkIcon size={17} />
@@ -744,9 +743,7 @@ function PromotionPreview({
             <div className={styles.storyShade} />
             <span className={styles.storyHandle}>{handle}</span>
             <div className={styles.storyText}>
-              {en
-                ? "Find my live updates\non my fan page"
-                : "라이브 소식은\n제 팬페이지에서 만나요"}
+              {previewCopy.story.split("\n")[0]}
               <span>{url} ↗</span>
             </div>
           </div>

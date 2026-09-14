@@ -13,7 +13,6 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ArrowRight } from "./icons";
 import { ChevronDown } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
@@ -145,8 +144,16 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
     const passport = passportState.status === "ready" ? passportState.passports.get(celebrity.slug) : undefined;
     return (<article key={celebrity.slug} className={styles.card} data-passport-owned={passport ? "true" : undefined}>
                   <Link className={styles.cardLink} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `View ${celebrity.name}’s fan page`}>
-                  <div className={styles.cardPrimary}><h2>{celebrity.name}</h2><CreatorRolesText roles={celebrity.roles} locale={locale} />{celebrity.upcomingLive ? <p className={styles.liveSchedule}><LiveStatusIndicator status={celebrity.upcomingLive.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" />{formatLiveDate(celebrity.upcomingLive.startsAt, locale)}</p> : null}</div>
-                  <span className={styles.cardAction}><span>{locale === "ko" ? `${celebrity.name} 만나보기` : `Meet ${celebrity.name}`}</span><ArrowRight aria-hidden="true" /></span>
+                  <div className={styles.cardPrimary}>
+                    <div className={styles.cardIdentity}>
+                      <h2>{celebrity.name}</h2>
+                      <CreatorRolesText roles={celebrity.roles} locale={locale} />
+                    </div>
+                    {celebrity.upcomingLive ? <p className={styles.liveSchedule}>
+                      <LiveStatusIndicator status={celebrity.upcomingLive.effectiveStatus === "live" ? "live" : "scheduled"} locale={locale} density="compact" />
+                      <time dateTime={celebrity.upcomingLive.startsAt}>{formatLiveDate(celebrity.upcomingLive.startsAt, locale)}</time>
+                    </p> : null}
+                  </div>
                   <div className={styles.media}>
                     <CreatorPortrait locale={locale} slug={celebrity.slug} image={celebrity.image} variant="full-bleed" />
                     {passport ? <span className={styles.passportBadge}><span aria-hidden="true">✓</span>{t.owned}</span> : null}
@@ -180,8 +187,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
               <div className={styles.grid}>{Array.from({ length: 3 }, (_, index) => (
                 <div key={index} className={styles.card}>
                   <div className={styles.cardLink}>
-                    <div className={styles.cardPrimary}><span className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonLabel}`} /></div>
-                    <div className={styles.cardAction}><span className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} /></div>
+                    <div className={styles.cardPrimary}><div className={styles.cardIdentity}><span className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonLabel}`} /></div></div>
                     <div className={`${styles.media} ${styles.skeletonBlock}`} />
                     <div className={styles.cardBody}><span className={`${styles.skeletonBlock} ${styles.skeletonSummary}`} /></div>
                   </div>

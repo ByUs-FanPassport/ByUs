@@ -164,7 +164,8 @@ describe("published celebrity directory", () => {
     expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("published");
     const karaCard = screen.getByRole("heading", { name: "KARA" }).closest("article");
     expect(karaCard?.querySelector("h2")?.compareDocumentPosition(karaCard.querySelector("img")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(within(karaCard!).getByText("KARA 만나보기").compareDocumentPosition(karaCard!.querySelector("img")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(within(karaCard!).getByRole("link", { name: "KARA 만나보기" })).toContainElement(karaCard!.querySelector("img"));
+    expect(within(karaCard!).queryByText("KARA 만나보기")).not.toBeInTheDocument();
     expect(within(karaCard!).getAllByRole("heading", { name: "KARA" })).toHaveLength(1);
   });
 

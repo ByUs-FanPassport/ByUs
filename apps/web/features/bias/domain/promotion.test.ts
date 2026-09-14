@@ -39,11 +39,11 @@ describe("promotion copy", () => {
       url,
       shortUrl: "byus.kr/ifew",
       general:
-        "제 ByUs 팬페이지에 놀러 오세요 💜\n제 소식과 참여할 수 있는 활동을 확인하고,\n좋아요와 출석으로 함께해 주세요.\n이벤트와 혜택도 팬페이지에서 확인해 주세요!\n" +
+        "여러분, 제 라이브 팬페이지가 ByUs에 오픈되었어요!\n매주 라이브 스케줄도 확인하시고,\n좋아요💜랑 출석체크로 다양한 혜택도 꼭 받아가세요!\n" +
         url,
-      bio: "내 소식과 팬 활동은 여기서 💜\n" + url,
+      bio: "라이브 스케줄과 다양한 소식은 이제 ByUs에서 확인하세요!\n" + url,
       story:
-        "라이브 소식은 제 ByUs 팬페이지에서 확인해요 💜\n좋아요와 출석으로 팬 활동도 함께해요!\n" +
+        "곧 라이브에서 만나요 💜\nByUs에서 라이브 출석도 기록하고 예쁜 스탬프도 꼭 받아가세요!\n" +
         url,
       live: "제 팬페이지는 byus.kr/ifew예요.\n라이브 일정과 참여할 수 있는 활동을 확인하고,\n좋아요와 출석으로 함께해 주세요!",
     });
@@ -55,11 +55,11 @@ describe("promotion copy", () => {
       url,
       shortUrl: "byus.kr/elina",
       general:
-        "Visit my ByUs fan page 💜\nCheck out my updates and ways to join in,\nand join me with likes and check-ins.\nYou can also find events and benefits on my fan page!\n" +
+        "Hi, everyone! My LIVE fan page is now open on ByUs!\nCheck out my weekly LIVE schedule,\nand be sure to enjoy a variety of benefits by leaving a like 💜 and checking in!\n" +
         url,
-      bio: "My updates and fan activities are here 💜\n" + url,
+      bio: "Check my LIVE schedule and more updates on ByUs!\n" + url,
       story:
-        "Find my LIVE updates on my ByUs fan page 💜\nJoin the fan activities with likes and check-ins!\n" +
+        "See you at my LIVE soon 💜\nLog your LIVE check-ins on ByUs and be sure to collect the cute stamps!\n" +
         url,
       live: "My fan page is byus.kr/elina.\nCheck my LIVE schedule and ways to join in,\nand join me with likes and check-ins!",
     });

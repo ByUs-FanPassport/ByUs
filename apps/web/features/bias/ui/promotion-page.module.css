@@ -2,7 +2,7 @@
   background: #fff;
   color: #17171b;
   min-height: 100vh;
-  font-family: var(--font-pretendard), Pretendard, sans-serif;
+  font-family: var(--font-pretendard, "Pretendard Variable"), Pretendard, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -603,7 +603,7 @@
   flex-direction: column;
   overflow: auto;
   color: #17171b;
-  font-family: var(--font-pretendard), Pretendard, sans-serif;
+  font-family: var(--font-pretendard, "Pretendard Variable"), Pretendard, sans-serif;
 }
 .picker button,
 .picker input {
