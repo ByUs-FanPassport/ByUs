@@ -195,7 +195,7 @@ describe("TelegramCommandWorker", () => {
     expect(q.acknowledge).toHaveBeenCalledExactlyOnceWith(chatId, 11);
   });
 
-  it("leaves a delayed callback and every following update unacknowledged when reply budget is exhausted", async () => {
+  it("leaves a callback and every following update unacknowledged with only 25 seconds remaining", async () => {
     const q = queue();
     const callbackUpdate = {
       update_id: 11,
@@ -203,7 +203,7 @@ describe("TelegramCommandWorker", () => {
     };
     const poller = { getUpdates: vi.fn().mockResolvedValue([callbackUpdate, update(12, "/help")]) };
     const callbacks: TelegramCertificationCallbackHandler = { handle: vi.fn() };
-    const now = vi.fn().mockReturnValueOnce(0).mockReturnValue(23_000);
+    const now = vi.fn().mockReturnValueOnce(0).mockReturnValue(15_000);
     await expect(new TelegramCommandWorker(q, poller, { sendText: vi.fn() }, chatId, now, callbacks).runOnce()).resolves.toBe(0);
     expect(callbacks.handle).not.toHaveBeenCalled(); expect(q.begin).not.toHaveBeenCalled(); expect(q.acknowledge).not.toHaveBeenCalled();
   });

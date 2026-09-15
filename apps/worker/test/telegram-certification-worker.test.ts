@@ -21,6 +21,7 @@ const deliveryId = "a1000000-0000-4000-8000-000000000001";
 const submissionId = "a2000000-0000-4000-8000-000000000001";
 const firstUploadId = "a3000000-0000-4000-8000-000000000001";
 const secondUploadId = "a3000000-0000-4000-8000-000000000002";
+const thirdUploadId = "a3000000-0000-4000-8000-000000000003";
 const callbackToken = "0123456789abcdef0123456789abcdef";
 const leaseToken = "fedcba9876543210fedcba9876543210";
 
@@ -202,6 +203,39 @@ describe("TelegramCertificationWorker", () => {
     await expect(new TelegramCertificationWorker(q, storage, sender, chatId).runOnce()).resolves.toBe(1);
     expect(q.begin).toHaveBeenCalledExactlyOnceWith(deliveryId, chatId, leaseToken, secondUploadId, 2);
     expect(sender.sendProof).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ upload: expect.objectContaining({ id: secondUploadId }), replyToMessageId: 321, caption: null }));
+  });
+
+  it("finishes two slow successful uploads but stops before beginning a third without enough run budget", async () => {
+    let elapsed = 0;
+    const q = queue();
+    q.claim.mockImplementation(async () => { elapsed += 5_000; return { ...claim, uploads: [
+      ...claim.uploads,
+      { ...claim.uploads[1]!, id: thirdUploadId, order: 3, objectPath: "proofs/third.png" },
+    ] }; });
+    q.begin.mockImplementation(async () => { elapsed += 5_000; return { accepted: true, status: "sending", complete: false, attemptCount: 1 }; });
+    q.record.mockImplementation(async () => { elapsed += 5_000; return { accepted: true, status: "partial", complete: false, attemptCount: 1 }; });
+    const storage = { download: vi.fn().mockImplementation(async () => { elapsed += 5_000; return new Blob(["proof"]); }) };
+    const sender = { sendProof: vi.fn().mockImplementation(async () => { elapsed += 8_000; return 320 + sender.sendProof.mock.calls.length; }) };
+    const worker = new TelegramCertificationWorker(q, storage, sender, chatId, { now: () => elapsed, runDeadlineMs: 58_000, uploadStartBudgetMs: 30_000 });
+    await expect(worker.runOnce()).resolves.toBe(0);
+    expect(elapsed).toBe(51_000);
+    expect(q.begin.mock.calls.map((call) => call[3])).toEqual([firstUploadId, secondUploadId]);
+    expect(sender.sendProof).toHaveBeenCalledTimes(2);
+  });
+
+  it("resumes the next claim after a budget stop without resending completed uploads", async () => {
+    const q = queue();
+    q.claim.mockResolvedValue({ ...claim, actionMessageId: 321, uploads: [
+      { ...claim.uploads[0]!, deliveryStatus: "sent", providerMessageId: 321 },
+      { ...claim.uploads[1]!, deliveryStatus: "sent", providerMessageId: 322 },
+      { ...claim.uploads[1]!, id: thirdUploadId, order: 3, objectPath: "proofs/third.png", deliveryStatus: "pending", providerMessageId: null },
+    ] });
+    const storage = { download: vi.fn().mockResolvedValue(new Blob(["third"])) };
+    const sender = { sendProof: vi.fn().mockResolvedValue(323) };
+    const worker = new TelegramCertificationWorker(q, storage, sender, chatId, { now: () => 0, runDeadlineMs: 58_000, uploadStartBudgetMs: 30_000 });
+    await expect(worker.runOnce()).resolves.toBe(1);
+    expect(q.begin).toHaveBeenCalledExactlyOnceWith(deliveryId, chatId, leaseToken, thirdUploadId, 3);
+    expect(sender.sendProof).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ upload: expect.objectContaining({ id: thirdUploadId }), replyToMessageId: 321 }));
   });
 
   it.each([

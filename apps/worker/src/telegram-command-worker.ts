@@ -19,6 +19,7 @@ const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
 const MAX_REPLIES = 3;
 const RUN_DEADLINE_MS = 40_000;
 const REQUIRED_REPLY_BUDGET_MS = 18_000;
+const REQUIRED_CALLBACK_BUDGET_MS = 26_000;
 
 const commandSchema = z.enum(["users", "today", "lives", "help"]);
 export type TelegramCommand = z.infer<typeof commandSchema>;
@@ -264,7 +265,7 @@ export class TelegramCommandWorker {
     for (const item of classified) {
       const callback = classifyTelegramCallbackUpdate(updates.find((raw) => record(raw)?.update_id === item.updateId), this.chatId);
       if (callback) {
-        if (RUN_DEADLINE_MS - (this.now() - startedAt) < REQUIRED_REPLY_BUDGET_MS) break;
+        if (RUN_DEADLINE_MS - (this.now() - startedAt) < REQUIRED_CALLBACK_BUDGET_MS) break;
         const outcome = this.callbacks ? await this.callbacks.handle(callback) : "failed";
         await this.acknowledged(item.updateId);
         if (outcome !== "failed") sent += 1;

@@ -6,6 +6,8 @@ import { validatedTelegramConfig } from "./telegram-alert-worker.js";
 const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
 const TELEGRAM_TIMEOUT_MS = 8_000;
 const CAPTION_LIMIT = 1_024;
+const DELIVERY_RUN_DEADLINE_MS = 58_000;
+const REQUIRED_UPLOAD_START_BUDGET_MS = 30_000;
 const CALLBACK_TOKEN = /^[0-9a-f]{32}$/u;
 const ADMIN_CERTIFICATIONS_URL = "https://byus.kr/admin/certifications";
 const submissionStatusSchema = z.enum(["pending", "approved", "rejected"]);
@@ -435,9 +437,18 @@ export class TelegramCertificationWorker {
     private readonly storage: TelegramCertificationStorage,
     private readonly sender: TelegramCertificationSender,
     private readonly chatId: string,
+    private readonly timing: Readonly<{
+      now?: () => number;
+      runDeadlineMs?: number;
+      uploadStartBudgetMs?: number;
+    }> = {},
   ) {}
 
   async runOnce(): Promise<number> {
+    const now = this.timing.now ?? Date.now;
+    const runDeadlineMs = this.timing.runDeadlineMs ?? DELIVERY_RUN_DEADLINE_MS;
+    const uploadStartBudgetMs = this.timing.uploadStartBudgetMs ?? REQUIRED_UPLOAD_START_BUDGET_MS;
+    const startedAt = now();
     const claim = await this.queue.claim(this.chatId);
     if (!claim) return 0;
     let firstMessageId: number | null = claim.actionMessageId;
@@ -447,6 +458,10 @@ export class TelegramCertificationWorker {
         continue;
       }
       if (upload.deliveryStatus !== "pending") return 0;
+      if (runDeadlineMs - (now() - startedAt) < uploadStartBudgetMs) {
+        console.info("telegram_certification_delivery", { outcome: "partial", stage: "budget" });
+        return 0;
+      }
       const begun = await this.queue.begin(claim.deliveryId, this.chatId, claim.leaseToken, upload.id, upload.order);
       if (!begun.accepted) return 0;
       let bytes: Blob;
@@ -531,9 +546,7 @@ export async function runTelegramCertificationWorkerOnce(env: NotificationWorker
     global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5_000) }) },
   });
   const queue = new SupabaseTelegramCertificationQueue(db);
-  const processed = await new TelegramCertificationWorker(queue, new SupabaseCertificationStorage(db), new TelegramCertificationHttpClient(config), config.chatId).runOnce();
-  console.info("telegram_certification_health", await queue.health());
-  return processed;
+  return new TelegramCertificationWorker(queue, new SupabaseCertificationStorage(db), new TelegramCertificationHttpClient(config), config.chatId).runOnce();
 }
 
 export function createTelegramCertificationCallbackWorker(env: NotificationWorkerEnv): TelegramCertificationCallbackWorker | null {
