@@ -19,8 +19,9 @@ export function supportsFanGuide(pathname: string, search: string) {
     || /^\/passports\/[0-9a-f-]{36}$/.test(pathname);
 }
 
-export function nextFanAction({ summary, lives, pathname, locale, now = new Date() }: {
+export function nextFanAction({ summary, lives, pathname, locale, completed, now = new Date() }: {
   summary: MySummary;
+  completed: { profile: boolean; verify: boolean; reserve: boolean };
   lives?: readonly LiveEventResponse[];
   pathname: string;
   locale: "ko" | "en";
@@ -30,16 +31,17 @@ export function nextFanAction({ summary, lives, pathname, locale, now = new Date
   const creatorSlug = creatorSlugFromHomePath(pathname)
     ?? owned.find((creator) => pathname === `/passports/${creator.passport?.id}`)?.celebrity.slug;
   const creator = summary.creators.find((item) => item.celebrity.slug === creatorSlug);
-  if (!summary.profile.nickname?.trim()) {
+  if (!completed.profile) {
     const returnTo = creatorSlug ? `/c/${creatorSlug}/verify?locale=${locale}` : `${pathname}?locale=${locale}`;
     return { step: "profile", href: appendLoginContext("/onboarding/profile", {
       returnTo, locale, entity: creatorSlug ?? null, intent: creatorSlug ? "passport" : null,
     }) };
   }
-  if ((creatorSlug && !creator?.passport) || owned.length === 0) {
+  if (!completed.verify) {
     return { step: "verify", href: creatorSlug ? `/c/${creatorSlug}/verify?locale=${locale}` : `/celebrities?locale=${locale}`,
       targetName: creator?.celebrity.name };
   }
+  if (completed.reserve) return null;
   const candidate = lives?.filter(({ live, viewer, primaryAction }) =>
     viewer.authenticated && (primaryAction === "reserve" || primaryAction === "reservation_upcoming")
     && (!creatorSlug || live.celebrity.slug === creatorSlug)

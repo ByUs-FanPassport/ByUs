@@ -2,7 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Flag, X } from "lucide-react";
 import { z } from "zod";
 import { Dialog } from "@/components/ui/overlay/accessible-overlay";
@@ -13,12 +13,24 @@ import { useByUsSession } from "@/components/byus-session-provider";
 import { mySummarySchema } from "@/features/my/domain/my-summary";
 import { liveEventResponseSchema } from "@/features/live/domain/live-event";
 import { nextFanAction, supportsFanGuide, type NextFanAction } from "../domain/next-fan-action";
+import { onboardingStateSchema } from "../domain/onboarding-state";
 import styles from "./fan-next-action-guide.module.css";
 
 const parseSummary = (body: unknown) => z.object({ summary: mySummarySchema }).parse(body).summary;
 const parseCatalog = (body: unknown) => z.object({ catalog: z.object({ upcoming: z.array(liveEventResponseSchema) }) }).parse(body).catalog.upcoming;
+const parseOnboarding = (body: unknown) => z.object({ onboarding: onboardingStateSchema }).parse(body).onboarding;
+const dismissedInMemory = new Set<string>();
+const dismissalKey = (ownerId: string) => `byus:fan-guide:dismissed:${ownerId}`;
+function isDismissed(ownerId: string) {
+  try { return dismissedInMemory.has(ownerId) || localStorage.getItem(dismissalKey(ownerId)) === "true"; }
+  catch { return dismissedInMemory.has(ownerId); }
+}
+function rememberDismissal(ownerId: string) {
+  dismissedInMemory.add(ownerId);
+  try { localStorage.setItem(dismissalKey(ownerId), "true"); } catch { /* Server preference is authoritative. */ }
+}
 const seenInMemory = new Set<string>();
-const storageKey = (ownerId: string, step: NextFanAction["step"]) => `byus:fan-guide:v1:${ownerId}:${step}`;
+const storageKey = (ownerId: string) => `byus:fan-guide:v2:${ownerId}`;
 function hasSeen(key: string) {
   try { return seenInMemory.has(key) || sessionStorage.getItem(key) === "seen"; }
   catch { return seenInMemory.has(key); }
@@ -63,17 +75,17 @@ export function FanNextActionDialog({ action, locale, onClose, onContinue }: {
   </Dialog>;
 }
 
-function GuidePrompt({ action, ownerId, locale }: { action: NextFanAction; ownerId: string; locale: "ko" | "en" }) {
-  const key = storageKey(ownerId, action.step);
+function GuidePrompt({ action, ownerId, locale, dismissed, onDismiss }: { action: NextFanAction; ownerId: string; locale: "ko" | "en"; dismissed: boolean; onDismiss(): void }) {
+  const key = storageKey(ownerId);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (hasSeen(key)) return;
+    if (dismissed || isDismissed(ownerId) || hasSeen(key)) return;
     let timer: ReturnType<typeof setTimeout>;
     const tryOpen = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (document.visibilityState === "hidden" || hasSeen(key)) return;
-        if (document.querySelector('[role="dialog"], [role="alertdialog"], [data-overlay-host]')) return;
+        if (document.visibilityState === "hidden" || isDismissed(ownerId) || hasSeen(key)) return;
+        if (document.querySelector('[role="dialog"], [role="alertdialog"], [data-overlay-host], dialog[open]')) { markSeen(key); return; }
         if (document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
         markSeen(key);
         setOpen(true);
@@ -86,23 +98,30 @@ function GuidePrompt({ action, ownerId, locale }: { action: NextFanAction; owner
     document.addEventListener("visibilitychange", tryOpen);
     tryOpen();
     return () => { clearTimeout(timer); observer.disconnect(); document.removeEventListener("focusout", tryOpen); document.removeEventListener("visibilitychange", tryOpen); };
-  }, [key]);
+  }, [key, dismissed, ownerId]);
   const close = () => { markSeen(key); setOpen(false); };
+  const dismiss = () => { rememberDismissal(ownerId); close(); onDismiss(); };
   return <>
     <button className={styles.launcher} type="button" onClick={() => { markSeen(key); setOpen(true); }} aria-haspopup="dialog">
       <Flag aria-hidden="true" />{locale === "ko" ? "다음 단계" : "Next step"}<ArrowRight aria-hidden="true" />
     </button>
-    {open ? <FanNextActionDialog action={action} locale={locale} onClose={close} onContinue={close} /> : null}
+    {open ? <FanNextActionDialog action={action} locale={locale} onClose={dismiss} onContinue={close} /> : null}
   </>;
 }
 
 function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en" }) {
   const auth = usePrivy();
   const session = useByUsSession();
+  const { getAccessToken } = auth;
   const ownerId = session.ownerId ?? auth.user?.id;
-  const enabled = session.ready && auth.ready && auth.authenticated && Boolean(ownerId);
+  const identity = `${ownerId}:${session.generation}:${session.ready}:${auth.ready}:${auth.authenticated}:${auth.user?.id}`;
+  const currentIdentity = useRef(identity);
+  useLayoutEffect(() => { currentIdentity.current = identity; return () => { currentIdentity.current = ""; }; }, [identity]);
+  const enabled = session.ready && auth.ready && auth.authenticated && Boolean(ownerId) && (!session.ownerId || session.ownerId === auth.user?.id);
+  const onboarding = useOwnedFanResource(enabled ? "/api/me/onboarding" : null, parseOnboarding, auth);
+  const { retry: refreshOnboarding } = onboarding;
   const summary = useOwnedFanResource(enabled ? `/api/me/summary?locale=${locale}` : null, parseSummary, auth);
-  const needsCatalog = summary.state.status === "ready" && Boolean(summary.state.data.profile.nickname)
+  const needsCatalog = onboarding.state.status === "ready" && !onboarding.state.data.completed.reserve && summary.state.status === "ready" && Boolean(summary.state.data.profile.nickname)
     && summary.state.data.creators.some((creator) => creator.passport);
   const catalog = useOwnedFanResource(enabled && needsCatalog ? `/api/live-events?locale=${locale}` : null, parseCatalog, auth);
   const [now, setNow] = useState(() => new Date());
@@ -111,11 +130,44 @@ function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en
     const timer = setInterval(() => setNow(new Date()), 15_000);
     return () => clearInterval(timer);
   }, [needsCatalog]);
-  if (!enabled || summary.state.status !== "ready" || summary.refreshFailed) return null;
-  const action = nextFanAction({ summary: summary.state.data, pathname, locale, now,
+  useEffect(() => {
+    if (!enabled) return;
+    const refresh = () => refreshOnboarding();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", refresh);
+    return () => { window.removeEventListener("focus", refresh); window.removeEventListener("storage", refresh); };
+  }, [enabled, refreshOnboarding]);
+  useEffect(() => {
+    if (!enabled || !ownerId || onboarding.state.status !== "ready" || onboarding.state.data.dismissed || !isDismissed(ownerId)) return;
+    let active = true;
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!active || !token || currentIdentity.current !== identity) return;
+        await fetch("/api/me/onboarding", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: "{}", keepalive: true });
+      } catch { /* Retain the local dismissal and retry on the next account read. */ }
+    })();
+    return () => { active = false; };
+  }, [enabled, ownerId, identity, getAccessToken, onboarding.state]);
+  if (!enabled || summary.state.status !== "ready" || summary.refreshFailed || onboarding.state.status !== "ready" || onboarding.refreshFailed) return null;
+  const action = nextFanAction({ summary: summary.state.data, completed: onboarding.state.data.completed, pathname, locale, now,
     lives: catalog.state.status === "ready" && !catalog.refreshFailed ? catalog.state.data : undefined });
   if (!action) return null;
-  return <GuidePrompt key={`${ownerId}:${session.generation}:${action.step}`} action={action} ownerId={ownerId!} locale={locale} />;
+  const dismiss = () => {
+    // Close immediately; keep the suppression for this owner even if persistence fails.
+    const owner = ownerId!;
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token || currentIdentity.current !== identity) return;
+        const response = await fetch("/api/me/onboarding", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: "{}", keepalive: true });
+        if (!response.ok) return;
+        parseOnboarding(await response.json());
+        rememberDismissal(owner);
+      } catch { /* A later page load reads the account preference again. */ }
+    })();
+  };
+  return <GuidePrompt dismissed={onboarding.state.data.dismissed} onDismiss={dismiss} key={`${ownerId}:${session.generation}:${action.step}`} action={action} ownerId={ownerId!} locale={locale} />;
 }
 
 export function FanNextActionGuide() {

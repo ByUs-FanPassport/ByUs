@@ -6,17 +6,17 @@ import { nextFanAction, supportsFanGuide } from "./next-fan-action";
 const summary = { profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA" }, passport: { id: "11111111-1111-4111-8111-111111111111" } }] } as MySummary;
 const now = new Date("2026-09-11T10:00Z");
 const live = { live: { slug: "kara-live", title: "KARA LIVE", celebrity: { slug: "kara", name: "KARA" }, effectiveStatus: "scheduled", startsAt: "2026-09-12T12:00Z", reservationOpensAt: "2026-09-10T00:00Z", reservationClosesAt: "2026-09-12T00:00Z" }, viewer: { authenticated: true, passport: "active", reservation: null }, primaryAction: "reserve" } as LiveEventResponse;
-const resolve = (changes: Partial<Parameters<typeof nextFanAction>[0]> = {}) => nextFanAction({ summary, lives: [live], pathname: "/", locale: "ko", now, ...changes });
+const resolve = (changes: Partial<Parameters<typeof nextFanAction>[0]> = {}) => nextFanAction({ summary, completed: { profile: true, verify: true, reserve: false }, lives: [live], pathname: "/", locale: "ko", now, ...changes });
 
 describe("next fan action", () => {
   it("keeps the new creator home attached to the existing verification journey", () => {
     expect(supportsFanGuide("/ifewknow", "locale=en")).toBe(true);
-    expect(resolve({ pathname: "/ifewknow" })).toMatchObject({ step: "verify", href: "/c/ifewknow/verify?locale=ko" });
-    const action = resolve({ pathname: "/ifewknow", summary: { ...summary, profile: { nickname: null } } })!;
+    expect(resolve({ pathname: "/ifewknow" })).toBeNull();
+    const action = resolve({ pathname: "/ifewknow", completed: { profile: false, verify: false, reserve: false }, summary: { ...summary, profile: { nickname: null } } })!;
     expect(new URL(action.href, "https://byus.test").searchParams.get("entity")).toBe("ifewknow");
   });
   it("starts profile setup without inventing a favorite and preserves the destination", () => {
-    const action = resolve({ summary: { ...summary, profile: { nickname: null }, creators: [] }, pathname: "/my", locale: "en" })!;
+    const action = resolve({ completed: { profile: false, verify: false, reserve: false }, summary: { ...summary, profile: { nickname: null }, creators: [] }, pathname: "/my", locale: "en" })!;
     const url = new URL(action.href, "https://byus.test");
     expect(action.step).toBe("profile");
     expect(url.pathname).toBe("/onboarding/profile");
@@ -24,14 +24,17 @@ describe("next fan action", () => {
     expect(url.searchParams.has("entity")).toBe(false);
   });
   it("preserves a chosen creator through profile and verification", () => {
-    const action = resolve({ summary: { ...summary, profile: { nickname: null } }, pathname: "/c/kara" })!;
+    const action = resolve({ completed: { profile: false, verify: false, reserve: false }, summary: { ...summary, profile: { nickname: null } }, pathname: "/c/kara" })!;
     const url = new URL(action.href, "https://byus.test");
     expect(url.searchParams.get("entity")).toBe("kara");
     expect(url.searchParams.get("returnTo")).toBe("/c/kara/verify?locale=ko");
   });
   it("lets fans choose their favorite, and checks ownership per creator", () => {
-    expect(resolve({ summary: { ...summary, creators: [] } })).toMatchObject({ step: "verify", href: "/celebrities?locale=ko" });
-    expect(resolve({ pathname: "/c/another" })).toMatchObject({ step: "verify", href: "/c/another/verify?locale=ko" });
+    expect(resolve({ completed: { profile: true, verify: false, reserve: false }, summary: { ...summary, creators: [] } })).toMatchObject({ step: "verify", href: "/celebrities?locale=ko" });
+    expect(resolve({ pathname: "/c/another" })).toBeNull();
+  });
+  it("never prompts an experienced reserver even when another LIVE is available", () => {
+    expect(resolve({ completed: { profile: true, verify: true, reserve: true } })).toBeNull();
   });
   it("offers the earliest eligible LIVE only for an owned favorite", () => {
     expect(resolve()).toMatchObject({ step: "reserve", href: "/live/kara-live?locale=ko" });
