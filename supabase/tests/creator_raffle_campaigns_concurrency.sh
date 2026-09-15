@@ -74,7 +74,7 @@ then
   echo "concurrent benefit owner update bypassed the campaign item owner lock" >&2
   exit 1
 fi
-if ! rg -q "canceling statement due to lock timeout" "$BLOCKED_ERR"; then
+if ! grep -q "canceling statement due to lock timeout" "$BLOCKED_ERR"; then
   echo "concurrent owner update failed for an unexpected reason" >&2
   sed -n '1,20p' "$BLOCKED_ERR" >&2
   exit 1
