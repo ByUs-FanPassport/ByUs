@@ -37,6 +37,7 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import styles from "@/features/fanpage/ui/fanpage.module.css";
 import { CreatorRolesText } from "./fan-ui/creator-roles";
 import { ElinaMissionEntry } from "@/features/live/ui/elina-mission-entry";
+import { FanTicketGuide } from "@/features/tickets/ui/fan-ticket-guide";
 import { useByUsSession } from "./byus-session-provider";
 export { flattenLiveCatalog } from "@/features/fanpage/domain/live-catalog";
 
@@ -108,11 +109,11 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
         </> : <><div><strong>{ko ? `${celebrity.name} 팬 인증하고, 함께한 순간을 모아 보세요.` : `Verify your ${celebrity.name} fandom and collect your moments.`}</strong><p>{ko ? "퀴즈로 패스포트를 만들고 팬 활동을 시작하세요." : "Create a Passport with a quiz and start your fan journey."}</p></div>{verifyLink}</>}
       </section>
       <div id="celebrity-content" className={styles.content}>
-        {tab === "home" ? <>{sessionReady ? <ElinaMissionEntry celebritySlug={celebrity.slug} locale={locale} /> : null}<div className={styles.homeGrid}><div className={styles.cheerPreview}>{sessionReady ? <CheerComments slug={celebrity.slug} name={celebrity.name} locale={locale} /> : null}</div><div className={styles.mainColumn}>
+        {tab === "home" ? <>{sessionReady ? <ElinaMissionEntry celebritySlug={celebrity.slug} locale={locale} /> : null}<FanTicketGuide creatorSlug={celebrity.slug} creatorName={celebrity.name} locale={locale} compact /><div className={styles.homeGrid}><div className={styles.cheerPreview}>{sessionReady ? <CheerComments slug={celebrity.slug} name={celebrity.name} locale={locale} /> : null}</div><div className={styles.mainColumn}>
           {instagramEnabled ? <InstagramRecentActivity slug={celebrity.slug} locale={locale} fallback={recent} /> : (channelId && !upcomingLive ? null : recent)}
           <CreatorNews key={`${celebrity.slug}:${initialNewsFilter}:home`} slug={celebrity.slug} locale={locale} initialFilter={initialNewsFilter} channelId={channelId} /><RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} preview ticketBalance={ticketBalance} />
         </div><aside className={styles.sideColumn}><CelebrityMiniCalendar key={celebrity.slug} celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /><section className={styles.certificationCta}><p className={styles.eyebrow}><BadgeCheck aria-hidden="true" />{ko ? "찐팬 인증" : "Fan verification"}</p><h2>{ko ? <>좋아하는 마음을<br />찐팬 인증으로 남겨요</> : "Make your fandom part of your story."}</h2><p>{ko ? "멤버십 · 티켓 · 현장 인증으로 팬 활동을 기록하세요." : "Record memberships, tickets, and on-site moments."}</p><Link className={styles.primaryButton} href={tabHref("certifications")}>{ko ? "인증 미션 보기" : "View verification missions"}<ArrowRight aria-hidden="true" /></Link><Link className={styles.historyLink} href={`/c/${celebrity.slug}/certifications?locale=${locale}`}>{ko ? "내 인증 내역" : "My verifications"} →</Link></section><FanActivityPanel slug={celebrity.slug} locale={locale} /></aside></div></>
-        : tab === "certifications" ? <CertificationPanel slug={celebrity.slug} locale={locale} /> : tab === "raffles" ? <RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} ticketBalance={ticketBalance} /> : tab === "leaderboard" ? <LeaderboardPanel slug={celebrity.slug} locale={locale} /> : tab === "notice" ? (<CreatorNews key={`${celebrity.slug}:${initialNewsFilter}:full`} slug={celebrity.slug} locale={locale} initialFilter={initialNewsFilter} channelId={channelId} full />) : <CreatorLivePanel slug={celebrity.slug} locale={locale} />}
+        : tab === "certifications" ? <><FanTicketGuide creatorSlug={celebrity.slug} creatorName={celebrity.name} locale={locale} /><CertificationPanel slug={celebrity.slug} locale={locale} /></> : tab === "raffles" ? <RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} ticketBalance={ticketBalance} /> : tab === "leaderboard" ? <LeaderboardPanel slug={celebrity.slug} locale={locale} /> : tab === "notice" ? (<CreatorNews key={`${celebrity.slug}:${initialNewsFilter}:full`} slug={celebrity.slug} locale={locale} initialFilter={initialNewsFilter} channelId={channelId} full />) : <CreatorLivePanel slug={celebrity.slug} locale={locale} />}
       </div>
     </FanContentContainer>
   </FanAppFrame>;

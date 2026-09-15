@@ -29,6 +29,7 @@ import { mySummarySchema, type MySummary } from "../domain/my-summary";
 import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
 import { fanStageLabel } from "../../rewards/domain/fan-stage";
+import { FAN_TICKET_CREATOR_SLUGS } from "@/features/tickets/domain/fan-ticket-activity";
 import { FanTierBadge } from "../../rewards/ui/fan-tier-badge";
 import { FanSurface, fanUtilityCanvasClassName } from "../../../components/fan-ui/fan-surface";
 import { Avatar, AvatarPlaceholder } from "../../profile/ui/avatar";
@@ -304,6 +305,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
               <p className={styles.eventDeadline}>{ko ? "가장 가까운 마감 · " : "Next deadline · "}<time dateTime={openRaffles[0].entryClosesAt!}>{formatClosing(openRaffles[0].entryClosesAt!, locale)}</time></p>
             </div> : <p className={styles.panelState}>{ko ? "현재 진행 중인 이벤트가 없어요." : "No events are open right now."}</p>}
           <div className={styles.eventWallet}><span><Ticket aria-hidden="true"/>{ko ? "보유 응모권" : "Available tickets"}</span><strong>{creator.ticketBalance}{ko ? "장" : ""}</strong></div>
+          <Link className={styles.ticketHistoryLink} href={`/c/${creator.celebrity.slug}/tickets?locale=${locale}` as Route}>{FAN_TICKET_CREATOR_SLUGS.has(creator.celebrity.slug) ? (ko ? "응모권 모으기 · 내역 보기" : "Collect tickets · View history") : (ko ? "응모권 내역 보기" : "View ticket history")}<ArrowRight aria-hidden="true"/></Link>
         </div>
         <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{ko ? "이벤트 보러 가기" : "Explore events"}</FanAction></div>
       </section>
