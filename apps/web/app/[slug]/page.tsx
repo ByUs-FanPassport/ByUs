@@ -26,10 +26,10 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     locales: translated ? ["ko", "en"] : [locale] });
 }
 
-export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; authIntent?: string }> }) {
+export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; news?: string; authIntent?: string }> }) {
   const { slug } = await params;
   if (!isCreatorHandle(slug)) notFound();
-  const { locale: requestedLocale, tab: requestedTab, authIntent: requestedAuthIntent } = await searchParams;
+  const { locale: requestedLocale, tab: requestedTab, news: requestedNews, authIntent: requestedAuthIntent } = await searchParams;
   const locale = requestedLocale === "en" ? "en" : "ko";
   if (requestedTab === "raffles" || requestedTab === "benefits") {
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
@@ -43,5 +43,5 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   ]);
   if (!celebrity) notFound();
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
-  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
+  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialNewsFilter={requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
 }

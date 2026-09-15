@@ -28,8 +28,10 @@ import { FanTierBadge } from "@/features/rewards/ui/fan-tier-badge";
 import { fanStageLabel } from "@/features/rewards/domain/fan-stage";
 import { CertificationPanel } from "@/features/certification/ui/certification-panel";
 import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
-import { CreatorLivePanel, NoticePanel, RafflePanel, RecentLive } from "@/features/fanpage/ui/home-panels";
+import { CreatorLivePanel, RafflePanel, RecentLive } from "@/features/fanpage/ui/home-panels";
 import { InstagramRecentActivity } from "./instagram-recent-activity";
+import { CreatorNews, type NewsFilter } from "@/features/fanpage/ui/chzzk-posts";
+import { chzzkChannelId } from "@/features/fanpage/domain/chzzk-posts";
 import { pageViewIdempotencyKey, recordProductEventV1 } from "@/features/analytics/client/product-event-client";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "@/server/content/content-domain";
 import styles from "@/features/fanpage/ui/fanpage.module.css";
@@ -47,7 +49,7 @@ const socialLabels = {
 } as const;
 const parseSummary = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
 
-export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab = "home", instagramEnabled = false }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null; initialTab?: CelebrityFanTab; instagramEnabled?: boolean }) {
+export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab = "home", initialNewsFilter = "all", instagramEnabled = false }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null; initialTab?: CelebrityFanTab; initialNewsFilter?: NewsFilter; instagramEnabled?: boolean }) {
   const auth = usePrivy();
   const { ready, authenticated, getAccessToken } = auth;
   const session = useByUsSession();
@@ -83,6 +85,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   }, [ready, requestAuthenticated, getAccessToken, celebrity.slug, auth.user?.id, session.generation, session.ownerId]);
   const hero = resolveCreatorHeroImage(celebrity.slug, celebrity.image);
   const verifyLink = <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: `/c/${celebrity.slug}/verify`, sourceQuery: `?locale=${locale}`, actionType: "START_FAN_VERIFICATION", targetType: "celebrity", targetId: celebrity.slug }}>{ko ? "퀴즈 풀고 팬 인증하기" : "Verify fandom"}<ArrowRight aria-hidden="true" /></AuthIntentLink>;
+  const channelId = chzzkChannelId(celebrity.socialLinks);
   const recent = <RecentLive celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} />;
   return <FanAppFrame locale={locale} mainId="celebrity-detail-main" actions={sessionReady && auth.authenticated ? <Link className={styles.headerIdentity} href={`/my?locale=${locale}`}>{portrait(36)}<span>{nickname ?? "MY"}</span></Link> : sessionReady ? <Link className={styles.headerLogin} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(`${creatorHomeHref(celebrity.slug)}?locale=${locale}`)}` as Route}>{ko ? "로그인" : "Sign in"}</Link> : undefined}>
     <FanContentContainer as="main" id="celebrity-detail-main" className={styles.page} tabIndex={-1}>
@@ -106,10 +109,10 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
       </section>
       <div id="celebrity-content" className={styles.content}>
         {tab === "home" ? <>{sessionReady ? <ElinaMissionEntry celebritySlug={celebrity.slug} locale={locale} /> : null}<div className={styles.homeGrid}><div className={styles.cheerPreview}>{sessionReady ? <CheerComments slug={celebrity.slug} name={celebrity.name} locale={locale} /> : null}</div><div className={styles.mainColumn}>
-          {instagramEnabled ? <InstagramRecentActivity slug={celebrity.slug} locale={locale} fallback={recent} /> : recent}
-          <NoticePanel slug={celebrity.slug} locale={locale} /><RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} preview ticketBalance={ticketBalance} />
+          {instagramEnabled ? <InstagramRecentActivity slug={celebrity.slug} locale={locale} fallback={recent} /> : (channelId && !upcomingLive ? null : recent)}
+          <CreatorNews key={`${celebrity.slug}:${initialNewsFilter}:home`} slug={celebrity.slug} locale={locale} initialFilter={initialNewsFilter} channelId={channelId} /><RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} preview ticketBalance={ticketBalance} />
         </div><aside className={styles.sideColumn}><CelebrityMiniCalendar key={celebrity.slug} celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} /><section className={styles.certificationCta}><p className={styles.eyebrow}><BadgeCheck aria-hidden="true" />{ko ? "찐팬 인증" : "Fan verification"}</p><h2>{ko ? <>좋아하는 마음을<br />찐팬 인증으로 남겨요</> : "Make your fandom part of your story."}</h2><p>{ko ? "멤버십 · 티켓 · 현장 인증으로 팬 활동을 기록하세요." : "Record memberships, tickets, and on-site moments."}</p><Link className={styles.primaryButton} href={tabHref("certifications")}>{ko ? "인증 미션 보기" : "View verification missions"}<ArrowRight aria-hidden="true" /></Link><Link className={styles.historyLink} href={`/c/${celebrity.slug}/certifications?locale=${locale}`}>{ko ? "내 인증 내역" : "My verifications"} →</Link></section><FanActivityPanel slug={celebrity.slug} locale={locale} /></aside></div></>
-        : tab === "certifications" ? <CertificationPanel slug={celebrity.slug} locale={locale} /> : tab === "raffles" ? <RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} ticketBalance={ticketBalance} /> : tab === "leaderboard" ? <LeaderboardPanel slug={celebrity.slug} locale={locale} /> : tab === "notice" ? <NoticePanel slug={celebrity.slug} locale={locale} full /> : <CreatorLivePanel slug={celebrity.slug} locale={locale} />}
+        : tab === "certifications" ? <CertificationPanel slug={celebrity.slug} locale={locale} /> : tab === "raffles" ? <RafflePanel slug={celebrity.slug} name={celebrity.name} locale={locale} ticketBalance={ticketBalance} /> : tab === "leaderboard" ? <LeaderboardPanel slug={celebrity.slug} locale={locale} /> : tab === "notice" ? (<CreatorNews key={`${celebrity.slug}:${initialNewsFilter}:full`} slug={celebrity.slug} locale={locale} initialFilter={initialNewsFilter} channelId={channelId} full />) : <CreatorLivePanel slug={celebrity.slug} locale={locale} />}
       </div>
     </FanContentContainer>
   </FanAppFrame>;
