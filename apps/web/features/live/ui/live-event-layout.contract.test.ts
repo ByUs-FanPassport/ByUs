@@ -28,7 +28,7 @@ describe("LIVE detail information hierarchy contract", () => {
     expect(declarations(".schedule > div")).toMatchObject({ display: "grid", gap: "var(--space-1)", "min-width": "0" });
     expect(declarations(".schedule dt")).toMatchObject({ "font-size": "12px", "align-items": "center" });
     expect(declarations(".schedule dd")).toMatchObject({ "font-size": "14px", "font-weight": "600", "overflow-wrap": "anywhere", "font-variant-numeric": "tabular-nums" });
-    expect(declarations(".schedule .eventSchedule dd")).toMatchObject({ "font-size": "18px", "font-weight": "750" });
+    expect(declarations(".schedule .eventSchedule dd")).toMatchObject({ "font-size": "16px", "font-weight": "750" });
     expect(declarations(".reservationDetails summary")).toMatchObject({ "min-height": "var(--min-target)" });
     expect(declarations(".timeZone")).toMatchObject({ margin: "0", "font-size": "12px" });
   });

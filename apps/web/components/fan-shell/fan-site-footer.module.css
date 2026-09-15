@@ -47,7 +47,7 @@
 
 .navigation {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(176px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px 16px;
 }
 
@@ -79,12 +79,14 @@
 
 .socialLinks {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .navigation .socialLink {
-  width: 44px;
+  width: fit-content;
   min-width: 44px;
+  gap: 8px;
   height: 44px;
   justify-content: flex-start;
   border-radius: 999rem;
@@ -174,7 +176,7 @@
   }
 
   .navigation {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(176px, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

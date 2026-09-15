@@ -1302,7 +1302,6 @@ export function LiveEventScreen({
             }
           >
             <div className={styles.eventStatusRow}>
-            {live.effectiveStatus === "scheduled" ? <span className={styles.status}>{locale === "ko" ? "LIVE 예정" : "Upcoming LIVE"}</span> : null}
             {live.effectiveStatus === "live" ||
             live.effectiveStatus === "scheduled" ? (
               <LiveTimeIndicator
@@ -1322,7 +1321,7 @@ export function LiveEventScreen({
             <div className={styles.scheduleGroup}>
               <dl className={styles.schedule}>
                 <div className={styles.eventSchedule}>
-                  <dt><FanMotionIcon name="calendar" />{c.eventTime}</dt>
+                  <dt className={styles.scheduleLabel}>{c.eventTime}</dt>
                   <dd><time dateTime={live.startsAt}>{formatReservationDateTime(live.startsAt, locale)}</time></dd>
                 </div>
                 {!viewer.reservation && live.effectiveStatus === "scheduled" ? <div className={styles.deadlineSchedule}>
@@ -1349,27 +1348,6 @@ export function LiveEventScreen({
                 {primaryControl}
               </div>
             ) : primaryControl}
-            {!isIfewLive && (live.missionsAvailable === false ? (
-              <FanAction
-                variant="neutral"
-                className={styles.missionLink}
-                fullWidth
-                disabled
-                helperText={locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}
-              >
-                {locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}
-              </FanAction>
-            ) : (
-              <FanAction
-                variant="neutral"
-                className={styles.missionLink}
-                fullWidth
-                href={`/live/${slug}/missions?locale=${locale}` as Route}
-                helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}
-              >
-                <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
-              </FanAction>
-            ))}
             {primaryAction === "watch_live" && live.attendanceConfigured !== false ? (
               <a className={styles.attendanceShortcut} href="#fan-code">
                 <TicketCheck aria-hidden="true" />
@@ -1409,6 +1387,21 @@ export function LiveEventScreen({
                   <ExternalLink aria-hidden="true" />
                 </a>
               )}
+            {!isIfewLive && (live.missionsAvailable === false ? (
+              <p className={styles.missionEmpty}>
+                {locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}
+              </p>
+            ) : (
+              <FanAction
+                variant="neutral"
+                className={styles.missionLink}
+                fullWidth
+                href={`/live/${slug}/missions?locale=${locale}` as Route}
+                helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}
+              >
+                <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
+              </FanAction>
+            ))}
             {actionError && (
               <p className={styles.actionError} role="alert">
                 {actionError}

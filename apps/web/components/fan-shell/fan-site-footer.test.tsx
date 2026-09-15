@@ -30,7 +30,7 @@ describe("FanSiteFooter", () => {
     expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
-    expect(telegram).not.toHaveTextContent("Telegram");
+    expect(telegram).toHaveTextContent("텔레그램");
     expect(telegram.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(telegram.querySelector("path")).toHaveAttribute("fill", "currentColor");
     expect(within(navigation).getByRole("link", { name: "문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");
@@ -77,9 +77,10 @@ describe("FanSiteFooter", () => {
     expect(linkRule).toContain("min-height: 44px");
     expect(linkRule).toContain("font-size: 13px");
     expect(linkRule).toContain("line-height: 1.35");
-    expect(navigationRule).toContain("grid-template-columns: minmax(0, 1fr) minmax(176px, 1fr)");
-    expect(footerCss).toContain("grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(176px, 1fr)");
-    expect(socialLinkRule).toContain("width: 44px");
+    expect(navigationRule).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+    expect(footerCss).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
+    expect(socialLinkRule).toContain("min-width: 44px");
+    expect(footerCss.match(/\.socialLinks\s*\{([^}]*)\}/)?.[1]).toContain("flex-direction: column");
     expect(socialLinkRule).toContain("height: 44px");
     expect(socialLinkRule).toContain("justify-content: flex-start");
     expect(socialIconRule).toContain("width: 16px");

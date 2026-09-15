@@ -189,9 +189,7 @@ describe("LiveEventScreen", () => {
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
     if (available === false) {
-      const mission = screen.getByRole("button", { name: "LIVE 미션 보기" });
-      expect(mission).toBeDisabled();
-      expect(mission).toHaveAccessibleDescription("현재 참여 가능한 미션이 없어요.");
+      expect(screen.queryByRole("button", { name: "LIVE 미션 보기" })).not.toBeInTheDocument();
       expect(screen.getByText("현재 참여 가능한 미션이 없어요.")).toBeVisible();
       expect(screen.queryByRole("link", { name: "LIVE 미션 보기" })).not.toBeInTheDocument();
     } else {

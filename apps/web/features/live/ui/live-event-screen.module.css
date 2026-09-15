@@ -86,8 +86,8 @@
 }
 
 .eventStatusRow { display:flex; align-items:center; gap:8px; min-height:28px; }
-.actionState { margin-top:24px; }
-.actionState .actionStatus { margin-top:0; }
+.actionState { margin-top:20px; padding:16px; border-radius:12px; background:var(--color-soft); }
+.actionState .actionStatus { min-height:24px; margin-top:0; }
 .actionStatus[data-reserved] { color:var(--color-ink); }
 .attendanceShortcut { display:flex; align-items:center; gap:8px; min-height:44px; margin-top:12px; color:var(--color-ink); font-size:14px; font-weight:650; text-decoration:none; }
 .attendanceShortcut svg { width:18px; height:18px; flex:none; }
@@ -957,7 +957,7 @@
 .titleGroup { margin-top:var(--space-3); }
 .scheduleGroup { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--color-line-subtle); }
 .schedule { gap:var(--space-3); }
-.schedule .eventSchedule dd { font-size:18px; line-height:1.45; }
+.schedule .eventSchedule dd { font-size:16px; line-height:1.5; }
 .primaryActionSlot { margin-top:var(--space-6); padding-top:var(--space-2); }
 .primaryActionBlock { width:100%; --fan-action-max-width:100%; }
 .actionHelper { margin-top:var(--space-3); color:var(--color-muted); font-weight:400; text-align:start; }
@@ -973,7 +973,10 @@
 .calendarActionLabel { line-height:1.2; }
 .schedule .deadlineSchedule { grid-template-columns:max-content minmax(0,1fr); align-items:start; gap:var(--space-2); }
 .deadlineSchedule dt { font-size:14px; line-height:1.6; white-space:nowrap; }
-.scheduleMeta { margin-top:var(--space-2); }
+.scheduleMeta { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 12px; margin-top:var(--space-2); }
+.reservationDetails[open] { flex-basis:100%; }
+.schedule .scheduleLabel { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.missionEmpty { margin:16px 0 0; color:var(--color-muted); font-size:13px; line-height:1.5; text-wrap:pretty; }
 .actionHelper { margin-bottom:0; }
 
 @media (max-width: 767px) {
