@@ -51,3 +51,4 @@ sql("delete from public.telegram_command_receipts; select public.configure_teleg
 sql("delete from public.telegram_alert_outbox; select public.configure_telegram_alerts(null,false)")
 print('PASS Telegram two-session claim, begin, destination-switch, command dedupe and cursor races')
 PY
+node "$root_dir/scripts/verify-telegram-certification-concurrency.mjs"

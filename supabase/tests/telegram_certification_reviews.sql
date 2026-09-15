@@ -31,8 +31,14 @@ insert into public.quiz_attempts(id,app_user_id,celebrity_id,quiz_id,quiz_versio
   ('a9200000-0000-4000-8000-000000000002','a9000000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000001','a9200000-0000-4000-8000-000000000001',1,'a9200000-0000-4000-8000-000000000003','passed',3,now());
 insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id) values
   ('a9200000-0000-4000-8000-000000000004','a9000000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000001','a9200000-0000-4000-8000-000000000002');
-insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id) values
-  ('a9200000-0000-4000-8000-000000000005','a9000000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000001','a9200000-0000-4000-8000-000000000004');
+insert into public.user_wallets(app_user_id,chain_id,address) values
+  ('a9000000-0000-4000-8000-000000000001',91342,'0xa900000000000000000000000000000000000001');
+insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload_version,payload) values
+  ('a9200000-0000-4000-8000-000000000006','passport','a9200000-0000-4000-8000-000000000005',
+   'byus:passport:v1:a9000000-0000-4000-8000-000000000001:telegram-certification-contract',1,
+   jsonb_build_object('recipient','0xa900000000000000000000000000000000000001','celebritySlug','telegram-certification-contract','passportId','0x'||repeat('9',64)));
+insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id) values
+  ('a9200000-0000-4000-8000-000000000005','a9000000-0000-4000-8000-000000000001','a9100000-0000-4000-8000-000000000001','a9200000-0000-4000-8000-000000000004','a9200000-0000-4000-8000-000000000006');
 
 do $$
 declare saved jsonb; mission uuid; submitted jsonb;
@@ -193,6 +199,9 @@ end $$;
 
 -- A membership approval performs its wallet precondition before mutation, then
 -- creates one activity, score row, stamp, and blockchain job after the wallet exists.
+delete from public.user_wallets where app_user_id='a9000000-0000-4000-8000-000000000001';
+update public.celebrities set status='published',published_at=now() where id='a9100000-0000-4000-8000-000000000001';
+insert into public.fan_ticket_activity_policy(celebrity_id) values('a9100000-0000-4000-8000-000000000001');
 do $$
 declare saved jsonb; mission uuid; submitted jsonb; claim jsonb; delivery uuid; upload uuid; token text; lease text; approval jsonb; submission uuid;
 begin
@@ -206,6 +215,9 @@ begin
   submitted:=public.submit_owned_certification('a9000000-0000-4000-8000-000000000001',mission,'a9500000-0000-4000-8000-000000000021','["a9400000-0000-4000-8000-000000000021"]',null,null);
   submission:=(submitted->>'id')::uuid;
   claim:=public.claim_telegram_certification_delivery('-1001234567890');delivery:=(claim->>'delivery_id')::uuid;token:=claim->>'callback_token';lease:=claim->>'lease_token';upload:=(claim->'uploads'->0->>'upload_id')::uuid;
+  if (claim->'reward'->>'ticket_amount')::integer<>1 then
+    raise exception 'TELEGRAM_CERTIFICATION_ACTIVITY_TICKET_PREVIEW_MISSING';
+  end if;
   perform public.record_telegram_certification_delivery(delivery,'-1001234567890',lease,'sending',upload,1);
   perform public.record_telegram_certification_delivery(delivery,'-1001234567890',lease,'sent',upload,1,9011);
   approval:=public.approve_telegram_certification('-1001234567890',token,9011,7011,'멤버십검토자','member_reviewer');
@@ -222,13 +234,16 @@ begin
     or (select count(*) from public.fan_score_ledger where manual_submission_id=submission and points=1)<>1
     or (select count(*) from public.stamps s join public.fan_activities a on a.id=s.activity_id where a.source_id=submission and s.stamp_type='membership')<>1
     or (select count(*) from public.blockchain_jobs j join public.stamps s on s.blockchain_job_id=j.id join public.fan_activities a on a.id=s.activity_id where a.source_id=submission)<>1
-    or exists(select 1 from public.fan_ticket_ledger where source_type='manual_certification' and source_id=submission) then
+    or exists(select 1 from public.fan_ticket_ledger where source_type='manual_certification' and source_id=submission)
+    or (select count(*) from public.fan_ticket_activity_awards a join public.fan_ticket_ledger l on l.id=a.ledger_id
+      where a.source_id=submission and a.action_key='membership_youtube' and l.amount=1)<>1 then
     raise exception 'TELEGRAM_CERTIFICATION_MEMBERSHIP_REWARD_NOT_EXACTLY_ONCE';
   end if;
   approval:=public.approve_telegram_certification('-1001234567890',token,9011,7012,'다른멤버십검토자','other_member_reviewer');
   if approval->>'outcome'<>'already_processed'
     or (select count(*) from public.fan_activities where source_id=submission and activity_type='membership')<>1
     or (select count(*) from public.fan_score_ledger where manual_submission_id=submission)<>1
+    or (select count(*) from public.fan_ticket_activity_awards where source_id=submission)<>1
     or (select count(*) from public.stamps s join public.fan_activities a on a.id=s.activity_id where a.source_id=submission)<>1 then
     raise exception 'TELEGRAM_CERTIFICATION_MEMBERSHIP_REPEAT_NOT_FINAL';
   end if;
