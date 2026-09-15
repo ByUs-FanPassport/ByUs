@@ -4,7 +4,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export type BenefitAdminActor = { appUserId: string; allowlistId: string };
 export type BenefitCampaignDraft = {
   id?: string | null;
-  liveEventId: string;
+  liveEventId?: string | null;
+  celebrityId?: string | null;
   entryOpensAt: string | null;
   entryClosesAt: string | null;
   publicTeaser?: boolean;
@@ -143,12 +144,12 @@ export function createSupabaseBenefitAdminRepository(
       return String(result(data, error));
     },
     async saveCampaign(a, c, i) {
-      const { data, error } = await db.rpc("save_admin_benefit_campaign", {
+      const { data, error } = await db.rpc(i.celebrityId ? "save_admin_creator_benefit_campaign" : "save_admin_benefit_campaign", {
         ...actorArgs(a),
         p_correlation_id: c,
         p_campaign_id: i.id || null,
         p_expected_revision: i.expectedRevision,
-        p_live_event_id: i.liveEventId,
+        ...(i.celebrityId ? { p_celebrity_id: i.celebrityId } : { p_live_event_id: i.liveEventId }),
         p_entry_opens_at: i.entryOpensAt,
         p_entry_closes_at: i.entryClosesAt,
         p_benefits: i.benefits,

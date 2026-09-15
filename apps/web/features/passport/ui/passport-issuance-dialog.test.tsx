@@ -73,6 +73,14 @@ describe("PassportIssuanceCeremony", () => {
     expect(screen.getByRole("link", { name: "MY에서 보기" })).toHaveAttribute("href", "/my?locale=ko");
   });
 
+  it("returns to the creator raffle after issuance without requiring mint completion", () => {
+    const target = "/c/kara/raffles/11111111-1111-4111-8111-111111111111?locale=ko";
+    render(<PassportIssuanceCeremony issuance={aggregate} returnTo={target} />);
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    expect(screen.getByRole("link", { name: "래플 응모 이어가기" })).toHaveAttribute("href", target);
+    expect(screen.queryByRole("link", { name: "LIVE 예약 이어가기" })).toBeNull();
+  });
+
   it("ignores an unsafe LIVE target and keeps the normal Passport action", () => {
     render(<PassportIssuanceCeremony issuance={aggregate} returnTo="//evil.example/live/kara?locale=ko" />);
     fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));

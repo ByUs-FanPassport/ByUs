@@ -84,7 +84,8 @@ const saveCampaign = z
     action: z.literal("save_campaign"),
     id: uuid.nullable().optional(),
     expectedRevision: z.number().int().positive().nullable(),
-    liveEventId: uuid,
+    liveEventId: uuid.nullable().optional(),
+    celebrityId: uuid.nullable().optional(),
     entryOpensAt: instant.nullable(),
     entryClosesAt: instant.nullable(),
     publicTeaser: z.boolean().optional().default(false),
@@ -92,6 +93,8 @@ const saveCampaign = z
   })
   .strict()
   .superRefine((v, c) => {
+    if (Boolean(v.liveEventId) === Boolean(v.celebrityId))
+      c.addIssue({ code: "custom", message: "CAMPAIGN_SOURCE_REQUIRED" });
     if ((v.id == null) !== (v.expectedRevision == null))
       c.addIssue({ code: "custom", message: "CAMPAIGN_REVISION_SHAPE" });
     if (

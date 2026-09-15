@@ -25,6 +25,8 @@ export const benefitEntryResultSchema = z.object({
 export type BenefitEntryResult = z.infer<typeof benefitEntryResultSchema>;
 
 export const benefitEntryStateSchema = z.object({
+  requiresFanVerification: z.boolean().optional(),
+  fanVerified: z.boolean().optional(),
   fulfillmentPolicy: raffleFulfillmentPolicySchema.nullable().optional(),
   campaignId: z.string().uuid(),
   creatorTicketBalance: z.number().int().nonnegative(),

@@ -1,12 +1,13 @@
 const LIVE_PATH = /^\/live\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const RAFFLE_PATH = /^\/c\/[a-z0-9]+(?:-[a-z0-9]+)*\/raffles(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?$/i;
 const RESERVED_LIVE_SLUGS = new Set(["calendar"]);
 const AUTH_INTENT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
 const LOCAL_ORIGIN = "https://byus.local";
 
 /**
- * Accepts only a canonical LIVE detail route that can safely resume the
- * reservation flow. Other internal paths are intentionally rejected so a
+ * Accepts canonical LIVE detail or creator raffle routes to resume the
+ * reservation or raffle flow after fan verification. Other internal paths are intentionally rejected so a
  * verification or issuance route cannot redirect back into itself.
  */
 export function sanitizeLiveReturnTo(value: string | null | undefined): string | null {
@@ -28,8 +29,8 @@ export function sanitizeLiveReturnTo(value: string | null | undefined): string |
       || parsed.username
       || parsed.password
       || parsed.hash
-      || !LIVE_PATH.test(parsed.pathname)
-      || parsed.pathname.length > 86
+      || (!LIVE_PATH.test(parsed.pathname) && !RAFFLE_PATH.test(parsed.pathname))
+      || parsed.pathname.length > 128
       || RESERVED_LIVE_SLUGS.has(parsed.pathname.slice("/live/".length))
     ) {
       return null;

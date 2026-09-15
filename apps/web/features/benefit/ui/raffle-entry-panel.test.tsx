@@ -121,3 +121,24 @@ describe("raffle entry error copy", () => {
     expect(submit).toHaveBeenCalledOnce();
   });
 });
+
+describe("standalone raffle fan verification", () => {
+  it.each([["ko", "팬 인증하고 응모권 받기"], ["en", "Verify your fan status"]] as const)("requires verification even with a ticket balance in %s", (locale, label) => {
+    render(<RaffleEntryPanel celebrity={celebrity} locale={locale}
+      raffle={{ ...raffle, requiresFanVerification: true }}
+      benefit={{ ...benefit, entry: { ...benefit.entry!, requiresFanVerification: true, fanVerified: false, canEnter: false } }}
+      loading={false} loadFailed={false} status="open" refresh={vi.fn()} onAccepted={vi.fn()} onReconciled={vi.fn()} />);
+    const link = screen.getByRole("link", { name: label });
+    expect(link.getAttribute("href")).toContain(`/c/creator/verify?locale=${locale}&returnTo=`);
+    expect(decodeURIComponent(link.getAttribute("href")!)).toContain(`/c/creator/raffles/${raffle.benefitId}?locale=${locale}`);
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+  });
+  it("allows verified fans to choose tickets", () => {
+    render(<RaffleEntryPanel celebrity={celebrity} locale="ko"
+      raffle={{ ...raffle, requiresFanVerification: true }}
+      benefit={{ ...benefit, entry: { ...benefit.entry!, requiresFanVerification: true, fanVerified: true, canEnter: true } }}
+      loading={false} loadFailed={false} status="open" refresh={vi.fn()} onAccepted={vi.fn()} onReconciled={vi.fn()} />);
+    expect(screen.getByRole("spinbutton")).toBeEnabled();
+    expect(screen.queryByRole("link", { name: "팬 인증하고 응모권 받기" })).toBeNull();
+  });
+});

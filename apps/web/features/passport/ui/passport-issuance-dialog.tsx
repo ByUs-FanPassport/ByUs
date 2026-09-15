@@ -123,7 +123,7 @@ export function PassportIssuanceCeremony({
   const passportHref = withLocale(`/passports/${issuance.passport.id}`, locale);
   const liveReturnTo = sanitizeLiveReturnTo(returnTo);
   const finalHref = (liveReturnTo ?? passportHref) as Route;
-  const finalLabel = liveReturnTo ? t.continueLive : t.open;
+  const finalLabel = liveReturnTo?.startsWith("/c/") ? (locale === "ko" ? "래플 응모 이어가기" : "Continue to the raffle") : liveReturnTo ? t.continueLive : t.open;
   const skipRef = useRef<HTMLButtonElement>(null);
   const openPassportRef = useRef<HTMLAnchorElement>(null);
   const focusOpenOnCompletionRef = useRef(false);

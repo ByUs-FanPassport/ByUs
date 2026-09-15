@@ -210,3 +210,19 @@ describe("benefit admin route", () => {
     expect(r.status).toBe(400);
   });
 });
+
+describe("creator campaign source validation", () => {
+  const creator = "33333333-3333-4333-8333-333333333333";
+  const draft = { action: "save_campaign", id: null, expectedRevision: null, celebrityId: creator,
+    entryOpensAt: "2026-09-15T00:00:00Z", entryClosesAt: "2026-09-27T15:00:00Z",
+    benefits: [{ benefitId: "55555555-5555-4555-8555-555555555555", priority: 1, perFanTicketLimit: null, winnerQuantity: 10, fulfillmentMethod: "on_site_pickup" }] };
+  it("accepts creator ownership without a LIVE", async () => {
+    const d=deps(); const result=await createPostBenefitAdminHandler(d)(req(draft));
+    expect(result.status).toBe(201);
+    expect(d.repository.saveCampaign.mock.calls[0]?.[2]).toMatchObject({ celebrityId: creator });
+  });
+  it.each([{ ...draft, liveEventId: creator }, { ...draft, celebrityId: null }, { ...draft, id: creator, expectedRevision: null }])("rejects ambiguous sources or a missing update revision", async body => {
+    const d=deps(); expect((await createPostBenefitAdminHandler(d)(req(body))).status).toBe(400);
+    expect(d.repository.saveCampaign).not.toHaveBeenCalled();
+  });
+});

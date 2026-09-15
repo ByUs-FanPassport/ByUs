@@ -2,6 +2,7 @@ import { z } from "zod";
 import { raffleFulfillmentPolicySchema } from "./raffle-fulfillment-policy";
 
 export const raffleSchema = z.object({
+  requiresFanVerification: z.boolean().optional(),
   id: z.string().uuid(),
   benefitId: z.string().uuid().nullable(),
   title: z.string().min(1),

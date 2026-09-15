@@ -2,6 +2,11 @@ import type { Route } from "next";
 import type { BenefitLocale } from "./benefit";
 
 /** Every creator uses the same catalog, including creators with one gift. */
+export function creatorRaffleVerificationHref(slug: string, locale: "ko" | "en", benefitId?: string | null) {
+  const returnTo = benefitId ? `/c/${slug}/raffles/${benefitId}?locale=${locale}` : `/c/${slug}/raffles?locale=${locale}`;
+  return `/c/${slug}/verify?${new URLSearchParams({ locale, returnTo }).toString()}` as Route;
+}
+
 export function creatorRafflesHref(slug: string, locale: BenefitLocale): Route {
   return `/c/${encodeURIComponent(slug)}/raffles?locale=${locale}` as Route;
 }

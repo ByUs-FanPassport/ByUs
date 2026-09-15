@@ -72,7 +72,8 @@ type CampaignItem = {
 };
 type Campaign = {
   id: string;
-  liveEventId: string;
+  liveEventId: string | null;
+  celebrityId?: string | null;
   status: "draft" | "published";
   entryOpensAt: string | null;
   entryClosesAt: string | null;
@@ -99,6 +100,8 @@ type Campaign = {
   };
 };
 type CampaignForm = {
+  source: "live" | "creator";
+  celebrityId: string;
   id: string;
   revision: number;
   liveEventId: string;
@@ -165,6 +168,8 @@ const blank: Form = {
   deliveryEn: "",
 };
 const blankCampaign: CampaignForm = {
+  source: "live",
+  celebrityId: "",
   id: "",
   revision: 1,
   liveEventId: "",
@@ -187,7 +192,7 @@ const copy = {
     clearCodes: "코드 전체 삭제",
     apps: "신청 및 선정",
     claims: "수령 및 사용 이력",
-    campaigns: "LIVE 혜택 캠페인",
+    campaigns: "혜택 캠페인",
     campaignSave: "캠페인 초안 저장",
     campaignPublish: "캠페인 발행",
     campaignNoLimit: "혜택별 응모 한도 (비우면 제한 없음)",
@@ -214,7 +219,7 @@ const copy = {
     clearCodes: "Clear all codes",
     apps: "Applications and selection",
     claims: "Claims and usage",
-    campaigns: "LIVE Benefit campaigns",
+    campaigns: "Benefit campaigns",
     campaignSave: "Save campaign draft",
     campaignPublish: "Publish campaign",
     campaignNoLimit: "Per-Benefit entry limit (blank means unlimited)",
@@ -263,7 +268,9 @@ function campaignFormFor(c: Campaign): CampaignForm {
   return {
     id: c.id,
     revision: c.revision,
-    liveEventId: c.liveEventId,
+    liveEventId: c.liveEventId ?? "",
+    celebrityId: c.celebrityId ?? "",
+    source: c.celebrityId ? "creator" : "live",
     entryOpensAt: local(c.entryOpensAt),
     entryClosesAt: local(c.entryClosesAt),
     publicTeaser: c.publicTeaser,
@@ -383,7 +390,7 @@ function BenefitManager({
       action: "save_campaign",
       id: campaign.id || null,
       expectedRevision: campaign.id ? campaign.revision : null,
-      liveEventId: campaign.liveEventId,
+      ...(campaign.source === "creator" ? { celebrityId: campaign.celebrityId } : { liveEventId: campaign.liveEventId }),
       entryOpensAt: campaign.entryOpensAt ? instant(campaign.entryOpensAt) : null,
       entryClosesAt: campaign.entryClosesAt ? instant(campaign.entryClosesAt) : null,
       publicTeaser: campaign.publicTeaser,
@@ -445,7 +452,7 @@ function BenefitManager({
     } catch { setError(t.failure); } finally { setPending(false); }
   }
   const benefitPages = useAdminPagination((data?.benefits ?? []).filter(item => [item.slug, item.localizations.ko.title, item.localizations.en.title].join(" ").toLowerCase().includes(benefitQuery.trim().toLowerCase())), benefitQuery);
-  const campaignPages = useAdminPagination((data?.campaigns ?? []).filter(item => [item.liveEventId, item.status].join(" ").toLowerCase().includes(campaignQuery.trim().toLowerCase())), campaignQuery);
+  const campaignPages = useAdminPagination((data?.campaigns ?? []).filter(item => [item.liveEventId, item.celebrityId, item.status].join(" ").toLowerCase().includes(campaignQuery.trim().toLowerCase())), campaignQuery);
   async function archive() {
     if (
       selected &&
@@ -496,7 +503,7 @@ function BenefitManager({
             {campaignPages.items.map((item) => (
               <li key={item.id} className={styles.campaignRow}>
                 <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
-                  {item.liveEventId} · {item.status}
+                  {item.celebrityId ? `${locale === "ko" ? "팬페이지" : "Fanpage"} · ${data.celebrities.find(c => c.id === item.celebrityId)?.[locale === "ko" ? "nameKo" : "nameEn"] ?? item.celebrityId}` : item.liveEventId} · {item.status}
                 </button>
                 {item.status === "published" && !item.draw && !item.cancelledAt && (
                   <button disabled={!canWrite || pending} type="button" onClick={() => void drawCampaign(item.id)}>
@@ -519,7 +526,11 @@ function BenefitManager({
             <fieldset disabled={!canWrite || pending || Boolean(campaign.id && data.campaigns.find((c) => c.id === campaign.id)?.status === "published")}>
               <legend>{t.campaigns}</legend>
               <div className={styles.grid}>
-                <Field label="LIVE event ID" value={campaign.liveEventId} set={(liveEventId) => setCampaign((c) => ({ ...c, liveEventId }))} />
+                <fieldset disabled={Boolean(campaign.id)}>
+                  <Select label={locale === "ko" ? "캠페인 유형" : "Campaign source"} value={campaign.source} set={(source) => setCampaign(c => ({ ...c, source: source as "live" | "creator" }))} options={[["live", "LIVE"], ["creator", locale === "ko" ? "팬페이지" : "Fanpage"]]} />
+                  {campaign.source === "creator" ? <Select label={locale === "ko" ? "크리에이터" : "Creator"} value={campaign.celebrityId} set={(celebrityId) => setCampaign(c => ({ ...c, celebrityId }))} options={[["", "—"], ...data.celebrities.map(c => [c.id, locale === "ko" ? c.nameKo : c.nameEn] as [string, string])]} /> : null}
+                </fieldset>
+                {campaign.source === "live" ? <Field label="LIVE event ID" value={campaign.liveEventId} set={(liveEventId) => setCampaign((c) => ({ ...c, liveEventId }))} /> : null}
                 <Field type="datetime-local" label="Entry opens (UTC)" value={campaign.entryOpensAt} set={(entryOpensAt) => setCampaign((c) => ({ ...c, entryOpensAt }))} />
                 <Field type="datetime-local" label="Entry closes (UTC)" value={campaign.entryClosesAt} set={(entryClosesAt) => setCampaign((c) => ({ ...c, entryClosesAt }))} />
                 <label><input type="checkbox" checked={campaign.publicTeaser} onChange={(event) => setCampaign((current) => ({ ...current, publicTeaser: event.target.checked }))} />{locale === "ko" ? "일정 미정 티저 공개" : "Show undated teaser"}</label>

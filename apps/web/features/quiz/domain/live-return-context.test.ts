@@ -36,3 +36,13 @@ describe("LIVE return context", () => {
       .toBe("/c/kara/verify?locale=ko");
   });
 });
+
+describe("creator raffle verification return", () => {
+  it("preserves only a canonical list or benefit destination", () => {
+    expect(sanitizeLiveReturnTo("/c/yuna/raffles?locale=ko")).toBe("/c/yuna/raffles?locale=ko");
+    expect(sanitizeLiveReturnTo("/c/changha/raffles/11111111-1111-4111-8111-111111111111?locale=en")).toBe("/c/changha/raffles/11111111-1111-4111-8111-111111111111?locale=en");
+    for (const path of ["/c/yuna/raffles/not-a-benefit?locale=ko", "/c/yuna/verify?locale=ko", "/c/yuna/raffles?locale=ko&next=https://evil.example", "//evil.example/c/yuna/raffles?locale=ko"]) {
+      expect(sanitizeLiveReturnTo(path)).toBeNull();
+    }
+  });
+});

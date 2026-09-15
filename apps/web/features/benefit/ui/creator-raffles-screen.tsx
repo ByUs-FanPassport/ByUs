@@ -16,7 +16,7 @@ import type { PublishedCelebrity } from "@/server/content/content-domain";
 import type { RaffleList } from "../domain/raffle";
 import { benefitListResponseSchema, type BenefitCatalogItem, type BenefitListResponse } from "../domain/benefit";
 import type { BenefitEntryResult } from "../domain/benefit-entry";
-import { creatorRaffleHref, creatorRafflesHref } from "../domain/raffle-navigation";
+import { creatorRaffleHref, creatorRafflesHref, creatorRaffleVerificationHref } from "../domain/raffle-navigation";
 import { formatRaffleDateTime } from "./benefit-presentation";
 import { RaffleArtwork } from "./raffle-artwork";
 import { RaffleEntryPanel } from "./raffle-entry-panel";
@@ -72,7 +72,11 @@ function OwnedCreatorRaffles({ celebrity, locale, raffles, benefitId, deliveryIn
   const benefit = data?.benefits.find((item) => item.id === benefitId) ?? null;
   const balance = known ? data?.benefits.find((item) => item.entry)?.entry?.creatorTicketBalance : undefined;
   const fanHref = `${creatorHomeHref(celebrity.slug)}?locale=${locale}`;
-  const earnHref = `${fanHref}&tab=live`;
+  const standalone = selected?.requiresFanVerification ?? raffles.some(raffle => raffle.requiresFanVerification);
+  const fanVerified = data?.benefits.some(item => item.entry?.fanVerified === true);
+  const earnHref = standalone && fanVerified ? fanHref
+    : standalone || raffles.length === 0 ? creatorRaffleVerificationHref(celebrity.slug, locale, benefitId)
+    : `${fanHref}&tab=live`;
   const historyHref = `/my/raffles?locale=${locale}`;
   const onAccepted = useCallback((result: BenefitEntryResult) => {
     if (result.replayed) { setTotalsUnknown(true); return; }
