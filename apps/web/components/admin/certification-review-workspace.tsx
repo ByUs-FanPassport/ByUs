@@ -49,16 +49,17 @@ export function CertificationReviewWorkspace({ submissions, locale, status, init
     && (!creatorFilter || item.celebritySlug === creatorFilter)
     && [item.applicantName, item.appUserId, item.missionTitle, item.missionTitleEn, item.celebritySlug, item.creatorNameKo, item.creatorNameEn, item.id].some(value => value?.toLocaleLowerCase().includes(query)));
   const pagination = useAdminPagination(filtered, JSON.stringify([search, platform, creatorFilter, status]));
-  const deepLinkHandled = useRef(false);
   useEffect(() => {
-    if (deepLinkHandled.current || !initialSelectedSubmissionId) return;
+    if (selectedId || !initialSelectedSubmissionId) return;
     const requestedIndex = filtered.findIndex(item => item.id === initialSelectedSubmissionId);
     if (requestedIndex < 0) return;
-    deepLinkHandled.current = true;
     setSelectedId(initialSelectedSubmissionId);
     pagination.onPageChange(Math.floor(requestedIndex / pagination.pageSize) + 1);
-  }, [filtered, initialSelectedSubmissionId, pagination]);
-  const selected = pagination.items.find(item => item.id === selectedId) ?? pagination.items[0];
+  }, [filtered, initialSelectedSubmissionId, pagination, selectedId]);
+  const pendingDeepLinkTarget = !selectedId && initialSelectedSubmissionId
+    ? filtered.find(item => item.id === initialSelectedSubmissionId)
+    : undefined;
+  const selected = pendingDeepLinkTarget ?? pagination.items.find(item => item.id === selectedId) ?? pagination.items[0];
   const creators = [...new Map(submissions.map(item => [item.celebritySlug, creator(item, locale)])).entries()];
   return <section className={styles.review} aria-label={locale === "ko" ? "인증 심사 목록과 상세" : "Certification review list and details"}>
     <div className={styles.filters}>

@@ -74,6 +74,23 @@ describe("certification review workspace integration", () => {
     expect(fetcher.mock.calls.some(([url]) => String(url).endsWith(`status=${status}`))).toBe(true);
   });
 
+  it("normalizes an uppercase submission UUID before selecting the matching row", async () => {
+    const requestedId = "123e4567-e89b-42d3-a456-426614174000";
+    auth.query = `lang=ko&status=pending&submission=${requestedId.toUpperCase()}`;
+    setup({ get: url => url.includes("certification-missions")
+      ? Response.json({ missions: [mission] })
+      : Response.json({ submissions: [
+        { ...submission, id: "11111111-1111-4111-8111-111111111111", applicantName: "첫 제출자", uploads: [] },
+        { ...submission, id: requestedId, applicantName: "대문자 링크 대상", uploads: [] },
+      ] }),
+    });
+
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByRole("heading", { name: "대문자 링크 대상" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /대문자 링크 대상/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("ignores malformed status and submission parameters", async () => {
     auth.query = "lang=en&status=waiting&submission=not-a-uuid";
     const fetcher = setup({ get: url => url.includes("certification-missions")
@@ -102,8 +119,8 @@ describe("certification review workspace integration", () => {
     render(<AuthorizedCertificationManager />);
 
     expect(await screen.findByRole("heading", { name: "두 번째 페이지 제출자" })).toBeVisible();
-    expect(screen.getByRole("button", { name: /두 번째 페이지 제출자/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "2페이지" })).toHaveAttribute("aria-current", "page");
+    expect(await screen.findByRole("button", { name: /두 번째 페이지 제출자/ })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("button", { name: "2페이지" })).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps the ordinary first result when the requested submission is missing", async () => {

@@ -98,7 +98,7 @@ export function AuthorizedCertificationManager() {
   const requestedStatus = searchParams.get("status");
   const initialReviewStatus: ReviewStatus = requestedStatus === "approved" || requestedStatus === "rejected" ? requestedStatus : "pending";
   const requestedSubmissionId = searchParams.get("submission");
-  const initialSubmissionId = requestedSubmissionId && UUID_PATTERN.test(requestedSubmissionId) ? requestedSubmissionId : undefined;
+  const initialSubmissionId = requestedSubmissionId && UUID_PATTERN.test(requestedSubmissionId) ? requestedSubmissionId.toLowerCase() : undefined;
   const session = useAdminSession();
   const { user } = usePrivy();
   if (session.status !== "authorized")

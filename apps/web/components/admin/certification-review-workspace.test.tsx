@@ -38,17 +38,20 @@ function setup({
   status = "pending",
   loadProof = vi.fn(async (_submissionId: string, uploadId: string) => new Blob([uploadId], { type: "image/webp" })),
   onReview = vi.fn(async () => undefined),
+  initialSelectedSubmissionId,
 }: {
   submissions?: CertificationReviewSubmission[];
   status?: ReviewStatus;
   loadProof?: ProofLoader;
   onReview?: (item: CertificationReviewSubmission, decision: "approve" | "reject", reason?: string) => Promise<void>;
+  initialSelectedSubmissionId?: string;
 } = {}) {
   const rendered = render(
     <CertificationReviewWorkspace
       submissions={submissions}
       locale="ko"
       status={status}
+      initialSelectedSubmissionId={initialSelectedSubmissionId}
       busy={false}
       canWrite
       loadProof={loadProof}
@@ -81,6 +84,17 @@ afterEach(() => {
 });
 
 describe("CertificationReviewWorkspace", () => {
+  it("loads proof only for a present deep-link target on the first render", async () => {
+    const requested = submission({ id: "submission-b", applicantName: "팬 B", uploads: [{ id: "proof-b-1", width: 400, height: 600 }] });
+    const loadProof = vi.fn<ProofLoader>(async (_submissionId, uploadId) => new Blob([uploadId], { type: "image/webp" }));
+
+    setup({ submissions: [baseSubmission, requested], initialSelectedSubmissionId: requested.id, loadProof });
+
+    expect(await screen.findByRole("heading", { name: "팬 B" })).toBeVisible();
+    expect(loadProof.mock.calls[0]?.slice(0, 2)).toEqual([requested.id, "proof-b-1"]);
+    expect(loadProof).not.toHaveBeenCalledWith(baseSubmission.id, "proof-a-1", expect.any(AbortSignal));
+  });
+
   it("waits for the requested submission to arrive before consuming the deep link", async () => {
     const requested = submission({ id: "submission-b", applicantName: "팬 B", uploads: [] });
     const loadProof = vi.fn<ProofLoader>();
