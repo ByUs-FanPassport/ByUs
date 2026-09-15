@@ -17,6 +17,8 @@ import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pa
 import styles from "./certification-manager.module.css";
 import { CertificationReviewWorkspace, reviewStatusLabel, type CertificationReviewSubmission as Submission, type ReviewStatus } from "./certification-review-workspace";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type Mission = {
   id: string;
   celebrityId: string;
@@ -91,7 +93,12 @@ function membershipPreset(platform: MembershipPlatform) {
   };
 }
 export function AuthorizedCertificationManager() {
-  const locale = useSearchParams().get("lang") === "en" ? "en" : "ko";
+  const searchParams = useSearchParams();
+  const locale = searchParams.get("lang") === "en" ? "en" : "ko";
+  const requestedStatus = searchParams.get("status");
+  const initialReviewStatus: ReviewStatus = requestedStatus === "approved" || requestedStatus === "rejected" ? requestedStatus : "pending";
+  const requestedSubmissionId = searchParams.get("submission");
+  const initialSubmissionId = requestedSubmissionId && UUID_PATTERN.test(requestedSubmissionId) ? requestedSubmissionId : undefined;
   const session = useAdminSession();
   const { user } = usePrivy();
   if (session.status !== "authorized")
@@ -102,6 +109,8 @@ export function AuthorizedCertificationManager() {
       locale={locale}
       canWrite={session.admin.role !== "viewer"}
       adminRole={session.admin.role}
+      initialReviewStatus={initialReviewStatus}
+      initialSubmissionId={initialSubmissionId}
     />
   );
 }
@@ -109,10 +118,14 @@ function CertificationManager({
   locale,
   canWrite,
   adminRole,
+  initialReviewStatus,
+  initialSubmissionId,
 }: {
   locale: "ko" | "en";
   canWrite: boolean;
   adminRole: string;
+  initialReviewStatus: ReviewStatus;
+  initialSubmissionId?: string;
 }) {
   const { getAccessToken } = usePrivy();
   const [missionQuery, setMissionQuery] = useState("");
@@ -121,7 +134,7 @@ function CertificationManager({
   const [queue, setQueue] = useState<Submission[]>([]);
   const [form, setForm] = useState(() => ({ ...blank, immutableKey: `cert-${crypto.randomUUID()}` }));
   const [tab, setTab] = useState<"review" | "missions">("review");
-  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("pending");
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>(initialReviewStatus);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [fatalAccess, setFatalAccess] = useState<"denied" | "unauthenticated" | null>(null);
@@ -360,7 +373,7 @@ function CertificationManager({
         <p role={messageIsError ? "alert" : "status"} className={styles.message} data-error={messageIsError}>{message}</p>
         {tab === "review" ? <div id="review-panel" role="tabpanel" aria-labelledby="review-tab">
           <div className={styles.statusTabs} role="group" aria-label={locale === "ko" ? "심사 상태" : "Review status"}>{(["pending", "rejected", "approved"] as const).map(status => <button type="button" key={status} aria-pressed={reviewStatus === status} disabled={pending || needsRefresh || loading} onClick={() => { setQueue([]); setReviewStatus(status); }}>{reviewStatusLabel(status, locale)}</button>)}</div>
-          {loading ? <p className={styles.loadState}>{locale === "ko" ? "인증 자료를 불러오는 중입니다…" : "Loading submissions…"}</p> : loadError ? <p className={styles.loadState}>{locale === "ko" ? "자료를 불러오지 못했습니다. 새로고침해 주세요." : "Could not load submissions. Please refresh."}</p> : <CertificationReviewWorkspace key={reviewStatus} submissions={queue} locale={locale} status={reviewStatus} busy={pending || needsRefresh} canWrite={canWrite} loadProof={loadProof} onReview={review} />}
+          {loading ? <p className={styles.loadState}>{locale === "ko" ? "인증 자료를 불러오는 중입니다…" : "Loading submissions…"}</p> : loadError ? <p className={styles.loadState}>{locale === "ko" ? "자료를 불러오지 못했습니다. 새로고침해 주세요." : "Could not load submissions. Please refresh."}</p> : <CertificationReviewWorkspace key={reviewStatus} submissions={queue} locale={locale} status={reviewStatus} initialSelectedSubmissionId={reviewStatus === initialReviewStatus ? initialSubmissionId : undefined} busy={pending || needsRefresh} canWrite={canWrite} loadProof={loadProof} onReview={review} />}
         </div> : <div id="missions-panel" role="tabpanel" aria-labelledby="missions-tab">
         <div className={styles.workspace}>
           <section className={styles.missions}>

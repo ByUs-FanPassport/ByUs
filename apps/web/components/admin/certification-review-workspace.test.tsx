@@ -81,6 +81,20 @@ afterEach(() => {
 });
 
 describe("CertificationReviewWorkspace", () => {
+  it("waits for the requested submission to arrive before consuming the deep link", async () => {
+    const requested = submission({ id: "submission-b", applicantName: "팬 B", uploads: [] });
+    const loadProof = vi.fn<ProofLoader>();
+    const onReview = vi.fn(async () => undefined);
+    const props = { locale: "ko" as const, status: "pending" as const, initialSelectedSubmissionId: requested.id, busy: false, canWrite: true, loadProof, onReview };
+    const rendered = render(<CertificationReviewWorkspace {...props} submissions={[]} />);
+
+    expect(screen.getByText("표시할 제출이 없습니다")).toBeVisible();
+    rendered.rerender(<CertificationReviewWorkspace {...props} submissions={[baseSubmission, requested]} />);
+
+    expect(await screen.findByRole("heading", { name: "팬 B" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /팬 B/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("blocks approval without an image while allowing a reasoned request for more proof", async () => {
     const onReview = vi.fn(async () => undefined);
     const loadProof = vi.fn<ProofLoader>();

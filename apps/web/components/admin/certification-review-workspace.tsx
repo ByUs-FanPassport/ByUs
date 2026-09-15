@@ -35,8 +35,9 @@ export function reviewStatusLabel(status: ReviewStatus, locale: Locale) {
     : { pending: "Awaiting review", rejected: "More proof / rejected", approved: "Approved" }[status];
 }
 
-export function CertificationReviewWorkspace({ submissions, locale, status, busy, canWrite, loadProof, onReview }: {
+export function CertificationReviewWorkspace({ submissions, locale, status, initialSelectedSubmissionId, busy, canWrite, loadProof, onReview }: {
   submissions: CertificationReviewSubmission[]; locale: Locale; status: ReviewStatus; busy: boolean; canWrite: boolean;
+  initialSelectedSubmissionId?: string;
   loadProof: ProofLoader; onReview: (item: CertificationReviewSubmission, decision: "approve" | "reject", reason?: string) => Promise<void>;
 }) {
   const [search, setSearch] = useState("");
@@ -48,6 +49,15 @@ export function CertificationReviewWorkspace({ submissions, locale, status, busy
     && (!creatorFilter || item.celebritySlug === creatorFilter)
     && [item.applicantName, item.appUserId, item.missionTitle, item.missionTitleEn, item.celebritySlug, item.creatorNameKo, item.creatorNameEn, item.id].some(value => value?.toLocaleLowerCase().includes(query)));
   const pagination = useAdminPagination(filtered, JSON.stringify([search, platform, creatorFilter, status]));
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (deepLinkHandled.current || !initialSelectedSubmissionId) return;
+    const requestedIndex = filtered.findIndex(item => item.id === initialSelectedSubmissionId);
+    if (requestedIndex < 0) return;
+    deepLinkHandled.current = true;
+    setSelectedId(initialSelectedSubmissionId);
+    pagination.onPageChange(Math.floor(requestedIndex / pagination.pageSize) + 1);
+  }, [filtered, initialSelectedSubmissionId, pagination]);
   const selected = pagination.items.find(item => item.id === selectedId) ?? pagination.items[0];
   const creators = [...new Map(submissions.map(item => [item.celebritySlug, creator(item, locale)])).entries()];
   return <section className={styles.review} aria-label={locale === "ko" ? "인증 심사 목록과 상세" : "Certification review list and details"}>

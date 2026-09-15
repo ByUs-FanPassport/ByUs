@@ -2,9 +2,9 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthorizedCertificationManager } from "./certification-manager";
 
-const auth = vi.hoisted(() => ({ getAccessToken: vi.fn(async () => "token"), email: "operator@byus.test", role: "operator", userId: "actor-1", locale: "ko" }));
+const auth = vi.hoisted(() => ({ getAccessToken: vi.fn(async () => "token"), email: "operator@byus.test", role: "operator", userId: "actor-1", query: "lang=ko" }));
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ getAccessToken: auth.getAccessToken, user: { id: auth.userId } }) }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(`lang=${auth.locale}`) }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(auth.query) }));
 vi.mock("./use-admin-session", () => ({ useAdminSession: () => ({ status: "authorized", admin: { role: auth.role, email: auth.email } }) }));
 vi.mock("./operations-shell", () => ({ AdminOperationsShell: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 const mission = {
@@ -46,13 +46,82 @@ function confirmApproval() {
 function postCalls(fetcher: ReturnType<typeof setup>) { return fetcher.mock.calls.filter(([, init]) => init?.method === "POST"); }
 
 beforeEach(() => {
-  auth.getAccessToken.mockReset(); auth.getAccessToken.mockResolvedValue("token"); auth.role = "operator"; auth.email = "operator@byus.test"; auth.userId = "actor-1"; auth.locale = "ko";
+  auth.getAccessToken.mockReset(); auth.getAccessToken.mockResolvedValue("token"); auth.role = "operator"; auth.email = "operator@byus.test"; auth.userId = "actor-1"; auth.query = "lang=ko";
   vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:proof-1"), revokeObjectURL: vi.fn() }));
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
 });
 
 describe("certification review workspace integration", () => {
+  it.each([
+    ["pending", "심사 대기"],
+    ["approved", "승인 완료"],
+  ] as const)("opens a valid %s deep link at the exact submission", async (status, statusLabel) => {
+    const requestedId = "123e4567-e89b-42d3-a456-426614174000";
+    auth.query = `lang=ko&status=${status}&submission=${requestedId}`;
+    const fetcher = setup({ get: url => url.includes("certification-missions")
+      ? Response.json({ missions: [mission] })
+      : Response.json({ submissions: [
+        { ...submission, id: "11111111-1111-4111-8111-111111111111", status, applicantName: "첫 제출자", uploads: [] },
+        { ...submission, id: requestedId, status, applicantName: "요청된 제출자", uploads: [], reviewedAt: status === "approved" ? "2026-09-10T01:00:00Z" : undefined },
+      ] }),
+    });
+
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByRole("heading", { name: "요청된 제출자" })).toBeVisible();
+    expect(screen.getByRole("button", { name: statusLabel })).toHaveAttribute("aria-pressed", "true");
+    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith(`status=${status}`))).toBe(true);
+  });
+
+  it("ignores malformed status and submission parameters", async () => {
+    auth.query = "lang=en&status=waiting&submission=not-a-uuid";
+    const fetcher = setup({ get: url => url.includes("certification-missions")
+      ? Response.json({ missions: [mission] })
+      : Response.json({ submissions: [{ ...submission, applicantName: "Default applicant", uploads: [] }] }),
+    });
+
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByRole("heading", { name: "Default applicant" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Awaiting review" })).toHaveAttribute("aria-pressed", "true");
+    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith("status=pending"))).toBe(true);
+  });
+
+  it("moves to the requested submission page when the target is beyond page one", async () => {
+    const requestedId = "123e4567-e89b-42d3-a456-426614174001";
+    auth.query = `lang=ko&status=pending&submission=${requestedId}`;
+    const submissions = Array.from({ length: 21 }, (_, index) => ({
+      ...submission,
+      id: index === 20 ? requestedId : `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+      applicantName: index === 20 ? "두 번째 페이지 제출자" : `첫 페이지 제출자 ${index}`,
+      uploads: [],
+    }));
+    setup({ get: url => url.includes("certification-missions") ? Response.json({ missions: [mission] }) : Response.json({ submissions }) });
+
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByRole("heading", { name: "두 번째 페이지 제출자" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /두 번째 페이지 제출자/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "2페이지" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("keeps the ordinary first result when the requested submission is missing", async () => {
+    auth.query = "lang=ko&status=pending&submission=123e4567-e89b-42d3-a456-426614174099";
+    setup({ get: url => url.includes("certification-missions")
+      ? Response.json({ missions: [mission] })
+      : Response.json({ submissions: [
+        { ...submission, id: "11111111-1111-4111-8111-111111111111", applicantName: "기본 제출자", uploads: [] },
+        { ...submission, id: "22222222-2222-4222-8222-222222222222", applicantName: "다음 제출자", uploads: [] },
+      ] }),
+    });
+
+    render(<AuthorizedCertificationManager />);
+
+    expect(await screen.findByRole("heading", { name: "기본 제출자" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /기본 제출자/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("opens reviews first with evidence/context and keeps mission editing in settings", async () => {
     setup(); render(<AuthorizedCertificationManager />);
     expect(await screen.findByAltText("인증 이미지 1")).toBeVisible();
