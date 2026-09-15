@@ -7,6 +7,12 @@ import {
   validatedTelegramConfig,
   type TelegramAlertSender,
 } from "./telegram-alert-worker.js";
+import {
+  createTelegramCertificationCallbackWorker,
+  validatedTelegramCertificationConfig,
+  type TelegramCertificationCallback,
+  type TelegramCertificationCallbackHandler,
+} from "./telegram-certification-worker.js";
 
 const BOT_USERNAME = "sallylabsurveyalertbot";
 const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
@@ -78,6 +84,43 @@ export function classifyTelegramUpdate(value: unknown, chatId: string): Telegram
   const messageDate = message.date;
   if (!parsed.success || !Number.isSafeInteger(messageDate) || Number(messageDate) < 0) return ignored;
   return { updateId: updateId as number, request: { updateId: updateId as number, command: parsed.data, messageDate: messageDate as number } };
+}
+
+export function classifyTelegramCallbackUpdate(value: unknown, chatId: string): TelegramCertificationCallback | null {
+  const update = record(value);
+  const updateId = update?.update_id;
+  if (!Number.isSafeInteger(updateId) || Number(updateId) < 0) return null;
+  const query = record(update?.callback_query);
+  const from = record(query?.from);
+  const message = record(query?.message);
+  const chat = record(message?.chat);
+  const queryId = query?.id;
+  const callbackToken = query?.data;
+  const telegramUserId = from?.id;
+  const messageId = message?.message_id;
+  if (
+    !query || !from || from.is_bot !== false ||
+    typeof queryId !== "string" || queryId.length < 1 || queryId.length > 256 ||
+    typeof callbackToken !== "string" || !/^[0-9a-f]{32}$/u.test(callbackToken) || new TextEncoder().encode(callbackToken).length > 64 ||
+    !Number.isSafeInteger(telegramUserId) || Number(telegramUserId) <= 0 ||
+    !message || !Number.isSafeInteger(messageId) || Number(messageId) <= 0 ||
+    !chat || !["group", "supergroup"].includes(String(chat.type)) || String(chat.id) !== chatId
+  ) return null;
+  const firstName = typeof from.first_name === "string" ? bounded(from.first_name, 80) : "";
+  const lastName = typeof from.last_name === "string" ? bounded(from.last_name, 80) : "";
+  const displayName = bounded([firstName, lastName].filter(Boolean).join(" "), 120);
+  if (!displayName) return null;
+  const username = typeof from.username === "string" && /^[A-Za-z0-9_]{5,32}$/u.test(from.username) ? from.username : null;
+  return {
+    updateId: updateId as number,
+    queryId,
+    callbackToken,
+    telegramUserId: telegramUserId as number,
+    displayName,
+    username,
+    messageId: messageId as number,
+    caption: typeof message.caption === "string" ? bounded(message.caption, 1_024) : "📸 인증 검토",
+  };
 }
 
 function bounded(value: string, limit: number): string {
@@ -198,6 +241,7 @@ export class TelegramCommandWorker {
     private readonly sender: TelegramAlertSender,
     private readonly chatId: string,
     private readonly now: () => number = Date.now,
+    private readonly callbacks: TelegramCertificationCallbackHandler | null = null,
   ) {}
   private async acknowledged(updateId: number) {
     try { await this.queue.acknowledge(this.chatId, updateId); }
@@ -218,6 +262,13 @@ export class TelegramCommandWorker {
     let attempts = 0;
     let sent = 0;
     for (const item of classified) {
+      const callback = classifyTelegramCallbackUpdate(updates.find((raw) => record(raw)?.update_id === item.updateId), this.chatId);
+      if (callback) {
+        const outcome = this.callbacks ? await this.callbacks.handle(callback) : "failed";
+        await this.acknowledged(item.updateId);
+        if (outcome !== "failed") sent += 1;
+        continue;
+      }
       if (attempts >= MAX_REPLIES) break;
       if (!item.request) { await this.acknowledged(item.updateId); continue; }
       if (RUN_DEADLINE_MS - (this.now() - startedAt) < REQUIRED_REPLY_BUDGET_MS) break;
@@ -243,7 +294,9 @@ export class TelegramCommandWorker {
 }
 
 export async function runTelegramCommandWorkerOnce(env: NotificationWorkerEnv): Promise<number> {
-  const config = validatedTelegramConfig(env, env.telegram.commandMode, "TELEGRAM_COMMAND_CONFIG_INVALID");
+  const commandConfig = validatedTelegramConfig(env, env.telegram.commandMode, "TELEGRAM_COMMAND_CONFIG_INVALID");
+  const certificationConfig = validatedTelegramCertificationConfig(env);
+  const config = commandConfig ?? certificationConfig;
   if (!config) return 0;
   const db = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -251,6 +304,7 @@ export async function runTelegramCommandWorkerOnce(env: NotificationWorkerEnv): 
   });
   return new TelegramCommandWorker(
     new SupabaseTelegramCommandQueue(db), new TelegramCommandPoller(config.token),
-    new TelegramHttpSender(config), config.chatId,
+    new TelegramHttpSender(config), config.chatId, Date.now,
+    certificationConfig ? createTelegramCertificationCallbackWorker(env) : null,
   ).runOnce();
 }

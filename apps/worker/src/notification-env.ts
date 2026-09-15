@@ -38,6 +38,7 @@ export type NotificationWorkerEnv = z.infer<typeof schema> & {
   telegram: Readonly<{
     mode: string | undefined;
     commandMode: string | undefined;
+    certificationReviewMode: string | undefined;
     token: string | undefined;
     chatId: string | undefined;
   }>;
@@ -55,6 +56,7 @@ export function parseNotificationEnv(
     telegram: {
       mode: source.TELEGRAM_ALERT_MODE,
       commandMode: source.TELEGRAM_COMMAND_MODE,
+      certificationReviewMode: source.TELEGRAM_CERTIFICATION_REVIEW_MODE ?? "disabled",
       token: source.TELEGRAM_BOT_TOKEN,
       chatId: source.TELEGRAM_CHAT_ID,
     },

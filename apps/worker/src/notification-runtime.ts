@@ -15,6 +15,7 @@ import { KakaoNotificationWorker } from "./kakao-notification-worker.js";
 import { SolapiClient } from "./solapi/index.js";
 import { runTelegramAlertWorkerOnce } from "./telegram-alert-worker.js";
 import { runTelegramCommandWorkerOnce } from "./telegram-command-worker.js";
+import { runTelegramCertificationWorkerOnce } from "./telegram-certification-worker.js";
 
 async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const push = await new NotificationWorker(
@@ -63,6 +64,7 @@ export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
     runKakaoNotificationsOnce(env),
     runTelegramAlertWorkerOnce(env),
     runTelegramCommandWorkerOnce(env),
+    runTelegramCertificationWorkerOnce(env),
   ]);
   if (results.some((result) => result.status === "rejected")) throw new Error("NOTIFICATION_RUNTIME_PARTIAL_FAILURE");
   return results.reduce((sum, result) => sum + (result.status === "fulfilled" ? result.value : 0), 0);

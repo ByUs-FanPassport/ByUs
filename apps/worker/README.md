@@ -73,6 +73,16 @@ explicit 12-digit `EXPECTED_AWS_ACCOUNT_ID`, the exact
 exact STS caller-account match before any AWS mutation. Dev and Prod may share
 an AWS account; function, role, rule, permission and secret names remain
 strictly environment-suffixed.
+
+`TELEGRAM_CERTIFICATION_REVIEW_MODE=enabled` enables private certification-proof
+delivery and approval callbacks in the configured Telegram group. It is disabled
+by default and is accepted only with the Production Supabase project, production
+notification environment, a valid bot token, and a negative group/supergroup chat
+ID. Both `TELEGRAM_ALERT_MODE=enabled` and `TELEGRAM_COMMAND_MODE=enabled` are
+required so the alert chat and existing command cursor are active. The existing
+command consumer remains the sole `getUpdates` cursor; do not run
+a separate Telegram poller. Proofs are downloaded from the private
+`certification-proofs` bucket and are never written to logs.
 EventBridge and the Notification Lambda are the canonical scheduler. Every
 invocation first runs `enqueue_due_notification_maintenance(now)` (scheduled
 notifications, delivery backfill, and Collectible window/availability/expiry

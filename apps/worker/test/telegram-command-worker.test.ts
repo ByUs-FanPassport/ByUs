@@ -4,9 +4,11 @@ import {
   TelegramCommandPoller,
   TelegramCommandWorker,
   classifyTelegramUpdate,
+  classifyTelegramCallbackUpdate,
   renderTelegramCommandReply,
   type TelegramCommandQueue,
 } from "../src/telegram-command-worker.js";
+import type { TelegramCertificationCallbackHandler } from "../src/telegram-certification-worker.js";
 import { TelegramSendError, type TelegramAlertSender } from "../src/telegram-alert-worker.js";
 
 const chatId = "-1001234567890";
@@ -33,6 +35,38 @@ describe("classifyTelegramUpdate", () => {
     update(8, "x/users", { entities: [{ type: "bot_command", offset: 1, length: 6 }] }),
   ])("ignores unsupported Telegram updates while retaining their cursor", (value) => {
     expect(classifyTelegramUpdate(value, chatId)).toEqual({ updateId: value.update_id, request: null });
+  });
+});
+
+describe("classifyTelegramCallbackUpdate", () => {
+  const callback = (overrides: Record<string, unknown> = {}) => ({
+    update_id: 21,
+    callback_query: {
+      id: "callback-query-1",
+      from: { id: 88, is_bot: false, first_name: "민지", last_name: "김", username: "minji_admin" },
+      message: { message_id: 321, chat: { id: Number(chatId), type: "supergroup" }, caption: "기존 인증 문구" },
+      data: "0123456789abcdef0123456789abcdef",
+      ...overrides,
+    },
+  });
+
+  it("accepts only the stored short token and normalized Telegram reviewer identity", () => {
+    expect(classifyTelegramCallbackUpdate(callback(), chatId)).toEqual({
+      updateId: 21, queryId: "callback-query-1", callbackToken: "0123456789abcdef0123456789abcdef",
+      telegramUserId: 88, displayName: "민지 김", username: "minji_admin", messageId: 321,
+      caption: "기존 인증 문구",
+    });
+  });
+
+  it.each([
+    callback({ from: { id: 88, is_bot: true, first_name: "봇" } }),
+    callback({ data: `approve:${"a".repeat(32)}` }),
+    callback({ data: "a".repeat(65) }),
+    callback({ message: { message_id: 321, chat: { id: Number(chatId), type: "private" } } }),
+    callback({ message: { message_id: 321, chat: { id: -999, type: "supergroup" } } }),
+    callback({ message: { message_id: 0, chat: { id: Number(chatId), type: "supergroup" } } }),
+  ])("ignores invalid callback queries while leaving them available for cursor acknowledgement", (value) => {
+    expect(classifyTelegramCallbackUpdate(value, chatId)).toBeNull();
   });
 });
 
@@ -128,6 +162,37 @@ describe("TelegramCommandWorker", () => {
     const sender: TelegramAlertSender = { sendText: vi.fn() };
     await expect(new TelegramCommandWorker(q, poller, sender, chatId).runOnce()).rejects.toThrow("TELEGRAM_COMMAND_POLL_UNAVAILABLE");
     expect(q.begin).not.toHaveBeenCalled(); expect(q.acknowledge).not.toHaveBeenCalled();
+  });
+
+  it("processes callbacks and commands through one ordered getUpdates cursor", async () => {
+    const q = queue();
+    const callbackUpdate = {
+      update_id: 11,
+      callback_query: {
+        id: "callback-11", data: "0123456789abcdef0123456789abcdef",
+        from: { id: 88, is_bot: false, first_name: "민지" },
+        message: { message_id: 321, caption: "기존 인증", chat: { id: Number(chatId), type: "supergroup" } },
+      },
+    };
+    const poller = { getUpdates: vi.fn().mockResolvedValue([update(12, "/help"), callbackUpdate]) };
+    const sender: TelegramAlertSender = { sendText: vi.fn().mockResolvedValue(99n) };
+    const callbacks: TelegramCertificationCallbackHandler = { handle: vi.fn().mockResolvedValue("approved") };
+    await expect(new TelegramCommandWorker(q, poller, sender, chatId, Date.now, callbacks).runOnce()).resolves.toBe(2);
+    expect(poller.getUpdates).toHaveBeenCalledTimes(1);
+    expect(callbacks.handle).toHaveBeenCalledWith(expect.objectContaining({ updateId: 11, messageId: 321, telegramUserId: 88 }));
+    expect(q.begin.mock.calls[0]![1]).toMatchObject({ updateId: 12, command: "help" });
+    expect(q.acknowledge.mock.calls.map((call) => call[1])).toEqual([11, 12]);
+  });
+
+  it("acknowledges a valid callback even when approval or message editing fails", async () => {
+    const q = queue();
+    const poller = { getUpdates: vi.fn().mockResolvedValue([{
+      update_id: 11,
+      callback_query: { id: "callback-11", data: "0123456789abcdef0123456789abcdef", from: { id: 88, is_bot: false, first_name: "민지" }, message: { message_id: 321, chat: { id: Number(chatId), type: "group" } } },
+    }]) };
+    const callbacks: TelegramCertificationCallbackHandler = { handle: vi.fn().mockResolvedValue("failed") };
+    await expect(new TelegramCommandWorker(q, poller, { sendText: vi.fn() }, chatId, Date.now, callbacks).runOnce()).resolves.toBe(0);
+    expect(q.acknowledge).toHaveBeenCalledExactlyOnceWith(chatId, 11);
   });
 });
 

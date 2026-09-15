@@ -75,6 +75,7 @@ it("keeps Telegram configuration raw so invalid values cannot fail common parsin
   expect(env.telegram).toEqual({
     mode: "invalid-mode",
     commandMode: undefined,
+    certificationReviewMode: "disabled",
     token: "invalid-token",
     chatId: "not-a-group",
   });
@@ -86,11 +87,17 @@ it("does not consume browser-public Telegram fields", () => {
     NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: "browser-secret",
     NEXT_PUBLIC_TELEGRAM_CHAT_ID: "-1001234567890",
   });
-  expect(env.telegram).toEqual({ mode: undefined, commandMode: undefined, token: undefined, chatId: undefined });
+  expect(env.telegram).toEqual({ mode: undefined, commandMode: undefined, certificationReviewMode: "disabled", token: undefined, chatId: undefined });
   expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_BOT_TOKEN");
   expect(env).not.toHaveProperty("NEXT_PUBLIC_TELEGRAM_CHAT_ID");
 });
 
 it("keeps invalid Telegram command mode isolated from common parsing", () => {
   expect(parseNotificationEnv({ ...valid, TELEGRAM_COMMAND_MODE: "invalid" }).telegram.commandMode).toBe("invalid");
+});
+
+it("defaults Telegram certification review mode to disabled semantics and keeps validation isolated", () => {
+  expect(parseNotificationEnv(valid).telegram.certificationReviewMode).toBe("disabled");
+  expect(parseNotificationEnv({ ...valid, TELEGRAM_CERTIFICATION_REVIEW_MODE: "disabled" }).telegram.certificationReviewMode).toBe("disabled");
+  expect(parseNotificationEnv({ ...valid, TELEGRAM_CERTIFICATION_REVIEW_MODE: "invalid" }).telegram.certificationReviewMode).toBe("invalid");
 });
