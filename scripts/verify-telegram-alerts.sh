@@ -5,6 +5,7 @@ psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_capture.s
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_alert_lifecycle.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_operator_commands.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/cs_telegram_alerts.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_certification_reviews.sql"
 python3 <<'PY'
 import concurrent.futures, json, subprocess, threading
 
