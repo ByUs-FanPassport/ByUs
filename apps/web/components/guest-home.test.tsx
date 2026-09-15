@@ -322,6 +322,18 @@ describe("canonical 03 guest home", () => {
     ).toHaveAttribute("href", "/live/changha-live?locale=ko");
   });
 
+  it("shows only the nearest recurring LIVE per creator on Home", () => {
+    const occurrence = (day: number) => ({ ...featuredLive, live: { ...featuredLive.live,
+      id: `recurring-${day}`, slug: `recurring-${day}`, title: `정기 LIVE ${day}`,
+      liveType: "recurring" as const, startsAt: `2026-10-0${day}T11:00:00.000Z` } });
+    render(<GuestHome {...defaultProps} featuredLives={[occurrence(3), occurrence(1), occurrence(2), featuredLive]} />);
+    const preview = within(screen.getByRole("heading", { name: "다가오는 LIVE" }).closest("section")!);
+    expect(preview.getAllByRole("article")).toHaveLength(2);
+    expect(preview.getByText("정기 LIVE 1")).toBeInTheDocument();
+    expect(preview.queryByText("정기 LIVE 2")).not.toBeInTheDocument();
+    expect(preview.queryByRole("button", { name: "다음 LIVE 목록" })).not.toBeInTheDocument();
+  });
+
   it("paginates the upcoming LIVE preview without hiding the full catalog link", () => {
     const lives = Array.from({ length: 7 }, (_, index) => ({
       ...featuredLive,

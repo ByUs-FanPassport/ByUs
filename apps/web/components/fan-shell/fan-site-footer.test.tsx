@@ -30,7 +30,7 @@ describe("FanSiteFooter", () => {
     expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
-    expect(telegram).toHaveTextContent("텔레그램");
+    expect(telegram.textContent).toBe("");
     expect(telegram.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(telegram.querySelector("path")).toHaveAttribute("fill", "currentColor");
     expect(within(navigation).getByRole("link", { name: "문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");

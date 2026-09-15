@@ -1,4 +1,6 @@
 "use client";
+
+import { nearestRecurringLives } from "@/features/live/domain/nearest-recurring-lives";
 import type { HomeBanner } from "../features/home/domain/home-banner";
 
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
@@ -272,8 +274,9 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
     rail.scrollBy({ left: direction * stride * count, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
 
-  const upcomingPageCount = Math.max(1, Math.ceil(featuredLives.length / UPCOMING_LIVE_PAGE_SIZE));
-  const visibleFeaturedLives = featuredLives.slice(
+  const upcomingLives = nearestRecurringLives(featuredLives);
+  const upcomingPageCount = Math.max(1, Math.ceil(upcomingLives.length / UPCOMING_LIVE_PAGE_SIZE));
+  const visibleFeaturedLives = upcomingLives.slice(
     upcomingPage * UPCOMING_LIVE_PAGE_SIZE,
     (upcomingPage + 1) * UPCOMING_LIVE_PAGE_SIZE,
   );

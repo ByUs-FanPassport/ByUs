@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import type { LiveEventResponse } from "../domain/live-event";
+import { nearestRecurringLives } from "../domain/nearest-recurring-lives";
 import { FanHeading } from "../../../components/fan-ui/fan-heading";
 import styles from "./live-catalog-screen.module.css";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
@@ -24,6 +25,7 @@ type Catalog = {
 };
 
 const CATALOG_PAGE_SIZE = 4;
+
 
 const copy = {
   ko: {
@@ -121,21 +123,14 @@ function LiveGroup({
 }) {
   const t = copy[locale];
   const [page, setPage] = useState(0);
-  const pageCount = Math.max(1, Math.ceil(items.length / CATALOG_PAGE_SIZE));
+  const groups = id === "upcoming" ? nearestRecurringLives(items) : items;
+  const pageCount = Math.max(1, Math.ceil(groups.length / CATALOG_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
-  const visibleItems = items.slice(
+  const visibleItems = groups.slice(
     currentPage * CATALOG_PAGE_SIZE,
     (currentPage + 1) * CATALOG_PAGE_SIZE,
   );
-  return (
-    <section className={styles.group} data-empty={items.length === 0} aria-labelledby={`${id}-heading`}>
-      <header className={styles.groupHeader}>
-        <FanHeading id={`${id}-heading`}>{title}</FanHeading>
-        {items.length > 0 ? <span className={styles.count} aria-label={`${title} ${items.length}${locale === "ko" ? "개" : " total"}`}>{items.length}</span> : null}
-      </header>
-      {items.length ? (
-        <div className={styles.list}>
-          {visibleItems.map((item) => {
+  const renderRow = (item: LiveEventResponse) => {
             const currentAction = action(item, locale);
             const awaitsReservation = item.live.effectiveStatus === "scheduled" && reservationStatus !== "ready";
             const isReserved = item.live.effectiveStatus === "scheduled" && reservationStatus === "ready" && Boolean(item.viewer.reservation);
@@ -198,7 +193,17 @@ function LiveGroup({
                 )}
               </article>
             );
-          })}
+
+  };
+  return (
+    <section className={styles.group} data-empty={items.length === 0} aria-labelledby={`${id}-heading`}>
+      <header className={styles.groupHeader}>
+        <FanHeading id={`${id}-heading`}>{title}</FanHeading>
+        {items.length > 0 ? <span className={styles.count} aria-label={`${title} ${groups.length}${locale === "ko" ? "개" : " total"}`}>{groups.length}</span> : null}
+      </header>
+      {items.length ? (
+        <div className={styles.list}>
+          {visibleItems.map(renderRow)}
         </div>
       ) : <p className={styles.empty}>{empty}</p>}
       {pageCount > 1 ? (
@@ -207,7 +212,7 @@ function LiveGroup({
             type="button"
             aria-label={locale === "ko" ? `${title} 이전 페이지` : `Previous ${title} page`}
             disabled={currentPage === 0}
-            onClick={() => setPage((value) => Math.max(0, value - 1))}
+            onClick={() => setPage(Math.max(0, currentPage - 1))}
           >
             <ChevronLeft aria-hidden="true" />
           </button>
@@ -216,7 +221,7 @@ function LiveGroup({
             type="button"
             aria-label={locale === "ko" ? `${title} 다음 페이지` : `Next ${title} page`}
             disabled={currentPage === pageCount - 1}
-            onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
+            onClick={() => setPage(Math.min(pageCount - 1, currentPage + 1))}
           >
             <ChevronRight aria-hidden="true" />
           </button>

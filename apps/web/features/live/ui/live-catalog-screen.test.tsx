@@ -225,4 +225,40 @@ describe("LIVE catalog", () => {
     expect(within(replayRegion).getByText("1 / 2")).toBeInTheDocument();
     expect(within(replayRegion).queryByText("다시보기 5")).not.toBeInTheDocument();
   });
+  it.each(["ko", "en"] as const)("groups only upcoming recurring broadcasts by creator in %s", (locale) => {
+    const occurrence = (creator: string, day: number) => ({ ...base, live: { ...base.live,
+      liveType: "recurring" as const, id: `${creator}-${day}`, slug: `${creator}-${day}`, title: `${creator} ${day}`,
+      startsAt: `2026-10-${String(day).padStart(2, "0")}T11:00:00Z`,
+      celebrity: { ...base.live.celebrity, slug: creator, name: creator } } });
+    const first = occurrence("KARA", 1), later = occurrence("KARA", 3), last = occurrence("KARA", 5);
+    const solo = occurrence("Solo", 2);
+    const general = { ...base, live: { ...base.live, id: "general", title: "General LIVE", startsAt: "2026-10-04T11:00:00Z" } };
+    const replay = [first, later].map(item => ({ ...item, live: { ...item.live, effectiveStatus: "ended" as const } }));
+    render(<LiveCatalogScreen locale={locale} initialCatalog={{ liveNow: [], upcoming: [last, general, solo, later, first], replay }} />);
+    const region = screen.getByRole("region", { name: locale === "ko" ? "예정된 LIVE" : "Upcoming LIVE" });
+    expect(within(region).getAllByRole("article")).toHaveLength(3);
+    expect(within(region).getByLabelText(locale === "ko" ? "예정된 LIVE 3개" : "Upcoming LIVE 3 total")).toHaveTextContent("3");
+    expect(within(region).getAllByRole("heading", { level: 3 }).map(node => node.textContent)).toEqual(["KARA 1", "Solo 2", "General LIVE"]);
+    expect(within(region).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(region).queryByText("KARA 3")).not.toBeInTheDocument();
+    expect(within(region).queryByText("KARA 5")).not.toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: locale === "ko" ? "다시보기" : "Replay" })).getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("paginates only the nearest recurring dates", () => {
+    const upcoming = Array.from({ length: 10 }, (_, i) => ({ ...base, live: { ...base.live,
+      id: `event-${i}`, slug: `event-${i}`, title: `Event ${i}`, liveType: "recurring" as const,
+      startsAt: `2026-10-${String(i + 1).padStart(2, "0")}T11:00:00Z`,
+      celebrity: { ...base.live.celebrity, slug: `creator-${i % 5}`, name: `Creator ${i % 5}` } } }));
+    render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming, replay: [] }} />);
+    const region = screen.getByRole("region", { name: "예정된 LIVE" });
+    expect(within(region).getByLabelText("예정된 LIVE 5개")).toBeInTheDocument();
+    expect(within(region).getAllByRole("article")).toHaveLength(4);
+    fireEvent.click(within(region).getByRole("button", { name: "예정된 LIVE 다음 페이지" }));
+    expect(within(region).getAllByRole("article")).toHaveLength(1);
+    expect(within(region).getByText("Event 4")).toBeInTheDocument();
+    expect(within(region).queryByText("Event 9")).not.toBeInTheDocument();
+    expect(within(region).getByText("2 / 2")).toBeInTheDocument();
+  });
+
 });
