@@ -24,7 +24,7 @@ class StaleLoginIdentityError extends Error {
   constructor() { super("Login identity changed"); this.name = "StaleLoginIdentityError"; }
 }
 
-export interface ByUsSessionSnapshot { ready: boolean; pending: boolean; ownerId: string | null; generation: number; }
+export interface ByUsSessionSnapshot { ready: boolean; pending: boolean; ownerId: string | null; generation: number; destination: string | null; }
 export interface SessionTransitionInput extends LoginContext { ownerId: string; }
 export interface ByUsSessionContextValue extends ByUsSessionSnapshot {
   error: string | null;
@@ -36,7 +36,7 @@ export interface ByUsSessionContextValue extends ByUsSessionSnapshot {
 }
 
 const DEFAULT_SESSION: ByUsSessionContextValue = {
-  ready: true, pending: false, ownerId: null, generation: 0, error: null, recoveryPath: null, reauthenticationProviders: [],
+  ready: true, pending: false, ownerId: null, generation: 0, destination: null, error: null, recoveryPath: null, reauthenticationProviders: [],
   beginTransition: () => false, retryTransition: async () => {}, resetTransition: () => {},
 };
 const ByUsSessionContext = createContext<ByUsSessionContextValue>(DEFAULT_SESSION);
@@ -108,7 +108,7 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
     setError(null);
     setRecoveryPath(null);
     setReauthenticationProviders([]);
-    setSnapshot({ ready: true, pending: false, ownerId: null, generation: generationRef.current });
+    setSnapshot({ ready: true, pending: false, ownerId: null, generation: generationRef.current, destination: null });
   }, [resetAvatarSession]);
 
   const assertCurrent = useCallback((ownerId: string, generation: number) => {
@@ -224,9 +224,10 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
           ? provisionalDestination : appendLoginContext("/onboarding/profile", { returnTo, intent, entity, locale, authIntent });
         activeRef.current = { ...transition, provisionalDestination: destination };
         setError(null);
-        setSnapshot({ ready: true, pending: false, ownerId, generation });
+        setSnapshot({ ready: true, pending: false, ownerId, generation, destination });
         const location = browserLocation();
-        if (destination !== provisionalDestination && (location === provisionalDestination || location === transition.sourceLocation)) router.replace(destination as Route);
+        // LoginPage owns return navigation after the SDK has cleaned its OAuth URL.
+        if (destination !== provisionalDestination && location === provisionalDestination) router.replace(destination as Route);
       } catch (caught) {
         if (caught instanceof StaleLoginIdentityError) {
           invalidateIfCurrent(ownerId, generation);
@@ -242,7 +243,7 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
         const nextError = caught instanceof Error && [VERIFIED_EMAIL_REQUIRED, APPLE_REAUTHENTICATION_REQUIRED].includes(caught.message)
           ? caught.message : caught instanceof RequestTimeoutError ? SESSION_SYNCHRONIZATION_TIMEOUT : SESSION_SYNCHRONIZATION_FAILED;
         setError(nextError);
-        setSnapshot({ ready: false, pending: false, ownerId, generation });
+        setSnapshot({ ready: false, pending: false, ownerId, generation, destination: null });
         const location = browserLocation();
         if (location === provisionalDestination || location === transition.sourceLocation) router.replace(loginPath as Route);
       } finally {
@@ -268,7 +269,7 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
     resetAvatarSession();
     setError(null); setReauthenticationProviders([]);
     setRecoveryPath(transition.loginPath);
-    setSnapshot({ ready: false, pending: true, ownerId: transition.ownerId, generation: transition.generation });
+    setSnapshot({ ready: false, pending: true, ownerId: transition.ownerId, generation: transition.generation, destination: transition.provisionalDestination });
     void synchronize(transition);
     return true;
   }, [resetAvatarSession, synchronize]);
@@ -277,14 +278,13 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
     const current = activeRef.current;
     if (!current) return Promise.resolve();
     generationRef.current += 1;
-    const transition = { ...current, generation: generationRef.current };
+    const transition = { ...current, ...normalizedInput(current), generation: generationRef.current };
     activeRef.current = transition;
     resetAvatarSession();
     setError(null); setReauthenticationProviders([]);
-    setSnapshot({ ready: false, pending: true, ownerId: transition.ownerId, generation: transition.generation });
-    if (browserLocation() === transition.loginPath) router.replace(transition.provisionalDestination as Route);
+    setSnapshot({ ready: false, pending: true, ownerId: transition.ownerId, generation: transition.generation, destination: transition.provisionalDestination });
     return synchronize(transition);
-  }, [resetAvatarSession, router, synchronize]);
+  }, [resetAvatarSession, synchronize]);
 
   useEffect(() => {
     if (!sdkReady) return;

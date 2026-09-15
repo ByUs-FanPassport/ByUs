@@ -6,6 +6,7 @@ import { LoginPage } from "./login-page";
 import { createOAuthStartGuard, getOAuthStartGuard } from "../features/reliability/client/oauth-start";
 import { signupFunnelTracker } from "../features/analytics/client/signup-funnel-tracker";
 import { ByUsSessionProvider } from "./byus-session-provider";
+import * as sessionModule from "./byus-session-provider";
 
 vi.mock("../features/reliability/client/oauth-start", async (importOriginal) => ({
   ...await importOriginal<typeof import("../features/reliability/client/oauth-start")>(),
@@ -26,6 +27,7 @@ let currentUserId = "restored-fan";
 const embeddedWallet = { type: "wallet", chainType: "ethereum", connectorType: "embedded", walletClientType: "privy", address: "0x1111111111111111111111111111111111111111" };
 const logout = vi.fn();
 let authenticated = false;
+let authenticateAfterCallback = true;
 let ready = true;
 let oauthLoading = false;
 let query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
@@ -41,12 +43,12 @@ vi.mock("@privy-io/react-auth", () => ({
   useCreateWallet: () => ({ createWallet }),
   useUser: () => ({ refreshUser }),
   useLogin: (callbacks: { onComplete?: (result: { user: { id: string } }) => void; onError?: () => void }) => {
-    onComplete = (result = { user: { id: "callback-fan" } }) => { currentUserId = result.user.id; return callbacks.onComplete?.(result); };
+    onComplete = (result = { user: { id: "callback-fan" } }) => { currentUserId = result.user.id; const value = callbacks.onComplete?.(result); if (authenticateAfterCallback) authenticated = true; return value; };
     onError = callbacks.onError;
     return { login };
   },
   useLoginWithOAuth: (callbacks: { onComplete?: (result: { user: { id: string } }) => void; onError?: () => void }) => {
-    onOAuthComplete = (result = { user: { id: "oauth-fan" } }) => { currentUserId = result.user.id; return callbacks.onComplete?.(result); };
+    onOAuthComplete = (result = { user: { id: "oauth-fan" } }) => { currentUserId = result.user.id; const value = callbacks.onComplete?.(result); if (authenticateAfterCallback) authenticated = true; return value; };
     return { initOAuth, loading: oauthLoading, state: { status: "initial" } };
   },
 }));
@@ -93,6 +95,7 @@ describe("Privy login page", () => {
     createWallet.mockReset().mockResolvedValue(embeddedWallet);
     refreshUser.mockReset().mockImplementation(async () => ({ id: currentUserId, linkedAccounts: [embeddedWallet] }));
     authenticated = false;
+    authenticateAfterCallback = true;
     ready = true;
     oauthLoading = false;
     query = "returnTo=%2Flive%2Fkara-nualeaf&intent=reserve";
@@ -118,12 +121,16 @@ describe("Privy login page", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith(destination));
   });
 
-  it("hands off the callback user even before usePrivy exposes authenticated user state", async () => {
-    render(<LoginPage />);
+  it("hands off the callback user but waits to navigate until the SDK exposes that owner", async () => {
+    authenticateAfterCallback = false;
+    const view = render(<LoginPage />);
     await act(async () => { await onComplete?.({ user: { id: "new-google-fan" } }); });
     await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("new-google-fan"));
     expect(authenticated).toBe(false);
-    expect(replace).toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+    authenticated = true;
+    view.rerender(<LoginPage />);
+    await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
   });
 
   it("synchronizes normally through the Strict Mode setup-cleanup-setup cycle", async () => {
@@ -135,16 +142,19 @@ describe("Privy login page", () => {
   });
 
   it("shows a recoverable user-facing error when callback synchronization fails before authenticated state arrives", async () => {
+    authenticateAfterCallback = false;
     vi.mocked(globalThis.fetch)
       .mockRejectedValueOnce(new Error("private upstream detail"))
       .mockResolvedValueOnce(Response.json({ profile: { completed: true, nickname: "John" } }));
-    render(<LoginPage />);
+    const view = render(<LoginPage />);
 
     await act(async () => { await onComplete?.({ user: { id: "new-google-fan" } }); });
 
     expect(screen.getByRole("alert")).toHaveTextContent("로그인 정보를 안전하게 연결하지 못했어요.");
     expect(screen.getByRole("alert")).not.toHaveTextContent("SESSION_SYNCHRONIZATION_FAILED");
     expect(screen.getByRole("button", { name: "다시 시도" })).toBeEnabled();
+    authenticated = true;
+    view.rerender(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko"));
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -598,6 +608,97 @@ describe("Privy login page", () => {
       },
       body: JSON.stringify({ locale: "ko" }),
     }));
+  });
+
+  it("waits for Privy OAuth URL cleanup before navigating with the authenticated owner", async () => {
+    query = "returnTo=%2Fmy&privy_oauth_code=fixture&privy_oauth_state=fixture&privy_oauth_provider=google";
+    const view = render(<LoginPage />);
+    await act(async () => { await onOAuthComplete?.({ user: { id: "oauth-return-owner" } }); });
+    authenticated = true;
+    view.rerender(<LoginPage />);
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(replace).not.toHaveBeenCalled();
+    query = "returnTo=%2Fmy";
+    view.rerender(<LoginPage />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/my?locale=ko"));
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a rejected early callback once the SDK exposes its authenticated owner", async () => {
+    const originalHook = sessionModule.useByUsSession;
+    let rejected = false;
+    const hook = vi.spyOn(sessionModule, "useByUsSession").mockImplementation(() => {
+      const session = originalHook();
+      return { ...session, beginTransition: (input) => {
+        if (!rejected) { rejected = true; return false; }
+        return session.beginTransition(input);
+      } };
+    });
+    try {
+      const view = render(<LoginPage />);
+      await act(async () => { await onOAuthComplete?.({ user: { id: "early-owner" } }); });
+      view.rerender(<LoginPage />);
+      await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("early-owner"));
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(replace).toHaveBeenCalledTimes(1);
+    } finally { hook.mockRestore(); }
+  });
+
+  it("ignores duplicate successful hooks and their late error while OAuth cleanup is pending", async () => {
+    query = "returnTo=%2Fmy&privy_oauth_code=fixture&privy_oauth_state=fixture&privy_oauth_provider=google";
+    const view = render(<LoginPage />);
+    await act(async () => { await onComplete?.({ user: { id: "same-owner" } }); });
+    await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("same-owner"));
+    await act(async () => { await onOAuthComplete?.({ user: { id: "same-owner" } }); onError?.(); });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.queryByText(/로그인을 완료하지 못했어요/)).not.toBeInTheDocument();
+    query = "returnTo=%2Fmy&privy_oauth_state=fixture";
+    view.rerender(<LoginPage />);
+    expect(replace).not.toHaveBeenCalled();
+    query = "returnTo=%2Fmy";
+    view.rerender(<LoginPage />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/my?locale=ko"));
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([true, false])("preserves verification onboarding when session finishes before cleanup=%s", async (finishBeforeCleanup) => {
+    query = "returnTo=%2Fc%2Fkara%2Fverify&intent=passport&entity=kara&privy_oauth_code=fixture";
+    let finish!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = render(<LoginPage />);
+    await act(async () => { await onOAuthComplete?.({ user: { id: "verification-owner" } }); });
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    const complete = async () => { await act(async () => { finish(Response.json({ profile: { completed: false } })); }); };
+    if (finishBeforeCleanup) await complete();
+    expect(replace).not.toHaveBeenCalled();
+    query = "returnTo=%2Fc%2Fkara%2Fverify&intent=passport&entity=kara";
+    view.rerender(<LoginPage />);
+    if (!finishBeforeCleanup) {
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/c/kara/verify?locale=ko"));
+      await complete();
+    }
+    await waitFor(() => expect(replace).toHaveBeenLastCalledWith(expect.stringMatching(/^\/onboarding\/profile\?/)));
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers explicit recovery after provider invalidation with an unchanged SDK owner", async () => {
+    authenticated = true;
+    query = "returnTo=%2Fmy&privy_oauth_code=fixture&privy_oauth_state=fixture&privy_oauth_provider=google";
+    refreshUser.mockResolvedValueOnce({ id: "conflicting-owner", linkedAccounts: [] });
+    const view = render(<LoginPage />);
+    await screen.findByText("로그인 정보를 안전하게 연결하지 못했어요.");
+    expect(refreshUser).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+    query = "returnTo=%2Fmy";
+    view.rerender(<LoginPage />);
+    expect(refreshUser).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(markAvatarSessionReady).toHaveBeenCalledWith("restored-fan"));
+    expect(refreshUser).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith("/my?locale=ko");
   });
 
   it("syncs an existing authenticated Privy session before redirecting", async () => {

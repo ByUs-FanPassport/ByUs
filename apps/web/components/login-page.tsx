@@ -151,6 +151,7 @@ export function LoginPage({
   const identityGenerationRef = useRef(0);
   const mountedRef = useRef(true);
   const attemptedTransitionRef = useRef<string | null>(null);
+  const navigatedTransitionRef = useRef<string | null>(null);
   const loginMeasurementRef = useRef<LoginMeasurementAttempt | null>(null);
   // Identity lives only in component memory; it is never sent to anonymous analytics.
   const loginMeasurementOwnerRef = useRef<string | null>(null);
@@ -174,16 +175,19 @@ export function LoginPage({
   const synchronizeSession = useCallback((completedUserId?: string) => {
     const expectedUserId = completedUserId ?? privyUserId;
     if (!expectedUserId) return Promise.resolve();
+    const attemptKey = `${expectedUserId}|${returnTo}|${locale}|${intent ?? ""}|${entity ?? ""}|${authIntent ?? ""}`;
+    if (attemptedTransitionRef.current === attemptKey) return;
+    const accepted = byUsSession.beginTransition({ ownerId: expectedUserId, returnTo, locale, intent, entity, authIntent });
+    if (!accepted) return;
+    // A rejected early callback must not suppress the later authenticated snapshot.
+    attemptedTransitionRef.current = attemptKey;
+    providerMeasurementRef.current = null;
     providerCallbackClosedRef.current = true;
     loginMeasurementOwnerRef.current = expectedUserId;
-    attemptedTransitionRef.current = `${expectedUserId}|${returnTo}|${locale}|${intent ?? ""}|${entity ?? ""}|${authIntent ?? ""}`;
     activeIdentityRef.current = expectedUserId;
     identityGenerationRef.current += 1;
-    const returnPathname = new URL(returnTo, "https://byus.local").pathname;
-    const destination = returnPathname === "/onboarding/profile" ? `/?locale=${locale}` : returnTo;
-    const accepted = byUsSession.beginTransition({ ownerId: expectedUserId, returnTo, locale, intent, entity, authIntent });
-    if (accepted) router.replace(destination as Route);
-  }, [authIntent, byUsSession, entity, intent, locale, privyUserId, returnTo, router]);
+    setError(null);
+  }, [authIntent, byUsSession, entity, intent, locale, privyUserId, returnTo]);
   const loginErrorMessage = locale === "en"
     ? testAccountLoginEnabled
       ? "We couldn't complete sign-in. Check your account and verification code, then try again."
@@ -194,12 +198,9 @@ export function LoginPage({
         ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
         : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
   const loginCallbacks = {
-    onComplete: ({ user: completedUser }: { user: { id: string } }) => {
-      providerMeasurementRef.current = null;
-      providerCallbackClosedRef.current = true;
-      return synchronizeSession(completedUser.id);
-    },
+    onComplete: ({ user: completedUser }: { user: { id: string } }) => synchronizeSession(completedUser.id),
     onError: () => {
+      if (providerCallbackClosedRef.current) return;
       let measurement = providerMeasurementRef.current;
       if (!measurement && !providerCallbackClosedRef.current && !loginMeasurementRef.current) {
         const pending = signupFunnelTracker.pendingLogin();
@@ -266,6 +267,8 @@ export function LoginPage({
       providerMeasurementRef.current = null;
       providerCallbackClosedRef.current = true;
     }
+    attemptedTransitionRef.current = null;
+    navigatedTransitionRef.current = null;
     activeIdentityRef.current = currentUserId;
     identityGenerationRef.current += 1;
   }, [privyUserId]);
@@ -290,6 +293,28 @@ export function LoginPage({
   }, [authenticated, byUsSession.error, ready, privyUserId, synchronizeSession, transitionKey]);
 
   useEffect(() => {
+    const interruptedTransition = ready && authenticated && Boolean(privyUserId)
+      && attemptedTransitionRef.current === transitionKey && byUsSession.ownerId === null
+      && byUsSession.generation > 0 && !byUsSession.error;
+    // An invalidated owner transaction must offer explicit recovery, not spin
+    // forever or repeatedly restart against a conflicting SDK user response.
+    if (interruptedTransition) setError(SESSION_SYNCHRONIZATION_FAILED);
+  }, [authenticated, byUsSession.error, byUsSession.generation, byUsSession.ownerId, privyUserId, ready, transitionKey]);
+
+  const oauthReturnPending = ["privy_oauth_code", "privy_oauth_state", "privy_oauth_provider"]
+    .some((key) => searchParams.has(key));
+  useEffect(() => {
+    // Privy calls onComplete before finally replacing the OAuth URL. Navigating
+    // inside that callback lets Next's later history restore cancel the move.
+    if (oauthReturnPending || !ready || !authenticated || !privyUserId
+      || byUsSession.ownerId !== privyUserId || byUsSession.error || !byUsSession.destination) return;
+    const navigationKey = `${privyUserId}|${byUsSession.generation}|${byUsSession.destination}`;
+    if (navigatedTransitionRef.current === navigationKey) return;
+    navigatedTransitionRef.current = navigationKey;
+    router.replace(byUsSession.destination as Route);
+  }, [authenticated, byUsSession.destination, byUsSession.error, byUsSession.generation, byUsSession.ownerId, oauthReturnPending, privyUserId, ready, router]);
+
+  useEffect(() => {
     if (!(authenticated ? (byUsSession.error ?? error) : loginError)) return;
     if (authenticated) {
       sessionErrorRef.current?.focus();
@@ -303,8 +328,14 @@ export function LoginPage({
     loginMeasurementRef.current = signupFunnelTracker.beginLogin(loginMeasurementRef.current?.provider ?? "unknown", "retry", locale);
     providerMeasurementRef.current = null;
     providerCallbackClosedRef.current = true;
-    void byUsSession.retryTransition();
-  }, [byUsSession, locale]);
+    if (byUsSession.ownerId === null) {
+      attemptedTransitionRef.current = null;
+      navigatedTransitionRef.current = null;
+      void synchronizeSession();
+    } else {
+      void byUsSession.retryTransition();
+    }
+  }, [byUsSession, locale, synchronizeSession]);
 
   const retryLoginReadiness = useCallback(() => {
     setError(null);
