@@ -158,9 +158,11 @@ begin
   approval:=public.approve_telegram_certification('-1001234567890',repeat('0',32),9001,7001,'검토자','reviewer_1');
   if approval->>'error_code'<>'TELEGRAM_CERTIFICATION_CALLBACK_MISMATCH' then raise exception 'TELEGRAM_CERTIFICATION_CALLBACK_MISMATCH_ACCEPTED'; end if;
   approval:=public.approve_telegram_certification('-1001234567890',token,9001,7001,'검토자','reviewer_1');
-  if approval->>'outcome'<>'approved' then raise exception 'TELEGRAM_CERTIFICATION_APPROVAL_FAILED'; end if;
+  if (approval->>'outcome') is distinct from 'approved' or (approval->>'status') is distinct from 'approved'
+    or (approval->>'reviewer_display_name') is distinct from '검토자' then raise exception 'TELEGRAM_CERTIFICATION_APPROVAL_FAILED'; end if;
   approval:=public.approve_telegram_certification('-1001234567890',token,9001,7002,'다른검토자','reviewer_2');
-  if approval->>'outcome'<>'already_processed' then raise exception 'TELEGRAM_CERTIFICATION_FIRST_CLICK_NOT_FINAL'; end if;
+  if (approval->>'outcome') is distinct from 'already_processed' or (approval->>'status') is distinct from 'approved'
+    or (approval->>'reviewer_display_name') is distinct from '검토자' then raise exception 'TELEGRAM_CERTIFICATION_FIRST_CLICK_NOT_FINAL'; end if;
 end $$;
 
 do $$
@@ -283,7 +285,8 @@ begin
   perform public.review_admin_certification_submission('a9000000-0000-4000-8000-000000000002','a9000000-0000-4000-8000-000000000010',
     'a9600000-0000-4000-8000-000000000011',submission,'a9600000-0000-4000-8000-000000000012',1,'approve',null);
   callback:=public.approve_telegram_certification('-1001234567890',token,9031,7031,'늦은검토자','late_reviewer');
-  if callback->>'outcome'<>'already_processed'
+  if (callback->>'outcome') is distinct from 'already_processed' or (callback->>'status') is distinct from 'approved'
+    or callback->'reviewer_display_name' is distinct from 'null'::jsonb
     or (select count(*) from public.fan_score_ledger where manual_submission_id=submission)<>1
     or (select count(*) from public.fan_ticket_ledger where source_type='manual_certification' and source_id=submission)<>1
     or not exists(select 1 from public.certification_submissions where id=submission and review_source='admin_web')

@@ -384,9 +384,10 @@ begin
   if not found or d.chat_id is distinct from p_chat_id or d.action_message_id is distinct from p_action_message_id or d.status<>'sent' then
     return jsonb_build_object('outcome','error','error_code','TELEGRAM_CERTIFICATION_CALLBACK_MISMATCH');
   end if;
-  select * into receipt from public.telegram_certification_review_receipts where delivery_id=d.id;
-  if found then return jsonb_build_object('outcome','already_processed','status',receipt.final_status,'submission_id',receipt.submission_id); end if;
   select * into strict s from public.certification_submissions where id=d.submission_id;
+  select * into receipt from public.telegram_certification_review_receipts where delivery_id=d.id;
+  if found then return jsonb_build_object('outcome','already_processed','status',receipt.final_status,'submission_id',receipt.submission_id,
+    'reviewer_display_name',case when s.status='approved' and s.review_source='telegram' then s.reviewed_by_telegram_name else null end); end if;
   if s.status='pending' and s.review_revision<>d.expected_review_revision then
     return jsonb_build_object('outcome','error','error_code','CERTIFICATION_STALE_REVISION');
   end if;
@@ -397,7 +398,8 @@ begin
       values('certification.submission.telegram_already_processed','certification_submission',s.id::text,extensions.gen_random_uuid(),
         jsonb_build_object('revision',s.review_revision,'reviewSource',s.review_source,'telegram',jsonb_build_object('userId',p_telegram_user_id,'displayName',display_name,'username',username),
           'reward',jsonb_build_object('scorePoints',s.reward_score_points,'ticketAmount',s.reward_ticket_amount,'stampCount',case when s.membership_platform is null then 0 else 1 end)));
-    return jsonb_build_object('outcome','already_processed','status',s.status,'submission_id',s.id);
+    return jsonb_build_object('outcome','already_processed','status',s.status,'submission_id',s.id,
+      'reviewer_display_name',case when s.status='approved' and s.review_source='telegram' then s.reviewed_by_telegram_name else null end);
   end if;
   begin
     result:=public.finalize_certification_review_internal(s.id,d.expected_review_revision,'approved',null,'telegram',null,null,
@@ -418,13 +420,15 @@ begin
             'telegram',jsonb_build_object('userId',p_telegram_user_id,'displayName',display_name,'username',username),
             'reward',jsonb_build_object('scorePoints',s.reward_score_points,'ticketAmount',s.reward_ticket_amount,
               'stampCount',case when s.membership_platform is null then 0 else 1 end)));
-      return jsonb_build_object('outcome','already_processed','status',s.status,'submission_id',s.id);
+      return jsonb_build_object('outcome','already_processed','status',s.status,'submission_id',s.id,
+        'reviewer_display_name',case when s.status='approved' and s.review_source='telegram' then s.reviewed_by_telegram_name else null end);
     end if;
     return jsonb_build_object('outcome','error','error_code',error_code);
   end;
   insert into public.telegram_certification_review_receipts(delivery_id,submission_id,telegram_user_id,telegram_display_name,telegram_username,action_message_id,outcome,final_status)
     values(d.id,s.id,p_telegram_user_id,display_name,username,p_action_message_id,'approved','approved');
-  return jsonb_build_object('outcome','approved','status','approved','submission_id',s.id,'revision',result->'revision');
+  return jsonb_build_object('outcome','approved','status','approved','submission_id',s.id,
+    'reviewer_display_name',display_name,'revision',result->'revision');
 end $$;
 
 create function public.telegram_certification_review_health() returns jsonb

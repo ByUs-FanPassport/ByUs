@@ -149,3 +149,16 @@ git diff --check                          # exit 0
 ```
 
 The earlier full-Supabase/Docker limitation remains unchanged; this follow-up used PostgreSQL 17 with schema-faithful defaults and compatibility objects for the existing functions and pg_cron catalog.
+
+### Approval reviewer response alignment
+
+The approval response contract now always includes `status` and `submission_id` for `approved`/`already_processed`. It includes `reviewer_display_name` for the original Telegram approver only; web-approved, rejected, or otherwise non-Telegram outcomes return JSON `null`.
+
+RED initially exposed a nullable-assertion weakness, which was corrected to `IS DISTINCT FROM`; the corrected test then failed as intended:
+
+```text
+psql:supabase/tests/telegram_certification_reviews.sql:166: ERROR:
+  TELEGRAM_CERTIFICATION_APPROVAL_FAILED
+```
+
+After adding the response field and preserving the original reviewer across repeated callbacks, the full focused SQL test again exited `0` through `ROLLBACK`.
