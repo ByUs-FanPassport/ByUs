@@ -226,7 +226,12 @@ export class TelegramCommandPoller implements TelegramUpdatePoller {
     try {
       const response = await this.fetcher(`${TELEGRAM_API_ORIGIN}/bot${this.token}/getUpdates`, {
         method: "POST", headers: { "content-type": "application/json" }, redirect: "error",
-        signal: AbortSignal.timeout(4_000), body: JSON.stringify({ timeout: 1, limit: 10, offset }),
+        // Telegram persists this filter across calls. Older command-only
+        // deployments excluded callbacks, so omitting it silently loses clicks.
+        signal: AbortSignal.timeout(4_000), body: JSON.stringify({
+          timeout: 1, limit: 10, offset,
+          allowed_updates: ["message", "my_chat_member", "callback_query"],
+        }),
       });
       const body = record(await response.json());
       if (!response.ok || body?.ok !== true || !Array.isArray(body.result)) throw new Error();

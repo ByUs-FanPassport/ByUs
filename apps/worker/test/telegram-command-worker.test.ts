@@ -210,14 +210,14 @@ describe("TelegramCommandWorker", () => {
 });
 
 describe("Telegram command adapters", () => {
-  it("polls getUpdates with the fixed safe request contract", async () => {
+  it("explicitly subscribes to callbacks instead of inheriting Telegram's persisted message-only filter", async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true, result: [] }), { status: 200 }));
     const poller = new TelegramCommandPoller("123:token", fetcher);
     await expect(poller.getUpdates(41)).resolves.toEqual([]);
     const [url, init] = fetcher.mock.calls[0]!;
     expect(url).toBe("https://api.telegram.org/bot123:token/getUpdates");
     expect(init).toMatchObject({ method: "POST", redirect: "error" });
-    expect(JSON.parse(String(init.body))).toEqual({ timeout: 1, limit: 10, offset: 41 });
+    expect(JSON.parse(String(init.body))).toEqual({ timeout: 1, limit: 10, offset: 41, allowed_updates: ["message", "my_chat_member", "callback_query"] });
   });
 
   it("uses the exact read, begin, finish, and cursor RPC contracts", async () => {
