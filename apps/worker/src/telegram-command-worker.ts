@@ -264,6 +264,7 @@ export class TelegramCommandWorker {
     for (const item of classified) {
       const callback = classifyTelegramCallbackUpdate(updates.find((raw) => record(raw)?.update_id === item.updateId), this.chatId);
       if (callback) {
+        if (RUN_DEADLINE_MS - (this.now() - startedAt) < REQUIRED_REPLY_BUDGET_MS) break;
         const outcome = this.callbacks ? await this.callbacks.handle(callback) : "failed";
         await this.acknowledged(item.updateId);
         if (outcome !== "failed") sent += 1;

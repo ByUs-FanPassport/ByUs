@@ -8,6 +8,9 @@ const TELEGRAM_TIMEOUT_MS = 8_000;
 const CAPTION_LIMIT = 1_024;
 const CALLBACK_TOKEN = /^[0-9a-f]{32}$/u;
 const ADMIN_CERTIFICATIONS_URL = "https://byus.kr/admin/certifications";
+const submissionStatusSchema = z.enum(["pending", "approved", "rejected"]);
+const uploadDeliveryStatusSchema = z.enum(["pending", "sending", "sent", "failed", "delivery_unknown"]);
+const deliveryStatusSchema = z.enum(["pending", "claimed", "sending", "sent", "partial", "failed", "delivery_unknown", "skipped", "missing"]);
 
 const uuid = z.uuid();
 const nonnegative = z.number().int().nonnegative();
@@ -19,6 +22,8 @@ const uploadSchema = z.object({
   content_type: z.string().min(1).max(128),
   width: positive,
   height: positive,
+  delivery_status: uploadDeliveryStatusSchema,
+  provider_message_id: positive.nullable(),
 }).strict();
 const rewardSchema = z.object({
   score_points: nonnegative,
@@ -29,6 +34,8 @@ const claimSchema = z.object({
   delivery_id: uuid,
   submission_id: uuid,
   callback_token: z.string().regex(CALLBACK_TOKEN),
+  lease_token: z.string().regex(CALLBACK_TOKEN),
+  action_message_id: positive.nullable(),
   expected_review_revision: nonnegative,
   creator_name: z.string().min(1).max(512),
   mission_title: z.string().min(1).max(1_024),
@@ -44,6 +51,7 @@ const claimSchema = z.object({
   claim.uploads.forEach((upload, index) => {
     if (upload.upload_order !== index + 1) context.addIssue({ code: "custom", path: ["uploads", index, "upload_order"], message: "upload order must be contiguous" });
     if (ids.has(upload.upload_id)) context.addIssue({ code: "custom", path: ["uploads", index, "upload_id"], message: "duplicate upload" });
+    if ((upload.delivery_status === "sent") !== (upload.provider_message_id !== null)) context.addIssue({ code: "custom", path: ["uploads", index, "provider_message_id"], message: "provider message must match sent state" });
     ids.add(upload.upload_id);
   });
 });
@@ -55,6 +63,8 @@ export interface TelegramCertificationUpload {
   contentType: string;
   width: number;
   height: number;
+  deliveryStatus: z.infer<typeof uploadDeliveryStatusSchema>;
+  providerMessageId: number | null;
 }
 
 export interface TelegramCertificationReward {
@@ -67,6 +77,8 @@ export interface TelegramCertificationClaim {
   deliveryId: string;
   submissionId: string;
   callbackToken: string;
+  leaseToken: string;
+  actionMessageId: number | null;
   expectedReviewRevision: number;
   creatorName: string;
   missionTitle: string;
@@ -92,7 +104,18 @@ export interface TelegramCertificationCallback {
   caption: string;
 }
 
-export type TelegramApproval = { outcome: "approved" | "already_processed"; submissionId: string };
+export type TelegramApproval = {
+  outcome: "approved" | "already_processed";
+  submissionId: string;
+  status: z.infer<typeof submissionStatusSchema>;
+  reviewerDisplayName: string | null;
+};
+export interface TelegramCertificationRecordResult {
+  accepted: boolean;
+  status: z.infer<typeof deliveryStatusSchema>;
+  complete: boolean;
+  attemptCount: number;
+}
 export interface TelegramCertificationHealth {
   pending: number; claimed: number; sending: number; sent: number; partial: number;
   failed: number; deliveryUnknown: number; skipped: number;
@@ -100,8 +123,8 @@ export interface TelegramCertificationHealth {
 
 export interface TelegramCertificationQueue {
   claim(chatId: string): Promise<TelegramCertificationClaim | null>;
-  begin(deliveryId: string, chatId: string): Promise<void>;
-  record(deliveryId: string, chatId: string, uploadId: string, uploadOrder: number, outcome: TelegramCertificationDeliveryOutcome, providerMessageId: number | null, retryAfter: number | null): Promise<void>;
+  begin(deliveryId: string, chatId: string, leaseToken: string, uploadId: string, uploadOrder: number): Promise<TelegramCertificationRecordResult>;
+  record(deliveryId: string, chatId: string, leaseToken: string, uploadId: string, uploadOrder: number, outcome: TelegramCertificationDeliveryOutcome, providerMessageId: number | null, retryAfter: number | null): Promise<TelegramCertificationRecordResult>;
   health(): Promise<TelegramCertificationHealth>;
   approve?(chatId: string, callback: TelegramCertificationCallback): Promise<TelegramApproval>;
 }
@@ -111,6 +134,12 @@ type RpcClient = { rpc(name: string, args?: Record<string, unknown>): PromiseLik
 const approvalSchema = z.object({
   outcome: z.enum(["approved", "already_processed"]),
   submission_id: uuid,
+  status: submissionStatusSchema,
+  reviewer_display_name: z.string().min(1).max(128).nullable(),
+}).passthrough();
+const recordResultSchema = z.object({
+  accepted: z.boolean(), status: deliveryStatusSchema, complete: z.boolean().default(false),
+  attempt_count: nonnegative.default(0),
 }).passthrough();
 const healthSchema = z.object({
   enabled: z.boolean(), chat_id: z.string().nullable(), activated_at: z.string().nullable(),
@@ -142,6 +171,8 @@ export class SupabaseTelegramCertificationQueue implements TelegramCertification
       deliveryId: claim.delivery_id,
       submissionId: claim.submission_id,
       callbackToken: claim.callback_token,
+      leaseToken: claim.lease_token,
+      actionMessageId: claim.action_message_id,
       expectedReviewRevision: claim.expected_review_revision,
       creatorName: claim.creator_name,
       missionTitle: claim.mission_title,
@@ -154,14 +185,16 @@ export class SupabaseTelegramCertificationQueue implements TelegramCertification
       uploads: claim.uploads.map((upload) => ({
         id: upload.upload_id, order: upload.upload_order, objectPath: upload.object_path,
         contentType: upload.content_type, width: upload.width, height: upload.height,
+        deliveryStatus: upload.delivery_status, providerMessageId: upload.provider_message_id,
       })),
     };
   }
 
-  async record(deliveryId: string, chatId: string, uploadId: string, uploadOrder: number, outcome: TelegramCertificationDeliveryOutcome, providerMessageId: number | null, retryAfter: number | null): Promise<void> {
+  async record(deliveryId: string, chatId: string, leaseToken: string, uploadId: string, uploadOrder: number, outcome: TelegramCertificationDeliveryOutcome, providerMessageId: number | null, retryAfter: number | null): Promise<TelegramCertificationRecordResult> {
     const result = await this.call("record_telegram_certification_delivery", {
       p_delivery_id: deliveryId,
       p_chat_id: chatId,
+      p_lease_token: leaseToken,
       p_outcome: outcome,
       p_upload_id: uploadId,
       p_upload_order: uploadOrder,
@@ -169,21 +202,26 @@ export class SupabaseTelegramCertificationQueue implements TelegramCertification
       p_retry_after: retryAfter,
       p_error_code: null,
     });
-    if (object(result)?.accepted !== true) throw new Error("TELEGRAM_CERTIFICATION_QUEUE_UNAVAILABLE");
+    const parsed = recordResultSchema.safeParse(result);
+    if (!parsed.success) throw new Error("TELEGRAM_CERTIFICATION_QUEUE_UNAVAILABLE");
+    return { accepted: parsed.data.accepted, status: parsed.data.status, complete: parsed.data.complete, attemptCount: parsed.data.attempt_count };
   }
 
-  async begin(deliveryId: string, chatId: string): Promise<void> {
+  async begin(deliveryId: string, chatId: string, leaseToken: string, uploadId: string, uploadOrder: number): Promise<TelegramCertificationRecordResult> {
     const result = await this.call("record_telegram_certification_delivery", {
       p_delivery_id: deliveryId,
       p_chat_id: chatId,
+      p_lease_token: leaseToken,
       p_outcome: "sending",
-      p_upload_id: null,
-      p_upload_order: null,
+      p_upload_id: uploadId,
+      p_upload_order: uploadOrder,
       p_provider_message_id: null,
       p_retry_after: null,
       p_error_code: null,
     });
-    if (object(result)?.accepted !== true) throw new Error("TELEGRAM_CERTIFICATION_QUEUE_UNAVAILABLE");
+    const parsed = recordResultSchema.safeParse(result);
+    if (!parsed.success) throw new Error("TELEGRAM_CERTIFICATION_QUEUE_UNAVAILABLE");
+    return { accepted: parsed.data.accepted, status: parsed.data.status, complete: parsed.data.complete, attemptCount: parsed.data.attempt_count };
   }
 
   async approve(chatId: string, callback: TelegramCertificationCallback): Promise<TelegramApproval> {
@@ -197,7 +235,12 @@ export class SupabaseTelegramCertificationQueue implements TelegramCertification
     });
     const parsed = approvalSchema.safeParse(raw);
     if (!parsed.success) throw new Error("TELEGRAM_CERTIFICATION_APPROVAL_FAILED");
-    return { outcome: parsed.data.outcome, submissionId: parsed.data.submission_id };
+    return {
+      outcome: parsed.data.outcome,
+      submissionId: parsed.data.submission_id,
+      status: parsed.data.status,
+      reviewerDisplayName: parsed.data.reviewer_display_name ?? null,
+    };
   }
 
   async health(): Promise<TelegramCertificationHealth> {
@@ -289,7 +332,7 @@ export interface TelegramCertificationSender {
 
 export interface TelegramCertificationCallbackApi {
   answerCallback(queryId: string, text: string, showAlert: boolean): Promise<void>;
-  editApproved(messageId: number, existingCaption: string, displayName: string, adminUrl: string): Promise<void>;
+  editProcessed(messageId: number, existingCaption: string, completionText: string, adminUrl: string): Promise<void>;
 }
 
 type Fetch = typeof fetch;
@@ -298,9 +341,10 @@ function object(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
-function retryAfter(body: unknown): number {
+function retryAfter(body: unknown, headerValue: string | null): number {
   const raw = object(object(body)?.parameters)?.retry_after;
-  const seconds = typeof raw === "number" && Number.isFinite(raw) ? Math.trunc(raw) : 60;
+  const headerSeconds = headerValue !== null && /^\d+$/u.test(headerValue.trim()) ? Number(headerValue) : undefined;
+  const seconds = typeof raw === "number" && Number.isFinite(raw) ? Math.trunc(raw) : headerSeconds ?? 60;
   return Math.max(1, Math.min(86_400, seconds));
 }
 
@@ -322,16 +366,17 @@ export class TelegramCertificationHttpClient implements TelegramCertificationSen
     } catch {
       throw new TelegramDeliveryError("delivery_unknown");
     }
-    let body: unknown;
-    try { body = await response.json(); } catch { throw new TelegramDeliveryError("delivery_unknown"); }
+    let body: unknown = null;
+    let malformedBody = false;
+    try { body = await response.json(); } catch { malformedBody = true; }
     const errorCode = object(body)?.error_code;
-    if (response.status === 429 || errorCode === 429) throw new TelegramDeliveryError("throttled", retryAfter(body));
+    if (response.status === 429 || errorCode === 429) throw new TelegramDeliveryError("throttled", retryAfter(body, response.headers.get("retry-after")));
     if (response.status >= 500) throw new TelegramDeliveryError("delivery_unknown");
     if (
       (response.status >= 400 && response.status < 500) ||
       (Number(errorCode) >= 400 && Number(errorCode) < 500)
     ) throw new TelegramDeliveryError("rejected");
-    if (!response.ok || object(body)?.ok !== true) throw new TelegramDeliveryError("delivery_unknown");
+    if (malformedBody || !response.ok || object(body)?.ok !== true) throw new TelegramDeliveryError("delivery_unknown");
     return object(body)?.result;
   }
 
@@ -364,9 +409,12 @@ export class TelegramCertificationHttpClient implements TelegramCertificationSen
     });
   }
 
-  async editApproved(messageId: number, existingCaption: string, displayName: string, adminUrl: string): Promise<void> {
-    const suffix = `✅ 승인 완료 · ${sanitize(displayName, 80)}`;
-    const caption = `${sanitize(existingCaption, CAPTION_LIMIT - suffix.length - 2)}\n\n${suffix}`;
+  async editProcessed(messageId: number, existingCaption: string, completionText: string, adminUrl: string): Promise<void> {
+    const suffix = `✅ ${sanitize(completionText, 100)}`;
+    const base = sanitize(existingCaption, CAPTION_LIMIT)
+      .replace(/\s*✅\s+(?:승인 완료(?:\s*·\s*.*?)?|처리 완료)\s*$/u, "")
+      .trimEnd();
+    const caption = `${sanitize(base, CAPTION_LIMIT - suffix.length - 2)}\n\n${suffix}`;
     await this.request("editMessageCaption", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -377,8 +425,8 @@ export class TelegramCertificationHttpClient implements TelegramCertificationSen
   }
 }
 
-function adminUrl(submissionId: string): string {
-  return `${ADMIN_CERTIFICATIONS_URL}?status=pending&submission=${submissionId}`;
+function adminUrl(submissionId: string, status: z.infer<typeof submissionStatusSchema> = "pending"): string {
+  return `${ADMIN_CERTIFICATIONS_URL}?status=${status}&submission=${submissionId}`;
 }
 
 export class TelegramCertificationWorker {
@@ -392,13 +440,19 @@ export class TelegramCertificationWorker {
   async runOnce(): Promise<number> {
     const claim = await this.queue.claim(this.chatId);
     if (!claim) return 0;
-    await this.queue.begin(claim.deliveryId, this.chatId);
-    let firstMessageId: number | null = null;
+    let firstMessageId: number | null = claim.actionMessageId;
     for (const upload of claim.uploads) {
+      if (upload.deliveryStatus === "sent") {
+        if (upload.order === 1) firstMessageId = upload.providerMessageId;
+        continue;
+      }
+      if (upload.deliveryStatus !== "pending") return 0;
+      const begun = await this.queue.begin(claim.deliveryId, this.chatId, claim.leaseToken, upload.id, upload.order);
+      if (!begun.accepted) return 0;
       let bytes: Blob;
       try { bytes = await this.storage.download(upload.objectPath); }
       catch {
-        await this.queue.record(claim.deliveryId, this.chatId, upload.id, upload.order, "rejected", null, null);
+        await this.queue.record(claim.deliveryId, this.chatId, claim.leaseToken, upload.id, upload.order, "rejected", null, null);
         console.error("telegram_certification_delivery", { outcome: "failed", stage: "storage" });
         return 0;
       }
@@ -410,11 +464,12 @@ export class TelegramCertificationWorker {
           adminUrl: upload.order === 1 ? adminUrl(claim.submissionId) : null,
           replyToMessageId: upload.order === 1 ? null : firstMessageId,
         });
-        await this.queue.record(claim.deliveryId, this.chatId, upload.id, upload.order, "sent", messageId, null);
+        const recorded = await this.queue.record(claim.deliveryId, this.chatId, claim.leaseToken, upload.id, upload.order, "sent", messageId, null);
+        if (!recorded.accepted) return 0;
         if (upload.order === 1) firstMessageId = messageId;
       } catch (error) {
         const known = error instanceof TelegramDeliveryError ? error : new TelegramDeliveryError("delivery_unknown");
-        await this.queue.record(claim.deliveryId, this.chatId, upload.id, upload.order, known.outcome, null, known.retryAfter ?? null);
+        await this.queue.record(claim.deliveryId, this.chatId, claim.leaseToken, upload.id, upload.order, known.outcome, null, known.retryAfter ?? null);
         console.error("telegram_certification_delivery", { outcome: known.outcome, stage: upload.order === 1 ? "action" : "attachment" });
         return 0;
       }
@@ -440,13 +495,18 @@ export class TelegramCertificationCallbackWorker implements TelegramCertificatio
     try {
       approval = await this.queue.approve(this.chatId, callback);
     } catch {
-      try { await this.api.answerCallback(callback.queryId, "승인 처리에 실패했습니다. 관리자에서 확인해 주세요.", true); } catch { /* cursor must still advance */ }
+      try { await this.api.answerCallback(callback.queryId, "승인 처리에 실패했습니다. 관리자에서 확인해 주세요.", true); }
+      catch { console.error("telegram_certification_callback", { outcome: "failed", stage: "answer" }); }
       console.error("telegram_certification_callback", { outcome: "failed" });
       return "failed";
     }
     const answer = approval.outcome === "approved" ? "승인되었습니다." : "이미 처리된 인증입니다.";
-    try { await this.api.answerCallback(callback.queryId, answer, false); } catch { /* approval remains final */ }
-    try { await this.api.editApproved(callback.messageId, callback.caption, callback.displayName, adminUrl(approval.submissionId)); } catch { /* edit failure never rolls approval back */ }
+    try { await this.api.answerCallback(callback.queryId, answer, false); }
+    catch { console.error("telegram_certification_callback", { outcome: "failed", stage: "answer" }); }
+    const reviewer = approval.outcome === "approved" ? callback.displayName : approval.reviewerDisplayName;
+    const completionText = approval.status === "approved" && reviewer ? `승인 완료 · ${reviewer}` : "처리 완료";
+    try { await this.api.editProcessed(callback.messageId, callback.caption, completionText, adminUrl(approval.submissionId, approval.status)); }
+    catch { console.error("telegram_certification_callback", { outcome: "failed", stage: "edit" }); }
     console.info("telegram_certification_callback", { outcome: approval.outcome });
     return approval.outcome;
   }

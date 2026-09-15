@@ -194,6 +194,19 @@ describe("TelegramCommandWorker", () => {
     await expect(new TelegramCommandWorker(q, poller, { sendText: vi.fn() }, chatId, Date.now, callbacks).runOnce()).resolves.toBe(0);
     expect(q.acknowledge).toHaveBeenCalledExactlyOnceWith(chatId, 11);
   });
+
+  it("leaves a delayed callback and every following update unacknowledged when reply budget is exhausted", async () => {
+    const q = queue();
+    const callbackUpdate = {
+      update_id: 11,
+      callback_query: { id: "callback-11", data: "0123456789abcdef0123456789abcdef", from: { id: 88, is_bot: false, first_name: "민지" }, message: { message_id: 321, chat: { id: Number(chatId), type: "supergroup" } } },
+    };
+    const poller = { getUpdates: vi.fn().mockResolvedValue([callbackUpdate, update(12, "/help")]) };
+    const callbacks: TelegramCertificationCallbackHandler = { handle: vi.fn() };
+    const now = vi.fn().mockReturnValueOnce(0).mockReturnValue(23_000);
+    await expect(new TelegramCommandWorker(q, poller, { sendText: vi.fn() }, chatId, now, callbacks).runOnce()).resolves.toBe(0);
+    expect(callbacks.handle).not.toHaveBeenCalled(); expect(q.begin).not.toHaveBeenCalled(); expect(q.acknowledge).not.toHaveBeenCalled();
+  });
 });
 
 describe("Telegram command adapters", () => {
