@@ -308,6 +308,7 @@ const rpcFailureMarkers: ReadonlyArray<readonly [string, BenefitFailureCode]> =
     ["benefit is not available", "BENEFIT_NOT_FOUND"],
     ["benefit claim window is closed", "BENEFIT_EXPIRED"],
     ["eligible fan passport is required", "BENEFIT_LOCKED"],
+    ["CREATOR_RAFFLE_LEGACY_ROUTE_FORBIDDEN", "BENEFIT_LOCKED"],
     ["benefit score or level requirement is not met", "BENEFIT_LOCKED"],
     ["required stamp is missing", "BENEFIT_LOCKED"],
     ["required activity is missing", "BENEFIT_LOCKED"],

@@ -51,6 +51,13 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y postgresql
       - name: Replay migrations and exercise real role and concurrent quota boundaries
         run: npm run security:backend-db
+      - name: Verify creator raffle eligibility and ownership concurrency
+        run: |
+          export PATH="$(pg_config --bindir):$PATH"
+          BYUS_CLEAN_DB_PORT=55486 \
+          BYUS_CLEAN_DB_ASSERTION_FILE=supabase/tests/creator_raffle_campaigns.sql \
+          BYUS_CLEAN_DB_SHELL_ASSERTION_FILE=supabase/tests/creator_raffle_campaigns_concurrency.sh \
+          bash scripts/verify-clean-migration-chain.sh
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable

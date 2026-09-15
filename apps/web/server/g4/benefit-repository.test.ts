@@ -8,6 +8,14 @@ import {
 } from "./benefit-repository";
 
 const id = "11111111-1111-4111-8111-111111111111";
+describe("standalone raffle legacy-route protection", () => {
+  it.each(["claim", "apply"] as const)("maps rejected %s to forbidden rather than unavailable", async (method) => {
+    const database = { rpc: vi.fn(async () => ({ data: null, error: { message: "CREATOR_RAFFLE_LEGACY_ROUTE_FORBIDDEN" } })) };
+    const source = new SupabaseBenefitDataSource(database as never);
+    await expect(source[method]({ benefitId: id, appUserId: id, idempotencyKey: id, now: new Date() }))
+      .rejects.toEqual(expect.objectContaining({ code: "BENEFIT_LOCKED" }));
+  });
+});
 const raw = {
   id,
   slug: "kara-reward",
