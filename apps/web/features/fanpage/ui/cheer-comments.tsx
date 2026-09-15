@@ -10,6 +10,8 @@ import { Heart } from "lucide-react";
 import { cheerPageSchema } from "../domain/fan-community";
 import { useCommunityResource } from "./use-community-resource";
 import styles from "./fan-community.module.css";
+import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
+import { useByUsSession } from "@/components/byus-session-provider";
 
 const parse = (value: unknown) => cheerPageSchema.parse(value);
 export function CheerComments({ slug, name, locale }: { slug: string; name: string; locale: "ko" | "en" }) {
@@ -17,7 +19,8 @@ export function CheerComments({ slug, name, locale }: { slug: string; name: stri
   return <CommentsForOwner key={`${slug}:${locale}:${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}`} {...{ slug, name, locale }} />;
 }
 function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; locale: "ko" | "en" }) {
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, user } = usePrivy();
+  const session = useByUsSession();
   const ko = locale === "ko";
   const [cursor, setCursor] = useState<string | null>(null);
   const resource = useCommunityResource(`/api/celebrities/${slug}/cheers?locale=${locale}&limit=5${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parse);
@@ -53,6 +56,7 @@ function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; 
       }
       if (!id) { setBody(""); attempt.current = null; }
       setCursor(null); resource.retry();
+      notifyFanActivityUpdated(session.ownerId ?? user?.id);
     } catch {
       if (alive.current && !controller.signal.aborted) setError(ko ? "연결을 확인하고 다시 시도해 주세요." : "Check your connection and try again.");
     } finally {

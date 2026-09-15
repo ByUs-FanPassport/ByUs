@@ -166,6 +166,8 @@
 .destinationIcon[data-kind="passport"] { color:oklch(48% .16 285); }
 .destinationIcon[data-kind="live"] { color:oklch(52% .17 350); }
 .destinationIcon[data-kind="benefit"] { color:oklch(48% .17 300); }
+.ticketHistoryLink { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--space-3); color:var(--my-accent-ink); font-size:12px; font-weight:750; }
+.ticketHistoryLink svg { width:16px; height:16px; }
 .destinations > a:focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
 @media(min-width:48rem) { .destinations { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(hover:hover) and (pointer:fine) { .destinations > a:hover { background:var(--color-soft); } }
