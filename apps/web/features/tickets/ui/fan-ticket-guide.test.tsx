@@ -44,4 +44,31 @@ describe("FanTicketGuide", () => {
     screen.getByRole("button", { name: "다시 시도" }).click();
     expect(mocks.retry).toHaveBeenCalledTimes(1);
   });
+  it("keeps the home summary focused on balance and today's available action", () => {
+    mocks.state = ready;
+    render(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact />);
+    expect(screen.getByText("4장")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /오늘 출석하고 1장 받기/ })).toHaveAttribute("href", "/elina?locale=ko#daily-checkin");
+    expect(screen.getByRole("link", { name: /응모권 모으기/ })).toHaveAttribute("href", "/c/elina/tickets?locale=ko");
+    expect(screen.queryByText("팬 인증")).not.toBeInTheDocument();
+    expect(screen.queryByText("Instagram 멤버십")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /래플 보러 가기/ })).not.toBeInTheDocument();
+  });
+  it.each([
+    ["awarded", "오늘 출석 완료"],
+    ["processing", "출석 보상 지급 중"],
+    ["pending", "출석 확인 중"],
+  ])("does not offer another check-in for %s records", (status, label) => {
+    mocks.state = { ...ready, data: { ...ready.data, actions: ready.data.actions.map(action => action.key === "checkin" ? { ...action, status } : action) } };
+    render(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact />);
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /오늘 출석/ })).not.toBeInTheDocument();
+  });
+  it("keeps a compact guest invitation without exposing a balance or listing actions", () => {
+    mocks.authenticated = false;
+    render(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact />);
+    expect(screen.getByRole("heading", { name: "응모권 모으기" })).toBeInTheDocument();
+    expect(screen.queryByText(/팬 활동으로 응모권/)).not.toBeInTheDocument();
+    expect(screen.queryByText("보유 응모권")).not.toBeInTheDocument();
+  });
 });
