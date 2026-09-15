@@ -9,37 +9,30 @@ cleanup() {
 }
 trap cleanup EXIT
 
-psql -X -v ON_ERROR_STOP=1 -q <<'SQL'
+CREATOR_IDS="$(psql -X -Atq -F '|' -c "select id from public.celebrities where status='published' and archived_at is null order by id limit 2" | paste -sd '|' -)"
+IFS='|' read -r OWNER_ID OTHER_ID <<<"$CREATOR_IDS"
+if [[ -z "${OWNER_ID:-}" || -z "${OTHER_ID:-}" || "$OWNER_ID" == "$OTHER_ID" ]]; then
+  echo "two published creator fixtures are required" >&2
+  exit 1
+fi
+
+psql -X -v ON_ERROR_STOP=1 -q --set=owner_id="$OWNER_ID" <<'SQL'
 insert into public.app_users(id,privy_user_id,verified_email,status)
 values('e0000000-0000-4000-8000-000000000001','did:privy:creator-raffle-lock-admin',
   'creator-raffle-lock-admin@example.test','active');
 insert into public.admin_allowlist(id,email,role,active)
 values('e0000000-0000-4000-8000-000000000002','creator-raffle-lock-admin@example.test','admin',true);
-create table public.creator_raffle_concurrency_fixture(owner_id uuid,other_id uuid);
-insert into public.creator_raffle_concurrency_fixture(owner_id,other_id)
-select ids[1],ids[2] from (
-  select array_agg(id order by id) ids from (
-    select id from public.celebrities
-    where status='published' and archived_at is null order by id limit 2
-  ) creators
-) selected;
-do $$ begin
-  if (select owner_id is null or other_id is null or owner_id=other_id
-      from public.creator_raffle_concurrency_fixture) then
-    raise exception 'two published creator fixtures are required';
-  end if;
-end $$;
 insert into public.benefits
 select * from jsonb_populate_record(null::public.benefits,(select to_jsonb(b) from public.benefits b limit 1)
   ||jsonb_build_object('id','e2000000-0000-4000-8000-000000000001','slug','creator-raffle-lock-benefit',
-    'celebrity_id',(select owner_id from public.creator_raffle_concurrency_fixture),'publication_status','draft',
+    'celebrity_id',:'owner_id','publication_status','draft',
     'published_at',null,'archived_at',null,'claim_opens_at','2026-09-01T00:00:00Z',
     'claim_closes_at','2027-01-01T00:00:00Z'));
 insert into public.live_benefit_campaigns(
   id,live_event_id,celebrity_id,entry_opens_at,entry_closes_at,actor_app_user_id,actor_admin_allowlist_id
 ) values(
   'e3000000-0000-4000-8000-000000000001',null,
-  (select owner_id from public.creator_raffle_concurrency_fixture),
+  :'owner_id',
   clock_timestamp(),clock_timestamp()+interval '1 day','e0000000-0000-4000-8000-000000000001',
   'e0000000-0000-4000-8000-000000000002'
 );
@@ -71,10 +64,10 @@ if [[ "$holder_ready" != true ]]; then
   exit 1
 fi
 
-if psql -X -v ON_ERROR_STOP=1 2>"$BLOCKED_ERR" <<'SQL'
+if psql -X -v ON_ERROR_STOP=1 --set=other_id="$OTHER_ID" 2>"$BLOCKED_ERR" <<'SQL'
 set lock_timeout='300ms';
 update public.benefits
-set celebrity_id=(select other_id from public.creator_raffle_concurrency_fixture)
+set celebrity_id=:'other_id'
 where id='e2000000-0000-4000-8000-000000000001';
 SQL
 then
@@ -88,10 +81,10 @@ if ! rg -q "canceling statement due to lock timeout" "$BLOCKED_ERR"; then
 fi
 wait "$HOLDER_PID"
 
-psql -X -v ON_ERROR_STOP=1 -q <<'SQL'
+psql -X -v ON_ERROR_STOP=1 -q --set=other_id="$OTHER_ID" <<'SQL'
 begin;
 update public.benefits
-set celebrity_id=(select other_id from public.creator_raffle_concurrency_fixture)
+set celebrity_id=:'other_id'
 where id='e2000000-0000-4000-8000-000000000001';
 rollback;
 SQL
