@@ -86,3 +86,66 @@ git diff --check                           # exit 0
 The host has Supabase CLI `2.109.0`, but no Docker daemon or Docker-compatible runtime is installed/running. Therefore `supabase status`, the real clean migration chain, `supabase test db`, advisors, and the existing broader DB suites could not run. The migration itself was parsed/applied and its new behavior test passed on PostgreSQL 17 with a minimal compatibility schema, but this is not a substitute for a clean Supabase stack run. A true two-connection race was also not runnable without a disposable full schema; the SQL test verifies the same row-lock/finality paths sequentially. These should be the first CI/local-Docker follow-up checks.
 
 The Supabase changelog and current official RLS/database-function guidance were checked. No relevant breaking change invalidated the chosen forced-RLS, explicit revoke/grant, or `security definer set search_path=''` patterns.
+
+## Risk-review follow-up
+
+Commit follow-up addresses all five blocking review items:
+
+- Submission capture now gates only on the active singleton observed by the insert trigger. It no longer compares transaction-start `submitted_at` against wall-clock `activated_at`; insert-only capture still prevents backfill.
+- Each claim now receives a fresh 128-bit `lease_token`. Every delivery record requires that token, and a reclaimed delivery fences the previous claimant. `sending` is an upload-specific atomic transition and cannot re-enter from `sending`.
+- Claim payloads now include `lease_token`, nullable `action_message_id`, and each upload's `delivery_status` plus nullable `provider_message_id`. This lets a reclaimed partial delivery skip known-sent uploads and continue replying to the persisted action message.
+- Upload delivery state explicitly distinguishes `pending`, `sending`, `sent`, `failed`, and `delivery_unknown`. Expired in-flight sends are terminal unknown; expired claimed/idle-partial leases can be reclaimed; explicit 429 resets only the known-unsent upload and stops after three claims.
+- Added the independent `telegram-certification-review-maintenance` pg_cron job on a five-minute schedule.
+- The concurrent web-winner exception path now writes the same Telegram `already_processed` audit identity/reward summary as the normal already-processed path.
+- Expanded SQL coverage for transaction-start timestamp capture, expired full and partial claims, stale lease fencing, sending re-entry, upload resume metadata, 429 cap, ambiguous-send terminality, disabled retention, web-winner audit, and repeated membership callback exact-once behavior.
+
+### Follow-up RED evidence
+
+With the original migration applied and the schema-faithful `submitted_at default now()` used, the new timestamp regression test failed at the intended behavior:
+
+```text
+psql:supabase/tests/telegram_certification_reviews.sql:75: ERROR:
+  TELEGRAM_CERTIFICATION_CAPTURE_MISSING_OR_DUPLICATED
+```
+
+The new lease contract test then failed because the old RPC had no claimant token argument:
+
+```text
+ERROR: function public.record_telegram_certification_delivery(
+  uuid, unknown, text, unknown, uuid, integer
+) does not exist
+```
+
+The cron contract test independently failed against the original migration:
+
+```text
+ERROR: TELEGRAM_CERTIFICATION_MAINTENANCE_CRON_MISSING
+```
+
+### Follow-up GREEN evidence
+
+Fresh focused verification after the fixes:
+
+```text
+PGPORT=55434 PGDATABASE=postgres psql -X -v ON_ERROR_STOP=1 \
+  -f supabase/tests/telegram_certification_reviews.sql
+
+BEGIN
+DO
+CREATE TABLE
+INSERT 0 2
+...
+DO  (expanded behavior blocks)
+ROLLBACK
+```
+
+Exit code: `0`.
+
+Also rerun after the final test edits:
+
+```text
+bash -n scripts/verify-telegram-alerts.sh  # exit 0
+git diff --check                          # exit 0
+```
+
+The earlier full-Supabase/Docker limitation remains unchanged; this follow-up used PostgreSQL 17 with schema-faithful defaults and compatibility objects for the existing functions and pg_cron catalog.

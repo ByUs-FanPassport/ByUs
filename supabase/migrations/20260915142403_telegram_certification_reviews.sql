@@ -54,6 +54,7 @@ create table public.telegram_certification_deliveries (
   status text not null default 'pending' check (status in ('pending','claimed','sending','sent','partial','failed','delivery_unknown','skipped')),
   attempt_count integer not null default 0 check (attempt_count between 0 and 3),
   available_at timestamptz not null default clock_timestamp(),
+  lease_token bytea unique check (lease_token is null or octet_length(lease_token)=16),
   lease_expires_at timestamptz,
   action_message_id bigint check (action_message_id is null or action_message_id>0),
   last_error text,
@@ -68,12 +69,12 @@ create table public.telegram_certification_upload_deliveries (
   delivery_id uuid not null references public.telegram_certification_deliveries(id) on delete restrict,
   upload_id uuid not null references public.certification_uploads(id) on delete restrict,
   upload_order integer not null check (upload_order between 1 and 3),
-  status text not null default 'pending' check (status in ('pending','sent')),
+  status text not null default 'pending' check (status in ('pending','sending','sent','failed','delivery_unknown')),
   provider_message_id bigint check (provider_message_id is null or provider_message_id>0),
   sent_at timestamptz,
   primary key(delivery_id,upload_id),
   unique(delivery_id,upload_order),
-  check ((status='pending' and provider_message_id is null and sent_at is null)
+  check ((status in ('pending','sending','failed','delivery_unknown') and provider_message_id is null and sent_at is null)
     or (status='sent' and provider_message_id is not null and sent_at is not null))
 );
 
@@ -126,7 +127,7 @@ begin
   update public.telegram_certification_deliveries
     set status=case when status in ('sending','partial') then 'delivery_unknown' else 'skipped' end,
         last_error=case when status in ('sending','partial') then 'DELIVERY_UNKNOWN' else last_error end,
-        lease_expires_at=null,finished_at=t
+        lease_token=null,lease_expires_at=null,finished_at=t
     where status in ('pending','claimed','sending','partial');
   update public.telegram_certification_review_settings set enabled=p_enabled,chat_id=p_chat_id,
     activation_id=extensions.gen_random_uuid(),activated_at=t,next_send_at='-infinity',
@@ -139,7 +140,7 @@ declare cfg public.telegram_certification_review_settings;
 begin
   if new.status<>'pending' then return new; end if;
   select * into cfg from public.telegram_certification_review_settings where singleton;
-  if not coalesce(cfg.enabled,false) or new.submitted_at<cfg.activated_at then return new; end if;
+  if not coalesce(cfg.enabled,false) then return new; end if;
   insert into public.telegram_certification_deliveries(submission_id,activation_id,chat_id,expected_review_revision)
     values(new.id,cfg.activation_id,cfg.chat_id,new.review_revision) on conflict(submission_id) do nothing;
   return new;
@@ -155,17 +156,20 @@ language plpgsql security definer set search_path='' as $$
 declare cfg public.telegram_certification_review_settings; t timestamptz:=clock_timestamp();
 begin
   select * into strict cfg from public.telegram_certification_review_settings where singleton for update;
+  update public.telegram_certification_upload_deliveries u set status='delivery_unknown'
+    from public.telegram_certification_deliveries d
+    where u.delivery_id=d.id and u.status='sending' and d.status='sending' and d.lease_expires_at<=t;
   update public.telegram_certification_deliveries d set
     status=case
-      when d.status='claimed' and d.attempt_count<3 then 'pending'
-      when d.status='claimed' then 'failed'
-      when exists(select 1 from public.telegram_certification_upload_deliveries u where u.delivery_id=d.id and u.status='sent') then 'delivery_unknown'
+      when d.status in ('claimed','partial') and d.attempt_count<3 then 'pending'
+      when d.status in ('claimed','partial') then 'failed'
       else 'delivery_unknown' end,
-    last_error=case when d.status='claimed' and d.attempt_count<3 then d.last_error when d.status='claimed' then 'CLAIM_TIMEOUT' else 'DELIVERY_UNKNOWN' end,
-    lease_expires_at=null,
-    finished_at=case when d.status='claimed' and d.attempt_count<3 then null else t end
+    last_error=case when d.status in ('claimed','partial') and d.attempt_count<3 then d.last_error
+      when d.status in ('claimed','partial') then 'CLAIM_TIMEOUT' else 'DELIVERY_UNKNOWN' end,
+    lease_token=null,lease_expires_at=null,
+    finished_at=case when d.status in ('claimed','partial') and d.attempt_count<3 then null else t end
     where d.status in ('claimed','sending','partial') and d.lease_expires_at<=t;
-  update public.telegram_certification_deliveries set status='skipped',lease_expires_at=null,finished_at=t
+  update public.telegram_certification_deliveries set status='skipped',lease_token=null,lease_expires_at=null,finished_at=t
     where status in ('pending','claimed') and (not cfg.enabled or activation_id<>cfg.activation_id
       or chat_id is distinct from cfg.chat_id or created_at<t-interval '1 day');
   update public.telegram_certification_review_settings set leased_delivery_id=null,lease_expires_at=null
@@ -191,7 +195,7 @@ begin
     order by created_at,id for update skip locked limit 1;
   if not found then return null; end if;
   update public.telegram_certification_deliveries set status='claimed',attempt_count=attempt_count+1,
-    lease_expires_at=t+interval '2 minutes' where id=selected.id returning * into selected;
+    lease_token=extensions.gen_random_bytes(16),lease_expires_at=t+interval '2 minutes' where id=selected.id returning * into selected;
   update public.telegram_certification_review_settings set leased_delivery_id=selected.id,
     lease_expires_at=selected.lease_expires_at where singleton;
   insert into public.telegram_certification_upload_deliveries(delivery_id,upload_id,upload_order)
@@ -200,6 +204,7 @@ begin
     on conflict(delivery_id,upload_id) do nothing;
   select jsonb_build_object(
     'delivery_id',selected.id,'submission_id',s.id,'callback_token',encode(selected.callback_token,'hex'),
+    'lease_token',encode(selected.lease_token,'hex'),'action_message_id',selected.action_message_id,
     'expected_review_revision',selected.expected_review_revision,
     'creator_name',coalesce(cko.name,cen.name,c.slug),'mission_title',coalesce(m.title_ko,m.title_en),
     'membership_platform',s.membership_platform,'applicant_nickname',p.nickname,
@@ -207,7 +212,8 @@ begin
     'reward',jsonb_build_object('score_points',s.reward_score_points,'ticket_amount',s.reward_ticket_amount,
       'stamp_count',case when s.membership_platform is null then 0 else 1 end),
     'uploads',coalesce((select jsonb_agg(jsonb_build_object('upload_id',u.id,'upload_order',du.upload_order,
-      'object_path',u.object_path,'content_type',u.content_type,'width',u.width,'height',u.height)
+      'object_path',u.object_path,'content_type',u.content_type,'width',u.width,'height',u.height,
+      'delivery_status',du.status,'provider_message_id',du.provider_message_id)
       order by du.upload_order) from public.telegram_certification_upload_deliveries du
       join public.certification_uploads u on u.id=du.upload_id where du.delivery_id=selected.id),'[]'::jsonb)
   ) into payload
@@ -221,55 +227,65 @@ begin
 end $$;
 
 create function public.record_telegram_certification_delivery(
-  p_delivery_id uuid,p_chat_id text,p_outcome text,p_upload_id uuid default null,
-  p_upload_order integer default null,p_provider_message_id bigint default null,
+  p_delivery_id uuid,p_chat_id text,p_lease_token text,p_outcome text,p_upload_id uuid,
+  p_upload_order integer,p_provider_message_id bigint default null,
   p_retry_after integer default null,p_error_code text default null
 ) returns jsonb language plpgsql security definer set search_path='' as $$
 declare cfg public.telegram_certification_review_settings; d public.telegram_certification_deliveries; u public.telegram_certification_upload_deliveries; t timestamptz:=clock_timestamp(); complete boolean;
 begin
   select * into strict cfg from public.telegram_certification_review_settings where singleton for update;
   select * into d from public.telegram_certification_deliveries where id=p_delivery_id for update;
-  if not found or d.chat_id is distinct from p_chat_id or cfg.chat_id is distinct from p_chat_id
+  if p_lease_token is null or p_lease_token !~ '^[0-9a-f]{32}$' or not found
+    or d.chat_id is distinct from p_chat_id or cfg.chat_id is distinct from p_chat_id
     or cfg.leased_delivery_id is distinct from p_delivery_id or d.lease_expires_at<=t
+    or d.lease_token is distinct from decode(p_lease_token,'hex')
     or d.status not in ('claimed','sending','partial') then return jsonb_build_object('accepted',false,'status',coalesce(d.status,'missing')); end if;
+  if p_upload_id is null or p_upload_order is null then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
+  select * into u from public.telegram_certification_upload_deliveries
+    where delivery_id=d.id and upload_id=p_upload_id and upload_order=p_upload_order for update;
+  if not found then raise exception 'TELEGRAM_CERTIFICATION_UPLOAD_INVALID'; end if;
   if p_outcome='sending' then
-    if p_upload_id is not null or p_upload_order is not null or p_provider_message_id is not null then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
+    if p_provider_message_id is not null or d.status not in ('claimed','partial') or u.status<>'pending' then
+      return jsonb_build_object('accepted',false,'status',d.status);
+    end if;
+    if p_upload_order<>1 and (d.action_message_id is null or exists(
+      select 1 from public.telegram_certification_upload_deliveries prior
+      where prior.delivery_id=d.id and prior.upload_order<p_upload_order and prior.status<>'sent'
+    )) then raise exception 'TELEGRAM_CERTIFICATION_ACTION_MESSAGE_REQUIRED'; end if;
+    update public.telegram_certification_upload_deliveries set status='sending' where delivery_id=d.id and upload_id=p_upload_id;
     update public.telegram_certification_deliveries set status='sending' where id=d.id;
   elsif p_outcome='sent' then
-    if p_upload_id is null or p_upload_order is null or p_provider_message_id is null or p_provider_message_id<=0 then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
-    select * into u from public.telegram_certification_upload_deliveries
-      where delivery_id=d.id and upload_id=p_upload_id and upload_order=p_upload_order for update;
-    if not found then raise exception 'TELEGRAM_CERTIFICATION_UPLOAD_INVALID'; end if;
-    if u.status='sent' then
-      if u.provider_message_id<>p_provider_message_id then raise exception 'TELEGRAM_CERTIFICATION_MESSAGE_CONFLICT'; end if;
-    else
-      if p_upload_order<>1 and d.action_message_id is null then raise exception 'TELEGRAM_CERTIFICATION_ACTION_MESSAGE_REQUIRED'; end if;
-      update public.telegram_certification_upload_deliveries set status='sent',provider_message_id=p_provider_message_id,sent_at=t
-        where delivery_id=d.id and upload_id=p_upload_id;
-      if p_upload_order=1 then
-        update public.telegram_certification_deliveries set action_message_id=p_provider_message_id where id=d.id and action_message_id is null;
-      end if;
+    if d.status<>'sending' or u.status<>'sending' or p_provider_message_id is null or p_provider_message_id<=0 then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
+    update public.telegram_certification_upload_deliveries set status='sent',provider_message_id=p_provider_message_id,sent_at=t
+      where delivery_id=d.id and upload_id=p_upload_id;
+    if p_upload_order=1 then
+      update public.telegram_certification_deliveries set action_message_id=p_provider_message_id where id=d.id and action_message_id is null;
     end if;
     select not exists(select 1 from public.telegram_certification_upload_deliveries where delivery_id=d.id and status<>'sent') into complete;
     update public.telegram_certification_deliveries set status=case when complete then 'sent' else 'partial' end,
+      lease_token=case when complete then null else lease_token end,
       lease_expires_at=case when complete then null else lease_expires_at end,
       finished_at=case when complete then t else null end where id=d.id;
     if complete then update public.telegram_certification_review_settings set leased_delivery_id=null,lease_expires_at=null where singleton; end if;
   elsif p_outcome='throttled' then
-    if d.action_message_id is not null then
-      update public.telegram_certification_deliveries set status='delivery_unknown',last_error='DELIVERY_UNKNOWN',lease_expires_at=null,finished_at=t where id=d.id;
-    elsif d.attempt_count>=3 then
-      update public.telegram_certification_deliveries set status='failed',last_error='THROTTLED',lease_expires_at=null,finished_at=t where id=d.id;
+    if d.status<>'sending' or u.status<>'sending' or p_provider_message_id is not null then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
+    if d.attempt_count>=3 then
+      update public.telegram_certification_upload_deliveries set status='failed' where delivery_id=d.id and upload_id=p_upload_id;
+      update public.telegram_certification_deliveries set status='failed',last_error='THROTTLED',lease_token=null,lease_expires_at=null,finished_at=t where id=d.id;
     else
-      update public.telegram_certification_deliveries set status='pending',last_error='THROTTLED',lease_expires_at=null,
+      update public.telegram_certification_upload_deliveries set status='pending' where delivery_id=d.id and upload_id=p_upload_id;
+      update public.telegram_certification_deliveries set status='pending',last_error='THROTTLED',lease_token=null,lease_expires_at=null,
         available_at=t+make_interval(secs=>greatest(1,least(coalesce(p_retry_after,1),3600))) where id=d.id;
       update public.telegram_certification_review_settings set next_send_at=t+make_interval(secs=>greatest(1,least(coalesce(p_retry_after,1),3600))) where singleton;
     end if;
     update public.telegram_certification_review_settings set leased_delivery_id=null,lease_expires_at=null where singleton;
   elsif p_outcome in ('rejected','delivery_unknown') then
+    if d.status<>'sending' or u.status<>'sending' or p_provider_message_id is not null then raise exception 'TELEGRAM_CERTIFICATION_DELIVERY_ARGUMENT_INVALID'; end if;
+    update public.telegram_certification_upload_deliveries set status=case when p_outcome='rejected' then 'failed' else 'delivery_unknown' end
+      where delivery_id=d.id and upload_id=p_upload_id;
     update public.telegram_certification_deliveries set status=case when p_outcome='rejected' then 'failed' else 'delivery_unknown' end,
       last_error=case when p_outcome='rejected' then left(coalesce(p_error_code,'REJECTED'),120) else 'DELIVERY_UNKNOWN' end,
-      lease_expires_at=null,finished_at=t where id=d.id;
+      lease_token=null,lease_expires_at=null,finished_at=t where id=d.id;
     update public.telegram_certification_review_settings set leased_delivery_id=null,lease_expires_at=null where singleton;
   else raise exception 'TELEGRAM_CERTIFICATION_OUTCOME_INVALID'; end if;
   select * into strict d from public.telegram_certification_deliveries where id=p_delivery_id;
@@ -396,6 +412,12 @@ begin
       insert into public.telegram_certification_review_receipts(delivery_id,submission_id,telegram_user_id,telegram_display_name,telegram_username,action_message_id,outcome,final_status)
         values(d.id,s.id,p_telegram_user_id,display_name,username,p_action_message_id,'already_processed',s.status)
         on conflict(delivery_id) do nothing;
+      insert into public.audit_logs(action,entity_type,entity_id,correlation_id,before_after_summary)
+        values('certification.submission.telegram_already_processed','certification_submission',s.id::text,extensions.gen_random_uuid(),
+          jsonb_build_object('revision',s.review_revision,'reviewSource',s.review_source,
+            'telegram',jsonb_build_object('userId',p_telegram_user_id,'displayName',display_name,'username',username),
+            'reward',jsonb_build_object('scorePoints',s.reward_score_points,'ticketAmount',s.reward_ticket_amount,
+              'stampCount',case when s.membership_platform is null then 0 else 1 end)));
       return jsonb_build_object('outcome','already_processed','status',s.status,'submission_id',s.id);
     end if;
     return jsonb_build_object('outcome','error','error_code',error_code);
@@ -419,7 +441,7 @@ $$;
 
 revoke all on function public.configure_telegram_certification_reviews(text,boolean),
   public.claim_telegram_certification_delivery(text),
-  public.record_telegram_certification_delivery(uuid,text,text,uuid,integer,bigint,integer,text),
+  public.record_telegram_certification_delivery(uuid,text,text,text,uuid,integer,bigint,integer,text),
   public.approve_telegram_certification(text,text,bigint,bigint,text,text),
   public.telegram_certification_review_health(),
   public.maintain_telegram_certification_reviews(),
@@ -427,6 +449,12 @@ revoke all on function public.configure_telegram_certification_reviews(text,bool
   public.capture_telegram_certification_submission() from public,anon,authenticated,service_role;
 grant execute on function public.configure_telegram_certification_reviews(text,boolean),
   public.claim_telegram_certification_delivery(text),
-  public.record_telegram_certification_delivery(uuid,text,text,uuid,integer,bigint,integer,text),
+  public.record_telegram_certification_delivery(uuid,text,text,text,uuid,integer,bigint,integer,text),
   public.approve_telegram_certification(text,text,bigint,bigint,text,text),
   public.telegram_certification_review_health() to service_role;
+
+select cron.schedule(
+  'telegram-certification-review-maintenance',
+  '*/5 * * * *',
+  'select public.maintain_telegram_certification_reviews()'
+);
