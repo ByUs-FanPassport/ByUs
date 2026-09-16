@@ -33,6 +33,10 @@ describe("Elina fan guide", () => {
     expect(container.textContent).toContain(locale === "ko" ? "60명" : "60 exhibition");
     expect(container.textContent).toContain(locale === "ko" ? "비피오 랜덤 케이스 10명" : "10 Beepio random case");
     expect(container.textContent).toContain(locale === "ko" ? "뱅크시 한정판 스태츄 3명" : "3 Banksy limited-edition statue");
+    expect(container.textContent).toContain(locale === "ko" ? "응모권 10장" : "10 raffle tickets");
+    expect(container.textContent).toContain(locale === "ko" ? "9월 19일 00:00(KST)" : "September 19 at 00:00 KST");
+    expect(container.textContent).toContain(locale === "ko" ? "데일리 출석은 하루 1장" : "daily check-in earns 1 per day");
+    expect(container.textContent).not.toMatch(/출석.*응모권 2장|check-in to earn 2|좋아요에는 응모권이 지급되지/);
     expect(container.querySelectorAll("h1")).toHaveLength(1);
     expect(container.querySelector("form")).toBeNull();
   });

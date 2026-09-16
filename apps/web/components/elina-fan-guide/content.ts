@@ -7,7 +7,7 @@ export const elinaFanGuideContent = {
     howToJoin: "팬 인증하고 시작하기",
     viewPrizes: "경품 3종 보기",
     heroNote: "팬 인증·예약 보상은 각각 처음 완료할 때 1회 지급돼요.\n응모권을 받은 뒤 원하는 경품에 직접 응모해 주세요.",
-    stages: ["팬 인증 +1장", "LIVE 예약 +1장", "지금 선물 응모", "방송 당일 +2장"],
+    stages: ["팬 인증 +1장", "LIVE 예약 +1장", "지금 선물 응모", "방송 당일 +10장"],
     steps: [
       {
         label: "01  /  방송 전",
@@ -32,10 +32,10 @@ export const elinaFanGuideContent = {
       },
       {
         label: "04  /  9월 18일 방송 당일",
-        title: "방송을 보고 출석하면\n응모권 2장을 더 받아요.",
-        body: "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 ByUs의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 2장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
+        title: "방송을 보고 출석하면\n응모권 10장을 더 받아요.",
+        body: "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 ByUs의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 10장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
         actions: ["출석할 LIVE 화면 보기", "선물 응모하러 가기"],
-        note: "코드 입력은 9월 18일 오후 8시 30분~9시 30분(KST)에 가능해요. 방송을 보다가 이 ByUs 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
+        note: "코드 입력은 9월 18일 오후 8시 30분부터 9월 19일 00:00(KST), 방송 당일 밤 12시까지 가능해요. 방송을 보다가 이 ByUs 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
       },
     ],
     liveCard: {
@@ -46,7 +46,7 @@ export const elinaFanGuideContent = {
     },
     missionCards: [
       ["Instagram에서 LIVE 시청", "9월 18일 오후 8:30 · KST"],
-      ["ByUs로 돌아와 코드 입력", "출석 완료 시 응모권 +2장"],
+      ["ByUs로 돌아와 코드 입력", "출석 완료 시 응모권 +10장"],
     ],
     historyTitle: "예약과 응모 완료를 확인하세요.",
     historyBody: "MY에서 예약한 LIVE, 내 응모 내역과 발표 후 당첨 여부를 확인할 수 있어요.",
@@ -55,8 +55,8 @@ export const elinaFanGuideContent = {
     faqs: [
       ["방송 전에도 선물에 응모할 수 있나요?", "네. 팬 인증으로 1장, LIVE 예약으로 1장을 받아 바로 응모할 수 있어요. 각 보상은 처음 완료할 때 한 번만 지급돼요."],
       ["예약하거나 출석하면 자동으로 응모되나요?", "아니요. 응모권을 받은 뒤 경품을 고르고 사용할 수량을 확인해 직접 응모해야 해요."],
-      ["이미 팬 인증이나 예약을 했다면요?", "같은 활동의 응모권은 다시 지급되지 않아요. 보유 응모권으로 응모하고, 방송 당일 출석으로 2장을 추가로 받을 수 있어요."],
-      ["좋아요를 누르면 응모권을 받나요?", "좋아요에는 응모권이 지급되지 않아요. 팬 인증, LIVE 예약, 방송 당일 출석으로 모아 주세요."],
+      ["이미 팬 인증이나 예약을 했다면요?", "같은 활동의 응모권은 다시 지급되지 않아요. 보유 응모권으로 응모하고, 방송 당일 출석으로 10장을 추가로 받을 수 있어요."],
+      ["좋아요를 누르면 응모권을 받나요?", "네. 엘리나 페이지에서 좋아요를 처음 완료하면 응모권 1장을 받아요. 첫 댓글도 1장, 데일리 출석은 하루 1장이에요. 같은 좋아요나 댓글을 반복해도 추가 지급되지는 않아요."],
       ["해외에서도 경품을 받을 수 있나요?", "전시 관람권은 더현대 서울 현장에서 수령하고 사용해요. 배송 경품은 대한민국 주소로만 받을 수 있어요. 응모 전 각 경품의 수령 조건을 확인해 주세요."],
       ["당첨되면 어떻게 확인하나요?", "결과 발표 후 MY의 응모 내역에서 확인하세요. 당첨자는 발표 후 7일 안에 수령정보를 입력해야 해요."],
     ],
@@ -74,7 +74,7 @@ export const elinaFanGuideContent = {
     howToJoin: "Verify and get started",
     viewPrizes: "View all 3 prizes",
     heroNote: "Verification and reservation rewards are each granted once. Earning tickets does not enter you automatically.",
-    stages: ["Verify +1 ticket", "Reserve +1 ticket", "Enter now", "LIVE check-in +2"],
+    stages: ["Verify +1 ticket", "Reserve +1 ticket", "Enter now", "LIVE check-in +10"],
     steps: [
       {
         label: "01  /  BEFORE THE LIVE",
@@ -99,10 +99,10 @@ export const elinaFanGuideContent = {
       },
       {
         label: "04  /  SEPTEMBER 18",
-        title: "Watch and check in.\nEarn 2 more tickets.",
-        body: "Watch the LIVE on Instagram, then return to the ByUs LIVE page and enter the code shared during the broadcast. Complete check-in to earn 2 raffle tickets, then use them to enter for your favorite prize.",
+        title: "Watch and check in.\nEarn 10 more tickets.",
+        body: "Watch the LIVE on Instagram, then return to the ByUs LIVE page and enter the code shared during the broadcast. Complete check-in to earn 10 raffle tickets, then use them to enter for your favorite prize.",
         actions: ["Open the LIVE check-in page", "Enter for a prize"],
-        note: "Code entry is open September 18, 8:30–9:30 PM KST. Return to the ByUs LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
+        note: "Code entry is open from September 18 at 8:30 PM until September 19 at 00:00 KST (midnight at the end of September 18). Return to the ByUs LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
       },
     ],
     liveCard: {
@@ -113,7 +113,7 @@ export const elinaFanGuideContent = {
     },
     missionCards: [
       ["Watch on Instagram", "September 18 · 8:30 PM KST"],
-      ["Return to ByUs and enter the code", "Complete check-in to earn +2 tickets"],
+      ["Return to ByUs and enter the code", "Complete check-in to earn +10 tickets"],
     ],
     historyTitle: "Check your reservation and entries.",
     historyBody: "Find your reserved LIVE and raffle entries in MY. Results appear there after the announcement.",
@@ -122,8 +122,8 @@ export const elinaFanGuideContent = {
     faqs: [
       ["Can I enter before the LIVE?", "Yes. Earn 1 ticket from fan verification and 1 from your LIVE reservation, then enter right away. Each reward is granted only once."],
       ["Does reserving or checking in enter me automatically?", "No. After earning tickets, choose a prize, review the quantity and confirm your entry."],
-      ["What if I have already verified or reserved?", "Repeating the same activity does not grant more tickets. Use your current balance, then earn 2 more tickets by checking in during the LIVE."],
-      ["Do likes earn raffle tickets?", "Likes do not earn raffle tickets. Earn them through fan verification, LIVE reservation and check-in."],
+      ["What if I have already verified or reserved?", "Repeating the same activity does not grant more tickets. Use your current balance, then earn 10 more tickets by checking in for the LIVE."],
+      ["Do likes earn raffle tickets?", "Yes. Your first completed like on Elina’s page earns 1 ticket. Your first comment also earns 1, and daily check-in earns 1 per day. Repeating likes or comments does not earn additional tickets."],
       ["Can I receive prizes overseas?", "Exhibition tickets must be collected and used at The Hyundai Seoul. Shipped prizes require an address in South Korea. Check each prize’s collection conditions before entering."],
       ["How do I check whether I won?", "After results are announced, check your entries in MY. Winners must submit recipient details within 7 days of the announcement."],
     ],
