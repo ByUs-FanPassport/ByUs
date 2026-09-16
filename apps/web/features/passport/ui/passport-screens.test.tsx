@@ -64,14 +64,16 @@ describe("passport fan screens", () => {
     expect(screen.getByRole("status", { name })).toHaveAttribute("aria-busy", "true");
   });
 
-  it("renders only the owned issued collection and retains locale in canonical detail links", async () => {
+  it.each(["ko", "en"])("retains the existing collection detail and section links (%s)", async (selectedLocale) => {
+    locale = selectedLocale;
+    const open = locale === "ko" ? "패스포트 보기" : "Open Passport";
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ passports: [passport] }), { status: 200 })));
     const { container } = render(<PassportCollectionScreen />);
     expect(await screen.findByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "KARA · 패스포트 보기" })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
-    expect(screen.getByRole("link", { name: /^15\s*팬 점수$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#activity`);
-    expect(screen.getByRole("link", { name: /^2\s*스탬프$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko#stamp-book`);
-    expect(screen.getByRole("link", { name: "패스포트 보기" })).toHaveAttribute("href", `/passports/${passport.id}?locale=ko`);
+    expect(screen.getByRole("link", { name: `KARA · ${open}` })).toHaveAttribute("href", `/passports/${passport.id}?locale=${locale}`);
+    expect(screen.getByRole("link", { name: locale === "ko" ? /^15\s*팬 점수$/ : /^15\s*Fan Score$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=${locale}#activity`);
+    expect(screen.getByRole("link", { name: locale === "ko" ? /^2\s*스탬프$/ : /^2\s*Stamps$/ })).toHaveAttribute("href", `/passports/${passport.id}?locale=${locale}#stamp-book`);
+    expect(screen.getByRole("link", { name: open })).toHaveAttribute("href", `/passports/${passport.id}?locale=${locale}`);
     expect(container.querySelector("img[data-image-presentation=portrait]")).toBeInTheDocument();
     expect(container.querySelector("#collection")).toBeInTheDocument();
     expect(container.querySelector("a a")).toBeNull();

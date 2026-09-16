@@ -32,8 +32,8 @@ describe("FanStageTooltip", () => {
     vi.useRealTimers();
   });
 
-  it("opens and pins on click, then closes when clicked again", () => {
-    render(<FanStageTooltip celebrityName="KARA" tier="Gold" points={62} stageProgress={withinTierStage} remainingToNextTier={58} locale="ko" />);
+  it.each(["floating", "compact"] as const)("opens and pins the %s trigger on click, then closes when clicked again", (variant) => {
+    render(<FanStageTooltip variant={variant} celebrityName="KARA" tier="Gold" points={62} stageProgress={withinTierStage} remainingToNextTier={58} locale="ko" />);
     const trigger = screen.getByRole("button", { name: /KARA · 골드 1/ });
 
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();

@@ -16,7 +16,7 @@ export type FanStageTooltipProps = {
   stageProgress?: FanStageProgress | null;
   remainingToNextTier?: number;
   locale: "ko" | "en";
-  variant?: "floating" | "inline";
+  variant?: "floating" | "inline" | "compact";
   className?: string;
 };
 
@@ -155,7 +155,7 @@ export function FanStageTooltip({
   const trigger = <button
     ref={triggerRef}
     type="button"
-    className={joinClassNames(styles.trigger, variant === "floating" ? styles.floatingTrigger : styles.inlineTrigger)}
+    className={joinClassNames(styles.trigger, variant === "floating" ? styles.floatingTrigger : variant === "compact" ? styles.compactTrigger : styles.inlineTrigger)}
     aria-label={summary}
     aria-expanded={open}
     aria-controls={tooltipId}
@@ -187,8 +187,9 @@ export function FanStageTooltip({
       tier={tier}
       stageKey={stageProgress?.current.key}
       locale={locale}
-      size={variant === "floating" ? 28 : 40}
+      size={variant === "compact" ? 24 : variant === "floating" ? 28 : 40}
     />
+    {variant === "compact" ? <span className={styles.compactLabel}>{currentStage}</span> : null}
     {variant === "inline" ? <span className={styles.inlineCopy}><strong>{currentStage}</strong><small>LEVEL</small></span> : null}
   </button>;
 

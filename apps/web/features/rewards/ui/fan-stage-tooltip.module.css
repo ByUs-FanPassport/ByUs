@@ -91,6 +91,20 @@
   line-height: 1.15;
 }
 
+.compactTrigger {
+  min-height: 44px;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #816342;
+  text-align: start;
+}
+.compactTrigger:hover { background: #f7f5f1; }
+.compactLabel { min-width: 0; overflow-wrap: anywhere; font-size: 11px; font-weight: 650; line-height: 1.4; }
+
 .tooltip {
   position: fixed;
   z-index: var(--z-tooltip, 60);
