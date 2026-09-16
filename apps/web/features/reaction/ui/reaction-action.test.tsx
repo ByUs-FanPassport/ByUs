@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAuthIntent, persistAuthIntent } from "../../../components/auth-intent";
@@ -58,6 +58,7 @@ describe("ReactionAction", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     privy.ready = true;
     privy.authenticated = true;
     privy.user = { id: "owner-a" };
@@ -67,6 +68,26 @@ describe("ReactionAction", () => {
     vi.clearAllMocks();
     sessionStorage.clear();
     window.history.replaceState({}, "", "/");
+  });
+
+  it.each(["token", "request", "body"])("offers a safe retry when the %s lookup stalls and ignores its late result", async (stage) => {
+    vi.useFakeTimers();
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    if (stage === "token") privy.getAccessToken.mockImplementationOnce(async () => { await pending; return "token"; });
+    const fetcher = vi.fn().mockResolvedValue(response({ reaction: null }));
+    if (stage === "request") fetcher.mockImplementationOnce(async () => { await pending; return response({ reaction: existing() }); });
+    if (stage === "body") fetcher.mockResolvedValueOnce({ ok: true, json: async () => { await pending; return { reaction: existing() }; } });
+    vi.stubGlobal("fetch", fetcher);
+    render(<ReactionAction slug="changha" locale="ko" variant="compact" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_001); });
+    expect(screen.getByRole("button", { name: "다시 확인" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "확인하는 중…" })).not.toBeInTheDocument();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "다시 확인" })); });
+    expect(screen.getByRole("button", { name: "좋아요 남기기" })).toBeEnabled();
+    await act(async () => { release(); });
+    expect(screen.getByRole("button", { name: "좋아요 남기기" })).toBeEnabled();
+    expect(fetcher.mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
   });
 
   it("restores an existing record in StrictMode without attempting a second POST", async () => {

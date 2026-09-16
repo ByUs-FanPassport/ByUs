@@ -291,7 +291,7 @@ describe("approved fanpage", () => {
     render(<CelebrityFanPage celebrity={{ ...kara, locale: "en", socialLinks: links }} locale="en" upcomingLive={{ ...upcomingLive, locale: "en" }} />);
     expect(screen.getByRole("link", { name: "View verification missions" })).toHaveAttribute("href", "/kara?tab=certifications&locale=en#celebrity-content");
     expect(screen.getByRole("link", { name: "CHZZK, new window" })).toHaveTextContent("CHZZK");
-    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === "/api/celebrities/kara/fanpage?locale=en")).toBe(true);
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === "/api/celebrities/kara/fanpage?locale=en")).toBe(true));
     expect(await screen.findByText("No public notices yet.")).toBeInTheDocument();
   });
   it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {

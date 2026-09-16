@@ -1,13 +1,46 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useFanpageResource } from "./use-fanpage-resource";
 let owner = "a";
+let unstableTokenIdentity = false;
 const getAccessToken = vi.fn(async () => "token");
 const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
-vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: true, user: { id: owner }, getAccessToken }) }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: true, user: { id: owner }, getAccessToken: unstableTokenIdentity ? () => getAccessToken() : getAccessToken }) }));
 vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
 const parse = (value: unknown) => value as { name: string };
-beforeEach(() => { owner = "a"; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockClear(); vi.unstubAllGlobals(); });
+beforeEach(() => { owner = "a"; unstableTokenIdentity = false; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockReset().mockResolvedValue("token"); vi.unstubAllGlobals(); });
+afterEach(() => { vi.useRealTimers(); });
+
+it("does not restart a fan lookup when the SDK returns a new token provider", async () => {
+  unstableTokenIdentity = true;
+  let release!: (value: Response) => void;
+  const fetcher = vi.fn(() => new Promise<Response>((resolve) => { release = resolve; }));
+  vi.stubGlobal("fetch", fetcher);
+  const { result, rerender } = renderHook(() => useFanpageResource("/fans", parse, true));
+  await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  rerender();
+  await act(async () => { release(Response.json({ name: "fans" })); });
+  expect(result.current.state).toEqual({ status: "ready", data: { name: "fans" } });
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
+it.each(["token", "request", "body"])("recovers a stalled %s lookup and ignores the late response", async (stage) => {
+  vi.useFakeTimers();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  if (stage === "token") getAccessToken.mockImplementationOnce(async () => { await pending; return "token"; });
+  const fetcher = vi.fn().mockResolvedValue(Response.json({ name: "current" }));
+  if (stage === "request") fetcher.mockImplementationOnce(async () => { await pending; return Response.json({ name: "stale" }); });
+  if (stage === "body") fetcher.mockResolvedValueOnce({ ok: true, json: async () => { await pending; return { name: "stale" }; } });
+  vi.stubGlobal("fetch", fetcher);
+  const { result } = renderHook(() => useFanpageResource("/fans", parse, true));
+  await act(async () => { await vi.advanceTimersByTimeAsync(20_001); });
+  expect(result.current.state.status).toBe("error");
+  await act(async () => { result.current.retry(); });
+  expect(result.current.state).toEqual({ status: "ready", data: { name: "current" } });
+  await act(async () => { release(); });
+  expect(result.current.state).toEqual({ status: "ready", data: { name: "current" } });
+});
 it("shows an anonymous public response while pending, then accepts only the ready owner's response", async () => {
   Object.assign(session, { ready: false, pending: true, ownerId: "a", generation: 1 });
   let resolveAnonymous!: (value: Response) => void;

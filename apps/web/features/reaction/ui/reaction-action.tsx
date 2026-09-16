@@ -3,6 +3,7 @@
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
+import { withRequestDeadline } from "@/features/reliability/client/request-deadline";
 
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
@@ -121,14 +122,18 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
     readAbort.current = controller;
     setCheckState("checking");
     try {
-      const token = await tokenProvider.current();
-      if (!token) throw new Error("missing token");
-      if (controller.signal.aborted) return;
-      const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/reactions`, {
-        headers: { authorization: `Bearer ${token}` }, signal: controller.signal, cache: "no-store",
-      });
-      if (!response.ok) throw new Error("reaction lookup failed");
-      const body = await response.json();
+      // Bound token refresh and body decoding as well as the network request.
+      // Late SDK responses must not restart a timed-out lookup.
+      const body = await withRequestDeadline(async (signal) => {
+        const token = await tokenProvider.current();
+        signal.throwIfAborted();
+        if (!token) throw new Error("missing token");
+        const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/reactions`, {
+          headers: { authorization: `Bearer ${token}` }, signal, cache: "no-store",
+        });
+        if (!response.ok) throw new Error("reaction lookup failed");
+        return response.json();
+      }, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (body?.reaction === null) {
         // A reaction is append-only. Do not let a briefly stale read after our
