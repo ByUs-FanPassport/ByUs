@@ -19,7 +19,7 @@
 .filterMeta p { margin: 0; }
 .filterMeta button { min-height: 44px; padding: 0 4px; border: 0; background: none; color: oklch(38% .2 315); font: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .grid { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:24px; }
-.card { position:relative; min-width:0; flex:0 1 100%; overflow:hidden; border:1px solid var(--color-line); border-radius:var(--radius-collection); background:var(--color-surface); }
+.card { position:relative; min-width:0; flex:0 1 100%; overflow:hidden; border:1px solid var(--color-line); border-radius:var(--radius-collection); background:var(--color-surface); container-type:inline-size; }
 .card[data-passport-owned="true"] {
   border-color: transparent;
   background: linear-gradient(var(--color-surface), var(--color-surface)) padding-box, var(--color-primary-action) border-box;
@@ -60,6 +60,9 @@
   /* Render 14px labels while retaining native 16px inputs to avoid iOS focus zoom. */
   .searchField input, .sortField select { position: absolute; top: 0; left: 0; width: calc(100% / .875); height: calc(44px / .875); min-height: 0; transform: scale(.875); transform-origin: top left; }
   .skeletonInput { height: 44px; }
+}
+@container (min-width: 23rem) {
+  .cardPrimary { flex-direction: row; align-items: center; gap: 8px 12px; }
 }
 @media(min-width:64rem) { .card { flex-basis:calc((100% - 48px)/3); } }
 
