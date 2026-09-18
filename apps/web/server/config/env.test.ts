@@ -38,6 +38,9 @@ const validEnv = {
   KAKAO_TEST_SINK_SECRET: "",
   KAKAO_ALIMTALK_ENROLLMENT_ENABLED: "false",
   SOLAPI_WEBHOOK_SECRET: "",
+  TELEGRAM_BUG_REPORT_BOT_TOKEN: "",
+  TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: "",
+  TELEGRAM_BUG_REPORT_OPERATOR_SECRET: "",
   YOUTUBE_DATA_API_KEY: "",
   VERCEL_ANALYTICS_TOKEN: "",
   VERCEL_ANALYTICS_PROJECT_ID: "",
@@ -108,6 +111,22 @@ describe("public environment", () => {
 });
 
 describe("server environment", () => {
+  it("keeps Telegram credentials server-only and validates provider-safe secrets", () => {
+    const configured = {
+      ...validEnv,
+      TELEGRAM_BUG_REPORT_BOT_TOKEN: "8135965800:abcdefghijklmnopqrstuvwxyz_ABCDEFGH",
+      TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: "webhook_secret_abcdefghijklmnopqrstuvwxyz",
+      TELEGRAM_BUG_REPORT_OPERATOR_SECRET: "operator_secret_abcdefghijklmnopqrstuvwxyz",
+    };
+    expect(parseServerEnv(configured)).toMatchObject({
+      TELEGRAM_BUG_REPORT_BOT_TOKEN: configured.TELEGRAM_BUG_REPORT_BOT_TOKEN,
+      TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: configured.TELEGRAM_BUG_REPORT_WEBHOOK_SECRET,
+      TELEGRAM_BUG_REPORT_OPERATOR_SECRET: configured.TELEGRAM_BUG_REPORT_OPERATOR_SECRET,
+    });
+    expect(Object.keys(parsePublicEnv(configured)).some((key) => key.startsWith("TELEGRAM_"))).toBe(false);
+    expect(() => parseServerEnv({ ...configured, TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: "contains spaces" })).toThrowError(/TELEGRAM_BUG_REPORT_WEBHOOK_SECRET/);
+  });
+
   it("keeps SMS enrollment off by default and requires complete server-only configuration", () => {
     const legacy: Record<string, string> = { ...validEnv };
     for (const key of Object.keys(legacy)) if (key.startsWith("PHONE_SMS_")) delete legacy[key];
@@ -202,6 +221,7 @@ describe("server environment", () => {
         !key.startsWith("VERCEL_ANALYTICS_") &&
         key !== "YOUTUBE_DATA_API_KEY" &&
         key !== "SOLAPI_WEBHOOK_SECRET" &&
+        !key.startsWith("TELEGRAM_BUG_REPORT_") &&
         !key.endsWith("_SITE_VERIFICATION") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
         key !== "PRIVY_APPLE_LOGIN_ENABLED" &&

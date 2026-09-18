@@ -46,7 +46,8 @@
     "security:verify": "node scripts/verify-security-dependencies.mjs",
     "security:ws-canary": "node scripts/verify-websocket-canary.mjs",
     "media:prepare-live-preview": "node scripts/prepare-live-preview.mjs",
-    "test:media-preview": "node --test scripts/live-preview-pipeline.contract.test.mjs"
+    "test:media-preview": "node --test scripts/live-preview-pipeline.contract.test.mjs",
+    "telegram:bugs": "node scripts/telegram-bug-reports.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

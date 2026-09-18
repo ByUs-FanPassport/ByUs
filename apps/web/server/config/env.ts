@@ -57,6 +57,10 @@ const optionalNonEmptyString = z.preprocess(
 const booleanFlag = z.enum(["true", "false"]).default("false").transform((value) => value === "true");
 const privyAppEnvironment = z.enum(["development", "production"]).default("production");
 const dataEnvironment = z.enum(["development", "production"]);
+const telegramSecret = z.preprocess(
+  (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.string().trim().min(32).max(256).regex(/^[A-Za-z0-9_-]+$/).optional(),
+);
 const PRODUCTION_SUPABASE_HOSTNAME = "gmrykvmtmuaeswpajteq.supabase.co";
 
 function isProductionHostname(value: string): boolean {
@@ -128,6 +132,12 @@ const serverEnvSchema = publicEnvSchema
       (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
       z.string().min(16).max(256).optional(),
     ),
+    TELEGRAM_BUG_REPORT_BOT_TOKEN: z.preprocess(
+      (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.string().trim().regex(/^\d{8,12}:[A-Za-z0-9_-]{30,}$/).optional(),
+    ),
+    TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: telegramSecret,
+    TELEGRAM_BUG_REPORT_OPERATOR_SECRET: telegramSecret,
   })
   .superRefine((value, context) => {
     if (value.PHONE_SMS_ENROLLMENT_MODE === "solapi" && (!value.PHONE_SMS_SOLAPI_API_KEY || !value.PHONE_SMS_SOLAPI_API_SECRET || !value.PHONE_SMS_SENDER || !value.PHONE_SMS_OTP_SECRET)) {
