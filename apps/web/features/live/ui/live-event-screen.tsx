@@ -1114,6 +1114,8 @@ export function LiveEventScreen({
       if (!draft) return;
       resumedIntentRef.current = intentId;
       setFanCode(draft);
+      fanCodeRef.current?.focus({ preventScroll: true });
+      fanCodeRef.current?.scrollIntoView?.({ block: "center", behavior: "instant" });
       void submitAttendance(draft);
     }
   }, [attendancePhase, authenticated, reserve, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);

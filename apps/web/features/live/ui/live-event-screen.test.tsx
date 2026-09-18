@@ -569,6 +569,7 @@ describe("LiveEventScreen", () => {
     missing.viewer.passport = "active";
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeVisible();
+    await waitFor(() => expect(document.getElementById("fan-code")).toHaveFocus());
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
     expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBeNull();
   });
