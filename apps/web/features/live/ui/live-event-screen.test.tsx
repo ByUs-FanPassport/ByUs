@@ -11,6 +11,7 @@ let userId = "owner-a";
 let userAvailable = true;
 const session = { ready: true, pending: false, ownerId: "owner-a" as string | null, generation: 0 };
 const push = vi.fn();
+const replace = vi.fn();
 let query = "locale=ko";
 const analytics = vi.hoisted(() => ({
   pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:live_page_view:11111111-1111-4111-8111-111111111111"),
@@ -24,7 +25,7 @@ vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => ses
 vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, replace }),
   usePathname: () => "/live/kara-nualeaf",
   useSearchParams: () => new URLSearchParams(query),
 }));
@@ -80,6 +81,7 @@ const attendanceResult = {
     updatedLevel: "Silver",
     leveledUp: false,
   },
+  replayed: false,
 };
 
 function payload(primaryAction = "reserve", withReservation = false) {
@@ -130,6 +132,25 @@ function ifewPayload(primaryAction = "reserve") {
 }
 
 describe("LiveEventScreen", () => {
+  it('promotes attendance and exposes the input during its configured window even before scheduled LIVE status changes', async () => {
+    const response = payload();
+    const now = Date.now();
+    const live = { ...response.live, attendanceWindow: { opensAt: new Date(now - 60_000).toISOString(), closesAt: new Date(now + 60_000).toISOString() } };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ ...response, live }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByRole('link', { name: '출석코드 입력하기' })).toHaveAttribute('href', '#fan-code');
+    expect(screen.getByRole('textbox', { name: 'Fan Code 입력' })).toBeEnabled();
+  });
+  it('does not invite users to enter codes after the configured window closes', async () => {
+    const response = payload('watch_live');
+    const now = Date.now();
+    const live = { ...response.live, effectiveStatus: 'live', attendanceWindow: { opensAt: new Date(now - 120_000).toISOString(), closesAt: new Date(now - 60_000).toISOString() } };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ ...response, live }));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByText('출석 인증 시간이 종료되었어요.')).toBeVisible();
+    expect(screen.queryByRole('link', { name: '출석코드 입력하기' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Fan Code 입력' })).not.toBeInTheDocument();
+  });
   it.each(["locked", "eligible", "claimed"] as const)("preserves the collectible %s state in the compact reward card", async (state) => {
     const response = payload();
     const collectible = {
@@ -297,6 +318,7 @@ describe("LiveEventScreen", () => {
     Object.assign(session, { ready: true, pending: false, ownerId: "owner-a", generation: 0 });
     query = "locale=ko";
     push.mockReset();
+    replace.mockReset();
     sessionStorage.clear();
     vi.restoreAllMocks();
     getAccessToken.mockReset().mockResolvedValue("access-token");
@@ -525,6 +547,89 @@ describe("LiveEventScreen", () => {
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ code: "KARA2026" });
     expect(sessionStorage.getItem(draftRef)).toBeNull();
     expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
+  });
+
+  it("submits an authenticated attendanceCode deep link once and removes the code from the URL", async () => {
+    query = "locale=ko&attendanceCode=%20elina%202026%20";
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(livePayload))
+      .mockResolvedValueOnce(Response.json(attendanceResult));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeInTheDocument();
+    const attendanceRequests = fetchMock.mock.calls.filter(([url]) => String(url).includes("/attendance"));
+    expect(attendanceRequests).toHaveLength(1);
+    expect(JSON.parse(String(attendanceRequests[0][1]?.body))).toEqual({ code: "ELINA2026" });
+    expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko#fan-code");
+  });
+
+  it("sends a guest attendanceCode deep link through login without exposing the code in the intent", async () => {
+    authenticated = false;
+    Object.assign(session, { ownerId: null });
+    query = "locale=ko&attendanceCode=ELINA2026";
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(livePayload));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
+    expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko#fan-code");
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBe("ELINA2026");
+    const stored = [...Array(sessionStorage.length)]
+      .map((_, index) => sessionStorage.key(index))
+      .find((key) => key?.startsWith("byus:auth-intent:v1:"));
+    expect(stored).toBeTruthy();
+    expect(JSON.stringify(JSON.parse(sessionStorage.getItem(stored!)!))).not.toContain("ELINA2026");
+    expect(String(push.mock.calls[0][0])).not.toContain("ELINA2026");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/attendance"))).toHaveLength(0);
+  });
+
+  it("keeps a malformed attendanceCode deep link on the form without logging in or posting", async () => {
+    query = "locale=ko&attendanceCode=ELINA-2026";
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(livePayload));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("영문과 숫자로 4자 이상 입력해 주세요.");
+    expect(replace).toHaveBeenCalledWith("/live/kara-nualeaf?locale=ko#fan-code");
+    expect(push).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/attendance"))).toHaveLength(0);
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Fan Code 입력" })).toHaveFocus());
+  });
+
+  it("explains an authentication failure while automatically submitting a deep link", async () => {
+    query = "locale=ko&attendanceCode=ELINA2026";
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(livePayload))
+      .mockResolvedValueOnce(Response.json(
+        { error: { code: "AUTHENTICATION_REQUIRED" } },
+        { status: 401 },
+      ));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("로그인이 만료됐어요. 다시 로그인해 주세요.");
+  });
+
+  it("identifies an already completed attendance returned from a deep link", async () => {
+    query = "locale=ko&attendanceCode=ELINA2026";
+    const livePayload = payload("watch_live");
+    livePayload.live.effectiveStatus = "live";
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json(livePayload))
+      .mockResolvedValueOnce(Response.json({ ...attendanceResult, replayed: true }));
+
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+
+    expect(await screen.findByText("이미 완료한 출석 기록을 안전하게 확인했어요.")).toBeVisible();
   });
 
   it("QA-RSVP-001 sends a fan without a Passport to verification without posting a reservation", async () => {

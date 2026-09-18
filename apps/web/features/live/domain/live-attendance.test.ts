@@ -36,6 +36,7 @@ describe("live attendance contract", () => {
       attendedAt: "2026-07-21T12:00:00.000Z",
       scorePoints: 3,
       stampMintStatus: "queued",
+      replayed: true,
       completion: {
         passportId: "33333333-3333-4333-8333-333333333333",
         earnedStamp: {
@@ -77,6 +78,7 @@ describe("live attendance contract", () => {
         updatedLevel: "Silver",
         leveledUp: false,
       },
+      replayed: true,
     });
   });
 

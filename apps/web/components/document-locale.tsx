@@ -16,7 +16,7 @@ export function DocumentLocale() {
     const callbackCookie = pathname === "/settings/kakao/callback"
       ? document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("byus_locale="))?.slice("byus_locale=".length)
       : null;
-    const locale = requestLocale(pathname, requestedLocale, callbackCookie);
+    const locale = requestLocale(pathname, requestedLocale, callbackCookie, navigator.language);
     document.documentElement.lang = locale;
     setLocale(locale);
   }, [pathname, requestedLocale, setLocale]);

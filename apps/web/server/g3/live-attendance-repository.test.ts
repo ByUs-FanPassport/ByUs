@@ -16,6 +16,7 @@ const rpcResult = {
   attendedAt: "2026-07-21T12:00:00.000Z",
   scorePoints: 3,
   stampMintStatus: "queued",
+  replayed: true,
   completion: {
     passportId: "66666666-6666-4666-8666-666666666666",
     earnedStamp: {
@@ -37,7 +38,7 @@ describe("SupabaseLiveAttendanceRepository", () => {
     const rpc = vi.fn().mockResolvedValue({ data: rpcResult, error: null });
     const repository = new SupabaseLiveAttendanceRepository({ rpc }, () => stampId);
     const result = await repository.attend({ appUserId, liveSlug: "kara-first-live", idempotencyKey, normalizedCode: "KARA2026", inputFormatValid: true });
-    expect(rpc).toHaveBeenCalledWith("attend_owned_live_event", {
+    expect(rpc).toHaveBeenCalledWith("attend_owned_live_event_with_replay", {
       p_app_user_id: appUserId,
       p_live_slug: "kara-first-live",
       p_idempotency_key: idempotencyKey,
@@ -49,6 +50,7 @@ describe("SupabaseLiveAttendanceRepository", () => {
     });
     expect(result.attendance).toMatchObject({ id: rpcResult.attendanceId, scorePoints: 3 });
     expect(result.completion).toEqual(rpcResult.completion);
+    expect(result.replayed).toBe(true);
     expect(result).not.toHaveProperty("code");
   });
 

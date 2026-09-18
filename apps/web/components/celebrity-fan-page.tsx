@@ -37,6 +37,7 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import styles from "@/features/fanpage/ui/fanpage.module.css";
 import { CreatorRolesText } from "./fan-ui/creator-roles";
 import { ElinaMissionEntry } from "@/features/live/ui/elina-mission-entry";
+import { ElinaAttendanceEntry } from "@/features/live/ui/elina-attendance-entry";
 import { FanTicketGuide } from "@/features/tickets/ui/fan-ticket-guide";
 import { useByUsSession } from "./byus-session-provider";
 export { flattenLiveCatalog } from "@/features/fanpage/domain/live-catalog";
@@ -94,6 +95,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
         <CreatorHeroPicture locale={locale} slug={celebrity.slug} image={celebrity.image} className={styles.heroPicture} priority /><div className={styles.scrim} aria-hidden="true" />
         <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><CreatorRolesText roles={celebrity.roles} locale={locale} /><p>{ko ? "최근 활동과 LIVE 소식을 한곳에서" : "Recent activity and LIVE updates in one place."}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { const socialLabel = socialLabels[locale][social.platform]; return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabel}, ${ko ? "새 창" : "new window"}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel}</span></a>; })}</div>{sessionReady ? <><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /><FanCommunity slug={celebrity.slug} locale={locale} /></> : null}</div>
       </section>
+      <ElinaAttendanceEntry celebritySlug={celebrity.slug} locale={locale} />
       <nav className={styles.tabs} aria-label={ko ? `${celebrity.name} 팬페이지 메뉴` : `${celebrity.name} fan page menu`}>{mainTabs.map((value) => <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{labels[locale][value]}</Link>)}</nav>
       <section className={`${styles.fanbar} ${passport ? styles.ownedFanbar : ""}`} aria-label={ko ? "내 팬 활동" : "My fan activity"}>
         {!sessionReady || (auth.authenticated && my.state.status === "loading") ? <p role="status">{ko ? "내 팬 활동을 확인하고 있어요." : "Loading your fan activity."}</p> : auth.authenticated && my.state.status === "error" ? <p role="alert">{ko ? "내 팬 활동을 불러오지 못했어요." : "Couldn't load your fan activity."} <button onClick={my.retry}>{ko ? "다시 시도" : "Retry"}</button></p> : passport ? <>

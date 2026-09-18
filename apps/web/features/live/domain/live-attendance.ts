@@ -31,6 +31,7 @@ const atomicAttendanceResultSchema = z.object({
   attendedAt: z.string().datetime({ offset: true }),
   scorePoints: z.literal(3),
   stampMintStatus: mintStatusSchema,
+  replayed: z.boolean(),
   completion: fanActivityCompletionSchema,
 }).strict().superRefine((result, context) => {
   if (
@@ -61,6 +62,7 @@ export const createLiveAttendanceResponseSchema = z.object({
     }).strict(),
   }).strict(),
   completion: fanActivityCompletionSchema,
+  replayed: z.boolean(),
 }).strict().superRefine((result, context) => {
   if (
     result.completion.passportId !== result.attendance.passportId
@@ -94,5 +96,6 @@ export function projectAtomicAttendanceResult(value: unknown): CreateLiveAttenda
       },
     },
     completion: result.completion,
+    replayed: result.replayed,
   });
 }

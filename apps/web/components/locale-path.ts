@@ -20,7 +20,15 @@ export function withLocalePath(path: string, locale: AppLocale, depth = 0): stri
   }
 }
 
-export function requestLocale(pathname: string, requested: string | null, callbackCookie?: string | null): AppLocale {
+export function requestLocale(pathname: string, requested: string | null, callbackCookie?: string | null, acceptLanguage?: string | null): AppLocale {
   const selected = requested ?? (pathname === "/settings/kakao/callback" ? callbackCookie : null);
-  return selected === "en" ? "en" : "ko";
+  if (selected === "ko" || selected === "en") return selected;
+  const preferred = (acceptLanguage ?? "").split(",").map((entry) => {
+    const [tag, ...parameters] = entry.trim().split(";");
+    const quality = parameters.find((parameter) => parameter.trim().startsWith("q="));
+    const weight = quality === undefined ? 1 : Number(quality.trim().slice(2));
+    return { tag: tag.trim().toLowerCase(), weight };
+  }).filter(({ tag, weight }) => tag && Number.isFinite(weight) && weight > 0 && weight <= 1)
+    .sort((a, b) => b.weight - a.weight)[0]?.tag;
+  return preferred && /^ko(?:-[a-z0-9]+)*$/.test(preferred) ? "ko" : "en";
 }

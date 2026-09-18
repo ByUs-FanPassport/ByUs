@@ -77,7 +77,7 @@ export class SupabaseLiveAttendanceRepository implements LiveAttendanceRepositor
   }): Promise<CreateLiveAttendanceResponse> {
     const stampId = this.createId();
     const operationKey = `byus:stamp:v1:${stampId}`;
-    const { data, error } = await this.client.rpc("attend_owned_live_event", {
+    const { data, error } = await this.client.rpc("attend_owned_live_event_with_replay", {
       p_app_user_id: input.appUserId,
       p_live_slug: input.liveSlug,
       p_idempotency_key: input.idempotencyKey,

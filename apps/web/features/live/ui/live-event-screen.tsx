@@ -3,6 +3,8 @@
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { LiveTimeIndicator } from "./live-time-indicator";
+import { AttendanceSpotlight } from './attendance-spotlight';
+import { useAttendanceWindow } from './use-attendance-window';
 import { liveWatchHref } from "../domain/live-watch-link";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -146,6 +148,7 @@ const copy = {
       unavailable:
         "지금은 출석을 확인할 수 없어요. 잠시 후 다시 시도해 주세요.",
       wallet: "Passport 준비가 끝나지 않았어요. 잠시 후 다시 시도해 주세요.",
+      authenticationRequired: "로그인이 만료됐어요. 다시 로그인해 주세요.",
       successTitle: "LIVE 출석을 남겼어요",
       successHelper: "Attendance Stamp, Fan Score +3, 응모권 2장이 기록되었습니다.",
       replay: "이미 완료한 출석 기록을 안전하게 확인했어요.",
@@ -227,6 +230,7 @@ const copy = {
       rateLimited: "Too many attempts. Try again in {time}.",
       unavailable: "Attendance can’t be verified right now. Try again shortly.",
       wallet: "Your Passport is still getting ready. Try again shortly.",
+      authenticationRequired: "Your sign-in expired. Please sign in again.",
       successTitle: "Your LIVE attendance is recorded",
       successHelper: "You earned an Attendance Stamp, +3 Fan Score, and 2 raffle tickets.",
       replay: "Your completed attendance record was safely retrieved.",
@@ -563,6 +567,7 @@ export function LiveEventScreen({
     && view.viewerOwnerId === sessionOwnerId
     && view.viewerGeneration === session.generation;
   const [reservePending, setReservePending] = useState(false);
+  const attendancePhase = useAttendanceWindow(view.kind === 'ready' ? view.data.live : null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [reservationCompletion, setReservationCompletion] =
@@ -588,6 +593,7 @@ export function LiveEventScreen({
   const attendanceKeyRef = useRef<string | null>(null);
   const attendanceAttemptsRef = useRef(0);
   const resumedIntentRef = useRef<string | null>(null);
+  const attendanceDeepLinkRef = useRef<string | null>(null);
   const liveReadController = useRef<AbortController | null>(null);
   const hasPublicViewRef = useRef(Boolean(initialData));
   const reservationControllerRef = useRef<AbortController | null>(null);
@@ -991,7 +997,7 @@ export function LiveEventScreen({
         setFanCode("");
         attendanceKeyRef.current = null;
         attendanceAttemptsRef.current = 0;
-        setAttendance({ kind: "success", result, replayed: replayedRequest });
+        setAttendance({ kind: "success", result, replayed: result.replayed || replayedRequest });
         const intentId = searchParams.get("authIntent");
         if (intentId) consumeAuthIntent(getSessionStorage(), intentId);
         getSessionStorage().removeItem(`byus:fan-code-draft:${slug}`);
@@ -1038,6 +1044,31 @@ export function LiveEventScreen({
     event.preventDefault();
     await submitAttendance(fanCode);
   }
+
+  useEffect(() => {
+    if (!searchParams.has("attendanceCode")) {
+      attendanceDeepLinkRef.current = null;
+      return;
+    }
+    if (
+      !sessionReady ||
+      view.kind !== "ready" ||
+      (authenticated && !viewerMatchesSession)
+    ) return;
+
+    const rawCode = searchParams.get("attendanceCode") ?? "";
+    const deepLinkKey = `${slug}:${rawCode}`;
+    if (attendanceDeepLinkRef.current === deepLinkKey) return;
+    attendanceDeepLinkRef.current = deepLinkKey;
+
+    const normalizedCode = normalizeFanCode(rawCode);
+    setFanCode(normalizedCode);
+    const cleanQuery = new URLSearchParams(searchParams.toString());
+    cleanQuery.delete("attendanceCode");
+    const queryString = cleanQuery.toString();
+    router.replace(`${pathname}${queryString ? `?${queryString}` : ""}#fan-code` as Route);
+    void submitAttendance(rawCode);
+  }, [authenticated, pathname, router, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
 
   useEffect(() => {
     if (!sessionReady || !authenticated || !viewerMatchesSession || view.kind !== "ready") return;
@@ -1165,13 +1196,15 @@ export function LiveEventScreen({
           ? attendanceCopy.notOpen
           : attendance.code === "ATTENDANCE_ENDED"
             ? attendanceCopy.attendanceEnded
-        : attendance.code === "FORMAT"
-          ? attendanceCopy.format
-          : attendance.code === "WALLET_NOT_READY"
-            ? attendanceCopy.wallet
-            : attendance.code === "PASSPORT_REQUIRED"
-              ? attendanceCopy.passport
-              : attendanceCopy.unavailable
+          : attendance.code === "FORMAT"
+            ? attendanceCopy.format
+            : attendance.code === "AUTHENTICATION_REQUIRED"
+              ? attendanceCopy.authenticationRequired
+              : attendance.code === "WALLET_NOT_READY"
+                ? attendanceCopy.wallet
+                : attendance.code === "PASSPORT_REQUIRED"
+                  ? attendanceCopy.passport
+                  : attendanceCopy.unavailable
       : attendance.kind === "rate-limited"
         ? attendanceCopy.rateLimited.replace("{time}", formatRetry(retrySeconds))
         : null;
@@ -1278,6 +1311,12 @@ export function LiveEventScreen({
           <ArrowLeft aria-hidden="true" />
           {c.back}
         </Link>
+        {attendancePhase === 'open' && attendance.kind !== 'success' && live.attendanceWindow && <AttendanceSpotlight
+          locale={locale}
+          closesAt={live.attendanceWindow.closesAt}
+          href="#fan-code"
+          onClick={() => { requestAnimationFrame(() => { (fanCodeInputRef.current ?? fanCodeRef.current)?.focus(); fanCodeRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' }); }); }}
+        />}
         <div className={styles.detailLayout}>
           <div className={styles.heroMedia}>
             <EventPhoto photos={live.photos} src={live.heroImage.url} alt={live.heroImage.alt} locale={locale} surface="detail" priority sizes="(min-width: 1440px) 960px, (min-width: 1024px) 66vw, calc(100vw - 32px)" />
@@ -1453,6 +1492,7 @@ export function LiveEventScreen({
               ref={fanCodeRef}
               id="fan-code"
               className={styles.fanCode}
+              data-attendance-open={attendancePhase === 'open' && attendance.kind !== 'success' || undefined}
               tabIndex={-1}
               aria-labelledby={attendance.kind === "success" ? undefined : "fan-code-title"}
               aria-label={attendance.kind === "success" ? attendanceCopy.successTitle : undefined}
@@ -1506,14 +1546,15 @@ export function LiveEventScreen({
                 <div className={styles.fanCodeContent}>
                   <div className={styles.fanCodeIntro}>
                     <div className={styles.fanCodeHeading}>
-                      <h2 id="fan-code-title">{eventCopy?.fanCode ?? c.fanCode}</h2>
-                      {live.effectiveStatus !== "scheduled" ? <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p> : null}
+                      {attendancePhase === 'open' && <p className={styles.attendanceOpenLabel}><Radio aria-hidden="true" />{locale === 'ko' ? '출석 접수 중' : 'CHECK-IN OPEN'}</p>}
+                      <h2 id="fan-code-title">{attendancePhase === 'open' ? locale === 'ko' ? '지금 Fan Code를 입력해 주세요' : 'Enter your Fan Code now' : eventCopy?.fanCode ?? c.fanCode}</h2>
+                      {live.effectiveStatus !== "scheduled" || attendancePhase === 'open' ? <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p> : null}
                     </div>
                     <div className={styles.fanCodeIcon} data-fan-code-header-icon aria-hidden="true">
                       <TicketCheck />
                     </div>
                   </div>
-                  {live.effectiveStatus === "scheduled" ? (
+                  {attendancePhase === 'closed' ? <p className={styles.attendanceNotice}><Clock3 aria-hidden="true" />{attendanceCopy.attendanceEnded}</p> : attendancePhase === 'upcoming' || (live.effectiveStatus === "scheduled" && attendancePhase !== 'open') ? (
                     <p className={styles.attendanceNotice} data-before-live>
                       <Clock3 aria-hidden="true" />
                       {attendanceCopy.beforeLive}

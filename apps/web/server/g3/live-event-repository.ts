@@ -45,6 +45,7 @@ export interface LiveEventRecord {
   slug: string;
   liveType?: "general" | "recurring";
   attendanceConfigured?: boolean;
+  attendanceWindow?: { opensAt: string; closesAt: string } | null;
   sourceStatus: EffectiveLiveStatus;
   startsAt: string;
   endsAt: string | null;
@@ -193,6 +194,7 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
         id: record.id,
         liveType: record.liveType ?? "general",
         attendanceConfigured: record.attendanceConfigured ?? true,
+        attendanceWindow: record.attendanceWindow ?? null,
         slug: record.slug,
         missionsAvailable,
         effectiveStatus,
@@ -397,6 +399,9 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
       slug: event.slug,
       liveType: event.live_type ?? "general",
       attendanceConfigured: event.attendance_valid_from != null && event.attendance_valid_until != null,
+      attendanceWindow: event.attendance_valid_from && event.attendance_valid_until
+        ? { opensAt: event.attendance_valid_from, closesAt: event.attendance_valid_until }
+        : null,
       sourceStatus: event.content_status,
       startsAt: event.starts_at,
       endsAt: event.ends_at,

@@ -36,7 +36,7 @@ describe("page locale proxy", () => {
     expect(response.headers.get("x-frame-options")).toBe("DENY");
   });
   it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
-    const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { "x-byus-pathname": "/" } }));
+    const response = proxy(new NextRequest(`https://byus.example${path}?locale=en&lang=en`, { headers: { "x-byus-pathname": "/" } }));
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
     expect(response.headers.get("x-middleware-request-x-byus-pathname")).toBe(path);
   });
@@ -51,29 +51,61 @@ describe("page locale proxy", () => {
     expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("en");
   });
 
-  it("uses Korean when the URL does not select a locale", () => {
+  it("uses English when the URL and browser do not select a locale", () => {
     const request = new NextRequest("https://byus.example/passports", {
       headers: { cookie: "byus_locale=en" },
     });
     const response = proxy(request);
 
-    expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("ko");
+    expect(new URL(response.headers.get('location')!).searchParams.get('locale')).toBe('en');
   });
 
-  it("defaults invalid locale input to Korean even when a stale cookie is present", () => {
+  it("defaults invalid locale input to English even when a stale cookie is present", () => {
     const response = proxy(
       new NextRequest("https://byus.example/?locale=fr", {
         headers: { cookie: "byus_locale=en" },
       }),
     );
 
-    expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("ko");
+    expect(new URL(response.headers.get('location')!).searchParams.get('locale')).toBe('en');
+  });
+
+  it.each([['ko-KR,ko;q=0.9', 'ko'], ['en-US,ko;q=0.8', 'en'], ['ja-JP', 'en']])('preserves attendance and login return paths while selecting %s', (language, expected) => {
+    for (const path of ['/live/elina?attendanceCode=ELINA2026#fan-code', '/login?returnTo=%2Flive%2Felina%3FattendanceCode%3DELINA2026%23fan-code']) {
+      const original = new URL(path, 'https://byus.example');
+      const result = proxy(new NextRequest(original, { headers: { 'accept-language': language } }));
+      const destination = new URL(result.headers.get('location')!);
+      expect(result.status).toBe(307);
+      expect(destination.searchParams.get('locale')).toBe(expected);
+      expect(destination.searchParams.get('attendanceCode')).toBe(original.searchParams.get('attendanceCode'));
+      expect(destination.searchParams.get('returnTo')).toBe(original.searchParams.get('returnTo'));
+      expect(destination.hash).toBe(original.hash);
+      expect(result.headers.get('cache-control')).toContain('no-store');
+    }
+  });
+  it('does not redirect explicit languages or static assets', () => {
+    for (const path of ['/live/elina?locale=ko', '/live/elina?locale=en', '/sw.js', '/manifest.webmanifest']) {
+      expect(proxy(new NextRequest(`https://byus.example${path}`)).headers.has('location')).toBe(false);
+    }
+  });
+  it('normalizes duplicate locale parameters without looping or losing the code', () => {
+    const first = proxy(new NextRequest('https://byus.example/live/elina?locale=en&locale=ko&attendanceCode=ELINA2026'));
+    const destination = new URL(first.headers.get('location')!);
+    expect(destination.searchParams.getAll('locale')).toEqual(['en']);
+    expect(destination.searchParams.get('attendanceCode')).toBe('ELINA2026');
+    expect(proxy(new NextRequest(destination)).headers.has('location')).toBe(false);
+  });
+  it('does not replay a server action through a language redirect', () => {
+    const response = proxy(new NextRequest('https://byus.example/live/elina', { method: 'POST', headers: { 'accept-language': 'ko-KR' } }));
+    expect(response.headers.has('location')).toBe(false);
+    expect(response.headers.get('x-middleware-request-x-byus-locale')).toBe('ko');
   });
 
   it("uses callback cookie only when query is absent and localizes manifest requests", () => {
     for (const [path, locale] of [["/settings/kakao/callback", "en"], ["/settings/kakao/callback?locale=ko", "ko"], ["/manifest.webmanifest?locale=en", "en"]]) {
       const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { cookie: "byus_locale=en" } }));
-      expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe(locale);
+      const location = response.headers.get('location');
+      expect(location ? new URL(location).searchParams.get('locale') : response.headers.get("x-middleware-request-x-byus-locale")).toBe(locale);
     }
   });
 

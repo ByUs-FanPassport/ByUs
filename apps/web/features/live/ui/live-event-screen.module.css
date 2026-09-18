@@ -310,6 +310,18 @@
   line-height: 1.2;
   letter-spacing: -0.03em;
 }
+.fanCode[data-attendance-open="true"] {
+  border: 2px solid #c92b77;
+  padding: 28px;
+  background: radial-gradient(ellipse at 100% 0%, #ffeed4, transparent 65%), #fff6fa;
+  box-shadow: 0 12px 30px -24px #9e236b;
+}
+.fanCode[data-attendance-open="true"] h2 { font-size: clamp(24px, 2.5vw, 30px); line-height: 1.3; letter-spacing: -.025em; }
+.fanCode .attendanceOpenLabel { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; color: #a91e5c; font-size: 12px; font-weight: 850; }
+.attendanceOpenLabel svg { width: 16px; height: 16px; }
+.fanCode[data-attendance-open="true"] input { min-height: 58px; background: #fff; border: 1px solid #c96292; font-size: 20px; letter-spacing: .08em; }
+.fanCode[data-attendance-open="true"] .fanCodeIcon { background: #ffeab7; color: #992151; }
+@media (max-width: 600px) { .fanCode[data-attendance-open="true"] { padding: 20px; } }
 .section p,
 .fanCode p {
   max-width: 70ch;

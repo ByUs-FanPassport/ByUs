@@ -42,6 +42,12 @@ function source(overrides: Partial<LiveEventDataSource> = {}): LiveEventDataSour
 }
 
 describe("DefaultLiveEventRepository", () => {
+  it('exposes the configured attendance window independently of the broadcast schedule', async () => {
+    const attendanceWindow = { opensAt: '2026-07-24T10:55:00Z', closesAt: '2026-07-24T12:30:00Z' };
+    const repository = new DefaultLiveEventRepository(source({ findPublishedEvent: async () => ({ ...event, attendanceWindow }) }));
+    const result = await repository.findPublishedBySlug({ slug: event.slug, locale: 'ko', appUserId: null, now: new Date('2026-07-24T11:30:00Z') });
+    expect(result?.live).toHaveProperty('attendanceWindow', attendanceWindow);
+  });
   it("keeps ended IfeW history without presenting the TikTok event listing as a replay", async () => {
     const slug = "ifew-100-days-tiktok-20260912";
     const repository = new DefaultLiveEventRepository(source({

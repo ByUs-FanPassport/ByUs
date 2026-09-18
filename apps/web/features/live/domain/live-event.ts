@@ -70,6 +70,7 @@ export const publicLiveEventSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   liveType: z.enum(["general", "recurring"]).optional(),
   attendanceConfigured: z.boolean().optional(),
+  attendanceWindow: z.object({ opensAt: isoTimestamp, closesAt: isoTimestamp }).nullable().optional(),
   effectiveStatus: effectiveLiveStatusSchema,
   startsAt: isoTimestamp,
   endsAt: isoTimestamp.nullable(),

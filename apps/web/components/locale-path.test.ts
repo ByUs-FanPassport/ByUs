@@ -24,6 +24,19 @@ describe("locale navigation", () => {
     expect(withLocalePath('/admin/notices?lang=ko', 'en')).toBe('/admin/notices?lang=en');
     expect(requestLocale('/settings/kakao/callback', null, 'en')).toBe('en');
     expect(requestLocale('/settings/kakao/callback', 'ko', 'en')).toBe('ko');
-    expect(requestLocale('/', null, 'en')).toBe('ko');
+    expect(requestLocale('/', null, 'ko')).toBe('en');
+  });
+  it.each([
+    [undefined, 'en'], ['', 'en'], ['en-US,en;q=0.9,ko;q=0.8', 'en'],
+    ['ko-KR,ko;q=0.9,en;q=0.8', 'ko'], ['KO', 'ko'], ['ja-JP', 'en'],
+    ['kr', 'en'], ['*', 'en'], ['ko;q=0,en;q=1', 'en'],
+    ['en;q=0.5,ko;q=0.9', 'ko'], ['fr,ko;q=0.9', 'en'],
+  ])('detects only a preferred Korean browser language: %s', (languages, expected) => {
+    expect(requestLocale('/', null, null, languages)).toBe(expected);
+  });
+  it('keeps explicit language selections ahead of the browser preference', () => {
+    expect(requestLocale('/', 'en', null, 'ko-KR')).toBe('en');
+    expect(requestLocale('/', 'ko', null, 'en-US')).toBe('ko');
+    expect(requestLocale('/', 'fr', null, 'en-US')).toBe('en');
   });
 });
