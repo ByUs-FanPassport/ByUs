@@ -138,6 +138,9 @@ const serverEnvSchema = publicEnvSchema
     ),
     TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: telegramSecret,
     TELEGRAM_BUG_REPORT_OPERATOR_SECRET: telegramSecret,
+    CHZZK_CLIENT_ID: optionalNonEmptyString,
+    CHZZK_CLIENT_SECRET: optionalNonEmptyString,
+    CHZZK_LIVE_ENABLED: booleanFlag,
   })
   .superRefine((value, context) => {
     if (value.PHONE_SMS_ENROLLMENT_MODE === "solapi" && (!value.PHONE_SMS_SOLAPI_API_KEY || !value.PHONE_SMS_SOLAPI_API_SECRET || !value.PHONE_SMS_SENDER || !value.PHONE_SMS_OTP_SECRET)) {
@@ -205,6 +208,9 @@ const serverEnvSchema = publicEnvSchema
     }
     if (value.KAKAO_OAUTH_MODE === "provider" && (!value.KAKAO_CLIENT_ID || !value.KAKAO_CLIENT_SECRET || !value.KAKAO_REDIRECT_URI)) {
       context.addIssue({ code: "custom", message: "provider mode requires Kakao credentials and redirect URI", path: ["KAKAO_OAUTH_MODE"] });
+    }
+    if (value.CHZZK_LIVE_ENABLED && (!value.CHZZK_CLIENT_ID || !value.CHZZK_CLIENT_SECRET)) {
+      context.addIssue({ code: "custom", message: "CHZZK LIVE requires client credentials", path: ["CHZZK_LIVE_ENABLED"] });
     }
     if (value.KAKAO_REDIRECT_URI) {
       try {

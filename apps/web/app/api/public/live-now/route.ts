@@ -15,6 +15,7 @@ import {
 
 import { getCachedYouTubeLiveObservation } from "../../../../server/youtube/cached-youtube-live-source";
 import type { YouTubeLiveObserver } from "../../../../server/youtube/youtube-live-source";
+import { getCachedChzzkLiveObservation, type ChzzkLiveObserver } from "../../../../server/chzzk/cached-live-source";
 
 type LiveNowDependencies = Readonly<{
   repository: Pick<PublishedContentRepository, "list">;
@@ -22,6 +23,7 @@ type LiveNowDependencies = Readonly<{
   now?: () => Date;
   observeYouTube?: YouTubeLiveObserver;
   observeInstagram?: InstagramLiveDiscoveryObserver;
+  observeChzzk?: ChzzkLiveObserver;
 }>;
 
 const noStoreHeaders = { "Cache-Control": "no-store" } as const;
@@ -48,8 +50,9 @@ export function createGetObservedLiveNow(dependencies: LiveNowDependencies) {
         locale,
         dependencies.observe ?? getCachedTikTokLiveObservation,
         dependencies.now ?? (() => new Date()),
-        version === "2" || version === "3" ? dependencies.observeYouTube ?? getCachedYouTubeLiveObservation : undefined,
-        version === "3" ? dependencies.observeInstagram ?? getCachedInstagramLiveDiscoveryObservation : undefined,
+        version === "2" || version === "3" || version === "4" ? dependencies.observeYouTube ?? getCachedYouTubeLiveObservation : undefined,
+        version === "3" || version === "4" ? dependencies.observeInstagram ?? getCachedInstagramLiveDiscoveryObservation : undefined,
+        version === "4" ? dependencies.observeChzzk ?? getCachedChzzkLiveObservation : undefined,
       );
       return NextResponse.json(feed, {
         status: 200,

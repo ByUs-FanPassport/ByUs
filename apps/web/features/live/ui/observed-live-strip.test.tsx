@@ -49,10 +49,10 @@ describe("observed LIVE cards", () => {
     expect(link).toHaveAttribute("href", card.watchUrl);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=3`, expect.objectContaining({ cache: "no-store" }));
+    expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=4`, expect.objectContaining({ cache: "no-store" }));
   });
 
-  it("uses a mixed-platform heading and keeps three providers for the same creator", async () => {
+  it("uses a mixed-platform heading and keeps four providers for the same creator", async () => {
     const youtube: ObservedLiveCard = {
       ...card,
       platform: "youtube",
@@ -68,15 +68,24 @@ describe("observed LIVE cards", () => {
       watchUrl: "https://www.instagram.com/stories/ifewknow/3984542264785618047",
       expiresAt: new Date(start + 300_000).toISOString(),
     };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([card, youtube, instagram])));
+    const chzzk: ObservedLiveCard = {
+      ...card,
+      platform: "chzzk",
+      handle: "a".repeat(32),
+      title: "CHZZK 라이브",
+      watchUrl: `https://chzzk.naver.com/live/${"a".repeat(32)}`,
+      expiresAt: new Date(start + 180_000).toISOString(),
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([card, youtube, instagram, chzzk])));
     render(<ObservedLiveStrip locale="ko" />);
     await settle();
 
     expect(screen.getByRole("heading", { name: "지금 LIVE 중" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    expect(screen.getAllByRole("link")).toHaveLength(4);
     expect(screen.getByRole("link", { name: /TikTok에서 시청, 새 창/ })).toHaveAttribute("href", card.watchUrl);
     expect(screen.getByRole("link", { name: /YouTube에서 시청, 새 창/ })).toHaveAttribute("href", youtube.watchUrl);
     expect(screen.getByRole("link", { name: /Instagram에서 시청, 새 창/ })).toHaveAttribute("href", instagram.watchUrl);
+    expect(screen.getByRole("link", { name: /CHZZK에서 시청, 새 창/ })).toHaveAttribute("href", chzzk.watchUrl);
     expect(screen.getByRole("button", { name: "다음 LIVE" })).toBeInTheDocument();
   });
 

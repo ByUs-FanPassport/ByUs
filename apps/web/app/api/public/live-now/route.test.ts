@@ -362,9 +362,10 @@ describe("GET /api/public/live-now", () => {
 
 describe("multi-platform observed feed", () => {
   const channelId = "UCaaaaaaaaaaaaaaaaaaaaaa";
+  const chzzkChannelId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const videoId = "abcdefghijk";
   function mixed() { const creator = celebrity("ifewknow", "https://www.tiktok.com/@ifewknow"); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "youtube" as const, url: `https://www.youtube.com/channel/${channelId}` }] }; }
-  function allPlatforms() { const creator = mixed(); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "instagram" as const, url: "https://www.instagram.com/ifewknow/" }] }; }
+  function allPlatforms() { const creator = mixed(); return { ...creator, socialLinks: [...creator.socialLinks, { platform: "instagram" as const, url: "https://www.instagram.com/ifewknow/" }, { platform: "chzzk" as const, url: `https://chzzk.naver.com/${chzzkChannelId}` }] }; }
   const instagramLive = {
     state: "live" as const,
     observedAt,
@@ -391,18 +392,25 @@ describe("multi-platform observed feed", () => {
     const foreign = await buildObservedLiveFeed([mixed()], "en", async () => ({ state: "offline", observedAt }), () => new Date(observedAt), async () => ({ state: "live", observedAt, channelId: "UCbbbbbbbbbbbbbbbbbbbbbb", videoId }));
     expect(foreign.items).toEqual([]); expect(foreign.coverage.unavailable).toBe(1);
   });
-  it("only v2 opts into YouTube so old cached clients never mislabel YouTube cards", async () => {
+  it("keeps v1-v3 contracts and only v4 opts into CHZZK", async () => {
     const observeYouTube = vi.fn(async () => ({ state: "live" as const, observedAt, channelId, videoId }));
     const observeInstagram = vi.fn(async () => instagramLive);
-    const handler = createGetObservedLiveNow({ repository: { list: async () => [allPlatforms()] }, observe: async () => ({ state: "offline", observedAt }), observeYouTube, observeInstagram, now: () => new Date(observedAt) });
+    const observeChzzk = vi.fn(async () => ({ state: "live" as const, observedAt, channelId: chzzkChannelId, title: "공식 치지직 LIVE" }));
+    const handler = createGetObservedLiveNow({ repository: { list: async () => [allPlatforms()] }, observe: async () => ({ state: "offline", observedAt }), observeYouTube, observeInstagram, observeChzzk, now: () => new Date(observedAt) });
     await handler(new Request("https://byus.kr/api/public/live-now"));
     expect(observeYouTube).not.toHaveBeenCalled();
     expect(observeInstagram).not.toHaveBeenCalled();
+    expect(observeChzzk).not.toHaveBeenCalled();
     const v2 = await handler(new Request("https://byus.kr/api/public/live-now?v=2"));
     expect((await v2.json()).items.map((item: { platform: string }) => item.platform)).toEqual(["youtube"]);
     expect(observeInstagram).not.toHaveBeenCalled();
+    expect(observeChzzk).not.toHaveBeenCalled();
     const v3 = await handler(new Request("https://byus.kr/api/public/live-now?v=3"));
     expect((await v3.json()).items.map((item: { platform: string }) => item.platform)).toEqual(["youtube", "instagram"]);
+    expect(observeChzzk).not.toHaveBeenCalled();
+    const v4 = await handler(new Request("https://byus.kr/api/public/live-now?v=4"));
+    expect((await v4.json()).items.map((item: { platform: string }) => item.platform)).toEqual(["youtube", "instagram", "chzzk"]);
+    expect(observeChzzk).toHaveBeenCalledWith(chzzkChannelId);
   });
 
   it("projects a safe Instagram card for the same creator without requiring a ByUs event", async () => {

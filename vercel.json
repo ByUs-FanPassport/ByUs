@@ -8,6 +8,7 @@
   "regions": ["icn1"],
   "crons": [
     { "path": "/api/internal/instagram/sync", "schedule": "15 * * * *" },
-    { "path": "/api/internal/instagram/live-sync", "schedule": "* * * * *" }
+    { "path": "/api/internal/instagram/live-sync", "schedule": "* * * * *" },
+    { "path": "/api/internal/chzzk/live-sync", "schedule": "* * * * *" }
   ]
 }

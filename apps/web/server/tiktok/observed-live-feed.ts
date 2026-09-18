@@ -14,7 +14,9 @@ import {
   type InstagramLiveObservation,
 } from "../../features/live/domain/instagram-live";
 import { parseYouTubeChannelUrl, YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
+import { CHZZK_LIVE_MAX_AGE_MS, parseCanonicalChzzkChannelUrl, toChzzkLiveWatchUrl } from "../../features/live/domain/chzzk-live";
 import type { InstagramLiveDiscoveryObserver } from "../instagram/cached-live-source";
+import type { ChzzkLiveObserver } from "../chzzk/cached-live-source";
 import type { YouTubeLiveObserver } from "../youtube/youtube-live-source";
 import type {
   ContentLocale,
@@ -35,6 +37,7 @@ type InstagramTarget = Readonly<{
   celebrity: PublishedCelebrity;
   username: string | null;
 }>;
+type ChzzkTarget = Readonly<{ celebrity: PublishedCelebrity; channelId: string | null }>;
 
 async function observeWithConcurrency(
   handles: readonly string[],
@@ -115,6 +118,7 @@ export async function buildObservedLiveFeed(
   now: () => Date,
   youtubeObserver?: YouTubeLiveObserver,
   instagramObserver?: InstagramLiveDiscoveryObserver,
+  chzzkObserver?: ChzzkLiveObserver,
 ): Promise<ObservedLiveFeed> {
   const targets = celebrities
     .map(targetFor)
@@ -142,12 +146,21 @@ export async function buildObservedLiveFeed(
     const username = links.map((link) => parseCanonicalInstagramProfileUrl(link.url)).find((value) => value !== null) ?? null;
     return [{ celebrity, username }];
   }) : [];
-  const [observations, youtubeResults, instagramObservations] = await Promise.all([
+  const chzzkTargets: ChzzkTarget[] = chzzkObserver ? celebrities.flatMap((celebrity) => {
+    const links = celebrity.socialLinks.filter((link) => link.platform === "chzzk");
+    if (!links.length) return [];
+    return [{ celebrity, channelId: links.map((link) => parseCanonicalChzzkChannelUrl(link.url)).find((value): value is string => value !== null) ?? null }];
+  }) : [];
+  const chzzkJobs = new Map<string, ReturnType<ChzzkLiveObserver>>();
+  for (const { channelId } of chzzkTargets) if (channelId && chzzkObserver && !chzzkJobs.has(channelId)) chzzkJobs.set(channelId, boundedObservation(() => chzzkObserver(channelId)));
+  const [observations, youtubeResults, instagramObservations, chzzkResults] = await Promise.all([
     observeWithConcurrency(handles, observer),
     Promise.all([...youtubeJobs].map(async ([key, job]) => [key, await job.catch(() => null)] as const)),
     instagramObserver ? observeInstagramWithConcurrency(instagramTargets, instagramObserver) : new Map<string, InstagramLiveObservation | null>(),
+    Promise.all([...chzzkJobs].map(async ([id, job]) => [id, await job.catch(() => null)] as const)),
   ]);
   const youtubeObservations = new Map(youtubeResults);
+  const chzzkObservations = new Map(chzzkResults);
   const checkedAt = now();
   const checkedAtMs = checkedAt.getTime();
   const items: ObservedLiveCard[] = [];
@@ -258,6 +271,23 @@ export async function buildObservedLiveFeed(
           expiresAt: new Date(at + INSTAGRAM_LIVE_MAX_AGE_MS).toISOString(),
         });
       }
+    }
+    coverage[status.state] += 1;
+  }
+  for (const { celebrity, channelId } of chzzkTargets) {
+    const observation = channelId ? chzzkObservations.get(channelId) ?? null : null;
+    const status: ObservedLiveTarget = { celebritySlug: celebrity.slug, platform: "chzzk", handle: channelId ?? "", state: "unavailable", observedAt: observation?.observedAt ?? null };
+    statuses.push(status);
+    const at = Date.parse(status.observedAt ?? "");
+    if (!observation || observation.state === "unavailable") status.state = "unavailable";
+    else if (!Number.isFinite(at) || at > checkedAtMs || checkedAtMs - at >= CHZZK_LIVE_MAX_AGE_MS) status.state = "stale";
+    else if (observation.state === "offline") status.state = "offline";
+    else if (channelId && observation.channelId === channelId) {
+      status.state = "live";
+      items.push({ platform: "chzzk", celebritySlug: celebrity.slug, creatorName: celebrity.name, handle: channelId,
+        title: observation.title, thumbnailUrl: celebrity.image.url, fallbackThumbnailUrl: celebrity.image.url,
+        watchUrl: toChzzkLiveWatchUrl(channelId), observedAt: observation.observedAt,
+        expiresAt: new Date(at + CHZZK_LIVE_MAX_AGE_MS).toISOString() });
     }
     coverage[status.state] += 1;
   }

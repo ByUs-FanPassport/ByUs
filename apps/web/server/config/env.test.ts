@@ -41,6 +41,9 @@ const validEnv = {
   TELEGRAM_BUG_REPORT_BOT_TOKEN: "",
   TELEGRAM_BUG_REPORT_WEBHOOK_SECRET: "",
   TELEGRAM_BUG_REPORT_OPERATOR_SECRET: "",
+  CHZZK_CLIENT_ID: "",
+  CHZZK_CLIENT_SECRET: "",
+  CHZZK_LIVE_ENABLED: "false",
   YOUTUBE_DATA_API_KEY: "",
   VERCEL_ANALYTICS_TOKEN: "",
   VERCEL_ANALYTICS_PROJECT_ID: "",
@@ -111,6 +114,19 @@ describe("public environment", () => {
 });
 
 describe("server environment", () => {
+  it("keeps CHZZK credentials server-only and requires them when collection is enabled", () => {
+    expect(parseServerEnv(validEnv)).toMatchObject({ CHZZK_LIVE_ENABLED: false });
+    expect(() => parseServerEnv({ ...validEnv, CHZZK_LIVE_ENABLED: "true" })).toThrowError(/CHZZK_LIVE_ENABLED/);
+    const configured = {
+      ...validEnv,
+      CHZZK_LIVE_ENABLED: "true",
+      CHZZK_CLIENT_ID: "d0a97006-cbfa-40c4-ab11-9cade2c44ac1",
+      CHZZK_CLIENT_SECRET: "a".repeat(43),
+    };
+    expect(parseServerEnv(configured)).toMatchObject({ CHZZK_LIVE_ENABLED: true });
+    expect(Object.keys(parsePublicEnv(configured)).some((key) => key.startsWith("CHZZK_"))).toBe(false);
+  });
+
   it("keeps Telegram credentials server-only and validates provider-safe secrets", () => {
     const configured = {
       ...validEnv,
@@ -220,6 +236,7 @@ describe("server environment", () => {
         !key.startsWith("PHONE_SMS_") &&
         !key.startsWith("VERCEL_ANALYTICS_") &&
         key !== "YOUTUBE_DATA_API_KEY" &&
+        !key.startsWith("CHZZK_") &&
         key !== "SOLAPI_WEBHOOK_SECRET" &&
         !key.startsWith("TELEGRAM_BUG_REPORT_") &&
         !key.endsWith("_SITE_VERIFICATION") &&
