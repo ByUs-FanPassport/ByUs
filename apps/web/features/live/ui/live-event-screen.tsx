@@ -49,6 +49,7 @@ import {
 import { elinaLiveSlug, elinaRafflesHref } from "@/features/live/domain/elina-event";
 import {
   buildAuthLoginHref,
+  FAN_CODE_INTENT_MAX_AGE_MS,
   consumeAuthIntent,
   createAuthIntent,
   persistAuthIntent,
@@ -944,6 +945,8 @@ export function LiveEventScreen({
     if (!authenticated || (viewerMatchesSession && view.data.viewer.passport === "missing")) {
       const draftRef = `byus:fan-code-draft:${slug}`;
       getSessionStorage().setItem(draftRef, normalizedCode);
+      const now = Date.now();
+      const closesAt = Date.parse(view.data.live.attendanceWindow?.closesAt ?? "");
       const intent = createAuthIntent({
         sourcePath: `/live/${slug}`,
         sourceQuery: `?locale=${locale}`,
@@ -952,7 +955,9 @@ export function LiveEventScreen({
         targetType: "live_event",
         targetId: slug,
         draftPayload: { draftRef },
-      });
+      }, { now, expiresAt: Number.isFinite(closesAt) && closesAt > now
+        ? Math.min(closesAt, now + FAN_CODE_INTENT_MAX_AGE_MS)
+        : undefined });
       persistAuthIntent(getSessionStorage(), intent);
       if (!authenticated) {
         router.push(buildAuthLoginHref(intent, locale) as Route);
@@ -1063,7 +1068,9 @@ export function LiveEventScreen({
     ) return;
 
     const rawCode = searchParams.get("attendanceCode") ?? "";
-    if (view.data.live.attendanceWindow && attendancePhase !== "open" && attendancePhase !== "closed") return;
+    if (view.data.live.attendanceWindow && (
+      attendancePhase === "unavailable" || (authenticated && attendancePhase === "upcoming")
+    )) return;
     const deepLinkKey = `${slug}:${rawCode}`;
     if (attendanceDeepLinkRef.current === deepLinkKey) return;
     attendanceDeepLinkRef.current = deepLinkKey;

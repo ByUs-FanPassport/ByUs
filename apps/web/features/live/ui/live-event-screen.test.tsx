@@ -574,6 +574,39 @@ describe("LiveEventScreen", () => {
     expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBeNull();
   });
 
+  it("logs guests in before opening and preserves their code across a long wait and reload", async () => {
+    authenticated = false;
+    session.ownerId = null;
+    query = "locale=ko&attendanceCode=5VSD6N";
+    const now = Date.now();
+    const livePayload = { ...payload("watch_live"), live: { ...payload().live, attendanceWindow: { opensAt: new Date(now + 7_200_000).toISOString(), closesAt: new Date(now + 10_800_000).toISOString() } } };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => init?.method === "POST" ? Response.json(attendanceResult) : Response.json(livePayload));
+    const guest = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await waitFor(() => expect(push).toHaveBeenCalledWith(expect.stringContaining("/login?")));
+    const login = new URL(push.mock.calls.at(-1)![0], "https://byus.kr");
+    const back = new URL(login.searchParams.get("returnTo")!, "https://byus.kr");
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBe("5VSD6N");
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    guest.unmount();
+    authenticated = true;
+    session.ownerId = "owner-a";
+    livePayload.viewer.authenticated = true;
+    query = back.searchParams.toString();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now + 3_600_000);
+    const waiting = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByText("Fan Code는 LIVE 시작 후 입력할 수 있어요.");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBe("5VSD6N");
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    waiting.unmount();
+    clock.mockReturnValue(now + 7_200_001);
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeVisible();
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBeNull();
+  });
+
   it("waits until the attendance window opens before consuming and submitting a deep link", async () => {
     query = "locale=ko&attendanceCode=5VSD6N";
     const now = Date.now();

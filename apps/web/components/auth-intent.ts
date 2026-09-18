@@ -122,7 +122,8 @@ export const authIntentSchema = z
     if (value.expiresAt <= value.createdAt) {
       context.addIssue({ code: "custom", path: ["expiresAt"], message: "Intent expiry must be after creation" });
     }
-    if (value.expiresAt - value.createdAt > AUTH_INTENT_MAX_AGE_MS) {
+    const maxAge = value.actionType === "SUBMIT_FAN_CODE" ? FAN_CODE_INTENT_MAX_AGE_MS : AUTH_INTENT_MAX_AGE_MS;
+    if (value.expiresAt - value.createdAt > maxAge) {
       context.addIssue({ code: "custom", path: ["expiresAt"], message: "Intent lifetime is too long" });
     }
   });
@@ -138,6 +139,9 @@ export type CreateAuthIntentInput = Pick<
 };
 
 export const AUTH_INTENT_MAX_AGE_MS = 30 * 60 * 1000;
+// A navigation draft, not an authentication session. Attendance may be shared
+// before opening; the server still enforces authentication and its own window.
+export const FAN_CODE_INTENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const AUTH_INTENT_STORAGE_PREFIX = "byus:auth-intent:v1:";
 
 const legacyIntentByAction: Record<AuthActionType, string> = {
@@ -172,7 +176,7 @@ function removeAssociatedDraft(storage: SessionStorageAccess, intent: AuthIntent
 
 export function createAuthIntent(
   input: CreateAuthIntentInput,
-  options: { now?: number; id?: string } = {},
+  options: { now?: number; id?: string; expiresAt?: number } = {},
 ): AuthIntent {
   const createdAt = options.now ?? Date.now();
   return authIntentSchema.parse({
@@ -182,7 +186,7 @@ export function createAuthIntent(
     draftPayload: input.draftPayload ?? {},
     returnAnchor: input.returnAnchor ?? null,
     createdAt,
-    expiresAt: createdAt + AUTH_INTENT_MAX_AGE_MS,
+    expiresAt: options.expiresAt ?? createdAt + AUTH_INTENT_MAX_AGE_MS,
   });
 }
 

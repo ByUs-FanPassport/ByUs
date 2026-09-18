@@ -86,6 +86,20 @@ describe("durable auth intent", () => {
     expect(storage.getItem("byus:fan-code-draft:kara-nualeaf")).toBeNull();
   });
 
+  it("retains only attendance drafts until their bounded event deadline", () => {
+    const storage = new MemoryStorage();
+    const input = { sourcePath: "/live/kara-nualeaf", sourceQuery: "?locale=ko", actionType: "SUBMIT_FAN_CODE" as const, targetType: "live_event" as const, targetId: "kara-nualeaf", draftPayload: { draftRef: "byus:fan-code-draft:kara-nualeaf" } };
+    const intent = createAuthIntent(input, { id, now: 1_000, expiresAt: 10_801_000 });
+    persistAuthIntent(storage, intent);
+    storage.setItem(input.draftPayload.draftRef, "5VSD6N");
+    expect(readAuthIntent(storage, id, 3_601_000)).not.toBeNull();
+    expect(storage.getItem(input.draftPayload.draftRef)).toBe("5VSD6N");
+    expect(readAuthIntent(storage, id, 10_801_000)).toBeNull();
+    expect(storage.getItem(input.draftPayload.draftRef)).toBeNull();
+    expect(() => createAuthIntent(input, { now: 1_000, expiresAt: 86_401_001 })).toThrow();
+    expect(() => createAuthIntent({ ...input, actionType: "RESERVE_LIVE", draftPayload: {} }, { now: 1_000, expiresAt: 10_801_000 })).toThrow();
+  });
+
   it("rejects unsafe routes, anchors, target identifiers, and oversized drafts", () => {
     const base = {
       sourceQuery: "",
