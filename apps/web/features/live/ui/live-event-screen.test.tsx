@@ -549,6 +549,72 @@ describe("LiveEventScreen", () => {
     expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
   });
 
+  it("preserves a signed-in fan's code through Passport issuance and submits on return", async () => {
+    query = "locale=ko&attendanceCode=5VSD6N";
+    const missing = payload("verify_fan");
+    missing.live.effectiveStatus = "live";
+    missing.viewer.passport = "missing";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) =>
+      init?.method === "POST" ? Response.json(attendanceResult) : Response.json(missing));
+    const first = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await waitFor(() => expect(push).toHaveBeenCalledWith(expect.stringContaining("/c/kara/verify?")));
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBe("5VSD6N");
+    const verification = new URL(push.mock.calls.at(-1)![0], "https://byus.kr");
+    const back = new URL(verification.searchParams.get("returnTo")!, "https://byus.kr");
+    expect(back.pathname).toBe("/live/kara-nualeaf");
+    expect(back.searchParams.get("authIntent")).toBeTruthy();
+    first.unmount();
+    query = back.searchParams.toString();
+    missing.viewer.passport = "active";
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeVisible();
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+    expect(sessionStorage.getItem("byus:fan-code-draft:kara-nualeaf")).toBeNull();
+  });
+
+  it("waits until the attendance window opens before consuming and submitting a deep link", async () => {
+    query = "locale=ko&attendanceCode=5VSD6N";
+    const now = Date.now();
+    const livePayload = { ...payload("watch_live"), live: { ...payload().live, attendanceWindow: { opensAt: new Date(now + 60_000).toISOString(), closesAt: new Date(now + 120_000).toISOString() } } };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) =>
+      init?.method === "POST" ? Response.json(attendanceResult) : Response.json(livePayload));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByText("Fan Code는 LIVE 시작 후 입력할 수 있어요.");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    expect(replace).not.toHaveBeenCalled();
+    vi.spyOn(Date, "now").mockReturnValue(now + 60_001);
+    act(() => window.dispatchEvent(new Event("focus")));
+    expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeVisible();
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+
+  it.each(["upcoming", "closed"])("does not submit a restored Passport return outside an open window (%s)", async (phase) => {
+    const draftRef = "byus:fan-code-draft:kara-nualeaf";
+    sessionStorage.setItem(draftRef, "5VSD6N");
+    const intent = createAuthIntent({ sourcePath: "/live/kara-nualeaf", sourceQuery: "?locale=ko", returnAnchor: "#fan-code", actionType: "SUBMIT_FAN_CODE", targetType: "live_event", targetId: "kara-nualeaf", draftPayload: { draftRef } });
+    persistAuthIntent(sessionStorage, intent);
+    query = `locale=ko&authIntent=${intent.id}`;
+    const now = Date.now();
+    const livePayload = { ...payload("watch_live"), live: { ...payload().live, attendanceWindow: { opensAt: new Date(now + (phase === "upcoming" ? 60_000 : -120_000)).toISOString(), closesAt: new Date(now + (phase === "upcoming" ? 120_000 : -60_000)).toISOString() } } };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => init?.method === "POST" ? Response.json(attendanceResult) : Response.json(livePayload));
+    render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByRole("heading", { name: "Fan Code" });
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    if (phase === "closed") {
+      expect(sessionStorage.getItem(draftRef)).toBeNull();
+      expect(sessionStorage.getItem(`byus:auth-intent:v1:${intent.id}`)).toBeNull();
+    } else {
+      expect(sessionStorage.getItem(draftRef)).toBe("5VSD6N");
+      vi.spyOn(Date, "now").mockReturnValue(now + 60_001);
+      act(() => window.dispatchEvent(new Event("focus")));
+      expect(await screen.findByRole("heading", { name: "LIVE 출석을 남겼어요" })).toBeVisible();
+      expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+    }
+  });
+
   it("submits an authenticated attendanceCode deep link once and removes the code from the URL", async () => {
     query = "locale=ko&attendanceCode=%20elina%202026%20";
     const livePayload = payload("watch_live");

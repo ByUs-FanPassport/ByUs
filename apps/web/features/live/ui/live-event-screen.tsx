@@ -941,7 +941,7 @@ export function LiveEventScreen({
       return;
     }
 
-    if (!authenticated) {
+    if (!authenticated || (viewerMatchesSession && view.data.viewer.passport === "missing")) {
       const draftRef = `byus:fan-code-draft:${slug}`;
       getSessionStorage().setItem(draftRef, normalizedCode);
       const intent = createAuthIntent({
@@ -954,7 +954,13 @@ export function LiveEventScreen({
         draftPayload: { draftRef },
       });
       persistAuthIntent(getSessionStorage(), intent);
-      router.push(buildAuthLoginHref(intent, locale) as Route);
+      if (!authenticated) {
+        router.push(buildAuthLoginHref(intent, locale) as Route);
+      } else {
+        const returnQuery = new URLSearchParams({ locale, authIntent: intent.id });
+        const verificationQuery = new URLSearchParams({ locale, returnTo: `/live/${slug}?${returnQuery}` });
+        router.push(`/c/${view.data.live.celebrity.slug}/verify?${verificationQuery}` as Route);
+      }
       return;
     }
     if (!viewerMatchesSession) return;
@@ -1057,6 +1063,7 @@ export function LiveEventScreen({
     ) return;
 
     const rawCode = searchParams.get("attendanceCode") ?? "";
+    if (view.data.live.attendanceWindow && attendancePhase !== "open" && attendancePhase !== "closed") return;
     const deepLinkKey = `${slug}:${rawCode}`;
     if (attendanceDeepLinkRef.current === deepLinkKey) return;
     attendanceDeepLinkRef.current = deepLinkKey;
@@ -1067,8 +1074,13 @@ export function LiveEventScreen({
     cleanQuery.delete("attendanceCode");
     const queryString = cleanQuery.toString();
     router.replace(`${pathname}${queryString ? `?${queryString}` : ""}#fan-code` as Route);
+    if (attendancePhase === "closed") {
+      getSessionStorage().removeItem(`byus:fan-code-draft:${slug}`);
+      setFanCode("");
+      return;
+    }
     void submitAttendance(rawCode);
-  }, [authenticated, pathname, router, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
+  }, [attendancePhase, authenticated, pathname, router, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
 
   useEffect(() => {
     if (!sessionReady || !authenticated || !viewerMatchesSession || view.kind !== "ready") return;
@@ -1089,6 +1101,13 @@ export function LiveEventScreen({
     }
 
     if (intent.actionType === "SUBMIT_FAN_CODE") {
+      if (attendancePhase === "closed") {
+        consumeAuthIntent(getSessionStorage(), intentId);
+        getSessionStorage().removeItem(`byus:fan-code-draft:${slug}`);
+        setFanCode("");
+        return;
+      }
+      if (view.data.live.attendanceWindow && attendancePhase !== "open") return;
       if (resumedIntentRef.current === intentId) return;
       const draftRef = typeof intent.draftPayload.draftRef === "string" ? intent.draftPayload.draftRef : null;
       const draft = draftRef ? getSessionStorage().getItem(draftRef) : null;
@@ -1097,7 +1116,7 @@ export function LiveEventScreen({
       setFanCode(draft);
       void submitAttendance(draft);
     }
-  }, [authenticated, reserve, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
+  }, [attendancePhase, authenticated, reserve, searchParams, sessionReady, slug, submitAttendance, view, viewerMatchesSession]);
 
   if (view.kind === "loading") {
     return (
