@@ -1,6 +1,6 @@
 export const elinaFanGuideContent = {
   ko: {
-    heroTitle: "엘리나와 함께하는\nInstagram LIVE",
+    heroTitle: "뱅크시와 함께 하는\n엘리나 LIVE",
     heroDescription: "팬 인증하고 LIVE를 예약하면 응모권 2장.\n지금 원하는 선물에 응모해 보세요.",
     heroSchedule: "9월 18일(금) 오후 8:30 · Instagram LIVE · KST",
     prizeSummary: "뱅크시 관람권 60명 · 비피오 랜덤 케이스 10명 · 뱅크시 한정판 스태츄 3명 추첨",

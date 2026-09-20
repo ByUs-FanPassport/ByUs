@@ -11,7 +11,7 @@ describe("Elina fan guide", () => {
   it.each(["ko", "en"] as const)("renders approved %s copy and real action destinations", (locale) => {
     const { container } = render(<ElinaFanGuidePage locale={locale} images={{ celebrity: null, eventPhotos: undefined }} />);
     const expected = locale === "ko" ? {
-      title: "엘리나와 함께하는 Instagram LIVE", verify: "팬 인증하기", live: "엘리나 LIVE 예약하기", checkIn: "출석할 LIVE 화면 보기", prize: "선물 고르고 응모하기", history: "내 기록 보기", start: "팬 인증하고 시작하기", prizes: "경품 3종 보기",
+      title: "뱅크시와 함께 하는 엘리나 LIVE", verify: "팬 인증하기", live: "엘리나 LIVE 예약하기", checkIn: "출석할 LIVE 화면 보기", prize: "선물 고르고 응모하기", history: "내 기록 보기", start: "팬 인증하고 시작하기", prizes: "경품 3종 보기",
     } : {
       title: "Instagram LIVE with Elina", verify: "Verify your fandom", live: "Reserve a spot", checkIn: "Open the LIVE check-in page", prize: "Choose a prize and enter", history: "View my history", start: "Verify and get started", prizes: "View all 3 prizes",
     };
@@ -52,6 +52,7 @@ describe("Elina fan guide", () => {
   it("falls back to Korean for unsupported or repeated locale values", async () => {
     for (const locale of ["fr", ["en", "ko"], undefined]) {
       const metadata = await generateMetadata({ searchParams: Promise.resolve({ locale }) });
+      expect(metadata.title).toBe("뱅크시와 함께 하는 엘리나 LIVE | ByUs");
       expect(metadata.alternates?.canonical).toBe("https://byus.kr/pages/elina-fan-guide?locale=ko");
     }
   });
