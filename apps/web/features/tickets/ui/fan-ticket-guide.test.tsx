@@ -64,6 +64,16 @@ describe("FanTicketGuide", () => {
     expect(screen.getByText(label)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /오늘 출석/ })).not.toBeInTheDocument();
   });
+  it("shows only the check-in next to the fan identity without duplicating ticket controls", () => {
+    mocks.state = ready;
+    const view = render(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact checkinOnly />);
+    expect(screen.getByRole("link", { name: "오늘 출석하고 1장 받기" })).toHaveAttribute("href", "/elina?locale=ko#daily-checkin");
+    expect(screen.queryByText("보유 응모권")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /응모권 모으기/ })).not.toBeInTheDocument();
+    mocks.authenticated = false;
+    view.rerender(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact checkinOnly />);
+    expect(view.container).toBeEmptyDOMElement();
+  });
   it("keeps a compact guest invitation without exposing a balance or listing actions", () => {
     mocks.authenticated = false;
     render(<FanTicketGuide creatorSlug="elina" creatorName="엘리나" locale="ko" compact />);

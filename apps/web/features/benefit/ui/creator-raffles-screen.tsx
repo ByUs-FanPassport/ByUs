@@ -13,7 +13,7 @@ import { FanAction } from "@/components/fan-ui/fan-action";
 import { useOwnedFanResource } from "@/components/fan-ui/use-owned-fan-resource";
 import { resolvePhoto } from "@/features/media/domain/public-image";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
-import type { RaffleList } from "../domain/raffle";
+import { raffleStatus, type RaffleList } from "../domain/raffle";
 import { benefitListResponseSchema, type BenefitCatalogItem, type BenefitListResponse } from "../domain/benefit";
 import type { BenefitEntryResult } from "../domain/benefit-entry";
 import { creatorRaffleHref, creatorRafflesHref, creatorRaffleVerificationHref } from "../domain/raffle-navigation";
@@ -27,12 +27,6 @@ export type Raffle = RaffleList["raffles"][number];
 type Props = { celebrity: PublishedCelebrity; locale: "ko" | "en"; raffles: Raffle[]; benefitId?: string; deliveryInstructions?: string };
 const parseBenefits = (value: unknown) => benefitListResponseSchema.parse(value);
 
-export function raffleStatus(raffle: Raffle, now: number): Raffle["status"] {
-  if (raffle.status === "cancelled" || raffle.status === "closed") return raffle.status;
-  if (raffle.entryClosesAt && now >= Date.parse(raffle.entryClosesAt)) return "closed";
-  if (raffle.entryOpensAt && now < Date.parse(raffle.entryOpensAt)) return "preparing";
-  return raffle.status;
-}
 
 export function RaffleCreator({ celebrity, locale }: Pick<Props, "celebrity" | "locale">) {
   const photo = resolvePhoto(celebrity.image.photos, "identity.avatar", celebrity.image.url, locale);

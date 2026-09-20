@@ -19,3 +19,10 @@ export const raffleSchema = z.object({
 
 export const raffleListSchema = z.object({ raffles: z.array(raffleSchema) });
 export type RaffleList = z.infer<typeof raffleListSchema>;
+
+export function raffleStatus(raffle: RaffleList["raffles"][number], now: number): RaffleList["raffles"][number]["status"] {
+  if (raffle.status === "cancelled" || raffle.status === "closed") return raffle.status;
+  if (raffle.entryClosesAt && now >= Date.parse(raffle.entryClosesAt)) return "closed";
+  if (raffle.entryOpensAt && now < Date.parse(raffle.entryOpensAt)) return "preparing";
+  return raffle.status;
+}

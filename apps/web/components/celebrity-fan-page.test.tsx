@@ -237,17 +237,34 @@ describe("approved fanpage", () => {
     expect(screen.queryByText("별빛팬")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "내 패스포트" })).not.toBeInTheDocument();
   });
-  it("links the featured raffle into the creator catalog and shows every prize on the legacy raffle panel", async () => {
-    const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444", title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50, status: "open", entryOpensAt: null, entryClosesAt: null, fulfillmentMethod: "digital", perFanTicketLimit: null };
-    stubHubFetch({ raffles: [raffle, { ...raffle, id: "33333333-3333-4333-8333-333333333333", benefitId: null, status: "preparing", title: "콜라보 케이스", winnerQuantity: 10 }] });
+  it("shows all open gifts with one shared deadline and one request, retaining the full legacy catalog", async () => {
+    const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444", title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50, status: "open", entryOpensAt: null, entryClosesAt: "2099-09-27T15:00:00Z", fulfillmentMethod: "digital", perFanTicketLimit: null };
+    stubHubFetch({ raffles: [raffle,
+      { ...raffle, id: "33333333-3333-4333-8333-333333333333", title: "콜라보 케이스" },
+      { ...raffle, id: "55555555-5555-4555-8555-555555555555", title: "한정판 스태츄" },
+      { ...raffle, id: "66666666-6666-4666-8666-666666666666", benefitId: null, status: "preparing", title: "준비 중 선물" },
+      { ...raffle, id: "77777777-7777-4777-8777-777777777777", entryClosesAt: "2020-01-01T00:00:00Z", title: "마감된 선물" },
+      { ...raffle, id: "88888888-8888-4888-8888-888888888888", status: "cancelled", title: "취소된 선물" },
+    ] });
     const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
-    await screen.findByText("전시 티켓");
-    expect(screen.queryByText("콜라보 케이스")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "전체 래플 보기 →" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
-    expect(screen.getByRole("link", { name: "래플 자세히 보기" })).toHaveAttribute("href", "/c/kara/raffles/44444444-4444-4444-8444-444444444444?locale=ko");
+    expect(await screen.findByRole("heading", { name: "응모 가능한 선물 3" })).toBeInTheDocument();
+    for (const title of ["전시 티켓", "콜라보 케이스", "한정판 스태츄"]) expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
+    for (const title of ["준비 중 선물", "마감된 선물", "취소된 선물"]) expect(screen.queryByText(title)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "래플 응모 3" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(screen.getByRole("link", { name: "전시 티켓 응모하기" })).toHaveAttribute("href", "/c/kara/raffles/44444444-4444-4444-8444-444444444444?locale=ko");
+    expect(screen.queryByRole("link", { name: /전체 래플 보기|내 응모 내역/ })).not.toBeInTheDocument();
+    expect(view.container.querySelectorAll('time[datetime="2099-09-27T15:00:00Z"]')).toHaveLength(1);
+    expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).includes("/kara/raffles?"))).toHaveLength(1);
     view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="raffles" />);
-    expect(await screen.findByText("콜라보 케이스")).toBeInTheDocument();
-    expect(screen.queryByText(/9월 25일/)).not.toBeInTheDocument();
+    expect(await screen.findByText("준비 중 선물")).toBeInTheDocument();
+    expect(screen.getByText("마감된 선물")).toBeInTheDocument();
+  });
+  it("keeps distinct gift deadlines on their own cards", async () => {
+    const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444", title: "첫 선물", summary: "선물", imageUrl: null, winnerQuantity: 1, status: "open", entryOpensAt: null, entryClosesAt: "2099-09-27T15:00:00Z", fulfillmentMethod: "digital", perFanTicketLimit: null };
+    stubHubFetch({ raffles: [raffle, { ...raffle, id: "33333333-3333-4333-8333-333333333333", title: "둘째 선물", entryClosesAt: "2099-10-01T15:00:00Z" }] });
+    const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
+    await screen.findByRole("heading", { name: "응모 가능한 선물 2" });
+    expect(view.container.querySelectorAll('article time[datetime^="2099-"]')).toHaveLength(2);
   });
   it("keeps published notices and empty comments separate", async () => {
     stubHubFetch({ notices: [{ slug: "schedule", title: "LIVE 일정 안내", pinned: true, publishedAt: "2026-09-08T00:00:00Z" }] });

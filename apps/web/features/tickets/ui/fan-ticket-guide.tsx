@@ -45,7 +45,7 @@ function ActionRow({ action, locale }: { action: FanTicketAction; locale: FanLoc
   return action.status === "available" ? <Link className={styles.action} href={withLocale(action.href, locale)}>{body}</Link> : <div className={styles.action} data-static="true">{body}</div>;
 }
 
-export function FanTicketGuide({ creatorSlug, creatorName, locale, compact = false }: { creatorSlug: string; creatorName: string; locale: FanLocale; compact?: boolean }) {
+export function FanTicketGuide({ creatorSlug, creatorName, locale, compact = false, checkinOnly = false }: { creatorSlug: string; creatorName: string; locale: FanLocale; compact?: boolean; checkinOnly?: boolean }) {
   const auth = usePrivy();
   const targeted = FAN_TICKET_CREATOR_SLUGS.has(creatorSlug);
   const resource = useOwnedFanResource(auth.authenticated && targeted ? `/api/me/tickets?creator=${encodeURIComponent(creatorSlug)}&locale=${locale}` : null, parseFanTicketActivity, auth, shouldPollTicketActivity);
@@ -61,6 +61,7 @@ export function FanTicketGuide({ creatorSlug, creatorName, locale, compact = fal
   }, [activityToday, auth.authenticated, resource.retry, targeted]);
 
   if (!targeted || !auth.ready) return null;
+  if (checkinOnly && (!auth.authenticated || resource.state.status !== "ready")) return null;
   if (compact && !auth.authenticated) return <section className={`${styles.summary} ${styles.compact}`} aria-labelledby={`ticket-guide-${creatorSlug}`}>
     <div className={styles.summaryWallet}><Ticket aria-hidden="true" /><h2 id={`ticket-guide-${creatorSlug}`}>{locale === "ko" ? "응모권 모으기" : "Collect tickets"}</h2></div>
     <AuthIntentLink className={styles.summaryLink} locale={locale} input={{ sourcePath: `/${creatorSlug}`, sourceQuery: `?locale=${locale}`, actionType: "APPLY_BENEFIT", targetType: "celebrity", targetId: creatorSlug }}>{locale === "ko" ? "로그인하고 확인" : "Sign in to check"}<ArrowRight aria-hidden="true" /></AuthIntentLink>
@@ -78,11 +79,13 @@ export function FanTicketGuide({ creatorSlug, creatorName, locale, compact = fal
     const checkinLabels = locale === "ko"
       ? { available: "오늘 출석하고 1장 받기", awarded: "오늘 출석 완료", processing: "출석 보상 지급 중", pending: "출석 확인 중" }
       : { available: "Check in for 1 ticket", awarded: "Checked in today", processing: "Check-in reward processing", pending: "Check-in pending" };
+    const checkinContent = checkin ? checkin.status === "available"
+        ? <Link className={styles.summaryCheckin} href={withLocale(checkin.href, locale)}><Clock3 aria-hidden="true" />{checkinLabels.available}</Link>
+        : <span className={styles.summaryCheckin} data-status={checkin.status}>{checkin.status === "awarded" ? <Check aria-hidden="true" /> : <Clock3 aria-hidden="true" />}{checkinLabels[checkin.status]}</span> : null;
+    if (checkinOnly) return checkinContent;
     return <section className={`${styles.summary} ${styles.compact}`} aria-label={locale === "ko" ? "내 응모권" : "My tickets"}>
       <div className={styles.summaryWallet}><Ticket aria-hidden="true" /><span>{locale === "ko" ? "보유 응모권" : "Tickets"}</span><strong>{data.balance.toLocaleString(locale === "ko" ? "ko-KR" : "en-US")}{locale === "ko" ? "장" : ""}</strong></div>
-      {checkin ? checkin.status === "available"
-        ? <Link className={styles.summaryCheckin} href={withLocale(checkin.href, locale)}><Clock3 aria-hidden="true" />{checkinLabels.available}</Link>
-        : <span className={styles.summaryCheckin} data-status={checkin.status}>{checkin.status === "awarded" ? <Check aria-hidden="true" /> : <Clock3 aria-hidden="true" />}{checkinLabels[checkin.status]}</span> : null}
+      {checkinContent}
       <Link className={styles.summaryLink} href={`/c/${creatorSlug}/tickets?locale=${locale}` as Route}>{locale === "ko" ? "응모권 모으기" : "Collect tickets"}<ArrowRight aria-hidden="true" /></Link>
     </section>;
   }

@@ -3,13 +3,17 @@
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { EventPhoto } from "@/components/fan-ui/event-photo";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, MessageSquare, Radio, Ticket } from "lucide-react";
 import { z } from "zod";
 import { flattenLiveCatalog } from "../domain/live-catalog";
-import { raffleListSchema } from "@/features/benefit/domain/raffle";
-import { creatorRaffleHref, creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+import { raffleListSchema, raffleStatus } from "@/features/benefit/domain/raffle";
+import { creatorRaffleHref } from "@/features/benefit/domain/raffle-navigation";
+import { RaffleArtwork } from "@/features/benefit/ui/raffle-artwork";
+import { formatRaffleDateTime } from "@/features/benefit/ui/benefit-presentation";
+import { FAN_TICKET_CREATOR_SLUGS } from "@/features/tickets/domain/fan-ticket-activity";
 import { bypassImageOptimization } from "@/components/fan-ui/public-image-policy";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "@/server/content/content-domain";
 import { NoticeComments } from "./notice-comments";
@@ -86,12 +90,47 @@ export function NoticePanel({ slug, locale, full = false }: { slug: string; loca
     </section>
   );
 }
-export function RafflePanel({ slug, name, locale, preview = false, ticketBalance }: { slug: string; name: string; locale: ContentLocale; preview?: boolean; ticketBalance: number | null }) {
-  const ko = locale === "ko";
+export function useCreatorRaffles(slug: string, locale: ContentLocale) {
   const resource = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${locale}`, parseRaffles);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const available = resource.state.status === "ready"
+    ? resource.state.data.filter(raffle => raffle.benefitId && raffleStatus(raffle, now) === "open") : [];
+  return { ...resource, available };
+}
+
+export function RafflePanel({ slug, name, locale, preview = false, ticketBalance, resource }: { slug: string; name: string; locale: ContentLocale; preview?: boolean; ticketBalance: number | null; resource: ReturnType<typeof useCreatorRaffles> }) {
+  const ko = locale === "ko";
+  if (preview) {
+    const gifts = resource.available;
+    const deadline = gifts[0]?.entryClosesAt;
+    const sharedDeadline = deadline && gifts.every(gift => gift.entryClosesAt && Date.parse(gift.entryClosesAt) === Date.parse(deadline)) ? deadline : null;
+    const closingTime = (date: string) => <time className={styles.homeDeadline} dateTime={date}>{formatRaffleDateTime(date, locale)} {ko ? "마감" : "closes"}</time>;
+    return <section className={styles.homeRaffles} aria-labelledby="home-raffle-heading">
+      <div className={styles.homeRaffleHeading}>
+        <div className={styles.homeRaffleTitle}><h2 id="home-raffle-heading">{ko ? "응모 가능한 선물" : "Gifts you can enter"}{" "}{resource.state.status === "ready" && <span>{gifts.length}</span>}</h2>{sharedDeadline && closingTime(sharedDeadline)}</div>
+        <div className={styles.raffleWallet}>
+          {ticketBalance !== null && <span><Ticket aria-hidden="true" />{ko ? `보유 응모권 ${ticketBalance.toLocaleString("ko-KR")}장` : `${ticketBalance.toLocaleString("en-US")} tickets`}</span>}
+          {FAN_TICKET_CREATOR_SLUGS.has(slug) && <Link href={`/c/${slug}/tickets?locale=${locale}`}>{ko ? "응모권 모으기" : "Collect tickets"}<ArrowRight aria-hidden="true" /></Link>}
+        </div>
+      </div>
+      {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !gifts.length ? <div className={styles.empty}>{ko ? "지금 응모할 수 있는 선물이 없어요." : "No gifts are open for entry right now."}</div> : <div className={styles.homeGiftGrid}>
+        {gifts.map(raffle => <article className={styles.homeGiftCard} key={raffle.id}>
+          <RaffleArtwork raffle={raffle} compact />
+          <div className={styles.homeGiftBody}><strong className={styles.homeGiftWinners}>{ko ? `${raffle.winnerQuantity}명 추첨` : `${raffle.winnerQuantity} winners`}</strong><h3>{raffle.title}</h3>
+            {!sharedDeadline && raffle.entryClosesAt && closingTime(raffle.entryClosesAt)}
+            <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId!, locale)} aria-label={ko ? `${raffle.title} 응모하기` : `Enter for ${raffle.title}`}>{ko ? "응모하기" : "Enter raffle"}<ArrowRight aria-hidden="true" /></Link>
+          </div>
+        </article>)}
+      </div>}
+    </section>;
+  }
   const statusText = { preparing: ko ? "이벤트 준비 중" : "Preparing", open: ko ? "응모 진행 중" : "Entries open", closed: ko ? "응모 종료" : "Closed", cancelled: ko ? "운영 취소 · 응모권 반환" : "Cancelled · tickets refunded" };
-  return <section><div className={styles.sectionHeading}><h2>{ko ? "래플 응모" : "Raffles"}</h2>{preview && <Link href={creatorRafflesHref(slug, locale)}>{ko ? "전체 래플 보기" : "All raffles"} →</Link>}</div>{!preview && <p className={styles.intro}>{ko ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : `Choose a prize and enter using your ${name} raffle tickets.`}</p>}
-    {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><Ticket aria-hidden="true" /><h3>{ko ? "새 래플을 준비하고 있어요." : "New raffles are coming."}</h3><p>{ko ? "경품과 일정이 공개되면 이곳에서 확인해 주세요." : "Check here for prizes and entry dates."}</p></div> : <div className={preview ? styles.featuredRaffle : styles.raffleGrid}>{resource.state.data.slice(0, preview ? 1 : undefined).map((raffle) => <article className={styles.raffleCard} key={raffle.id} data-status={raffle.status}>
+  return <section><div className={styles.sectionHeading}><h2>{ko ? "래플 응모" : "Raffles"}</h2></div>{!preview && <p className={styles.intro}>{ko ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : `Choose a prize and enter using your ${name} raffle tickets.`}</p>}
+    {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><Ticket aria-hidden="true" /><h3>{ko ? "새 래플을 준비하고 있어요." : "New raffles are coming."}</h3><p>{ko ? "경품과 일정이 공개되면 이곳에서 확인해 주세요." : "Check here for prizes and entry dates."}</p></div> : <div className={preview ? styles.featuredRaffle : styles.raffleGrid}>{resource.state.data.map((raffle) => <article className={styles.raffleCard} key={raffle.id} data-status={raffle.status}>
       <div className={styles.raffleImage}>{raffle.imageUrl ? <Image src={raffle.imageUrl} alt="" fill sizes={preview ? "(min-width:768px) 280px, calc(100vw - 64px)" : "(min-width:768px) 400px, calc(100vw - 64px)"} unoptimized={bypassImageOptimization(raffle.imageUrl)} /> : <><Ticket aria-hidden="true" /><span>{ko ? "경품 안내" : "Prize"}</span></>}</div>
       <div className={styles.raffleBody}><span className={styles.statusPill}>{statusText[raffle.status]}</span><h3>{raffle.title}</h3><p>{raffle.summary}</p><p>{ko ? `${raffle.winnerQuantity}명 추첨` : `${raffle.winnerQuantity} winners`}</p>{raffle.entryClosesAt && <small>{formatDate(raffle.entryClosesAt, locale)} {ko ? "마감" : "deadline"}</small>}
         <div className={styles.ticketBalance}><Ticket aria-hidden="true" />{ticketBalance !== null ? (ko ? `내 ${name} 응모권 ${ticketBalance}장` : `${ticketBalance} ${name} tickets`) : (ko ? "로그인하고 내 응모권 확인" : "Sign in to check your tickets")}</div>

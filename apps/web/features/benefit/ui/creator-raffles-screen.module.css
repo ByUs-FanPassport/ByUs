@@ -70,3 +70,5 @@ button.ticket{cursor:pointer}.ticket>span{display:flex;justify-content:space-bet
 
 .quantityLabel button { min-height: 44px; min-width: 44px; }
 .stepper input { min-height: 44px; }
+
+.compactArtwork{height:150px}.compactArtwork .wordmark{left:16px;top:16px;width:76px}

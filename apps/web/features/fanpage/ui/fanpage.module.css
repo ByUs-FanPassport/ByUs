@@ -80,4 +80,25 @@
 
 .fanbar > p > button, .muted > button { min-height: 44px; min-width: 44px; }
 
-.homeGrid{grid-template-areas:"main cheers" "main side";align-items:start}.homeGrid>.mainColumn{grid-area:main}.cheerPreview{grid-area:cheers;min-width:0}.homeGrid>.sideColumn{grid-area:side}@media(max-width:767px){.homeGrid{grid-template-areas:"cheers" "main" "side"}}
+.homeGrid{grid-template-areas:"main side";align-items:start}.homeGrid>.mainColumn{grid-area:main}.cheerPreview{grid-area:cheers;min-width:0}.homeGrid>.sideColumn{grid-area:side}@media(max-width:767px){.homeGrid{grid-template-areas:"main" "side"}}
+
+.availableRaffleTab{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #f8acd0;border-radius:24px;background:#fff0f8;color:#ce0066;font-weight:750}
+.availableRaffleTab>span{display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:50%;background:#ce0066;color:#fff;font-size:12px;font-variant-numeric:tabular-nums}
+.homeRaffles{margin-bottom:32px;min-width:0}
+.homeRaffleHeading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:44px;margin-bottom:16px}
+.homeRaffleTitle{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.homeRaffleTitle h2{display:flex;gap:12px;margin:0;font-size:24px;font-weight:800;letter-spacing:-.04em}
+.homeRaffleTitle h2>span{color:#ce0066;font-variant-numeric:tabular-nums}
+.homeDeadline{color:#696570;font-size:12px;line-height:1.5}
+.raffleWallet,.raffleWallet>span,.raffleWallet>a{display:flex;align-items:center;gap:8px}
+.raffleWallet{gap:20px;flex-wrap:wrap;font-size:13px;font-weight:650}
+.raffleWallet svg{width:18px;height:18px;flex:none}.raffleWallet>span svg,.raffleWallet>a{color:#ce0066}
+.homeGiftGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.homeGiftCard{min-width:0;overflow:hidden;border:1px solid #e5e3e9;border-radius:18px;display:flex;flex-direction:column}
+.homeGiftBody{display:flex;flex-direction:column;flex:1;gap:8px;padding:16px}
+.homeGiftBody h3{margin:0;font-size:19px;line-height:1.4;letter-spacing:-.03em}
+.homeGiftWinners{color:#ce0066;font-size:12px}
+.homeGiftBody .darkButton{margin-top:auto;min-height:44px;padding:10px 16px;font-size:14px;border-radius:10px;justify-content:space-between}
+.homeGiftBody .darkButton svg{width:18px;height:18px}
+.fanIdentity{flex-wrap:wrap}
+@media(max-width:767px){.homeGiftGrid{grid-template-columns:minmax(0,1fr);gap:16px}.homeRaffleTitle{gap:6px 12px}.homeRaffleTitle h2{font-size:20px}.homeRaffleHeading{gap:12px}.homeRaffles{margin-bottom:28px}.raffleWallet{gap:16px;font-size:12px}.availableRaffleTab{padding:6px 8px;gap:5px;font-size:12px}.availableRaffleTab>span{min-width:20px;height:20px;font-size:11px}}
