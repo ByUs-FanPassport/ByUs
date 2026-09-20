@@ -20,6 +20,7 @@ const kindSchema = z.enum([
   "draw_published",
   "cs_inquiry_created",
   "cs_user_replied",
+  "campaign_visited",
 ]);
 const alertSchema = z.object({
   kind: kindSchema,
@@ -30,9 +31,21 @@ const alertSchema = z.object({
   winner_count: z.number().int().nonnegative().nullable(),
   occurred_at: z.iso.datetime({ offset: true }),
   inquiry_id: z.uuid().nullable().optional(),
+  campaign_name: z.string().min(1).max(80).optional(),
+  campaign_channel: z.string().min(1).max(40).optional(),
   // PostgreSQL permits 4000 Unicode characters, up to 8000 UTF-16 units.
   message_body: z.string().min(1).max(8000).nullable().optional(),
 }).strict().superRefine((alert, context) => {
+  if (alert.kind === "campaign_visited") {
+    if (!alert.campaign_name || !alert.campaign_channel) {
+      context.addIssue({ code: "custom", message: "missing campaign context" });
+    }
+    if ([alert.creator_name, alert.live_title, alert.actor_name, alert.actor_email, alert.winner_count].some(value => value !== null)) {
+      context.addIssue({ code: "custom", message: "unexpected campaign identity" });
+    }
+  } else if (alert.campaign_name !== undefined || alert.campaign_channel !== undefined) {
+    context.addIssue({ code: "custom", message: "unexpected campaign context" });
+  }
   if (alert.kind === "draw_published" && alert.winner_count === null) {
     context.addIssue({ code: "custom", path: ["winner_count"], message: "missing draw winner count" });
   }
@@ -91,6 +104,9 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
     throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
   }
   const lines = input.flatMap((alert) => {
+    if (alert.kind === "campaign_visited") {
+      return ["• 캠페인 링크로 새 방문", `  ${cleanPublicName(alert.campaign_name ?? null, 80)}`, `  채널: ${cleanPublicName(alert.campaign_channel ?? null, 40)} · 브라우저 세션 1건`, `${ADMIN_URL}/campaigns`];
+    }
     if (alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied") {
       const inquiryId = z.uuid().safeParse(alert.inquiry_id);
       if (!inquiryId.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
