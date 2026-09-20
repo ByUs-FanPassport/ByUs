@@ -242,3 +242,32 @@ describe("Telegram command adapters", () => {
       .rejects.toThrow("TELEGRAM_COMMAND_QUEUE_UNAVAILABLE");
   });
 });
+
+describe("operations and marketing commands", () => {
+  const counts = { accounts: 0, profile_accounts: 0, passport_accounts: 0, reactions: 0, missions: 0, raffle_entries: 0, raffle_tickets: 0, invite_redemptions: 0, tracked_visits: 0, direct_visits: 0, outbound_sessions: 0 };
+  const marketing = { command: "marketing" as const, generated_at: "2026-09-21T03:00:00Z", from: "2026-09-14T15:00:00Z", previous_from: "2026-09-08T03:00:00Z", current: counts, previous: counts, active_links: 1, campaign_sources: [] };
+  it.each(["ops", "marketing"])("accepts /%s only in the authorized room", command => {
+    expect(classifyTelegramUpdate(update(22, `/${command}`), chatId)?.request?.command).toBe(command);
+    expect(classifyTelegramUpdate(update(22, `/${command}`, { chat: { id: -3 } }), chatId)?.request).toBeNull();
+  });
+  it("renders zero denominators, bounded source labels and explicitly separate cohorts", () => {
+    const empty = renderTelegramCommandReply(marketing);
+    expect(empty).toContain("팬 패스 0 (—)");
+    expect(empty).toContain("링크 게시 위치");
+    const reply = renderTelegramCommandReply({ ...marketing, current: { ...counts, accounts: 4, passport_accounts: 2, tracked_visits: 10, outbound_sessions: 3 }, campaign_sources: Array.from({ length: 5 }, () => ({ name: "😀".repeat(79) + "\u202e", channel: "x\n", visits: 10, outbound_sessions: 3 })) });
+    expect(reply).toContain("팬 패스 2 (50.0%)");
+    expect(reply).toContain("외부 이동 요청 3 (30.0%)");
+    expect(reply).toContain("유입별 응모 전환을 뜻하지 않습니다");
+    expect(reply).not.toContain("\u202e");
+    expect(reply.length).toBeLessThanOrEqual(4000);
+    expect(() => renderTelegramCommandReply({ ...marketing, email: "private@example.com" } as typeof marketing)).toThrow();
+    expect(() => renderTelegramCommandReply({ ...marketing, current: { ...counts, accounts: -1 } })).toThrow();
+  });
+  it("renders queue state without claiming that the worker is healthy", () => {
+    const reply = renderTelegramCommandReply({ command: "ops", generated_at: marketing.generated_at, pending_cs: 2, pending_certifications: 3, failed_mints: 1, overdue_mints: 0, failed_deliveries: 4, business_pending: 0, business_failed: 1, telegram_pending: 2, telegram_failed: 0, telegram_unknown: 1, telegram_oldest_pending_at: marketing.from });
+    expect(reply).toContain("CS 답변 대기 2건");
+    expect(reply).toContain("최종 실패/결과 불명 4건");
+    expect(reply).toContain("워커 가동을 보증하지 않습니다");
+    expect(renderTelegramCommandReply({ command: "help", generated_at: marketing.generated_at })).toContain("/marketing");
+  });
+});

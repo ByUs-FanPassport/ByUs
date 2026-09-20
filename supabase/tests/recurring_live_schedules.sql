@@ -1,5 +1,6 @@
 -- Disposable recurring LIVE behavior fixture. All rows are rolled back.
 begin;
+select public.configure_telegram_alerts('-1001234567890',true);
 
 do $$
 declare actor uuid:=pg_catalog.gen_random_uuid(); allow_id uuid:=pg_catalog.gen_random_uuid(); creator uuid;
@@ -69,6 +70,7 @@ begin
   approved:=public.approve_initial_recurring_live_rules(actor,allow_id,import_run,imported->>'inputHash','{}'::uuid[],pg_catalog.gen_random_uuid());
   if approved->'approvedRuleRevisionIds'->>0<>proposal::text then raise exception 'bootstrap approval retry was not idempotent'; end if;
   replenished:=public.replenish_recurring_live_events(replenish_run,49,'2030-01-01T00:00:00Z');
+  perform pg_temp.assert(exists(select 1 from public.telegram_alert_outbox where kind='live_published'),'direct published INSERT must notify operators');
   if (replenished->>'createdCount')::integer<1 then raise exception 'recurring LIVE replenishment created no occurrence'; end if;
   select * into generated from public.live_events where id=(replenished->'eventIds'->>1)::uuid;
   if generated.live_type<>'recurring' or generated.ends_at is not null or generated.brand_id is not null

@@ -300,3 +300,16 @@ describe("SupabaseTelegramAlertQueue", () => {
     expect(String(error)).toBe("Error: TELEGRAM_ALERT_QUEUE_UNAVAILABLE");
   });
 });
+
+describe("major activity notifications", () => {
+  const activity = { kind: "raffle_entered" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-21T00:00:00Z", activity_context: "뱅크시\u202e\n전시", activity_quantity: 3 };
+  it("renders bounded anonymous activities and rejects identity contamination", async () => {
+    expect(renderTelegramAlertMessage([activity])).toContain("사용 응모권 3장");
+    expect(renderTelegramAlertMessage([activity])).not.toContain("\u202e");
+    expect(renderTelegramAlertMessage(Array.from({ length: 5 }, () => ({ ...activity, activity_context: "😀".repeat(160) })) ).length).toBeLessThanOrEqual(4000);
+    expect(() => renderTelegramAlertMessage([{ ...activity, actor_email: "private@example.com" }])).toThrow();
+    expect(() => renderTelegramAlertMessage([{ ...activity, message_body: "private proof" }])).toThrow();
+    const q = new SupabaseTelegramAlertQueue({ rpc: vi.fn().mockResolvedValue({ error: null, data: { batch_id: "01234567-1234-4234-8234-012345678901", alerts: [activity] } }) });
+    expect((await q.claim("-1001234567890"))?.alerts[0]?.kind).toBe("raffle_entered");
+  });
+});
