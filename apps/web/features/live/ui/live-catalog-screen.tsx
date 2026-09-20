@@ -30,41 +30,35 @@ const CATALOG_PAGE_SIZE = 4;
 const copy = {
   ko: {
     title: "전체 LIVE",
-    intro: "지금 진행 중인 LIVE에 참여하고, 예정된 LIVE를 예약하거나 다시보기를 시청해 보세요.",
+    intro: "지금 진행 중인 LIVE에 참여하고, 예정된 LIVE를 예약해 보세요.",
     liveNow: "지금 LIVE 중",
     upcoming: "예정된 LIVE",
-    replay: "다시보기",
     emptyAll: "현재 공개된 LIVE가 없어요.",
     emptyLive: "현재 진행 중인 LIVE가 없어요.",
     emptyUpcoming: "예정된 LIVE가 없어요.",
-    emptyReplay: "공개된 다시보기가 없어요.",
     enter: "LIVE 시청하기",
     reserve: "라이브 예약하기",
     reserved: "예약 완료",
     details: "상세 보기",
     reservationLoading: "예약 상태 확인 중",
     reservationUnknown: "예약 상태 확인 필요",
-    watch: "다시보기",
     retry: "내 예약 상태 다시 불러오기",
     calendar: "LIVE 캘린더",
   },
   en: {
     title: "All LIVE events",
-    intro: "Join a LIVE happening now, reserve a spot for an upcoming LIVE, or watch a replay.",
+    intro: "Join a LIVE happening now or reserve a spot for an upcoming LIVE.",
     liveNow: "LIVE NOW",
     upcoming: "Upcoming LIVE",
-    replay: "Replay",
     emptyAll: "There are no published LIVE events right now.",
     emptyLive: "Nothing is live right now.",
     emptyUpcoming: "No upcoming LIVE events.",
-    emptyReplay: "No replays are published yet.",
     enter: "Watch LIVE",
     reserve: "Reserve a spot",
     reserved: "Reserved",
     details: "View details",
     reservationLoading: "Checking reservation status",
     reservationUnknown: "Reservation status unavailable",
-    watch: "Watch replay",
     retry: "Reload my reservation status",
     calendar: "LIVE calendar",
   },
@@ -99,7 +93,6 @@ function dateRange(item: LiveEventResponse, locale: FanLocale) {
 function action(item: LiveEventResponse, locale: FanLocale) {
   const t = copy[locale];
   if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true, state: "watch" as const };
-  if (item.live.effectiveStatus === "ended") return { label: t.watch, icon: <Play />, external: true, state: "watch" as const };
   if (item.viewer.reservation) return { label: t.details, icon: <Eye />, external: false, state: "reserved" as const };
   return { label: t.details, icon: <Eye />, external: false, state: "reserve" as const };
 }
@@ -289,7 +282,7 @@ export function LiveCatalogScreen({
     return () => controller.abort();
   }, [ready, requestAuthenticated, getAccessToken, locale, requestKey, initialCatalog, session.generation, session.pending]);
 
-  const total = catalog.liveNow.length + catalog.upcoming.length + catalog.replay.length;
+  const total = catalog.liveNow.length + catalog.upcoming.length;
   return (
     <FanAppFrame locale={locale} mainId="live-catalog-main">
       <FanContentContainer as="main" className={styles.main} id="live-catalog-main" tabIndex={-1}>
@@ -309,7 +302,6 @@ export function LiveCatalogScreen({
           <>
             {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} /> : null}
             <LiveGroup id="upcoming" title={t.upcoming} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
-            <LiveGroup id="replay" title={t.replay} empty={t.emptyReplay} items={catalog.replay} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
           </>
         )}
       </FanContentContainer>

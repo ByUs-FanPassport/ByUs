@@ -66,8 +66,8 @@ export const pageCopy = {
     en: { title: "ByUs | LIVE moments and your Fan Passport", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
   },
   live: {
-    ko: { title: "LIVE 일정과 다시보기 | ByUs", description: "진행 중인 LIVE와 예정된 방송, 다시보기를 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },
-    en: { title: "LIVE events, schedules and replays | ByUs", description: "Explore ongoing LIVE events, upcoming broadcasts and replays. Reserve a spot for your favorite creator’s LIVE and record the moments you share." },
+    ko: { title: "LIVE 일정 | ByUs", description: "진행 중인 LIVE와 예정된 방송을 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },
+    en: { title: "LIVE events and schedules | ByUs", description: "Explore ongoing and upcoming LIVE events. Reserve a spot for your favorite creator’s LIVE and record the moments you share." },
   },
   celebrities: {
     ko: { title: "셀럽과 크리에이터 | ByUs", description: "ByUs의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요." },
