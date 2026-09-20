@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { createManifest } from "../components/pwa-manifest";
 
@@ -25,15 +26,19 @@ describe("PWA-001 install contract", () => {
     expect(value.description).toContain("Record moments with each of your favorites");
   });
 
-  it("uses the approved B Spark application icon files", () => {
-    const approvedIcon = readFileSync(
-      resolve(process.cwd(), "../../design/brand/app-icon-512.png"),
-    );
-    const publishedIcon = readFileSync(
-      resolve(process.cwd(), "public/byus-app-icon-512.png"),
-    );
-
-    expect(publishedIcon).toEqual(approvedIcon);
+  it("publishes opaque Apple and PWA icons matching the wordmark SVG", async () => {
+    const source = readFileSync(resolve(process.cwd(), "public/byus-app-icon.svg"));
+    for (const [file, size] of [
+      ["apple-touch-icon.png", 180],
+      ["byus-app-icon-192.png", 192],
+      ["byus-app-icon-512.png", 512],
+    ] as const) {
+      const icon = sharp(resolve(process.cwd(), "public", file));
+      expect(await icon.metadata()).toMatchObject({ width: size, height: size });
+      expect((await icon.stats()).isOpaque).toBe(true);
+      const expected = await sharp(source).resize(size, size).removeAlpha().raw().toBuffer();
+      expect(await icon.removeAlpha().raw().toBuffer()).toEqual(expected);
+    }
   });
 
   it("uses one root service worker for both install shell and notifications", () => {
