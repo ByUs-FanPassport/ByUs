@@ -28,7 +28,7 @@ export const elinaFanGuideContent = {
         title: "모은 2장으로,\n원하는 선물에 응모해요.",
         body: "팬 인증과 LIVE 예약을 처음 완료했다면 응모권 2장으로 바로 응모할 수 있어요. 방송까지 기다릴 필요 없어요. 원하는 경품을 고르고 사용할 수량을 확인해 주세요.",
         actions: ["선물 고르고 응모하기"],
-        note: "응모권은 경품 3종이 함께 사용해요. 한 경품에 쓰면 남은 수량이 줄어들어요. 응모 마감은 9월 28일 00:00(KST), 9월 27일에서 28일로 넘어가는 자정이에요.",
+        note: "응모권은 경품 3종이 함께 사용해요. 한 경품에 쓰면 남은 수량이 줄어들어요. 응모 마감은 10월 7일 오후 6시(KST)예요.",
       },
       {
         label: "04  /  9월 18일 방송 당일",
@@ -95,7 +95,7 @@ export const elinaFanGuideContent = {
         title: "Use your 2 tickets.\nChoose your prize.",
         body: "After completing fan verification and this LIVE reservation for the first time, you can enter with 2 tickets right away. No need to wait for the broadcast. Choose a prize and review how many tickets to use.",
         actions: ["Choose a prize and enter"],
-        note: "Your Elina ticket balance is shared across all 3 prizes. Tickets used for one prize are deducted from that balance. Entries close at midnight KST at the end of September 27 (September 28, 00:00).",
+        note: "Your Elina ticket balance is shared across all 3 prizes. Tickets used for one prize are deducted from that balance. Entries close on October 7 at 6:00 PM KST.",
       },
       {
         label: "04  /  SEPTEMBER 18",
