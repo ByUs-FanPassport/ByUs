@@ -1,0 +1,60 @@
+.banner, .dialog { --campaign-ink: hsl(30 8% 10%); --campaign-paper: hsl(38 30% 96%); --campaign-accent: hsl(336 100% 42%); color: var(--campaign-ink); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.banner { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; min-height: 224px; margin-bottom: 24px; padding: 32px; border-radius: 20px; background: var(--campaign-ink); color: var(--campaign-paper); }
+.bannerImage { z-index: -2; object-fit: cover; object-position: 70% 55%; }
+.banner::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, hsl(30 8% 7% / .96), hsl(30 8% 7% / .82) 45%, hsl(30 8% 7% / .25)); }
+.bannerCopy { min-width: 0; }
+.eyebrow { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.status { padding: 6px 8px; border: 1px solid currentColor; border-radius: 4px; }
+.banner h2, .dialog h2 { margin: 16px 0 12px; font-size: 36px; line-height: 1.15; font-weight: 700; letter-spacing: -.045em; text-wrap: balance; word-break: keep-all; }
+.banner h2 br { display: none; }
+.description { margin: 0; font-size: 14px; line-height: 1.6; }
+.description strong { font-weight: 700; }
+.deadline { margin: 12px 0 0; font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.bannerAction, .primaryAction { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; padding: 16px 24px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 700; line-height: 1.5; transition: background .15s ease; }
+.bannerAction { flex-shrink: 0; align-self: flex-end; background: var(--campaign-paper); color: var(--campaign-ink); }
+.bannerAction:hover { background: hsl(38 30% 88%); }
+.bannerAction svg, .primaryAction svg { width: 20px; height: 20px; flex-shrink: 0; }
+.backdrop { align-items: center; justify-content: center; padding: 24px; background: hsl(30 8% 6% / .7); backdrop-filter: blur(6px); }
+.backdrop .dialog { position: relative; display: grid; grid-template-columns: 1fr 1fr; width: min(840px, 100%); max-height: calc(100dvh - 48px); overflow: auto; overscroll-behavior: contain; border-radius: 24px; background: var(--campaign-paper); box-shadow: 0 15px 35px hsl(0 0% 0% / .2); }
+.close { position: absolute; top: 12px; right: 12px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid hsl(30 8% 10% / .2); border-radius: 50%; background: var(--campaign-paper); color: var(--campaign-ink); cursor: pointer; }
+.cover { position: relative; min-height: 480px; overflow: hidden; background: var(--campaign-ink); color: var(--campaign-paper); }
+.cover > img { object-fit: cover; object-position: 72% 50%; }
+.cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, hsl(30 8% 7% / .75), transparent 60%, hsl(30 8% 7% / .4)); }
+.coverType { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; padding: 32px; }
+.coverType > span:first-child { font-size: 20px; letter-spacing: .12em; }
+.coverType strong { font-size: clamp(48px, 5vw, 72px); line-height: 1; letter-spacing: -.055em; font-weight: 900; }
+.coverType > span:last-child { margin-top: 4px; font-size: 10px; letter-spacing: .12em; }
+.dialogBody { display: flex; flex-direction: column; justify-content: center; padding: 64px 32px 24px; }
+.dialog .eyebrow { color: hsl(335 88% 33%); gap: 8px; font-size: 10px; }
+.dialog .description { color: hsl(30 8% 30%); }
+.dialog .deadline { color: hsl(30 8% 36%); }
+.primaryAction { margin-top: 24px; background: var(--campaign-accent); color: white; }
+.primaryAction:hover { background: hsl(336 100% 35%); }
+.entryNote { margin: 12px 0 0; color: hsl(30 8% 36%); font-size: 12px; line-height: 1.5; text-align: center; }
+.later { align-self: center; min-height: 44px; margin-top: 8px; padding: 8px 16px; border: 0; background: transparent; color: hsl(30 8% 30%); font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.copyFocus:focus { outline: none; }
+.bannerAction:focus-visible, .primaryAction:focus-visible, .close:focus-visible, .later:focus-visible { outline: 3px solid hsl(336 100% 42%); outline-offset: 4px; }
+@media (max-width: 767px) {
+  .banner { min-height: 0; display: block; padding: 24px; margin-bottom: 16px; border-radius: 16px; }
+  .banner::after { background: linear-gradient(90deg, hsl(30 8% 7% / .96), hsl(30 8% 7% / .55)); }
+  .banner h2 { font-size: 30px; }
+  .banner h2 br { display: initial; }
+  .banner .description { font-size: 12px; }
+  .banner .eyebrow { gap: 8px; font-size: 10px; }
+  .bannerAction { justify-content: space-between; min-height: 48px; margin-top: 24px; padding: 12px 16px; font-size: 14px; }
+  .bannerAction > svg:first-child { display: none; }
+  .backdrop { padding: 16px; }
+  .backdrop .dialog { grid-template-columns: 1fr; width: min(420px, 100%); max-height: calc(100dvh - 32px); border-radius: 20px; }
+  .cover { min-height: 192px; }
+  .cover > img { object-position: 70% 55%; }
+  .coverType { padding: 24px; gap: 4px; }
+  .coverType > span:first-child { font-size: 14px; }
+  .coverType strong { font-size: 60px; }
+  .coverType > span:last-child { font-size: 8px; }
+  .dialogBody { padding: 24px; }
+  .dialog h2 { font-size: 30px; margin: 12px 0; }
+  .dialog h2 br { display: none; }
+  .dialog .description { font-size: 14px; }
+  .primaryAction { min-height: 48px; padding: 12px 16px; margin-top: 24px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .bannerAction, .primaryAction { transition: none; } }
