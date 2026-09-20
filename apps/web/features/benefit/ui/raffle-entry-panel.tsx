@@ -1,5 +1,8 @@
 "use client";
 
+import { BanksyOutboundLinks } from "@/features/analytics/client/banksy-campaign";
+import { BANKSY_BENEFIT_IDS } from "@/features/analytics/domain/banksy-campaign";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Check, Minus, Plus, Ticket } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -84,6 +87,7 @@ export function RaffleEntryPanel({ celebrity, locale, raffle, benefit, loading, 
         <p>{ko ? "당첨 여부는 결과 발표 후 내 응모 내역에서 확인할 수 있어요." : "Check your raffle entries for the result after the announcement."}</p>
         {request.reconciling ? <p role="status">{ko ? "최신 응모권 잔액을 확인하고 있어요." : "Checking your current ticket balance."}</p> : null}
         <div className={styles.receiptActions}><FanAction variant="primary" href={creatorRafflesHref(celebrity.slug, locale)} trailingIcon={<ArrowRight />}>{ko ? "선물 목록 보기" : "View gifts"}</FanAction><FanAction disabled={!request.reconciled} onClick={() => { request.clearReceipt(); setQuantity(1); }}>{ko ? "이 선물에 더 응모하기" : "Enter this gift again"}</FanAction></div>
+        {celebrity.slug === "elina" && raffle.benefitId && BANKSY_BENEFIT_IDS.has(raffle.benefitId) ? <BanksyOutboundLinks locale={locale} surface="raffle_receipt" /> : null}
       </div> : <>
         <div className={styles.entryHeading}><div><span className={styles.eyebrow}>{ko ? "01 수량 선택 → 02 확인 → 03 응모 완료" : "01 Select tickets → 02 Review → 03 Entry confirmed"}</span><h2 id="raffle-entry-title" tabIndex={-1} ref={entryHeadingRef}>{needsVerification ? (ko ? "팬 인증 후 응모해요" : "Verify your fan status to enter") : (ko ? "이번 선물에 몇 장을 보낼까요?" : "How many tickets for this gift?")}</h2></div>{auth.authenticated ? <p>{ko ? "이 선물에 응모한 수량" : "Tickets entered"} <strong>{entry ? `${entry.enteredTickets}${ko ? "장" : ""}` : "—"}</strong></p> : null}</div>
         {!auth.ready || (auth.authenticated && loading) ? <p role="status">{ko ? "내 응모권을 확인하고 있어요." : "Checking your tickets."}</p> : !auth.authenticated ? <div className={styles.guestEntry}><p>{ko ? "로그인하고 보유 응모권을 확인해 주세요." : "Sign in to check your available tickets."}</p>{status === "open" ? <AuthIntentLink locale={locale} className={fanActionClassName("primary")} emphasis="primary" input={{ sourcePath: `/c/${celebrity.slug}/raffles/${raffle.benefitId}`, sourceQuery: `?locale=${locale}`, actionType: "APPLY_BENEFIT", targetType: "benefit", targetId: raffle.benefitId! }}>{ko ? "로그인하고 응모하기" : "Sign in to enter"}</AuthIntentLink> : <p>{blockedText}</p>}</div> : loadFailed || !entry ? <div role="status"><p>{ko ? "내 응모권을 불러오지 못했어요." : "We couldn’t load your tickets."}</p><FanAction onClick={refresh}>{ko ? "다시 확인" : "Try again"}</FanAction></div> : needsVerification && status === "open" ? <div className={styles.guestEntry}><p>{ko ? `${celebrity.name} 팬 인증을 완료하면 응모권 1장을 받아 응모할 수 있어요.` : `Verify your ${celebrity.name} fan status to receive 1 ticket and enter.`}</p><FanAction variant="primary" href={creatorRaffleVerificationHref(celebrity.slug, locale, raffle.benefitId)}>{ko ? "팬 인증하고 응모권 받기" : "Verify your fan status"}</FanAction></div> : <>

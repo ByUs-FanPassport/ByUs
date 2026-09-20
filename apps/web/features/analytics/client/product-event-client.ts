@@ -18,7 +18,7 @@ type PageViewCacheEntry = {
   event: ClientProductEventV1 | null;
 };
 
-function anonymousSessionId(): string {
+export function anonymousSessionId(): string {
   const existing = window.sessionStorage.getItem(SESSION_KEY);
   if (existing) return existing;
   const created = crypto.randomUUID();
