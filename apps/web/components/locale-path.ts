@@ -20,8 +20,8 @@ export function withLocalePath(path: string, locale: AppLocale, depth = 0): stri
   }
 }
 
-export function requestLocale(pathname: string, requested: string | null, callbackCookie?: string | null, acceptLanguage?: string | null): AppLocale {
-  const selected = requested ?? (pathname === "/settings/kakao/callback" ? callbackCookie : null);
+export function requestLocale(pathname: string, requested: string | null, callbackCookie?: string | null, acceptLanguage?: string | null, preference?: string | null): AppLocale {
+  const selected = requested ?? (pathname === "/settings/kakao/callback" ? callbackCookie ?? preference : preference);
   if (selected === "ko" || selected === "en") return selected;
   const preferred = (acceptLanguage ?? "").split(",").map((entry) => {
     const [tag, ...parameters] = entry.trim().split(";");

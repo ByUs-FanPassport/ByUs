@@ -1,5 +1,7 @@
 "use client";
 
+import { usePageLocale } from "@/components/locale-provider";
+
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { CommunityStampCollection } from "@/features/community-stamps/ui/community-stamp-collection";
@@ -11,7 +13,7 @@ import Link from "next/link";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { CreatorImage } from "@/components/fan-ui/creator-image";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useCallback, useEffect, useId, useState } from "react";
 import { BottomSheet, Drawer } from "@/components/ui/overlay/accessible-overlay";
@@ -62,7 +64,6 @@ const copy = {
   },
 } as const;
 
-function localeFrom(value: string | null): PassportLocale { return value === "en" ? "en" : "ko"; }
 function withLocale(path: string, locale: PassportLocale): Route { return `${path}?locale=${locale}` as Route; }
 function date(value: string, locale: PassportLocale): string { return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { year: "numeric", month: "short", day: "numeric" }).format(new Date(value)); }
 function passportDate(value: string, locale: PassportLocale): string { return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)); }
@@ -147,7 +148,7 @@ function RefreshNotice({ failed, retry, locale }: { failed: boolean; retry: () =
 
 
 export function PassportCollectionScreen() {
-  const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
+  const locale = usePageLocale(); const c = copy[locale]; const auth = usePrivy();
   const fetcher = useOwnedFanResource(`/api/passports?locale=${locale}&tierStages=1&firstLikeStamp=1`, parseCollection, auth, collectionNeedsRefresh);
   return <Frame locale={locale} collection><div className={styles.collectionHeading}>
       <PageHeading title={c.passports} subtitle={c.passportsSub} />
@@ -239,7 +240,7 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
 }
 
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
-  const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const c = copy[locale]; const auth = usePrivy();
+  const locale = usePageLocale(); const c = copy[locale]; const auth = usePrivy();
   const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedFanResource(`/api/passports/${encodeURIComponent(id)}?locale=${locale}&tierStages=1`, parse, auth, passportNeedsRefresh);
   return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>}</Frame>;
 }
@@ -289,7 +290,7 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
 }
 
 export function StampDetailScreen({ id, explorerBaseUrl, presentation = "page", onClose }: { id: string; explorerBaseUrl: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
-  const params = useSearchParams(); const locale = localeFrom(params.get("locale")); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
+  const locale = usePageLocale(); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
   const fetcher = useOwnedFanResource(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth, stampNeedsRefresh);
   return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} /></>}</Frame>;
 }
@@ -313,8 +314,7 @@ function useMobileDetail() {
 }
 
 export function StampDetailOverlay({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
-  const params = useSearchParams();
-  const locale = localeFrom(params.get("locale"));
+  const locale = usePageLocale();
   const router = useRouter();
   const mobile = useMobileDetail();
   const close = useCallback(() => router.back(), [router]);

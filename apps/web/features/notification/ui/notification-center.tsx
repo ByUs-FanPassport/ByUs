@@ -1,4 +1,6 @@
 "use client";
+
+import { usePageLocale } from "@/components/locale-provider";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
@@ -75,7 +77,7 @@ export function NotificationCenter() {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
   const ownerId = user?.id ?? null;
   const params = useSearchParams();
-  const locale = params.get("locale") === "en" ? "en" : "ko";
+  const locale = usePageLocale();
   const c = copy[locale];
   const [state, setState] = useState<State>({ kind: "loading" });
   const [permission, setPermission] = useState<PushEnableResult | null>(null);

@@ -3,13 +3,14 @@ import { renderToString } from "react-dom/server";
 import { useEffect, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { DocumentLocale } from "./document-locale";
-import { LocaleProvider } from "./locale-provider";
+import { LocaleProvider, usePageLocale } from "./locale-provider";
 import { ByUsPrivyProvider } from "./privy-provider";
 import { PublicContentState } from "./public-content-state";
 
 const state = vi.hoisted(() => ({ query: 'locale=en', pathname: '/', mounts: 0, header: '' }));
 vi.mock('next/navigation', () => ({ usePathname: () => state.pathname, useSearchParams: () => new URLSearchParams(state.query) }));
 vi.mock('./avatar-session-bridge', () => ({ AvatarSessionBridge: ({children}: {children: ReactNode}) => children }));
+vi.mock('./byus-session-provider', () => ({ ByUsSessionProvider: ({children}: {children: ReactNode}) => children }));
 vi.mock('@privy-io/react-auth', () => ({ PrivyProvider: function TestProvider({children, config}: {children: ReactNode; config: {appearance: {landingHeader: string}}}) {
   useEffect(() => { state.mounts += 1; }, []);
   state.header = config.appearance.landingHeader;
@@ -17,6 +18,15 @@ vi.mock('@privy-io/react-auth', () => ({ PrivyProvider: function TestProvider({c
 } }));
 
 describe('document and authentication locale', () => {
+  it('uses the server-selected locale on clean URLs and honors explicit legacy links', () => {
+    function PageLocale() { return <output>{usePageLocale()}</output>; }
+    state.query = '';
+    const view = render(<LocaleProvider initialLocale="en"><PageLocale /></LocaleProvider>);
+    expect(screen.getByRole('status')).toHaveTextContent('en');
+    state.query = 'locale=ko';
+    view.rerender(<LocaleProvider initialLocale="en"><PageLocale /></LocaleProvider>);
+    expect(screen.getByRole('status')).toHaveTextContent('ko');
+  });
   it('renders English loading content in the server output', () => {
     const html = renderToString(<LocaleProvider initialLocale="en"><PublicContentState state="loading" scope="home" /></LocaleProvider>);
     expect(html).toContain("Loading today");

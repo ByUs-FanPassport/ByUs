@@ -1,5 +1,7 @@
 "use client";
 
+import { usePageLocale } from "@/components/locale-provider";
+
 import { useLogin, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
@@ -9,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { withLocalePath } from "./locale-path";
 import { X } from "lucide-react";
 import { AppleMark, ArrowRight, GoogleMark } from "./icons";
-import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "./login-intent";
+import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeReturnTo } from "./login-intent";
 import { BottomSheet, Dialog } from "./ui/overlay/accessible-overlay";
 import { FanSiteFooter } from "./fan-shell/fan-site-footer";
 import { FanAction } from "./fan-ui/fan-action";
@@ -161,11 +163,11 @@ export function LoginPage({
   const errorRef = useRef<HTMLParagraphElement>(null);
   const sessionErrorRef = useRef<HTMLDivElement>(null);
   const mobilePresentation = useMobileLoginPresentation();
-  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(searchParams.get("returnTo")), sanitizeLocale(searchParams.get("locale"))), [searchParams]);
+  const locale = usePageLocale();
+  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(searchParams.get("returnTo")), locale), [searchParams, locale]);
   const intent = useMemo(() => sanitizeIntent(searchParams.get("intent")), [searchParams]);
   const entity = useMemo(() => sanitizeEntity(searchParams.get("entity")), [searchParams]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(searchParams.get("authIntent")), [searchParams]);
-  const locale = useMemo(() => sanitizeLocale(searchParams.get("locale")), [searchParams]);
   const transitionKey = `${privyUserId ?? ""}|${returnTo}|${locale}|${intent ?? ""}|${entity ?? ""}|${authIntent ?? ""}`;
   const assertCurrentIdentity = useCallback((userId: string, generation: number) => {
     if (!mountedRef.current || activeIdentityRef.current !== userId || identityGenerationRef.current !== generation) {

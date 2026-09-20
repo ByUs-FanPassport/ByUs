@@ -57,7 +57,22 @@ describe("page locale proxy", () => {
     });
     const response = proxy(request);
 
-    expect(new URL(response.headers.get('location')!).searchParams.get('locale')).toBe('en');
+    expect(new URL(response.headers.get('x-middleware-rewrite')!).searchParams.get('locale')).toBe('en');
+  });
+
+  it.each([['ko-KR', 'ko'], ['en-US', 'en'], ['ja-JP', 'en']])('keeps creator URLs clean for %s browsers', (language, locale) => {
+    const response = proxy(new NextRequest('https://byus.example/elina', { headers: { 'accept-language': language } }));
+    expect(response.status).toBe(200);
+    expect(response.headers.has('location')).toBe(false);
+    expect(response.headers.get('x-middleware-request-x-byus-locale')).toBe(locale);
+    expect(new URL(response.headers.get('x-middleware-rewrite')!).searchParams.get('locale')).toBe(locale);
+    expect(response.headers.get('vary')).toContain('Cookie');
+  });
+
+  it('retains a language selected in this browser after reloading a clean URL', () => {
+    const response = proxy(new NextRequest('https://byus.example/elina', { headers: { 'accept-language': 'ko-KR', cookie: 'byus_page_locale=en' } }));
+    expect(response.headers.get('x-middleware-request-x-byus-locale')).toBe('en');
+    expect(response.headers.has('location')).toBe(false);
   });
 
   it("defaults invalid locale input to English even when a stale cookie is present", () => {
@@ -67,15 +82,16 @@ describe("page locale proxy", () => {
       }),
     );
 
-    expect(new URL(response.headers.get('location')!).searchParams.get('locale')).toBe('en');
+    expect(new URL(response.headers.get('x-middleware-rewrite')!).searchParams.get('locale')).toBe('en');
   });
 
   it.each([['ko-KR,ko;q=0.9', 'ko'], ['en-US,ko;q=0.8', 'en'], ['ja-JP', 'en']])('preserves attendance and login return paths while selecting %s', (language, expected) => {
     for (const path of ['/live/elina?attendanceCode=ELINA2026#fan-code', '/login?returnTo=%2Flive%2Felina%3FattendanceCode%3DELINA2026%23fan-code']) {
       const original = new URL(path, 'https://byus.example');
       const result = proxy(new NextRequest(original, { headers: { 'accept-language': language } }));
-      const destination = new URL(result.headers.get('location')!);
-      expect(result.status).toBe(307);
+      const destination = new URL(result.headers.get('x-middleware-rewrite')!);
+      expect(result.status).toBe(200);
+      expect(result.headers.has("location")).toBe(false);
       expect(destination.searchParams.get('locale')).toBe(expected);
       expect(destination.searchParams.get('attendanceCode')).toBe(original.searchParams.get('attendanceCode'));
       expect(destination.searchParams.get('returnTo')).toBe(original.searchParams.get('returnTo'));
@@ -90,7 +106,7 @@ describe("page locale proxy", () => {
   });
   it('normalizes duplicate locale parameters without looping or losing the code', () => {
     const first = proxy(new NextRequest('https://byus.example/live/elina?locale=en&locale=ko&attendanceCode=ELINA2026'));
-    const destination = new URL(first.headers.get('location')!);
+    const destination = new URL(first.headers.get('x-middleware-rewrite')!);
     expect(destination.searchParams.getAll('locale')).toEqual(['en']);
     expect(destination.searchParams.get('attendanceCode')).toBe('ELINA2026');
     expect(proxy(new NextRequest(destination)).headers.has('location')).toBe(false);
@@ -104,7 +120,7 @@ describe("page locale proxy", () => {
   it("uses callback cookie only when query is absent and localizes manifest requests", () => {
     for (const [path, locale] of [["/settings/kakao/callback", "en"], ["/settings/kakao/callback?locale=ko", "ko"], ["/manifest.webmanifest?locale=en", "en"]]) {
       const response = proxy(new NextRequest(`https://byus.example${path}`, { headers: { cookie: "byus_locale=en" } }));
-      const location = response.headers.get('location');
+      const location = response.headers.get('x-middleware-rewrite');
       expect(location ? new URL(location).searchParams.get('locale') : response.headers.get("x-middleware-request-x-byus-locale")).toBe(locale);
     }
   });

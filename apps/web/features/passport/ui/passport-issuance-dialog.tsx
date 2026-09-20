@@ -1,5 +1,7 @@
 "use client";
 
+import { usePageLocale } from "@/components/locale-provider";
+
 import Link from "next/link";
 import type { Route } from "next";
 import { usePrivy } from "@privy-io/react-auth";
@@ -82,10 +84,6 @@ const copy = {
     retry: "Try again",
   },
 } as const;
-
-function localeFrom(value: string | null): PassportLocale {
-  return value === "en" ? "en" : "ko";
-}
 
 function withLocale(path: string, locale: PassportLocale): Route {
   return `${path}?locale=${locale}` as Route;
@@ -330,7 +328,7 @@ type ScreenState =
 
 export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
   const params = useSearchParams();
-  const locale = localeFrom(params.get("locale"));
+  const locale = usePageLocale();
   const liveReturnTo = sanitizeLiveReturnTo(params.get("returnTo"));
   const { ready, authenticated, getAccessToken } = usePrivy();
   const [state, setState] = useState<ScreenState>({ kind: "loading" });

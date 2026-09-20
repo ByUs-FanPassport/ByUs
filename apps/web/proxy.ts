@@ -8,22 +8,22 @@ export function proxy(request: NextRequest): NextResponse {
       request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/");
     const queryKey = isAdminPage ? "lang" : "locale";
     const requestedLocale = request.nextUrl.searchParams.get(queryKey);
-    const locale = requestLocale(request.nextUrl.pathname, requestedLocale, request.cookies.get("byus_locale")?.value, request.headers.get("accept-language"));
+    const locale = requestLocale(request.nextUrl.pathname, requestedLocale, request.cookies.get("byus_locale")?.value, request.headers.get("accept-language"), isAdminPage ? null : request.cookies.get("byus_page_locale")?.value);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-byus-locale", locale);
     requestHeaders.set("x-byus-pathname", request.nextUrl.pathname);
-    // Resolve before rendering so existing page query readers and auth return paths
-    // agree with SSR. Static resources must retain their exact URLs.
+    // Resolve page queries internally, keeping the browser/share URL language-free.
+    // Static resources retain their exact URLs; admin keeps its lang contract.
     const needsLocale = (requestedLocale !== "ko" && requestedLocale !== "en")
       || request.nextUrl.searchParams.getAll(queryKey).length > 1;
     const isPage = !/\.[a-z0-9]+$/i.test(request.nextUrl.pathname);
     const destination = request.nextUrl.clone();
     destination.searchParams.set(queryKey, locale);
-    const redirect = needsLocale && isPage && (request.method === "GET" || request.method === "HEAD");
-    const response = redirect
-      ? NextResponse.redirect(destination, 307)
+    const resolve = needsLocale && isPage && (request.method === "GET" || request.method === "HEAD");
+    const response = resolve
+      ? isAdminPage ? NextResponse.redirect(destination, 307) : NextResponse.rewrite(destination, { request: { headers: requestHeaders } })
       : NextResponse.next({ request: { headers: requestHeaders } });
-    if (redirect) {
+    if (resolve) {
       response.headers.set("Cache-Control", "private, no-store");
       response.headers.set("Vary", "Accept-Language, Cookie");
     }

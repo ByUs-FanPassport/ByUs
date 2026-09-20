@@ -1,5 +1,7 @@
 "use client";
 
+import { usePageLocale } from "@/components/locale-provider";
+
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 
 import { withLocalePath } from "@/components/locale-path";
@@ -19,7 +21,7 @@ import {
   type NicknameFormatReason,
 } from "../domain/nickname-format";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
-import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo } from "../../../components/login-intent";
+import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeReturnTo } from "../../../components/login-intent";
 import styles from "./profile-onboarding-screen.module.css";
 
 type ScreenState = "checking" | "empty" | "typing" | "valid" | "duplicate" | "prohibited" | "invalid" | "saving" | "saved" | "network";
@@ -98,12 +100,11 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
   const rawIntent = searchParams.get("intent");
   const rawEntity = searchParams.get("entity");
   const rawAuthIntent = searchParams.get("authIntent");
-  const rawLocale = searchParams.get("locale");
-  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(rawReturnTo), sanitizeLocale(rawLocale)), [rawReturnTo, rawLocale]);
+  const locale = usePageLocale();
+  const returnTo = useMemo(() => withLocalePath(sanitizeReturnTo(rawReturnTo), locale), [rawReturnTo, locale]);
   const intent = useMemo(() => sanitizeIntent(rawIntent), [rawIntent]);
   const entity = useMemo(() => sanitizeEntity(rawEntity), [rawEntity]);
   const authIntent = useMemo(() => sanitizeAuthIntentId(rawAuthIntent), [rawAuthIntent]);
-  const locale = useMemo(() => sanitizeLocale(rawLocale), [rawLocale]);
   const context = useMemo(() => ({ returnTo, intent, entity, locale, authIntent }), [authIntent, entity, intent, locale, returnTo]);
   const t = copy[locale];
   const nicknameFormat = getNicknameFormat(nickname);
