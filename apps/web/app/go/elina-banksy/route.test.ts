@@ -65,14 +65,26 @@ describe("Elina Instagram → byus → Banksy", () => {
 
   it.each<[string, number]>([
     ["https://www.facebook.com/", 0],
+    ["https://www.facebook.com", 0],
+    ["https://facebook.com/?preview=1", 0],
     ["https://l.instagram.com/", 1],
+    ["https://www.facebook.com.example/", 1],
     ["", 1],
-  ])("filters the observed Meta scanner without excluding normal desktop Chrome: %s", async (referrer, count) => {
+  ])("excludes Facebook scans while counting Instagram and direct Chrome visits: %s", async (referrer, count) => {
     const response = await GET(new Request("https://byus.kr/go/elina-banksy", {
       headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6780.64 Safari/537.36", referer: referrer },
     }));
     expect(response.headers.get("location")).toBe(destination);
     expect(fetcher).toHaveBeenCalledTimes(count);
+  });
+
+  it("excludes Meta scans when they rotate the browser version", async () => {
+    const response = await GET(request({
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.8976.12 Safari/537.36",
+      referer: "https://www.facebook.com/",
+    }));
+    expect(response.headers.get("location")).toBe(destination);
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it("still redirects when the database rejects the insert", async () => {

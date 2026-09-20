@@ -12,9 +12,10 @@ const headers = {
 export async function GET(request: Request): Promise<Response> {
   // ponytail: header filtering excludes known previews, not all bots; add verified bot detection if abuse affects reporting.
   const userAgent = request.headers.get("user-agent") ?? "";
-  // Observed Meta link scan: desktop Chrome UA + Facebook referrer, before any Instagram tap.
-  const facebookLinkScan = userAgent === "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6780.64 Safari/537.36"
-    && request.headers.get("referer") === "https://www.facebook.com/";
+  // Instagram-only campaign: Meta scans rotate Chrome UAs but refer from Facebook.
+  // Facebook referrals (including real ones) are outside this campaign's count.
+  const facebookLinkScan = /^https:\/\/(?:www\.)?facebook\.com(?:[/?#]|$)/i
+    .test(request.headers.get("referer") ?? "");
   const preview = htmlLimitedBots.test(userAgent) || /bot|crawler|spider|meta-external/i.test(userAgent)
     || facebookLinkScan
     || /prefetch|prerender/i.test(`${request.headers.get("purpose") ?? ""} ${request.headers.get("sec-purpose") ?? ""}`)
