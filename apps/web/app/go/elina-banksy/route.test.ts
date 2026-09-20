@@ -63,6 +63,18 @@ describe("Elina Instagram → byus → Banksy", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it.each<[string, number]>([
+    ["https://www.facebook.com/", 0],
+    ["https://l.instagram.com/", 1],
+    ["", 1],
+  ])("filters the observed Meta scanner without excluding normal desktop Chrome: %s", async (referrer, count) => {
+    const response = await GET(new Request("https://byus.kr/go/elina-banksy", {
+      headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6780.64 Safari/537.36", referer: referrer },
+    }));
+    expect(response.headers.get("location")).toBe(destination);
+    expect(fetcher).toHaveBeenCalledTimes(count);
+  });
+
   it("still redirects when the database rejects the insert", async () => {
     fetcher.mockResolvedValue(new Response('{"message":"database unavailable"}', { status: 400 }));
     expect((await GET(request())).headers.get("location")).toBe(destination);
