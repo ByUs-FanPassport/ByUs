@@ -21,7 +21,7 @@ const RUN_DEADLINE_MS = 40_000;
 const REQUIRED_REPLY_BUDGET_MS = 18_000;
 const REQUIRED_CALLBACK_BUDGET_MS = 26_000;
 
-const commandSchema = z.enum(["users", "today", "lives", "help"]);
+const commandSchema = z.enum(["users", "today", "lives", "ops", "marketing", "help"]);
 export type TelegramCommand = z.infer<typeof commandSchema>;
 export interface TelegramCommandRequest {
   updateId: number;
@@ -53,7 +53,25 @@ const livesPayload = z.object({
   command: z.literal("lives"), generated_at: generated,
   lives: z.array(liveSchema).max(5), total_lives: count,
 }).strict();
-const payloadSchema = z.discriminatedUnion("command", [helpPayload, usersPayload, todayPayload, livesPayload]);
+const opsPayload = z.object({
+  command: z.literal("ops"), generated_at: generated,
+  pending_cs: count, pending_certifications: count, failed_mints: count, overdue_mints: count,
+  failed_deliveries: count, business_pending: count, business_failed: count,
+  telegram_pending: count, telegram_failed: count, telegram_unknown: count,
+  telegram_oldest_pending_at: generated.nullable(),
+}).strict();
+const marketingCounts = z.object({
+  accounts: count, profile_accounts: count, passport_accounts: count, reactions: count,
+  missions: count, raffle_entries: count, raffle_tickets: count, invite_redemptions: count,
+  tracked_visits: count, direct_visits: count, outbound_sessions: count,
+}).strict();
+const marketingPayload = z.object({
+  command: z.literal("marketing"), generated_at: generated, from: generated, previous_from: generated,
+  current: marketingCounts, previous: marketingCounts, active_links: count,
+  campaign_sources: z.array(z.object({ name: z.string().max(160), channel: z.string().max(80),
+    visits: count, outbound_sessions: count }).strict()).max(5),
+}).strict();
+const payloadSchema = z.discriminatedUnion("command", [helpPayload, usersPayload, todayPayload, livesPayload, opsPayload, marketingPayload]);
 export type TelegramCommandPayload = z.infer<typeof payloadSchema>;
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -151,8 +169,49 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
       "/users 회원 현황",
       "/today 오늘 가입·팬 가입·예약·출석",
       "/lives 공개 라이브 현황",
+      "/ops 운영 대기·실패 현황",
+      "/marketing 최근 7일 성과·확인할 지점",
       "/help 명령어 안내",
     ].join("\n"); break;
+    case "ops": message = [
+      `🛠 운영 현황 · ${seoulTime(payload.generated_at)} KST`,
+      `CS 답변 대기 ${payload.pending_cs}건 · 인증 검토 대기 ${payload.pending_certifications}건`,
+      `발급 최종 실패 ${payload.failed_mints}건 · 예정 시각보다 30분 이상 늦은 대기/재시도 ${payload.overdue_mints}건`,
+      `팬 알림 최종 실패/결과 불명 ${payload.failed_deliveries}건 (푸시 전달 + 외부 전송 계획)`,
+      `사업 문의 메일 대기 ${payload.business_pending}건 · 실패/결과 불명 ${payload.business_failed}건`,
+      `Telegram 대기/전송 중 ${payload.telegram_pending}건 · 거절 ${payload.telegram_failed}건 · 결과 불명 ${payload.telegram_unknown}건`,
+      `가장 오래된 대기: ${payload.telegram_oldest_pending_at ? seoulTime(payload.telegram_oldest_pending_at) + " KST" : "없음"}`,
+      "현재 DB 상태이며 워커 가동을 보증하지 않습니다. Telegram 완료 이력은 30일 보관합니다.",
+      "https://byus.kr/admin/inquiries", "https://byus.kr/admin/certifications",
+      "https://byus.kr/admin/blockchain-jobs", "https://byus.kr/admin/notifications", "https://byus.kr/admin/system",
+    ].join("\n"); break;
+    case "marketing": {
+      const c = payload.current, p = payload.previous;
+      const compare = (label: string, current: number, previous: number) => `${label} ${current} · 이전 ${previous} (${current - previous >= 0 ? "+" : ""}${current - previous})`;
+      const ratio = (part: number, total: number) => total === 0 ? "—" : `${(part / total * 100).toFixed(1)}%`;
+      const next = payload.active_links === 0 ? "출처별 링크를 만들어 유입을 측정하세요."
+        : c.tracked_visits === 0 ? "추적 유입이 없습니다. 링크 게시 위치와 실제 이동을 확인하세요."
+        : c.accounts > c.passport_accounts ? "신규 가입자의 팬 패스 발급 단계에서 멈추는 이유를 확인하세요."
+        : "같은 콘텐츠에 출처별 링크를 사용해 방문과 외부 이동 비율을 비교해 보세요.";
+      message = [
+        "📊 마케팅 현황 · 최근 7개 KST 날짜(오늘 진행분 포함)",
+        `${seoulTime(payload.from)} ~ ${seoulTime(payload.generated_at)} KST`,
+        `이전: ${seoulTime(payload.previous_from)} ~ ${seoulTime(payload.from)} KST · 동일 길이`,
+        compare("신규 계정", c.accounts, p.accounts),
+        `그중 프로필 ${c.profile_accounts} (${ratio(c.profile_accounts,c.accounts)}) · 팬 패스 ${c.passport_accounts} (${ratio(c.passport_accounts,c.accounts)})`,
+        compare("리액션", c.reactions, p.reactions), compare("미션 제출", c.missions, p.missions),
+        compare("응모", c.raffle_entries, p.raffle_entries), `사용 응모권 ${c.raffle_tickets}장 · 이전 ${p.raffle_tickets}장`,
+        compare("초대 참여", c.invite_redemptions, p.invite_redemptions),
+        "뱅크시 익명 브라우저 세션 (회원 수와 별도)",
+        compare("추적 링크 방문", c.tracked_visits,p.tracked_visits),
+        `그중 외부 이동 요청 ${c.outbound_sessions} (${ratio(c.outbound_sessions,c.tracked_visits)}) · 이전 ${p.outbound_sessions}`,
+        `출처 없는 방문 ${c.direct_visits} · 이전 ${p.direct_visits}`,
+        ...payload.campaign_sources.map(source => `• ${bounded(source.name,80)} [${bounded(source.channel,40)}] 방문 ${source.visits} → 외부 이동 ${source.outbound_sessions} (${ratio(source.outbound_sessions,source.visits)})`),
+        "계정·활동 집계에는 운영/테스트 계정이 포함됩니다. 신규 계정의 프로필·팬 패스는 각 기간 종료 시점 기준입니다.",
+        "방문은 사람 수가 아니며, 외부 도착·구매·유입별 응모 전환을 뜻하지 않습니다.",
+        `확인/실험 후보: ${next}`, "https://byus.kr/admin/campaigns",
+      ].join("\n"); break;
+    }
     case "users": message = [
       "👥 회원 현황",
       `전체 ${payload.total_users}명 · 이용 가능한 회원 ${payload.active_users}명 · 이용 중지 회원 ${payload.disabled_users}명`,

@@ -6,6 +6,9 @@ import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit
 import { translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
+import { BanksyVisitTracker, BanksyOutboundLinks } from "@/features/analytics/client/banksy-campaign";
+import { BANKSY_BENEFIT_IDS } from "@/features/analytics/domain/banksy-campaign";
+
 import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -51,6 +54,7 @@ export function CreatorRafflesScreen(props: Props) {
 function OwnedCreatorRaffles({ celebrity, locale, raffles, benefitId, deliveryInstructions }: Props) {
   const auth = usePrivy();
   const ko = locale === "ko";
+  const banksy = celebrity.slug === "elina" && raffles.some(raffle => raffle.benefitId !== null && BANKSY_BENEFIT_IDS.has(raffle.benefitId));
   const [now, setNow] = useState(() => Date.now());
   const [totalsUnknown, setTotalsUnknown] = useState(false);
   const { refresh: refreshRoute } = useRouter();
@@ -96,6 +100,7 @@ function OwnedCreatorRaffles({ celebrity, locale, raffles, benefitId, deliveryIn
 
   return <FanAppFrame locale={locale} mainId="raffle-main">
     <main className={styles.page} id="raffle-main">
+      {banksy && !selected ? <BanksyVisitTracker /> : null}
       <Link className={styles.back} href={(selected ? creatorRafflesHref(celebrity.slug, locale) : fanHref) as Route}><ArrowLeft aria-hidden="true" />{selected ? (locale === "ko" ? `${celebrity.name}의 선물` : translate(locale, localizedMessages.mef504cc2ceef, "{0}’s gifts", [celebrity.name])) : (locale === "ko" ? `${celebrity.name} 팬 페이지` : translate(locale, localizedMessages.mb1ee4d81fde9, "{0} fan page", [celebrity.name]))}</Link>
       {!selected ? <>
         <header className={styles.hero}>
@@ -119,6 +124,7 @@ function OwnedCreatorRaffles({ celebrity, locale, raffles, benefitId, deliveryIn
         <RaffleEntryPanel celebrity={celebrity} locale={locale} raffle={selected} benefit={known ? benefit : null} loading={resource.state.status === "loading"} loadFailed={!known && resource.state.status !== "loading"} refresh={resource.retry} onAccepted={onAccepted} onReconciled={onReconciled} status={raffleStatus(selected, now)} />
         {deliveryInstructions ? <p className={styles.notice}>{deliveryInstructions}</p> : null}
       </>}
+      {banksy && !selected ? <BanksyOutboundLinks locale={locale} surface="raffle_list" /> : null}
       <nav className={styles.support} aria-label={locale === "ko" ? "응모 관련 메뉴" : translate(locale, localizedMessages.m8c95093143d9, "Raffle links")}><Link href={earnHref as Route}><Ticket aria-hidden="true" /><span><strong>{locale === "ko" ? "응모권 모으기" : translate(locale, localizedMessages.md731effad5fb, "Collect tickets")}</strong><small>{locale === "ko" ? `${celebrity.name} 팬 활동에서 참여 방법을 확인하세요.` : translate(locale, localizedMessages.ma5e3137312c2, "Explore {0}’s fan activities.", [celebrity.name])}</small></span><ArrowUpRight aria-hidden="true" /></Link><Link href={historyHref as Route}><History aria-hidden="true" /><span><strong>{locale === "ko" ? "내 응모 내역" : translate(locale, localizedMessages.mea3197a6c4b9, "My raffle entries")}</strong><small>{locale === "ko" ? "이미 응모한 선물과 결과를 확인하세요." : translate(locale, localizedMessages.mad649e30a3ba, "Check the gifts you entered for and your results.")}</small></span><ArrowUpRight aria-hidden="true" /></Link></nav>
     </main>
   </FanAppFrame>;

@@ -10,6 +10,7 @@ import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-accou
 import { readPublicPrivyAppleLoginPolicy } from "../components/privy-apple-login-policy";
 import { AcquisitionSessionTracker } from "../features/analytics/client/acquisition-session-tracker";
 import { VercelTelemetry } from "../features/analytics/client/vercel-telemetry";
+import { BanksyEntryPromotion } from "../components/banksy-promotion/banksy-promotion";
 import { FanNextActionGuide } from "../features/onboarding/ui/fan-next-action-guide";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
 import { AuthTransitionBoundary } from "../components/auth-transition-boundary";
@@ -85,6 +86,7 @@ export default async function RootLayout({
             <DocumentLocale />
           </Suspense>
           <AuthTransitionBoundary modal={modal}>{children}</AuthTransitionBoundary>
+          <Suspense fallback={null}><BanksyEntryPromotion /></Suspense>
           <Suspense fallback={null}><FanNextActionGuide /></Suspense>
         </ByUsPrivyProvider>
         </LocaleProvider>

@@ -15964,5 +15964,95 @@
     "en": "No reservation needed with a Fan Passport",
     "source": "features/live/ui/attendance-spotlight",
     "id": "features/live/ui/attendance-spotlight:inline.mc708ece152e0"
+  },
+  "banksy_status": {
+    "en": "GIVEAWAY OPEN",
+    "ko": "응모 진행 중",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_status"
+  },
+  "banksy_titleStart": {
+    "en": "Your chance",
+    "ko": "뱅크시를 만나는",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_titleStart"
+  },
+  "banksy_titleEnd": {
+    "en": "to see Banksy.",
+    "ko": "특별한 기회.",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_titleEnd"
+  },
+  "banksy_venue": {
+    "en": "Banksy exhibition at The Hyundai Seoul",
+    "ko": "더현대 서울 뱅크시 전시 관람권",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_venue"
+  },
+  "banksy_winners": {
+    "en": "{0} winners",
+    "ko": "{0}명 추첨",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_winners"
+  },
+  "banksy_event": {
+    "en": "A giveaway with Elina",
+    "ko": "엘리나와 함께하는 이벤트",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_event"
+  },
+  "banksy_closes": {
+    "en": "closes",
+    "ko": "마감",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_closes"
+  },
+  "banksy_label": {
+    "en": "Elina Banksy giveaway",
+    "ko": "엘리나 뱅크시 이벤트",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_label"
+  },
+  "banksy_cta": {
+    "en": "Explore the giveaway",
+    "ko": "이벤트 응모하러 가기",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_cta"
+  },
+  "banksy_close": {
+    "en": "Close giveaway",
+    "ko": "이벤트 안내 닫기",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_close"
+  },
+  "banksy_note": {
+    "en": "Choose a prize and enter with your Elina raffle tickets.",
+    "ko": "선물을 고르고 엘리나 응모권으로 응모하세요.",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_note"
+  },
+  "banksy_later": {
+    "en": "Keep browsing",
+    "ko": "지금은 둘러볼게요",
+    "source": "components/banksy-promotion/banksy-promotion",
+    "id": "banksy_later"
+  },
+  "banksy_related": {
+    "en": "Exhibition and goods",
+    "ko": "관련 전시와 굿즈",
+    "source": "features/analytics/client/banksy-campaign",
+    "id": "banksy_related"
+  },
+  "banksy_details": {
+    "en": "Exhibition details",
+    "ko": "전시 자세히 보기",
+    "source": "features/analytics/client/banksy-campaign",
+    "id": "banksy_details"
+  },
+  "banksy_shop": {
+    "en": "Book a goods shop visit",
+    "ko": "굿즈 방문 예약",
+    "source": "features/analytics/client/banksy-campaign",
+    "id": "banksy_shop"
   }
 }

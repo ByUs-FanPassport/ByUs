@@ -12,6 +12,90 @@ const PROD_SUPABASE_HOST = "gmrykvmtmuaeswpajteq.supabase.co";
 const BOT_TOKEN = /^[1-9]\d{5,11}:[A-Za-z0-9_-]{35}$/;
 const GROUP_OR_CHANNEL_CHAT_ID = /^-[1-9]\d{5,19}$/;
 
+const activityLabels = {
+  "raffle_entered": [
+    "응모 접수",
+    "benefits"
+  ],
+  "benefit_claimed": [
+    "혜택 수령",
+    "benefits"
+  ],
+  "reaction_completed": [
+    "팬 리액션 완료",
+    "celebrities"
+  ],
+  "mission_submitted": [
+    "미션 제출",
+    "lives"
+  ],
+  "journey_completed": [
+    "LIVE 여정 완료",
+    "lives"
+  ],
+  "collectible_claimed": [
+    "컬렉터블 수령",
+    "lives"
+  ],
+  "invite_redeemed": [
+    "커뮤니티 초대 참여",
+    "celebrities"
+  ],
+  "certification_approved": [
+    "팬 인증 승인",
+    "certifications"
+  ],
+  "certification_rejected": [
+    "팬 인증 반려",
+    "certifications"
+  ],
+  "fulfillment_updated": [
+    "경품 전달 상태 변경",
+    "benefits"
+  ],
+  "fulfillment_unclaimed": [
+    "미수령 경품 마감",
+    "benefits"
+  ],
+  "business_received": [
+    "사업 문의 접수 · 담당 메일함 확인",
+    "system"
+  ],
+  "business_failed": [
+    "⚠️ 사업 문의 메일 전송 실패/결과 불명",
+    "system"
+  ],
+  "mint_completed": [
+    "온체인 발급 완료",
+    "blockchain-jobs"
+  ],
+  "mint_failed": [
+    "⚠️ 온체인 발급 최종 실패",
+    "blockchain-jobs"
+  ],
+  "delivery_failed": [
+    "⚠️ 팬 알림 전송 확인 필요",
+    "notifications"
+  ],
+  "live_published": [
+    "LIVE 공개",
+    "lives"
+  ],
+  "live_cancelled": [
+    "LIVE 취소 공지",
+    "lives"
+  ],
+  "live_rescheduled": [
+    "LIVE 일정 변경",
+    "lives"
+  ],
+  "campaign_outbound": [
+    "뱅크시 외부 링크 이동 요청",
+    "campaigns"
+  ]
+} as const;
+type ActivityKind = keyof typeof activityLabels;
+
 const kindSchema = z.enum([
   "member_joined",
   "fan_joined",
@@ -20,6 +104,28 @@ const kindSchema = z.enum([
   "draw_published",
   "cs_inquiry_created",
   "cs_user_replied",
+  "campaign_visited",
+  "raffle_entered",
+  "benefit_claimed",
+  "reaction_completed",
+  "mission_submitted",
+  "journey_completed",
+  "collectible_claimed",
+  "invite_redeemed",
+  "certification_approved",
+  "certification_rejected",
+  "fulfillment_updated",
+  "fulfillment_unclaimed",
+  "business_received",
+  "business_failed",
+  "mint_completed",
+  "mint_failed",
+  "delivery_failed",
+  "live_published",
+  "live_cancelled",
+  "live_rescheduled",
+  "campaign_outbound",
+
 ]);
 const alertSchema = z.object({
   kind: kindSchema,
@@ -30,9 +136,31 @@ const alertSchema = z.object({
   winner_count: z.number().int().nonnegative().nullable(),
   occurred_at: z.iso.datetime({ offset: true }),
   inquiry_id: z.uuid().nullable().optional(),
+  campaign_name: z.string().min(1).max(80).optional(),
+  campaign_channel: z.string().min(1).max(40).optional(),
+  activity_context: z.string().max(320).nullable().optional(),
+  activity_quantity: z.number().int().nonnegative().nullable().optional(),
   // PostgreSQL permits 4000 Unicode characters, up to 8000 UTF-16 units.
   message_body: z.string().min(1).max(8000).nullable().optional(),
 }).strict().superRefine((alert, context) => {
+  if (alert.kind in activityLabels) {
+    if (alert.activity_context === undefined || alert.activity_quantity === undefined ||
+      [alert.creator_name, alert.live_title, alert.actor_name, alert.actor_email, alert.winner_count].some(value => value !== null)) {
+      context.addIssue({ code: "custom", message: "invalid activity payload" });
+    }
+  } else if (alert.activity_context !== undefined || alert.activity_quantity !== undefined) {
+    context.addIssue({ code: "custom", message: "unexpected activity context" });
+  }
+  if (alert.kind === "campaign_visited") {
+    if (!alert.campaign_name || !alert.campaign_channel) {
+      context.addIssue({ code: "custom", message: "missing campaign context" });
+    }
+    if ([alert.creator_name, alert.live_title, alert.actor_name, alert.actor_email, alert.winner_count].some(value => value !== null)) {
+      context.addIssue({ code: "custom", message: "unexpected campaign identity" });
+    }
+  } else if (alert.campaign_name !== undefined || alert.campaign_channel !== undefined) {
+    context.addIssue({ code: "custom", message: "unexpected campaign context" });
+  }
   if (alert.kind === "draw_published" && alert.winner_count === null) {
     context.addIssue({ code: "custom", path: ["winner_count"], message: "missing draw winner count" });
   }
@@ -91,6 +219,16 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
     throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
   }
   const lines = input.flatMap((alert) => {
+    if (alert.kind in activityLabels) {
+      alertSchema.parse(alert);
+      const [label, page] = activityLabels[alert.kind as ActivityKind];
+      const context = cleanPublicName(alert.activity_context ?? null, 160);
+      return [`• ${label}`, ...(context ? [`  ${context}`] : []),
+        ...(alert.kind === "raffle_entered" ? [`  사용 응모권 ${alert.activity_quantity ?? 0}장`] : []), `${ADMIN_URL}/${page}`];
+    }
+    if (alert.kind === "campaign_visited") {
+      return ["• 캠페인 링크로 새 방문", `  ${cleanPublicName(alert.campaign_name ?? null, 80)}`, `  채널: ${cleanPublicName(alert.campaign_channel ?? null, 40)} · 브라우저 세션 1건`, `${ADMIN_URL}/campaigns`];
+    }
     if (alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied") {
       const inquiryId = z.uuid().safeParse(alert.inquiry_id);
       if (!inquiryId.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
@@ -107,7 +245,7 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
     }
     const actorName = cleanPublicName(alert.actor_name, 48) || "닉네임 미설정";
     const actorEmail = cleanPublicName(alert.actor_email, 320) || "이메일 미등록";
-    let event: string;
+    let event: string = "주요 활동";
     switch (alert.kind) {
       case "member_joined": event = "신규 회원 가입"; break;
       case "fan_joined": event = `${prefix}팬 가입`; break;
