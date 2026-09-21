@@ -1,7 +1,7 @@
 .root {
   background: #fff;
   color: #17171b;
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-pretendard, "Pretendard Variable"), Pretendard, sans-serif;
   font-size: 16px;
   line-height: 1.6;
@@ -654,7 +654,7 @@
   background: transparent;
   border: 0;
   outline-offset: 0 !important;
-  font-size: 14px;
+  font-size: 16px;
 }
 .resultCount {
   font-size: 13px;

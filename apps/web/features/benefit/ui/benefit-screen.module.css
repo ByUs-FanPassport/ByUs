@@ -1,5 +1,5 @@
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #fff;
   color: oklch(18% 0 0);
 }

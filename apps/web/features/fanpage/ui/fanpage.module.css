@@ -82,7 +82,7 @@
 
 .homeGrid{grid-template-areas:"main side";align-items:start}.homeGrid>.mainColumn{grid-area:main}.cheerPreview{grid-area:cheers;min-width:0}.homeGrid>.sideColumn{grid-area:side}@media(max-width:767px){.homeGrid{grid-template-areas:"main" "side"}}
 
-.availableRaffleTab{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #f8acd0;border-radius:24px;background:#fff0f8;color:#ce0066;font-weight:750}
+.availableRaffleTab{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #f8acd0;border-radius:24px;background:#fff0f8;color:#ce0066;font-weight:750;white-space:nowrap}
 .availableRaffleTab>span{display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:50%;background:#ce0066;color:#fff;font-size:12px;font-variant-numeric:tabular-nums}
 .homeRaffles{margin-bottom:32px;min-width:0}
 .homeRaffleHeading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:44px;margin-bottom:16px}

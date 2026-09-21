@@ -4,7 +4,7 @@
   --soft: oklch(97.5% 0 0);
   --line: oklch(91% 0 0);
   --micro: oklch(94% 0 0);
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #fff;
   color: var(--ink);
   font-family:
