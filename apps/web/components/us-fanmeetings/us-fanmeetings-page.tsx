@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__us-fanmeetings__us-fanmeetings-page";
+import { translate } from "@/i18n/messages";
 import Image from "next/image";
 import {
   ArrowDown,
@@ -182,14 +184,10 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
             />
             <div>
               <h3>
-                {locale === "ko"
-                  ? "팬이 쌓아가는 참여의 기록"
-                  : "A record of fan activities"}
+                {locale === "ko" ? "팬이 쌓아가는 참여의 기록" : translate(locale, localizedMessages.mddfc05395797, "A record of fan activities")}
               </h3>
               <p>
-                {locale === "ko"
-                  ? "Fan Passport에 쌓인 참여를 바탕으로\n다음 캠페인과 팬 경험을 함께 기획합니다."
-                  : "Use Fan Passport activity records\nto plan future campaigns and fan experiences."}
+                {locale === "ko" ? "Fan Passport에 쌓인 참여를 바탕으로\n다음 캠페인과 팬 경험을 함께 기획합니다." : translate(locale, localizedMessages.m3ac21cee1000, "Use Fan Passport activity records\nto plan future campaigns and fan experiences.")}
               </p>
             </div>
           </div>

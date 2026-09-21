@@ -1,3 +1,6 @@
+import { parseAppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/app__pages__onchain__page";
+import { translate } from "@/i18n/messages";
 import type { Metadata } from "next";
 
 import { OnchainPublicPage } from "@/components/onchain/onchain-public-page";
@@ -11,7 +14,7 @@ export const maxDuration = 60;
 type Props = { searchParams: Promise<{ locale?: string | string[] }> };
 
 function resolveLocale(locale?: string | string[]) {
-  return locale === "en" ? "en" : "ko";
+  return parseAppLocale(locale);
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -19,10 +22,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return publicMetadata({
     path: "/pages/onchain",
     locale,
-    title: locale === "ko" ? "ByUs 온체인 기록 | ByUs" : "ByUs onchain records | ByUs",
-    description: locale === "ko"
-      ? "GIWA Sepolia에 기록된 ByUs 팬 행동 지표와 검증 근거를 확인하세요."
-      : "Review ByUs fan action metrics and verification evidence recorded on GIWA Sepolia.",
+    title: locale === "ko" ? "ByUs 온체인 기록 | ByUs" : translate(locale, localizedMessages.me9ce14ecd1e0, "ByUs onchain records | ByUs"),
+    description: locale === "ko" ? "GIWA Sepolia에 기록된 ByUs 팬 행동 지표와 검증 근거를 확인하세요." : translate(locale, localizedMessages.m3a31c7871cfc, "Review ByUs fan action metrics and verification evidence recorded on GIWA Sepolia."),
   });
 }
 

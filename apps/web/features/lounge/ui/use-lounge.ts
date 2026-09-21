@@ -1,4 +1,6 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import { useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { subscribeFanActivityUpdates } from "@/components/fan-ui/fan-activity-updates";
@@ -8,7 +10,7 @@ import type { z } from "zod";
 export type LoungeData = z.infer<typeof loungeSchema>;
 // The caller keys its component by creator + identity. A history page keeps its
 // upper cursor fixed and is re-read, so moderation also reaches old messages.
-export function useLounge(slug: string, locale: "ko" | "en", limit = 50, cursor: string | null = null) {
+export function useLounge(slug: string, locale: AppLocale, limit = 50, cursor: string | null = null) {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
   const ownerId = user?.id;
   const requestKey = `${slug}:${locale}:${limit}:${cursor ?? "latest"}:${ready}:${authenticated}:${ownerId ?? "guest"}`;
@@ -21,7 +23,7 @@ export function useLounge(slug: string, locale: "ko" | "en", limit = 50, cursor:
     let disposed = false, running = false, queued = false, failures = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let controller: AbortController | undefined;
-    const url = `/api/celebrities/${slug}/lounge?locale=${locale}&limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const url = `/api/celebrities/${slug}/lounge?locale=${toContentLocale(locale)}&limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
     async function refresh() {
       if (disposed) return;
       if (running) { queued = true; return; }
@@ -41,7 +43,7 @@ export function useLounge(slug: string, locale: "ko" | "en", limit = 50, cursor:
         const next = loungeSchema.parse(await response.json());
         let newest = next.messages[0] ?? null;
         if (cursor) {
-          const head = await fetch(`/api/celebrities/${slug}/lounge?locale=${locale}&limit=1`, options);
+          const head = await fetch(`/api/celebrities/${slug}/lounge?locale=${toContentLocale(locale)}&limit=1`, options);
           if (!head.ok) throw new Error("LOUNGE_UNAVAILABLE");
           newest = loungeSchema.parse(await head.json()).messages[0] ?? null;
         }

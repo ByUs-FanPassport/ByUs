@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__my__ui__my-benefit-progress";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +36,17 @@ const copy = {
     selectionHelp: "If you apply, the benefit is provided only if you are selected.",
     stale: "We couldn’t refresh the conditions.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    loading: localizedMessages.m39627e883d2e[translationLocale],
+    error: localizedMessages.m664167c2ecc7[translationLocale], retry: localizedMessages.mac188466b33f[translationLocale], empty: localizedMessages.m19c3e221d8c4[translationLocale],
+    all: localizedMessages.m74f09b478ece[translationLocale], view: localizedMessages.m7e03478cf37f[translationLocale], score: localizedMessages.m20d49d63e3c0[translationLocale], scoreProgress: localizedMessages.m7747b579b8f4[translationLocale],
+    remaining: localizedMessages.m487ab20fd3cb[translationLocale], ready: localizedMessages.mcc6c215fd5c5[translationLocale], locked: localizedMessages.m4124df7a72d8[translationLocale],
+    applyReady: localizedMessages.m999d592c2ba7[translationLocale], applyLocked: localizedMessages.m65cd28235ab0[translationLocale],
+    submitted: localizedMessages.mb998594bf075[translationLocale], selected: localizedMessages.m3ce382173737[translationLocale], notSelected: localizedMessages.m68a6760afc94[translationLocale],
+    selectionHelp: localizedMessages.m6b3006c48b16[translationLocale],
+    stale: localizedMessages.md571edfdc4ed[translationLocale],
+  }))
 } as const;
 
 function benefitStatus(benefit: NextPassportBenefit, locale: FanLocale) {
@@ -49,10 +63,10 @@ function benefitStatus(benefit: NextPassportBenefit, locale: FanLocale) {
 function conditionLabel(condition: NextPassportBenefit["missingConditions"][number], locale: FanLocale) {
   switch (condition.type) {
     case "score": return `${copy[locale].score} ${condition.current} / ${condition.required}`;
-    case "level": return locale === "ko" ? `${levelLabel(locale, condition.required)} 등급 필요` : `${levelLabel(locale, condition.required)} level required`;
-    case "stamp": return `${stampTypeLabel(locale, condition.required)} ${locale === "ko" ? "스탬프 필요" : "Stamp required"}`;
-    case "activity": return locale === "ko" ? `${stampTypeLabel(locale, condition.required)} 완료 필요` : `${stampTypeLabel(locale, condition.required)} activity required`;
-    case "opens_at": return `${locale === "ko" ? "신청·수령 시작" : "Opens"}: ${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(condition.at))} KST`;
+    case "level": return locale === "ko" ? `${levelLabel(locale, condition.required)} 등급 필요` : translate(locale, localizedMessages.maf617b4b6fb9, "{0} level required", [levelLabel(locale, condition.required)]);
+    case "stamp": return `${stampTypeLabel(locale, condition.required)} ${locale === "ko" ? "스탬프 필요" : translate(locale, localizedMessages.m1d222f21cbca, "Stamp required")}`;
+    case "activity": return locale === "ko" ? `${stampTypeLabel(locale, condition.required)} 완료 필요` : translate(locale, localizedMessages.m1b757b0b21b2, "{0} activity required", [stampTypeLabel(locale, condition.required)]);
+    case "opens_at": return `${locale === "ko" ? "신청·수령 시작" : translate(locale, localizedMessages.m181b0bcb5990, "Opens")}: ${new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(condition.at))} KST`;
   }
 }
 
@@ -67,7 +81,7 @@ function SelectedBenefit({ creator, locale, compact }: { creator: PassportCreato
     if (passport.id !== creator.passport.id || passport.celebrity.slug !== creator.celebrity.slug) throw new Error("Passport does not match selected creator");
     return passport;
   }, [creator.passport.id, creator.celebrity.slug]);
-  const resource = useOwnedFanResource(`/api/passports/${encodeURIComponent(creator.passport.id)}?locale=${locale}`, parse, auth);
+  const resource = useOwnedFanResource(`/api/passports/${encodeURIComponent(creator.passport.id)}?locale=${toContentLocale(locale)}`, parse, auth);
   const t = copy[locale];
   const allHref = `/benefits?locale=${locale}&celebrity=${encodeURIComponent(creator.celebrity.slug)}` as const;
   if (resource.state.status === "loading") return <div className={styles.loading} role="status"><span className={styles.skeleton}/><p>{t.loading}</p></div>;
@@ -75,20 +89,20 @@ function SelectedBenefit({ creator, locale, compact }: { creator: PassportCreato
   const passport = resource.state.data;
   const benefit = passport.nextBenefit;
   if (!benefit) return <div className={compact ? styles.compactMessage : styles.message}>
-    {compact ? <strong>{locale === "ko" ? "등급 혜택" : "Tier benefits"}</strong> : null}
-    <p>{compact ? (locale === "ko" ? `현재 ${creator.celebrity.name}의 다음 혜택이 없어요.` : `No next benefit for ${creator.celebrity.name} right now.`) : t.empty}</p>
+    {compact ? <strong>{locale === "ko" ? "등급 혜택" : translate(locale, localizedMessages.m4cb7f1790a1c, "Tier benefits")}</strong> : null}
+    <p>{compact ? (locale === "ko" ? `현재 ${creator.celebrity.name}의 다음 혜택이 없어요.` : translate(locale, localizedMessages.m477d93507ab6, "No next benefit for {0} right now.", [creator.celebrity.name])) : t.empty}</p>
     <Link className={styles.link} href={allHref}>{t.all}<ArrowRight aria-hidden="true"/></Link>
   </div>;
   const percent = benefitScorePercent(passport.score.points, benefit.minimumScore);
   const otherConditions = benefit.missingConditions.filter(condition => condition.type !== "score");
   return <div className={styles.benefit}>
-    {compact ? <p className={styles.compactLabel}>{locale === "ko" ? "등급 혜택" : "Tier benefits"}</p> : null}
+    {compact ? <p className={styles.compactLabel}>{locale === "ko" ? "등급 혜택" : translate(locale, localizedMessages.m4cb7f1790a1c, "Tier benefits")}</p> : null}
     <h3>{benefit.title}</h3>
     <p className={styles.eligibility}>{benefit.eligibilityLabel}</p>
     {percent !== null ? <div className={styles.score}>
       <div><span>{t.score}</span><strong>{passport.score.points} <span>/ {benefit.minimumScore}</span></strong></div>
       <progress value={percent} max={100} aria-label={t.scoreProgress}>{percent}%</progress>
-      {passport.score.points < benefit.minimumScore ? <p>{locale === "ko" ? `${benefit.minimumScore - passport.score.points}점 더 필요해요.` : `${benefit.minimumScore - passport.score.points} more points needed.`}</p> : null}
+      {passport.score.points < benefit.minimumScore ? <p>{locale === "ko" ? `${benefit.minimumScore - passport.score.points}점 더 필요해요.` : translate(locale, localizedMessages.me2e46d806667, "{0} more points needed.", [benefit.minimumScore - passport.score.points])}</p> : null}
     </div> : null}
     {otherConditions.length ? <div className={styles.conditions}><h4>{t.remaining}</h4><ul>{otherConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{conditionLabel(condition, locale)}</li>)}</ul></div> : null}
     <p className={styles.status} data-eligible={benefit.state === "eligible" && benefit.allocationMode === "direct_claim"}>

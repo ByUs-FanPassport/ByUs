@@ -480,10 +480,7 @@ describe("LiveEventScreen", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute(
-      "href",
-      "/live/kara-nualeaf?locale=en",
-    );
+    expect(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" })).toHaveValue("ko");
   });
 
   it("restores unauthenticated reservation intent through login returnTo", async () => {

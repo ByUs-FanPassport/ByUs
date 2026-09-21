@@ -1,3 +1,4 @@
+import { type AppLocale } from "@/i18n/locales";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { deriveLivePrimaryAction, type LiveEventResponse } from "@/features/live/domain/live-event";
 import type { MySummary } from "@/features/my/domain/my-summary";
@@ -24,7 +25,7 @@ export function nextFanAction({ summary, lives, pathname, locale, completed, now
   completed: { profile: boolean; verify: boolean; reserve: boolean };
   lives?: readonly LiveEventResponse[];
   pathname: string;
-  locale: "ko" | "en";
+  locale: AppLocale;
   now?: Date;
 }): NextFanAction | null {
   const owned = summary.creators.filter((creator) => creator.passport);

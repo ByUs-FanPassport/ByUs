@@ -1,0 +1,323 @@
+import type { TranslatedMessage } from "../messages";
+
+export const messages = {
+  "m56ef76018c22": {
+    "ja": "ログインの有効期限が切れました。続行するにはもう一度ログインしてください。",
+    "zh-Hans": "登录已过期。请重新登录后继续。",
+    "zh-Hant": "登入已過期。請重新登入後繼續。",
+    "es": "Tu sesión venció. Inicia sesión de nuevo para continuar.",
+    "id": "Sesi Anda berakhir. Masuk lagi untuk melanjutkan.",
+    "vi": "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục.",
+    "th": "การเข้าสู่ระบบหมดอายุ โปรดเข้าสู่ระบบอีกครั้งเพื่อดำเนินการต่อ",
+    "pt": "Sua sessão expirou. Entre novamente para continuar.",
+    "fr": "Votre session a expiré. Reconnectez-vous pour continuer."
+  },
+  "m8cc6f68894bb": {
+    "ja": "このクイズは提出済みです。結果画面で認証状態を確認してください。",
+    "zh-Hans": "此问答已提交。请在结果页面查看验证状态。",
+    "zh-Hant": "此問答已提交。請在結果頁面查看驗證狀態。",
+    "es": "Este cuestionario ya se envió. Consulta el estado de verificación en la pantalla de resultados.",
+    "id": "Kuis ini sudah dikirim. Periksa status verifikasimu di layar hasil.",
+    "vi": "Bài kiểm tra này đã được gửi. Hãy xem trạng thái xác minh trên màn hình kết quả.",
+    "th": "ส่งแบบทดสอบนี้แล้ว โปรดดูสถานะการยืนยันในหน้าผลลัพธ์",
+    "pt": "Este quiz já foi enviado. Confira seu status de verificação na tela de resultados.",
+    "fr": "Ce quiz a déjà été envoyé. Consultez l’écran des résultats pour connaître l’état de votre vérification."
+  },
+  "mb94ea63f587c": {
+    "ja": "Passportを準備できませんでした。しばらくしてからもう一度お試しください。",
+    "zh-Hans": "无法准备Passport。请稍后重试。",
+    "zh-Hant": "無法準備Passport。請稍後重試。",
+    "es": "No pudimos preparar tu Passport. Vuelve a intentarlo en un momento.",
+    "id": "Kami tidak dapat menyiapkan Passport-mu. Silakan coba lagi sebentar lagi.",
+    "vi": "Chúng tôi không thể chuẩn bị Passport. Vui lòng thử lại sau ít phút.",
+    "th": "เตรียม Passport ไม่สำเร็จ โปรดลองอีกครั้งในอีกสักครู่",
+    "pt": "Não foi possível preparar seu Passport. Tente novamente em instantes.",
+    "fr": "Impossible de préparer votre Passport. Réessayez dans un instant."
+  },
+  "m3619a6748339": {
+    "ja": "保存されていない回答があります。3問すべてを確認してください。",
+    "zh-Hans": "部分答案未保存。请检查全部三道题。",
+    "zh-Hant": "部分答案未儲存。請檢查全部三道題。",
+    "es": "Algunas respuestas no se guardaron. Revisa las tres preguntas.",
+    "id": "Beberapa jawaban belum disimpan. Periksa kembali ketiga pertanyaan.",
+    "vi": "Một số câu trả lời chưa được lưu. Hãy xem lại cả ba câu hỏi.",
+    "th": "บางคำตอบยังไม่บันทึก โปรดตรวจสอบทั้งสามข้อ",
+    "pt": "Algumas respostas não foram salvas. Confira as três perguntas.",
+    "fr": "Certaines réponses n’ont pas été enregistrées. Vérifiez les trois questions."
+  },
+  "m069057a4e800": {
+    "ja": "現在、このファン認証クイズは利用できません。",
+    "zh-Hans": "此粉丝验证问答目前不可用。",
+    "zh-Hant": "此粉絲驗證問答目前不可用。",
+    "es": "Este cuestionario de verificación de fans no está disponible ahora.",
+    "id": "Kuis verifikasi penggemar ini tidak tersedia saat ini.",
+    "vi": "Bài trắc nghiệm xác minh này hiện không khả dụng.",
+    "th": "ขณะนี้แบบทดสอบยืนยันแฟนคลับไม่พร้อมใช้งาน",
+    "pt": "Este quiz de verificação de fã não está disponível no momento.",
+    "fr": "Ce quiz de vérification de fan n’est pas disponible pour le moment."
+  },
+  "m79d1d88e572e": {
+    "ja": "クイズを安全に読み込めませんでした。しばらくしてからもう一度お試しください。",
+    "zh-Hans": "无法安全加载问答。请稍后重试。",
+    "zh-Hant": "無法安全載入問答。請稍後重試。",
+    "es": "No pudimos cargar el cuestionario de forma segura. Vuelve a intentarlo en un momento.",
+    "id": "Kami tidak dapat memuat kuis dengan aman. Silakan coba lagi sebentar lagi.",
+    "vi": "Chúng tôi không thể tải bài kiểm tra một cách an toàn. Vui lòng thử lại sau ít phút.",
+    "th": "โหลดแบบทดสอบอย่างปลอดภัยไม่ได้ โปรดลองอีกครั้ง",
+    "pt": "Não foi possível carregar o quiz com segurança. Tente novamente em instantes.",
+    "fr": "Impossible de charger le quiz de manière sécurisée. Réessayez dans un instant."
+  },
+  "m9f6c08469649": {
+    "ja": "ファン認証クイズを読み込み中",
+    "zh-Hans": "正在加载粉丝验证问答",
+    "zh-Hant": "正在載入粉絲驗證問答",
+    "es": "Cargando cuestionario de verificación",
+    "id": "Memuat kuis verifikasi fan",
+    "vi": "Đang tải bài kiểm tra xác minh fan",
+    "th": "กำลังโหลดแบบทดสอบยืนยันแฟนคลับ",
+    "pt": "Carregando quiz de verificação de fã",
+    "fr": "Chargement du quiz de vérification de fan"
+  },
+  "ma1786b5df10b": {
+    "ja": "ファン認証クイズを読み込んでいます。",
+    "zh-Hans": "正在加载您的粉丝验证问答。",
+    "zh-Hant": "正在載入您的粉絲驗證問答。",
+    "es": "Cargando tu cuestionario de verificación.",
+    "id": "Memuat kuis verifikasi fanmu.",
+    "vi": "Đang tải bài kiểm tra xác minh fan của bạn.",
+    "th": "กำลังโหลดแบบทดสอบยืนยันแฟนคลับ",
+    "pt": "Carregando seu quiz de verificação de fã.",
+    "fr": "Chargement de votre quiz de vérification de fan."
+  },
+  "m30cb700f641f": {
+    "ja": "ログインが必要です",
+    "zh-Hans": "需要登录",
+    "zh-Hant": "需要登入",
+    "es": "Debes iniciar sesión",
+    "id": "Harus masuk",
+    "vi": "Cần đăng nhập",
+    "th": "ต้องเข้าสู่ระบบ",
+    "pt": "É necessário entrar",
+    "fr": "Connexion requise"
+  },
+  "ma4cb6f21402b": {
+    "ja": "ファン認証の回答を安全に保存して続行するには、ログインしてください。",
+    "zh-Hans": "请登录以安全保存粉丝验证答案并继续。",
+    "zh-Hant": "請登入以安全儲存粉絲驗證答案並繼續。",
+    "es": "Inicia sesión para guardar de forma segura tus respuestas y continuar.",
+    "id": "Masuk untuk menyimpan jawaban verifikasi fanmu dan melanjutkan dengan aman.",
+    "vi": "Đăng nhập để lưu câu trả lời xác minh fan và tiếp tục an toàn.",
+    "th": "เข้าสู่ระบบเพื่อบันทึกคำตอบและดำเนินการต่ออย่างปลอดภัย",
+    "pt": "Entre para salvar suas respostas e continuar com segurança.",
+    "fr": "Connectez-vous pour enregistrer vos réponses et continuer en toute sécurité."
+  },
+  "m366bfb834fc0": {
+    "ja": "ログインして続ける",
+    "zh-Hans": "登录并继续",
+    "zh-Hant": "登入並繼續",
+    "es": "Iniciar sesión y continuar",
+    "id": "Masuk untuk melanjutkan",
+    "vi": "Đăng nhập để tiếp tục",
+    "th": "เข้าสู่ระบบเพื่อดำเนินการต่อ",
+    "pt": "Entre para continuar",
+    "fr": "Connectez-vous pour continuer"
+  },
+  "ma2486a313263": {
+    "ja": "クイズを読み込めませんでした。",
+    "zh-Hans": "无法加载问答。",
+    "zh-Hant": "無法載入問答。",
+    "es": "No pudimos cargar el cuestionario.",
+    "id": "Kami tidak dapat memuat kuis.",
+    "vi": "Chúng tôi không thể tải bài kiểm tra.",
+    "th": "โหลดแบบทดสอบไม่ได้",
+    "pt": "Não foi possível carregar o quiz.",
+    "fr": "Impossible de charger le quiz."
+  },
+  "m6644e6caf399": {
+    "ja": "もう一度試す",
+    "zh-Hans": "重试",
+    "zh-Hant": "重試",
+    "es": "Intentar de nuevo",
+    "id": "Coba lagi",
+    "vi": "Thử lại",
+    "th": "ลองอีกครั้ง",
+    "pt": "Tentar novamente",
+    "fr": "Réessayer"
+  },
+  "mc88b50b506cf": {
+    "ja": "認証を終了してファンページに戻る",
+    "zh-Hans": "退出验证并返回粉丝页面",
+    "zh-Hant": "退出驗證並返回粉絲頁面",
+    "es": "Salir de la verificación y volver a la página de fans",
+    "id": "Keluar dari verifikasi dan kembali ke halaman fan",
+    "vi": "Thoát xác minh và quay lại trang fan",
+    "th": "ออกจากการยืนยันและกลับไปหน้าแฟนคลับ",
+    "pt": "Sair da verificação e voltar à página de fãs",
+    "fr": "Quitter la vérification et revenir à la page de fans"
+  },
+  "m621c5de2e1cf": {
+    "ja": "ファン認証クイズ",
+    "zh-Hans": "粉丝验证问答",
+    "zh-Hant": "粉絲驗證問答",
+    "es": "Cuestionario de verificación de fan",
+    "id": "Kuis verifikasi fan",
+    "vi": "Bài kiểm tra xác minh fan",
+    "th": "แบบทดสอบยืนยันแฟนคลับ",
+    "pt": "Quiz de verificação de fã",
+    "fr": "Quiz de vérification de fan"
+  },
+  "ma6e194c0d01f": {
+    "ja": "大好きなクリエイターのことをどれくらい知っていますか？",
+    "zh-Hans": "您有多了解喜爱的创作者？",
+    "zh-Hant": "您有多瞭解喜愛的創作者？",
+    "es": "¿Cuánto conoces a tu creador favorito?",
+    "id": "Seberapa baik kamu mengenal kreator favoritmu?",
+    "vi": "Bạn hiểu nhà sáng tạo yêu thích đến mức nào?",
+    "th": "คุณรู้จักครีเอเตอร์คนโปรดดีแค่ไหน",
+    "pt": "Quanto você conhece seu criador favorito?",
+    "fr": "Connaissez-vous bien votre créateur préféré ?"
+  },
+  "m9c8456872d51": {
+    "ja": "ファン認証の進捗",
+    "zh-Hans": "粉丝验证进度",
+    "zh-Hant": "粉絲驗證進度",
+    "es": "Progreso de verificación",
+    "id": "Progres verifikasi fan",
+    "vi": "Tiến độ xác minh fan",
+    "th": "ความคืบหน้าการยืนยันแฟนคลับ",
+    "pt": "Progresso da verificação de fã",
+    "fr": "Progression de la vérification de fan"
+  },
+  "m96465e8e1fa1": {
+    "ja": "全{0}問中{1}問目",
+    "zh-Hans": "第{1}题，共{0}题",
+    "zh-Hant": "第{1}題，共{0}題",
+    "es": "Pregunta {1} de {0}",
+    "id": "Pertanyaan {0} dari {1}",
+    "vi": "Câu hỏi {0}/{1}",
+    "th": "ข้อ {0} จาก {1}",
+    "pt": "Pergunta {0} de {1}",
+    "fr": "Question {0} sur {1}"
+  },
+  "m9103c18f5cc9": {
+    "ja": "回答を保存中…",
+    "zh-Hans": "正在保存答案…",
+    "zh-Hant": "正在儲存答案…",
+    "es": "Guardando respuesta…",
+    "id": "Menyimpan jawaban…",
+    "vi": "Đang lưu câu trả lời…",
+    "th": "กำลังบันทึกคำตอบ…",
+    "pt": "Salvando resposta…",
+    "fr": "Enregistrement de la réponse…"
+  },
+  "mac6c0a18e138": {
+    "ja": "回答を保存しました",
+    "zh-Hans": "答案已保存",
+    "zh-Hant": "答案已儲存",
+    "es": "Respuesta guardada",
+    "id": "Jawaban disimpan",
+    "vi": "Đã lưu câu trả lời",
+    "th": "บันทึกคำตอบแล้ว",
+    "pt": "Resposta salva",
+    "fr": "Réponse enregistrée"
+  },
+  "me4820ccd441a": {
+    "ja": "回答を選択してください。",
+    "zh-Hans": "请选择答案。",
+    "zh-Hant": "請選擇答案。",
+    "es": "Elige una respuesta.",
+    "id": "Pilih jawaban.",
+    "vi": "Hãy chọn một câu trả lời.",
+    "th": "เลือกคำตอบ",
+    "pt": "Escolha uma resposta.",
+    "fr": "Choisissez une réponse."
+  },
+  "mbbdbacc261b6": {
+    "ja": "もう一度回答を選択してください。",
+    "zh-Hans": "请重新选择答案。",
+    "zh-Hant": "請重新選擇答案。",
+    "es": "Vuelve a elegir la respuesta.",
+    "id": "Pilih kembali jawabannya.",
+    "vi": "Hãy chọn lại câu trả lời.",
+    "th": "เลือกคำตอบอีกครั้ง",
+    "pt": "Escolha a resposta novamente.",
+    "fr": "Choisissez à nouveau la réponse."
+  },
+  "m1d0e0347af82": {
+    "ja": "クイズの問題を移動",
+    "zh-Hans": "问答题目导航",
+    "zh-Hant": "問答題目導航",
+    "es": "Navegación del cuestionario",
+    "id": "Navigasi pertanyaan kuis",
+    "vi": "Điều hướng câu hỏi",
+    "th": "การนำทางคำถาม",
+    "pt": "Navegação entre perguntas do quiz",
+    "fr": "Navigation entre les questions du quiz"
+  },
+  "m8aa3750cbbac": {
+    "ja": "前の問題",
+    "zh-Hans": "上一题",
+    "zh-Hant": "上一題",
+    "es": "Pregunta anterior",
+    "id": "Pertanyaan sebelumnya",
+    "vi": "Câu hỏi trước",
+    "th": "คำถามก่อนหน้า",
+    "pt": "Pergunta anterior",
+    "fr": "Question précédente"
+  },
+  "m2945465ee20c": {
+    "ja": "結果を確認中…",
+    "zh-Hans": "正在确认结果…",
+    "zh-Hant": "正在確認結果…",
+    "es": "Comprobando resultado…",
+    "id": "Memeriksa hasil…",
+    "vi": "Đang kiểm tra kết quả…",
+    "th": "กำลังตรวจสอบผล…",
+    "pt": "Verificando resultado…",
+    "fr": "Vérification du résultat…"
+  },
+  "mc5ba941e51ca": {
+    "ja": "認証結果を見る",
+    "zh-Hans": "查看验证结果",
+    "zh-Hant": "查看驗證結果",
+    "es": "Ver resultado de verificación",
+    "id": "Lihat hasil verifikasi",
+    "vi": "Xem kết quả xác minh",
+    "th": "ดูผลการยืนยัน",
+    "pt": "Ver resultado da verificação",
+    "fr": "Voir le résultat de la vérification"
+  },
+  "m48bbbde7741a": {
+    "ja": "提出結果を確認できませんでした。もう一度確認するか、同じ回答を再提出してください。",
+    "zh-Hans": "无法确认提交结果。请重新查看或再次提交同一次回答。",
+    "zh-Hant": "無法確認提交結果。請重新查看或再次提交同一次回答。",
+    "es": "No pudimos confirmar el resultado del envío. Compruébalo de nuevo o vuelve a enviar el mismo intento.",
+    "id": "Kami tidak dapat mengonfirmasi hasil pengiriman. Periksa lagi atau kirim ulang percobaan yang sama.",
+    "vi": "Chúng tôi không thể xác nhận kết quả gửi. Hãy kiểm tra lại hoặc gửi lại cùng lượt thử.",
+    "th": "ยืนยันผลการส่งไม่ได้ โปรดตรวจสอบอีกครั้งหรือส่งความพยายามเดิมซ้ำ",
+    "pt": "Não foi possível confirmar o resultado do envio. Confira novamente ou reenvie a mesma tentativa.",
+    "fr": "Impossible de confirmer le résultat de l’envoi. Vérifiez à nouveau ou renvoyez la même tentative."
+  },
+  "maa84f2b23137": {
+    "ja": "提出結果をもう一度確認",
+    "zh-Hans": "重新查看提交结果",
+    "zh-Hant": "重新查看提交結果",
+    "es": "Volver a comprobar el resultado del envío",
+    "id": "Periksa lagi hasil pengiriman",
+    "vi": "Kiểm tra lại kết quả gửi",
+    "th": "ตรวจสอบผลการส่งอีกครั้ง",
+    "pt": "Verificar o resultado do envio novamente",
+    "fr": "Vérifier à nouveau le résultat de l’envoi"
+  },
+  "m3abe4fb41ea7": {
+    "ja": "次の問題",
+    "zh-Hans": "下一题",
+    "zh-Hant": "下一題",
+    "es": "Siguiente pregunta",
+    "id": "Pertanyaan berikutnya",
+    "vi": "Câu hỏi tiếp theo",
+    "th": "คำถามถัดไป",
+    "pt": "Próxima pergunta",
+    "fr": "Question suivante"
+  }
+} satisfies Record<string, TranslatedMessage>;

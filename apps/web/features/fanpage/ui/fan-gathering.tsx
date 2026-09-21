@@ -1,4 +1,8 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__ui__fan-gathering";
+import { translate } from "@/i18n/messages";
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Heart, Pause, Play } from "lucide-react";
 import { fanCommunitySchema } from "../domain/fan-community";
@@ -15,7 +19,7 @@ const serverMotion = () => true;
 const parse = (value: unknown) => fanCommunitySchema.parse(value);
 function nameHash(name: string) { return [...name].reduce((hash, char) => ((hash * 31) + char.charCodeAt(0)) >>> 0, 0); }
 
-function MarbleTray({ fans, paused, locale }: { fans: Fan[]; paused: boolean; locale: "ko" | "en" }) {
+function MarbleTray({ fans, paused, locale }: { fans: Fan[]; paused: boolean; locale: AppLocale }) {
   const tray = useRef<HTMLDivElement>(null), tooltip = useRef<HTMLDivElement>(null);
   const items = useRef<(HTMLButtonElement | null)[]>([]);
   const stop = useRef(paused), wake = useRef(() => {}), repaint = useRef(() => {});
@@ -105,35 +109,35 @@ function MarbleTray({ fans, paused, locale }: { fans: Fan[]; paused: boolean; lo
       for (const [type, listener] of Object.entries(events)) element.removeEventListener(type, listener as EventListener);
     };
   }, [fans]);
-  return <div ref={tray} className={styles.tray} data-marble-tray data-paused={paused} role="group" aria-label={locale === "ko" ? "함께하는 팬 캐릭터" : "Fan characters"}>
+  return <div ref={tray} className={styles.tray} data-marble-tray data-paused={paused} role="group" aria-label={locale === "ko" ? "함께하는 팬 캐릭터" : translate(locale, localizedMessages.m77068e9efddb, "Fan characters")}>
     {fans.map((fan, index) => <button type="button" key={`${fan.nickname}:${index}`} data-marble-index={index} ref={node => { items.current[index] = node; }} className={styles.marble} data-selected={selected === index} aria-label={fan.nickname} aria-describedby={selected === index ? tooltipId : undefined}>
       <img src={fan.avatarUrl} alt="" width={44} height={44} draggable={false} />
     </button>)}
     {selected !== null && fans[selected] && <div ref={tooltip} id={tooltipId} className={styles.tooltip} role="tooltip">{fans[selected]!.nickname}</div>}
   </div>;
 }
-export function FanGathering({ fans, fanCount, locale }: { fans: Fan[]; fanCount: number; locale: "ko" | "en" }) {
+export function FanGathering({ fans, fanCount, locale }: { fans: Fan[]; fanCount: number; locale: AppLocale }) {
   const ko = locale === "ko", titleId = useId();
   const reduced = useSyncExternalStore(subscribeMotion, readMotion, serverMotion);
   const [paused, setPaused] = useState(false);
   // Stable placement conveys no score, membership tier, or arrival order.
   const current = useMemo(() => [...fans].sort((a, b) => nameHash(a.nickname) - nameHash(b.nickname)), [fans]);
-  const count = fanCount.toLocaleString(ko ? "ko-KR" : "en-US");
+  const count = fanCount.toLocaleString(locale);
   return <section className={styles.panel} aria-labelledby={titleId} data-fan-gathering>
     <div className={styles.top}><span><Heart size={15} aria-hidden="true" /> BYUS FANS</span></div>
-    <h2 id={titleId}>{ko ? "좋아하는 마음으로 모인 팬들" : "Fans, brought together"}</h2>
-    <p className={styles.description}>{ko ? <><strong>{count}명</strong>이 좋아요와 패스포트로 함께하고 있어요.</> : <><strong>{count} {fanCount === 1 ? "fan" : "fans"}</strong> joined with a like or Passport.</>}</p>
-    {current.length ? <MarbleTray key={JSON.stringify(current)} fans={current} paused={paused || reduced} locale={locale} /> : <div className={styles.empty}><Heart size={28} aria-hidden="true" /><p>{ko ? "아직 함께하는 팬이 없어요." : "No fans have joined yet."}</p></div>}
-    {current.length > 0 && <p className={styles.caption}>{ko ? `캐릭터에 마우스를 올리거나 눌러 닉네임을 확인하세요.${paused || reduced ? "" : " 끌어서 움직일 수도 있어요."}` : `Hover or tap to see a name.${paused || reduced ? "" : " Drag a character to move it."}`}</p>}
+    <h2 id={titleId}>{locale === "ko" ? "좋아하는 마음으로 모인 팬들" : translate(locale, localizedMessages.m25a5ce8b9549, "Fans, brought together")}</h2>
+    <p className={styles.description}>{ko ? <><strong>{count}명</strong>이 좋아요와 패스포트로 함께하고 있어요.</> : locale === "en" ? <><strong>{count} {fanCount === 1 ? "fan" : "fans"}</strong> joined with a like or Passport.</> : translate(locale, localizedMessages.m72cd99c57af2, "{0} fans joined with a like or Passport.", [count])}</p>
+    {current.length ? <MarbleTray key={JSON.stringify(current)} fans={current} paused={paused || reduced} locale={locale} /> : <div className={styles.empty}><Heart size={28} aria-hidden="true" /><p>{locale === "ko" ? "아직 함께하는 팬이 없어요." : translate(locale, localizedMessages.mae1619294e22, "No fans have joined yet.")}</p></div>}
+    {current.length > 0 && <p className={styles.caption}>{locale === "ko" ? `캐릭터에 마우스를 올리거나 눌러 닉네임을 확인하세요.${paused || reduced ? "" : " 끌어서 움직일 수도 있어요."}` : translate(locale, localizedMessages.m85a5a48246a6, "Hover or tap to see a name.{0}", [paused || reduced ? "" : " Drag a character to move it."])}</p>}
     <div className={styles.bottom}>
       {current.length > 0 && <button type="button" className={styles.motion} disabled={reduced} onClick={() => setPaused(value => !value)} aria-pressed={paused || reduced}>
-        {paused || reduced ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}{reduced ? (ko ? "동작 줄이기 사용 중" : "Reduced motion on") : paused ? (ko ? "움직임 재생" : "Resume motion") : (ko ? "움직임 멈추기" : "Pause motion")}
+        {paused || reduced ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}{reduced ? (locale === "ko" ? "동작 줄이기 사용 중" : translate(locale, localizedMessages.mfe31d3c0a45b, "Reduced motion on")) : paused ? (locale === "ko" ? "움직임 재생" : translate(locale, localizedMessages.m5ef423b8bcda, "Resume motion")) : (locale === "ko" ? "움직임 멈추기" : translate(locale, localizedMessages.m66befff9ece7, "Pause motion"))}
       </button>}
     </div>
   </section>;
 }
-export function FanGatheringPanel({ slug, locale }: { slug: string; locale: "ko" | "en" }) {
-  const resource = useCommunityResource(`/api/celebrities/${slug}/fans?locale=${locale}`, parse);
+export function FanGatheringPanel({ slug, locale }: { slug: string; locale: AppLocale }) {
+  const resource = useCommunityResource(`/api/celebrities/${slug}/fans?locale=${toContentLocale(locale)}`, parse);
   if (resource.state.status !== "ready") return <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} />;
   return <><FanGathering key={`${slug}:${locale}`} {...resource.state.data} locale={locale} />{resource.refreshFailed && <ResourceMessage locale={locale} error retry={resource.retry} />}</>;
 }

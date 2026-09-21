@@ -194,6 +194,16 @@ function callbackRequest(
 }
 
 describe("reauthentication start route", () => {
+  it("preserves a Traditional Chinese UI and nested return path through reauthentication", async () => {
+    const deps = dependencies();
+    const response = await startReauthentication(startRequest("google", { body: JSON.stringify({
+      provider: "google", locale: "zh-Hant", returnTo: "/my?locale=zh-Hant", intent: "reserve", entity: "live-1",
+    }) }), deps);
+    expect(response.status).toBe(200);
+    const path = new URL(String(deps.captured.challenge?.returnPath), ORIGIN);
+    expect(path.searchParams.get("locale")).toBe("zh-Hant");
+    expect(path.searchParams.get("returnTo")).toBe("/my?locale=zh-Hant");
+  });
   it.each(["google", "apple"] as const)(
     "binds a %s challenge to state, nonce, cookie, session, and provider subject hashes",
     async (provider) => {

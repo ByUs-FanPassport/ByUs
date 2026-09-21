@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__elina-fan-guide__content";
+import { additionalLocales } from "@/i18n/messages";
 export const elinaFanGuideContent = {
   ko: {
     heroTitle: "뱅크시와 함께 하는\n엘리나 LIVE",
@@ -133,4 +135,72 @@ export const elinaFanGuideContent = {
     imageAlt: "Elina standing by the sea",
     prizeAlt: "Banksy exhibition ticket, Beepio cases, and a Banksy limited-edition statue",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    heroTitle: localizedMessages.mb919c47dfa9f[translationLocale],
+    heroDescription: localizedMessages.mfb7774d413e8[translationLocale],
+    heroSchedule: localizedMessages.mb2d9597a8f6f[translationLocale],
+    prizeSummary: localizedMessages.m6150118f0159[translationLocale],
+    howToJoin: localizedMessages.m7d22a890b036[translationLocale],
+    viewPrizes: localizedMessages.m7f45e242f4bd[translationLocale],
+    heroNote: localizedMessages.md80dc8b14215[translationLocale],
+    stages: [localizedMessages.mbbf45469e4ff[translationLocale], localizedMessages.m75a4b0ad57d8[translationLocale], localizedMessages.me21dda9bba3f[translationLocale], localizedMessages.m35d7f8a1f2b9[translationLocale]],
+    steps: [
+      {
+        label: localizedMessages.m2b39194241ef[translationLocale],
+        title: localizedMessages.m50e9842f3082[translationLocale],
+        body: localizedMessages.m9d1ca2ea6a0d[translationLocale],
+        actions: [localizedMessages.m4636ffda6a89[translationLocale]],
+        note: localizedMessages.m005d4d79ddb8[translationLocale],
+      },
+      {
+        label: localizedMessages.m743d23e46573[translationLocale],
+        title: localizedMessages.m3aaa5770532b[translationLocale],
+        body: localizedMessages.mc14cdd1146f5[translationLocale],
+        actions: [localizedMessages.mfc3fccb9f347[translationLocale]],
+        note: localizedMessages.mc75b958e0f02[translationLocale],
+      },
+      {
+        label: localizedMessages.m12a83cc90244[translationLocale],
+        title: localizedMessages.m589aea1e0c11[translationLocale],
+        body: localizedMessages.md5125c3cf2c7[translationLocale],
+        actions: [localizedMessages.m89405facd0d2[translationLocale]],
+        note: localizedMessages.m9cffe0680880[translationLocale],
+      },
+      {
+        label: localizedMessages.m62d77eaa7c70[translationLocale],
+        title: localizedMessages.m6824947438b9[translationLocale],
+        body: localizedMessages.mf929a4ddbe2e[translationLocale],
+        actions: [localizedMessages.ma3c830606914[translationLocale], localizedMessages.m138c4710c6fb[translationLocale]],
+        note: localizedMessages.mf5fabcca671f[translationLocale],
+      },
+    ],
+    liveCard: {
+      title: localizedMessages.m1cbd001ea1a7[translationLocale],
+      flow: localizedMessages.mf364de6801e6[translationLocale],
+      code: localizedMessages.m89d509f24c7c[translationLocale],
+      value: localizedMessages.m23fd70daeed2[translationLocale],
+    },
+    missionCards: [
+      [localizedMessages.m3106230e59da[translationLocale], localizedMessages.m18c83209282e[translationLocale]],
+      [localizedMessages.me53d1a75ce25[translationLocale], localizedMessages.m1e3a56f753a7[translationLocale]],
+    ],
+    historyTitle: localizedMessages.m37111b9cefeb[translationLocale],
+    historyBody: localizedMessages.mb6b07d01a9c5[translationLocale],
+    historyAction: localizedMessages.m1fb5700bf820[translationLocale],
+    faqTitle: localizedMessages.m00d12aadf3ca[translationLocale],
+    faqs: [
+      [localizedMessages.m62e483a19ba0[translationLocale], localizedMessages.me644c13d4ff4[translationLocale]],
+      [localizedMessages.med60d34cd3a0[translationLocale], localizedMessages.m60b30d7883da[translationLocale]],
+      [localizedMessages.m1f475c6e672c[translationLocale], localizedMessages.m207315312602[translationLocale]],
+      [localizedMessages.me97c93b2a362[translationLocale], localizedMessages.mdd7b6a1e4296[translationLocale]],
+      [localizedMessages.mf535ea10bff1[translationLocale], localizedMessages.m9ce106c1194d[translationLocale]],
+      [localizedMessages.mf8c8e81af305[translationLocale], localizedMessages.me0625936719b[translationLocale]],
+    ],
+    closingTitle: localizedMessages.m9807deffe77b[translationLocale],
+    closingAction: localizedMessages.mbd79ff423d32[translationLocale],
+    footer: localizedMessages.mca079ef76357[translationLocale],
+    imageAlt: localizedMessages.me864016bbde1[translationLocale],
+    prizeAlt: localizedMessages.m7c67f80b538e[translationLocale],
+  }))
 } as const;

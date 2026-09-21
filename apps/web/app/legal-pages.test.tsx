@@ -23,7 +23,7 @@ describe("public legal pages", () => {
     expect(screen.getByText(/수탁자: 솔라피 주식회사\(SOLAPI\)/)).toBeInTheDocument();
     expect(screen.getByText(/메시지 발송 이력을 발송일로부터 1년간 보관/)).toBeInTheDocument();
     expect(screen.getByText(/원본 전화번호와 완료되지 않은 등록 정보를 삭제/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "언어 선택, 현재 한국어" })).toHaveAttribute("href", "/privacy?locale=en");
+    expect(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" })).toHaveValue("ko");
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/?locale=ko");
   });
 
@@ -41,7 +41,7 @@ describe("public legal pages", () => {
     expect(screen.getByText(/Processor: 솔라피 주식회사 \(SOLAPI\)/)).toBeInTheDocument();
     expect(screen.getByText(/for one year from the delivery date/)).toBeInTheDocument();
     expect(screen.getByText(/delete the original phone number from ByUs systems and any incomplete registration information/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Choose language, currently English" })).toHaveAttribute("href", "/privacy?locale=ko");
+    expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/?locale=en");
     expect(container.querySelector("[data-fan-surface]")).toHaveAttribute("lang", "en");
     expect(screen.getByRole("link", { name: "Skip to content" })).toBeInTheDocument();
@@ -58,15 +58,20 @@ describe("public legal pages", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeInTheDocument();
     expect(screen.getByText("Effective date: July 25, 2026")).toBeInTheDocument();
     expect(screen.getByText(/governed by and construed in accordance with the laws of the Republic of Korea/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Choose language, currently English" })).toHaveAttribute("href", "/terms?locale=ko");
+    expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
   });
 
   it("falls back to Korean for missing and unsupported locales", async () => {
     expect(resolveLegalLocale(undefined)).toBe("ko");
-    expect(resolveLegalLocale("fr")).toBe("ko");
+    expect(resolveLegalLocale("de")).toBe("ko");
 
-    render(await TermsPage({ searchParams: searchParams("fr") }));
+    render(await TermsPage({ searchParams: searchParams("de") }));
     expect(screen.getByRole("heading", { level: 1, name: "이용약관" })).toBeInTheDocument();
+  });
+
+  it("renders Japanese legal content for a supported locale", async () => {
+    render(await PrivacyPage({ searchParams: searchParams("ja") }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("プライバシーポリシー");
   });
 
   it("localizes legal metadata", async () => {

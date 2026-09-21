@@ -1,0 +1,301 @@
+import type { TranslatedMessage } from "../messages";
+
+export const messages = {
+  "mc36b291db899": {
+    "ja": "お気に入りと過ごした瞬間を記録しましょう。",
+    "zh-Hans": "记录与喜爱创作者共度的时刻。",
+    "zh-Hant": "記錄與喜愛創作者共度的時刻。",
+    "es": "Guarda un registro de los momentos con tus favoritos.",
+    "id": "Simpan catatan momen bersama favorit Anda.",
+    "vi": "Lưu lại những khoảnh khắc cùng người bạn yêu thích.",
+    "th": "เก็บบันทึกช่วงเวลากับคนโปรดของคุณ",
+    "pt": "Guarde um registro dos momentos com seus favoritos.",
+    "fr": "Conservez les moments partagés avec vos artistes préférés."
+  },
+  "maf963691264c": {
+    "ja": "見る",
+    "zh-Hans": "探索",
+    "zh-Hant": "探索",
+    "es": "Explorar",
+    "id": "Jelajahi",
+    "vi": "Khám phá",
+    "th": "สำรวจ",
+    "pt": "Explorar",
+    "fr": "Découvrir"
+  },
+  "m99200ab51218": {
+    "ja": "マイ活動",
+    "zh-Hans": "我的活动",
+    "zh-Hant": "我的活動",
+    "es": "Mi actividad",
+    "id": "Aktivitas saya",
+    "vi": "Hoạt động của tôi",
+    "th": "กิจกรรมของฉัน",
+    "pt": "Minha atividade",
+    "fr": "Mon activité"
+  },
+  "m5e5309afe2f0": {
+    "ja": "ガイド＆お問い合わせ",
+    "zh-Hans": "指南与联系",
+    "zh-Hant": "指南與聯繫",
+    "es": "Guías y contacto",
+    "id": "Panduan & kontak",
+    "vi": "Hướng dẫn & liên hệ",
+    "th": "คู่มือและการติดต่อ",
+    "pt": "Guias e contato",
+    "fr": "Guides et contact"
+  },
+  "m5726f3e9a90b": {
+    "ja": "ソーシャル",
+    "zh-Hans": "社交",
+    "zh-Hant": "社交",
+    "es": "Redes sociales",
+    "id": "Sosial",
+    "vi": "Mạng xã hội",
+    "th": "โซเชียล",
+    "pt": "Redes sociais",
+    "fr": "Réseaux sociaux"
+  },
+  "m41f365db4fb7": {
+    "ja": "お気に入り",
+    "zh-Hans": "喜爱对象",
+    "zh-Hant": "喜愛對象",
+    "es": "Favoritos",
+    "id": "Favorit",
+    "vi": "Yêu thích",
+    "th": "คนโปรด",
+    "pt": "Favoritos",
+    "fr": "Favoris"
+  },
+  "mab7b6d4cdc72": {
+    "ja": "特典",
+    "zh-Hans": "福利",
+    "zh-Hant": "福利",
+    "es": "Beneficios",
+    "id": "Manfaat",
+    "vi": "Quyền lợi",
+    "th": "สิทธิประโยชน์",
+    "pt": "Benefícios",
+    "fr": "Avantages"
+  },
+  "m2c4e2b786e56": {
+    "ja": "通知",
+    "zh-Hans": "通知",
+    "zh-Hant": "通知",
+    "es": "Notificaciones",
+    "id": "Notifikasi",
+    "vi": "Thông báo",
+    "th": "การแจ้งเตือน",
+    "pt": "Notificações",
+    "fr": "Notifications"
+  },
+  "m9fa1f7c32250": {
+    "ja": "プライバシーポリシー",
+    "zh-Hans": "隐私政策",
+    "zh-Hant": "隱私政策",
+    "es": "Política de privacidad",
+    "id": "Kebijakan Privasi",
+    "vi": "Chính sách quyền riêng tư",
+    "th": "นโยบายความเป็นส่วนตัว",
+    "pt": "Política de Privacidade",
+    "fr": "Politique de confidentialité"
+  },
+  "mcc28f0a3daaa": {
+    "ja": "利用規約",
+    "zh-Hans": "使用条款",
+    "zh-Hant": "使用條款",
+    "es": "Términos de uso",
+    "id": "Ketentuan Penggunaan",
+    "vi": "Điều khoản sử dụng",
+    "th": "ข้อกำหนดการใช้งาน",
+    "pt": "Termos de Uso",
+    "fr": "Conditions d’utilisation"
+  },
+  "m426ae2de78d1": {
+    "ja": "ByUsフッターナビゲーション",
+    "zh-Hans": "ByUs 页脚导航",
+    "zh-Hant": "ByUs 頁尾導航",
+    "es": "Navegación del pie de página de ByUs",
+    "id": "Navigasi footer ByUs",
+    "vi": "Điều hướng chân trang ByUs",
+    "th": "เมนูด้านล่างของ ByUs",
+    "pt": "Navegação do rodapé da ByUs",
+    "fr": "Navigation du pied de page ByUs"
+  },
+  "m2c5ffc3483d2": {
+    "ja": "ファンミーティング提携",
+    "zh-Hans": "粉丝见面会合作",
+    "zh-Hant": "粉絲見面會合作",
+    "es": "Colaboraciones para encuentros de fans",
+    "id": "Kerja sama fanmeeting",
+    "vi": "Hợp tác họp mặt người hâm mộ",
+    "th": "ความร่วมมือด้านแฟนมีตติ้ง",
+    "pt": "Parcerias para fanmeetings",
+    "fr": "Partenariats de fanmeeting"
+  },
+  "m5ba596447d28": {
+    "ja": "サービスガイド",
+    "zh-Hans": "服务指南",
+    "zh-Hant": "服務指南",
+    "es": "Guía del servicio",
+    "id": "Panduan layanan",
+    "vi": "Hướng dẫn dịch vụ",
+    "th": "คู่มือการใช้บริการ",
+    "pt": "Guia do serviço",
+    "fr": "Guide du service"
+  },
+  "m33db2981a0e6": {
+    "ja": "サポートに問い合わせる",
+    "zh-Hans": "联系支持团队",
+    "zh-Hant": "聯繫支援團隊",
+    "es": "Contactar al equipo de soporte",
+    "id": "Hubungi dukungan",
+    "vi": "Liên hệ hỗ trợ",
+    "th": "ติดต่อฝ่ายสนับสนุน",
+    "pt": "Contatar o suporte",
+    "fr": "Contacter l’assistance"
+  },
+  "mc926c97a41e6": {
+    "ja": "ファンがいるすべての方へ",
+    "zh-Hans": "致每一位拥有粉丝的人",
+    "zh-Hant": "致每一位擁有粉絲的人",
+    "es": "Para todos los que tienen fans",
+    "id": "Untuk semua yang memiliki penggemar",
+    "vi": "Dành cho tất cả những ai có người hâm mộ",
+    "th": "สำหรับทุกคนที่มีแฟนคลับ",
+    "pt": "Para todos que têm fãs",
+    "fr": "Pour tous ceux qui ont des fans"
+  },
+  "m5b205e1c6048": {
+    "ja": "提携のご提案",
+    "zh-Hans": "合作提案",
+    "zh-Hant": "合作提案",
+    "es": "Propuestas de colaboración",
+    "id": "Proposal kerja sama",
+    "vi": "Đề xuất hợp tác",
+    "th": "ข้อเสนอความร่วมมือ",
+    "pt": "Propostas de parceria",
+    "fr": "Propositions de partenariat"
+  },
+  "m7607ea6f5002": {
+    "ja": "オンチェーン記録",
+    "zh-Hans": "链上记录",
+    "zh-Hant": "鏈上記錄",
+    "es": "Registros en cadena",
+    "id": "Catatan onchain",
+    "vi": "Hồ sơ onchain",
+    "th": "บันทึกบนเชน",
+    "pt": "Registros on-chain",
+    "fr": "Registres on-chain"
+  },
+  "mf557e073dfa7": {
+    "ja": "事業者情報",
+    "zh-Hans": "企业信息",
+    "zh-Hant": "企業資訊",
+    "es": "Información empresarial",
+    "id": "Informasi bisnis",
+    "vi": "Thông tin doanh nghiệp",
+    "th": "ข้อมูลธุรกิจ",
+    "pt": "Informações comerciais",
+    "fr": "Informations sur l’entreprise"
+  },
+  "m858f418834a6": {
+    "ja": "運営会社",
+    "zh-Hans": "运营方",
+    "zh-Hant": "營運方",
+    "es": "Operador",
+    "id": "Operator",
+    "vi": "Đơn vị vận hành",
+    "th": "ผู้ดำเนินการ",
+    "pt": "Operadora",
+    "fr": "Exploitant"
+  },
+  "mb0979e47f86e": {
+    "ja": "代表者",
+    "zh-Hans": "代表人",
+    "zh-Hant": "代表人",
+    "es": "Representante",
+    "id": "Perwakilan",
+    "vi": "Người đại diện",
+    "th": "ผู้แทน",
+    "pt": "Representante",
+    "fr": "Représentant"
+  },
+  "m6a7a6594ed5a": {
+    "ja": "事業者登録番号",
+    "zh-Hans": "企业登记号",
+    "zh-Hant": "企業登記號",
+    "es": "Número de registro empresarial",
+    "id": "Nomor registrasi bisnis",
+    "vi": "Mã đăng ký kinh doanh",
+    "th": "เลขทะเบียนธุรกิจ",
+    "pt": "Número de registro da empresa",
+    "fr": "Numéro d’immatriculation de l’entreprise"
+  },
+  "m1f45fe0f4807": {
+    "ja": "所在地",
+    "zh-Hans": "注册地址",
+    "zh-Hant": "註冊地址",
+    "es": "Domicilio registrado",
+    "id": "Alamat terdaftar",
+    "vi": "Địa chỉ đăng ký",
+    "th": "ที่อยู่จดทะเบียน",
+    "pt": "Endereço registrado",
+    "fr": "Adresse enregistrée"
+  },
+  "mfafaf28d4070": {
+    "ja": "ByUsホーム",
+    "zh-Hans": "ByUs 首页",
+    "zh-Hant": "ByUs 首頁",
+    "es": "Inicio de ByUs",
+    "id": "Beranda ByUs",
+    "vi": "Trang chủ ByUs",
+    "th": "หน้าหลัก ByUs",
+    "pt": "Início da ByUs",
+    "fr": "Accueil ByUs"
+  },
+  "m447c7b7bbd23": {
+    "ja": "ByUsのTelegramチャンネルを新しいウィンドウで開く",
+    "zh-Hans": "在新窗口打开 ByUs Telegram 频道",
+    "zh-Hant": "在新窗口打開 ByUs Telegram 頻道",
+    "es": "Abrir el canal de Telegram de ByUs en una ventana nueva",
+    "id": "Buka kanal Telegram ByUs, jendela baru",
+    "vi": "Mở kênh Telegram ByUs, cửa sổ mới",
+    "th": "เปิดช่อง Telegram ของ ByUs ในหน้าต่างใหม่",
+    "pt": "Abrir o canal da ByUs no Telegram, nova janela",
+    "fr": "Ouvrir la chaîne Telegram de ByUs, nouvelle fenêtre"
+  },
+  "maf19023c88d3": {
+    "ja": "ByUsの{0}を新しいウィンドウで開く",
+    "zh-Hans": "在新窗口打开 ByUs {0}",
+    "zh-Hant": "在新窗口打開 ByUs {0}",
+    "es": "Abrir {0} de ByUs en una ventana nueva",
+    "id": "Buka {0} ByUs, jendela baru",
+    "vi": "Mở {0} của ByUs, cửa sổ mới",
+    "th": "เปิด {0} ของ ByUs ในหน้าต่างใหม่",
+    "pt": "Abrir {0} da ByUs, nova janela",
+    "fr": "Ouvrir {0} de ByUs, nouvelle fenêtre"
+  },
+  "mc2da954c6e18": {
+    "ja": "プライバシーポリシーを開く",
+    "zh-Hans": "打开隐私政策",
+    "zh-Hant": "打開隱私政策",
+    "es": "Abrir la Política de privacidad",
+    "id": "Buka Kebijakan Privasi",
+    "vi": "Mở Chính sách quyền riêng tư",
+    "th": "เปิดนโยบายความเป็นส่วนตัว",
+    "pt": "Abrir a Política de Privacidade",
+    "fr": "Ouvrir la Politique de confidentialité"
+  },
+  "m9083a379799f": {
+    "ja": "利用規約を開く",
+    "zh-Hans": "打开使用条款",
+    "zh-Hant": "打開使用條款",
+    "es": "Abrir los Términos de uso",
+    "id": "Buka Ketentuan Penggunaan",
+    "vi": "Mở Điều khoản sử dụng",
+    "th": "เปิดข้อกำหนดการใช้งาน",
+    "pt": "Abrir os Termos de Uso",
+    "fr": "Ouvrir les Conditions d’utilisation"
+  }
+} satisfies Record<string, TranslatedMessage>;

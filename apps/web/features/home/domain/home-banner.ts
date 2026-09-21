@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/locales";
 import { z } from "zod";
 import { safeAssetUrlSchema } from "../../live/domain/live-event";
 
@@ -12,7 +13,7 @@ export function isBannerHref(value: string): boolean {
   } catch { return false; }
 }
 
-export function localizedBannerHref(href: string, locale: "ko" | "en"): string {
+export function localizedBannerHref(href: string, locale: AppLocale): string {
   if (!isBannerHref(href)) throw new Error("Invalid banner link");
   if (!href.startsWith("/")) return href;
   const url = new URL(href, "https://byus.kr");

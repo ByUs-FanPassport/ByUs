@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__benefit-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -66,7 +70,7 @@ import {
   elinaVerificationHref,
 } from "@/features/live/domain/elina-event";
 
-export type BenefitLocale = "ko" | "en";
+export type BenefitLocale = AppLocale;
 
 const benefitUpdatedEvent = "byus:benefit-updated";
 const elinaBanksyCampaignId = "14d6ae96-a168-494a-be85-f02f8050fbfa";
@@ -251,16 +255,103 @@ const copy = {
     notFound: "We couldn’t find this benefit.",
     locale: "EN / KO",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    nav: [localizedMessages.mc479fe23637d[translationLocale], localizedMessages.m22f4a1234a39[translationLocale], localizedMessages.ma2124acff3dd[translationLocale], localizedMessages.m355f806fbf48[translationLocale], localizedMessages.mcd53f051880a[translationLocale]],
+    title: localizedMessages.mf334d12f8dfe[translationLocale],
+    subtitle: localizedMessages.m029fa55d14da[translationLocale],
+    filter: localizedMessages.mf06d1cb8c856[translationLocale],
+    allEmpty: localizedMessages.m8a47290d1158[translationLocale],
+    filterEmpty: localizedMessages.m03a800dc1dd2[translationLocale],
+    emptyHelp: localizedMessages.md97cd47c327d[translationLocale],
+    loadError: localizedMessages.mebbf3bca342e[translationLocale],
+    loadHelp: localizedMessages.m74c2ede087d3[translationLocale],
+    retry: localizedMessages.m67a8aa0164c1[translationLocale],
+    back: localizedMessages.m89a16ea7324b[translationLocale],
+    details: localizedMessages.me923fd5505b3[translationLocale],
+    states: {
+      locked: localizedMessages.mfaaba44b52ff[translationLocale],
+      eligible: localizedMessages.m404fa6774f25[translationLocale],
+      claimed: localizedMessages.m2c1ad530a3b9[translationLocale],
+      sold_out: localizedMessages.m8e0282aa83b5[translationLocale],
+      expired: localizedMessages.mb6100fccacb8[translationLocale],
+    },
+    period: localizedMessages.ma70a86271ab4[translationLocale],
+    periodStart: localizedMessages.m6922de7e2ece[translationLocale],
+    periodEnd: localizedMessages.m48d790b73da3[translationLocale],
+    requirement: localizedMessages.mf4ef68b21775[translationLocale],
+    delivery: localizedMessages.m142882fcc151[translationLocale],
+    score: localizedMessages.m4a0b7a8d623f[translationLocale],
+    level: localizedMessages.m1ec309df5271[translationLocale],
+    stamp: localizedMessages.m83ce39f9b546[translationLocale],
+    activity: localizedMessages.m87a21b68eb4c[translationLocale],
+    claim: localizedMessages.m635ba7eb87cb[translationLocale],
+    signIn: localizedMessages.mff15b83e8a39[translationLocale],
+    signInToEnter: localizedMessages.m00b6362bbb46[translationLocale],
+    claiming: localizedMessages.m53839a344f8f[translationLocale],
+    locked: localizedMessages.m345f591c5a4a[translationLocale],
+    claimed: localizedMessages.m6490b7f8af01[translationLocale],
+    sold_out: localizedMessages.mb0fd6abbdc84[translationLocale],
+    expired: localizedMessages.med5737370945[translationLocale],
+    claimError:
+      localizedMessages.mc5a144f27d01[translationLocale],
+    apply: localizedMessages.m0484ce351590[translationLocale],
+    applying: localizedMessages.m8730911eb85f[translationLocale],
+    applyError:
+      localizedMessages.m96345a4607b3[translationLocale],
+    applicationStates: {
+      submitted: localizedMessages.mad23187cc164[translationLocale],
+      selected: localizedMessages.m14485512e4c2[translationLocale],
+      not_selected: localizedMessages.ma0efd8f20c74[translationLocale],
+    },
+    enter: localizedMessages.m26484b457f7b[translationLocale],
+    entering: localizedMessages.me12086409cfb[translationLocale],
+    tickets: localizedMessages.m0d6b747d91e7[translationLocale],
+    enteredTickets: localizedMessages.m02042506f8ab[translationLocale],
+    entryLimit: localizedMessages.mc579a3557862[translationLocale],
+    noEntryLimit: localizedMessages.m426ff084741c[translationLocale],
+    entryAmount: localizedMessages.m6d7589a0bc76[translationLocale],
+    entryHistory: localizedMessages.m744a070e2b58[translationLocale],
+    entryConfirmTitle: localizedMessages.m28f870eae5b5[translationLocale],
+    entryConfirmHelp:
+      localizedMessages.m5f9b6d471c18[translationLocale],
+    entryCurrentBalance: localizedMessages.me6c1638e2df1[translationLocale],
+    entryDebit: localizedMessages.m511d24c734cb[translationLocale],
+    entryRemainingBalance: localizedMessages.m2c8ad40fec7e[translationLocale],
+    entryConfirm: localizedMessages.m061fb96d3a6e[translationLocale],
+    entryCancel: localizedMessages.m5ad261dbb4cc[translationLocale],
+    entrySuccess: localizedMessages.m068372c36b6e[translationLocale],
+    entryAgain: localizedMessages.m09fd61da32b3[translationLocale],
+    entryZero: localizedMessages.m07c4158f1ef4[translationLocale],
+    entrySpent: localizedMessages.m114f66e95161[translationLocale],
+    entryLimitReached: localizedMessages.m5670e6eadb2e[translationLocale],
+    entryClosed: localizedMessages.m7be3ad95a720[translationLocale],
+    entryError:
+      localizedMessages.m50469a221029[translationLocale],
+    shippingOnly: localizedMessages.m47a8090a2918[translationLocale],
+    shippingOnlyHelp: localizedMessages.m1e831cb74491[translationLocale],
+    pickupMethod: localizedMessages.mb7396db30963[translationLocale],
+    shippingAck: localizedMessages.m8ac905897565[translationLocale],
+    entryPolicyRefresh: localizedMessages.m672277cca321[translationLocale],
+    delivered: localizedMessages.m21ce59e65b26[translationLocale],
+    text: localizedMessages.m6eaa12a964ec[translationLocale],
+    code: localizedMessages.m9bbb9de3a3d1[translationLocale],
+    open: localizedMessages.m80f2b11958af[translationLocale],
+    copy: localizedMessages.mf11da3c86e9a[translationLocale],
+    copied: localizedMessages.maea0052f42e9[translationLocale],
+    notFound: localizedMessages.m8898fc65d932[translationLocale],
+    locale: localizedMessages.mfad3f2c27731[translationLocale],
+  }))
 } as const;
 
-function query(locale: BenefitLocale, celebrity?: string) {
+function query(locale: AppLocale, celebrity?: string) {
   const params = new URLSearchParams({ locale });
   if (celebrity) params.set("celebrity", celebrity);
   return params.toString();
 }
 
-function formatDate(value: string, locale: BenefitLocale) {
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+function formatDate(value: string, locale: AppLocale) {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -268,7 +359,7 @@ function formatDate(value: string, locale: BenefitLocale) {
   }).format(new Date(value));
 }
 
-function localizeBenefitValue(value: string, locale: BenefitLocale) {
+function localizeBenefitValue(value: string, locale: AppLocale) {
   if (locale !== "ko") return value;
   const normalized = value.trim().toLowerCase();
   const knownValues: Record<string, string> = {
@@ -282,19 +373,19 @@ function localizeBenefitValue(value: string, locale: BenefitLocale) {
   return knownValues[normalized] ?? value;
 }
 
-function benefitStateLabel(benefit: BenefitCatalogItem, locale: BenefitLocale): string {
+function benefitStateLabel(benefit: BenefitCatalogItem, locale: AppLocale): string {
   const { state, applicationStatus, entry, allocationMode } = benefit;
   if (state === "claimed") return copy[locale].states.claimed;
-  if (applicationStatus === "selected") return locale === "ko" ? "선정 완료" : "Selected";
-  if (applicationStatus === "submitted") return locale === "ko" ? "신청 완료" : "Application submitted";
-  if (applicationStatus === "not_selected") return locale === "ko" ? "선정 종료" : "Selection complete";
+  if (applicationStatus === "selected") return locale === "ko" ? "선정 완료" : translate(locale, localizedMessages.m75aeafbfc8fc, "Selected");
+  if (applicationStatus === "submitted") return locale === "ko" ? "신청 완료" : translate(locale, localizedMessages.mdb8e3ce65760, "Application submitted");
+  if (applicationStatus === "not_selected") return locale === "ko" ? "선정 종료" : translate(locale, localizedMessages.m2a8f07d0844c, "Selection complete");
   if (entry) {
-    if (entry.canEnter) return locale === "ko" ? "응모 가능" : "Open for entries";
-    if (Date.now() < Date.parse(entry.entryOpensAt)) return locale === "ko" ? "응모 예정" : "Entries open soon";
-    return locale === "ko" ? "응모 종료" : "Entries closed";
+    if (entry.canEnter) return locale === "ko" ? "응모 가능" : translate(locale, localizedMessages.m1fc8c82cd1d1, "Open for entries");
+    if (Date.now() < Date.parse(entry.entryOpensAt)) return locale === "ko" ? "응모 예정" : translate(locale, localizedMessages.m1eaa9ad6e7cb, "Entries open soon");
+    return locale === "ko" ? "응모 종료" : translate(locale, localizedMessages.ma9dd4c6bb133, "Entries closed");
   }
   if (state === "eligible" && allocationMode === "application_selection") {
-    return locale === "ko" ? "신청 가능" : "Open for applications";
+    return locale === "ko" ? "신청 가능" : translate(locale, localizedMessages.m53cbbafb2109, "Open for applications");
   }
   return copy[locale].states[state];
 }
@@ -304,7 +395,7 @@ function StateBadge({
   locale,
 }: {
   benefit: BenefitCatalogItem;
-  locale: BenefitLocale;
+  locale: AppLocale;
 }) {
   const { state } = benefit;
   return (
@@ -321,7 +412,7 @@ function RequirementList({
   locale,
 }: {
   benefit: BenefitCatalogItem;
-  locale: BenefitLocale;
+  locale: AppLocale;
 }) {
   const c = copy[locale];
   const showScore = !benefit.entry || benefit.minimumScore > 0;
@@ -339,7 +430,7 @@ function RequirementList({
         <div>
           <dt>{c.score}</dt>
           <dd>
-            {new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US").format(
+            {new Intl.NumberFormat(locale).format(
               benefit.minimumScore,
             )}
           </dd>
@@ -376,7 +467,7 @@ export function BenefitsScreen({
   locale,
   initialCelebrity,
 }: {
-  locale: BenefitLocale;
+  locale: AppLocale;
   initialCelebrity?: string;
 }) {
   const c = copy[locale];
@@ -390,7 +481,7 @@ export function BenefitsScreen({
 
   const loadCelebrities = useCallback(async () => {
     try {
-      const response = await fetch(`/api/public/celebrities?locale=${locale}`);
+      const response = await fetch(`/api/public/celebrities?locale=${toContentLocale(locale)}`);
       if (!response.ok) throw new Error();
       const data = celebritiesResponseSchema.parse(await response.json());
       setCelebrities(data.celebrities);
@@ -433,7 +524,7 @@ export function BenefitsScreen({
     setView({ kind: "loading" });
     try {
       const token = authenticated ? await getAccessToken() : null;
-      const response = await fetch(`/api/benefits?${query(locale, selected)}`, {
+      const response = await fetch(`/api/benefits?${query(toContentLocale(locale), selected)}`, {
         headers: token ? { authorization: `Bearer ${token}` } : undefined,
         cache: "no-store",
       });
@@ -493,7 +584,7 @@ export function BenefitsScreen({
             role="status"
             aria-busy="true"
             aria-label={
-              locale === "ko" ? "혜택 불러오는 중" : "Loading benefits"
+              locale === "ko" ? "혜택 불러오는 중" : translate(locale, localizedMessages.mc61fba98c413, "Loading benefits")
             }
           >
             {[0, 1, 2].map((item) => (
@@ -540,10 +631,10 @@ export function BenefitsScreen({
                     <StateBadge benefit={benefit} locale={locale} />
                     <h2>{benefit.title}</h2>
                     <p>{benefit.entry
-                      ? locale === "ko" ? "응모권으로 참여" : "Enter with raffle tickets"
+                      ? locale === "ko" ? "응모권으로 참여" : translate(locale, localizedMessages.m2b5f8ed324ec, "Enter with raffle tickets")
                       : benefitEligibilityLabel(benefit, locale)}</p>
                     <p className={styles.rowDeadline}>
-                      {locale === "ko" ? "마감 " : "Closes "}
+                      {locale === "ko" ? "마감 " : translate(locale, localizedMessages.m3941d047472b, "Closes ")}
                       <time dateTime={benefit.entry?.entryClosesAt ?? benefit.claimClosesAt}>
                         {formatRaffleDateTime(benefit.entry?.entryClosesAt ?? benefit.claimClosesAt, locale)}
                       </time>
@@ -568,7 +659,7 @@ type DetailView =
 
 type BenefitDetailScreenProps = {
   benefitId: string;
-  locale: BenefitLocale;
+  locale: AppLocale;
   celebrity?: string;
   presentation?: "page" | "overlay";
   onBusyChange?: (busy: boolean) => void;
@@ -624,7 +715,7 @@ function BenefitDetailOwnerScreen({
     try {
       const token = authenticated ? await getAccessToken() : null;
       const response = await fetch(
-        `/api/benefits/${encodeURIComponent(benefitId)}?locale=${locale}`,
+        `/api/benefits/${encodeURIComponent(benefitId)}?locale=${toContentLocale(locale)}`,
         {
           headers: token ? { authorization: `Bearer ${token}` } : undefined,
           cache: "no-store",
@@ -1046,9 +1137,7 @@ function BenefitDetailOwnerScreen({
   const isElinaRaffle = benefit.entry?.campaignId === elinaBanksyCampaignId;
   const detailTitle = isIfewRaffle ? ifewPrizeName[locale] : benefit.title;
   const detailSummary = isIfewRaffle
-    ? locale === "ko"
-      ? "5명을 추첨해 관람권을 2장씩, 총 10장 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다."
-      : "Five winners receive two admission tickets each, for 10 tickets in total. Ifew raffle tickets are used to enter the draw."
+    ? locale === "ko" ? "5명을 추첨해 관람권을 2장씩, 총 10장 드려요. 이퓨 응모권은 추첨에 참여할 때 사용합니다." : translate(locale, localizedMessages.m6a69019aed6d, "Five winners receive two admission tickets each, for 10 tickets in total. Ifew raffle tickets are used to enter the draw.")
     : benefit.summary;
   const deliveredClaim = claim ?? ownedApplication?.claim ?? null;
   const unavailableCopy =
@@ -1062,7 +1151,7 @@ function BenefitDetailOwnerScreen({
   const benefitInformation = (
         <div className={styles.detailColumns}>
           <section>
-            <h2>{benefit.entry ? locale === "ko" ? "응모하려면" : "How to enter" : c.requirement}</h2>
+            <h2>{benefit.entry ? locale === "ko" ? "응모하려면" : translate(locale, localizedMessages.m8e1e4d734b51, "How to enter") : c.requirement}</h2>
             <p>{localizeBenefitValue(benefitEligibilityLabel(benefit, locale), locale)}</p>
             <RequirementList benefit={benefit} locale={locale} />
           </section>
@@ -1077,14 +1166,14 @@ function BenefitDetailOwnerScreen({
               ) : benefit.entry?.fulfillmentPolicy?.method === "on_site_pickup" ? (
                 <div className={styles.fulfillmentNotice}>
                   <strong>{c.pickupMethod}</strong>
-                  {benefit.entry?.fulfillmentPolicy.pickupVenue[locale] ? (
-                    <span>{benefit.entry?.fulfillmentPolicy.pickupVenue[locale]}</span>
+                  {benefit.entry?.fulfillmentPolicy.pickupVenue[toContentLocale(locale)] ? (
+                    <span>{benefit.entry?.fulfillmentPolicy.pickupVenue[toContentLocale(locale)]}</span>
                   ) : null}
                 </div>
               ) : null}
             <dl className={styles.period}>
               <div>
-                <dt>{benefit.entry ? locale === "ko" ? "응모 시작" : "Entries open" : c.periodStart}</dt>
+                <dt>{benefit.entry ? locale === "ko" ? "응모 시작" : translate(locale, localizedMessages.m87f015927c14, "Entries open") : c.periodStart}</dt>
                 <dd>
                   <time dateTime={benefit.entry?.entryOpensAt ?? benefit.claimOpensAt}>
                     {formatBenefitDateTime(benefit.entry?.entryOpensAt ?? benefit.claimOpensAt, locale)}
@@ -1132,7 +1221,7 @@ function BenefitDetailOwnerScreen({
           <h1>{detailTitle}</h1>
           <p>{detailSummary}</p>
           {benefit.entry ? <p className={styles.deadline}>
-            <span>{locale === "ko" ? "응모 마감" : "Entries close"}</span>
+            <span>{locale === "ko" ? "응모 마감" : translate(locale, localizedMessages.m73ec246630c6, "Entries close")}</span>
             <time dateTime={benefit.entry.entryClosesAt}>{formatBenefitDateTime(benefit.entry.entryClosesAt, locale)}</time>
           </p> : null}
         </div>
@@ -1161,12 +1250,8 @@ function BenefitDetailOwnerScreen({
               <h2 className={styles.entryHeading}><FanMotionIcon name="ticket" size={24} />{c.enter}</h2>
               <p>
                 {isIfewRaffle
-                  ? locale === "ko"
-                    ? "사용할 이퓨 응모권 수량을 선택하고 직접 응모해 주세요. 팬 인증이나 LIVE 참여만으로 자동 응모되지는 않아요."
-                    : "Choose how many ifew raffle tickets to use and submit your entry. Fan verification or LIVE participation does not enter you automatically."
-                  : locale === "ko"
-                    ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요."
-                    : "Use this creator’s raffle tickets to enter for this benefit."}
+                  ? locale === "ko" ? "사용할 이퓨 응모권 수량을 선택하고 직접 응모해 주세요. 팬 인증이나 LIVE 참여만으로 자동 응모되지는 않아요." : translate(locale, localizedMessages.m2b5088f52e34, "Choose how many ifew raffle tickets to use and submit your entry. Fan verification or LIVE participation does not enter you automatically.")
+                  : locale === "ko" ? "이 크리에이터의 응모권을 사용해 혜택에 응모할 수 있어요." : translate(locale, localizedMessages.m13ed96cd2401, "Use this creator’s raffle tickets to enter for this benefit.")}
               </p>
               <dl className={`${styles.period} ${styles.entryStats}`}>
                 <div>
@@ -1189,7 +1274,7 @@ function BenefitDetailOwnerScreen({
                     <strong>{c.entrySuccess}</strong>
                     <span>
                       {entryResult.ticketAmount}{" "}
-                      {locale === "ko" ? "응모" : "entries"} ·{" "}
+                      {locale === "ko" ? "응모" : translate(locale, localizedMessages.m095fcfb8e291, "entries")} ·{" "}
                       {c.entryRemainingBalance} {entryResult.resultingBalance}
                     </span>
                   </div>
@@ -1235,24 +1320,16 @@ function BenefitDetailOwnerScreen({
                           <>
                             <p>
                               {isElinaRaffle
-                                ? locale === "ko"
-                                  ? "팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
-                                  : "You can get raffle tickets through fan verification and an Elina LIVE reservation. Choose how many to use and submit your entry yourself."
-                                : locale === "ko"
-                                  ? "아직 이퓨 팬 인증을 하지 않았다면 첫 인증으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요."
-                                  : "If you haven’t verified your ifew fandom yet, you can earn raffle tickets through your first verification. Choose how many to use and submit your entry yourself."}
+                                ? locale === "ko" ? "팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요." : translate(locale, localizedMessages.mcbf1b034e6dd, "You can get raffle tickets through fan verification and an Elina LIVE reservation. Choose how many to use and submit your entry yourself.")
+                                : locale === "ko" ? "아직 이퓨 팬 인증을 하지 않았다면 첫 인증으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요." : translate(locale, localizedMessages.m37ca2a744c3b, "If you haven’t verified your ifew fandom yet, you can earn raffle tickets through your first verification. Choose how many to use and submit your entry yourself.")}
                             </p>
                             {isElinaRaffle ? (
                               <>
                                 <FanAction variant="primary" href={elinaVerificationHref(locale)}>
-                                  {locale === "ko"
-                                    ? "팬 인증하고 응모권 받기"
-                                    : "Verify fandom"}
+                                  {locale === "ko" ? "팬 인증하고 응모권 받기" : translate(locale, localizedMessages.m9ddf33f17c63, "Verify fandom")}
                                 </FanAction>
                                 <FanAction variant="neutral" href={elinaLiveHref(locale)}>
-                                  {locale === "ko"
-                                    ? "LIVE 예약하고 응모권 받기"
-                                    : "Reserve a spot"}
+                                  {locale === "ko" ? "LIVE 예약하고 응모권 받기" : translate(locale, localizedMessages.md1cd04ba68a2, "Reserve a spot")}
                                 </FanAction>
                               </>
                             ) : (
@@ -1260,21 +1337,15 @@ function BenefitDetailOwnerScreen({
                                 variant="primary"
                                 href={`/c/ifewknow/verify?locale=${locale}` as Route}
                               >
-                                {locale === "ko"
-                                  ? "이퓨 팬 인증하기"
-                                  : "Verify your ifew fandom"}
+                                {locale === "ko" ? "이퓨 팬 인증하기" : translate(locale, localizedMessages.m308319df82fd, "Verify your ifew fandom")}
                               </FanAction>
                             )}
                           </>
                         ) : (
                           <Link href={isElinaRaffle ? elinaLiveHref(locale) : ifewLiveHref(locale)}>
                             {isElinaRaffle
-                              ? locale === "ko"
-                                ? "엘리나 LIVE 자세히 보기"
-                                : "View the Elina LIVE"
-                              : locale === "ko"
-                                ? "이퓨 LIVE 자세히 보기"
-                                : "View the ifew LIVE"}
+                              ? locale === "ko" ? "엘리나 LIVE 자세히 보기" : translate(locale, localizedMessages.m4a86836b1b99, "View the Elina LIVE")
+                              : locale === "ko" ? "이퓨 LIVE 자세히 보기" : translate(locale, localizedMessages.m4a7cac3f80d1, "View the ifew LIVE")}
                           </Link>
                         )}
                       </>
@@ -1336,7 +1407,7 @@ function BenefitDetailOwnerScreen({
                     {benefit.entry.entries.map((entry) => (
                       <li key={entry.entryId}>
                         {entry.ticketAmount}{" "}
-                        {locale === "ko" ? "응모" : "entries"} ·{" "}
+                        {locale === "ko" ? "응모" : translate(locale, localizedMessages.m095fcfb8e291, "entries")} ·{" "}
                         {formatDate(entry.enteredAt, locale)}
                       </li>
                     ))}
@@ -1362,7 +1433,7 @@ function BenefitDetailOwnerScreen({
                 </div>
                 <button
                   type="button"
-                  aria-label={locale === "ko" ? "닫기" : "Close"}
+                  aria-label={locale === "ko" ? "닫기" : translate(locale, localizedMessages.m05a1db569ca0, "Close")}
                   disabled={pending}
                   onClick={() => setEntryConfirmation(null)}
                 >
@@ -1437,7 +1508,7 @@ function BenefitDetailOwnerScreen({
                   href={deliveredClaim.deliveryValue}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`${c.open}: ${benefit.title}, ${locale === "ko" ? "새 창" : "new window"}`}
+                  aria-label={`${c.open}: ${benefit.title}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.mef883edf5f13, "new window")}`}
                 >
                   {c.open}
                   <ExternalLink aria-hidden="true" />
@@ -1566,7 +1637,7 @@ export function BenefitDetailOverlay({
   celebrity,
 }: {
   benefitId: string;
-  locale: BenefitLocale;
+  locale: AppLocale;
   celebrity?: string;
 }) {
   const router = useRouter();
@@ -1587,12 +1658,12 @@ export function BenefitDetailOverlay({
     >
       <header className={styles.overlayHeader}>
         <h2 id="benefit-overlay-title">
-          {locale === "ko" ? "혜택 정보" : "Benefit details"}
+          {locale === "ko" ? "혜택 정보" : translate(locale, localizedMessages.md08f6429ae14, "Benefit details")}
         </h2>
         <button
           type="button"
           aria-label={
-            locale === "ko" ? "혜택 정보 닫기" : "Close benefit details"
+            locale === "ko" ? "혜택 정보 닫기" : translate(locale, localizedMessages.m15183493b649, "Close benefit details")
           }
           data-autofocus
           disabled={busy}

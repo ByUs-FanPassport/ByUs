@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__quiz__ui__quiz-questions-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -102,6 +105,38 @@ const copy = {
     recheck: "Check submission result again",
     next: "Next question",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    sessionExpired: localizedMessages.m56ef76018c22[translationLocale],
+    closed: localizedMessages.m8cc6f68894bb[translationLocale],
+    wallet: localizedMessages.mb94ea63f587c[translationLocale],
+    incomplete: localizedMessages.m3619a6748339[translationLocale],
+    unavailable: localizedMessages.m069057a4e800[translationLocale],
+    loadError: localizedMessages.m79d1d88e572e[translationLocale],
+    loadingAria: localizedMessages.m9f6c08469649[translationLocale],
+    loading: localizedMessages.ma1786b5df10b[translationLocale],
+    loginTitle: localizedMessages.m30cb700f641f[translationLocale],
+    loginBody: localizedMessages.ma4cb6f21402b[translationLocale],
+    login: localizedMessages.m366bfb834fc0[translationLocale],
+    errorTitle: localizedMessages.ma2486a313263[translationLocale],
+    retry: localizedMessages.m6644e6caf399[translationLocale],
+    exit: localizedMessages.mc88b50b506cf[translationLocale],
+    eyebrow: localizedMessages.m621c5de2e1cf[translationLocale],
+    title: localizedMessages.ma6e194c0d01f[translationLocale],
+    progress: localizedMessages.m9c8456872d51[translationLocale],
+    progressValue: (current: number, total: number) => translate(translationLocale, localizedMessages.m96465e8e1fa1, "Question {0} of {1}", [current, total]),
+    saving: localizedMessages.m9103c18f5cc9[translationLocale],
+    saved: localizedMessages.mac6c0a18e138[translationLocale],
+    select: localizedMessages.me4820ccd441a[translationLocale],
+    retryAnswer: localizedMessages.mbbdbacc261b6[translationLocale],
+    navigation: localizedMessages.m1d0e0347af82[translationLocale],
+    previous: localizedMessages.m8aa3750cbbac[translationLocale],
+    submitting: localizedMessages.m2945465ee20c[translationLocale],
+    submit: localizedMessages.mc5ba941e51ca[translationLocale],
+    submitUnknown: localizedMessages.m48bbbde7741a[translationLocale],
+    recheck: localizedMessages.maa84f2b23137[translationLocale],
+    next: localizedMessages.m3abe4fb41ea7[translationLocale],
+  }))
 } as const;
 
 function withLocale(path: string, locale: FanLocale): Route {
@@ -170,7 +205,7 @@ export function QuizQuestionsScreen({
       const token = await withOperationDeadline(getAccessToken());
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
       const body = await withRequestDeadline(async (signal) => {
-        const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${locale}`, {
+        const response = await fetch(`/api/celebrities/${encodeURIComponent(slug)}/quiz/attempts?locale=${toContentLocale(locale)}`, {
           method: "POST", headers: authorization(token), cache: "no-store", signal,
         });
         return await readJson(response) as { result?: unknown };
@@ -218,7 +253,7 @@ export function QuizQuestionsScreen({
     try {
       const token = await getAccessToken();
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
-      const response = await fetch(`/api/quiz-attempts/${projection.attempt.id}/answers?locale=${locale}`, {
+      const response = await fetch(`/api/quiz-attempts/${projection.attempt.id}/answers?locale=${toContentLocale(locale)}`, {
         method: "PUT",
         headers: { ...authorization(token), "content-type": "application/json" },
         body: JSON.stringify({ questionId, selectedOptionId }),
@@ -239,7 +274,7 @@ export function QuizQuestionsScreen({
       const token = await withOperationDeadline(getAccessToken());
       if (!token) throw new QuizUiError("UNAUTHENTICATED");
       const body = await withRequestDeadline(async (signal) => {
-        const response = await fetch(`/api/quiz-attempts/${attemptId}?locale=${locale}`, {
+        const response = await fetch(`/api/quiz-attempts/${attemptId}?locale=${toContentLocale(locale)}`, {
           method: "GET", headers: authorization(token), cache: "no-store", signal,
         });
         return await readJson(response) as { attempt?: unknown };

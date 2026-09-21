@@ -12,14 +12,22 @@ afterEach(() => {
   document.cookie = 'byus_page_locale=; Max-Age=0; Path=/';
 });
 describe('browser locale fallback', () => {
-  it.each([['ko-KR', 'ko'], ['en-US', 'en'], ['ja-JP', 'en'], ['', 'en']])('uses %s only when the URL omits a language', (language, expected) => {
+  it.each([['ko-KR', 'ko'], ['en-US', 'en'], ['ja-JP', 'ja'], ['zh-TW', 'zh-Hant'], ['', 'en']])('uses %s only when the URL omits a language', (language, expected) => {
     vi.spyOn(navigator, 'language', 'get').mockReturnValue(language);
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(language ? [language] : []);
     const view = render(<LocaleProvider initialLocale="en"><DocumentLocale /><CurrentLocale /></LocaleProvider>);
     expect(document.documentElement.lang).toBe(expected);
     expect(view.getByRole('status').textContent).toBe(expected);
-    route.query = expected === 'en' ? 'locale=ko' : 'locale=en';
+    route.query = expected === 'en' ? 'locale=ko' : 'locale=fr';
     view.rerender(<LocaleProvider initialLocale="en"><DocumentLocale /><CurrentLocale /></LocaleProvider>);
-    expect(document.documentElement.lang).toBe(expected === 'en' ? 'ko' : 'en');
+    expect(document.documentElement.lang).toBe(expected === 'en' ? 'ko' : 'fr');
+  });
+  it('keeps the first supported language from the browser preference list', () => {
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue('de-DE');
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['de-DE', 'fr']);
+    const view = render(<LocaleProvider initialLocale="fr"><DocumentLocale /><CurrentLocale /></LocaleProvider>);
+    expect(view.getByRole('status').textContent).toBe('fr');
+    expect(document.cookie).toContain('byus_page_locale=fr');
   });
   it('cleans legacy links without losing query, anchor or language', () => {
     route.query = 'locale=en&locale=ko&attendanceCode=KEEP&returnTo=%2Flive%2Felina%23code';

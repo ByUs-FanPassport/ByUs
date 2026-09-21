@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-calendar-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import type { PhotoSet } from "@/features/media/domain/public-image";
 import { CalendarArt } from "@/components/fan-calendar/calendar-art";
 import { Dialog } from "@/components/ui/overlay/accessible-overlay";
@@ -80,6 +83,26 @@ const copy = {
     selectedEmpty: "No LIVE events are scheduled for the selected date.",
     platformLabel: "Broadcast platforms",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.m486f168dcd98[translationLocale],
+    intro: localizedMessages.m0e427341e8f7[translationLocale],
+    previous: localizedMessages.m0a9323ee46c9[translationLocale],
+    next: localizedMessages.m9b710f72e853[translationLocale],
+    catalog: localizedMessages.mb1a4776d6ee2[translationLocale],
+    weekdays: [localizedMessages.m685893a63fe6[translationLocale], localizedMessages.m3bd154b00927[translationLocale], localizedMessages.m542318d64eec[translationLocale], localizedMessages.mb418c318b813[translationLocale], localizedMessages.mf72661995d20[translationLocale], localizedMessages.mf94dddd16a20[translationLocale], localizedMessages.mc4ee8dfc230e[translationLocale]],
+    status: { scheduled: localizedMessages.mee5317aa60dd[translationLocale], live: localizedMessages.m3770e22e167f[translationLocale], ended: localizedMessages.m0863e3fb862e[translationLocale], cancelled: localizedMessages.me6581b1a04d9[translationLocale] },
+    empty: localizedMessages.m807eb1786841[translationLocale],
+    filteredEmpty: localizedMessages.m1af07149fa49[translationLocale],
+    filterTitle: localizedMessages.m11a4c16b4ecc[translationLocale],
+    filterHelp: localizedMessages.mc1e73dcb2b5e[translationLocale],
+    allCelebrities: localizedMessages.m52a11f9cd87b[translationLocale],
+    allSelected: localizedMessages.m6b17a82c5078[translationLocale],
+    selectedCount: (count: number) => translate(translationLocale, localizedMessages.me2cc4a258dab, "{0} selected", [count]),
+    selectedResult: (date: string, count: number) => translate(translationLocale, localizedMessages.m8f061c653bf4, "{0} · {1} LIVE {2}", [date, count, count === 1 ? "event" : "events"]),
+    selectedEmpty: localizedMessages.mae3506ec87af[translationLocale],
+    platformLabel: localizedMessages.md3391d70828f[translationLocale],
+  }))
 } as const;
 
 const platformLabel: Record<ExternalLiveProvider, string> = {
@@ -101,15 +124,20 @@ function calendarHref(month: string, locale: FanLocale, celebritySlugs: readonly
 }
 
 const formatters = {
+  ...additionalLocales((locale) => ({
+    month: new Intl.DateTimeFormat(locale, { calendar: "gregory", year: "numeric", month: "long", timeZone: "Asia/Seoul" }),
+    day: new Intl.DateTimeFormat(locale, { calendar: "gregory", year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }),
+    time: new Intl.DateTimeFormat(locale, { calendar: "gregory", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }),
+  })),
   ko: {
-    month: new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", timeZone: "Asia/Seoul" }),
-    day: new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }),
-    time: new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" }),
+    month: new Intl.DateTimeFormat("ko-KR", { calendar: "gregory", year: "numeric", month: "long", timeZone: "Asia/Seoul" }),
+    day: new Intl.DateTimeFormat("ko-KR", { calendar: "gregory", year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }),
+    time: new Intl.DateTimeFormat("ko-KR", { calendar: "gregory", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" }),
   },
   en: {
-    month: new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", timeZone: "Asia/Seoul" }),
-    day: new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }),
-    time: new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Seoul" }),
+    month: new Intl.DateTimeFormat("en-US", { calendar: "gregory", year: "numeric", month: "long", timeZone: "Asia/Seoul" }),
+    day: new Intl.DateTimeFormat("en-US", { calendar: "gregory", year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }),
+    time: new Intl.DateTimeFormat("en-US", { calendar: "gregory", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Seoul" }),
   },
 } as const;
 
@@ -184,7 +212,7 @@ export function LiveCalendarScreen({
   const isMobileCalendar = useMediaQuery("(max-width: 63.99rem)");
   const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
   const t = copy[locale];
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const today = new Intl.DateTimeFormat("en-CA", { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const previous = adjacentMonth(calendar.month, -1);
   const next = adjacentMonth(calendar.month, 1);
   const firstWeekday = calendarWeekday(
@@ -259,7 +287,7 @@ export function LiveCalendarScreen({
       if (controller.signal.aborted) return;
       if (requestAuthenticated && !token) return;
       const response = await fetch(
-        `/api/live-events/calendar?month=${initialCalendar.month}&locale=${locale}`,
+        `/api/live-events/calendar?month=${initialCalendar.month}&locale=${toContentLocale(locale)}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           signal: controller.signal,
@@ -337,7 +365,7 @@ export function LiveCalendarScreen({
       <Link
         className={styles.eventLink}
         href={`/live/${event.slug}?locale=${locale}` as Route}
-        aria-label={locale === "ko" ? `${title} 상세 보기` : `View ${title} details`}
+        aria-label={locale === "ko" ? `${title} 상세 보기` : translate(locale, localizedMessages.m207f5e914afc, "View {0} details", [title])}
       >
         <CreatorImage className={styles.eventPortrait} slug={creatorSlug} src={event.celebrity.image} photos={creatorPhotos?.photos ?? event.celebrity.photos} position={creatorPhotos?.imagePosition ?? event.celebrity.imagePosition} alt="" width={72} height={96} sizes="72px" presentation="vertical" framed />
         <span className={styles.eventMeta}>
@@ -471,7 +499,7 @@ export function LiveCalendarScreen({
                   ? t.selectedResult(dayLabel(activeDate, locale), activeEventCount)
                   : `${visibleEventCount} LIVE`}
               </h3>
-              {activeDate ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? t.allSelected : "Show all"}</button> : null}
+              {activeDate ? <button type="button" onClick={() => setSelectedDate(null)}>{t.allSelected}</button> : null}
             </div>
             {activeDate && activeEventCount === 0
               ? <p className={styles.calendarEmpty}>{t.selectedEmpty}</p> : null}
@@ -513,7 +541,7 @@ export function LiveCalendarScreen({
                   <span>{label}</span>
                   {day.events.length > 1 ? <>
                     <span className={styles.eventPosition} aria-live="polite" aria-atomic="true">{position + 1} / {day.events.length}</span>
-                    <button className={styles.viewAll} type="button" aria-haspopup="dialog" onClick={() => setModalDate(day.date)}>{locale === "ko" ? "전체 보기" : "View all"}</button>
+                    <button className={styles.viewAll} type="button" aria-haspopup="dialog" onClick={() => setModalDate(day.date)}>{locale === "ko" ? "전체 보기" : translate(locale, localizedMessages.m25184e3d2b84, "View all")}</button>
                   </> : null}
                 </header>
                 {day.events.length ? (
@@ -553,8 +581,8 @@ export function LiveCalendarScreen({
                     </div>
                     {day.events.length > 1 ? <div className={styles.dayControls}>
                       <div className={styles.carouselControls}>
-                        <button type="button" aria-label={locale === "ko" ? "이전 LIVE" : "Previous LIVE"} aria-controls={eventListId} disabled={position === 0} onClick={() => move(-1)}><ChevronLeft aria-hidden="true" size={16} /></button>
-                        <button type="button" aria-label={locale === "ko" ? "다음 LIVE" : "Next LIVE"} aria-controls={eventListId} disabled={position === day.events.length - 1} onClick={() => move(1)}><ChevronRight aria-hidden="true" size={16} /></button>
+                        <button type="button" aria-label={locale === "ko" ? "이전 LIVE" : translate(locale, localizedMessages.md0b6877630f5, "Previous LIVE")} aria-controls={eventListId} disabled={position === 0} onClick={() => move(-1)}><ChevronLeft aria-hidden="true" size={16} /></button>
+                        <button type="button" aria-label={locale === "ko" ? "다음 LIVE" : translate(locale, localizedMessages.mde24c98cdcb8, "Next LIVE")} aria-controls={eventListId} disabled={position === day.events.length - 1} onClick={() => move(1)}><ChevronRight aria-hidden="true" size={16} /></button>
                       </div>
                     </div> : null}
                   </div>
@@ -574,7 +602,7 @@ export function LiveCalendarScreen({
       <Dialog open={Boolean(modalDay)} onClose={() => setModalDate(null)} labelledBy="calendar-dialog-title" backdropClassName={styles.modalBackdrop} contentClassName={styles.modal}>
         <header className={styles.modalHeader}>
           <h2 id="calendar-dialog-title">{modalDay ? dayLabel(modalDay.date, locale) : ""}</h2>
-          <button type="button" onClick={() => setModalDate(null)} aria-label={locale === "ko" ? "닫기" : "Close"}><X aria-hidden="true" size={20} /></button>
+          <button type="button" onClick={() => setModalDate(null)} aria-label={locale === "ko" ? "닫기" : translate(locale, localizedMessages.m0e5f178b1634, "Close")}><X aria-hidden="true" size={20} /></button>
         </header>
         <div className={styles.modalEvents}>{modalDay?.events.map(event => renderEvent(event, { showRelativeTime: true }))}</div>
       </Dialog>

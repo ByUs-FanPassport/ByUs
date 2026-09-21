@@ -1,5 +1,7 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import { usePrivy } from "@privy-io/react-auth";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { z } from "zod";
@@ -44,11 +46,11 @@ const parseHomePassportPreview = (body: unknown): PassportPreview => {
 
 type HomeAuth = ReturnType<typeof usePrivy>;
 
-function HomeOwnerStateProvider({ locale, children, auth }: { locale: ContentLocale; children: ReactNode; auth: HomeAuth }) {
+function HomeOwnerStateProvider({ locale, children, auth }: { locale: AppLocale; children: ReactNode; auth: HomeAuth }) {
   const ownerId = auth.user?.id;
   const privateReady = auth.ready && (!auth.authenticated || Boolean(ownerId));
   const ownerAuth = { ready: privateReady, authenticated: auth.authenticated, user: ownerId ? { id: ownerId } : null, getAccessToken: auth.getAccessToken };
-  const summaryResource = useOwnedFanResource(auth.authenticated && ownerId ? `/api/me/summary?locale=${locale}&tierStages=1` : null, parseHomeSummary, ownerAuth);
+  const summaryResource = useOwnedFanResource(auth.authenticated && ownerId ? `/api/me/summary?locale=${toContentLocale(locale)}&tierStages=1` : null, parseHomeSummary, ownerAuth);
   const personalization: PersonalizationState = !privateReady ? { status: "auth-loading" }
     : !auth.authenticated ? { status: "guest" }
     : summaryResource.state.status === "loading" ? { status: "authenticated-loading" }
@@ -59,7 +61,7 @@ function HomeOwnerStateProvider({ locale, children, auth }: { locale: ContentLoc
     : [];
   const [requestedPassportId, setRequestedPassportId] = useState<string | null>(null);
   const selectedPassportId = requestedPassportId && passportIds.includes(requestedPassportId) ? requestedPassportId : passportIds[0] ?? null;
-  const passportResource = useOwnedFanResource(selectedPassportId ? `/api/passports/${encodeURIComponent(selectedPassportId)}?locale=${locale}&tierStages=1` : null, parseHomePassportPreview, ownerAuth);
+  const passportResource = useOwnedFanResource(selectedPassportId ? `/api/passports/${encodeURIComponent(selectedPassportId)}?locale=${toContentLocale(locale)}&tierStages=1` : null, parseHomePassportPreview, ownerAuth);
   const passportPreview: OwnedState<PassportPreview> = passportResource.state.status === "ready"
     ? { status: "ready", data: passportResource.state.data }
     : passportResource.state.status === "loading" ? { status: "loading" } : { status: "error" };
@@ -81,7 +83,7 @@ function HomeOwnerStateProvider({ locale, children, auth }: { locale: ContentLoc
   return <HomeOwnerContext.Provider value={value}>{children}</HomeOwnerContext.Provider>;
 }
 
-export function HomeOwnerProvider({ locale, children }: { locale: ContentLocale; children: ReactNode }) {
+export function HomeOwnerProvider({ locale, children }: { locale: AppLocale; children: ReactNode }) {
   const auth = usePrivy();
   const ownerKey = !auth.ready ? "auth-loading" : !auth.authenticated ? "guest" : auth.user?.id ?? "owner-loading";
   return <HomeOwnerStateProvider key={ownerKey} locale={locale} auth={auth}>{children}</HomeOwnerStateProvider>;

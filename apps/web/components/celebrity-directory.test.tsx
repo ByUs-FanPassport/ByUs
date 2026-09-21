@@ -221,7 +221,7 @@ describe("published celebrity directory", () => {
     expect(screen.getByRole("tooltip")).toHaveTextContent("10점");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "name-asc" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "정렬" }), { target: { value: "name-asc" } });
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
     expect(publishedCelebrityFixtures[0].slug).toBe("kara");
   });
@@ -395,7 +395,7 @@ it("clears deep-linked filters from the URL so reloading cannot restore an old r
   fireEvent.click(await screen.findByRole("button", { name: "필터 초기화" }));
   expect(screen.getAllByRole("article")).toHaveLength(3);
   expect(screen.getByRole("searchbox")).toHaveValue("");
-  expect(screen.getByRole("combobox")).toHaveValue("name-asc");
+  expect(screen.getByRole("combobox", { name: "정렬" })).toHaveValue("name-asc");
   expect(window.location.pathname + window.location.search).toBe("/celebrities?locale=ko&role=all&sort=name-asc");
   window.history.replaceState({}, "", "/");
 });

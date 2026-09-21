@@ -1,7 +1,10 @@
+import { APP_LOCALES, type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/seo__metadata";
+import { additionalLocales } from "@/i18n/messages";
 import type { Metadata } from "next";
 import { bypassImageOptimization } from "@/components/fan-ui/public-image-policy";
 
-export type SeoLocale = "ko" | "en";
+export type SeoLocale = AppLocale;
 export const SITE_URL = "https://byus.kr";
 export const DEFAULT_SHARE_IMAGE = `${SITE_URL}/share/default.png`;
 export const NO_INDEX: Metadata["robots"] = { index: false, follow: false };
@@ -12,7 +15,7 @@ export function canonicalUrl(path: string, locale: SeoLocale): string {
   return `${SITE_URL}${url.pathname}?locale=${locale}`;
 }
 
-export function languageAlternates(path: string, locales: readonly SeoLocale[] = ["ko", "en"]) {
+export function languageAlternates(path: string, locales: readonly SeoLocale[] = APP_LOCALES) {
   return Object.fromEntries(locales.map((locale) => [locale, canonicalUrl(path, locale)]));
 }
 
@@ -54,8 +57,8 @@ export function publicMetadata(input: {
     alternates: { canonical: url, languages: languageAlternates(path, input.locales) },
     ...(isRehearsalPath(path) ? { robots: NO_INDEX } : {}),
     openGraph: { title, description, url, type: "website", siteName: "ByUs",
-      locale: locale === "en" ? "en_US" : "ko_KR",
-      alternateLocale: (input.locales ?? ["ko", "en"]).filter((value) => value !== locale).map((value) => value === "en" ? "en_US" : "ko_KR"), images },
+      locale: locale === "ko" ? "ko_KR" : locale === "en" ? "en_US" : undefined,
+      alternateLocale: (input.locales ?? APP_LOCALES).filter((value) => value !== locale).flatMap((value) => value === "ko" ? ["ko_KR"] : value === "en" ? ["en_US"] : []), images },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }
@@ -64,13 +67,19 @@ export const pageCopy = {
   home: {
     ko: { title: "ByUs | 최애의 LIVE와 팬 패스포트", description: "최애의 LIVE 일정을 확인하고 팬 인증, 예약, 출석으로 함께한 순간을 Fan Passport에 기록하세요." },
     en: { title: "ByUs | LIVE moments and your Fan Passport", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
-  },
+
+  ...additionalLocales((translationLocale) => ({ title: localizedMessages.mc4254c713e43[translationLocale], description: localizedMessages.m66f358c91b9f[translationLocale] }))
+},
   live: {
     ko: { title: "LIVE 일정 | ByUs", description: "진행 중인 LIVE와 예정된 방송을 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },
     en: { title: "LIVE events and schedules | ByUs", description: "Explore ongoing and upcoming LIVE events. Reserve a spot for your favorite creator’s LIVE and record the moments you share." },
-  },
+
+  ...additionalLocales((translationLocale) => ({ title: localizedMessages.m70c75a25ee29[translationLocale], description: localizedMessages.m449445c22831[translationLocale] }))
+},
   celebrities: {
     ko: { title: "셀럽과 크리에이터 | ByUs", description: "ByUs의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요." },
     en: { title: "Celebrities and creators | ByUs", description: "Meet the celebrities and creators on ByUs. Explore updates and LIVE schedules, and create a Fan Passport for your favorite creator." },
-  },
+
+  ...additionalLocales((translationLocale) => ({ title: localizedMessages.m83574df4c2b6[translationLocale], description: localizedMessages.ma7d9afcd4b2d[translationLocale] }))
+},
 } as const;

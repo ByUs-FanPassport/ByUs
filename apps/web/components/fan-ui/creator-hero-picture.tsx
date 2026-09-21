@@ -1,3 +1,5 @@
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import { getImageProps } from "next/image";
 import type { CSSProperties } from "react";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
@@ -9,15 +11,15 @@ import styles from "./creator-hero-picture.module.css";
 export function CreatorHeroPicture({ slug, image, locale = "ko", className, priority = false }: {
   slug: string;
   image: PublishedCelebrity["image"];
-  locale?: "ko" | "en";
+  locale?: AppLocale;
   className?: string;
   priority?: boolean;
 }) {
   const hero = resolveCreatorHeroImage(slug, image);
   const desktopSrc = hero?.src ?? image.url;
   const mobileSrc = hero?.mobileSrc ?? desktopSrc;
-  const desktopAlt = image.photos?.landscape?.alt[locale] ?? image.alt;
-  const mobileAlt = image.photos?.portrait?.alt[locale] ?? image.alt;
+  const desktopAlt = image.photos?.landscape?.alt[toContentLocale(locale)] ?? image.alt;
+  const mobileAlt = image.photos?.portrait?.alt[toContentLocale(locale)] ?? image.alt;
   const desktop = getImageProps({ src: desktopSrc, alt: desktopAlt, fill: true, sizes: "(min-width: 1440px) 940px, (min-width: 768px) calc(69vw - 44px), calc(100vw - 32px)", priority,
     unoptimized: typeof desktopSrc === "string" && bypassImageOptimization(desktopSrc) }).props;
   const mobileScale = hero?.mobileScale ?? 1;

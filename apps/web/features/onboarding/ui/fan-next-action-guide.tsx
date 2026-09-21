@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__onboarding__ui__fan-next-action-guide";
+import { translate, additionalLocales } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
@@ -41,29 +45,29 @@ function markSeen(key: string) {
 }
 
 export function FanNextActionDialog({ action, locale, onClose, onContinue }: {
-  action: NextFanAction; locale: "ko" | "en"; onClose(): void; onContinue(): void;
+  action: NextFanAction; locale: AppLocale; onClose(): void; onContinue(): void;
 }) {
   const titleId = useId();
   const descriptionId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const ko = locale === "ko";
   const current = ["profile", "verify", "reserve"].indexOf(action.step);
-  const steps = ko ? ["프로필", "팬 인증", "LIVE 예약"] : ["Profile", "Fan verification", "LIVE reservation"];
+  const steps = ({ ko: ["프로필", "팬 인증", "LIVE 예약"], en: ["Profile", "Fan verification", "LIVE reservation"], ...additionalLocales((translationLocale) => ([localizedMessages.mf4fbd1fe4f10[translationLocale], localizedMessages.m5d63c3c5c58e[translationLocale], localizedMessages.m6497547a590c[translationLocale]])) })[locale];
   const selecting = action.step === "verify" && action.href.startsWith("/celebrities");
-  const title = action.step === "profile" ? (ko ? "어떤 이름으로 활동할까요?" : "What should we call you?")
-    : action.step === "verify" ? (ko ? "최애의 팬임을 인증해 보세요" : "Verify your fandom")
-    : (ko ? "다음 만남을 예약해 보세요" : "Reserve your next LIVE");
-  const description = action.step === "profile" ? (ko ? "닉네임을 정하면 팬 인증과 활동 기록에 사용할 수 있어요." : "Choose a display name for your fan verification and activity history.")
-    : action.step === "verify" ? (ko ? "퀴즈를 통과하면 최애의 Fan Passport가 발급돼요." : "Pass the quiz to get a Fan Passport for this creator.")
-    : (ko ? "팬 인증을 마쳤어요. 예약 가능한 LIVE에서 다음 만남을 준비하세요." : "You’re verified. Continue to an available LIVE to make your reservation.");
-  const label = action.step === "profile" ? (ko ? "닉네임 정하기" : "Set display name")
-    : action.step === "verify" ? (selecting ? (ko ? "최애 선택하기" : "Choose a favorite") : (ko ? "퀴즈 풀고 팬 인증하기" : "Take the fan quiz"))
-    : (ko ? "LIVE 예약하러 가기" : "Continue to LIVE reservation");
+  const title = action.step === "profile" ? (locale === "ko" ? "어떤 이름으로 활동할까요?" : translate(locale, localizedMessages.m40f87829ebda, "What should we call you?"))
+    : action.step === "verify" ? (locale === "ko" ? "최애의 팬임을 인증해 보세요" : translate(locale, localizedMessages.m254a084085fb, "Verify your fandom"))
+    : (locale === "ko" ? "다음 만남을 예약해 보세요" : translate(locale, localizedMessages.m95cb7b0e4074, "Reserve your next LIVE"));
+  const description = action.step === "profile" ? (locale === "ko" ? "닉네임을 정하면 팬 인증과 활동 기록에 사용할 수 있어요." : translate(locale, localizedMessages.mfc047ddb285e, "Choose a display name for your fan verification and activity history."))
+    : action.step === "verify" ? (locale === "ko" ? "퀴즈를 통과하면 최애의 Fan Passport가 발급돼요." : translate(locale, localizedMessages.mab4ccffbffc1, "Pass the quiz to get a Fan Passport for this creator."))
+    : (locale === "ko" ? "팬 인증을 마쳤어요. 예약 가능한 LIVE에서 다음 만남을 준비하세요." : translate(locale, localizedMessages.m07e1d5b77af8, "You’re verified. Continue to an available LIVE to make your reservation."));
+  const label = action.step === "profile" ? (locale === "ko" ? "닉네임 정하기" : translate(locale, localizedMessages.m1dd665169e08, "Set display name"))
+    : action.step === "verify" ? (selecting ? (locale === "ko" ? "최애 선택하기" : translate(locale, localizedMessages.mee72447d0380, "Choose a favorite")) : (locale === "ko" ? "퀴즈 풀고 팬 인증하기" : translate(locale, localizedMessages.mbed491ef1fdc, "Take the fan quiz")))
+    : (locale === "ko" ? "LIVE 예약하러 가기" : translate(locale, localizedMessages.ma94ca6207b9d, "Continue to LIVE reservation"));
   return <Dialog open onClose={onClose} labelledBy={titleId} describedBy={descriptionId}
     initialFocusRef={headingRef} backdropClassName={styles.backdrop} contentClassName={styles.dialog}>
-    <div className={styles.top}><span>{ko ? "팬 활동 시작하기" : "Start your fan journey"}</span>
-      <button type="button" className={styles.close} onClick={onClose} aria-label={ko ? "안내 닫기" : "Close guide"}><X aria-hidden="true" /></button></div>
-    <ol className={styles.steps} aria-label={ko ? "팬 활동 단계" : "Fan journey steps"}>{steps.map((step, index) =>
+    <div className={styles.top}><span>{locale === "ko" ? "팬 활동 시작하기" : translate(locale, localizedMessages.ma14cf02c657d, "Start your fan journey")}</span>
+      <button type="button" className={styles.close} onClick={onClose} aria-label={locale === "ko" ? "안내 닫기" : translate(locale, localizedMessages.m5ec2ff36981c, "Close guide")}><X aria-hidden="true" /></button></div>
+    <ol className={styles.steps} aria-label={locale === "ko" ? "팬 활동 단계" : translate(locale, localizedMessages.mb3ec6d57e9af, "Fan journey steps")}>{steps.map((step, index) =>
       <li key={step} aria-current={index === current ? "step" : undefined} data-complete={index < current || undefined}>
         <span className={styles.number}>{index < current ? <Check aria-hidden="true" /> : index + 1}</span><span>{step}</span>
       </li>)}</ol>
@@ -71,11 +75,11 @@ export function FanNextActionDialog({ action, locale, onClose, onContinue }: {
     <p className={styles.description} id={descriptionId}>{description}</p>
     {action.liveTitle ? <div className={styles.target}><span>{action.targetName}</span><strong>{action.liveTitle}</strong></div> : null}
     <div className={styles.actions}><FanAction href={action.href} variant="primary" fullWidth onClick={onContinue} trailingIcon={<ArrowRight />}>{label}</FanAction>
-      <FanAction variant="text" fullWidth onClick={onClose}>{ko ? "나중에 할게요" : "Maybe later"}</FanAction></div>
+      <FanAction variant="text" fullWidth onClick={onClose}>{locale === "ko" ? "나중에 할게요" : translate(locale, localizedMessages.m66c5c7171fa5, "Maybe later")}</FanAction></div>
   </Dialog>;
 }
 
-function GuidePrompt({ action, ownerId, locale, dismissed, onDismiss }: { action: NextFanAction; ownerId: string; locale: "ko" | "en"; dismissed: boolean; onDismiss(): void }) {
+function GuidePrompt({ action, ownerId, locale, dismissed, onDismiss }: { action: NextFanAction; ownerId: string; locale: AppLocale; dismissed: boolean; onDismiss(): void }) {
   const key = storageKey(ownerId);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -103,13 +107,13 @@ function GuidePrompt({ action, ownerId, locale, dismissed, onDismiss }: { action
   const dismiss = () => { rememberDismissal(ownerId); close(); onDismiss(); };
   return <>
     <button className={styles.launcher} type="button" onClick={() => { markSeen(key); setOpen(true); }} aria-haspopup="dialog">
-      <Flag aria-hidden="true" />{locale === "ko" ? "다음 단계" : "Next step"}<ArrowRight aria-hidden="true" />
+      <Flag aria-hidden="true" />{locale === "ko" ? "다음 단계" : translate(locale, localizedMessages.mbd04155d264e, "Next step")}<ArrowRight aria-hidden="true" />
     </button>
     {open ? <FanNextActionDialog action={action} locale={locale} onClose={dismiss} onContinue={close} /> : null}
   </>;
 }
 
-function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en" }) {
+function OwnedGuide({ pathname, locale }: { pathname: string; locale: AppLocale }) {
   const auth = usePrivy();
   const session = useByUsSession();
   const { getAccessToken } = auth;
@@ -120,10 +124,10 @@ function OwnedGuide({ pathname, locale }: { pathname: string; locale: "ko" | "en
   const enabled = session.ready && auth.ready && auth.authenticated && Boolean(ownerId) && (!session.ownerId || session.ownerId === auth.user?.id);
   const onboarding = useOwnedFanResource(enabled ? "/api/me/onboarding" : null, parseOnboarding, auth);
   const { retry: refreshOnboarding } = onboarding;
-  const summary = useOwnedFanResource(enabled ? `/api/me/summary?locale=${locale}` : null, parseSummary, auth);
+  const summary = useOwnedFanResource(enabled ? `/api/me/summary?locale=${toContentLocale(locale)}` : null, parseSummary, auth);
   const needsCatalog = onboarding.state.status === "ready" && !onboarding.state.data.completed.reserve && summary.state.status === "ready" && Boolean(summary.state.data.profile.nickname)
     && summary.state.data.creators.some((creator) => creator.passport);
-  const catalog = useOwnedFanResource(enabled && needsCatalog ? `/api/live-events?locale=${locale}` : null, parseCatalog, auth);
+  const catalog = useOwnedFanResource(enabled && needsCatalog ? `/api/live-events?locale=${toContentLocale(locale)}` : null, parseCatalog, auth);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     if (!needsCatalog) return;

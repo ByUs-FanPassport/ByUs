@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__home-entry-cards__home-guide-carousel";
+import { additionalLocales } from "@/i18n/messages";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -10,10 +13,12 @@ const ROTATION_INTERVAL = 3_000;
 const copy = {
   ko: { label: "참여 가이드", previous: "이전 가이드", next: "다음 가이드", pause: "자동 재생 정지", resume: "자동 재생 시작", reduced: "동작 줄이기 설정으로 자동 재생이 꺼져 있어요." },
   en: { label: "Participation guides", previous: "Previous guide", next: "Next guide", pause: "Pause autoplay", resume: "Start autoplay", reduced: "Autoplay is off because reduced motion is enabled." },
+
+  ...additionalLocales((translationLocale) => ({ label: localizedMessages.m9f41a5bf0dd3[translationLocale], previous: localizedMessages.m6613be639a48[translationLocale], next: localizedMessages.m7622c745bca7[translationLocale], pause: localizedMessages.mbf7169cfd2f9[translationLocale], resume: localizedMessages.m584821dc04f6[translationLocale], reduced: localizedMessages.m1e656dc6e959[translationLocale] }))
 };
 
 export function HomeGuideCarousel({ locale, slides }: {
-  locale: ContentLocale;
+  locale: AppLocale;
   slides: { key: string; label: string; content: ReactNode }[];
 }) {
   const t = copy[locale];

@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__pwa-manifest";
+import { translate } from "@/i18n/messages";
 import type { MetadataRoute } from "next";
 import type { AppLocale } from "./locale-path";
 
@@ -5,7 +7,7 @@ export function createManifest(locale: AppLocale): MetadataRoute.Manifest {
   return {
     name: "ByUs | Your Bias",
     short_name: "ByUs",
-    description: locale === "en" ? "Record moments with each of your favorites in a Fan Passport." : "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요.",
+    description: locale === "ko" ? "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요." : translate(locale, localizedMessages.mdafefe2ef1a5, "Record moments with each of your favorites in a Fan Passport."),
     id: "/",
     start_url: `/?locale=${locale}`,
     display: "standalone",

@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__guest-home";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { nearestRecurringLives } from "@/features/live/domain/nearest-recurring-lives";
 import type { HomeBanner } from "../features/home/domain/home-banner";
 
@@ -51,6 +54,8 @@ export type HomeContentErrors = { homeBanners?: boolean; celebrities?: boolean; 
 const copy = {
   ko: { skip: "본문으로 바로가기", language: "언어 선택, 현재 한국어", liveHeading: "ByUs. Your Bias.", liveSub: "오늘, 최애를 만나는 시간", allLive: "전체 라이브", noneStatus: "공개된 LIVE 없음", noneTitle: "새로운 LIVE를 준비하고 있어요.", reserve: "라이브 예약하기", details: "LIVE 상세보기", context: "로그인 및 Fan Passport 시작", google: "Google로 계속하기", passportIssue: "Fan Passport 발급받기", favorites: "당신의 최애", favoritesSub: "좋아하는 최애를 만나보세요.", all: "전체 보기", celebrityList: "셀럽 목록", detail: "상세 보기", social: "공식 채널", liveNow: "LIVE 진행중", liveUpcoming: "LIVE 예정", noCelebrities: "현재 공개된 셀럽이 없습니다.", myFavoritesGuest: "내 최애를 보려면 로그인해 주세요.", myFavoritesLoading: "보유한 Fan Passport를 확인하고 있어요.", myFavoritesError: "보유한 Fan Passport를 확인하지 못했어요.", myFavoritesEmpty: "아직 보유한 Fan Passport가 없어요.", myFavoritesUnavailable: "지금 공개된 내 최애가 없어요.", myFavoritesUnavailableHelp: "전체에서 다른 최애를 만나보세요.", myFavoritesHelp: "전체 최애를 둘러보고 Fan Passport를 만들어 보세요.", signIn: "로그인하기", upcoming: "다가오는 LIVE", upcomingSub: "미리 예약하고 알림을 받아보세요.", previousLivePage: "이전 LIVE 목록", nextLivePage: "다음 LIVE 목록", noLive: "현재 공개된 LIVE가 없습니다.", guestPanel: "로그인 전 팬 활동", soon: "곧 만날 최애", booked: "예약한 LIVE를 확인해보세요.", loginHint: "로그인하고 예약한 최애의 LIVE를 확인해 보세요.", passportHeading: "최애의 Fan Passport", passportSub: "팬이 된 모든 순간을 Passport에 기록하세요.", passportEmpty: "아직 발급된 Passport와 Stamp가 없어요.", passportHelp: "최애와 함께한 첫 순간부터 기록해 보세요.", signedInPanel: "나의 팬 활동", welcome: "반가워요.", myPassport: "내 패스포트", allPassports: "패스포트 전체 보기", reservedLive: "예약한 LIVE", liveDetails: "LIVE 상세 보기", noPassport: "아직 발급된 Passport가 없어요.", passportPreview: "발급 전 Fan Passport 미리보기", passportPreviewHint: "팬 인증 완료 후 발급돼요.", findFavorite: "팬 인증할 최애 찾기", noReservation: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", retryTitle: "팬 활동을 불러오지 못했어요.", retryHelp: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", loading: "팬 활동을 불러오는 중이에요.", stamps: "Stamp", recentNine: "최근 9개 표시" },
   en: { skip: "Skip to main content", language: "Choose language, currently English", liveHeading: "ByUs. Your Bias.", liveSub: "Your next moment with your favorites", allLive: "All LIVE events", noneStatus: "No LIVE events available", noneTitle: "We’re preparing a new LIVE.", reserve: "Reserve a spot", details: "View LIVE details", context: "Sign in and start a Fan Passport", google: "Continue with Google", passportIssue: "Get your Fan Passport", favorites: "Your favorites", favoritesSub: "Meet the celebrities you love.", all: "View all", celebrityList: "Celebrity list", detail: "View details", social: "Official channel", liveNow: "LIVE NOW", liveUpcoming: "UPCOMING LIVE", noCelebrities: "No profiles are available right now.", myFavoritesGuest: "Sign in to see your favorites.", myFavoritesLoading: "Checking your Fan Passports.", myFavoritesError: "We couldn't check your Fan Passports.", myFavoritesEmpty: "You don't have a Fan Passport yet.", myFavoritesUnavailable: "None of your favorites are available right now.", myFavoritesUnavailableHelp: "Browse all celebrities to find another favorite.", myFavoritesHelp: "Browse all celebrities and create a Fan Passport.", signIn: "Sign in", upcoming: "Upcoming LIVE", upcomingSub: "Reserve ahead and get a reminder.", previousLivePage: "Previous LIVE events", nextLivePage: "Next LIVE events", noLive: "No LIVE events are available right now.", guestPanel: "Fan activity preview", soon: "Your next LIVE", booked: "Check your reserved LIVE events.", loginHint: "Sign in to see the LIVE events you reserved.", passportHeading: "Fan Passports for your favorites", passportSub: "Keep every fan moment in your Passport.", passportEmpty: "You don't have a Passport or any Stamps yet.", passportHelp: "Start recording moments with your favorites.", signedInPanel: "My fan activity", welcome: "Welcome back.", myPassport: "My Fan Passport", allPassports: "View all Passports", reservedLive: "Reserved LIVE", liveDetails: "View LIVE details", noPassport: "You don't have a Passport yet.", passportPreview: "Fan Passport preview", passportPreviewHint: "Issued after fan verification.", findFavorite: "Find a celebrity to verify", noReservation: "You don't have any reserved LIVE events.", browseLive: "Browse LIVE events", retryTitle: "We couldn't load your fan activity.", retryHelp: "Please try again in a moment.", retry: "Try again", loading: "Loading your fan activity.", stamps: "Stamps", recentNine: "Showing the latest 9" },
+
+  ...additionalLocales((translationLocale) => ({ skip: localizedMessages.m1f2d07933f72[translationLocale], language: localizedMessages.m2b9cc6c160b5[translationLocale], liveHeading: "ByUs. Your Bias.", liveSub: localizedMessages.mfec2668b74c8[translationLocale], allLive: localizedMessages.m54dd85c7923f[translationLocale], noneStatus: localizedMessages.mccde2af4a88b[translationLocale], noneTitle: localizedMessages.md8d8997a6c05[translationLocale], reserve: localizedMessages.m828c4b76dc47[translationLocale], details: localizedMessages.m357122ff8ba1[translationLocale], context: localizedMessages.mb486d46ca0ac[translationLocale], google: localizedMessages.m356ad35234db[translationLocale], passportIssue: localizedMessages.m146056e1f7fb[translationLocale], favorites: localizedMessages.m66d82efbdffe[translationLocale], favoritesSub: localizedMessages.ma6564418a5af[translationLocale], all: localizedMessages.mb77becf4fc95[translationLocale], celebrityList: localizedMessages.m0cf3ec288523[translationLocale], detail: localizedMessages.m60da1bd22057[translationLocale], social: localizedMessages.me22245be7785[translationLocale], liveNow: localizedMessages.m3e2b2258026f[translationLocale], liveUpcoming: localizedMessages.m2385a41c8a58[translationLocale], noCelebrities: localizedMessages.m479576e01e3c[translationLocale], myFavoritesGuest: localizedMessages.m4b15ddf79f44[translationLocale], myFavoritesLoading: localizedMessages.me5538b70d1cf[translationLocale], myFavoritesError: localizedMessages.m6a62efb9c6f4[translationLocale], myFavoritesEmpty: localizedMessages.m2f6d85cfec82[translationLocale], myFavoritesUnavailable: localizedMessages.m59d84902398d[translationLocale], myFavoritesUnavailableHelp: localizedMessages.m97666ea9a11d[translationLocale], myFavoritesHelp: localizedMessages.m9a6d2845fc3e[translationLocale], signIn: localizedMessages.m07e0a9e48bd0[translationLocale], upcoming: localizedMessages.m51dfa5dd0f6f[translationLocale], upcomingSub: localizedMessages.mb8c528d41bbc[translationLocale], previousLivePage: localizedMessages.mdf97b80344c5[translationLocale], nextLivePage: localizedMessages.m2eb9d49d3f74[translationLocale], noLive: localizedMessages.m35ff321a05aa[translationLocale], guestPanel: localizedMessages.mda49bf52819f[translationLocale], soon: localizedMessages.mc4ee815b442a[translationLocale], booked: localizedMessages.m244ed4da2daa[translationLocale], loginHint: localizedMessages.m6bb68c22ac32[translationLocale], passportHeading: localizedMessages.m1f0bf3c5fcdd[translationLocale], passportSub: localizedMessages.mb7a08e173fe7[translationLocale], passportEmpty: localizedMessages.m7918f39efab0[translationLocale], passportHelp: localizedMessages.mf31ade6d0ed9[translationLocale], signedInPanel: localizedMessages.mab415ccf7109[translationLocale], welcome: localizedMessages.m0b42e19ddd4d[translationLocale], myPassport: localizedMessages.m487a655fb68b[translationLocale], allPassports: localizedMessages.m543cb3ace5a0[translationLocale], reservedLive: localizedMessages.mdaf6cfd14de9[translationLocale], liveDetails: localizedMessages.m2536a94af120[translationLocale], noPassport: localizedMessages.mf590bcb19fb6[translationLocale], passportPreview: localizedMessages.m0fee008df904[translationLocale], passportPreviewHint: localizedMessages.mf031d3cda80f[translationLocale], findFavorite: localizedMessages.m135d3e0c6806[translationLocale], noReservation: localizedMessages.m9cd4b16f64f8[translationLocale], browseLive: localizedMessages.m6f3142fd97ae[translationLocale], retryTitle: localizedMessages.m0af50b904df8[translationLocale], retryHelp: localizedMessages.md769f12cf36e[translationLocale], retry: localizedMessages.m0261983ec47a[translationLocale], loading: localizedMessages.md2b2e951eb03[translationLocale], stamps: localizedMessages.m6c7f6a661030[translationLocale], recentNine: localizedMessages.m39ef6e8eec22[translationLocale] }))
 } as const;
 
 export function formatKoreanLiveDate(value: string) {
@@ -63,27 +68,25 @@ export function formatKoreanLiveDate(value: string) {
   return `${kst.getUTCMonth() + 1}월 ${kst.getUTCDate()}일 ${period} ${displayHour}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-function formatLiveDate(value: string, locale: ContentLocale) {
+function formatLiveDate(value: string, locale: AppLocale) {
   if (locale === "ko") return formatKoreanLiveDate(value);
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value));
 }
 
-export function formatPassportTier(tier: PassportLevel, locale: ContentLocale) {
+export function formatPassportTier(tier: PassportLevel, locale: AppLocale) {
   return levelLabel(locale, tier);
 }
 
-function formatPassportTitle(name: string, locale: ContentLocale) {
-  return locale === "ko" ? `${name} 패스포트` : `${name} Fan Passport`;
+function formatPassportTitle(name: string, locale: AppLocale) {
+  return locale === "ko" ? `${name} 패스포트` : translate(locale, localizedMessages.mb9826c413719, "{0} Fan Passport", [name]);
 }
 
-function formatPassportValue(tier: PassportLevel, score: number, locale: ContentLocale, stage?: NonNullable<MySummary["creators"][number]["passport"]>["stageProgress"]) {
+function formatPassportValue(tier: PassportLevel, score: number, locale: AppLocale, stage?: NonNullable<MySummary["creators"][number]["passport"]>["stageProgress"]) {
   const tierName = stage ? fanStageLabel(locale, stage.current) : formatPassportTier(tier, locale);
-  return locale === "ko"
-    ? `${tierName} · ${score}점`
-    : `${tierName} · ${score} points`;
+  return locale === "ko" ? `${tierName} · ${score}점` : translate(locale, localizedMessages.mdb384dd690d3, "{0} · {1} points", [tierName, score]);
 }
 
-function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
+function PersonalizationLoading({ locale }: { locale: AppLocale }) {
   return (
     <section className={`${styles.personalizationState} ${styles.personalizationLoading}`} role="status" aria-live="polite">
       <span className={styles.stateSkeleton} aria-hidden="true" />
@@ -93,7 +96,7 @@ function PersonalizationLoading({ locale }: { locale: ContentLocale }) {
   );
 }
 
-function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }: { locale: ContentLocale; summary: MySummary; placement: "desktop" | "mobile"; featuredLives: readonly LiveEventResponse[] }) {
+function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }: { locale: AppLocale; summary: MySummary; placement: "desktop" | "mobile"; featuredLives: readonly LiveEventResponse[] }) {
   const owner = useHomeOwner();
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
@@ -118,7 +121,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
       <div className={styles.signedInGreeting}><h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2></div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 1 ? <small>{locale === "ko" ? `${passportCount}개` : passportCount}</small> : null}</div>
-        {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : "Passport carousel"} aria-label={t.myPassport}>
+        {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : translate(locale, localizedMessages.mfa3f5fc72bf9, "Passport carousel")} aria-label={t.myPassport}>
           <div className={styles.ownedPassportPreview}>
             <Link className={styles.ownedPassportLink} href={`/passports/${creator.passport.id}${localeQuery}` as Route} aria-label={`${passportTitle}, ${passportValue}`}>
               <PassportIdentityArtwork
@@ -140,10 +143,10 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
             </div>
           </div>
           <div className={`${styles.passportUtilityRow} ${passportCount === 1 ? styles.passportUtilityRowSingle : ""}`}>
-          {passportCount > 1 ? <div className={styles.passportControls} aria-label={locale === "ko" ? "패스포트 선택" : "Choose a Fan Passport"}>
-            <button type="button" onClick={() => selectPassport(activePassportIndex - 1)} aria-label={locale === "ko" ? "이전 패스포트" : "Previous Fan Passport"}><ChevronLeft /></button>
+          {passportCount > 1 ? <div className={styles.passportControls} aria-label={locale === "ko" ? "패스포트 선택" : translate(locale, localizedMessages.m67cfe9d200e6, "Choose a Fan Passport")}>
+            <button type="button" onClick={() => selectPassport(activePassportIndex - 1)} aria-label={locale === "ko" ? "이전 패스포트" : translate(locale, localizedMessages.mc5c4c5e69231, "Previous Fan Passport")}><ChevronLeft /></button>
             <div className={styles.passportDots}>{passportCreators.map((item, index) => <button key={item.passport?.id ?? item.celebrity.slug} type="button" aria-current={index === activePassportIndex ? "true" : undefined} aria-label={formatPassportTitle(item.celebrity.name, locale)} onClick={() => selectPassport(index)}><span /></button>)}</div>
-            <button type="button" onClick={() => selectPassport(activePassportIndex + 1)} aria-label={locale === "ko" ? "다음 패스포트" : "Next Fan Passport"}><ChevronRight /></button>
+            <button type="button" onClick={() => selectPassport(activePassportIndex + 1)} aria-label={locale === "ko" ? "다음 패스포트" : translate(locale, localizedMessages.m13b5b1e2975d, "Next Fan Passport")}><ChevronRight /></button>
           </div> : null}
             <Link className={styles.passportCollectionLink} href={`/passports${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link>
           </div>
@@ -173,7 +176,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
   );
 }
 
-function PersonalizationError({ locale, retry }: { locale: ContentLocale; retry: () => void }) {
+function PersonalizationError({ locale, retry }: { locale: AppLocale; retry: () => void }) {
   const t = copy[locale];
   return (
     <section className={styles.personalizationState} role="alert">
@@ -184,12 +187,12 @@ function PersonalizationError({ locale, retry }: { locale: ContentLocale; retry:
   );
 }
 
-function ContentLoadError({ locale }: { locale: ContentLocale }) {
+function ContentLoadError({ locale }: { locale: AppLocale }) {
   const router = useRouter();
   return <div className={styles.personalizationState} role="alert"><strong>{copy[locale].retryTitle}</strong><span>{copy[locale].retryHelp}</span><button type="button" onClick={() => router.refresh()}>{copy[locale].retry}</button></div>;
 }
 
-type GuestHomeProps = { homeBanners?: readonly HomeBanner[]; celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: ContentLocale; contentErrors?: HomeContentErrors; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter };
+type GuestHomeProps = { homeBanners?: readonly HomeBanner[]; celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: AppLocale; contentErrors?: HomeContentErrors; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter };
 
 export function GuestHome(props: GuestHomeProps) {
   return <HomeOwnerProvider locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
@@ -317,7 +320,7 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
           </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={favoritesLoading ? null : <Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : "View all favorites"} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={favoritesLoading ? null : <Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : translate(locale, localizedMessages.meba9f13bd74e, "View all favorites")} <ChevronRight /></Link>} />
             {!contentErrors.celebrities && celebrities.length > 0 && favoritesLoading ? (
               <div role="status" aria-label={t.myFavoritesLoading} aria-busy="true">
                 <span className={styles.srOnly}>{t.myFavoritesLoading}</span>
@@ -342,7 +345,7 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
                 const celebrityLive = liveByCelebrity.get(celebrity.slug);
                 return (
                 <article className={styles.celebrityCard} key={celebrity.slug}>
-                  <Link className={styles.celebrityMediaBox} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}` as Route} aria-label={locale === "ko" ? `${celebrity.name} ${t.detail}` : `View ${celebrity.name} details`}>
+                  <Link className={styles.celebrityMediaBox} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}` as Route} aria-label={locale === "ko" ? `${celebrity.name} ${t.detail}` : translate(locale, localizedMessages.m7c3e6608522c, "View {0} details", [celebrity.name])}>
                     {celebrityLive?.preview ? (
                       <ActivePreviewVideo
                         id={celebrity.slug}
@@ -364,8 +367,8 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
                     </div>
                     <div className={`${styles.celebrityInfoRow} ${styles.celebrityAudienceRow}`}>
                       <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
-                      <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : "social channels"}`}>
-                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale === "en" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
+                      <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : translate(locale, localizedMessages.m81fb78c7ebd5, "social channels")}`}>
+                        {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale !== "ko" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>
                     </div>
                   </div>
@@ -374,9 +377,9 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
               {celebrities.length === 0 ? <p role="status">{t.noCelebrities}</p> : null}
             </div>
             {creatorScroll.previous || creatorScroll.next ? (
-              <nav className={styles.creatorControls} aria-label={locale === "ko" ? "최애 목록 이동" : "Browse creators"}>
-                <button type="button" aria-label={locale === "ko" ? "이전 최애" : "Previous creators"} aria-controls="home-creator-rail" disabled={!creatorScroll.previous} onClick={() => moveCreators(-1)}><ChevronLeft /></button>
-                <button type="button" aria-label={locale === "ko" ? "다음 최애" : "Next creators"} aria-controls="home-creator-rail" disabled={!creatorScroll.next} onClick={() => moveCreators(1)}><ChevronRight /></button>
+              <nav className={styles.creatorControls} aria-label={locale === "ko" ? "최애 목록 이동" : translate(locale, localizedMessages.mdcf61c1a1ca5, "Browse creators")}>
+                <button type="button" aria-label={locale === "ko" ? "이전 최애" : translate(locale, localizedMessages.me65af7523189, "Previous creators")} aria-controls="home-creator-rail" disabled={!creatorScroll.previous} onClick={() => moveCreators(-1)}><ChevronLeft /></button>
+                <button type="button" aria-label={locale === "ko" ? "다음 최애" : translate(locale, localizedMessages.m0aab33b2d3dc, "Next creators")} aria-controls="home-creator-rail" disabled={!creatorScroll.next} onClick={() => moveCreators(1)}><ChevronRight /></button>
               </nav>
             ) : null}
             </div> : null}
@@ -397,7 +400,7 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
                     <CreatorAvatar slug={featuredLive.live.celebrity.slug} src={featuredLive.live.celebrity.image} photos={featuredLive.live.celebrity.photos} position={featuredLive.live.celebrity.imagePosition} size={{ mobile: 56, desktop: 64 }} />
                     <div className={styles.liveDetails}><span>{featuredLive.live.celebrity.name}</span><h3>{featuredLive.live.title}</h3><p>{formatLiveDate(featuredLive.live.startsAt, locale)}</p></div>
                     <div className={styles.liveMeta}><LiveTimeIndicator event={featuredLive.live} locale={locale} onStartReached={refreshLiveStatus} /></div>
-                    <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={locale === "ko" ? `${featuredLive.live.title} ${t.detail}` : `View ${featuredLive.live.title} details`}><ChevronRight /></Link>
+                    <Link className={styles.rowAction} href={`/live/${featuredLive.live.slug}${localeQuery}` as Route} aria-label={locale === "ko" ? `${featuredLive.live.title} ${t.detail}` : translate(locale, localizedMessages.mbbae831d75b7, "View {0} details", [featuredLive.live.title])}><ChevronRight /></Link>
                   </article>
                 );
               }) : <p>{t.noLive}</p>}
@@ -419,7 +422,7 @@ function GuestHomeContent({ homeBanners = [], celebrities, celebrityLives = [], 
             </section>
             <section id="passport" className={`${styles.guestCard} ${styles.passportReferenceCard}`} aria-labelledby="passport-heading">
               <div className={styles.passportHeader}><h2 id="passport-heading">{t.passportHeading}</h2><p>{t.passportSub}</p></div>
-              <div className={styles.passportAsset}><Image src="/images/guest-home/passport-open-blank-9-transparent.png" alt={locale === "ko" ? "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport" : "Opened Fan Passport with nine empty Stamp circles"} width={1536} height={1024} /></div>
+              <div className={styles.passportAsset}><Image src="/images/guest-home/passport-open-blank-9-transparent.png" alt={locale === "ko" ? "빈 Stamp 원 9개가 있는 펼쳐진 Fan Passport" : translate(locale, localizedMessages.mc91e6e2d8dcc, "Opened Fan Passport with nine empty Stamp circles")} width={1536} height={1024} /></div>
               <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
             </section>
           </> : null}

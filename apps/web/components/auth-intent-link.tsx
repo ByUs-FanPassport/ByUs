@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
 import { withLocalePath } from "./locale-path";
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
@@ -18,7 +19,7 @@ import { rememberOverlayTrigger } from "./ui/overlay/focus-return";
 import { getSessionStorage } from "../features/reliability/client/session-storage";
 import { useByUsSession } from "./byus-session-provider";
 
-function fallbackHref(input: CreateAuthIntentInput, locale: "ko" | "en"): string {
+function fallbackHref(input: CreateAuthIntentInput, locale: AppLocale): string {
   const returnTo = `${input.sourcePath}${input.sourceQuery}${input.returnAnchor ?? ""}`;
   const query = new URLSearchParams({
     returnTo: withLocalePath(returnTo, locale),
@@ -40,7 +41,7 @@ function sourceHref(input: CreateAuthIntentInput): string {
 
 export function resolveAuthIntentHref(
   input: CreateAuthIntentInput,
-  locale: "ko" | "en",
+  locale: AppLocale,
   state: AuthIntentNavigationState,
 ): string | undefined {
   if (!state.ready) return undefined;
@@ -51,7 +52,7 @@ export function resolveAuthIntentHref(
 
 export function resolveAuthIntentDestination(
   intent: AuthIntent,
-  locale: "ko" | "en",
+  locale: AppLocale,
   state: AuthIntentNavigationState,
 ): string | null {
   if (!state.ready) return null;
@@ -71,7 +72,7 @@ export function AuthIntentLink({
   focusKey,
 }: {
   input: CreateAuthIntentInput;
-  locale: "ko" | "en";
+  locale: AppLocale;
   className?: string;
   children: ReactNode;
   ariaLabel?: string;

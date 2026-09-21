@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
 import { useEffect, useRef, useState } from "react";
 import type { Avatar } from "../domain/avatar";
 import type { useAvatar } from "./use-avatar";
@@ -9,7 +10,7 @@ import { avatarEditorCopy } from "./avatar-editor-copy";
 import styles from "./avatar-editor.module.css";
 
 type AvatarResource = ReturnType<typeof useAvatar>;
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 
 export function AvatarSettings({ locale, resource }: { locale: Locale; resource: AvatarResource }) {
   const t = avatarEditorCopy[locale];

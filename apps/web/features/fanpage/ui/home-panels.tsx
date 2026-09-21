@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__ui__home-panels";
+import { translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { EventPhoto } from "@/components/fan-ui/event-photo";
@@ -26,12 +30,12 @@ import { ifewLiveSlug } from "@/features/live/domain/ifew-event";
 const noticeListSchema = z.object({ notices: z.array(z.object({ slug: z.string(), title: z.string(), pinned: z.boolean(), kind: z.enum(["standard", "welcome"]).default("standard"), publishedAt: z.string() })) });
 const parseNotices = (body: unknown) => noticeListSchema.parse(body).notices;
 const parseRaffles = (body: unknown) => raffleListSchema.parse(body).raffles;
-const formatDate = (date: string, locale: ContentLocale) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(date));
+const formatDate = (date: string, locale: AppLocale) => new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(date));
 
-export function ResourceMessage({ locale, error, retry }: { locale: ContentLocale; error: boolean; retry: () => void }) {
-  return <div className={styles.empty} role={error ? "alert" : "status"}><p>{locale === "ko" ? (error ? "불러오지 못했어요. 다시 시도해 주세요." : "불러오고 있어요.") : (error ? "Couldn't load this. Please try again." : "Loading.")}</p>{error && <button className={styles.pillButton} onClick={retry}>{locale === "ko" ? "다시 시도" : "Retry"}</button>}</div>;
+export function ResourceMessage({ locale, error, retry }: { locale: AppLocale; error: boolean; retry: () => void }) {
+  return <div className={styles.empty} role={error ? "alert" : "status"}><p>{locale === "ko" ? (error ? "불러오지 못했어요. 다시 시도해 주세요." : "불러오고 있어요.") : (error ? translate(locale, localizedMessages.m5347ac7955c6, "Couldn't load this. Please try again.") : translate(locale, localizedMessages.m7610a2b6d58f, "Loading."))}</p>{error && <button className={styles.pillButton} onClick={retry}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m3875a5d69dbe, "Retry")}</button>}</div>;
 }
-export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: PublishedCelebrity; locale: ContentLocale; upcomingLive: PublishedCelebrityLive | null }) {
+export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: PublishedCelebrity; locale: AppLocale; upcomingLive: PublishedCelebrityLive | null }) {
   const ko = locale === "ko";
   const registeredPoster = upcomingLive?.photos?.poster;
   const previewPoster = upcomingLive?.preview?.square.posterUrl;
@@ -42,47 +46,47 @@ export function RecentLive({ celebrity, locale, upcomingLive }: { celebrity: Pub
   return (
     <section>
       <div className={styles.sectionHeading}>
-        <h2>{ko ? "최근 활동" : "Recent activity"}</h2>
-        <Link href={`/live?locale=${locale}`}>{ko ? "LIVE 전체 보기" : "All LIVE"}<ArrowRight size={16} aria-hidden="true" /></Link>
+        <h2>{locale === "ko" ? "최근 활동" : translate(locale, localizedMessages.m43693f52f548, "Recent activity")}</h2>
+        <Link href={`/live?locale=${locale}`}>{locale === "ko" ? "LIVE 전체 보기" : translate(locale, localizedMessages.m1b1bd5b9acd8, "All LIVE")}<ArrowRight size={16} aria-hidden="true" /></Link>
       </div>
       {upcomingLive ? (
         <Link className={panels.liveCard} data-has-artwork={hasArtwork} href={`/live/${upcomingLive.slug}?locale=${locale}`}>
           {hasArtwork ? <div className={panels.liveMedia}>
             {previewPoster ? <Image src={previewPoster} alt="" fill sizes="(max-width:767px) calc(100vw - 32px), 320px" unoptimized={bypassImageOptimization(previewPoster)} />
-              : <EventPhoto photos={upcomingLive.photos} src={poster!} alt={registeredPoster?.alt[locale] ?? upcomingLive.title} locale={locale} surface="poster" sizes="(max-width:767px) calc(100vw - 32px), 320px" />}
+              : <EventPhoto photos={upcomingLive.photos} src={poster!} alt={registeredPoster?.alt[toContentLocale(locale)] ?? upcomingLive.title} locale={locale} surface="poster" sizes="(max-width:767px) calc(100vw - 32px), 320px" />}
           </div> : null}
           <div className={panels.liveBody}>
-            <span className={panels.liveStatus} data-live={upcomingLive.effectiveStatus === "live"}><Radio size={15} aria-hidden="true" />{upcomingLive.effectiveStatus === "live" ? "LIVE NOW" : (ko ? "다가오는 LIVE" : "Upcoming LIVE")}</span>
+            <span className={panels.liveStatus} data-live={upcomingLive.effectiveStatus === "live"}><Radio size={15} aria-hidden="true" />{upcomingLive.effectiveStatus === "live" ? "LIVE NOW" : (locale === "ko" ? "다가오는 LIVE" : translate(locale, localizedMessages.mc4b0cb6efc48, "Upcoming LIVE"))}</span>
             <h3>{upcomingLive.title}</h3>
-            <p className={panels.liveDate}><CalendarDays size={16} aria-hidden="true" /><time dateTime={upcomingLive.startsAt}>{new Intl.DateTimeFormat(ko ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", hourCycle: "h23", timeZone: "Asia/Seoul" }).format(new Date(upcomingLive.startsAt))} (KST)</time></p>
-            <span className={panels.liveAction}>{ko ? "LIVE 자세히 보기" : "View LIVE details"}<ArrowRight size={16} aria-hidden="true" /></span>
+            <p className={panels.liveDate}><CalendarDays size={16} aria-hidden="true" /><time dateTime={upcomingLive.startsAt}>{new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeStyle: "short", hourCycle: "h23", timeZone: "Asia/Seoul" }).format(new Date(upcomingLive.startsAt))} (KST)</time></p>
+            <span className={panels.liveAction}>{locale === "ko" ? "LIVE 자세히 보기" : translate(locale, localizedMessages.me8e3a9e42c78, "View LIVE details")}<ArrowRight size={16} aria-hidden="true" /></span>
           </div>
         </Link>
       ) : <div className={panels.emptyState}>
         <span className={panels.emptyIcon}><Radio aria-hidden="true" /></span>
-        <div><h3>{ko ? "새로운 활동을 기다리고 있어요." : "New moments are on the way."}</h3><p>{ko ? `${celebrity.name}의 새 소식과 LIVE가 공개되면 이곳에서 만나요.` : `See ${celebrity.name}'s updates and LIVE events here when published.`}</p></div>
+        <div><h3>{locale === "ko" ? "새로운 활동을 기다리고 있어요." : translate(locale, localizedMessages.m541de64fb9bb, "New moments are on the way.")}</h3><p>{locale === "ko" ? `${celebrity.name}의 새 소식과 LIVE가 공개되면 이곳에서 만나요.` : translate(locale, localizedMessages.m1023187bedc3, "See {0}'s updates and LIVE events here when published.", [celebrity.name])}</p></div>
       </div>}
     </section>
   );
 }
-export function NoticePanel({ slug, locale, full = false }: { slug: string; locale: ContentLocale; full?: boolean }) {
+export function NoticePanel({ slug, locale, full = false }: { slug: string; locale: AppLocale; full?: boolean }) {
   const ko = locale === "ko";
-  const resource = useFanpageResource(`/api/public/celebrities/${slug}/notices?locale=${locale}${full ? "" : "&surface=home"}`, parseNotices);
+  const resource = useFanpageResource(`/api/public/celebrities/${slug}/notices?locale=${toContentLocale(locale)}${full ? "" : "&surface=home"}`, parseNotices);
   const empty = resource.state.status === "ready" && resource.state.data.length === 0;
   return (
     <section className={panels.notices}>
       <div className={styles.sectionHeading}>
-        <h2>{ko ? "공지와 댓글" : "Notices & comments"}</h2>
-        {!full && !empty && <Link href={`${creatorHomeHref(slug)}?tab=notice&locale=${locale}#celebrity-content`}>{ko ? "공지 전체 보기" : "All notices"}<ArrowRight size={16} aria-hidden="true" /></Link>}
+        <h2>{locale === "ko" ? "공지와 댓글" : translate(locale, localizedMessages.mc06551416571, "Notices & comments")}</h2>
+        {!full && !empty && <Link href={`${creatorHomeHref(slug)}?tab=notice&locale=${locale}#celebrity-content`}>{locale === "ko" ? "공지 전체 보기" : translate(locale, localizedMessages.m8d2e50846134, "All notices")}<ArrowRight size={16} aria-hidden="true" /></Link>}
       </div>
       {resource.state.status !== "ready" ? <div className={panels.noticeFeedback}><ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /></div>
         : empty ? <div className={panels.emptyState} role="status">
           <span className={panels.emptyIcon}><MessageSquare aria-hidden="true" /></span>
-          <div><h3>{ko ? "아직 등록된 공지가 없어요." : "No notices yet."}</h3><p>{ko ? "새 소식이 올라오면 여기에서 확인할 수 있어요." : "New updates will appear here."}</p></div>
+          <div><h3>{locale === "ko" ? "아직 등록된 공지가 없어요." : translate(locale, localizedMessages.m3f185398b16f, "No notices yet.")}</h3><p>{locale === "ko" ? "새 소식이 올라오면 여기에서 확인할 수 있어요." : translate(locale, localizedMessages.m694c52137a91, "New updates will appear here.")}</p></div>
         </div>
         : resource.state.data.slice(0, full ? undefined : 1).map((notice) => <article key={notice.slug} className={`${styles.notice} ${panels.noticeItem}`}>
           <Link className={panels.noticeLink} href={`/c/${slug}/notices/${notice.slug}?locale=${locale}`}>
-            <div><h3>{notice.pinned && <span className={styles.pinned}>{notice.kind === "welcome" ? (ko ? "이용 안내" : "Start here") : (ko ? "공지" : "Notice")}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></div>
+            <div><h3>{notice.pinned && <span className={styles.pinned}>{notice.kind === "welcome" ? (locale === "ko" ? "이용 안내" : translate(locale, localizedMessages.m950773a69f9d, "Start here")) : (locale === "ko" ? "공지" : translate(locale, localizedMessages.mdd3b38ddd8aa, "Notice"))}</span>}{notice.title}</h3><time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt, locale)}</time></div>
             <ArrowRight size={18} aria-hidden="true" />
           </Link>
           {!full && <NoticeComments slug={slug} noticeSlug={notice.slug} locale={locale} welcome={notice.kind === "welcome"} preview />}
@@ -90,8 +94,8 @@ export function NoticePanel({ slug, locale, full = false }: { slug: string; loca
     </section>
   );
 }
-export function useCreatorRaffles(slug: string, locale: ContentLocale) {
-  const resource = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${locale}`, parseRaffles);
+export function useCreatorRaffles(slug: string, locale: AppLocale) {
+  const resource = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}`, parseRaffles);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -102,49 +106,49 @@ export function useCreatorRaffles(slug: string, locale: ContentLocale) {
   return { ...resource, available };
 }
 
-export function RafflePanel({ slug, name, locale, preview = false, ticketBalance, resource }: { slug: string; name: string; locale: ContentLocale; preview?: boolean; ticketBalance: number | null; resource: ReturnType<typeof useCreatorRaffles> }) {
+export function RafflePanel({ slug, name, locale, preview = false, ticketBalance, resource }: { slug: string; name: string; locale: AppLocale; preview?: boolean; ticketBalance: number | null; resource: ReturnType<typeof useCreatorRaffles> }) {
   const ko = locale === "ko";
   if (preview) {
     const gifts = resource.available;
     const deadline = gifts[0]?.entryClosesAt;
     const sharedDeadline = deadline && gifts.every(gift => gift.entryClosesAt && Date.parse(gift.entryClosesAt) === Date.parse(deadline)) ? deadline : null;
-    const closingTime = (date: string) => <time className={styles.homeDeadline} dateTime={date}>{formatRaffleDateTime(date, locale)} {ko ? "마감" : "closes"}</time>;
+    const closingTime = (date: string) => <time className={styles.homeDeadline} dateTime={date}>{formatRaffleDateTime(date, locale)} {locale === "ko" ? "마감" : translate(locale, localizedMessages.mcf133f000b89, "closes")}</time>;
     return <section className={styles.homeRaffles} aria-labelledby="home-raffle-heading">
       <div className={styles.homeRaffleHeading}>
-        <div className={styles.homeRaffleTitle}><h2 id="home-raffle-heading">{ko ? "응모 가능한 선물" : "Gifts you can enter"}{" "}{resource.state.status === "ready" && <span>{gifts.length}</span>}</h2>{sharedDeadline && closingTime(sharedDeadline)}</div>
+        <div className={styles.homeRaffleTitle}><h2 id="home-raffle-heading">{locale === "ko" ? "응모 가능한 선물" : translate(locale, localizedMessages.ma9d3b3913311, "Gifts you can enter")}{" "}{resource.state.status === "ready" && <span>{gifts.length}</span>}</h2>{sharedDeadline && closingTime(sharedDeadline)}</div>
         <div className={styles.raffleWallet}>
-          {ticketBalance !== null && <span><Ticket aria-hidden="true" />{ko ? `보유 응모권 ${ticketBalance.toLocaleString("ko-KR")}장` : `${ticketBalance.toLocaleString("en-US")} tickets`}</span>}
-          {FAN_TICKET_CREATOR_SLUGS.has(slug) && <Link href={`/c/${slug}/tickets?locale=${locale}`}>{ko ? "응모권 모으기" : "Collect tickets"}<ArrowRight aria-hidden="true" /></Link>}
+          {ticketBalance !== null && <span><Ticket aria-hidden="true" />{locale === "ko" ? `보유 응모권 ${ticketBalance.toLocaleString("ko-KR")}장` : translate(locale, localizedMessages.m751e3b484d1e, "{0} tickets", [ticketBalance.toLocaleString("en-US")])}</span>}
+          {FAN_TICKET_CREATOR_SLUGS.has(slug) && <Link href={`/c/${slug}/tickets?locale=${locale}`}>{locale === "ko" ? "응모권 모으기" : translate(locale, localizedMessages.m309e1c640be3, "Collect tickets")}<ArrowRight aria-hidden="true" /></Link>}
         </div>
       </div>
-      {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !gifts.length ? <div className={styles.empty}>{ko ? "지금 응모할 수 있는 선물이 없어요." : "No gifts are open for entry right now."}</div> : <div className={styles.homeGiftGrid}>
+      {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !gifts.length ? <div className={styles.empty}>{locale === "ko" ? "지금 응모할 수 있는 선물이 없어요." : translate(locale, localizedMessages.m30e5b230c66c, "No gifts are open for entry right now.")}</div> : <div className={styles.homeGiftGrid}>
         {gifts.map(raffle => <article className={styles.homeGiftCard} key={raffle.id}>
           <RaffleArtwork raffle={raffle} compact />
-          <div className={styles.homeGiftBody}><strong className={styles.homeGiftWinners}>{ko ? `${raffle.winnerQuantity}명 추첨` : `${raffle.winnerQuantity} winners`}</strong><h3>{raffle.title}</h3>
+          <div className={styles.homeGiftBody}><strong className={styles.homeGiftWinners}>{locale === "ko" ? `${raffle.winnerQuantity}명 추첨` : translate(locale, localizedMessages.me9dda1227b55, "{0} winners", [raffle.winnerQuantity])}</strong><h3>{raffle.title}</h3>
             {!sharedDeadline && raffle.entryClosesAt && closingTime(raffle.entryClosesAt)}
-            <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId!, locale)} aria-label={ko ? `${raffle.title} 응모하기` : `Enter for ${raffle.title}`}>{ko ? "응모하기" : "Enter raffle"}<ArrowRight aria-hidden="true" /></Link>
+            <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId!, locale)} aria-label={locale === "ko" ? `${raffle.title} 응모하기` : translate(locale, localizedMessages.m694bc6806f76, "Enter for {0}", [raffle.title])}>{locale === "ko" ? "응모하기" : translate(locale, localizedMessages.m32172c4b3182, "Enter raffle")}<ArrowRight aria-hidden="true" /></Link>
           </div>
         </article>)}
       </div>}
     </section>;
   }
-  const statusText = { preparing: ko ? "이벤트 준비 중" : "Preparing", open: ko ? "응모 진행 중" : "Entries open", closed: ko ? "응모 종료" : "Closed", cancelled: ko ? "운영 취소 · 응모권 반환" : "Cancelled · tickets refunded" };
-  return <section><div className={styles.sectionHeading}><h2>{ko ? "래플 응모" : "Raffles"}</h2></div>{!preview && <p className={styles.intro}>{ko ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : `Choose a prize and enter using your ${name} raffle tickets.`}</p>}
-    {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><Ticket aria-hidden="true" /><h3>{ko ? "새 래플을 준비하고 있어요." : "New raffles are coming."}</h3><p>{ko ? "경품과 일정이 공개되면 이곳에서 확인해 주세요." : "Check here for prizes and entry dates."}</p></div> : <div className={preview ? styles.featuredRaffle : styles.raffleGrid}>{resource.state.data.map((raffle) => <article className={styles.raffleCard} key={raffle.id} data-status={raffle.status}>
-      <div className={styles.raffleImage}>{raffle.imageUrl ? <Image src={raffle.imageUrl} alt="" fill sizes={preview ? "(min-width:768px) 280px, calc(100vw - 64px)" : "(min-width:768px) 400px, calc(100vw - 64px)"} unoptimized={bypassImageOptimization(raffle.imageUrl)} /> : <><Ticket aria-hidden="true" /><span>{ko ? "경품 안내" : "Prize"}</span></>}</div>
-      <div className={styles.raffleBody}><span className={styles.statusPill}>{statusText[raffle.status]}</span><h3>{raffle.title}</h3><p>{raffle.summary}</p><p>{ko ? `${raffle.winnerQuantity}명 추첨` : `${raffle.winnerQuantity} winners`}</p>{raffle.entryClosesAt && <small>{formatDate(raffle.entryClosesAt, locale)} {ko ? "마감" : "deadline"}</small>}
-        <div className={styles.ticketBalance}><Ticket aria-hidden="true" />{ticketBalance !== null ? (ko ? `내 ${name} 응모권 ${ticketBalance}장` : `${ticketBalance} ${name} tickets`) : (ko ? "로그인하고 내 응모권 확인" : "Sign in to check your tickets")}</div>
-        {raffle.benefitId && raffle.status !== "preparing" ? <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId, locale)}>{ko ? "래플 자세히 보기" : "View raffle"}<ArrowRight aria-hidden="true" /></Link> : <p className={styles.preparing}>{ko ? "응모 일정은 공지에서 안내해요." : "Entry dates will be announced in Notices."}</p>}
+  const statusText = { preparing: locale === "ko" ? "이벤트 준비 중" : translate(locale, localizedMessages.madd088ed5150, "Preparing"), open: locale === "ko" ? "응모 진행 중" : translate(locale, localizedMessages.mc65ed9ce7fd1, "Entries open"), closed: locale === "ko" ? "응모 종료" : translate(locale, localizedMessages.mc1eb21f2eb4b, "Closed"), cancelled: locale === "ko" ? "운영 취소 · 응모권 반환" : translate(locale, localizedMessages.m777ad91ea4a1, "Cancelled · tickets refunded") };
+  return <section><div className={styles.sectionHeading}><h2>{locale === "ko" ? "래플 응모" : translate(locale, localizedMessages.m04101d7a69c9, "Raffles")}</h2></div>{!preview && <p className={styles.intro}>{locale === "ko" ? `${name} 응모권으로 원하는 경품에 직접 응모하세요.` : translate(locale, localizedMessages.m08fd986b3ebe, "Choose a prize and enter using your {0} raffle tickets.", [name])}</p>}
+    {resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : !resource.state.data.length ? <div className={styles.empty}><Ticket aria-hidden="true" /><h3>{locale === "ko" ? "새 래플을 준비하고 있어요." : translate(locale, localizedMessages.m659677f29a05, "New raffles are coming.")}</h3><p>{locale === "ko" ? "경품과 일정이 공개되면 이곳에서 확인해 주세요." : translate(locale, localizedMessages.md966c9e04263, "Check here for prizes and entry dates.")}</p></div> : <div className={preview ? styles.featuredRaffle : styles.raffleGrid}>{resource.state.data.map((raffle) => <article className={styles.raffleCard} key={raffle.id} data-status={raffle.status}>
+      <div className={styles.raffleImage}>{raffle.imageUrl ? <Image src={raffle.imageUrl} alt="" fill sizes={preview ? "(min-width:768px) 280px, calc(100vw - 64px)" : "(min-width:768px) 400px, calc(100vw - 64px)"} unoptimized={bypassImageOptimization(raffle.imageUrl)} /> : <><Ticket aria-hidden="true" /><span>{locale === "ko" ? "경품 안내" : translate(locale, localizedMessages.m252d38eed9f1, "Prize")}</span></>}</div>
+      <div className={styles.raffleBody}><span className={styles.statusPill}>{statusText[raffle.status]}</span><h3>{raffle.title}</h3><p>{raffle.summary}</p><p>{locale === "ko" ? `${raffle.winnerQuantity}명 추첨` : translate(locale, localizedMessages.me9dda1227b55, "{0} winners", [raffle.winnerQuantity])}</p>{raffle.entryClosesAt && <small>{formatDate(raffle.entryClosesAt, locale)} {locale === "ko" ? "마감" : translate(locale, localizedMessages.md728bb30f99d, "deadline")}</small>}
+        <div className={styles.ticketBalance}><Ticket aria-hidden="true" />{ticketBalance !== null ? (locale === "ko" ? `내 ${name} 응모권 ${ticketBalance}장` : translate(locale, localizedMessages.mbac879409dfb, "{0} {1} tickets", [ticketBalance, name])) : (locale === "ko" ? "로그인하고 내 응모권 확인" : translate(locale, localizedMessages.mc4f406571c84, "Sign in to check your tickets"))}</div>
+        {raffle.benefitId && raffle.status !== "preparing" ? <Link className={styles.darkButton} href={creatorRaffleHref(slug, raffle.benefitId, locale)}>{locale === "ko" ? "래플 자세히 보기" : translate(locale, localizedMessages.mc5325fdf82cf, "View raffle")}<ArrowRight aria-hidden="true" /></Link> : <p className={styles.preparing}>{locale === "ko" ? "응모 일정은 공지에서 안내해요." : translate(locale, localizedMessages.m1d0239729880, "Entry dates will be announced in Notices.")}</p>}
       </div>
     </article>)}</div>}
   </section>;
 }
 
 const parseLiveCatalog = (body: unknown) => flattenLiveCatalog((body as { catalog: unknown }).catalog);
-export function CreatorLivePanel({ slug, locale }: { slug: string; locale: ContentLocale }) {
-  const resource = useFanpageResource(`/api/live-events?locale=${locale}`, parseLiveCatalog);
+export function CreatorLivePanel({ slug, locale }: { slug: string; locale: AppLocale }) {
+  const resource = useFanpageResource(`/api/live-events?locale=${toContentLocale(locale)}`, parseLiveCatalog);
   const ko = locale === "ko";
   const events = resource.state.status === "ready" ? resource.state.data.filter(({ live }) => live.celebrity.slug === slug) : [];
-  const statuses = { scheduled: ko ? "예정" : "Upcoming", live: "LIVE NOW", ended: ko ? "종료" : "Ended", cancelled: ko ? "취소" : "Cancelled" };
-  return <section><div className={styles.sectionHeading}><h2>LIVE</h2></div>{resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : events.length === 0 ? <div className={styles.empty}>{ko ? "공개된 LIVE가 없어요." : "No published LIVE events."}</div> : events.map(({ live }) => <Link key={live.slug} className={styles.liveCard} href={`/live/${live.slug}?locale=${locale}`}><div className={styles.livePhoto}><EventPhoto src={live.heroImage.url} alt={live.heroImage.alt} photos={live.photos} locale={locale} surface="detail" sizes="(min-width:768px) 340px, calc(100vw - 64px)" /></div><div><span className={styles.eyebrow}>{statuses[live.effectiveStatus]}</span><h3>{live.title}</h3><p>{formatDate(live.startsAt, locale)}</p><span>{ko ? "LIVE 자세히 보기" : "View LIVE details"} →</span></div></Link>)}</section>;
+  const statuses = { scheduled: locale === "ko" ? "예정" : translate(locale, localizedMessages.m1e4f7badba7d, "Upcoming"), live: "LIVE NOW", ended: locale === "ko" ? "종료" : translate(locale, localizedMessages.ma25956083eb2, "Ended"), cancelled: locale === "ko" ? "취소" : translate(locale, localizedMessages.me70ae1625f95, "Cancelled") };
+  return <section><div className={styles.sectionHeading}><h2>LIVE</h2></div>{resource.state.status !== "ready" ? <ResourceMessage locale={locale} error={resource.state.status === "error"} retry={resource.retry} /> : events.length === 0 ? <div className={styles.empty}>{locale === "ko" ? "공개된 LIVE가 없어요." : translate(locale, localizedMessages.m48a9cea28333, "No published LIVE events.")}</div> : events.map(({ live }) => <Link key={live.slug} className={styles.liveCard} href={`/live/${live.slug}?locale=${locale}`}><div className={styles.livePhoto}><EventPhoto src={live.heroImage.url} alt={live.heroImage.alt} photos={live.photos} locale={locale} surface="detail" sizes="(min-width:768px) 340px, calc(100vw - 64px)" /></div><div><span className={styles.eyebrow}>{statuses[live.effectiveStatus]}</span><h3>{live.title}</h3><p>{formatDate(live.startsAt, locale)}</p><span>{locale === "ko" ? "LIVE 자세히 보기" : translate(locale, localizedMessages.me8e3a9e42c78, "View LIVE details")} →</span></div></Link>)}</section>;
 }

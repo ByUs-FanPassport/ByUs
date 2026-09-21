@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/locales";
 import { creatorHomeHref, isCreatorHandle } from "@/features/creator/domain/creator-navigation";
 import { withLocalePath } from "./locale-path";
 import { z } from "zod";
@@ -234,7 +235,7 @@ export function authIntentReturnTo(intent: AuthIntent): string {
   return `${intent.sourcePath}?${query.toString()}${intent.returnAnchor ?? ""}`;
 }
 
-export function buildAuthLoginHref(intent: AuthIntent, locale: "ko" | "en"): string {
+export function buildAuthLoginHref(intent: AuthIntent, locale: AppLocale): string {
   const query = new URLSearchParams({
     returnTo: withLocalePath(authIntentReturnTo(intent), locale),
     locale,

@@ -4,7 +4,8 @@ import { CHZZK_CHANNEL_URL } from "@/features/fanpage/domain/chzzk-posts";
 const mocks=vi.hoisted(()=>({find:vi.fn(),read:vi.fn()}));
 vi.mock("@/server/content/published-content-repository",()=>({createPublishedContentRepositoryFromEnvironment:()=>({findBySlug:mocks.find})}));
 vi.mock("@/server/chzzk/community",()=>({readChzzkPost:mocks.read}));
-vi.mock("next/navigation",()=>({notFound:()=>{throw Error("NOT_FOUND");}}));
+vi.mock("next/navigation",()=>({
+  useRouter: () => ({ push: vi.fn() }),notFound:()=>{throw Error("NOT_FOUND");}}));
 vi.mock("@/components/fan-shell/fan-app-shell",()=>({FanAppFrame:({children}:{children:React.ReactNode})=><div>{children}</div>,FanContentContainer:({children}:{children:React.ReactNode})=><main>{children}</main>}));
 import Page from "./page";
 const props=(slug="jenny-jeong",postId="123")=>({params:Promise.resolve({slug,postId}),searchParams:Promise.resolve({locale:"ko"})});

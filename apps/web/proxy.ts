@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPrivatePath, isRehearsalPath } from "./seo/metadata";
-import { requestLocale } from "./components/locale-path";
+import { isInstagramManagementPath, requestLocale } from "./components/locale-path";
+import { isAppLocale } from "./i18n/locales";
 
 export function proxy(request: NextRequest): NextResponse {
   if (!request.nextUrl.pathname.startsWith("/api/admin/")) {
@@ -14,7 +15,7 @@ export function proxy(request: NextRequest): NextResponse {
     requestHeaders.set("x-byus-pathname", request.nextUrl.pathname);
     // Resolve page queries internally, keeping the browser/share URL language-free.
     // Static resources retain their exact URLs; admin keeps its lang contract.
-    const needsLocale = (requestedLocale !== "ko" && requestedLocale !== "en")
+    const needsLocale = (isAdminPage || isInstagramManagementPath(request.nextUrl.pathname) ? requestedLocale !== "ko" && requestedLocale !== "en" : !isAppLocale(requestedLocale))
       || request.nextUrl.searchParams.getAll(queryKey).length > 1;
     const isPage = !/\.[a-z0-9]+$/i.test(request.nextUrl.pathname);
     const destination = request.nextUrl.clone();

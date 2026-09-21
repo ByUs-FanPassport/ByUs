@@ -1,4 +1,5 @@
 import { withLocalePath } from "./locale-path";
+import { parseAppLocale, type AppLocale } from "../i18n/locales";
 
 const allowedIntents = new Set(["reserve", "attendance", "survey", "benefit-claim", "benefit-application", "passport", "youtube", "tiktok", "instagram"]);
 
@@ -7,7 +8,7 @@ export type LoginContext = {
   intent: string | null;
   entity: string | null;
   authIntent?: string | null;
-  locale: "ko" | "en";
+  locale: AppLocale;
 };
 
 export function sanitizeReturnTo(value: string | null | undefined): string {
@@ -32,8 +33,8 @@ export function sanitizeEntity(value: string | null | undefined): string | null 
   return value && /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/i.test(value) ? value : null;
 }
 
-export function sanitizeLocale(value: string | null | undefined): "ko" | "en" {
-  return value === "en" ? "en" : "ko";
+export function sanitizeLocale(value: string | null | undefined): AppLocale {
+  return parseAppLocale(value);
 }
 
 export function sanitizeAuthIntentId(value: string | null | undefined): string | null {

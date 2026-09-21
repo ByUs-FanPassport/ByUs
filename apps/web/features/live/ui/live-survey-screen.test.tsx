@@ -77,7 +77,7 @@ describe("LiveSurveyScreen", () => {
     expect(screen.getByRole("checkbox", { name: "토크" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "5" })).toBeRequired();
     expect(screen.getByRole("textbox", { name: /의견을 남겨 주세요/ })).toHaveAttribute("maxlength", "4000");
-    expect(screen.getByRole("link", { name: "KO / EN" })).toHaveAttribute("href", "/live/kara-nualeaf/survey?locale=en");
+    expect(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" })).toHaveValue("ko");
   });
 
   it("QA-SURV-001 shows the attendance eligibility gate and retains locale in the Fan Code route", async () => {

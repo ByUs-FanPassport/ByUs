@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__raffle-result-panel";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowRight, Clock3, Gift, RotateCcw, TicketCheck, XCircle } from "lucide-react";
 import { useCallback } from "react";
@@ -13,7 +17,7 @@ import { ownedRaffleResultSchema, type OwnedRaffleResult } from "../domain/raffl
 import { formatRaffleDateTime } from "./benefit-presentation";
 import styles from "./raffle-result-panel.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 
 const copy = {
   ko: {
@@ -96,6 +100,47 @@ const copy = {
     venue: "Pickup venue",
     pickupPeriod: "Pickup available through",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    heading: localizedMessages.md86ef743b301[translationLocale],
+    loading: localizedMessages.md5eaec3a2772[translationLocale],
+    error: localizedMessages.m6dcc8e3ac2be[translationLocale],
+    errorHelp: localizedMessages.mb117c8e03878[translationLocale],
+    retry: localizedMessages.mf8d73fa87a5d[translationLocale],
+    login: localizedMessages.m5df388dceb96[translationLocale],
+    notEntered: localizedMessages.m817af555e951[translationLocale],
+    notEnteredHelp: localizedMessages.m9e5526ebfeaf[translationLocale],
+    pending: localizedMessages.mff0c400d7d7e[translationLocale],
+    pendingHelp: localizedMessages.m80bd0d5d0358[translationLocale],
+    notWon: localizedMessages.m1504f00753a1[translationLocale],
+    notWonHelp: localizedMessages.m7e1c4b56ff6a[translationLocale],
+    won: localizedMessages.m8fadaedbf181[translationLocale],
+    cancelled: localizedMessages.m29ab5098a2d6[translationLocale],
+    cancelledHelp: localizedMessages.mc964489f93d6[translationLocale],
+    entered: localizedMessages.me7b4a5b1bf9c[translationLocale],
+    closed: localizedMessages.mda20fad6a6ae[translationLocale],
+    published: localizedMessages.m318bb6e96024[translationLocale],
+    deadline: localizedMessages.ma318e792d9c2[translationLocale],
+    enterRecipient: localizedMessages.me5f964e3894f[translationLocale],
+    editRecipient: localizedMessages.mb8940b867153[translationLocale],
+    pickup: localizedMessages.mf4c87c1edc4b[translationLocale],
+    other: localizedMessages.m01b7f449da23[translationLocale],
+    submitted: localizedMessages.m800ffc240382[translationLocale],
+    submittedHelp: localizedMessages.ma659c402cd34[translationLocale],
+    shippingPreparing: localizedMessages.m3e4dfc261850[translationLocale],
+    shippingTransit: localizedMessages.me699ed27e092[translationLocale],
+    shippingComplete: localizedMessages.m1b5e8a723792[translationLocale],
+    pickupAvailable: localizedMessages.m11304f801535[translationLocale],
+    pickupComplete: localizedMessages.m5f4f2147684f[translationLocale],
+    digitalComplete: localizedMessages.m91c3a0718b94[translationLocale],
+    overdue: localizedMessages.m0792a7d4c6d4[translationLocale],
+    overdueHelp: localizedMessages.m28c4623b6580[translationLocale],
+    unclaimed: localizedMessages.m4210d2f579d4[translationLocale],
+    unclaimedHelp: localizedMessages.m221ca2c793ef[translationLocale],
+    contact: localizedMessages.m5f3408b81704[translationLocale],
+    venue: localizedMessages.m48ae48a7d34f[translationLocale],
+    pickupPeriod: localizedMessages.m65f31814389b[translationLocale],
+  }))
 } as const;
 
 function resultStatus(result: OwnedRaffleResult, locale: Locale) {
@@ -161,17 +206,17 @@ export function RaffleResultPanel({ result, locale, embedded = false }: { result
         {!embedded && result.entryClosesAt ? <div><dt>{t.closed}</dt><dd><time dateTime={result.entryClosesAt}>{formatRaffleDateTime(result.entryClosesAt, locale)}</time></dd></div> : null}
         {result.publishedAt ? <div><dt>{t.published}</dt><dd><time dateTime={result.publishedAt}>{formatRaffleDateTime(result.publishedAt, locale)}</time></dd></div> : null}
         {result.state === "won" && result.recipientDeadlineAt ? <div><dt>{t.deadline}</dt><dd><time dateTime={result.recipientDeadlineAt}>{formatRaffleDateTime(result.recipientDeadlineAt, locale)}</time></dd></div> : null}
-        {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupVenue[locale]
-          ? <div><dt>{t.venue}</dt><dd>{result.policy.pickupVenue[locale]}</dd></div> : null}
+        {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupVenue[toContentLocale(locale)]
+          ? <div><dt>{t.venue}</dt><dd>{result.policy.pickupVenue[toContentLocale(locale)]}</dd></div> : null}
         {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupEndsOn
           ? <div><dt>{t.pickupPeriod}</dt><dd>{result.policy.pickupEndsOn}</dd></div> : null}
         {result.state === "won" && ["shipping_in_transit", "shipping_completed"].includes(result.fulfillmentStatus ?? "") && result.carrier
-          ? <div><dt>{locale === "ko" ? "택배사" : "Carrier"}</dt><dd>{result.carrier}</dd></div> : null}
+          ? <div><dt>{locale === "ko" ? "택배사" : translate(locale, localizedMessages.m59bab08d3a40, "Carrier")}</dt><dd>{result.carrier}</dd></div> : null}
         {result.state === "won" && ["shipping_in_transit", "shipping_completed"].includes(result.fulfillmentStatus ?? "") && result.trackingNumber
-          ? <div><dt>{locale === "ko" ? "운송장 번호" : "Tracking number"}</dt><dd>{result.trackingNumber}</dd></div> : null}
+          ? <div><dt>{locale === "ko" ? "운송장 번호" : translate(locale, localizedMessages.med4aca10125e, "Tracking number")}</dt><dd>{result.trackingNumber}</dd></div> : null}
       </dl>
-      {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupInstructions[locale]
-        ? <p className={styles.instructions}>{result.policy.pickupInstructions[locale]}</p> : null}
+      {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupInstructions[toContentLocale(locale)]
+        ? <p className={styles.instructions}>{result.policy.pickupInstructions[toContentLocale(locale)]}</p> : null}
       <div className={styles.actions}>
         {showRecipientAction ? <FanAction variant="primary" href={recipientHref} trailingIcon={<ArrowRight />}>{recipientLabel}</FanAction> : null}
         {isClosed ? <FanAction variant="neutral" href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : null}
@@ -185,7 +230,7 @@ export function BenefitRaffleResult({ benefitId, locale, embedded = false }: { b
   const auth = usePrivy();
   const parse = useCallback((body: unknown) => ownedRaffleResultSchema.parse(body), []);
   const resource = useOwnedFanResource(
-    auth.authenticated ? `/api/benefits/${encodeURIComponent(benefitId)}/result?locale=${locale}` : null,
+    auth.authenticated ? `/api/benefits/${encodeURIComponent(benefitId)}/result?locale=${toContentLocale(locale)}` : null,
     parse,
     auth,
   );

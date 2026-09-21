@@ -1,5 +1,7 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import type { PhotoSet } from "@/features/media/domain/public-image";
 import Image, { type ImageProps } from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
@@ -13,7 +15,7 @@ type Props = Pick<ImageProps, "alt" | "width" | "height" | "fill" | "priority" |
   presentation?: CreatorImagePresentation;
   position?: string;
   photos: PhotoSet | undefined;
-  locale?: "ko" | "en";
+  locale?: AppLocale;
   sizes: string;
   fallback?: ReactNode;
   framed?: boolean;
@@ -23,7 +25,7 @@ type Props = Pick<ImageProps, "alt" | "width" | "height" | "fill" | "priority" |
 export function CreatorImage({ slug, src, presentation = "portrait", position, photos, locale = "ko", sizes, fallback = null, framed = false, ...imageProps }: Props) {
   const image = resolveCreatorImage({ slug, src, presentation, position, photos });
   const role = creatorPresentationRole(presentation);
-  const alt = imageProps.alt === "" ? "" : photos?.[role]?.alt[locale] ?? imageProps.alt;
+  const alt = imageProps.alt === "" ? "" : photos?.[role]?.alt[toContentLocale(locale)] ?? imageProps.alt;
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const photo = !image.src || image.src === failedSource ? fallback : <Image {...imageProps} alt={alt} className={framed ? undefined : imageProps.className} src={image.src} sizes={creatorImageSizes(sizes, image.crop.scale)}
     data-creator-image={slug} data-image-presentation={presentation}

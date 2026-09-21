@@ -1,5 +1,7 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/components__auth-transition-boundary";
+import { translate } from "@/i18n/messages";
 import { isCreatorHandle } from "@/features/creator/domain/creator-navigation";
 import type { Route } from "next";
 import Link from "next/link";
@@ -47,9 +49,9 @@ export function AuthTransitionBoundary({ children, modal }: { children: ReactNod
         <div className={styles.status} role="status" aria-live="polite">
           {session.pending ? <span className={styles.spinner} aria-hidden="true" /> : null}
           <span>{session.error
-            ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : "We couldn't finish sign-in."
-            : locale === "ko" ? "로그인을 마무리하고 있어요." : "Finishing sign-in."}</span>
-          {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "다시 시도" : "Try again"}</Link> : null}
+            ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : translate(locale, localizedMessages.mba7f1533e68f, "We couldn't finish sign-in.")
+            : locale === "ko" ? "로그인을 마무리하고 있어요." : translate(locale, localizedMessages.m4851f6cbdcd0, "Finishing sign-in.")}</span>
+          {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m54eb080fad51, "Try again")}</Link> : null}
         </div>
       </>
     );
@@ -61,9 +63,9 @@ export function AuthTransitionBoundary({ children, modal }: { children: ReactNod
       <div className={styles.fallbackCard}>
         {session.pending ? <span className={styles.spinner} aria-hidden="true" /> : null}
         <p role="status">{session.error
-          ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : "We couldn't finish sign-in."
-          : locale === "ko" ? "로그인을 마무리하고 있어요." : "Finishing sign-in."}</p>
-        {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "로그인 화면에서 다시 시도" : "Try again from sign-in"}</Link> : null}
+          ? locale === "ko" ? "로그인 연결을 마치지 못했어요." : translate(locale, localizedMessages.mba7f1533e68f, "We couldn't finish sign-in.")
+          : locale === "ko" ? "로그인을 마무리하고 있어요." : translate(locale, localizedMessages.m4851f6cbdcd0, "Finishing sign-in.")}</p>
+        {session.error && session.recoveryPath ? <Link href={session.recoveryPath as Route}>{locale === "ko" ? "로그인 화면에서 다시 시도" : translate(locale, localizedMessages.meee354602b88, "Try again from sign-in")}</Link> : null}
       </div>
     </main>
   );

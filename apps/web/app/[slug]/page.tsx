@@ -1,3 +1,5 @@
+import { toContentLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
 import { VercelTelemetry } from "@/features/analytics/client/vercel-telemetry";
 import { creatorHomeHref, isCreatorHandle } from "@/features/creator/domain/creator-navigation";
 import { publicMetadata } from "@/seo/metadata";
@@ -15,22 +17,22 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string }> }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   if (!isCreatorHandle(slug)) notFound();
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   const celebrity = await loadSeoCreator(slug, locale);
   if (!celebrity) notFound();
-  const otherLocale = locale === "en" ? "ko" : "en";
+  const otherLocale = toContentLocale(locale) === "en" ? "ko" : "en";
   const translated = await loadSeoCreator(slug, otherLocale);
   const photo = resolvePhoto(celebrity.image.photos, "creator.hero.desktop", celebrity.image.url, locale);
   return publicMetadata({ path: creatorHomeHref(slug), locale, title: `${celebrity.name} | ByUs`, description: celebrity.summary,
     image: photo.src, imageAlt: photo.alt ?? celebrity.image.alt,
-    locales: translated ? ["ko", "en"] : [locale] });
+    locales: translated ? ["ko", "en"] : [toContentLocale(locale)] });
 }
 
 export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; news?: string; authIntent?: string }> }) {
   const { slug } = await params;
   if (!isCreatorHandle(slug)) notFound();
   const { locale: requestedLocale, tab: requestedTab, news: requestedNews, authIntent: requestedAuthIntent } = await searchParams;
-  const locale = requestedLocale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(requestedLocale);
   if (requestedTab === "raffles" || requestedTab === "benefits") {
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
     redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
@@ -39,7 +41,7 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [celebrity, primaryLives] = await Promise.all([
     loadSeoCreator(slug, locale),
-    repository.listPrimaryLives(locale),
+    repository.listPrimaryLives(toContentLocale(locale)),
   ]);
   if (!celebrity) notFound();
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;

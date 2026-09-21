@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { Suspense } from "react";
 import { LoginPage } from "../../../components/login-page";
 import { readPublicPrivyTestAccountPolicy } from "../../../components/privy-test-account-policy";
@@ -10,7 +11,7 @@ export default async function LoginModalRoute({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   return (
     <Suspense
       fallback={<FanRouteLoading locale={locale} presentation="overlay" />}

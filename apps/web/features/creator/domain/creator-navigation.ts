@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/locales";
 import type { Route } from "next";
 
 // The existing immutable slug is also the public handle. Keep this list aligned
@@ -14,7 +15,7 @@ export function isCreatorHandle(value: string): boolean {
     && !(RESERVED_CREATOR_HANDLES as readonly string[]).includes(value);
 }
 
-export function creatorHomeHref(slug: string, locale?: "ko" | "en"): Route {
+export function creatorHomeHref(slug: string, locale?: AppLocale): Route {
   return `/${encodeURIComponent(slug)}${locale ? `?locale=${locale}` : ""}` as Route;
 }
 

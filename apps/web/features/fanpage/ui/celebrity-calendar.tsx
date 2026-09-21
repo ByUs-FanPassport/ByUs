@@ -1,4 +1,8 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__ui__celebrity-calendar";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useByUsSession } from "@/components/byus-session-provider";
@@ -18,9 +22,11 @@ type AsyncState<T> = { status: "idle" | "loading" } | { status: "ready"; data:T 
 const copy = {
 ko: { calendarTitle:"LIVE 일정", calendarOpen:"캘린더 크게 보기", calendarLoading:"LIVE 일정을 확인하고 있어요", calendarError:"일정을 불러오지 못했어요.", calendarUpcoming:"다가오는 일정", calendarUpcomingEmpty:"이번 달에는 예정된 LIVE가 없어요.", previousMonth:"이전 달", nextMonth:"다음 달", weekdays:["일","월","화","수","목","금","토"] },
 en: { calendarTitle:"LIVE schedule", calendarOpen:"Open full calendar", calendarLoading:"Checking LIVE schedule", calendarError:"We couldn't load the schedule.", calendarUpcoming:"Upcoming", calendarUpcomingEmpty:"No upcoming LIVE this month.", previousMonth:"Previous month", nextMonth:"Next month", weekdays:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] }
+,
+  ...additionalLocales((translationLocale) => ({ calendarTitle:localizedMessages.m7f1d81ff4af0[translationLocale], calendarOpen:localizedMessages.m60a10a47cbd4[translationLocale], calendarLoading:localizedMessages.me0eacb0fb2fa[translationLocale], calendarError:localizedMessages.m6c136ac58bb7[translationLocale], calendarUpcoming:localizedMessages.m626938c7444d[translationLocale], calendarUpcomingEmpty:localizedMessages.m485405428e90[translationLocale], previousMonth:localizedMessages.m0351b88b33a5[translationLocale], nextMonth:localizedMessages.mb4d0abcae301[translationLocale], weekdays:[localizedMessages.m7c2166ebd1f5[translationLocale],localizedMessages.m59b63ad67ef4[translationLocale],localizedMessages.mdd059499b529[translationLocale],localizedMessages.m9665850eb016[translationLocale],localizedMessages.m480b5a0ef7fc[translationLocale],localizedMessages.m8745d57d92fa[translationLocale],localizedMessages.m6d6077913c94[translationLocale]] }))
 } as const;
-function formatMiniCalendarDate(value: string, locale: ContentLocale) {
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+function formatMiniCalendarDate(value: string, locale: AppLocale) {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     timeZone: "Asia/Seoul",
     month: "short",
     day: "numeric",
@@ -30,20 +36,20 @@ function formatMiniCalendarDate(value: string, locale: ContentLocale) {
 }
 
 function currentKstDate(now = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", {
+  return new Intl.DateTimeFormat("en-CA", { calendar: "gregory",
     year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Seoul",
   }).format(now);
 }
 
 function kstMonthForInstant(value: string) {
-  return new Intl.DateTimeFormat("en-CA", {
+  return new Intl.DateTimeFormat("en-CA", { calendar: "gregory",
     year: "numeric", month: "2-digit", timeZone: "Asia/Seoul",
   }).format(new Date(value));
 }
 
-function miniCalendarMonthLabel(month: string, locale: ContentLocale) {
+function miniCalendarMonthLabel(month: string, locale: AppLocale) {
   const [year, monthNumber] = month.split("-").map(Number);
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     year: "numeric", month: "long", timeZone: "Asia/Seoul",
   }).format(new Date(Date.UTC(year!, monthNumber! - 1, 15)));
 }
@@ -73,7 +79,7 @@ export function CelebrityMiniCalendar({
   upcomingLive,
 }: {
   celebrity: PublishedCelebrity;
-  locale: ContentLocale;
+  locale: AppLocale;
   upcomingLive: PublishedCelebrityLive | null;
 }) {
   const { ready, authenticated, getAccessToken } = usePrivy();
@@ -107,7 +113,7 @@ export function CelebrityMiniCalendar({
       const token = requestAuthenticated ? await getAccessToken() : null;
       if (controller.signal.aborted) return;
       if (requestAuthenticated && !token) throw new Error("Calendar authentication unavailable");
-      const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${locale}`, {
+      const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${toContentLocale(locale)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         signal: controller.signal,
       });
@@ -183,7 +189,7 @@ export function CelebrityMiniCalendar({
           const checkedIn = checkedDateSet.has(day.date);
           const style = index === 0 ? { gridColumnStart: firstWeekday + 1 } : undefined;
           if (firstEvent) {
-            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE${checkedIn ? ", 출석 완료" : ""}` : `${dayNumber}, ${day.events.length} LIVE${checkedIn ? ", checked in" : ""}`;
+            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE${checkedIn ? ", 출석 완료" : ""}` : translate(locale, localizedMessages.mcde08ef46875, "{0}, {1} LIVE{2}", [dayNumber, day.events.length, checkedIn ? ", checked in" : ""]);
             return (
               <button
                 type="button"
@@ -206,7 +212,7 @@ export function CelebrityMiniCalendar({
             );
           }
           return (
-            <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} data-checked-in={checkedIn ? "true" : undefined} key={day.date} style={style} aria-label={checkedIn ? (locale === "ko" ? `${dayNumber}일, 출석 완료` : `${dayNumber}, checked in`) : undefined}>
+            <span className={styles.calendarDay} data-today={day.date === today ? "true" : undefined} data-checked-in={checkedIn ? "true" : undefined} key={day.date} style={style} aria-label={checkedIn ? (locale === "ko" ? `${dayNumber}일, 출석 완료` : translate(locale, localizedMessages.mdfeb64d2c67d, "{0}, checked in", [dayNumber])) : undefined}>
               <CalendarDayNumber date={day.date} today={today} />
               {checkedIn ? <i className={dailyStyles.checkinMark} aria-hidden="true">✓</i> : null}
             </span>
@@ -219,8 +225,8 @@ export function CelebrityMiniCalendar({
       </p> : null}
       <div className={styles.calendarUpcoming} id={calendarListId}>
         <div className={styles.calendarListHeading}>
-          <h3 aria-live="polite">{selectedDay ? new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${selectedDay.date}T00:00:00+09:00`)) : t.calendarUpcoming}</h3>
-          {selectedDay ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? "전체 보기" : "Show all"}</button> : null}
+          <h3 aria-live="polite">{selectedDay ? new Intl.DateTimeFormat(locale, { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${selectedDay.date}T00:00:00+09:00`)) : t.calendarUpcoming}</h3>
+          {selectedDay ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? "전체 보기" : translate(locale, localizedMessages.m150c0d4b6414, "Show all")}</button> : null}
         </div>
         {state.status === "ready" && displayedEvents.length > 0 ? <ol>{displayedEvents.map((event) => (
           <li key={event.id} data-status={event.effectiveStatus}>

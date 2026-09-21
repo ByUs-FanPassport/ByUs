@@ -1,3 +1,5 @@
+import { toContentLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
 import { publicMetadata, pageCopy } from "@/seo/metadata";
 import { CelebrityDirectory } from "../../components/celebrity-directory";
 import { parseCreatorRoleFilter } from "../../features/creator/domain/creator-role";
@@ -6,17 +8,17 @@ import { createPublishedContentRepositoryFromEnvironment } from "../../server/co
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ locale?: string | string[] }> }) {
-  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale((await searchParams).locale);
   return publicMetadata({ path: "/celebrities", locale, ...pageCopy.celebrities[locale] });
 }
 
 export default async function CelebritiesPage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; q?: string | string[]; sort?: string | string[]; role?: string | string[] }> }) {
   const { locale: requestedLocale, owned, q, sort, role } = await searchParams;
-  const locale = requestedLocale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(requestedLocale);
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [publishedCelebrities, primaryLives] = await Promise.all([
-    repository.list(locale),
-    repository.listPrimaryLives(locale),
+    repository.list(toContentLocale(locale)),
+    repository.listPrimaryLives(toContentLocale(locale)),
   ]);
   const livesByCelebrity = new Map(primaryLives.map((live) => [live.celebritySlug, live]));
   const celebrities = publishedCelebrities.map((celebrity) => ({

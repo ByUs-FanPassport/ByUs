@@ -1,0 +1,312 @@
+import type { TranslatedMessage } from "../messages";
+
+export const messages = {
+  "mf4c213b8593e": {
+    "ja": "ホーム",
+    "zh-Hans": "首页",
+    "zh-Hant": "首頁",
+    "es": "Inicio",
+    "id": "Beranda",
+    "vi": "Trang chủ",
+    "th": "หน้าแรก",
+    "pt": "Início",
+    "fr": "Accueil"
+  },
+  "m2bc194a0a5a0": {
+    "ja": "ファン認証",
+    "zh-Hans": "粉丝验证",
+    "zh-Hant": "粉絲驗證",
+    "es": "Verificación de fans",
+    "id": "Verifikasi penggemar",
+    "vi": "Xác minh người hâm mộ",
+    "th": "การยืนยันแฟนคลับ",
+    "pt": "Verificação de fã",
+    "fr": "Vérification de fan"
+  },
+  "m6172ae5badc6": {
+    "ja": "抽選",
+    "zh-Hans": "抽选",
+    "zh-Hant": "抽選",
+    "es": "Sorteos",
+    "id": "Undian",
+    "vi": "Quay thưởng",
+    "th": "จับรางวัล",
+    "pt": "Sorteios",
+    "fr": "Tirages au sort"
+  },
+  "madeb99f7d16f": {
+    "ja": "ランキング",
+    "zh-Hans": "排行榜",
+    "zh-Hant": "排行榜",
+    "es": "Clasificación",
+    "id": "Papan peringkat",
+    "vi": "Bảng xếp hạng",
+    "th": "ลีดเดอร์บอร์ด",
+    "pt": "Ranking",
+    "fr": "Classement"
+  },
+  "m912b89a327a1": {
+    "ja": "CHZZK",
+    "zh-Hans": "CHZZK",
+    "zh-Hant": "CHZZK",
+    "es": "CHZZK",
+    "id": "CHZZK",
+    "vi": "CHZZK",
+    "th": "CHZZK",
+    "pt": "CHZZK",
+    "fr": "CHZZK"
+  },
+  "m58e2f1f8977e": {
+    "ja": "クイズに答えてファン認証",
+    "zh-Hans": "完成测验并进行粉丝认证",
+    "zh-Hant": "完成測驗並進行粉絲認證",
+    "es": "Hacer cuestionario y verificar condición de fan",
+    "id": "Ikuti kuis dan verifikasi penggemar",
+    "vi": "Xác minh tư cách người hâm mộ",
+    "th": "ยืนยันการเป็นแฟน",
+    "pt": "Verificar fandom",
+    "fr": "Confirmer mon statut de fan"
+  },
+  "m4ec129dd4b3e": {
+    "ja": "ログイン",
+    "zh-Hans": "登录",
+    "zh-Hant": "登入",
+    "es": "Iniciar sesión",
+    "id": "Masuk",
+    "vi": "Đăng nhập",
+    "th": "เข้าสู่ระบบ",
+    "pt": "Entrar",
+    "fr": "Se connecter"
+  },
+  "m9bcb85b2bed2": {
+    "ja": "最近の活動とLIVEのお知らせをひとつに",
+    "zh-Hans": "在一处查看近期活动和 LIVE 动态",
+    "zh-Hant": "在一處查看近期活動和 LIVE 動態",
+    "es": "Actividad reciente y novedades de LIVE en un solo lugar",
+    "id": "Aktivitas terbaru dan kabar LIVE di satu tempat",
+    "vi": "Hoạt động gần đây và tin LIVE ở cùng một nơi.",
+    "th": "รวมกิจกรรมล่าสุดและข่าว LIVE ไว้ในที่เดียว",
+    "pt": "Atividades recentes e novidades de LIVE em um só lugar.",
+    "fr": "Les activités récentes et les nouveautés des LIVE au même endroit."
+  },
+  "me1f5c62bd1d6": {
+    "ja": "新しいウィンドウ",
+    "zh-Hans": "新窗口",
+    "zh-Hant": "新窗口",
+    "es": "ventana nueva",
+    "id": "jendela baru",
+    "vi": "cửa sổ mới",
+    "th": "หน้าต่างใหม่",
+    "pt": "nova janela",
+    "fr": "nouvelle fenêtre"
+  },
+  "m0f2000ce3e28": {
+    "ja": "{0}ファンページのメニュー",
+    "zh-Hans": "{0} 粉丝页面菜单",
+    "zh-Hant": "{0} 粉絲頁面菜單",
+    "es": "Menú de la página de fans de {0}",
+    "id": "Menu halaman penggemar {0}",
+    "vi": "Menu trang người hâm mộ {0}",
+    "th": "เมนูหน้าแฟนของ {0}",
+    "pt": "Menu da página de fãs de {0}",
+    "fr": "Menu de la page de fans de {0}"
+  },
+  "mfd82d54cca54": {
+    "ja": "自分のファン活動",
+    "zh-Hans": "我的粉丝活动",
+    "zh-Hant": "我的粉絲活動",
+    "es": "Mi actividad como fan",
+    "id": "Aktivitas penggemar saya",
+    "vi": "Hoạt động người hâm mộ của tôi",
+    "th": "กิจกรรมแฟนของฉัน",
+    "pt": "Minha atividade de fã",
+    "fr": "Mon activité de fan"
+  },
+  "mf1295c4df607": {
+    "ja": "ファン活動を読み込んでいます。",
+    "zh-Hans": "正在加载粉丝活动。",
+    "zh-Hant": "正在載入粉絲活動。",
+    "es": "Cargando tu actividad.",
+    "id": "Memuat aktivitas penggemar.",
+    "vi": "Đang tải hoạt động người hâm mộ của bạn.",
+    "th": "กำลังโหลดกิจกรรมแฟนของคุณ",
+    "pt": "Carregando sua atividade de fã.",
+    "fr": "Chargement de votre activité de fan."
+  },
+  "m0aea4924b59e": {
+    "ja": "ファン活動を読み込めませんでした。",
+    "zh-Hans": "无法加载粉丝活动。",
+    "zh-Hant": "無法載入粉絲活動。",
+    "es": "No pudimos cargar tu actividad.",
+    "id": "Tidak dapat memuat aktivitas penggemar.",
+    "vi": "Không thể tải hoạt động người hâm mộ của bạn.",
+    "th": "ไม่สามารถโหลดกิจกรรมแฟนของคุณได้",
+    "pt": "Não foi possível carregar sua atividade de fã.",
+    "fr": "Impossible de charger votre activité de fan."
+  },
+  "m99f026b1d3a8": {
+    "ja": "もう一度試す",
+    "zh-Hans": "重试",
+    "zh-Hant": "重試",
+    "es": "Intentar de nuevo",
+    "id": "Coba lagi",
+    "vi": "Thử lại",
+    "th": "ลองอีกครั้ง",
+    "pt": "Tentar novamente",
+    "fr": "Réessayer"
+  },
+  "m33aabe47ea2a": {
+    "ja": "自分の活動",
+    "zh-Hans": "我的活动",
+    "zh-Hant": "我的活動",
+    "es": "Mi actividad",
+    "id": "Aktivitas saya",
+    "vi": "Hoạt động của tôi",
+    "th": "กิจกรรมของฉัน",
+    "pt": "Minha atividade",
+    "fr": "Mon activité"
+  },
+  "m50ddf6278ab0": {
+    "ja": "{0}まで",
+    "zh-Hans": "距离 {0}",
+    "zh-Hant": "距離 {0}",
+    "es": "Hasta {0}",
+    "id": "Menuju {0}",
+    "vi": "Còn đến {0}",
+    "th": "ถึง {0}",
+    "pt": "Até {0}",
+    "fr": "Vers {0}"
+  },
+  "m630bc8843593": {
+    "ja": "ポイント",
+    "zh-Hans": "分",
+    "zh-Hant": "分",
+    "es": " puntos",
+    "id": " poin",
+    "vi": " điểm",
+    "th": " คะแนน",
+    "pt": " pontos",
+    "fr": " points"
+  },
+  "m29ba29df317d": {
+    "ja": "最高ステージ達成",
+    "zh-Hans": "已达到最高阶段",
+    "zh-Hant": "已達到最高階段",
+    "es": "Etapa máxima alcanzada",
+    "id": "Tahap tertinggi tercapai",
+    "vi": "Đã đạt cấp cao nhất",
+    "th": "ถึงขั้นสูงสุดแล้ว",
+    "pt": "Etapa máxima alcançada",
+    "fr": "Palier maximal atteint"
+  },
+  "m499225dbee28": {
+    "ja": "最高ランク達成",
+    "zh-Hans": "已达到最高等级",
+    "zh-Hant": "已達到最高等級",
+    "es": "Nivel máximo alcanzado",
+    "id": "Tingkat tertinggi tercapai",
+    "vi": "Đã đạt hạng cao nhất",
+    "th": "ถึงระดับสูงสุดแล้ว",
+    "pt": "Nível máximo alcançado",
+    "fr": "Niveau maximal atteint"
+  },
+  "mebc103264c9f": {
+    "ja": "次のランクまで",
+    "zh-Hans": "距离下一等级",
+    "zh-Hant": "距離下一等級",
+    "es": "Hasta el siguiente nivel",
+    "id": "Menuju tingkat berikutnya",
+    "vi": "Còn đến hạng tiếp theo",
+    "th": "ถึงระดับถัดไป",
+    "pt": "Até o próximo nível",
+    "fr": "Vers le niveau suivant"
+  },
+  "m416360f1aadc": {
+    "ja": "自分のPassport",
+    "zh-Hans": "我的 Passport",
+    "zh-Hant": "我的 Passport",
+    "es": "Mi Passport",
+    "id": "Passport saya",
+    "vi": "Passport của tôi",
+    "th": "Passport ของฉัน",
+    "pt": "Meu Passport",
+    "fr": "Mon Passport"
+  },
+  "m0e9a04d5d42a": {
+    "ja": "{0}のファン認証を完了して、一緒に過ごした瞬間を集めましょう。",
+    "zh-Hans": "完成 {0} 粉丝认证，收藏共同度过的点滴。",
+    "zh-Hant": "完成 {0} 粉絲認證，收藏共同度過的點滴。",
+    "es": "Verifica tu condición de fan de {0} y colecciona tus momentos.",
+    "id": "Verifikasi status penggemar {0} dan kumpulkan momen Anda.",
+    "vi": "Xác minh bạn là người hâm mộ {0} và lưu lại những khoảnh khắc đồng hành.",
+    "th": "ยืนยันว่าคุณเป็นแฟน {0} และสะสมช่วงเวลาที่ได้ร่วมกัน",
+    "pt": "Verifique seu fandom de {0} e colecione os momentos que viveram juntos.",
+    "fr": "Confirmez votre statut de fan de {0} et collectionnez vos moments."
+  },
+  "m363016fa1279": {
+    "ja": "クイズでPassportを作り、ファン活動を始めましょう。",
+    "zh-Hans": "通过测验创建 Passport，开启粉丝旅程。",
+    "zh-Hant": "通過測驗建立 Passport，開啓粉絲旅程。",
+    "es": "Crea un Passport con un cuestionario y empieza tu recorrido como fan.",
+    "id": "Buat Passport melalui kuis dan mulai perjalanan penggemar.",
+    "vi": "Tạo Passport bằng một câu đố và bắt đầu hành trình người hâm mộ.",
+    "th": "สร้าง Passport ด้วยแบบทดสอบและเริ่มเส้นทางแฟนของคุณ",
+    "pt": "Crie um Passport com um quiz e comece sua jornada de fã.",
+    "fr": "Créez un Passport avec un quiz et commencez votre parcours de fan."
+  },
+  "ma487b133d988": {
+    "ja": "ファン認証",
+    "zh-Hans": "粉丝认证",
+    "zh-Hant": "粉絲認證",
+    "es": "Verificación de fan",
+    "id": "Verifikasi penggemar",
+    "vi": "Xác minh người hâm mộ đích thực",
+    "th": "ยืนยันแฟนตัวจริง",
+    "pt": "Verificação de fã verdadeiro",
+    "fr": "Vérification de fan"
+  },
+  "m2e295c5fb59b": {
+    "ja": "メンバーシップ、チケット、現地認証でファン活動を記録しましょう。",
+    "zh-Hans": "通过会员、票券和现场认证记录粉丝活动。",
+    "zh-Hant": "通過會員、票券和現場認證記錄粉絲活動。",
+    "es": "Registra membresías, boletos y momentos presenciales.",
+    "id": "Catat keanggotaan, tiket, dan momen di lokasi.",
+    "vi": "Ghi lại hoạt động người hâm mộ qua tư cách thành viên, vé và xác minh tại địa điểm.",
+    "th": "บันทึกกิจกรรมแฟนผ่านการเป็นสมาชิก ตั๋ว และการยืนยัน ณ สถานที่",
+    "pt": "Registre suas atividades de fã com assinaturas, bilhetes e verificações presenciais.",
+    "fr": "Enregistrez vos abonnements, vos billets et vos moments sur place."
+  },
+  "m2733b5519c3d": {
+    "ja": "認証ミッションを見る",
+    "zh-Hans": "查看认证任务",
+    "zh-Hant": "查看認證任務",
+    "es": "Ver misiones de verificación",
+    "id": "Lihat misi verifikasi",
+    "vi": "Xem nhiệm vụ xác minh",
+    "th": "ดูภารกิจยืนยัน",
+    "pt": "Ver missões de verificação",
+    "fr": "Voir les missions de vérification"
+  },
+  "mdce114bd4ae5": {
+    "ja": "自分の認証履歴",
+    "zh-Hans": "我的认证记录",
+    "zh-Hant": "我的認證記錄",
+    "es": "Mis verificaciones",
+    "id": "Verifikasi saya",
+    "vi": "Lịch sử xác minh của tôi",
+    "th": "ประวัติการยืนยันของฉัน",
+    "pt": "Minhas verificações",
+    "fr": "Mes vérifications"
+  },
+  "mf444b267ae91": {
+    "ja": "好きな気持ちをファン認証で残しましょう。",
+    "zh-Hans": "用粉丝认证记录你的热爱。",
+    "zh-Hant": "用粉絲認證記錄你的熱愛。",
+    "es": "Haz que ser fan forme parte de tu historia.",
+    "id": "Jadikan rasa sukamu bagian dari ceritamu.",
+    "vi": "Ghi dấu tình cảm của bạn qua xác minh fan.",
+    "th": "บันทึกความชอบของคุณด้วยการยืนยันแฟน",
+    "pt": "Faça sua paixão de fã fazer parte da sua história.",
+    "fr": "Faites de votre passion une part de votre histoire."
+  }
+} satisfies Record<string, TranslatedMessage>;

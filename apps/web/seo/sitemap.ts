@@ -1,3 +1,4 @@
+import { APP_LOCALES } from "@/i18n/locales";
 import type { MetadataRoute } from "next";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { canonicalUrl, isPrivatePath, isRehearsalPath, languageAlternates, type SeoLocale } from "./metadata";
@@ -6,7 +7,7 @@ export const STATIC_PUBLIC_PATHS = ["/", "/celebrities", "/live", "/guide", "/pa
 
 export function buildSitemap(content: readonly { path: string; locale: SeoLocale }[]): MetadataRoute.Sitemap {
   const paths = new Map<string, Set<SeoLocale>>();
-  const all = [...STATIC_PUBLIC_PATHS.flatMap((path) => (["ko", "en"] as const).map((locale) => ({ path, locale }))), ...content];
+  const all = [...STATIC_PUBLIC_PATHS.flatMap((path) => APP_LOCALES.map((locale) => ({ path, locale }))), ...content];
   for (const { path, locale } of all) {
     if (isPrivatePath(path) || isRehearsalPath(path)) continue;
     const creatorHome = !path.startsWith("/c/") && creatorSlugFromHomePath(path) !== null;

@@ -1,3 +1,6 @@
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__profile__domain__nickname-format";
+import { additionalLocales } from "@/i18n/messages";
 export const NICKNAME_MIN_LENGTH = 1;
 export const NICKNAME_MAX_LENGTH = 32;
 // Keep pathological combining sequences below PostgreSQL's unique-index limit.
@@ -55,7 +58,7 @@ export function getNicknameFormat(input: string): NicknameFormat {
   };
 }
 
-export function getNicknameFormatMessage(reason: NicknameFormatReason | null, locale: "ko" | "en"): string {
+export function getNicknameFormatMessage(reason: NicknameFormatReason | null, locale: AppLocale): string {
   if (!reason) return "";
   const messages = {
     ko: {
@@ -70,6 +73,13 @@ export function getNicknameFormatMessage(reason: NicknameFormatReason | null, lo
       newline: "Keep your display name on one line.",
       unsupported: "Remove the unsupported characters from your display name.",
     },
-  };
+
+  ...additionalLocales((translationLocale) => ({
+      empty: localizedMessages.m48a33613eab4[translationLocale],
+      too_long: localizedMessages.m82b5d7f5fc7d[translationLocale],
+      newline: localizedMessages.mf2ee43f78d15[translationLocale],
+      unsupported: localizedMessages.m6a5adb25e785[translationLocale],
+    }))
+};
   return messages[locale][reason];
 }

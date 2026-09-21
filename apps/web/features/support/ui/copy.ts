@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/features__support__ui__copy";
+import { additionalLocales } from "@/i18n/messages";
 export const supportCopy = {
   ko: {
     title: "문의 내역", adminTitle: "CS 문의", intro: "궁금한 점을 남겨주세요. 답변과 이전 대화를 여기서 확인할 수 있어요.",
@@ -37,4 +39,24 @@ export const supportCopy = {
     forbiddenError: "Check your sign-in status and permission to access this inquiry.",
     status: { open: "Received", answered: "Answered", resolved: "Resolved" },
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.mc4f943671198[translationLocale], adminTitle: localizedMessages.m8178eceb771e[translationLocale], intro: localizedMessages.m51d97dfae3a7[translationLocale],
+    adminIntro: localizedMessages.m91454d57e957[translationLocale], new: localizedMessages.mc1e4addd950f[translationLocale], cancel: localizedMessages.m96f8959e492c[translationLocale], subject: localizedMessages.mc2a618e2b761[translationLocale], body: localizedMessages.m9551dc675c34[translationLocale],
+    subjectHelp: localizedMessages.m2cd2df0b659a[translationLocale], bodyHelp: localizedMessages.md29152f8d25e[translationLocale],
+    submit: localizedMessages.m33f41210ef0d[translationLocale], reply: localizedMessages.mb058e6725686[translationLocale], send: localizedMessages.m8af6d60ffea7[translationLocale], sending: localizedMessages.m851a2463814c[translationLocale], sent: localizedMessages.ma681df3f9a82[translationLocale],
+    loading: localizedMessages.mc436c9c2e0be[translationLocale], empty: localizedMessages.mf391cf197281[translationLocale], adminEmpty: localizedMessages.md83f57c86af9[translationLocale],
+    error: localizedMessages.m27fa874c63d3[translationLocale], retry: localizedMessages.mce01916ce4d0[translationLocale], refresh: localizedMessages.meb819817d99a[translationLocale], refreshError: localizedMessages.m58f18df9f129[translationLocale],
+    loginTitle: localizedMessages.m540a46d58c0e[translationLocale], loginHelp: localizedMessages.me204bcaba09f[translationLocale], login: localizedMessages.m38fb3b0f129e[translationLocale],
+    missing: localizedMessages.m8429f772c5c2[translationLocale], back: localizedMessages.m829ccd427752[translationLocale], all: localizedMessages.m3d59c78fc90a[translationLocale], statusFilter: localizedMessages.m29afc9f09089[translationLocale], next: localizedMessages.m4ba6f8a548a0[translationLocale], previous: localizedMessages.m0c0c6e71aa30[translationLocale],
+    earlier: localizedMessages.m4277e1c2976d[translationLocale], team: localizedMessages.m2eb0209031b3[translationLocale], me: localizedMessages.m2eb4d983af76[translationLocale], fan: localizedMessages.m0ff4fee7be4b[translationLocale], resolved: localizedMessages.mc495541c4a57[translationLocale], resolve: localizedMessages.m33df12f78c33[translationLocale], resolving: localizedMessages.m42d924e6c1fd[translationLocale],
+    resolvedHelp: localizedMessages.md3ce54743576[translationLocale], resolvedNotice: localizedMessages.m517556328d69[translationLocale],
+    readonly: localizedMessages.m7e0867d7a3b4[translationLocale],
+    invalidSubject: localizedMessages.mb5f2aa6fedbf[translationLocale], invalidBody: localizedMessages.m5bc487185fc4[translationLocale],
+    sendError: localizedMessages.me5d1f757d62d[translationLocale], rateError: localizedMessages.mdab458e06ffd[translationLocale],
+    conflictError: localizedMessages.m73a3457075c3[translationLocale],
+    staleError: localizedMessages.me2701109dbb0[translationLocale],
+    forbiddenError: localizedMessages.m6bb4671da9e7[translationLocale],
+    status: { open: localizedMessages.mcd91f2836692[translationLocale], answered: localizedMessages.mc53e5aee1d4d[translationLocale], resolved: localizedMessages.mc4d1ee0d6464[translationLocale] },
+  }))
 } as const;

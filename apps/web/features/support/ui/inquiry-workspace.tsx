@@ -1,5 +1,9 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__support__ui__inquiry-workspace";
+import { translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, ArrowRight, Check, MessageSquare, Plus, RefreshCw, Send } from "lucide-react";
 import Link from "next/link";
@@ -13,13 +17,13 @@ import { inquiryDetailSchema, inquiryListSchema, mutationSchema, type Inquiry, t
 import { supportCopy } from "./copy";
 import styles from "./inquiry.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type Props = { locale: Locale; id?: string; admin?: boolean; readonly?: boolean };
 const parseList = (value: unknown) => inquiryListSchema.parse(value);
 const parseDetail = (value: unknown) => inquiryDetailSchema.parse(value);
 const poll = () => true;
 const pageHref = (admin: boolean, locale: Locale, id?: string) => `${admin ? "/admin" : "/my"}/inquiries${id ? `/${id}` : ""}?${admin ? "lang" : "locale"}=${locale}` as Route;
-const date = (value: string, locale: Locale) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+const date = (value: string, locale: Locale) => new Intl.DateTimeFormat(locale, { calendar: "gregory",
   year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Seoul",
 }).format(new Date(value));
 
@@ -69,7 +73,7 @@ function InquiryList({ locale, admin = false }: Props) {
         const token = await auth.getAccessToken();
         if (!mounted.current) return false;
         if (!token) throw new Error("AUTHENTICATION_REQUIRED");
-        const data = mutationSchema.parse(await checked(await fetch(api, { method: "POST", headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ ...input, locale }) })));
+        const data = mutationSchema.parse(await checked(await fetch(api, { method: "POST", headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ ...input, locale: toContentLocale(locale) }) })));
         if (!mounted.current) return false;
         router.push(pageHref(false, locale, data.id));
         return true;
@@ -147,7 +151,7 @@ function Conversation({ locale, id, admin = false, readonly = false }: Props & {
           </div>
           {resource.refreshFailed && <p className={styles.warning} role="status">{t.refreshError}</p>}
           {nextCursor && <div className={styles.earlier}><FanAction onClick={loadOlder} disabled={loadingOlder}>{loadingOlder ? t.loading : t.earlier}</FanAction></div>}
-          <ol className={styles.messages} aria-label={locale === "ko" ? "문의 대화" : "Conversation"}>
+          <ol className={styles.messages} aria-label={locale === "ko" ? "문의 대화" : translate(locale, localizedMessages.m6d751920c46e, "Conversation")}>
             {messages.map((message) => <li key={message.id} className={styles.message} data-own={message.sender === (admin ? "admin" : "fan")}>
               <div className={styles.messageMeta}><strong>{message.sender === "admin" ? t.team : admin ? read.inquiry.requesterName : t.me}</strong><time dateTime={message.createdAt}>{date(message.createdAt, locale)} KST</time></div><p>{message.body}</p>
             </li>)}

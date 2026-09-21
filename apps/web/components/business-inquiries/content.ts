@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__business-inquiries__content";
+import { additionalLocales } from "@/i18n/messages";
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 
 export type BusinessPageKind = "creator" | "partner";
@@ -114,7 +116,48 @@ export const businessPageContent: Record<BusinessPageKind, Record<FanLocale, Con
       guide: "Explore the fan guide",
       related: "Looking for a brand or business partnership?",
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      title: localizedMessages.m1247c04592f0[translationLocale],
+      eyebrow: "FOR EVERYONE WITH FANS",
+      hero: localizedMessages.mf938d6104e6b[translationLocale],
+      description: localizedMessages.m68036ee9b0e3[translationLocale],
+      cta: localizedMessages.m5340b6825041[translationLocale],
+      scope: localizedMessages.m6ff2c4c12602[translationLocale],
+      audience: localizedMessages.mf769eecca2d2[translationLocale],
+      visualTitle: localizedMessages.m20f5ffd670a9[translationLocale],
+      visualLabels: [localizedMessages.me099db4483a2[translationLocale], localizedMessages.md5d8135bc1c7[translationLocale], "Fan Passport"],
+      supportTitle: localizedMessages.mdf148fa500df[translationLocale],
+      supportDescription: localizedMessages.m545fa50871ad[translationLocale],
+      services: [
+        { title: localizedMessages.m3c52717a7539[translationLocale], description: localizedMessages.m5a82c094fbfb[translationLocale] },
+        { title: localizedMessages.m03c141f8bd8e[translationLocale], description: localizedMessages.m915a224b3ec0[translationLocale] },
+        { title: localizedMessages.m0b2ac9e7411e[translationLocale], description: localizedMessages.m3eaba3812b30[translationLocale] },
+        { title: localizedMessages.m3fec36a6e48c[translationLocale], description: localizedMessages.ma204af1fe063[translationLocale] },
+      ],
+      processTitle: localizedMessages.mf3060170948d[translationLocale],
+      steps: [
+        { title: localizedMessages.m25b4ec342d97[translationLocale], description: localizedMessages.m4b8ec52092c7[translationLocale] },
+        { title: localizedMessages.m14de657e9fa7[translationLocale], description: localizedMessages.m8525a92de7f5[translationLocale] },
+        { title: localizedMessages.m0a560aa54112[translationLocale], description: localizedMessages.m7271115766fd[translationLocale] },
+        { title: localizedMessages.m6dcf2404a24f[translationLocale], description: localizedMessages.m853ada69c47d[translationLocale] },
+      ],
+      prepareTitle: localizedMessages.mbd804da83147[translationLocale],
+      prepareDescription: localizedMessages.m43b756ab034c[translationLocale],
+      prepare: [localizedMessages.m3722fd8b66f5[translationLocale], localizedMessages.m82aba9a31cfc[translationLocale], localizedMessages.m57965195b658[translationLocale], localizedMessages.md53b17200b1c[translationLocale]],
+      faqTitle: localizedMessages.mefef1b01b74d[translationLocale],
+      faqs: [
+        { question: localizedMessages.m53751ccae311[translationLocale], answer: localizedMessages.m0e52ba0535cd[translationLocale] },
+        { question: localizedMessages.m14b311ae6ed7[translationLocale], answer: localizedMessages.m4b85a066677a[translationLocale] },
+        { question: localizedMessages.m037c41630769[translationLocale], answer: localizedMessages.mea71a9578691[translationLocale] },
+        { question: localizedMessages.mdb5e88a949e3[translationLocale], answer: localizedMessages.ma1712853ea66[translationLocale] },
+      ],
+      closeTitle: localizedMessages.m098b52dd253b[translationLocale],
+      closeDescription: localizedMessages.mf5b3f456ce70[translationLocale],
+      guide: localizedMessages.m370429ae2106[translationLocale],
+      related: localizedMessages.m178a1b4c601d[translationLocale],
+    }))
+},
   partner: {
     ko: {
       title: "파트너 협업 제안",
@@ -198,5 +241,47 @@ export const businessPageContent: Record<BusinessPageKind, Record<FanLocale, Con
       guide: "Explore the ByUs guide",
       related: "Planning a U.S. fanmeeting?",
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      title: localizedMessages.m23b043a37dea[translationLocale],
+      eyebrow: "PARTNERSHIPS",
+      hero: localizedMessages.m86584585a1ee[translationLocale],
+      description: localizedMessages.m49588b042547[translationLocale],
+      cta: localizedMessages.mbbf6437b36b9[translationLocale],
+      scope: localizedMessages.m99dc836d87fe[translationLocale],
+      audience: localizedMessages.m572d4a9e0915[translationLocale],
+      visualTitle: localizedMessages.m0a166d328baf[translationLocale],
+      visualLabels: [localizedMessages.m5ccfd5ed1a15[translationLocale], localizedMessages.m35e3e355d6df[translationLocale], localizedMessages.mfe80f1e0d309[translationLocale]],
+      supportTitle: localizedMessages.m9f0cc2c5b79f[translationLocale],
+      supportDescription: localizedMessages.md5749d6d51ef[translationLocale],
+      services: [
+        { title: localizedMessages.m7d89fd1c078e[translationLocale], description: localizedMessages.mf58b74aec182[translationLocale] },
+        { title: localizedMessages.m0cce8979291b[translationLocale], description: localizedMessages.mb473941badab[translationLocale] },
+        { title: localizedMessages.m8251a4326219[translationLocale], description: localizedMessages.mc6a1b091c0ac[translationLocale] },
+        { title: localizedMessages.m4a2693bb88d4[translationLocale], description: localizedMessages.m33de40e3347a[translationLocale] },
+        { title: localizedMessages.m9b0c8b495827[translationLocale], description: localizedMessages.m9252455e7e45[translationLocale] },
+      ],
+      processTitle: localizedMessages.m500d72696e66[translationLocale],
+      steps: [
+        { title: localizedMessages.m8e9931dbe157[translationLocale], description: localizedMessages.mf03c046d8625[translationLocale] },
+        { title: localizedMessages.mba9314997e5f[translationLocale], description: localizedMessages.m91de78bf076e[translationLocale] },
+        { title: localizedMessages.m28760c7e9ae0[translationLocale], description: localizedMessages.m46d15e481ee2[translationLocale] },
+        { title: localizedMessages.m54a143311b58[translationLocale], description: localizedMessages.m0ecc4e829130[translationLocale] },
+      ],
+      prepareTitle: localizedMessages.m09b1840e442c[translationLocale],
+      prepareDescription: localizedMessages.m90e58334565d[translationLocale],
+      prepare: [localizedMessages.m9bdf7947f3bd[translationLocale], localizedMessages.mb4c0998cc63d[translationLocale], localizedMessages.m0aaccbd50315[translationLocale], localizedMessages.m3d92c4964688[translationLocale]],
+      faqTitle: localizedMessages.m788f02f09bfc[translationLocale],
+      faqs: [
+        { question: localizedMessages.m3b84f39cbcab[translationLocale], answer: localizedMessages.m87583ad9eedf[translationLocale] },
+        { question: localizedMessages.mb2309378deb8[translationLocale], answer: localizedMessages.m7b596f0293dd[translationLocale] },
+        { question: localizedMessages.ma39bd8601716[translationLocale], answer: localizedMessages.m8723db69486f[translationLocale] },
+        { question: localizedMessages.m3cbafecadbc7[translationLocale], answer: localizedMessages.mf1b5adaebfc8[translationLocale] },
+      ],
+      closeTitle: localizedMessages.m3905e8b16181[translationLocale],
+      closeDescription: localizedMessages.m70c129acb201[translationLocale],
+      guide: localizedMessages.m1d9a381aa88a[translationLocale],
+      related: localizedMessages.mc6ace05e496d[translationLocale],
+    }))
+},
 };

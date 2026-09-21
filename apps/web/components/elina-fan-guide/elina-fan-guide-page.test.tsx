@@ -51,7 +51,7 @@ describe("Elina fan guide", () => {
   });
 
   it("falls back to Korean for unsupported or repeated locale values", async () => {
-    for (const locale of ["fr", ["en", "ko"], undefined]) {
+    for (const locale of ["de", ["en", "ko"], undefined]) {
       const metadata = await generateMetadata({ searchParams: Promise.resolve({ locale }) });
       expect(metadata.title).toBe("뱅크시와 함께 하는 엘리나 LIVE | ByUs");
       expect(metadata.alternates?.canonical).toBe("https://byus.kr/pages/elina-fan-guide?locale=ko");

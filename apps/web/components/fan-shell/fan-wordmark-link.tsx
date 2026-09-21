@@ -1,3 +1,6 @@
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__fan-wordmark-link";
+import { translate } from "@/i18n/messages";
 import Image from "next/image";
 import type { Route } from "next";
 import Link from "next/link";
@@ -5,7 +8,7 @@ import Link from "next/link";
 type FanWordmarkLinkProps = {
   className?: string;
   href?: Route;
-  locale?: "ko" | "en";
+  locale?: AppLocale;
   ariaLabel?: string;
   priority?: boolean;
 };
@@ -18,7 +21,7 @@ export function FanWordmarkLink({
   priority = true,
 }: FanWordmarkLinkProps) {
   const resolvedHref = href ?? (locale ? `/?locale=${locale}` as Route : "/");
-  const resolvedAriaLabel = ariaLabel ?? (locale === "en" ? "ByUs home" : "ByUs 홈");
+  const resolvedAriaLabel = ariaLabel ?? (!locale || locale === "ko" ? "ByUs 홈" : translate(locale ?? "en", localizedMessages.mae9332c916d9, "ByUs home"));
 
   return (
     <Link className={className} href={resolvedHref} aria-label={resolvedAriaLabel}>

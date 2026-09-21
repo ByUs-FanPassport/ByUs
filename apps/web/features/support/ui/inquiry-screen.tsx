@@ -26,7 +26,7 @@ export function InquiryScreen({ locale, id }: { locale: FanLocale; id?: string }
   </FanAppFrame>;
 }
 
-export function AdminInquiryScreen({ locale, id }: { locale: FanLocale; id?: string }) {
+export function AdminInquiryScreen({ locale, id }: { locale: "ko" | "en"; id?: string }) {
   const auth = usePrivy();
   const session = useAdminSession();
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale={locale} />;

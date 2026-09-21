@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__reaction__ui__reaction-action";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
@@ -21,6 +24,8 @@ import { StampArtwork } from "../../passport/ui/passport-stamp-artwork";
 const copy = {
   ko: { title: "좋아요 남기기", body: "좋아하는 마음을 팬 활동 기록에 남겨보세요.", action: "좋아요 남기기", working: "남기는 중…", checking: "확인하는 중…", done: "좋아요를 남겼어요", error: "좋아요를 남기지 못했어요. 잠시 후 다시 시도해 주세요.", statusError: "좋아요 기록을 확인하지 못했어요. 다시 시도해 주세요.", retry: "다시 확인", passport: "Fan Passport 만들기", later: "나중에 할게요" },
   en: { title: "Leave a like", body: "Save your first like as a Stamp in your Fan Passport.", action: "Leave a like", working: "Recording…", checking: "Checking…", done: "Like recorded", error: "We couldn't save your like. Try again in a moment.", statusError: "We couldn't check your like. Try again in a moment.", retry: "Check again", passport: "Create Fan Passport", later: "Maybe later" },
+
+  ...additionalLocales((translationLocale) => ({ title: localizedMessages.m6f6dac867f8e[translationLocale], body: localizedMessages.mf0c0b01e1250[translationLocale], action: localizedMessages.m0be227a6d2b5[translationLocale], working: localizedMessages.me443ebcd1615[translationLocale], checking: localizedMessages.m130d18b3ca08[translationLocale], done: localizedMessages.mbd195f4596d0[translationLocale], error: localizedMessages.m3ee403208b42[translationLocale], statusError: localizedMessages.mab6d207fe534[translationLocale], retry: localizedMessages.ma338c790832e[translationLocale], passport: localizedMessages.m1641d12dfb0d[translationLocale], later: localizedMessages.m5c5e45421dcb[translationLocale] }))
 } as const;
 
 type CheckState = "checking" | "ready" | "error";
@@ -30,7 +35,7 @@ type ActionState = "idle" | "working" | "done" | "error";
  * Each Privy owner and creator gets a separate stateful instance. This prevents
  * a completed CTA or an in-flight response from a prior account being reused.
  */
-export function ReactionAction({ slug, locale, variant = "card" }: { slug: string; locale: "ko" | "en"; variant?: "card" | "compact" }) {
+export function ReactionAction({ slug, locale, variant = "card" }: { slug: string; locale: AppLocale; variant?: "card" | "compact" }) {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
   const ownerId = user?.id;
   return <ReactionActionForOwner key={`${ready ? "ready" : "loading"}:${authenticated ? "authenticated" : "guest"}:${ownerId ?? "unknown"}:${slug}`} slug={slug} locale={locale} variant={variant} ready={ready} authenticated={authenticated} ownerId={ownerId} getAccessToken={getAccessToken} />;
@@ -39,7 +44,7 @@ export function ReactionAction({ slug, locale, variant = "card" }: { slug: strin
 function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, ownerId, getAccessToken }: {
   variant: "card" | "compact";
   slug: string;
-  locale: "ko" | "en";
+  locale: AppLocale;
   ready: boolean;
   authenticated: boolean;
   ownerId: string | undefined;
@@ -182,11 +187,11 @@ function ReactionActionForOwner({ slug, locale, variant, ready, authenticated, o
     {actionState === "error" && checkState !== "error" ? <p role="alert" className={styles.error}>{t.error}</p> : null}
     {actionState === "done" && result && showModal && <AccessibleOverlay open onClose={() => setShowModal(false)} labelledBy="reaction-modal-title" backdropClassName={styles.backdrop} contentClassName={styles.modal}>
       <div className={styles.stampReward}><StampArtwork type="first_reaction" locale={locale} /></div>
-      <h2 id="reaction-modal-title">{locale === "ko" ? "첫 좋아요 도장을 받았어요" : "You earned your First Like Stamp"}</h2>
+      <h2 id="reaction-modal-title">{locale === "ko" ? "첫 좋아요 도장을 받았어요" : translate(locale, localizedMessages.m2e387fe4594c, "You earned your First Like Stamp")}</h2>
       <p>{result.passportExists
-        ? locale === "ko" ? "패스포트 도장함에서 첫 좋아요를 확인해 보세요." : "Find your first like in your Passport stamp book."
-        : locale === "ko" ? "첫 좋아요 도장을 보관했어요. 팬 인증을 마치고 Fan Passport를 만들면 도장함에 담겨요." : "Your First Like Stamp is saved. Complete fan verification to add it to your Fan Passport."}</p>
-      <Link href={(result.passportExists ? `/passports?locale=${locale}#collection` : verificationHref) as Route}>{result.passportExists ? locale === "ko" ? "내 패스포트 보기" : "View my Passports" : t.passport}</Link>
+        ? locale === "ko" ? "패스포트 도장함에서 첫 좋아요를 확인해 보세요." : translate(locale, localizedMessages.m7a4ba120835b, "Find your first like in your Passport stamp book.")
+        : locale === "ko" ? "첫 좋아요 도장을 보관했어요. 팬 인증을 마치고 Fan Passport를 만들면 도장함에 담겨요." : translate(locale, localizedMessages.m3cadbfa88dd5, "Your First Like Stamp is saved. Complete fan verification to add it to your Fan Passport.")}</p>
+      <Link href={(result.passportExists ? `/passports?locale=${locale}#collection` : verificationHref) as Route}>{result.passportExists ? locale === "ko" ? "내 패스포트 보기" : translate(locale, localizedMessages.mca4d55210ded, "View my Passports") : t.passport}</Link>
       <button type="button" onClick={() => setShowModal(false)}>{t.later}</button>
     </AccessibleOverlay>}
   </section>;

@@ -7,6 +7,7 @@ import { BusinessInquiryPage } from "../business-inquiries/business-inquiry-page
 
 const navigation = vi.hoisted(() => ({ search: "locale=ko" }));
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(navigation.search),
 }));
 
@@ -46,7 +47,7 @@ describe("public pages layout", () => {
     expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
   });
 
-  it.each(["", "locale=fr", "locale=en&locale=ko"])("matches the page's Korean fallback for %s", (search) => {
+  it.each(["", "locale=de", "locale=en&locale=ko"])("matches the page's Korean fallback for %s", (search) => {
     navigation.search = search;
     render(<PagesLayout><main>Content</main></PagesLayout>);
     expect(screen.getByRole("navigation", { name: "ByUs 하단 메뉴" })).toBeInTheDocument();

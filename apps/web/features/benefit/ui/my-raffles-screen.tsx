@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__my-raffles-screen";
+import { additionalLocales } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, RotateCcw, TicketCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -46,6 +49,22 @@ const copy = {
     more: "Load earlier entries",
     moreError: "We couldn’t load earlier entries.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.mc412268837ae[translationLocale],
+    description: localizedMessages.m34ca508c640d[translationLocale],
+    back: localizedMessages.mb16bc5bfc5ad[translationLocale],
+    loading: localizedMessages.m3b09952f82f3[translationLocale],
+    error: localizedMessages.m312f30447683[translationLocale],
+    errorHelp: localizedMessages.m31e34298bff8[translationLocale],
+    retry: localizedMessages.md2d596f0852b[translationLocale],
+    empty: localizedMessages.m86d5ed79af68[translationLocale],
+    emptyHelp: localizedMessages.m586b60f427f0[translationLocale],
+    browse: localizedMessages.m6241311366fe[translationLocale],
+    login: localizedMessages.m43e37be1dcda[translationLocale],
+    more: localizedMessages.m8724421a50f0[translationLocale],
+    moreError: localizedMessages.mb9c524bceae4[translationLocale],
+  }))
 } as const;
 
 const parseList = (body: unknown) => ownedRaffleListSchema.parse(body);
@@ -59,7 +78,7 @@ export function MyRafflesScreen({ locale }: { locale: FanLocale }) {
 function MyRafflesOwnerScreen({ locale, auth }: { locale: FanLocale; auth: ReturnType<typeof usePrivy> }) {
   const t = copy[locale];
   const parse = useCallback((body: unknown) => parseList(body), []);
-  const resource = useOwnedFanResource(auth.authenticated ? `/api/me/raffles?locale=${locale}` : null, parse, auth);
+  const resource = useOwnedFanResource(auth.authenticated ? `/api/me/raffles?locale=${toContentLocale(locale)}` : null, parse, auth);
   const [extraPages, setExtraPages] = useState<OwnedRaffleList[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState(false);
@@ -77,7 +96,7 @@ function MyRafflesOwnerScreen({ locale, auth }: { locale: FanLocale; auth: Retur
       try {
         const token = await auth.getAccessToken();
         if (!token) throw new Error("Authentication required");
-        const query = new URLSearchParams({ locale, cursor: nextCursor });
+        const query = new URLSearchParams({ locale: toContentLocale(locale), cursor: nextCursor });
         const response = await fetch(`/api/me/raffles?${query.toString()}`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",

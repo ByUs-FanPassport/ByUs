@@ -1,12 +1,15 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__instagram-recent-activity";
+import { translate } from "@/i18n/messages";
 import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Play } from "./icons";
 import { instagramMediaSchema, type InstagramMedia } from "../server/instagram/model";
 import styles from "./instagram-recent-activity.module.css";
 
-export function InstagramRecentActivity({ slug, locale, fallback = null }: { slug: string; locale: "ko" | "en"; fallback?: ReactNode }) {
+export function InstagramRecentActivity({ slug, locale, fallback = null }: { slug: string; locale: AppLocale; fallback?: ReactNode }) {
   const [media, setMedia] = useState<InstagramMedia[]>([]);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -38,10 +41,10 @@ export function InstagramRecentActivity({ slug, locale, fallback = null }: { slu
   const cards = media.filter((item) => !failedImages.has(item.imageUrl));
   if (!cards.length) return fallback;
   return <section className={styles.section} aria-labelledby="instagram-activity-title">
-    <h2 id="instagram-activity-title">{locale === "ko" ? "최근 활동" : "Recent activity"}</h2>
+    <h2 id="instagram-activity-title">{locale === "ko" ? "최근 활동" : translate(locale, localizedMessages.m827eba9cc92d, "Recent activity")}</h2>
     <div className={styles.grid}>
       {cards.map((item) => <a key={item.id} className={styles.card} href={item.permalink} target="_blank" rel="noopener noreferrer"
-        aria-label={`${item.caption || `@${item.sourceAccount.username}`} · ${locale === "ko" ? "Instagram에서 보기, 새 창" : "View on Instagram, new window"}`}>
+        aria-label={`${item.caption || `@${item.sourceAccount.username}`} · ${locale === "ko" ? "Instagram에서 보기, 새 창" : translate(locale, localizedMessages.mcacf27040a99, "View on Instagram, new window")}`}>
         <div className={styles.media}>
           <Image src={item.imageUrl} alt="" width={900} height={1600} unoptimized referrerPolicy="no-referrer"
             onError={() => setFailedImages((previous) => new Set(previous).add(item.imageUrl))} />

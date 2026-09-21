@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ServiceGuidePage } from "./service-guide-page";
 
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/guide",
   useSearchParams: () => new URLSearchParams("locale=ko"),
 }));

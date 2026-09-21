@@ -1,3 +1,5 @@
+import { toContentLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
 import { createHomeBannerRepository } from "../server/content/home-banner-repository";
 import { publicMetadata, pageCopy } from "@/seo/metadata";
 import { homeStructuredData, serializeStructuredData } from "@/seo/structured-data";
@@ -10,13 +12,13 @@ import { createLiveEventRepositoryFromEnvironment } from "../server/g3/live-even
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ locale?: string | string[] }> }) {
-  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale((await searchParams).locale);
   return publicMetadata({ path: "/", locale, ...pageCopy.home[locale] });
 }
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ locale?: string | string[]; owned?: string | string[]; role?: string | string[] }> }) {
   const { locale: requestedLocale, owned, role } = await searchParams;
-  const locale = requestedLocale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(requestedLocale);
   const initialOwnedOnly = owned === "1" ? true : owned !== undefined || role !== undefined ? false : undefined;
   const environment = loadServerEnv();
   const liveRepository = createLiveEventRepositoryFromEnvironment({
@@ -25,10 +27,10 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   });
   const celebrityRepository = createPublishedContentRepositoryFromEnvironment();
   const [featuredLivesResult, celebritiesResult, celebrityLivesResult, homeBannersResult] = await Promise.allSettled([
-    liveRepository.listFeaturedPublished({ locale, now: new Date() }),
-    celebrityRepository.list(locale),
-    celebrityRepository.listPrimaryLives(locale),
-    createHomeBannerRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }).list(locale),
+    liveRepository.listFeaturedPublished({ locale: toContentLocale(locale), now: new Date() }),
+    celebrityRepository.list(toContentLocale(locale)),
+    celebrityRepository.listPrimaryLives(toContentLocale(locale)),
+    createHomeBannerRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }).list(toContentLocale(locale)),
   ]);
   if (featuredLivesResult.status === "rejected" && celebritiesResult.status === "rejected" && homeBannersResult.status === "rejected") throw new Error("Home content unavailable");
   const contentErrors: HomeContentErrors = {

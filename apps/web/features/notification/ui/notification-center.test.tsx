@@ -15,6 +15,7 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 let locale = "ko";
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/notifications",
   useSearchParams: () => new URLSearchParams(`locale=${locale}`),
 }));

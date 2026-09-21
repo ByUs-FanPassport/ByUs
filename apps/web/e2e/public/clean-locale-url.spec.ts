@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 for (const [browserLocale, locale, title] of [
   ["ko-KR", "ko", "개인정보처리방침"],
   ["en-US", "en", "Privacy Policy"],
-  ["ja-JP", "en", "Privacy Policy"],
+  ["ja-JP", "ja", "プライバシーポリシー"],
 ]) {
   test(`clean URLs retain ${browserLocale} browser language detection`, async ({ browser, baseURL }) => {
     const context = await browser.newContext({ locale: browserLocale });
@@ -24,7 +24,7 @@ test("legacy URLs stay clean through language switches, history, reload and logi
   await page.goto("/privacy?locale=ko&attendanceCode=KEEP&returnTo=%2Flive%2Felina%23code#fans");
   await expect(page).toHaveURL(`${baseURL}/privacy?attendanceCode=KEEP&returnTo=%2Flive%2Felina%23code#fans`);
   await expect(page.locator("html")).toHaveAttribute("lang", "ko");
-  await page.getByRole("link", { name: "언어 선택, 현재 한국어" }).click();
+  await page.getByRole("combobox", { name: "언어 선택, 현재 한국어" }).selectOption("en");
   await expect(page).toHaveURL(`${baseURL}/privacy`);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy Policy");

@@ -1,3 +1,6 @@
+import { parseAppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__legal-content";
+import { additionalLocales } from "@/i18n/messages";
 import type { FanLocale } from "./fan-shell/fan-app-shell";
 
 export type LegalDocumentId = "privacy" | "terms";
@@ -42,6 +45,17 @@ export const legalLabels = {
     homeAriaLabel: "Return home",
     languageAriaLabel: "Choose language, currently English",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    notice: localizedMessages.m9cc8a37e9587[translationLocale],
+    effectiveDate: {
+      privacy: localizedMessages.m04176cbfe77c[translationLocale],
+      terms: localizedMessages.m05574b4c58bb[translationLocale],
+    },
+    home: localizedMessages.m2a9616d0c0b5[translationLocale],
+    homeAriaLabel: localizedMessages.mb05381200dbb[translationLocale],
+    languageAriaLabel: localizedMessages.m3430a7f445df[translationLocale],
+  }))
 } as const satisfies Record<FanLocale, {
   notice: string;
   effectiveDate: Record<LegalDocumentId, string>;
@@ -186,7 +200,75 @@ export const legalDocuments = {
         },
       ],
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      metadataTitle: localizedMessages.m6fd73ee9a050[translationLocale],
+      metadataDescription: localizedMessages.mc249cedcdc5e[translationLocale],
+      title: localizedMessages.m11f0aaaa4630[translationLocale],
+      description: localizedMessages.me46e68309758[translationLocale],
+      sections: [
+        {
+          heading: localizedMessages.m1eda7bbe7402[translationLocale],
+          paragraphs: [localizedMessages.m7148a2909419[translationLocale]],
+          items: [
+            localizedMessages.mf46ad39f8ac8[translationLocale],
+            localizedMessages.m551ea6d7a5fd[translationLocale],
+            localizedMessages.mc93e006ee387[translationLocale],
+            localizedMessages.mbf510e8cc83f[translationLocale],
+            localizedMessages.m8dfa1127c83f[translationLocale],
+            localizedMessages.m63755271545d[translationLocale],
+            localizedMessages.m80919aa4dd0b[translationLocale],
+            localizedMessages.ma0ef3740bf9e[translationLocale],
+            localizedMessages.med00b7b0db1c[translationLocale],
+            localizedMessages.mac7c32165c01[translationLocale],
+            localizedMessages.m547fc19cd397[translationLocale],
+          ],
+        },
+        {
+          heading: localizedMessages.m545a59e117eb[translationLocale],
+          items: [
+            localizedMessages.mbd658d40c9c6[translationLocale],
+            localizedMessages.m3c70ccdab9f7[translationLocale],
+            localizedMessages.m519c6a229017[translationLocale],
+            localizedMessages.mab062c798b3e[translationLocale],
+            localizedMessages.m992c6448a94c[translationLocale],
+            localizedMessages.m617a63ce368c[translationLocale],
+            localizedMessages.md1a62d2db05f[translationLocale],
+            localizedMessages.m42eec045cd6d[translationLocale],
+          ],
+        },
+        {
+          heading: localizedMessages.mb7cc854484c7[translationLocale],
+          paragraphs: [localizedMessages.mc54081fa5ad1[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m07d5d91060a1[translationLocale],
+          items: [localizedMessages.mbf80c131b865[translationLocale], localizedMessages.m093f5c2b4d55[translationLocale], localizedMessages.m2f8221b0ed77[translationLocale], localizedMessages.m1089057df78a[translationLocale]],
+          paragraphs: [localizedMessages.m6aebcb01b417[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m9f47bb265455[translationLocale],
+          paragraphs: [localizedMessages.mc981a802e0a2[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m1276cd5b884a[translationLocale],
+          paragraphs: [localizedMessages.m3d15e3a06d46[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m24722fff928d[translationLocale],
+          contact: {
+            before: localizedMessages.mad0f86fcbb93[translationLocale],
+            email: "biz@sallylab.io",
+            after: ".",
+          },
+        },
+        {
+          heading: localizedMessages.mfcb8a52b9ae3[translationLocale],
+          paragraphs: [localizedMessages.ma09e75b8e30f[translationLocale]],
+        },
+      ],
+    }))
+},
   terms: {
     ko: {
       metadataTitle: "이용약관 | ByUs",
@@ -304,9 +386,68 @@ export const legalDocuments = {
         },
       ],
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      metadataTitle: localizedMessages.m23fd78f6ad62[translationLocale],
+      metadataDescription: localizedMessages.m4b060e1a4d9a[translationLocale],
+      title: localizedMessages.m797c79546a11[translationLocale],
+      description: localizedMessages.mafff687cb83b[translationLocale],
+      sections: [
+        {
+          heading: localizedMessages.m41633f1be348[translationLocale],
+          paragraphs: [localizedMessages.mf85d07a12a73[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m7dc3d9aecc68[translationLocale],
+          items: [
+            localizedMessages.m3b767a77137d[translationLocale],
+            localizedMessages.mafd0b7bdeb56[translationLocale],
+            localizedMessages.m3c029677522b[translationLocale],
+          ],
+        },
+        {
+          heading: localizedMessages.m2c4577cb1edd[translationLocale],
+          paragraphs: [localizedMessages.mfa945b35fc18[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m6ff84b9b6ad2[translationLocale],
+          paragraphs: [localizedMessages.m2466a0a8cd85[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m09114dc5d283[translationLocale],
+          items: [
+            localizedMessages.m25cfb3586924[translationLocale],
+            localizedMessages.mcfd02edd4bcc[translationLocale],
+            localizedMessages.m734f6fd54a17[translationLocale],
+            localizedMessages.m88be4bb35871[translationLocale],
+            localizedMessages.m693f3ba837ed[translationLocale],
+          ],
+        },
+        {
+          heading: localizedMessages.m9775a3649ecf[translationLocale],
+          paragraphs: [localizedMessages.mb227898283ff[translationLocale]],
+        },
+        {
+          heading: localizedMessages.mbb61d0911642[translationLocale],
+          paragraphs: [localizedMessages.m8daa4fd4a4d3[translationLocale]],
+        },
+        {
+          heading: localizedMessages.me9967bdb6251[translationLocale],
+          paragraphs: [localizedMessages.m73fa0d7a4bb7[translationLocale]],
+        },
+        {
+          heading: localizedMessages.m7464ecc66cee[translationLocale],
+          contact: {
+            before: localizedMessages.m1fed95c279e9[translationLocale],
+            email: "biz@sallylab.io",
+            after: ".",
+          },
+        },
+      ],
+    }))
+},
 } as const satisfies Record<LegalDocumentId, Record<FanLocale, LegalDocumentContent>>;
 
 export function resolveLegalLocale(value: string | string[] | undefined): FanLocale {
-  return value === "en" ? "en" : "ko";
+  return parseAppLocale(value);
 }

@@ -1,4 +1,10 @@
 import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next/navigation")>(),
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 // Node 24 exposes an incomplete global localStorage when --localstorage-file is
 // present without a path. Keep tests deterministic with the Storage contract.

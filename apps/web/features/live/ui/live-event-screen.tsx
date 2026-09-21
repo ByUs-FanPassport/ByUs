@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-event-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { LiveTimeIndicator } from "./live-time-indicator";
@@ -95,7 +99,7 @@ import {
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 import styles from "./live-event-screen.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type ViewState =
   | { kind: "loading" }
   | { kind: "error"; notFound: boolean }
@@ -282,6 +286,89 @@ const copy = {
     continue: "Keep browsing",
     close: "Close reservation confirmation",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    nav: [localizedMessages.mf35522f383ab[translationLocale], localizedMessages.m65f960dec334[translationLocale], localizedMessages.m654f233409cd[translationLocale], localizedMessages.m6d678b006abd[translationLocale], localizedMessages.me35bb4693fe3[translationLocale]],
+    back: localizedMessages.m1e429792156c[translationLocale],
+    scheduled: localizedMessages.m88aacc0cd24c[translationLocale],
+    live: "LIVE",
+    ended: localizedMessages.m3466a2c7285a[translationLocale],
+    cancelled: localizedMessages.m4ca93a54692e[translationLocale],
+    introduction: localizedMessages.mb1ddd098c43b[translationLocale],
+    howTo: localizedMessages.ma1336a310e6a[translationLocale],
+    benefit: localizedMessages.m8ebaaf980ec3[translationLocale],
+    benefitIntro: localizedMessages.mefc1f3e1298e[translationLocale],
+    fanCode: "Fan Code",
+    fanCodeHelper:
+      localizedMessages.m9cb659e21e1b[translationLocale],
+    attendance: {
+      label: localizedMessages.meb25155466c1[translationLocale],
+      placeholder: localizedMessages.m9970843ef1fe[translationLocale],
+      submit: localizedMessages.m2b26660bd101[translationLocale],
+      pending: localizedMessages.m1b999fd86e9e[translationLocale],
+      signIn: localizedMessages.m651b2dba01e4[translationLocale],
+      passport: localizedMessages.m6d0df9f61ad7[translationLocale],
+      issuePassport: localizedMessages.m9fcefc28009a[translationLocale],
+      beforeLive: localizedMessages.m40fd2887086a[translationLocale],
+      notOpen: localizedMessages.m2f36c598a89a[translationLocale],
+      attendanceEnded: localizedMessages.m32ac8b3bd164[translationLocale],
+      invalid:
+        localizedMessages.ma7c4c439c371[translationLocale],
+      format: localizedMessages.mece0c12b48a1[translationLocale],
+      rateLimited: localizedMessages.m121437ef0d9a[translationLocale],
+      unavailable: localizedMessages.m900527bca355[translationLocale],
+      wallet: localizedMessages.mc6dfac436e41[translationLocale],
+      authenticationRequired: localizedMessages.md5369fc54b47[translationLocale],
+      successTitle: localizedMessages.m766685d13f3a[translationLocale],
+      successHelper: localizedMessages.mbb8252b2f1ce[translationLocale],
+      replay: localizedMessages.m0a2b03278908[translationLocale],
+      survey: localizedMessages.md07b6a5fbdf5[translationLocale],
+    },
+    steps: [localizedMessages.mcc382dc90935[translationLocale], localizedMessages.m40df16e2ff9f[translationLocale], "Fan Code", localizedMessages.m3e2bfb186511[translationLocale], "Stamp"],
+    stepHelpers: [
+      localizedMessages.m1bca3fbe9814[translationLocale],
+      localizedMessages.m7dac7fc03667[translationLocale],
+      localizedMessages.m620f22306a1f[translationLocale],
+      localizedMessages.mc724e11d3089[translationLocale],
+      localizedMessages.m11c287d2d2a2[translationLocale],
+    ],
+    action: {
+      reservation_upcoming: localizedMessages.md776b8250cdb[translationLocale],
+      sign_in_to_reserve: localizedMessages.m41236d922737[translationLocale],
+      verify_fan: localizedMessages.mf5b015e274d6[translationLocale],
+      reserve: localizedMessages.m05c4082bfd19[translationLocale],
+      reserved: localizedMessages.meff374b24221[translationLocale],
+      watch_live: localizedMessages.m4ec04bfc003e[translationLocale],
+      reservation_closed: localizedMessages.m3c8ab4296007[translationLocale],
+      live_ended: localizedMessages.m0f5db351cee1[translationLocale],
+      live_cancelled: localizedMessages.m83708e51b816[translationLocale],
+    },
+    actionHelper: {
+      signIn: localizedMessages.m941b88c1ccf4[translationLocale],
+      verifyFan: localizedMessages.m21ef7db4e5f6[translationLocale],
+      watch: localizedMessages.mb3d5745c39d6[translationLocale],
+    },
+    reservationPeriod: localizedMessages.m3d248d578b9a[translationLocale],
+    eventTime: localizedMessages.m287b7301639d[translationLocale],
+    timeZone: localizedMessages.m91bb49d94bd2[translationLocale],
+    reservePending: localizedMessages.m4c92bece19c1[translationLocale],
+    reserveError:
+      localizedMessages.m13a8aafc96e0[translationLocale],
+    reserveUnknown:
+      localizedMessages.m3f4b8e66debc[translationLocale],
+    loadError: localizedMessages.m5712034aa50a[translationLocale],
+    loadErrorHelper: localizedMessages.m1aa405edbd79[translationLocale],
+    notFound: localizedMessages.mf5ea50c88080[translationLocale],
+    retry: localizedMessages.mdcacf25fdf50[translationLocale],
+    calendar: localizedMessages.mc71b211e885c[translationLocale],
+    watch: localizedMessages.mded0357b3802[translationLocale],
+    newWindow: localizedMessages.m9238a958f6e8[translationLocale],
+    reservedTitle: localizedMessages.ma7c565f4498c[translationLocale],
+    reservedHelper: localizedMessages.m03f67e857d4d[translationLocale],
+    stampIssued: localizedMessages.mfe35df368010[translationLocale],
+    continue: localizedMessages.m771431ae3eef[translationLocale],
+    close: localizedMessages.ma20662af635f[translationLocale],
+  }))
 } as const;
 
 const ifewLiveCopy = {
@@ -331,6 +418,30 @@ const ifewLiveCopy = {
     prizeAction: "Enter the Banksy ticket draw",
     prizeHelper: `Go to the draw for ${ifewPrizeName.en}.`,
   },
+
+  ...additionalLocales((translationLocale) => ({
+    fanCode: localizedMessages.me66aaa7d8055[translationLocale],
+    fanCodeHelper:
+      localizedMessages.m371c2f660b46[translationLocale],
+    attendance: {
+      label: localizedMessages.m31c62ef02fb7[translationLocale],
+      beforeLive:
+        localizedMessages.m078e71307773[translationLocale],
+      invalid:
+        localizedMessages.m6c20955a60d8[translationLocale],
+      successHelper:
+        localizedMessages.mb60738bd2925[translationLocale],
+    },
+    steps: [localizedMessages.m1bbf967d6533[translationLocale], localizedMessages.m0d651ff6594c[translationLocale], localizedMessages.m6c2684807ecf[translationLocale], localizedMessages.m327d547c4531[translationLocale]],
+    stepHelpers: [
+      localizedMessages.m3214aef0a091[translationLocale],
+      localizedMessages.mdd030a1bc56e[translationLocale],
+      localizedMessages.m5af701c505c4[translationLocale],
+      localizedMessages.m26439d5fae3a[translationLocale],
+    ],
+    prizeAction: localizedMessages.mc8cc08deb635[translationLocale],
+    prizeHelper: translate(translationLocale, localizedMessages.ma1a8c0a4609b, "Go to the draw for {0}.", [ifewPrizeName.en]),
+  }))
 } as const;
 
 type AttendanceState =
@@ -357,7 +468,7 @@ function formatRetry(seconds: number) {
 }
 
 function formatDateTime(iso: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     timeZone: "Asia/Seoul",
     month: "long",
     day: "numeric",
@@ -369,21 +480,21 @@ function formatDateTime(iso: string, locale: Locale) {
 
 // Compare calendar days in the same timezone used by the displayed LIVE schedule.
 export function formatReservationDeadline(closesAt: string, startsAt: string, locale: Locale) {
-  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+  const day = new Intl.DateTimeFormat("en-CA", { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
   if (day.format(new Date(closesAt)) !== day.format(new Date(startsAt))) {
     return formatReservationDateTime(closesAt, locale);
   }
-  const time = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
-    timeZone: "Asia/Seoul", hour: "numeric", minute: "2-digit", hour12: locale !== "ko",
+  const time = new Intl.DateTimeFormat(locale, { calendar: "gregory",
+    timeZone: "Asia/Seoul", hour: "numeric", minute: "2-digit", hour12: locale === "ko" ? false : locale === "en" ? true : undefined,
   }).format(new Date(closesAt));
-  return `${locale === "ko" ? "당일" : "Same day"} ${time}`;
+  return `${locale === "ko" ? "당일" : translate(locale, localizedMessages.m6590318357c5, "Same day")} ${time}`;
 }
 
 /** Compact schedule keeps the year and KST explicit; no browser-timezone dependence. */
 export function formatReservationDateTime(iso: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     timeZone: "Asia/Seoul", year:"numeric", month:"short", day:"numeric",
-    weekday:"short", hour:"numeric", minute:"2-digit", hour12:locale !== "ko",
+    weekday:"short", hour:"numeric", minute:"2-digit", hour12: locale === "ko" ? false : locale === "en" ? true : undefined,
   }).format(new Date(iso));
 }
 
@@ -457,7 +568,7 @@ function ReservationDialog({
         stampType="reservation"
         title={c.reservedTitle}
         description={isElinaReservation
-          ? locale === "ko" ? "보유 응모권으로 지금 원하는 선물에 직접 응모할 수 있어요." : "Use your raffle tickets to enter for your favorite prize now."
+          ? locale === "ko" ? "보유 응모권으로 지금 원하는 선물에 직접 응모할 수 있어요." : translate(locale, localizedMessages.m9a9785e2a282, "Use your raffle tickets to enter for your favorite prize now.")
           : c.reservedHelper}
         headingId="reservation-title"
         scoreDelta={completion.scoreDelta}
@@ -498,33 +609,23 @@ function ReservationDialog({
       >
         <Bell aria-hidden="true" />
         {pushState === "subscribed"
-          ? locale === "ko"
-            ? "알림 켜짐"
-            : "Notifications on"
+          ? locale === "ko" ? "알림 켜짐" : translate(locale, localizedMessages.m6c63d1136fe0, "Notifications on")
           : pushState === "failed"
-            ? locale === "ko" ? "알림 설정 다시 시도" : "Retry notification setup"
-          : locale === "ko"
-            ? "시작 알림 받기"
-            : "Enable reminders"}
+            ? locale === "ko" ? "알림 설정 다시 시도" : translate(locale, localizedMessages.m732876e33248, "Retry notification setup")
+          : locale === "ko" ? "시작 알림 받기" : translate(locale, localizedMessages.m6dd41a8b1675, "Enable reminders")}
       </button>
       {pushState && pushState !== "subscribed" && (
         <p className={styles.pushMessage} role="status">
           {pushState === "denied"
-            ? locale === "ko"
-              ? "브라우저 설정에서 알림 권한을 허용해 주세요."
-              : "Allow notifications in browser settings."
+            ? locale === "ko" ? "브라우저 설정에서 알림 권한을 허용해 주세요." : translate(locale, localizedMessages.m85c4110aa1d8, "Allow notifications in browser settings.")
             : pushState === "unsupported"
-              ? locale === "ko"
-                ? "이 브라우저는 푸시 알림을 지원하지 않습니다."
-                : "This browser does not support push notifications."
-              : locale === "ko"
-                ? "알림 설정을 저장하지 못했어요. 다시 시도해 주세요. LIVE 예약은 완료됐어요."
-                : "Could not save notification settings. Please try again. Your LIVE reservation is complete."}
+              ? locale === "ko" ? "이 브라우저는 푸시 알림을 지원하지 않습니다." : translate(locale, localizedMessages.m4d9fb2fb6d1b, "This browser does not support push notifications.")
+              : locale === "ko" ? "알림 설정을 저장하지 못했어요. 다시 시도해 주세요. LIVE 예약은 완료됐어요." : translate(locale, localizedMessages.m83d1bd7802c6, "Could not save notification settings. Please try again. Your LIVE reservation is complete.")}
         </p>
       )}
       {isElinaReservation ? (
         <FanAction variant="primary" className={styles.dialogPrimary} fullWidth href={elinaRafflesHref(locale)}>
-          {locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter"}
+          {locale === "ko" ? "선물 고르고 응모하기" : translate(locale, localizedMessages.mb16d9d8b336e, "Choose a prize and enter")}
         </FanAction>
       ) : (
         <FanAction variant="primary" className={styles.dialogPrimary} fullWidth onClick={() => dialogRef.current?.close()}>
@@ -645,7 +746,7 @@ export function LiveEventScreen({
       if (controller.signal.aborted) return;
       const result = await withRequestDeadline(async (signal) => {
         const response = await fetch(
-          `/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`,
+          `/api/live-events/${encodeURIComponent(slug)}?locale=${toContentLocale(locale)}`,
           { method: "GET", headers: token ? { authorization: `Bearer ${token}` } : undefined, cache: "no-store", signal },
         );
         if (!response.ok) return { ok: false as const, status: response.status };
@@ -722,7 +823,7 @@ export function LiveEventScreen({
       const claim = collectibleClaimSchema.parse(result.claim);
       window.sessionStorage.removeItem(storageKey);
       if (isCurrent()) setCollectibleSnapshot({ key: privateOwnerKey, data: { ...collectible, eligible: false, claim } });
-    } catch { if (isCurrent()) setCollectibleError(locale === "ko" ? "Collectible을 받지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요." : "Could not claim the Collectible. Check the status and try again."); }
+    } catch { if (isCurrent()) setCollectibleError(locale === "ko" ? "Collectible을 받지 못했어요. 상태를 확인한 뒤 다시 시도해 주세요." : translate(locale, localizedMessages.m56df2486edef, "Could not claim the Collectible. Check the status and try again.")); }
     finally { if (isCurrent()) setCollectiblePending(false); }
   }, [authenticated, collectible, collectiblePending, getAccessToken, locale, privateOwnerKey, session.generation, sessionOwnerId, sessionReady, slug]);
 
@@ -835,7 +936,7 @@ export function LiveEventScreen({
           const refreshController = new AbortController();
           reservationControllerRef.current = refreshController;
           const data = await withRequestDeadline(async (signal) => {
-            const refreshed = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, {
+            const refreshed = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${toContentLocale(locale)}`, {
               method: "GET", headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
             });
             if (!refreshed.ok) throw new Error("Reservation refresh failed");
@@ -862,7 +963,7 @@ export function LiveEventScreen({
         if (!token) token = await withOperationDeadline(getAccessToken());
         if (!token || !isCurrent()) throw new Error("Missing reconciliation token");
         const current = await withRequestDeadline(async (signal) => {
-          const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, {
+          const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${toContentLocale(locale)}`, {
             method: "GET", headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
           });
           if (!response.ok) throw new Error("Reservation reconciliation failed");
@@ -1136,7 +1237,7 @@ export function LiveEventScreen({
           tabIndex={-1}
           className={styles.loading}
           aria-busy="true"
-          aria-label={locale === "ko" ? "LIVE 불러오는 중" : "Loading LIVE"}
+          aria-label={locale === "ko" ? "LIVE 불러오는 중" : translate(locale, localizedMessages.m204628abf2b9, "Loading LIVE")}
         >
           <div />
           <div />
@@ -1177,12 +1278,8 @@ export function LiveEventScreen({
   const attendanceCopy = eventCopy
     ? { ...c.attendance, ...eventCopy.attendance }
     : c.attendance;
-  const elinaSteps = locale === "ko"
-    ? ["팬 인증", "LIVE 예약", "선물 응모", "방송 당일 출석"]
-    : ["Verify", "Reserve", "Enter for prizes", "LIVE check-in"];
-  const elinaStepHelpers = locale === "ko"
-    ? ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "ByUs에 코드 입력하고 2장 추가"]
-    : ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to ByUs, enter the code and earn 2"];
+  const elinaSteps = ({ ko: ["팬 인증", "LIVE 예약", "선물 응모", "방송 당일 출석"], en: ["Verify", "Reserve", "Enter for prizes", "LIVE check-in"], ...additionalLocales((translationLocale) => ([localizedMessages.mc1710e55de0d[translationLocale], localizedMessages.m30f072d4f05f[translationLocale], localizedMessages.mfa0fca66bf63[translationLocale], localizedMessages.med9574a43a55[translationLocale]])) })[locale];
+  const elinaStepHelpers = ({ ko: ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "ByUs에 코드 입력하고 2장 추가"], en: ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to ByUs, enter the code and earn 2"], ...additionalLocales((translationLocale) => ([localizedMessages.mcdbf7d4c741f[translationLocale], localizedMessages.m256a94549924[translationLocale], localizedMessages.m0e68ee041cca[translationLocale], localizedMessages.m52dd9000cd4f[translationLocale]])) })[locale];
   const journeySteps = live.attendanceConfigured === false ? c.steps.slice(0, 2) : eventCopy?.steps ?? (isElinaLive ? elinaSteps : c.steps.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const journeyStepHelpers = live.attendanceConfigured === false ? c.stepHelpers.slice(0, 2) : eventCopy?.stepHelpers ?? (isElinaLive ? elinaStepHelpers : c.stepHelpers.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const statusLabel =
@@ -1212,7 +1309,7 @@ export function LiveEventScreen({
         ? c.actionHelper.verifyFan.replace("{celebrity}", live.celebrity.name)
         : primaryAction === "watch_live"
           ? isIfewLive
-            ? locale === "ko" ? "틱톡이 새 창에서 열려요. 시청 후 이 화면에서 출석 코드를 입력해 주세요." : "TikTok opens in a new tab. Return here to enter the attendance code."
+            ? locale === "ko" ? "틱톡이 새 창에서 열려요. 시청 후 이 화면에서 출석 코드를 입력해 주세요." : translate(locale, localizedMessages.mfecd6473737d, "TikTok opens in a new tab. Return here to enter the attendance code.")
             : c.actionHelper.watch
           : null;
   const primaryHelperId = primaryHelper ? "live-primary-action-helper" : undefined;
@@ -1318,7 +1415,7 @@ export function LiveEventScreen({
         </p>
         {primaryAction === "reserved" ? <p className={styles.actionHelper}>
           {isIfewLive
-            ? locale === "ko" ? "일정을 저장해 두세요. 방송이 시작되면 이 화면에서 출석 코드를 입력할 수 있어요." : "Save the schedule. When the LIVE starts, return here to enter the attendance code."
+            ? locale === "ko" ? "일정을 저장해 두세요. 방송이 시작되면 이 화면에서 출석 코드를 입력할 수 있어요." : translate(locale, localizedMessages.m368720b16d69, "Save the schedule. When the LIVE starts, return here to enter the attendance code.")
             : c.reservedHelper}
         </p> : null}
       </div>
@@ -1365,7 +1462,7 @@ export function LiveEventScreen({
           <aside
             className={styles.actionRail}
             aria-label={
-              locale === "ko" ? "LIVE 예약 정보" : "LIVE reservation details"
+              locale === "ko" ? "LIVE 예약 정보" : translate(locale, localizedMessages.m236456e2f613, "LIVE reservation details")
             }
           >
             <div className={styles.eventStatusRow}>
@@ -1392,17 +1489,17 @@ export function LiveEventScreen({
                   <dd><time dateTime={live.startsAt}>{formatReservationDateTime(live.startsAt, locale)}</time></dd>
                 </div>
                 {!viewer.reservation && live.effectiveStatus === "scheduled" ? <div className={styles.deadlineSchedule}>
-                  <dt><Clock3 aria-hidden="true" />{locale === "ko" ? "예약 마감" : "Booking closes"}</dt>
+                  <dt><Clock3 aria-hidden="true" />{locale === "ko" ? "예약 마감" : translate(locale, localizedMessages.m8b5e2a88bdcf, "Booking closes")}</dt>
                   <dd><time dateTime={live.reservationClosesAt}>{formatReservationDeadline(live.reservationClosesAt, live.startsAt, locale)}</time></dd>
                 </div> : null}
               </dl>
               <div className={styles.scheduleMeta}>
                 <p className={styles.timeZone}>{c.timeZone}</p>
                 <details className={styles.reservationDetails}>
-                  <summary>{locale === "ko" ? "예약 전체 기간" : "Full booking period"}</summary>
+                  <summary>{locale === "ko" ? "예약 전체 기간" : translate(locale, localizedMessages.m3c6c11d428e2, "Full booking period")}</summary>
                   <dl>
-                    <div><dt>{locale === "ko" ? "시작" : "Opens"}</dt><dd><time dateTime={live.reservationOpensAt}>{formatReservationDateTime(live.reservationOpensAt, locale)}</time></dd></div>
-                    <div><dt>{locale === "ko" ? "마감" : "Closes"}</dt><dd><time dateTime={live.reservationClosesAt}>{formatReservationDateTime(live.reservationClosesAt, locale)}</time></dd></div>
+                    <div><dt>{locale === "ko" ? "시작" : translate(locale, localizedMessages.m2cba765285b8, "Opens")}</dt><dd><time dateTime={live.reservationOpensAt}>{formatReservationDateTime(live.reservationOpensAt, locale)}</time></dd></div>
+                    <div><dt>{locale === "ko" ? "마감" : translate(locale, localizedMessages.mdd13f8f52cab, "Closes")}</dt><dd><time dateTime={live.reservationClosesAt}>{formatReservationDateTime(live.reservationClosesAt, locale)}</time></dd></div>
                   </dl>
                 </details>
               </div>
@@ -1419,8 +1516,8 @@ export function LiveEventScreen({
               <a className={styles.attendanceShortcut} href="#fan-code">
                 <TicketCheck aria-hidden="true" />
                 {attendance.kind === "success"
-                  ? locale === "ko" ? "출석 기록 보기" : "View attendance record"
-                  : isIfewLive ? attendanceCopy.label : locale === "ko" ? "출석 인증하기" : "Verify attendance"}
+                  ? locale === "ko" ? "출석 기록 보기" : translate(locale, localizedMessages.m81962885a07b, "View attendance record")
+                  : isIfewLive ? attendanceCopy.label : locale === "ko" ? "출석 인증하기" : translate(locale, localizedMessages.mbc44a0e83fca, "Verify attendance")}
                 <ArrowRight aria-hidden="true" />
               </a>
             ) : null}
@@ -1456,7 +1553,7 @@ export function LiveEventScreen({
               )}
             {!isIfewLive && (live.missionsAvailable === false ? (
               <p className={styles.missionEmpty}>
-                {locale === "ko" ? "현재 참여 가능한 미션이 없어요." : "No missions are available right now."}
+                {locale === "ko" ? "현재 참여 가능한 미션이 없어요." : translate(locale, localizedMessages.m0f87b18f0c16, "No missions are available right now.")}
               </p>
             ) : (
               <FanAction
@@ -1464,9 +1561,9 @@ export function LiveEventScreen({
                 className={styles.missionLink}
                 fullWidth
                 href={`/live/${slug}/missions?locale=${locale}` as Route}
-                helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : "Check the mission list for availability.") : undefined}
+                helperText={live.missionsAvailable == null ? (locale === "ko" ? "미션 목록에서 참여 가능 여부를 확인해 주세요." : translate(locale, localizedMessages.m74fb6f427790, "Check the mission list for availability.")) : undefined}
               >
-                <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : "View LIVE missions"}</span><ArrowRight aria-hidden="true" /></span>
+                <span className={styles.missionLinkContent}><span>{locale === "ko" ? "LIVE 미션 보기" : translate(locale, localizedMessages.ma66aa523b5a6, "View LIVE missions")}</span><ArrowRight aria-hidden="true" /></span>
               </FanAction>
             ))}
             {actionError && (
@@ -1484,9 +1581,7 @@ export function LiveEventScreen({
             <Link
               href={withLocalePath(creatorHomeHref(live.celebrity.slug), locale) as Route}
               aria-label={
-                locale === "ko"
-                  ? `팬페이지 보기: ${live.celebrity.name}`
-                  : `View fan page: ${live.celebrity.name}`
+                locale === "ko" ? `팬페이지 보기: ${live.celebrity.name}` : translate(locale, localizedMessages.m598c9d56a2ff, "View fan page: {0}", [live.celebrity.name])
               }
             >
               <ArrowRight aria-hidden="true" />
@@ -1498,8 +1593,8 @@ export function LiveEventScreen({
               <h2>{c.introduction}</h2>
               <p>{isIfewClosed ? ifewEndedDescription[locale] : live.description}</p>
               {live.productContext && <p className={styles.productContext}>{live.productContext}</p>}
-              {live.liveType === "recurring" && <p>{locale === "ko" ? "정기 방송" : "Recurring LIVE"}{live.endsAt === null ? (locale === "ko" ? " · 종료 시간 미정" : " · End time unconfirmed") : ""}</p>}
-              {live.liveType === "recurring" && <a href={live.watch.url} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "방송 채널" : "Broadcast channel"}</a>}
+              {live.liveType === "recurring" && <p>{locale === "ko" ? "정기 방송" : translate(locale, localizedMessages.mde096ed18581, "Recurring LIVE")}{live.endsAt === null ? (locale === "ko" ? " · 종료 시간 미정" : translate(locale, localizedMessages.mf1c882cbae83, " · End time unconfirmed")) : ""}</p>}
+              {live.liveType === "recurring" && <a href={live.watch.url} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "방송 채널" : translate(locale, localizedMessages.ma260718d76e6, "Broadcast channel")}</a>}
             </section>
             {!isIfewClosed && <section className={styles.section}>
               <h2>{c.howTo}</h2>
@@ -1513,7 +1608,7 @@ export function LiveEventScreen({
                 ))}
               </ol>
               {isIfewLive ? <p className={styles.participationNote}>
-                {locale === "ko" ? "Fan Passport가 있으면 예약 없이도 출석할 수 있어요. 선물은 응모권으로 별도 신청해 주세요." : "With a Fan Passport, you can check in without a reservation. Use your raffle tickets to enter the prize draw separately."}
+                {locale === "ko" ? "Fan Passport가 있으면 예약 없이도 출석할 수 있어요. 선물은 응모권으로 별도 신청해 주세요." : translate(locale, localizedMessages.m753ad0ab8812, "With a Fan Passport, you can check in without a reservation. Use your raffle tickets to enter the prize draw separately.")}
               </p> : null}
             </section>}
             {((!isIfewClosed && live.attendanceConfigured !== false) || attendance.kind === "success") && <section
@@ -1560,12 +1655,10 @@ export function LiveEventScreen({
                         {isIfewLive
                           ? eventCopy?.prizeAction
                           : isElinaLive
-                            ? locale === "ko" ? "선물 고르고 응모하기" : "Choose a prize and enter"
+                            ? locale === "ko" ? "선물 고르고 응모하기" : translate(locale, localizedMessages.mb16d9d8b336e, "Choose a prize and enter")
                           : live.missionsAvailable !== false
                             ? attendanceCopy.survey
-                            : locale === "ko"
-                              ? "Passport에서 참여 기록 보기"
-                              : "View participation in Passport"}
+                            : locale === "ko" ? "Passport에서 참여 기록 보기" : translate(locale, localizedMessages.md8a4cb6fc81f, "View participation in Passport")}
                       </FanAction>
                     }
                   />
@@ -1574,8 +1667,8 @@ export function LiveEventScreen({
                 <div className={styles.fanCodeContent}>
                   <div className={styles.fanCodeIntro}>
                     <div className={styles.fanCodeHeading}>
-                      {attendancePhase === 'open' && <p className={styles.attendanceOpenLabel}><Radio aria-hidden="true" />{locale === 'ko' ? '출석 접수 중' : 'CHECK-IN OPEN'}</p>}
-                      <h2 id="fan-code-title">{attendancePhase === 'open' ? locale === 'ko' ? '지금 Fan Code를 입력해 주세요' : 'Enter your Fan Code now' : eventCopy?.fanCode ?? c.fanCode}</h2>
+                      {attendancePhase === 'open' && <p className={styles.attendanceOpenLabel}><Radio aria-hidden="true" />{locale === "ko" ? '출석 접수 중' : translate(locale, localizedMessages.m322388657d99, "CHECK-IN OPEN")}</p>}
+                      <h2 id="fan-code-title">{attendancePhase === 'open' ? locale === "ko" ? '지금 Fan Code를 입력해 주세요' : translate(locale, localizedMessages.mbe3a5f73fa38, "Enter your Fan Code now") : eventCopy?.fanCode ?? c.fanCode}</h2>
                       {live.effectiveStatus !== "scheduled" || attendancePhase === 'open' ? <p>{eventCopy?.fanCodeHelper ?? c.fanCodeHelper}</p> : null}
                     </div>
                     <div className={styles.fanCodeIcon} data-fan-code-header-icon aria-hidden="true">
@@ -1687,7 +1780,7 @@ export function LiveEventScreen({
               {isIfewLive ? (
                 <>
                   <p className={styles.prizeName}>{ifewPrizeName[locale]}</p>
-                  <p>{locale === "ko" ? "이퓨 응모권으로 추첨에 응모해 보세요. LIVE 예약이나 시청만으로 자동 응모되지는 않아요." : "Use your ifew raffle tickets to enter the draw. Reserving or watching the LIVE does not enter you automatically."}</p>
+                  <p>{locale === "ko" ? "이퓨 응모권으로 추첨에 응모해 보세요. LIVE 예약이나 시청만으로 자동 응모되지는 않아요." : translate(locale, localizedMessages.mc834e986d105, "Use your ifew raffle tickets to enter the draw. Reserving or watching the LIVE does not enter you automatically.")}</p>
                   {attendance.kind !== "success" ? <FanAction
                     href={ifewRafflesHref(locale)} variant="neutral" className={styles.benefitAction} trailingIcon={<ArrowRight />}
                   >{eventCopy?.prizeAction}</FanAction> : null}
@@ -1698,35 +1791,35 @@ export function LiveEventScreen({
                 className={styles.benefitAction}
                 trailingIcon={<ArrowRight />}
               >
-                {locale === "ko" ? `${live.celebrity.name} 혜택·응모 보기` : `View ${live.celebrity.name} benefits & entries`}
+                {locale === "ko" ? `${live.celebrity.name} 혜택·응모 보기` : translate(locale, localizedMessages.m67af00c954ea, "View {0} benefits & entries", [live.celebrity.name])}
               </FanAction></>}
             </section>
             {sessionReady && authenticated && collectible ? (
               <section className={styles.collectible} aria-labelledby="collectible-title">
                 <details open={collectible.eligible || Boolean(collectible.claim) || undefined}>
                   <summary>
-                    <h2 id="collectible-title">{locale === "ko" ? "디지털 소장품" : "Digital collectible"}</h2>
+                    <h2 id="collectible-title">{locale === "ko" ? "디지털 소장품" : translate(locale, localizedMessages.m57a300d77901, "Digital collectible")}</h2>
                     <span className={styles.collectibleState}>
-                      {collectible.claim ? <Check aria-label={locale === "ko" ? "받기 완료" : "Claim complete"} /> : !collectible.eligible ? <LockKeyhole aria-hidden="true" /> : null}
+                      {collectible.claim ? <Check aria-label={locale === "ko" ? "받기 완료" : translate(locale, localizedMessages.md2b3d88a414e, "Claim complete")} /> : !collectible.eligible ? <LockKeyhole aria-hidden="true" /> : null}
                       {collectible.claim
-                        ? locale === "ko" ? "받기 완료" : "Claimed"
-                        : collectible.eligible ? locale === "ko" ? "받기 가능" : "Ready to claim"
-                        : locale === "ko" ? "참여 완료 후" : "After participation"}
+                        ? locale === "ko" ? "받기 완료" : translate(locale, localizedMessages.mb9ec638c3b2f, "Claimed")
+                        : collectible.eligible ? locale === "ko" ? "받기 가능" : translate(locale, localizedMessages.m72ae1e109a0d, "Ready to claim")
+                        : locale === "ko" ? "참여 완료 후" : translate(locale, localizedMessages.mdeaf564f9598, "After participation")}
                       <ChevronDown aria-hidden="true" />
                     </span>
                   </summary>
                   <div className={styles.collectibleContent}>
                     <p>{collectible.claim
                       ? collectible.claim.mint.status === "minted"
-                        ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : `Minted · Token #${collectible.claim.mint.tokenId}`
-                        : locale === "ko" ? "받기 신청 완료 · 발급을 준비 중이에요." : "Claimed · Your collectible is being issued."
+                        ? locale === "ko" ? `발급 완료 · Token #${collectible.claim.mint.tokenId}` : translate(locale, localizedMessages.m224569b5d2c4, "Minted · Token #{0}", [collectible.claim.mint.tokenId])
+                        : locale === "ko" ? "받기 신청 완료 · 발급을 준비 중이에요." : translate(locale, localizedMessages.m24ab5021dcbc, "Claimed · Your collectible is being issued.")
                       : collectible.eligible
-                        ? locale === "ko" ? "참여 조건을 완료했어요. LIVE 종료 후 48시간 안에 받아보세요." : "Participation complete. Claim within 48 hours after the LIVE."
-                        : locale === "ko" ? "참여 조건을 완료하고 LIVE가 끝나면 받을 수 있어요." : "Available after completing participation and the LIVE ends."}</p>
-                    <small>{locale === "ko" ? "받기 마감 · " : "Claim deadline · "}{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST</small>
+                        ? locale === "ko" ? "참여 조건을 완료했어요. LIVE 종료 후 48시간 안에 받아보세요." : translate(locale, localizedMessages.m82d77781a99f, "Participation complete. Claim within 48 hours after the LIVE.")
+                        : locale === "ko" ? "참여 조건을 완료하고 LIVE가 끝나면 받을 수 있어요." : translate(locale, localizedMessages.m32e3260eeddf, "Available after completing participation and the LIVE ends.")}</p>
+                    <small>{locale === "ko" ? "받기 마감 · " : translate(locale, localizedMessages.m4ef1c80c263a, "Claim deadline · ")}{new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(collectible.claimWindow.until))} KST</small>
                     {!collectible.claim && collectible.eligible ? (
                       <FanAction variant="primary" disabled={!sessionReady || collectiblePending} ariaBusy={collectiblePending} onClick={() => void claimCollectible()}>
-                        {collectiblePending ? (locale === "ko" ? "받기 처리 중" : "Claiming") : (locale === "ko" ? "소장품 받기" : "Claim collectible")}
+                        {collectiblePending ? (locale === "ko" ? "받기 처리 중" : translate(locale, localizedMessages.m4fe002e8f0ab, "Claiming")) : (locale === "ko" ? "소장품 받기" : translate(locale, localizedMessages.m9ac0bf49cae4, "Claim collectible"))}
                       </FanAction>
                     ) : null}
                     {collectibleError ? <p className={styles.actionError} role="alert">{collectibleError}</p> : null}

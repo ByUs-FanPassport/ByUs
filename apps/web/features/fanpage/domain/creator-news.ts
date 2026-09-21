@@ -1,3 +1,6 @@
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__domain__creator-news";
+import { translate } from "@/i18n/messages";
 import { z } from "zod";
 import type { ChzzkPost } from "./chzzk-posts";
 
@@ -10,12 +13,12 @@ export type CreatorNewsItem =
   | { source: "byus"; key: string; title: string; date: string; pinned: boolean; notice: NewsNotice }
   | { source: "chzzk"; key: string; title: string; date: string; pinned: false; post: ChzzkPost };
 
-export function chzzkPostTitle(post: ChzzkPost, locale: "ko" | "en"): string {
+export function chzzkPostTitle(post: ChzzkPost, locale: AppLocale): string {
   return post.text.split(/\r?\n/).map((line) => line.trim()).find(Boolean)?.slice(0, 160)
-    || (locale === "ko" ? "사진 소식" : "Photo update");
+    || (locale === "ko" ? "사진 소식" : translate(locale, localizedMessages.m26082a2169cd, "Photo update"));
 }
 
-export function creatorNewsItems(notices: NewsNotice[], posts: ChzzkPost[], locale: "ko" | "en", full: boolean): CreatorNewsItem[] {
+export function creatorNewsItems(notices: NewsNotice[], posts: ChzzkPost[], locale: AppLocale, full: boolean): CreatorNewsItem[] {
   const items: CreatorNewsItem[] = [
     ...notices.map((notice): CreatorNewsItem => ({ source: "byus", key: `byus:${notice.slug}`, title: notice.title, date: notice.publishedAt, pinned: notice.pinned, notice })),
     ...posts.map((post): CreatorNewsItem => ({ source: "chzzk", key: `chzzk:${post.id}`, title: chzzkPostTitle(post, locale), date: post.date, pinned: false, post })),

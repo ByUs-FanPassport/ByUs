@@ -1,5 +1,8 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/components__us-fanmeetings__inquiry-dialog";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, LoaderCircle, X } from "lucide-react";
 import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
@@ -13,12 +16,24 @@ type InquiryKind = "fanmeeting" | "creator" | "partner";
 
 const emptyDraft: Draft = { name: "", company: "", email: "", message: "", consent: false, topic: "other" };
 const partnerTopics = [
-  { value: "other", ko: "아직 정하지 못했어요 / 기타", en: "Not sure yet / other" },
-  { value: "commerce", ko: "커머스 · 공동구매", en: "Commerce & group buying" },
-  { value: "live", ko: "라이브커머스", en: "Live shopping" },
-  { value: "merchandise", ko: "굿즈 · IP 협업", en: "Merchandise & IP collaborations" },
-  { value: "advertising", ko: "광고 · 브랜디드 콘텐츠", en: "Advertising & branded content" },
-  { value: "benefits", ko: "팬 혜택 · 이벤트", en: "Fan benefits & events" },
+  { value: "other", ko: "아직 정하지 못했어요 / 기타", en: "Not sure yet / other" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m9e14252a235a[translationLocale]))
+},
+  { value: "commerce", ko: "커머스 · 공동구매", en: "Commerce & group buying" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mfb5e13068657[translationLocale]))
+},
+  { value: "live", ko: "라이브커머스", en: "Live shopping" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m2c49adf846ca[translationLocale]))
+},
+  { value: "merchandise", ko: "굿즈 · IP 협업", en: "Merchandise & IP collaborations" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m341e939671dd[translationLocale]))
+},
+  { value: "advertising", ko: "광고 · 브랜디드 콘텐츠", en: "Advertising & branded content" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m32ce99e80b6d[translationLocale]))
+},
+  { value: "benefits", ko: "팬 혜택 · 이벤트", en: "Fan benefits & events" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mc93f57c5d6e9[translationLocale]))
+},
 ] as const;
 const copy = {
   ko: {
@@ -59,6 +74,26 @@ const copy = {
       TIMEOUT: "Your inquiry is taking longer than expected. Please try again with the same details.",
     },
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.m987c00428df3[translationLocale],
+    description: localizedMessages.m2b6697574a96[translationLocale],
+    name: localizedMessages.mc47ca89fcee4[translationLocale], company: localizedMessages.m606e59016a8c[translationLocale], email: localizedMessages.m6f2a610ca103[translationLocale], message: localizedMessages.m1e3986980bc8[translationLocale],
+    namePlaceholder: localizedMessages.m677f83a3ca48[translationLocale], companyPlaceholder: localizedMessages.m6e5e9939457d[translationLocale], emailPlaceholder: "name@company.com",
+    messagePlaceholder: localizedMessages.m6e40c3f768f0[translationLocale],
+    consent: localizedMessages.m25b40cfe803a[translationLocale],
+    submit: localizedMessages.m468b691db650[translationLocale], pending: localizedMessages.m45401f83b808[translationLocale], close: localizedMessages.md17c403faad0[translationLocale],
+    successTitle: localizedMessages.m5d32b487ce64[translationLocale],
+    successBody: localizedMessages.m15a7afd65e7a[translationLocale],
+    done: localizedMessages.mf913aa568f4e[translationLocale],
+    errors: {
+      INQUIRY_INVALID: localizedMessages.me789d5867329[translationLocale],
+      INQUIRY_RATE_LIMITED: localizedMessages.me98659993cc8[translationLocale],
+      INQUIRY_IDEMPOTENCY_CONFLICT: localizedMessages.m28da522f38b4[translationLocale],
+      INQUIRY_UNAVAILABLE: localizedMessages.mbfd92c938cb2[translationLocale],
+      TIMEOUT: localizedMessages.m0cfaa31c7802[translationLocale],
+    },
+  }))
 } as const;
 
 const inquiryDetails = {
@@ -77,7 +112,15 @@ const inquiryDetails = {
       companyPlaceholder: "The name your fans know you by",
       messagePlaceholder: "Share your channel links, a short introduction, and your ideas for fan activities.",
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      title: localizedMessages.m662b1fac2803[translationLocale],
+      description: localizedMessages.mca12299d3675[translationLocale],
+      name: localizedMessages.m59e3d28cc35c[translationLocale], company: localizedMessages.m45f7fe20f88e[translationLocale],
+      companyPlaceholder: localizedMessages.m66f4f83b5572[translationLocale],
+      messagePlaceholder: localizedMessages.mf342618e89a8[translationLocale],
+    }))
+},
   partner: {
     ko: {
       title: "파트너 협업 제안",
@@ -91,7 +134,14 @@ const inquiryDetails = {
       company: "Company / brand", companyPlaceholder: "Company or brand name",
       messagePlaceholder: "Tell us about your products or content, who you’d like to work with, the fans you want to reach, and your sales or publishing channels. Include any dates, budget, or terms you’ve decided on.",
     },
-  },
+
+  ...additionalLocales((translationLocale) => ({
+      title: localizedMessages.mcfb8301add42[translationLocale],
+      description: localizedMessages.m6c72edaef909[translationLocale],
+      company: localizedMessages.m297797fdc016[translationLocale], companyPlaceholder: localizedMessages.m0a74fca81030[translationLocale],
+      messagePlaceholder: localizedMessages.m67858f585247[translationLocale],
+    }))
+},
 } as const;
 
 const inquiryEyebrows = { fanmeeting: "U.S. FANMEETINGS", creator: "FOR EVERYONE WITH FANS", partner: "PARTNERSHIPS" };
@@ -99,7 +149,7 @@ const inquiryEyebrows = { fanmeeting: "U.S. FANMEETINGS", creator: "FOR EVERYONE
 const InquiryContext = createContext<{ open: () => void } | null>(null);
 
 function canonicalPayload(locale: FanLocale, draft: Draft) {
-  return { locale, name: draft.name.trim(), company: draft.company.trim(), email: draft.email.trim(), message: draft.message.trim(), consent: draft.consent };
+  return { locale: toContentLocale(locale), name: draft.name.trim(), company: draft.company.trim(), email: draft.email.trim(), message: draft.message.trim(), consent: draft.consent };
 }
 
 function errorCode(body: unknown) {
@@ -150,7 +200,7 @@ export function BusinessInquiryProvider({ locale, kind, children }: { locale: Fa
     const payload = canonicalPayload(locale, draft);
     if (kind === "partner") {
       const topic = partnerTopics.find((item) => item.value === draft.topic) ?? partnerTopics[0];
-      payload.message = `${locale === "ko" ? "협업 분야" : "Collaboration type"}: ${topic[locale]}\n\n${payload.message}`;
+      payload.message = `${locale === "ko" ? "협업 분야" : translate(locale, localizedMessages.m07273f3c2a36, "Collaboration type")}: ${topic[locale]}\n\n${payload.message}`;
     }
     const fingerprint = JSON.stringify([kind, payload]);
     const attempt = attemptRef.current?.fingerprint === fingerprint
@@ -215,7 +265,7 @@ export function BusinessInquiryProvider({ locale, kind, children }: { locale: Fa
                 <label>{t.company}<input name="company" autoComplete={kind === "creator" ? "off" : "organization"} value={draft.company} onChange={(event) => update("company", event.target.value)} maxLength={120} required disabled={busy} placeholder={t.companyPlaceholder} /></label>
               </div>
               <label>{t.email}<input name="email" type="email" autoComplete="email" value={draft.email} onChange={(event) => update("email", event.target.value)} maxLength={254} required disabled={busy} placeholder={t.emailPlaceholder} /></label>
-              {kind === "partner" ? <label>{locale === "ko" ? "협업 분야" : "Collaboration type"}<select name="topic" value={draft.topic} onChange={(event) => update("topic", event.target.value)} disabled={busy}>{partnerTopics.map((topic) => <option key={topic.value} value={topic.value}>{topic[locale]}</option>)}</select></label> : null}
+              {kind === "partner" ? <label>{locale === "ko" ? "협업 분야" : translate(locale, localizedMessages.m07273f3c2a36, "Collaboration type")}<select name="topic" value={draft.topic} onChange={(event) => update("topic", event.target.value)} disabled={busy}>{partnerTopics.map((topic) => <option key={topic.value} value={topic.value}>{topic[locale]}</option>)}</select></label> : null}
               <label>{t.message}<textarea name="message" value={draft.message} onChange={(event) => update("message", event.target.value)} maxLength={kind === "partner" ? 3900 : 4000} required disabled={busy} placeholder={t.messagePlaceholder} /></label>
               <label className={styles.consent}><input name="consent" type="checkbox" checked={draft.consent} onChange={(event) => update("consent", event.target.checked)} required disabled={busy} /><span>{t.consent}</span></label>
               {error ? <p className={styles.error} id={`${id}-error`} role="alert">{error}</p> : null}

@@ -660,7 +660,8 @@ describe("FAN-020 settings", () => {
         }),
       ),
     );
-    expect(replace).toHaveBeenCalledWith("/settings?locale=en");
+    expect(replace).not.toHaveBeenCalledWith("/settings?locale=en");
+    expect(screen.getAllByRole("combobox", { name: "언어 선택, 현재 한국어" }).every(select => (select as HTMLSelectElement).value === "ko")).toBe(true);
   });
 
   it("locks and serializes preference switches before a delayed token resolves", async () => {

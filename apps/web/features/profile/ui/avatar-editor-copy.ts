@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/features__profile__ui__avatar-editor-copy";
+import { additionalLocales } from "@/i18n/messages";
 export const avatarEditorCopy = {
   ko: {
     avatar: "프로필 이미지",
@@ -57,4 +59,34 @@ export const avatarEditorCopy = {
     refresh: "Reload latest version",
     photoAlt: "Profile photo being adjusted",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    avatar: localizedMessages.mef14baa66f50[translationLocale],
+    help: localizedMessages.m61e60760de51[translationLocale],
+    change: localizedMessages.mf5668a0d0d7e[translationLocale],
+    loading: localizedMessages.mc0a72b791ca7[translationLocale],
+    loadError: localizedMessages.ma2a11b756dde[translationLocale],
+    retry: localizedMessages.mefda601e510c[translationLocale],
+    dialogTitle: localizedMessages.mc7dbb88dc4f6[translationLocale],
+    dialogHelp: localizedMessages.m62d5eaf43c83[translationLocale],
+    characters: localizedMessages.m085c2481c501[translationLocale],
+    choosePhoto: localizedMessages.mbf03c5774c0e[translationLocale],
+    replacePhoto: localizedMessages.mbf70b24ab9c6[translationLocale],
+    photoHelp: localizedMessages.m662b92ecf5d5[translationLocale],
+    crop: localizedMessages.mf8b9d453147f[translationLocale],
+    cropHelp: localizedMessages.m26fc2e38c6a1[translationLocale],
+    zoom: localizedMessages.m93fbd1a0efee[translationLocale],
+    deletePhoto: localizedMessages.md21e28ce2c11[translationLocale],
+    cancel: localizedMessages.m5d23bfb51d06[translationLocale],
+    save: localizedMessages.mb6b86335e242[translationLocale],
+    saving: localizedMessages.m6c9e2b1faf05[translationLocale],
+    invalidType: localizedMessages.m4701885c0220[translationLocale],
+    tooLarge: localizedMessages.m6d24050efd2b[translationLocale],
+    decodeFailed: localizedMessages.m5b278d06f58d[translationLocale],
+    failed: localizedMessages.m147c3dfbee5c[translationLocale],
+    conflict: localizedMessages.m743d53c50441[translationLocale],
+    refreshFailed: localizedMessages.m054dc609c4b0[translationLocale],
+    refresh: localizedMessages.m7cf9d84c29a7[translationLocale],
+    photoAlt: localizedMessages.m757950f98cf8[translationLocale],
+  }))
 } as const;

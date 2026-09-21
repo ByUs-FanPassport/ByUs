@@ -1,5 +1,7 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   benefitCatalogItemSchema,
@@ -41,7 +43,7 @@ type SubmitInput = {
 type UseRaffleEntryInput = {
   ownerId: string | null;
   benefitId: string;
-  locale?: BenefitLocale;
+  locale?: AppLocale;
   getAccessToken: () => Promise<string | null>;
   onAccepted: (result: BenefitEntryResult) => void;
   onReconciled: (benefit: BenefitCatalogItem) => void;
@@ -243,7 +245,7 @@ export function useRaffleEntry({
         controller = new AbortController();
         runtime.controllers.add(controller);
         const benefit = await withRequestDeadline(async (signal) => {
-          const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}?locale=${locale}`, {
+          const response = await fetch(`/api/benefits/${encodeURIComponent(benefitId)}?locale=${toContentLocale(locale)}`, {
             headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal,
           });
           if (!response.ok) throw new Error("Benefit reconciliation failed");

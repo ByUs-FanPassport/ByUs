@@ -1,9 +1,11 @@
+import { type AppLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
 import { LiveSurveyScreen } from "@/features/live/ui/live-survey-screen";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 
 function resolveLocale(value: string | string[] | undefined): Locale {
-  return value === "en" ? "en" : "ko";
+  return parseAppLocale(value);
 }
 
 export default async function LiveSurveyPage({

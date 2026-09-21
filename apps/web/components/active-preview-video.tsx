@@ -1,5 +1,8 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/components__active-preview-video";
+import { translate } from "@/i18n/messages";
+import type { AppLocale } from "@/i18n/locales";
 import {
   createContext,
   useCallback,
@@ -94,11 +97,12 @@ function useMotionPolicy() {
 }
 
 function previewControlLabel(
-  locale: "ko" | "en",
+  locale: AppLocale,
   playing: boolean,
 ): string {
-  if (locale === "ko") return playing ? "Preview 일시정지" : "Preview 재생";
-  return playing ? "Pause Preview" : "Play Preview";
+  return playing
+    ? locale === "ko" ? "Preview 일시정지" : translate(locale, localizedMessages.md11237bb6700, "Pause Preview")
+    : locale === "ko" ? "Preview 재생" : translate(locale, localizedMessages.me0d54a2436d2, "Play Preview");
 }
 
 export function ActivePreviewVideo({
@@ -111,7 +115,7 @@ export function ActivePreviewVideo({
   id: string;
   preview: PreviewMedia;
   mode: "card" | "detail";
-  locale?: "ko" | "en";
+  locale?: AppLocale;
   className?: string;
 }) {
   const coordinator = useContext(ActivePreviewContext);

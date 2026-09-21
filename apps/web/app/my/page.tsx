@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { MyScreen } from "@/features/my/ui/my-screen";
 
 export default async function MyPage({
@@ -5,6 +6,6 @@ export default async function MyPage({
 }: {
   searchParams: Promise<{ locale?: string }>;
 }) {
-  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale((await searchParams).locale);
   return <MyScreen locale={locale} />;
 }

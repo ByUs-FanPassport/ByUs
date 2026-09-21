@@ -1,3 +1,4 @@
+import { APP_LOCALES } from "@/i18n/locales";
 import { describe, expect, it } from "vitest";
 import { canonicalUrl, DEFAULT_SHARE_IMAGE, isPrivatePath, publicMetadata, shareImageUrl } from "./metadata";
 import { buildSitemap } from "./sitemap";
@@ -11,7 +12,7 @@ describe("public search and sharing metadata", () => {
   it("keeps self-canonicals distinct by language and drops tracking/filter/hash state", () => {
     expect(canonicalUrl("/?locale=en&utm_source=kakao&owned=1#start", "ko")).toBe("https://byus.kr/?locale=ko");
     const meta = publicMetadata({ path: "/live/ifew", locale: "en", title: "ifew LIVE | ByUs", description: "Meet ifew." });
-    expect(meta.alternates).toEqual({ canonical: "https://byus.kr/live/ifew?locale=en", languages: { ko: "https://byus.kr/live/ifew?locale=ko", en: "https://byus.kr/live/ifew?locale=en" } });
+    expect(meta.alternates).toEqual({ canonical: "https://byus.kr/live/ifew?locale=en", languages: Object.fromEntries(APP_LOCALES.map(locale => [locale, `https://byus.kr/live/ifew?locale=${locale}`])) });
     expect(meta.openGraph).toMatchObject({ title: "ifew LIVE | ByUs", type: "website", siteName: "ByUs", url: "https://byus.kr/live/ifew?locale=en", locale: "en_US", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "ByUs | Your Bias" }] });
     expect(meta.twitter).toMatchObject({ card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE }] });
   });
@@ -45,14 +46,14 @@ describe("sitemap URL inclusion", () => {
       { path: "/my", locale: "ko" }, { path: "/c/ifew/verify", locale: "ko" },
     ]);
     expect(map.some(({ url }) => url.includes("/pages/ifew-fan-guide"))).toBe(false);
-    expect(map).toHaveLength(21);
-    expect(new Set(map.map(({ url }) => url)).size).toBe(21);
+    expect(map).toHaveLength(102);
+    expect(new Set(map.map(({ url }) => url)).size).toBe(102);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=ko")).toBe(true);
     expect(map.some(({ url }) => url === "https://byus.kr/guide?locale=en")).toBe(true);
     expect(map.some(({ url }) => url === "https://byus.kr/pages/onchain?locale=ko")).toBe(true);
     expect(map.some(({ url }) => url === "https://byus.kr/pages/onchain?locale=en")).toBe(true);
     expect(map.some(({ url }) => /rehearsal|\/my|\/verify/.test(url))).toBe(false);
     expect(map.find(({ url }) => url.includes("ended-event"))?.alternates?.languages).toEqual({ ko: "https://byus.kr/live/ended-event?locale=ko" });
-    expect(map.every(({ url }) => /\?locale=(ko|en)$/.test(url))).toBe(true);
+    expect(map.every(({ url }) => APP_LOCALES.some(locale => url.endsWith(`?locale=${locale}`)))).toBe(true);
   });
 });

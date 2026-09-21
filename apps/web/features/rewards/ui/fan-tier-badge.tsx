@@ -1,10 +1,11 @@
+import type { AppLocale } from "@/i18n/locales";
 import Image from "next/image";
 import { fanStageLabel, fanTierEntryKey, type FanStage, type FanStageKey } from "../domain/fan-stage";
 
 type Props = {
   tier: FanStage["tier"];
   stageKey?: FanStageKey | null;
-  locale: "ko" | "en";
+  locale: AppLocale;
   size: number;
   adjacentLabel?: boolean;
   className?: string;

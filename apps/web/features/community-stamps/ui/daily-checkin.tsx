@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__community-stamps__ui__daily-checkin";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -15,7 +18,7 @@ import {
 import { communityStampAction, useCommunityStamps } from "./use-community-stamps";
 import styles from "./daily-checkin.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 
 const copy = {
   ko: {
@@ -52,6 +55,24 @@ const copy = {
     auth: "Please check your sign-in and try again.",
     count: (value: number) => `${value} check-in${value === 1 ? "" : "s"} this month`,
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.me090b9615631[translationLocale],
+    help: localizedMessages.made923b999af[translationLocale],
+    loading: localizedMessages.m1712f68ea709[translationLocale],
+    loadError: localizedMessages.mfb55da6210ea[translationLocale],
+    retry: localizedMessages.m498d300c7d14[translationLocale],
+    login: localizedMessages.mc2c7e20f07af[translationLocale],
+    action: localizedMessages.m0cee79a5453a[translationLocale],
+    pending: localizedMessages.m01ff6d51a8b9[translationLocale],
+    earned: localizedMessages.m586444eea398[translationLocale],
+    awarded: localizedMessages.me1b97abc8909[translationLocale],
+    already: localizedMessages.md5685335b511[translationLocale],
+    failed: localizedMessages.m0edcb75338c8[translationLocale],
+    wallet: localizedMessages.m9ca07fc0dbd7[translationLocale],
+    auth: localizedMessages.m7e8a55c5e6d8[translationLocale],
+    count: (value: number) => translate(translationLocale, localizedMessages.m155113217662, "{0} check-ins this month", [value]),
+  }))
 } as const;
 
 function actionError(error: unknown, locale: Locale) {

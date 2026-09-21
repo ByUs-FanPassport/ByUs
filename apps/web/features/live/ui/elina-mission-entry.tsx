@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__elina-mission-entry";
+import { additionalLocales } from "@/i18n/messages";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
@@ -32,9 +36,18 @@ const copy = {
     action: "Start missions",
     hint: "Complete a mission to record a Stamp.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    eyebrow: localizedMessages.m5267357f1419[translationLocale],
+    title: localizedMessages.m111c5c262aee[translationLocale],
+    invitation: localizedMessages.mf8ae3329afeb[translationLocale],
+    count: localizedMessages.m8e242988ecf7[translationLocale],
+    action: localizedMessages.m62844ba86ce4[translationLocale],
+    hint: localizedMessages.mc7e1a60b9ffd[translationLocale],
+  }))
 } as const;
 
-export function ElinaMissionEntry({ celebritySlug, locale }: { celebritySlug: string; locale: ContentLocale }) {
+export function ElinaMissionEntry({ celebritySlug, locale }: { celebritySlug: string; locale: AppLocale }) {
   const titleId = useId();
   const visibilityKey = `${celebritySlug}:${locale}`;
   const [visibleFor, setVisibleFor] = useState<string | null>(null);
@@ -45,7 +58,7 @@ export function ElinaMissionEntry({ celebritySlug, locale }: { celebritySlug: st
 
     const controller = new AbortController();
     void (async () => {
-      const response = await fetch(`/api/live-events/${elinaLiveSlug}?locale=${locale}`, {
+      const response = await fetch(`/api/live-events/${elinaLiveSlug}?locale=${toContentLocale(locale)}`, {
         cache: "no-store",
         signal: controller.signal,
       });

@@ -1,3 +1,6 @@
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__onchain__onchain-public-page";
+import { additionalLocales, translate } from "@/i18n/messages";
 import Link from "next/link";
 
 import { FanContentContainer } from "@/components/fan-shell/fan-content-container";
@@ -155,20 +158,116 @@ const copy = {
     transactionKinds: { record: "Record", correct: "Correction", invalidate: "Invalidation" },
     unavailableValue: "—",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    eyebrow: "PUBLIC ONCHAIN RECORDS",
+    title: localizedMessages.m8fb00b25bfe1[translationLocale],
+    intro: localizedMessages.mcf9e123a8736[translationLocale],
+    testnet: localizedMessages.m74719a97f8d5[translationLocale],
+    testnetDetail: localizedMessages.m738356d4c065[translationLocale],
+    available: localizedMessages.mdea885c5ccba[translationLocale],
+    unavailable: localizedMessages.ma44c78472417[translationLocale],
+    aggregateUnavailable: localizedMessages.m5d27496b1e01[translationLocale],
+    download: localizedMessages.m9d772914c435[translationLocale],
+    metricsTitle: localizedMessages.m27a9345480b1[translationLocale],
+    metricsDescription: localizedMessages.mf143058d9a7b[translationLocale],
+    metricWallets: localizedMessages.mf6fe95d46ec5[translationLocale],
+    metricActions: localizedMessages.m67f151286609[translationLocale],
+    metricCredentials: localizedMessages.m3107b4d4ef56[translationLocale],
+    metricPassports: localizedMessages.mb95d7dad80f1[translationLocale],
+    metricLifecycle: localizedMessages.mc113a936a88d[translationLocale],
+    currentScope: localizedMessages.m62739683a427[translationLocale],
+    lifecycleScope: localizedMessages.m446c8121736e[translationLocale],
+    actionsTitle: localizedMessages.m2e352c633908[translationLocale],
+    actionsDescription: localizedMessages.m55b727b07cc5[translationLocale],
+    code: localizedMessages.meed3affbd4b9[translationLocale],
+    action: localizedMessages.m77cfe13fd61f[translationLocale],
+    definition: localizedMessages.md6f52e0c5ac0[translationLocale],
+    count: localizedMessages.m9756d6a8e0dd[translationLocale],
+    rollout: localizedMessages.m3ead4e1fb06c[translationLocale],
+    unconfirmed: localizedMessages.m2bab19e96761[translationLocale],
+    qaOnly: localizedMessages.m1327fab1282c[translationLocale],
+    active: (count: number) => translate(translationLocale, localizedMessages.m5f4c9a197396, "{0} current valid records", [count.toLocaleString(translationLocale)]),
+    missingContract: localizedMessages.mef8c08b07a5c[translationLocale],
+    statusAsOf: localizedMessages.mc607fa7e1e38[translationLocale],
+    evidenceTitle: localizedMessages.m534e9f0a5cc0[translationLocale],
+    evidenceDescription: localizedMessages.me33da31c3039[translationLocale],
+    shown: (shown: number, total: number) => translate(translationLocale, localizedMessages.md0f9ddbad3b0, "Showing {0} of {1}", [shown.toLocaleString(translationLocale), total.toLocaleString(translationLocale)]),
+    noEvidence: localizedMessages.m8e0388bf2c39[translationLocale],
+    qa: "QA",
+    history: localizedMessages.m21a7a0576c46[translationLocale],
+    current: localizedMessages.md494b1e85f52[translationLocale],
+    invalidated: localizedMessages.m6cd90d46df97[translationLocale],
+    excluded: localizedMessages.mc37ab9dbfe25[translationLocale],
+    wallet: localizedMessages.mdf667ec00831[translationLocale],
+    creator: localizedMessages.m8dcd72e2f7e1[translationLocale],
+    campaign: localizedMessages.me2c413f361c9[translationLocale],
+    occurredDay: localizedMessages.ma2aaf6ee13bb[translationLocale],
+    block: localizedMessages.m4651b5bbb39f[translationLocale],
+    transaction: localizedMessages.m5a9b857392c4[translationLocale],
+    attestation: localizedMessages.m42cd76a64d5b[translationLocale],
+    easUid: "EAS UID",
+    source: localizedMessages.md0df100a0a1f[translationLocale],
+    credential: "NFT",
+    openNew: localizedMessages.mb06c8922a7dd[translationLocale],
+    directoryTitle: localizedMessages.m15b8b868b70c[translationLocale],
+    directoryDescription: localizedMessages.m13d2fec9c752[translationLocale],
+    address: localizedMessages.m9e192c8e2d63[translationLocale],
+    role: localizedMessages.m5d88be588b0f[translationLocale],
+    snapshotTitle: localizedMessages.me49bdb2f61ba[translationLocale],
+    network: localizedMessages.m681da54e2991[translationLocale],
+    hub: localizedMessages.mb5735732891b[translationLocale],
+    environment: localizedMessages.m22667c3402bf[translationLocale],
+    schema: localizedMessages.m8c1630cbd2e7[translationLocale],
+    coverage: localizedMessages.m5148079420ef[translationLocale],
+    snapshotBlock: localizedMessages.m26b6c073e22f[translationLocale],
+    snapshotTime: localizedMessages.m5ecb7bb9a36b[translationLocale],
+    generatedAt: localizedMessages.m59ba4782f49c[translationLocale],
+    exclusions: localizedMessages.mac8d3ef70736[translationLocale],
+    exclusionsValue: (wallets: number, actions: number, historical: number) => translate(translationLocale, localizedMessages.mfac654ffe92c, "{0} actions from {1} explicitly declared QA wallet, plus {2} historical imports", [actions.toLocaleString(translationLocale), wallets.toLocaleString(translationLocale), historical.toLocaleString(translationLocale)]),
+    deploymentStatus: { current: localizedMessages.ma2c6c27806dd[translationLocale], historical: localizedMessages.md4c4f2c14f63[translationLocale], pending_activation: localizedMessages.m3fe53340cddd[translationLocale] },
+    lifecycleTitle: localizedMessages.maa197605a972[translationLocale],
+    lifecycleDescription: (total: number, qa: number, historical: number) => translate(translationLocale, localizedMessages.m9c3a4887e2f2, "{0} total · {1} QA · {2} historical. Record, correction, and invalidation transactions are listed separately.", [total.toLocaleString(translationLocale), qa.toLocaleString(translationLocale), historical.toLocaleString(translationLocale)]),
+    lifecycleShown: (shown: number, total: number) => translate(translationLocale, localizedMessages.m248d70b8a91d, "Showing the latest {0} of {1}", [shown.toLocaleString(translationLocale), total.toLocaleString(translationLocale)]),
+    transactionKinds: { record: localizedMessages.m7cfc898a2e4f[translationLocale], correct: localizedMessages.m5ed337ade8b4[translationLocale], invalidate: localizedMessages.m727107a459d4[translationLocale] },
+    unavailableValue: "—",
+  }))
 } as const;
 
-const roleCopy: Record<(typeof officialAddresses)[number]["role"], { ko: string; en: string }> = {
-  actionHub: { ko: "ActionHub 프록시", en: "ActionHub proxy" },
-  passport: { ko: "Passport 발급 계약", en: "Passport issuance contract" },
-  stamp: { ko: "Stamp 발급 계약", en: "Stamp issuance contract" },
-  implementation: { ko: "ActionHub 구현", en: "ActionHub implementation" },
-  codec: { ko: "행동 데이터 코덱", en: "Action data codec" },
-  registry: { ko: "공개 컨텍스트 레지스트리", en: "Public context registry" },
-  eas: { ko: "EAS 계약", en: "EAS contract" },
-  schema: { ko: "EAS 스키마 레지스트리", en: "EAS schema registry" },
-  timelock: { ko: "거버넌스 타임록", en: "Governance timelock" },
-  admin: { ko: "관리자 지갑", en: "Admin wallet" },
-  writer: { ko: "행동 기록 지갑", en: "Action writer wallet" },
+const roleCopy: Record<(typeof officialAddresses)[number]["role"], Record<AppLocale, string>> = {
+  actionHub: { ko: "ActionHub 프록시", en: "ActionHub proxy" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mf8cbb8e9aea4[translationLocale]))
+},
+  passport: { ko: "Passport 발급 계약", en: "Passport issuance contract" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m062833399ce9[translationLocale]))
+},
+  stamp: { ko: "Stamp 발급 계약", en: "Stamp issuance contract" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m376c3fb1bc1e[translationLocale]))
+},
+  implementation: { ko: "ActionHub 구현", en: "ActionHub implementation" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mf67982d45fdc[translationLocale]))
+},
+  codec: { ko: "행동 데이터 코덱", en: "Action data codec" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m779775f649c1[translationLocale]))
+},
+  registry: { ko: "공개 컨텍스트 레지스트리", en: "Public context registry" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m5e416abdb93e[translationLocale]))
+},
+  eas: { ko: "EAS 계약", en: "EAS contract" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m61fcf8adb733[translationLocale]))
+},
+  schema: { ko: "EAS 스키마 레지스트리", en: "EAS schema registry" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.me16ab778ae9b[translationLocale]))
+},
+  timelock: { ko: "거버넌스 타임록", en: "Governance timelock" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m39f247bdbb77[translationLocale]))
+},
+  admin: { ko: "관리자 지갑", en: "Admin wallet" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mb4b80502e2c8[translationLocale]))
+},
+  writer: { ko: "행동 기록 지갑", en: "Action writer wallet" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m9f4c961d059a[translationLocale]))
+},
 };
 
 function explorer(path: string) {
@@ -178,7 +277,7 @@ function explorer(path: string) {
 function formatTimestamp(value: string, locale: FanLocale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "UTC",
@@ -186,7 +285,7 @@ function formatTimestamp(value: string, locale: FanLocale) {
 }
 
 function metricValue(value: number | undefined, locale: FanLocale) {
-  return value === undefined ? "—" : value.toLocaleString(locale === "ko" ? "ko-KR" : "en-US");
+  return value === undefined ? "—" : value.toLocaleString(locale);
 }
 
 function statusFor(code: number, actionCount: number | undefined, hasQaEvidence: boolean, locale: FanLocale) {
@@ -200,7 +299,7 @@ function statusFor(code: number, actionCount: number | undefined, hasQaEvidence:
 function occurredDayLabel(day: number, locale: FanLocale) {
   const date = new Date(day * 86_400_000);
   if (!Number.isFinite(day) || Number.isNaN(date.getTime())) return String(day);
-  const formatted = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  const formatted = new Intl.DateTimeFormat(locale, { calendar: "gregory",
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(date);
@@ -223,7 +322,7 @@ function EvidenceItem({ action, locale }: { action: PublicOnchainAction; locale:
           <span className={styles.actionCode}>#{action.actionCode}</span>
           <h3>{definition ? definition[locale] : action.actionId}</h3>
         </div>
-        <ul className={styles.tags} aria-label={locale === "ko" ? "기록 분류" : "Record classifications"}>
+        <ul className={styles.tags} aria-label={locale === "ko" ? "기록 분류" : translate(locale, localizedMessages.mf8c3ea2e2476, "Record classifications")}>
           {tags.map((tag) => <li key={tag}>{tag}</li>)}
         </ul>
       </header>
@@ -326,14 +425,14 @@ export function OnchainPublicPage({ locale, result }: { locale: FanLocale; resul
 
           <section className={styles.section} aria-labelledby="actions-title">
             <div className={styles.sectionHeading}><p>02</p><div><h2 id="actions-title">{t.actionsTitle}</h2><p>{t.actionsDescription}</p><p className={styles.statusNote}>{t.statusAsOf}</p></div></div>
-            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label={locale === "ko" ? "행동별 집계 표" : "Action metrics table"}>
+            <div className={styles.tableScroll} tabIndex={0} role="region" aria-label={locale === "ko" ? "행동별 집계 표" : translate(locale, localizedMessages.m7188df05fe48, "Action metrics table")}>
               <table className={styles.actionTable} aria-labelledby="actions-title">
                 <thead><tr><th scope="col">{t.code}</th><th scope="col">{t.action}</th><th scope="col">{t.definition}</th><th scope="col">{t.count}</th><th scope="col">{t.rollout}</th></tr></thead>
                 <tbody>{actionDefinitions.map((definition) => {
                   const actionCount = snapshot?.business && definition.code <= 10 ? (snapshot.business.actionCounts[definition.code] ?? 0) : undefined;
                   const hasQaEvidence = snapshot?.actions.some((action) => action.actionCode === definition.code && action.qa) ?? false;
                   const status = statusFor(definition.code, actionCount, hasQaEvidence, locale);
-                  return <tr key={definition.code}><td><code>{definition.code}</code></td><th scope="row"><strong>{definition[locale]}</strong><span>{definition.name}</span></th><td>{locale === "ko" ? definition.descriptionKo : definition.descriptionEn}</td><td className={styles.countCell}>{metricValue(actionCount, locale)}</td><td><span className={styles.status} data-tone={status.tone}>{status.label}</span></td></tr>;
+                  return <tr key={definition.code}><td><code>{definition.code}</code></td><th scope="row"><strong>{definition[locale]}</strong><span>{definition.name}</span></th><td>{definition.description[locale]}</td><td className={styles.countCell}>{metricValue(actionCount, locale)}</td><td><span className={styles.status} data-tone={status.tone}>{status.label}</span></td></tr>;
                 })}</tbody>
               </table>
             </div>

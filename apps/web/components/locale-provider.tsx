@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import type { AppLocale } from "./locale-path";
+import { parseAppLocale, type AppLocale } from "../i18n/locales";
 
 const LocaleContext = createContext<{ locale: AppLocale; setLocale: (locale: AppLocale) => void }>({ locale: "ko", setLocale: () => {} });
 
@@ -18,7 +18,7 @@ export function useAppLocale() {
 
 /** Page URLs can omit locale; explicit legacy links still select a language. */
 export function usePageLocale(): AppLocale {
-  const requested = useSearchParams().get("locale");
+  const requested = useSearchParams().getAll("locale");
   const { locale } = useAppLocale();
-  return requested === "ko" || requested === "en" ? requested : locale;
+  return requested.length === 1 ? parseAppLocale(requested[0], locale) : locale;
 }

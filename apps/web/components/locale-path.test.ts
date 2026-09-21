@@ -25,18 +25,24 @@ describe("locale navigation", () => {
     expect(requestLocale('/settings/kakao/callback', null, 'en')).toBe('en');
     expect(requestLocale('/settings/kakao/callback', 'ko', 'en')).toBe('ko');
     expect(requestLocale('/', null, 'ko')).toBe('en');
+    expect(requestLocale('/admin', null, null, 'ja-JP,ko;q=0.8')).toBe('ko');
   });
   it.each([
     [undefined, 'en'], ['', 'en'], ['en-US,en;q=0.9,ko;q=0.8', 'en'],
-    ['ko-KR,ko;q=0.9,en;q=0.8', 'ko'], ['KO', 'ko'], ['ja-JP', 'en'],
+    ['ko-KR,ko;q=0.9,en;q=0.8', 'ko'], ['KO', 'ko'], ['ja-JP', 'ja'],
     ['kr', 'en'], ['*', 'en'], ['ko;q=0,en;q=1', 'en'],
-    ['en;q=0.5,ko;q=0.9', 'ko'], ['fr,ko;q=0.9', 'en'],
-  ])('detects only a preferred Korean browser language: %s', (languages, expected) => {
+    ['en;q=0.5,ko;q=0.9', 'ko'], ['fr,ko;q=0.9', 'fr'],
+    ['de-DE;q=1,vi-VN;q=0.8,en;q=0.7', 'vi'],
+    ['de-DE;q=1,zh-TW;q=0.8', 'zh-Hant'],
+    ['th;q=bogus,pt;q=0,es;q=0.4', 'es'],
+    ['ja;q = 1,vi;q,fr;q=0.6', 'fr'],
+  ])('selects the highest-quality supported browser language: %s', (languages, expected) => {
     expect(requestLocale('/', null, null, languages)).toBe(expected);
   });
   it('keeps explicit language selections ahead of the browser preference', () => {
     expect(requestLocale('/', 'en', null, 'ko-KR')).toBe('en');
     expect(requestLocale('/', 'ko', null, 'en-US')).toBe('ko');
-    expect(requestLocale('/', 'fr', null, 'en-US')).toBe('en');
+    expect(requestLocale('/', 'zh-TW', null, 'en-US')).toBe('zh-Hant');
+    expect(requestLocale('/', 'de', null, 'ja-JP', 'fr')).toBe('fr');
   });
 });

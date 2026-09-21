@@ -1,4 +1,8 @@
 "use client";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__certification__ui__certification-panel";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Award,
@@ -78,6 +82,29 @@ const copy = {
     start: "Get verified",
     startQuiz: "Take quiz",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.m84776792a6a6[translationLocale],
+    help: localizedMessages.m120b7dd6d7bc[translationLocale],
+    missions: localizedMessages.m5acaed52a19a[translationLocale],
+    all: localizedMessages.mfbe0f0d8b589[translationLocale],
+    history: localizedMessages.m577093b578a3[translationLocale],
+    loading: localizedMessages.m8c73c29c5ef0[translationLocale],
+    error: localizedMessages.mc084de4feb8e[translationLocale],
+    empty: localizedMessages.me8850e1b06b4[translationLocale],
+    historyEmpty: localizedMessages.m08188f574c68[translationLocale],
+    login: localizedMessages.m79fd84b32847[translationLocale],
+    available: localizedMessages.m26877e0405a0[translationLocale],
+    preparing: localizedMessages.me6800ee5bcd0[translationLocale],
+    closed: localizedMessages.m6797acdc4160[translationLocale],
+    pending: localizedMessages.mbaf38767e5fa[translationLocale],
+    approved: localizedMessages.mc01385355806[translationLocale],
+    rejected: localizedMessages.m0f0c1691895f[translationLocale],
+    score: localizedMessages.m5224845219bc[translationLocale],
+    ticket: localizedMessages.m1925bade61c2[translationLocale],
+    start: localizedMessages.mfd7692d3f746[translationLocale],
+    startQuiz: localizedMessages.m75cba4550bc8[translationLocale],
+  }))
 } as const;
 
 export function CertificationPanel({
@@ -86,7 +113,7 @@ export function CertificationPanel({
   initialTab = "missions",
 }: {
   slug: string;
-  locale: CertificationLocale;
+  locale: AppLocale;
   initialTab?: "missions" | "history";
 }) {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
@@ -104,7 +131,7 @@ export function CertificationPanel({
       try {
         if (tab === "missions") {
           const response = await fetch(
-            `/api/celebrities/${encodeURIComponent(slug)}/certifications?locale=${locale}`,
+            `/api/celebrities/${encodeURIComponent(slug)}/certifications?locale=${toContentLocale(locale)}`,
             { signal },
           );
           if (!response.ok) throw new Error();
@@ -115,7 +142,7 @@ export function CertificationPanel({
         } else if (ready && authenticated && ownerKey) {
           const token = await getAccessToken();
           const response = await fetch(
-            `/api/me/celebrities/${encodeURIComponent(slug)}/certifications?locale=${locale}`,
+            `/api/me/celebrities/${encodeURIComponent(slug)}/certifications?locale=${toContentLocale(locale)}`,
             {
               headers: { authorization: `Bearer ${token}` },
               cache: "no-store",
@@ -211,7 +238,7 @@ export function CertificationPanel({
           <div className={styles.state} role="alert">
             <p>{t.error}</p>
             <button type="button" onClick={() => void load()}>
-              {locale === "ko" ? "다시 시도" : "Try again"}
+              {locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m31610d1a288d, "Try again")}
             </button>
           </div>
         ) : tab === "missions" ? (
@@ -220,7 +247,7 @@ export function CertificationPanel({
               <div
                 className={styles.categories}
                 aria-label={
-                  locale === "ko" ? "인증 카테고리" : "Certification categories"
+                  locale === "ko" ? "인증 카테고리" : translate(locale, localizedMessages.m55f6d05a1ab8, "Certification categories")
                 }
               >
                 <button
@@ -286,9 +313,7 @@ export function CertificationPanel({
                           {item.reward?.stampCount ? (
                             <span>
                               <Crown aria-hidden="true" />
-                              {locale === "ko"
-                                ? "멤버십 Stamp 1개"
-                                : "1 Membership Stamp"}
+                              {locale === "ko" ? "멤버십 Stamp 1개" : translate(locale, localizedMessages.mdf1cff686174, "1 Membership Stamp")}
                             </span>
                           ) : null}
                           {item.reward?.ticketAmount ? (
@@ -363,7 +388,7 @@ export function CertificationPanel({
                       </small>
                     ) : null}
                     <small>
-                      {new Intl.DateTimeFormat(locale, {
+                      {new Intl.DateTimeFormat(locale, { calendar: "gregory",
                         dateStyle: "medium",
                       }).format(new Date(item.submittedAt))}{" "}
                       · #{item.attemptNumber}
@@ -376,9 +401,7 @@ export function CertificationPanel({
                   </span>
                   <span className={styles.status} data-status={item.status}>
                     {item.status === "rejected" && item.membershipPlatform
-                      ? locale === "ko"
-                        ? "보완 필요"
-                        : "More proof needed"
+                      ? locale === "ko" ? "보완 필요" : translate(locale, localizedMessages.m3fe001e864cd, "More proof needed")
                       : t[item.status]}
                   </span>
                   <ChevronRight aria-hidden="true" />

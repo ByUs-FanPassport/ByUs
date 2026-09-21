@@ -12,6 +12,7 @@ import {
 let pathname = "/";
 let search = "";
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   usePathname: () => pathname,
   useSearchParams: () => new URLSearchParams(search),
 }));
@@ -101,13 +102,9 @@ describe("fan app shell navigation", () => {
       </FanAppFrame>,
     );
 
-    const languageAction = screen.getByRole("link", {
-      name: "언어 선택, 현재 한국어",
-    });
-    expect(languageAction).toHaveAttribute(
-      "href",
-      "/c/kara?tab=benefits&locale=en&source=home",
-    );
+    const languageAction = screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" });
+    expect(languageAction).toHaveValue("ko");
+    expect(localeSwitchHref("/c/kara", "tab=benefits&locale=ko&source=home", "ja")).toBe("/c/kara?tab=benefits&locale=ja&source=home");
     expect(languageAction).toHaveAttribute("data-fan-language-action");
   });
 

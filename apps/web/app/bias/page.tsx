@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { redirect } from "next/navigation";
 export default async function Page({
   searchParams,
@@ -6,7 +7,7 @@ export default async function Page({
 }) {
   const params = await searchParams;
   const query = new URLSearchParams({
-    locale: params.locale === "en" ? "en" : "ko",
+    locale: parseAppLocale(params.locale),
   });
   if (typeof params.celebrity === "string")
     query.set("celebrity", params.celebrity);

@@ -1,3 +1,4 @@
+import { toContentLocale, parseAppLocale } from "@/i18n/locales";
 import { notFound } from "next/navigation";
 import { LiveEventScreen } from "@/features/live/ui/live-event-screen";
 import { loadSeoLive } from "@/server/seo/public-content";
@@ -12,24 +13,24 @@ type Props = {
 
 export async function generateMetadata({ params, searchParams }: Props) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   const data = await loadSeoLive(slug, locale);
   if (!data) notFound();
-  const translated = await loadSeoLive(slug, locale === "en" ? "ko" : "en");
+  const translated = await loadSeoLive(slug, toContentLocale(locale) === "en" ? "ko" : "en");
   const { live } = data;
   const photo = resolvePhoto(live.photos, "event.detail", live.heroImage.url, locale);
-  const schedule = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ko-KR", {
+  const schedule = new Intl.DateTimeFormat(locale, { calendar: "gregory",
     timeZone: "Asia/Seoul", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: locale === "en",
   }).format(new Date(live.startsAt));
   return publicMetadata({ path: `/live/${slug}`, locale, title: `${live.title} | ByUs`,
     description: `${live.celebrity.name} · ${schedule} KST · ${live.watch.provider}. ${live.description}`,
     image: photo.src, imageAlt: photo.alt ?? live.heroImage.alt,
-    locales: translated ? ["ko", "en"] : [locale] });
+    locales: translated ? ["ko", "en"] : [toContentLocale(locale)] });
 }
 
 export default async function LiveEventPage({ params, searchParams }: Props) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   const data = await loadSeoLive(slug, locale);
   if (!data) notFound();
   return <LiveEventScreen key={`${slug}:${locale}`} slug={slug} locale={locale} initialData={data} />;

@@ -352,7 +352,7 @@ describe("benefit screens", () => {
       .mockResolvedValueOnce(Response.json({ benefits: [benefit] }));
     render(<BenefitsScreen locale="ko" initialCelebrity="ifewknow" />);
     await screen.findByRole("heading", { name: benefit.title });
-    expect(screen.getByRole("combobox")).toHaveValue("ifewknow");
+    expect(screen.getByRole("combobox", { name: "셀럽 선택" })).toHaveValue("ifewknow");
     expect(fetchMock).toHaveBeenCalledWith("/api/benefits?locale=ko&celebrity=ifewknow", expect.anything());
   });
   it("distinguishes raffle entry eligibility and uses its exact KST deadline", async () => {

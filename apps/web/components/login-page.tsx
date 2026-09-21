@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__login-page";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePageLocale } from "@/components/locale-provider";
 
 import { useLogin, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
@@ -61,58 +65,50 @@ function loginSessionCopy({
   ready,
   error,
 }: {
-  locale: "ko" | "en";
+  locale: AppLocale;
   ready: boolean;
   error: string | null;
 }): { title: string; description?: string } {
   if (error === APPLE_REAUTHENTICATION_REQUIRED) {
-    return locale === "ko"
-      ? { title: "계정을 다시 확인해 주세요.", description: "Apple 계정 연결이 변경되었어요. 기존 계정으로 인증하면 계속할 수 있어요." }
-      : { title: "Verify your account again.", description: "Your Apple account connection has changed. Verify with your existing account to continue." };
+    return ({ ko: { title: "계정을 다시 확인해 주세요.", description: "Apple 계정 연결이 변경되었어요. 기존 계정으로 인증하면 계속할 수 있어요." }, en: { title: "Verify your account again.", description: "Your Apple account connection has changed. Verify with your existing account to continue." }, ...additionalLocales((translationLocale) => ({ title: localizedMessages.m9bd003de190a[translationLocale], description: localizedMessages.m2962318754ff[translationLocale] })) })[locale];
   }
   if (error === VERIFIED_EMAIL_REQUIRED) {
-    return locale === "ko"
-      ? {
+    return ({ ko: {
           title: "이 계정에서 확인된 이메일을 찾을 수 없어요.",
           description: "로그아웃한 뒤 이메일 공유가 가능한 계정으로 다시 로그인해 주세요.",
-        }
-      : {
+        }, en: {
           title: "We couldn't find a verified email for this account.",
           description: "Sign out, then choose an account that can share a verified email.",
-        };
+        }, ...additionalLocales((translationLocale) => ({
+          title: localizedMessages.mf07a6ae0e0e2[translationLocale],
+          description: localizedMessages.mb087ac335c7a[translationLocale],
+        })) })[locale];
   }
   if (error === LOGIN_READINESS_TIMEOUT) {
-    return locale === "ko"
-      ? { title: "로그인 준비가 오래 걸리고 있어요.", description: "다시 확인하면 이 화면에서 로그인을 이어갈 수 있어요." }
-      : { title: "Sign-in is taking longer than expected.", description: "Check again to continue signing in from this screen." };
+    return ({ ko: { title: "로그인 준비가 오래 걸리고 있어요.", description: "다시 확인하면 이 화면에서 로그인을 이어갈 수 있어요." }, en: { title: "Sign-in is taking longer than expected.", description: "Check again to continue signing in from this screen." }, ...additionalLocales((translationLocale) => ({ title: localizedMessages.mbca39c0aeeae[translationLocale], description: localizedMessages.ma8df20d6ade0[translationLocale] })) })[locale];
   }
   if (error === SESSION_SYNCHRONIZATION_TIMEOUT) {
-    return locale === "ko"
-      ? { title: "로그인 연결이 오래 걸리고 있어요.", description: "현재 계정을 유지한 채 다시 시도해 주세요." }
-      : { title: "Finishing sign-in is taking longer than expected.", description: "Try again with the account you’re currently using." };
+    return ({ ko: { title: "로그인 연결이 오래 걸리고 있어요.", description: "현재 계정을 유지한 채 다시 시도해 주세요." }, en: { title: "Finishing sign-in is taking longer than expected.", description: "Try again with the account you’re currently using." }, ...additionalLocales((translationLocale) => ({ title: localizedMessages.m3f9f50c0c146[translationLocale], description: localizedMessages.m3e60a6698eaa[translationLocale] })) })[locale];
   }
   if (error) {
-    return locale === "ko"
-      ? {
+    return ({ ko: {
           title: "로그인 정보를 안전하게 연결하지 못했어요.",
           description: "잠시 후 다시 시도해 주세요.",
-        }
-      : {
+        }, en: {
           title: "We couldn't finish signing you in.",
           description: "Please try again in a moment.",
-        };
+        }, ...additionalLocales((translationLocale) => ({
+          title: localizedMessages.m069bbd166b2f[translationLocale],
+          description: localizedMessages.m8a1a1559dbb1[translationLocale],
+        })) })[locale];
   }
   if (!ready) {
     return {
-      title: locale === "ko"
-        ? "로그인 상태를 확인하고 있어요."
-        : "Checking your sign-in.",
+      title: locale === "ko" ? "로그인 상태를 확인하고 있어요." : translate(locale, localizedMessages.m995f202408b2, "Checking your sign-in."),
     };
   }
   return {
-    title: locale === "ko"
-      ? "로그인 상태를 연결하고 있어요."
-      : "Finishing sign-in.",
+    title: locale === "ko" ? "로그인 상태를 연결하고 있어요." : translate(locale, localizedMessages.m91f394c1ddcb, "Finishing sign-in."),
   };
 }
 
@@ -190,15 +186,11 @@ export function LoginPage({
     identityGenerationRef.current += 1;
     setError(null);
   }, [authIntent, byUsSession, entity, intent, locale, privyUserId, returnTo]);
-  const loginErrorMessage = locale === "en"
-    ? testAccountLoginEnabled
-      ? "We couldn't complete sign-in. Check your account and verification code, then try again."
-      : `We couldn't complete sign-in. Check your Google${appleLoginEnabled ? " or Apple" : ""} account, then try again.`
-    : testAccountLoginEnabled
-      ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요."
-      : appleLoginEnabled
-        ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요."
-        : "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요.";
+  const loginErrorMessage = testAccountLoginEnabled
+    ? locale === "ko" ? "로그인을 완료하지 못했어요. 계정 정보와 인증 코드를 확인한 뒤 다시 시도해 주세요." : translate(locale, localizedMessages.m3fa6fe428a6a, "We couldn't complete sign-in. Check your account and verification code, then try again.")
+    : appleLoginEnabled
+      ? locale === "ko" ? "로그인을 완료하지 못했어요. Google 또는 Apple 계정을 확인한 뒤 다시 시도해 주세요." : translate(locale, localizedMessages.mc426e8d8a8f2, "We couldn't complete sign-in. Check your Google or Apple account, then try again.")
+      : locale === "ko" ? "로그인을 완료하지 못했어요. Google 계정을 확인한 뒤 다시 시도해 주세요." : translate(locale, localizedMessages.m2c842480d657, "We couldn't complete sign-in. Check your Google account, then try again.");
   const loginCallbacks = {
     onComplete: ({ user: completedUser }: { user: { id: string } }) => synchronizeSession(completedUser.id),
     onError: () => {
@@ -227,18 +219,16 @@ export function LoginPage({
   const { initOAuth, loading: oauthLoading } = useLoginWithOAuth(loginCallbacks);
 
   const loginError = oauthRestartRequired
-    ? locale === "ko"
-      ? "로그인 연결이 오래 걸리고 있어요. 로그인 화면을 새로 열어 다시 시도해 주세요."
-      : "Sign-in is taking longer than expected. Reopen the sign-in page to try again."
+    ? locale === "ko" ? "로그인 연결이 오래 걸리고 있어요. 로그인 화면을 새로 열어 다시 시도해 주세요." : translate(locale, localizedMessages.m62059f56445b, "Sign-in is taking longer than expected. Reopen the sign-in page to try again.")
     : error ?? (searchParams.get("reauth") === "failed"
-      ? locale === "ko" ? "계정을 확인하지 못했어요. 다시 로그인해 주세요." : "We couldn't verify your account. Please sign in again."
+      ? locale === "ko" ? "계정을 확인하지 못했어요. 다시 로그인해 주세요." : translate(locale, localizedMessages.m944ca3336d23, "We couldn't verify your account. Please sign in again.")
       : null);
   const restartOAuthPath = appendLoginContext("/login", { returnTo, locale, intent, entity, authIntent });
 
   const startOAuthLogin = useCallback((provider: "google" | "apple") => {
     if (oauthGuard.getSnapshot() !== "idle") return;
     setError(null);
-    const measurement = signupFunnelTracker.beginLogin(provider, "provider", locale);
+    const measurement = signupFunnelTracker.beginLogin(provider, "provider", toContentLocale(locale));
     loginMeasurementRef.current = measurement;
     providerMeasurementRef.current = measurement;
     providerCallbackClosedRef.current = false;
@@ -327,7 +317,7 @@ export function LoginPage({
 
   const retrySessionSynchronization = useCallback(() => {
     setError(null);
-    loginMeasurementRef.current = signupFunnelTracker.beginLogin(loginMeasurementRef.current?.provider ?? "unknown", "retry", locale);
+    loginMeasurementRef.current = signupFunnelTracker.beginLogin(loginMeasurementRef.current?.provider ?? "unknown", "retry", toContentLocale(locale));
     providerMeasurementRef.current = null;
     providerCallbackClosedRef.current = true;
     if (byUsSession.ownerId === null) {
@@ -367,7 +357,7 @@ export function LoginPage({
     setReauthenticationFailed(false);
     const expectedUserId = activeIdentityRef.current;
     const generation = identityGenerationRef.current;
-    const measurement = signupFunnelTracker.beginLogin(provider, "reauth", locale);
+    const measurement = signupFunnelTracker.beginLogin(provider, "reauth", toContentLocale(locale));
     loginMeasurementRef.current = measurement;
     providerMeasurementRef.current = null;
     try {
@@ -425,7 +415,7 @@ export function LoginPage({
             ref={closeButtonRef}
             className={styles.closeButton}
             type="button"
-            aria-label={locale === "ko" ? "로그인 창 닫기" : "Close sign-in"}
+            aria-label={locale === "ko" ? "로그인 창 닫기" : translate(locale, localizedMessages.m7c0a77cfcd61, "Close sign-in")}
             onClick={() => router.back()}
           >
             <X aria-hidden="true" />
@@ -441,21 +431,21 @@ export function LoginPage({
           kind={sessionStateError ? "error" : "loading"}
           title={sessionCopy.title}
           description={sessionStateError === APPLE_REAUTHENTICATION_REQUIRED && reauthenticationProviders.length === 0
-            ? locale === "ko" ? "연결된 로그인 수단을 사용할 수 없어 현재 이 계정으로 로그인할 수 없어요." : "The linked sign-in methods are unavailable, so this account cannot sign in right now."
+            ? locale === "ko" ? "연결된 로그인 수단을 사용할 수 없어 현재 이 계정으로 로그인할 수 없어요." : translate(locale, localizedMessages.m69fd6f288ef3, "The linked sign-in methods are unavailable, so this account cannot sign in right now.")
             : sessionStateError === APPLE_REAUTHENTICATION_REQUIRED && (reauthenticationFailed || searchParams.get("reauth") === "failed")
-              ? locale === "ko" ? "인증을 완료하지 못했어요. 기존 계정으로 다시 인증해 주세요." : "Verification wasn't completed. Please verify with your existing account again."
+              ? locale === "ko" ? "인증을 완료하지 못했어요. 기존 계정으로 다시 인증해 주세요." : translate(locale, localizedMessages.ma29b99f941ec, "Verification wasn't completed. Please verify with your existing account again.")
             : sessionCopy.description}
           actions={sessionStateError === APPLE_REAUTHENTICATION_REQUIRED ? (
             <>
               {reauthenticationProviders.map((provider) => (
                 <FanAction key={provider} variant="neutral" disabled={reauthenticationStarting}
                   aria-busy={reauthenticationStarting} onClick={() => void startReauthentication(provider)}>
-                  {locale === "ko" ? `${provider === "google" ? "Google" : "Apple"}로 인증` : `Verify with ${provider === "google" ? "Google" : "Apple"}`}
+                  {locale === "ko" ? `${provider === "google" ? "Google" : "Apple"}로 인증` : translate(locale, localizedMessages.m4bba84b95ff9, "Verify with {0}", [provider === "google" ? "Google" : "Apple"])}
                 </FanAction>
               ))}
               {reauthenticationProviders.length === 0 && (
                 <FanAction variant="neutral" onClick={restartLogin}>
-                  {locale === "ko" ? "다른 계정으로 로그인" : "Sign in with another account"}
+                  {locale === "ko" ? "다른 계정으로 로그인" : translate(locale, localizedMessages.m65e665466264, "Sign in with another account")}
                 </FanAction>
               )}
             </>
@@ -469,10 +459,10 @@ export function LoginPage({
                   : retrySessionSynchronization}
             >
               {sessionStateError === VERIFIED_EMAIL_REQUIRED
-                ? locale === "ko" ? "다른 계정으로 로그인" : "Sign in with another account"
+                ? locale === "ko" ? "다른 계정으로 로그인" : translate(locale, localizedMessages.m65e665466264, "Sign in with another account")
                 : sessionStateError === LOGIN_READINESS_TIMEOUT
-                  ? locale === "ko" ? "다시 확인" : "Check again"
-                  : locale === "ko" ? "다시 시도" : "Try again"}
+                  ? locale === "ko" ? "다시 확인" : translate(locale, localizedMessages.m4d9899fc905b, "Check again")
+                  : locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m29ac680649cc, "Try again")}
             </FanAction>
           ) : undefined}
         />
@@ -525,13 +515,13 @@ export function LoginPage({
   const content = (
     <div className={styles.contents} data-fan-surface lang={locale}>
         <div className={styles.panelHeader}>
-          <Link className={styles.brand} href={`/?locale=${locale}`} aria-label={locale === "ko" ? "ByUs 홈으로 돌아가기" : "Return to ByUs home"}><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
+          <Link className={styles.brand} href={`/?locale=${locale}`} aria-label={locale === "ko" ? "ByUs 홈으로 돌아가기" : translate(locale, localizedMessages.mb2e8e1adc638, "Return to ByUs home")}><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
           {presentation === "overlay" && (
             <button
               ref={closeButtonRef}
               className={styles.closeButton}
               type="button"
-              aria-label={locale === "ko" ? "로그인 창 닫기" : "Close sign-in"}
+              aria-label={locale === "ko" ? "로그인 창 닫기" : translate(locale, localizedMessages.m7c0a77cfcd61, "Close sign-in")}
               onClick={() => router.back()}
             >
               <X aria-hidden="true" />
@@ -539,7 +529,7 @@ export function LoginPage({
           )}
         </div>
         <div className={styles.copy}>
-          <h1 id="login-heading">{locale === "ko" ? "최애와 함께한 순간을 기록하세요." : "Keep a record of moments with your favorites."}</h1>
+          <h1 id="login-heading">{locale === "ko" ? "최애와 함께한 순간을 기록하세요." : translate(locale, localizedMessages.m25a4dd3e23d7, "Keep a record of moments with your favorites.")}</h1>
         </div>
         <button
           className={styles.googleButton}
@@ -549,7 +539,7 @@ export function LoginPage({
           onClick={() => startOAuthLogin("google")}
         >
           <GoogleMark />
-          <span>{ready ? locale === "ko" ? "Google로 계속하기" : "Continue with Google" : locale === "ko" ? "로그인 준비 중" : "Preparing sign-in"}</span>
+          <span>{ready ? locale === "ko" ? "Google로 계속하기" : translate(locale, localizedMessages.m6655518973dd, "Continue with Google") : locale === "ko" ? "로그인 준비 중" : translate(locale, localizedMessages.mc34b01c121dc, "Preparing sign-in")}</span>
           <ArrowRight />
         </button>
         {appleLoginEnabled && (
@@ -561,28 +551,28 @@ export function LoginPage({
             onClick={() => startOAuthLogin("apple")}
           >
             <AppleMark />
-            <span>{ready ? locale === "ko" ? "Apple로 계속하기" : "Continue with Apple" : locale === "ko" ? "로그인 준비 중" : "Preparing sign-in"}</span>
+            <span>{ready ? locale === "ko" ? "Apple로 계속하기" : translate(locale, localizedMessages.m1841b9ffa3a5, "Continue with Apple") : locale === "ko" ? "로그인 준비 중" : translate(locale, localizedMessages.mc34b01c121dc, "Preparing sign-in")}</span>
             <ArrowRight />
           </button>
         )}
         {testAccountLoginEnabled && (
-          <div className={styles.testAccountGroup} role="group" aria-label={locale === "ko" ? "개발 환경 Test Account 로그인" : "Development Test Account sign-in"}>
-            <span className={styles.divider}>{locale === "ko" ? "개발 환경 Test Account" : "Development Test Account"}</span>
+          <div className={styles.testAccountGroup} role="group" aria-label={locale === "ko" ? "개발 환경 Test Account 로그인" : translate(locale, localizedMessages.m8b0d27e1a222, "Development Test Account sign-in")}>
+            <span className={styles.divider}>{locale === "ko" ? "개발 환경 Test Account" : translate(locale, localizedMessages.mdf939f60c96f, "Development Test Account")}</span>
             <button
               className={styles.emailButton}
               type="button"
               disabled={!ready || authenticated || oauthStarting || oauthRestartRequired}
               onClick={() => {
                 setError(null);
-                loginMeasurementRef.current = signupFunnelTracker.beginLogin("test", "provider", locale);
+                loginMeasurementRef.current = signupFunnelTracker.beginLogin("test", "provider", toContentLocale(locale));
                 providerMeasurementRef.current = loginMeasurementRef.current;
                 providerCallbackClosedRef.current = false;
                 login({ loginMethods: ["email"] });
               }}
             >
-              <span>{locale === "ko" ? "Test Account 이메일로 계속하기" : "Continue with Test Account email"}</span><ArrowRight />
+              <span>{locale === "ko" ? "Test Account 이메일로 계속하기" : translate(locale, localizedMessages.m8401ba06776d, "Continue with Test Account email")}</span><ArrowRight />
             </button>
-            <p>{locale === "ko" ? "Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요." : "Use only a Test Account email and verification code registered in the Privy dashboard."}</p>
+            <p>{locale === "ko" ? "Privy 대시보드에 등록된 Test Account 이메일과 OTP만 사용할 수 있어요." : translate(locale, localizedMessages.m689bb697eba6, "Use only a Test Account email and verification code registered in the Privy dashboard.")}</p>
           </div>
         )}
         {loginError && <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>{loginError}</p>}
@@ -590,7 +580,7 @@ export function LoginPage({
           // A native navigation replaces the document and its pending SDK work.
           // A Next Link/router transition would retain the old OAuth request.
           <a className={`${styles.emailButton} ${styles.restartLink}`} href={restartOAuthPath}>
-            {locale === "ko" ? "로그인 다시 시작" : "Restart sign-in"}
+            {locale === "ko" ? "로그인 다시 시작" : translate(locale, localizedMessages.mcd64f8604d89, "Restart sign-in")}
           </a>
         )}
     </div>
@@ -632,7 +622,7 @@ export function LoginPage({
               <Image
                 className={styles.passportImage}
                 src={passportPreview}
-                alt={locale === "ko" ? "펼쳐진 Fan Passport" : "Open Fan Passport"}
+                alt={locale === "ko" ? "펼쳐진 Fan Passport" : translate(locale, localizedMessages.mab1cb2ccc525, "Open Fan Passport")}
                 width={1536}
                 height={1024}
                 sizes="(min-width: 768px) 390px, 1px"

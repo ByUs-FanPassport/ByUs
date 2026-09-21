@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__community-stamps__ui__shared-passport-landing";
+import { additionalLocales } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -15,13 +18,11 @@ import { communityShareDestinationSchema } from "../domain/community-stamps";
 import { communityStampAction } from "./use-community-stamps";
 import styles from "./share-passport.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type Creator = { slug: string; name: string; image: { url: string; alt: string } };
 
 function copyFor(locale: Locale) {
-  return locale === "ko"
-    ? { eyebrow: "BYUS FAN PASSPORT", title: "함께 좋아하는 마음을 만나보세요.", body: "이 패스포트로 연결된 최애 페이지에서 소식과 팬 활동을 확인할 수 있어요.", signedIn: "최애 보기", signing: "최애 페이지를 열고 있어요.", signIn: "로그인하고 최애 보기", ordinary: "최애 페이지로 이동", proof: "최애를 확인하면 링크를 보낸 회원의 공유 스탬프가 기록돼요.", failed: "최애 페이지를 열지 못했어요. 다시 시도해 주세요." }
-    : { eyebrow: "BYUS FAN PASSPORT", title: "Meet the favorite that brought you here.", body: "Visit this creator’s page to explore updates and fan moments connected to the Passport.", signedIn: "View favorite", signing: "Opening the creator page.", signIn: "Sign in to view favorite", ordinary: "Go to creator page", proof: "Confirm this favorite and the member who sent the link receives their Share Stamp.", failed: "We couldn't open the creator page. Please try again." };
+  return ({ ko: { eyebrow: "BYUS FAN PASSPORT", title: "함께 좋아하는 마음을 만나보세요.", body: "이 패스포트로 연결된 최애 페이지에서 소식과 팬 활동을 확인할 수 있어요.", signedIn: "최애 보기", signing: "최애 페이지를 열고 있어요.", signIn: "로그인하고 최애 보기", ordinary: "최애 페이지로 이동", proof: "최애를 확인하면 링크를 보낸 회원의 공유 스탬프가 기록돼요.", failed: "최애 페이지를 열지 못했어요. 다시 시도해 주세요." }, en: { eyebrow: "BYUS FAN PASSPORT", title: "Meet the favorite that brought you here.", body: "Visit this creator’s page to explore updates and fan moments connected to the Passport.", signedIn: "View favorite", signing: "Opening the creator page.", signIn: "Sign in to view favorite", ordinary: "Go to creator page", proof: "Confirm this favorite and the member who sent the link receives their Share Stamp.", failed: "We couldn't open the creator page. Please try again." }, ...additionalLocales((translationLocale) => ({ eyebrow: "BYUS FAN PASSPORT", title: localizedMessages.md4ae0dc90050[translationLocale], body: localizedMessages.mdd29ff7d7bcd[translationLocale], signedIn: localizedMessages.md34e8e8c5c09[translationLocale], signing: localizedMessages.md5dd382be6cc[translationLocale], signIn: localizedMessages.m39775c2edd89[translationLocale], ordinary: localizedMessages.mb7d45142b18e[translationLocale], proof: localizedMessages.m08c56b12da41[translationLocale], failed: localizedMessages.mc8797f2333f6[translationLocale] })) })[locale];
 }
 
 export function SharedPassportLanding({ token, creator, locale }: { token: string; creator: Creator; locale: Locale }) {

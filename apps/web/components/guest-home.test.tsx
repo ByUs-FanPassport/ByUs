@@ -223,31 +223,14 @@ describe("canonical 03 guest home", () => {
     );
   });
 
-  it("shows KO / EN in a fixed order and emphasizes the current language", () => {
-    const { rerender } = render(
-      <GuestHome {...defaultProps} featuredLives={[featuredLive]} />,
-    );
-
-    const koreanLanguageLink = screen.getByRole("link", {
-      name: "언어 선택, 현재 한국어",
-    });
-    expect(koreanLanguageLink).toHaveAttribute("href", "/?locale=en");
-    expect(koreanLanguageLink).toHaveTextContent("KO/EN");
-    expect(koreanLanguageLink.querySelector("strong")).toHaveTextContent("KO");
-
-    rerender(
-      <GuestHome
-        celebrities={celebrities}
-        featuredLives={[featuredLive]}
-        locale="en"
-      />,
-    );
-    const englishLanguageLink = screen.getByRole("link", {
-      name: "Choose language, currently English",
-    });
-    expect(englishLanguageLink).toHaveAttribute("href", "/?locale=ko");
-    expect(englishLanguageLink).toHaveTextContent("KO/EN");
-    expect(englishLanguageLink.querySelector("strong")).toHaveTextContent("EN");
+  it("offers all 11 languages and selects the current language", () => {
+    const { rerender } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    const selector = screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" });
+    expect(selector).toHaveValue("ko");
+    expect(within(selector).getAllByRole("option")).toHaveLength(11);
+    expect(within(selector).getByRole("option", { name: "繁體中文" })).toHaveValue("zh-Hant");
+    rerender(<GuestHome celebrities={celebrities} featuredLives={[featuredLive]} locale="en" />);
+    expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
   });
 
   it("renders the first three active and scheduled LIVE events", () => {

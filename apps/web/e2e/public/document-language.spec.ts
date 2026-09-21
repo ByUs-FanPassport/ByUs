@@ -7,7 +7,7 @@ test("document language follows direct load, client navigation, reload, and hist
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest?locale=ko");
   await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "ko_KR");
 
-  await page.getByRole("link", { name: "언어 선택, 현재 한국어" }).click();
+  await page.getByRole("combobox", { name: "언어 선택, 현재 한국어" }).selectOption("en");
   await expect(page).not.toHaveURL(/[?&]locale=/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest?locale=en");

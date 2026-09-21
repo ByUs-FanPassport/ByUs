@@ -14,6 +14,15 @@ import {
 import { STAMP_METADATA, stampTypeLabel } from "../domain/passport-read-model";
 
 describe("Passport Stamp artwork", () => {
+  it("localizes Japanese score units and uses an existing first-reaction image", () => {
+    const { container } = render(<>
+      <StampArtwork type="knowledge" locale="ja" points={3} />
+      <StampArtwork type="first_reaction" locale="ja" />
+    </>);
+    expect(screen.getByRole("img", { name: /3 点獲得/ })).toBeInTheDocument();
+    expect(container.querySelector("img")).toHaveAttribute("src", expect.stringContaining("first-like-en.webp"));
+  });
+
   it("keeps the Passport skeleton visible until both data and the base artwork are ready", async () => {
     const { container, rerender } = render(
       <PassportStampCanvas celebrityName="KARA" stamps={[]} locale="ko" loading />,

@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-ui__creator-fan-link";
+import { translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -18,23 +22,23 @@ function parseVerifiedCreators(value: unknown): ReadonlySet<string> {
 
 type FanLinkState = { status: "guest" | "loading" | "error" | "ready"; verified?: boolean };
 
-function LinkView({ slug, name, locale, state }: { slug: string; name: string; locale: "ko" | "en"; state: FanLinkState }) {
+function LinkView({ slug, name, locale, state }: { slug: string; name: string; locale: AppLocale; state: FanLinkState }) {
   const verified = state.status === "ready" && state.verified === true;
   const checking = state.status === "loading";
   const unavailable = state.status === "error";
-  const label = checking ? (locale === "ko" ? "확인 중" : "Checking")
-    : verified ? (locale === "ko" ? "입덕 완료" : "Fan verified")
-    : unavailable ? (locale === "ko" ? "팬페이지 보기" : "View fan page")
-    : (locale === "ko" ? "입덕하기" : "Become a fan");
+  const label = checking ? (locale === "ko" ? "확인 중" : translate(locale, localizedMessages.m3ef156cad29a, "Checking"))
+    : verified ? (locale === "ko" ? "입덕 완료" : translate(locale, localizedMessages.m9f6b28aeb90d, "Fan verified"))
+    : unavailable ? (locale === "ko" ? "팬페이지 보기" : translate(locale, localizedMessages.m3c982b122f61, "View fan page"))
+    : (locale === "ko" ? "입덕하기" : translate(locale, localizedMessages.m8ea67bd69d6f, "Become a fan"));
   return <Link className={styles.celebrityFanLink} data-verified={verified || undefined}
     href={`${creatorHomeHref(slug)}?locale=${locale}` as Route} aria-label={`${name} ${label}`} aria-busy={checking || undefined}>
     <Heart aria-hidden="true" /><span>{label}</span>
   </Link>;
 }
 
-function StandaloneCreatorFanLink({ slug, name, locale }: { slug: string; name: string; locale: "ko" | "en" }) {
+function StandaloneCreatorFanLink({ slug, name, locale }: { slug: string; name: string; locale: AppLocale }) {
   const auth = usePrivy();
-  const { state } = useOwnedFanResource(`/api/me/summary?locale=${locale}&tierStages=1`, parseVerifiedCreators, auth);
+  const { state } = useOwnedFanResource(`/api/me/summary?locale=${toContentLocale(locale)}&tierStages=1`, parseVerifiedCreators, auth);
   const viewState: FanLinkState = !auth.ready || (auth.authenticated && state.status === "loading") ? { status: "loading" }
     : !auth.authenticated ? { status: "guest" }
     : state.status === "error" ? { status: "error" }
@@ -43,7 +47,7 @@ function StandaloneCreatorFanLink({ slug, name, locale }: { slug: string; name: 
   return <LinkView slug={slug} name={name} locale={locale} state={viewState} />;
 }
 
-export function CreatorFanLink(props: { slug: string; name: string; locale: "ko" | "en" }) {
+export function CreatorFanLink(props: { slug: string; name: string; locale: AppLocale }) {
   const homeState = useOptionalHomeCreatorVerification(props.slug);
   return homeState ? <LinkView {...props} state={homeState} /> : <StandaloneCreatorFanLink {...props} />;
 }

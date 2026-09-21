@@ -1,3 +1,6 @@
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__domain__first-like-stamp";
+import { translate } from "@/i18n/messages";
 import { z } from "zod";
 import { mintStatusSchema, stampTypeLabel, type PassportLocale, type PassportStampType } from "./passport-read-model";
 
@@ -23,9 +26,9 @@ export interface PassportDisplayStamp {
   points?: number;
 }
 
-export function displayStampLabel(locale: PassportLocale, type: PassportDisplayStampType): string {
+export function displayStampLabel(locale: AppLocale, type: PassportDisplayStampType): string {
   return type === "first_reaction"
-    ? locale === "ko" ? "첫 좋아요" : "First Like"
+    ? locale === "ko" ? "첫 좋아요" : translate(locale, localizedMessages.mad51ebdd321b, "First Like")
     : stampTypeLabel(locale, type);
 }
 

@@ -1,12 +1,14 @@
 'use client';
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
 import { useEffect, useState } from 'react';
 import { elinaLiveSlug } from '../domain/elina-event';
 import { liveEventResponseSchema, type LiveLocale, type PublicLiveEvent } from '../domain/live-event';
 import { AttendanceSpotlight } from './attendance-spotlight';
 import { useAttendanceWindow } from './use-attendance-window';
 
-export function ElinaAttendanceEntry({ celebritySlug, locale }: { celebritySlug: string; locale: LiveLocale }) {
+export function ElinaAttendanceEntry({ celebritySlug, locale }: { celebritySlug: string; locale: AppLocale }) {
   const key = `${celebritySlug}:${locale}`;
   const [snapshot, setSnapshot] = useState<{ key: string; live: PublicLiveEvent } | null>(null);
   const live = snapshot?.key === key ? snapshot.live : null;
@@ -20,7 +22,7 @@ export function ElinaAttendanceEntry({ celebritySlug, locale }: { celebritySlug:
       const request = new AbortController();
       controller = request;
       try {
-        const response = await fetch(`/api/live-events/${elinaLiveSlug}?locale=${locale}`, { cache: 'no-store', signal: request.signal });
+        const response = await fetch(`/api/live-events/${elinaLiveSlug}?locale=${toContentLocale(locale)}`, { cache: 'no-store', signal: request.signal });
         if (!response.ok) throw new Error('Live availability unavailable');
         const { live: received } = liveEventResponseSchema.parse(await response.json());
         if (request.signal.aborted) return;

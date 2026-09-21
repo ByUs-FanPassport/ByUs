@@ -1,3 +1,4 @@
+import { isAppLocale } from "@/i18n/locales";
 const LIVE_PATH = /^\/live\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RAFFLE_PATH = /^\/c\/[a-z0-9]+(?:-[a-z0-9]+)*\/raffles(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?$/i;
 const RESERVED_LIVE_SLUGS = new Set(["calendar"]);
@@ -40,7 +41,7 @@ export function sanitizeLiveReturnTo(value: string | null | undefined): string |
     if (keys.some((key) => key !== "locale" && key !== "authIntent")) return null;
 
     const locales = parsed.searchParams.getAll("locale");
-    if (locales.length !== 1 || (locales[0] !== "ko" && locales[0] !== "en")) return null;
+    if (locales.length !== 1 || !isAppLocale(locales[0])) return null;
 
     const authIntents = parsed.searchParams.getAll("authIntent");
     if (authIntents.length > 1 || (authIntents[0] && !AUTH_INTENT_ID.test(authIntents[0]))) return null;

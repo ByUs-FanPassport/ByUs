@@ -93,7 +93,7 @@ describe("fan verification route locale contract", () => {
 
   it.each([
     { locale: undefined },
-    { locale: "ja" },
+    { locale: "de" },
     { locale: ["en"] },
   ])("defaults unsupported entry locale input to Korean: %j", async (searchParams) => {
     const element = await QuizEntryPage({

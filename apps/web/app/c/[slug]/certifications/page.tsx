@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import {
   FanAppFrame,
   FanContentContainer,
@@ -11,7 +12,7 @@ export default async function CertificationPage({
   searchParams: Promise<{ locale?: string }>;
 }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   return (
     <FanAppFrame locale={locale} mainId="certification-list">
       <FanContentContainer as="main" id="certification-list" tabIndex={-1}>

@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import type { Metadata } from "next";
 
 import { ServiceGuidePage } from "@/components/service-guide/service-guide-page";
@@ -7,7 +8,7 @@ import { publicMetadata } from "@/seo/metadata";
 type Props = { searchParams: Promise<{ locale?: string | string[] }> };
 
 function resolveLocale(locale?: string | string[]) {
-  return locale === "en" ? "en" : "ko";
+  return parseAppLocale(locale);
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {

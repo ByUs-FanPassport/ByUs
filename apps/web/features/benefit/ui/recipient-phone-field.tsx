@@ -1,5 +1,7 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__recipient-phone-field";
+import { additionalLocales } from "@/i18n/messages";
 import { Check, ChevronDown, Search } from "lucide-react";
 import {
   useEffect,
@@ -12,11 +14,11 @@ import {
 } from "react";
 import PhoneInput, {
   getCountryCallingCode,
+  getCountries,
   type Country,
   type Value,
 } from "react-phone-number-input";
 import enLabels from "react-phone-number-input/locale/en.json";
-import koLabels from "react-phone-number-input/locale/ko.json";
 
 import type { FanLocale } from "@/components/fan-shell/fan-app-shell";
 
@@ -52,6 +54,13 @@ const selectCopy = {
     empty: "No countries found.",
     selected: "Selected",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    label: localizedMessages.m94b8157a6ea1[translationLocale],
+    search: localizedMessages.m35d3fa1158e3[translationLocale],
+    empty: localizedMessages.mf7543fdac1be[translationLocale],
+    selected: localizedMessages.m12ee4bae4fd7[translationLocale],
+  }))
 } as const;
 
 function SearchableCountrySelect({
@@ -77,11 +86,11 @@ function SearchableCountrySelect({
     [options],
   );
   const filtered = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase(locale === "ko" ? "ko-KR" : "en-US").replace(/^\+/, "");
+    const normalized = query.trim().toLocaleLowerCase(locale).replace(/^\+/, "");
     if (!normalized) return countryOptions;
     return countryOptions.filter((option) => {
       const callingCode = getCountryCallingCode(option.value);
-      return option.label.toLocaleLowerCase(locale === "ko" ? "ko-KR" : "en-US").includes(normalized)
+      return option.label.toLocaleLowerCase(locale).includes(normalized)
         || option.value.toLowerCase().includes(normalized)
         || callingCode.includes(normalized);
     });
@@ -232,7 +241,10 @@ export function RecipientPhoneField({
   inputRef?: Ref<HTMLInputElement>;
 }) {
   const errorId = `${id}-error`;
-  const labels = locale === "ko" ? koLabels : enLabels;
+  const labels = useMemo(() => {
+    const names = new Intl.DisplayNames([locale], { type: "region" });
+    return { ...enLabels, ...Object.fromEntries(getCountries().map((country) => [country, names.of(country) ?? country])) };
+  }, [locale]);
 
   return <div className={styles.field}>
     <label htmlFor={id}><span>{label}</span><small>{requiredLabel}</small></label>

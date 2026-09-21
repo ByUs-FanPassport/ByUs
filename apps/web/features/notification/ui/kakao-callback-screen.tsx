@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__notification__ui__kakao-callback-screen";
+import { additionalLocales } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +18,7 @@ import {
 } from "../domain/kakao-connection-schema";
 import styles from "./kakao-callback-screen.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type QueryResult =
   | { kind: "callback"; value: KakaoConnectionCallback }
   | { kind: "invalid" }
@@ -47,6 +50,19 @@ const copy = {
     retry: "Connect again in Settings",
     settings: "Back to Settings",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    loading: localizedMessages.meaf2110d0230[translationLocale],
+    success: localizedMessages.m8554c2a59d56[translationLocale],
+    signed_out: localizedMessages.m954b2401f011[translationLocale],
+    invalid: localizedMessages.mdc23dbcfa116[translationLocale],
+    provider_error: localizedMessages.mbc69584c4e68[translationLocale],
+    token_error: localizedMessages.mdeedf6831397[translationLocale],
+    owner_changed: localizedMessages.mc53df0f7b80b[translationLocale],
+    failed: localizedMessages.m1eb4d5407172[translationLocale],
+    retry: localizedMessages.m748d61c73c2c[translationLocale],
+    settings: localizedMessages.mc4414201dbea[translationLocale],
+  }))
 } as const;
 
 class CallbackFlowError extends Error {

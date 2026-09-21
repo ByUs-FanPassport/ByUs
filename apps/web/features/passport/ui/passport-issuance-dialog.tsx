@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__ui__passport-issuance-dialog";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePageLocale } from "@/components/locale-provider";
 
 import Link from "next/link";
@@ -83,13 +87,45 @@ const copy = {
     errorBody: "Try again in a moment, or open your Passport.",
     retry: "Try again",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    skip: localizedMessages.ma9cd361dfea1[translationLocale],
+    progress: localizedMessages.m9f51d19ce306[translationLocale],
+    completeTitle: (name: string) => translate(translationLocale, localizedMessages.m84198a93cc93, "{0} Passport issued", [name]),
+    completeBody: localizedMessages.m052058d743cc[translationLocale],
+    score: localizedMessages.mbc24b1f6a496[translationLocale],
+    level: localizedMessages.mc4bc91c65097[translationLocale],
+    fanId: "Fan ID",
+    copyFanId: localizedMessages.m1b50b4cd86a2[translationLocale],
+    copiedFanId: localizedMessages.m55401e01d6fa[translationLocale],
+    copyFanIdFailed: localizedMessages.mf1fe2e622705[translationLocale],
+    stampEarned: localizedMessages.mdd07540869ca[translationLocale],
+    open: localizedMessages.m425873a1d4dd[translationLocale],
+    continueLive: localizedMessages.mab2c87655564[translationLocale],
+    myHint: localizedMessages.m84b26c0c9170[translationLocale],
+    openMy: localizedMessages.m311f929deaa4[translationLocale],
+    waiting: localizedMessages.m265d333b7f8f[translationLocale],
+    mintComplete: localizedMessages.m7ccc097f1c7b[translationLocale],
+    mintChecking: localizedMessages.mb2c10d9120cc[translationLocale],
+    mintProcessing: localizedMessages.mafc46ad2a5c6[translationLocale],
+    mintPreparing: localizedMessages.m000b4ebe0cb8[translationLocale],
+    passportAvailable: localizedMessages.m039933af6727[translationLocale],
+    loadingTitle: localizedMessages.m105e6d0a2755[translationLocale],
+    loadingBody: localizedMessages.mcd559c591160[translationLocale],
+    authTitle: localizedMessages.m10190edd8f4f[translationLocale],
+    authBody: localizedMessages.m40c4986c3cc7[translationLocale],
+    authAction: localizedMessages.m91f83a83225d[translationLocale],
+    errorTitle: localizedMessages.m8d987a8f2ccc[translationLocale],
+    errorBody: localizedMessages.mae093a964a2d[translationLocale],
+    retry: localizedMessages.mf5be4ddaebf9[translationLocale],
+  }))
 } as const;
 
-function withLocale(path: string, locale: PassportLocale): Route {
+function withLocale(path: string, locale: AppLocale): Route {
   return `${path}?locale=${locale}` as Route;
 }
 
-function issuanceStatus(issuance: IssuanceAggregate, locale: PassportLocale): string {
+function issuanceStatus(issuance: IssuanceAggregate, locale: AppLocale): string {
   const t = copy[locale];
   const statuses = [issuance.passport.mintStatus, issuance.firstStamp.mintStatus];
   if (statuses.every((status) => status === "minted")) return t.mintComplete;
@@ -108,12 +144,12 @@ export function PassportIssuanceCeremony({
   issuance,
   locale = "ko",
   returnTo,
-}: PassportIssuanceCeremonyProps & { locale?: PassportLocale; returnTo?: string | null }) {
+}: PassportIssuanceCeremonyProps & { locale?: AppLocale; returnTo?: string | null }) {
   const [stage, setStage] = useState(0);
   const t = copy[locale];
   const progress = stage + 1;
   const level = levelLabel(locale, "Bronze");
-  const stampDate = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  const stampDate = new Intl.DateTimeFormat(locale, { calendar: "gregory",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -121,7 +157,7 @@ export function PassportIssuanceCeremony({
   const passportHref = withLocale(`/passports/${issuance.passport.id}`, locale);
   const liveReturnTo = sanitizeLiveReturnTo(returnTo);
   const finalHref = (liveReturnTo ?? passportHref) as Route;
-  const finalLabel = liveReturnTo?.startsWith("/c/") ? (locale === "ko" ? "래플 응모 이어가기" : "Continue to the raffle") : liveReturnTo ? t.continueLive : t.open;
+  const finalLabel = liveReturnTo?.startsWith("/c/") ? (locale === "ko" ? "래플 응모 이어가기" : translate(locale, localizedMessages.m2aaada133b21, "Continue to the raffle")) : liveReturnTo ? t.continueLive : t.open;
   const skipRef = useRef<HTMLButtonElement>(null);
   const openPassportRef = useRef<HTMLAnchorElement>(null);
   const focusOpenOnCompletionRef = useRef(false);
@@ -268,7 +304,7 @@ export function PassportIssuanceCeremony({
           </div>
 
           <div className={styles.sideColumn}>
-            <aside className={styles.summary} aria-label={locale === "ko" ? "팬 인증 기록" : "Fan verification record"}>
+            <aside className={styles.summary} aria-label={locale === "ko" ? "팬 인증 기록" : translate(locale, localizedMessages.mf00176e669cd, "Fan verification record")}>
               <div className={styles.scoreSummary}>
                 <span>{t.score}</span>
                 <strong aria-live="polite">+{stage >= 2 ? issuance.score.points : 0}</strong>
@@ -344,7 +380,7 @@ export function PassportIssuanceScreen({ passportId }: { passportId: string }) {
     try {
       const token = await getAccessToken();
       if (!token) throw new Error("missing access token");
-      const response = await fetch(`/api/passports/${encodeURIComponent(passportId)}/issuance?locale=${locale}`, {
+      const response = await fetch(`/api/passports/${encodeURIComponent(passportId)}/issuance?locale=${toContentLocale(locale)}`, {
         method: "GET",
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",

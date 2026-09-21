@@ -1,3 +1,5 @@
+import { toContentLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
 import { LiveCalendarScreen } from "@/features/live/ui/live-calendar-screen";
 import { resolveLiveCalendarMonth } from "@/features/live/domain/live-calendar";
 import { loadServerEnv } from "@/server/config/env";
@@ -8,7 +10,7 @@ import { createLiveEventRepositoryFromEnvironment } from "@/server/g3/live-event
 export const dynamic = "force-dynamic";
 
 function currentKstMonth(now = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-CA", { calendar: "gregory",
     year: "numeric",
     month: "2-digit",
     timeZone: "Asia/Seoul",
@@ -24,7 +26,7 @@ export default async function LiveCalendarPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const requested = await searchParams;
-  const locale = requested.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(requested.locale);
   const month = resolveLiveCalendarMonth(requested.month, currentKstMonth());
   const environment = loadServerEnv();
   const repositoryConfig = {
@@ -36,8 +38,8 @@ export default async function LiveCalendarPage({
   const liveRepository = createLiveEventRepositoryFromEnvironment(repositoryConfig);
   const now = new Date();
   const [calendar, publishedCelebrities] = await Promise.all([
-    repository.readMonth({ month, locale, appUserId: null, now }),
-    contentRepository.list(locale),
+    repository.readMonth({ month, locale: toContentLocale(locale), appUserId: null, now }),
+    contentRepository.list(toContentLocale(locale)),
   ]);
   const celebrities = publishedCelebrities.map((celebrity) => ({
     slug: celebrity.slug,
@@ -51,7 +53,7 @@ export default async function LiveCalendarPage({
     .filter((slug, index, values) => availableSlugs.has(slug) && values.indexOf(slug) === index);
   const eventSlugs = [...new Set(calendar.days.flatMap((day) => day.events.map((event) => event.slug)))];
   const liveResponses = await Promise.all(eventSlugs.map((slug) =>
-    liveRepository.findPublishedBySlug({ slug, locale, appUserId: null, now }),
+    liveRepository.findPublishedBySlug({ slug, locale: toContentLocale(locale), appUserId: null, now }),
   ));
   const eventMetadata = liveResponses
     .filter((response) => response !== null)

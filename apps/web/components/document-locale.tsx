@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLayoutEffect } from "react";
 import { useAppLocale } from "./locale-provider";
-import { requestLocale } from "./locale-path";
+import { isInstagramManagementPath, requestLocale } from "./locale-path";
 
 export function DocumentLocale() {
   const pathname = usePathname();
@@ -17,11 +17,11 @@ export function DocumentLocale() {
       const url = new URL(window.location.href);
       const admin = currentPath === "/admin" || currentPath.startsWith("/admin/");
       const preference = admin ? null : window.history.state?.byusLocale ?? cookie("byus_page_locale");
-      const locale = requestLocale(currentPath, requested, cookie("byus_locale"), navigator.language, preference);
+      const locale = requestLocale(currentPath, requested, cookie("byus_locale"), navigator.languages.length ? navigator.languages.join(",") : navigator.language, preference);
       document.documentElement.lang = locale;
       setLocale(locale);
       if (!admin) {
-        document.cookie = `byus_page_locale=${locale}; Path=/; SameSite=Lax`;
+        if (!isInstagramManagementPath(currentPath)) document.cookie = `byus_page_locale=${locale}; Path=/; SameSite=Lax`;
         if (url.searchParams.has("locale")) {
           url.searchParams.delete("locale");
           // Let Next synchronize its URL too, including repeated same-page links.

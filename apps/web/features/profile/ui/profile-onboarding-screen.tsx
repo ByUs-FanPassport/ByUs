@@ -1,5 +1,9 @@
 "use client";
+import { FanLanguageSwitch } from "@/components/fan-shell/fan-language-switch";
+import type { AppLocale } from "@/i18n/locales";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/features__profile__ui__profile-onboarding-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePageLocale } from "@/components/locale-provider";
 
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
@@ -36,7 +40,7 @@ type Copy = {
   valid: string; duplicate: string; prohibited: string; invalid: string; network: string; auth: string;
 };
 
-const copy: Record<"ko" | "en", Copy> = {
+const copy: Record<AppLocale, Copy> = {
   ko: {
     home: "ByUs 홈", language: "언어", heading: (name) => `${name} 팬 인증에 사용할 닉네임을 정해 주세요.`,
     subtitle: (name) => `팬 인증을 통과하면 ${name} Fan Passport와 활동 기록에 표시돼요.`, preview: "발급 예정 Fan Passport 미리보기",
@@ -75,6 +79,26 @@ const copy: Record<"ko" | "en", Copy> = {
     network: "We couldn't save it. Your display name is still here, so you can try again.",
     auth: "Log in to continue setting your display name.",
   },
+
+  ...additionalLocales((translationLocale): Copy => ({
+    home: localizedMessages.m1a5c7fab95c1[translationLocale], language: localizedMessages.m7cecac15d1c8[translationLocale], heading: (name) => translate(translationLocale, localizedMessages.m4fd20ce2ec5e, "Choose a display name for your {0} fan verification.", [name]),
+    subtitle: (name) => translate(translationLocale, localizedMessages.mb2cc6130dfa0, "After verification, it will appear in your {0} Fan Passport and activity history.", [name]), preview: localizedMessages.m77a8433b4b98[translationLocale],
+    genericHeading: localizedMessages.m8968f5dd8d60[translationLocale],
+    genericSubtitle: localizedMessages.md0d20638439b[translationLocale],
+    progress: localizedMessages.m45b828d21678[translationLocale],
+    verification: localizedMessages.m7d12545de2ff[translationLocale], pending: localizedMessages.m740212594afd[translationLocale], owner: localizedMessages.m1ccddaaa7c9b[translationLocale], placeholderOwner: localizedMessages.mf3186babb5fc[translationLocale],
+    issuance: localizedMessages.mcb25408c796c[translationLocale], field: localizedMessages.m1f43225c3b92[translationLocale], counter: (count) => translate(translationLocale, localizedMessages.mf735427be4fd, "{0}/32 characters", [count]),
+    rule: localizedMessages.m388d99b17aa2[translationLocale],
+    privacy: localizedMessages.me914d546f539[translationLocale],
+    save: localizedMessages.m3a4bd2a82e85[translationLocale], saving: localizedMessages.m8ce7631a645d[translationLocale], saved: localizedMessages.m66fa547b695c[translationLocale], back: localizedMessages.me581e7288bd2[translationLocale],
+    checking: localizedMessages.m613e3cef5528[translationLocale], empty: localizedMessages.m39097293d8a7[translationLocale],
+    typing: localizedMessages.mb8991f17ddf9[translationLocale], valid: localizedMessages.mece4bb8d1ff4[translationLocale],
+    duplicate: localizedMessages.m2e3215a8f372[translationLocale],
+    prohibited: localizedMessages.mb55fe0064f9f[translationLocale],
+    invalid: localizedMessages.ma2d1a9ec33e4[translationLocale],
+    network: localizedMessages.mc3ef2f0c72ce[translationLocale],
+    auth: localizedMessages.m526720e6b622[translationLocale],
+  }))
 };
 
 const draftStorageKey = "byus:profile-nickname-draft";
@@ -272,11 +296,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
       mainId="profile-onboarding-main"
       showFooter
       headerActions={
-        <nav className={styles.locale} aria-label={t.language}>
-          <Link aria-current={locale === "ko" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "ko" }) as Route}>KO</Link>
-          <span aria-hidden="true">/</span>
-          <Link aria-current={locale === "en" ? "page" : undefined} href={appendLoginContext("/onboarding/profile", { ...context, locale: "en" }) as Route}>EN</Link>
-        </nav>
+        <FanLanguageSwitch locale={locale} href={appendLoginContext("/onboarding/profile", context) as Route} />
       }
     >
 
@@ -306,7 +326,7 @@ export function ProfileOnboardingScreen({ celebrity }: { celebrity: PublishedCel
             </div>
             <dl>
               <div className={styles.ownerRow}><dt>{t.owner}</dt><dd dir="auto">{displayOwner}</dd></div>
-              <div><dt>{locale === "ko" ? "상태" : "Status"}</dt><dd>{t.issuance}</dd></div>
+              <div><dt>{locale === "ko" ? "상태" : translate(locale, localizedMessages.m8f2df231a288, "Status")}</dt><dd>{t.issuance}</dd></div>
             </dl>
           </section> : null}
 

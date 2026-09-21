@@ -14,13 +14,8 @@ describe("U.S. fanmeeting inquiries", () => {
       expect(screen.getByRole("button", { name: "biz@sallylab.io" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: locale === "ko" ? "프로젝트 문의하기" : "Tell us about your project" })).toBeInTheDocument();
       expect(
-        screen.getByRole("link", {
-          name: locale === "ko" ? "Switch to English" : "한국어로 보기",
-        }),
-      ).toHaveAttribute(
-        "href",
-        `/pages/us-fanmeetings?locale=${locale === "ko" ? "en" : "ko"}`,
-      );
+        screen.getByRole("combobox", { name: locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English" }),
+      ).toHaveValue(locale);
       expect(
         screen.getByRole("link", {
           name: locale === "ko" ? "지원 범위 보기" : "Explore our support",
@@ -47,7 +42,7 @@ describe("U.S. fanmeeting inquiries", () => {
   });
 
   it("falls back to Korean for unsupported or repeated locale parameters", async () => {
-    for (const locale of ["fr", ["en", "ko"], undefined]) {
+    for (const locale of ["de", ["en", "ko"], undefined]) {
       const metadata = await generateMetadata({
         searchParams: Promise.resolve({ locale }),
       });

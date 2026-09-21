@@ -1,4 +1,9 @@
 "use client";
+import { FanLanguageSwitch } from "@/components/fan-shell/fan-language-switch";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-mission-screen";
+import { translate } from "@/i18n/messages";
 import Link from "next/link";
 import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
@@ -14,18 +19,15 @@ import { ArtMissionHeader, ArtMissionPlay, supportsArtMissionPlay } from "./art-
 import styles from "./live-mission-screen.module.css";
 
 type Mission = z.infer<typeof liveMissionSchema>;
-type Props = { slug: string; locale: "ko" | "en" };
+type Props = { slug: string; locale: AppLocale };
 type SubmissionState = "pending" | "complete" | "error";
 
 export function LiveMissionScreen(props: Props) {
   const auth = usePrivy();
-  const otherLocale = props.locale === "ko" ? "en" : "ko";
   const artCampaign = props.slug === elinaLiveSlug;
   return <div className={`${styles.surface} ${artCampaign ? styles.artSurface : ""}`} data-fan-surface lang={props.locale}>
     {artCampaign ? <ArtMissionHeader locale={props.locale} /> : <FocusFlowHeader locale={props.locale} mainId="live-mission-main" innerClassName={styles.headerInner} sticky>
-      <Link className={styles.locale} href={`/live/${props.slug}/missions?locale=${otherLocale}`} lang={otherLocale} hrefLang={otherLocale}>
-        {props.locale === "ko" ? "KO / EN" : "EN / KO"}
-      </Link>
+      <FanLanguageSwitch locale={props.locale} href={`/live/${props.slug}/missions?locale=${props.locale}`} />
     </FocusFlowHeader>}
     <MissionContent key={`${auth.ready}:${auth.authenticated}:${auth.user?.id ?? "guest"}:${props.slug}:${props.locale}`} {...props} auth={auth} />
   </div>;
@@ -53,7 +55,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${locale}`, { signal: controller.signal, cache: "no-store" })
+    void fetch(`/api/live-events/${encodeURIComponent(slug)}?locale=${toContentLocale(locale)}`, { signal: controller.signal, cache: "no-store" })
       .then(async response => {
         if (response.ok) {
           const body = liveEventResponseSchema.parse(await response.json());
@@ -71,7 +73,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
       const token = await getAccessToken();
       if (controller.signal.aborted) return;
       if (!token) throw new Error("Missing token");
-      const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/missions?locale=${locale}`, {
+      const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/missions?locale=${toContentLocale(locale)}`, {
         signal: controller.signal, headers: { authorization: `Bearer ${token}` }, cache: "no-store",
       });
       if (!response.ok) throw new Error("Mission request failed");
@@ -124,18 +126,18 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
     }
   }
 
-  const back = <Link className={styles.back} href={`/live/${slug}?locale=${locale}`}>{ko ? "LIVE로 돌아가기" : "Back to LIVE"}</Link>;
-  if (!ready) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<FanState kind="loading" title={ko ? "참여 정보를 확인하고 있어요." : "Checking participation."} /></main>;
-  if (!authenticated) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<h1>{ko ? "LIVE 미션" : "LIVE Missions"}</h1><button onClick={login}>{ko ? "로그인하고 참여하기" : "Sign in to join"}</button></main>;
+  const back = <Link className={styles.back} href={`/live/${slug}?locale=${locale}`}>{locale === "ko" ? "LIVE로 돌아가기" : translate(locale, localizedMessages.m0fd55b295f20, "Back to LIVE")}</Link>;
+  if (!ready) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<FanState kind="loading" title={locale === "ko" ? "참여 정보를 확인하고 있어요." : translate(locale, localizedMessages.m25d053f465c8, "Checking participation.")} /></main>;
+  if (!authenticated) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<h1>{locale === "ko" ? "LIVE 미션" : translate(locale, localizedMessages.m9e1272e7e694, "LIVE Missions")}</h1><button onClick={login}>{locale === "ko" ? "로그인하고 참여하기" : translate(locale, localizedMessages.mb3747fde918f, "Sign in to join")}</button></main>;
   if (loadState === "ready" && slug === elinaLiveSlug && supportsArtMissionPlay(missions)) {
     return <ArtMissionPlay missions={missions} locale={locale} answers={answers} submissions={submissions} errors={errors}
       onAnswer={(questionId, optionId) => setAnswers(current => ({ ...current, [questionId]: optionId }))} onSubmit={submit} />;
   }
   return <main className={styles.page} id="live-mission-main" tabIndex={-1}>
-    {back}<header><p>{title || (ko ? "LIVE 참여 미션" : "LIVE participation")}</p><h1>{ko ? "미션" : "Missions"}</h1></header>
-    {loadState === "loading" ? <FanState kind="loading" title={ko ? "미션을 불러오고 있어요." : "Loading missions."} />
-      : loadState === "error" ? <FanState kind="error" title={ko ? "미션을 불러오지 못했어요." : "Could not load missions."} actions={<FanAction onClick={() => setRetry(value => value + 1)}>{ko ? "다시 시도" : "Try again"}</FanAction>} />
-      : missions.length === 0 ? <p>{ko ? "지금 참여할 수 있는 미션이 없어요." : "No missions are available right now."}</p>
+    {back}<header><p>{title || (locale === "ko" ? "LIVE 참여 미션" : translate(locale, localizedMessages.maef244b8cb1d, "LIVE participation"))}</p><h1>{locale === "ko" ? "미션" : translate(locale, localizedMessages.m33fa9338bae8, "Missions")}</h1></header>
+    {loadState === "loading" ? <FanState kind="loading" title={locale === "ko" ? "미션을 불러오고 있어요." : translate(locale, localizedMessages.mcabe043759ae, "Loading missions.")} />
+      : loadState === "error" ? <FanState kind="error" title={locale === "ko" ? "미션을 불러오지 못했어요." : translate(locale, localizedMessages.mddfe2c1fc9f7, "Could not load missions.")} actions={<FanAction onClick={() => setRetry(value => value + 1)}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m323140c34cfd, "Try again")}</FanAction>} />
+      : missions.length === 0 ? <p>{locale === "ko" ? "지금 참여할 수 있는 미션이 없어요." : translate(locale, localizedMessages.m5a132c3337b9, "No missions are available right now.")}</p>
       : missions.map(mission => {
         const pending = submissions[mission.id] === "pending";
         return <article key={mission.id} className={styles.card} aria-busy={pending}>
@@ -148,10 +150,10 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
             </label>)}
           </fieldset>)}
           <button disabled={pending || mission.completed || mission.questions.some(question => !answers[question.id])} onClick={() => void submit(mission)}>
-            {pending ? (ko ? "제출 중…" : "Submitting…") : mission.completed ? (ko ? "완료됨" : "Completed") : (ko ? "미션 완료" : "Complete mission")}
+            {pending ? (locale === "ko" ? "제출 중…" : translate(locale, localizedMessages.m4ea9a49f362b, "Submitting…")) : mission.completed ? (locale === "ko" ? "완료됨" : translate(locale, localizedMessages.m4c70b81bb0c3, "Completed")) : (locale === "ko" ? "미션 완료" : translate(locale, localizedMessages.me1b43e38ddba, "Complete mission"))}
           </button>
-          {submissions[mission.id] === "complete" && <p role="status" className={styles.notice}>{ko ? "미션을 완료했어요. 보상과 Stamp가 기록되었습니다." : "Mission complete. Your rewards and Stamp were recorded."}</p>}
-          {submissions[mission.id] === "error" && <p role="alert" className={styles.notice}>{ko ? "미션을 완료하지 못했어요. 다시 시도해 주세요." : "Mission could not be completed. Please try again."}</p>}
+          {submissions[mission.id] === "complete" && <p role="status" className={styles.notice}>{locale === "ko" ? "미션을 완료했어요. 보상과 Stamp가 기록되었습니다." : translate(locale, localizedMessages.m69b94777d35b, "Mission complete. Your rewards and Stamp were recorded.")}</p>}
+          {submissions[mission.id] === "error" && <p role="alert" className={styles.notice}>{locale === "ko" ? "미션을 완료하지 못했어요. 다시 시도해 주세요." : translate(locale, localizedMessages.m7e12c8224787, "Mission could not be completed. Please try again.")}</p>}
         </article>;
       })}
   </main>;

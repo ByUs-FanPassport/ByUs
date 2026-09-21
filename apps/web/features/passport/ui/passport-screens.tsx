@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__ui__passport-screens";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePageLocale } from "@/components/locale-provider";
 
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
@@ -62,15 +66,28 @@ const copy = {
     nextLevel: "Next Level", levelMax: "You reached the highest Level.", remaining: "pts remaining", nextBenefit: "Next benefit", benefitReady: "Available now", participationReady: "You can participate now.", benefitLocked: "Complete the conditions to unlock it.", viewBenefit: "View benefit", relatedActivity: "Related activity", currentScore: "Current", requiredScore: "Required", opensAt: "Opens",
     firstReaction: "First Like", firstReactionDate: "First like recorded", firstReactionTransaction: "First Like issuance record",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    passports: localizedMessages.me6897dd75bd1[translationLocale], passportsSub: localizedMessages.mc73f3749e3e5[translationLocale], discover: localizedMessages.mdef75c1884a4[translationLocale], open: localizedMessages.mfc76989a61b9[translationLocale],
+    emptyTitle: localizedMessages.m1864d69ebd2a[translationLocale], emptyBody: localizedMessages.m59e0b11ca75c[translationLocale], emptyAction: localizedMessages.mbfa0d61142d3[translationLocale],
+    retry: localizedMessages.mb4379c372d8c[translationLocale], loadError: localizedMessages.m3b80a3121288[translationLocale], loadErrorBody: localizedMessages.m2ab7fcbaaf3d[translationLocale], login: localizedMessages.mb23955ded091[translationLocale],
+    issued: localizedMessages.me21434252594[translationLocale], score: localizedMessages.m0b081127588e[translationLocale], stamps: localizedMessages.mbc614a24872e[translationLocale], digital: localizedMessages.m340ae2353038[translationLocale], pending: localizedMessages.mf61f0a1c1ea3[translationLocale], complete: localizedMessages.m2abdc2da22b2[translationLocale], needsHelp: localizedMessages.m05766dc82114[translationLocale],
+    detailSub: localizedMessages.m25e2ba37bd5e[translationLocale], stampBook: localizedMessages.mbd926ecb9a0a[translationLocale], activity: localizedMessages.mb26bfbbe9b01[translationLocale], noActivity: localizedMessages.m83d6d2b708c0[translationLocale], noActivityBody: localizedMessages.maacf890b3b73[translationLocale],
+    emptySlot: localizedMessages.ma76da83341eb[translationLocale], earned: localizedMessages.mcf03511bc0de[translationLocale],
+    points: localizedMessages.m5058ce8d84cf[translationLocale], digitalInfo: localizedMessages.m5a8d2ab5532f[translationLocale], token: localizedMessages.mc4766245431c[translationLocale], transaction: localizedMessages.m6fd0f304e6fe[translationLocale], explorer: localizedMessages.mbb1fcacb0088[translationLocale], noFacts: localizedMessages.mc22636f8e2b3[translationLocale],
+    stampDetail: localizedMessages.m0f3be195bc4a[translationLocale], stampDetailSub: localizedMessages.m3b721e6e2da9[translationLocale], earnedOn: localizedMessages.me0161251536f[translationLocale], activityDate: localizedMessages.m7a385bc95031[translationLocale], reward: localizedMessages.m06dafc751133[translationLocale], backPassport: localizedMessages.md0e4ec808f3a[translationLocale], notFound: localizedMessages.m35f21c723389[translationLocale], notFoundBody: localizedMessages.m3151e4f3276f[translationLocale],
+    nextLevel: localizedMessages.m0d0fe339dc82[translationLocale], levelMax: localizedMessages.m91ac4dc48d6e[translationLocale], remaining: localizedMessages.m1703d305925e[translationLocale], nextBenefit: localizedMessages.m0394ccf9fa80[translationLocale], benefitReady: localizedMessages.me6266f60b794[translationLocale], participationReady: localizedMessages.m13d5416c4e58[translationLocale], benefitLocked: localizedMessages.m417a03223434[translationLocale], viewBenefit: localizedMessages.m3b1b0ad50a6b[translationLocale], relatedActivity: localizedMessages.ma154c43cdd92[translationLocale], currentScore: localizedMessages.m5e68cf5fdfe8[translationLocale], requiredScore: localizedMessages.mc5ca7741f741[translationLocale], opensAt: localizedMessages.m49be08ad96ce[translationLocale],
+    firstReaction: localizedMessages.m8c011de843b8[translationLocale], firstReactionDate: localizedMessages.m20bcb4f2133a[translationLocale], firstReactionTransaction: localizedMessages.m65be95e9b73c[translationLocale],
+  }))
 } as const;
 
-function withLocale(path: string, locale: PassportLocale): Route { return `${path}?locale=${locale}` as Route; }
-function date(value: string, locale: PassportLocale): string { return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { year: "numeric", month: "short", day: "numeric" }).format(new Date(value)); }
-function passportDate(value: string, locale: PassportLocale): string { return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)); }
-function passportSectionHref(id: string, locale: PassportLocale, section: "activity" | "stamp-book"): Route { return `/passports/${id}?locale=${locale}#${section}` as Route; }
+function withLocale(path: string, locale: AppLocale): Route { return `${path}?locale=${locale}` as Route; }
+function date(value: string, locale: AppLocale): string { return new Intl.DateTimeFormat(locale, { calendar: "gregory", year: "numeric", month: "short", day: "numeric" }).format(new Date(value)); }
+function passportDate(value: string, locale: AppLocale): string { return new Intl.DateTimeFormat(locale, { calendar: "gregory", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)); }
+function passportSectionHref(id: string, locale: AppLocale, section: "activity" | "stamp-book"): Route { return `/passports/${id}?locale=${locale}#${section}` as Route; }
 function maskHash(value: string): string { return `${value.slice(0, 8)}…${value.slice(-6)}`; }
 
-function issuanceText(status: string, locale: PassportLocale) {
+function issuanceText(status: string, locale: AppLocale) {
   const c = copy[locale];
   if (status === "minted") return c.complete;
   if (status === "permanent_failure") return c.needsHelp;
@@ -79,7 +96,7 @@ function issuanceText(status: string, locale: PassportLocale) {
 
 function missingConditionText(
   condition: NonNullable<PassportDetail["nextBenefit"]>["missingConditions"][number],
-  locale: PassportLocale,
+  locale: AppLocale,
 ): string {
   const c = copy[locale];
   switch (condition.type) {
@@ -90,9 +107,7 @@ function missingConditionText(
     case "stamp":
       return `Stamp: ${stampTypeLabel(locale, condition.required)}`;
     case "activity":
-      return locale === "ko"
-        ? `활동: ${stampTypeLabel(locale, condition.required)}`
-        : `Activity: ${stampTypeLabel(locale, condition.required)}`;
+      return locale === "ko" ? `활동: ${stampTypeLabel(locale, condition.required)}` : translate(locale, localizedMessages.m9b94aca36d75, "Activity: {0}", [stampTypeLabel(locale, condition.required)]);
     case "opens_at":
       return `${c.opensAt}: ${date(condition.at, locale)}`;
   }
@@ -115,23 +130,23 @@ function safeExplorerUrl(baseUrl: string, txHash: string): string | null {
   } catch { return null; }
 }
 
-function Frame({ locale, children, presentation = "page", collection = false }: { locale: PassportLocale; children: React.ReactNode; presentation?: "page" | "overlay"; collection?: boolean }) {
+function Frame({ locale, children, presentation = "page", collection = false }: { locale: AppLocale; children: React.ReactNode; presentation?: "page" | "overlay"; collection?: boolean }) {
   if (presentation === "overlay") return <div className={`${styles.app} ${styles.overlayApp}`} data-fan-surface lang={locale}><main className={styles.overlayMain}>{children}</main></div>;
   return <FanAppFrame locale={locale} className={collection ? fanUtilityCanvasClassName : undefined} mainId="passport-content"><div className={`${styles.app} ${collection ? styles.collectionApp : ""}`}><FanContentContainer as="main" className={styles.main} id="passport-content" tabIndex={-1}>{children}</FanContentContainer></div></FanAppFrame>;
 }
 
-function Skeleton({ detail = false, locale }: { detail?: boolean; locale: PassportLocale }) { return <div className={styles.skeleton} role="status" aria-label={locale === "ko" ? "패스포트 불러오는 중" : "Loading Passport"} aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
+function Skeleton({ detail = false, locale }: { detail?: boolean; locale: AppLocale }) { return <div className={styles.skeleton} role="status" aria-label={locale === "ko" ? "패스포트 불러오는 중" : translate(locale, localizedMessages.mc27600a8c8ca, "Loading Passport")} aria-busy="true"><div className={styles.skeletonLine} /><div className={styles.skeletonLineShort} /><div className={detail ? styles.skeletonDetail : styles.skeletonGrid}>{Array.from({ length: detail ? 5 : 3 }, (_, i) => <span key={i} />)}</div></div>; }
 
-function StateMessage({ locale, kind, retry, returnTo }: { locale: PassportLocale; kind: "auth" | "missing" | "network"; retry: () => void; returnTo: string }) {
+function StateMessage({ locale, kind, retry, returnTo }: { locale: AppLocale; kind: "auth" | "missing" | "network"; retry: () => void; returnTo: string }) {
   const c = copy[locale]; const missing = kind === "missing";
   const source = new URL(returnTo, "https://byus.local");
   const targetId = source.pathname.split("/").filter(Boolean).at(-1) ?? "collection";
-  return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{kind === "auth" ? (locale === "ko" ? "로그인하고 내 패스포트를 확인하세요." : "Sign in to view your Passports.") : missing ? c.notFound : c.loadError}</h1><p>{kind === "auth" ? (locale === "ko" ? "팬 인증과 LIVE 참여로 남긴 기록을 한곳에서 볼 수 있어요." : "See your fan verification and LIVE participation records in one place.") : missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
+  return <section className={styles.state} aria-labelledby="state-title" role={kind === "network" ? "alert" : "status"}><CircleHelp aria-hidden="true" /><h1 id="state-title">{kind === "auth" ? (locale === "ko" ? "로그인하고 내 패스포트를 확인하세요." : translate(locale, localizedMessages.mf8911ff69073, "Sign in to view your Passports.")) : missing ? c.notFound : c.loadError}</h1><p>{kind === "auth" ? (locale === "ko" ? "팬 인증과 LIVE 참여로 남긴 기록을 한곳에서 볼 수 있어요." : translate(locale, localizedMessages.m0f233f872987, "See your fan verification and LIVE participation records in one place.")) : missing ? c.notFoundBody : c.loadErrorBody}</p>{kind === "auth" ? <AuthIntentLink className={styles.primaryButton} locale={locale} input={{ sourcePath: source.pathname, sourceQuery: source.search, actionType: "OPEN_PASSPORT", targetType: "passport", targetId }}>{c.login}<ArrowRight aria-hidden="true" /></AuthIntentLink> : kind === "network" ? <button className={styles.primaryButton} type="button" onClick={retry}><RotateCcw aria-hidden="true" />{c.retry}</button> : <Link className={styles.secondaryButton} href={withLocale("/passports", locale)}>{c.backPassport}</Link>}</section>;
 }
 
 function PageHeading({ title, subtitle, back }: { title: string; subtitle: string; back?: React.ReactNode }) { return <div className={styles.heading}>{back}<div><h1>{title}</h1><p>{subtitle}</p></div></div>; }
 
-function DigitalStatus({ status, locale }: { status: string; locale: PassportLocale }) { return <span className={styles.digitalStatus} data-complete={status === "minted"}><span aria-hidden="true">{status === "minted" ? <Check /> : <Sparkles />}</span>{issuanceText(status, locale)}</span>; }
+function DigitalStatus({ status, locale }: { status: string; locale: AppLocale }) { return <span className={styles.digitalStatus} data-complete={status === "minted"}><span aria-hidden="true">{status === "minted" ? <Check /> : <Sparkles />}</span>{issuanceText(status, locale)}</span>; }
 
 const parseCollection = (body: unknown) => parsePassportCollectionResponse(body).passports;
 const parsePassport = (body: unknown) => (body as { passport: PassportDetail }).passport;
@@ -142,20 +157,20 @@ const passportNeedsRefresh = (passport: PassportDetail) => mintNeedsRefresh(pass
   || mintNeedsRefresh(passport.firstReaction?.mintStatus) || passport.stamps.some(s => mintNeedsRefresh(s.mint.status));
 const stampNeedsRefresh = (stamp: StampDetail) => mintNeedsRefresh(stamp.mint.status);
 
-function RefreshNotice({ failed, retry, locale }: { failed: boolean; retry: () => void; locale: PassportLocale }) {
+function RefreshNotice({ failed, retry, locale }: { failed: boolean; retry: () => void; locale: AppLocale }) {
   return failed ? <p className={styles.refreshNotice} role="status">{copy[locale].loadError} <button className={styles.secondaryButton} type="button" onClick={retry}>{copy[locale].retry}</button></p> : null;
 }
 
 
 export function PassportCollectionScreen() {
   const locale = usePageLocale(); const c = copy[locale]; const auth = usePrivy();
-  const fetcher = useOwnedFanResource(`/api/passports?locale=${locale}&tierStages=1&firstLikeStamp=1`, parseCollection, auth, collectionNeedsRefresh);
+  const fetcher = useOwnedFanResource(`/api/passports?locale=${toContentLocale(locale)}&tierStages=1&firstLikeStamp=1`, parseCollection, auth, collectionNeedsRefresh);
   return <Frame locale={locale} collection><div className={styles.collectionHeading}>
       <PageHeading title={c.passports} subtitle={c.passportsSub} />
       {fetcher.state.status === "ready" && fetcher.state.data.length > 0 ? <Link className={styles.discoverLink} href={withLocale("/celebrities", locale)}>{c.discover}<ArrowRight aria-hidden="true" /></Link> : null}
     </div>
     <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
-      <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : "Passport collection"}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
+      <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : translate(locale, localizedMessages.mbba0de6c334a, "Passport collection")}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
         <div className={styles.collectionCardLabel}><span>FAN PASSPORT</span><span aria-hidden="true">ByUs.</span></div>
         <div className={styles.collectionCardMain}>
           <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)} aria-label={`${passport.celebrity.name} · ${c.open}`}>
@@ -178,20 +193,18 @@ export function PassportCollectionScreen() {
   </Frame>;
 }
 
-function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: PassportLocale; explorerBaseUrl: string }) {
+function DigitalDisclosure({ mint, locale, explorerBaseUrl }: { mint: { status: string; txHash: string | null; tokenId: string | null }; locale: AppLocale; explorerBaseUrl: string }) {
   const c = copy[locale]; const explorer = mint.txHash ? safeExplorerUrl(explorerBaseUrl, mint.txHash) : null;
   const transaction = mint.txHash ? maskHash(mint.txHash) : null;
   const explorerLabel = mint.txHash
-    ? locale === "ko"
-      ? `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`
-      : `Issuance record ${mint.txHash}, open issuance record in a new tab`
+    ? locale === "ko" ? `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기` : translate(locale, localizedMessages.m2777a4cfeb09, "Issuance record {0}, open issuance record in a new tab", [mint.txHash])
     : "";
   return <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>{mint.tokenId ? <p><span>{c.token}</span><strong data-wrap-anywhere>{mint.tokenId}</strong></p> : null}{transaction ? <p><span>{c.transaction}</span>{explorer ? <a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{transaction}</strong><ExternalLink aria-hidden="true" /></a> : <strong data-wrap-anywhere>{transaction}</strong>}</p> : null}{!mint.tokenId && !mint.txHash ? <p>{c.noFacts}</p> : null}</div></details>;
 }
 
 function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityName }: {
   firstReaction: NonNullable<PassportDetail["firstReaction"]>;
-  locale: PassportLocale;
+  locale: AppLocale;
   explorerBaseUrl: string;
   celebrityName: string;
 }) {
@@ -205,9 +218,7 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
     ? safeExplorerUrl(explorerBaseUrl, firstReaction.txHash)
     : null;
   const explorerLabel = firstReaction.txHash
-    ? locale === "ko"
-      ? `${c.firstReactionTransaction} ${firstReaction.txHash}, 발급 기록을 새 탭에서 열기`
-      : `${c.firstReactionTransaction} ${firstReaction.txHash}, open issuance record in a new tab`
+    ? locale === "ko" ? `${c.firstReactionTransaction} ${firstReaction.txHash}, 발급 기록을 새 탭에서 열기` : translate(locale, localizedMessages.md4e04ec79dac, "{0} {1}, open issuance record in a new tab", [c.firstReactionTransaction, firstReaction.txHash])
     : "";
   return <>
     <button type="button" className={`${styles.stampSlot} ${styles.stampButton}`} id="first-like-stamp" aria-label={c.firstReaction} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
@@ -218,7 +229,7 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
     {open ? <Overlay open onClose={close} labelledBy={titleId} closeOnBackdrop backdropClassName={styles.detailBackdrop} contentClassName={styles.detailOverlay}>
       <h1 className={styles.visuallyHidden} id={titleId}>{c.stampDetail}</h1>
       <Frame locale={locale} presentation="overlay">
-        <PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={<button className={styles.back} type="button" onClick={close} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button>} />
+        <PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={<button className={styles.back} type="button" onClick={close} data-autofocus><X />{locale === "ko" ? "상세 닫기" : translate(locale, localizedMessages.m138c8f13f9bc, "Close details")}</button>} />
         <div className={styles.stampDetailLayout}>
           <section className={styles.stampFocus}>
             <span className={styles.momentLabel}>{celebrityName}</span>
@@ -227,7 +238,7 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
             <div aria-live="polite"><DigitalStatus status={firstReaction.mintStatus} locale={locale} /></div>
           </section>
           <aside className={styles.stampFacts}>
-            <h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2>
+            <h2>{locale === "ko" ? "이 순간의 기록" : translate(locale, localizedMessages.mb1bae3f5da54, "Moment record")}</h2>
             <dl><div><dt>{c.earnedOn}</dt><dd>{date(firstReaction.issuedAt, locale)}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{c.firstReaction}</dd></div></dl>
             <details className={styles.disclosure}><summary>{c.digitalInfo}</summary><div>
               {explorer && firstReaction.txHash ? <p><span>{c.transaction}</span><a className={styles.transactionLink} href={explorer} target="_blank" rel="noreferrer" aria-label={explorerLabel}><strong data-wrap-anywhere>{maskHash(firstReaction.txHash)}</strong><ExternalLink aria-hidden="true" /></a></p> : <p>{c.noFacts}</p>}
@@ -241,11 +252,11 @@ function FirstLikeStampCard({ firstReaction, locale, explorerBaseUrl, celebrityN
 
 export function PassportDetailScreen({ id, explorerBaseUrl }: { id: string; explorerBaseUrl: string }) {
   const locale = usePageLocale(); const c = copy[locale]; const auth = usePrivy();
-  const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedFanResource(`/api/passports/${encodeURIComponent(id)}?locale=${locale}&tierStages=1`, parse, auth, passportNeedsRefresh);
+  const parse = useCallback((value: unknown) => parsePassport(value), []); const fetcher = useOwnedFanResource(`/api/passports/${encodeURIComponent(id)}?locale=${toContentLocale(locale)}&tierStages=1`, parse, auth, passportNeedsRefresh);
   return <Frame locale={locale}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><PassportDetailView passport={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} /></>}</Frame>;
 }
 
-function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: PassportDetail; locale: PassportLocale; explorerBaseUrl: string }) {
+function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: PassportDetail; locale: AppLocale; explorerBaseUrl: string }) {
   const c = copy[locale];
   const communityStamps = useCommunityStamps(passport.celebrity.slug);
   const communityCount = communityStamps.state.status === "ready" ? communityStamps.state.data.stamps.filter(stamp => stamp.celebritySlug === passport.celebrity.slug).length : 0;
@@ -273,15 +284,15 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
   const fanName = passport.owner.nickname?.trim() || "—";
   const nickname = passport.owner.nickname?.trim() || passport.display.level;
   const longFanName = Array.from(new Intl.Segmenter(locale, { granularity: "grapheme" }).segment(fanName)).length > 16;
-  const avatarLabel = locale === "ko" ? `${nickname} 프로필 아바타` : `${nickname} profile avatar`;
-  const creatorLinkLabel = locale === "ko" ? `${passport.celebrity.name} 최애 페이지 보기` : `View ${passport.celebrity.name} creator page`;
+  const avatarLabel = locale === "ko" ? `${nickname} 프로필 아바타` : translate(locale, localizedMessages.m4a446a5d94ae, "{0} profile avatar", [nickname]);
+  const creatorLinkLabel = locale === "ko" ? `${passport.celebrity.name} 최애 페이지 보기` : translate(locale, localizedMessages.m6c1e7c1ea0c2, "View {0} creator page", [passport.celebrity.name]);
   return <><PageHeading title={`${passport.celebrity.name} Fan Passport`} subtitle={c.detailSub} back={<Link className={styles.back} href={withLocale("/passports", locale)}><ArrowLeft />{c.passports}</Link>} />
     <section className={styles.passportHero}><div className={styles.passportVisual}><PassportStampCanvas celebrityName={passport.celebrity.name} level={passport.display.level} stamps={stampDisplay.stamps} totalCount={stampDisplay.totalCount + communityCount} locale={locale} priority /><dl className={styles.passportFields}>
       <div><dt>FAN NAME</dt><dd className={styles.fanNameValue} data-long-name={longFanName} aria-label={`FAN NAME: ${fanName}`} data-passport-field="fan-name" dir="auto">{fanName}</dd></div>
       <div><dt>STAR</dt><dd aria-label={`STAR: ${passport.celebrity.name}`} data-passport-field="star">{passport.celebrity.name}</dd></div>
       <div><dt>DATE OF ISSUE</dt><dd className={styles.issueDateValue} aria-label={`DATE OF ISSUE: ${passportDate(passport.issuedAt, locale)}`} data-passport-field="issue-date">{passportDate(passport.issuedAt, locale)}</dd></div>
       <div><dt>FAN ID</dt><dd className={styles.fanIdValue} aria-label={`FAN ID: ${passport.id}`} data-passport-field="fan-id" dir="ltr">{passport.id}</dd></div>
-    </dl></div><div className={styles.identity}><div className={styles.identityAvatar} data-fan-avatar>{avatarResource.state.status === "ready" ? <Avatar avatar={avatarResource.state.avatar} imageUrl={avatarResource.state.imageUrl} label={avatarLabel} size={64} /> : <AvatarPlaceholder size={64} />}</div><div className={styles.identityCopy}><strong dir="auto">{nickname}</strong><div className={styles.identityMeta}><Link className={styles.creatorLink} href={withLocale(creatorHomeHref(passport.celebrity.slug), locale)} aria-label={creatorLinkLabel}><span>{passport.celebrity.name}</span><ExternalLink aria-hidden="true" /></Link><small>{passport.owner.nickname ? `${currentStageLabel} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div></div><div className={styles.heroFacts}><Link href="#activity"><strong>{passport.score.points}</strong><small>{c.score}</small></Link><Link href="#stamp-book"><strong>{stampDisplay.totalCount + communityCount}</strong><small>{c.stamps}</small></Link></div><div className={styles.levelProgress}><FanTierBadge tier={passport.score.level} stageKey={stage?.current.key} locale={locale} size={40}/><div><strong>{stage ? nextStageLabel ? `${currentStageLabel} → ${nextStageLabel}` : currentStageLabel : passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{stage ? stage.next ? `${stage.remaining} ${c.remaining}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span>{stage && stage.next?.tier === stage.current.tier && !passport.progress.maxed ? <small>{locale === "ko" ? `${nextLevel} 등급까지 ${passport.progress.remainingPoints}점` : `${passport.progress.remainingPoints} pts to ${nextLevel}`}</small> : null}</div><progress aria-label={stage ? stage.next ? `${c.nextLevel}: ${nextStageLabel}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={stage?.progressPercent ?? passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
+    </dl></div><div className={styles.identity}><div className={styles.identityAvatar} data-fan-avatar>{avatarResource.state.status === "ready" ? <Avatar avatar={avatarResource.state.avatar} imageUrl={avatarResource.state.imageUrl} label={avatarLabel} size={64} /> : <AvatarPlaceholder size={64} />}</div><div className={styles.identityCopy}><strong dir="auto">{nickname}</strong><div className={styles.identityMeta}><Link className={styles.creatorLink} href={withLocale(creatorHomeHref(passport.celebrity.slug), locale)} aria-label={creatorLinkLabel}><span>{passport.celebrity.name}</span><ExternalLink aria-hidden="true" /></Link><small>{passport.owner.nickname ? `${currentStageLabel} · ` : ""}{c.issued} {date(passport.issuedAt, locale)}</small></div></div></div><div className={styles.heroFacts}><Link href="#activity"><strong>{passport.score.points}</strong><small>{c.score}</small></Link><Link href="#stamp-book"><strong>{stampDisplay.totalCount + communityCount}</strong><small>{c.stamps}</small></Link></div><div className={styles.levelProgress}><FanTierBadge tier={passport.score.level} stageKey={stage?.current.key} locale={locale} size={40}/><div><strong>{stage ? nextStageLabel ? `${currentStageLabel} → ${nextStageLabel}` : currentStageLabel : passport.progress.maxed ? passport.display.level : `${passport.display.level} → ${nextLevel}`}</strong><span>{stage ? stage.next ? `${stage.remaining} ${c.remaining}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${passport.progress.remainingPoints} ${c.remaining}`}</span>{stage && stage.next?.tier === stage.current.tier && !passport.progress.maxed ? <small>{locale === "ko" ? `${nextLevel} 등급까지 ${passport.progress.remainingPoints}점` : translate(locale, localizedMessages.m15d3362a4189, "{0} pts to {1}", [passport.progress.remainingPoints, nextLevel])}</small> : null}</div><progress aria-label={stage ? stage.next ? `${c.nextLevel}: ${nextStageLabel}` : c.levelMax : passport.progress.maxed ? c.levelMax : `${c.nextLevel}: ${nextLevel}`} max={100} value={stage?.progressPercent ?? passport.progress.percent} /></div><DigitalStatus status={passport.mint.status} locale={locale} /></section>
     {passport.nextBenefit ? <section className={styles.nextBenefit} aria-labelledby="next-benefit-title"><div><span>{passport.nextBenefit.state === "eligible" ? passport.nextBenefit.allocationMode === "application_selection" ? c.participationReady : c.benefitReady : c.benefitLocked}</span><h2 id="next-benefit-title">{c.nextBenefit}: {passport.nextBenefit.title}</h2><p>{passport.nextBenefit.eligibilityLabel}</p>{passport.nextBenefit.missingConditions.length ? <ul>{passport.nextBenefit.missingConditions.map((condition, index) => <li key={`${condition.type}-${index}`}>{missingConditionText(condition, locale)}</li>)}</ul> : null}</div><Link href={withLocale(`/benefits/${passport.nextBenefit.id}`, locale)}>{c.viewBenefit}<ArrowRight aria-hidden="true" /></Link></section> : null}
     <section id="stamp-book" className={styles.section}><div className={styles.sectionHeading}><h2>{c.stampBook}</h2><p>{stampDisplay.totalCount} {c.stamps}</p></div>{stampDisplay.stamps.length ? <div className={styles.stampGrid}>{[...stampDisplay.stamps].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).map((stamp) => { if (stamp.type === "first_reaction") return passport.firstReaction ? <FirstLikeStampCard key={stamp.id} celebrityName={passport.celebrity.name} firstReaction={passport.firstReaction} locale={locale} explorerBaseUrl={explorerBaseUrl} /> : null; const stampName = stampTypeLabel(locale, stamp.type); return <Link key={stamp.id} className={styles.stampSlot} href={withLocale(`/stamps/${stamp.id}`, locale)} scroll={false}><div className={styles.stampArtwork}><StampArtwork type={stamp.type} locale={locale} label={stampName} celebrityName={passport.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.points} /></div><strong>{stampName}</strong><span>{date(stamp.issuedAt, locale)}</span><em>{c.earned}</em></Link>; })}</div> : <div className={styles.inlineEmpty}><CalendarDays aria-hidden="true" /><div><strong>{c.noActivity}</strong><p>{c.noActivityBody}</p></div></div>}</section>
     <CommunityStampCollection locale={locale} creator={passport.celebrity.slug} resource={communityStamps}/>
@@ -291,13 +302,13 @@ function PassportDetailView({ passport, locale, explorerBaseUrl }: { passport: P
 
 export function StampDetailScreen({ id, explorerBaseUrl, presentation = "page", onClose }: { id: string; explorerBaseUrl: string; presentation?: "page" | "overlay"; onClose?: () => void }) {
   const locale = usePageLocale(); const auth = usePrivy(); const parse = useCallback((value: unknown) => parseStamp(value), []);
-  const fetcher = useOwnedFanResource(`/api/stamps/${encodeURIComponent(id)}?locale=${locale}`, parse, auth, stampNeedsRefresh);
+  const fetcher = useOwnedFanResource(`/api/stamps/${encodeURIComponent(id)}?locale=${toContentLocale(locale)}`, parse, auth, stampNeedsRefresh);
   return <Frame locale={locale} presentation={presentation}>{fetcher.state.status === "loading" ? <Skeleton detail locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/stamps/${id}?locale=${locale}`} /> : <><RefreshNotice failed={fetcher.refreshFailed} retry={fetcher.retry} locale={locale} /><StampDetailView stamp={fetcher.state.data} locale={locale} explorerBaseUrl={explorerBaseUrl} onClose={onClose} /></>}</Frame>;
 }
 
-function StampDetailView({ stamp, locale, explorerBaseUrl, onClose }: { stamp: StampDetail; locale: PassportLocale; explorerBaseUrl: string; onClose?: () => void }) {
-  const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={onClose ? <button className={styles.back} type="button" onClick={onClose} data-autofocus><X />{locale === "ko" ? "상세 닫기" : "Close details"}</button> : <Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
-    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><div className={styles.stampArtwork}><StampArtwork type={stamp.type as PassportStampType} locale={locale} label={stamp.display.type} celebrityName={stamp.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.activity.points} /></div><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : "Moment record"}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{stamp.activity.context.live ? stamp.activity.context.live.linkable ? <Link href={withLocale(`/live/${stamp.activity.context.live.slug}`, locale)}>{stamp.activity.context.live.title}</Link> : stamp.activity.context.live.title : stamp.display.type}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></aside></div></>;
+function StampDetailView({ stamp, locale, explorerBaseUrl, onClose }: { stamp: StampDetail; locale: AppLocale; explorerBaseUrl: string; onClose?: () => void }) {
+  const c = copy[locale]; return <><PageHeading title={c.stampDetail} subtitle={c.stampDetailSub} back={onClose ? <button className={styles.back} type="button" onClick={onClose} data-autofocus><X />{locale === "ko" ? "상세 닫기" : translate(locale, localizedMessages.m138c8f13f9bc, "Close details")}</button> : <Link className={styles.back} href={withLocale(`/passports/${stamp.passport.id}`, locale)}><ArrowLeft />{c.backPassport}</Link>} />
+    <div className={styles.stampDetailLayout}><section className={styles.stampFocus}><span className={styles.momentLabel}>{stamp.celebrity.name}</span><div className={styles.stampArtwork}><StampArtwork type={stamp.type as PassportStampType} locale={locale} label={stamp.display.type} celebrityName={stamp.celebrity.name} issuedAt={stamp.issuedAt} points={stamp.activity.points} /></div><h2>{stamp.display.type}</h2><p>{date(stamp.activity.occurredAt, locale)}</p><DigitalStatus status={stamp.mint.status} locale={locale} /></section><aside className={styles.stampFacts}><h2>{locale === "ko" ? "이 순간의 기록" : translate(locale, localizedMessages.mb1bae3f5da54, "Moment record")}</h2><dl><div><dt>{c.earnedOn}</dt><dd>{date(stamp.issuedAt, locale)}</dd></div><div><dt>{c.activityDate}</dt><dd>{date(stamp.activity.occurredAt, locale)}</dd></div><div><dt>{c.reward}</dt><dd>+{stamp.activity.points} {c.points}</dd></div><div><dt>{c.relatedActivity}</dt><dd>{stamp.activity.context.live ? stamp.activity.context.live.linkable ? <Link href={withLocale(`/live/${stamp.activity.context.live.slug}`, locale)}>{stamp.activity.context.live.title}</Link> : stamp.activity.context.live.title : stamp.display.type}</dd></div></dl><DigitalDisclosure mint={stamp.mint} locale={locale} explorerBaseUrl={explorerBaseUrl} /></aside></div></>;
 }
 
 function useMobileDetail() {

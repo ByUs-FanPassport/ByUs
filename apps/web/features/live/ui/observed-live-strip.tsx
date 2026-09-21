@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__observed-live-strip";
+import { translate } from "@/i18n/messages";
 import { ArrowUpRight, ChevronRight } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { FanHeading } from "@/components/fan-ui/fan-heading";
@@ -27,7 +31,7 @@ function LiveCover({ item }: { item: ObservedLiveCard }) {
     }} />;
 }
 
-export function ObservedLiveStrip({ locale }: { locale: "ko" | "en" }) {
+export function ObservedLiveStrip({ locale }: { locale: AppLocale }) {
   const headingId = useId();
   const [items, setItems] = useState<ObservedLiveCard[]>([]);
   const [now, setNow] = useState(() => Date.now());
@@ -44,7 +48,7 @@ export function ObservedLiveStrip({ locale }: { locale: "ko" | "en" }) {
       controller = new AbortController();
       const timeout = setTimeout(() => controller?.abort(), 12_000);
       try {
-        const response = await fetch(`/api/public/live-now?locale=${locale}&v=4`, {
+        const response = await fetch(`/api/public/live-now?locale=${toContentLocale(locale)}&v=4`, {
           cache: "no-store", signal: controller.signal,
         });
         if (!response.ok) throw new Error("LIVE unavailable");
@@ -92,10 +96,10 @@ export function ObservedLiveStrip({ locale }: { locale: "ko" | "en" }) {
   return <LiveCards key={visible.map(observedLiveKey).join("|")} items={visible} locale={locale} headingId={headingId} />;
 }
 
-function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; locale: "ko" | "en"; headingId: string }) {
+function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; locale: AppLocale; headingId: string }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
-  const title = locale === "ko" ? "지금 LIVE 중" : "Live now";
+  const title = locale === "ko" ? "지금 LIVE 중" : translate(locale, localizedMessages.m5faa6bee45bd, "Live now");
   const syncPage = () => {
     const grid = gridRef.current;
     if (!grid) return;
@@ -123,7 +127,7 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
         {items.length > 1 ? <div className={styles.pagination}>
           <span aria-live="polite" aria-atomic="true">{page + 1} / {items.length}</span>
           <button type="button" onClick={next} aria-controls={`${headingId}-cards`}
-            aria-label={locale === "ko" ? "다음 LIVE" : "Next LIVE"}>
+            aria-label={locale === "ko" ? "다음 LIVE" : translate(locale, localizedMessages.md4cec06a6176, "Next LIVE")}>
             <ChevronRight aria-hidden="true" />
           </button>
         </div> : null}
@@ -132,7 +136,7 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
         {items.map((item) => (
           <a className={styles.card} key={observedLiveKey(item)} href={item.watchUrl}
             target="_blank" rel="noopener noreferrer"
-            aria-label={`${item.creatorName} · ${item.title} · ${watchLabel(item, locale)}, ${locale === "ko" ? "새 창" : "new tab"}`}>
+            aria-label={`${item.creatorName} · ${item.title} · ${watchLabel(item, locale)}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.mc3e79a000f51, "new tab")}`}>
             <div className={styles.cover}>
               {/* Upstream covers expire and are intentionally not persisted in the image optimizer. */}
               <LiveCover key={item.thumbnailUrl} item={item} />
@@ -150,7 +154,7 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
   );
 }
 
-function watchLabel(item: ObservedLiveCard, locale: "ko" | "en"): string {
+function watchLabel(item: ObservedLiveCard, locale: AppLocale): string {
   const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : "TikTok";
-  return locale === "ko" ? `${provider}에서 시청` : `Watch on ${provider}`;
+  return locale === "ko" ? `${provider}에서 시청` : translate(locale, localizedMessages.m7ce4b315a780, "Watch on {0}", [provider]);
 }

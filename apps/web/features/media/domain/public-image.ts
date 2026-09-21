@@ -1,3 +1,4 @@
+import { type AppLocale, toContentLocale } from "../../../i18n/locales";
 /** Public editorial photos only. Private avatars and certification proofs never enter this contract. */
 export const creatorPhotoRoles = ["profile", "portrait", "landscape"] as const;
 export const eventPhotoRoles = ["landscape", "portrait", "poster"] as const;
@@ -27,12 +28,12 @@ export type ImageRoleRecord = { role: PhotoRole; revision: number; binding: Phot
 export function photoSlots(owner: PhotoOwner, role: PhotoRole): ImageSlot[] {
   return (Object.keys(imageSlots) as ImageSlot[]).filter(slot => imageSlots[slot].role === role && (owner === "live" ? slot.startsWith("event.") : !slot.startsWith("event.")));
 }
-export function resolvePhoto(photos: PhotoSet | undefined, slot: ImageSlot, fallback: string, locale: "ko" | "en" = "ko") {
+export function resolvePhoto(photos: PhotoSet | undefined, slot: ImageSlot, fallback: string, locale: AppLocale = "ko") {
   const role = imageSlots[slot].role;
   const binding = photos?.[role];
   if (!binding) return { src: fallback, alt: undefined, fit: "contain" as const, position: "50% 50%", role, fallback: true };
   const frame = binding.frames[slot];
   const cover = frame?.fit === "cover" && frame.approvedAssetRevision === binding.asset.revision;
-  return { src: binding.asset.url, alt: binding.alt[locale], fit: cover ? "cover" as const : "contain" as const,
+  return { src: binding.asset.url, alt: binding.alt[toContentLocale(locale)], fit: cover ? "cover" as const : "contain" as const,
     position: `${frame?.x ?? 50}% ${frame?.y ?? 50}%`, role, fallback: false };
 }

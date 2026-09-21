@@ -36,7 +36,7 @@ const context = { returnTo: "/live/kara-nualeaf", locale: "ko" as const, intent:
 
 function Monitor() {
   const session = useByUsSession();
-  return <output data-testid="session">{JSON.stringify({ ready: session.ready, pending: session.pending, ownerId: session.ownerId, generation: session.generation, error: session.error })}</output>;
+  return <output data-testid="session">{JSON.stringify({ ready: session.ready, pending: session.pending, ownerId: session.ownerId, generation: session.generation, destination: session.destination, error: session.error })}</output>;
 }
 
 function Starter({ owner = "fan-a", onStart }: { owner?: string; onStart?: () => void }) {
@@ -75,6 +75,19 @@ beforeEach(() => {
 });
 
 describe("root-owned ByUs session transition", () => {
+  it("preserves the UI locale in navigation while sending the existing content locale", async () => {
+    function FrenchStarter() {
+      const session = useByUsSession();
+      return <button onClick={() => void session.beginTransition({ ownerId: "fan-a", ...context, locale: "fr" })}>start French</button>;
+    }
+    render(tree(<FrenchStarter />));
+    fireEvent.click(screen.getByRole("button", { name: "start French" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    const request = vi.mocked(fetch).mock.calls[0][1];
+    expect(JSON.parse(String(request?.body))).toEqual({ locale: "en" });
+    expect(screen.getByTestId("session")).toHaveTextContent("locale=fr");
+  });
+
   it("continues after the source login component unmounts", async () => {
     let finishRefresh!: (value: { id: string; linkedAccounts: typeof wallet[] }) => void;
     mocks.refreshUser.mockImplementation(() => new Promise((resolve) => { finishRefresh = resolve; }));

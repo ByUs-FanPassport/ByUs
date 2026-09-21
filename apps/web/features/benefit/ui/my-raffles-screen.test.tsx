@@ -10,6 +10,7 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated, user: { id: userId }, getAccessToken }),
 }));
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/my/raffles",
   useSearchParams: () => new URLSearchParams("locale=ko"),
 }));

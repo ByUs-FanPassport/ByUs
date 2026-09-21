@@ -1,5 +1,7 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/components__public-content-state";
+import { additionalLocales } from "@/i18n/messages";
 import Link from "next/link";
 import { useAppLocale } from "./locale-provider";
 import styles from "./public-content-state.module.css";
@@ -19,6 +21,12 @@ const labels = {
     error: { home: "We couldn't load the home content.", directory: "We couldn't load the published celebrities.", celebrity: "We couldn't load this fan page." },
     help: "Check your connection and try again.", retry: "Try again", home: "Go home",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    loading: { home: localizedMessages.mc682364494a9[translationLocale], directory: localizedMessages.mc260cdb175f9[translationLocale], celebrity: localizedMessages.m530ad8bcd8fa[translationLocale] },
+    error: { home: localizedMessages.md38bdebbbc0e[translationLocale], directory: localizedMessages.m2611c2710a3f[translationLocale], celebrity: localizedMessages.m412da821b210[translationLocale] },
+    help: localizedMessages.mebdcf05b2700[translationLocale], retry: localizedMessages.m88fc442f5cc1[translationLocale], home: localizedMessages.m0c8d0106a5d0[translationLocale],
+  }))
 } as const;
 
 export function PublicContentState(props: PublicContentStateProps) {

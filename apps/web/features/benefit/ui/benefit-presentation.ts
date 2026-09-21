@@ -1,7 +1,8 @@
+import type { AppLocale } from "@/i18n/locales";
 import type { BenefitCatalogItem, BenefitLocale } from "../domain/benefit";
 
-export function formatBenefitDateTime(value: string, locale: BenefitLocale) {
-  return `${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+export function formatBenefitDateTime(value: string, locale: AppLocale) {
+  return `${new Intl.DateTimeFormat(locale, { calendar: "gregory",
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -12,8 +13,8 @@ export function formatBenefitDateTime(value: string, locale: BenefitLocale) {
   }).format(new Date(value))} (KST)`;
 }
 
-export function formatRaffleDateTime(value: string, locale: BenefitLocale) {
-  const parts = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-CA", {
+export function formatRaffleDateTime(value: string, locale: AppLocale) {
+  const parts = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-CA", { calendar: "gregory",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -28,16 +29,16 @@ export function formatRaffleDateTime(value: string, locale: BenefitLocale) {
 }
 
 /** Keep editorial conditions, but render an equivalent midnight deadline consistently. */
-export function benefitEligibilityLabel(benefit: BenefitCatalogItem, locale: BenefitLocale) {
+export function benefitEligibilityLabel(benefit: BenefitCatalogItem, locale: AppLocale) {
   const closesAt = benefit.entry?.entryClosesAt ?? benefit.claimClosesAt;
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-US", { calendar: "gregory",
     month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit",
     hourCycle: "h23", timeZone: "Asia/Seoul",
   }).formatToParts(new Date(closesAt));
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((value) => value.type === type)?.value;
   if (locale !== "ko" || part("hour") !== "00" || part("minute") !== "00") return benefit.eligibilityLabel;
   const previousDay = new Date(new Date(closesAt).getTime() - 86_400_000);
-  const previousDate = new Intl.DateTimeFormat("ko-KR", {
+  const previousDate = new Intl.DateTimeFormat("ko-KR", { calendar: "gregory",
     month: "long", day: "numeric", timeZone: "Asia/Seoul",
   }).format(previousDay);
   return benefit.eligibilityLabel.replace(

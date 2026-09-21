@@ -1,4 +1,7 @@
 "use client";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__fan-app-shell";
+import { translate } from "@/i18n/messages";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 
 
@@ -17,7 +20,7 @@ import {
 import { FanSiteFooter } from "./fan-site-footer";
 import styles from "./fan-app-shell.module.css";
 
-export type FanLocale = "ko" | "en";
+export type FanLocale = AppLocale;
 export type FanSection = "home" | "live" | "favorites" | "my";
 
 function useBrowserHash() {
@@ -72,7 +75,7 @@ export function fanNavigationItems(
     {
       id: "favorites",
       href: `/celebrities${query}` as Route,
-      label: locale === "ko" ? "최애" : "FAVORITES",
+      label: locale === "ko" ? "최애" : translate(locale, localizedMessages.m0f4f77a0db44, "FAVORITES"),
       isCurrent: current === "favorites",
     },
     { id: "my", href: `/my${query}` as Route, label: "MY", isCurrent: current === "my" },
@@ -87,9 +90,9 @@ const icons: Record<FanSection, ReactNode> = {
 };
 
 function mobileLabel(section: FanSection, locale: FanLocale) {
-  if (section === "home") return locale === "ko" ? "홈" : "Home";
+  if (section === "home") return locale === "ko" ? "홈" : translate(locale, localizedMessages.m8082d5c40271, "Home");
   if (section === "live") return "LIVE";
-  if (section === "favorites") return locale === "ko" ? "최애" : "Favorites";
+  if (section === "favorites") return locale === "ko" ? "최애" : translate(locale, localizedMessages.m7a1e6f7131e7, "Favorites");
   return "MY";
 }
 
@@ -121,11 +124,11 @@ export function FanAppHeader({
       innerClassName={styles.headerInner}
       brandClassName={styles.brand}
       brandHref={`/?locale=${locale}` as Route}
-      brandAriaLabel={locale === "ko" ? "ByUs 홈" : "ByUs home"}
+      brandAriaLabel={locale === "ko" ? "ByUs 홈" : translate(locale, localizedMessages.m84a200a175f6, "ByUs home")}
     >
       <FanPrimaryNavigation
         activeItemClassName={styles.activeNav}
-        ariaLabel={locale === "ko" ? "주요 메뉴" : "Primary navigation"}
+        ariaLabel={locale === "ko" ? "주요 메뉴" : translate(locale, localizedMessages.m5cfebe367665, "Primary navigation")}
         className={styles.desktopNav}
         itemClassName={styles.desktopNavItem}
         items={items}
@@ -151,7 +154,7 @@ export function FanAppBottomNavigation({ locale, currentPath }: { locale: FanLoc
   return (
     <FanBottomNavigation
       activeItemClassName={styles.activeBottomItem}
-      ariaLabel={locale === "ko" ? "모바일 주요 메뉴" : "Mobile primary navigation"}
+      ariaLabel={locale === "ko" ? "모바일 주요 메뉴" : translate(locale, localizedMessages.ma253a156003b, "Mobile primary navigation")}
       className={styles.bottomNavigation}
       itemClassName={styles.bottomNavigationItem}
       items={items}
@@ -182,7 +185,7 @@ export function FanAppFrame({
     >
       {mainId ? (
         <a className={styles.skipLink} href={`#${mainId}`}>
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+          {locale === "ko" ? "본문으로 바로가기" : translate(locale, localizedMessages.ma938d26ac3b9, "Skip to content")}
         </a>
       ) : null}
       <FanAppHeader locale={locale} actions={actions} currentPath={currentPath} />

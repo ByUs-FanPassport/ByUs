@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__community-stamps__ui__share-passport";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, Copy, Share2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -8,13 +11,11 @@ import { communityShareLinkSchema } from "../domain/community-stamps";
 import { communityStampAction } from "./use-community-stamps";
 import styles from "./share-passport.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type Creator = { slug: string; name?: string; image?: { url: string; alt: string } };
 
 function copyFor(locale: Locale) {
-  return locale === "ko"
-    ? { create: "공유 링크 만들기", share: "공유", copy: "복사", ready: "링크가 준비됐어요. 공유하거나 복사해 보내세요.", copied: "링크를 복사했어요.", fallback: "링크를 선택해서 복사해 주세요.", unavailable: "발급된 패스포트가 있어야 공유할 수 있어요.", failed: "공유 링크를 준비하지 못했어요. 다시 시도해 주세요." }
-    : { create: "Create share link", share: "Share", copy: "Copy", ready: "Your link is ready. Share or copy it to send.", copied: "Link copied.", fallback: "Select the link and copy it.", unavailable: "An issued Passport is needed before sharing.", failed: "We couldn't prepare a share link. Please try again." };
+  return ({ ko: { create: "공유 링크 만들기", share: "공유", copy: "복사", ready: "링크가 준비됐어요. 공유하거나 복사해 보내세요.", copied: "링크를 복사했어요.", fallback: "링크를 선택해서 복사해 주세요.", unavailable: "발급된 패스포트가 있어야 공유할 수 있어요.", failed: "공유 링크를 준비하지 못했어요. 다시 시도해 주세요." }, en: { create: "Create share link", share: "Share", copy: "Copy", ready: "Your link is ready. Share or copy it to send.", copied: "Link copied.", fallback: "Select the link and copy it.", unavailable: "An issued Passport is needed before sharing.", failed: "We couldn't prepare a share link. Please try again." }, ...additionalLocales((translationLocale) => ({ create: localizedMessages.m688c4a0ba888[translationLocale], share: localizedMessages.m74d551a80196[translationLocale], copy: localizedMessages.m76f06d1930fd[translationLocale], ready: localizedMessages.m5212c9594df4[translationLocale], copied: localizedMessages.ma9232c8ed883[translationLocale], fallback: localizedMessages.md7af9f59201e[translationLocale], unavailable: localizedMessages.m7d6e05a03174[translationLocale], failed: localizedMessages.m87df351cb103[translationLocale] })) })[locale];
 }
 
 export function SharePassport({ creator, locale }: { creator: Creator; locale: Locale }) {
@@ -62,7 +63,7 @@ function SharePassportInner({ creator, locale, getAccessToken }: { creator: Crea
 
   return <div className={styles.sender}>
     {!url ? <button className={styles.primary} type="button" onClick={() => void createLink()} disabled={busy}><Share2 aria-hidden="true" />{c.create}</button> : <>
-      <label className={styles.shareUrlLabel}><span className={styles.srOnly}>{locale === "ko" ? "공유 링크" : "Share link"}</span><input className={styles.shareUrl} value={url} readOnly onFocus={(event) => event.currentTarget.select()} aria-describedby="share-link-message" /></label>
+      <label className={styles.shareUrlLabel}><span className={styles.srOnly}>{locale === "ko" ? "공유 링크" : translate(locale, localizedMessages.m5741c6b38269, "Share link")}</span><input className={styles.shareUrl} value={url} readOnly onFocus={(event) => event.currentTarget.select()} aria-describedby="share-link-message" /></label>
       <div className={styles.shareActions}>{typeof navigator !== "undefined" && typeof navigator.share === "function" && <button className={styles.primary} type="button" onClick={() => void nativeShare()}><Share2 aria-hidden="true" />{c.share}</button>}<button className={styles.secondaryButton} type="button" onClick={() => void copyLink()}><Copy aria-hidden="true" />{c.copy}</button></div>
     </>}
     {message && <p id="share-link-message" className={failed ? styles.error : styles.status} role={failed ? "alert" : "status"}>{!failed && url && message === c.ready ? <><Check aria-hidden="true" />{message}</> : message}</p>}

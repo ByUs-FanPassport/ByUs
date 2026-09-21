@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__celebrity-directory";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -29,13 +33,13 @@ type PassportState =
 type SortOrder = "published" | "name-asc" | "live-first";
 type DirectoryCelebrity = PublishedCelebrity & Readonly<{ upcomingLive: PublishedCelebrityLive | null }>;
 
-function formatLiveDate(value: string, locale: ContentLocale) {
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+function formatLiveDate(value: string, locale: AppLocale) {
+  return new Intl.DateTimeFormat(locale, { calendar: "gregory",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    hour12: locale !== "ko",
+    hour12: locale === "ko" ? false : locale === "en" ? true : undefined,
     timeZone: "Asia/Seoul",
   }).format(new Date(value));
 }
@@ -43,6 +47,8 @@ function formatLiveDate(value: string, locale: ContentLocale) {
 const copy = {
   ko: { home: "홈으로", heading: "최애 찾기", intro: "좋아하는 최애를 만나고, 다음 LIVE를 확인하세요.", search: "이름으로 찾기", searchPlaceholder: "이름으로 검색", sort: "정렬", defaultSort: "기본순", nameSort: "이름순", liveSort: "LIVE 우선", guestFilter: "내 최애를 보려면 로그인해 주세요.", signIn: "로그인하기", loadingPassport: "보유한 Fan Passport를 확인하고 있어요.", retryPrefix: "보유한 Fan Passport를 확인하지 못했어요.", retry: "다시 시도", noPublished: "지금 공개된 셀럽이 없어요.", noPublishedHelp: "새로운 셀럽이 공개되면 이곳에서 바로 만날 수 있어요.", back: "LIVE 둘러보기", ownedEmpty: "아직 보유한 Fan Passport가 없어요.", searchEmpty: "검색 결과가 없어요.", ownedHelp: "전체 최애를 둘러보고 Fan Passport를 만들어 보세요.", discoverAll: "전체 보기", searchHelp: "다른 이름으로 검색하거나 필터를 초기화해 보세요.", reset: "필터 초기화", list: "최애 목록", owned: "패스포트 보유", fanPage: "만나보기", fanPageMove: "팬페이지로 이동", liveSoon: "LIVE 예정", livePreparing: "예정된 LIVE가 없어요." },
   en: { home: "Home", heading: "Find your favorite", intro: "Explore your favorites’ LIVE events and fan pages.", search: "Search celebrities", searchPlaceholder: "Search by name", sort: "Sort", defaultSort: "Default", nameSort: "Name", liveSort: "LIVE first", guestFilter: "Sign in to see your favorites.", signIn: "Sign in", loadingPassport: "Loading your Fan Passports.", retryPrefix: "We couldn't load your Fan Passports.", retry: "Try again", noPublished: "No profiles are available yet.", noPublishedHelp: "New profiles will appear here when they’re available.", back: "Explore LIVE events", ownedEmpty: "You don't own a Fan Passport yet.", searchEmpty: "No search results.", ownedHelp: "Browse all favorites and create a Fan Passport.", discoverAll: "View all", searchHelp: "Try another name or clear the filters.", reset: "Clear filters", list: "Celebrities and creators", owned: "With a Fan Passport", fanPage: "View fan page", fanPageMove: "open fan page", liveSoon: "Upcoming LIVE", livePreparing: "No upcoming LIVE events." },
+
+  ...additionalLocales((translationLocale) => ({ home: localizedMessages.mda6909bdf841[translationLocale], heading: localizedMessages.mab373172560f[translationLocale], intro: localizedMessages.maf7baaeb1247[translationLocale], search: localizedMessages.m9e8df343175e[translationLocale], searchPlaceholder: localizedMessages.mc64d8e801119[translationLocale], sort: localizedMessages.m025626c0e4cd[translationLocale], defaultSort: localizedMessages.m2c77fa082979[translationLocale], nameSort: localizedMessages.m3a9719ad7ac1[translationLocale], liveSort: localizedMessages.m54b70197c3c1[translationLocale], guestFilter: localizedMessages.mc875440f4085[translationLocale], signIn: localizedMessages.m58cff46ab67f[translationLocale], loadingPassport: localizedMessages.mbed47a1091b0[translationLocale], retryPrefix: localizedMessages.m8261b7a0bdb7[translationLocale], retry: localizedMessages.m9f6ac5f4882d[translationLocale], noPublished: localizedMessages.m7a9a0aa09f21[translationLocale], noPublishedHelp: localizedMessages.md7f058ad3092[translationLocale], back: localizedMessages.m6583b95908cf[translationLocale], ownedEmpty: localizedMessages.m306505f6ba01[translationLocale], searchEmpty: localizedMessages.m17edf81f334e[translationLocale], ownedHelp: localizedMessages.me4d7e93c8b8f[translationLocale], discoverAll: localizedMessages.m73e0c60f172a[translationLocale], searchHelp: localizedMessages.m6a76b31b262c[translationLocale], reset: localizedMessages.m90e01a3bc89a[translationLocale], list: localizedMessages.m0a48aa274797[translationLocale], owned: localizedMessages.m740f37c456f4[translationLocale], fanPage: localizedMessages.m1e780ecb9a9b[translationLocale], fanPageMove: localizedMessages.m467b7a8a93a1[translationLocale], liveSoon: localizedMessages.md17036c0cfa4[translationLocale], livePreparing: localizedMessages.m85d27e25d314[translationLocale] }))
 } as const;
 
 function passportsBySlug(value: unknown) {
@@ -50,12 +56,12 @@ function passportsBySlug(value: unknown) {
 }
 
 /** Directory copy ends at a complete published sentence, never a visual ellipsis. */
-export function directoryIntroduction(summary: string, locale: ContentLocale) {
+export function directoryIntroduction(summary: string, locale: AppLocale) {
   const sentences = new Intl.Segmenter(locale, { granularity: "sentence" }).segment(summary.trim());
   return Array.from(sentences)[0]?.segment.trim() ?? "";
 }
 
-export function CelebrityDirectory({ celebrities, locale, initialQuery = "", initialSort = "published", initialOwnedOnly, initialRole = "all" }: { celebrities: readonly DirectoryCelebrity[]; locale: ContentLocale; initialQuery?: string; initialSort?: SortOrder; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter }) {
+export function CelebrityDirectory({ celebrities, locale, initialQuery = "", initialSort = "published", initialOwnedOnly, initialRole = "all" }: { celebrities: readonly DirectoryCelebrity[]; locale: AppLocale; initialQuery?: string; initialSort?: SortOrder; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter }) {
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
   const auth = usePrivy();
@@ -65,7 +71,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
   const [role, setRole] = useState<CreatorRoleFilter>(initialOwnedOnly ? "all" : initialRole);
   const [sort, setSort] = useState<SortOrder>(initialSort);
   const [ownedOnlyOverride, setOwnedOnly] = useState(initialOwnedOnly);
-  const { state, retry } = useOwnedFanResource(`/api/passports?locale=${locale}&tierStages=1`, passportsBySlug, auth);
+  const { state, retry } = useOwnedFanResource(`/api/passports?locale=${toContentLocale(locale)}&tierStages=1`, passportsBySlug, auth);
   const passportState = useMemo<PassportState>(() => ready && !authenticated ? { status: "guest" }
     : state.status === "ready" ? { status: "ready", passports: state.data }
     : { status: state.status }, [ready, authenticated, state]);
@@ -143,7 +149,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
   const renderCreator = (celebrity: DirectoryCelebrity) => {
     const passport = passportState.status === "ready" ? passportState.passports.get(celebrity.slug) : undefined;
     return (<article key={celebrity.slug} className={styles.card} data-passport-owned={passport ? "true" : undefined}>
-                  <Link className={styles.cardLink} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : `View ${celebrity.name}’s fan page`}>
+                  <Link className={styles.cardLink} href={`${creatorHomeHref(celebrity.slug)}${localeQuery}`} aria-label={locale === "ko" ? `${celebrity.name} ${t.fanPage}` : translate(locale, localizedMessages.m11a1d75c5b58, "View {0}’s fan page", [celebrity.name])}>
                   <div className={styles.cardPrimary}>
                     <div className={styles.cardIdentity}>
                       <h2>{celebrity.name}</h2>
@@ -202,7 +208,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
             <label className={styles.sortField} htmlFor="celebrity-sort"><span>{t.sort}</span><span className={styles.selectControl}><select id="celebrity-sort" value={sort} onChange={(event) => changeSort(event.target.value as SortOrder)}><option value="published">{t.defaultSort}</option><option value="name-asc">{t.nameSort}</option><option value="live-first">{t.liveSort}</option></select><ChevronDown aria-hidden="true" /></span></label>
           </form>
           <div className={styles.filterMeta} aria-live="polite">
-            {!ownedOnly || passportState.status === "ready" ? <p>{locale === "ko" ? `총 ${visibleCelebrities.length}개` : `${visibleCelebrities.length} profiles`}</p> : null}
+            {!ownedOnly || passportState.status === "ready" ? <p>{locale === "ko" ? `총 ${visibleCelebrities.length}개` : translate(locale, localizedMessages.m2755e20a87be, "{0} profiles", [visibleCelebrities.length])}</p> : null}
           </div>
           {ownedOnly && passportState.status === "guest" ? (
             <div id="directory-results" className={styles.ownedState} role="status"><p>{t.guestFilter}</p><Link href={passportLoginHref}>{t.signIn}</Link></div>

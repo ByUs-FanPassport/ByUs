@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-ui__creator-roles";
+import { translate } from "@/i18n/messages";
 import {
   creatorRoleFilterLabel,
   creatorRoleLabel,
@@ -8,7 +11,7 @@ import {
 } from "@/features/creator/domain/creator-role";
 import styles from "./creator-roles.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 
 export function CreatorRoleFilterControl({ roles, value, onChange, locale, controls, ownedOnly = false, onSelectOwned, ownedDisabled = false, compact = false }: {
   roles: readonly CreatorRole[];
@@ -21,7 +24,7 @@ export function CreatorRoleFilterControl({ roles, value, onChange, locale, contr
   ownedDisabled?: boolean;
   compact?: boolean;
 }) {
-  return <div className={styles.filters} data-compact={compact || undefined} role="group" aria-label={locale === "ko" ? "직군으로 찾기" : "Browse by role"}>
+  return <div className={styles.filters} data-compact={compact || undefined} role="group" aria-label={locale === "ko" ? "직군으로 찾기" : translate(locale, localizedMessages.m61fa7982f0ed, "Browse by role")}>
     {onSelectOwned ? <button
       type="button"
       data-owned-filter="true"
@@ -29,7 +32,7 @@ export function CreatorRoleFilterControl({ roles, value, onChange, locale, contr
       aria-controls={controls}
       disabled={ownedDisabled}
       onClick={onSelectOwned}
-    ><span>{locale === "ko" ? "내 최애" : "My favorites"}</span></button> : null}
+    ><span>{locale === "ko" ? "내 최애" : translate(locale, localizedMessages.mc53f55277fa2, "My favorites")}</span></button> : null}
     {(["all", ...roles] as const).map((role) => <button
       key={role}
       type="button"

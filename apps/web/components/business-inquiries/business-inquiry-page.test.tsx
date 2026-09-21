@@ -19,7 +19,7 @@ describe("business inquiry pages", () => {
     const t = businessPageContent[kind][locale];
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: locale === "ko" ? "Switch to English" : "한국어로 보기" })).toHaveAttribute("href", `${businessPagePaths[kind]}?locale=${locale === "ko" ? "en" : "ko"}`);
+    expect(screen.getByRole("combobox", { name: locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English" })).toHaveValue(locale);
     expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
     fireEvent.click(screen.getAllByRole("button", { name: t.cta })[0]);
     const dialog = await screen.findByRole("dialog");
@@ -86,7 +86,7 @@ describe("business inquiry pages", () => {
     const result = await metadata({ searchParams });
     expect(result.title).toContain(businessPageContent[kind].en.title);
     expect(result.alternates?.canonical).toBe(`https://byus.kr${businessPagePaths[kind]}?locale=en`);
-    for (const locale of ["fr", ["en", "ko"], undefined]) {
+    for (const locale of ["de", ["en", "ko"], undefined]) {
       expect((await metadata({ searchParams: Promise.resolve({ locale }) })).alternates?.canonical).toBe(`https://byus.kr${businessPagePaths[kind]}?locale=ko`);
     }
     const urls = buildSitemap([]).map((item) => item.url);

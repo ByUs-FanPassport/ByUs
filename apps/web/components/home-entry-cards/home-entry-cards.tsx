@@ -1,3 +1,6 @@
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__home-entry-cards__home-entry-cards";
+import { additionalLocales } from "@/i18n/messages";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { CreatorImage } from "../fan-ui/creator-image";
 import Link from "next/link";
@@ -24,9 +27,18 @@ const copy = {
     fanmeeting: "Plan your U.S. fanmeeting with ByUs",
     explore: "U.S. event partnerships for agencies and artists",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.ma1bde353710b[translationLocale],
+    label: localizedMessages.ma1bde353710b[translationLocale],
+    description: localizedMessages.m8730562b9dee[translationLocale],
+    action: localizedMessages.m874196adc5ca[translationLocale],
+    fanmeeting: localizedMessages.m16b2e3b23b97[translationLocale],
+    explore: localizedMessages.mb8abbbaa625c[translationLocale],
+  }))
 };
 
-export function ElinaGuideCard({ locale, elina, hero = false, priority = false }: { locale: ContentLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean }) {
+export function ElinaGuideCard({ locale, elina, hero = false, priority = false }: { locale: AppLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean }) {
   const t = copy[locale];
   const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-blue-beret-20260912.webp" photos={undefined} position="50% 70%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
   if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BYUS" title={t.title}
@@ -43,7 +55,7 @@ export function ElinaGuideCard({ locale, elina, hero = false, priority = false }
   </Link>;
 }
 
-export function HomeEntryCards({ locale, celebrities }: { locale: ContentLocale; celebrities: readonly PublishedCelebrity[] }) {
+export function HomeEntryCards({ locale, celebrities }: { locale: AppLocale; celebrities: readonly PublishedCelebrity[] }) {
   const t = copy[locale];
   const elina = celebrities.find(celebrity => celebrity.slug === "elina");
   return (

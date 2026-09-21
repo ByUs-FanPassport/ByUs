@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__benefit-recipient-presentation";
+import { additionalLocales } from "@/i18n/messages";
 import { withLocalePath, type AppLocale } from "@/components/locale-path";
 import type { MyReward } from "../domain/my-reward";
 
@@ -122,6 +124,67 @@ export const recipientCopy = {
     lockedBody: "These details can no longer be edited. Contact ByUs if you need a change.",
     contact: "Contact ByUs",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.mc238721e5dfa[translationLocale],
+    editTitle: localizedMessages.mcf950a202960[translationLocale],
+    shippingIntro: localizedMessages.m46b95d821f25[translationLocale],
+    pickupIntro: localizedMessages.m6744e8d5045d[translationLocale],
+    name: localizedMessages.m902568d7bb29[translationLocale],
+    nameHelp: localizedMessages.mba9a9b2d92bb[translationLocale],
+    phone: localizedMessages.m0a1dc195e6ce[translationLocale],
+    phoneHelp: localizedMessages.m53c66dd9c138[translationLocale],
+    postalCode: localizedMessages.m6209051a83e1[translationLocale],
+    address1: localizedMessages.m7df9fae95130[translationLocale],
+    address2: localizedMessages.m57b2ef5998cc[translationLocale],
+    shippingCountry: localizedMessages.m24f1a5ed4675[translationLocale],
+    korea: localizedMessages.m3730b43223eb[translationLocale],
+    koreaOnly: localizedMessages.ma847b4a1d025[translationLocale],
+    deadline: localizedMessages.mcd2d77f1c397[translationLocale],
+    reviewTitle: localizedMessages.m498bd27aec17[translationLocale],
+    reviewName: localizedMessages.m593a09e74ff8[translationLocale],
+    reviewPhone: localizedMessages.mbcd6f5f8c219[translationLocale],
+    privacy: localizedMessages.mcf66e41751e9[translationLocale],
+    privacyLink: localizedMessages.mb6ca05a61dc9[translationLocale],
+    consent: localizedMessages.mec6e7535a849[translationLocale],
+    submit: localizedMessages.m7b613d232e18[translationLocale],
+    submitting: localizedMessages.m3a07011c10c6[translationLocale],
+    reconciling: localizedMessages.mf043cadbcaae[translationLocale],
+    confirmTitle: localizedMessages.ma658056bba94[translationLocale],
+    confirmBody: localizedMessages.m09b98ace1942[translationLocale],
+    checkStatus: localizedMessages.m5631ee64eb85[translationLocale],
+    retrySubmit: localizedMessages.m1f12adcc890d[translationLocale],
+    success: localizedMessages.m1741bbe504cc[translationLocale],
+    successBody: localizedMessages.m3bf034ada31a[translationLocale],
+    currentStatus: localizedMessages.m20dc3747dbee[translationLocale],
+    noInput: localizedMessages.m2f9f0c65d0f3[translationLocale],
+    missing: localizedMessages.md4feadc5e9b4[translationLocale],
+    missingBody: localizedMessages.mb2aa4d6e040a[translationLocale],
+    unavailable: localizedMessages.m608dde297476[translationLocale],
+    session: localizedMessages.ma461593a3c30[translationLocale],
+    sessionBody: localizedMessages.m95b1bd01daaa[translationLocale],
+    login: localizedMessages.m4500526a115a[translationLocale],
+    retry: localizedMessages.m68b5d1146de6[translationLocale],
+    backMy: localizedMessages.m4c3a0efa4c35[translationLocale],
+    benefit: localizedMessages.m140532951a2e[translationLocale],
+    loading: localizedMessages.m7a591d65809e[translationLocale],
+    required: localizedMessages.m69e590eb4df5[translationLocale],
+    requiredError: localizedMessages.mdb24540316b4[translationLocale],
+    nameTooLong: localizedMessages.m7b842f787b0a[translationLocale],
+    phoneLength: localizedMessages.ma18e2a9f898a[translationLocale],
+    phoneInvalid: localizedMessages.mecff151e7839[translationLocale],
+    postalTooLong: localizedMessages.m7e378753071d[translationLocale],
+    addressTooLong: localizedMessages.m8dfd77aec8bc[translationLocale],
+    consentError: localizedMessages.m470108f30ec5[translationLocale],
+    invalid: localizedMessages.m30d7b1820728[translationLocale],
+    deadlinePassed: localizedMessages.m6ebd49abdf4d[translationLocale],
+    deadlinePassedBody: localizedMessages.m338a725406f1[translationLocale],
+    unclaimed: localizedMessages.md38815e13a48[translationLocale],
+    unclaimedBody: localizedMessages.m25add08bd374[translationLocale],
+    locked: localizedMessages.m48f4444bf8e8[translationLocale],
+    lockedBody: localizedMessages.mafc7598c3a84[translationLocale],
+    contact: localizedMessages.mfbc414826fbc[translationLocale],
+  }))
 } as const;
 
 export function recipientPath(winnerId: string, locale: AppLocale): string {
@@ -133,19 +196,37 @@ export function selectOwnedRecipientReward(rewards: MyReward[], winnerId: string
 }
 
 export const fulfillmentStatusLabel: Record<MyReward["status"], Record<AppLocale, string>> = {
-  information_required: { ko: "정보 입력 필요", en: "Information required" },
-  ready: { ko: "정보 접수 완료", en: "Information submitted" },
-  shipping_preparing: { ko: "배송 준비 중", en: "Preparing shipment" },
-  shipping_in_transit: { ko: "배송 중", en: "In transit" },
-  shipping_completed: { ko: "배송 완료", en: "Delivered" },
-  pickup_available: { ko: "수령 가능", en: "Ready for pickup" },
-  pickup_completed: { ko: "수령 완료", en: "Picked up" },
-  digital_delivered: { ko: "지급 완료", en: "Delivered" },
-  not_selected: { ko: "미선정", en: "Not selected" },
+  information_required: { ko: "정보 입력 필요", en: "Information required" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mfb981d1f2367[translationLocale]))
+},
+  ready: { ko: "정보 접수 완료", en: "Information submitted" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m169c35d1ebb1[translationLocale]))
+},
+  shipping_preparing: { ko: "배송 준비 중", en: "Preparing shipment" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m2152d73b9dfa[translationLocale]))
+},
+  shipping_in_transit: { ko: "배송 중", en: "In transit" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m4bc81d21fa52[translationLocale]))
+},
+  shipping_completed: { ko: "배송 완료", en: "Delivered" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m57d19ecfbdca[translationLocale]))
+},
+  pickup_available: { ko: "수령 가능", en: "Ready for pickup" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m9a09596ca1bd[translationLocale]))
+},
+  pickup_completed: { ko: "수령 완료", en: "Picked up" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.ma13b5ba1467e[translationLocale]))
+},
+  digital_delivered: { ko: "지급 완료", en: "Delivered" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m4e669e5dda9c[translationLocale]))
+},
+  not_selected: { ko: "미선정", en: "Not selected" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m819342889e13[translationLocale]))
+},
 };
 
 export function formatRecipientDeadline(value: string, locale: AppLocale): string {
-  const parts = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-CA", {
+  const parts = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-CA", { calendar: "gregory",
     timeZone: "Asia/Seoul",
     year: "numeric",
     month: "2-digit",

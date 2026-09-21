@@ -1,3 +1,6 @@
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-ui__fan-activity-completion-summary";
+import { translate } from "@/i18n/messages";
 import type { ReactNode } from "react";
 
 import {
@@ -27,7 +30,7 @@ export function FanActivityCompletionSummary({
   headingLevel = 2,
   headingId,
 }: {
-  locale: PassportLocale;
+  locale: AppLocale;
   stampType: PassportStampType;
   title: string;
   description: string;
@@ -52,20 +55,20 @@ export function FanActivityCompletionSummary({
         <p className={styles.eyebrow}>{stampName} Stamp</p>
         <Heading id={headingId}>{title}</Heading>
         <p className={styles.description}>{description}</p>
-        <dl className={styles.metrics} aria-label={locale === "ko" ? "활동 보상" : "Activity rewards"}>
+        <dl className={styles.metrics} aria-label={locale === "ko" ? "활동 보상" : translate(locale, localizedMessages.mc2562d2ef72d, "Activity rewards")}>
           <div><dt>Fan Score</dt><dd>+{scoreDelta}</dd></div>
           {typeof updatedScore === "number" ? (
-            <div><dt>{locale === "ko" ? "총점" : "Total"}</dt><dd>{updatedScore}</dd></div>
+            <div><dt>{locale === "ko" ? "총점" : translate(locale, localizedMessages.m0de176477889, "Total")}</dt><dd>{updatedScore}</dd></div>
           ) : null}
           {updatedLevel ? (
-            <div><dt>{locale === "ko" ? "레벨" : "Level"}</dt><dd>{leveledUp && locale === "ko" ? `상승 · ${updatedLevel}` : leveledUp ? `Up · ${updatedLevel}` : updatedLevel}</dd></div>
+            <div><dt>{locale === "ko" ? "레벨" : translate(locale, localizedMessages.m09a782c59625, "Level")}</dt><dd>{leveledUp && locale === "ko" ? `상승 · ${updatedLevel}` : leveledUp ? translate(locale, localizedMessages.m1e54f39926a1, "Up · {0}", [updatedLevel]) : updatedLevel}</dd></div>
           ) : null}
         </dl>
         {note ? <p className={styles.note}>{note}</p> : null}
         <div className={styles.actions}>
           {passportHref ? (
             <FanAction href={passportHref} variant="neutral">
-              {locale === "ko" ? "Passport에서 확인하기" : "View in Passport"}
+              {locale === "ko" ? "Passport에서 확인하기" : translate(locale, localizedMessages.m8f1b5fa4dba6, "View in Passport")}
             </FanAction>
           ) : null}
           {primaryAction}

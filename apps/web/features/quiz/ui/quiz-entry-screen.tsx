@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__quiz__ui__quiz-entry-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
@@ -90,6 +93,35 @@ const copy = {
     login: "Sign in to start",
     note: "If you already started, you'll continue from your saved questions.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    sessionExpired: localizedMessages.m8583f735760a[translationLocale],
+    unavailable: localizedMessages.m85e00c143995[translationLocale],
+    loadError: localizedMessages.m465be069c2b9[translationLocale],
+    loadingAria: localizedMessages.m15d50361234f[translationLocale],
+    loading: localizedMessages.m2b3d0f29e8cf[translationLocale],
+    errorTitle: localizedMessages.mcd6720ec3242[translationLocale],
+    retry: localizedMessages.m8846c9245a30[translationLocale],
+    unavailableTitle: localizedMessages.m7dca46965504[translationLocale],
+    unavailableBody: (name: string) => translate(translationLocale, localizedMessages.m523e7646bd59, "Come back when a new {0} fan verification opens.", [name]),
+    fanPage: (name?: string) => name ? translate(translationLocale, localizedMessages.m087490a6b525, "Back to {0} fan page", [name]) : localizedMessages.m20b3a9bcb62c[translationLocale],
+    eyebrow: localizedMessages.m2ba7ff4d7753[translationLocale],
+    title: (name: string) => translate(translationLocale, localizedMessages.m2342b08e5b5b, "See how well you know\n{0}.", [name]),
+    description: localizedMessages.me8b8a3dcf2ea[translationLocale],
+    questionCount: (count: number) => translate(translationLocale, localizedMessages.mbbfb2a916e4d, "{0} questions", [count]),
+    questionCountTail: localizedMessages.mf5082ce93c91[translationLocale],
+    passThreshold: (count: number) => translate(translationLocale, localizedMessages.mc9041df7d4b2, "At least {0} correct", [count]),
+    passThresholdTail: localizedMessages.md55660c432ca[translationLocale],
+    saved: localizedMessages.m1368cd0da861[translationLocale],
+    authChecking: localizedMessages.mfa2e863970e4[translationLocale],
+    profileChecking: localizedMessages.m882f9ba49057[translationLocale],
+    profileError: localizedMessages.m1db38cfc9edf[translationLocale],
+    starting: localizedMessages.mbbde83d340ee[translationLocale],
+    cooldown: localizedMessages.m3cbe55588a43[translationLocale],
+    start: localizedMessages.mb8716a66fc57[translationLocale],
+    login: localizedMessages.m1fccdbe4af58[translationLocale],
+    note: localizedMessages.ma3066d315e6f[translationLocale],
+  }))
 } as const;
 
 function withLocale(path: string, locale: FanLocale): Route {
@@ -142,7 +174,7 @@ export function QuizEntryScreen({
     const generation = ++requestGeneration.current;
     setScreen({ kind: "loading" });
     try {
-      const response = await fetch(`/api/public/celebrities/${encodeURIComponent(slug)}/quiz?locale=${locale}`, {
+      const response = await fetch(`/api/public/celebrities/${encodeURIComponent(slug)}/quiz?locale=${toContentLocale(locale)}`, {
         method: "GET",
         cache: "no-store",
       });

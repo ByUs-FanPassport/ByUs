@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/components__live-hero-carousel";
+import { additionalLocales, translate } from "@/i18n/messages";
 import useEmblaCarousel from "embla-carousel-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -38,9 +41,19 @@ const carouselCopy = {
     goTo: (index: number) => `View banner ${index}`,
     position: (index: number, total: number) => `${index} of ${total}`,
   },
+
+  ...additionalLocales((translationLocale) => ({
+    label: localizedMessages.md9901b1ddbd2[translationLocale],
+    pause: localizedMessages.m0389db05acd4[translationLocale],
+    resume: localizedMessages.m45b7c4707cdd[translationLocale],
+    previous: localizedMessages.mdab6c9431b74[translationLocale],
+    next: localizedMessages.m679b450a65d7[translationLocale],
+    goTo: (index: number) => translate(translationLocale, localizedMessages.me7dbdaa8ca43, "View banner {0}", [index]),
+    position: (index: number, total: number) => translate(translationLocale, localizedMessages.me955757b0bb0, "{0} of {1}", [index, total]),
+  }))
 } as const;
 
-export function formatLiveCountdown(startsAt: string, now: number, locale: ContentLocale = "ko") {
+export function formatLiveCountdown(startsAt: string, now: number, locale: AppLocale = "ko") {
   return formatDetailedLiveCountdown(startsAt, now, locale);
 }
 
@@ -60,7 +73,7 @@ export function LiveCountdown({
   effectiveStatus: LiveEventResponse["live"]["effectiveStatus"];
   startsAt: string;
   active: boolean;
-  locale?: ContentLocale;
+  locale?: AppLocale;
   onStartReached?: (event: LiveStartEvent) => void;
 }) {
   const { now, visible } = useLiveStartClock({ id, effectiveStatus, startsAt }, { active, precision: "second", onStartReached });
@@ -85,7 +98,7 @@ export function LiveHeroCarousel({
 }: {
   elina?: PublishedCelebrity;
   homeBanners: readonly HomeBanner[];
-  locale: ContentLocale;
+  locale: AppLocale;
 }) {
   const t = carouselCopy[locale];
   const total = homeBanners.length + 1;

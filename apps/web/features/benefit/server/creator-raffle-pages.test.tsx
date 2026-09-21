@@ -25,6 +25,7 @@ vi.mock("@/server/g4/benefit-repository", () => ({
   createBenefitRepositoryFromEnvironment: mocks.createBenefitRepository,
 }));
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
   notFound: mocks.notFound,
 }));
 

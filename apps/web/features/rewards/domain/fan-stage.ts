@@ -1,4 +1,6 @@
+import type { AppLocale } from "@/i18n/locales";
 import { z } from "zod";
+import { messages as tierMessages } from "@/i18n/catalogs/features__passport__domain__passport-read-model";
 import { FAN_TIERS } from "./reward-policy";
 
 export const FAN_STAGE_KEYS = [
@@ -36,8 +38,13 @@ export type FanStage = z.infer<typeof fanStageSchema>;
 export type FanStageProgress = z.infer<typeof fanStageProgressSchema>;
 
 const labels = { Bronze: "브론즈", Silver: "실버", Gold: "골드", Platinum: "플래티넘", Diamond: "다이아몬드" };
-export function fanStageLabel(locale: "ko" | "en", stage: Pick<FanStage, "tier" | "subdivision">): string {
-  const tier = locale === "ko" ? labels[stage.tier] : stage.tier;
+export function fanStageLabel(locale: AppLocale, stage: Pick<FanStage, "tier" | "subdivision">): string {
+  const translated = {
+    Bronze: tierMessages.m860246902e14, Silver: tierMessages.mc0892217f397,
+    Gold: tierMessages.me12a6f61ff09, Platinum: tierMessages.me2f02b0acb25,
+    Diamond: tierMessages.mcc8c85f578b9,
+  };
+  const tier = locale === "ko" ? labels[stage.tier] : locale === "en" ? stage.tier : translated[stage.tier][locale];
   return stage.tier === "Bronze" || stage.tier === "Diamond" ? tier : `${tier} ${stage.subdivision}`;
 }
 

@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__my__ui__my-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { CommunityStampCollection } from "@/features/community-stamps/ui/community-stamp-collection";
@@ -83,20 +87,60 @@ const copy = {
     missionLoading: "Checking your next activity.", missionError: "We couldn’t load your next activity.", manualReward: "Granted after approval",
     tierHelp: "Your fan activities determine your fan tier.", highestTier: "You reached the highest tier.", toNextTier: "to",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: "MY", profileSummary: localizedMessages.ma73150e96afb[translationLocale], profileHelp: localizedMessages.md23fab73ead6[translationLocale],
+    guestTitle: localizedMessages.mc075578d9dca[translationLocale], guestBody: localizedMessages.m642fc3f3a78f[translationLocale],
+    login: localizedMessages.m31d61c3cc601[translationLocale], loading: localizedMessages.m03449d54333c[translationLocale], error: localizedMessages.mff567c545ea0[translationLocale], retry: localizedMessages.mb0a068fe8172[translationLocale],
+    creators: localizedMessages.madfe76fc03d1[translationLocale], creatorsHelp: localizedMessages.m6c62da6f7772[translationLocale],
+    noCreators: localizedMessages.mee9c567663d7[translationLocale], findCreator: localizedMessages.m0af6a3088bb5[translationLocale], live: localizedMessages.m3190c29eddca[translationLocale], upcoming: localizedMessages.m0de14525bbe6[translationLocale],
+    history: localizedMessages.m9337541996b3[translationLocale], noLive: localizedMessages.me7c44c442e4d[translationLocale], browseLive: localizedMessages.m2f6fea140b72[translationLocale], rewards: localizedMessages.mfd30c394dc05[translationLocale],
+    collection: localizedMessages.ma2be6d1414b6[translationLocale],
+    passports: localizedMessages.m6a7992f4b40d[translationLocale], stamps: localizedMessages.mfadefc3042da[translationLocale], collectibles: localizedMessages.m9e88a74ef12b[translationLocale], noCollection: localizedMessages.mdb4ac0204c7f[translationLocale],
+    notifications: localizedMessages.m802d447f3402[translationLocale], settings: localizedMessages.m980e9a086e5d[translationLocale], tickets: localizedMessages.m07a852a47833[translationLocale], firstReaction: localizedMessages.m596fafbf40db[translationLocale],
+    avatarSettings: localizedMessages.m404563ff319a[translationLocale],
+    destinations: localizedMessages.m9a63f0998069[translationLocale], reservedLive: localizedMessages.m777735bc5ff8[translationLocale], noReservedLive: localizedMessages.m3a6a27c27b16[translationLocale], reservationCount: (count: number) => translate(translationLocale, localizedMessages.m24c92327a966, "{0} reserved", [count]), allCollection: localizedMessages.mae5642911b86[translationLocale], moreFavorites: localizedMessages.m314c7f41355c[translationLocale], fewerFavorites: localizedMessages.m98b6de18ad27[translationLocale],
+    benefitEntry: localizedMessages.m0be13a5224c5[translationLocale], benefitSummary: (benefits: number, entries: number) => translate(translationLocale, localizedMessages.m2c34e72dfaa2, "{0} rewards · {1} entries", [benefits, entries]),
+    passportSummary: (count: number) => translate(translationLocale, localizedMessages.maab7aa3a3792, "{0} issued", [count]),
+    allLive: localizedMessages.m11773623921f[translationLocale], fanTier: (name: string) => translate(translationLocale, localizedMessages.m5bf91e65ee9a, "{0} fan tier", [name]), myPassport: localizedMessages.mbd0f17ab2ba5[translationLocale],
+    ticketPanel: (name: string) => translate(translationLocale, localizedMessages.m7c96f7637dc5, "{0} raffle tickets", [name]), allRaffles: localizedMessages.mf0c1202ac4b6[translationLocale], raffleOpen: localizedMessages.mff5f7e4cc18a[translationLocale], raffleDraw: localizedMessages.mc501090136ec[translationLocale], raffleView: localizedMessages.mea5a5d7215d9[translationLocale],
+    raffleEmpty: localizedMessages.m365139d906a3[translationLocale], raffleHelp: localizedMessages.m9e81570fba82[translationLocale],
+    nextAction: localizedMessages.m9e00b28f1ca9[translationLocale], noMission: localizedMessages.ma1e80483c12b[translationLocale], viewLive: localizedMessages.m75589d2732b7[translationLocale], startPassport: localizedMessages.md784e78b6f0d[translationLocale],
+    missionLoading: localizedMessages.m05039f1121a7[translationLocale], missionError: localizedMessages.ma96afa6f171f[translationLocale], manualReward: localizedMessages.m245b2551a6c7[translationLocale],
+    tierHelp: localizedMessages.m62ee926264d3[translationLocale], highestTier: localizedMessages.m0f473985b8a3[translationLocale], toNextTier: localizedMessages.mc031f5c28aae[translationLocale],
+  }))
 } as const;
 
 const parseSummaryResponse = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
 
-const rewardStatusCopy: Record<MyReward["status"], { ko: string; en: string }> = {
-  information_required: { ko: "정보 입력 필요", en: "Information required" },
-  ready: { ko: "준비 완료", en: "Ready" },
-  shipping_preparing: { ko: "배송 준비 중", en: "Preparing shipment" },
-  shipping_in_transit: { ko: "배송 중", en: "In transit" },
-  shipping_completed: { ko: "배송 완료", en: "Delivered" },
-  pickup_available: { ko: "수령 가능", en: "Ready for pickup" },
-  pickup_completed: { ko: "수령 완료", en: "Picked up" },
-  digital_delivered: { ko: "지급 완료", en: "Delivered" },
-  not_selected: { ko: "미선정", en: "Not selected" },
+const rewardStatusCopy: Record<MyReward["status"], Record<AppLocale, string>> = {
+  information_required: { ko: "정보 입력 필요", en: "Information required" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mb4717a21fc23[translationLocale]))
+},
+  ready: { ko: "준비 완료", en: "Ready" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mf66ef64ed395[translationLocale]))
+},
+  shipping_preparing: { ko: "배송 준비 중", en: "Preparing shipment" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m8386f0ad3416[translationLocale]))
+},
+  shipping_in_transit: { ko: "배송 중", en: "In transit" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mf240ac8e77d3[translationLocale]))
+},
+  shipping_completed: { ko: "배송 완료", en: "Delivered" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m8cb597538f65[translationLocale]))
+},
+  pickup_available: { ko: "수령 가능", en: "Ready for pickup" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m9739df7093cb[translationLocale]))
+},
+  pickup_completed: { ko: "수령 완료", en: "Picked up" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m5a526af5f90c[translationLocale]))
+},
+  digital_delivered: { ko: "지급 완료", en: "Delivered" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m7b4b672e09ae[translationLocale]))
+},
+  not_selected: { ko: "미선정", en: "Not selected" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m675176b0d466[translationLocale]))
+},
 };
 
 function MyDashboardSkeleton({ locale }: { locale: FanLocale }) {
@@ -113,7 +157,7 @@ function MyDashboardSkeleton({ locale }: { locale: FanLocale }) {
 export function MyScreen({ locale }: { locale: FanLocale }) {
   const auth = usePrivy();
   const { ready, authenticated } = auth;
-  const resource = useOwnedFanResource(`/api/me/summary?locale=${locale}&tierStages=1`, parseSummaryResponse, auth);
+  const resource = useOwnedFanResource(`/api/me/summary?locale=${toContentLocale(locale)}&tierStages=1`, parseSummaryResponse, auth);
   const avatarResource = useAvatar();
   const state = resource.state;
   const t = copy[locale];
@@ -202,7 +246,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         <h1>{identity}</h1><p>{t.profileHelp}</p></div>
       <div className={styles.profileActions}>
         <Link className={styles.notificationLink} href={`/notifications?locale=${locale}` as Route}><Bell aria-hidden="true"/><span>{t.notifications}</span><strong>{summary.unreadNotificationCount}</strong></Link>
-        <Link className={styles.notificationLink} href={`/my/inquiries?locale=${locale}` as Route}><MessageSquare aria-hidden="true"/><span>{locale === "ko" ? "문의 내역" : "My inquiries"}</span></Link>
+        <Link className={styles.notificationLink} href={`/my/inquiries?locale=${locale}` as Route}><MessageSquare aria-hidden="true"/><span>{locale === "ko" ? "문의 내역" : translate(locale, localizedMessages.mbf5ca7f787a3, "My inquiries")}</span></Link>
         <Link className={styles.notificationLink} href={`/settings?locale=${locale}` as Route}><Settings aria-hidden="true"/><span>{t.settings}</span></Link>
       </div>
     </header>
@@ -248,7 +292,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         </div>
         <RecentActivityRows items={recentPreview} creators={summary.creators} locale={locale}/>
         {remainingRecent.length > 0 ? <details className={styles.recentDisclosure} open={recentOpen} onToggle={event => setRecentOpen(event.currentTarget.open)}>
-          <summary><span>{recentOpen ? (locale === "ko" ? "접기" : "Show less") : (locale === "ko" ? `${remainingRecent.length}개 더 보기` : `Show ${remainingRecent.length} more`)}</span>{recentOpen ? <Minus aria-hidden="true"/> : <Plus aria-hidden="true"/>}</summary>
+          <summary><span>{recentOpen ? (locale === "ko" ? "접기" : translate(locale, localizedMessages.ma9d92b36cfae, "Show less")) : (locale === "ko" ? `${remainingRecent.length}개 더 보기` : translate(locale, localizedMessages.m6e5a2ccb1304, "Show {0} more", [remainingRecent.length]))}</span>{recentOpen ? <Minus aria-hidden="true"/> : <Plus aria-hidden="true"/>}</summary>
           <RecentActivityRows items={remainingRecent} creators={summary.creators} locale={locale}/>
         </details> : null}
       </FanSurface> : null}
@@ -258,7 +302,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       <SectionTitle title={t.rewards}/>
       <div className={styles.rows}>{receivedRewards.slice(0, 4).map((reward) => {
         const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;
-        const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : "Enter recipient details") : rewardStatusCopy[reward.status][locale];
+        const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : translate(locale, localizedMessages.mbd998889a6d6, "Enter recipient details")) : rewardStatusCopy[reward.status][locale];
         return <Link href={withLocalePath(recipientHref ?? reward.benefitHref, locale) as Route} key={reward.rewardResultId}><span className={styles.activityMark} data-kind="collectible" aria-hidden="true"><FanMotionIcon name="gift" size={20}/></span><div><strong>{reward.title}</strong><span>{status}</span></div><ArrowRight/></Link>;
       })}</div>
     </FanSurface> : null}
@@ -271,7 +315,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
   const [now, setNow] = useState(() => Date.now());
   const slug = encodeURIComponent(creator.celebrity.slug);
   const parseRaffles = useCallback((body: unknown) => raffleListSchema.parse(body).raffles, []);
-  const raffles = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${locale}`, parseRaffles);
+  const raffles = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}`, parseRaffles);
   const raffleState = raffles.state;
   const retryRaffles = raffles.retry;
   const openRaffles = raffleState.status === "ready" ? selectOpenRaffles(raffleState.data, new Date(now)) : [];
@@ -285,29 +329,29 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
     document.addEventListener("visibilitychange", refreshVisible);
     return () => { if (timer !== undefined) window.clearTimeout(timer); document.removeEventListener("visibilitychange", refreshVisible); };
   }, [now, raffleState, retryRaffles]);
-  return <FanSurface className={styles.selectedDetails} aria-label={ko ? `${creator.celebrity.name} 팬 활동` : `${creator.celebrity.name} fan activity`}>
+  return <FanSurface className={styles.selectedDetails} aria-label={locale === "ko" ? `${creator.celebrity.name} 팬 활동` : translate(locale, localizedMessages.m1e2889748a87, "{0} fan activity", [creator.celebrity.name])}>
     <div className={styles.corePanels}>
       <section className={styles.growthPanel}>
         <div className={styles.panelContent}>
           <SectionTitle title={t.fanTier(creator.celebrity.name)} href={creator.passport ? `/passports/${creator.passport.id}?locale=${locale}` : undefined} action={creator.passport ? t.myPassport : undefined}/>
-          {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <p className={styles.panelState}>{ko ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : `Start ${creator.celebrity.name} fan verification to earn your first tier.`}</p>}
+          {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <p className={styles.panelState}>{locale === "ko" ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : translate(locale, localizedMessages.m343c50cb9a59, "Start {0} fan verification to earn your first tier.", [creator.celebrity.name])}</p>}
         </div>
-        <div className={styles.panelAction}><Link className={styles.fanActivityLink} href={activityHref}>{creator.passport ? (ko ? "참여할 팬 활동 보기" : "Explore fan activities") : t.startPassport}<ArrowRight aria-hidden="true"/></Link></div>
+        <div className={styles.panelAction}><Link className={styles.fanActivityLink} href={activityHref}>{creator.passport ? (locale === "ko" ? "참여할 팬 활동 보기" : translate(locale, localizedMessages.m51c0c8f56b17, "Explore fan activities")) : t.startPassport}<ArrowRight aria-hidden="true"/></Link></div>
       </section>
       <section className={styles.activityPanel}>
         <div className={styles.panelContent}>
-          <SectionTitle title={ko ? `${creator.celebrity.name} 이벤트` : `${creator.celebrity.name} events`} href={`/my/raffles?locale=${locale}`} action={ko ? "내 응모 내역" : "My entries"}/>
-          {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{ko ? "이벤트를 불러오는 중이에요." : "Loading events."}</p>
-            : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{ko ? "이벤트를 불러오지 못했어요." : "We couldn’t load events."}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
+          <SectionTitle title={locale === "ko" ? `${creator.celebrity.name} 이벤트` : translate(locale, localizedMessages.m11202455f80b, "{0} events", [creator.celebrity.name])} href={`/my/raffles?locale=${locale}`} action={locale === "ko" ? "내 응모 내역" : translate(locale, localizedMessages.m59a59a47cffd, "My entries")}/>
+          {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "이벤트를 불러오는 중이에요." : translate(locale, localizedMessages.mf4c9eb491dff, "Loading events.")}</p>
+            : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{locale === "ko" ? "이벤트를 불러오지 못했어요." : translate(locale, localizedMessages.mdd8573a9baf2, "We couldn’t load events.")}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
             : openRaffles.length > 0 ? <div className={styles.eventSummary}>
-              <div className={styles.eventTitle}><span className={styles.eventIcon}><Gift aria-hidden="true"/></span><h3>{ko ? <>응모할 수 있는 선물 <em>{openRaffles.length}종</em></> : <>{openRaffles.length} {openRaffles.length === 1 ? "gift" : "gifts"} to enter for</>}</h3></div>
-              <p>{ko ? "마음에 드는 선물을 고르고, 모은 응모권으로 참여해 보세요." : "Choose a gift and enter with your tickets."}</p>
-              <p className={styles.eventDeadline}>{ko ? "가장 가까운 마감 · " : "Next deadline · "}<time dateTime={openRaffles[0].entryClosesAt!}>{formatClosing(openRaffles[0].entryClosesAt!, locale)}</time></p>
-            </div> : <p className={styles.panelState}>{ko ? "현재 진행 중인 이벤트가 없어요." : "No events are open right now."}</p>}
-          <div className={styles.eventWallet}><span><Ticket aria-hidden="true"/>{ko ? "보유 응모권" : "Available tickets"}</span><strong>{creator.ticketBalance}{ko ? "장" : ""}</strong></div>
-          <Link className={styles.ticketHistoryLink} href={`/c/${creator.celebrity.slug}/tickets?locale=${locale}` as Route}>{FAN_TICKET_CREATOR_SLUGS.has(creator.celebrity.slug) ? (ko ? "응모권 모으기 · 내역 보기" : "Collect tickets · View history") : (ko ? "응모권 내역 보기" : "View ticket history")}<ArrowRight aria-hidden="true"/></Link>
+              <div className={styles.eventTitle}><span className={styles.eventIcon}><Gift aria-hidden="true"/></span><h3>{ko ? <>응모할 수 있는 선물 <em>{openRaffles.length}종</em></> : locale === "en" ? <>{openRaffles.length} {openRaffles.length === 1 ? "gift" : "gifts"} to enter for</> : translate(locale, localizedMessages.mb3e721bb6234, "{0} gifts to enter for", [openRaffles.length])}</h3></div>
+              <p>{locale === "ko" ? "마음에 드는 선물을 고르고, 모은 응모권으로 참여해 보세요." : translate(locale, localizedMessages.m58b6515d67d0, "Choose a gift and enter with your tickets.")}</p>
+              <p className={styles.eventDeadline}>{locale === "ko" ? "가장 가까운 마감 · " : translate(locale, localizedMessages.m7d4e6ed6ba76, "Next deadline · ")}<time dateTime={openRaffles[0].entryClosesAt!}>{formatClosing(openRaffles[0].entryClosesAt!, locale)}</time></p>
+            </div> : <p className={styles.panelState}>{locale === "ko" ? "현재 진행 중인 이벤트가 없어요." : translate(locale, localizedMessages.m0fca25890c94, "No events are open right now.")}</p>}
+          <div className={styles.eventWallet}><span><Ticket aria-hidden="true"/>{locale === "ko" ? "보유 응모권" : translate(locale, localizedMessages.ma88be67e1498, "Available tickets")}</span><strong>{creator.ticketBalance}{ko ? "장" : ""}</strong></div>
+          <Link className={styles.ticketHistoryLink} href={`/c/${creator.celebrity.slug}/tickets?locale=${locale}` as Route}>{FAN_TICKET_CREATOR_SLUGS.has(creator.celebrity.slug) ? (locale === "ko" ? "응모권 모으기 · 내역 보기" : translate(locale, localizedMessages.md2234a576ef5, "Collect tickets · View history")) : (locale === "ko" ? "응모권 내역 보기" : translate(locale, localizedMessages.m88bda75c40da, "View ticket history"))}<ArrowRight aria-hidden="true"/></Link>
         </div>
-        <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{ko ? "이벤트 보러 가기" : "Explore events"}</FanAction></div>
+        <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{locale === "ko" ? "이벤트 보러 가기" : translate(locale, localizedMessages.m65e43e1ae2a9, "Explore events")}</FanAction></div>
       </section>
     </div>
   </FanSurface>;
@@ -331,16 +375,16 @@ function FanGrade({ creator, locale }: { creator: PassportCreator; locale: FanLo
   const currentLabel = stage ? fanStageLabel(locale, stage.current) : levelLabel(locale, creator.passport.tier);
   return <div className={styles.fanGrade}>
     <div className={styles.gradeIdentity}><FanTierBadge tier={creator.passport.tier} stageKey={stage?.current.key} locale={locale} size={88}/><div><strong>{currentLabel}</strong><p>{t.tierHelp}</p></div></div>
-    <div className={styles.tierScore}><div><span>{locale === "ko" ? "팬 점수" : "Fan Score"}</span><strong>{creator.passport.score}{stage?.next ? ` / ${stage.next.minimumScore}` : !stage && progress.nextThreshold !== null ? ` / ${progress.nextThreshold}` : ""}{locale === "ko" ? "점" : ""}</strong></div><progress value={stage?.progressPercent ?? progress.percent} max={100} aria-label={locale === "ko" ? "다음 팬등급 진행률" : "Progress to next fan tier"}>{stage?.progressPercent ?? progress.percent}%</progress><div><span>{currentLabel}</span><strong>{stage ? stage.next ? (locale === "ko" ? `${fanStageLabel(locale, stage.next)}까지 ${stage.remaining}점` : `${stage.remaining} points to ${fanStageLabel(locale, stage.next)}`) : t.highestTier : progress.maxed ? t.highestTier : locale === "ko" ? `${levelLabel(locale, progress.nextTier)}까지 ${progress.remaining}점` : `${progress.remaining} points to ${levelLabel(locale, progress.nextTier)}`}</strong></div>{stage && stage.next?.tier === stage.current.tier && !progress.maxed ? <p className={styles.majorGoal}>{locale === "ko" ? `${levelLabel(locale, progress.nextTier)} 등급까지 ${progress.remaining}점` : `${progress.remaining} points to ${levelLabel(locale, progress.nextTier)}`}</p> : null}</div>
+    <div className={styles.tierScore}><div><span>{locale === "ko" ? "팬 점수" : translate(locale, localizedMessages.mbab2ee28117c, "Fan Score")}</span><strong>{creator.passport.score}{stage?.next ? ` / ${stage.next.minimumScore}` : !stage && progress.nextThreshold !== null ? ` / ${progress.nextThreshold}` : ""}{locale === "ko" ? "점" : ""}</strong></div><progress value={stage?.progressPercent ?? progress.percent} max={100} aria-label={locale === "ko" ? "다음 팬등급 진행률" : translate(locale, localizedMessages.m812bd5560c72, "Progress to next fan tier")}>{stage?.progressPercent ?? progress.percent}%</progress><div><span>{currentLabel}</span><strong>{stage ? stage.next ? (locale === "ko" ? `${fanStageLabel(locale, stage.next)}까지 ${stage.remaining}점` : translate(locale, localizedMessages.m03f59e765839, "{0} points to {1}", [stage.remaining, fanStageLabel(locale, stage.next)])) : t.highestTier : progress.maxed ? t.highestTier : locale === "ko" ? `${levelLabel(locale, progress.nextTier)}까지 ${progress.remaining}점` : translate(locale, localizedMessages.m41f3833433d4, "{0} points to {1}", [progress.remaining, levelLabel(locale, progress.nextTier)])}</strong></div>{stage && stage.next?.tier === stage.current.tier && !progress.maxed ? <p className={styles.majorGoal}>{locale === "ko" ? `${levelLabel(locale, progress.nextTier)} 등급까지 ${progress.remaining}점` : translate(locale, localizedMessages.m791251df2885, "{0} points to {1}", [progress.remaining, levelLabel(locale, progress.nextTier)])}</p> : null}</div>
   </div>;
 }
 
 function formatClosing(value: string, locale: FanLocale) {
-  return `${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value))} ${locale === "ko" ? "마감" : "KST"}`;
+  return `${new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date(value))} ${locale === "ko" ? "마감" : translate(locale, localizedMessages.m2d53c23126e6, "KST")}`;
 }
 
 function RecentActivityRows({ items, creators, locale }: { items: MySummary["collection"]["recent"]; creators: MySummary["creators"]; locale: FanLocale }) {
-  const formatDate = (value: string) => new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(value));
+  const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(value));
   return <div className={`${styles.rows} ${styles.collectionRows}`}>{groupRecentCollection(items).map((group) => {
     const { item } = group;
     const creator = creators.find(({ passport }) => passport && item.href === `/passports/${passport.id}`)?.celebrity;
@@ -372,19 +416,19 @@ export function prioritizeReservedLives(events: MySummary["live"]["upcoming"]) {
 }
 export function passportProgressLabel(passport: NonNullable<MySummary["creators"][number]["passport"]>, locale: FanLocale) {
   const next = FAN_TIERS[FAN_TIERS.indexOf(passport.tier) + 1];
-  const current = `${levelLabel(locale, passport.tier)} · ${locale === "ko" ? "팬 점수" : "Fan Score"} ${passport.score}`;
-  return `${current} · ${next ? (locale === "ko" ? `${levelLabel(locale,next)}까지 팬 점수 ${passport.remainingToNextTier}점` : `${passport.remainingToNextTier} points to ${levelLabel(locale,next)}`) : (locale === "ko" ? "최고 등급" : "Highest tier")}`;
+  const current = `${levelLabel(locale, passport.tier)} · ${locale === "ko" ? "팬 점수" : translate(locale, localizedMessages.mbab2ee28117c, "Fan Score")} ${passport.score}`;
+  return `${current} · ${next ? (locale === "ko" ? `${levelLabel(locale,next)}까지 팬 점수 ${passport.remainingToNextTier}점` : translate(locale, localizedMessages.m9d5b91c6df69, "{0} points to {1}", [passport.remainingToNextTier, levelLabel(locale,next)])) : (locale === "ko" ? "최고 등급" : translate(locale, localizedMessages.m506a961e1dda, "Highest tier"))}`;
 }
 
 function ReservedLiveSection({events,history,locale,onStartReached}:{events:MySummary["live"]["upcoming"];history:MySummary["live"]["history"];locale:FanLocale;onStartReached:()=>void}) {
  const t=copy[locale];
  const [otherOpen,setOtherOpen]=useState(false);
- const formatDate=(value:string)=>new Intl.DateTimeFormat(locale==="ko"?"ko-KR":"en-US",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Seoul"}).format(new Date(value));
- const row=(event:MySummary["live"]["upcoming"][number],active=true)=><Link href={`/live/${event.slug}?locale=${locale}` as Route} key={event.id}><time className={styles.liveDate} dateTime={event.startsAt}><span>{new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { month:"short", timeZone:"Asia/Seoul" }).format(new Date(event.startsAt))}</span><b>{new Intl.DateTimeFormat("en-US", { day:"numeric", timeZone:"Asia/Seoul" }).format(new Date(event.startsAt))}</b></time><div><strong>{event.title}</strong><span>{formatDate(event.startsAt)} KST</span><MyLiveCountdown event={event} locale={locale} active={active} onStartReached={onStartReached}/></div><ArrowRight/></Link>;
+ const formatDate=(value:string)=>new Intl.DateTimeFormat(locale,{ calendar: "gregory",dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Seoul"}).format(new Date(value));
+ const row=(event:MySummary["live"]["upcoming"][number],active=true)=><Link href={`/live/${event.slug}?locale=${locale}` as Route} key={event.id}><time className={styles.liveDate} dateTime={event.startsAt}><span>{new Intl.DateTimeFormat(locale, { calendar: "gregory", month:"short", timeZone:"Asia/Seoul" }).format(new Date(event.startsAt))}</span><b>{new Intl.DateTimeFormat("en-US", { calendar: "gregory", day:"numeric", timeZone:"Asia/Seoul" }).format(new Date(event.startsAt))}</b></time><div><strong>{event.title}</strong><span>{formatDate(event.startsAt)} KST</span><MyLiveCountdown event={event} locale={locale} active={active} onStartReached={onStartReached}/></div><ArrowRight/></Link>;
  return <FanSurface appearance="plain" className={styles.section} id="my-reserved-live" tabIndex={-1} aria-label={t.live}>
   <SectionTitle title={t.live} href={`/live?locale=${locale}`} action={t.allLive}/>
   {events.length?<div className={`${styles.rows} ${styles.reservedRows}`}>{row(events[0])}</div>:<Empty text={t.noLive} href={`/live?locale=${locale}`} action={t.browseLive}/>}
-  {events.length>1?<details className={styles.history} open={otherOpen} onToggle={event=>setOtherOpen(event.currentTarget.open)}><summary>{locale==="ko"?"다른 예약 LIVE":"Other reserved LIVE"} ({events.length-1})</summary><div className={`${styles.rows} ${styles.reservedRows}`}>{events.slice(1).map(event=>row(event,otherOpen))}</div></details>:null}
+  {events.length>1?<details className={styles.history} open={otherOpen} onToggle={event=>setOtherOpen(event.currentTarget.open)}><summary>{locale === "ko" ? "다른 예약 LIVE" : translate(locale, localizedMessages.m166efc88e4ff, "Other reserved LIVE")} ({events.length-1})</summary><div className={`${styles.rows} ${styles.reservedRows}`}>{events.slice(1).map(event=>row(event,otherOpen))}</div></details>:null}
   {history.length>0?<details className={styles.history}><summary>{t.history} ({history.length})</summary>{history.map(event=><Link href={`/live/${event.slug}?locale=${locale}` as Route} key={event.id}>{event.title}<span>{formatDate(event.startsAt)}</span></Link>)}</details>:null}
  </FanSurface>;
 }

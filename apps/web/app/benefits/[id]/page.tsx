@@ -1,6 +1,7 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { BenefitDetailScreen, type BenefitLocale } from "@/features/benefit/ui/benefit-screen";
 
-function locale(value: string | string[] | undefined): BenefitLocale { return value === "en" ? "en" : "ko"; }
+function locale(value: string | string[] | undefined): BenefitLocale { return parseAppLocale(value); }
 function slug(value: string | string[] | undefined) { return typeof value === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) ? value : undefined; }
 
 export default async function BenefitPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {

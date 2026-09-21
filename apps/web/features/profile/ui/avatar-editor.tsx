@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__profile__ui__avatar-editor";
+import { additionalLocales } from "@/i18n/messages";
 import { ImagePlus, Trash2, X } from "lucide-react";
 import {
   type ChangeEvent,
@@ -25,7 +28,7 @@ import type { useAvatar } from "./use-avatar";
 import styles from "./avatar-editor.module.css";
 
 type AvatarResource = ReturnType<typeof useAvatar>;
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type Dimensions = { width: number; height: number };
 type Pan = { x: number; y: number };
 
@@ -75,9 +78,7 @@ async function decodeImage(file: File) {
 
 function characterLabel(id: AvatarCharacterId, locale: Locale) {
   const [shape, color] = id.split("-") as ["star" | "heart" | "fairy" | "ghost", "cream" | "pink" | "lavender"];
-  const labels = locale === "ko"
-    ? { star: "별", heart: "하트", fairy: "요정", ghost: "유령", cream: "크림", pink: "핑크", lavender: "라벤더" }
-    : { star: "Star", heart: "Heart", fairy: "Fairy", ghost: "Ghost", cream: "Cream", pink: "Pink", lavender: "Lavender" };
+  const labels = ({ ko: { star: "별", heart: "하트", fairy: "요정", ghost: "유령", cream: "크림", pink: "핑크", lavender: "라벤더" }, en: { star: "Star", heart: "Heart", fairy: "Fairy", ghost: "Ghost", cream: "Cream", pink: "Pink", lavender: "Lavender" }, ...additionalLocales((translationLocale) => ({ star: localizedMessages.me4589f9a25ee[translationLocale], heart: localizedMessages.m194e5b6e19ea[translationLocale], fairy: localizedMessages.m8e23734d042c[translationLocale], ghost: localizedMessages.m912f724fd469[translationLocale], cream: localizedMessages.m0bebe0038986[translationLocale], pink: localizedMessages.ma87beff78bb6[translationLocale], lavender: localizedMessages.me75c3039c32f[translationLocale] })) })[locale];
   return `${labels[color]} ${labels[shape]}`;
 }
 

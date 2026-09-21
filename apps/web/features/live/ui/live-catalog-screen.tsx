@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-catalog-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { MyLiveCountdown } from "@/features/my/ui/my-live-countdown";
 import { CreatorAvatar } from "@/components/fan-ui/creator-avatar";
 
@@ -62,27 +65,45 @@ const copy = {
     retry: "Reload my reservation status",
     calendar: "LIVE calendar",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.m5512385f3f65[translationLocale],
+    intro: localizedMessages.mb2a27553073c[translationLocale],
+    liveNow: localizedMessages.m9a88574728d8[translationLocale],
+    upcoming: localizedMessages.me0f2d726baad[translationLocale],
+    emptyAll: localizedMessages.mb058a008daea[translationLocale],
+    emptyLive: localizedMessages.m595ca556cf42[translationLocale],
+    emptyUpcoming: localizedMessages.mba1a7b5ea2be[translationLocale],
+    enter: localizedMessages.m47b6bd7a8c1e[translationLocale],
+    reserve: localizedMessages.m83d238865329[translationLocale],
+    reserved: localizedMessages.m96b86c41e168[translationLocale],
+    details: localizedMessages.me8e8e7dcc7cd[translationLocale],
+    reservationLoading: localizedMessages.m3829bffc17b9[translationLocale],
+    reservationUnknown: localizedMessages.mfff75b1c1b3e[translationLocale],
+    retry: localizedMessages.m9a2c16305724[translationLocale],
+    calendar: localizedMessages.me243583851df[translationLocale],
+  }))
 } as const;
 
 function dateRange(item: LiveEventResponse, locale: FanLocale) {
   const startsAt = new Date(item.live.startsAt);
-  const formatter = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+  const formatter = new Intl.DateTimeFormat(locale, { calendar: "gregory",
     month: "short",
     day: "numeric",
     hour: locale === "ko" ? "2-digit" : "numeric",
     minute: "2-digit",
-    hour12: locale !== "ko",
+    hour12: locale === "ko" ? false : locale === "en" ? true : undefined,
     timeZone: "Asia/Seoul",
   });
-  if (item.live.endsAt === null) return `${formatter.format(startsAt)} · ${locale === "ko" ? "종료 시간 미정" : "End time unconfirmed"}`;
+  if (item.live.endsAt === null) return `${formatter.format(startsAt)} · ${locale === "ko" ? "종료 시간 미정" : translate(locale, localizedMessages.m9203f81c207d, "End time unconfirmed")}`;
   const endsAt = new Date(item.live.endsAt);
   const sameDay = startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })
     === endsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
   if (sameDay) {
-    const endTime = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    const endTime = new Intl.DateTimeFormat(locale, { calendar: "gregory",
       hour: locale === "ko" ? "2-digit" : "numeric",
       minute: "2-digit",
-      hour12: locale !== "ko",
+      hour12: locale === "ko" ? false : locale === "en" ? true : undefined,
       timeZone: "Asia/Seoul",
     }).format(endsAt);
     return `${formatter.format(startsAt)}–${endTime}`;
@@ -137,9 +158,7 @@ function LiveGroup({
                   className={styles.details}
                   href={`/live/${item.live.slug}?locale=${locale}` as Route}
                   aria-label={
-                    locale === "ko"
-                      ? `${item.live.title} 상세 보기`
-                      : `View ${item.live.title} details`
+                    locale === "ko" ? `${item.live.title} 상세 보기` : translate(locale, localizedMessages.m43c55b90f860, "View {0} details", [item.live.title])
                   }
                 >
                   <div className={styles.meta}>
@@ -176,7 +195,7 @@ function LiveGroup({
                     href={href as Route}
                     target={currentAction.external ? "_blank" : undefined}
                     rel={currentAction.external ? "noreferrer" : undefined}
-                    aria-label={`${currentAction.label}: ${item.live.title}${currentAction.external ? locale === "ko" ? ", 새 창" : ", new tab" : ""}`}
+                    aria-label={`${currentAction.label}: ${item.live.title}${currentAction.external ? locale === "ko" ? ", 새 창" : translate(locale, localizedMessages.mc8f56bef8619, ", new tab") : ""}`}
                   >
                     <span className={styles.actionIcon} aria-hidden="true">{currentAction.icon}</span>
                     <span className={styles.actionLabel}>{currentAction.label}</span>
@@ -192,7 +211,7 @@ function LiveGroup({
     <section className={styles.group} data-empty={items.length === 0} aria-labelledby={`${id}-heading`}>
       <header className={styles.groupHeader}>
         <FanHeading id={`${id}-heading`}>{title}</FanHeading>
-        {items.length > 0 ? <span className={styles.count} aria-label={`${title} ${groups.length}${locale === "ko" ? "개" : " total"}`}>{groups.length}</span> : null}
+        {items.length > 0 ? <span className={styles.count} aria-label={`${title} ${groups.length}${locale === "ko" ? "개" : translate(locale, localizedMessages.mb37052ce0f64, " total")}`}>{groups.length}</span> : null}
       </header>
       {items.length ? (
         <div className={styles.list}>
@@ -200,10 +219,10 @@ function LiveGroup({
         </div>
       ) : <p className={styles.empty}>{empty}</p>}
       {pageCount > 1 ? (
-        <nav className={styles.pagination} aria-label={locale === "ko" ? `${title} 페이지` : `${title} pages`}>
+        <nav className={styles.pagination} aria-label={locale === "ko" ? `${title} 페이지` : translate(locale, localizedMessages.m3cfeb050544a, "{0} pages", [title])}>
           <button
             type="button"
-            aria-label={locale === "ko" ? `${title} 이전 페이지` : `Previous ${title} page`}
+            aria-label={locale === "ko" ? `${title} 이전 페이지` : translate(locale, localizedMessages.m505a78fdc660, "Previous {0} page", [title])}
             disabled={currentPage === 0}
             onClick={() => setPage(Math.max(0, currentPage - 1))}
           >
@@ -212,7 +231,7 @@ function LiveGroup({
           <span aria-live="polite" aria-atomic="true">{currentPage + 1} / {pageCount}</span>
           <button
             type="button"
-            aria-label={locale === "ko" ? `${title} 다음 페이지` : `Next ${title} page`}
+            aria-label={locale === "ko" ? `${title} 다음 페이지` : translate(locale, localizedMessages.mbd51832549e0, "Next {0} page", [title])}
             disabled={currentPage === pageCount - 1}
             onClick={() => setPage(Math.min(pageCount - 1, currentPage + 1))}
           >
@@ -261,7 +280,7 @@ export function LiveCatalogScreen({
         const token = requestAuthenticated ? await getAccessToken() : null;
         if (controller.signal.aborted) return;
         if (requestAuthenticated && !token) throw new Error("access token unavailable");
-        const response = await fetch(`/api/live-events?locale=${locale}`, {
+        const response = await fetch(`/api/live-events?locale=${toContentLocale(locale)}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           cache: "no-store",
           signal: controller.signal,

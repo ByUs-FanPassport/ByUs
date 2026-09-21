@@ -1,5 +1,8 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__my__ui__my-live-countdown";
+import { translate } from "@/i18n/messages";
 import { formatCompactLiveStart, type LiveStartEvent } from "@/features/live/domain/live-time-display";
 import { useLiveStartClock } from "@/features/live/ui/use-live-start-clock";
 import timeStyles from "@/features/live/ui/live-time-indicator.module.css";
@@ -9,13 +12,13 @@ export type MyLiveCountdownEvent = LiveStartEvent & { id: string };
 
 type MyLiveCountdownProps = {
   event: MyLiveCountdownEvent;
-  locale: "ko" | "en";
+  locale: AppLocale;
   active?: boolean;
   pulseScheduled?: boolean;
   onStartReached?: (event: MyLiveCountdownEvent) => void;
 };
 
-export function formatMyLiveCountdown(startsAt: string, now: number, locale: "ko" | "en" = "ko") {
+export function formatMyLiveCountdown(startsAt: string, now: number, locale: AppLocale = "ko") {
   return formatCompactLiveStart(startsAt, now, locale);
 }
 
@@ -29,11 +32,11 @@ export function MyLiveCountdown({ event, locale, active = true, pulseScheduled =
   if (!isScheduled && !isLive) return null;
 
   const value = clock.now === null
-    ? locale === "ko" ? "LIVE 예정" : "Upcoming LIVE"
+    ? locale === "ko" ? "LIVE 예정" : translate(locale, localizedMessages.mc5067174ebb8, "Upcoming LIVE")
     : formatMyLiveCountdown(event.startsAt, clock.now, locale);
 
   return <span className={`${styles.countdown} ${timeStyles.emphasis}`} data-variant="badge" data-active={active ? "true" : "false"} data-pulse={shouldPulse ? "true" : "false"} data-status={event.effectiveStatus} aria-live="off">
     <span className={timeStyles.dot} aria-hidden="true" />
-    {isLive ? <span className={styles.liveLabel}>{locale === "ko" ? "진행 중" : "Live now"}</span> : <span className={styles.value}>{value}</span>}
+    {isLive ? <span className={styles.liveLabel}>{locale === "ko" ? "진행 중" : translate(locale, localizedMessages.m2f551ac0b3bd, "Live now")}</span> : <span className={styles.value}>{value}</span>}
   </span>;
 }

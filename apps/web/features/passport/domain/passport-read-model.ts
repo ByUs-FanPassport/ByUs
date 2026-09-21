@@ -1,3 +1,6 @@
+import { type AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__domain__passport-read-model";
+import { additionalLocales } from "@/i18n/messages";
 import { z } from "zod";
 import { nicknameSchema } from "../../profile/domain/nickname-schema";
 import { fanStageProgressSchema } from "../../rewards/domain/fan-stage";
@@ -50,28 +53,48 @@ export const passportActivityContextSchema = z.object({
 
 export const STAMP_METADATA = {
   knowledge: {
-    label: { ko: "팬 인증", en: "Fan Verification" },
-    shortLabel: { ko: "인증", en: "VERIFY" },
+    label: { ko: "팬 인증", en: "Fan Verification" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m95f58ad617d8[translationLocale]))
+},
+    shortLabel: { ko: "인증", en: "VERIFY" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m2bddd66cf984[translationLocale]))
+},
     inkToken: "oklch(45% 0.14 24)",
   },
   reservation: {
-    label: { ko: "라이브 예약", en: "Live Reservation" },
-    shortLabel: { ko: "예약", en: "RESERVE" },
+    label: { ko: "라이브 예약", en: "Live Reservation" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m7b7c90f28fee[translationLocale]))
+},
+    shortLabel: { ko: "예약", en: "RESERVE" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m69b01836073b[translationLocale]))
+},
     inkToken: "oklch(46% 0.13 290)",
   },
   attendance: {
-    label: { ko: "라이브 출석", en: "Live Attendance" },
-    shortLabel: { ko: "출석", en: "ATTEND" },
+    label: { ko: "라이브 출석", en: "Live Attendance" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m6dd9defca075[translationLocale]))
+},
+    shortLabel: { ko: "출석", en: "ATTEND" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.ma6c0372c5682[translationLocale]))
+},
     inkToken: "oklch(43% 0.12 235)",
   },
   survey: {
-    label: { ko: "후기 참여", en: "Survey" },
-    shortLabel: { ko: "후기", en: "SURVEY" },
+    label: { ko: "후기 참여", en: "Survey" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mf4698d9889c0[translationLocale]))
+},
+    shortLabel: { ko: "후기", en: "SURVEY" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m7606d201a86b[translationLocale]))
+},
     inkToken: "oklch(43% 0.11 155)",
   },
   membership: {
-    label: { ko: "멤버십 인증", en: "Membership Verification" },
-    shortLabel: { ko: "멤버십", en: "MEMBER" },
+    label: { ko: "멤버십 인증", en: "Membership Verification" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m3647db038a98[translationLocale]))
+},
+    shortLabel: { ko: "멤버십", en: "MEMBER" ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m2a7e9201753e[translationLocale]))
+},
     inkToken: "oklch(38% 0.1 75)",
   },
 } as const satisfies Record<
@@ -149,9 +172,14 @@ const labels = {
     levels: { Bronze: "Bronze", Silver: "Silver", Gold: "Gold", Platinum: "Platinum", Diamond: "Diamond" },
     mint: { queued: "Issuance queued", processing: "Issuing", retryable: "Retrying issuance", permanent_failure: "Issuance needs attention", minted: "Issued" },
   },
+
+  ...additionalLocales((translationLocale) => ({
+    levels: { Bronze: localizedMessages.m860246902e14[translationLocale], Silver: localizedMessages.mc0892217f397[translationLocale], Gold: localizedMessages.me12a6f61ff09[translationLocale], Platinum: localizedMessages.me2f02b0acb25[translationLocale], Diamond: localizedMessages.mcc8c85f578b9[translationLocale] },
+    mint: { queued: localizedMessages.m3900c3c60003[translationLocale], processing: localizedMessages.m960398fe947c[translationLocale], retryable: localizedMessages.mb3ae54b62c6b[translationLocale], permanent_failure: localizedMessages.mf578f89ce4d5[translationLocale], minted: localizedMessages.m02dc46521d60[translationLocale] },
+  }))
 } as const;
 
-export function levelLabel(locale: PassportLocale, level: z.infer<typeof levelSchema>): string { return labels[locale].levels[level]; }
-export function stampTypeLabel(locale: PassportLocale, type: PassportStampType): string { return STAMP_METADATA[type].label[locale]; }
-export function stampShortLabel(locale: PassportLocale, type: PassportStampType): string { return STAMP_METADATA[type].shortLabel[locale]; }
-export function mintStatusLabel(locale: PassportLocale, status: z.infer<typeof mintStatusSchema>): string { return labels[locale].mint[status]; }
+export function levelLabel(locale: AppLocale, level: z.infer<typeof levelSchema>): string { return labels[locale].levels[level]; }
+export function stampTypeLabel(locale: AppLocale, type: PassportStampType): string { return STAMP_METADATA[type].label[locale]; }
+export function stampShortLabel(locale: AppLocale, type: PassportStampType): string { return STAMP_METADATA[type].shortLabel[locale]; }
+export function mintStatusLabel(locale: AppLocale, status: z.infer<typeof mintStatusSchema>): string { return labels[locale].mint[status]; }

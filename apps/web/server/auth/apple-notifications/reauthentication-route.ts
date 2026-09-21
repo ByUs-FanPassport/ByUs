@@ -1,4 +1,5 @@
 import "server-only";
+import { APP_LOCALES } from "@/i18n/locales";
 
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -22,7 +23,7 @@ const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const startSchema = z.object({
   provider: z.enum(["google", "apple"]),
   returnTo: z.string().max(1024).optional(),
-  locale: z.enum(["ko", "en"]).optional(),
+  locale: z.enum(APP_LOCALES).optional(),
   intent: z.string().max(100).optional(),
   entity: z.string().max(200).nullable().optional(),
   authIntent: z.string().max(200).nullable().optional(),

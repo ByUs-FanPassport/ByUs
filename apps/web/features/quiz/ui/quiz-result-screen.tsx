@@ -1,5 +1,8 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__quiz__ui__quiz-result-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import Link from "next/link";
@@ -101,6 +104,31 @@ const copy = {
     cooldown: "You've had 3 consecutive failures. Please retry in 1 minute based on server time.",
     retryError: "We couldn't start a new quiz. Please try again in a moment.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    favorite: localizedMessages.m2344ef357e86[translationLocale],
+    loginTitle: localizedMessages.m1108eed43f73[translationLocale],
+    loginBody: localizedMessages.mb4249e42aaee[translationLocale],
+    login: localizedMessages.md7ddedc5ef2a[translationLocale],
+    errorTitle: localizedMessages.md36a1b642f6b[translationLocale],
+    errorBody: localizedMessages.m9fd10f096364[translationLocale],
+    fanPage: (name: string) => translate(translationLocale, localizedMessages.m7f9652a6844f, "Back to {0} fan page", [name]),
+    completionAria: localizedMessages.m1e52ac45ca86[translationLocale],
+    completion: localizedMessages.ma58415f99cf0[translationLocale],
+    passed: (name: string) => translate(translationLocale, localizedMessages.m7309a3343f60, "{0} fan verification complete", [name]),
+    failed: localizedMessages.m64a6dd7c2df4[translationLocale],
+    score: (score: number) => translate(translationLocale, localizedMessages.mba4184321d42, "You answered {0} of 3 questions correctly.", [score]),
+    passedHelper: localizedMessages.mbe6cbd7da6d2[translationLocale],
+    rewards: localizedMessages.m435164225d85[translationLocale],
+    fanScore: localizedMessages.m865e6df46a12[translationLocale],
+    receivePassport: localizedMessages.mf2435aa22e21[translationLocale],
+    failedHelper: localizedMessages.m271b633fd758[translationLocale],
+    retrying: localizedMessages.m6430ea54c906[translationLocale],
+    retry: localizedMessages.m861f856e5057[translationLocale],
+    retryNote: localizedMessages.maa353a7ee424[translationLocale],
+    cooldown: localizedMessages.md107c8ae9c74[translationLocale],
+    retryError: localizedMessages.m0ab5459e8f55[translationLocale],
+  }))
 } as const;
 
 function withLocale(path: string, locale: FanLocale): Route {
@@ -155,7 +183,7 @@ export function QuizResultScreen({
       try {
         const token = await getAccessToken();
         if (!token) throw new Error("missing access token");
-        const body = await parseJson(await fetch(`/api/quiz-attempts/${attemptId}?locale=${locale}`, {
+        const body = await parseJson(await fetch(`/api/quiz-attempts/${attemptId}?locale=${toContentLocale(locale)}`, {
           method: "GET",
           headers: { authorization: `Bearer ${token}` },
           cache: "no-store",
@@ -180,7 +208,7 @@ export function QuizResultScreen({
     try {
       const token = await getAccessToken();
       if (!token) throw new Error("missing access token");
-      const body = await parseJson(await fetch(`/api/celebrities/${celebritySlug}/quiz/attempts?locale=${locale}`, {
+      const body = await parseJson(await fetch(`/api/celebrities/${celebritySlug}/quiz/attempts?locale=${toContentLocale(locale)}`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
       })) as { result?: unknown };
@@ -211,7 +239,7 @@ export function QuizResultScreen({
   const resultReturnTo = `/c/${celebritySlug}/verify/result?${resultQuery.toString()}`;
 
   if (view.kind === "loading") {
-    return <ResultFrame locale={locale}><div className={styles.skeleton} aria-label={locale === "ko" ? "퀴즈 결과 불러오는 중" : "Loading quiz result"} /></ResultFrame>;
+    return <ResultFrame locale={locale}><div className={styles.skeleton} aria-label={locale === "ko" ? "퀴즈 결과 불러오는 중" : translate(locale, localizedMessages.mc1c6ac93782f, "Loading quiz result")} /></ResultFrame>;
   }
   if (view.kind === "unauthenticated") {
     return (
@@ -264,7 +292,7 @@ export function QuizResultScreen({
         {passed && (
           <dl className={styles.rewards} aria-label={t.rewards}>
             <div><dt>Passport</dt><dd>{displayName} Passport</dd></div>
-            <div><dt>Stamp</dt><dd>{locale === "ko" ? "팬 인증 Stamp" : "Fan Verification Stamp"}</dd></div>
+            <div><dt>Stamp</dt><dd>{locale === "ko" ? "팬 인증 Stamp" : translate(locale, localizedMessages.m8829e734e0e6, "Fan Verification Stamp")}</dd></div>
             <div><dt>Score</dt><dd>{t.fanScore}</dd></div>
           </dl>
         )}

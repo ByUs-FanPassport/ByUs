@@ -1,3 +1,7 @@
+import { toContentLocale } from "@/i18n/locales";
+import { parseAppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/app__bias__promotion__page";
+import { translate } from "@/i18n/messages";
 import type { PromotionProfile } from "@/features/bias/domain/promotion";
 import { PromotionPage } from "@/features/bias/ui/promotion-page";
 import { createPublishedContentRepositoryFromEnvironment } from "@/server/content/published-content-repository";
@@ -10,28 +14,24 @@ export async function generateMetadata({
 }: {
   searchParams: Params;
 }) {
-  const locale = (await searchParams).locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale((await searchParams).locale);
   return publicMetadata({
     path: "/bias/promotion",
     locale,
     title:
-      locale === "en"
-        ? "Promote your fan page | ByUs"
-        : "팬페이지 홍보 안내 | ByUs",
+      locale === "ko" ? "팬페이지 홍보 안내 | ByUs" : translate(locale, localizedMessages.mabdee7400079, "Promote your fan page | ByUs"),
     description:
-      locale === "en"
-        ? "Find your fan page and copy ready-to-use promotional messages."
-        : "내 팬페이지 링크를 찾고 프로필, 스토리, 라이브용 홍보 문구를 복사하세요.",
+      locale === "ko" ? "내 팬페이지 링크를 찾고 프로필, 스토리, 라이브용 홍보 문구를 복사하세요." : translate(locale, localizedMessages.mac2697327da4, "Find your fan page and copy ready-to-use promotional messages."),
   });
 }
 export default async function Page({ searchParams }: { searchParams: Params }) {
   const params = await searchParams;
-  const locale = params.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(params.locale);
   let profiles: readonly PromotionProfile[] = [];
   let unavailable = false;
   try {
     profiles =
-      await createPublishedContentRepositoryFromEnvironment().list(locale);
+      await createPublishedContentRepositoryFromEnvironment().list(toContentLocale(locale));
   } catch {
     unavailable = true;
   }

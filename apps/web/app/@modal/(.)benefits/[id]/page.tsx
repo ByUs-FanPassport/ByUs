@@ -1,10 +1,11 @@
+import { parseAppLocale } from "@/i18n/locales";
 import {
   BenefitDetailOverlay,
   type BenefitLocale,
 } from "@/features/benefit/ui/benefit-screen";
 
 function locale(value: string | string[] | undefined): BenefitLocale {
-  return value === "en" ? "en" : "ko";
+  return parseAppLocale(value);
 }
 
 function slug(value: string | string[] | undefined) {

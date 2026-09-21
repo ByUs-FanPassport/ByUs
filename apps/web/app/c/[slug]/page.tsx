@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Route } from "next";
 import { creatorHomeHref, isCreatorHandle } from "@/features/creator/domain/creator-navigation";
@@ -18,7 +19,7 @@ export default async function LegacyCelebrityPage({ params, searchParams }: {
   }
   // These tabs already lead to a dedicated catalog, not to the home page.
   if (query.get("tab") === "raffles" || query.get("tab") === "benefits") {
-    const locale = query.get("locale") === "en" ? "en" : "ko";
+    const locale = parseAppLocale(query.get("locale"));
     const intent = sanitizeAuthIntentId(query.get("authIntent"));
     permanentRedirect(`${creatorRafflesHref(slug, locale)}${intent ? `&authIntent=${intent}` : ""}` as Route);
   }

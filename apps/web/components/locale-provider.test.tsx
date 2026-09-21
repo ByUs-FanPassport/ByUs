@@ -26,6 +26,9 @@ describe('document and authentication locale', () => {
     state.query = 'locale=ko';
     view.rerender(<LocaleProvider initialLocale="en"><PageLocale /></LocaleProvider>);
     expect(screen.getByRole('status')).toHaveTextContent('ko');
+    state.query = 'locale=ja';
+    view.rerender(<LocaleProvider initialLocale="en"><PageLocale /></LocaleProvider>);
+    expect(screen.getByRole('status')).toHaveTextContent('ja');
   });
   it('renders English loading content in the server output', () => {
     const html = renderToString(<LocaleProvider initialLocale="en"><PublicContentState state="loading" scope="home" /></LocaleProvider>);

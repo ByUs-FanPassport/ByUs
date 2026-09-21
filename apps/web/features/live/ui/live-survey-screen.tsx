@@ -1,5 +1,10 @@
 "use client";
 
+import { FanLanguageSwitch } from "@/components/fan-shell/fan-language-switch";
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-survey-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { getSessionStorage } from "@/features/reliability/client/session-storage";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -23,7 +28,7 @@ import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { levelLabel } from "@/features/passport/domain/passport-read-model";
 import styles from "./live-survey-screen.module.css";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; code: string }
@@ -106,6 +111,44 @@ const copy = {
     multipleHint: "Choose all that apply.",
     ratingHint: "Choose a rating from 1 to 5.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    back: localizedMessages.m246515332b34[translationLocale],
+    title: localizedMessages.mb0b897b906b5[translationLocale],
+    subtitle: localizedMessages.mc292b6084482[translationLocale],
+    required: localizedMessages.md559abb9760e[translationLocale],
+    optional: localizedMessages.me23fcb1cd925[translationLocale],
+    attendanceTitle: localizedMessages.md9e99d4384c1[translationLocale],
+    attendanceBody: localizedMessages.m4aeb574b27d6[translationLocale],
+    attendanceAction: localizedMessages.mffb86af5380b[translationLocale],
+    loading: localizedMessages.ma9cef7eb522d[translationLocale],
+    loadError: localizedMessages.m57c436467406[translationLocale],
+    notFound: localizedMessages.m55a7ef88eba2[translationLocale],
+    retry: localizedMessages.m077ba15d3e68[translationLocale],
+    signIn: localizedMessages.m0542a396bb6a[translationLocale],
+    saving: localizedMessages.mddae5a460374[translationLocale],
+    saved: localizedMessages.m5fcb21ea1e2a[translationLocale],
+    saveError: localizedMessages.ma9cd890abc14[translationLocale],
+    answerRequired: localizedMessages.mac88ffd4b8b1[translationLocale],
+    textPlaceholder: localizedMessages.m328463a7cb85[translationLocale],
+    textCount: (count: number) => translate(translationLocale, localizedMessages.m5e26bc532e5c, "{0} / 4,000 characters", [count]),
+    submit: localizedMessages.m0990ce8a1c84[translationLocale],
+    submitting: localizedMessages.m091f84c8bd4e[translationLocale],
+    submitError: localizedMessages.m9ee3a86dd208[translationLocale],
+    conflictTitle: localizedMessages.m9e5e9bc67080[translationLocale],
+    conflictBody: localizedMessages.m946bf598cc00[translationLocale],
+    keepMine: localizedMessages.mcd5be4270695[translationLocale],
+    useSaved: localizedMessages.m47e490d0b893[translationLocale],
+    completeTitle: localizedMessages.m8dadfd038795[translationLocale],
+    completeBody: localizedMessages.m28e4e326a613[translationLocale],
+    score: "Fan Score +2",
+    stamp: localizedMessages.m2e8bd9aa8ca2[translationLocale],
+    returnLive: localizedMessages.m058f8af8a2f7[translationLocale],
+    submittedAt: localizedMessages.m3f07790b87ff[translationLocale],
+    singleHint: localizedMessages.m5d830501519f[translationLocale],
+    multipleHint: localizedMessages.m1c61e64194df[translationLocale],
+    ratingHint: localizedMessages.m8acc8ddbb047[translationLocale],
+  }))
 } as const;
 
 function answerMap(answers: SurveyAnswer[]): Map<string, SurveyAnswer> {
@@ -139,7 +182,6 @@ function errorCode(value: unknown): string {
 }
 
 function Header({ slug, locale, mainId }: { slug: string; locale: Locale; mainId: string }) {
-  const other = locale === "ko" ? "en" : "ko";
   return (
     <FocusFlowHeader
       className={styles.header}
@@ -148,14 +190,7 @@ function Header({ slug, locale, mainId }: { slug: string; locale: Locale; mainId
       mainId={mainId}
       sticky
     >
-        <Link
-          className={styles.locale}
-          href={`/live/${slug}/survey?locale=${other}` as Route}
-          lang={other}
-          hrefLang={other}
-        >
-          {locale === "ko" ? "KO / EN" : "EN / KO"}
-        </Link>
+        <FanLanguageSwitch locale={locale} href={`/live/${slug}/survey?locale=${locale}` as Route} />
     </FocusFlowHeader>
   );
 }
@@ -185,7 +220,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
         setView({ kind: "error", code: "AUTHENTICATION_REQUIRED" });
         return null;
       }
-      const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/survey?locale=${locale}`, {
+      const response = await fetch(`/api/live-events/${encodeURIComponent(slug)}/survey?locale=${toContentLocale(locale)}`, {
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",
       });
@@ -428,7 +463,7 @@ export function LiveSurveyScreen({ slug, locale }: { slug: string; locale: Local
             passportHref={`/passports/${completion.passportId}?locale=${locale}`}
             note={
               data.response.submittedAt
-                ? `${c.submittedAt} · ${new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(data.response.submittedAt))}`
+                ? `${c.submittedAt} · ${new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", timeStyle: "short" }).format(new Date(data.response.submittedAt))}`
                 : undefined
             }
             primaryAction={<FanAction variant="primary" href={liveHref}>{c.returnLive}</FanAction>}

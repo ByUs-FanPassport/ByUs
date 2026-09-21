@@ -1,5 +1,10 @@
 "use client";
 
+import type { AppLocale } from "@/i18n/locales";
+import { languageSettings } from "@/i18n/language-settings";
+import { FanLanguageSwitch } from "@/components/fan-shell/fan-language-switch";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__profile__ui__settings-screen";
+import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Bell,
@@ -30,12 +35,12 @@ import { PhoneSmsEnrollment } from "./phone-sms-enrollment";
 import { AvatarSettings } from "./avatar-settings";
 import { useAvatar } from "./use-avatar";
 
-type Locale = "ko" | "en";
+type Locale = AppLocale;
 type PreferenceKey =
   "liveReminders" | "surveyReminders" | "benefitNotifications";
 interface SettingsSummary {
   nickname: string;
-  preferredLocale: Locale;
+  preferredLocale: "ko" | "en";
   wallet: { chainId: number; maskedAddress: string } | null;
 }
 interface Preferences {
@@ -261,6 +266,94 @@ const copy = {
     nicknameSaved: "Display name updated.",
     failed: "We couldn't save that. Try again.",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    logout: localizedMessages.m8763f7e0a9f2[translationLocale],
+    loggingOut: localizedMessages.m758bda62aa11[translationLocale],
+    logoutFailed: localizedMessages.m8a916681ec62[translationLocale],
+    back: localizedMessages.mbad22f5a1a0b[translationLocale],
+    title: localizedMessages.m261b34eb8339[translationLocale],
+    subtitle: localizedMessages.mdaafda9be2b2[translationLocale],
+    profile: localizedMessages.mc7fba50a9917[translationLocale],
+    nickname: localizedMessages.m0b89ab7abb98[translationLocale],
+    nicknameHelp: localizedMessages.m96a33c44da86[translationLocale],
+    edit: localizedMessages.m9cb82aa6061a[translationLocale],
+    save: localizedMessages.m570b0f115075[translationLocale],
+    saving: localizedMessages.m074cf81ab408[translationLocale],
+    cancel: localizedMessages.m135463f232a4[translationLocale],
+    nicknameRule: localizedMessages.mbbc0c6c8fe23[translationLocale],
+    language: localizedMessages.m49802171f1bd[translationLocale],
+    languageHelp: localizedMessages.m9a20f8be7c86[translationLocale],
+    korean: "한국어",
+    english: "English",
+    notifications: localizedMessages.m5c5dc0a0a093[translationLocale],
+    notificationHelp: localizedMessages.m9541f078789c[translationLocale],
+    connections: localizedMessages.m7b9ebb7c1094[translationLocale],
+    googleReadOnly: localizedMessages.mdbcc9163726d[translationLocale],
+    kakaoConnect: localizedMessages.m7e969d218a0a[translationLocale],
+    kakaoDisconnect: localizedMessages.me75884210c9b[translationLocale],
+    kakaoConnecting: localizedMessages.m49d9ed0cac29[translationLocale],
+    kakaoDisconnecting: localizedMessages.m7db6fee2775f[translationLocale],
+    preferenceSaving: localizedMessages.m29bbe37b4f1d[translationLocale],
+    channelSaving: localizedMessages.mf1c0776cdb11[translationLocale],
+    emailChannel: localizedMessages.m0930f5d46029[translationLocale],
+    kakaoChannel: localizedMessages.m063a599d995d[translationLocale],
+    needsEnrollment: localizedMessages.ma7d07d5e90ea[translationLocale],
+    kakaoEnrollmentTitle: localizedMessages.mcf7f14643b2c[translationLocale],
+    kakaoEnrollmentConsent: localizedMessages.m85457e2cc797[translationLocale],
+    kakaoEnrollmentStart: localizedMessages.m7bc099ffe1df[translationLocale],
+    kakaoEnrollmentStarting: localizedMessages.m70d80d33b764[translationLocale],
+    kakaoEnrollmentPending: localizedMessages.md2c031c3792b[translationLocale],
+    kakaoEnrollmentConfirmConsent: localizedMessages.mfcc55fef00aa[translationLocale],
+    kakaoEnrollmentConfirm: localizedMessages.m9d9150f0fef5[translationLocale],
+    kakaoEnrollmentConfirming: localizedMessages.m3d0d085be27c[translationLocale],
+    kakaoEnrollmentCancel: localizedMessages.m2192406b70a7[translationLocale],
+    kakaoEnrollmentCanceling: localizedMessages.m669a0179df30[translationLocale],
+    kakaoEnrollmentHelp: localizedMessages.me54f33f29afc[translationLocale],
+    kakaoEnrollmentConsentRequired: localizedMessages.m86ca9a57b1a8[translationLocale],
+    live: localizedMessages.mae960a5d1279[translationLocale],
+    survey: localizedMessages.m6b0841295ef6[translationLocale],
+    benefit: localizedMessages.m4659331db850[translationLocale],
+    browserConnect: localizedMessages.m8b002868e983[translationLocale],
+    browserReconnect: localizedMessages.m4389fa70b5c5[translationLocale],
+    permissionLabel: localizedMessages.mb1e007be62b1[translationLocale],
+    permissionPending: localizedMessages.mda6f1be2db64[translationLocale],
+    permissionDefault: localizedMessages.m19f2c84d9058[translationLocale],
+    permissionGranted: localizedMessages.mcb44ab83aaeb[translationLocale],
+    pushDenied: localizedMessages.mf97d5e447836[translationLocale],
+    pushUnsupported: localizedMessages.mf3d461e3f6ef[translationLocale],
+    pushInsecure: localizedMessages.m3a65550b1786[translationLocale],
+    pushPending: localizedMessages.m799f960eeb71[translationLocale],
+    pushFailed: localizedMessages.mcecc57fdf667[translationLocale],
+    subscriptionLabel: localizedMessages.m80267ed2fd3d[translationLocale],
+    subscriptionOn: localizedMessages.m3eed0bed3a92[translationLocale],
+    subscriptionOff: localizedMessages.ma3e2c0bc840f[translationLocale],
+    wallet: localizedMessages.m0d42fa0921ee[translationLocale],
+    walletHelp:
+      localizedMessages.m7c5b48cc38fa[translationLocale],
+    noWallet: localizedMessages.m57a088d81a8e[translationLocale],
+    install: localizedMessages.m76dbd917d816[translationLocale],
+    installHelp: localizedMessages.m0c4c7655ff06[translationLocale],
+    installAction: localizedMessages.mf7724c014fed[translationLocale],
+    installChecking: localizedMessages.m62549f14759c[translationLocale],
+    installing: localizedMessages.m5bf6071fbab4[translationLocale],
+    installed: localizedMessages.m5bf28ff49ef0[translationLocale],
+    unsupported: localizedMessages.m6ad26c70517a[translationLocale],
+    installFailed: localizedMessages.md8796e8a8236[translationLocale],
+    loading: localizedMessages.ma5d034f65725[translationLocale],
+    unavailable: localizedMessages.m144f0d8f2e11[translationLocale],
+    retry: localizedMessages.mca2ea0d49fe3[translationLocale],
+    profileRequiredTitle: localizedMessages.m73f08b37c095[translationLocale],
+    profileRequiredBody: localizedMessages.me01e6582ce64[translationLocale],
+    profileRequiredAction: localizedMessages.m5ceca38f6077[translationLocale],
+    auth: localizedMessages.md358ed05cd07[translationLocale],
+    duplicate: localizedMessages.md4684c70b3a5[translationLocale],
+    prohibited: localizedMessages.m11ec949bb256[translationLocale],
+    invalid: localizedMessages.m599a42c83c4a[translationLocale],
+    saved: localizedMessages.mcc34d22bc52b[translationLocale],
+    nicknameSaved: localizedMessages.m0b46bbc6c7cc[translationLocale],
+    failed: localizedMessages.m2f6f0378046d[translationLocale],
+  }))
 } as const;
 
 function authHeaders(token: string): HeadersInit {
@@ -595,14 +688,10 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     }
   }
 
-  async function updatePreferredLocale(nextLocale: Locale) {
+  async function updatePreferredLocale(nextLocale: "ko" | "en") {
     if (!settings || languageSaving) return;
     setLanguageError(false);
-    if (settings.preferredLocale === nextLocale) {
-      if (locale !== nextLocale)
-        router.replace(`/settings?locale=${nextLocale}` as Route);
-      return;
-    }
+    if (settings.preferredLocale === nextLocale) return;
     setLanguageSaving(true);
     setMessage("");
     try {
@@ -614,14 +703,13 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         body: JSON.stringify({ preferredLocale: nextLocale }),
       });
       const body = (await response.json()) as {
-        settings?: { preferredLocale?: Locale };
+        settings?: { preferredLocale?: "ko" | "en" };
       };
       if (!response.ok || body.settings?.preferredLocale !== nextLocale)
         throw new Error("save");
       setSettings((current) =>
         current ? { ...current, preferredLocale: nextLocale } : current,
       );
-      router.replace(`/settings?locale=${nextLocale}` as Route);
     } catch {
       setLanguageError(true);
     } finally {
@@ -1036,20 +1124,24 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           ) : null}
         </section>
 
+        <section className={styles.section} aria-labelledby="website-language-title">
+          <h2 id="website-language-title">{languageSettings[locale].website}</h2>
+          <FanLanguageSwitch locale={locale} href="/settings" />
+        </section>
         <section className={styles.section} aria-labelledby="language-title">
           <div className={styles.sectionTitle}>
             <div className={styles.icon}>
               <Globe2 />
             </div>
             <div>
-              <h2 id="language-title">{t.language}</h2>
-              <p>{t.languageHelp}</p>
+              <h2 id="language-title">{languageSettings[locale].email}</h2>
+              <p>{languageSettings[locale].help}</p>
             </div>
           </div>
           <div
             className={styles.segmented}
             role="group"
-            aria-label={t.language}
+            aria-label={languageSettings[locale].email}
             aria-describedby={languageError ? "language-error" : undefined}
           >
             <button
@@ -1233,7 +1325,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           <div className={styles.walletValue}>
             <code>{settings.wallet?.maskedAddress ?? t.noWallet}</code>
             {settings.wallet && (
-              <span>{locale === "ko" ? "네트워크" : "Network"} · {settings.wallet.chainId}</span>
+              <span>{locale === "ko" ? "네트워크" : translate(locale, localizedMessages.m7c538d007755, "Network")} · {settings.wallet.chainId}</span>
             )}
           </div>
         </section>

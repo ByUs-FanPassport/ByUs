@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { appendLiveReturnTo, sanitizeLiveReturnTo } from "./live-return-context";
 
 describe("LIVE return context", () => {
+  it.each(["ja", "zh-Hans", "zh-Hant", "es", "id", "vi", "th", "pt", "fr"])("preserves %s after verification", locale => {
+    expect(sanitizeLiveReturnTo(`/live/kara?locale=${locale}`)).toBe(`/live/kara?locale=${locale}`);
+  });
   it("canonicalizes a LIVE detail target and preserves its reservation auth intent", () => {
     expect(sanitizeLiveReturnTo(
       "/live/kara-seoul?authIntent=ABCDEFAB-1234-4123-8123-ABCDEFABCDEF&locale=ko",
@@ -17,7 +20,7 @@ describe("LIVE return context", () => {
     "/live/kara?locale=ko%0a",
     "/live/kara?locale=ko&next=/passports",
     "/live/kara?locale=ko&locale=en",
-    "/live/kara?locale=ja",
+    "/live/kara?locale=de",
     "/live/calendar?locale=ko",
     "/c/kara/verify?locale=ko",
     "/passports/id/issuance?locale=ko",

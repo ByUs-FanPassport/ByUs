@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import { CertificationDetailScreen } from "@/features/certification/ui/certification-detail-screen";
 import { z } from "zod";
 
@@ -16,7 +17,7 @@ export default async function CertificationDetailPage({
     <CertificationDetailScreen
       id={id}
       slug={slug}
-      locale={query.locale === "en" ? "en" : "ko"}
+      locale={parseAppLocale(query.locale)}
       selectedSubmissionId={selectedSubmissionId}
     />
   );

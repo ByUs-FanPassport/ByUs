@@ -1,5 +1,7 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__benefit-recipient-screen";
+import { translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import { CheckCircle2, Clock3, ShieldCheck, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -554,7 +556,7 @@ function BenefitRecipientOwnerScreen({
         </section> : null}
         <section className={styles.privacy} aria-labelledby="recipient-privacy-heading">
           <ShieldCheck aria-hidden="true" />
-          <div><h2 id="recipient-privacy-heading">{locale === "ko" ? "개인정보 수집·이용" : "Collection and use of personal information"}</h2><p>{t.privacy} <a href={withLocalePath("/privacy", locale)}>{t.privacyLink}</a></p></div>
+          <div><h2 id="recipient-privacy-heading">{locale === "ko" ? "개인정보 수집·이용" : translate(locale, localizedMessages.mbc7de4d7d8e3, "Collection and use of personal information")}</h2><p>{t.privacy} <a href={withLocalePath("/privacy", locale)}>{t.privacyLink}</a></p></div>
         </section>
         <label className={styles.consent} htmlFor="consented">
           <input id="consented" ref={(node) => { fieldRefs.current.consented = node; }} type="checkbox" checked={draft.consented} disabled={busy || locked} required aria-invalid={Boolean(errors.consented)} aria-describedby={errors.consented ? "consented-error" : undefined} onChange={(event) => updateField("consented", event.target.checked)} />

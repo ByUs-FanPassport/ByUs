@@ -8,6 +8,7 @@ import { readAuthIntent } from "./auth-intent";
 import { useAvatarSessionReady, useAvatarSessionReset } from "./avatar-session-bridge";
 import { appendLoginContext, sanitizeAuthIntentId, sanitizeEntity, sanitizeIntent, sanitizeLocale, sanitizeReturnTo, type LoginContext } from "./login-intent";
 import { withLocalePath } from "./locale-path";
+import { toContentLocale } from "../i18n/locales";
 import { signupFunnelTracker } from "../features/analytics/client/signup-funnel-tracker";
 import { signupStageSchema, type SignupReason, type WalletDiagnostic } from "../features/analytics/domain/signup-funnel-event";
 import { RequestTimeoutError, reportRecoveryFailure, withOperationDeadline, withRequestDeadline } from "../features/reliability/client/request-deadline";
@@ -129,7 +130,7 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
     const existing = synchronizationRef.current;
     if (existing?.ownerId === transition.ownerId && existing.generation === transition.generation) return existing.promise;
     const { ownerId, generation, locale, intent, entity, authIntent, returnTo, provisionalDestination, loginPath } = transition;
-    const measurement = signupFunnelTracker.resumeLogin(locale);
+    const measurement = signupFunnelTracker.resumeLogin(toContentLocale(locale));
     let promise!: Promise<void>;
     promise = (async () => {
       let stage = "login.user";
@@ -197,7 +198,7 @@ export function ByUsSessionProvider({ children }: { children: ReactNode }) {
         const { response, body } = await withRequestDeadline(async (signal) => {
           const response = await fetch("/api/auth/session", {
             method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-            body: JSON.stringify({ locale }), cache: "no-store", signal,
+            body: JSON.stringify({ locale: toContentLocale(locale) }), cache: "no-store", signal,
           });
           const body = await response.json().catch(() => null) as { profile?: { completed?: boolean }; error?: { code?: string; providers?: unknown } } | null;
           return { response, body };

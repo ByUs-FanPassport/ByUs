@@ -1,0 +1,301 @@
+import type { TranslatedMessage } from "../messages";
+
+export const messages = {
+  "m8583f735760a": {
+    "ja": "ログインの有効期限が切れました。続けるにはもう一度ログインしてください。",
+    "zh-Hans": "登录已过期。请重新登录后继续。",
+    "zh-Hant": "登入已過期。請重新登入後繼續。",
+    "es": "Tu sesión venció. Inicia sesión de nuevo para continuar.",
+    "id": "Sesi Anda berakhir. Masuk lagi untuk melanjutkan.",
+    "vi": "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục.",
+    "th": "การเข้าสู่ระบบหมดอายุแล้ว เข้าสู่ระบบอีกครั้งเพื่อดำเนินการต่อ",
+    "pt": "Sua sessão expirou. Entre novamente para continuar.",
+    "fr": "Votre session a expiré. Reconnectez-vous pour continuer."
+  },
+  "m85e00c143995": {
+    "ja": "このファン認証クイズは現在利用できません。",
+    "zh-Hans": "此粉丝认证问答目前不可用。",
+    "zh-Hant": "此粉絲認證問答目前不可用。",
+    "es": "Este cuestionario de verificación de fans no está disponible ahora.",
+    "id": "Kuis verifikasi penggemar ini tidak tersedia saat ini.",
+    "vi": "Bài trắc nghiệm xác minh này hiện không khả dụng.",
+    "th": "แบบทดสอบยืนยันแฟนคลับนี้ยังไม่พร้อมใช้งานในขณะนี้",
+    "pt": "Este questionário de verificação de fã não está disponível no momento.",
+    "fr": "Ce quiz de vérification de fan n’est pas disponible pour le moment."
+  },
+  "m465be069c2b9": {
+    "ja": "ファン認証を読み込めませんでした。しばらくしてからもう一度お試しください。",
+    "zh-Hans": "无法加载粉丝认证。请稍后重试。",
+    "zh-Hant": "無法載入粉絲認證。請稍後重試。",
+    "es": "No pudimos cargar la verificación de fans. Inténtalo de nuevo en unos instantes.",
+    "id": "Kami tidak dapat memuat verifikasi penggemar. Coba lagi sebentar lagi.",
+    "vi": "Không thể tải xác minh người hâm mộ. Vui lòng thử lại sau.",
+    "th": "โหลดข้อมูลยืนยันแฟนคลับไม่ได้ โปรดลองอีกครั้งในอีกสักครู่",
+    "pt": "Não foi possível carregar a verificação de fã. Tente novamente em instantes.",
+    "fr": "Impossible de charger la vérification de fan. Réessayez dans quelques instants."
+  },
+  "m15d50361234f": {
+    "ja": "ファン認証を読み込み中",
+    "zh-Hans": "正在加载粉丝认证",
+    "zh-Hant": "正在載入粉絲認證",
+    "es": "Cargando la verificación de fans",
+    "id": "Memuat verifikasi penggemar",
+    "vi": "Đang tải xác minh người hâm mộ",
+    "th": "กำลังโหลดข้อมูลยืนยันแฟนคลับ",
+    "pt": "Carregando a verificação de fã",
+    "fr": "Chargement de la vérification de fan"
+  },
+  "m2b3d0f29e8cf": {
+    "ja": "ファン認証を準備中です。",
+    "zh-Hans": "正在准备粉丝认证。",
+    "zh-Hant": "正在準備粉絲認證。",
+    "es": "Preparando la verificación de fans.",
+    "id": "Menyiapkan verifikasi penggemar.",
+    "vi": "Đang chuẩn bị xác minh người hâm mộ.",
+    "th": "กำลังเตรียมการยืนยันแฟนคลับ",
+    "pt": "Preparando a verificação de fã.",
+    "fr": "Préparation de la vérification de fan."
+  },
+  "mcd6720ec3242": {
+    "ja": "ファン認証を準備できませんでした。",
+    "zh-Hans": "无法准备粉丝认证。",
+    "zh-Hant": "無法準備粉絲認證。",
+    "es": "No pudimos preparar la verificación de fans.",
+    "id": "Kami tidak dapat menyiapkan verifikasi penggemar.",
+    "vi": "Không thể chuẩn bị xác minh người hâm mộ.",
+    "th": "เตรียมการยืนยันแฟนคลับไม่ได้",
+    "pt": "Não foi possível preparar a verificação de fã.",
+    "fr": "Impossible de préparer la vérification de fan."
+  },
+  "m8846c9245a30": {
+    "ja": "もう一度試す",
+    "zh-Hans": "重试",
+    "zh-Hant": "重試",
+    "es": "Intentar de nuevo",
+    "id": "Coba lagi",
+    "vi": "Thử lại",
+    "th": "ลองอีกครั้ง",
+    "pt": "Tentar novamente",
+    "fr": "Réessayer"
+  },
+  "m7dca46965504": {
+    "ja": "ファン認証クイズはまだ準備できていません。",
+    "zh-Hans": "粉丝认证问答尚未准备好。",
+    "zh-Hant": "粉絲認證問答尚未準備好。",
+    "es": "El cuestionario de verificación de fans todavía no está listo.",
+    "id": "Kuis verifikasi penggemar belum siap.",
+    "vi": "Bài trắc nghiệm xác minh chưa sẵn sàng.",
+    "th": "แบบทดสอบยืนยันแฟนคลับยังไม่พร้อม",
+    "pt": "O questionário de verificação de fã ainda não está pronto.",
+    "fr": "Le quiz de vérification de fan n’est pas encore prêt."
+  },
+  "m523e7646bd59": {
+    "ja": "{0}の新しいファン認証が始まったら、またご参加ください。",
+    "zh-Hans": "{0} 的新粉丝认证开放后再来参与。",
+    "zh-Hant": "{0} 的新粉絲認證開放後再來參與。",
+    "es": "Vuelve cuando se abra una nueva verificación de fans de {0}.",
+    "id": "Kembali saat verifikasi penggemar {0} yang baru dibuka.",
+    "vi": "Hãy quay lại khi xác minh người hâm mộ mới của {0} mở.",
+    "th": "กลับมาอีกครั้งเมื่อเปิดการยืนยันแฟนคลับ {0} รอบใหม่",
+    "pt": "Volte quando uma nova verificação de fã de {0} for aberta.",
+    "fr": "Revenez lorsqu’une nouvelle vérification de fan de {0} sera ouverte."
+  },
+  "m087490a6b525": {
+    "ja": "{0}のファンページに戻る",
+    "zh-Hans": "返回 {0} 粉丝页面",
+    "zh-Hant": "返回 {0} 粉絲頁面",
+    "es": "Volver a la página de fans de {0}",
+    "id": "Kembali ke halaman penggemar {0}",
+    "vi": "Quay lại trang người hâm mộ {0}",
+    "th": "กลับไปยังหน้าแฟนคลับ {0}",
+    "pt": "Voltar à página de fãs de {0}",
+    "fr": "Retour à la page de fans de {0}"
+  },
+  "m20b3a9bcb62c": {
+    "ja": "ファンページに戻る",
+    "zh-Hans": "返回粉丝页面",
+    "zh-Hant": "返回粉絲頁面",
+    "es": "Volver a la página de fans",
+    "id": "Kembali ke halaman penggemar",
+    "vi": "Quay lại trang người hâm mộ",
+    "th": "กลับไปยังหน้าแฟนคลับ",
+    "pt": "Voltar à página de fãs",
+    "fr": "Retour à la page de fans"
+  },
+  "m2ba7ff4d7753": {
+    "ja": "ファン認証 · 開始前",
+    "zh-Hans": "粉丝认证 · 开始之前",
+    "zh-Hant": "粉絲認證 · 開始之前",
+    "es": "Verificación de fans · Antes de empezar",
+    "id": "Verifikasi penggemar · Sebelum memulai",
+    "vi": "Xác minh người hâm mộ · Trước khi bắt đầu",
+    "th": "การยืนยันแฟนคลับ · ก่อนเริ่ม",
+    "pt": "Verificação de fã · Antes de começar",
+    "fr": "Vérification de fan · Avant de commencer"
+  },
+  "m2342b08e5b5b": {
+    "ja": "{0}のことを\nどれだけ知っているか試しましょう。",
+    "zh-Hans": "看看你对\n{0} 有多了解。",
+    "zh-Hant": "看看你對\n{0} 有多瞭解。",
+    "es": "Descubre cuánto sabes\nsobre {0}.",
+    "id": "Lihat seberapa baik Anda mengenal\n{0}.",
+    "vi": "Xem bạn hiểu\n{0} đến đâu.",
+    "th": "มาดูกันว่าคุณรู้จัก\n{0} ดีแค่ไหน",
+    "pt": "Veja o quanto você conhece\n{0}.",
+    "fr": "Découvrez à quel point vous connaissez\n{0}."
+  },
+  "me8b8a3dcf2ea": {
+    "ja": "短いクイズに合格すると、最初のファン認証StampとFan Passportを受け取れます。",
+    "zh-Hans": "通过简短问答，即可获得首枚粉丝认证 Stamp 和 Fan Passport。",
+    "zh-Hant": "通過簡短問答，即可獲得首枚粉絲認證 Stamp 和 Fan Passport。",
+    "es": "Aprueba un cuestionario breve para recibir tu primer Stamp de verificación de fans y tu Fan Passport.",
+    "id": "Lulus kuis singkat untuk menerima Stamp Verifikasi Penggemar pertama dan Fan Passport Anda.",
+    "vi": "Đạt bài trắc nghiệm ngắn để nhận Stamp Xác minh Người hâm mộ đầu tiên và Fan Passport.",
+    "th": "ทำแบบทดสอบสั้น ๆ ให้ผ่านเพื่อรับ Stamp ยืนยันแฟนคลับดวงแรกและ Fan Passport",
+    "pt": "Passe em um questionário curto para receber seu primeiro Stamp de verificação de fã e seu Fan Passport.",
+    "fr": "Réussissez un court quiz pour recevoir votre premier Stamp de vérification de fan et votre Fan Passport."
+  },
+  "mbbfb2a916e4d": {
+    "ja": "{0}問",
+    "zh-Hans": "{0} 道题",
+    "zh-Hant": "{0} 道題",
+    "es": "{0} preguntas",
+    "id": "{0} pertanyaan",
+    "vi": "{0} câu hỏi",
+    "th": "{0} คำถาม",
+    "pt": "{0} perguntas",
+    "fr": "{0} questions"
+  },
+  "mf5082ce93c91": {
+    "ja": " お気に入りのクリエイターについて",
+    "zh-Hans": "，内容与你喜爱的创作者有关",
+    "zh-Hant": "，內容與你喜愛的創作者有關",
+    "es": " sobre tu creador favorito",
+    "id": " tentang kreator favorit Anda",
+    "vi": " về nhà sáng tạo yêu thích",
+    "th": " เกี่ยวกับครีเอเตอร์คนโปรดของคุณ",
+    "pt": " sobre seu criador favorito",
+    "fr": " sur votre créateur favori"
+  },
+  "mc9041df7d4b2": {
+    "ja": "{0}問以上正解",
+    "zh-Hans": "至少答对 {0} 题",
+    "zh-Hant": "至少答對 {0} 題",
+    "es": "Al menos {0} correctas",
+    "id": "Minimal {0} benar",
+    "vi": "Đúng ít nhất {0} câu",
+    "th": "ตอบถูกอย่างน้อย {0} ข้อ",
+    "pt": "Pelo menos {0} respostas corretas",
+    "fr": "Au moins {0} bonnes réponses"
+  },
+  "md55660c432ca": {
+    "ja": " で合格",
+    "zh-Hans": " 即可通过",
+    "zh-Hant": " 即可通過",
+    "es": " para aprobar",
+    "id": " untuk lulus",
+    "vi": " để đạt",
+    "th": " เพื่อผ่าน",
+    "pt": " para passar",
+    "fr": " pour réussir"
+  },
+  "m1368cd0da861": {
+    "ja": "回答は1問ごとに安全に保存されます",
+    "zh-Hans": "每道答案都会安全保存",
+    "zh-Hant": "每道答案都會安全儲存",
+    "es": "Cada respuesta se guarda de forma segura",
+    "id": "Setiap jawaban disimpan dengan aman",
+    "vi": "Mỗi câu trả lời được lưu an toàn",
+    "th": "ทุกคำตอบได้รับการบันทึกอย่างปลอดภัย",
+    "pt": "Cada resposta é salva com segurança",
+    "fr": "Chaque réponse est enregistrée en toute sécurité"
+  },
+  "mfa2e863970e4": {
+    "ja": "ログインを確認中…",
+    "zh-Hans": "正在检查登录…",
+    "zh-Hant": "正在檢查登入…",
+    "es": "Comprobando la sesión…",
+    "id": "Memeriksa status masuk…",
+    "vi": "Đang kiểm tra đăng nhập…",
+    "th": "กำลังตรวจสอบการเข้าสู่ระบบ…",
+    "pt": "Verificando o login…",
+    "fr": "Vérification de la connexion…"
+  },
+  "m882f9ba49057": {
+    "ja": "プロフィールを確認中…",
+    "zh-Hans": "正在检查个人资料…",
+    "zh-Hant": "正在檢查個人資料…",
+    "es": "Comprobando el perfil…",
+    "id": "Memeriksa profil…",
+    "vi": "Đang kiểm tra hồ sơ…",
+    "th": "กำลังตรวจสอบโปรไฟล์…",
+    "pt": "Verificando o perfil…",
+    "fr": "Vérification du profil…"
+  },
+  "m1db38cfc9edf": {
+    "ja": "プロフィールを確認できませんでした。",
+    "zh-Hans": "无法检查个人资料。",
+    "zh-Hant": "無法檢查個人資料。",
+    "es": "No pudimos comprobar tu perfil.",
+    "id": "Kami tidak dapat memeriksa profil Anda.",
+    "vi": "Không thể kiểm tra hồ sơ.",
+    "th": "ตรวจสอบโปรไฟล์ไม่ได้",
+    "pt": "Não foi possível verificar seu perfil.",
+    "fr": "Impossible de vérifier votre profil."
+  },
+  "mbbde83d340ee": {
+    "ja": "ファン認証を開始中…",
+    "zh-Hans": "正在开始粉丝认证…",
+    "zh-Hant": "正在開始粉絲認證…",
+    "es": "Iniciando la verificación de fans…",
+    "id": "Memulai verifikasi penggemar…",
+    "vi": "Đang bắt đầu xác minh…",
+    "th": "กำลังเริ่มการยืนยันแฟนคลับ…",
+    "pt": "Iniciando a verificação de fã…",
+    "fr": "Démarrage de la vérification de fan…"
+  },
+  "m3cbe55588a43": {
+    "ja": "ひと休みしましょう。1分後に新しい問題が用意されます。",
+    "zh-Hans": "稍作休息！一分钟后会准备好新问题。",
+    "zh-Hant": "稍作休息！一分鐘後會準備好新問題。",
+    "es": "¡Tómate un respiro! Habrá nuevas preguntas en un minuto.",
+    "id": "Istirahat sejenak! Pertanyaan baru akan siap dalam satu menit.",
+    "vi": "Nghỉ một chút! Câu hỏi mới sẽ sẵn sàng sau một phút.",
+    "th": "พักสักครู่! คำถามชุดใหม่จะพร้อมในอีกหนึ่งนาที",
+    "pt": "Uma pausa rápida! Novas perguntas estarão prontas em um minuto.",
+    "fr": "Petite pause ! De nouvelles questions seront prêtes dans une minute."
+  },
+  "mb8716a66fc57": {
+    "ja": "ファン認証を始める",
+    "zh-Hans": "开始粉丝认证",
+    "zh-Hant": "開始粉絲認證",
+    "es": "Iniciar la verificación de fans",
+    "id": "Mulai verifikasi penggemar",
+    "vi": "Bắt đầu xác minh người hâm mộ",
+    "th": "เริ่มการยืนยันแฟนคลับ",
+    "pt": "Iniciar verificação de fã",
+    "fr": "Commencer la vérification de fan"
+  },
+  "m1fccdbe4af58": {
+    "ja": "ログインして始める",
+    "zh-Hans": "登录后开始",
+    "zh-Hant": "登入後開始",
+    "es": "Iniciar sesión para empezar",
+    "id": "Masuk untuk memulai",
+    "vi": "Đăng nhập để bắt đầu",
+    "th": "เข้าสู่ระบบเพื่อเริ่ม",
+    "pt": "Entre para começar",
+    "fr": "Connectez-vous pour commencer"
+  },
+  "ma3066d315e6f": {
+    "ja": "すでに開始している場合は、保存された問題から続けられます。",
+    "zh-Hans": "如果已经开始，将从已保存的问题继续。",
+    "zh-Hant": "如果已經開始，將從已儲存的問題繼續。",
+    "es": "Si ya empezaste, continuarás desde las preguntas guardadas.",
+    "id": "Jika sudah memulai, Anda akan melanjutkan dari pertanyaan yang tersimpan.",
+    "vi": "Nếu đã bắt đầu, bạn sẽ tiếp tục từ các câu hỏi đã lưu.",
+    "th": "หากคุณเริ่มไว้แล้ว ระบบจะดำเนินการต่อจากคำถามที่บันทึกไว้",
+    "pt": "Se já tiver começado, você continuará a partir das perguntas salvas.",
+    "fr": "Si vous avez déjà commencé, vous reprendrez avec les questions enregistrées."
+  }
+} satisfies Record<string, TranslatedMessage>;

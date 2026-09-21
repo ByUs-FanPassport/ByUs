@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__notification__ui__notification-center";
+import { additionalLocales } from "@/i18n/messages";
 import { usePageLocale } from "@/components/locale-provider";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -54,6 +58,17 @@ const copy = {
     upcoming: "View upcoming LIVE", settings: "Open notification settings", read: "Read", unread: "Unread", readLabel: "Read notification", unreadLabel: "Unread notification",
     summary: "Notification summary", unreadSummary: "Unread notifications", notifications: "", browser: "Browser notifications", choose: "Action needed",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    title: localizedMessages.m0ce955712d28[translationLocale], subtitle: localizedMessages.mda7046ffffd1[translationLocale], all: localizedMessages.mafbd37836ffe[translationLocale], readingAll: localizedMessages.m34565e48b2b1[translationLocale],
+    empty: localizedMessages.maafa0b4fa930[translationLocale], emptyHelp: localizedMessages.m5507fd7439f2[translationLocale], today: localizedMessages.mb74b6fc18430[translationLocale], previous: localizedMessages.m96f267992aca[translationLocale],
+    enable: localizedMessages.m151f36b9f2ce[translationLocale], enabling: localizedMessages.m1104d490cfc4[translationLocale], enabled: localizedMessages.md7bd4e99fe18[translationLocale], permission: localizedMessages.meab304c085e0[translationLocale],
+    subscribed: localizedMessages.m9ca4125ddd98[translationLocale], denied: localizedMessages.m29358063ccfb[translationLocale], unsupported: localizedMessages.m56f488cb0908[translationLocale], failed: localizedMessages.mede544d7b169[translationLocale],
+    readAllFailed: localizedMessages.m41d314b7affd[translationLocale], signIn: localizedMessages.m765c2ab5d16d[translationLocale], signInHelp: localizedMessages.m6f8d40e676c7[translationLocale],
+    google: localizedMessages.m2615b4ad9ca5[translationLocale], retry: localizedMessages.m350d86b1a577[translationLocale], load: localizedMessages.m5c06daa850a1[translationLocale], loadError: localizedMessages.md8e8eebe2936[translationLocale], loadErrorHelp: localizedMessages.mb0cd1fafd814[translationLocale],
+    upcoming: localizedMessages.m4841af4dca97[translationLocale], settings: localizedMessages.mae16c506a010[translationLocale], read: localizedMessages.mcac3b1390d50[translationLocale], unread: localizedMessages.mc77726e05eaf[translationLocale], readLabel: localizedMessages.m5471bf002659[translationLocale], unreadLabel: localizedMessages.m8600684fcd79[translationLocale],
+    summary: localizedMessages.m4633173083a2[translationLocale], unreadSummary: localizedMessages.m2bf19d8e6d6f[translationLocale], notifications: "", browser: localizedMessages.mdbf91260c2e9[translationLocale], choose: localizedMessages.medcfd408c0b8[translationLocale],
+  }))
 } as const;
 
 function sameDay(value: string) {
@@ -65,9 +80,9 @@ function sameDay(value: string) {
     date.getDate() === now.getDate()
   );
 }
-function time(value: string, locale: "ko" | "en") {
+function time(value: string, locale: AppLocale) {
   return new Intl.DateTimeFormat(
-    locale === "ko" ? "ko-KR" : "en-US",
+    locale,
     sameDay(value)
       ? { hour: "numeric", minute: "2-digit" }
       : { month: "long", day: "numeric" },
@@ -120,7 +135,7 @@ export function NotificationCenter() {
       const token = await getAccessToken();
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== loadGenerationRef.current) return;
       if (!token) throw new Error();
-      const response = await fetch(`/api/notifications?locale=${locale}&recipientLinks=1`, {
+      const response = await fetch(`/api/notifications?locale=${toContentLocale(locale)}&recipientLinks=1`, {
         headers: { authorization: `Bearer ${token}` },
         cache: "no-store",
       });

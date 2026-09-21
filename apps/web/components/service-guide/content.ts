@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__service-guide__content";
+import { additionalLocales } from "@/i18n/messages";
 import type { FanLocale } from "../fan-shell/fan-app-shell";
 
 export type ServiceGuideContent = {
@@ -101,4 +103,41 @@ export const serviceGuideContent = {
     contactDescription: "Contact the ByUs team with questions about your account or use of the service.",
     contactAction: "Contact support",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    metadataTitle: localizedMessages.mc5515d140ff1[translationLocale],
+    metadataDescription: localizedMessages.m0daebd272cc6[translationLocale],
+    eyebrow: "BYUS GUIDE",
+    title: localizedMessages.mfaed6476c28b[translationLocale],
+    description: localizedMessages.m2caf430bc8ae[translationLocale],
+    primaryAction: localizedMessages.mc5905342e441[translationLocale],
+    secondaryAction: localizedMessages.m06617142d2f0[translationLocale],
+    overviewTitle: localizedMessages.m4275d91e03ef[translationLocale],
+    overviewDescription: localizedMessages.m4bd73608cdc1[translationLocale],
+    steps: [
+      { number: "01", title: localizedMessages.m90847e2be093[translationLocale], description: localizedMessages.mf3ae5fb82904[translationLocale] },
+      { number: "02", title: localizedMessages.mdbbebe3323b5[translationLocale], description: localizedMessages.mcbfab42ec7d4[translationLocale] },
+      { number: "03", title: localizedMessages.m2f5eef7e9c14[translationLocale], description: localizedMessages.m8c6648a3ce8f[translationLocale] },
+      { number: "04", title: localizedMessages.ma70d42052583[translationLocale], description: localizedMessages.m6e7a4f6fd4a5[translationLocale] },
+    ],
+    passportTitle: localizedMessages.m8ec124cede9e[translationLocale],
+    passportDescription: localizedMessages.md231d4e64298[translationLocale],
+    passportPoints: [
+      localizedMessages.m231eb1d4add4[translationLocale],
+      localizedMessages.m2c7f3722e34e[translationLocale],
+      localizedMessages.m2d16c97f1f60[translationLocale],
+    ],
+    faqTitle: localizedMessages.mc3d598082174[translationLocale],
+    faqs: [
+      { question: localizedMessages.mb0f7773ff34e[translationLocale], answer: localizedMessages.mfbf4313052e9[translationLocale] },
+      { question: localizedMessages.md65d11d72e7a[translationLocale], answer: localizedMessages.m0673ea228026[translationLocale] },
+      { question: localizedMessages.mc009bb8cf3ab[translationLocale], answer: localizedMessages.mbf8c598cc236[translationLocale] },
+      { question: localizedMessages.mf99abdb6132e[translationLocale], answer: localizedMessages.m119f2bc8395b[translationLocale] },
+      { question: localizedMessages.m5622a5a8c614[translationLocale], answer: localizedMessages.mb457b4f73aa5[translationLocale] },
+      { question: localizedMessages.m9b6182f8745d[translationLocale], answer: localizedMessages.m8004c4734a4a[translationLocale] },
+    ],
+    contactTitle: localizedMessages.m31aa657e0010[translationLocale],
+    contactDescription: localizedMessages.med934a1ccf6c[translationLocale],
+    contactAction: localizedMessages.m04559da2b8cc[translationLocale],
+  }))
 } as const satisfies Record<FanLocale, ServiceGuideContent>;

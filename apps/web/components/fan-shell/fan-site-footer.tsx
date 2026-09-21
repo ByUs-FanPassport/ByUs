@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__fan-site-footer";
+import { additionalLocales, translate } from "@/i18n/messages";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -81,6 +83,32 @@ const copy = {
     registrationNumber: "Business registration number",
     businessAddress: "Registered address",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    tagline: localizedMessages.mc36b291db899[translationLocale],
+    explore: localizedMessages.maf963691264c[translationLocale],
+    activity: localizedMessages.m99200ab51218[translationLocale],
+    guide: localizedMessages.m5e5309afe2f0[translationLocale],
+    social: localizedMessages.m5726f3e9a90b[translationLocale],
+    favorites: localizedMessages.m41f365db4fb7[translationLocale],
+    passports: "Fan Passport",
+    benefits: localizedMessages.mab7b6d4cdc72[translationLocale],
+    notifications: localizedMessages.m2c4e2b786e56[translationLocale],
+    privacy: localizedMessages.m9fa1f7c32250[translationLocale],
+    terms: localizedMessages.mcc28f0a3daaa[translationLocale],
+    nav: localizedMessages.m426ae2de78d1[translationLocale],
+    fanmeetings: localizedMessages.m2c5ffc3483d2[translationLocale],
+    serviceGuide: localizedMessages.m5ba596447d28[translationLocale],
+    support: localizedMessages.m33db2981a0e6[translationLocale],
+    creatorOnboarding: localizedMessages.mc926c97a41e6[translationLocale],
+    partners: localizedMessages.m5b205e1c6048[translationLocale],
+    onchain: localizedMessages.m7607ea6f5002[translationLocale],
+    businessInfo: localizedMessages.mf557e073dfa7[translationLocale],
+    operator: localizedMessages.m858f418834a6[translationLocale],
+    representative: localizedMessages.mb0979e47f86e[translationLocale],
+    registrationNumber: localizedMessages.m6a7a6594ed5a[translationLocale],
+    businessAddress: localizedMessages.m1f45fe0f4807[translationLocale],
+  }))
 } as const;
 
 function fanHref(pathname: string, locale: FanLocale): Route {
@@ -93,7 +121,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
     <footer className={styles.footer} data-fan-site-footer>
       <FanContentContainer className={styles.inner}>
         <div className={styles.brandColumn}>
-          <Link className={styles.brand} href={fanHref("/", locale)} aria-label={locale === "ko" ? "ByUs 홈" : "ByUs home"}>
+          <Link className={styles.brand} href={fanHref("/", locale)} aria-label={locale === "ko" ? "ByUs 홈" : translate(locale, localizedMessages.mfafaf28d4070, "ByUs home")}>
             <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={39} />
           </Link>
           <p>{t.tagline}</p>
@@ -130,7 +158,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
                 href={TELEGRAM_CHANNEL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={locale === "ko" ? "ByUs Telegram 채널 열기, 새 창" : "Open ByUs Telegram channel, new window"}
+                aria-label={locale === "ko" ? "ByUs Telegram 채널 열기, 새 창" : translate(locale, localizedMessages.m447c7b7bbd23, "Open ByUs Telegram channel, new window")}
               >
                 <svg viewBox="24 38 72 60" aria-hidden="true">
                   <path fill="currentColor" d="M28.9700376,63.3244248 C47.6273373,55.1957357 60.0684594,49.8368063 66.2934036,47.2476366 C84.0668845,39.855031 87.7600616,38.5708563 90.1672227,38.528 C90.6966555,38.5191258 91.8804274,38.6503351 92.6472251,39.2725385 C93.294694,39.7979149 93.4728387,40.5076237 93.5580865,41.0057381 C93.6433345,41.5038525 93.7494885,42.63857 93.6651041,43.5252052 C92.7019529,53.6451182 88.5344133,78.2034783 86.4142057,89.5379542 C85.5170662,94.3339958 83.750571,95.9420841 82.0403991,96.0994568 C78.3237996,96.4414641 75.5015827,93.6432685 71.9018743,91.2836143 C66.2690414,87.5912212 63.0868492,85.2926952 57.6192095,81.6896017 C51.3004058,77.5256038 55.3966232,75.2369981 58.9976911,71.4967761 C59.9401076,70.5179421 76.3155302,55.6232293 76.6324771,54.2720454 C76.6721165,54.1030573 76.7089039,53.4731496 76.3346867,53.1405352 C75.9604695,52.8079208 75.4081573,52.921662 75.0095933,53.0121213 C74.444641,53.1403447 65.4461175,59.0880351 48.0140228,70.8551922 C45.4598218,72.6091037 43.1463059,73.4636682 41.0734751,73.4188859 C38.7883453,73.3695169 34.3926725,72.1268388 31.1249416,71.0646282 C27.1169366,69.7617838 23.931454,69.0729605 24.208838,66.8603276 C24.3533167,65.7078514 25.9403832,64.5292172 28.9700376,63.3244248 Z" />
@@ -144,7 +172,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={locale === "ko" ? channel.labelKo : channel.name}
-                  aria-label={locale === "ko" ? `ByUs ${channel.labelKo} 열기, 새 창` : `Open ByUs ${channel.name}, new window`}
+                  aria-label={locale === "ko" ? `ByUs ${channel.labelKo} 열기, 새 창` : translate(locale, localizedMessages.maf19023c88d3, "Open ByUs {0}, new window", [channel.name])}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="currentColor" d={channel.path} />
@@ -171,9 +199,9 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
       <FanContentContainer className={styles.legal}>
         <span>© 2026 ByUs. All rights reserved.</span>
         <div className={styles.legalLinks}>
-          <Link className={styles.privacyLink} href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : "Open Privacy Policy"}>{t.privacy}</Link>
+          <Link className={styles.privacyLink} href={fanHref("/privacy", locale)} aria-label={locale === "ko" ? "개인정보처리방침 열기" : translate(locale, localizedMessages.mc2da954c6e18, "Open Privacy Policy")}>{t.privacy}</Link>
           <span aria-hidden="true">·</span>
-          <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : "Open Terms of Use"}>{t.terms}</Link>
+          <Link href={fanHref("/terms", locale)} aria-label={locale === "ko" ? "이용약관 열기" : translate(locale, localizedMessages.m9083a379799f, "Open Terms of Use")}>{t.terms}</Link>
         </div>
       </FanContentContainer>
     </footer>

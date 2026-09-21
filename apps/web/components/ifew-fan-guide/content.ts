@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__ifew-fan-guide__content";
+import { additionalLocales } from "@/i18n/messages";
 export const ifewGuideImage = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/ifewknow/profile-7951fc437251547f.png";
 export const ifewEventBanner = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew-100-days/banner-9dddada89193dd87.png";
 export { ifewLiveSlug, ifewBenefitId } from "@/features/live/domain/ifew-event";
@@ -132,4 +134,69 @@ export const ifewFanGuideContent = {
     eventImageAlt: "Poster for ifew’s 100-day TikTok LIVE on September 12, 2026",
     prizeAlt: "A visitor viewing artwork in an exhibition space",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    heroTitle: localizedMessages.m274c207e9834[translationLocale],
+    heroDescription: localizedMessages.m1cfd01d03c6a[translationLocale],
+    heroSchedule: localizedMessages.m137095cccc88[translationLocale],
+    howToJoin: localizedMessages.m0202c7bfee74[translationLocale],
+    viewPrizes: localizedMessages.m7ab90e7ac8c7[translationLocale],
+    heroNote: localizedMessages.m46d345b193bf[translationLocale],
+    stages: [localizedMessages.mc66330041c18[translationLocale], localizedMessages.mf67141cc3f4b[translationLocale], localizedMessages.m92afa1b9ff58[translationLocale], localizedMessages.mb878b1db7957[translationLocale]],
+    steps: [
+      {
+        label: "01  /  GET READY",
+        title: localizedMessages.mb5d3f7902418[translationLocale],
+        body: localizedMessages.m248e947d35bf[translationLocale],
+        actions: [localizedMessages.m5112b8d385f9[translationLocale]],
+      },
+      {
+        label: "02  /  SAVE THE DATE",
+        title: localizedMessages.m8fd18ceb2cb6[translationLocale],
+        body: localizedMessages.md690a1be143f[translationLocale],
+        actions: [localizedMessages.mf0239476954e[translationLocale], localizedMessages.mb14874248664[translationLocale]],
+        note: localizedMessages.m63bfdea50767[translationLocale],
+      },
+      {
+        label: "03  /  CHECK IN TOGETHER",
+        title: localizedMessages.m82d939e89ce5[translationLocale],
+        body: localizedMessages.m288dacffc1bb[translationLocale],
+        actions: [localizedMessages.mc99b7c304613[translationLocale], localizedMessages.m7c0ca284edbc[translationLocale]],
+        note: localizedMessages.mc6e113e028d1[translationLocale],
+      },
+      {
+        label: "04  /  BANKSY TICKETS",
+        title: localizedMessages.m4aa3de48507e[translationLocale],
+        body: localizedMessages.m31d863729e54[translationLocale],
+        actions: [localizedMessages.m3de9da9d301a[translationLocale]],
+        note: localizedMessages.mff98492d13c4[translationLocale],
+      },
+    ],
+    liveCard: {
+      title: localizedMessages.m7317bbda198c[translationLocale],
+      flow: localizedMessages.m53d0ba9f4253[translationLocale],
+      code: localizedMessages.m8f2faa40740c[translationLocale],
+      value: "08:00 – 13:00",
+    },
+    missionCards: [
+      [localizedMessages.mf5cd5a4ede0f[translationLocale], localizedMessages.mdfafcdf08f16[translationLocale]],
+      [localizedMessages.m0355c5437439[translationLocale], localizedMessages.m7d861e6df9e8[translationLocale]],
+    ],
+    historyTitle: localizedMessages.m04d9dbc76003[translationLocale],
+    historyBody: localizedMessages.maa84f7a86fcb[translationLocale],
+    historyAction: localizedMessages.ma7207830d6f8[translationLocale],
+    faqTitle: localizedMessages.mcf01183e33ea[translationLocale],
+    faqs: [
+      [localizedMessages.m9fe8dd80ceb5[translationLocale], localizedMessages.mbca0b3d67d1e[translationLocale]],
+      [localizedMessages.mc213aa9d64c3[translationLocale], localizedMessages.mb77a3dfd2d64[translationLocale]],
+      [localizedMessages.md0305ad948fd[translationLocale], localizedMessages.ma01b69d6c4f9[translationLocale]],
+      [localizedMessages.mef4579ad4537[translationLocale], localizedMessages.m1f906057f204[translationLocale]],
+    ],
+    closingTitle: localizedMessages.m9f5b27a0c51c[translationLocale],
+    closingAction: localizedMessages.m0e9edaa8fdf9[translationLocale],
+    footer: localizedMessages.m34da268adce6[translationLocale],
+    imageAlt: localizedMessages.mb91b2ba739ca[translationLocale],
+    eventImageAlt: localizedMessages.ma81cdb815ee0[translationLocale],
+    prizeAlt: localizedMessages.mbbb9e1b4d94e[translationLocale],
+  }))
 } as const;

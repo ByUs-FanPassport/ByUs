@@ -1,3 +1,4 @@
+import { toContentLocale } from "@/i18n/locales";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { ProfileOnboardingScreen } from "../../../features/profile/ui/profile-onboarding-screen";
@@ -21,7 +22,7 @@ export default async function ProfileOnboardingRoute({
   let celebrity = null;
   if (entity) {
     try {
-      celebrity = await createPublishedContentRepositoryFromEnvironment().findBySlug(locale, entity);
+      celebrity = await createPublishedContentRepositoryFromEnvironment().findBySlug(toContentLocale(locale), entity);
     } catch {
       redirect(`/?locale=${locale}`);
     }

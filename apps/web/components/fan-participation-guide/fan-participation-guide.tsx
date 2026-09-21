@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-participation-guide__fan-participation-guide";
+import { translate } from "@/i18n/messages";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
@@ -69,10 +71,10 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
     <div className={styles.page} lang={locale} data-fan-surface>
       <SignupGuideView guide={creator} locale={locale} />
       <FocusFlowHeader locale={locale} mainId={`${creator}-guide-main`} innerClassName={styles.headerInner}>
-        <nav className={styles.navigation} aria-label={locale === "ko" ? "주요 메뉴" : "Primary navigation"}>
+        <nav className={styles.navigation} aria-label={locale === "ko" ? "주요 메뉴" : translate(locale, localizedMessages.m22d7fc27022b, "Primary navigation")}>
           <Link href={`/?locale=${locale}` as Route}>HOME</Link>
           <Link href={`/live?locale=${locale}` as Route}>LIVE</Link>
-          <Link href={`/celebrities?locale=${locale}` as Route}>{locale === "ko" ? "최애" : "Favorites"}</Link>
+          <Link href={`/celebrities?locale=${locale}` as Route}>{locale === "ko" ? "최애" : translate(locale, localizedMessages.mbe39b4e99415, "Favorites")}</Link>
           <Link href={href.my}>MY</Link>
         </nav>
         <FanLanguageSwitch
@@ -103,7 +105,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
           )}
         </section>
 
-        <ol className={styles.stageNav} aria-label={locale === "ko" ? "참여 순서" : "Participation steps"}>
+        <ol className={styles.stageNav} aria-label={locale === "ko" ? "참여 순서" : translate(locale, localizedMessages.m35da26eb5629, "Participation steps")}>
           {t.stages.map((stage, index) => <li key={stage}><span>0{index + 1}</span>{stage}</li>)}
         </ol>
 

@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__us-fanmeetings__content";
+import { additionalLocales } from "@/i18n/messages";
 // ByUs fanmeeting copy, shared by both responsive layouts.
 export const fanmeetingContent = {
   ko: {
@@ -200,4 +202,108 @@ export const fanmeetingContent = {
     note: "It’s fine if some details are still undecided.",
     footer: "ByUs. Your Bias.    ·    U.S. Fanmeetings",
   },
+
+  ...additionalLocales((translationLocale) => ({
+    hero: localizedMessages.m8ac5df8cf16e[translationLocale],
+    desc: localizedMessages.ma9f1cbace901[translationLocale],
+    cta: localizedMessages.m93456ec7af53[translationLocale],
+    scope: localizedMessages.m341abd227bdf[translationLocale],
+    audience: localizedMessages.md850b97ea5c1[translationLocale],
+    visualTitle: localizedMessages.m586be00b44d2[translationLocale],
+    visualServices: [localizedMessages.m7c9d9c7b0db4[translationLocale], localizedMessages.mee234c7b2436[translationLocale], localizedMessages.m71753509ddbb[translationLocale]],
+    rolesTitle: localizedMessages.m84978fffdba7[translationLocale],
+    roleA: localizedMessages.m83bc8b6820fa[translationLocale],
+    roleADesc: localizedMessages.m48d21c65dbcf[translationLocale],
+    roleB: localizedMessages.m5f7de8e85daf[translationLocale],
+    roleBDesc: localizedMessages.m8e9625e4e4a7[translationLocale],
+    a: [
+      localizedMessages.m06cc1260c64c[translationLocale],
+      localizedMessages.med668f106713[translationLocale],
+      localizedMessages.m808ada707b2a[translationLocale],
+    ],
+    b: [
+      localizedMessages.m2801e929c448[translationLocale],
+      localizedMessages.m5d9f38e1bf8b[translationLocale],
+      localizedMessages.m2d25cb4b849b[translationLocale],
+    ],
+    journey: localizedMessages.m3c095abd535b[translationLocale],
+    stages: [
+      [
+        localizedMessages.m28a48c4aece0[translationLocale],
+        localizedMessages.m248a831aafef[translationLocale],
+        localizedMessages.m62f8e8881c9d[translationLocale],
+      ],
+      [
+        localizedMessages.m7f96cf60c1bc[translationLocale],
+        localizedMessages.mdc45aa30888b[translationLocale],
+        localizedMessages.ma182c028eca2[translationLocale],
+      ],
+      [
+        localizedMessages.mc89a6efe7b3c[translationLocale],
+        localizedMessages.m46dd292a5ed5[translationLocale],
+        localizedMessages.m173214f15b6c[translationLocale],
+      ],
+    ],
+    support: localizedMessages.md2a7b82aad47[translationLocale],
+    supportDesc:
+      localizedMessages.ma2575773bc74[translationLocale],
+    services: [
+      ["map-pin", localizedMessages.m1e9de2c4308e[translationLocale], localizedMessages.maaa225a8f7f3[translationLocale]],
+      [
+        "clipboard-check",
+        localizedMessages.m64024e6fd20f[translationLocale],
+        localizedMessages.m44891494c64d[translationLocale],
+      ],
+      [
+        "clapperboard",
+        localizedMessages.m718c990c8e1a[translationLocale],
+        localizedMessages.mf0c2d9156e2c[translationLocale],
+      ],
+      [
+        "users-round",
+        localizedMessages.ma1a4bc93887c[translationLocale],
+        localizedMessages.m0bbf9ed012b2[translationLocale],
+      ],
+    ],
+    process: localizedMessages.m2b0e32b2859a[translationLocale],
+    steps: [
+      [
+        localizedMessages.mb58ddae4bb0b[translationLocale],
+        localizedMessages.m0d7bf4e20b54[translationLocale],
+      ],
+      [
+        localizedMessages.m6ce50c95ff09[translationLocale],
+        localizedMessages.m914872fa3ec8[translationLocale],
+      ],
+      [
+        localizedMessages.m2bf0eb94d5dc[translationLocale],
+        localizedMessages.m4b8c18ff5dea[translationLocale],
+      ],
+      [
+        localizedMessages.mdc11ed51aefb[translationLocale],
+        localizedMessages.m7cd26e4c732d[translationLocale],
+      ],
+    ],
+    faqTitle: localizedMessages.m6d00aabfca01[translationLocale],
+    faqs: [
+      [
+        localizedMessages.m8cb950e6f4a5[translationLocale],
+        localizedMessages.mb50ee4397c7e[translationLocale],
+      ],
+      [
+        localizedMessages.meae05ff67163[translationLocale],
+        localizedMessages.m8831e5ca3516[translationLocale],
+      ],
+      [
+        localizedMessages.m31dcd77c8e30[translationLocale],
+        localizedMessages.m3335a89aa2b2[translationLocale],
+      ],
+    ],
+    close: localizedMessages.m8278867524f5[translationLocale],
+    closeDesc:
+      localizedMessages.m1490696f3277[translationLocale],
+    email: localizedMessages.md987d23bbfa1[translationLocale],
+    note: localizedMessages.m1c44511d65ee[translationLocale],
+    footer: localizedMessages.m1d46854470b4[translationLocale],
+  }))
 } as const;

@@ -1,3 +1,4 @@
+import { parseAppLocale } from "@/i18n/locales";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NO_INDEX } from "@/seo/metadata";
@@ -16,7 +17,7 @@ export default async function SharedPassportPage({ params, searchParams }: {
   params: Promise<{ token: string }>; searchParams: Promise<{ locale?: string }>;
 }) {
   const [{ token }, query] = await Promise.all([params, searchParams]);
-  const locale = query.locale === "en" ? "en" : "ko";
+  const locale = parseAppLocale(query.locale);
   const link = await resolveSharedPassport(token, createFanpageDependencies());
   if (!link) notFound();
   const creator = await loadSeoCreator(link.creator, locale);

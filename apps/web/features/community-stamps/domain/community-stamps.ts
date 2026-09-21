@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/features__community-stamps__domain__community-stamps";
+import { additionalLocales } from "@/i18n/messages";
 import { z } from "zod";
 import { mintFactsSchema } from "../../passport/domain/passport-read-model";
 
@@ -24,18 +26,32 @@ export const communityShareDestinationSchema = z.object({ creator: communityCrea
 export const communityAwardResultSchema = z.object({ awarded: z.boolean() }).strict();
 
 export const COMMUNITY_STAMPS = {
-  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", koHelp: "가입하면 받는 기념 스탬프예요.", enHelp: "A welcome Stamp for joining ByUs." },
-  first_comment: { asset: "first-comment", ko: "첫 댓글", en: "First comment", scope: "creator", koHelp: "최애에게 첫 댓글을 남겨보세요.", enHelp: "Leave your first comment for your favorite." },
-  subscription: { asset: "subscription", ko: "구독인증", en: "Subscription", scope: "creator", koHelp: "최애의 SNS 구독을 인증해요.", enHelp: "Verify your subscription to your favorite." },
-  support: { asset: "support", ko: "후원", en: "Support", scope: "creator", koHelp: "최애에게 보낸 후원을 기록해요.", enHelp: "Keep a record of your support." },
-  share: { asset: "share", ko: "공유하기", en: "Share", scope: "creator", koHelp: "패스포트 링크를 받은 다른 회원이 로그인 후 최애를 확인하면 받아요.", enHelp: "Earn a Stamp when another member signs in and confirms a visit through your Passport link." },
-  invite: { asset: "invite", ko: "친구초대", en: "Invite a friend", scope: "account", koHelp: "친구 코드를 인증하면 둘 다 받아요.", enHelp: "Use a friend’s code to earn a Stamp together." },
-  daily_checkin: { asset: "daily-checkin", ko: "출첵", en: "Daily check-in", scope: "creator", koHelp: "최애 캘린더에서 매일 출석해요.", enHelp: "Check in on your favorite’s calendar each day." },
+  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", koHelp: "가입하면 받는 기념 스탬프예요.", enHelp: "A welcome Stamp for joining ByUs." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m2f8dbf719303[translationLocale]))
+},
+  first_comment: { asset: "first-comment", ko: "첫 댓글", en: "First comment", scope: "creator", koHelp: "최애에게 첫 댓글을 남겨보세요.", enHelp: "Leave your first comment for your favorite." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m448150d0a8d7[translationLocale]))
+},
+  subscription: { asset: "subscription", ko: "구독인증", en: "Subscription", scope: "creator", koHelp: "최애의 SNS 구독을 인증해요.", enHelp: "Verify your subscription to your favorite." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mbe6440927666[translationLocale]))
+},
+  support: { asset: "support", ko: "후원", en: "Support", scope: "creator", koHelp: "최애에게 보낸 후원을 기록해요.", enHelp: "Keep a record of your support." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m7c0546df2eff[translationLocale]))
+},
+  share: { asset: "share", ko: "공유하기", en: "Share", scope: "creator", koHelp: "패스포트 링크를 받은 다른 회원이 로그인 후 최애를 확인하면 받아요.", enHelp: "Earn a Stamp when another member signs in and confirms a visit through your Passport link." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m7f1d76d612b2[translationLocale]))
+},
+  invite: { asset: "invite", ko: "친구초대", en: "Invite a friend", scope: "account", koHelp: "친구 코드를 인증하면 둘 다 받아요.", enHelp: "Use a friend’s code to earn a Stamp together." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.m66421648262d[translationLocale]))
+},
+  daily_checkin: { asset: "daily-checkin", ko: "출첵", en: "Daily check-in", scope: "creator", koHelp: "최애 캘린더에서 매일 출석해요.", enHelp: "Check in on your favorite’s calendar each day." ,
+  ...additionalLocales((translationLocale) => (localizedMessages.mc47f16b546b2[translationLocale]))
+},
 } as const;
 
 // External verification is not public until the matching server proof exists.
 export const AVAILABLE_COMMUNITY_STAMPS: readonly CommunityStampKind[] = ["welcome", "first_comment", "daily_checkin", "share", "invite"];
 export function communityStampAsset(kind: CommunityStampKind) { return `/images/community-stamps/${COMMUNITY_STAMPS[kind].asset}.png`; }
 export function communityStampKstDate(value: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-CA", { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
 }

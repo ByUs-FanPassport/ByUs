@@ -1,3 +1,4 @@
+import { type AppLocale } from "@/i18n/locales";
 import type { MySummary } from "./my-summary";
 
 type CollectionItem = MySummary["collection"]["recent"][number];
@@ -17,7 +18,7 @@ export function groupRecentCollection(items: CollectionItem[]): RecentCollection
   return [...groups.values()];
 }
 
-export function collectionGroupTitle({ item, count }: RecentCollectionGroup, locale: "ko" | "en") {
+export function collectionGroupTitle({ item, count }: RecentCollectionGroup, locale: AppLocale) {
   const title = locale === "ko" && item.kind === "stamp" ? item.title.replace(/ Stamp$/, " 스탬프") : item.title;
   return count > 1 ? `${title}${locale === "ko" ? ` ${count}개` : ` ×${count}`}` : title;
 }

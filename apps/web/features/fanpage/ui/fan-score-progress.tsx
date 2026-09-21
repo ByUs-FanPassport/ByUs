@@ -1,5 +1,8 @@
 "use client";
 
+import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__ui__fan-score-progress";
+import { translate } from "@/i18n/messages";
+import type { AppLocale } from "@/i18n/locales";
 import { useEffect, useId, useRef, useState } from "react";
 import { fanTierProgress, type PassportCreator } from "@/features/my/domain/my-progress";
 import { levelLabel } from "@/features/passport/domain/passport-read-model";
@@ -8,7 +11,7 @@ import styles from "./fan-score-progress.module.css";
 
 type Props = {
   passport: PassportCreator["passport"];
-  locale: "ko" | "en";
+  locale: AppLocale;
 };
 
 export function FanScoreProgress({ passport, locale }: Props) {
@@ -19,27 +22,25 @@ export function FanScoreProgress({ passport, locale }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const pinned = useRef(false);
   const [open, setOpen] = useState(false);
-  const score = passport.score.toLocaleString(ko ? "ko-KR" : "en-US");
-  const target = nextThreshold?.toLocaleString(ko ? "ko-KR" : "en-US");
-  let title = ko ? "최고 등급 달성" : "Top tier reached";
+  const score = passport.score.toLocaleString(locale);
+  const target = nextThreshold?.toLocaleString(locale);
+  let title = locale === "ko" ? "최고 등급 달성" : translate(locale, localizedMessages.md9c4419e2bdd, "Top tier reached");
   if (nextTier) {
-    title = ko ? `현재 점수 / ${levelLabel(locale, nextTier)} 기준` : `Current score / ${nextTier} target`;
+    title = locale === "ko" ? `현재 점수 / ${levelLabel(locale, nextTier)} 기준` : translate(locale, localizedMessages.m39c723c64f5d, "Current score / {0} target", [nextTier]);
   }
   const value = maxed
-    ? `${score}${ko ? "점" : " points"}`
-    : `${score} / ${target}${ko ? "점" : " points"}`;
+    ? `${score}${locale === "ko" ? "점" : translate(locale, localizedMessages.m2d8c681d11b6, " points")}`
+    : `${score} / ${target}${locale === "ko" ? "점" : translate(locale, localizedMessages.m2d8c681d11b6, " points")}`;
   const stageTitle = stage?.next
-    ? (ko ? `${fanStageLabel(locale, stage.next)}까지` : `To ${fanStageLabel(locale, stage.next)}`)
-    : stage ? (ko ? "최고 단계 달성" : "Top stage reached") : null;
+    ? (locale === "ko" ? `${fanStageLabel(locale, stage.next)}까지` : translate(locale, localizedMessages.m4e80451e0720, "To {0}", [fanStageLabel(locale, stage.next)]))
+    : stage ? (locale === "ko" ? "최고 단계 달성" : translate(locale, localizedMessages.m016c9a365d4a, "Top stage reached")) : null;
   const stageValue = stage?.next
-    ? `${stage.remaining.toLocaleString(ko ? "ko-KR" : "en-US")}${ko ? "점 남음" : " points remaining"}`
-    : stage ? (ko ? "모든 단계를 달성했어요" : "All stages reached") : null;
+    ? `${stage.remaining.toLocaleString(locale)}${locale === "ko" ? "점 남음" : translate(locale, localizedMessages.m149e2e290f7c, " points remaining")}`
+    : stage ? (locale === "ko" ? "모든 단계를 달성했어요" : translate(locale, localizedMessages.mc2f0efce3633, "All stages reached")) : null;
   const majorGoal = stage && nextTier && stage.next?.tier === stage.current.tier
-    ? (ko
-      ? `${levelLabel(locale, nextTier)}까지 ${passport.remainingToNextTier.toLocaleString("ko-KR")}점`
-      : `${passport.remainingToNextTier.toLocaleString("en-US")} points to ${nextTier}`)
+    ? (locale === "ko" ? `${levelLabel(locale, nextTier)}까지 ${passport.remainingToNextTier.toLocaleString("ko-KR")}점` : translate(locale, localizedMessages.mce880b9e25c4, "{0} points to {1}", [passport.remainingToNextTier.toLocaleString("en-US"), nextTier]))
     : null;
-  const currentScoreLabel = `${ko ? "현재 점수" : "Current score"}: ${score}${ko ? "점" : " points"}`;
+  const currentScoreLabel = `${locale === "ko" ? "현재 점수" : translate(locale, localizedMessages.mf871410e5769, "Current score")}: ${score}${locale === "ko" ? "점" : translate(locale, localizedMessages.m2d8c681d11b6, " points")}`;
 
   useEffect(() => {
     if (!open) return;
@@ -67,7 +68,7 @@ export function FanScoreProgress({ passport, locale }: Props) {
     <button
       className={styles.trigger}
       type="button"
-      aria-label={ko ? "팬 점수 자세히 보기" : "View Fan Score details"}
+      aria-label={locale === "ko" ? "팬 점수 자세히 보기" : translate(locale, localizedMessages.m17d872928dd3, "View Fan Score details")}
       aria-expanded={open}
       aria-controls={tooltipId}
       aria-describedby={open ? tooltipId : undefined}
@@ -78,14 +79,14 @@ export function FanScoreProgress({ passport, locale }: Props) {
       <progress
         value={stage ? stage.progressPercent : maxed ? 1 : passport.score}
         max={stage ? 100 : maxed ? 1 : Math.max(1, nextThreshold ?? 0)}
-        aria-label={ko ? "팬 등급 진행도" : "Fan tier progress"}
+        aria-label={locale === "ko" ? "팬 등급 진행도" : translate(locale, localizedMessages.mda729f4ab53d, "Fan tier progress")}
         aria-valuetext={stageTitle && stageValue ? `${stageTitle}: ${stageValue}. ${currentScoreLabel}${majorGoal ? `. ${majorGoal}` : ""}` : `${title}: ${value}`}
       />
     </button>
     <span className={styles.tooltip} role="tooltip" id={tooltipId} hidden={!open}>
       {stageTitle && stageValue ? <span className={styles.stageDetail}><span>{stageTitle}</span><strong>{stageValue}</strong></span> : null}
-      {stage ? <span className={styles.currentDetail}><span>{ko ? "현재 점수" : "Current score"}</span><strong>{score}{ko ? "점" : " points"}</strong></span> : <><span>{title}</span><strong>{value}</strong></>}
-      {majorGoal ? <span className={styles.majorDetail}><span>{ko ? "등급 목표" : "Tier goal"}</span><strong>{majorGoal}</strong></span> : null}
+      {stage ? <span className={styles.currentDetail}><span>{locale === "ko" ? "현재 점수" : translate(locale, localizedMessages.mf871410e5769, "Current score")}</span><strong>{score}{locale === "ko" ? "점" : translate(locale, localizedMessages.m2d8c681d11b6, " points")}</strong></span> : <><span>{title}</span><strong>{value}</strong></>}
+      {majorGoal ? <span className={styles.majorDetail}><span>{locale === "ko" ? "등급 목표" : translate(locale, localizedMessages.m2567390c480b, "Tier goal")}</span><strong>{majorGoal}</strong></span> : null}
     </span>
   </div>;
 }

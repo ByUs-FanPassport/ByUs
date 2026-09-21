@@ -1,3 +1,4 @@
+import { withLocalePath } from "@/components/locale-path";
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -187,14 +188,15 @@ describe("FAN-005 profile onboarding", () => {
     expect(await screen.findByRole("heading", { name: "Choose a display name for your KARA fan verification." })).toBeInTheDocument();
     expect(screen.getByText("After verification, it will appear in your KARA Fan Passport and activity history.")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Display name" })).toHaveAttribute("dir", "auto");
-    expect(screen.getByRole("link", { name: "EN" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
   });
 
   it("switches the return destination and nested LIVE locale while preserving the action", async () => {
     query = new URLSearchParams({locale: "ko", intent: "passport", entity: "kara", returnTo: "/c/kara/verify?locale=ko&authIntent=11111111-1111-4111-8111-111111111111#fan-verify"}).toString();
     render(<ProfileOnboardingScreen celebrity={celebrity} />);
     await screen.findByRole("textbox", { name: "닉네임" });
-    const href = screen.getByRole("link", { name: "EN" }).getAttribute("href")!;
+    expect(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" })).toHaveValue("ko");
+    const href = withLocalePath(`/onboarding/profile?${query}`, "en");
     const destination = new URL(href, "https://byus.local");
     expect(destination.searchParams.get("locale")).toBe("en");
     expect(destination.searchParams.get("returnTo")).toBe("/c/kara/verify?locale=en&authIntent=11111111-1111-4111-8111-111111111111#fan-verify");

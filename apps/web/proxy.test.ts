@@ -35,6 +35,11 @@ describe("page locale proxy", () => {
     expect(response.headers.get("referrer-policy")).toBe("same-origin");
     expect(response.headers.get("x-frame-options")).toBe("DENY");
   });
+  it.each(["/creator/instagram", "/connect/instagram", "/connect/instagram/callback"])("maps added UI languages to English on %s", (path) => {
+    const response = proxy(new NextRequest(`https://byus.example${path}?locale=ja`));
+    expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("en");
+    expect(new URL(response.headers.get("x-middleware-rewrite")!).searchParams.get("locale")).toBe("en");
+  });
   it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
     const response = proxy(new NextRequest(`https://byus.example${path}?locale=en&lang=en`, { headers: { "x-byus-pathname": "/" } }));
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
@@ -60,7 +65,7 @@ describe("page locale proxy", () => {
     expect(new URL(response.headers.get('x-middleware-rewrite')!).searchParams.get('locale')).toBe('en');
   });
 
-  it.each([['ko-KR', 'ko'], ['en-US', 'en'], ['ja-JP', 'en']])('keeps creator URLs clean for %s browsers', (language, locale) => {
+  it.each([['ko-KR', 'ko'], ['en-US', 'en'], ['ja-JP', 'ja'], ['zh-HK', 'zh-Hant']])('keeps creator URLs clean for %s browsers', (language, locale) => {
     const response = proxy(new NextRequest('https://byus.example/elina', { headers: { 'accept-language': language } }));
     expect(response.status).toBe(200);
     expect(response.headers.has('location')).toBe(false);
@@ -75,17 +80,18 @@ describe("page locale proxy", () => {
     expect(response.headers.has('location')).toBe(false);
   });
 
-  it("defaults invalid locale input to English even when a stale cookie is present", () => {
+  it("uses a supported explicit locale instead of a stale legacy cookie", () => {
     const response = proxy(
       new NextRequest("https://byus.example/?locale=fr", {
         headers: { cookie: "byus_locale=en" },
       }),
     );
 
-    expect(new URL(response.headers.get('x-middleware-rewrite')!).searchParams.get('locale')).toBe('en');
+    expect(response.headers.get('x-middleware-request-x-byus-locale')).toBe('fr');
+    expect(response.headers.has('x-middleware-rewrite')).toBe(false);
   });
 
-  it.each([['ko-KR,ko;q=0.9', 'ko'], ['en-US,ko;q=0.8', 'en'], ['ja-JP', 'en']])('preserves attendance and login return paths while selecting %s', (language, expected) => {
+  it.each([['ko-KR,ko;q=0.9', 'ko'], ['en-US,ko;q=0.8', 'en'], ['ja-JP', 'ja']])('preserves attendance and login return paths while selecting %s', (language, expected) => {
     for (const path of ['/live/elina?attendanceCode=ELINA2026#fan-code', '/login?returnTo=%2Flive%2Felina%3FattendanceCode%3DELINA2026%23fan-code']) {
       const original = new URL(path, 'https://byus.example');
       const result = proxy(new NextRequest(original, { headers: { 'accept-language': language } }));
@@ -100,7 +106,7 @@ describe("page locale proxy", () => {
     }
   });
   it('does not redirect explicit languages or static assets', () => {
-    for (const path of ['/live/elina?locale=ko', '/live/elina?locale=en', '/sw.js', '/manifest.webmanifest']) {
+    for (const path of ['/live/elina?locale=ko', '/live/elina?locale=en', '/live/elina?locale=fr', '/live/elina?locale=zh-Hant', '/sw.js', '/manifest.webmanifest']) {
       expect(proxy(new NextRequest(`https://byus.example${path}`)).headers.has('location')).toBe(false);
     }
   });
@@ -131,5 +137,7 @@ describe("page locale proxy", () => {
 
     expect(english.headers.get("x-middleware-request-x-byus-locale")).toBe("en");
     expect(korean.headers.get("x-middleware-request-x-byus-locale")).toBe("ko");
+    const unsupported = proxy(new NextRequest("https://byus.example/admin?lang=ja", { headers: { "accept-language": "ja-JP,ko;q=0.8" } }));
+    expect(new URL(unsupported.headers.get("location")!).searchParams.get("lang")).toBe("ko");
   });
 });

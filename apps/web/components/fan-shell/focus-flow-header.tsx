@@ -1,3 +1,5 @@
+import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__focus-flow-header";
+import { translate } from "@/i18n/messages";
 import type { ReactNode } from "react";
 
 import type { FanLocale } from "./fan-app-shell";
@@ -29,7 +31,7 @@ export function FocusFlowHeader({
     <>
       {mainId ? (
         <a className={styles.skipLink} href={`#${mainId}`}>
-          {locale === "ko" ? "본문으로 바로가기" : "Skip to content"}
+          {locale === "ko" ? "본문으로 바로가기" : translate(locale, localizedMessages.m54b15ccd35fe, "Skip to content")}
         </a>
       ) : null}
       <header className={classes(styles.header, sticky && styles.sticky, className)}>

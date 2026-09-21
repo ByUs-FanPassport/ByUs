@@ -1,5 +1,9 @@
 "use client";
 
+import { toContentLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { messages as localizedMessages } from "@/i18n/catalogs/features__certification__ui__certification-detail-screen";
+import { translate } from "@/i18n/messages";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -40,7 +44,7 @@ export function CertificationDetailScreen({
 }: {
   id: string;
   slug: string;
-  locale: CertificationLocale;
+  locale: AppLocale;
   selectedSubmissionId?: string;
 }) {
   const auth = usePrivy();
@@ -66,7 +70,7 @@ function CertificationDetailForOwner({
 }: {
   id: string;
   slug: string;
-  locale: CertificationLocale;
+  locale: AppLocale;
   selectedSubmissionId?: string;
   auth: Auth;
 }) {
@@ -89,7 +93,7 @@ function CertificationDetailForOwner({
   const submitInFlight = useRef<Promise<void> | null>(null);
   const mutationAbort = useRef<AbortController | null>(null);
   const passports = useOwnedFanResource(
-    submission?.status === "approved" ? `/api/passports?locale=${locale}&tierStages=1` : null,
+    submission?.status === "approved" ? `/api/passports?locale=${toContentLocale(locale)}&tierStages=1` : null,
     parseOwnerPassports,
     auth,
   );
@@ -102,7 +106,7 @@ function CertificationDetailForOwner({
     const controller = new AbortController();
     setMission(null);
     setMissionSettled(false);
-    void fetch(`/api/certifications/${id}?locale=${locale}`, { signal: controller.signal })
+    void fetch(`/api/certifications/${id}?locale=${toContentLocale(locale)}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error();
         return manualCertificationSchema.parse((await response.json()).certification);
@@ -132,7 +136,7 @@ function CertificationDetailForOwner({
         if (!token || controller.signal.aborted) throw new Error();
         const headers = { authorization: `Bearer ${token}` };
         const historyResponse = await fetch(
-          `/api/me/celebrities/${encodeURIComponent(slug)}/certifications?locale=${locale}`,
+          `/api/me/celebrities/${encodeURIComponent(slug)}/certifications?locale=${toContentLocale(locale)}`,
           { headers, cache: "no-store", signal: controller.signal },
         );
         if (!historyResponse.ok) throw new Error();
@@ -142,7 +146,7 @@ function CertificationDetailForOwner({
         const targetId = selectedSubmissionId ?? latest?.id;
         if (!targetId || (selectedSubmissionId && !attempts.some((item) => item.id === selectedSubmissionId))) return;
         const response = await fetch(
-          `/api/certification-submissions/${targetId}?locale=${locale}`,
+          `/api/certification-submissions/${targetId}?locale=${toContentLocale(locale)}`,
           { headers, cache: "no-store", signal: controller.signal },
         );
         if (!response.ok) throw new Error();
@@ -165,7 +169,7 @@ function CertificationDetailForOwner({
         setProofs(loadedProofs);
       } catch {
         for (const url of createdUrls) URL.revokeObjectURL(url);
-        if (!controller.signal.aborted) setMessage(locale === "ko" ? "제출 내역을 불러오지 못했어요." : "Could not load your submission.");
+        if (!controller.signal.aborted) setMessage(locale === "ko" ? "제출 내역을 불러오지 못했어요." : translate(locale, localizedMessages.mac2d72afdaf6, "Could not load your submission."));
       } finally {
         if (!controller.signal.aborted) setOwnerHistorySettled(true);
       }
@@ -193,16 +197,16 @@ function CertificationDetailForOwner({
       if (selected.some((item) => item.file.name === file.name && item.file.size === file.size
         && item.file.type === file.type && item.file.lastModified === file.lastModified)) continue;
       const reason = !allowedProofTypes.has(file.type)
-        ? (locale === "ko" ? "JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요." : "Use a JPG, PNG, or WEBP image.")
+        ? (locale === "ko" ? "JPG, PNG, WEBP 이미지 파일만 첨부할 수 있어요." : translate(locale, localizedMessages.mf9694cc473a8, "Use a JPG, PNG, or WEBP image."))
         : file.size <= 0
-          ? (locale === "ko" ? "내용이 없는 이미지 파일은 첨부할 수 없어요." : "This image file is empty.")
+          ? (locale === "ko" ? "내용이 없는 이미지 파일은 첨부할 수 없어요." : translate(locale, localizedMessages.mab6bb324c8c2, "This image file is empty."))
           : file.size > maxProofBytes
-            ? (locale === "ko" ? "3MB를 초과했어요. 용량을 줄여 다시 첨부해 주세요." : "This image exceeds 3MB. Reduce its size and add it again.")
+            ? (locale === "ko" ? "3MB를 초과했어요. 용량을 줄여 다시 첨부해 주세요." : translate(locale, localizedMessages.m7934d577ac1a, "This image exceeds 3MB. Reduce its size and add it again."))
             : selected.length >= 3
-              ? (locale === "ko" ? "이미지는 최대 3장까지 첨부할 수 있어요. 기존 이미지를 삭제한 뒤 추가해 주세요." : "You can attach up to 3 images. Remove an image before adding another.")
+              ? (locale === "ko" ? "이미지는 최대 3장까지 첨부할 수 있어요. 기존 이미지를 삭제한 뒤 추가해 주세요." : translate(locale, localizedMessages.m678809bebf4b, "You can attach up to 3 images. Remove an image before adding another."))
               : "";
       if (reason) {
-        errors.push(locale === "ko" ? `${file.name} 첨부 안 됨: ${reason}` : `${file.name} was not added: ${reason}`);
+        errors.push(locale === "ko" ? `${file.name} 첨부 안 됨: ${reason}` : translate(locale, localizedMessages.mbcb1c6488a1d, "{0} was not added: {1}", [file.name, reason]));
         continue;
       }
       selected.push({ id: nextSelectedProofId.current++, file, url: URL.createObjectURL(file) });
@@ -231,7 +235,7 @@ function CertificationDetailForOwner({
         return;
       }
       if (!files.length || files.length > 3 || !mission) {
-        if (!files.length) setFileError(locale === "ko" ? "인증 이미지를 1장 이상 첨부해 주세요." : "Attach at least 1 proof image.");
+        if (!files.length) setFileError(locale === "ko" ? "인증 이미지를 1장 이상 첨부해 주세요." : translate(locale, localizedMessages.m23175a41c170, "Attach at least 1 proof image."));
         return;
       }
       const controller = new AbortController();
@@ -267,7 +271,7 @@ function CertificationDetailForOwner({
         });
         if (!response.ok) throw new Error();
         const result = await response.json();
-        const detail = await fetch(`/api/certification-submissions/${result.submission.id}?locale=${locale}`, {
+        const detail = await fetch(`/api/certification-submissions/${result.submission.id}?locale=${toContentLocale(locale)}`, {
           headers: { authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal,
         });
         if (!detail.ok) throw new Error();
@@ -293,10 +297,10 @@ function CertificationDetailForOwner({
         setFiles([]);
         setFileError("");
         setNote("");
-        setMessage(locale === "ko" ? "인증 자료를 제출했어요." : "Your proof was submitted.");
+        setMessage(locale === "ko" ? "인증 자료를 제출했어요." : translate(locale, localizedMessages.me1a5ed911d33, "Your proof was submitted."));
       } catch {
         for (const url of createdSubmissionProofUrls) URL.revokeObjectURL(url);
-        if (!controller.signal.aborted) setMessage(locale === "ko" ? "제출하지 못했어요. 이미지와 인증 상태를 확인해 주세요." : "Submission failed. Check your images and certification status.");
+        if (!controller.signal.aborted) setMessage(locale === "ko" ? "제출하지 못했어요. 이미지와 인증 상태를 확인해 주세요." : translate(locale, localizedMessages.ma2768e084eb5, "Submission failed. Check your images and certification status."));
       } finally {
         if (!controller.signal.aborted) setBusy(false);
         if (mutationAbort.current === controller) mutationAbort.current = null;
@@ -314,76 +318,76 @@ function CertificationDetailForOwner({
   const membershipPlatform = mission?.membershipPlatform ?? submission?.membershipPlatform;
   const isMembership = Boolean(membershipPlatform);
   const statusLabel = submission ? ({
-    pending: locale === "ko" ? "검토 중" : "Under review",
-    approved: locale === "ko" ? "승인" : "Approved",
+    pending: locale === "ko" ? "검토 중" : translate(locale, localizedMessages.m83ae55962a3d, "Under review"),
+    approved: locale === "ko" ? "승인" : translate(locale, localizedMessages.m3c4c0ffa7511, "Approved"),
     rejected: isMembership
-      ? locale === "ko" ? "보완 필요" : "More proof needed"
-      : locale === "ko" ? "반려" : "Rejected",
+      ? locale === "ko" ? "보완 필요" : translate(locale, localizedMessages.m1d2634778436, "More proof needed")
+      : locale === "ko" ? "반려" : translate(locale, localizedMessages.mcd241e0b843d, "Rejected"),
   } as const)[submission.status] : null;
 
   return (
     <FanAppFrame locale={locale} mainId="certification-detail">
       <FanContentContainer as="main" id="certification-detail" tabIndex={-1} className={styles.detail}>
         <Link className={styles.back} href={`/c/${slug}/certifications?locale=${locale}&tab=history`}>
-          <ArrowLeft aria-hidden="true" />{locale === "ko" ? "내 인증 내역" : "My verification history"}
+          <ArrowLeft aria-hidden="true" />{locale === "ko" ? "내 인증 내역" : translate(locale, localizedMessages.m445dc29b1f60, "My verification history")}
         </Link>
         {title && reward ? (
           <>
             <header className={styles.hero}>
-              <span>{mission?.category ?? (locale === "ko" ? "내 인증 기록" : "My certification")}</span>
+              <span>{mission?.category ?? (locale === "ko" ? "내 인증 기록" : translate(locale, localizedMessages.mde69a148dc22, "My certification"))}</span>
               <h1>{title}</h1>
               {mission?.description ? <p>{mission.description}</p> : null}
               {reward.scorePoints > 0 || reward.ticketAmount > 0 || reward.stampCount ? <div className={styles.rewardCard}>
-                {reward.scorePoints > 0 ? <strong>+{reward.scorePoints} {locale === "ko" ? "팬 점수" : "fan score"}</strong> : null}
-                {reward.stampCount ? <span><Crown aria-hidden="true" />{locale === "ko" ? "멤버십 Stamp 1개" : "1 Membership Stamp"}</span> : null}
-                {reward.ticketAmount > 0 ? <span><Ticket aria-hidden="true" />+{reward.ticketAmount} {locale === "ko" ? "응모권" : "tickets"}</span> : null}
+                {reward.scorePoints > 0 ? <strong>+{reward.scorePoints} {locale === "ko" ? "팬 점수" : translate(locale, localizedMessages.mf5f0dc89bb4b, "fan score")}</strong> : null}
+                {reward.stampCount ? <span><Crown aria-hidden="true" />{locale === "ko" ? "멤버십 Stamp 1개" : translate(locale, localizedMessages.maecca8f592dc, "1 Membership Stamp")}</span> : null}
+                {reward.ticketAmount > 0 ? <span><Ticket aria-hidden="true" />+{reward.ticketAmount} {locale === "ko" ? "응모권" : translate(locale, localizedMessages.m93ab20a72717, "tickets")}</span> : null}
               </div> : null}
             </header>
             {mission ? <section className={styles.instructions}>
-              <h2>{locale === "ko" ? "인증 방법" : "How to verify"}</h2>
+              <h2>{locale === "ko" ? "인증 방법" : translate(locale, localizedMessages.ma8f4567f52a9, "How to verify")}</h2>
               {membershipPlatform ? <MembershipEligibility locale={locale} platform={membershipPlatform} creatorAccountUrl={mission.creatorAccountUrl} /> : null}
               <p>{mission.instructions}</p>
             </section> : null}
             {submission ? (
               <section className={styles.submissionDetail} aria-labelledby="submission-detail-heading">
                 <div className={styles.submissionDetailHeading}>
-                  <h2 id="submission-detail-heading">{locale === "ko" ? "제출 내역" : "Submission"}</h2>
+                  <h2 id="submission-detail-heading">{locale === "ko" ? "제출 내역" : translate(locale, localizedMessages.m0cd04178d6cc, "Submission")}</h2>
                   <span className={styles.status} data-status={submission.status}>{statusLabel}</span>
                 </div>
                 <dl>
-                  <div><dt>{locale === "ko" ? "차수" : "Attempt"}</dt><dd>#{submission.attemptNumber}</dd></div>
-                  <div><dt>{locale === "ko" ? "제출일" : "Submitted"}</dt><dd>{new Intl.DateTimeFormat(locale,{dateStyle:"medium",timeStyle:"short"}).format(new Date(submission.submittedAt))}</dd></div>
-                  {submission.reviewedAt ? <div><dt>{locale === "ko" ? "검토일" : "Reviewed"}</dt><dd>{new Intl.DateTimeFormat(locale,{dateStyle:"medium",timeStyle:"short"}).format(new Date(submission.reviewedAt))}</dd></div> : null}
+                  <div><dt>{locale === "ko" ? "차수" : translate(locale, localizedMessages.m74ddf68f4e4c, "Attempt")}</dt><dd>#{submission.attemptNumber}</dd></div>
+                  <div><dt>{locale === "ko" ? "제출일" : translate(locale, localizedMessages.ma1fa442ba138, "Submitted")}</dt><dd>{new Intl.DateTimeFormat(locale,{ calendar: "gregory",dateStyle:"medium",timeStyle:"short"}).format(new Date(submission.submittedAt))}</dd></div>
+                  {submission.reviewedAt ? <div><dt>{locale === "ko" ? "검토일" : translate(locale, localizedMessages.m9551f5f3614e, "Reviewed")}</dt><dd>{new Intl.DateTimeFormat(locale,{ calendar: "gregory",dateStyle:"medium",timeStyle:"short"}).format(new Date(submission.reviewedAt))}</dd></div> : null}
                 </dl>
-                {submission.note ? <div className={styles.submissionCopy}><strong>{locale === "ko" ? "제출 설명" : "Note"}</strong><p>{submission.note}</p></div> : null}
-                {submission.rejectionReason ? <div className={styles.rejection}><strong>{isMembership ? (locale === "ko" ? "보완 요청 사유" : "Reason more proof is needed") : (locale === "ko" ? "반려 사유" : "Reason")}</strong>{submission.rejectionReason}</div> : null}
-                {proofs.length ? <div className={styles.proofs} aria-label={locale === "ko" ? "제출 이미지" : "Submitted images"}>{proofs.map((proof,index)=><img key={proof.id} src={proof.url} alt={locale === "ko" ? `제출 이미지 ${index+1}` : `Submitted image ${index+1}`} />)}</div> : null}
+                {submission.note ? <div className={styles.submissionCopy}><strong>{locale === "ko" ? "제출 설명" : translate(locale, localizedMessages.m99ce56222988, "Note")}</strong><p>{submission.note}</p></div> : null}
+                {submission.rejectionReason ? <div className={styles.rejection}><strong>{isMembership ? (locale === "ko" ? "보완 요청 사유" : translate(locale, localizedMessages.mc8b6a657c5c6, "Reason more proof is needed")) : (locale === "ko" ? "반려 사유" : translate(locale, localizedMessages.maa09e04e9ec4, "Reason"))}</strong>{submission.rejectionReason}</div> : null}
+                {proofs.length ? <div className={styles.proofs} aria-label={locale === "ko" ? "제출 이미지" : translate(locale, localizedMessages.m21bd68eff662, "Submitted images")}>{proofs.map((proof,index)=><img key={proof.id} src={proof.url} alt={locale === "ko" ? `제출 이미지 ${index+1}` : translate(locale, localizedMessages.m679cf1288af4, "Submitted image {0}", [index+1])} />)}</div> : null}
               </section>
             ) : null}
-            {submission?.status === "pending" ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "검토 중이에요" : "Under review"}</h2><p>{locale === "ko" ? "관리자가 인증 자료를 확인하고 있어요." : "An administrator is reviewing your proof."}</p></section>
+            {submission?.status === "pending" ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "검토 중이에요" : translate(locale, localizedMessages.m0925ffbca0e7, "Under review")}</h2><p>{locale === "ko" ? "관리자가 인증 자료를 확인하고 있어요." : translate(locale, localizedMessages.m546aeb7f9844, "An administrator is reviewing your proof.")}</p></section>
               : submission?.status === "approved" ? <ApprovedNextStep locale={locale} slug={slug} passportState={passports.state}/>
-                : submission?.status === "rejected" && !currentRejected ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "이후 제출 내역이 있어요" : "A newer submission exists"}</h2></section>
+                : submission?.status === "rejected" && !currentRejected ? <section className={styles.submissionState} role="status"><CheckCircle2 /><h2>{locale === "ko" ? "이후 제출 내역이 있어요" : translate(locale, localizedMessages.mc0dfd548ea18, "A newer submission exists")}</h2></section>
                   : null}
             {canOpenForm ? (
               <section className={styles.formArea} aria-labelledby="proof-heading">
-                <h2 id="proof-heading">{currentRejected ? (isMembership ? (locale === "ko" ? "보완 자료 제출하기" : "Submit additional proof") : (locale === "ko" ? "자료를 보완해 다시 제출해 주세요" : "Update and resubmit your proof")) : (locale === "ko" ? "인증 자료 제출" : "Submit proof")}</h2>
+                <h2 id="proof-heading">{currentRejected ? (isMembership ? (locale === "ko" ? "보완 자료 제출하기" : translate(locale, localizedMessages.m3254b2dced07, "Submit additional proof")) : (locale === "ko" ? "자료를 보완해 다시 제출해 주세요" : translate(locale, localizedMessages.m12b1b7d6e4ec, "Update and resubmit your proof"))) : (locale === "ko" ? "인증 자료 제출" : translate(locale, localizedMessages.mdd94a640047d, "Submit proof"))}</h2>
                 <div className={styles.requiredFieldHeading}>
-                  <strong>{locale === "ko" ? "인증 이미지 (필수)" : "Proof images (required)"}</strong>
-                  <span>{locale === "ko" ? "1~3장 · JPG, PNG, WEBP · 장당 3MB 이하" : "1–3 images · JPG, PNG, WEBP · 3MB each"}</span>
+                  <strong>{locale === "ko" ? "인증 이미지 (필수)" : translate(locale, localizedMessages.m6a4a246fca0d, "Proof images (required)")}</strong>
+                  <span>{locale === "ko" ? "1~3장 · JPG, PNG, WEBP · 장당 3MB 이하" : translate(locale, localizedMessages.m29982f172359, "1–3 images · JPG, PNG, WEBP · 3MB each")}</span>
                 </div>
-                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{files.length ? (locale === "ko" ? "이미지 추가" : "Add images") : (locale === "ko" ? "이미지 선택" : "Choose images")}</span><input aria-describedby="proof-file-hint proof-file-count proof-file-error" type="file" accept="image/jpeg,image/png,image/webp" multiple required disabled={busy} onChange={(event)=>{selectFiles([...(event.currentTarget.files??[])]);event.currentTarget.value="";}}/></label>
+                <label className={styles.filePicker}><ImagePlus aria-hidden="true" /><span>{files.length ? (locale === "ko" ? "이미지 추가" : translate(locale, localizedMessages.m80d6b57a6027, "Add images")) : (locale === "ko" ? "이미지 선택" : translate(locale, localizedMessages.m0e581051e6f0, "Choose images"))}</span><input aria-describedby="proof-file-hint proof-file-count proof-file-error" type="file" accept="image/jpeg,image/png,image/webp" multiple required disabled={busy} onChange={(event)=>{selectFiles([...(event.currentTarget.files??[])]);event.currentTarget.value="";}}/></label>
                 <p className={styles.fileHint} id="proof-file-hint">{isMembership
-                  ? locale === "ko" ? "크리에이터와 내 계정, 유료 멤버십 상태, 다음 결제일 또는 유효기간이 보이는 캡처를 첨부해 주세요." : "Attach screenshots showing the creator, your account, paid membership status, and next billing or expiration date."
-                  : locale === "ko" ? "위 인증 안내에 맞는 이미지 자료를 1장 이상 첨부해 주세요." : "Attach at least one image that meets the proof requirements above."}</p>
-                <p className={styles.fileHint} id="proof-file-count" role="status">{locale === "ko" ? `${files.length}/3장 첨부됨` : `${files.length}/3 images attached`}</p>
+                  ? locale === "ko" ? "크리에이터와 내 계정, 유료 멤버십 상태, 다음 결제일 또는 유효기간이 보이는 캡처를 첨부해 주세요." : translate(locale, localizedMessages.mde29830c7134, "Attach screenshots showing the creator, your account, paid membership status, and next billing or expiration date.")
+                  : locale === "ko" ? "위 인증 안내에 맞는 이미지 자료를 1장 이상 첨부해 주세요." : translate(locale, localizedMessages.md554dcc9df45, "Attach at least one image that meets the proof requirements above.")}</p>
+                <p className={styles.fileHint} id="proof-file-count" role="status">{locale === "ko" ? `${files.length}/3장 첨부됨` : translate(locale, localizedMessages.m0c243d4ca824, "{0}/3 images attached", [files.length])}</p>
                 <p className={styles.fileError} id="proof-file-error" role="alert">{fileError}</p>
-                <ul className={styles.fileList}>{files.map((selected,index)=><li key={selected.id}><img src={selected.url} alt={locale === "ko" ? `선택한 이미지 ${index+1}` : `Selected image ${index+1}`} /><span><strong>{selected.file.name}</strong><small>{(selected.file.size/1024/1024).toFixed(1)}MB</small></span><button type="button" disabled={busy} aria-label={`${selected.file.name} ${locale==="ko"?"삭제":"remove"}`} onClick={()=>removeFile(selected.id)}><X /></button></li>)}</ul>
-                <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : "Note (optional)"}</span><textarea maxLength={1000} disabled={busy} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
-                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale==="ko"?"제출 중…":"Submitting…"):!authenticated?(locale==="ko"?"로그인하고 제출하기":"Sign in to submit"):currentRejected&&isMembership?(locale==="ko"?"보완 자료 제출하기":"Submit additional proof"):(locale==="ko"?"인증 자료 제출하기":"Submit proof")}</button>
+                <ul className={styles.fileList}>{files.map((selected,index)=><li key={selected.id}><img src={selected.url} alt={locale === "ko" ? `선택한 이미지 ${index+1}` : translate(locale, localizedMessages.md6e6f3167727, "Selected image {0}", [index+1])} /><span><strong>{selected.file.name}</strong><small>{(selected.file.size/1024/1024).toFixed(1)}MB</small></span><button type="button" disabled={busy} aria-label={`${selected.file.name} ${locale === "ko" ? "삭제" : translate(locale, localizedMessages.m468e187af951, "remove")}`} onClick={()=>removeFile(selected.id)}><X /></button></li>)}</ul>
+                <label className={styles.note}><span>{locale === "ko" ? "설명 (선택)" : translate(locale, localizedMessages.m8193cbb22521, "Note (optional)")}</span><textarea maxLength={1000} disabled={busy} value={note} onChange={(event)=>setNote(event.target.value)}/></label>
+                <button className={fanActionClassName("primary",{fullWidth:true})} type="button" disabled={busy||mission?.status!=="available"||!files.length||!ready} onClick={()=>void submit()}>{busy?(locale === "ko" ? "제출 중…" : translate(locale, localizedMessages.md94e82e31431, "Submitting…")):!authenticated?(locale === "ko" ? "로그인하고 제출하기" : translate(locale, localizedMessages.m7cb28315fd68, "Sign in to submit")):currentRejected&&isMembership?(locale === "ko" ? "보완 자료 제출하기" : translate(locale, localizedMessages.m3254b2dced07, "Submit additional proof")):(locale === "ko" ? "인증 자료 제출하기" : translate(locale, localizedMessages.ma2300aa2d477, "Submit proof"))}</button>
               </section>
             ) : null}
           </>
-        ) : missionSettled && ownerHistorySettled ? <p className={styles.state}>{locale === "ko" ? "인증 정보를 불러오지 못했어요." : "Could not load certification."}</p> : <p className={styles.state}>{locale === "ko" ? "제출 내역을 불러오는 중이에요." : "Loading submission."}</p>}
+        ) : missionSettled && ownerHistorySettled ? <p className={styles.state}>{locale === "ko" ? "인증 정보를 불러오지 못했어요." : translate(locale, localizedMessages.ma08d5ccd2b0e, "Could not load certification.")}</p> : <p className={styles.state}>{locale === "ko" ? "제출 내역을 불러오는 중이에요." : translate(locale, localizedMessages.me8da76ea6569, "Loading submission.")}</p>}
         <p className={styles.message} role="status">{message}</p>
       </FanContentContainer>
     </FanAppFrame>
@@ -395,24 +399,24 @@ function MembershipEligibility({
   platform,
   creatorAccountUrl,
 }: {
-  locale: CertificationLocale;
+  locale: AppLocale;
   platform: NonNullable<ManualCertification["membershipPlatform"]>;
   creatorAccountUrl?: string;
 }) {
   const platformName = membershipPlatformLabel(platform);
   return <div className={styles.membershipGuide}>
-    <strong>{locale === "ko" ? `${platformName} 유료 멤버십 회원만 참여할 수 있어요` : `For paid ${platformName} members only`}</strong>
-    <p>{locale === "ko" ? "일반 팔로우나 무료 채널 구독은 인증 대상이 아니에요." : "Following an account or subscribing to a free channel does not qualify."}</p>
-    <p>{locale === "ko" ? "캡처에서 아래 네 가지 정보를 확인할 수 있어야 해요." : "Your screenshots must show these four details."}</p>
+    <strong>{locale === "ko" ? `${platformName} 유료 멤버십 회원만 참여할 수 있어요` : translate(locale, localizedMessages.m41c629238dee, "For paid {0} members only", [platformName])}</strong>
+    <p>{locale === "ko" ? "일반 팔로우나 무료 채널 구독은 인증 대상이 아니에요." : translate(locale, localizedMessages.m5e26ab793252, "Following an account or subscribing to a free channel does not qualify.")}</p>
+    <p>{locale === "ko" ? "캡처에서 아래 네 가지 정보를 확인할 수 있어야 해요." : translate(locale, localizedMessages.m20e6e5bc2986, "Your screenshots must show these four details.")}</p>
     <ul>
-      <li>{locale === "ko" ? "크리에이터 계정" : "Creator account"}</li>
-      <li>{locale === "ko" ? `내 ${platformName} 계정` : `Your ${platformName} account`}</li>
-      <li>{locale === "ko" ? "현재 유료 멤버십 상태" : "Current paid membership status"}</li>
-      <li>{locale === "ko" ? "다음 결제일 또는 유효기간" : "Next billing date or expiration date"}</li>
+      <li>{locale === "ko" ? "크리에이터 계정" : translate(locale, localizedMessages.m54b3ffb43b13, "Creator account")}</li>
+      <li>{locale === "ko" ? `내 ${platformName} 계정` : translate(locale, localizedMessages.m359ad0aecd65, "Your {0} account", [platformName])}</li>
+      <li>{locale === "ko" ? "현재 유료 멤버십 상태" : translate(locale, localizedMessages.mdfb94cda549a, "Current paid membership status")}</li>
+      <li>{locale === "ko" ? "다음 결제일 또는 유효기간" : translate(locale, localizedMessages.mae77ee42ee74, "Next billing date or expiration date")}</li>
     </ul>
-    <p>{locale === "ko" ? "화면이 나뉘어 있다면 이미지를 최대 3장까지 제출할 수 있어요. 멤버십 시작일이나 가입 기간은 선택 사항이며, 결제 수단과 인증에 필요하지 않은 개인정보는 가려도 됩니다." : "If the details appear on separate screens, you may submit up to 3 images. Start date or membership tenure is optional, and you may hide payment details and unrelated personal information."}</p>
-    <p>{locale === "ko" ? "이 크리에이터의 같은 플랫폼 멤버십은 최초 승인 시 한 번만 보상을 받아요." : "You can receive this creator and platform reward once, when your first submission is approved."}</p>
-    {creatorAccountUrl ? <a href={creatorAccountUrl} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "크리에이터 계정 확인" : "Open creator account"}<ExternalLink aria-hidden="true" /></a> : null}
+    <p>{locale === "ko" ? "화면이 나뉘어 있다면 이미지를 최대 3장까지 제출할 수 있어요. 멤버십 시작일이나 가입 기간은 선택 사항이며, 결제 수단과 인증에 필요하지 않은 개인정보는 가려도 됩니다." : translate(locale, localizedMessages.mfd76e3ff9687, "If the details appear on separate screens, you may submit up to 3 images. Start date or membership tenure is optional, and you may hide payment details and unrelated personal information.")}</p>
+    <p>{locale === "ko" ? "이 크리에이터의 같은 플랫폼 멤버십은 최초 승인 시 한 번만 보상을 받아요." : translate(locale, localizedMessages.mc426e9a805f9, "You can receive this creator and platform reward once, when your first submission is approved.")}</p>
+    {creatorAccountUrl ? <a href={creatorAccountUrl} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "크리에이터 계정 확인" : translate(locale, localizedMessages.mfdde0933d348, "Open creator account")}<ExternalLink aria-hidden="true" /></a> : null}
   </div>;
 }
 
@@ -421,7 +425,7 @@ function ApprovedNextStep({
   slug,
   passportState,
 }: {
-  locale: CertificationLocale;
+  locale: AppLocale;
   slug: string;
   passportState: PassportResourceState;
 }) {
@@ -434,21 +438,21 @@ function ApprovedNextStep({
       ? `${creatorHomeHref(slug)}?tab=certifications&locale=${locale}#celebrity-content`
       : `/my?locale=${locale}`;
   const body = ownedPassport
-    ? (locale === "ko" ? "발급된 내 패스포트를 다시 열어볼 수 있어요." : "You can reopen your issued Passport.")
+    ? (locale === "ko" ? "발급된 내 패스포트를 다시 열어볼 수 있어요." : translate(locale, localizedMessages.mb654a58461c8, "You can reopen your issued Passport."))
     : passportState.status === "ready"
-      ? (locale === "ko" ? "이번 인증 승인과 패스포트 발급은 별개예요. 팬 인증에서 발급 과정을 확인하세요." : "This approval does not issue a Passport. Check fan verification to start issuance.")
+      ? (locale === "ko" ? "이번 인증 승인과 패스포트 발급은 별개예요. 팬 인증에서 발급 과정을 확인하세요." : translate(locale, localizedMessages.m1735acae1ea7, "This approval does not issue a Passport. Check fan verification to start issuance."))
       : passportState.status === "loading"
-        ? (locale === "ko" ? "패스포트 보유 여부를 확인하는 중이에요. MY에서 내 활동을 먼저 확인할 수 있어요." : "Checking Passport ownership. You can review your activity in MY in the meantime.")
-        : (locale === "ko" ? "패스포트 보유 여부를 확인하지 못했어요. MY에서 내 활동을 확인하세요." : "We couldn’t confirm Passport ownership. Check your activity in MY.");
+        ? (locale === "ko" ? "패스포트 보유 여부를 확인하는 중이에요. MY에서 내 활동을 먼저 확인할 수 있어요." : translate(locale, localizedMessages.mb6f77e3729e8, "Checking Passport ownership. You can review your activity in MY in the meantime."))
+        : (locale === "ko" ? "패스포트 보유 여부를 확인하지 못했어요. MY에서 내 활동을 확인하세요." : translate(locale, localizedMessages.mca20a88717bf, "We couldn’t confirm Passport ownership. Check your activity in MY."));
   const action = ownedPassport
-    ? (locale === "ko" ? "내 패스포트 보기" : "Open my Passport")
+    ? (locale === "ko" ? "내 패스포트 보기" : translate(locale, localizedMessages.m3ca4b4bf32e8, "Open my Passport"))
     : passportState.status === "ready"
-      ? (locale === "ko" ? "팬 인증 확인하기" : "Check fan verification")
-      : (locale === "ko" ? "MY로 이동" : "Go to MY");
+      ? (locale === "ko" ? "팬 인증 확인하기" : translate(locale, localizedMessages.m4e5359ae504c, "Check fan verification"))
+      : (locale === "ko" ? "MY로 이동" : translate(locale, localizedMessages.m94e2ec6ddac7, "Go to MY"));
 
   return <section className={`${styles.submissionState} ${styles.approvedNext}`} role="status">
     <CheckCircle2 aria-hidden="true" />
-    <h2>{locale === "ko" ? "인증이 승인됐어요" : "Certification approved"}</h2>
+    <h2>{locale === "ko" ? "인증이 승인됐어요" : translate(locale, localizedMessages.m180f58226684, "Certification approved")}</h2>
     <p>{body}</p>
     <Link className={fanActionClassName(ownedPassport ? "passport" : "neutral")} href={href as Route}>
       {action}<ArrowRight aria-hidden="true" />

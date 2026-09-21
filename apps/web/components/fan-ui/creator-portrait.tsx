@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/i18n/locales";
 import { CreatorImage } from "./creator-image";
 import type { PublishedCelebrity } from "../../server/content/content-domain";
 import styles from "./creator-portrait.module.css";
@@ -6,7 +7,7 @@ import styles from "./creator-portrait.module.css";
 export function CreatorPortrait({ slug, image, locale = "ko", variant = "inset" }: {
   slug: string;
   image: PublishedCelebrity["image"];
-  locale?: "ko" | "en";
+  locale?: AppLocale;
   variant?: "inset" | "full-bleed";
 }) {
   const sizes = variant === "full-bleed"
