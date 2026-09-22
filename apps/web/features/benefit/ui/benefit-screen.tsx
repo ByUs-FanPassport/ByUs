@@ -66,9 +66,9 @@ import {
   ifewPrizeName,
 } from "@/features/live/domain/ifew-event";
 import {
-  elinaLiveHref,
   elinaVerificationHref,
 } from "@/features/live/domain/elina-event";
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 export type BenefitLocale = AppLocale;
 
@@ -1320,7 +1320,7 @@ function BenefitDetailOwnerScreen({
                           <>
                             <p>
                               {isElinaRaffle
-                                ? locale === "ko" ? "팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요." : translate(locale, localizedMessages.mcbf1b034e6dd, "You can get raffle tickets through fan verification and an Elina LIVE reservation. Choose how many to use and submit your entry yourself.")
+                                ? locale === "ko" ? "팬 인증과 엘리나 페이지 활동으로 응모권을 모을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요." : translate(locale, localizedMessages.mcbf1b034e6dd, "Verify your fandom and visit Elina's page to earn raffle tickets. Choose how many to use and submit your entry.")
                                 : locale === "ko" ? "아직 이퓨 팬 인증을 하지 않았다면 첫 인증으로 응모권을 받을 수 있어요. 받은 응모권은 수량을 선택해 직접 응모해야 해요." : translate(locale, localizedMessages.m37ca2a744c3b, "If you haven’t verified your ifew fandom yet, you can earn raffle tickets through your first verification. Choose how many to use and submit your entry yourself.")}
                             </p>
                             {isElinaRaffle ? (
@@ -1328,8 +1328,8 @@ function BenefitDetailOwnerScreen({
                                 <FanAction variant="primary" href={elinaVerificationHref(locale)}>
                                   {locale === "ko" ? "팬 인증하고 응모권 받기" : translate(locale, localizedMessages.m9ddf33f17c63, "Verify fandom")}
                                 </FanAction>
-                                <FanAction variant="neutral" href={elinaLiveHref(locale)}>
-                                  {locale === "ko" ? "LIVE 예약하고 응모권 받기" : translate(locale, localizedMessages.md1cd04ba68a2, "Reserve a spot")}
+                                <FanAction variant="neutral" href={creatorHomeHref("elina", locale)}>
+                                  {locale === "ko" ? "엘리나 페이지에서 응모권 모으기" : translate(locale, localizedMessages.md1cd04ba68a2, "Earn tickets on Elina's page")}
                                 </FanAction>
                               </>
                             ) : (
@@ -1342,9 +1342,9 @@ function BenefitDetailOwnerScreen({
                             )}
                           </>
                         ) : (
-                          <Link href={isElinaRaffle ? elinaLiveHref(locale) : ifewLiveHref(locale)}>
+                          <Link href={isElinaRaffle ? creatorHomeHref("elina", locale) : ifewLiveHref(locale)}>
                             {isElinaRaffle
-                              ? locale === "ko" ? "엘리나 LIVE 자세히 보기" : translate(locale, localizedMessages.m4a86836b1b99, "View the Elina LIVE")
+                              ? locale === "ko" ? "엘리나 페이지에서 응모권 모으기" : translate(locale, localizedMessages.m4a86836b1b99, "Visit Elina's page")
                               : locale === "ko" ? "이퓨 LIVE 자세히 보기" : translate(locale, localizedMessages.m4a7cac3f80d1, "View the ifew LIVE")}
                           </Link>
                         )}

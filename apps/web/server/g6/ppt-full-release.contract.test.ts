@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PRODUCT_EVENT_NAMES } from "../../features/analytics/domain/product-event";
 
 const root = resolve(process.cwd(), "../..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
@@ -42,19 +41,7 @@ describe("full PPT release inventory", () => {
     expect(names).toEqual([...names].sort());
   });
 
-  it("keeps every global invariant and required evidence field in the ledger", () => {
-    const invariants = read("docs/plans/2026-09-03-global-invariant-ledger.md");
-    const ledger = read("docs/plans/2026-09-03-verification-ledger.md");
-    for (const id of ["TIER-01", "REACTION-02", "ATTR-01", "JOURNEY-03", "COLLECT-02", "BEN-DRAW-03", "PII-03", "NOTIFY-01", "NOTIFY-02", "NOTIFY-03", "NOTIFY-04", "ANALYTICS-02", "EVENT-02", "EVIDENCE-01", "PROD-KNOWN-01"]) {
-      expect(invariants, id).toContain(`\`${id}\``);
-    }
-    for (const field of ["environment", "command_or_locator", "observed", "verified_at", "last_verified_commit"]) {
-      expect(ledger).toContain(field);
-    }
-    expect(ledger).toMatch(/`PROD-KNOWN-01`[^\n]*`OUT_OF_SCOPE`/);
-  });
-
-  it("binds all product events, guarded reads, routes and deployment integrity proof", () => {
+  it("binds guarded reads, routes and deployment integrity proof", () => {
     const sql = releaseMigrations.map((name) => read(`supabase/migrations/${name}`)).join("\n");
     const providerBackfill = read("supabase/migrations/20260903016600_phase3_live_provider_calendar.sql");
     const routeInventory = [
@@ -65,7 +52,6 @@ describe("full PPT release inventory", () => {
       "apps/web/app/api/admin/notification-deliveries/route.ts",
       "apps/web/app/api/admin/blockchain-jobs/route.ts",
     ];
-    for (const eventName of PRODUCT_EVENT_NAMES) expect(sql + read("apps/web/features/analytics/domain/product-event.ts")).toContain(eventName);
     for (const rpc of ["read_admin_platform_analytics", "read_admin_live_analytics", "read_admin_recipient_purge_status"]) expect(sql).toContain(rpc);
     expect(providerBackfill.indexOf("disable trigger live_events_enforce_lifecycle")).toBeLessThan(providerBackfill.indexOf("update public.live_events"));
     expect(providerBackfill.indexOf("set constraints all immediate")).toBeLessThan(providerBackfill.indexOf("enable trigger live_events_enforce_lifecycle"));

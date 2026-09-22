@@ -8,7 +8,7 @@ export function elinaLiveHref(locale: AppLocale) {
 }
 
 export function elinaVerificationHref(locale: AppLocale) {
-  const query = new URLSearchParams({ locale, returnTo: elinaLiveHref(locale) });
+  const query = new URLSearchParams({ locale, returnTo: elinaRafflesHref(locale) });
   return `/c/elina/verify?${query.toString()}` as const;
 }
 

@@ -158,7 +158,7 @@ describe("canonical 03 guest home", () => {
     expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
     expect(within(hero).getByText("팬 인증부터 선물 응모까지")).toBeInTheDocument();
     expect(within(hero).getByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" }))
-      .toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
+      .toHaveAttribute("href", "/c/elina/raffles?locale=ko");
   });
 
   it("does not turn four published occurrences into four home banners", () => {
@@ -434,7 +434,7 @@ describe("canonical 03 guest home", () => {
     expect(fanmeetingCards).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다음 가이드" })).not.toBeInTheDocument();
-    for (const card of guideCards) expect(card).toHaveAttribute("href", "/pages/elina-fan-guide?locale=ko");
+    for (const card of guideCards) expect(card).toHaveAttribute("href", "/c/elina/raffles?locale=ko");
     for (const card of fanmeetingCards) expect(card).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
   });
 

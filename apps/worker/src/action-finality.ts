@@ -89,6 +89,7 @@ export class SupabaseActionReceiptIndex implements ActionReceiptIndexPort {
 
 export class ViemActionFinalityReader implements ActionFinalityPort {
   private readonly client: PublicClient;
+  private finalityBlocks?: Promise<[bigint | null, bigint | null]>;
   constructor(options: { rpcUrl: string; chainId: number; client?: PublicClient }) {
     const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
     this.client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl) });
@@ -105,12 +106,12 @@ export class ViemActionFinalityReader implements ActionFinalityPort {
     if (current.blockHash.toLowerCase() !== stored.blockHash.toLowerCase() || current.blockNumber !== BigInt(stored.blockNumber)) return "orphaned";
     const canonical = await this.client.getBlock({ blockNumber: current.blockNumber });
     if (canonical.hash?.toLowerCase() !== current.blockHash.toLowerCase()) return "orphaned";
-    const [safe, finalized] = await Promise.allSettled([
-      this.client.getBlock({ blockTag: "safe" }),
-      this.client.getBlock({ blockTag: "finalized" }),
-    ]);
-    if (finalized.status === "fulfilled" && finalized.value.number >= current.blockNumber) return "finalized";
-    if (safe.status === "fulfilled" && safe.value.number >= current.blockNumber) return "safe";
+    const [safe, finalized] = await (this.finalityBlocks ??= Promise.all([
+      this.client.getBlock({ blockTag: "safe" }).then((block) => block.number).catch(() => null),
+      this.client.getBlock({ blockTag: "finalized" }).then((block) => block.number).catch(() => null),
+    ]));
+    if (finalized !== null && finalized >= current.blockNumber) return "finalized";
+    if (safe !== null && safe >= current.blockNumber) return "safe";
     return "included";
   }
 }

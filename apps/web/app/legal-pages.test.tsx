@@ -95,8 +95,8 @@ describe("public legal pages", () => {
   it("preserves English locale in reciprocal legal navigation", async () => {
     render(await TermsPage({ searchParams: searchParams("en") }));
 
-    const legalNavigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
-    expect(within(legalNavigation).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
-    expect(within(legalNavigation).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByRole("link", { name: "Open Privacy Policy" })).toHaveAttribute("href", "/privacy?locale=en");
+    expect(within(footer).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
   });
 });

@@ -13,7 +13,7 @@ type GuideProps = { guide: SignupGuide; locale: AppLocale };
 export function SignupGuideView({ guide, locale }: GuideProps) {
   const { ready, authenticated } = usePrivy();
   useEffect(() => {
-    signupFunnelTracker.guideView(guide, toContentLocale(locale), ready ? authenticated ? "member" : "guest" : "unknown");
+    if (ready) signupFunnelTracker.guideView(guide, toContentLocale(locale), authenticated ? "member" : "guest");
   }, [authenticated, guide, locale, ready]);
   return null;
 }

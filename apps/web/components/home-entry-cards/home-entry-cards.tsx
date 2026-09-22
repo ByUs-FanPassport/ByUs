@@ -9,6 +9,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { ContentLocale } from "@/server/content/content-domain";
 import styles from "./home-entry-cards.module.css";
 import { HomeHeroBanner } from "./home-hero-banner";
+import { elinaRafflesHref } from "@/features/live/domain/elina-event";
 
 const copy = {
   ko: {
@@ -43,8 +44,8 @@ export function ElinaGuideCard({ locale, elina, hero = false, priority = false }
   const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-blue-beret-20260912.webp" photos={undefined} position="50% 70%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
   if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BYUS" title={t.title}
     description={t.description}
-    action={<Link href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}><span>{t.action}</span><ArrowRight aria-hidden="true" /></Link>} />;
-  return <Link className={styles.guide} href={`/pages/elina-fan-guide?locale=${locale}` as Route} aria-label={t.label}>
+    action={<Link href={elinaRafflesHref(locale)} aria-label={t.label}><span>{t.action}</span><ArrowRight aria-hidden="true" /></Link>} />;
+  return <Link className={styles.guide} href={elinaRafflesHref(locale)} aria-label={t.label}>
     <span className={styles.portrait}>{image}</span>
     <span className={styles.guideCopy}>
       <small>ELINA × BYUS</small>

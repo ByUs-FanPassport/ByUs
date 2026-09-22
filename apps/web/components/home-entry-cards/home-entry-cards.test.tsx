@@ -26,7 +26,7 @@ describe("home entry cards", () => {
     const { container } = render(<HomeEntryCards celebrities={[]} locale={locale} />);
     const links = container.querySelectorAll("a");
     expect(links).toHaveLength(2);
-    expect(links[0]).toHaveAttribute("href", `/pages/elina-fan-guide?locale=${locale}`);
+    expect(links[0]).toHaveAttribute("href", `/c/elina/raffles?locale=${locale}`);
     expect(links[1]).toHaveAttribute("href", `/pages/us-fanmeetings?locale=${locale}`);
     expect(links[0].querySelector("strong")).not.toBeNull();
     expect(container.querySelector("a a, a button")).toBeNull();

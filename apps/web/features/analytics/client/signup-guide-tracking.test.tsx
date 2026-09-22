@@ -10,16 +10,16 @@ vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready, authenticated
 describe("guide tracking preserves existing navigation", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("does not wait for auth readiness to observe a view", () => {
+  it("waits for auth readiness so the first recorded audience is accurate", () => {
     ready = false;
     const view = vi.spyOn(signupFunnelTracker, "guideView").mockImplementation(() => undefined);
     const { rerender, container } = render(<SignupGuideView guide="elina" locale="ko" />);
-    expect(view).toHaveBeenCalledWith("elina", "ko", "unknown");
+    expect(view).not.toHaveBeenCalled();
     expect(container).toBeEmptyDOMElement();
     ready = true;
     rerender(<SignupGuideView guide="elina" locale="ko" />);
     expect(view).toHaveBeenLastCalledWith("elina", "ko", "guest");
-    // The tracker itself dedupes repeated effects; it never rewrites the first audience.
+    expect(view).toHaveBeenCalledTimes(1);
   });
 
   it("records the current audience without canceling or awaiting the link action", () => {

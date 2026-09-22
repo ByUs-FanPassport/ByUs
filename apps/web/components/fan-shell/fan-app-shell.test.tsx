@@ -146,6 +146,6 @@ describe("fan app shell navigation", () => {
     const footerContainers = screen
       .getByRole("contentinfo")
       .querySelectorAll("[data-fan-content-container]");
-    expect(footerContainers).toHaveLength(2);
+    expect(footerContainers).toHaveLength(3);
   });
 });

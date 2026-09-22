@@ -432,14 +432,14 @@ describe("benefit screens", () => {
     render(<BenefitDetailScreen benefitId={elinaBenefit.id} locale="ko" />);
 
     expect(await screen.findByText("현재 보유한 응모권이 없어요.")).toBeInTheDocument();
-    expect(screen.getByText(/팬 인증과 엘리나 LIVE 예약으로 응모권을 받을 수 있어요/)).toBeInTheDocument();
+    expect(screen.getByText(/팬 인증과 엘리나 페이지 활동으로 응모권을 모을 수 있어요/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "팬 인증하고 응모권 받기" })).toHaveAttribute(
       "href",
-      "/c/elina/verify?locale=ko&returnTo=%2Flive%2Felina-banksy-instagram-20260918%3Flocale%3Dko",
+      "/c/elina/verify?locale=ko&returnTo=%2Fc%2Felina%2Fraffles%3Flocale%3Dko",
     );
-    expect(screen.getByRole("link", { name: "LIVE 예약하고 응모권 받기" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "엘리나 페이지에서 응모권 모으기" })).toHaveAttribute(
       "href",
-      "/live/elina-banksy-instagram-20260918?locale=ko",
+      "/elina?locale=ko",
     );
   });
   it("keeps prior IfeW entry history when the current balance is zero", async () => {

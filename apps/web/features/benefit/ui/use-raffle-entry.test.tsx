@@ -430,9 +430,10 @@ describe("raffle entry controller", () => {
   });
 
   it("blocks POST on durable storage failure and retries the same in-memory key once storage recovers", async () => {
-    const originalSetItem = Storage.prototype.setItem;
+    const storagePrototype = Object.getPrototypeOf(window.sessionStorage) as Storage;
+    const originalSetItem = storagePrototype.setItem;
     let fail = true;
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+    vi.spyOn(storagePrototype, "setItem").mockImplementation(function (this: Storage, key, value) {
       if (fail) { fail = false; throw new Error("quota exceeded"); }
       return Reflect.apply(originalSetItem, this, [key, value]);
     });

@@ -1069,15 +1069,15 @@ export const messages = {
     "fr": "participations"
   },
   "mcbf1b034e6dd": {
-    "ja": "ファン認証とElinaのLIVE予約で抽選券を獲得できます。使用する枚数を選び、ご自身で応募してください。",
-    "zh-Hans": "通过粉丝验证和预约Elina LIVE可获得抽奖券。请选择使用数量并自行提交。",
-    "zh-Hant": "通過粉絲驗證和預約Elina LIVE可獲得抽獎券。請選擇使用數量並自行提交。",
-    "es": "Puedes obtener boletos mediante la verificación de fan y la reserva de un LIVE de Elina. Elige cuántos usar y envía tú mismo la participación.",
-    "id": "Kamu bisa mendapatkan tiket undian melalui verifikasi fan dan reservasi LIVE Elina. Pilih jumlah yang akan digunakan dan kirim entrimu sendiri.",
-    "vi": "Bạn có thể nhận vé quay thưởng qua xác minh fan và đặt chỗ LIVE Elina. Hãy chọn số vé sẽ dùng và tự gửi lượt tham gia.",
-    "th": "รับบัตรจับรางวัลได้จากการยืนยันแฟนคลับและจอง LIVE ของ Elina เลือกจำนวนที่จะใช้แล้วส่งรายการด้วยตนเอง",
-    "pt": "Você pode obter tickets com a verificação de fã e a reserva de um LIVE de Elina. Escolha quantos quer usar e envie sua participação.",
-    "fr": "Vous pouvez obtenir des tickets grâce à la vérification de fan et à la réservation d’un LIVE d’Elina. Choisissez combien en utiliser et envoyez vous-même votre participation."
+    "ja": "ファン認証やElinaのページでのアクティビティで抽選券を獲得できます。使用する枚数を選んで応募してください。",
+    "zh-Hans": "通过粉丝验证和参与Elina页面活动可获得抽奖券。请选择使用数量并提交报名。",
+    "zh-Hant": "通過粉絲驗證和參與Elina頁面活動可獲得抽獎券。請選擇使用數量並提交報名。",
+    "es": "Puedes conseguir boletos al verificar que eres fan y participar en la página de Elina. Elige cuántos usar y envía tu participación.",
+    "id": "Kamu bisa mendapatkan tiket undian dengan verifikasi fan dan beraktivitas di halaman Elina. Pilih jumlah tiket lalu kirim entrimu.",
+    "vi": "Bạn có thể nhận vé quay thưởng bằng cách xác minh fan và tham gia hoạt động trên trang Elina. Hãy chọn số vé rồi gửi lượt tham gia.",
+    "th": "รับบัตรจับรางวัลได้จากการยืนยันแฟนคลับและร่วมกิจกรรมบนหน้า Elina เลือกจำนวนบัตรที่ต้องการใช้แล้วส่งรายการเข้าร่วม",
+    "pt": "Você pode ganhar tickets ao verificar que é fã e participar das atividades na página da Elina. Escolha quantos usar e envie sua participação.",
+    "fr": "Vous pouvez obtenir des tickets en confirmant votre statut de fan et en participant aux activités sur la page d’Elina. Choisissez combien en utiliser, puis validez votre participation."
   },
   "m37ca2a744c3b": {
     "ja": "ifewのファン認証がまだの場合、初回認証で抽選券を獲得できます。使用する枚数を選び、ご自身で応募してください。",
@@ -1102,15 +1102,15 @@ export const messages = {
     "fr": "Confirmer mon statut de fan"
   },
   "md1cd04ba68a2": {
-    "ja": "参加枠を予約",
-    "zh-Hans": "预约名额",
-    "zh-Hant": "預約名額",
-    "es": "Reservar un lugar",
-    "id": "Pesan tempat",
-    "vi": "Đặt chỗ",
-    "th": "จองที่",
-    "pt": "Reservar uma vaga",
-    "fr": "Réserver une place"
+    "ja": "Elinaのページで抽選券を集める",
+    "zh-Hans": "前往Elina页面获取抽奖券",
+    "zh-Hant": "前往Elina頁面取得抽獎券",
+    "es": "Conseguir boletos en la página de Elina",
+    "id": "Dapatkan tiket di halaman Elina",
+    "vi": "Nhận vé trên trang Elina",
+    "th": "รับบัตรบนหน้า Elina",
+    "pt": "Ganhar tickets na página da Elina",
+    "fr": "Obtenir des tickets sur la page d’Elina"
   },
   "m308319df82fd": {
     "ja": "ifewファン認証をする",
@@ -1124,15 +1124,15 @@ export const messages = {
     "fr": "Confirmer mon statut de fan d’ifew"
   },
   "m4a86836b1b99": {
-    "ja": "ElinaのLIVEを見る",
-    "zh-Hans": "查看Elina LIVE",
-    "zh-Hant": "查看Elina LIVE",
-    "es": "Ver el LIVE de Elina",
-    "id": "Lihat LIVE Elina",
-    "vi": "Xem LIVE Elina",
-    "th": "ดู LIVE ของ Elina",
-    "pt": "Ver o LIVE de Elina",
-    "fr": "Voir le LIVE d’Elina"
+    "ja": "Elinaのページを見る",
+    "zh-Hans": "查看Elina页面",
+    "zh-Hant": "查看Elina頁面",
+    "es": "Ver la página de Elina",
+    "id": "Lihat halaman Elina",
+    "vi": "Xem trang Elina",
+    "th": "ดูหน้า Elina",
+    "pt": "Ver a página da Elina",
+    "fr": "Voir la page d’Elina"
   },
   "m4a7cac3f80d1": {
     "ja": "ifewのLIVEを見る",

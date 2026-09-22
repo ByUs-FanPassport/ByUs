@@ -5,8 +5,8 @@ import type { Route } from "next";
 // with top-level app routes and public asset directories (checked by tests).
 export const RESERVED_CREATOR_HANDLES = [
   "admin", "api", "benefits", "bias", "c", "celebrities", "connect", "creator",
-  "guide", "live", "login", "my", "notifications", "onboarding", "pages",
-  "passports", "privacy", "s", "settings", "stamps", "terms",
+  "go", "guide", "live", "login", "my", "notifications", "o", "onboarding", "pages",
+  "passports", "privacy", "s", "settings", "stamps", "t", "terms",
   "fonts", "images", "share", "_next", ".well-known",
 ] as const;
 
