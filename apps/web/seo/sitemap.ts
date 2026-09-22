@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 import { canonicalUrl, isPrivatePath, isRehearsalPath, languageAlternates, type SeoLocale } from "./metadata";
 
-export const STATIC_PUBLIC_PATHS = ["/", "/celebrities", "/live", "/guide", "/pages/elina-fan-guide", "/pages/us-fanmeetings", "/pages/creator-onboarding", "/pages/partners", "/pages/onchain"];
+export const STATIC_PUBLIC_PATHS = ["/", "/celebrities", "/live", "/guide", "/pages/us-fanmeetings", "/pages/creator-onboarding", "/pages/partners", "/pages/onchain"];
 
 export function buildSitemap(content: readonly { path: string; locale: SeoLocale }[]): MetadataRoute.Sitemap {
   const paths = new Map<string, Set<SeoLocale>>();
