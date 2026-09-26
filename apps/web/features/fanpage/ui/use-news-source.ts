@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { withRequestDeadline } from "@/features/reliability/client/request-deadline";
 type Page<T> = { items: T[]; nextCursor: string | null };
 type State<T> = { url: string | null; status: "loading" | "ready" | "error"; data: T[]; nextCursor: string | null; moreLoading: boolean; moreError: boolean };
 export function useNewsSource<T>(url: string | null, parse: (body: unknown) => Page<T>, key: (item: T) => string, auth?: { key: string; ready: boolean; getToken: () => Promise<string | null> }) {
@@ -22,11 +23,13 @@ export function useNewsSource<T>(url: string | null, parse: (body: unknown) => P
       commit(append ? {...snapshot,moreLoading:true,moreError:false} : {...snapshot,status:"loading",data:[],nextCursor:null,moreLoading:false,moreError:false});
       try {
         const address = cursor ? `${url}${url.includes("?") ? "&" : "?"}cursor=${encodeURIComponent(cursor)}` : url;
-        const token = tokenProvider.current ? await tokenProvider.current() : null;
-        current.signal.throwIfAborted();
-        const response = await fetch(address,{signal:current.signal,cache:"no-store",credentials:"omit",headers:token ? {Authorization:`Bearer ${token}`} : undefined});
-        if (!response.ok) throw Error();
-        const page = parse(await response.json());
+        const page = await withRequestDeadline(async signal => {
+          const token = tokenProvider.current ? await tokenProvider.current() : null;
+          signal.throwIfAborted();
+          const response = await fetch(address,{signal,cache:"no-store",credentials:"omit",headers:token ? {Authorization:`Bearer ${token}`} : undefined});
+          if (!response.ok) throw Error();
+          return parse(await response.json());
+        }, { signal: current.signal });
         if (current.signal.aborted || !active) return;
         if (page.nextCursor && page.nextCursor === cursor) throw Error("Cursor did not advance");
         const data = new Map((append ? snapshot.data : []).map(item => [key(item),item]));

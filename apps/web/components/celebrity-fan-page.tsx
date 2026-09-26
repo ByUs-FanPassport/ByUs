@@ -11,7 +11,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { ArrowRight, BadgeCheck, BookOpen } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "./fan-shell/fan-app-shell";
 import { AuthIntentLink } from "./auth-intent-link";
@@ -50,10 +50,20 @@ import { CreatorMediaPanel } from "@/features/media/ui/creator-media-panel";
 export { flattenLiveCatalog } from "@/features/fanpage/domain/live-catalog";
 
 export type CelebrityFanTab = "home" | "community" | "media" | "certifications" | "raffles" | "leaderboard" | "notice" | "live" | "benefits";
-const mainTabs = ["home", "community", "media", "certifications", "raffles", "leaderboard"] as const;
-const labels = { ko: { home: "홈", community: "팬 게시판", media: "미디어", certifications: "찐팬 인증", raffles: "래플 응모", leaderboard: "리더보드" }, en: { home: "Home", community: "Community", media: "Media", certifications: "Fan verification", raffles: "Raffles", leaderboard: "Leaderboard" } ,
-  ...additionalLocales((translationLocale) => ({ home: localizedMessages.mf4c213b8593e[translationLocale], community: localizedMessages.mfbe230aec6fe[translationLocale], media: localizedMessages.mef318d6cd5e2[translationLocale], certifications: localizedMessages.m2bc194a0a5a0[translationLocale], raffles: localizedMessages.m6172ae5badc6[translationLocale], leaderboard: localizedMessages.madeb99f7d16f[translationLocale] }))
-};
+const mainTabs = ["home", "notice", "community", "media", "certifications", "raffles", "leaderboard"] as const;
+const labels = {
+  ko: { home: "홈", notice: "소식", community: "팬 게시판", media: "미디어", certifications: "찐팬 인증", raffles: "래플 응모", leaderboard: "리더보드" },
+  en: { home: "Home", notice: "Updates", community: "Community", media: "Media", certifications: "Fan verification", raffles: "Raffles", leaderboard: "Leaderboard" },
+  ja: { home: "ホーム", notice: "最新情報", community: "ファン掲示板", media: "メディア", certifications: "ファン認証", raffles: "抽選", leaderboard: "ランキング" },
+  "zh-Hans": { home: "首页", notice: "动态", community: "粉丝社区", media: "媒体", certifications: "粉丝验证", raffles: "抽选", leaderboard: "排行榜" },
+  "zh-Hant": { home: "首頁", notice: "動態", community: "粉絲社群", media: "媒體", certifications: "粉絲驗證", raffles: "抽選", leaderboard: "排行榜" },
+  es: { home: "Inicio", notice: "Novedades", community: "Comunidad", media: "Multimedia", certifications: "Verificación de fans", raffles: "Sorteos", leaderboard: "Clasificación" },
+  id: { home: "Beranda", notice: "Pembaruan", community: "Komunitas", media: "Media", certifications: "Verifikasi penggemar", raffles: "Undian", leaderboard: "Papan peringkat" },
+  vi: { home: "Trang chủ", notice: "Tin mới", community: "Cộng đồng", media: "Thư viện", certifications: "Xác minh người hâm mộ", raffles: "Quay thưởng", leaderboard: "Bảng xếp hạng" },
+  th: { home: "หน้าแรก", notice: "ข่าวสาร", community: "ชุมชนแฟนคลับ", media: "สื่อ", certifications: "การยืนยันแฟนคลับ", raffles: "จับรางวัล", leaderboard: "ลีดเดอร์บอร์ด" },
+  pt: { home: "Início", notice: "Novidades", community: "Comunidade", media: "Mídia", certifications: "Verificação de fã", raffles: "Sorteios", leaderboard: "Ranking" },
+  fr: { home: "Accueil", notice: "Actualités", community: "Communauté", media: "Médias", certifications: "Vérification de fan", raffles: "Tirages au sort", leaderboard: "Classement" },
+} as const;
 const socialLabels = {
   ko: { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", chzzk: "치지직" },
   en: { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", chzzk: "CHZZK" },
@@ -73,6 +83,15 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const avatar = useAvatar();
   const raffles = useCreatorRaffles(celebrity.slug, locale);
   const tab = initialTab === "benefits" ? "raffles" : initialTab;
+  const tabsRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = tabsRef.current, active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav || !active) return;
+    const bounds = nav.getBoundingClientRect(), item = active.getBoundingClientRect();
+    if (item.left < bounds.left || item.right > bounds.right) {
+      nav.scrollLeft += item.left - bounds.left - (nav.clientWidth - active.clientWidth) / 2;
+    }
+  }, [tab, locale]);
   const creator = my.state.status === "ready" ? my.state.data.creators.find((item) => item.celebrity.slug === celebrity.slug) : undefined;
   const nickname = my.state.status === "ready" ? my.state.data.profile.nickname : null;
   const passport = creator?.passport;
@@ -109,7 +128,7 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
         <div className={styles.heroContent}><p className={styles.eyebrow}>BYUS FAN PAGE</p><h1 id="celebrity-heading">{celebrity.name}</h1><CreatorRolesText roles={celebrity.roles} locale={locale} /><p>{locale === "ko" ? "최근 활동과 LIVE 소식을 한곳에서" : translate(locale, localizedMessages.m9bcb85b2bed2, "Recent activity and LIVE updates in one place.")}</p><div className={styles.socials}>{celebrity.socialLinks.map((social) => { const socialLabel = socialLabels[locale][social.platform]; return <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" aria-label={`${socialLabel}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.me1f5c62bd1d6, "new window")}`} data-platform={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} /><span>{socialLabel}</span></a>; })}</div>{sessionReady ? <><ReactionAction slug={celebrity.slug} locale={locale} variant="compact" /><FanCommunity slug={celebrity.slug} locale={locale} /></> : null}</div>
       </section>
       <ElinaAttendanceEntry celebritySlug={celebrity.slug} locale={locale} />
-      <nav className={styles.tabs} aria-label={locale === "ko" ? `${celebrity.name} 팬페이지 메뉴` : translate(locale, localizedMessages.m0f2000ce3e28, "{0} fan page menu", [celebrity.name])}>{mainTabs.map((value) => <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{value === "raffles" && raffles.available.length > 0 ? <span className={styles.availableRaffleTab}>{labels[locale][value]}{" "}<span>{raffles.available.length}</span></span> : labels[locale][value]}</Link>)}</nav>
+      <nav ref={tabsRef} className={styles.tabs} aria-label={locale === "ko" ? `${celebrity.name} 팬페이지 메뉴` : translate(locale, localizedMessages.m0f2000ce3e28, "{0} fan page menu", [celebrity.name])}>{mainTabs.map((value) => <Link key={value} href={tabHref(value)} aria-current={tab === value ? "page" : undefined}>{value === "raffles" && raffles.available.length > 0 ? <span className={styles.availableRaffleTab}>{labels[locale][value]}{" "}<span>{raffles.available.length}</span></span> : labels[locale][value]}</Link>)}</nav>
       <section className={`${styles.fanbar} ${passport ? styles.ownedFanbar : ""}`} aria-label={locale === "ko" ? "내 팬 활동" : translate(locale, localizedMessages.mfd82d54cca54, "My fan activity")}>
         {!sessionReady || (auth.authenticated && my.state.status === "loading") ? <p role="status">{locale === "ko" ? "내 팬 활동을 확인하고 있어요." : translate(locale, localizedMessages.mf1295c4df607, "Loading your fan activity.")}</p> : auth.authenticated && my.state.status === "error" ? <p role="alert">{locale === "ko" ? "내 팬 활동을 불러오지 못했어요." : translate(locale, localizedMessages.m0aea4924b59e, "Couldn't load your fan activity.")} <button onClick={my.retry}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m99f026b1d3a8, "Retry")}</button></p> : passport ? <>
           <div className={styles.fanIdentity}>{portrait(48)}<strong>{nickname ?? (locale === "ko" ? "내 팬 활동" : translate(locale, localizedMessages.m33aabe47ea2a, "My activity"))}</strong>{tab === "home" && <FanTicketGuide creatorSlug={celebrity.slug} creatorName={celebrity.name} locale={locale} compact checkinOnly />}</div>

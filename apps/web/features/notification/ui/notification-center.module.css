@@ -172,6 +172,19 @@
   gap: 24px;
 }
 
+.readError {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-error);
+  border-radius: 12px;
+  color: var(--color-error);
+}
+
+.readError p { margin: 0; }
+.readError div { display: flex; gap: 8px; margin-top: 12px; }
+.readError button,
+.readError a { color: inherit; font: inherit; font-weight: 750; }
+
 .list {
   overflow: hidden;
   margin-bottom: 20px;

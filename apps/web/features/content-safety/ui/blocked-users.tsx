@@ -12,7 +12,7 @@ export function BlockedUsers({ locale }: { locale: AppLocale }) {
   return <section className={styles.section}><h2>{copy.block}</h2>
     {resource.state.status === "ready" ? resource.state.data.items.length ? <ul className={styles.list}>{resource.state.data.items.map(user => <li key={user.id} className={`${styles.card} ${styles.row}`}>
       <span className={styles.meta}><img src={user.avatarUrl} alt="" width={32} height={32} /><strong>{user.nickname}</strong></span>
-      <button className={styles.button} type="button" disabled={mutation.busy} onClick={() => void remove(user.id)}>{copy.unblock}</button>
+      <button className={styles.button} type="button" disabled={mutation.busy} aria-label={`${copy.unblock}: ${user.nickname}`} onClick={() => void remove(user.id)}>{copy.unblock}</button>
     </li>)}</ul> : <p className={styles.empty}>{copy.noBlocks}</p> : <p role="status">{resource.state.status === "loading" ? copy.loading : copy.failed}{resource.state.status === "error" && <button className={styles.button} onClick={resource.retry}>{copy.retry}</button>}</p>}
     {mutation.error && <p className={styles.error} role="alert">{mutation.error}</p>}
   </section>;

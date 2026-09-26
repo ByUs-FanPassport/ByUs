@@ -295,10 +295,13 @@
 }
 .message {
   min-height: 24px;
-  margin: 24px 0 0;
+  margin: 12px 0 0 58px;
   color: oklch(40% 0.16 145);
   font-size: 13px;
-  text-align: center;
+  font-weight: 700;
+}
+.message[data-tone="error"] {
+  color: var(--color-error);
 }
 .pushRow {
   margin: 18px 0 0 58px;
@@ -426,7 +429,8 @@
   .installButton {
     margin-left: 0;
   }
-  .inlineStatus {
+  .inlineStatus,
+  .message {
     margin-left: 0;
   }
   .nicknameResult {

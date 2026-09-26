@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { useFanpageResource } from "@/features/fanpage/ui/use-fanpage-resource";
@@ -24,12 +24,17 @@ function Manager({ liveEventId, locale, readOnly }: { liveEventId: string; local
   const c = participationCopy(locale), action = useParticipationAction(), [cursor, setCursor] = useState<string | null>(null);
   const resource = useFanpageResource(`/api/admin/live-events/${liveEventId}/submissions${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, parse);
   const replay = useFanpageResource(`/api/admin/live-events/${liveEventId}/replay`, parseReplay);
+  const [accepting, setAccepting] = useState(false), [deadlineError, setDeadlineError] = useState(false), deadline = useRef<HTMLInputElement>(null), deadlineErrorId = useId();
+  const settingsRevision = resource.state.status === "ready" ? resource.state.data.settings.revision : null;
+  const settingsAccepting = resource.state.status === "ready" ? resource.state.data.settings.accepting : false;
+  useEffect(() => { if (settingsRevision !== null) { setAccepting(settingsAccepting); setDeadlineError(false); } }, [settingsRevision, settingsAccepting]);
   return <section className={styles.panel}><h2>{c.question} · {c.cheer}</h2>
     {resource.state.status !== "ready" ? <ParticipationState locale={locale} status={resource.state.status} retry={resource.retry} /> : <>
       <form key={resource.state.data.settings.revision} className={styles.form} onSubmit={async event => {
         event.preventDefault(); if (resource.state.status !== "ready") return; const data = new FormData(event.currentTarget);
+        if (accepting && !data.get("closesAt")) { setDeadlineError(true); requestAnimationFrame(() => deadline.current?.focus()); return; }
         try { const result = await action.run(`/api/admin/live-events/${liveEventId}/submission-settings`, "PUT", { expectedRevision: resource.state.data.settings.revision, accepting: data.get("accepting") === "on", closesAt: data.get("closesAt") ? scheduleInstant(String(data.get("closesAt")), "Asia/Seoul") : null, visibility: data.get("visibility") }, value => liveSubmissionSettingsSchema.parse(value)); if (result) resource.retry(); } catch { action.setError("INVALID"); }
-      }}><fieldset disabled={readOnly || action.busy}><label><span>{c.accepting}</span><input name="accepting" type="checkbox" defaultChecked={resource.state.data.settings.accepting} /></label><label>{c.deadline} (Asia/Seoul)<input name="closesAt" type="datetime-local" defaultValue={resource.state.data.settings.closesAt ? localScheduleTime(resource.state.data.settings.closesAt, "Asia/Seoul") : ""} /></label><label>{c.selected}<select name="visibility" defaultValue={resource.state.data.settings.visibility}><option value="public">{c.publicVisibility}</option><option value="members">{c.memberVisibility}</option></select></label><FanAction type="submit">{c.save}</FanAction></fieldset></form>
+      }}><fieldset disabled={readOnly || action.busy}><label><span>{c.accepting}</span><input name="accepting" type="checkbox" checked={accepting} onChange={event => { setAccepting(event.target.checked); setDeadlineError(false); }} /></label><label>{c.deadline} (Asia/Seoul)<input ref={deadline} name="closesAt" type="datetime-local" required={accepting} aria-invalid={deadlineError || undefined} aria-describedby={deadlineError ? deadlineErrorId : undefined} defaultValue={resource.state.data.settings.closesAt ? localScheduleTime(resource.state.data.settings.closesAt, "Asia/Seoul") : ""} onInvalid={() => setDeadlineError(true)} onChange={() => setDeadlineError(false)} />{deadlineError && <span id={deadlineErrorId} className={styles.meta}>{c.deadlineRequired}</span>}</label><label>{c.selected}<select name="visibility" defaultValue={resource.state.data.settings.visibility}><option value="public">{c.publicVisibility}</option><option value="members">{c.memberVisibility}</option></select></label><FanAction type="submit">{c.save}</FanAction></fieldset></form>
       <ul className={styles.list}>{resource.state.data.items.map(item => <Submission key={`${item.id}:${item.revision}`} item={item} locale={locale} readOnly={readOnly} refresh={resource.retry} />)}</ul>
       {!resource.state.data.items.length && <p>{c.empty}</p>}<div className={styles.actions}>{cursor && <FanAction onClick={() => setCursor(null)}>{c.back}</FanAction>}{resource.state.data.nextCursor && <FanAction onClick={() => resource.state.status === "ready" && setCursor(resource.state.data.nextCursor)}>{c.more}</FanAction>}</div>
     </>}

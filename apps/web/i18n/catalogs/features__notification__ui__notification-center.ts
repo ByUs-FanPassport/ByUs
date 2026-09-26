@@ -374,5 +374,27 @@ export const messages = {
     "th": "ต้องดำเนินการ",
     "pt": "Ação necessária",
     "fr": "Action requise"
+  },
+  "m7c3fdceca820": {
+    "ja": "既読にできませんでした。もう一度試すか、通知先へ移動できます。",
+    "zh-Hans": "无法标为已读。你可以重试或直接前往通知。",
+    "zh-Hant": "無法標為已讀。你可以重試或直接前往通知。",
+    "es": "No pudimos marcar esta notificación como leída. Inténtalo de nuevo o continúa a la notificación.",
+    "id": "Notifikasi ini tidak dapat ditandai sudah dibaca. Coba lagi atau lanjutkan ke notifikasi.",
+    "vi": "Không thể đánh dấu thông báo này là đã đọc. Hãy thử lại hoặc tiếp tục đến thông báo.",
+    "th": "ไม่สามารถทำเครื่องหมายว่าอ่านแล้วได้ ลองอีกครั้งหรือไปยังการแจ้งเตือน",
+    "pt": "Não foi possível marcar esta notificação como lida. Tente novamente ou continue para a notificação.",
+    "fr": "Impossible de marquer cette notification comme lue. Réessayez ou ouvrez directement la notification."
+  },
+  "m333948906d83": {
+    "ja": "通知先へ移動",
+    "zh-Hans": "前往通知",
+    "zh-Hant": "前往通知",
+    "es": "Continuar a la notificación",
+    "id": "Lanjutkan ke notifikasi",
+    "vi": "Tiếp tục đến thông báo",
+    "th": "ไปยังการแจ้งเตือน",
+    "pt": "Continuar para a notificação",
+    "fr": "Ouvrir la notification"
   }
 } satisfies Record<string, TranslatedMessage>;

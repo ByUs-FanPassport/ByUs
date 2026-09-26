@@ -50,7 +50,7 @@ export function useParticipationAction() {
 }
 export function ActionFeedback({ locale, error, saved }: { locale: AppLocale; error?: string; saved?: boolean }) {
   const c = participationCopy(locale);
-  const message = error?.includes("CLOSED") ? c.closed : error?.includes("MEMBERS_REQUIRED") ? c.members : error?.includes("AUTHENTICATION") ? c.login : c.error;
+  const message = error?.includes("CONFLICT") ? c.conflict : error?.includes("CLOSED") ? c.closed : error?.includes("MEMBERS_REQUIRED") ? c.members : error?.includes("AUTHENTICATION") ? c.login : c.error;
   return error ? <p role="alert" className={styles.feedback}>{message}</p> : saved ? <p role="status" className={styles.feedback}>{c.saved}</p> : null;
 }
 export function ParticipationPage({ locale, title, path, children }: { locale: AppLocale; title: string; path: string; children: ReactNode }) {
@@ -60,18 +60,33 @@ export function ParticipationState({ locale, status, retry }: { locale: AppLocal
   const c = participationCopy(locale);
   return <div role={status === "error" ? "alert" : "status"} className={styles.feedback}><p>{status === "error" ? c.error : c.loading}</p>{status === "error" && retry && <FanAction onClick={retry}>{c.retry}</FanAction>}</div>;
 }
-export function ScheduleFields({ locale, initial }: { locale: AppLocale; initial?: Partial<ScheduleInput> }) {
+export type ScheduleFieldErrors = Partial<Record<"startsAt" | "endsAt" | "timeZone" | "sourceUrl", string>>;
+export function ScheduleFields({ locale, initial, errors = {} }: { locale: AppLocale; initial?: Partial<ScheduleInput>; errors?: ScheduleFieldErrors }) {
   const c = participationCopy(locale), zone = initial?.timeZone ?? "Asia/Seoul";
+  const error = (name: keyof ScheduleFieldErrors) => ({ "aria-invalid": Boolean(errors[name]) || undefined, "aria-describedby": errors[name] ? `schedule-${name}-error` : undefined });
   return <>
     <label>{c.event}<select name="kind" defaultValue={initial?.kind ?? "event"}>{(["broadcast", "concert", "birthday", "event"] as const).map(kind => <option value={kind} key={kind}>{c[kind]}</option>)}</select></label>
     <label>{c.title}<input name="title" required maxLength={160} defaultValue={initial?.title} /></label>
     <label>{c.description}<textarea name="description" rows={3} maxLength={4000} defaultValue={initial?.description} /></label>
-    <div className={styles.columns}><label>{c.start}<input name="startsAt" required type="datetime-local" defaultValue={initial?.startsAt ? localScheduleTime(initial.startsAt, zone) : ""} /></label><label>{c.end}<input name="endsAt" required type="datetime-local" defaultValue={initial?.endsAt ? localScheduleTime(initial.endsAt, zone) : ""} /></label></div>
-    <label>{c.timezone}<input name="timeZone" required maxLength={100} defaultValue={zone} /></label>
+    <div className={styles.columns}><label>{c.start}<input name="startsAt" required type="datetime-local" defaultValue={initial?.startsAt ? localScheduleTime(initial.startsAt, zone) : ""} {...error("startsAt")} />{errors.startsAt && <span id="schedule-startsAt-error" className={styles.meta}>{errors.startsAt}</span>}</label><label>{c.end}<input name="endsAt" required type="datetime-local" defaultValue={initial?.endsAt ? localScheduleTime(initial.endsAt, zone) : ""} {...error("endsAt")} />{errors.endsAt && <span id="schedule-endsAt-error" className={styles.meta}>{errors.endsAt}</span>}</label></div>
+    <label>{c.timezone}<input name="timeZone" required maxLength={100} defaultValue={zone} {...error("timeZone")} />{errors.timeZone && <span id="schedule-timeZone-error" className={styles.meta}>{errors.timeZone}</span>}</label>
     <label>{c.location}<input name="location" maxLength={300} defaultValue={initial?.location} /></label>
     <label>{c.instructions}<textarea name="participationInstructions" rows={2} maxLength={2000} defaultValue={initial?.participationInstructions} /></label>
-    <label>{c.source}<input name="sourceUrl" required type="url" maxLength={2048} defaultValue={initial?.sourceUrl} /></label>
+    <label>{c.source}<input name="sourceUrl" required type="url" maxLength={2048} defaultValue={initial?.sourceUrl} {...error("sourceUrl")} />{errors.sourceUrl && <span id="schedule-sourceUrl-error" className={styles.meta}>{errors.sourceUrl}</span>}</label>
   </>;
+}
+export function scheduleFieldErrors(form: HTMLFormElement, locale: AppLocale): ScheduleFieldErrors {
+  const c = participationCopy(locale), data = new FormData(form), errors: ScheduleFieldErrors = {};
+  const timeZone = String(data.get("timeZone") ?? ""), startsAt = String(data.get("startsAt") ?? ""), endsAt = String(data.get("endsAt") ?? "");
+  try { new Intl.DateTimeFormat("en", { timeZone }); } catch { errors.timeZone = c.invalidTimeZone; }
+  let start: string | undefined, end: string | undefined;
+  if (!errors.timeZone) {
+    try { start = scheduleInstant(startsAt, timeZone); } catch { errors.startsAt = c.invalidLocalTime; }
+    try { end = scheduleInstant(endsAt, timeZone); } catch { errors.endsAt = c.invalidLocalTime; }
+  }
+  if (start && end && Date.parse(start) >= Date.parse(end)) errors.endsAt = c.endAfterStart;
+  try { if (new URL(String(data.get("sourceUrl") ?? "")).protocol !== "https:") errors.sourceUrl = c.httpsRequired; } catch { errors.sourceUrl = c.httpsRequired; }
+  return errors;
 }
 export function scheduleFormValues(form: HTMLFormElement) {
   const values = Object.fromEntries(new FormData(form));

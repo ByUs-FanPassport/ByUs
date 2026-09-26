@@ -11,6 +11,7 @@ import styles from "./operations.module.css";
 import listStyles from "./notice-comment-manager.module.css";
 
 const parse = (value: unknown) => reportPageSchema.parse(value);
+const targetLabels = { fan_post: "팬 게시글", fan_post_comment: "팬 게시글 댓글", notice: "공식 소식", notice_comment: "공식 소식 댓글", cheer: "응원글", live_submission: "LIVE 질문·응원" } as const;
 export function ContentReportManager() {
   const auth = usePrivy();
   return <ReportsForOwner key={auth.user?.id ?? "guest"} />;
@@ -41,11 +42,13 @@ function ReportsForOwner() {
       {resource.state.data.items.length === 0 && <p>이 상태의 신고가 없습니다.</p>}
       {resource.state.data.items.map(report => <article className={listStyles.card} key={report.id}>
         <header><strong>{report.target?.celebritySlug ?? "삭제된 콘텐츠"}</strong><time dateTime={report.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(report.createdAt))}</time></header>
+        <p><strong>{targetLabels[report.targetType]}</strong> · 버전 {report.targetRevision}</p>
+        <p>대상 ID: <code style={{ overflowWrap: "anywhere" }}>{report.targetId}</code>{report.targetType === "fan_post" && report.target && <> · <a href={`/c/${encodeURIComponent(report.target.celebritySlug)}/community/${report.targetId}?locale=ko`} target="_blank" rel="noopener noreferrer">원문 보기, 새 창</a></>}</p>
         <p>{report.target?.body ?? "현재 표시할 수 없는 콘텐츠입니다."}</p><p><strong>신고 사유</strong> · {report.reason}</p>
         {status === "open" && session.admin.role !== "viewer" && <button type="button" disabled={busy} onClick={() => { clear(); setSelected(report.id); }}>신고 처리</button>}
         {selected === report.id && <form onSubmit={event => { event.preventDefault(); void resolve(); }}>
           <label>처리 결과 <select value={resolution} disabled={busy} onChange={event => { setResolution(event.target.value as "resolved" | "dismissed"); setHideTarget(false); }}><option value="resolved">처리 완료</option><option value="dismissed">반려</option></select></label>
-          {resolution === "resolved" && <label><input type="checkbox" checked={hideTarget} disabled={busy} onChange={event => setHideTarget(event.target.checked)} />콘텐츠 숨김</label>}
+          {resolution === "resolved" && <label><input type="checkbox" checked={hideTarget} disabled={busy} onChange={event => setHideTarget(event.target.checked)} />위 {targetLabels[report.targetType]} 숨김</label>}
           <label htmlFor="report-resolution-reason">처리 사유 (10자 이상)</label><textarea id="report-resolution-reason" minLength={10} maxLength={500} required value={reason} disabled={busy} onChange={event => setReason(event.target.value)} />
           <div><button type="button" disabled={busy} onClick={clear}>취소</button><button type="submit" disabled={busy || reason.trim().length < 10}>{busy ? "저장 중…" : "처리 저장"}</button></div>
         </form>}

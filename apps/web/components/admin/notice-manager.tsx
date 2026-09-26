@@ -123,7 +123,21 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     }
   }, [bodies, editor, language]);
 
+  const dirty = slug !== (current?.slug ?? "") || pinned !== (current?.pinned ?? false)
+    || postType !== (current?.postType ?? "notice") || visibility !== (current?.visibility ?? "public")
+    || (["ko", "en"] as const).some(value => titles[value] !== (current?.localizations[value].title ?? "")
+      || JSON.stringify(bodies[value]) !== JSON.stringify(current?.localizations[value].body ?? emptyDocument));
+  useEffect(() => {
+    if (!dirty) return;
+    const protectDraft = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", protectDraft);
+    return () => window.removeEventListener("beforeunload", protectDraft);
+  }, [dirty]);
+  function confirmDiscard() {
+    return !dirty || window.confirm(locale === "ko" ? "저장하지 않은 변경사항이 있어요. 변경사항을 버리고 이동할까요?" : "You have unsaved changes. Discard them and continue?");
+  }
   function reset() {
+    if (!confirmDiscard()) return;
     setSelectedId(null); setSlug(""); setPinned(false); setPostType("notice"); setVisibility("public"); setTitles({ ko: "", en: "" });
     setBodies({ ko: emptyDocument, en: emptyDocument }); setMessage("");
   }
@@ -231,7 +245,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
         {listState === "loading" && !pending && <p role="status">{locale === "ko" ? "공지를 불러오는 중입니다." : "Loading notices."}</p>}
         {listState === "error" && <button type="button" disabled={interactionLocked} onClick={() => void load()}>{locale === "ko" ? "다시 시도" : "Retry"}</button>}
         {listState === "ready" && pagination.total === 0 && <p>{locale === "ko" ? "공지가 없습니다." : "No notices found."}</p>}
-        {listState === "ready" && pagination.items.map((item) => <button type="button" key={item.id} disabled={interactionLocked} aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}{listState === "ready" && <AdminPagination {...pagination} locale={locale} disabled={interactionLocked} />}</div>
+        {listState === "ready" && pagination.items.map((item) => <button type="button" key={item.id} disabled={interactionLocked} aria-pressed={selectedId === item.id} onClick={() => { if (item.id !== selectedId && confirmDiscard()) setSelectedId(item.id); }}><strong>{item.localizations[locale].title || item.slug}</strong><span>{item.archivedAt ? "ARCHIVED" : item.publicationStatus.toUpperCase()} · r{item.revision}</span></button>)}{listState === "ready" && <AdminPagination {...pagination} locale={locale} disabled={interactionLocked} />}</div>
       <div className={styles.editor}>
         <div className={styles.language}><button type="button" disabled={interactionLocked} aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" disabled={interactionLocked} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
         <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>

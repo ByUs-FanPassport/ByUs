@@ -392,6 +392,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const [languageSaving, setLanguageSaving] = useState(false);
   const [languageError, setLanguageError] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageError, setMessageError] = useState(false);
   const [preferencePending, setPreferencePending] = useState(false);
   const [connectionAction, setConnectionAction] = useState<"channel" | "phone-sms" | "kakao-connect" | "kakao-disconnect" | "kakao-enroll" | "kakao-confirm" | "kakao-cancel" | null>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(
@@ -414,6 +415,10 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   const connectionGenerationRef = useRef(0);
   const pushPendingRef = useRef(false);
   const pushGenerationRef = useRef(0);
+  function showNotificationMessage(value: string, error = false) {
+    setMessage(value);
+    setMessageError(error);
+  }
   useLayoutEffect(() => {
     const ownerChanged = ownerRef.current !== ownerId;
     activeRef.current = true;
@@ -436,7 +441,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       setKakaoEnrollmentConsent(false);
       setNickname("");
       setEditing(false);
-      setMessage("");
+      showNotificationMessage("");
       setState("loading");
     }
     return () => {
@@ -666,7 +671,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     const previousValue = preferences[key];
     setPreferencePending(true);
     setPreferences((current) => current ? { ...current, [key]: value } : current);
-    setMessage("");
+    showNotificationMessage("");
     try {
       const token = await getAccessToken();
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== preferenceGenerationRef.current) return;
@@ -680,11 +685,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       if (!response.ok || typeof body.preferences?.[key] !== "boolean") throw new Error("save");
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== preferenceGenerationRef.current) return;
       setPreferences((current) => current ? { ...current, [key]: body.preferences![key] } : current);
-      setMessage(t.saved);
+      showNotificationMessage(t.saved);
     } catch {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === preferenceGenerationRef.current) {
         setPreferences((current) => current ? { ...current, [key]: previousValue } : current);
-        setMessage(t.failed);
+        showNotificationMessage(t.failed, true);
       }
     } finally {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === preferenceGenerationRef.current) {
@@ -699,7 +704,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     setLanguageError(false);
     if (settings.preferredLocale === nextLocale) return;
     setLanguageSaving(true);
-    setMessage("");
+    showNotificationMessage("");
     try {
       const token = await getAccessToken();
       if (!token) throw new Error("token");
@@ -732,7 +737,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     const ownerAtStart = ownerId;
     const generation = ++connectionGenerationRef.current;
     setConnectionAction("channel");
-    setMessage("");
+    showNotificationMessage("");
     setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? { ...channel, consented } : channel) } : current);
     try {
       const token = await getAccessToken();
@@ -743,11 +748,11 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       if (!response.ok || !body.channel) throw new Error("save");
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
       setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? body.channel! : channel) } : current);
-      setMessage(t.saved);
+      showNotificationMessage(t.saved);
     } catch {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
         setConnections((current) => current ? { ...current, channels: current.channels.map((channel) => channel.id === channelId ? { ...channel, consented: previousValue } : channel) } : current);
-        setMessage(t.failed);
+        showNotificationMessage(t.failed, true);
       }
     } finally {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
@@ -759,13 +764,13 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
 
   async function mutateKakaoEnrollment(action: "start" | "confirm" | "cancel") {
     if (connectionPendingRef.current || !kakaoEnrollment.enabled) return;
-    if ((action === "start" || action === "confirm") && !kakaoEnrollmentConsent) { setMessage(t.kakaoEnrollmentConsentRequired); return; }
+    if ((action === "start" || action === "confirm") && !kakaoEnrollmentConsent) { showNotificationMessage(t.kakaoEnrollmentConsentRequired, true); return; }
     if (action === "confirm" && !kakaoEnrollment.pending) return;
     connectionPendingRef.current = true;
     const ownerAtStart = ownerId;
     const generation = ++connectionGenerationRef.current;
     setConnectionAction(action === "start" ? "kakao-enroll" : action === "confirm" ? "kakao-confirm" : "kakao-cancel");
-    setMessage("");
+    showNotificationMessage("");
     const isCurrent = () => activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current;
     try {
       const token = await getAccessToken();
@@ -794,9 +799,9 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       }
       setKakaoEnrollment((current) => ({ ...current, pending: null }));
       setKakaoEnrollmentConsent(false);
-      setMessage(t.saved);
+      showNotificationMessage(t.saved);
     } catch {
-      if (isCurrent()) setMessage(t.failed);
+      if (isCurrent()) showNotificationMessage(t.failed, true);
     } finally {
       if (isCurrent()) { connectionPendingRef.current = false; setConnectionAction(null); }
     }
@@ -808,7 +813,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     const ownerAtStart = ownerId;
     const generation = ++connectionGenerationRef.current;
     setConnectionAction(connected ? "kakao-disconnect" : "kakao-connect");
-    setMessage("");
+    showNotificationMessage("");
     try {
       const token = await getAccessToken();
       if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
@@ -825,7 +830,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         setPhoneSmsEnabled(body.phoneSmsEnrollment?.enabled === true);
         setKakaoEnrollment(body.kakaoEnrollment ?? { enabled: false, pending: null });
         setKakaoEnrollmentConsent(false);
-        setMessage(t.saved);
+        showNotificationMessage(t.saved);
       } else {
         const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}`, { method: "POST", headers: authHeaders(token) });
         const body = await response.json() as { authorizationUrl?: string };
@@ -835,7 +840,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       }
     } catch {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current)
-        setMessage(t.failed);
+        showNotificationMessage(t.failed, true);
     } finally {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === connectionGenerationRef.current) {
         connectionPendingRef.current = false;
@@ -1187,6 +1192,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               <p>{t.notificationHelp}</p>
             </div>
           </div>
+          {message && <p id="settings-message" className={styles.message} data-tone={messageError ? "error" : "success"} role={messageError ? "alert" : "status"} aria-live={messageError ? "assertive" : "polite"}>{message}</p>}
           <div className={styles.toggles}>
             {(
               [
@@ -1379,14 +1385,6 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         </section>
         <BlockedUsers locale={locale}/>
         <AccountDeletion locale={locale}/>
-        <p
-          id="settings-message"
-          className={styles.message}
-          role="status"
-          aria-live="polite"
-        >
-          {message}
-        </p>
       </FanContentContainer>
     </div>
     </FanAppFrame>

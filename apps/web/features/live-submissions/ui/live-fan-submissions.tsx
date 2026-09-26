@@ -11,11 +11,11 @@ import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__part
 import { toContentLocale, type AppLocale } from "@/i18n/locales";
 import styles from "@/features/schedules/ui/participation.module.css";
 const parse = (value: unknown) => liveSubmissionsPageSchema.parse(value);
-export function LiveFanSubmissions(props: { slug: string; locale: AppLocale }) {
+export function LiveFanSubmissions(props: { slug: string; celebritySlug: string; locale: AppLocale }) {
   const auth = usePrivy();
   return <Submissions key={`${auth.user?.id ?? "guest"}:${props.slug}:${props.locale}`} {...props} />;
 }
-function Submissions({ slug, locale }: { slug: string; locale: AppLocale }) {
+function Submissions({ slug, celebritySlug, locale }: { slug: string; celebritySlug: string; locale: AppLocale }) {
   const c = participationCopy(locale), action = useParticipationAction();
   const [kind, setKind] = useState<"question" | "cheer">("question"), [body, setBody] = useState("");
   const [cursor, setCursor] = useState<string | null>(null), [saved, setSaved] = useState(false);
@@ -29,8 +29,7 @@ function Submissions({ slug, locale }: { slug: string; locale: AppLocale }) {
   return <section className={styles.panel} aria-labelledby={`live-submissions-${slug}`}><h2 id={`live-submissions-${slug}`}>{c.question} · {c.cheer}</h2>
     {!data ? <ParticipationState locale={locale} status={resource.state.status === "error" ? "error" : "loading"} retry={resource.retry} /> : <>
       <p className={styles.meta}>{c.deadline}: {closesAt ? <time dateTime={closesAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(closesAt))} (KST)</time> : c.closed}</p>
-      {data.access === "members_required" && <p>{c.members}</p>}
-      {!action.authenticated ? <FanAction onClick={() => action.login()}>{c.login}</FanAction> : !open ? <p>{c.closed}</p> : data.access !== "members_required" && <form className={styles.form} onSubmit={async event => {
+      {!open ? <p>{c.closed}</p> : data.access === "members_required" ? <><p>{c.members}</p><FanAction href={`/c/${celebritySlug}/verify?locale=${locale}`}>{c.verify}</FanAction></> : !action.authenticated ? <FanAction onClick={() => action.login()}>{c.login}</FanAction> : <form className={styles.form} onSubmit={async event => {
         event.preventDefault();
         try {
           const input = { kind, body: body.trim() };
@@ -49,7 +48,7 @@ function Submissions({ slug, locale }: { slug: string; locale: AppLocale }) {
         <ContentTranslation targetType="live_submission" targetId={item.id} sourceRevision={item.revision} locale={locale}><p>{item.body}</p></ContentTranslation>
         <ContentActions targetType="live_submission" targetId={item.id} locale={locale} canBlock={!item.isOwner} onChanged={resource.retry} />
       </li>)}</ul> : <p>{c.empty}</p>}
-      <div className={styles.actions}>{cursor && <FanAction onClick={() => setCursor(null)}>{c.back}</FanAction>}{data.nextCursor && <FanAction onClick={() => setCursor(data.nextCursor)}>{c.more}</FanAction>}</div>
+      <div className={styles.actions}>{cursor && <FanAction onClick={() => setCursor(null)}>{c.firstPage}</FanAction>}{data.nextCursor && <FanAction onClick={() => setCursor(data.nextCursor)}>{c.more}</FanAction>}</div>
     </>}
   </section>;
 }

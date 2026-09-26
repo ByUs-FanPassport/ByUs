@@ -13,10 +13,10 @@ import { contentCopy } from "@/i18n/catalogs/features__fan_posts__ui";
 import type { AppLocale } from "@/i18n/locales";
 import styles from "@/features/content-safety/ui/content.module.css";
 
-export function PostCard({ post, locale, onChanged, detail = false }: { post: FanPost; locale: AppLocale; onChanged: () => void; detail?: boolean }) {
+export function PostCard({ post, locale, onChanged, onDeleted, detail = false }: { post: FanPost; locale: AppLocale; onChanged: () => void; onDeleted?: () => void; detail?: boolean }) {
   const auth = usePrivy(), copy = contentCopy(locale), mutation = useContentMutation(locale), [editing, setEditing] = useState(false);
   const href = `/c/${post.celebritySlug}/community/${post.id}?locale=${locale}` as Route;
-  async function remove() { if (window.confirm(copy.deleteConfirm) && await mutation.request(`/api/posts/${post.id}`, "DELETE")) onChanged(); }
+  async function remove() { if (window.confirm(copy.deleteConfirm) && await mutation.request(`/api/posts/${post.id}`, "DELETE")) (onDeleted ?? onChanged)(); }
   async function like() { if (await mutation.request(`/api/posts/${post.id}/like`, "PUT", { liked: !post.liked })) onChanged(); }
   if (editing) return <PostComposer slug={post.celebritySlug} locale={locale} post={post} onCancel={() => setEditing(false)} onSaved={() => { setEditing(false); onChanged(); }} />;
   return <article className={styles.card} data-post-id={post.id}>
@@ -30,7 +30,7 @@ export function PostCard({ post, locale, onChanged, detail = false }: { post: Fa
       {!detail && <Link href={href} className={styles.button}><MessageCircle size={16} aria-hidden="true" /> {copy.comments} {post.commentCount.toLocaleString(locale)}</Link>}
       {post.isOwner && <><button type="button" disabled={mutation.busy} onClick={() => setEditing(true)}>{copy.edit}</button><button type="button" disabled={mutation.busy} onClick={() => void remove()}>{copy.delete}</button></>}
     </div>
-    <ContentActions targetType="fan_post" targetId={post.id} locale={locale} canBlock={!post.isOwner} onChanged={onChanged} />
+    {!post.isOwner && <ContentActions targetType="fan_post" targetId={post.id} locale={locale} onChanged={onChanged} />}
     {mutation.error && <p className={styles.error} role="alert">{mutation.error}</p>}
   </article>;
 }

@@ -20,8 +20,9 @@ export function PostComposer({ slug, locale, post, onSaved, onCancel }: { slug: 
     for (const file of files) {
       const form = new FormData(); form.set("file", file); form.set("celebritySlug", slug);
       const result = await mutation.request("/api/content-assets", "POST", form);
+      if (!result) { setProblem(copy.failed); break; }
       const parsed = assetSchema.safeParse((result as { asset?: unknown } | null)?.asset);
-      if (!parsed.success) break;
+      if (!parsed.success) { setProblem(copy.failed); break; }
       setAssets(current => [...current, parsed.data]);
     }
   }
@@ -33,16 +34,16 @@ export function PostComposer({ slug, locale, post, onSaved, onCancel }: { slug: 
     if (result) { setBody(""); setAssets([]); attempt.current = null; onSaved(); }
   }
   return <form className={styles.composer} onSubmit={event => { event.preventDefault(); void save(); }}>
-    <label htmlFor={`${fieldId}-body`}>{post ? copy.edit : copy.writePost}<textarea id={`${fieldId}-body`} rows={4} maxLength={5000} value={body} disabled={mutation.busy} onChange={event => setBody(event.target.value)} aria-describedby={`${fieldId}-hint`} /></label>
+    <label htmlFor={`${fieldId}-body`}>{post ? copy.edit : copy.writePost}<textarea id={`${fieldId}-body`} rows={4} maxLength={5000} value={body} disabled={mutation.busy} onChange={event => setBody(event.target.value)} /></label>
     {assets.length > 0 && <div className={styles.photos}>{assets.map(asset => <figure key={asset.id}>
       <ContentAssetImage asset={asset} locale={locale} alt={copy.photo} /><button type="button" className={styles.button} disabled={mutation.busy} onClick={() => setAssets(current => current.filter(item => item.id !== asset.id))}>{copy.delete}</button>
     </figure>)}</div>}
     <div className={styles.row}>
-      <label>{copy.visibility}<select value={visibility} disabled={mutation.busy} onChange={event => setVisibility(event.target.value as "public" | "members")}><option value="public">{copy.public}</option><option value="members">{copy.members}</option></select></label>
-      <label>{copy.photos}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={mutation.busy || assets.length >= 4} onChange={event => { void upload(event.target.files); event.target.value = ""; }} /></label>
+      <label>{copy.visibility}<select value={visibility} disabled={mutation.busy} aria-describedby={`${fieldId}-members-hint`} onChange={event => setVisibility(event.target.value as "public" | "members")}><option value="public">{copy.public}</option><option value="members">{copy.members}</option></select><small id={`${fieldId}-members-hint`} className={styles.hint}>{copy.members}: {copy.memberRequired}</small></label>
+      <label>{copy.photos}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={mutation.busy || assets.length >= 4} aria-describedby={`${fieldId}-hint${problem ? ` ${fieldId}-photo-error` : ""}`} aria-invalid={problem ? true : undefined} onChange={event => { void upload(event.target.files); event.target.value = ""; }} /></label>
     </div>
     <small id={`${fieldId}-hint`} className={styles.hint}>{copy.photoLimit}</small>
     <div className={styles.actions}><FanAction variant="primary" type="submit" disabled={mutation.busy || (!body.trim() && !assets.length)} ariaBusy={mutation.busy}>{mutation.busy ? copy.loading : post ? copy.save : copy.publish}</FanAction>{onCancel && <FanAction disabled={mutation.busy} onClick={onCancel}>{copy.cancel}</FanAction>}</div>
-    {(problem || mutation.error) && <p className={styles.error} role="alert">{problem || mutation.error}</p>}
+    {(problem || mutation.error) && <p id={problem ? `${fieldId}-photo-error` : undefined} className={styles.error} role="alert">{problem || mutation.error}</p>}
   </form>;
 }

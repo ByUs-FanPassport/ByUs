@@ -650,6 +650,10 @@ describe("FAN-020 settings", () => {
         }),
       ),
     );
+    const saved = await screen.findByText("변경 사항을 저장했어요.");
+    expect(saved).toHaveAttribute("role", "status");
+    expect(saved).toHaveAttribute("data-tone", "success");
+    expect(saved.closest("section")).toHaveAccessibleName("알림");
     fireEvent.click(screen.getByRole("button", { name: "English" }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
@@ -704,6 +708,10 @@ describe("FAN-020 settings", () => {
     rejectPreference();
     await waitFor(() => expect(screen.getByRole("switch", { name: "설문 참여 알림" })).not.toBeChecked());
     expect(screen.getByText("등록된 브라우저 알림이 있어요.")).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.");
+    expect(alert.closest("section")).toHaveAccessibleName("알림");
+    expect(alert).toHaveAttribute("data-tone", "error");
   });
 
   it("shares a connection-group lock between channel consent and Kakao", async () => {

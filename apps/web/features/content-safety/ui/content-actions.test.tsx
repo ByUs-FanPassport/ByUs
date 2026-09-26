@@ -36,6 +36,18 @@ describe("content ownership and retries", () => {
     expect(screen.queryByText(translation.translatedText)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Reason for reporting")).toHaveValue("");
   });
+  it("keeps blocking separate from reporting and restores focus after a report", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ id })));
+    render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
+    const summary = document.querySelector("summary")!;
+    const block = screen.getByRole("button", { name: "Block author" });
+    expect(block.closest("form")).toBeNull();
+    fireEvent.click(summary);
+    fireEvent.change(screen.getByLabelText("Reason for reporting"), { target: { value: "Spam" } });
+    fireEvent.submit(screen.getByLabelText("Reason for reporting").closest("form")!);
+    await screen.findByText("Report submitted.");
+    await waitFor(() => expect(summary).toHaveFocus());
+  });
   it("reuses a post creation key after a lost response", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ error: { code: "UNAVAILABLE" } }, { status: 503 })).mockResolvedValueOnce(Response.json({ id, revision: 1, replayed: true }));
     vi.stubGlobal("fetch", fetcher); const saved = vi.fn();
@@ -45,6 +57,15 @@ describe("content ownership and retries", () => {
     fireEvent.click(screen.getByRole("button", { name: "Publish" })); await waitFor(() => expect(saved).toHaveBeenCalledOnce());
     const first = JSON.parse(fetcher.mock.calls[0][1].body), second = JSON.parse(fetcher.mock.calls[1][1].body);
     expect(first.idempotencyKey).toBe(second.idempotencyKey); expect(second).not.toHaveProperty("appUserId");
+  });
+  it("connects photo limits and validation errors to the file input", () => {
+    render(<PostComposer slug="artist" locale="en" onSaved={vi.fn()} />);
+    const input = screen.getByLabelText("Add photos");
+    fireEvent.change(input, { target: { files: Array.from({ length: 5 }, (_, index) => new File(["x"], `${index}.jpg`, { type: "image/jpeg" })) } });
+
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    const descriptions = input.getAttribute("aria-describedby")!.split(" ").map(value => document.getElementById(value)?.textContent);
+    expect(descriptions).toEqual(["JPEG, PNG or WebP, up to 8MB each, 4 photos maximum", "JPEG, PNG or WebP, up to 8MB each, 4 photos maximum"]);
   });
   it("aborts a protected image from the previous owner and does not create its object URL", async () => {
     let resolve!: (value: Response) => void;

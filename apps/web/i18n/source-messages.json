@@ -16066,5 +16066,17 @@
     "ko": "미디어",
     "source": "components/celebrity-fan-page",
     "id": "components/celebrity-fan-page:media"
+  },
+  "m7c3fdceca820": {
+    "en": "We couldn't mark this notification as read. Try again or continue to the notification.",
+    "ko": "읽음으로 표시하지 못했습니다. 다시 시도하거나 알림으로 바로 이동할 수 있어요.",
+    "source": "features/notification/ui/notification-center",
+    "id": "features/notification/ui/notification-center:readFailed"
+  },
+  "m333948906d83": {
+    "en": "Continue to notification",
+    "ko": "알림으로 이동",
+    "source": "features/notification/ui/notification-center",
+    "id": "features/notification/ui/notification-center:continueToNotification"
   }
 }

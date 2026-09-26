@@ -9,6 +9,16 @@ const response = (data: unknown) => new Response(JSON.stringify(data));
 const normalFetch = (url: string) => Promise.resolve(response(url.includes("/chzzk") ? {items} : {notices:[notice]}));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 describe("creator news", () => {
+  it("keeps a filtered home preview discoverable when matching updates are on the next page", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.includes("cursor=")
+      ? { notices: [{ ...notice, slug: "artist-news", title: "아티스트의 새 소식", postType: "artist_post" }], nextCursor: null }
+      : { notices: [{ ...notice, postType: "notice" }], nextCursor: "page-two" }))));
+    render(<CreatorNews slug="elina" locale="ko" initialFilter="artist_post" />);
+    await screen.findByText("더 보기를 눌러 이 분류의 소식을 확인해 보세요.");
+    expect(screen.queryByText("아직 공개된 소식이 없어요.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "더 보기" }));
+    expect(await screen.findByText("아티스트의 새 소식")).toBeInTheDocument();
+  });
   it("merges a pinned notice with two latest compact posts and links to internal details", async () => {
     vi.stubGlobal("fetch",vi.fn(normalFetch));
     const {container}=render(<CreatorNews channelId="0a3f97086cb81d3360c69fdf5d020045" slug="jenny-jeong" locale="ko" />);
@@ -92,6 +102,7 @@ describe("creator news", () => {
     let resolve!: (value:Response)=>void;
     vi.stubGlobal("fetch",vi.fn((url:string)=>url.includes("previous/chzzk")?new Promise<Response>(done=>{resolve=done;}):Promise.resolve(response(url.includes("/chzzk")?{items:[]}:{notices:[]}))));
     const {rerender}=render(<CreatorNews channelId="0a3f97086cb81d3360c69fdf5d020045" slug="previous" locale="ko" />);
+    await waitFor(() => expect(resolve).toBeTypeOf("function"));
     rerender(<CreatorNews channelId="0a3f97086cb81d3360c69fdf5d020045" slug="jenny-jeong" locale="ko" />);
     await screen.findByText("아직 공개된 소식이 없어요.");
     await act(async()=>resolve(response({items})));

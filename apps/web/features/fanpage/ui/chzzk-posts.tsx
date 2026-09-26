@@ -22,6 +22,7 @@ const parsePosts = (body: unknown) => chzzkFeedSchema.parse(body);
 const parseNotices = (body: unknown) => { const page = newsNoticesSchema.parse(body); return {items:page.notices,nextCursor:page.nextCursor}; };
 const postKey = (post: ChzzkPost) => post.id;
 const noticeKey = (notice: NewsNotice) => notice.slug;
+const categoryMoreCopy = { ja: "もっと見るを押して、このカテゴリの情報を確認してください。", "zh-Hans": "点击加载更多，查看此分类的动态。", "zh-Hant": "點擊載入更多，查看此分類的動態。", es: "Carga más para ver las novedades de esta categoría.", id: "Muat lebih banyak untuk melihat pembaruan dalam kategori ini.", vi: "Tải thêm để xem tin mới trong danh mục này.", th: "โหลดเพิ่มเติมเพื่อดูข่าวสารในหมวดหมู่นี้", pt: "Carregue mais para ver novidades nesta categoria.", fr: "Chargez plus de contenus pour consulter cette catégorie." } as const;
 
 export type NewsFilter = "all" | "notice" | "artist_post" | "chzzk";
 
@@ -41,6 +42,7 @@ export function CreatorNews({ slug, locale, full = false, initialFilter = "all",
   const sources = filter === "notice" || filter === "artist_post" ? [notices] : filter === "chzzk" ? [posts] : [notices, posts];
   const loading = sources.some((source) => source.state.status === "loading");
   const failed = sources.some((source) => source.state.status === "error");
+  const hasMore = sources.some(source => source.state.nextCursor);
   return <section className={styles.section} aria-labelledby={titleId}>
     <header className={styles.heading}>
       <h2 id={titleId}>{locale === "ko" ? "소식" : translate(locale, localizedMessages.m1672ef751316, "Updates")}</h2>
@@ -67,8 +69,8 @@ export function CreatorNews({ slug, locale, full = false, initialFilter = "all",
     </ul>}
     {!items.length && loading && <p className={styles.feedback} role="status">{locale === "ko" ? "소식을 불러오고 있어요." : translate(locale, localizedMessages.m761de726ce49, "Loading updates.")}</p>}
     {failed && <div className={styles.feedback}><span role="status">{items.length ? (locale === "ko" ? "일부 소식을 불러오지 못했어요." : translate(locale, localizedMessages.me4b4e8ab66f1, "Some updates couldn't be loaded.")) : (locale === "ko" ? "소식을 불러오지 못했어요." : translate(locale, localizedMessages.m410455f09dcc, "Couldn't load updates."))}</span><button onClick={() => { sources.forEach((source) => { if (source.state.status === "error") source.retry(); }); }}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m158760d5a4ca, "Retry")}</button></div>}
-    {!items.length && !loading && !failed && <p className={styles.feedback}>{filter === "notice" ? (locale === "ko" ? "아직 공개된 공지가 없어요." : translate(locale, localizedMessages.m25d5632ac746, "No public notices yet.")) : filter === "chzzk" ? (locale === "ko" ? "아직 공개된 치지직 소식이 없어요." : translate(locale, localizedMessages.mfacc92ea1b06, "No public CHZZK updates yet.")) : (locale === "ko" ? "아직 공개된 소식이 없어요." : translate(locale, localizedMessages.m7850d3d1cee2, "No public updates yet."))}</p>}
-    {full && sources.some(source => source.state.nextCursor) && <div className={styles.pagination}>
+    {!items.length && !loading && !failed && <p className={styles.feedback}>{hasMore ? (locale === "ko" ? "더 보기를 눌러 이 분류의 소식을 확인해 보세요." : locale === "en" ? "Load more to check for updates in this category." : categoryMoreCopy[locale]) : filter === "notice" ? (locale === "ko" ? "아직 공개된 공지가 없어요." : translate(locale, localizedMessages.m25d5632ac746, "No public notices yet.")) : filter === "chzzk" ? (locale === "ko" ? "아직 공개된 치지직 소식이 없어요." : translate(locale, localizedMessages.mfacc92ea1b06, "No public CHZZK updates yet.")) : (locale === "ko" ? "아직 공개된 소식이 없어요." : translate(locale, localizedMessages.m7850d3d1cee2, "No public updates yet."))}</p>}
+    {(full || !items.length) && hasMore && <div className={styles.pagination}>
       <button type="button" disabled={sources.some(source => source.state.moreLoading)} onClick={() => sources.forEach(source => { if (source.state.nextCursor && (!sources.some(item => item.state.moreError) || source.state.moreError)) source.loadMore(); })}>{sources.some(source => source.state.moreLoading) ? (locale === "ko" ? "불러오는 중…" : translate(locale, localizedMessages.m9b11aaea717a, "Loading…")) : (locale === "ko" ? "더 보기" : translate(locale, localizedMessages.m4f5d625cf937, "Load more"))}</button>
       {sources.some(source => source.state.moreError) && <p role="status">{locale === "ko" ? "다음 소식을 불러오지 못했어요. 더 보기를 눌러 다시 시도해 주세요." : translate(locale, localizedMessages.m857e081a72b4, "Couldn't load more updates. Select Load more to retry.")}</p>}
     </div>}

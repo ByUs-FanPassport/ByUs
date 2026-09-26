@@ -818,4 +818,16 @@ const copy = {
     "reviewDecision": "Décision d’examen"
   }
 } as const;
-export const participationCopy = (locale: AppLocale) => ({ ...copy[locale], fanpageLabel: locale === "ko" ? "팬페이지" : translate(locale, loungeMessages.me7ffa5b0712f, "Fan page") });
+export const participationCopy = (locale: AppLocale) => ({
+  ...copy[locale],
+  fanpageLabel: locale === "ko" ? "팬페이지" : translate(locale, loungeMessages.me7ffa5b0712f, "Fan page"),
+  invalidTimeZone: locale === "ko" ? "IANA 시간대(예: Asia/Seoul)를 입력해 주세요." : "Enter an IANA time zone, such as Asia/Seoul.",
+  invalidLocalTime: locale === "ko" ? "이 시간대에 존재하는 날짜와 시간을 입력해 주세요." : "Enter a date and time that exists in this time zone.",
+  endAfterStart: locale === "ko" ? "종료는 시작보다 나중이어야 해요." : "The end must be later than the start.",
+  httpsRequired: locale === "ko" ? "https://로 시작하는 주소를 입력해 주세요." : "Enter an address that starts with https://.",
+  officialProfileRequired: locale === "ko" ? "지원 서비스의 공식 프로필 주소를 입력해 주세요." : "Enter an official profile URL from a supported service.",
+  conflict: locale === "ko" ? "다른 관리자가 먼저 처리했어요. 최신 상태를 다시 불러와 주세요." : "Another administrator handled this item first. Reload the latest status.",
+  refreshLatest: locale === "ko" ? "최신 상태 다시 불러오기" : "Reload latest status",
+  deadlineRequired: locale === "ko" ? "접수를 켜려면 마감 시간을 입력해 주세요." : "Enter a deadline when accepting submissions.",
+  firstPage: locale === "ko" ? "처음으로" : "First page",
+});

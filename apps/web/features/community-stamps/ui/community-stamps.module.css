@@ -13,6 +13,7 @@
 .state { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#813193; padding-top:2px; }
 .state svg { width:13px; height:13px; }
 .action { min-height:44px; border:0; border-radius:12px; background:var(--color-surface-subtle,#f6f6f5); color:var(--color-text-primary,#292929); font:inherit; font-size:12px; font-weight:600; padding:9px 14px; display:inline-flex; align-items:center; justify-content:center; gap:6px; text-decoration:none; cursor:pointer; transition:background-color 160ms,scale 160ms; }
+.cardActions { display:grid; gap:8px; }
 .action svg { width:16px; height:16px; }
 .action:active:not(:disabled) { scale:.96; }
 .action:hover:not(:disabled) { background:#ededeb; }

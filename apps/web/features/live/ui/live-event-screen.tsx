@@ -1831,7 +1831,7 @@ export function LiveEventScreen({
           </div>
 
         </div>
-        <LiveFanSubmissions slug={slug} locale={locale} />
+        <LiveFanSubmissions slug={slug} celebritySlug={live.celebrity.slug} locale={locale} />
       </FanContentContainer>
       {sessionReady && viewerMatchesSession && showConfirmation && reservationCompletion && (
         <ReservationDialog

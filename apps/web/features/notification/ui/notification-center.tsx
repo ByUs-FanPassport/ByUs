@@ -8,7 +8,7 @@ import { usePageLocale } from "@/components/locale-provider";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Bell,
@@ -22,6 +22,7 @@ import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
 import { FanState } from "@/components/fan-ui/fan-state";
 import { GoogleMark } from "@/components/icons";
 import { withLocalePath } from "@/components/locale-path";
+import { withRequestDeadline } from "@/features/reliability/client/request-deadline";
 import {
   notificationCollectionSchema,
   type NotificationItem,
@@ -43,7 +44,7 @@ const copy = {
     empty: "아직 도착한 알림이 없습니다.", emptyHelp: "라이브를 예약하면 시작 전 알림을 받을 수 있어요.", today: "오늘", previous: "이전 알림",
     enable: "브라우저 알림 켜기", enabling: "알림 켜는 중…", enabled: "켜짐", permission: "알림은 예약 완료 뒤, 이 버튼을 선택할 때만 권한을 요청합니다.",
     subscribed: "브라우저 알림이 켜졌습니다.", denied: "브라우저 설정에서 알림 권한을 허용해 주세요.", unsupported: "이 브라우저는 푸시 알림을 지원하지 않습니다.", failed: "알림 설정을 저장하지 못했습니다.",
-    readAllFailed: "알림을 모두 읽음으로 표시하지 못했습니다. 다시 시도해 주세요.", signIn: "로그인 후 알림을 확인해 주세요.", signInHelp: "로그인하면 읽지 않은 소식과 예약한 LIVE 알림을 이어서 볼 수 있어요.",
+    readAllFailed: "알림을 모두 읽음으로 표시하지 못했습니다. 다시 시도해 주세요.", readFailed: "읽음으로 표시하지 못했습니다. 다시 시도하거나 알림으로 바로 이동할 수 있어요.", continueToNotification: "알림으로 이동", signIn: "로그인 후 알림을 확인해 주세요.", signInHelp: "로그인하면 읽지 않은 소식과 예약한 LIVE 알림을 이어서 볼 수 있어요.",
     google: "Google로 계속하기", retry: "다시 시도", load: "알림을 불러오는 중입니다.", loadError: "알림을 불러오지 못했습니다.", loadErrorHelp: "연결을 확인한 뒤 다시 시도해 주세요.",
     upcoming: "다가오는 LIVE 보기", settings: "알림 설정 열기", read: "읽음", unread: "읽지 않음", readLabel: "읽은 알림", unreadLabel: "읽지 않은 알림",
     summary: "알림 요약", unreadSummary: "읽지 않은 알림", notifications: "개", browser: "브라우저 알림", choose: "선택 필요",
@@ -53,7 +54,7 @@ const copy = {
     empty: "No notifications yet.", emptyHelp: "Reserve a spot for a LIVE to get a reminder before it starts.", today: "Today", previous: "Earlier notifications",
     enable: "Enable browser notifications", enabling: "Enabling notifications…", enabled: "On", permission: "We only request permission after a reservation, when you select this button.",
     subscribed: "Browser notifications are on.", denied: "Allow notifications in your browser settings.", unsupported: "This browser does not support push notifications.", failed: "We couldn't save your notification settings.",
-    readAllFailed: "We couldn't mark all notifications as read. Please try again.", signIn: "Sign in to view notifications.", signInHelp: "Sign in to continue viewing unread updates and reminders for your reserved LIVE events.",
+    readAllFailed: "We couldn't mark all notifications as read. Please try again.", readFailed: "We couldn't mark this notification as read. Try again or continue to the notification.", continueToNotification: "Continue to notification", signIn: "Sign in to view notifications.", signInHelp: "Sign in to continue viewing unread updates and reminders for your reserved LIVE events.",
     google: "Continue with Google", retry: "Try again", load: "Loading notifications.", loadError: "We couldn't load notifications.", loadErrorHelp: "Check your connection and try again.",
     upcoming: "View upcoming LIVE", settings: "Open notification settings", read: "Read", unread: "Unread", readLabel: "Read notification", unreadLabel: "Unread notification",
     summary: "Notification summary", unreadSummary: "Unread notifications", notifications: "", browser: "Browser notifications", choose: "Action needed",
@@ -64,7 +65,7 @@ const copy = {
     empty: localizedMessages.maafa0b4fa930[translationLocale], emptyHelp: localizedMessages.m5507fd7439f2[translationLocale], today: localizedMessages.mb74b6fc18430[translationLocale], previous: localizedMessages.m96f267992aca[translationLocale],
     enable: localizedMessages.m151f36b9f2ce[translationLocale], enabling: localizedMessages.m1104d490cfc4[translationLocale], enabled: localizedMessages.md7bd4e99fe18[translationLocale], permission: localizedMessages.meab304c085e0[translationLocale],
     subscribed: localizedMessages.m9ca4125ddd98[translationLocale], denied: localizedMessages.m29358063ccfb[translationLocale], unsupported: localizedMessages.m56f488cb0908[translationLocale], failed: localizedMessages.mede544d7b169[translationLocale],
-    readAllFailed: localizedMessages.m41d314b7affd[translationLocale], signIn: localizedMessages.m765c2ab5d16d[translationLocale], signInHelp: localizedMessages.m6f8d40e676c7[translationLocale],
+    readAllFailed: localizedMessages.m41d314b7affd[translationLocale], readFailed: localizedMessages.m7c3fdceca820[translationLocale], continueToNotification: localizedMessages.m333948906d83[translationLocale], signIn: localizedMessages.m765c2ab5d16d[translationLocale], signInHelp: localizedMessages.m6f8d40e676c7[translationLocale],
     google: localizedMessages.m2615b4ad9ca5[translationLocale], retry: localizedMessages.m350d86b1a577[translationLocale], load: localizedMessages.m5c06daa850a1[translationLocale], loadError: localizedMessages.md8e8eebe2936[translationLocale], loadErrorHelp: localizedMessages.mb0cd1fafd814[translationLocale],
     upcoming: localizedMessages.m4841af4dca97[translationLocale], settings: localizedMessages.mae16c506a010[translationLocale], read: localizedMessages.mcac3b1390d50[translationLocale], unread: localizedMessages.mc77726e05eaf[translationLocale], readLabel: localizedMessages.m5471bf002659[translationLocale], unreadLabel: localizedMessages.m8600684fcd79[translationLocale],
     summary: localizedMessages.m4633173083a2[translationLocale], unreadSummary: localizedMessages.m2bf19d8e6d6f[translationLocale], notifications: "", browser: localizedMessages.mdbf91260c2e9[translationLocale], choose: localizedMessages.medcfd408c0b8[translationLocale],
@@ -92,17 +93,21 @@ export function NotificationCenter() {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
   const ownerId = user?.id ?? null;
   const params = useSearchParams();
+  const router = useRouter();
   const locale = usePageLocale();
   const c = copy[locale];
   const [state, setState] = useState<State>({ kind: "loading" });
   const [permission, setPermission] = useState<PushEnableResult | null>(null);
   const [pendingAction, setPendingAction] = useState<"read-all" | "enable" | null>(null);
   const [actionError, setActionError] = useState("");
+  const [readFailure, setReadFailure] = useState<NotificationItem | null>(null);
+  const [readPendingId, setReadPendingId] = useState<string | null>(null);
   const activeRef = useRef(true);
   const ownerRef = useRef(ownerId);
   const loadGenerationRef = useRef(0);
   const actionPendingRef = useRef(false);
   const actionGenerationRef = useRef(0);
+  const openAttemptRef = useRef("");
   useLayoutEffect(() => {
     const ownerChanged = ownerRef.current !== ownerId;
     activeRef.current = true;
@@ -110,8 +115,11 @@ export function NotificationCenter() {
     loadGenerationRef.current += 1;
     actionGenerationRef.current += 1;
     actionPendingRef.current = false;
+    openAttemptRef.current = "";
     setPendingAction(null);
     setActionError("");
+    setReadFailure(null);
+    setReadPendingId(null);
     if (ownerChanged) {
       setState({ kind: "loading" });
       setPermission(null);
@@ -159,17 +167,29 @@ export function NotificationCenter() {
     const id = params.get("open");
     if (!id || state.kind !== "ready") return;
     const item = state.items.find((candidate) => candidate.id === id);
-    if (!item) return;
+    const attempt = `${ownerId}:${id}`;
+    if (!item || openAttemptRef.current === attempt) return;
+    openAttemptRef.current = attempt;
+    const ownerAtStart = ownerId;
     void (async () => {
-      const token = await getAccessToken();
-      if (!token) return;
-      const response = await fetch(`/api/notifications/${id}/read`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}` },
-      });
-      if (response.ok) window.location.assign(withLocalePath(item.deepLink, locale));
+      try {
+        await withRequestDeadline(async (signal) => {
+          const token = await getAccessToken();
+          signal.throwIfAborted();
+          if (!token) throw new Error("token");
+          const response = await fetch(`/api/notifications/${id}/read`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${token}` },
+            signal,
+          });
+          if (!response.ok) throw new Error("read");
+        });
+        if (activeRef.current && ownerRef.current === ownerAtStart) window.location.assign(withLocalePath(item.deepLink, locale));
+      } catch {
+        if (activeRef.current && ownerRef.current === ownerAtStart) setReadFailure(item);
+      }
     })();
-  }, [getAccessToken, locale, params, state]);
+  }, [getAccessToken, locale, ownerId, params, state]);
   const groups = useMemo(
     () =>
       state.kind === "ready"
@@ -181,13 +201,21 @@ export function NotificationCenter() {
     [state],
   );
   async function read(item: NotificationItem) {
-    const token = await getAccessToken();
-    if (!token) return;
-    const response = await fetch(`/api/notifications/${item.id}/read`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (response.ok)
+    if (item.readAt) return true;
+    const ownerAtStart = ownerId;
+    try {
+      await withRequestDeadline(async (signal) => {
+        const token = await getAccessToken();
+        signal.throwIfAborted();
+        if (!token) throw new Error("token");
+        const response = await fetch(`/api/notifications/${item.id}/read`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${token}` },
+          signal,
+        });
+        if (!response.ok) throw new Error("read");
+      });
+      if (!activeRef.current || ownerRef.current !== ownerAtStart) return null;
       setState((current) =>
         current.kind === "ready"
           ? {
@@ -204,6 +232,20 @@ export function NotificationCenter() {
             }
           : current,
       );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  async function openNotification(item: NotificationItem) {
+    if (readPendingId) return;
+    setReadFailure(null);
+    setReadPendingId(item.id);
+    const result = await read(item);
+    if (!activeRef.current || ownerRef.current !== ownerId) return;
+    setReadPendingId(null);
+    if (result) router.push(withLocalePath(item.deepLink, locale) as Route);
+    else if (result === false) setReadFailure(item);
   }
   async function readAll() {
     if (actionPendingRef.current) return;
@@ -360,7 +402,7 @@ export function NotificationCenter() {
         />
       )}
       {state.kind === "ready" && state.items.length > 0 && (
-        <div className={styles.layout}>
+        <>{readFailure && <div className={styles.readError} role="alert"><p>{c.readFailed}</p><div><button type="button" onClick={() => void openNotification(readFailure)}>{c.retry}</button><Link href={withLocalePath(readFailure.deepLink, locale) as Route}>{c.continueToNotification}</Link></div></div>}<div className={styles.layout}>
           <div>
             {(["today", "previous"] as const).map((group) =>
               groups[group].length ? (
@@ -373,7 +415,12 @@ export function NotificationCenter() {
                       className={styles.row}
                       data-unread={!item.readAt}
                       data-read-state={item.readAt ? "read" : "unread"}
-                      onClick={() => void read(item)}
+                      aria-busy={readPendingId === item.id}
+                      onClick={(event) => {
+                        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                        event.preventDefault();
+                        void openNotification(item);
+                      }}
                     >
                       <span className={styles.dot} aria-hidden="true" />
                       <span className={styles.copy}>
@@ -406,7 +453,7 @@ export function NotificationCenter() {
               </div>
             </dl>
           </aside>
-        </div>
+        </div></>
       )}
       </FanContentContainer>
       </div>

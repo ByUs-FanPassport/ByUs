@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const { authState, getAccessToken, enablePushNotifications } = vi.hoisted(() => ({
+const { authState, getAccessToken, enablePushNotifications, push } = vi.hoisted(() => ({
   authState: { ready: true, authenticated: true, user: { id: "owner-a" } },
   getAccessToken: vi.fn<() => Promise<string | null>>(async () => "token"),
   enablePushNotifications: vi.fn<
@@ -9,13 +9,14 @@ const { authState, getAccessToken, enablePushNotifications } = vi.hoisted(() => 
     async (): Promise<"subscribed" | "denied" | "unsupported" | "failed"> =>
       "subscribed",
   ),
+  push: vi.fn(),
 }));
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ...authState, getAccessToken }),
 }));
 let locale = "ko";
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push }),
   usePathname: () => "/notifications",
   useSearchParams: () => new URLSearchParams(`locale=${locale}`),
 }));
@@ -115,6 +116,16 @@ describe("FAN-019 Notification Center", () => {
       screen.getByRole("link", { name: /팬 혜택 신청이 완료되었어요/ }),
     ).toHaveAttribute("data-read-state", "read");
     expect(screen.getByText("읽음")).toBeInTheDocument();
+  });
+
+  it("keeps modified clicks on the notification link", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    render(<NotificationCenter />);
+    const link = await screen.findByRole("link", { name: /KARA LIVE, 10분 후 시작해요/ });
+
+    fireEvent.click(link, { ctrlKey: true });
+
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("renders the complete English chrome and adds locale to stored pathname-only rows", async () => {
@@ -301,6 +312,44 @@ describe("FAN-019 Notification Center", () => {
     fireEvent.click(screen.getByRole("button", { name: "모두 읽음" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("알림을 모두 읽음으로 표시하지 못했습니다. 다시 시도해 주세요.");
     expect(screen.getByRole("button", { name: "모두 읽음" })).toBeEnabled();
+  });
+
+  it.each(["token", "http", "network"] as const)("keeps the notification destination available after a %s read failure and retries", async (kind) => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    render(<NotificationCenter />);
+    const row = await screen.findByRole("link", { name: /KARA LIVE, 10분 후 시작해요/ });
+    if (kind === "token") getAccessToken.mockResolvedValueOnce(null);
+    if (kind === "http") vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 503 }));
+    if (kind === "network") vi.mocked(fetch).mockRejectedValueOnce(new Error("offline"));
+
+    fireEvent.click(row);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("읽음으로 표시하지 못했습니다.");
+    expect(screen.getByRole("link", { name: "알림으로 이동" })).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    getAccessToken.mockResolvedValueOnce("retry-token");
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/live/kara-live?locale=ko"));
+  });
+
+  it("times out a hanging read and keeps retry and direct navigation available", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(unreadCollection));
+    render(<NotificationCenter />);
+    const row = await screen.findByRole("link", { name: /KARA LIVE, 10분 후 시작해요/ });
+    getAccessToken.mockImplementationOnce(() => new Promise(() => undefined));
+    vi.useFakeTimers();
+
+    fireEvent.click(row);
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("읽음으로 표시하지 못했습니다.");
+    expect(screen.getByRole("link", { name: "알림으로 이동" })).toHaveAttribute("href", "/live/kara-live?locale=ko");
+    vi.useRealTimers();
+    getAccessToken.mockResolvedValueOnce("retry-token");
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/live/kara-live?locale=ko"));
   });
 
   it("guards push enablement, shows progress, and reports thrown failures", async () => {

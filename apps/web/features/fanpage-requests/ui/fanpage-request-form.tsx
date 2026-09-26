@@ -15,13 +15,21 @@ export function FanpageRequestForm(props: { locale: AppLocale; initialName?: str
 }
 function RequestForm({ locale, initialName = "" }: { locale: AppLocale; initialName?: string }) {
   const action = useParticipationAction(), c = participationCopy(locale);
-  const form = useRef<HTMLFormElement>(null), socialHelpId = useId();
+  const form = useRef<HTMLFormElement>(null), social = useRef<HTMLInputElement>(null), socialHelpId = useId(), socialErrorId = useId();
   const [matches, setMatches] = useState<z.infer<typeof artistLinkSchema>[] | null>(null);
+  const [socialError, setSocialError] = useState("");
   const [saved, setSaved] = useState<FanpageRequest | null>(null);
   async function check() {
     try {
       const values = Object.fromEntries(new FormData(form.current!));
-      const input = fanpageCheckSchema.parse({ name: values.name, officialSocialUrl: values.officialSocialUrl, locale: toContentLocale(locale) });
+      const parsed = fanpageCheckSchema.safeParse({ name: values.name, officialSocialUrl: values.officialSocialUrl, locale: toContentLocale(locale) });
+      if (!parsed.success) {
+        const issue = parsed.error.issues.find(value => value.path[0] === "officialSocialUrl");
+        if (issue) { setSocialError(String(values.officialSocialUrl).startsWith("https://") ? c.officialProfileRequired : c.httpsRequired); requestAnimationFrame(() => social.current?.focus()); }
+        else action.setError("INVALID_REQUEST");
+        return null;
+      }
+      const input = parsed.data;
       const result = await action.run("/api/fanpage-requests/check", "POST", input, value => z.object({ artists: z.array(artistLinkSchema) }).parse(value), false);
       if (result) setMatches(result.artists);
       return result?.artists ?? null;
@@ -42,8 +50,9 @@ function RequestForm({ locale, initialName = "" }: { locale: AppLocale; initialN
     } catch { action.setError("INVALID_REQUEST"); }
   }}><fieldset disabled={action.busy}>
     <label>{c.name}<input name="name" required maxLength={120} defaultValue={initialName} /></label>
-    <label>{c.social}<input name="officialSocialUrl" type="url" required maxLength={2048} aria-describedby={socialHelpId} /></label>
+    <label>{c.social}<input ref={social} name="officialSocialUrl" type="url" required maxLength={2048} aria-invalid={Boolean(socialError) || undefined} aria-describedby={`${socialHelpId}${socialError ? ` ${socialErrorId}` : ""}`} onChange={() => setSocialError("")} /></label>
     <p id={socialHelpId} className={styles.meta}>{c.socialProfileHelp}</p>
+    {socialError && <p id={socialErrorId} className={styles.meta}>{socialError}</p>}
     <FanAction onClick={() => void check()} disabled={action.busy}>{c.check}</FanAction>
     {matches && <div role="status">{matches.length ? matches.map(artist => <p key={artist.slug}><FanAction href={`${artist.href}?locale=${locale}`}>{artist.name} · {c.view}</FanAction></p>) : <p>{c.empty}</p>}</div>}
     <label>{c.note}<textarea name="note" rows={3} maxLength={2000} /></label>

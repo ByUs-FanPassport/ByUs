@@ -36,6 +36,23 @@ const noticeRow = {
 };
 
 describe("notice manager mutations", () => {
+  it("retains a dirty draft when discarding is cancelled and resets only after confirmation", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ notices: [noticeRow] })));
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    try {
+      render(<NoticeManager celebrityId="celebrity-1" celebrityName="스타" role="operator" locale="ko" />);
+      fireEvent.click(await screen.findByRole("button", { name: /첫 공지/ }));
+      const title = await screen.findByDisplayValue("첫 공지");
+      fireEvent.change(title, { target: { value: "저장 전 수정한 제목" } });
+      fireEvent.click(screen.getByRole("button", { name: "새 공지" }));
+      expect(screen.getByDisplayValue("저장 전 수정한 제목")).toBeInTheDocument();
+      expect(confirm).toHaveBeenCalledTimes(1);
+      confirm.mockReturnValue(true);
+      fireEvent.click(screen.getByRole("button", { name: "새 공지" }));
+      expect(screen.queryByDisplayValue("저장 전 수정한 제목")).not.toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "제목" })).toHaveValue("");
+    } finally { confirm.mockRestore(); }
+  });
   beforeEach(() => {
     getAccessToken.mockReset();
     getAccessToken.mockResolvedValue("token");

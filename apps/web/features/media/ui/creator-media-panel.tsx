@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
 import Image from "next/image";
+import type { Route } from "next";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useByUsSession } from "@/components/byus-session-provider";
 import { ContentAssetImage } from "@/features/content-safety/ui/content-asset";
@@ -26,23 +27,34 @@ const parseChzzk = (value: unknown) => { const page = chzzkFeedSchema.parse(valu
 const parseReplay = (value: unknown) => ({ items: z.object({ catalog: z.object({ replay: z.array(liveEventResponseSchema) }) }).parse(value).catalog.replay.filter(({ live }) => live.watch.available && live.watch.mode === "replay" && isRecordedReplayUrl(live.watch.provider, live.watch.url)).map(({ live }): Media => ({ id: `replay:${live.id}`, kind: "replays", title: live.title, image: live.heroImage.url, href: live.watch.url, date: live.endsAt ?? live.startsAt, slug: live.celebrity.slug })), nextCursor: null });
 
 export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CREATOR_SLUG ? CHZZK_CHANNEL_ID : null }: { slug: string; locale: AppLocale; channelId?: string | null }) {
-  const c = participationCopy(locale), [filter, setFilter] = useState<"all" | Media["kind"]>("all");
+  const c = participationCopy(locale), router = useRouter(), pathname = usePathname(), search = useSearchParams();
+  const requestedFilter = search.get("media");
+  const filter = requestedFilter === "photos" || requestedFilter === "videos" || requestedFilter === "replays" ? requestedFilter : "all";
+  function setFilter(value: "all" | Media["kind"]) {
+    const query = new URLSearchParams(search.toString());
+    if (value === "all") query.delete("media"); else query.set("media", value);
+    router.replace(`${pathname}?${query.toString()}` as Route, { scroll: false });
+  }
   const auth = usePrivy(), session = useByUsSession();
   const official = useNewsSource(`/api/celebrities/${encodeURIComponent(slug)}/media?locale=${toContentLocale(locale)}`, parseOfficial, key, { key: `${auth.ready}:${auth.authenticated}:${session.ownerId ?? auth.user?.id}:${session.generation}`, ready: auth.ready && session.ready, getToken: async () => { if (!auth.authenticated) return null; const token = await auth.getAccessToken(); if (!token) throw Error(); return token; } });
   const instagram = useNewsSource(`/api/celebrities/${encodeURIComponent(slug)}/instagram`, parseInstagram, key);
   const chzzk = useNewsSource(channelId ? `/api/celebrities/${encodeURIComponent(slug)}/chzzk` : null, parseChzzk, key);
   const replay = useNewsSource(`/api/live-events?locale=${toContentLocale(locale)}`, parseReplay, key);
-  const sources = [{ name: "ByUs", resource: official }, { name: "Instagram", resource: instagram }, ...(channelId ? [{ name: "CHZZK", resource: chzzk }] : []), { name: c.replays, resource: replay }];
+  const sources = [
+    ...(filter !== "replays" ? [{ name: "ByUs", resource: official }, { name: "Instagram", resource: instagram }] : []),
+    ...(channelId && (filter === "all" || filter === "photos") ? [{ name: "CHZZK", resource: chzzk }] : []),
+    ...(filter === "all" || filter === "replays" ? [{ name: c.replays, resource: replay }] : []),
+  ];
   const items: Media[] = [...official.state.data, ...instagram.state.data, ...chzzk.state.data.map(item => ({ ...item, href: `https://chzzk.naver.com/${channelId}/community` })), ...replay.state.data.filter(item => item.slug === slug)]
     .filter(item => filter === "all" || item.kind === filter).sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || a.id.localeCompare(b.id));
   return <section className={styles.panel} aria-label={`${c.photos} · ${c.videos}`}>
     <div className={styles.tabs}>{(["all", "photos", "videos", "replays"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{c[value]}</button>)}</div>
     {sources.map(({ name, resource }) => resource.state.status !== "ready" && <div key={name}><strong>{name}</strong><ParticipationState locale={locale} status={resource.state.status} retry={resource.retry} /></div>)}
     {!items.length && sources.every(source => source.resource.state.status === "ready") && <p className={styles.feedback}>{c.empty}</p>}
-    <ul className={styles.media}>{items.map(item => <li key={item.id}>{item.asset ? <ContentAssetImage asset={item.asset} locale={locale} alt={item.title} /> : item.image ? <Image src={item.image} width={640} height={480} alt="" unoptimized referrerPolicy="no-referrer" /> : <span className={styles.videoLink} aria-hidden="true">▶</span>}<a href={item.href.startsWith("/") ? `${item.href}?locale=${locale}` : item.href} target={item.href.startsWith("/") ? undefined : "_blank"} rel={item.href.startsWith("/") ? undefined : "noopener noreferrer"}><strong>{item.title.slice(0, 120) || c[item.kind]}</strong><span>{c[item.kind]} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(locale)}</time></span></a></li>)}</ul>
-    {official.state.nextCursor && <FanAction onClick={official.loadMore} disabled={official.state.moreLoading}>ByUs · {c.more}</FanAction>}
-    {official.state.moreError && <ParticipationState locale={locale} status="error" retry={official.loadMore} />}
-    {chzzk.state.nextCursor && <FanAction onClick={chzzk.loadMore} disabled={chzzk.state.moreLoading}>{chzzk.state.moreLoading ? c.loading : c.more}</FanAction>}
-    {chzzk.state.moreError && <ParticipationState locale={locale} status="error" retry={chzzk.loadMore} />}
+    <ul className={styles.media}>{items.map(item => <li key={item.id}><a href={item.href.startsWith("/") ? `${item.href}?locale=${locale}` : item.href} target={item.href.startsWith("/") ? undefined : "_blank"} rel={item.href.startsWith("/") ? undefined : "noopener noreferrer"}>{item.asset ? <ContentAssetImage asset={item.asset} locale={locale} alt="" /> : item.image ? <Image src={item.image} width={640} height={480} alt="" unoptimized referrerPolicy="no-referrer" /> : <span className={styles.videoLink} aria-hidden="true">▶</span>}<strong>{item.title.slice(0, 120) || c[item.kind]}</strong><span>{c[item.kind]} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(locale)}</time></span></a></li>)}</ul>
+    {filter !== "replays" && official.state.nextCursor && <FanAction onClick={official.loadMore} disabled={official.state.moreLoading}>ByUs · {official.state.moreLoading ? c.loading : c.more}</FanAction>}
+    {filter !== "replays" && official.state.moreError && <ParticipationState locale={locale} status="error" retry={official.loadMore} />}
+    {(filter === "all" || filter === "photos") && chzzk.state.nextCursor && <FanAction onClick={chzzk.loadMore} disabled={chzzk.state.moreLoading}>CHZZK · {chzzk.state.moreLoading ? c.loading : c.more}</FanAction>}
+    {(filter === "all" || filter === "photos") && chzzk.state.moreError && <ParticipationState locale={locale} status="error" retry={chzzk.loadMore} />}
   </section>;
 }
