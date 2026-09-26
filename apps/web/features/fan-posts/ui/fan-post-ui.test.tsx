@@ -65,6 +65,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("fan post UI navigation and context", () => {
+  it("announces the feed's empty state alongside the new-post composer", () => {
+    state.pages = { first: { items: [], nextCursor: null } };
+    render(<FanPostFeed slug="artist" locale="en" />);
+
+    expect(screen.getByRole("textbox", { name: "Write a post" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("No posts yet");
+  });
+
   it("returns to the community after deleting the detailed post", async () => {
     state.post = post("Owned post", true);
     vi.stubGlobal("confirm", vi.fn(() => true));

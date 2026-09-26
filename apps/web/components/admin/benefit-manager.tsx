@@ -502,16 +502,16 @@ function BenefitManager({
           <ul className={styles.rows}>
             {campaignPages.items.map((item) => (
               <li key={item.id} className={styles.campaignRow}>
-                <button type="button" onClick={() => setCampaign(campaignFormFor(item))}>
+                <button className={styles.campaignSelect} type="button" onClick={() => setCampaign(campaignFormFor(item))}>
                   {item.celebrityId ? `${locale === "ko" ? "팬페이지" : "Fanpage"} · ${data.celebrities.find(c => c.id === item.celebrityId)?.[locale === "ko" ? "nameKo" : "nameEn"] ?? item.celebrityId}` : item.liveEventId} · {item.status}
                 </button>
                 {item.status === "published" && !item.draw && !item.cancelledAt && (
-                  <button disabled={!canWrite || pending} type="button" onClick={() => void drawCampaign(item.id)}>
+                  <button className={styles.campaignAction} disabled={!canWrite || pending} type="button" onClick={() => void drawCampaign(item.id)}>
                     {t.draw}
                   </button>
                 )}
-                {item.draw && !item.drawPublishedAt && <button disabled={!canWrite || pending} type="button" onClick={() => void publishDraw(item.id, item.draw!.drawId)}>{locale === "ko" ? "추첨 결과 공개" : "Publish draw results"}</button>}
-                {item.status === "published" && !item.draw && !item.cancelledAt && <button disabled={!canWrite || pending} type="button" onClick={() => { const reason = window.prompt(locale === "ko" ? "취소 사유를 10자 이상 입력하세요." : "Enter a cancellation reason (10+ characters).", ""); if (reason) void cmd({ action: "cancel_campaign", id: item.id, expectedRevision: item.revision, reason }); }}>{locale === "ko" ? "응모 취소 및 환불" : "Cancel and refund"}</button>}
+                {item.draw && !item.drawPublishedAt && <button className={styles.campaignAction} disabled={!canWrite || pending} type="button" onClick={() => void publishDraw(item.id, item.draw!.drawId)}>{locale === "ko" ? "추첨 결과 공개" : "Publish draw results"}</button>}
+                {item.status === "published" && !item.draw && !item.cancelledAt && <button className={styles.campaignDanger} disabled={!canWrite || pending} type="button" onClick={() => { const reason = window.prompt(locale === "ko" ? "취소 사유를 10자 이상 입력하세요." : "Enter a cancellation reason (10+ characters).", ""); if (reason) void cmd({ action: "cancel_campaign", id: item.id, expectedRevision: item.revision, reason }); }}>{locale === "ko" ? "응모 취소 및 환불" : "Cancel and refund"}</button>}
                 {draws[item.id] && (
                   <small>{draws[item.id].candidateCount} candidates · {draws[item.id].winners.length} winners · {draws[item.id].seedHash}</small>
                 )}

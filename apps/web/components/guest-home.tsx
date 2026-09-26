@@ -26,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Book, CalendarHeart, ChevronLeft, ChevronRight, GoogleMark } from "./icons";
 import type { LiveEventResponse } from "../features/live/domain/live-event";
-import type { MySummary } from "../features/my/domain/my-summary";
+import { prioritizeReservedLives, type MySummary } from "../features/my/domain/my-summary";
 import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "../server/content/content-domain";
 import { AuthIntentLink } from "./auth-intent-link";
 import { FanAppFrame } from "./fan-shell/fan-app-shell";
@@ -106,7 +106,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
   const passportPreview = owner.passportPreview.status === "ready"
     ? { status: "ready" as const, ...owner.passportPreview.data }
     : { status: owner.passportPreview.status, stamps: [] as readonly PassportStampRecord[], totalCount: 0 };
-  const reservation = summary.live.upcoming[0] ?? null;
+  const reservation = prioritizeReservedLives(summary.live.upcoming)[0] ?? null;
   const reservationCreator = featuredLives.find(({ live }) => live.id === reservation?.id)?.live.celebrity;
   const headingId = `signed-in-home-heading-${placement}`;
   const passportCount = passportCreators.length;

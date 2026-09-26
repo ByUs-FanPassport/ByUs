@@ -462,5 +462,27 @@ export const messages = {
     "th": "ดำเนินการไม่สำเร็จ โปรดลองอีกครั้ง",
     "pt": "Não foi possível concluir. Tente novamente.",
     "fr": "Impossible de terminer cette action. Réessayez."
+  },
+  "m3f3e69fa36eb": {
+    "ja": "このアーティストのStamp活動は現在利用できません。",
+    "zh-Hans": "这位艺人的Stamp活动目前不可用。",
+    "zh-Hant": "這位藝人的Stamp活動目前無法使用。",
+    "es": "Las actividades de Stamps de este artista no están disponibles ahora.",
+    "id": "Aktivitas Stamp untuk artis ini sedang tidak tersedia.",
+    "vi": "Hoạt động Stamp của nghệ sĩ này hiện không khả dụng.",
+    "th": "กิจกรรม Stamp ของศิลปินนี้ยังไม่พร้อมใช้งานในขณะนี้",
+    "pt": "As atividades de Stamps deste artista estão indisponíveis no momento.",
+    "fr": "Les activités de Stamps de cet artiste sont indisponibles pour le moment."
+  },
+  "mb43cbc171691": {
+    "ja": "自分のStampを見る",
+    "zh-Hans": "查看我的Stamp",
+    "zh-Hant": "查看我的Stamp",
+    "es": "Ver mis Stamps",
+    "id": "Lihat Stamp saya",
+    "vi": "Xem Stamp của tôi",
+    "th": "ดู Stamp ของฉัน",
+    "pt": "Ver meus Stamps",
+    "fr": "Voir mes Stamps"
   }
 } satisfies Record<string, TranslatedMessage>;

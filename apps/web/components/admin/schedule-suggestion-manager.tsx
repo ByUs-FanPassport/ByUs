@@ -6,7 +6,7 @@ import { useParticipationAction, ActionFeedback, ParticipationState } from "@/fe
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { ParticipationAdmin, useAdminPage, AdminScheduleForm, useParticipationCreators, AdminListState, styles } from "./participation-controls";
 const parse = (value: unknown) => pageSchema(suggestionSchema).parse(value);
-export function AuthorizedScheduleSuggestionManager({ locale = "ko" }: { locale?: "ko" | "en" }) { return <ParticipationAdmin locale={locale} title={participationCopy(locale).suggest}>{role => <Manager locale={locale} role={role} />}</ParticipationAdmin>; }
+export function AuthorizedScheduleSuggestionManager({ locale = "ko" }: { locale?: "ko" | "en" }) { return <ParticipationAdmin locale={locale} title={participationCopy(locale).suggest} description={locale === "ko" ? "팬이 제안한 일정과 공식 출처를 확인하고 승인하거나 반려합니다." : "Review fan suggestions and official sources, then approve or decline them."}>{role => <Manager locale={locale} role={role} />}</ParticipationAdmin>; }
 function Manager({ locale, role }: { locale: "ko" | "en"; role: string }) {
   const c = participationCopy(locale), [status, setStatus] = useState("pending"), list = useAdminPage(`/api/admin/schedule-suggestions?status=${status}`, parse), creators = useParticipationCreators();
   const creatorItems = creators.state.status === "ready" ? creators.state.data : [];

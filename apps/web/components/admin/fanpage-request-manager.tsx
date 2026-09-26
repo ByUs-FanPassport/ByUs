@@ -6,11 +6,11 @@ import { useParticipationAction, ActionFeedback, ParticipationState } from "@/fe
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { ParticipationAdmin, useAdminPage, CreatorSelect, useParticipationCreators, AdminListState, styles, type CreatorRefs } from "./participation-controls";
 const parse = (value: unknown) => pageSchema(fanpageRequestSchema).parse(value);
-export function AuthorizedFanpageRequestManager({ locale = "ko" }: { locale?: "ko" | "en" }) { return <ParticipationAdmin locale={locale} title={participationCopy(locale).fanpage}>{role => <Manager locale={locale} role={role} />}</ParticipationAdmin>; }
+export function AuthorizedFanpageRequestManager({ locale = "ko" }: { locale?: "ko" | "en" }) { return <ParticipationAdmin locale={locale} title={participationCopy(locale).fanpage} description={locale === "ko" ? "팬페이지 개설 신청을 검토하고 아티스트와 연결합니다." : "Review fan page requests and link approved requests to an artist."}>{role => <Manager locale={locale} role={role} />}</ParticipationAdmin>; }
 function Manager({ locale, role }: { locale: "ko" | "en"; role: string }) {
   const c = participationCopy(locale), [status, setStatus] = useState("pending"), list = useAdminPage(`/api/admin/fanpage-requests?status=${status}&locale=${locale}`, parse), creators = useParticipationCreators();
   const creatorItems = creators.state.status === "ready" ? creators.state.data : [];
-  return <><div className={styles.tabs}>{(["pending", "approved", "rejected"] as const).map(value => <button key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>{c[value]}</button>)}</div><FanAction href={`/admin/celebrities?lang=${locale}`}>{c.fanpage} +</FanAction>
+  return <><div className={styles.tabs}>{(["pending", "approved", "rejected"] as const).map(value => <button key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>{c[value]}</button>)}</div><FanAction href={`/admin/celebrities?lang=${locale}`}>{locale === "ko" ? "아티스트 관리" : "Manage artists"}</FanAction>
     {creators.state.status !== "ready" ? <ParticipationState locale={locale} status={creators.state.status} retry={creators.retry} /> : <ul className={styles.list}>{list.state.data.map(item => <Review key={`${item.id}:${item.revision}`} item={item} locale={locale} role={role} creators={creatorItems} refresh={list.retry} />)}</ul>}<AdminListState locale={locale} resource={list} /></>;
 }
 function Review({ item, locale, role, creators, refresh }: { item: FanpageRequest; locale: "ko" | "en"; role: string; creators: CreatorRefs; refresh: () => void }) {

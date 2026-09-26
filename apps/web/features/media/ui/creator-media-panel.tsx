@@ -12,12 +12,14 @@ import { FanAction } from "@/components/fan-ui/fan-action";
 import { instagramMediaSchema } from "@/server/instagram/model";
 import { liveEventResponseSchema } from "@/features/live/domain/live-event";
 import { isRecordedReplayUrl } from "@/features/live/domain/live-watch-link";
+import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 import { chzzkFeedSchema, CHZZK_CREATOR_SLUG, CHZZK_CHANNEL_ID } from "@/features/fanpage/domain/chzzk-posts";
 import { useNewsSource } from "@/features/fanpage/ui/use-news-source";
 import { ParticipationState } from "@/features/schedules/ui/participation-ui";
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { toContentLocale, type AppLocale } from "@/i18n/locales";
 import styles from "@/features/schedules/ui/participation.module.css";
+import mediaStyles from "./creator-media-panel.module.css";
 
 type Media = { id: string; kind: "photos" | "videos" | "replays"; title: string; image: string | null; asset?: ContentAsset | null; href: string; date: string; slug?: string };
 const key = (item: Media) => item.id;
@@ -50,7 +52,7 @@ export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CRE
   return <section className={styles.panel} aria-label={`${c.photos} · ${c.videos}`}>
     <div className={styles.tabs}>{(["all", "photos", "videos", "replays"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{c[value]}</button>)}</div>
     {sources.map(({ name, resource }) => resource.state.status !== "ready" && <div key={name}><strong>{name}</strong><ParticipationState locale={locale} status={resource.state.status} retry={resource.retry} /></div>)}
-    {!items.length && sources.every(source => source.resource.state.status === "ready") && <p className={styles.feedback}>{c.empty}</p>}
+    {!items.length && sources.every(source => source.resource.state.status === "ready") && <div className={mediaStyles.empty} role="status"><strong>{filter === "all" ? `${c.photos} · ${c.videos}` : c[filter]}</strong><p>{c.empty}</p><FanAction variant="text" href={creatorHomeHref(slug, locale)}>{c.back}</FanAction></div>}
     <ul className={styles.media}>{items.map(item => <li key={item.id}><a href={item.href.startsWith("/") ? `${item.href}?locale=${locale}` : item.href} target={item.href.startsWith("/") ? undefined : "_blank"} rel={item.href.startsWith("/") ? undefined : "noopener noreferrer"}>{item.asset ? <ContentAssetImage asset={item.asset} locale={locale} alt="" /> : item.image ? <Image src={item.image} width={640} height={480} alt="" unoptimized referrerPolicy="no-referrer" /> : <span className={styles.videoLink} aria-hidden="true">▶</span>}<strong>{item.title.slice(0, 120) || c[item.kind]}</strong><span>{c[item.kind]} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(locale)}</time></span></a></li>)}</ul>
     {filter !== "replays" && official.state.nextCursor && <FanAction onClick={official.loadMore} disabled={official.state.moreLoading}>ByUs · {official.state.moreLoading ? c.loading : c.more}</FanAction>}
     {filter !== "replays" && official.state.moreError && <ParticipationState locale={locale} status="error" retry={official.loadMore} />}

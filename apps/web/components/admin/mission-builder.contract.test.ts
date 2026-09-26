@@ -12,8 +12,8 @@ describe("Admin Mission Builder original specification controls", () => {
   });
 
   it("renders Mission participation and correctness statistics", () => {
-    expect(source).toContain("Total participants");
-    expect(source).toContain("Correct / Incorrect");
+    expect(source).toContain("참여자:");
+    expect(source).toContain("정답 / 오답:");
     expect(source).toContain("optionCount");
   });
 });

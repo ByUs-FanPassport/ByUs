@@ -8,7 +8,7 @@ import { contentCopy } from "@/i18n/catalogs/features__fan_posts__ui";
 import type { AppLocale } from "@/i18n/locales";
 import styles from "@/features/content-safety/ui/content.module.css";
 
-export function PostComposer({ slug, locale, post, onSaved, onCancel }: { slug: string; locale: AppLocale; post?: FanPost; onSaved: () => void; onCancel?: () => void }) {
+export function PostComposer({ slug, locale, post, onSaved, onCancel, featured = false }: { slug: string; locale: AppLocale; post?: FanPost; onSaved: () => void; onCancel?: () => void; featured?: boolean }) {
   const copy = contentCopy(locale), mutation = useContentMutation(locale), fieldId = useId();
   const [body, setBody] = useState(post?.body ?? ""), [visibility, setVisibility] = useState<"public" | "members">(post?.visibility ?? "public");
   const [assets, setAssets] = useState<ContentAsset[]>(post?.assets ?? []), [problem, setProblem] = useState("");
@@ -33,7 +33,7 @@ export function PostComposer({ slug, locale, post, onSaved, onCancel }: { slug: 
       : await mutation.request(`/api/celebrities/${slug}/posts`, "POST", { ...value, idempotencyKey: attempt.current.key });
     if (result) { setBody(""); setAssets([]); attempt.current = null; onSaved(); }
   }
-  return <form className={styles.composer} onSubmit={event => { event.preventDefault(); void save(); }}>
+  return <form className={`${styles.composer}${featured ? ` ${styles.composerFeatured}` : ""}`} onSubmit={event => { event.preventDefault(); void save(); }}>
     <label htmlFor={`${fieldId}-body`}>{post ? copy.edit : copy.writePost}<textarea id={`${fieldId}-body`} rows={4} maxLength={5000} value={body} disabled={mutation.busy} onChange={event => setBody(event.target.value)} /></label>
     {assets.length > 0 && <div className={styles.photos}>{assets.map(asset => <figure key={asset.id}>
       <ContentAssetImage asset={asset} locale={locale} alt={copy.photo} /><button type="button" className={styles.button} disabled={mutation.busy} onClick={() => setAssets(current => current.filter(item => item.id !== asset.id))}>{copy.delete}</button>

@@ -1,0 +1,14 @@
+.empty {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: 32px 24px;
+  border: 1px dashed var(--color-line);
+  border-radius: 16px;
+  background: var(--color-soft);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.empty strong { color: var(--color-ink); font-size: 18px; }
+.empty p { margin: 8px 0 16px; line-height: 1.65; }

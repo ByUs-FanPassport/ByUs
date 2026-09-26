@@ -1,13 +1,15 @@
 "use client";
 import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__fan-app-shell";
+import { messages as footerMessages } from "@/i18n/catalogs/components__fan-shell__fan-site-footer";
 import { translate } from "@/i18n/messages";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
 
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
-import { BookOpen, Heart, Home, Radio } from "lucide-react";
+import Link from "next/link";
+import { Bell, BookOpen, Heart, Home, Radio } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { FanHeader } from "./fan-header";
@@ -51,7 +53,7 @@ export function localeSwitchHref(
 
 export function activeFanSection(pathname: string): FanSection {
   if (pathname === "/live" || pathname.startsWith("/live/")) return "live";
-  if (pathname === "/celebrities" || pathname.startsWith("/c/") || creatorSlugFromHomePath(pathname) !== null) return "favorites";
+  if (pathname === "/celebrities" || pathname === "/bias" || pathname.startsWith("/bias/") || pathname.startsWith("/c/") || creatorSlugFromHomePath(pathname) !== null) return "favorites";
   if (
     pathname === "/my" || pathname.startsWith("/my/") ||
     pathname.startsWith("/passports") ||
@@ -105,14 +107,15 @@ export function FanAppHeader({
   actions?: ReactNode;
   currentPath?: string;
 }) {
-  const browserPathname = usePathname() || "/";
+  const browserPathname = usePathname() || currentPath || "/";
   const searchParams = useSearchParams();
   const browserHash = useBrowserHash();
   const pathname = currentPath ?? browserPathname;
   const items = fanNavigationItems(locale, pathname);
+  const notificationsLabel = locale === "ko" ? "알림" : translate(locale, footerMessages.m2c4e2b786e56, "Notifications");
   const nextLocale = locale === "ko" ? "en" : "ko";
   const languageHref = localeSwitchHref(
-    pathname,
+    browserPathname,
     searchParams?.toString() ?? "",
     nextLocale,
     browserHash,
@@ -135,6 +138,11 @@ export function FanAppHeader({
       />
       <div className={styles.actions}>
         {actions}
+        {pathname !== "/notifications" && (
+          <Link className={styles.utilityLink} href={`/notifications?locale=${locale}` as Route} aria-label={notificationsLabel} title={notificationsLabel}>
+            <Bell aria-hidden="true" />
+          </Link>
+        )}
         <FanLanguageSwitch locale={locale} href={languageHref} />
       </div>
     </FanHeader>

@@ -127,6 +127,8 @@ describe("unified MY hub", () => {
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음/ })).toHaveAttribute("href", "/live?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /응모·혜택.*혜택 2.*응모 내역 3/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /내 활동 내역/ })).toHaveAttribute("href", "/my/activity?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /내 신청 내역/ })).toHaveAttribute("href", "/my/requests?locale=ko");
     expect(within(shortcuts).queryByText("응모 가능")).not.toBeInTheDocument();
   });
 

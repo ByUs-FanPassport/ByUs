@@ -45,5 +45,6 @@
 .loading p { grid-column:1/-1; margin-top:8px; color:oklch(48% 0 0); font-size:14px; text-align:center; }
 @keyframes pulse { to { background:oklch(93% 0 0); } }
 @media (min-width:48rem) { .shell { padding-inline:32px; } .shellTopAligned { padding-top:64px; } .quizHeader h1 { font-size:24px; } .question legend { font-size:36px; } }
+@media (max-width:47.99rem) { .navigation { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (hover:hover) and (pointer:fine) { .option:hover { background:oklch(97.5% 0 0); } .previous:hover,.secondaryAction:hover { background:oklch(97.5% 0 0); } }
 @media (prefers-reduced-motion:reduce) { .page * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }

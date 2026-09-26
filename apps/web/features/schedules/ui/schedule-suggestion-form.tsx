@@ -7,10 +7,11 @@ import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__part
 import { mutationSchema, scheduleInputSchema, suggestionSchema, type ScheduleSuggestion } from "../domain/participation";
 import { ActionFeedback, ParticipationState, ScheduleFields, scheduleFieldErrors, scheduleFormValues, useParticipationAction, type ScheduleFieldErrors } from "./participation-ui";
 import styles from "./participation.module.css";
+import suggestionStyles from "./schedule-suggestion-form.module.css";
 
 export function ScheduleSuggestionForm(props: { celebritySlug: string; locale: AppLocale }) {
   const auth = usePrivy();
-  return <SuggestionForm key={`${auth.user?.id ?? "guest"}:${props.celebritySlug}:${props.locale}`} {...props} />;
+  return <section className={suggestionStyles.surface} aria-label={participationCopy(props.locale).suggest}><SuggestionForm key={`${auth.user?.id ?? "guest"}:${props.celebritySlug}:${props.locale}`} {...props} /></section>;
 }
 function SuggestionForm({ celebritySlug, locale }: { celebritySlug: string; locale: AppLocale }) {
   const action = useParticipationAction(), c = participationCopy(locale);

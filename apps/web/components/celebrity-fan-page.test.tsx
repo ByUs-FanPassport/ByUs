@@ -178,6 +178,7 @@ describe("approved fanpage", () => {
     expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "소식", "팬 게시판", "미디어", "찐팬 인증", "래플 응모", "리더보드"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
     expect(within(menu).getByRole("link", { name: "래플 응모" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(menu).toHaveAttribute("id", "celebrity-content");
     expect(within(menu).getByRole("link", { name: "리더보드" })).toHaveAttribute("href", "/kara?tab=leaderboard&locale=ko#celebrity-content");
     expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();

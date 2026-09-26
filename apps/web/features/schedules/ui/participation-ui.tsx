@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useByUsSession } from "@/components/byus-session-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { FanHeading } from "@/components/fan-ui/fan-heading";
 import { FanAppFrame } from "@/components/fan-shell/fan-app-shell";
 import { withRequestDeadline } from "@/features/reliability/client/request-deadline";
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
@@ -53,8 +54,8 @@ export function ActionFeedback({ locale, error, saved }: { locale: AppLocale; er
   const message = error?.includes("CONFLICT") ? c.conflict : error?.includes("CLOSED") ? c.closed : error?.includes("MEMBERS_REQUIRED") ? c.members : error?.includes("AUTHENTICATION") ? c.login : c.error;
   return error ? <p role="alert" className={styles.feedback}>{message}</p> : saved ? <p role="status" className={styles.feedback}>{c.saved}</p> : null;
 }
-export function ParticipationPage({ locale, title, path, children }: { locale: AppLocale; title: string; path: string; children: ReactNode }) {
-  return <FanAppFrame locale={locale} currentPath={path} mainId="participation-main"><main className={styles.page} id="participation-main" tabIndex={-1}><h1>{title}</h1>{children}</main></FanAppFrame>;
+export function ParticipationPage({ locale, title, path, backAction, children }: { locale: AppLocale; title: string; path: string; backAction?: ReactNode; children: ReactNode }) {
+  return <FanAppFrame locale={locale} currentPath={path} mainId="participation-main"><main className={styles.page} id="participation-main" tabIndex={-1}>{backAction && <div className={styles.backAction}>{backAction}</div>}<FanHeading as="h1" variant="personal-page">{title}</FanHeading>{children}</main></FanAppFrame>;
 }
 export function ParticipationState({ locale, status, retry }: { locale: AppLocale; status: "loading" | "error"; retry?: () => void }) {
   const c = participationCopy(locale);

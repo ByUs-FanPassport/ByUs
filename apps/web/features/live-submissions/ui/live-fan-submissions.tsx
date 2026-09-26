@@ -28,7 +28,7 @@ function Submissions({ slug, celebritySlug, locale }: { slug: string; celebrityS
   const existing = data?.mine.some(item => item.kind === kind);
   return <section className={styles.panel} aria-labelledby={`live-submissions-${slug}`}><h2 id={`live-submissions-${slug}`}>{c.question} · {c.cheer}</h2>
     {!data ? <ParticipationState locale={locale} status={resource.state.status === "error" ? "error" : "loading"} retry={resource.retry} /> : <>
-      <p className={styles.meta}>{c.deadline}: {closesAt ? <time dateTime={closesAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(closesAt))} (KST)</time> : c.closed}</p>
+      {closesAt && <p className={styles.meta}>{c.deadline}: <time dateTime={closesAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(closesAt))} (KST)</time></p>}
       {!open ? <p>{c.closed}</p> : data.access === "members_required" ? <><p>{c.members}</p><FanAction href={`/c/${celebritySlug}/verify?locale=${locale}`}>{c.verify}</FanAction></> : !action.authenticated ? <FanAction onClick={() => action.login()}>{c.login}</FanAction> : <form className={styles.form} onSubmit={async event => {
         event.preventDefault();
         try {

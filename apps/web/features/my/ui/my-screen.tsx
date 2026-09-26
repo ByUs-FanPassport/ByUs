@@ -13,7 +13,7 @@ import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation"
 import { boundFirstLikeCount } from "../../passport/domain/first-like-stamp";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Gift, MessageSquare, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, CalendarDays, Check, Gift, History, ListChecks, MessageSquare, Minus, Pencil, Plus, RotateCcw, Settings, Sparkles, Ticket } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -29,7 +29,7 @@ import type { MyReward } from "../../benefit/domain/my-reward";
 import { raffleListSchema } from "../../benefit/domain/raffle";
 import { useFanpageResource } from "../../fanpage/ui/use-fanpage-resource";
 import { levelLabel } from "../../passport/domain/passport-read-model";
-import { mySummarySchema, type MySummary } from "../domain/my-summary";
+import { mySummarySchema, prioritizeReservedLives, type MySummary } from "../domain/my-summary";
 import { FanHeading, FanSectionHeader } from "../../../components/fan-ui/fan-heading";
 import { FAN_TIERS } from "../../rewards/domain/reward-policy";
 import { fanStageLabel } from "../../rewards/domain/fan-stage";
@@ -269,9 +269,17 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         <span><strong>{t.benefitEntry}</strong><small>{t.benefitSummary(summary.rewards.availableCount, summary.rewards.entries)}</small></span>
         <ArrowRight aria-hidden="true" />
       </Link>
+      <Link href={`/my/activity?locale=${locale}` as Route}>
+        <span className={styles.destinationIcon} data-kind="activity" aria-hidden="true"><History /></span>
+        <span><strong>{personalCopy[locale].title}</strong><small>{personalCopy[locale].applications} · {personalCopy[locale].rewards} · {personalCopy[locale].collection}</small></span>
+        <ArrowRight aria-hidden="true" />
+      </Link>
+      <Link href={`/my/requests?locale=${locale}` as Route}>
+        <span className={styles.destinationIcon} data-kind="requests" aria-hidden="true"><ListChecks /></span>
+        <span><strong>{participationCopy(locale).requests}</strong><small>{participationCopy(locale).suggest} · {participationCopy(locale).fanpage}</small></span>
+        <ArrowRight aria-hidden="true" />
+      </Link>
     </nav>
-    <Link className={styles.moreFavorites} href={`/my/activity?locale=${locale}` as Route}>{personalCopy[locale].title}<ArrowRight aria-hidden="true"/></Link>
-    <Link className={styles.moreFavorites} href={`/my/requests?locale=${locale}` as Route}>{participationCopy(locale).requests}<ArrowRight aria-hidden="true"/></Link>
 
     <FanSurface appearance="plain" className={`${styles.section} ${styles.favoritesSection}`} id="my-creators">
       <SectionTitle title={<>{t.creators} <span className={styles.sectionCount}>{summary.creators.length}</span></>} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
@@ -413,11 +421,6 @@ function Empty({ text, href, action }: { text: string; href: string; action: str
   return <div className={styles.empty}><span>{text}</span><Link href={href as Route}>{action}<ArrowRight/></Link></div>;
 }
 
-/** Only the server-provided reserved collection is eligible; never promote public LIVE here. */
-export function prioritizeReservedLives(events: MySummary["live"]["upcoming"]) {
-  return events.filter(event => event.effectiveStatus === "live" || event.effectiveStatus === "scheduled")
-    .toSorted((a,b) => Number(b.effectiveStatus === "live") - Number(a.effectiveStatus === "live") || Date.parse(a.startsAt) - Date.parse(b.startsAt) || a.id.localeCompare(b.id));
-}
 export function passportProgressLabel(passport: NonNullable<MySummary["creators"][number]["passport"]>, locale: FanLocale) {
   const next = FAN_TIERS[FAN_TIERS.indexOf(passport.tier) + 1];
   const current = `${levelLabel(locale, passport.tier)} · ${locale === "ko" ? "팬 점수" : translate(locale, localizedMessages.mbab2ee28117c, "Fan Score")} ${passport.score}`;

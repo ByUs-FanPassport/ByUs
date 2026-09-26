@@ -44,9 +44,10 @@ it("closes an already rendered form at the actual deadline", async () => {
 });
 it("shows the closed state to guests before offering login", async () => {
   auth.authenticated = false; auth.user = null;
-  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...base, settings: { ...base.settings, accepting: false } })));
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...base, settings: { ...base.settings, accepting: false, closesAt: null } })));
   render(<LiveFanSubmissions slug="event" celebritySlug="kara" locale="ko" />);
-  await screen.findAllByText("마감");
+  expect(await screen.findByText("마감")).toBeInTheDocument();
+  expect(screen.queryByText(/접수 마감:/)).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "로그인하고 계속" })).not.toBeInTheDocument();
 });
 it("labels cursor reset by its actual first-page behavior", async () => {

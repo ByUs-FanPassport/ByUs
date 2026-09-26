@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -11,8 +11,9 @@ import {
 
 let pathname = "/";
 let search = "";
+const push = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push }),
   usePathname: () => pathname,
   useSearchParams: () => new URLSearchParams(search),
 }));
@@ -30,6 +31,7 @@ describe("fan app shell navigation", () => {
     ["/live/kara-byus-live", "live"],
     ["/celebrities", "favorites"],
     ["/c/kara", "favorites"],
+    ["/bias/requests", "favorites"],
     ["/my", "my"],
     ["/passports", "my"],
     ["/benefits", "my"],
@@ -90,6 +92,19 @@ describe("fan app shell navigation", () => {
         "#latest",
       ),
     ).toBe("/c/kara?tab=notice&locale=en&source=home#latest");
+  });
+
+  it("retains a nested screen when its selected navigation section is overridden", () => {
+    pathname = "/my/activity";
+    search = "kind=collection&locale=ko";
+    render(<FanAppFrame locale="ko" currentPath="/my"><main>Activity</main></FanAppFrame>);
+    fireEvent.change(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" }), { target: { value: "en" } });
+    expect(push).toHaveBeenCalledWith("/my/activity?kind=collection&locale=en");
+  });
+
+  it.each([["ko", "알림"], ["en", "Notifications"], ["ja", "通知"]] as const)("makes notifications reachable from the %s header", (locale, label) => {
+    render(<FanAppFrame locale={locale}><main>Content</main></FanAppFrame>);
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: label })).toHaveAttribute("href", `/notifications?locale=${locale}`);
   });
 
   it("preserves non-locale query parameters in the rendered language action", () => {

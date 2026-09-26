@@ -32,3 +32,13 @@ it("makes the thumbnail and text one link, and restores the media filter from it
   expect(screen.getByRole("link", { name: /함께한 LIVE/ })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /더 보기/ })).not.toBeInTheDocument();
 });
+
+it("gives an empty media filter a clear label and a route back to the creator", () => {
+  state.query = "tab=media&locale=ko&media=videos";
+  render(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);
+
+  const empty = screen.getByRole("status");
+  expect(empty).toHaveTextContent("영상");
+  expect(empty).toHaveTextContent("아직 등록된 항목이 없어요.");
+  expect(screen.getByRole("link", { name: "돌아가기" })).toHaveAttribute("href", "/elina?locale=ko");
+});

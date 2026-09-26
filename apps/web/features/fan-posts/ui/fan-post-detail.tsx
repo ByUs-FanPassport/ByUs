@@ -1,10 +1,11 @@
 "use client";
-import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { FanHeading } from "@/components/fan-ui/fan-heading";
 import { useCommunityResource } from "@/features/fanpage/ui/use-community-resource";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 import { postSchema, commentPageSchema } from "../domain/content";
@@ -41,9 +42,9 @@ function DetailForOwner({ postId, locale }: { postId: string; locale: AppLocale 
   if (post.state.status !== "ready") return <p role="status" className={styles.status}>{post.state.status === "loading" ? copy.loading : copy.unavailable}{post.state.status === "error" && <button className={styles.button} onClick={post.retry}>{copy.retry}</button>}</p>;
   const data = post.state.data, returnTo = `/c/${data.celebritySlug}/community/${postId}?locale=${locale}`;
   const communityHref = `${creatorHomeHref(data.celebritySlug)}?tab=community&locale=${locale}` as Route;
-  return <section className={styles.section}>
-    <Link href={communityHref} className={styles.link}>{copy.back}</Link>
-    <h1>{copy.community}</h1><PostCard post={data} locale={locale} onChanged={refresh} onDeleted={() => router.replace(communityHref)} detail />
+  return <section className={`${styles.section} ${styles.postDetail}`}>
+    <FanAction href={communityHref} variant="text" leadingIcon={<ArrowLeft />}>{copy.back}</FanAction>
+    <FanHeading as="h1" variant="personal-page">{copy.community}</FanHeading><PostCard post={data} locale={locale} onChanged={refresh} onDeleted={() => router.replace(communityHref)} detail />
     <section className={styles.section} aria-labelledby={`${fieldId}-heading`}><h2 id={`${fieldId}-heading`}>{copy.comments}</h2>
       {auth.ready && (auth.authenticated ? <form className={styles.composer} onSubmit={event => { event.preventDefault(); void submit(); }}>
         {replyTarget && <div id={`${fieldId}-reply-target`} className={styles.row}><span className={styles.status}>{copy.replying}: <strong>{replyTarget.nickname}</strong> · {replyTarget.body.length > 80 ? `${replyTarget.body.slice(0, 80)}…` : replyTarget.body}</span><button type="button" className={styles.button} onClick={() => { restoreReplyFocus.current = true; setParentId(null); setReplyTarget(null); }}>{copy.cancel}</button></div>}

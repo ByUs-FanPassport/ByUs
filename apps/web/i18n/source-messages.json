@@ -16078,5 +16078,17 @@
     "ko": "알림으로 이동",
     "source": "features/notification/ui/notification-center",
     "id": "features/notification/ui/notification-center:continueToNotification"
+  },
+  "m3f3e69fa36eb": {
+    "en": "Stamp activities for this artist are currently unavailable.",
+    "ko": "현재 이 최애의 스탬프 활동을 이용할 수 없어요.",
+    "source": "features/community-stamps/ui/community-stamp-collection",
+    "id": "features/community-stamps/ui/community-stamp-collection:inline.m3f3e69fa36eb"
+  },
+  "mb43cbc171691": {
+    "en": "View my Stamps",
+    "ko": "내 스탬프 보기",
+    "source": "features/community-stamps/ui/community-stamp-collection",
+    "id": "features/community-stamps/ui/community-stamp-collection:inline.mb43cbc171691"
   }
 }

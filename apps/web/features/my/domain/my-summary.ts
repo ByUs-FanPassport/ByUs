@@ -60,3 +60,26 @@ export const mySummarySchema = z.object({
 }).strict();
 
 export type MySummary = z.infer<typeof mySummarySchema>;
+
+/** Order eligible server-provided reservations without promoting public LIVE records. */
+export function prioritizeReservedLives(
+  events: MySummary["live"]["upcoming"],
+  now = Date.now(),
+) {
+  const rank = (event: MySummary["live"]["upcoming"][number]) => {
+    if (event.effectiveStatus === "live") return 0;
+    if (event.effectiveStatus === "scheduled" && Date.parse(event.startsAt) >= now) return 1;
+    if (event.effectiveStatus === "scheduled") return 2;
+    return 3;
+  };
+  return events
+    .filter((event) => event.effectiveStatus === "live" || event.effectiveStatus === "scheduled")
+    .toSorted((left, right) => {
+    const rankDifference = rank(left) - rank(right);
+    if (rankDifference) return rankDifference;
+    const leftStart = Date.parse(left.startsAt);
+    const rightStart = Date.parse(right.startsAt);
+    const newestFirst = rank(left) !== 1;
+    return (newestFirst ? rightStart - leftStart : leftStart - rightStart) || left.id.localeCompare(right.id);
+    });
+}

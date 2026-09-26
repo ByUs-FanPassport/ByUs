@@ -14,10 +14,10 @@ import { scheduleWriteSchema, type AdminSchedule, type ScheduleSuggestion, type 
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import styles from "@/features/schedules/ui/participation.module.css";
 export { styles };
-export function ParticipationAdmin({ locale, title, children }: { locale: AdminLocale; title: string; children: (role: string) => ReactNode }) {
+export function ParticipationAdmin({ locale, title, description, children }: { locale: AdminLocale; title: string; description: string; children: (role: string) => ReactNode }) {
   const session = useAdminSession(), auth = usePrivy();
   if (session.status !== "authorized") return <AdminAccessState status={session.status} locale={locale} />;
-  return <AdminOperationsShell locale={locale} adminRole={session.admin.role}><div className={styles.panel} key={auth.user?.id}><h1>{title}</h1>{children(session.admin.role)}</div></AdminOperationsShell>;
+  return <AdminOperationsShell locale={locale} adminRole={session.admin.role}><div className={styles.adminPanel} key={auth.user?.id}><header className={styles.adminHeading}><h1>{title}</h1><p>{description}</p></header>{children(session.admin.role)}</div></AdminOperationsShell>;
 }
 export function useAdminPage<T extends { id: string }>(url: string, parse: (value: unknown) => { items: T[]; nextCursor: string | null }) {
   const auth = usePrivy(), session = useByUsSession();
@@ -48,5 +48,5 @@ export function AdminScheduleForm({ locale, creators, initial, busy, onSave, onI
 }
 export function AdminListState({ locale, resource }: { locale: AdminLocale; resource: { state: { status: "loading" | "error" | "ready"; data: unknown[]; nextCursor: string | null; moreLoading: boolean; moreError: boolean }; retry: () => void; loadMore: () => void } }) {
   const c = participationCopy(locale);
-  return <>{resource.state.status !== "ready" ? <ParticipationState locale={locale} status={resource.state.status} retry={resource.retry} /> : !resource.state.data.length ? <p>{c.empty}</p> : null}{resource.state.nextCursor && <FanAction disabled={resource.state.moreLoading} onClick={resource.loadMore}>{c.more}</FanAction>}{resource.state.moreError && <ParticipationState locale={locale} status="error" retry={resource.loadMore} />}</>;
+  return <>{resource.state.status !== "ready" ? <ParticipationState locale={locale} status={resource.state.status} retry={resource.retry} /> : !resource.state.data.length ? <p className={styles.adminEmpty} role="status">{c.empty}</p> : null}{resource.state.nextCursor && <FanAction disabled={resource.state.moreLoading} onClick={resource.loadMore}>{c.more}</FanAction>}{resource.state.moreError && <ParticipationState locale={locale} status="error" retry={resource.loadMore} />}</>;
 }

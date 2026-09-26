@@ -1214,8 +1214,8 @@ function BenefitDetailOwnerScreen({
           {c.back}
         </Link>
       )}
-      <article className={styles.detail}>
-        {benefitArtworkSource(benefit) ? <BenefitArtwork benefit={benefit} large /> : null}
+      <article className={`${styles.detail} ${benefitArtworkSource(benefit) ? styles.detailWithArtwork : ""}`}>
+        {benefitArtworkSource(benefit) ? <div className={styles.detailArtwork}><BenefitArtwork benefit={benefit} large /></div> : null}
         <div className={styles.detailIntro}>
           <StateBadge benefit={benefit} locale={locale} />
           <h1>{detailTitle}</h1>
@@ -1230,7 +1230,7 @@ function BenefitDetailOwnerScreen({
         {!authenticated && benefit.entry ? (
           benefit.entry.canEnter ? (
             <AuthIntentLink
-              className={fanActionClassName("primary")}
+              className={`${fanActionClassName("primary")} ${styles.detailAction}`}
               emphasis="primary"
               locale={locale}
               input={{
@@ -1245,7 +1245,7 @@ function BenefitDetailOwnerScreen({
             </AuthIntentLink>
           ) : null
         ) : benefit.entry ? (
-          <section className={`${styles.delivery} ${styles.entryPanel}`} aria-live="polite">
+          <section className={`${styles.delivery} ${styles.entryPanel} ${styles.detailAction}`} aria-live="polite">
             <div>
               <h2 className={styles.entryHeading}><FanMotionIcon name="ticket" size={24} />{c.enter}</h2>
               <p>
@@ -1499,7 +1499,7 @@ function BenefitDetailOwnerScreen({
             </EntryConfirmationOverlay>
           </section>
         ) : deliveredClaim ? (
-          <section className={styles.delivery} aria-live="polite">
+          <section className={`${styles.delivery} ${styles.detailAction}`} aria-live="polite">
             <Check aria-hidden="true" />
             <div>
               <h2>{c.delivered}</h2>
@@ -1538,7 +1538,7 @@ function BenefitDetailOwnerScreen({
           benefit.state !== "sold_out" &&
           benefit.state !== "expired" ? (
           <AuthIntentLink
-            className={fanActionClassName("primary")}
+            className={`${fanActionClassName("primary")} ${styles.detailAction}`}
             emphasis="primary"
             locale={locale}
             input={{
@@ -1556,7 +1556,7 @@ function BenefitDetailOwnerScreen({
           </AuthIntentLink>
         ) : benefit.allocationMode === "application_selection" &&
           (application?.status ?? benefit.applicationStatus) ? (
-          <div className={styles.unavailable} role="status">
+          <div className={`${styles.unavailable} ${styles.detailAction}`} role="status">
             <TicketCheck aria-hidden="true" />
             {
               c.applicationStates[
@@ -1567,6 +1567,7 @@ function BenefitDetailOwnerScreen({
           </div>
         ) : benefit.state === "eligible" ? (
           <FanAction
+            className={styles.detailAction}
             variant="primary"
             disabled={pending}
             ariaBusy={pending}
@@ -1586,7 +1587,7 @@ function BenefitDetailOwnerScreen({
                 : c.claim}
           </FanAction>
         ) : (
-          <div className={styles.unavailable} role="status">
+          <div className={`${styles.unavailable} ${styles.detailAction}`} role="status">
             <LockKeyhole aria-hidden="true" />
             {unavailableCopy}
           </div>

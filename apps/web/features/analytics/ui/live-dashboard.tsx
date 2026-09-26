@@ -283,6 +283,7 @@ export function LiveDashboard({
       defaultAnalyticsWindow(),
     ),
     [windowReady, setWindowReady] = useState(false),
+    [retryKey, setRetryKey] = useState(0),
     [state, setState] = useState<{
       loading: boolean;
       data?: LiveAnalytics;
@@ -334,7 +335,7 @@ export function LiveDashboard({
       }
     })();
     return () => controller.abort();
-  }, [getAccessToken, liveEventId, session.status, windowReady, windowValue]);
+  }, [getAccessToken, liveEventId, retryKey, session.status, windowReady, windowValue]);
   if (session.status !== "authorized")
     return <AdminAccessState status={session.status} locale={locale} />;
   const ko = locale === "ko";
@@ -367,10 +368,10 @@ export function LiveDashboard({
             {ko ? "분석 불러오는 중" : "Loading analytics"}
           </p>
         ) : state.error ? (
-          <p className={styles.status} data-error role="alert">
-            {ko ? "분석을 불러오지 못했습니다" : "Analytics unavailable"} ·{" "}
-            {state.error}
-          </p>
+          <div className={styles.status} data-error>
+            <p role="alert">{ko ? "분석을 불러오지 못했습니다" : "Analytics unavailable"} ·{" "}{state.error}</p>
+            <button type="button" onClick={() => setRetryKey((value) => value + 1)}>{ko ? "다시 시도" : "Retry"}</button>
+          </div>
         ) : (
           state.data && (
             <LiveDashboardContent data={state.data} locale={locale} />
