@@ -201,6 +201,7 @@ describe("observed LIVE feed projection", () => {
           watchUrl: "https://www.tiktok.com/@ifewknow/live",
           observedAt,
           expiresAt: "2026-09-11T01:01:30.000Z",
+          playbackAvailable: false,
         },
       ],
       targets: [{ celebritySlug: "ifewknow", platform: "tiktok", handle: "ifewknow", state: "live", observedAt }],
@@ -212,6 +213,27 @@ describe("observed LIVE feed projection", () => {
       Date.parse(feed.items[0]!.expiresAt) - Date.parse(feed.items[0]!.observedAt),
     ).toBe(OBSERVED_LIVE_MAX_AGE_MS);
     expect(isObservedLiveCardFresh(feed.items[0]!, Date.parse(feed.checkedAt))).toBe(true);
+  });
+
+  it("exposes only a boolean hint when a safe direct playback source is available", async () => {
+    const feed = await buildObservedLiveFeed(
+      [celebrity("ifewknow", "https://www.tiktok.com/@ifewknow")],
+      "ko",
+      vi.fn().mockResolvedValue({
+        state: "live",
+        observedAt,
+        title: "지금 방송 중",
+        thumbnailUrl: null,
+        playback: {
+          roomId: "7611111111111111111",
+          url: "https://pull-f5-sg01.tiktokcdn.com/live/source.flv?expire=1790438400&sign=test",
+          expiresAt: "2026-09-26T16:00:00.000Z",
+        },
+      }),
+      () => new Date("2026-09-11T01:00:30.000Z"),
+    );
+    expect(feed.items[0]?.playbackAvailable).toBe(true);
+    expect(feed.items[0]).not.toHaveProperty("playback");
   });
 
   it("hides observations at the 90-second boundary instead of renewing their cache timestamp", async () => {

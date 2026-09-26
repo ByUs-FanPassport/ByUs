@@ -109,6 +109,21 @@ describe("observed LIVE feed merging", () => {
     expect(mergeObservedLiveFeed([expired], undefined, now)).toEqual([]);
     expect(mergeObservedLiveFeed([tiktok], undefined, now)).toEqual([tiktok]);
   });
+
+  it("accepts small future clock skew without extending the fixed expiry window", () => {
+    const slightlyFuture = {
+      ...tiktok,
+      observedAt: new Date(now + 4_999).toISOString(),
+      expiresAt: new Date(now + 94_999).toISOString(),
+    };
+    const tooFarFuture = {
+      ...slightlyFuture,
+      observedAt: new Date(now + 5_001).toISOString(),
+      expiresAt: new Date(now + 95_001).toISOString(),
+    };
+    expect(mergeObservedLiveFeed([], feed([slightlyFuture], [targetFor(slightlyFuture)], new Date(now + 4_999).toISOString()), now)).toEqual([slightlyFuture]);
+    expect(mergeObservedLiveFeed([], feed([tooFarFuture], [targetFor(tooFarFuture)], new Date(now + 5_001).toISOString()), now)).toEqual([]);
+  });
 });
 
 

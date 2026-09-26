@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export const OBSERVED_LIVE_MAX_AGE_MS = 90_000;
 export const OBSERVED_LIVE_POLL_MS = 30_000;
+export const OBSERVED_LIVE_FUTURE_SKEW_MS = 5_000;
 export type ObservedLivePlatform = "tiktok" | "youtube" | "instagram" | "chzzk";
 export type ObservedLiveCard = {
   platform?: ObservedLivePlatform;
@@ -17,6 +18,7 @@ export type ObservedLiveCard = {
   watchUrl: string;
   observedAt: string;
   expiresAt: string;
+  playbackAvailable?: boolean;
 };
 export type ObservedLiveTarget = {
   celebritySlug: string;
@@ -43,7 +45,7 @@ export function observedLiveMaxAge(platform?: ObservedLivePlatform): number {
 export function isObservedLiveCardFresh(card: Pick<ObservedLiveCard, "platform" | "observedAt" | "expiresAt">, now = Date.now()): boolean {
   const observedAt = Date.parse(card.observedAt), expiresAt = Date.parse(card.expiresAt);
   const duration = expiresAt - observedAt;
-  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now && now < expiresAt &&
+  return Number.isFinite(observedAt) && Number.isFinite(expiresAt) && observedAt <= now + OBSERVED_LIVE_FUTURE_SKEW_MS && now < expiresAt &&
     (duration === observedLiveMaxAge(card.platform) || (card.platform === "youtube" && duration === OBSERVED_LIVE_MAX_AGE_MS));
 }
 const label = z.string().max(2048);
@@ -55,7 +57,7 @@ const httpsUrl = label.refine((value) => {
 const cardSchema = z.object({
   platform: platform.optional(), celebritySlug: label, creatorName: label, handle: label,
   title: label, thumbnailUrl: httpsUrl, fallbackThumbnailUrl: httpsUrl.optional(), watchUrl: label,
-  observedAt: label, expiresAt: label,
+  observedAt: label, expiresAt: label, playbackAvailable: z.boolean().optional(),
 }).refine((card) => {
   if (card.platform === "youtube") return /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(card.watchUrl);
   if (card.platform === "instagram") return parseInstagramLivePermalink(card.watchUrl, card.handle) === card.watchUrl;
@@ -72,7 +74,7 @@ const feedSchema = z.object({
 export function mergeObservedLiveFeed(previous: ObservedLiveCard[], response: unknown, now = Date.now()): ObservedLiveCard[] {
   const current = previous.filter((item) => isObservedLiveCardFresh(item, now));
   const parsed = feedSchema.safeParse(response);
-  if (!parsed.success || !Number.isFinite(Date.parse(parsed.data.checkedAt)) || Date.parse(parsed.data.checkedAt) > now) return current;
+  if (!parsed.success || !Number.isFinite(Date.parse(parsed.data.checkedAt)) || Date.parse(parsed.data.checkedAt) > now + OBSERVED_LIVE_FUTURE_SKEW_MS) return current;
   const feed = parsed.data;
   const targetKeys = feed.targets.map(observedLiveKey);
   if (new Set(targetKeys).size !== targetKeys.length) return current;
@@ -82,7 +84,7 @@ export function mergeObservedLiveFeed(previous: ObservedLiveCard[], response: un
   for (const target of feed.targets) {
     const key = observedLiveKey(target), prior = old.get(key), next = incoming.get(key);
     const at = target.observedAt === null ? NaN : Date.parse(target.observedAt);
-    const targetFresh = Number.isFinite(at) && at <= now && now - at < observedLiveMaxAge(target.platform);
+    const targetFresh = Number.isFinite(at) && at <= now + OBSERVED_LIVE_FUTURE_SKEW_MS && now - at < observedLiveMaxAge(target.platform);
     if (target.state === "live" && next && next.observedAt === target.observedAt) {
       merged.push(prior && Date.parse(prior.observedAt) > Date.parse(next.observedAt) ? prior : next);
     } else if (prior && !(target.state === "offline" && targetFresh && at >= Date.parse(prior.observedAt))) {

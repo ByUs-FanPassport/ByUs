@@ -41,12 +41,15 @@ import { ChzzkPostBody } from "../../features/fanpage/ui/chzzk-posts";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import noticeStyles from "../../components/notice/notice-detail.module.css";
+import { TikTokLiveFallbackFixture, tiktokPlaybackFixtureResponse } from "./tiktok-live-fixture";
+import { CelebrityDirectory } from "../../components/celebrity-directory";
+import { officialVideoFixture } from "./product-quality-fixture";
 import { discoveryChzzkPost, discoveryFixtureResponse, discoveryIds } from "./discovery-fixture";
 import "../../app/globals.css";
 
 const params = new URLSearchParams(location.search);
 const locale: "ko" | "en" = params.get("locale") === "en" ? "en" : "ko";
-const celebrity = { slug: "elina", locale, name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }], displayOrder: 0, fanCount: 0 } as const;
+const celebrity = { slug: "elina", locale, name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }, ...(params.has("quality") ? [{ platform: "youtube" as const, url: "https://www.youtube.com/@ElinaKarimova" }] : [])], displayOrder: 0, fanCount: 0 } as const;
 const communityMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_COMMUNITY_MODE === "true";
 const fanWebMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_FAN_WEB_MODE === "true";
 const fanWebPath = /^\/(?:c\/elina\/(?:community\/|schedule-suggestions|updates\/chzzk\/|verify\/(?:questions|result))|live\/(?:calendar\/schedules\/|discovery-survey\/survey)|bias\/requests|my\/(?:activity|requests|rewards\/[0-9a-f-]{36}\/recipient)|s\/[a-f0-9]{32}|settings\/blocked-users|admin\/(?:schedules|schedule-suggestions|fanpage-requests))/.test(location.pathname);
@@ -59,6 +62,8 @@ function AccountSwitcher({ children }: { children: ReactNode }) {
 }
 
 function fanWebScreen() {
+  if (location.pathname === "/fixtures/tiktok-live") return <TikTokLiveFallbackFixture locale={locale} />;
+  if (location.pathname === "/celebrities") return <CelebrityDirectory celebrities={[{ ...celebrity, upcomingLive: null }]} locale={locale} initialQuery={params.get("q") ?? ""} />;
   const detail = location.pathname.match(/^\/c\/elina\/community\/([0-9a-f-]{36})$/);
   const schedule = location.pathname.match(/^\/live\/calendar\/schedules\/([0-9a-f-]{36})$/);
   if (detail) return <FanAppFrame locale={locale} mainId="fan-post-main"><FanContentContainer as="main" id="fan-post-main" tabIndex={-1} style={{ paddingBlock: 32 }}><FanPostDetail postId={detail[1]} locale={locale} /></FanContentContainer></FanAppFrame>;
@@ -96,6 +101,11 @@ const originalFetch = window.fetch.bind(window);
 window.fetch = (input, init) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
   const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+  if (params.has("quality") && method === "GET" && url === "/api/celebrities/elina/youtube") return Promise.resolve(Response.json(officialVideoFixture));
+  if (params.has("quality") && method === "GET" && url.startsWith("/api/celebrities/elina/media?")) return Promise.resolve(Response.json({ items: [], nextCursor: null }));
+  if (location.pathname === "/fixtures/tiktok-live") { const playback = tiktokPlaybackFixtureResponse(url, method, params.get("state")); if (playback) return Promise.resolve(playback); }
+  if (params.has("quality") && method === "GET" && url === "/api/celebrities/elina/instagram") return Promise.resolve(params.has("partialError") ? Response.json({}, { status: 503 }) : Response.json({ items: [], updatedAt: null }));
+  if (params.has("quality") && method === "GET" && url.startsWith("/api/live-events?")) return Promise.resolve(Response.json({ catalog: { replay: [] } }));
   const discoveryResponse = discoveryFixtureResponse(url, method, location.pathname);
   if (discoveryResponse) return Promise.resolve(discoveryResponse);
   if (method === "GET" && location.pathname === "/benefits/local-preview" && url.startsWith(`/api/benefits/${benefitFixture.id}/result?`)) return Promise.resolve(Response.json(benefitResultFixture));

@@ -105,4 +105,28 @@ describe("TikTok LIVE playback lifecycle", () => {
     expect(screen.getByRole("link", { name: "Watch on TikTok" })).toHaveAttribute("href", item.watchUrl);
     expect(fetch).not.toHaveBeenCalled();
   });
+  it("accepts a playback observation within the shared future clock-skew allowance", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ ...source, observedAt: new Date(now + 4_999).toISOString() })));
+    render(<TikTokLivePlayer item={item} locale="ko" onClose={() => {}} />);
+    await settle();
+    expect(library.createPlayer).toHaveBeenCalledOnce();
+  });
+  it("uses a compact external-watch fallback after playback fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+    render(<TikTokLivePlayer item={item} locale="ko" onClose={() => {}} />);
+    await settle();
+    expect(screen.getByRole("dialog").className).toContain("compactDialog");
+    expect(screen.getByRole("link", { name: "TikTok에서 시청" })).toHaveAttribute("href", item.watchUrl);
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+  it("leaves a hanging playback lookup after eight seconds with an external-watch action", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((_url, init: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+    })));
+    render(<TikTokLivePlayer item={item} locale="ko" onClose={() => {}} />);
+    await settle();
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); });
+    expect(screen.getByRole("link", { name: "TikTok에서 시청" })).toHaveAttribute("href", item.watchUrl);
+    expect(screen.getByRole("dialog").className).toContain("compactDialog");
+  });
 });

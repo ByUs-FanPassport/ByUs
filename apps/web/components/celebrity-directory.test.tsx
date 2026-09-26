@@ -435,3 +435,15 @@ it("offers all profiles when the authenticated owner has no Passports", async ()
   fireEvent.click(showAll);
   expect(screen.getAllByRole("article")).toHaveLength(3);
 });
+
+it("offers a favorite request at discovery and preserves an unmatched name", async () => {
+  render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" initialQuery=" 새 최애 & 이름 " />);
+  const links = await screen.findAllByRole("link", { name: "최애 요청" });
+  expect(links.length).toBe(2);
+  for (const link of links) {
+    const url = new URL(link.getAttribute("href")!, "https://byus.kr");
+    expect(url.pathname).toBe("/bias/requests");
+    expect(url.searchParams.get("name")).toBe("새 최애 & 이름");
+    expect(url.searchParams.get("locale")).toBe("ko");
+  }
+});

@@ -223,12 +223,15 @@ describe("canonical 03 guest home", () => {
     );
   });
 
-  it("offers all 11 languages and selects the current language", () => {
+  it("offers all 11 languages and selects the current language", async () => {
     const { rerender } = render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     const selector = screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" });
     expect(selector).toHaveValue("ko");
-    expect(within(selector).getAllByRole("option")).toHaveLength(11);
-    expect(within(selector).getByRole("option", { name: "繁體中文" })).toHaveValue("zh-Hant");
+    fireEvent.click(selector);
+    const listbox = await screen.findByRole("listbox");
+    expect(within(listbox).getAllByRole("option")).toHaveLength(11);
+    expect(within(listbox).getByRole("option", { name: "繁體中文" })).toBeInTheDocument();
+    fireEvent.keyDown(listbox, { key: "Escape" });
     rerender(<GuestHome celebrities={celebrities} featuredLives={[featuredLive]} locale="en" />);
     expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
   });

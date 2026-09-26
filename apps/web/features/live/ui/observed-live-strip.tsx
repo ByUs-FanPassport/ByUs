@@ -139,7 +139,7 @@ function LiveCards({ items, locale, headingId, onWatch }: { items: ObservedLiveC
       </header>
       <div ref={gridRef} id={`${headingId}-cards`} className={styles.grid} onScroll={syncPage}>
         {items.map((item) => {
-          const internal = !item.platform || item.platform === "tiktok";
+          const internal = (!item.platform || item.platform === "tiktok") && item.playbackAvailable === true;
           const body = <>
             <div className={styles.cover}>
               {/* Upstream covers expire and are intentionally not persisted in the image optimizer. */}
@@ -163,6 +163,6 @@ function LiveCards({ items, locale, headingId, onWatch }: { items: ObservedLiveC
 }
 
 function watchLabel(item: ObservedLiveCard, locale: AppLocale): string {
-  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : "ByUs";
+  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : item.playbackAvailable === true ? "ByUs" : "TikTok";
   return locale === "ko" ? `${provider}에서 시청` : translate(locale, localizedMessages.m7ce4b315a780, "Watch on {0}", [provider]);
 }

@@ -106,3 +106,11 @@
 
 @media(max-width:767px){.headerIdentity,.headerLogin{display:none}}
 .headerLogin{min-height:44px;padding:12px;font-size:14px;font-weight:750}
+
+.communityLayout { display:grid; grid-template-columns:minmax(0,1fr); gap:32px; max-width:1100px; margin-inline:auto; }
+.communityOfficial { min-width:0; padding-top:24px; border-top:1px solid var(--color-line); }
+.communitySource { margin:0 0 16px; color:var(--color-muted); font-size:12px; font-weight:700; }
+.communityMediaLink { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; margin-top:16px; color:var(--color-ink); font-size:13px; font-weight:650; text-decoration:none; }
+@media(min-width:1000px) { .communityLayout { grid-template-columns:minmax(0,720px) minmax(0,300px); gap:48px; }.communityOfficial { padding:0; border:0; }.communityOfficial h2 { font-size:18px; } }
+
+@media(max-width:767px) { .tabs { scroll-snap-type:x mandatory; scroll-padding-inline:0; }.tabs>a,.tabs>button { flex:0 0 25%; min-width:max-content; scroll-snap-align:start; } }

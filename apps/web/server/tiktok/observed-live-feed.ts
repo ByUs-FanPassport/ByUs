@@ -213,6 +213,7 @@ export async function buildObservedLiveFeed(
       watchUrl: `https://www.tiktok.com/@${handle}/live`,
       observedAt: observation.observedAt,
       expiresAt: new Date(observedAtMs + OBSERVED_LIVE_MAX_AGE_MS).toISOString(),
+      playbackAvailable: observation.playback !== undefined && observation.playbackRestricted !== true,
     });
   }
 

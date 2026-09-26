@@ -23,6 +23,9 @@ import type { ContentLocale, PublishedCelebrity, PublishedCelebrityLive } from "
 import { FanStageTooltip } from "../features/rewards/ui/fan-stage-tooltip";
 import { parsePassportCollectionResponse, type PassportCollectionResponse } from "../features/passport/domain/passport-collection";
 import { fanUtilityCanvasClassName } from "./fan-ui/fan-surface";
+import { discoveryCopy } from "@/i18n/catalogs/features__fan_posts__discovery";
+import { FanAction } from "./fan-ui/fan-action";
+import { Plus } from "lucide-react";
 import { FanHeading } from "./fan-ui/fan-heading";
 import styles from "./celebrity-directory.module.css";
 
@@ -62,12 +65,13 @@ export function directoryIntroduction(summary: string, locale: AppLocale) {
 }
 
 export function CelebrityDirectory({ celebrities, locale, initialQuery = "", initialSort = "published", initialOwnedOnly, initialRole = "all" }: { celebrities: readonly DirectoryCelebrity[]; locale: AppLocale; initialQuery?: string; initialSort?: SortOrder; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter }) {
-  const t = copy[locale];
+  const t = copy[locale], discovery = discoveryCopy(locale);
   const localeQuery = `?locale=${locale}`;
   const auth = usePrivy();
   const router = useRouter();
   const { ready, authenticated } = auth;
   const [query, setQuery] = useState(initialQuery);
+  const requestHref = `/bias/requests?locale=${locale}${query.trim() ? `&name=${encodeURIComponent(query.trim().slice(0, 120))}` : ""}`;
   const [role, setRole] = useState<CreatorRoleFilter>(initialOwnedOnly ? "all" : initialRole);
   const [sort, setSort] = useState<SortOrder>(initialSort);
   const [ownedOnlyOverride, setOwnedOnly] = useState(initialOwnedOnly);
@@ -180,7 +184,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
     <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="celebrity-directory-content">
     <FanContentContainer as="main" className={styles.page} id="celebrity-directory-content" tabIndex={-1}>
       <section className={styles.content} aria-labelledby="directory-heading">
-        <div className={styles.intro}><FanHeading as="h1" id="directory-heading" variant="personal-page">{t.heading}</FanHeading><p>{t.intro}</p></div>
+        <div className={styles.introRow}><div className={styles.intro}><FanHeading as="h1" id="directory-heading" variant="personal-page">{t.heading}</FanHeading><p>{t.intro}</p></div><FanAction href={requestHref} leadingIcon={<Plus />} variant="neutral">{discovery.requestFavorite}</FanAction></div>
         {celebrities.length === 0 ? (
           <div className={styles.empty} role="status"><h2>{t.noPublished}</h2><p>{t.noPublishedHelp}</p><Link href={`/${localeQuery}`}>{t.back}</Link></div>
         ) : isDirectoryLoading ? (
@@ -215,7 +219,7 @@ export function CelebrityDirectory({ celebrities, locale, initialQuery = "", ini
           ) : ownedOnly && passportState.status === "error" ? (
             <div id="directory-results" className={styles.ownedState} role="alert"><p>{t.retryPrefix}</p><button type="button" onClick={retry}>{t.retry}</button></div>
           ) : visibleCelebrities.length === 0 ? (
-            <div id="directory-results" className={styles.empty} role="status"><h2>{ownedOnly && !hasOwnedPassport ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly && !hasOwnedPassport ? t.ownedHelp : t.searchHelp}</p>{ownedOnly && !hasOwnedPassport ? <button type="button" onClick={() => changeRole("all")}>{t.discoverAll}</button> : filtersActive ? <button type="button" onClick={() => changeRole("all", true)}>{t.reset}</button> : null}</div>
+            <div id="directory-results" className={styles.empty} role="status"><h2>{ownedOnly && !hasOwnedPassport ? t.ownedEmpty : t.searchEmpty}</h2><p>{ownedOnly && !hasOwnedPassport ? t.ownedHelp : t.searchHelp}</p>{ownedOnly && !hasOwnedPassport ? <button type="button" onClick={() => changeRole("all")}>{t.discoverAll}</button> : filtersActive ? <button type="button" onClick={() => changeRole("all", true)}>{t.reset}</button> : null}{!ownedOnly && <div className={styles.requestEmpty}><p>{discovery.missingFavorite}</p><FanAction href={requestHref} variant="neutral" leadingIcon={<Plus />}>{discovery.requestFavorite}</FanAction></div>}</div>
           ) : (
             <div id="directory-results" className={styles.grid} aria-label={t.list}>
               {visibleCelebrities.map(c => renderCreator(c))}

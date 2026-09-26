@@ -153,7 +153,8 @@ describe("FAN-019 Notification Center", () => {
       "/live/kara-live?locale=en",
     );
     expect(screen.getByText("Unread")).toHaveAccessibleName("Unread notification");
-    expect(screen.getByRole("heading", { name: "Notification summary" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Unread notifications 1")).toHaveTextContent("1");
+    expect(screen.queryByRole("heading", { name: "Notification summary" })).not.toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       "/api/notifications?locale=en&recipientLinks=1",
       expect.objectContaining({ cache: "no-store" }),
@@ -200,6 +201,9 @@ describe("FAN-019 Notification Center", () => {
     await screen.findByText("No notifications yet.");
     fireEvent.click(screen.getAllByRole("button", { name: "Enable browser notifications" })[0]);
     expect(await screen.findByText(message)).toBeInTheDocument();
+    if (result === "denied" || result === "unsupported") {
+      expect(screen.getByRole("button", { name: "Enable browser notifications" })).toBeDisabled();
+    }
   });
 
   it("localizes English read-all progress and failure", async () => {

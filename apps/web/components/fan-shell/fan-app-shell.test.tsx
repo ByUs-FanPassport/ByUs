@@ -94,11 +94,14 @@ describe("fan app shell navigation", () => {
     ).toBe("/c/kara?tab=notice&locale=en&source=home#latest");
   });
 
-  it("retains a nested screen when its selected navigation section is overridden", () => {
+  it("retains a nested screen when its selected navigation section is overridden", async () => {
     pathname = "/my/activity";
     search = "kind=collection&locale=ko";
     render(<FanAppFrame locale="ko" currentPath="/my"><main>Activity</main></FanAppFrame>);
-    fireEvent.change(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" }), { target: { value: "en" } });
+    fireEvent.click(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" }));
+    const english = await screen.findByRole("option", { name: "English" });
+    fireEvent.pointerDown(english, { button: 0, pointerType: "mouse" });
+    fireEvent.click(english);
     expect(push).toHaveBeenCalledWith("/my/activity?kind=collection&locale=en");
   });
 

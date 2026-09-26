@@ -5,7 +5,7 @@ import type Mpegts from "mpegts.js";
 import { ArrowUpRight, CircleAlert, LoaderCircle, Maximize, Minimize, Radio, RotateCcw, Volume2, X } from "lucide-react";
 import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
 import { toContentLocale, type AppLocale } from "@/i18n/locales";
-import type { ObservedLiveCard } from "../domain/observed-live";
+import { OBSERVED_LIVE_FUTURE_SKEW_MS, type ObservedLiveCard } from "../domain/observed-live";
 import { tiktokPlaybackResponseSchema } from "../domain/tiktok-playback";
 import styles from "./tiktok-live-player.module.css";
 
@@ -31,13 +31,14 @@ const framingCopy = {
   pt: ["Preencher ecrã", "Mostrar vídeo completo"], fr: ["Remplir l’écran", "Afficher toute la vidéo"],
 } satisfies Record<AppLocale, [string, string]>;
 
-function LiveVideo({ item, locale }: { item: ObservedLiveCard; locale: AppLocale }) {
+type PlayerStatus = "loading" | "playing" | "paused" | "ended" | "error" | "unsupported";
+
+function LiveVideo({ item, locale, status, setStatus }: { item: ObservedLiveCard; locale: AppLocale; status: PlayerStatus; setStatus: (status: PlayerStatus) => void }) {
   const slug = item.celebritySlug;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [attempt, setAttempt] = useState(0);
   const [muted, setMuted] = useState(true);
   const [fill, setFill] = useState(false);
-  const [status, setStatus] = useState<"loading" | "playing" | "paused" | "ended" | "error" | "unsupported">("loading");
   const t = copy[locale];
 
   useEffect(() => {
@@ -90,7 +91,7 @@ function LiveVideo({ item, locale }: { item: ObservedLiveCard; locale: AppLocale
           const source = tiktokPlaybackResponseSchema.parse(await response.json());
           if (stopped) return;
           const now = Date.now(), sourceExpiry = Date.parse(source.expiresAt), observedAt = Date.parse(source.observedAt);
-          if (sourceExpiry <= now + 5_000 || observedAt > now || now - observedAt > 60_000) throw new Error("Stale LIVE");
+          if (sourceExpiry <= now + 5_000 || observedAt > now + OBSERVED_LIVE_FUTURE_SKEW_MS || now - observedAt > 60_000) throw new Error("Stale LIVE");
           clearTimeout(freshness);
           freshness = setTimeout(() => stop("error"), 60_000);
           if (player && (activeRoom !== source.roomId || activeExpiry - now < 45_000)) destroy();
@@ -132,10 +133,11 @@ function LiveVideo({ item, locale }: { item: ObservedLiveCard; locale: AppLocale
       stopped = true; clearTimeout(poll); clearTimeout(startup); clearTimeout(freshness); clearTimeout(expiry);
       controller?.abort(); removeListeners(); destroy();
     };
-  }, [slug, locale, attempt]);
+  }, [slug, locale, attempt, setStatus]);
 
   const active = status === "playing" || status === "paused";
-  return <>
+  const externalFallback = status === "ended" || status === "error" || status === "unsupported";
+  return <div className={styles.player} data-state={status}>
     <div className={styles.stage} data-state={status}>
       <video ref={videoRef} className={styles.video} controls playsInline autoPlay muted={muted} disableRemotePlayback
         data-fill={fill} tabIndex={0} aria-label="TikTok LIVE" onVolumeChange={() => setMuted(videoRef.current?.muted ?? true)} />
@@ -143,13 +145,16 @@ function LiveVideo({ item, locale }: { item: ObservedLiveCard; locale: AppLocale
       <div className={styles.status} hidden={active}>
         {status === "loading" ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : status === "ended" ? <Radio aria-hidden="true" /> : <CircleAlert aria-hidden="true" />}
         <p role="status">{status === "loading" ? t.loading : status === "ended" ? t.ended : status === "error" ? t.error : status === "unsupported" ? t.unsupported : ""}</p>
-        {status === "error" ? <button type="button" className={styles.retry} onClick={() => setAttempt((value) => value + 1)}><RotateCcw aria-hidden="true" />{t.retry}</button> : null}
+        {externalFallback ? <div className={styles.fallbackActions}>
+          <a className={styles.fallbackOriginal} href={item.watchUrl} target="_blank" rel="noopener noreferrer">{t.original}<ArrowUpRight aria-hidden="true" /></a>
+          {status === "error" ? <button type="button" className={styles.retry} onClick={() => { setStatus("loading"); setAttempt((value) => value + 1); }}><RotateCcw aria-hidden="true" />{t.retry}</button> : null}
+        </div> : null}
       </div>
       {(status === "playing" && muted) || status === "paused" ? <button type="button" className={styles.sound} onClick={() => {
         setMuted(false); const video = videoRef.current; if (video) { video.muted = false; void video.play().catch(() => setStatus("paused")); }
       }}><Volume2 aria-hidden="true" />{t.sound}</button> : null}
     </div>
-    <footer className={styles.footer}>
+    {externalFallback ? null : <footer className={styles.footer}>
       <p className={styles.title}>{item.title}</p>
       <div className={styles.actions}>
         <a className={styles.original} href={item.watchUrl} target="_blank" rel="noopener noreferrer">{t.original}<ArrowUpRight aria-hidden="true" /></a>
@@ -158,14 +163,16 @@ function LiveVideo({ item, locale }: { item: ObservedLiveCard; locale: AppLocale
           {fill ? <Minimize aria-hidden="true" /> : <Maximize aria-hidden="true" />}
         </button> : null}
       </div>
-    </footer>
-  </>;
+    </footer>}
+  </div>;
 }
 
 export function TikTokLivePlayer({ item, locale, onClose }: { item: ObservedLiveCard; locale: AppLocale; onClose: () => void }) {
   const headingId = useId();
   const t = copy[locale];
-  return <AccessibleOverlay open onClose={onClose} labelledBy={headingId} backdropClassName={styles.backdrop} contentClassName={styles.dialog} contentAs="section">
+  const [status, setStatus] = useState<PlayerStatus>("loading");
+  const compact = status === "ended" || status === "error" || status === "unsupported";
+  return <AccessibleOverlay open onClose={onClose} labelledBy={headingId} backdropClassName={styles.backdrop} contentClassName={`${styles.dialog} ${compact ? styles.compactDialog : ""}`} contentAs="section">
     <header className={styles.header}>
       <div className={styles.identity}>
         <img className={styles.avatar} src={item.fallbackThumbnailUrl ?? item.thumbnailUrl} alt="" referrerPolicy="no-referrer"
@@ -174,6 +181,6 @@ export function TikTokLivePlayer({ item, locale, onClose }: { item: ObservedLive
       </div>
       <button type="button" className={styles.close} onClick={onClose} aria-label={t.close}><X aria-hidden="true" /></button>
     </header>
-    <LiveVideo item={item} locale={locale} />
+    <LiveVideo item={item} locale={locale} status={status} setStatus={setStatus} />
   </AccessibleOverlay>;
 }

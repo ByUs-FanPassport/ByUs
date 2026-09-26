@@ -14,6 +14,7 @@ const card: ObservedLiveCard = {
   title: "함께 노래해요", thumbnailUrl: "/images/live.jpg",
   watchUrl: "https://www.tiktok.com/@ifewknow/live",
   observedAt: new Date(start).toISOString(), expiresAt: new Date(start + 90_000).toISOString(),
+  playbackAvailable: true,
 };
 const targetFor = (item: ObservedLiveCard, state: ObservedLiveTarget["state"] = "live", observedAt: string | null = item.observedAt): ObservedLiveTarget => ({
   celebritySlug: item.celebritySlug,
@@ -52,6 +53,14 @@ describe("observed LIVE cards", () => {
     const button = screen.getByRole("button", { name: /ByUs/ });
     expect(button).toHaveAttribute("aria-haspopup", "dialog");
     expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=4`, expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it("opens TikTok directly when discovery cannot prove in-app playback eligibility", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([{ ...card, playbackAvailable: false }])));
+    render(<ObservedLiveStrip locale="ko" />);
+    await settle();
+    expect(screen.queryByRole("button", { name: /박명호|이퓨.*ByUs/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /TikTok에서 시청, 새 창/ })).toHaveAttribute("href", card.watchUrl);
   });
 
   it("uses a mixed-platform heading and keeps four providers for the same creator", async () => {
@@ -217,7 +226,7 @@ describe("observed LIVE cards", () => {
   it("does not display already stale, future, or invalid observations", async () => {
     const invalid = [
       { ...card, celebritySlug: "stale", observedAt: new Date(start - 91_000).toISOString(), expiresAt: new Date(start - 1_000).toISOString() },
-      { ...card, celebritySlug: "future", observedAt: new Date(start + 5_000).toISOString(), expiresAt: new Date(start + 95_000).toISOString() },
+      { ...card, celebritySlug: "future", observedAt: new Date(start + 5_001).toISOString(), expiresAt: new Date(start + 95_001).toISOString() },
       { ...card, celebritySlug: "invalid", expiresAt: "invalid" },
     ];
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(invalid)));

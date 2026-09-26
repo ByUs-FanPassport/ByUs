@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
 import { FanAction, fanActionClassName } from "@/components/fan-ui/fan-action";
+import { FanHeading } from "@/components/fan-ui/fan-heading";
 import { FanState } from "@/components/fan-ui/fan-state";
 import { GoogleMark } from "@/components/icons";
 import { withLocalePath } from "@/components/locale-path";
@@ -335,7 +336,14 @@ export function NotificationCenter() {
       <FanContentContainer as="main" className={styles.content} id="notification-content" tabIndex={-1}>
       <header className={styles.pageHeading}>
         <div>
-          <h1>{c.title}</h1>
+          <div className={styles.titleRow}>
+            <FanHeading as="h1">{c.title}</FanHeading>
+            {state.kind === "ready" && state.unread > 0 ? (
+              <span className={styles.unreadCount} aria-label={`${c.unreadSummary} ${state.unread}${c.notifications}`}>
+                {state.unread}
+              </span>
+            ) : null}
+          </div>
           <p>{c.subtitle}</p>
         </div>
         <button
@@ -349,13 +357,13 @@ export function NotificationCenter() {
         </button>
       </header>
       {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
-      <section className={styles.permission} aria-labelledby="permission-title">
+      <section className={styles.permission} aria-labelledby="permission-title" aria-describedby="permission-description">
         <div className={styles.permissionIcon}>
           <Bell aria-hidden="true" />
         </div>
         <div>
           <h2 id="permission-title">{c.enable}</h2>
-          <p>{c.permission}</p>
+          <p id="permission-description">{c.permission}</p>
           {status && (
             <p className={styles.status} role={permission === "failed" ? "alert" : "status"}>
               {status}
@@ -365,7 +373,7 @@ export function NotificationCenter() {
         <button
           type="button"
           onClick={enable}
-          disabled={pendingAction !== null || permission === "subscribed"}
+          disabled={pendingAction !== null || permission === "subscribed" || permission === "denied" || permission === "unsupported"}
           aria-busy={pendingAction === "enable"}
         >
           {pendingAction === "enable" ? c.enabling : permission === "subscribed" ? c.enabled : c.enable}
@@ -422,7 +430,7 @@ export function NotificationCenter() {
                         void openNotification(item);
                       }}
                     >
-                      <span className={styles.dot} aria-hidden="true" />
+                      {!item.readAt ? <span className={styles.dot} aria-hidden="true" /> : null}
                       <span className={styles.copy}>
                         <strong>{item.title}</strong>
                         <span>
@@ -439,20 +447,6 @@ export function NotificationCenter() {
               ) : null,
             )}
           </div>
-          <aside className={styles.summary} aria-labelledby="notification-summary-title">
-            <Bell aria-hidden="true" />
-            <h2 id="notification-summary-title">{c.summary}</h2>
-            <dl>
-              <div>
-                <dt>{c.unreadSummary}</dt>
-                <dd>{state.unread}{c.notifications}</dd>
-              </div>
-              <div>
-                <dt>{c.browser}</dt>
-                <dd>{permission === "subscribed" ? c.enabled : c.choose}</dd>
-              </div>
-            </dl>
-          </aside>
         </div></>
       )}
       </FanContentContainer>

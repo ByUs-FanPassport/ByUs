@@ -8,8 +8,8 @@
 .dialog {
   display: flex;
   flex-direction: column;
-  width: min(100%, 600px);
-  height: min(920px, calc(100dvh - 48px));
+  width: min(100%, 420px);
+  height: min(780px, calc(100dvh - 48px));
   min-height: 0;
   overflow: hidden;
   border-radius: var(--radius-hero);
@@ -19,6 +19,8 @@
   font-family: "Pretendard Variable", Pretendard, sans-serif;
   box-shadow: 0 0 0 1px rgb(255 255 255 / 10%), 0 24px 80px rgb(0 0 0 / 40%);
 }
+.compactDialog { height: auto; }
+.player { display: flex; flex: 1; min-height: 0; flex-direction: column; }
 
 .header {
   display: flex;
@@ -39,6 +41,7 @@
 .close svg { width: 22px; height: 22px; }
 
 .stage { position: relative; isolation: isolate; flex: 1; min-height: 0; overflow: hidden; background: #000; }
+.player[data-state="error"] .stage, .player[data-state="unsupported"] .stage, .player[data-state="ended"] .stage { flex: none; min-height: 240px; }
 .video { display: block; width: 100%; height: 100%; object-fit: contain; }
 .video[data-fill="true"] { object-fit: cover; }
 .liveBadge { position: absolute; top: 16px; left: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 6px; background: #be185d; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .04em; pointer-events: none; }
@@ -48,7 +51,10 @@
 .status > svg { width: 28px; height: 28px; color: #999; stroke-width: 1.5; }
 .status p { max-width: 34ch; margin: 0; color: #d4d4d4; font-size: 15px; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
 .spinner { animation: spin 1s linear infinite; }
-.sound, .retry { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: var(--radius-pill); background: #fafafa; color: #171717; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.sound, .retry, .fallbackOriginal { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: var(--radius-pill); background: #fafafa; color: #171717; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.fallbackActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.fallbackOriginal svg { width: 17px; height: 17px; }
+.retry { border: 1px solid rgb(255 255 255 / 20%); background: transparent; color: #e5e5e5; }
 .sound { position: absolute; right: 20px; bottom: 64px; box-shadow: 0 2px 12px rgb(0 0 0 / 20%); }
 .sound svg, .retry svg { width: 17px; height: 17px; stroke-width: 2; }
 
@@ -60,19 +66,21 @@
 .framing { background: transparent; color: #aaa; }
 .framing svg { width: 20px; height: 20px; }
 .framing[aria-pressed="true"] { color: #fff; background: rgb(255 255 255 / 10%); }
-.dialog button, .original { transition: background-color 150ms ease-out, color 150ms ease-out, scale 150ms var(--motion-easing); }
+.dialog button, .original, .fallbackOriginal { transition: background-color 150ms ease-out, color 150ms ease-out, scale 150ms var(--motion-easing); }
 .dialog button:active { scale: .96; }
-.dialog button:focus-visible, .original:focus-visible, .video:focus-visible { outline: 3px solid #fff; outline-offset: -4px; }
+.dialog button:focus-visible, .original:focus-visible, .fallbackOriginal:focus-visible, .video:focus-visible { outline: 3px solid #fff; outline-offset: -4px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (hover: hover) {
   .close:hover, .framing:hover, .original:hover { background: rgb(255 255 255 / 14%); color: #fff; }
-  .sound:hover, .retry:hover { background: #e5e5e5; }
+  .sound:hover, .fallbackOriginal:hover { background: #e5e5e5; }
+  .retry:hover { background: rgb(255 255 255 / 10%); }
 }
 @media (max-width: 47.99rem), (max-height: 30rem) and (pointer: coarse) {
   .backdrop[data-overlay-root] { padding: 0; }
   .dialog { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .compactDialog { width: calc(100% - 32px); height: auto; border-radius: var(--radius-hero); box-shadow: 0 24px 80px rgb(0 0 0 / 40%); }
   .header { padding: 12px 16px; }
   .avatar { width: 40px; height: 40px; }
   .header h2 { font-size: 16px; }

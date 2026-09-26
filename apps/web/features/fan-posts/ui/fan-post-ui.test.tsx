@@ -69,7 +69,13 @@ describe("fan post UI navigation and context", () => {
     state.pages = { first: { items: [], nextCursor: null } };
     render(<FanPostFeed slug="artist" locale="en" />);
 
-    expect(screen.getByRole("textbox", { name: "Write a post" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Write a post" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Write a post" }));
+    expect(screen.getByRole("textbox", { name: "Write a post" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("radio", { name: "Passport members" }));
+    expect(screen.getByRole("radio", { name: "Passport members" })).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("No posts yet");
   });
 
