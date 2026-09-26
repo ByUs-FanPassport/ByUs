@@ -1,4 +1,5 @@
 import "server-only";
+import { AuthError } from "@/features/auth/domain/auth-errors";
 import { createClient } from "@supabase/supabase-js";
 import type { CanonicalPrivyIdentity, CanonicalWallet } from "../../features/auth/domain/identity";
 import {
@@ -80,6 +81,9 @@ export class SupabaseSessionSyncRepository implements SessionSyncRepository {
       p_chain_id: wallet.chainId,
       p_wallet_address: wallet.address,
     }));
+    if (error?.message && /ACCOUNT_DELETED|FAN_WEB_ACTIVE_ACCOUNT_REQUIRED/.test(error.message)) {
+      throw new AuthError("AUTHENTICATION_REQUIRED", 403, "Account is unavailable");
+    }
     if (error) throwStageError("session.identity", "Identity synchronization failed");
     const row = Array.isArray(data) ? data[0] : null;
     if (!row || typeof row !== "object" || !("app_user_id" in row) || typeof row.app_user_id !== "string") {

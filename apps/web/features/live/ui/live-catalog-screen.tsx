@@ -1,5 +1,6 @@
 "use client";
 
+import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { toContentLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-catalog-screen";
 import { additionalLocales, translate } from "@/i18n/messages";
@@ -113,6 +114,7 @@ function dateRange(item: LiveEventResponse, locale: FanLocale) {
 
 function action(item: LiveEventResponse, locale: FanLocale) {
   const t = copy[locale];
+  if (item.live.watch.mode === "replay" && item.live.watch.available) return { label: participationCopy(locale).replays, icon: <Play />, external: true, state: "watch" as const };
   if (item.live.effectiveStatus === "live") return { label: t.enter, icon: <Play />, external: true, state: "watch" as const };
   if (item.viewer.reservation) return { label: t.details, icon: <Eye />, external: false, state: "reserved" as const };
   return { label: t.details, icon: <Eye />, external: false, state: "reserve" as const };
@@ -301,7 +303,8 @@ export function LiveCatalogScreen({
     return () => controller.abort();
   }, [ready, requestAuthenticated, getAccessToken, locale, requestKey, initialCatalog, session.generation, session.pending]);
 
-  const total = catalog.liveNow.length + catalog.upcoming.length;
+  const replay = catalog.replay.filter(item => item.live.watch.available && item.live.watch.mode === "replay");
+  const total = catalog.liveNow.length + catalog.upcoming.length + replay.length;
   return (
     <FanAppFrame locale={locale} mainId="live-catalog-main">
       <FanContentContainer as="main" className={styles.main} id="live-catalog-main" tabIndex={-1}>
@@ -320,6 +323,7 @@ export function LiveCatalogScreen({
         {total === 0 ? <p className={styles.emptyAll}>{t.emptyAll}</p> : (
           <>
             {catalog.liveNow.length > 0 ? <LiveGroup id="live-now" title={t.liveNow} empty={t.emptyLive} items={catalog.liveNow} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} /> : null}
+            {replay.length > 0 && <LiveGroup id="replay" title={participationCopy(locale).replays} empty={participationCopy(locale).empty} items={replay} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />}
             <LiveGroup id="upcoming" title={t.upcoming} empty={t.emptyUpcoming} items={catalog.upcoming} locale={locale} reservationStatus={reservationStatus} onStartReached={refreshLiveStatus} />
           </>
         )}

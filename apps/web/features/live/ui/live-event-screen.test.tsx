@@ -22,6 +22,13 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: authReady, authenticated, getAccessToken, user: authenticated && userAvailable ? { id: userId } : null }),
 }));
 vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => session }));
+// The submission child has its own route tests; do not consume this suite's ordered reward/reservation responses.
+vi.mock("@/features/fanpage/ui/use-fanpage-resource", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/features/fanpage/ui/use-fanpage-resource")>();
+  return { ...actual, useFanpageResource: ((url: string | null, ...args: unknown[]) => url?.includes("/submissions?")
+    ? { state: { status: "ready", data: { settings: { accepting: false, closesAt: null, visibility: "public", revision: 0 }, access: "public", mine: [], items: [], nextCursor: null } }, retry: () => {} }
+    : (actual.useFanpageResource as (...values: unknown[]) => unknown)(url, ...args)) };
+});
 vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 
 vi.mock("next/navigation", () => ({

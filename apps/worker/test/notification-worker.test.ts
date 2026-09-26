@@ -24,11 +24,31 @@ function queue(items = [delivery]): NotificationQueue {
   return {
     enqueueDue: vi.fn(async () => 0),
     claim: vi.fn(async () => items),
+    canSend: vi.fn(async () => true),
     complete: vi.fn(async () => undefined),
     retry: vi.fn(async () => undefined),
   };
 }
 describe("NotificationWorker", () => {
+  it("suppresses a notification whose owner or delivery policy changed after claim", async () => {
+    const q = queue();
+    vi.mocked(q.canSend).mockResolvedValue(false);
+    const sender: PushSender = { send: vi.fn() };
+    await new NotificationWorker(q, sender, { workerId: "notify-1", batchSize: 25, leaseSeconds: 120 }).runOnce();
+    expect(q.canSend).toHaveBeenCalledWith(delivery);
+    expect(sender.send).not.toHaveBeenCalled();
+    expect(q.complete).not.toHaveBeenCalled();
+    expect(q.retry).toHaveBeenCalledWith(delivery, { code: "NOTIFICATION_NOT_SENDABLE", retryable: false, disableSubscription: false });
+  });
+  it("fails closed and retries when the send permission cannot be checked", async () => {
+    const q = queue();
+    vi.mocked(q.canSend).mockRejectedValue(new Error("permission unavailable"));
+    const sender: PushSender = { send: vi.fn() };
+    await new NotificationWorker(q, sender, { workerId: "notify-1", batchSize: 25, leaseSeconds: 120 }).runOnce();
+    expect(sender.send).not.toHaveBeenCalled();
+    expect(q.complete).not.toHaveBeenCalled();
+    expect(q.retry).toHaveBeenCalledWith(delivery, { code: "UNEXPECTED_PUSH_ERROR", retryable: true, disableSubscription: false });
+  });
   it("completes each leased subscription delivery once", async () => {
     const q = queue();
     const sender: PushSender = { send: vi.fn(async () => undefined) };

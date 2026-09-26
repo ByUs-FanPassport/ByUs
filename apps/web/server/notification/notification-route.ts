@@ -31,6 +31,9 @@ const patch = z
     liveReminders: z.boolean().optional(),
     surveyReminders: z.boolean().optional(),
     benefitNotifications: z.boolean().optional(),
+    replyNotifications: z.boolean().optional(),
+    officialPostNotifications: z.boolean().optional(),
+    scheduleNotifications: z.boolean().optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0);

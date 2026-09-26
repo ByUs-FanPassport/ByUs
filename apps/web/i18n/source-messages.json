@@ -16054,5 +16054,17 @@
     "ko": "굿즈 방문 예약",
     "source": "features/analytics/client/banksy-campaign",
     "id": "banksy_shop"
+  },
+  "mfbe230aec6fe": {
+    "en": "Fan community",
+    "ko": "팬 게시판",
+    "source": "components/celebrity-fan-page",
+    "id": "components/celebrity-fan-page:community"
+  },
+  "mef318d6cd5e2": {
+    "en": "Media",
+    "ko": "미디어",
+    "source": "components/celebrity-fan-page",
+    "id": "components/celebrity-fan-page:media"
   }
 }

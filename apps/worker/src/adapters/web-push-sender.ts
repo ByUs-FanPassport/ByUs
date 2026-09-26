@@ -48,6 +48,9 @@ export class WebPushSender implements PushSender {
     webpush.setVapidDetails(input.subject, input.publicKey, input.privateKey);
   }
   async send(delivery: NotificationDelivery) {
+    const message = copy[delivery.locale]?.[delivery.kind];
+    if (!message)
+      throw new NotificationDeliveryError("UNSUPPORTED_PUSH_KIND", false);
     if (!isTrustedWebPushEndpoint(delivery.endpoint))
       throw new NotificationDeliveryError(
         "INVALID_PUSH_ENDPOINT",
@@ -64,7 +67,7 @@ export class WebPushSender implements PushSender {
         JSON.stringify({
           notificationId: delivery.notificationId,
           locale: delivery.locale,
-          ...copy[delivery.locale][delivery.kind],
+          ...message,
         }),
         {
           TTL: 86400,

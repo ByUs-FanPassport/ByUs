@@ -11,6 +11,20 @@ describe("Notice locale query", () => {
 });
 
 describe("Notice rich-text contract", () => {
+  it("validates unsafe siblings after a meaningful first paragraph", () => {
+    expect(() => parseNoticeDocument({ type: "doc", content: [
+      { type: "paragraph", content: [{ type: "text", text: "valid" }] },
+      { type: "image", attrs: { src: "javascript:alert(1)", alt: "image" } },
+    ] })).toThrow();
+    expect(() => parseNoticeDocument({ type: "doc", content: [{ type: "paragraph", content: [
+      { type: "text", text: "valid" }, { type: "text", text: "unsafe", marks: [{ type: "link", attrs: { href: "http://unsafe.test" } }] },
+    ] }] })).toThrow();
+  });
+  it("accepts only canonical protected image paths", () => {
+    const doc = (src: string) => ({ type: "doc", content: [{ type: "image", attrs: { src, alt: "photo" } }] });
+    expect(parseNoticeDocument(doc("/api/content-assets/11111111-1111-4111-8111-111111111111"))).toBeTruthy();
+    expect(() => parseNoticeDocument(doc("/api/content-assets/../secret"))).toThrow();
+  });
   it("accepts the supported Tiptap document set", () => {
     expect(parseNoticeDocument({
       type: "doc",

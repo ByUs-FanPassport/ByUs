@@ -9,7 +9,8 @@ import Link from "next/link";
 import { z } from "zod";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { commentsSchema } from "../domain/community";
-import { useFanpageResource } from "./use-fanpage-resource";
+import { useCommunityResource } from "./use-community-resource";
+import { ContentActions, ContentTranslation } from "@/features/content-safety/ui/content-actions";
 import previewStyles from "./fanpage.module.css";
 import detailStyles from "./notice-comments.module.css";
 
@@ -24,7 +25,7 @@ function CommentsForOwner({ slug, noticeSlug, locale, preview, welcome }: { slug
   const styles = preview ? previewStyles : detailStyles;
   const Heading = preview ? "h3" : "h2";
   const [cursor, setCursor] = useState<string | null>(null);
-  const resource = useFanpageResource(`/api/celebrities/${slug}/notices/${noticeSlug}/comments?locale=${toContentLocale(locale)}&limit=${preview ? 2 : 20}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parseComments);
+  const resource = useCommunityResource(`/api/celebrities/${slug}/notices/${noticeSlug}/comments?locale=${toContentLocale(locale)}&limit=${preview ? 2 : 20}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parseComments, false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -53,7 +54,7 @@ function CommentsForOwner({ slug, noticeSlug, locale, preview, welcome }: { slug
     <div id={preview ? undefined : "comments"}>
       {resource.state.status === "loading" ? <p role="status" className={styles.muted}>{locale === "ko" ? "댓글을 불러오고 있어요." : translate(locale, localizedMessages.mf94d961ae09e, "Loading comments.")}</p> : resource.state.status === "error" ? <p role="alert">{locale === "ko" ? "댓글을 불러오지 못했어요." : translate(locale, localizedMessages.m75ec2fbb186d, "Couldn't load comments.")} <button onClick={resource.retry}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m7be9e2b0e04a, "Retry")}</button></p> : <>
         {!resource.state.data.comments.length && <p className={styles.muted}>{welcome ? (locale === "ko" ? "어떤 순간에 팬이 되셨나요? 첫 인사를 남겨주세요." : translate(locale, localizedMessages.m28934d96496a, "What made you a fan? Say hello in the comments.")) : (locale === "ko" ? "첫 댓글로 이야기를 시작해 보세요." : translate(locale, localizedMessages.ma34a3cc7c637, "Start the conversation with the first comment."))}</p>}
-        <ul className={styles.commentList}>{resource.state.data.comments.map((comment) => <li key={comment.id}><img src={comment.avatarUrl} width={preview ? 32 : 40} height={preview ? 32 : 40} alt="" /><div><div className={styles.commentMeta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} onClick={() => void mutate(comment.id)}>{locale === "ko" ? "삭제" : translate(locale, localizedMessages.mf859bdd4bf81, "Delete")}</button>}</div><p>{comment.body}</p></div></li>)}</ul>
+        <ul className={styles.commentList}>{resource.state.data.comments.map((comment) => <li key={comment.id}><img src={comment.avatarUrl} width={preview ? 32 : 40} height={preview ? 32 : 40} alt="" /><div><div className={styles.commentMeta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} onClick={() => void mutate(comment.id)}>{locale === "ko" ? "삭제" : translate(locale, localizedMessages.mf859bdd4bf81, "Delete")}</button>}</div><ContentTranslation targetType="notice_comment" targetId={comment.id} locale={locale}><p>{comment.body}</p></ContentTranslation><ContentActions targetType="notice_comment" targetId={comment.id} locale={locale} canBlock={!comment.isOwner} onChanged={resource.retry} /></div></li>)}</ul>
         {!preview && <div className={styles.pagination}>{cursor && <button onClick={() => setCursor(null)}>{locale === "ko" ? "최신 댓글" : translate(locale, localizedMessages.m787c23318977, "Newest")}</button>}{resource.state.data.nextCursor && <button onClick={() => { if (resource.state.status === "ready") setCursor(resource.state.data.nextCursor); }}>{locale === "ko" ? "이전 댓글" : translate(locale, localizedMessages.md95599a46ca8, "Older comments")}</button>}</div>}
       </>}
     </div>

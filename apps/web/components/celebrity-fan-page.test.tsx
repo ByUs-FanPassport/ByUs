@@ -80,7 +80,9 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
     if (url.includes("/fans?")) return ok({ likeCount: membershipCount, fanCount: membershipCount, publicFanCount: 0, fans: [] });
     if (url.includes("/cheers?")) return ok({ total: 0, comments: [], nextCursor: null });
     if (url.includes("/comments")) return ok({ total: 0, comments: [], nextCursor: null });
-    if (url.includes("/notices")) return ok({ notices });
+    if (url.includes("/notices")) return ok({ notices, nextCursor: null });
+    if (url.includes("/api/schedules?")) return ok({ items: [], nextCursor: null });
+    if (url.includes("/chzzk")) return ok({ items: [], nextCursor: null });
     if (url.includes("/raffles")) return ok({ raffles });
     if (url.includes("/api/me/summary")) return ok(summaryPayload(passports));
     if (url.includes("/api/me/avatar")) return { ok: false, json: async () => ({}) };
@@ -115,7 +117,7 @@ describe("approved fanpage", () => {
     analytics.pageViewIdempotencyKey.mockRejectedValueOnce(new Error("storage unavailable"));
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(await screen.findByText("아직 공개된 공지가 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();
   });
   it("scopes a stale authenticated user as anonymous when no token is issued", async () => {
     authenticated = true;
@@ -129,7 +131,7 @@ describe("approved fanpage", () => {
     ownerId = null;
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     expect(screen.getByRole("heading", { name: "KARA" })).toBeInTheDocument();
-    expect(await screen.findByText("아직 공개된 공지가 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();
     expect(analytics.pageViewIdempotencyKey).not.toHaveBeenCalled();
   });
   it("does not send owner A telemetry when its token resolves after switching to owner B", async () => {
@@ -173,12 +175,12 @@ describe("approved fanpage", () => {
   it("opens the fan gathering tab before ranking eligibility without trusting social followers", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });
-    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "찐팬 인증", "래플 응모", "리더보드"]);
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "팬 게시판", "미디어", "찐팬 인증", "래플 응모", "리더보드"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
     expect(within(menu).getByRole("link", { name: "래플 응모" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
     expect(within(menu).getByRole("link", { name: "리더보드" })).toHaveAttribute("href", "/kara?tab=leaderboard&locale=ko#celebrity-content");
     expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
-    expect(await screen.findByText("아직 공개된 공지가 없어요.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "인증 미션 보기" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();
   });
@@ -271,7 +273,7 @@ describe("approved fanpage", () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
     expect(await screen.findByText("LIVE 일정 안내")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /LIVE 일정 안내/ })).toHaveAttribute("href", "/c/kara/notices/schedule?locale=ko");
-    expect(screen.queryByRole("group", {name:"소식 분류"})).not.toBeInTheDocument();
+    expect(screen.getByRole("group", {name:"소식 분류"})).toBeInTheDocument();
     expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes("/chzzk"))).toBe(false);
   });
   it.each(["ko", "en"] as const)("invites a first greeting on the persisted welcome notice in %s", async (locale) => {
@@ -280,7 +282,7 @@ describe("approved fanpage", () => {
     const greeting = await screen.findByRole("link", { name: locale === "ko" ? /KARA 팬페이지에 오신 걸 환영해요/ : /Welcome to KARA/ });
     expect(greeting).toHaveAttribute("href", `/c/kara/notices/welcome-byus?locale=${locale}`);
     expect(screen.getByText(locale === "ko" ? "이용 안내" : "Start here")).toBeInTheDocument();
-    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/public/celebrities/kara/notices?locale=${locale}`)).toBe(true);
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/celebrities/kara/notices?locale=${locale}`)).toBe(true);
   });
   it("keeps official social channels and dedicated hero art direction", async () => {
     const links = [{ platform: "instagram" as const, url: "https://www.instagram.com/jen2jen2_/" }, { platform: "chzzk" as const, url: "https://chzzk.naver.com/channel" }];
@@ -288,7 +290,7 @@ describe("approved fanpage", () => {
     expect(screen.getByRole("link", { name: "치지직, 새 창" })).toHaveAttribute("href", links[1]!.url);
     expect(screen.getByRole("link", { name: "Instagram, 새 창" })).toHaveAttribute("rel", "noopener noreferrer");
     expect(container.querySelector('[data-dedicated-hero="jenny-jeong"]')).toBeInTheDocument();
-    await screen.findByText("아직 공개된 공지가 없어요.");
+    await screen.findByText("아직 공개된 소식이 없어요.");
   });
   it("shows CHZZK updates on the enabled creator home before authentication is ready", async () => {
     Object.assign(session, { ready: false, pending: true });
@@ -309,7 +311,7 @@ describe("approved fanpage", () => {
     expect(screen.getByRole("link", { name: "View verification missions" })).toHaveAttribute("href", "/kara?tab=certifications&locale=en#celebrity-content");
     expect(screen.getByRole("link", { name: "CHZZK, new window" })).toHaveTextContent("CHZZK");
     await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === "/api/celebrities/kara/fanpage?locale=en")).toBe(true));
-    expect(await screen.findByText("No public notices yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No public updates yet.")).toBeInTheDocument();
   });
   it("shows only this celebrity's LIVE dates in the Hero mini calendar", async () => {
     const month = currentCalendarMonth();
@@ -320,7 +322,7 @@ describe("approved fanpage", () => {
         startsAt: `${month}-12T11:00:00.000Z`,
         effectiveStatus: "live",
         title: "KARA 캘린더 LIVE",
-        celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+        celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
         reservationState: null,
         hasBenefit: null,
       }, {
@@ -329,7 +331,7 @@ describe("approved fanpage", () => {
         startsAt: `${month}-13T11:00:00.000Z`,
         effectiveStatus: "scheduled",
         title: "다른 셀럽 캘린더 LIVE",
-        celebrity: { name: "Changha", image: "/images/guest-home/changha-card.jpg" },
+        celebrity: { slug: "changha", name: "Changha", image: "/images/guest-home/changha-card.jpg" },
         reservationState: null,
         hasBenefit: null,
       }],
@@ -337,7 +339,7 @@ describe("approved fanpage", () => {
 
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
 
-    expect(await screen.findByRole("button", { name: "12일, 1 LIVE" })).toHaveAttribute("aria-pressed", "false");
+    expect(await screen.findByRole("button", { name: "12일, 일정 1" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("heading", { name: "다가오는 일정" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /KARA 캘린더 LIVE/ })).toHaveLength(1);
     expect(screen.queryByLabelText(/다른 셀럽 캘린더 LIVE/)).not.toBeInTheDocument();
@@ -350,17 +352,17 @@ describe("approved fanpage", () => {
       slug: index === 0 ? "kara-first-live" : "kara-second-live",
       startsAt: `${month}-12T${index === 0 ? "11" : "12"}:00:00.000Z`,
       effectiveStatus: "scheduled", title: index === 0 ? "첫 LIVE" : "두 번째 LIVE",
-      celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+      celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
       reservationState, hasBenefit: null,
     })) });
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
-    const date = await screen.findByRole("button", { name: "12일, 2 LIVE" });
+    const date = await screen.findByRole("button", { name: "12일, 일정 2" });
     expect(date).not.toHaveAttribute("href");
     expect(date).not.toHaveAttribute("data-reservation");
     expect(date).toHaveAttribute("data-upcoming", "true");
     fireEvent.click(date);
     expect(date).toHaveAttribute("aria-pressed", "true");
-    const region = screen.getByRole("region", { name: "KARA LIVE 일정" });
+    const region = screen.getByRole("region", { name: "KARA 일정" });
     expect(within(region).getByRole("link", { name: /첫 LIVE/ })).toHaveAttribute("href", "/live/kara-first-live?locale=ko");
     expect(within(region).getByRole("link", { name: /두 번째 LIVE/ })).toHaveAttribute("href", "/live/kara-second-live?locale=ko");
     expect(within(region).getByText("예약 완료")).toBeInTheDocument();
@@ -388,7 +390,7 @@ describe("approved fanpage", () => {
       `/live/calendar?month=${nextMonth}&locale=ko&celebrity=kara`,
     );
     await waitFor(() => expect(request).toHaveBeenCalledWith(
-      `/api/live-events/calendar?month=${nextMonth}&locale=ko`,
+      `/api/live-events/calendar?month=${nextMonth}&locale=ko&identity=1`,
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
   });
@@ -405,7 +407,7 @@ describe("approved fanpage", () => {
         startsAt: `${month}-18T11:00:00.000Z`,
         effectiveStatus: "scheduled",
         title: "예약한 KARA LIVE",
-        celebrity: { name: "KARA", image: "/images/guest-home/kara-card.jpg" },
+        celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" },
         reservationState: "reserved",
         hasBenefit: false,
       }],
@@ -413,15 +415,15 @@ describe("approved fanpage", () => {
 
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
 
-    const reservedDate = await screen.findByRole("button", { name: "18일, 1 LIVE" });
+    const reservedDate = await screen.findByRole("button", { name: "18일, 일정 1" });
     expect(reservedDate).not.toHaveAttribute("data-reservation");
     fireEvent.click(reservedDate);
-    const region = screen.getByRole("region", { name: "KARA LIVE 일정" });
+    const region = screen.getByRole("region", { name: "KARA 일정" });
     expect(within(region).getByText("예약 완료")).toBeInTheDocument();
     expect(within(region).getByText("내 예약")).toBeInTheDocument();
     expect(region.querySelectorAll('[data-live-reserved="true"]')).toHaveLength(1);
     expect(request).toHaveBeenCalledWith(
-      `/api/live-events/calendar?month=${month}&locale=ko`,
+      `/api/live-events/calendar?month=${month}&locale=ko&identity=1`,
       expect.objectContaining({ headers: { Authorization: "Bearer token" } }),
     );
   });
@@ -441,7 +443,7 @@ describe("approved fanpage", () => {
       `/live/calendar?month=${nextMonth}&locale=ko&celebrity=kara`,
     );
     await waitFor(() => expect(request).toHaveBeenCalledWith(
-      `/api/live-events/calendar?month=${nextMonth}&locale=ko`,
+      `/api/live-events/calendar?month=${nextMonth}&locale=ko&identity=1`,
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
   });

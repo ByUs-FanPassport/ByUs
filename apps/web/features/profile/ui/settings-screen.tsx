@@ -33,11 +33,14 @@ import styles from "./settings-screen.module.css";
 import type { NotificationConnections } from "../../notification/domain/connected-account";
 import { PhoneSmsEnrollment } from "./phone-sms-enrollment";
 import { AvatarSettings } from "./avatar-settings";
+import { AccountDeletion } from "./account-deletion";
+import { BlockedUsers } from "@/features/content-safety/ui/blocked-users";
 import { useAvatar } from "./use-avatar";
+import { personalCopy } from "@/i18n/catalogs/features__my__ui__personal-copy";
 
 type Locale = AppLocale;
 type PreferenceKey =
-  "liveReminders" | "surveyReminders" | "benefitNotifications";
+  "liveReminders" | "surveyReminders" | "benefitNotifications" | "replyNotifications" | "officialPostNotifications" | "scheduleNotifications";
 interface SettingsSummary {
   nickname: string;
   preferredLocale: "ko" | "en";
@@ -47,6 +50,9 @@ interface Preferences {
   liveReminders: boolean;
   surveyReminders: boolean;
   benefitNotifications: boolean;
+  replyNotifications: boolean;
+  officialPostNotifications: boolean;
+  scheduleNotifications: boolean;
   browserSubscription: "subscribed" | "unsubscribed";
 }
 interface KakaoEnrollmentState {
@@ -957,6 +963,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         <h1>{t.profileRequiredTitle}</h1>
         <p>{t.profileRequiredBody}</p>
         <FanAction variant="primary" href={profileSetupHref}>{t.profileRequiredAction}</FanAction>
+        <AccountDeletion locale={locale}/>
         {logoutAction}
       </FanContentContainer></FanAppFrame>
     );
@@ -965,6 +972,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>
         <p>{t.unavailable}</p>
         <button onClick={() => void load()}>{t.retry}</button>
+        <AccountDeletion locale={locale}/>
         {logoutAction}
       </FanContentContainer></FanAppFrame>
     );
@@ -1185,6 +1193,9 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 ["liveReminders", t.live],
                 ["surveyReminders", t.survey],
                 ["benefitNotifications", t.benefit],
+                ["replyNotifications", personalCopy[locale].replyNotifications],
+                ["officialPostNotifications", personalCopy[locale].officialPostNotifications],
+                ["scheduleNotifications", personalCopy[locale].scheduleNotifications],
               ] as const
             ).map(([key, label]) => (
               <label key={key}>
@@ -1192,7 +1203,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
                 <input
                   type="checkbox"
                   role="switch"
-                  checked={preferences[key]}
+                  checked={preferences[key] ?? true}
                   disabled={preferencePending}
                   aria-describedby={preferencePending ? "preference-save-status" : undefined}
                   onChange={(event) =>
@@ -1366,6 +1377,8 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             <p className={styles.support}>{t.unsupported}</p>
           )}
         </section>
+        <BlockedUsers locale={locale}/>
+        <AccountDeletion locale={locale}/>
         <p
           id="settings-message"
           className={styles.message}

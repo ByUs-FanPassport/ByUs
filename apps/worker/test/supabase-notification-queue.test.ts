@@ -13,6 +13,15 @@ const row = {
   lease_expires_at: "2099-01-01T00:00:00Z",
 };
 describe("SupabaseNotificationQueue", () => {
+  it("requires an explicit true from the current notification policy", async () => {
+    const rpc = vi.fn().mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: null }).mockResolvedValueOnce({ data: null, error: { message: "unavailable" } });
+    const queue = new SupabaseNotificationQueue({ rpc } as never);
+    const delivery = { notificationId: row.notification_id } as Parameters<typeof queue.canSend>[0];
+    await expect(queue.canSend(delivery)).resolves.toBe(true);
+    await expect(queue.canSend(delivery)).resolves.toBe(false);
+    await expect(queue.canSend(delivery)).rejects.toThrow("permission unavailable");
+    expect(rpc).toHaveBeenCalledWith("fan_web_notification_can_send", { p_notification_id: row.notification_id });
+  });
   it("enqueues and backfills due notifications before claim", async () => {
     const rpc = vi.fn(async () => ({ data: {scheduledNotifications: 2, collectibleExpiryNotifications: 1}, error: null }));
     const queue = new SupabaseNotificationQueue({ rpc } as never);

@@ -21,7 +21,8 @@
 .socials a{display:flex;align-items:center;gap:8px;min-height:44px;font-size:12px;font-weight:750}
 .socials svg{width:20px;height:20px;flex:none}
 .socials [data-platform=instagram] svg{color:#ff2d87}.socials [data-platform=youtube] svg{color:#f00}
-.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid #e8e7ec;margin:22px 0 20px;min-height:58px;gap:16px}
+.tabs{display:flex;overflow-x:auto;border-bottom:1px solid #e8e7ec;margin:22px 0 20px;min-height:58px;gap:16px;scroll-padding-inline:8px}
+.tabs>a,.tabs>button{flex:1 0 auto;min-width:92px;min-height:58px;padding-inline:8px;white-space:nowrap}
 .tabs>a,.tabs>button{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;background:none;border:0;color:#66636c;font-size:14px;font-weight:750;text-align:center}
 .tabs [aria-current=page]{color:#17161b}
 .tabs [aria-current=page]::after{content:"";position:absolute;bottom:-1px;left:24%;right:24%;height:3px;background:#ff0080}

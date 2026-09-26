@@ -122,9 +122,11 @@ describe("DefaultLiveEventRepository", () => {
     const records = new Map<string, LiveEventRecord>([
       ["live", { ...event, slug: "live", sourceStatus: "live", startsAt: "2026-07-24T00:00:00.000Z", endsAt: "2026-08-01T00:00:00.000Z" }],
       ["upcoming", { ...event, slug: "upcoming", startsAt: "2026-09-15T11:00:00.000Z", endsAt: "2026-09-15T12:00:00.000Z" }],
-      ["older", { ...event, slug: "older", sourceStatus: "ended", startsAt: "2026-07-01T00:00:00.000Z", endsAt: "2026-07-01T01:00:00.000Z" }],
-      ["newer", { ...event, slug: "newer", sourceStatus: "ended", startsAt: "2026-07-02T00:00:00.000Z", endsAt: "2026-07-02T01:00:00.000Z" }],
+      ["older", { ...event, slug: "older", replayPublished: true, replayProvider: "youtube", replayUrl: "https://www.youtube.com/watch?v=abcdefghijk", sourceStatus: "ended", startsAt: "2026-07-01T00:00:00.000Z", endsAt: "2026-07-01T01:00:00.000Z" }],
+      ["newer", { ...event, slug: "newer", replayPublished: true, replayProvider: "youtube", replayUrl: "https://www.youtube.com/watch?v=lmnopqrstuv", sourceStatus: "ended", startsAt: "2026-07-02T00:00:00.000Z", endsAt: "2026-07-02T01:00:00.000Z" }],
       ["cancelled", { ...event, slug: "cancelled", sourceStatus: "cancelled" }],
+      ["no-recording", { ...event, slug: "no-recording", startsAt: "2026-07-01T00:00:00Z", sourceStatus: "ended", endsAt: "2026-07-01T01:00:00Z" }],
+      ["channel-only", { ...event, slug: "channel-only", startsAt: "2026-07-01T00:00:00Z", sourceStatus: "ended", endsAt: "2026-07-01T01:00:00Z", replayPublished: true, replayProvider: "youtube", replayUrl: "https://www.youtube.com/@channel" }],
     ]);
     const repository = new DefaultLiveEventRepository(source({
       listPublishedSlugs: async () => [...records.keys()].map((slug) => ({ slug, createdAt: "2026-07-01T00:00:00.000Z" })),

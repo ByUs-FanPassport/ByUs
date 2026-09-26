@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCalendarScreen } from "./live-calendar-screen";
+vi.mock("@/features/schedules/ui/use-schedule-month", () => ({ useScheduleMonth: () => ({ status: "ready", items: [], retry: vi.fn() }) }));
 
 const auth = vi.hoisted(() => ({ authenticated: false, getAccessToken: vi.fn() }));
 vi.mock("@privy-io/react-auth", () => ({
@@ -135,7 +136,7 @@ describe("LIVE calendar screen", () => {
 
   it("selects a mobile date without removing the desktop month's events and can clear it", () => {
     renderCalendar();
-    const date = screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ });
+    const date = screen.getByRole("button", { name: /2026년 9월 15일.*일정 4/ });
     fireEvent.click(date);
     expect(date).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("group", { name: /2026년 9월 16일/ })).toHaveAttribute("data-mobile-hidden", "true");
@@ -151,13 +152,13 @@ describe("LIVE calendar screen", () => {
       return 1;
     });
     const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
-    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const heading = screen.getByRole("heading", { name: "일정 6" });
     const scroll = vi.fn();
     heading.scrollIntoView = scroll;
 
     fireEvent.click(date, { detail: 1 });
 
-    expect(screen.getByRole("heading", { name: /2026년 9월 15일.*LIVE 4개/ })).toBe(heading);
+    expect(screen.getByRole("heading", { name: /2026년 9월 15일.*일정 4/ })).toBe(heading);
     expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
     expect(heading).not.toHaveFocus();
     frame.mockRestore();
@@ -179,7 +180,7 @@ describe("LIVE calendar screen", () => {
       dispatchEvent: vi.fn(),
     }));
     const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
-    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const heading = screen.getByRole("heading", { name: "일정 6" });
     const scroll = vi.fn();
     heading.scrollIntoView = scroll;
 
@@ -210,7 +211,7 @@ describe("LIVE calendar screen", () => {
       dispatchEvent: vi.fn(),
     }));
     const date = renderCalendar().container.querySelector<HTMLButtonElement>('[data-calendar-date="2026-09-15"]')!;
-    const heading = screen.getByRole("heading", { name: "6 LIVE" });
+    const heading = screen.getByRole("heading", { name: "일정 6" });
     const scroll = vi.fn();
     heading.scrollIntoView = scroll;
     fireEvent.click(date, { detail: 1 });
@@ -239,25 +240,25 @@ describe("LIVE calendar screen", () => {
     };
     render(<LiveCalendarScreen locale="en" initialCalendar={selectedCalendar} celebrities={celebrities} eventMetadata={[]} initialCelebritySlugs={[]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(`September 15, 2026.*${count} LIVE`) }), { detail: 1 });
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`September 15, 2026.*Schedules ${count}`) }), { detail: 1 });
 
-    expect(screen.getByRole("heading", { name: new RegExp(`September 15, 2026.*${count} LIVE event`) })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: new RegExp(`September 15, 2026.*Schedules ${count}`) })).toBeInTheDocument();
     expect(screen.queryAllByRole("article")).toHaveLength(count);
-    if (count === 0) expect(screen.getByText("No LIVE events are scheduled for the selected date.")).toBeInTheDocument();
+    if (count === 0) expect(screen.getAllByText("No items yet.").length).toBeGreaterThan(0);
   });
 
   it("updates mobile date counts with multi-creator filters and resets the date when filters change", () => {
     renderCalendar();
-    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ }));
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*일정 4/ }));
     fireEvent.click(screen.getByRole("button", { name: "KARA" }));
-    expect(screen.getByRole("button", { name: /2026년 9월 15일.*2 LIVE/ })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /2026년 9월 15일.*일정 2/ })).toHaveAttribute("aria-pressed", "false");
     expect(screen.queryByRole("article", { name: "ELINA LIVE" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "ELINA" }));
-    expect(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ }));
-    expect(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /2026년 9월 15일.*일정 4/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 1일.*일정 0/ }));
+    expect(screen.getByRole("button", { name: /2026년 9월 1일.*일정 0/ })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "전체 셀럽 일정" }));
-    expect(screen.getByRole("button", { name: /2026년 9월 1일.*0 LIVE/ })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /2026년 9월 1일.*일정 0/ })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("renders every status and multiple Creators on one KST date with detail links", () => {
@@ -311,7 +312,7 @@ describe("LIVE calendar screen", () => {
     const { container } = renderCalendar();
     expect(container.querySelector('[data-live-time]')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*4 LIVE/ }));
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 15일.*일정 4/ }));
     expect(container.querySelectorAll('[data-live-time]')).toHaveLength(4);
 
     fireEvent.click(within(screen.getByRole("group", { name: /2026년 9월 15일/ })).getByRole("button", { name: "전체 보기" }));
@@ -356,11 +357,11 @@ describe("LIVE calendar screen", () => {
     const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
     const current = () => day.querySelector('[data-current="true"]');
     expect(current()).toHaveAccessibleName("KARA LIVE");
-    expect(within(day).getByRole("button", { name: "이전 LIVE" })).toBeDisabled();
-    for (let index = 0; index < 3; index++) fireEvent.click(within(day).getByRole("button", { name: "다음 LIVE" }));
+    expect(within(day).getByRole("button", { name: "이전 일정" })).toBeDisabled();
+    for (let index = 0; index < 3; index++) fireEvent.click(within(day).getByRole("button", { name: "다음 일정" }));
     expect(current()).toHaveAccessibleName("ELINA AFTER PARTY");
-    expect(within(day).getByRole("button", { name: "다음 LIVE" })).toBeDisabled();
-    fireEvent.click(within(day).getByRole("button", { name: "이전 LIVE" }));
+    expect(within(day).getByRole("button", { name: "다음 일정" })).toBeDisabled();
+    fireEvent.click(within(day).getByRole("button", { name: "이전 일정" }));
     expect(current()).toHaveAccessibleName("KARA AFTER TALK");
     const trigger = within(day).getByRole("button", { name: "전체 보기" });
     trigger.focus();
@@ -376,7 +377,7 @@ describe("LIVE calendar screen", () => {
   it("resets carousel selection with filters and omits controls on single or empty dates", () => {
     renderCalendar();
     const day = screen.getByRole("group", { name: /2026년 9월 15일/ });
-    fireEvent.click(within(day).getByRole("button", { name: "다음 LIVE" }));
+    fireEvent.click(within(day).getByRole("button", { name: "다음 일정" }));
     fireEvent.click(screen.getByRole("button", { name: "KARA" }));
     expect(day.querySelector('[data-current="true"]')).toHaveAccessibleName("KARA LIVE");
     const single = screen.getByRole("group", { name: /2026년 9월 16일/ });

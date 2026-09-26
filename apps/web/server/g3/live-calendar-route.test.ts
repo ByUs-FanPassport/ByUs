@@ -86,3 +86,8 @@ describe("GET LIVE calendar handler", () => {
     expect(await response.json()).toEqual({ error: { code: "LIVE_CALENDAR_UNAVAILABLE" } });
   });
 });
+it("adds exact artist identity only for the opt-in calendar request",async()=>{
+ const value=target(); await value.run(new Request("https://byus.test/api?month=2026-09&identity=1"));
+ expect(value.readMonth).toHaveBeenCalledWith(expect.objectContaining({includeIdentity:true}));
+ expect((await value.run(new Request("https://byus.test/api?month=2026-09&identity=0"))).status).toBe(400);
+});

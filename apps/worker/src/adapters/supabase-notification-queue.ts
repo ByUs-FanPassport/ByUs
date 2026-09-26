@@ -56,6 +56,13 @@ export class SupabaseNotificationQueue implements NotificationQueue {
     if (error) throw new Error("notification queue claim failed");
     return ((data ?? []) as Record<string, unknown>[]).map(row);
   }
+  async canSend(delivery: NotificationDelivery) {
+    const { data, error } = await this.client.rpc("fan_web_notification_can_send", {
+      p_notification_id: delivery.notificationId,
+    });
+    if (error) throw new Error("notification send permission unavailable");
+    return data === true;
+  }
   async complete(delivery: NotificationDelivery) {
     const { data, error } = await this.client.rpc(
       "complete_notification_delivery",

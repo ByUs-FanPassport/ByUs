@@ -20,6 +20,9 @@ export class NotificationWorker {
     for (const delivery of deliveries) {
       if (Date.parse(delivery.leaseExpiresAt) <= Date.now()) continue;
       try {
+        if (!await this.queue.canSend(delivery))
+          throw new NotificationDeliveryError("NOTIFICATION_NOT_SENDABLE", false);
+        if (Date.parse(delivery.leaseExpiresAt) <= Date.now()) continue;
         await this.sender.send(delivery);
         await this.queue.complete(delivery);
       } catch (error) {

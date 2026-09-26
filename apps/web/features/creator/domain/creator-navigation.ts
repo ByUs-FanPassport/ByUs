@@ -1,5 +1,4 @@
 import type { AppLocale } from "@/i18n/locales";
-import type { Route } from "next";
 
 // The existing immutable slug is also the public handle. Keep this list aligned
 // with top-level app routes and public asset directories (checked by tests).
@@ -15,8 +14,10 @@ export function isCreatorHandle(value: string): boolean {
     && !(RESERVED_CREATOR_HANDLES as readonly string[]).includes(value);
 }
 
-export function creatorHomeHref(slug: string, locale?: AppLocale): Route {
-  return `/${encodeURIComponent(slug)}${locale ? `?locale=${locale}` : ""}` as Route;
+// Keep the path narrow when callers append queries; a full Route union expands
+// every app route inside each template and can exceed TypeScript's depth limit.
+export function creatorHomeHref(slug: string, locale?: AppLocale): `/${string}` {
+  return `/${encodeURIComponent(slug)}${locale ? `?locale=${locale}` : ""}`;
 }
 
 /** Recognize the new home and old stored login/attribution targets only. */

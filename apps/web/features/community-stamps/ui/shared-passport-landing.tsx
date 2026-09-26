@@ -14,7 +14,9 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useRef, useState } from "react";
 
-import { communityShareDestinationSchema } from "../domain/community-stamps";
+import { communityShareDestinationSchema, type SharedPassportActivity } from "../domain/community-stamps";
+import { personalCopy } from "@/i18n/catalogs/features__my__ui__personal-copy";
+import { FanTierBadge } from "@/features/rewards/ui/fan-tier-badge";
 import { communityStampAction } from "./use-community-stamps";
 import styles from "./share-passport.module.css";
 
@@ -25,13 +27,14 @@ function copyFor(locale: Locale) {
   return ({ ko: { eyebrow: "BYUS FAN PASSPORT", title: "함께 좋아하는 마음을 만나보세요.", body: "이 패스포트로 연결된 최애 페이지에서 소식과 팬 활동을 확인할 수 있어요.", signedIn: "최애 보기", signing: "최애 페이지를 열고 있어요.", signIn: "로그인하고 최애 보기", ordinary: "최애 페이지로 이동", proof: "최애를 확인하면 링크를 보낸 회원의 공유 스탬프가 기록돼요.", failed: "최애 페이지를 열지 못했어요. 다시 시도해 주세요." }, en: { eyebrow: "BYUS FAN PASSPORT", title: "Meet the favorite that brought you here.", body: "Visit this creator’s page to explore updates and fan moments connected to the Passport.", signedIn: "View favorite", signing: "Opening the creator page.", signIn: "Sign in to view favorite", ordinary: "Go to creator page", proof: "Confirm this favorite and the member who sent the link receives their Share Stamp.", failed: "We couldn't open the creator page. Please try again." }, ...additionalLocales((translationLocale) => ({ eyebrow: "BYUS FAN PASSPORT", title: localizedMessages.md4ae0dc90050[translationLocale], body: localizedMessages.mdd29ff7d7bcd[translationLocale], signedIn: localizedMessages.md34e8e8c5c09[translationLocale], signing: localizedMessages.md5dd382be6cc[translationLocale], signIn: localizedMessages.m39775c2edd89[translationLocale], ordinary: localizedMessages.mb7d45142b18e[translationLocale], proof: localizedMessages.m08c56b12da41[translationLocale], failed: localizedMessages.mc8797f2333f6[translationLocale] })) })[locale];
 }
 
-export function SharedPassportLanding({ token, creator, locale }: { token: string; creator: Creator; locale: Locale }) {
+export function SharedPassportLanding({ token, creator, locale, activity }: { token: string; creator: Creator; locale: Locale; activity?: SharedPassportActivity }) {
   const auth = usePrivy();
-  return <SharedPassportLandingInner key={`${auth.user?.id ?? "guest"}:${token}:${creator.slug}:${locale}`} token={token} creator={creator} locale={locale} authenticated={auth.authenticated} ready={auth.ready} getAccessToken={auth.getAccessToken} />;
+  return <SharedPassportLandingInner key={`${auth.user?.id ?? "guest"}:${token}:${creator.slug}:${locale}`} token={token} creator={creator} locale={locale} activity={activity} authenticated={auth.authenticated} ready={auth.ready} getAccessToken={auth.getAccessToken} />;
 }
 
-function SharedPassportLandingInner({ token, creator, locale, authenticated, ready, getAccessToken }: { token: string; creator: Creator; locale: Locale; authenticated: boolean; ready: boolean; getAccessToken: () => Promise<string | null> }) {
+function SharedPassportLandingInner({ token, creator, locale, activity, authenticated, ready, getAccessToken }: { token: string; creator: Creator; locale: Locale; activity?: SharedPassportActivity; authenticated: boolean; ready: boolean; getAccessToken: () => Promise<string | null> }) {
   const c = copyFor(locale);
+  const t = personalCopy[locale];
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,6 +64,13 @@ function SharedPassportLandingInner({ token, creator, locale, authenticated, rea
       <p className={styles.creatorName}>{creator.name}</p>
       <h1 id="shared-passport-title">{c.title}</h1>
       <p className={styles.landingBody}>{c.body}</p>
+      {activity ? <section className={styles.activityCard} aria-label="Fan Passport">
+        <FanTierBadge tier={activity.tier} locale={locale} size={64} adjacentLabel={false}/>
+        <dl><div><dt>{t.issued}</dt><dd><time dateTime={activity.issuedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(activity.issuedAt))}</time></dd></div>
+          <div><dt>{t.score}</dt><dd>{activity.score.toLocaleString(locale)}</dd></div>
+          <div><dt>{t.activities}</dt><dd>{activity.activityCount.toLocaleString(locale)}</dd></div>
+          <div><dt>{t.stamps}</dt><dd>{activity.stampCount.toLocaleString(locale)}</dd></div></dl>
+      </section> : null}
       <Image className={styles.shareArtwork} src="/images/community-stamps/share.png" alt="" width={96} height={96} />
       {ready && authenticated ? <button type="button" className={styles.primary} disabled={busy} onClick={() => void visit()}>{busy ? c.signing : c.signedIn}<ArrowRight aria-hidden="true" /></button> : ready ? <Link className={styles.primary} href={loginHref as Route}>{c.signIn}<ArrowRight aria-hidden="true" /></Link> : null}
       {ready && authenticated && <p className={styles.proof}>{c.proof}</p>}

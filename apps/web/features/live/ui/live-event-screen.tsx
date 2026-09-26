@@ -1,4 +1,5 @@
 "use client";
+import { LiveFanSubmissions } from "@/features/live-submissions/ui/live-fan-submissions";
 
 import { toContentLocale } from "@/i18n/locales";
 import type { AppLocale } from "@/i18n/locales";
@@ -1830,6 +1831,7 @@ export function LiveEventScreen({
           </div>
 
         </div>
+        <LiveFanSubmissions slug={slug} locale={locale} />
       </FanContentContainer>
       {sessionReady && viewerMatchesSession && showConfirmation && reservationCompletion && (
         <ReservationDialog

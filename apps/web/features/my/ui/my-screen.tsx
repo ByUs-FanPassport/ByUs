@@ -43,6 +43,8 @@ import { fanTierProgress, nextRaffleBoundary, selectOpenRaffles, type MyCreator,
 import { collectionGroupTitle, groupRecentCollection } from "../domain/recent-collection";
 import { MyLiveCountdown } from "./my-live-countdown";
 import styles from "./my-screen.module.css";
+import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
+import { personalCopy } from "@/i18n/catalogs/features__my__ui__personal-copy";
 
 const copy = {
   ko: {
@@ -113,7 +115,7 @@ const copy = {
 
 const parseSummaryResponse = (body: unknown) => mySummarySchema.parse((body as { summary: unknown }).summary);
 
-const rewardStatusCopy: Record<MyReward["status"], Record<AppLocale, string>> = {
+export const rewardStatusCopy: Record<MyReward["status"], Record<AppLocale, string>> = {
   information_required: { ko: "정보 입력 필요", en: "Information required" ,
   ...additionalLocales((translationLocale) => (localizedMessages.mb4717a21fc23[translationLocale]))
 },
@@ -268,6 +270,8 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         <ArrowRight aria-hidden="true" />
       </Link>
     </nav>
+    <Link className={styles.moreFavorites} href={`/my/activity?locale=${locale}` as Route}>{personalCopy[locale].title}<ArrowRight aria-hidden="true"/></Link>
+    <Link className={styles.moreFavorites} href={`/my/requests?locale=${locale}` as Route}>{participationCopy(locale).requests}<ArrowRight aria-hidden="true"/></Link>
 
     <FanSurface appearance="plain" className={`${styles.section} ${styles.favoritesSection}`} id="my-creators">
       <SectionTitle title={<>{t.creators} <span className={styles.sectionCount}>{summary.creators.length}</span></>} href={`/celebrities?locale=${locale}`} action={t.findCreator}/>
@@ -285,7 +289,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
     {hasLive || hasCollection ? <div className={styles.lowerGrid} data-single-section={!hasLive || !hasCollection}>
       {hasLive ? <ReservedLiveSection events={reservedLives} history={summary.live.history} locale={locale} onStartReached={refreshSummary}/> : null}
       {hasCollection ? <FanSurface appearance="plain" className={styles.section} id="my-collection" tabIndex={-1}>
-        <SectionTitle title={t.collection} href={`/passports?locale=${locale}#collection`} action={t.allCollection}/>
+        <SectionTitle title={t.collection} href={`/my/activity?kind=collection&locale=${locale}`} action={t.allCollection}/>
         <div className={styles.collectionTotals}>
           <CollectionTotal icon={<Sparkles/>} value={stampCount} label={t.stamps} href={`/passports?locale=${locale}#collection`} kind="stamp"/>
           <CollectionTotal icon={<FanMotionIcon name="gift" size={16}/>} value={summary.collection.collectibleCount} label={t.collectibles} href={hasVisibleCollectible ? "#my-collection" : undefined} onClick={hasVisibleCollectible ? openRecent : undefined} kind="collectible"/>
@@ -299,7 +303,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
     </div> : null}
 
     {receivedRewards.length > 0 ? <FanSurface className={styles.section}>
-      <SectionTitle title={t.rewards}/>
+      <SectionTitle title={t.rewards} href={`/my/activity?kind=rewards&locale=${locale}`} action={personalCopy[locale].rewards}/>
       <div className={styles.rows}>{receivedRewards.slice(0, 4).map((reward) => {
         const recipientHref = reward.recipientRequired && reward.winnerId ? `/my/rewards/${reward.winnerId}/recipient` : null;
         const status = recipientHref ? (locale === "ko" ? "수령 정보 입력" : translate(locale, localizedMessages.mbd998889a6d6, "Enter recipient details")) : rewardStatusCopy[reward.status][locale];

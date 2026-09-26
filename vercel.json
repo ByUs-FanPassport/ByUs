@@ -9,6 +9,7 @@
   "crons": [
     { "path": "/api/internal/instagram/sync", "schedule": "15 * * * *" },
     { "path": "/api/internal/instagram/live-sync", "schedule": "* * * * *" },
-    { "path": "/api/internal/chzzk/live-sync", "schedule": "* * * * *" }
+    { "path": "/api/internal/chzzk/live-sync", "schedule": "* * * * *" },
+    { "path": "/api/internal/account-deletions/process", "schedule": "*/15 * * * *" }
   ]
 }

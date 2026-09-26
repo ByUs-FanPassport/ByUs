@@ -1,4 +1,8 @@
 "use client";
+import { useScheduleMonth } from "@/features/schedules/ui/use-schedule-month";
+import { combinedCalendarDays, type CalendarEntry } from "@/features/schedules/domain/calendar-entries";
+import { ParticipationState } from "@/features/schedules/ui/participation-ui";
+import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 
 import { toContentLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__live-calendar-screen";
@@ -197,6 +201,8 @@ export function LiveCalendarScreen({
   const session = useByUsSession();
   const requestAuthenticated = ready && session.ready && authenticated;
   const [calendar, setCalendar] = useState(initialCalendar);
+  const schedules = useScheduleMonth(initialCalendar.month, locale);
+  const participation = participationCopy(locale);
   const [selectedCelebritySlugs, setSelectedCelebritySlugs] = useState<string[]>([
     ...initialCelebritySlugs,
   ]);
@@ -211,7 +217,7 @@ export function LiveCalendarScreen({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const isMobileCalendar = useMediaQuery("(max-width: 63.99rem)");
   const activeDate = selectedDate?.startsWith(`${calendar.month}-`) ? selectedDate : null;
-  const t = copy[locale];
+  const t = { ...copy[locale], title: participation.schedules, intro: participation.calendarIntro, empty: participation.empty, filteredEmpty: participation.empty, selectedEmpty: participation.empty, selectedResult: (date: string, count: number) => `${date} · ${participation.schedules} ${count}` };
   const today = new Intl.DateTimeFormat("en-CA", { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const previous = adjacentMonth(calendar.month, -1);
   const next = adjacentMonth(calendar.month, 1);
@@ -227,19 +233,10 @@ export function LiveCalendarScreen({
     () => new Set(selectedCelebritySlugs),
     [selectedCelebritySlugs],
   );
-  const visibleDays = useMemo(() => calendar.days.map((day) => ({
-    ...day,
-    events: selectedCelebritySet.size === 0
-      ? day.events
-      : day.events.filter((event) => {
-          const metadata = metadataByEventSlug.get(event.slug);
-          if (metadata) return selectedCelebritySet.has(metadata.celebritySlug);
-          return celebrities.some(
-            (celebrity) => selectedCelebritySet.has(celebrity.slug)
-              && celebrity.name === event.celebrity.name,
-          );
-        }),
-  })), [calendar.days, celebrities, metadataByEventSlug, selectedCelebritySet]);
+  const visibleDays = useMemo(() => combinedCalendarDays(calendar, schedules.items, celebrities,
+    new Map(eventMetadata.map(item => [item.eventSlug, item.celebritySlug]))).map(day => ({
+      ...day, events: selectedCelebritySet.size === 0 ? day.events : day.events.filter(event => event.artistSlug !== undefined && selectedCelebritySet.has(event.artistSlug)),
+    })), [calendar, schedules.items, celebrities, eventMetadata, selectedCelebritySet]);
   const visibleEventCount = visibleDays.reduce((total, day) => total + day.events.length, 0);
   const activeDay = activeDate ? visibleDays.find((day) => day.date === activeDate) : undefined;
   const activeEventCount = activeDay?.events.length ?? 0;
@@ -351,12 +348,12 @@ export function LiveCalendarScreen({
   const modalDay = visibleDays.find(day => day.date === modalDate);
   const hasVisibleReservation = visibleDays.some((day) => day.events.some((event) => event.reservationState === "reserved"));
   function renderEvent(
-    event: LiveCalendarMonth["days"][number]["events"][number],
+    event: CalendarEntry,
     { isCurrent = true, showRelativeTime = false }: { isCurrent?: boolean; showRelativeTime?: boolean } = {},
   ) {
     const title = locale === "ko" ? calendarTitlesKo.get(event.slug) ?? event.title : event.title;
     const metadata = metadataByEventSlug.get(event.slug);
-    const creatorSlug = metadata?.celebritySlug ?? "";
+    const creatorSlug = event.artistSlug ?? metadata?.celebritySlug ?? "";
     const creatorPhotos = celebrities.find((creator) => creator.slug === creatorSlug);
     const platforms = metadata?.platforms ?? [];
     const platformNames = platforms.map((platform) => platformLabel[platform]);
@@ -364,7 +361,7 @@ export function LiveCalendarScreen({
     return <article className={styles.event} key={event.id} aria-label={title} data-current={isCurrent ? "true" : "false"} data-calendar-event-status={event.effectiveStatus} data-calendar-event-tone={tone}>
       <Link
         className={styles.eventLink}
-        href={`/live/${event.slug}?locale=${locale}` as Route}
+        href={`${event.schedule?.detailHref ?? `/live/${event.slug}`}?locale=${locale}` as Route}
         aria-label={locale === "ko" ? `${title} 상세 보기` : translate(locale, localizedMessages.m207f5e914afc, "View {0} details", [title])}
       >
         <CreatorImage className={styles.eventPortrait} slug={creatorSlug} src={event.celebrity.image} photos={creatorPhotos?.photos ?? event.celebrity.photos} position={creatorPhotos?.imagePosition ?? event.celebrity.imagePosition} alt="" width={72} height={96} sizes="72px" presentation="vertical" framed />
@@ -387,7 +384,7 @@ export function LiveCalendarScreen({
               key={platform}
             />)}
           </span> : null}
-          {showRelativeTime
+          {event.schedule ? <span className={styles.status}>{event.schedule.status === "cancelled" ? participation.cancelled : participation[event.schedule.kind]}</span> : showRelativeTime
             ? <LiveTimeIndicator event={event} locale={locale} active onStartReached={handleStartReached} variant="text" className={styles.calendarTimeIndicator} />
             : event.effectiveStatus === "live" || event.effectiveStatus === "scheduled" ? <LiveStatusIndicator className={styles.calendarStatus} label={t.status[event.effectiveStatus]} status={event.effectiveStatus} locale={locale} density="compact" /> : <span className={styles.status} data-status={event.effectiveStatus}>{t.status[event.effectiveStatus]}</span>}
         </span>
@@ -401,6 +398,7 @@ export function LiveCalendarScreen({
   return (
     <FanAppFrame locale={locale} mainId="live-calendar-main" currentPath="/live/calendar">
       <FanContentContainer as="main" className={styles.main} id="live-calendar-main" tabIndex={-1}>
+        {schedules.status !== "ready" && <ParticipationState locale={locale} status={schedules.status} retry={schedules.retry} />}
         <div className={styles.editorialHeader}>
         <header className={styles.intro}>
           <div>
@@ -475,7 +473,7 @@ export function LiveCalendarScreen({
                 key={day.date}
                 data-calendar-date={day.date}
                 data-upcoming-day={day.events.some((event) => event.effectiveStatus === "scheduled" || event.effectiveStatus === "live") ? "true" : undefined}
-                aria-label={`${dayLabel(day.date, locale)}, ${day.events.length} LIVE`}
+                aria-label={`${dayLabel(day.date, locale)}, ${participation.schedules} ${day.events.length}`}
                 aria-pressed={activeDate === day.date}
                 aria-controls="calendar-day-list"
                 onClick={(event) => selectMobileDate(day.date, event.detail === 0)}
@@ -497,7 +495,7 @@ export function LiveCalendarScreen({
               >
                 {activeDate
                   ? t.selectedResult(dayLabel(activeDate, locale), activeEventCount)
-                  : `${visibleEventCount} LIVE`}
+                  : `${participation.schedules} ${visibleEventCount}`}
               </h3>
               {activeDate ? <button type="button" onClick={() => setSelectedDate(null)}>{t.allSelected}</button> : null}
             </div>
@@ -581,8 +579,8 @@ export function LiveCalendarScreen({
                     </div>
                     {day.events.length > 1 ? <div className={styles.dayControls}>
                       <div className={styles.carouselControls}>
-                        <button type="button" aria-label={locale === "ko" ? "이전 LIVE" : translate(locale, localizedMessages.md0b6877630f5, "Previous LIVE")} aria-controls={eventListId} disabled={position === 0} onClick={() => move(-1)}><ChevronLeft aria-hidden="true" size={16} /></button>
-                        <button type="button" aria-label={locale === "ko" ? "다음 LIVE" : translate(locale, localizedMessages.mde24c98cdcb8, "Next LIVE")} aria-controls={eventListId} disabled={position === day.events.length - 1} onClick={() => move(1)}><ChevronRight aria-hidden="true" size={16} /></button>
+                        <button type="button" aria-label={participation.previousEvent} aria-controls={eventListId} disabled={position === 0} onClick={() => move(-1)}><ChevronLeft aria-hidden="true" size={16} /></button>
+                        <button type="button" aria-label={participation.nextEvent} aria-controls={eventListId} disabled={position === day.events.length - 1} onClick={() => move(1)}><ChevronRight aria-hidden="true" size={16} /></button>
                       </div>
                     </div> : null}
                   </div>

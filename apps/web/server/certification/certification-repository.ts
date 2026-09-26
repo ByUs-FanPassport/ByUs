@@ -44,15 +44,22 @@ export class CertificationRepository {
     const uploadId = randomUUID();
     const objectPath = `${appUserId}/${missionId}/${uploadId}.webp`;
     const bucket = this.db.storage.from("certification-proofs");
-    const stored = await bucket.upload(objectPath, normalized.bytes, { contentType: "image/webp", cacheControl: "private, max-age=0", upsert: false });
-    if (stored.error) throw new CertificationRepositoryError("CERTIFICATION_STORAGE_UNAVAILABLE");
-    const sha256 = createHash("sha256").update(normalized.bytes).digest("hex");
-    const result = await this.db.rpc("register_owned_certification_upload", {
-      p_app_user_id: appUserId, p_mission_id: missionId, p_upload_id: uploadId, p_object_path: objectPath,
-      p_byte_size: normalized.bytes.byteLength, p_width: normalized.width, p_height: normalized.height, p_sha256: sha256,
-    });
-    if (result.error) { await bucket.remove([objectPath]); fail(result.error); }
-    return z.object({ uploadId: z.uuid(), expiresAt: z.iso.datetime({ offset: true }) }).parse(result.data);
+    const tracking = { p_app_user_id: appUserId, p_bucket: "certification-proofs", p_object_path: objectPath };
+    const started = await this.db.rpc("fan_web_begin_private_upload", tracking);
+    if (started.error) fail(started.error);
+    try {
+      const stored = await bucket.upload(objectPath, normalized.bytes, { contentType: "image/webp", cacheControl: "private, max-age=0", upsert: false });
+      if (stored.error) throw new CertificationRepositoryError("CERTIFICATION_STORAGE_UNAVAILABLE");
+      const sha256 = createHash("sha256").update(normalized.bytes).digest("hex");
+      const result = await this.db.rpc("register_owned_certification_upload", {
+        p_app_user_id: appUserId, p_mission_id: missionId, p_upload_id: uploadId, p_object_path: objectPath,
+        p_byte_size: normalized.bytes.byteLength, p_width: normalized.width, p_height: normalized.height, p_sha256: sha256,
+      });
+      if (result.error) { await bucket.remove([objectPath]); fail(result.error); }
+      return z.object({ uploadId: z.uuid(), expiresAt: z.iso.datetime({ offset: true }) }).parse(result.data);
+    } finally {
+      try { await this.db.rpc("fan_web_finish_private_upload", tracking); } catch { /* durable lease retries */ }
+    }
   }
   async submit(input: { appUserId: string; missionId: string; idempotencyKey: string; uploadIds: string[]; note?: string; previousSubmissionId?: string }): Promise<unknown> {
     const { data, error } = await this.db.rpc("submit_owned_certification", { p_app_user_id: input.appUserId, p_mission_id: input.missionId, p_idempotency_key: input.idempotencyKey, p_upload_ids: input.uploadIds, p_note: input.note ?? null, p_previous_submission_id: input.previousSubmissionId ?? null });
@@ -99,5 +106,5 @@ export class CertificationRepository {
 
 export function createCertificationRepository(source: Record<string,string|undefined> = process.env): CertificationRepository {
   if (!source.SUPABASE_URL || !source.SUPABASE_SERVICE_ROLE_KEY) throw new Error("Certification repository is not configured");
-  return new CertificationRepository(createClient(source.SUPABASE_URL,source.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}));
+  return new CertificationRepository(createClient(source.SUPABASE_URL,source.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:init?.signal?AbortSignal.any([init.signal,AbortSignal.timeout(60_000)]):AbortSignal.timeout(60_000)})}}));
 }

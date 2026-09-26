@@ -54,6 +54,7 @@ const validEnv = {
   PHONE_SMS_SENDER: "",
   PHONE_SMS_OTP_SECRET: "",
   GOOGLE_SITE_VERIFICATION: "",
+  GOOGLE_TRANSLATION_API_KEY: "",
   NAVER_SITE_VERIFICATION: "",
   BING_SITE_VERIFICATION: "",
 } as const;
@@ -236,6 +237,7 @@ describe("server environment", () => {
         !key.startsWith("PHONE_SMS_") &&
         !key.startsWith("VERCEL_ANALYTICS_") &&
         key !== "YOUTUBE_DATA_API_KEY" &&
+        key !== "GOOGLE_TRANSLATION_API_KEY" &&
         !key.startsWith("CHZZK_") &&
         key !== "SOLAPI_WEBHOOK_SECRET" &&
         !key.startsWith("TELEGRAM_BUG_REPORT_") &&

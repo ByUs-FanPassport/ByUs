@@ -32,8 +32,8 @@ function errorResponse(code: string, status: number, authenticated: boolean): Re
   );
 }
 
-function parseRequest(url: URL): { month: string; locale: LiveLocale } {
-  const allowedKeys = new Set(["month", "locale"]);
+function parseRequest(url: URL): { month: string; locale: LiveLocale; includeIdentity?: boolean } {
+  const allowedKeys = new Set(["month", "locale", "identity"]);
   for (const key of url.searchParams.keys()) {
     if (!allowedKeys.has(key)) throw new Error("unexpected calendar parameter");
   }
@@ -43,7 +43,9 @@ function parseRequest(url: URL): { month: string; locale: LiveLocale } {
   if (url.searchParams.getAll("locale").length > 1) {
     throw new Error("locale may be supplied once");
   }
+  if (url.searchParams.getAll("identity").length > 1 || (url.searchParams.has("identity") && url.searchParams.get("identity") !== "1")) throw new Error("invalid identity option");
   return {
+    ...(url.searchParams.get("identity") === "1" ? { includeIdentity: true } : {}),
     month: liveCalendarMonthValueSchema.parse(url.searchParams.get("month")),
     locale: parseLiveLocale(url.searchParams.get("locale") ?? "ko"),
   };

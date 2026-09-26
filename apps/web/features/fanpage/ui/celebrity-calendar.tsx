@@ -1,4 +1,8 @@
 "use client";
+import { useScheduleMonth } from "@/features/schedules/ui/use-schedule-month";
+import { combinedCalendarDays } from "@/features/schedules/domain/calendar-entries";
+import { ParticipationState } from "@/features/schedules/ui/participation-ui";
+import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { toContentLocale } from "@/i18n/locales";
 import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__fanpage__ui__celebrity-calendar";
@@ -91,6 +95,8 @@ export function CelebrityMiniCalendar({
   const upcomingMonth = upcomingLive ? kstMonthForInstant(upcomingLive.startsAt) : null;
   const initialMonth = upcomingMonth && upcomingMonth >= currentMonth ? upcomingMonth : currentMonth;
   const [month, setMonth] = useState(initialMonth);
+  const schedules = useScheduleMonth(month, locale, celebrity.slug);
+  const participation = participationCopy(locale);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [state, setState] = useState<AsyncState<LiveCalendarDay[]>>({ status: "loading" });
   const [checkedDates, setCheckedDates] = useState<readonly string[]>([]);
@@ -113,7 +119,7 @@ export function CelebrityMiniCalendar({
       const token = requestAuthenticated ? await getAccessToken() : null;
       if (controller.signal.aborted) return;
       if (requestAuthenticated && !token) throw new Error("Calendar authentication unavailable");
-      const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${toContentLocale(locale)}`, {
+      const response = await fetch(`/api/live-events/calendar?month=${month}&locale=${toContentLocale(locale)}&identity=1`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         signal: controller.signal,
       });
@@ -124,7 +130,7 @@ export function CelebrityMiniCalendar({
         status: "ready",
         data: calendar.days.map((day) => ({
           ...day,
-          events: day.events.filter((event) => event.celebrity.name === celebrity.name),
+          events: day.events.filter((event) => event.celebrity.slug === celebrity.slug),
         })),
       });
     } catch {
@@ -134,7 +140,7 @@ export function CelebrityMiniCalendar({
     }
   // Session generation deliberately restarts and aborts an otherwise identical public refresh.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [abortCalendarRefresh, celebrity.name, getAccessToken, locale, month, requestAuthenticated, session.generation]);
+  }, [abortCalendarRefresh, celebrity.slug, getAccessToken, locale, month, requestAuthenticated, session.generation]);
 
   useEffect(() => {
     if (!ready) return;
@@ -152,7 +158,10 @@ export function CelebrityMiniCalendar({
     setCheckedDates((current) => current.join(",") === dates.join(",") ? current : dates);
   }, []);
 
-  const days = state.status === "ready" ? state.data : emptyCalendarDays(month);
+  const liveDays = state.status === "ready" ? state.data : emptyCalendarDays(month);
+  const days = combinedCalendarDays({ month, timeZone: "Asia/Seoul", days: liveDays }, schedules.items,
+    [{ slug: celebrity.slug, name: celebrity.name, image: celebrity.image.url }],
+    new Map(liveDays.flatMap(day => day.events.map(event => [event.slug, celebrity.slug] as const))));
   const checkedDateSet = new Set(checkedDates);
   const firstWeekday = calendarWeekday(days[0]?.date ?? `${month}-01`);
   const previousMonth = adjacentCalendarMonth(month, -1);
@@ -173,7 +182,7 @@ export function CelebrityMiniCalendar({
   return (
     <section className={styles.heroCalendar} aria-labelledby={`${celebrity.slug}-mini-calendar-title`} aria-busy={state.status === "loading"}>
       <div className={styles.calendarHeading}>
-        <h2 id={`${celebrity.slug}-mini-calendar-title`}><FanMotionIcon name="calendar" size={18} />{celebrity.name} {t.calendarTitle}</h2>
+        <h2 id={`${celebrity.slug}-mini-calendar-title`}><FanMotionIcon name="calendar" size={18} />{celebrity.name} {participation.schedules}</h2>
       </div>
       <CalendarMonthHeader month={month} label={miniCalendarMonthLabel(month, locale)} density="compact"
         previous={{ onClick: () => setMonth(previousMonth), label: `${t.previousMonth}: ${miniCalendarMonthLabel(previousMonth, locale)}` }}
@@ -189,7 +198,7 @@ export function CelebrityMiniCalendar({
           const checkedIn = checkedDateSet.has(day.date);
           const style = index === 0 ? { gridColumnStart: firstWeekday + 1 } : undefined;
           if (firstEvent) {
-            const eventLabel = locale === "ko" ? `${dayNumber}일, ${day.events.length} LIVE${checkedIn ? ", 출석 완료" : ""}` : translate(locale, localizedMessages.mcde08ef46875, "{0}, {1} LIVE{2}", [dayNumber, day.events.length, checkedIn ? ", checked in" : ""]);
+            const eventLabel = locale === "ko" ? `${dayNumber}일, ${participation.schedules} ${day.events.length}${checkedIn ? ", 출석 완료" : ""}` : `${dayNumber}, ${participation.schedules} ${day.events.length}`;
             return (
               <button
                 type="button"
@@ -219,6 +228,7 @@ export function CelebrityMiniCalendar({
           );
         })}
       </div>
+      {schedules.status !== "ready" && <ParticipationState locale={locale} status={schedules.status} retry={schedules.retry} />}
       <DailyCheckin creator={celebrity.slug} locale={locale} month={month} onCheckedDatesChange={handleCheckedDatesChange} />
       {state.status !== "ready" ? <p className={styles.calendarMessage} role={state.status === "error" ? "alert" : "status"}>
         {state.status === "loading" ? t.calendarLoading : t.calendarError}
@@ -228,17 +238,18 @@ export function CelebrityMiniCalendar({
           <h3 aria-live="polite">{selectedDay ? new Intl.DateTimeFormat(locale, { calendar: "gregory", timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${selectedDay.date}T00:00:00+09:00`)) : t.calendarUpcoming}</h3>
           {selectedDay ? <button type="button" onClick={() => setSelectedDate(null)}>{locale === "ko" ? "전체 보기" : translate(locale, localizedMessages.m150c0d4b6414, "Show all")}</button> : null}
         </div>
-        {state.status === "ready" && displayedEvents.length > 0 ? <ol>{displayedEvents.map((event) => (
+        {displayedEvents.length > 0 ? <ol>{displayedEvents.map((event) => (
           <li key={event.id} data-status={event.effectiveStatus}>
-            <Link href={`/live/${event.slug}?locale=${locale}` as Route}>
+            <Link href={`${event.schedule?.detailHref ?? `/live/${event.slug}`}?locale=${locale}` as Route}>
               <time dateTime={event.startsAt}>{formatMiniCalendarDate(event.startsAt, locale)}</time>
               <strong><span>{event.title}</span>{event.reservationState === "reserved" ? <LiveReservationMark locale={locale} className={styles.calendarReservation} /> : null}</strong>
-              <LiveTimeIndicator event={event} locale={locale} active onStartReached={handleStartReached} variant="text" className={styles.calendarTimeIndicator} />
+              {event.schedule ? <span>{event.schedule.status === "cancelled" ? participation.cancelled : participation[event.schedule.kind]}</span> : <LiveTimeIndicator event={event} locale={locale} active onStartReached={handleStartReached} variant="text" className={styles.calendarTimeIndicator} />}
             </Link>
           </li>
-        ))}</ol> : state.status === "ready" ? <p>{t.calendarUpcomingEmpty}</p> : null}
+        ))}</ol> : state.status === "ready" ? <p>{participation.empty}</p> : null}
       </div>
       <div className={styles.calendarFooter}>
+        <Link href={`/c/${celebrity.slug}/schedule-suggestions?locale=${locale}` as Route}>{participation.suggest}</Link>
         {hasDisplayedReservation ? <LiveReservationLegend locale={locale} className={styles.calendarLegend} /> : null}
         <Link href={`/live/calendar?month=${month}&locale=${locale}&celebrity=${celebrity.slug}` as Route}>{t.calendarOpen}<ArrowRight /></Link>
       </div>

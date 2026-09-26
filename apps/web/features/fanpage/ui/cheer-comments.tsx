@@ -16,6 +16,7 @@ import { useCommunityResource } from "./use-community-resource";
 import styles from "./fan-community.module.css";
 import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
 import { useByUsSession } from "@/components/byus-session-provider";
+import { ContentActions, ContentTranslation } from "@/features/content-safety/ui/content-actions";
 
 const parse = (value: unknown) => cheerPageSchema.parse(value);
 export function CheerComments({ slug, name, locale }: { slug: string; name: string; locale: AppLocale }) {
@@ -27,7 +28,7 @@ function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; 
   const session = useByUsSession();
   const ko = locale === "ko";
   const [cursor, setCursor] = useState<string | null>(null);
-  const resource = useCommunityResource(`/api/celebrities/${slug}/cheers?locale=${toContentLocale(locale)}&limit=5${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parse);
+  const resource = useCommunityResource(`/api/celebrities/${slug}/cheers?locale=${toContentLocale(locale)}&limit=5${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parse, false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -82,7 +83,8 @@ function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; 
       {data.comments.length === 0 ? <p className={styles.empty}>{locale === "ko" ? "첫 응원을 남겨 주세요." : translate(locale, localizedMessages.m525a3ea46cff, "Be the first to leave a cheer.")}</p> : <ul className={styles.commentList}>
         {data.comments.map(comment => <li key={comment.id} data-cheer-id={comment.id}><img src={comment.avatarUrl} alt="" width={32} height={32} /><div>
           <div className={styles.meta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} aria-label={locale === "ko" ? "내 응원댓글 삭제" : translate(locale, localizedMessages.m64d6c6bc70e0, "Delete my cheer")} onClick={() => void mutate(comment.id)}>{locale === "ko" ? "삭제" : translate(locale, localizedMessages.mf83922cd2596, "Delete")}</button>}</div>
-          <p>{comment.body}</p>
+          <ContentTranslation targetType="cheer" targetId={comment.id} locale={locale}><p>{comment.body}</p></ContentTranslation>
+          <ContentActions targetType="cheer" targetId={comment.id} locale={locale} canBlock={!comment.isOwner} onChanged={resource.retry} />
         </div></li>)}
       </ul>}
       {(cursor || data.nextCursor) && <div className={styles.pagination}>{cursor && <button onClick={() => setCursor(null)}>{locale === "ko" ? "최신 응원" : translate(locale, localizedMessages.m17119f570d9a, "Newest cheers")}</button>}{data.nextCursor && <button onClick={() => setCursor(data.nextCursor)}>{locale === "ko" ? "이전 응원 보기" : translate(locale, localizedMessages.m381cd150c1b1, "Older cheers")}</button>}</div>}

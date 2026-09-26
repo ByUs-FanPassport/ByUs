@@ -39,6 +39,10 @@ function safeHttps(value: unknown): boolean {
   }
 }
 
+export function isPrivateNoticeImage(value: unknown): value is string {
+  return typeof value === "string" && /^\/api\/content-assets\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function validateNode(value: unknown, depth = 0): boolean {
   if (!value || typeof value !== "object" || Array.isArray(value) || depth > 30) {
     throw new Error("Invalid Notice document");
@@ -53,7 +57,7 @@ function validateNode(value: unknown, depth = 0): boolean {
   }
   if (node.type === "image") {
     const attrs = node.attrs as Record<string, unknown> | undefined;
-    if (!safeHttps(attrs?.src) || typeof attrs?.alt !== "string" || !attrs.alt.trim()) {
+    if ((!safeHttps(attrs?.src) && !isPrivateNoticeImage(attrs?.src)) || typeof attrs?.alt !== "string" || !attrs.alt.trim()) {
       throw new Error("Notice images require an HTTPS source and alt text");
     }
   }
@@ -73,7 +77,7 @@ function validateNode(value: unknown, depth = 0): boolean {
   }
   if (node.content !== undefined) {
     if (!Array.isArray(node.content)) throw new Error("Invalid Notice content");
-    meaningful = node.content.some((child) => validateNode(child, depth + 1)) || meaningful;
+    meaningful = node.content.map((child) => validateNode(child, depth + 1)).some(Boolean) || meaningful;
   }
   return meaningful;
 }

@@ -10,6 +10,9 @@ export const liveMissionSchema = z.object({
   id: z.string().uuid(), type: z.enum(["quiz", "survey", "vote"]), version: z.number().int().positive(),
   title: z.string().min(1), description: z.string(), attendanceRequired: z.boolean(), completed: z.boolean(),
   visibleFrom: z.iso.datetime({ offset: true }), visibleUntil: z.iso.datetime({ offset: true }),
+  completedAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  eligibility: z.enum(["available", "passport_required", "attendance_required", "wallet_pending", "closed", "completed"]).optional(),
+  nextAction: z.object({ kind: z.enum(["answer", "verify_fan", "check_in", "wait_wallet", "view_record", "unavailable"]), href: z.string().regex(/^\/(?!\/)/).nullable() }).strict().optional(),
   questions: z.array(question).min(1),
 }).strict();
 export const liveMissionListSchema = z.array(liveMissionSchema);

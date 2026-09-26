@@ -15,11 +15,12 @@ export const notificationKindSchema = z.enum([
   "benefit_available",
   "level_up",
   "benefit_unlocked",
+  "content_reply", "official_post", "schedule_reminder", "schedule_changed", "schedule_cancelled", "schedule_suggestion_reviewed", "fanpage_request_reviewed",
 ]);
 export const safeNotificationPathSchema = z
   .string()
   .regex(
-    /^\/(?:my|passports|live\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/survey)?|benefits\/[0-9a-f-]{36})$/,
+    /^\/(?:my(?:\/requests\?tab=(?:schedules|fanpages)&item=[0-9a-f-]{36})?|passports|live\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/survey)?|live\/calendar\/schedules\/[0-9a-f-]{36}|benefits\/[0-9a-f-]{36}|c\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:community\/[0-9a-f-]{36}(?:#comment-[0-9a-f-]{36})?|notices\/[a-z0-9]+(?:-[a-z0-9]+)*))$/,
   );
 export const notificationItemSchema = z.object({
   id: z.uuid(),
@@ -38,6 +39,9 @@ export const notificationPreferencesSchema = z.object({
   liveReminders: z.boolean(),
   surveyReminders: z.boolean(),
   benefitNotifications: z.boolean(),
+  replyNotifications: z.boolean().default(true),
+  officialPostNotifications: z.boolean().default(true),
+  scheduleNotifications: z.boolean().default(true),
   browserSubscription: z.enum(["subscribed", "unsubscribed"]),
 });
 export type NotificationItem = z.infer<typeof notificationItemSchema>;

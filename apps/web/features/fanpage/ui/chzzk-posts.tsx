@@ -9,6 +9,9 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ArrowRight, ArrowUpRight, Pin } from "lucide-react";
 import { useId, useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
+import { contentCopy } from "@/i18n/catalogs/features__fan_posts__ui";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 import { CHZZK_COMMUNITY_URL, chzzkFeedSchema, type ChzzkPost } from "../domain/chzzk-posts";
 import { creatorNewsItems, newsNoticesSchema, type NewsNotice } from "../domain/creator-news";
@@ -20,17 +23,22 @@ const parseNotices = (body: unknown) => { const page = newsNoticesSchema.parse(b
 const postKey = (post: ChzzkPost) => post.id;
 const noticeKey = (notice: NewsNotice) => notice.slug;
 
-export type NewsFilter = "all" | "notice" | "chzzk";
+export type NewsFilter = "all" | "notice" | "artist_post" | "chzzk";
 
 export function CreatorNews({ slug, locale, full = false, initialFilter = "all", channelId = null }: { slug: string; locale: AppLocale; full?: boolean; initialFilter?: NewsFilter; channelId?: string | null }) {
   const [selectedFilter, setFilter] = useState<NewsFilter>(initialFilter);
-  const filter = channelId ? selectedFilter : "notice";
+  const filter = !channelId && selectedFilter === "chzzk" ? "all" : selectedFilter;
+  const auth = usePrivy(), session = useByUsSession(), contentLabels = contentCopy(locale);
   const ko = locale === "ko";
   const titleId = useId();
   const posts = useNewsSource(channelId ? `/api/celebrities/${encodeURIComponent(slug)}/chzzk` : null, parsePosts, postKey);
-  const notices = useNewsSource(`/api/public/celebrities/${encodeURIComponent(slug)}/notices?locale=${toContentLocale(locale)}`, parseNotices, noticeKey);
-  const items = creatorNewsItems(filter === "chzzk" ? [] : notices.state.data ?? [], filter === "notice" ? [] : posts.state.data ?? [], locale, full);
-  const sources = filter === "notice" ? [notices] : filter === "chzzk" ? [posts] : [notices, posts];
+  const notices = useNewsSource(`/api/celebrities/${encodeURIComponent(slug)}/notices?locale=${toContentLocale(locale)}`, parseNotices, noticeKey, {
+    key: `${auth.ready}:${auth.authenticated}:${session.ownerId ?? auth.user?.id}:${session.generation}`, ready: auth.ready && session.ready,
+    getToken: async () => { if (!auth.authenticated) return null; const token = await auth.getAccessToken(); if (!token) throw new Error("AUTHENTICATION_REQUIRED"); return token; },
+  });
+  const noticeItems = filter === "chzzk" ? [] : notices.state.data.filter(notice => filter === "all" || (notice.postType ?? "notice") === filter);
+  const items = creatorNewsItems(noticeItems, filter === "all" || filter === "chzzk" ? posts.state.data : [], locale, full);
+  const sources = filter === "notice" || filter === "artist_post" ? [notices] : filter === "chzzk" ? [posts] : [notices, posts];
   const loading = sources.some((source) => source.state.status === "loading");
   const failed = sources.some((source) => source.state.status === "error");
   return <section className={styles.section} aria-labelledby={titleId}>
@@ -38,16 +46,16 @@ export function CreatorNews({ slug, locale, full = false, initialFilter = "all",
       <h2 id={titleId}>{locale === "ko" ? "소식" : translate(locale, localizedMessages.m1672ef751316, "Updates")}</h2>
       {!full && <Link href={`${creatorHomeHref(slug)}?tab=notice&locale=${locale}${filter === "all" ? "" : `&news=${filter}`}#celebrity-content`}>{locale === "ko" ? "전체 보기" : translate(locale, localizedMessages.m3e5383762d51, "View all")}<ArrowRight size={16} aria-hidden="true" /></Link>}
     </header>
-    {channelId && <div className={styles.filters} role="group" aria-label={locale === "ko" ? "소식 분류" : translate(locale, localizedMessages.me557c4702ff6, "Update categories")}>
-      {(["all", "notice", "chzzk"] as const).map((value) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === "all" ? (locale === "ko" ? "전체" : translate(locale, localizedMessages.m1ca728a7e66c, "All")) : value === "notice" ? (locale === "ko" ? "공지" : translate(locale, localizedMessages.m237c0328b7ea, "Notices")) : (locale === "ko" ? "치지직" : translate(locale, localizedMessages.m9fb648fbd0b4, "CHZZK"))}</button>)}
-    </div>}
+    <div className={styles.filters} role="group" aria-label={locale === "ko" ? "소식 분류" : translate(locale, localizedMessages.me557c4702ff6, "Update categories")}>
+      {(["all", "notice", "artist_post", ...(channelId ? ["chzzk"] : [])] as NewsFilter[]).map((value) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === "all" ? (locale === "ko" ? "전체" : translate(locale, localizedMessages.m1ca728a7e66c, "All")) : value === "notice" ? (locale === "ko" ? "공지" : translate(locale, localizedMessages.m237c0328b7ea, "Notices")) : value === "artist_post" ? contentLabels.artistPost : (locale === "ko" ? "치지직" : translate(locale, localizedMessages.m9fb648fbd0b4, "CHZZK"))}</button>)}
+    </div>
     {items.length > 0 && <ul className={styles.list}>
       {items.map((item) => <li key={item.key}>
         <Link className={styles.row} href={(item.source === "byus" ? `/c/${slug}/notices/${item.notice.slug}?locale=${locale}` : `/c/${slug}/updates/chzzk/${item.post.id}?locale=${locale}`) as Route}>
           <span className={styles.rowContent}>
             <span className={styles.meta}>
               {item.source === "chzzk" ? <span className={styles.platform}><Image src="/images/guest-home/chzzk.png" width={16} height={16} alt="" />{locale === "ko" ? "치지직" : translate(locale, localizedMessages.m9fb648fbd0b4, "CHZZK")}</span>
-                : <span className={styles.notice}>{item.pinned && <Pin size={12} aria-hidden="true" />}{item.notice.kind === "welcome" ? (locale === "ko" ? "이용 안내" : translate(locale, localizedMessages.m1160110e13ea, "Start here")) : (locale === "ko" ? "공지" : translate(locale, localizedMessages.m5c028578dc57, "Notice"))}</span>}
+                : <span className={styles.notice}>{item.pinned && <Pin size={12} aria-hidden="true" />}{item.notice.postType === "artist_post" ? contentLabels.artistPost : item.notice.kind === "welcome" ? (locale === "ko" ? "이용 안내" : translate(locale, localizedMessages.m1160110e13ea, "Start here")) : contentLabels.notice}{item.notice.visibility === "members" ? ` · ${contentLabels.members}` : ""}</span>}
               <time dateTime={item.date}>{item.date.slice(0, 10).replaceAll("-", ".")}</time>
             </span>
             <span className={styles.title}>{item.title}</span>

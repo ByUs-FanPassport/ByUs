@@ -1,4 +1,5 @@
 "use client";
+import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { FanLanguageSwitch } from "@/components/fan-shell/fan-language-switch";
 import { toContentLocale } from "@/i18n/locales";
 import type { AppLocale } from "@/i18n/locales";
@@ -35,7 +36,7 @@ export function LiveMissionScreen(props: Props) {
 
 function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeof usePrivy> }) {
   const { ready, authenticated, login, getAccessToken } = auth;
-  const ko = locale === "ko";
+  const c = participationCopy(locale);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [retry, setRetry] = useState(0);
   const [title, setTitle] = useState("");
@@ -84,7 +85,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
   }, [ready, authenticated, getAccessToken, locale, slug, retry]);
 
   async function submit(mission: Mission) {
-    if (inFlight.current.has(mission.id) || mission.completed || mission.questions.some(question => !answers[question.id])) return;
+    if (inFlight.current.has(mission.id) || mission.completed || (mission.eligibility && mission.eligibility !== "available") || mission.questions.some(question => !answers[question.id])) return;
     const controller = new AbortController();
     inFlight.current.set(mission.id, controller);
     setSubmissions(current => ({ ...current, [mission.id]: "pending" }));
@@ -112,7 +113,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
       const completed = liveMissionCompletionSchema.parse(await response.json()).mission;
       if (completed.id !== mission.id || completed.type !== mission.type) throw new Error("Mission response mismatch");
       if (!active.current || controller.signal.aborted) return;
-      setMissions(current => current.map(item => item.id === completed.id ? { ...item, completed: true } : item));
+      setMissions(current => current.map(item => item.id === completed.id ? { ...item, completed: true, eligibility: "completed" as const, completedAt: new Date().toISOString() } : item));
       setSubmissions(current => ({ ...current, [mission.id]: "complete" }));
       requestKeys.current.delete(mission.id);
       return completed;
@@ -129,7 +130,7 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
   const back = <Link className={styles.back} href={`/live/${slug}?locale=${locale}`}>{locale === "ko" ? "LIVE로 돌아가기" : translate(locale, localizedMessages.m0fd55b295f20, "Back to LIVE")}</Link>;
   if (!ready) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<FanState kind="loading" title={locale === "ko" ? "참여 정보를 확인하고 있어요." : translate(locale, localizedMessages.m25d053f465c8, "Checking participation.")} /></main>;
   if (!authenticated) return <main className={styles.page} id="live-mission-main" tabIndex={-1}>{back}<h1>{locale === "ko" ? "LIVE 미션" : translate(locale, localizedMessages.m9e1272e7e694, "LIVE Missions")}</h1><button onClick={login}>{locale === "ko" ? "로그인하고 참여하기" : translate(locale, localizedMessages.mb3747fde918f, "Sign in to join")}</button></main>;
-  if (loadState === "ready" && slug === elinaLiveSlug && supportsArtMissionPlay(missions)) {
+  if (loadState === "ready" && slug === elinaLiveSlug && supportsArtMissionPlay(missions) && missions.every(mission => !mission.eligibility || ["available", "completed"].includes(mission.eligibility))) {
     return <ArtMissionPlay missions={missions} locale={locale} answers={answers} submissions={submissions} errors={errors}
       onAnswer={(questionId, optionId) => setAnswers(current => ({ ...current, [questionId]: optionId }))} onSubmit={submit} />;
   }
@@ -140,16 +141,23 @@ function MissionContent({ slug, locale, auth }: Props & { auth: ReturnType<typeo
       : missions.length === 0 ? <p>{locale === "ko" ? "지금 참여할 수 있는 미션이 없어요." : translate(locale, localizedMessages.m5a132c3337b9, "No missions are available right now.")}</p>
       : missions.map(mission => {
         const pending = submissions[mission.id] === "pending";
+        const blocked = Boolean(mission.eligibility && !["available", "completed"].includes(mission.eligibility));
+        const editing = !mission.completed && mission.questions.some(question => Boolean(answers[question.id]));
+        const label = mission.completed ? c.completed : mission.eligibility === "passport_required" ? c.verify : mission.eligibility === "attendance_required" ? c.checkin : mission.eligibility === "wallet_pending" ? c.wallet : blocked ? c.closed : editing ? c.editing : c.available;
+        const href = mission.nextAction?.href ? new URL(mission.nextAction.href, "https://byus.invalid") : null;
+        if (href) href.searchParams.set("locale", locale);
         return <article key={mission.id} className={styles.card} aria-busy={pending}>
-          <span>{mission.type.toUpperCase()}</span><h2>{mission.title}</h2><p>{mission.description}</p>
-          {mission.questions.map(question => <fieldset key={question.id} disabled={pending || mission.completed}>
+          <span>{mission.type.toUpperCase()} · {label}</span><h2>{mission.title}</h2><p>{mission.description}</p>
+          {mission.completedAt && <p><time dateTime={mission.completedAt}>{new Date(mission.completedAt).toLocaleString(locale)}</time></p>}
+          {href && <FanAction href={`${href.pathname}${href.search}${href.hash}`}>{mission.completed ? c.view : label}</FanAction>}
+          {!blocked && mission.questions.map(question => <fieldset key={question.id} disabled={pending || mission.completed || blocked}>
             <legend>{question.text}</legend>{question.media && <Media value={question.media} alt={question.text} />}
             {question.options.map(option => <label key={option.id} className={styles.option}>
               <input aria-label={option.label} type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => setAnswers(current => ({ ...current, [question.id]: option.id }))} />
               {option.media && <Media value={option.media} alt="" />}{option.displayMode !== "media" && <span>{option.label}</span>}
             </label>)}
           </fieldset>)}
-          <button disabled={pending || mission.completed || mission.questions.some(question => !answers[question.id])} onClick={() => void submit(mission)}>
+          <button disabled={pending || mission.completed || blocked || mission.questions.some(question => !answers[question.id])} onClick={() => void submit(mission)}>
             {pending ? (locale === "ko" ? "제출 중…" : translate(locale, localizedMessages.m4ea9a49f362b, "Submitting…")) : mission.completed ? (locale === "ko" ? "완료됨" : translate(locale, localizedMessages.m4c70b81bb0c3, "Completed")) : (locale === "ko" ? "미션 완료" : translate(locale, localizedMessages.me1b43e38ddba, "Complete mission"))}
           </button>
           {submissions[mission.id] === "complete" && <p role="status" className={styles.notice}>{locale === "ko" ? "미션을 완료했어요. 보상과 Stamp가 기록되었습니다." : translate(locale, localizedMessages.m69b94777d35b, "Mission complete. Your rewards and Stamp were recorded.")}</p>}

@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CreatorNews, ChzzkPostBody } from "./chzzk-posts";
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false, user: null, getAccessToken: async () => null }) }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => ({ ready: true, ownerId: null, generation: 0 }) }));
 const items = Array.from({ length: 5 }, (_, index) => ({ id: String(index + 1), text: index === 0 ? "<script>alert(1)</script>\n방송 일정" : `소식 ${index}`, date: `2026-09-${String(15-index).padStart(2,"0")}`, images: index === 0 ? [{ url: "https://nng-phinf.pstatic.net/schedule.jpg" }] : [] }));
 const notice = {slug:"important",title:"중요 공지",pinned:true,kind:"standard",publishedAt:"2026-08-01"};
 const response = (data: unknown) => new Response(JSON.stringify(data));
@@ -63,7 +65,8 @@ describe("creator news", () => {
     vi.stubGlobal("fetch",fetcher);
     render(<CreatorNews slug="kara" locale="ko" full />);
     await screen.findByText("중요 공지");
-    expect(screen.queryByRole("group",{name:"소식 분류"})).not.toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"아티스트 소식"})).toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:"치지직"})).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button",{name:"더 보기"}));
     await screen.findByText("두 번째 공지");
     expect(fetcher.mock.calls.every(([url])=>url.includes("/notices"))).toBe(true);

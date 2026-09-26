@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthError } from "../../features/auth/domain/auth-errors";
 
+vi.mock("server-only", () => ({}));
+
 const { authorize, listAdmin, save, state, upload } = vi.hoisted(() => ({
   authorize: vi.fn(), listAdmin: vi.fn(), save: vi.fn(), state: vi.fn(), upload: vi.fn(),
 }));

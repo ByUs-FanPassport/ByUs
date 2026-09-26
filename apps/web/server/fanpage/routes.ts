@@ -15,7 +15,7 @@ export function fanpageFailure(error: unknown) {
   if (error instanceof AuthError) return fanpageJson({ error: { code: "AUTHENTICATION_REQUIRED" } }, error.status);
   if (error instanceof z.ZodError || error instanceof SyntaxError) return fanpageJson({ error: { code: "INVALID_REQUEST" } }, 400);
   const code = error instanceof Error ? error.message : "";
-  const status = ({ FANPAGE_FORBIDDEN: 403, FANPAGE_NOT_FOUND: 404, FANPAGE_RATE_LIMITED: 429, FANPAGE_IDEMPOTENCY_CONFLICT: 409, FANPAGE_INVALID_REQUEST: 400, FANPAGE_BODY_TOO_LARGE: 413 } as Record<string, number>)[code];
+  const status = ({ FAN_WEB_ACTIVE_ACCOUNT_REQUIRED: 403, FANPAGE_FORBIDDEN: 403, FANPAGE_NOT_FOUND: 404, FANPAGE_RATE_LIMITED: 429, FANPAGE_IDEMPOTENCY_CONFLICT: 409, FANPAGE_INVALID_REQUEST: 400, FANPAGE_BODY_TOO_LARGE: 413 } as Record<string, number>)[code];
   return fanpageJson({ error: { code: status ? code : "FANPAGE_UNAVAILABLE" } }, status ?? 503);
 }
 async function optionalOwner(request: Request, dependencies: FanpageDependencies) {

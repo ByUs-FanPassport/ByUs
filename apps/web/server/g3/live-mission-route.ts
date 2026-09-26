@@ -1,4 +1,7 @@
 import "server-only";
+import { AuthError } from "../../features/auth/domain/auth-errors";
+import { FanAuthUnavailableError } from "../fan-auth/fan-auth-gate";
+import { boundedJson, CertificationBodyError } from "../certification/certification-http";
 import { z } from "zod";
 import { submitLiveMissionSchema } from "../../features/live/domain/live-mission";
 import { LiveMissionRepositoryError, SupabaseLiveMissionRepository } from "./live-mission-repository";
@@ -7,6 +10,9 @@ type Deps={authorize(value:string|null):Promise<{appUserId:string}>;repository:S
 const locale=z.enum(["ko","en"]); const uuid=z.string().uuid();
 const json=(body:unknown,status:number)=>Response.json(body,{status,headers:{"cache-control":"private, no-store",vary:"Authorization"}});
 function mapped(error:unknown){
+  if (error instanceof AuthError || error instanceof FanAuthUnavailableError) return json({error:{code:error.code}},error.status);
+  if (error instanceof CertificationBodyError) return json({error:{code:error.code}},error.code === "BODY_TOO_LARGE" ? 413 : 422);
+  if (error instanceof z.ZodError || error instanceof SyntaxError) return json({error:{code:"MISSION_INVALID_REQUEST"}},422);
   if(!(error instanceof LiveMissionRepositoryError)) return json({error:{code:"MISSION_UNAVAILABLE"}},503);
   const code=error.code.replace("PHASE2_","");
   const status=code.endsWith("NOT_FOUND")?404:code.includes("REQUIRED")?403:code.includes("INVALID")?422:code.includes("ALREADY")||code.includes("CONFLICT")||code.includes("WALLET")||code.includes("NOT_VISIBLE")?409:503;
@@ -17,5 +23,5 @@ export const createGetLiveMissionsHandler=(d:Deps)=>async(request:Request,input:
   try{const owner=await d.authorize(request.headers.get("authorization")); const lang=locale.parse(new URL(request.url).searchParams.get("locale")??"ko"); return json(await d.repository.list({appUserId:owner.appUserId,slug:input.slug,locale:lang}),200);}catch(error){return mapped(error);}
 };
 export const createPostLiveMissionHandler=(d:Deps)=>async(request:Request,input:{missionId:string})=>{
-  try{const missionId=uuid.parse(input.missionId); const body=submitLiveMissionSchema.parse(await request.json()); const owner=await d.authorize(request.headers.get("authorization")); return json(await d.repository.submit({appUserId:owner.appUserId,missionId,idempotencyKey:body.idempotencyKey,answers:body.answers}),200);}catch(error){return mapped(error);}
+  try{const missionId=uuid.parse(input.missionId); const body=submitLiveMissionSchema.parse(await boundedJson(request)); const owner=await d.authorize(request.headers.get("authorization")); return json(await d.repository.submit({appUserId:owner.appUserId,missionId,idempotencyKey:body.idempotencyKey,answers:body.answers}),200);}catch(error){return mapped(error);}
 };

@@ -23,6 +23,7 @@ export const liveCalendarEventSchema = z
     celebrity: z
       .object({
         name: z.string().trim().min(1).max(120),
+        slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
         image: safeAssetUrlSchema,
         imagePosition: z.string().trim().min(1).max(100).optional(),
         photos: z.custom<PhotoSet>().optional(),

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { boundedMultipart, CertificationBodyError } from "@/server/certification/certification-http";
+import { MAX_PUBLIC_IMAGE_MULTIPART_BYTES } from "@/server/media/public-image-processing";
 import { createNoticeDependencies } from "../../../../../../../../server/notice/notice-dependencies";
 import { AuthError } from "../../../../../../../../features/auth/domain/auth-errors";
 
@@ -19,11 +21,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const deps = createNoticeDependencies();
     const session = await deps.authorize({ authorization: request.headers.get("authorization") ?? "", correlationId });
     if (session.role === "viewer") return json({ error: "FORBIDDEN" }, 403);
-    const form = await request.formData();
+    const form = await boundedMultipart(request, MAX_PUBLIC_IMAGE_MULTIPART_BYTES);
     const file = form.get("file");
     if (!(file instanceof File)) return json({ error: "FILE_REQUIRED" }, 400);
     return json(await deps.repository.upload(session, { celebrityId: id, noticeId, file }));
   } catch (error) {
+    if (error instanceof CertificationBodyError) return json({ error: error.code }, error.code === "BODY_TOO_LARGE" ? 413 : 400);
     if (error instanceof AuthError) {
       return json(
         { error: error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN" },

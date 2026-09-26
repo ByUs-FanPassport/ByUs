@@ -6,6 +6,7 @@ export interface NotificationQueue {
     batchSize: number,
     leaseSeconds: number,
   ): Promise<NotificationDelivery[]>;
+  canSend(delivery: NotificationDelivery): Promise<boolean>;
   complete(delivery: NotificationDelivery): Promise<void>;
   retry(
     delivery: NotificationDelivery,

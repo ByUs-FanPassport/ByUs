@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boundedJson, CertificationBodyError } from "@/server/certification/certification-http";
 import { createNoticeDependencies } from "../../../../../../server/notice/notice-dependencies";
 import { noticeSlugSchema } from "../../../../../../server/notice/notice-domain";
 import { AuthError } from "../../../../../../features/auth/domain/auth-errors";
@@ -16,11 +17,13 @@ const saveSchema = z.object({
   expectedRevision: z.number().int().positive().optional(),
   slug: noticeSlugSchema,
   pinned: z.boolean(),
+  postType: z.enum(["notice", "artist_post"]).optional(),
+  visibility: z.enum(["public", "members"]).optional(),
   localizations: z.object({
     ko: z.object({ title: z.string().trim().min(1).max(160), body: documentSchema }),
     en: z.object({ title: z.string().trim().min(1).max(160), body: documentSchema }),
   }),
-});
+}).refine(value => (value.postType === undefined) === (value.visibility === undefined), "Content type and visibility are required together");
 const stateSchema = z.object({
   action: z.enum(["publish", "unpublish", "archive"]),
   id: z.string().uuid(),
@@ -38,6 +41,8 @@ async function admin(request: Request, id: string) {
   return { deps, session };
 }
 function failure(error: unknown) {
+  if (error instanceof CertificationBodyError) return json({ error: error.code }, error.code === "BODY_TOO_LARGE" ? 413 : 400);
+  if (error instanceof Error && error.message === "FAN_WEB_ACTIVE_ACCOUNT_REQUIRED") return json({ error: "FORBIDDEN" }, 403);
   if (error instanceof z.ZodError || error instanceof SyntaxError) return json({ error: "INVALID_REQUEST" }, 400);
   if (error instanceof AuthError) {
     return json(
@@ -65,8 +70,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const c = correlation(request);
     const { deps, session } = await admin(request, c);
     if (session.role === "viewer") return json({ error: "FORBIDDEN" }, 403);
-    const value = await request.json();
-    if (value?.action === "save") {
+    const value = await boundedJson(request, 256 * 1024);
+    if (value && typeof value === "object" && "action" in value && value.action === "save") {
       const body = saveSchema.parse(value);
       return json(await deps.repository.save(session, c, { ...body, celebrityId }));
     }

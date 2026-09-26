@@ -22,6 +22,12 @@ const productionSource = {
 };
 
 describe("localhost Production environment contract", () => {
+  it("keeps the optional Translation credential server-only across local regeneration", () => {
+    const generated = productionLocalEnvironment({ ...productionSource, GOOGLE_TRANSLATION_API_KEY: "translation-secret\n" });
+    expect(generated.GOOGLE_TRANSLATION_API_KEY).toBe("translation-secret");
+    expect(generated).not.toHaveProperty("NEXT_PUBLIC_GOOGLE_TRANSLATION_API_KEY");
+    expect(productionLocalEnvironment(productionSource)).not.toHaveProperty("GOOGLE_TRANSLATION_API_KEY");
+  });
   it("forces localhost, Production data, demo Privy Development, and disables test login", () => {
     expect(productionLocalEnvironment(productionSource)).toMatchObject({
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",

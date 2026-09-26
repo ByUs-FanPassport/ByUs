@@ -90,6 +90,7 @@ export function productionLocalEnvironment(source) {
   }
 
   return {
+    ...(source.GOOGLE_TRANSLATION_API_KEY ? { GOOGLE_TRANSLATION_API_KEY: source.GOOGLE_TRANSLATION_API_KEY.replaceAll("\n", "") } : {}),
     ...Object.fromEntries(
       requiredKeys.map((key) => [key, source[key].replaceAll("\n", "")]),
     ),

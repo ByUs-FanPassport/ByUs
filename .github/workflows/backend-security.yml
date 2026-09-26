@@ -45,6 +45,8 @@ jobs:
           features/auth server/auth server/fan-auth
           features/community-stamps server/community-stamps
           server/notice/notice-admin-security.test.ts server/notification
+          server/fan-posts server/content-translation server/schedules
+          server/profile/account-deletion.test.ts server/my/fan-history-route.test.ts
           server/onchain app/api/public/onchain
       - run: npm run test --workspace @byus/worker
       - run: npm run build --workspace @byus/worker

@@ -36,6 +36,9 @@ export interface NotificationRepository {
     liveReminders?: boolean;
     surveyReminders?: boolean;
     benefitNotifications?: boolean;
+    replyNotifications?: boolean;
+    officialPostNotifications?: boolean;
+    scheduleNotifications?: boolean;
   }): Promise<NotificationPreferences>;
   enqueueDue(now: string): Promise<number>;
 }
@@ -62,6 +65,19 @@ export function projectNotificationRow(
   recipientLinks = false,
 ): NotificationItem {
   const kind = String(row.kind) as NotificationItem["kind"];
+  const webCopy = {
+    content_reply: ["새 댓글이 도착했어요", "내 글에 남겨진 댓글을 확인해 주세요.", "New comment", "View the comment on your conversation."],
+    official_post: ["공식 소식이 도착했어요", "최애의 새로운 소식을 확인해 주세요.", "New official update", "Read the latest update from your favorite."],
+    schedule_reminder: ["다가오는 일정이 있어요", "알림을 신청한 일정을 확인해 주세요.", "An event is coming up", "View the event you subscribed to."],
+    schedule_changed: ["일정이 변경됐어요", "변경된 시간과 참여 방법을 확인해 주세요.", "Event updated", "Check the updated time and participation details."],
+    schedule_cancelled: ["일정이 취소됐어요", "알림을 신청한 일정의 취소 안내를 확인해 주세요.", "Event cancelled", "View the cancellation of your subscribed event."],
+    schedule_suggestion_reviewed: ["일정 제안 검토가 끝났어요", "내 요청에서 결과를 확인해 주세요.", "Schedule suggestion reviewed", "View the result in your requests."],
+    fanpage_request_reviewed: ["최애 개설 요청 검토가 끝났어요", "내 요청에서 결과를 확인해 주세요.", "Fan page request reviewed", "View the result in your requests."],
+  } as const;
+  if (kind in webCopy) {
+    const copy = webCopy[kind as keyof typeof webCopy];
+    return { id: String(row.id), kind, title: copy[locale === "ko" ? 0 : 2], detail: copy[locale === "ko" ? 1 : 3], createdAt: String(row.created_at), readAt: row.read_at == null ? null : String(row.read_at), deepLink: String(row.deep_link) };
+  }
   const live = one(row.live_events);
   const benefit = one(row.benefits);
   const liveLoc =
@@ -201,7 +217,7 @@ export function createNotificationRepository(
     const [pref, sub] = await Promise.all([
       db
         .from("notification_preferences")
-        .select("live_reminders,survey_reminders,benefit_notifications")
+        .select("live_reminders,survey_reminders,benefit_notifications,reply_notifications,official_post_notifications,schedule_notifications")
         .eq("app_user_id", appUserId)
         .maybeSingle(),
       db
@@ -216,41 +232,29 @@ export function createNotificationRepository(
       liveReminders: pref.data?.live_reminders ?? true,
       surveyReminders: pref.data?.survey_reminders ?? true,
       benefitNotifications: pref.data?.benefit_notifications ?? true,
+      replyNotifications: pref.data?.reply_notifications ?? true,
+      officialPostNotifications: pref.data?.official_post_notifications ?? true,
+      scheduleNotifications: pref.data?.schedule_notifications ?? true,
       browserSubscription: (sub.count ?? 0) > 0 ? "subscribed" : "unsubscribed",
     };
   }
   return {
     async list({ appUserId, locale, recipientLinks = false }) {
-      const { data, error } = await db
-        .from("fan_notifications")
-        .select(
-          "id,kind,source_key,created_at,read_at,deep_link,payload,celebrity_id,live_events(id,slug,live_event_localizations(locale,title)),benefits(id,slug,benefit_localizations(locale,title))",
-        )
-        .eq("app_user_id", appUserId)
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const drained = await db.rpc("fan_web_drain_notification_intents", { p_app_user_id: appUserId, p_limit: 100 });
+      if (drained.error) throw new Error("notifications unavailable");
+      const { data, error } = await db.rpc("get_owned_web_notifications", { p_app_user_id: appUserId, p_locale: locale });
       if (error) throw new Error("notifications unavailable");
-      return (data ?? []).map((row) =>
+      return (data ?? []).map((row: unknown) =>
         projectNotificationRow(row as Row, locale, recipientLinks),
       );
     },
     async markRead({ appUserId, notificationId }) {
-      const { data, error } = await db
-        .from("fan_notifications")
-        .update({ read_at: new Date().toISOString() })
-        .eq("id", notificationId)
-        .eq("app_user_id", appUserId)
-        .select("id")
-        .maybeSingle();
+      const { data, error } = await db.rpc("mark_owned_web_notifications_read", { p_app_user_id: appUserId, p_notification_id: notificationId });
       if (error) throw new Error("notification update failed");
       return Boolean(data);
     },
     async markAllRead(appUserId) {
-      const { error } = await db
-        .from("fan_notifications")
-        .update({ read_at: new Date().toISOString() })
-        .eq("app_user_id", appUserId)
-        .is("read_at", null);
+      const { error } = await db.rpc("mark_owned_web_notifications_read", { p_app_user_id: appUserId, p_notification_id: null });
       if (error) throw new Error("notification update failed");
     },
     async putSubscription(input) {
@@ -276,30 +280,22 @@ export function createNotificationRepository(
       const endpointHash = createHash("sha256")
         .update(input.endpoint)
         .digest("hex");
-      const { error } = await db
-        .from("push_subscriptions")
-        .update({ disabled_at: new Date().toISOString() })
-        .eq("app_user_id", input.appUserId)
-        .eq("endpoint_hash", endpointHash);
+      const { error } = await db.rpc("fan_web_disable_push_subscription", { p_app_user_id: input.appUserId, p_endpoint_hash: endpointHash });
       if (error) throw new Error("subscription delete failed");
     },
     getPreferences,
     async patchPreferences(input) {
-      const { error } = await db.from("notification_preferences").upsert(
-        {
-          app_user_id: input.appUserId,
-          ...(input.liveReminders === undefined
-            ? {}
-            : { live_reminders: input.liveReminders }),
-          ...(input.surveyReminders === undefined
-            ? {}
-            : { survey_reminders: input.surveyReminders }),
-          ...(input.benefitNotifications === undefined
-            ? {}
-            : { benefit_notifications: input.benefitNotifications }),
+      const { error } = await db.rpc("fan_web_patch_notification_preferences", {
+        p_app_user_id: input.appUserId,
+        p_patch: {
+          ...(input.liveReminders === undefined ? {} : { live_reminders: input.liveReminders }),
+          ...(input.surveyReminders === undefined ? {} : { survey_reminders: input.surveyReminders }),
+          ...(input.benefitNotifications === undefined ? {} : { benefit_notifications: input.benefitNotifications }),
+          ...(input.replyNotifications === undefined ? {} : { reply_notifications: input.replyNotifications }),
+          ...(input.officialPostNotifications === undefined ? {} : { official_post_notifications: input.officialPostNotifications }),
+          ...(input.scheduleNotifications === undefined ? {} : { schedule_notifications: input.scheduleNotifications }),
         },
-        { onConflict: "app_user_id" },
-      );
+      });
       if (error) throw new Error("notification preferences update failed");
       return getPreferences(input.appUserId);
     },

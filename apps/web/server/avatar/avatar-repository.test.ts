@@ -24,8 +24,11 @@ function client() {
     data: new Blob([new Uint8Array([1, 2, 3])], { type: "image/webp" }),
     error: null,
   });
+  const domainRpc = vi.fn().mockResolvedValue({ data: rawAvatar(), error: null });
   return {
-    rpc: vi.fn().mockResolvedValue({ data: rawAvatar(), error: null }),
+    domainRpc,
+    rpc: vi.fn((name: string, args: unknown) => name.startsWith("fan_web_")
+      ? Promise.resolve({ data: null, error: null }) : domainRpc(name, args)),
     storage: { from: vi.fn(() => ({ upload, remove, download })) },
     upload,
     remove,
@@ -36,7 +39,7 @@ function client() {
 describe("avatar repository CAS and private object lifecycle", () => {
   it("lazily ensures one owner-scoped avatar through the service RPC", async () => {
     const db = client();
-    db.rpc.mockResolvedValueOnce({
+    db.domainRpc.mockResolvedValueOnce({
       data: rawAvatar({ source: "default", hasImage: false, revision: 0, objectPath: null }),
       error: null,
     });
@@ -52,7 +55,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
   it("uploads to an immutable key, commits CAS, then deletes only the previous object", async () => {
     const db = client();
     const previous = `${userId}/1-33333333-3333-4333-8333-333333333333.webp`;
-    db.rpc.mockResolvedValueOnce({
+    db.domainRpc.mockResolvedValueOnce({
       data: rawAvatar({ previousObjectPath: previous }),
       error: null,
     });
@@ -76,7 +79,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
 
   it("deletes its own new object and preserves the previous object when CAS loses", async () => {
     const db = client();
-    db.rpc.mockResolvedValueOnce({ data: null, error: { message: "AVATAR_STALE_REVISION" } });
+    db.domainRpc.mockResolvedValueOnce({ data: null, error: { message: "AVATAR_STALE_REVISION" } });
     const repository = new SupabaseAvatarRepository(db as never, () => generatedId);
     const next = `${userId}/2-${generatedId}.webp`;
     await expect(
@@ -94,7 +97,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
   it("preserves a candidate when an ambiguous response may follow a committed mutation", async () => {
     const db = client();
     const next = `${userId}/2-${generatedId}.webp`;
-    db.rpc
+    db.domainRpc
       .mockResolvedValueOnce({ data: { malformed: true }, error: null })
       .mockResolvedValueOnce({
         data: rawAvatar({ objectPath: next, previousObjectPath: null }),
@@ -114,7 +117,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
 
   it("preserves an unreferenced candidate while ambiguous state remains at the expected revision", async () => {
     const db = client();
-    db.rpc
+    db.domainRpc
       .mockResolvedValueOnce({ data: { malformed: true }, error: null })
       .mockResolvedValueOnce({
         data: rawAvatar({
@@ -141,7 +144,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
   it("does not turn a committed avatar mutation into failure when old-object cleanup rejects", async () => {
     const db = client();
     const previous = `${userId}/1-33333333-3333-4333-8333-333333333333.webp`;
-    db.rpc.mockResolvedValueOnce({
+    db.domainRpc.mockResolvedValueOnce({
       data: rawAvatar({ previousObjectPath: previous }),
       error: null,
     });
@@ -160,7 +163,7 @@ describe("avatar repository CAS and private object lifecycle", () => {
   it("deletes the replaced object after character selection and removal", async () => {
     const db = client();
     const previous = `${userId}/2-${generatedId}.webp`;
-    db.rpc
+    db.domainRpc
       .mockResolvedValueOnce({
         data: rawAvatar({ source: "character", hasImage: false, revision: 3, objectPath: null, previousObjectPath: previous }),
         error: null,

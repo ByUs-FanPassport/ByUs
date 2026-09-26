@@ -147,47 +147,55 @@ export class SupabaseAvatarRepository implements AvatarRepository {
     const source = avatarSourceSchema.extract(["google", "upload"]).parse(input.source);
     const objectPath = `${input.appUserId}/${input.expectedRevision + 1}-${this.createId()}.webp`;
     const bucket = this.client.storage.from(AVATAR_BUCKET);
-    const upload = await bucket.upload(objectPath, input.bytes, {
-      contentType: "image/webp",
-      upsert: false,
-      cacheControl: "31536000",
-    });
-    if (upload.error) throw new AvatarRepositoryError("STORAGE_UNAVAILABLE");
-
-    const mutation = await this.client.rpc("set_owned_avatar_image", {
-      p_app_user_id: input.appUserId,
-      p_source: source,
-      p_object_path: objectPath,
-      p_expected_revision: input.expectedRevision,
-    });
-    if (mutation.error?.message?.includes("AVATAR_STALE_REVISION")) {
-      try {
-        await bucket.remove([objectPath]);
-      } catch {
-        // CAS is definitively rejected even if candidate cleanup must be retried.
-      }
-      throw new AvatarRepositoryError("STALE_REVISION");
-    }
-
-    let persisted: PersistedAvatar;
+    const tracking = { p_app_user_id: input.appUserId, p_bucket: AVATAR_BUCKET, p_object_path: objectPath };
+    const started = await this.client.rpc("fan_web_begin_private_upload", tracking);
+    if (started.error) throw mapRpcError(started.error);
     try {
-      if (mutation.error) throw mapRpcError(mutation.error);
-      persisted = parsePersisted(mutation.data);
-    } catch (error) {
-      // A transport failure or malformed response can arrive after the database
-      // committed. Re-read authoritative state before deciding whether this
-      // immutable candidate is safe to delete.
-      const reconciled = await this.reconcileCandidate(
-        input.appUserId,
-        objectPath,
-        input.expectedRevision,
-      );
-      if (reconciled) return publicAvatar(reconciled);
-      throw error;
-    }
+      const upload = await bucket.upload(objectPath, input.bytes, {
+        contentType: "image/webp",
+        upsert: false,
+        cacheControl: "31536000",
+      });
+      if (upload.error) throw new AvatarRepositoryError("STORAGE_UNAVAILABLE");
 
-    await this.removePrevious(persisted.previousObjectPath);
-    return publicAvatar(persisted);
+      const mutation = await this.client.rpc("set_owned_avatar_image", {
+        p_app_user_id: input.appUserId,
+        p_source: source,
+        p_object_path: objectPath,
+        p_expected_revision: input.expectedRevision,
+      });
+      if (mutation.error?.message?.includes("AVATAR_STALE_REVISION")) {
+        try {
+          await bucket.remove([objectPath]);
+        } catch {
+          // CAS is definitively rejected even if candidate cleanup must be retried.
+        }
+        throw new AvatarRepositoryError("STALE_REVISION");
+      }
+
+      let persisted: PersistedAvatar;
+      try {
+        if (mutation.error) throw mapRpcError(mutation.error);
+        persisted = parsePersisted(mutation.data);
+      } catch (error) {
+        // A transport failure or malformed response can arrive after the database
+        // committed. Re-read authoritative state before deciding whether this
+        // immutable candidate is safe to delete.
+        const reconciled = await this.reconcileCandidate(
+          input.appUserId,
+          objectPath,
+          input.expectedRevision,
+        );
+        if (reconciled) return publicAvatar(reconciled);
+        throw error;
+      }
+
+      await this.removePrevious(persisted.previousObjectPath);
+      return publicAvatar(persisted);
+    } finally {
+      // A failed finalization leaves a durable upload lease for deletion retries.
+      try { await this.client.rpc("fan_web_finish_private_upload", tracking); } catch { /* lease remains */ }
+    }
   }
 
   async remove(input: {
@@ -277,6 +285,7 @@ export function createSupabaseAvatarRepository(
   const client =
     existingClient ??
     (createClient(config.url, config.serviceRoleKey, {
+      global: { fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(60_000)]) : AbortSignal.timeout(60_000) }) },
       auth: {
         persistSession: false,
         autoRefreshToken: false,

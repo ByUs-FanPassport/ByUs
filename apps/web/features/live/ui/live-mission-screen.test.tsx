@@ -88,7 +88,7 @@ it("runs the image vote then quiz, using server reward values on the final resul
  expect(await screen.findByRole("button", { name: "이 작품으로 결정" })).toBeDisabled();
  fireEvent.click(screen.getByRole("radio", { name: "플라잉 코퍼" }));
  fireEvent.click(screen.getByRole("button", { name: "이 작품으로 결정" }));
- expect(await screen.findByRole("heading", { name: "빨간 풍선의 모양은?" })).toHaveFocus();
+ await waitFor(() => expect(screen.getByRole("heading", { name: "빨간 풍선의 모양은?" })).toHaveFocus());
  expect(screen.getByRole("button", { name: "취향 고르기 완료" })).toBeDisabled();
  fireEvent.click(screen.getByRole("radio", { name: "하트" }));
  fireEvent.click(screen.getByRole("button", { name: "정답 확인하기" }));
@@ -148,4 +148,11 @@ it("keeps changed CMS questions and falls back for unsupported mission structure
  expect(supportsArtMissionPlay(list)).toBe(true);
  expect(supportsArtMissionPlay([{ ...list[0], questions: [...list[0].questions, list[0].questions[0]] }, list[1]])).toBe(false);
  expect(supportsArtMissionPlay([{ ...list[0], questions: [{ ...list[0].questions[0], media: { type: "video", url: "https://example.com/instructions.mp4" } }] }, list[1]])).toBe(false);
+});
+it("shows required next action before questions and retains an expired completed record",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async(url:string)=>url.includes("/missions?")?Response.json([{...mission,eligibility:"passport_required",nextAction:{kind:"verify_fan",href:"/c/artist/verify"},completedAt:null},{...mission,id:"10000000-0000-4000-8000-000000000002",title:"완료 기록",completed:true,completedAt:"2026-09-10T01:00:00Z",eligibility:"completed",nextAction:{kind:"view_record",href:"/c/artist/certifications"}}]):new Response(null,{status:404})));
+ render(<LiveMissionScreen slug="test-live" locale="ko"/>);
+ expect(await screen.findByRole("link",{name:"팬 인증하기"})).toHaveAttribute("href","/c/artist/verify?locale=ko");
+ expect(screen.getByRole("heading",{name:"완료 기록"})).toBeInTheDocument();
+ expect(screen.getAllByRole("radio")).toHaveLength(2); screen.getAllByRole("radio").forEach(radio=>expect(radio).toBeDisabled());
 });

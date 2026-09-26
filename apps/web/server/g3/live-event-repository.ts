@@ -1,4 +1,5 @@
 import "server-only";
+import { isRecordedReplayUrl } from "../../features/live/domain/live-watch-link";
 import { ifewEndedDescription, ifewLiveSlug } from "../../features/live/domain/ifew-event";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -54,6 +55,9 @@ export interface LiveEventRecord {
   liveProvider: ExternalLiveProvider;
   externalLiveUrl: string;
   youtubeUrl: string;
+  replayProvider?: ExternalLiveProvider | null;
+  replayUrl?: string | null;
+  replayPublished?: boolean;
   heroUrl: string;
   title: string;
   description: string;
@@ -187,8 +191,8 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
       record.liveProvider,
       record.externalLiveUrl,
     );
-    // This TikTok URL is the past event listing, not a replay recording.
-    const replayAvailable = effectiveStatus === "ended" && record.slug !== ifewLiveSlug && record.liveType !== "recurring";
+    const replayAvailable = effectiveStatus === "ended" && record.replayPublished === true
+      && Boolean(record.replayProvider && record.replayUrl && isRecordedReplayUrl(record.replayProvider, record.replayUrl));
     const response: LiveEventResponse = {
       live: {
         id: record.id,
@@ -224,8 +228,8 @@ export class DefaultLiveEventRepository implements LiveEventRepository {
         watch: {
           available: effectiveStatus === "live" || replayAvailable,
           mode: effectiveStatus === "live" ? "live" : replayAvailable ? "replay" : "unavailable",
-          provider: record.liveProvider,
-          url: watchUrl,
+          provider: replayAvailable ? record.replayProvider! : record.liveProvider,
+          url: replayAvailable ? record.replayUrl! : watchUrl,
         },
         preview: record.preview
           ? {
@@ -359,7 +363,7 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
   async findPublishedEvent(slug: string, locale: LiveLocale): Promise<LiveEventRecord | null> {
     const { data: event, error: eventError } = await this.database
       .from("live_events")
-      .select("id, slug, live_type, celebrity_id, brand_id, content_status, starts_at, ends_at, attendance_valid_from, attendance_valid_until, reservation_opens_at, reservation_closes_at, live_provider, external_live_url, youtube_url, approved_hero_url")
+      .select("id, slug, live_type, celebrity_id, brand_id, content_status, starts_at, ends_at, attendance_valid_from, attendance_valid_until, reservation_opens_at, reservation_closes_at, live_provider, external_live_url, youtube_url, approved_hero_url, replay_provider, replay_url, replay_published")
       .eq("slug", slug)
       .eq("publication_status", "published")
       .maybeSingle();
@@ -410,6 +414,9 @@ class SupabaseLiveEventDataSource implements LiveEventDataSource {
       liveProvider: event.live_provider ?? "youtube",
       externalLiveUrl: event.external_live_url ?? event.youtube_url,
       youtubeUrl: event.youtube_url,
+      replayProvider: event.replay_provider,
+      replayUrl: event.replay_url,
+      replayPublished: event.replay_published,
       heroUrl: event.approved_hero_url,
       title: localization.title,
       description: localization.summary,

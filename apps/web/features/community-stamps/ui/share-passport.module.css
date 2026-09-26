@@ -30,6 +30,11 @@
 .landingCard h1 { margin:12px auto 0; max-width:330px; font-size:27px; line-height:1.22; letter-spacing:-.045em; }
 .landingBody { margin:14px auto 24px; max-width:350px; color:#6c6a6a; font-size:14px; line-height:1.65; }
 .shareArtwork { display:block; width:80px; height:80px; object-fit:contain; margin:-14px auto 10px; }
+.activityCard { margin:0 0 24px; padding:16px; border:1px solid #e8e8e8; border-radius:16px; }
+.activityCard > img { display:block; margin:0 auto 12px; }
+.activityCard dl { display:grid; grid-template-columns:1fr 1fr; gap:16px 12px; margin:0; }
+.activityCard dt { color:#6c6a6a; font-size:12px; line-height:1.5; }
+.activityCard dd { margin:4px 0 0; font-size:14px; font-weight:700; overflow-wrap:anywhere; }
 .landingCard .primary { width:100%; font-size:14px; }
 .proof { margin:10px auto 0; max-width:330px; color:#6a576e; font-size:12px; line-height:1.55; }
 .secondary { display:inline-flex; min-height:44px; align-items:center; justify-content:center; margin-top:8px; color:#5c5260; font-size:13px; font-weight:650; text-underline-offset:3px; }

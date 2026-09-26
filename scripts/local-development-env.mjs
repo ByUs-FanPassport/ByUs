@@ -16,11 +16,15 @@ function requireValues(source, keys, label) {
 }
 
 export async function developmentLocalEnvironment() {
-  const [privy, supabase, wallets, contracts] = await Promise.all([
+  const [privy, supabase, wallets, contracts, translation] = await Promise.all([
     readEnvironmentFile(".env.privy.local"),
     readEnvironmentFile(".env.supabase.local"),
     readEnvironmentFile(".env.wallets.local"),
     readEnvironmentFile(".env.contracts.local"),
+    readEnvironmentFile(".env.translation.local").catch((error) => {
+      if (error.code === "ENOENT") return {};
+      throw error;
+    }),
   ]);
   for (const [label, keys] of Object.entries(requiredSources)) {
     requireValues({ privy, supabase, wallets, contracts }[label], keys, label);
@@ -32,6 +36,7 @@ export async function developmentLocalEnvironment() {
   if (wallets.GIWA_CHAIN_ID !== "91342") throw new Error("Dev GIWA chain must be 91342");
 
   return {
+    ...(translation.GOOGLE_TRANSLATION_API_KEY ? { GOOGLE_TRANSLATION_API_KEY: translation.GOOGLE_TRANSLATION_API_KEY } : {}),
     NEXT_PUBLIC_APP_URL: "http://localhost:3000",
     NEXT_PUBLIC_PRIVY_APP_ID: privy.NEXT_PUBLIC_PRIVY_APP_ID,
     PRIVY_APP_ID: privy.NEXT_PUBLIC_PRIVY_APP_ID,

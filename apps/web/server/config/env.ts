@@ -108,6 +108,7 @@ const serverEnvSchema = publicEnvSchema
     PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
     SUPABASE_URL: httpsUrl,
     SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(16),
+    GOOGLE_TRANSLATION_API_KEY: optionalNonEmptyString,
     GIWA_CHAIN_ID: z.coerce.number().int().refine((value) => value === 91342),
     GIWA_RPC_URL: httpsUrl,
     GIWA_EXPLORER_URL: httpsUrl,

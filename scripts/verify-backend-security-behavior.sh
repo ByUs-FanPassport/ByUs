@@ -27,3 +27,14 @@ BYUS_ACTION_CONCURRENCY_MODE=1 bash "$root_dir/scripts/verify-fan-action-concurr
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_canary.sql"
 
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/bias_celebrity_public_handle.sql"
+
+# Fan web reads and writes must preserve owner, membership and lifecycle boundaries.
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_foundation.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_content_behavior.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_participation.sql"
+bash "$root_dir/supabase/tests/fan_web_participation_concurrency.sh"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_notifications.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_personal.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_account_deletion.sql"
+
+FAN_WEB_DISPOSABLE_DB_URL="postgresql:///byus_clean?host=${PGHOST}&port=${PGPORT}" node "$root_dir/supabase/tests/fan_web_notification_concurrency.mjs"

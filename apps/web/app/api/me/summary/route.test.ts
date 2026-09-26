@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthError } from "@/features/auth/domain/auth-errors";
 
-const { authorize, get } = vi.hoisted(() => ({ authorize: vi.fn(), get: vi.fn() }));
-vi.mock("@supabase/supabase-js", () => ({ createClient: () => ({}) }));
+const { authorize, get, rpc } = vi.hoisted(() => ({ authorize: vi.fn(), get: vi.fn(), rpc: vi.fn() }));
+vi.mock("@supabase/supabase-js", () => ({ createClient: () => ({ rpc }) }));
 vi.mock("@/server/config/env", () => ({ loadServerEnv: () => ({ SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "test", PRIVY_APP_ID: "test", PRIVY_APP_SECRET: "test" }) }));
 vi.mock("@/server/auth/privy-node-verifier", () => ({ createPrivyNodeAccessVerifier: () => ({}) }));
 vi.mock("@/server/fan-auth/fan-auth-gate", () => ({ authorizeFanRequest: authorize }));
@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   authorize.mockResolvedValue({ appUserId: "canonical-owner" });
   get.mockResolvedValue({ creators: [] });
+  rpc.mockResolvedValue({ data: 0, error: null });
 });
 
 describe("MY summary stage opt-in", () => {
@@ -35,5 +36,6 @@ describe("MY summary stage opt-in", () => {
     const response = await GET(new Request("https://byus.kr/api/me/summary?tierStages=1"));
     expect(response.status).toBe(401);
     expect(get).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

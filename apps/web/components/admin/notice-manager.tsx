@@ -1,10 +1,13 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
+import Image from "@tiptap/extension-image";
 import { Archive, Bold, ImagePlus, Italic, Link2, List, ListOrdered, Pin, Save, Underline as UnderlineIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { noticeExtensions } from "../notice/tiptap-extensions";
 import { NoticeBody } from "../notice/notice-body";
+import { ContentAssetImage } from "@/features/content-safety/ui/content-asset";
+import { isPrivateNoticeImage } from "@/server/notice/notice-domain";
 import type { TiptapDocument } from "../../server/notice/notice-domain";
 import type { AdminLocale } from "./operations-shell";
 import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pagination";
@@ -16,6 +19,8 @@ type Notice = {
   slug: string;
   publicationStatus: "draft" | "published";
   pinned: boolean;
+  postType: "notice" | "artist_post";
+  visibility: "public" | "members";
   publishedAt: string | null;
   archivedAt: string | null;
   archiveReason: string | null;
@@ -32,6 +37,7 @@ function normalize(row: any): Notice {
   };
   return {
     id: row.id, slug: row.slug, publicationStatus: row.publication_status, pinned: row.pinned,
+    postType: row.post_type ?? "notice", visibility: row.visibility ?? "public",
     publishedAt: row.published_at, archivedAt: row.archived_at, archiveReason: row.archive_reason,
     revision: row.revision, localizations: { ko: loc("ko"), en: loc("en") },
   };
@@ -47,6 +53,8 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [slug, setSlug] = useState("");
   const [pinned, setPinned] = useState(false);
+  const [postType, setPostType] = useState<Notice["postType"]>("notice");
+  const [visibility, setVisibility] = useState<Notice["visibility"]>("public");
   const [titles, setTitles] = useState({ ko: "", en: "" });
   const [bodies, setBodies] = useState<{ ko: Document; en: Document }>({ ko: emptyDocument, en: emptyDocument });
   const [message, setMessage] = useState("");
@@ -88,12 +96,19 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!current) return;
-    setSlug(current.slug); setPinned(current.pinned);
+    setSlug(current.slug); setPinned(current.pinned); setPostType(current.postType); setVisibility(current.visibility);
     setTitles({ ko: current.localizations.ko.title, en: current.localizations.en.title });
     setBodies({ ko: current.localizations.ko.body, en: current.localizations.en.body });
   }, [current]);
+  const extensions = useMemo(() => [...noticeExtensions.filter(extension => extension.name !== "image"), Image.extend({
+    addNodeView() { return ReactNodeViewRenderer(({ node }) => <NodeViewWrapper>
+      {isPrivateNoticeImage(node.attrs.src)
+        ? <ContentAssetImage asset={{ id: node.attrs.src.slice("/api/content-assets/".length), width: 960, height: 640 }} locale={locale} alt={node.attrs.alt || ""} adminPreview />
+        : <img src={node.attrs.src} alt={node.attrs.alt || ""} />}
+    </NodeViewWrapper>); },
+  }).configure({ inline: false, allowBase64: false })], [locale]);
   const editor = useEditor({
-    extensions: noticeExtensions,
+    extensions,
     content: bodies[language],
     immediatelyRender: false,
     editable: canEdit && !current?.archivedAt && current?.publicationStatus !== "published",
@@ -109,7 +124,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
   }, [bodies, editor, language]);
 
   function reset() {
-    setSelectedId(null); setSlug(""); setPinned(false); setTitles({ ko: "", en: "" });
+    setSelectedId(null); setSlug(""); setPinned(false); setPostType("notice"); setVisibility("public"); setTitles({ ko: "", en: "" });
     setBodies({ ko: emptyDocument, en: emptyDocument }); setMessage("");
   }
   function beginOperation(label: string) {
@@ -129,7 +144,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     let postSucceeded = false;
     try {
       const result = await request("POST", {
-        action: "save", id: current?.id, expectedRevision: current?.revision, slug, pinned,
+        action: "save", id: current?.id, expectedRevision: current?.revision, slug, pinned, postType, visibility,
         localizations: {
           ko: { title: titles.ko, body: bodies.ko },
           en: { title: titles.en, body: bodies.en },
@@ -220,6 +235,10 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
       <div className={styles.editor}>
         <div className={styles.language}><button type="button" disabled={interactionLocked} aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" disabled={interactionLocked} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
         <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>
+        <div className={styles.fields}>
+          <label><span>{locale === "ko" ? "글 구분" : "Post type"}</span><select disabled={toolbarDisabled} value={postType} onChange={event => setPostType(event.target.value as Notice["postType"])}><option value="notice">{locale === "ko" ? "공지" : "Notice"}</option><option value="artist_post">{locale === "ko" ? "아티스트 글" : "Artist post"}</option></select></label>
+          <label><span>{locale === "ko" ? "공개 범위" : "Visibility"}</span><select disabled={toolbarDisabled} value={visibility} onChange={event => setVisibility(event.target.value as Notice["visibility"])}><option value="public">{locale === "ko" ? "전체 공개" : "Public"}</option><option value="members">{locale === "ko" ? "회원 공개" : "Members only"}</option></select></label>
+        </div>
         <div className={styles.toolbar} aria-label={locale === "ko" ? "본문 서식" : "Body formatting"}>
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleBold().run()} aria-label="Bold"><Bold /></button>
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleItalic().run()} aria-label="Italic"><Italic /></button>
@@ -234,7 +253,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
         <section className={styles.preview} aria-labelledby="notice-preview-title">
           <h3 id="notice-preview-title">{locale === "ko" ? "공개 화면 미리보기" : "Public preview"}</h3>
           <h4>{titles[language] || (language === "ko" ? "공지 제목" : "Notice title")}</h4>
-          <NoticeBody document={bodies[language] as TiptapDocument} locale={language} />
+          <NoticeBody document={bodies[language] as TiptapDocument} locale={language} adminPreview />
         </section>
         {message && <p role={messageIsError ? "alert" : "status"} className={styles.message}>{message}</p>}
         <div className={styles.actions}>{needsRefresh && <button type="button" disabled={pending} onClick={() => void recoverLatest()}>{locale === "ko" ? "최신 상태 불러오기" : "Load latest state"}</button>}{canEdit && !current?.archivedAt && current?.publicationStatus !== "published" && <button type="button" disabled={interactionLocked} onClick={() => void save()}><Save />{pending ? (locale === "ko" ? "처리 중" : "Processing") : (locale === "ko" ? "저장" : "Save")}</button>}{canEdit && current && !current.archivedAt && <button type="button" disabled={interactionLocked} onClick={() => void state(current.publicationStatus === "published" ? "unpublish" : "publish")}>{current.publicationStatus === "published" ? (locale === "ko" ? "공개 중지" : "Unpublish") : (locale === "ko" ? "공개" : "Publish")}</button>}{canEdit && current && !current.archivedAt && <button type="button" disabled={interactionLocked} onClick={() => void state("archive")}><Archive />{locale === "ko" ? "보관" : "Archive"}</button>}</div>

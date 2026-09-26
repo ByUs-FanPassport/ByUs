@@ -1,6 +1,8 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AdminSession } from "../admin/admin-session-gate";
+import { z } from "zod";
+import { normalizePublicImage } from "../media/public-image-processing";
 import {
   parseNoticeDocument,
   type NoticeLocale,
@@ -15,6 +17,8 @@ type AdminNoticeInput = Readonly<{
   celebrityId: string;
   slug: string;
   pinned: boolean;
+  postType?: "notice" | "artist_post";
+  visibility?: "public" | "members";
   localizations: Readonly<{
     ko: Readonly<{ title: string; body: unknown }>;
     en: Readonly<{ title: string; body: unknown }>;
@@ -47,6 +51,7 @@ export class NoticeRepository {
       .eq("celebrities.status", "published")
       .is("celebrities.archived_at", null)
       .eq("publication_status", "published")
+      .eq("visibility", "public")
       .is("archived_at", null)
       .eq("celebrity_notice_localizations.locale", input.locale);
     // Order before pagination so a welcome notice cannot hide news on home.
@@ -88,6 +93,7 @@ export class NoticeRepository {
       .eq("celebrities.status", "published")
       .is("celebrities.archived_at", null)
       .eq("publication_status", "published")
+      .eq("visibility", "public")
       .is("archived_at", null)
       .eq("celebrity_notice_localizations.locale", input.locale)
       .maybeSingle();
@@ -109,7 +115,7 @@ export class NoticeRepository {
   async listAdmin(admin: AdminSession, celebrityId: string) {
     const { data, error } = await this.db
       .from("celebrity_notices")
-      .select("id,celebrity_id,slug,publication_status,pinned,published_at,archived_at,archive_reason,revision,created_at,celebrity_notice_localizations(locale,title,body_json)")
+      .select("id,celebrity_id,slug,publication_status,pinned,post_type,visibility,published_at,archived_at,archive_reason,revision,created_at,celebrity_notice_localizations(locale,title,body_json)")
       .eq("celebrity_id", celebrityId)
       .order("created_at", { ascending: false });
     if (error) throw new NoticeRepositoryError(error.message);
@@ -133,6 +139,7 @@ export class NoticeRepository {
       p_body_ko: ko.body,
       p_title_en: en.title.trim(),
       p_body_en: en.body,
+      ...(input.postType !== undefined && input.visibility !== undefined ? { p_post_type: input.postType, p_visibility: input.visibility } : {}),
     });
     if (error) throw new NoticeRepositoryError(error.message);
     return { id: data };
@@ -176,19 +183,30 @@ export class NoticeRepository {
       .maybeSingle();
     if (noticeError) throw new NoticeRepositoryError(noticeError.message);
     if (!notice) throw new NoticeRepositoryError("Notice not found");
-    const extension = input.file.type === "image/jpeg" ? "jpg" : input.file.type.split("/")[1];
-    const path = `celebrity-notices/${input.celebrityId}/${input.noticeId}/${crypto.randomUUID()}.${extension}`;
-    const { error } = await this.db.storage.from("cms-assets").upload(path, await input.file.arrayBuffer(), {
-      contentType: input.file.type,
-      upsert: false,
+    const image = await normalizePublicImage(new Uint8Array(await input.file.arrayBuffer()));
+    const { data, error } = await this.db.rpc("reserve_admin_content_asset", {
+      p_actor_app_user_id: admin.appUserId, p_actor_admin_allowlist_id: admin.allowlistId,
+      p_celebrity_id: input.celebrityId, p_byte_size: image.bytes.byteLength,
+      p_width: image.width, p_height: image.height, p_sha256: image.sha256,
     });
     if (error) throw new NoticeRepositoryError(error.message);
-    return { url: this.db.storage.from("cms-assets").getPublicUrl(path).data.publicUrl };
+    const asset = z.object({ id: z.uuid(), storagePath: z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/) }).strict().parse(data);
+    try {
+      const uploaded = await this.db.storage.from("fan-content-assets").upload(asset.storagePath, image.bytes, { contentType: "image/webp", cacheControl: "0", upsert: false });
+      if (uploaded.error) throw new NoticeRepositoryError("Upload failed");
+      const finished = await this.db.rpc("finish_content_asset_upload", { p_app_user_id: admin.appUserId, p_asset_id: asset.id });
+      if (finished.error) throw new NoticeRepositoryError(finished.error.message);
+    } catch (error) {
+      await this.db.rpc("abandon_content_asset_upload", { p_app_user_id: admin.appUserId, p_asset_id: asset.id });
+      throw error;
+    }
+    return { url: `/api/content-assets/${asset.id}` };
   }
 }
 
 export function createNoticeRepository(config: Config, client?: SupabaseClient) {
   return new NoticeRepository(client ?? createClient(config.url, config.serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(60_000)]) : AbortSignal.timeout(60_000) }) },
   }));
 }

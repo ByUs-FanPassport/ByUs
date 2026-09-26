@@ -37,7 +37,7 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
     redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
   }
-  const initialTab: CelebrityFanTab = requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" || requestedTab === "certifications" || requestedTab === "raffles" || requestedTab === "leaderboard" ? requestedTab : "home";
+  const initialTab: CelebrityFanTab = requestedTab === "community" || requestedTab === "media" || requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" || requestedTab === "certifications" || requestedTab === "raffles" || requestedTab === "leaderboard" ? requestedTab : "home";
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [celebrity, primaryLives] = await Promise.all([
     loadSeoCreator(slug, locale),
@@ -45,5 +45,5 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   ]);
   if (!celebrity) notFound();
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
-  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialNewsFilter={requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
+  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
 }

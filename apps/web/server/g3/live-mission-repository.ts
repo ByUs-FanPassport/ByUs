@@ -7,7 +7,7 @@ import { liveMissionCompletionSchema, liveMissionListSchema } from "../../featur
 type RpcClient = Pick<SupabaseClient,"rpc">;
 export class LiveMissionRepositoryError extends Error { constructor(readonly code:string){ super(code); } }
 function check<T>(data:unknown,error:{message:string}|null,schema:{parse(value:unknown):T}):T {
-  if(error){ const marker=error.message.match(/PHASE2_MISSION_[A-Z_]+/)?.[0] ?? "PHASE2_MISSION_UNAVAILABLE"; throw new LiveMissionRepositoryError(marker); }
+  if(error){ const marker=error.message.match(/PHASE2_MISSION_[A-Z_]+|FAN_WEB_ACTIVE_ACCOUNT_REQUIRED/)?.[0] ?? "PHASE2_MISSION_UNAVAILABLE"; throw new LiveMissionRepositoryError(marker); }
   try{return schema.parse(data);}catch{throw new LiveMissionRepositoryError("PHASE2_MISSION_INTEGRITY_ERROR");}
 }
 export class SupabaseLiveMissionRepository {

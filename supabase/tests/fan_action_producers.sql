@@ -12,6 +12,23 @@ declare caught boolean:=false;begin
   if not caught then raise exception 'Expected error was not raised: %',expected; end if;
 end $$;
 
+-- Inspect the preserved producer behind the fan-web account/visibility guards.
+create function pg_temp.producer_definition(signature regprocedure) returns text language plpgsql as $$
+declare current_function regprocedure:=signature; original record; delegated text;
+  definition text:=''; visited oid[]:='{}';
+begin
+  loop
+    if current_function::oid=any(visited) then raise exception 'Producer wrapper cycle: %',signature; end if;
+    visited:=array_append(visited,current_function::oid);
+    definition:=definition||E'\n'||pg_get_functiondef(current_function);
+    select prosrc,proargtypes into strict original from pg_proc where oid=current_function;
+    delegated:=substring(original.prosrc from 'public\.([a-z0-9_]+(_fw_[a-f0-9]{8}|_before_fan_web))[[:space:]]*\(');
+    if delegated is null then return definition; end if;
+    select p.oid::regprocedure into strict current_function from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname=delegated and p.proargtypes=original.proargtypes;
+  end loop;
+end $$;
+
 do $$
 declare
   creator uuid:='fa110000-0000-4000-8000-000000000001';
@@ -435,15 +452,15 @@ begin
     ('public.react_to_creator(uuid,uuid,uuid,uuid,text)'::regprocedure,'fan_action_native_enabled(6,p_app_user_id,p_celebrity_id)'),
     ('public.claim_owned_live_collectible(uuid,text,uuid)'::regprocedure,'fan_action_native_enabled(11,p_app_user_id)')
   ) v(signature,marker) loop
-    definition:=pg_get_functiondef(item.signature);
+    definition:=pg_temp.producer_definition(item.signature);
     perform pg_temp.assert(position(item.marker in definition)>0,item.signature::text||' is missing its v2 branch');
   end loop;
-  definition:=pg_get_functiondef('public.attend_owned_live_event(uuid,text,uuid,text,uuid,text,text)'::regprocedure);
+  definition:=pg_temp.producer_definition('public.attend_owned_live_event(uuid,text,uuid,text,uuid,text,text)'::regprocedure);
   perform pg_temp.assert(
     (length(definition)-length(replace(definition,'public.attend_owned_live_event_before_recurring_live(','')))
       / length('public.attend_owned_live_event_before_recurring_live(')=1,
     'recurring LIVE attendance wrapper no longer delegates exactly once to the patched producer');
-  definition:=pg_get_functiondef('public.issue_community_stamp(uuid,uuid,public.community_stamp_kind,text)'::regprocedure);
+  definition:=pg_temp.producer_definition('public.issue_community_stamp(uuid,uuid,public.community_stamp_kind,text)'::regprocedure);
   perform pg_temp.assert(position('fan_action_native_enabled(v_action_code,p_app_user_id,p_celebrity_id)' in definition)>0,
     'community producer is missing action codes 7-10 branch');
   perform pg_temp.assert(position('v_action_code is not null and' in definition)>0

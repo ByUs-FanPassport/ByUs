@@ -1,6 +1,28 @@
 import type { TranslatedMessage } from "../messages";
 
 export const messages = {
+  "mfbe230aec6fe": {
+    "ja": "ファン掲示板",
+    "zh-Hans": "粉丝社区",
+    "zh-Hant": "粉絲社群",
+    "es": "Comunidad",
+    "id": "Komunitas",
+    "vi": "Cộng đồng",
+    "th": "ชุมชนแฟนคลับ",
+    "pt": "Comunidade",
+    "fr": "Communauté"
+  },
+  "mef318d6cd5e2": {
+    "ja": "メディア",
+    "zh-Hans": "媒体",
+    "zh-Hant": "媒體",
+    "es": "Multimedia",
+    "id": "Media",
+    "vi": "Thư viện",
+    "th": "สื่อ",
+    "pt": "Mídia",
+    "fr": "Médias"
+  },
   "mf4c213b8593e": {
     "ja": "ホーム",
     "zh-Hans": "首页",

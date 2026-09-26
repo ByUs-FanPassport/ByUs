@@ -19,6 +19,11 @@ const delivery = {
 };
 describe("WebPushSender", () => {
   beforeEach(() => vi.clearAllMocks());
+  it("rejects inbox-only and unknown kinds before contacting a push provider", async () => {
+    const sender = new WebPushSender({ subject: "mailto:ops@byus.example", publicKey: "A".repeat(88), privateKey: "B".repeat(43) });
+    await expect(sender.send({ ...delivery, kind: "content_reply" } as never)).rejects.toMatchObject({ code: "UNSUPPORTED_PUSH_KIND", retryable: false });
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
   it("configures VAPID signing and sends only the notification id as navigation authority", async () => {
     sendNotification.mockResolvedValue({ statusCode: 201 });
     const sender = new WebPushSender({

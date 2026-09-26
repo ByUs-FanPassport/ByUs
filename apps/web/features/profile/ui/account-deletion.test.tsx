@@ -1,0 +1,30 @@
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+const state = vi.hoisted(() => ({ owner: "one", getAccessToken: vi.fn(), logout: vi.fn(), replace: vi.fn() }));
+vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ authenticated: true, user: { id: state.owner }, getAccessToken: state.getAccessToken, logout: state.logout }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: state.replace }) }));
+import { AccountDeletion } from "./account-deletion";
+beforeEach(() => { state.owner = "one"; vi.clearAllMocks(); state.getAccessToken.mockResolvedValue("token"); state.logout.mockResolvedValue(undefined); vi.stubGlobal("fetch", vi.fn()); });
+it("requires typed confirmation and displays pending accurately before logout", async () => {
+  vi.mocked(fetch).mockResolvedValue(Response.json({ deletion: { status: "pending" } }, { status: 202 }));
+  render(<AccountDeletion locale="ko"/>);
+  const button = screen.getByRole("button", { name: "계정 삭제 요청" }); expect(button).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("계속하려면 DELETE를 입력해 주세요."), { target: { value: "DELETE" } });
+  fireEvent.click(button);
+  expect(await screen.findByRole("status")).toHaveTextContent("삭제 요청을 접수했어요");
+  expect(screen.queryByText("계정 삭제를 완료했어요.")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "홈으로" }));
+  await waitFor(() => expect(state.logout).toHaveBeenCalledOnce());
+});
+it("does not apply a previous owner's deletion response to a switched account", async () => {
+  let finish!: (response: Response) => void;
+  vi.mocked(fetch).mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  const view = render(<AccountDeletion locale="en"/>);
+  fireEvent.change(screen.getByLabelText("Type DELETE to continue."), { target: { value: "DELETE" } });
+  fireEvent.click(screen.getByRole("button", { name: "Request account deletion" }));
+  await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+  state.owner = "two"; view.rerender(<AccountDeletion locale="en"/>);
+  await act(async () => finish(Response.json({ deletion: { status: "completed" } })));
+  expect(screen.queryByText("Your account has been deleted.")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Request account deletion" })).toBeDisabled();
+});

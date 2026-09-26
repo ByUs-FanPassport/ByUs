@@ -100,7 +100,7 @@ describe("LIVE catalog", () => {
     expect(screen.getAllByText(/^D-\d+$/)).toHaveLength(2);
   });
 
-  it("renders live and upcoming states while hiding replay entries", () => {
+  it("renders live, upcoming and published replay entries", () => {
     const { container } = render(<LiveCatalogScreen locale="ko" initialCatalog={{
       liveNow: [{ ...base, live: { ...base.live, effectiveStatus: "live", watch: { ...base.live.watch, available: true, mode: "live" } }, primaryAction: "watch_live" }],
       upcoming: [base],
@@ -118,8 +118,8 @@ describe("LIVE catalog", () => {
     expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).getByRole("link", {
       name: "KARA × NUALEAF LIVE 상세 보기",
     })).toHaveAttribute("href", "/live/kara-live?locale=ko");
-    expect(screen.queryByRole("region", { name: "다시보기" })).not.toBeInTheDocument();
-    expect(container.querySelectorAll('article [data-fan-action-emphasis="secondary"]')).toHaveLength(2);
+    expect(screen.getByRole("region", { name: "다시보기" })).toBeInTheDocument();
+    expect(container.querySelectorAll('article [data-fan-action-emphasis="secondary"]')).toHaveLength(3);
     expect(container.querySelectorAll('article [data-fan-action-emphasis="primary"]')).toHaveLength(0);
     expect(within(screen.getByRole("region", { name: "예정된 LIVE" })).queryByText("LIVE 예정")).not.toBeInTheDocument();
   });
@@ -179,7 +179,7 @@ describe("LIVE catalog", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("paginates upcoming LIVE entries while keeping replay entries hidden", () => {
+  it("paginates upcoming and published replay entries independently", () => {
     const upcoming = Array.from({ length: 5 }, (_, index) => ({
       ...base,
       live: {
@@ -209,7 +209,7 @@ describe("LIVE catalog", () => {
     const upcomingRegion = screen.getByRole("region", { name: "예정된 LIVE" });
     expect(within(upcomingRegion).getAllByRole("article")).toHaveLength(4);
     expect(within(upcomingRegion).queryByText("예정 LIVE 5")).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "다시보기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "다시보기" })).toBeInTheDocument();
 
     fireEvent.click(within(upcomingRegion).getByRole("button", { name: "예정된 LIVE 다음 페이지" }));
     expect(within(upcomingRegion).getByText("예정 LIVE 5")).toBeInTheDocument();
@@ -235,7 +235,7 @@ describe("LIVE catalog", () => {
     expect(screen.queryByRole("region", { name: locale === "ko" ? "다시보기" : "Replay" })).not.toBeInTheDocument();
   });
 
-  it("treats a replay-only catalog as empty", () => {
+  it("shows a replay-only catalog", () => {
     const replay = [{
       ...base,
       live: {
@@ -248,8 +248,8 @@ describe("LIVE catalog", () => {
       primaryAction: "live_ended" as const,
     }];
     render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [], replay }} />);
-    expect(screen.getByText("현재 공개된 LIVE가 없어요.")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "다시보기" })).not.toBeInTheDocument();
+    expect(screen.queryByText("현재 공개된 LIVE가 없어요.")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "다시보기" })).toBeInTheDocument();
   });
 
   it("paginates only the nearest recurring dates", () => {

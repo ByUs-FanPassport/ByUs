@@ -23,6 +23,12 @@ export const communityInviteSchema = z.object({ code: z.string().min(6).max(32),
 export const communityShareTokenSchema = z.string().regex(/^[a-f0-9]{32}$/);
 export const communityShareLinkSchema = z.object({ token: communityShareTokenSchema }).strict();
 export const communityShareDestinationSchema = z.object({ creator: communityCreatorSlugSchema }).strict();
+export const sharedPassportActivitySchema = z.object({
+  creator: communityCreatorSlugSchema, issuedAt: z.iso.datetime({ offset: true }),
+  tier: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]),
+  score: z.number().int().nonnegative(), activityCount: z.number().int().nonnegative(), stampCount: z.number().int().nonnegative(),
+}).strict();
+export type SharedPassportActivity = z.infer<typeof sharedPassportActivitySchema>;
 export const communityAwardResultSchema = z.object({ awarded: z.boolean() }).strict();
 
 export const COMMUNITY_STAMPS = {

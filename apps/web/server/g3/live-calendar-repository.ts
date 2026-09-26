@@ -16,6 +16,7 @@ export interface LiveCalendarRepository {
     month: string;
     locale: LiveLocale;
     appUserId: string | null;
+    includeIdentity?: boolean;
     now: Date;
   }): Promise<LiveCalendarMonth>;
 }
@@ -71,6 +72,7 @@ export class SupabaseLiveCalendarRepository implements LiveCalendarRepository {
     month: string;
     locale: LiveLocale;
     appUserId: string | null;
+    includeIdentity?: boolean;
     now: Date;
   }): Promise<LiveCalendarMonth> {
     const bounds = getLiveCalendarUtcBounds(input.month);
@@ -104,6 +106,7 @@ export class PublicImageLiveCalendarRepository implements LiveCalendarRepository
     month: string;
     locale: LiveLocale;
     appUserId: string | null;
+    includeIdentity?: boolean;
     now: Date;
   }): Promise<LiveCalendarMonth> {
     const calendar = await this.repository.readMonth(input);
@@ -131,6 +134,7 @@ export class PublicImageLiveCalendarRepository implements LiveCalendarRepository
             celebrity: {
               ...event.celebrity,
               ...(creator === undefined ? {} : {
+                ...(input.includeIdentity ? { slug: creator.celebritySlug } : {}),
                 imagePosition: creator.imagePosition,
                 ...(creatorPhotosBySlug[creator.celebritySlug] === undefined ? {} : { photos: creatorPhotosBySlug[creator.celebritySlug] }),
               }),

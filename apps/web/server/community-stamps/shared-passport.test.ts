@@ -1,8 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-import { resolveSharedPassport } from "./shared-passport";
+import { resolveSharedPassport, readSharedPassportActivity } from "./shared-passport";
 
 describe("anonymous shared Passport projection", () => {
+  it("reads only verified public activity fields and denies revoked links", async () => {
+    const card = { creator: "elina", issuedAt: "2026-09-26T00:00:00+00:00", tier: "Bronze", score: 50, activityCount: 1, stampCount: 2 };
+    const rpc = vi.fn().mockResolvedValue(card);
+    expect(await readSharedPassportActivity("a".repeat(32), { rpc })).toEqual(card);
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("read_shared_passport_activity", { p_token: "a".repeat(32) });
+    rpc.mockResolvedValue({ ...card, appUserId: "private" });
+    await expect(readSharedPassportActivity("a".repeat(32), { rpc })).rejects.toThrow("Shared Passport is unavailable");
+    rpc.mockResolvedValue(null);
+    expect(await readSharedPassportActivity("a".repeat(32), { rpc })).toBeNull();
+  });
   it("rejects malformed tokens without accessing storage", async () => {
     const rpc = vi.fn();
     expect(await resolveSharedPassport("../someone", { rpc })).toBeNull();
