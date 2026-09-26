@@ -15,9 +15,10 @@
 .body { display:flex; min-width:0; flex-direction:column; align-items:flex-start; padding:16px; }
 .creator { font-size:13px; line-height:1.4; color:var(--color-muted); }
 .body h3 { display:-webkit-box; overflow:hidden; margin:8px 0; font-size:17px; font-weight:750; line-height:1.4; letter-spacing:-.02em; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere; }
-.watch { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin-top:auto; font-size:14px; font-weight:650; }
-.watch svg { width:16px; height:16px; stroke-width:2; }
+.watch { display:flex; width:100%; align-items:center; justify-content:space-between; gap:12px; min-height:44px; margin-top:auto; padding-top:8px; font-size:13px; font-weight:650; }
+.watch svg { width:32px; height:32px; flex:none; padding:8px; border-radius:50%; background:var(--color-soft); stroke-width:2; }
 .card:focus-visible { outline:3px solid var(--color-ink); outline-offset:4px; }
+button.card { padding:0; text-align:start; font:inherit; cursor:pointer; }
 @media (min-width:48rem) { .grid { grid-auto-flow:row; grid-template-columns:repeat(3,minmax(0,1fr)); overflow-x:visible; } .header { min-height:0; margin-bottom:16px; } .count { display:grid; } .pagination { display:none; } }
 @media (hover:hover) { .card:hover { box-shadow:0 2px 4px rgb(0 0 0 / 6%),0 8px 20px rgb(0 0 0 / 8%); } .card:hover .watch { text-decoration:underline; text-underline-offset:3px; } }
 @media (prefers-reduced-motion:reduce) { .card { transition:none; } .pagination button:active { scale:none; } }

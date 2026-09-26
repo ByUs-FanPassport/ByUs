@@ -4,7 +4,8 @@ import { toContentLocale } from "@/i18n/locales";
 import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__live__ui__observed-live-strip";
 import { translate } from "@/i18n/messages";
-import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Play } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useId, useRef, useState } from "react";
 import { FanHeading } from "@/components/fan-ui/fan-heading";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
@@ -19,6 +20,7 @@ import {
 import styles from "./observed-live-strip.module.css";
 
 const fresh = isObservedLiveCardFresh;
+const TikTokLivePlayer = dynamic(() => import("./tiktok-live-player").then((module) => module.TikTokLivePlayer), { ssr: false });
 
 function LiveCover({ item }: { item: ObservedLiveCard }) {
   const [src, setSrc] = useState(item.thumbnailUrl);
@@ -35,6 +37,7 @@ export function ObservedLiveStrip({ locale }: { locale: AppLocale }) {
   const headingId = useId();
   const [items, setItems] = useState<ObservedLiveCard[]>([]);
   const [now, setNow] = useState(() => Date.now());
+  const [selected, setSelected] = useState<ObservedLiveCard | null>(null);
 
   useEffect(() => {
     let stopped = false;
@@ -92,11 +95,13 @@ export function ObservedLiveStrip({ locale }: { locale: AppLocale }) {
   }, [items, now]);
 
   const visible = items.filter((item) => fresh(item, now));
-  if (!visible.length) return null;
-  return <LiveCards key={visible.map(observedLiveKey).join("|")} items={visible} locale={locale} headingId={headingId} />;
+  return <>
+    {visible.length ? <LiveCards key={visible.map(observedLiveKey).join("|")} items={visible} locale={locale} headingId={headingId} onWatch={setSelected} /> : null}
+    {selected ? <TikTokLivePlayer item={visible.find((item) => observedLiveKey(item) === observedLiveKey(selected)) ?? selected} locale={locale} onClose={() => setSelected(null)} /> : null}
+  </>;
 }
 
-function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; locale: AppLocale; headingId: string }) {
+function LiveCards({ items, locale, headingId, onWatch }: { items: ObservedLiveCard[]; locale: AppLocale; headingId: string; onWatch: (item: ObservedLiveCard) => void }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
   const title = locale === "ko" ? "지금 LIVE 중" : translate(locale, localizedMessages.m5faa6bee45bd, "Live now");
@@ -133,10 +138,9 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
         </div> : null}
       </header>
       <div ref={gridRef} id={`${headingId}-cards`} className={styles.grid} onScroll={syncPage}>
-        {items.map((item) => (
-          <a className={styles.card} key={observedLiveKey(item)} href={item.watchUrl}
-            target="_blank" rel="noopener noreferrer"
-            aria-label={`${item.creatorName} · ${item.title} · ${watchLabel(item, locale)}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.mc3e79a000f51, "new tab")}`}>
+        {items.map((item) => {
+          const internal = !item.platform || item.platform === "tiktok";
+          const body = <>
             <div className={styles.cover}>
               {/* Upstream covers expire and are intentionally not persisted in the image optimizer. */}
               <LiveCover key={item.thumbnailUrl} item={item} />
@@ -145,16 +149,20 @@ function LiveCards({ items, locale, headingId }: { items: ObservedLiveCard[]; lo
             <div className={styles.body}>
               <span className={styles.creator}>{item.creatorName}</span>
               <h3>{item.title}</h3>
-              <span className={styles.watch}>{watchLabel(item, locale)}<ArrowUpRight aria-hidden="true" /></span>
+              <span className={styles.watch}>{watchLabel(item, locale)}{internal ? <Play aria-hidden="true" /> : <ArrowUpRight aria-hidden="true" />}</span>
             </div>
-          </a>
-        ))}
+          </>;
+          return internal ? <button type="button" className={styles.card} key={observedLiveKey(item)} onClick={() => onWatch(item)}
+            aria-haspopup="dialog" aria-label={`${item.creatorName} · ${item.title} · ${watchLabel(item, locale)}`}>{body}</button>
+            : <a className={styles.card} key={observedLiveKey(item)} href={item.watchUrl} target="_blank" rel="noopener noreferrer"
+              aria-label={`${item.creatorName} · ${item.title} · ${watchLabel(item, locale)}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.mc3e79a000f51, "new tab")}`}>{body}</a>;
+        })}
       </div>
     </section>
   );
 }
 
 function watchLabel(item: ObservedLiveCard, locale: AppLocale): string {
-  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : "TikTok";
+  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : "ByUs";
   return locale === "ko" ? `${provider}에서 시청` : translate(locale, localizedMessages.m7ce4b315a780, "Watch on {0}", [provider]);
 }

@@ -30,6 +30,8 @@ const contentSecurityPolicy = [
     "wss://www.walletlink.org",
     "https://*.rpc.privy.systems",
     "https://explorer-api.walletconnect.com",
+    "https://*.tiktokcdn.com",
+    "https://*.tiktokcdn-us.com",
   ].join(" "),
   "worker-src 'self' blob:",
   "manifest-src 'self'",

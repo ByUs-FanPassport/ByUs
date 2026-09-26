@@ -1,4 +1,5 @@
 import "server-only";
+import { tiktokPlaybackSchema, type TikTokPlayback } from "../../features/live/domain/tiktok-playback";
 
 const TIKTOK_LIVE_ENDPOINT = "https://www.tiktok.com/api-live/user/room/";
 const MAX_RESPONSE_BYTES = 256 * 1024;
@@ -10,6 +11,8 @@ export type TikTokLiveObservation = Readonly<
       observedAt: string;
       title: string;
       thumbnailUrl: string | null;
+      playback?: TikTokPlayback;
+      playbackRestricted?: boolean;
     }
   | { state: "offline"; observedAt: string }
   | { state: "unavailable"; observedAt: string }
@@ -125,6 +128,32 @@ function objectValue(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function playbackDetails(room: Record<string, unknown>, roomId: unknown, now: Date): {
+  playback?: TikTokPlayback; playbackRestricted?: boolean;
+} {
+  const paid = objectValue(room.paidEvent);
+  if ((typeof room.liveSubOnly === "number" && room.liveSubOnly > 0)
+    || (typeof paid?.paid_type === "number" && paid.paid_type > 0)) return { playbackRestricted: true };
+  // A missing/unknown access flag cannot establish that playback is public.
+  if (room.liveSubOnly !== 0 || paid?.paid_type !== 0 || paid.event_id !== 0) return {};
+  try {
+    const pull = objectValue(objectValue(room.streamData)?.pull_data);
+    const raw = stringValue(pull?.stream_data);
+    if (!raw) return {};
+    const streams = objectValue(objectValue(JSON.parse(raw))?.data);
+    const key = stringValue(objectValue(objectValue(pull?.options)?.default_quality)?.sdk_key) ?? "hd";
+    const main = objectValue(objectValue(streams?.[key])?.main);
+    const url = stringValue(main?.flv);
+    if (!url) return {};
+    const expiry = new URL(url).searchParams.get("expire") ?? "";
+    if (!/^\d{10}$/.test(expiry)) return {};
+    const expiresAt = Number(expiry) * 1000;
+    if (expiresAt <= now.getTime() + 5_000) return {};
+    const parsed = tiktokPlaybackSchema.safeParse({ url, roomId: String(roomId), expiresAt: new Date(expiresAt).toISOString() });
+    return parsed.success ? { playback: parsed.data } : {};
+  } catch { return {}; }
+}
+
 export async function fetchTikTokLiveObservation(
   handle: string,
   dependencies: SourceDependencies = {},
@@ -133,7 +162,7 @@ export async function fetchTikTokLiveObservation(
   const now = dependencies.now ?? (() => new Date());
   const finish = (
     state: TikTokLiveObservation["state"],
-    details?: Readonly<{ title: string; thumbnailUrl: string | null }>,
+    details?: Readonly<{ title: string; thumbnailUrl: string | null; playback?: TikTokPlayback; playbackRestricted?: boolean }>,
   ): TikTokLiveObservation =>
     state === "live" && details
       ? { state, observedAt: now().toISOString(), ...details }
@@ -186,6 +215,7 @@ export async function fetchTikTokLiveObservation(
       title,
       thumbnailUrl:
         coverUrl !== null && isSafeTikTokThumbnailUrl(coverUrl) ? coverUrl : null,
+      ...playbackDetails(liveRoom, user?.roomId, now()),
     });
   } catch {
     return finish("unavailable");
