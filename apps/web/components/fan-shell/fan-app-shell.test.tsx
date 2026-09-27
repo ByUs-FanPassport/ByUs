@@ -27,8 +27,9 @@ describe("fan app shell navigation", () => {
 
   it.each([
     ["/", "home"],
-    ["/live", "live"],
-    ["/live/kara-byus-live", "live"],
+    ["/community", "community"],
+    ["/live", "favorites"],
+    ["/live/kara-byus-live", "favorites"],
     ["/celebrities", "favorites"],
     ["/c/kara", "favorites"],
     ["/bias/requests", "favorites"],
@@ -42,20 +43,20 @@ describe("fan app shell navigation", () => {
   });
 
   it("uses the same four destinations in Korean and English", () => {
-    expect(fanNavigationItems("ko", "/live").map(({ id, href, label, isCurrent }) => ({
+    expect(fanNavigationItems("ko", "/community").map(({ id, href, label, isCurrent }) => ({
       id,
       href,
       label,
       isCurrent,
     }))).toEqual([
       { id: "home", href: "/?locale=ko", label: "HOME", isCurrent: false },
-      { id: "live", href: "/live?locale=ko", label: "LIVE", isCurrent: true },
+      { id: "community", href: "/community?locale=ko", label: "커뮤니티", isCurrent: true },
       { id: "favorites", href: "/celebrities?locale=ko", label: "최애", isCurrent: false },
       { id: "my", href: "/my?locale=ko", label: "MY", isCurrent: false },
     ]);
     expect(fanNavigationItems("en", "/").map((item) => item.label)).toEqual([
       "HOME",
-      "LIVE",
+      "Community",
       "FAVORITES",
       "MY",
     ]);
@@ -72,7 +73,7 @@ describe("fan app shell navigation", () => {
     );
 
     const currentLinks = screen
-      .getAllByRole("link", { name: "LIVE" })
+      .getAllByRole("link", { name: "최애" })
       .filter((link) => link.hasAttribute("aria-current"));
     expect(currentLinks).toHaveLength(2);
     for (const current of currentLinks) {

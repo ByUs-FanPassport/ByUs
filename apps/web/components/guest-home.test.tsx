@@ -155,9 +155,9 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
     fireEvent.click(screen.getByRole("button", { name: "2번째 배너 보기" }));
     const hero = screen.getByRole("region", { name: "홈 배너" });
-    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
-    expect(within(hero).getByText("팬 인증부터 선물 응모까지")).toBeInTheDocument();
-    expect(within(hero).getByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" }))
+    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
+    expect(within(hero).getByText("팬 인증 → 응모권 받기 → 선물 선택")).toBeInTheDocument();
+    expect(within(hero).getByRole("link", { name: "엘리나와 함께 뱅크시 전시 보러 가요" }))
       .toHaveAttribute("href", "/c/elina/raffles?locale=ko");
   });
 
@@ -170,13 +170,13 @@ describe("canonical 03 guest home", () => {
     expect(hero.querySelectorAll("article")).toHaveLength(2);
     view.rerender(<GuestHome {...defaultProps} homeBanners={[]} featuredLives={occurrences} />);
     expect(document.querySelectorAll("[data-managed-home-banner]")).toHaveLength(0);
-    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
+    expect(within(hero).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "정기 LIVE 1" })).toBeInTheDocument();
   });
 
   it("preserves the guide and live list when independent banner loading fails", () => {
     render(<GuestHome {...defaultProps} homeBanners={[]} featuredLives={[featuredLive]} contentErrors={{ homeBanners: true }} />);
-    expect(within(screen.getByRole("region", { name: "홈 배너" })).getByRole("heading", { name: "엘리나와 함께 ByUs 참여 가이드" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "홈 배너" })).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toBeInTheDocument();
   });
 
@@ -203,16 +203,23 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
+    const primaryLinks = within(primary).getAllByRole("link");
+    expect(primaryLinks).toHaveLength(4);
     expect(within(primary).getByRole("link", { name: "HOME" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(within(primary).getByRole("link", { name: "LIVE" })).toHaveAttribute(
+    expect(within(primary).getByRole("link", { name: "커뮤니티" })).toHaveAttribute(
       "href",
-      "/live?locale=ko",
+      "/community?locale=ko",
     );
 
     const mobile = screen.getByRole("navigation", { name: "모바일 주요 메뉴" });
+    const mobileLinks = within(mobile).getAllByRole("link");
+    expect(mobileLinks).toHaveLength(4);
+    expect(mobileLinks.map((link) => link.getAttribute("href"))).toEqual(
+      primaryLinks.map((link) => link.getAttribute("href")),
+    );
     expect(within(mobile).getByRole("link", { name: "홈" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -431,7 +438,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.getByRole("complementary", { name: "로그인 전 팬 활동" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
-    const guideCards = screen.getAllByRole("link", { name: "엘리나와 함께 ByUs 참여 가이드" });
+    const guideCards = screen.getAllByRole("link", { name: "엘리나와 함께 뱅크시 전시 보러 가요" });
     const fanmeetingCards = screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" });
     expect(guideCards).toHaveLength(2);
     expect(fanmeetingCards).toHaveLength(2);

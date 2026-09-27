@@ -7,7 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { FanHeading } from "@/components/fan-ui/fan-heading";
 import { useCommunityResource } from "@/features/fanpage/ui/use-community-resource";
-import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+import { communityHref as hubHref } from "@/features/community/domain/navigation";
 import { postSchema, commentPageSchema } from "../domain/content";
 import { PostCard } from "./post-card";
 import { ContentActions, ContentTranslation } from "@/features/content-safety/ui/content-actions";
@@ -41,7 +41,7 @@ function DetailForOwner({ postId, locale }: { postId: string; locale: AppLocale 
   async function remove(id: string) { if (window.confirm(copy.deleteConfirm) && await mutation.request(`/api/post-comments/${id}`, "DELETE")) refresh(); }
   if (post.state.status !== "ready") return <p role="status" className={styles.status}>{post.state.status === "loading" ? copy.loading : copy.unavailable}{post.state.status === "error" && <button className={styles.button} onClick={post.retry}>{copy.retry}</button>}</p>;
   const data = post.state.data, returnTo = `/c/${data.celebritySlug}/community/${postId}?locale=${locale}`;
-  const communityHref = `${creatorHomeHref(data.celebritySlug)}?tab=community&locale=${locale}` as Route;
+  const communityHref = hubHref(data.celebritySlug, locale);
   return <section className={`${styles.section} ${styles.postDetail}`}>
     <FanAction href={communityHref} variant="text" leadingIcon={<ArrowLeft />}>{copy.back}</FanAction>
     <FanHeading as="h1" variant="personal-page">{copy.community}</FanHeading><PostCard post={data} locale={locale} onChanged={refresh} onDeleted={() => router.replace(communityHref)} detail />

@@ -13,18 +13,18 @@ import { elinaRafflesHref } from "@/features/live/domain/elina-event";
 
 const copy = {
   ko: {
-    title: <>엘리나와 함께 <br />ByUs 참여 가이드</>,
-    label: "엘리나와 함께 ByUs 참여 가이드",
-    description: "팬 인증부터 선물 응모까지",
-    action: "참여 방법 보기",
+    title: <>엘리나와 함께 <br />뱅크시 전시 보러 가요</>,
+    label: "엘리나와 함께 뱅크시 전시 보러 가요",
+    description: "팬 인증 → 응모권 받기 → 선물 선택",
+    action: "이벤트 응모하기",
     fanmeeting: "미국 팬미팅, ByUs와 함께 준비하세요",
     explore: "기획사와 아티스트를 위한 미국 현지 협업",
   },
   en: {
-    title: <>Your ByUs guide <br />with Elina</>,
-    label: "Your ByUs guide with Elina",
-    description: "From fan verification to prize draws",
-    action: "See how to join",
+    title: <>See Banksy <br />with Elina</>,
+    label: "See Banksy with Elina",
+    description: "Verify fandom → collect tickets → choose a prize",
+    action: "Enter the raffle",
     fanmeeting: "Plan your U.S. fanmeeting with ByUs",
     explore: "U.S. event partnerships for agencies and artists",
   },
@@ -41,14 +41,15 @@ const copy = {
 
 export function ElinaGuideCard({ locale, elina, hero = false, priority = false }: { locale: AppLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean }) {
   const t = copy[locale];
-  const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-blue-beret-20260912.webp" photos={undefined} position="50% 70%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
-  if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BYUS" title={t.title}
+  // Official image: instagram.com/elina_4_22/p/DdjT4dtk_A1/ (2026-09-21), first carousel photo.
+  const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-autumn-20260921.jpg" photos={undefined} position="50% 35%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
+  if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BANKSY" title={t.title}
     description={t.description}
     action={<Link href={elinaRafflesHref(locale)} aria-label={t.label}><span>{t.action}</span><ArrowRight aria-hidden="true" /></Link>} />;
   return <Link className={styles.guide} href={elinaRafflesHref(locale)} aria-label={t.label}>
     <span className={styles.portrait}>{image}</span>
     <span className={styles.guideCopy}>
-      <small>ELINA × BYUS</small>
+      <small>ELINA × BANKSY</small>
       <strong>{t.title}</strong>
       <span className={styles.description}>{t.description}</span>
       <span className={styles.action}>{t.action}<ArrowRight size={16} aria-hidden="true" /></span>

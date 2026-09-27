@@ -2,37 +2,37 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "ma1bde353710b": {
-    "ja": "Elinaと学ぶByUs参加ガイド",
-    "zh-Hans": "Elina 陪您了解 ByUs 参与指南",
-    "zh-Hant": "Elina 陪您瞭解 ByUs 參與指南",
-    "es": "Tu guía de ByUs con Elina",
-    "id": "Panduan ByUs bersama Elina",
-    "vi": "Hướng dẫn ByUs cùng Elina",
-    "th": "คู่มือ ByUs ของคุณกับ Elina",
-    "pt": "Seu guia do ByUs com Elina",
-    "fr": "Votre guide ByUs avec Elina"
+    "ja": "Elinaと一緒にバンクシー展へ行こう",
+    "zh-Hans": "和 Elina 一起去看班克斯展览",
+    "zh-Hant": "和 Elina 一起去看班克斯展覽",
+    "es": "Ve a la exposición de Banksy con Elina",
+    "id": "Lihat pameran Banksy bersama Elina",
+    "vi": "Đi xem triển lãm Banksy cùng Elina",
+    "th": "ไปชมนิทรรศการ Banksy กับ Elina",
+    "pt": "Veja a exposição de Banksy com Elina",
+    "fr": "Découvrez l’exposition Banksy avec Elina"
   },
   "m8730562b9dee": {
-    "ja": "ファン認証からプレゼント抽選まで",
-    "zh-Hans": "从粉丝认证到奖品抽选",
-    "zh-Hant": "從粉絲認證到獎品抽選",
-    "es": "De la verificación de fan a los sorteos",
-    "id": "Dari verifikasi penggemar hingga undian hadiah",
-    "vi": "Từ xác minh đến rút thăm quà",
-    "th": "ตั้งแต่การยืนยันแฟนไปจนถึงการจับรางวัล",
-    "pt": "Da verificação de fã aos sorteios",
-    "fr": "De la vérification de fan aux tirages au sort"
+    "ja": "ファン認証 → 応募券を受け取る → プレゼントを選ぶ",
+    "zh-Hans": "粉丝认证 → 领取抽奖券 → 选择礼物",
+    "zh-Hant": "粉絲認證 → 領取抽獎券 → 選擇禮物",
+    "es": "Verifica tu perfil de fan → recibe boletos → elige tu regalo",
+    "id": "Verifikasi penggemar → dapatkan tiket undian → pilih hadiah",
+    "vi": "Xác minh người hâm mộ → nhận vé dự thưởng → chọn quà",
+    "th": "ยืนยันสถานะแฟน → รับสิทธิ์ลุ้นรางวัล → เลือกของขวัญ",
+    "pt": "Verifique seu perfil de fã → receba bilhetes → escolha seu presente",
+    "fr": "Validez votre statut de fan → recevez des tickets → choisissez votre cadeau"
   },
   "m874196adc5ca": {
-    "ja": "参加方法を見る",
-    "zh-Hans": "查看参与方式",
-    "zh-Hant": "查看參與方式",
-    "es": "Ver cómo participar",
-    "id": "Lihat cara bergabung",
-    "vi": "Xem cách tham gia",
-    "th": "ดูวิธีเข้าร่วม",
-    "pt": "Veja como participar",
-    "fr": "Voir comment participer"
+    "ja": "抽選に応募する",
+    "zh-Hans": "参加活动抽奖",
+    "zh-Hant": "參加活動抽獎",
+    "es": "Participar en el sorteo",
+    "id": "Ikuti undian",
+    "vi": "Tham gia rút thăm",
+    "th": "เข้าร่วมกิจกรรมชิงรางวัล",
+    "pt": "Participar do sorteio",
+    "fr": "Participer au tirage au sort"
   },
   "m16b2e3b23b97": {
     "ja": "米国ファンミーティングをByUsと一緒に企画しましょう",

@@ -1,5 +1,6 @@
 import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-shell__fan-site-footer";
 import { additionalLocales, translate } from "@/i18n/messages";
+import { communityCopy } from "@/i18n/catalogs/features__community";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -131,7 +132,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           <section>
             <h2>{t.explore}</h2>
             <Link href={fanHref("/", locale)}>HOME</Link>
-            <Link href={fanHref("/live", locale)}>LIVE</Link>
+            <Link href={fanHref("/community", locale)}>{communityCopy(locale).title}</Link>
             <Link href={fanHref("/celebrities", locale)}>{t.favorites}</Link>
           </section>
           <section>

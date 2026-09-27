@@ -21,10 +21,10 @@ describe("role propagation from parent content", () => {
   });
   it("keeps the selected Elina guide portrait without the retired event poster", () => {
     const view = render(<HomeEntryCards locale="ko" celebrities={[celebrity()]} />);
-    expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-blue-beret-20260912.webp");
+    expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-autumn-20260921.jpg");
     expect(view.container.querySelector('[data-event-photo="poster"]')).toBeNull();
     view.rerender(<HomeEntryCards locale="ko" celebrities={[celebrity(2)]} />);
-    expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-blue-beret-20260912.webp");
+    expectImage(view.container.querySelector('[data-creator-image="elina"]'), "/images/celebrities/elina/guide-autumn-20260921.jpg");
     expect(view.container.querySelector('[data-event-photo="poster"]')).toBeNull();
   });
   it.each(["elina", "ifew"] as const)("keeps %s guide identity separate from editorial imagery", creator => {

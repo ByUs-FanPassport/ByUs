@@ -4,12 +4,13 @@ import { messages as localizedMessages } from "@/i18n/catalogs/components__fan-s
 import { messages as footerMessages } from "@/i18n/catalogs/components__fan-shell__fan-site-footer";
 import { translate } from "@/i18n/messages";
 import { creatorSlugFromHomePath } from "@/features/creator/domain/creator-navigation";
+import { communityCopy } from "@/i18n/catalogs/features__community";
 
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "next";
 import Link from "next/link";
-import { Bell, BookOpen, Heart, Home, Radio } from "lucide-react";
+import { Bell, BookOpen, Heart, Home, UsersRound } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { FanHeader } from "./fan-header";
@@ -23,7 +24,7 @@ import { FanSiteFooter } from "./fan-site-footer";
 import styles from "./fan-app-shell.module.css";
 
 export type FanLocale = AppLocale;
-export type FanSection = "home" | "live" | "favorites" | "my";
+export type FanSection = "home" | "community" | "favorites" | "my";
 
 function useBrowserHash() {
   const [hash, setHash] = useState("");
@@ -52,8 +53,8 @@ export function localeSwitchHref(
 }
 
 export function activeFanSection(pathname: string): FanSection {
-  if (pathname === "/live" || pathname.startsWith("/live/")) return "live";
-  if (pathname === "/celebrities" || pathname === "/bias" || pathname.startsWith("/bias/") || pathname.startsWith("/c/") || creatorSlugFromHomePath(pathname) !== null) return "favorites";
+  if (pathname === "/community" || pathname.startsWith("/community/")) return "community";
+  if (pathname === "/live" || pathname.startsWith("/live/") || pathname === "/celebrities" || pathname === "/bias" || pathname.startsWith("/bias/") || pathname.startsWith("/c/") || creatorSlugFromHomePath(pathname) !== null) return "favorites";
   if (
     pathname === "/my" || pathname.startsWith("/my/") ||
     pathname.startsWith("/passports") ||
@@ -73,7 +74,7 @@ export function fanNavigationItems(
   const query = `?locale=${locale}`;
   return [
     { id: "home", href: `/${query}` as Route, label: "HOME", isCurrent: current === "home" },
-    { id: "live", href: `/live${query}` as Route, label: "LIVE", isCurrent: current === "live" },
+    { id: "community", href: `/community${query}` as Route, label: communityCopy(locale).title, isCurrent: current === "community" },
     {
       id: "favorites",
       href: `/celebrities${query}` as Route,
@@ -86,14 +87,14 @@ export function fanNavigationItems(
 
 const icons: Record<FanSection, ReactNode> = {
   home: <Home aria-hidden="true" />,
-  live: <Radio aria-hidden="true" />,
+  community: <UsersRound aria-hidden="true" />,
   favorites: <Heart aria-hidden="true" />,
   my: <BookOpen aria-hidden="true" />,
 };
 
 function mobileLabel(section: FanSection, locale: FanLocale) {
   if (section === "home") return locale === "ko" ? "홈" : translate(locale, localizedMessages.m8082d5c40271, "Home");
-  if (section === "live") return "LIVE";
+  if (section === "community") return communityCopy(locale).title;
   if (section === "favorites") return locale === "ko" ? "최애" : translate(locale, localizedMessages.m7a1e6f7131e7, "Favorites");
   return "MY";
 }

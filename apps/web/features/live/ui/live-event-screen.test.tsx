@@ -470,7 +470,7 @@ describe("LiveEventScreen", () => {
     expect(destination.searchParams.get("returnTo")).toBe(`/live/kara-nualeaf?${query}`);
     expect(screen.getByRole("link", { name: "KARA 혜택·응모 보기" })).toHaveAttribute("href", "/benefits?locale=ko&celebrity=kara");
   });
-  it("keeps LIVE current across desktop and mobile navigation and preserves locale switching", async () => {
+  it("keeps the artist section current across desktop and mobile navigation and preserves locale switching", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(payload()), { status: 200 }),
     );
@@ -479,13 +479,21 @@ describe("LiveEventScreen", () => {
     await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
     const primary = screen.getByRole("navigation", { name: "주요 메뉴" });
     const bottom = screen.getByRole("navigation", { name: "모바일 주요 메뉴" });
-    expect(within(primary).getByRole("link", { name: "LIVE" })).toHaveAttribute(
+    expect(within(primary).getByRole("link", { name: "최애" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(within(bottom).getByRole("link", { name: "LIVE" })).toHaveAttribute(
+    expect(within(primary).getByRole("link", { name: "최애" })).toHaveAttribute(
+      "href",
+      "/celebrities?locale=ko",
+    );
+    expect(within(bottom).getByRole("link", { name: "최애" })).toHaveAttribute(
       "aria-current",
       "page",
+    );
+    expect(within(bottom).getByRole("link", { name: "최애" })).toHaveAttribute(
+      "href",
+      "/celebrities?locale=ko",
     );
     expect(screen.getByRole("combobox", { name: "언어 선택, 현재 한국어" })).toHaveValue("ko");
   });

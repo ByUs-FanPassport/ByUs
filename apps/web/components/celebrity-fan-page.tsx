@@ -6,6 +6,7 @@ import { messages as localizedMessages } from "@/i18n/catalogs/components__celeb
 import { additionalLocales, translate } from "@/i18n/messages";
 import { BanksyFanBanner } from "./banksy-promotion/banksy-promotion";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+import { communityHref } from "@/features/community/domain/navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
@@ -52,19 +53,19 @@ import { CreatorMediaPanel } from "@/features/media/ui/creator-media-panel";
 export { flattenLiveCatalog } from "@/features/fanpage/domain/live-catalog";
 
 export type CelebrityFanTab = "home" | "community" | "media" | "certifications" | "raffles" | "leaderboard" | "notice" | "live" | "benefits";
-const mainTabs = ["home", "notice", "community", "media", "certifications", "raffles", "leaderboard"] as const;
+const mainTabs = ["home", "notice", "community", "media", "live", "certifications", "raffles", "leaderboard"] as const;
 const labels = {
-  ko: { home: "홈", notice: "소식", community: "팬 게시판", media: "미디어", certifications: "찐팬 인증", raffles: "래플 응모", leaderboard: "리더보드" },
-  en: { home: "Home", notice: "Updates", community: "Community", media: "Media", certifications: "Fan verification", raffles: "Raffles", leaderboard: "Leaderboard" },
-  ja: { home: "ホーム", notice: "最新情報", community: "ファン掲示板", media: "メディア", certifications: "ファン認証", raffles: "抽選", leaderboard: "ランキング" },
-  "zh-Hans": { home: "首页", notice: "动态", community: "粉丝社区", media: "媒体", certifications: "粉丝验证", raffles: "抽选", leaderboard: "排行榜" },
-  "zh-Hant": { home: "首頁", notice: "動態", community: "粉絲社群", media: "媒體", certifications: "粉絲驗證", raffles: "抽選", leaderboard: "排行榜" },
-  es: { home: "Inicio", notice: "Novedades", community: "Comunidad", media: "Multimedia", certifications: "Verificación de fans", raffles: "Sorteos", leaderboard: "Clasificación" },
-  id: { home: "Beranda", notice: "Pembaruan", community: "Komunitas", media: "Media", certifications: "Verifikasi penggemar", raffles: "Undian", leaderboard: "Papan peringkat" },
-  vi: { home: "Trang chủ", notice: "Tin mới", community: "Cộng đồng", media: "Thư viện", certifications: "Xác minh người hâm mộ", raffles: "Quay thưởng", leaderboard: "Bảng xếp hạng" },
-  th: { home: "หน้าแรก", notice: "ข่าวสาร", community: "ชุมชนแฟนคลับ", media: "สื่อ", certifications: "การยืนยันแฟนคลับ", raffles: "จับรางวัล", leaderboard: "ลีดเดอร์บอร์ด" },
-  pt: { home: "Início", notice: "Novidades", community: "Comunidade", media: "Mídia", certifications: "Verificação de fã", raffles: "Sorteios", leaderboard: "Ranking" },
-  fr: { home: "Accueil", notice: "Actualités", community: "Communauté", media: "Médias", certifications: "Vérification de fan", raffles: "Tirages au sort", leaderboard: "Classement" },
+  ko: { home: "홈", notice: "소식", community: "팬 게시판", media: "미디어", live: "LIVE", certifications: "찐팬 인증", raffles: "래플 응모", leaderboard: "리더보드" },
+  en: { home: "Home", notice: "Updates", community: "Community", media: "Media", live: "LIVE", certifications: "Fan verification", raffles: "Raffles", leaderboard: "Leaderboard" },
+  ja: { home: "ホーム", notice: "最新情報", community: "ファン掲示板", media: "メディア", live: "LIVE", certifications: "ファン認証", raffles: "抽選", leaderboard: "ランキング" },
+  "zh-Hans": { home: "首页", notice: "动态", community: "粉丝社区", media: "媒体", live: "LIVE", certifications: "粉丝验证", raffles: "抽选", leaderboard: "排行榜" },
+  "zh-Hant": { home: "首頁", notice: "動態", community: "粉絲社群", media: "媒體", live: "LIVE", certifications: "粉絲驗證", raffles: "抽選", leaderboard: "排行榜" },
+  es: { home: "Inicio", notice: "Novedades", community: "Comunidad", media: "Multimedia", live: "LIVE", certifications: "Verificación de fans", raffles: "Sorteos", leaderboard: "Clasificación" },
+  id: { home: "Beranda", notice: "Pembaruan", community: "Komunitas", media: "Media", live: "LIVE", certifications: "Verifikasi penggemar", raffles: "Undian", leaderboard: "Papan peringkat" },
+  vi: { home: "Trang chủ", notice: "Tin mới", community: "Cộng đồng", media: "Thư viện", live: "LIVE", certifications: "Xác minh người hâm mộ", raffles: "Quay thưởng", leaderboard: "Bảng xếp hạng" },
+  th: { home: "หน้าแรก", notice: "ข่าวสาร", community: "ชุมชนแฟนคลับ", media: "สื่อ", live: "LIVE", certifications: "การยืนยันแฟนคลับ", raffles: "จับรางวัล", leaderboard: "ลีดเดอร์บอร์ด" },
+  pt: { home: "Início", notice: "Novidades", community: "Comunidade", media: "Mídia", live: "LIVE", certifications: "Verificação de fã", raffles: "Sorteios", leaderboard: "Ranking" },
+  fr: { home: "Accueil", notice: "Actualités", community: "Communauté", media: "Médias", live: "LIVE", certifications: "Vérification de fan", raffles: "Tirages au sort", leaderboard: "Classement" },
 } as const;
 const socialLabels = {
   ko: { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", chzzk: "치지직" },
@@ -100,9 +101,14 @@ export function CelebrityFanPage({ celebrity, locale, upcomingLive, initialTab =
   const stage = passport?.stageProgress;
   const stageName = stage ? fanStageLabel(locale, stage.current) : passport ? levelLabel(locale, passport.tier) : null;
   const ticketBalance = requestAuthenticated && my.state.status === "ready" ? creator?.ticketBalance ?? 0 : null;
-  const tabHref = (value: CelebrityFanTab) => value === "raffles"
-    ? creatorRafflesHref(celebrity.slug, locale)
-    : `${creatorHomeHref(celebrity.slug)}?tab=${value}&locale=${locale}#celebrity-content` as Route;
+  const tabHref = (value: CelebrityFanTab) => {
+    if (value === "community") return communityHref(celebrity.slug, locale);
+    if (value === "leaderboard") return communityHref(celebrity.slug, locale, "fans");
+    if (value === "certifications") return communityHref(celebrity.slug, locale, "certifications");
+    return value === "raffles"
+      ? creatorRafflesHref(celebrity.slug, locale)
+      : `${creatorHomeHref(celebrity.slug)}?tab=${value}&locale=${locale}#celebrity-content` as Route;
+  };
   const portrait = (size: number) => avatar.state.status === "ready" ? <Avatar avatar={avatar.state.avatar} imageUrl={avatar.state.imageUrl} label="" size={size} /> : <AvatarPlaceholder size={size} />;
   useEffect(() => {
     if (!ready) return;

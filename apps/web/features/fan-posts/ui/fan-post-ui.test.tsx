@@ -86,7 +86,7 @@ describe("fan post UI navigation and context", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
-    await waitFor(() => expect(state.replace).toHaveBeenCalledWith("/artist?tab=community&locale=en"));
+    await waitFor(() => expect(state.replace).toHaveBeenCalledWith("/community?creator=artist&tab=posts&locale=en"));
     expect(state.request).toHaveBeenCalledWith(`/api/posts/${state.post.id}`, "DELETE");
   });
 

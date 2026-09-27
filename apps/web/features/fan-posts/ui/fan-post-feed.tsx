@@ -14,11 +14,11 @@ import { toContentLocale, type AppLocale } from "@/i18n/locales";
 import styles from "@/features/content-safety/ui/content.module.css";
 const parse = (value: unknown) => postPageSchema.parse(value);
 
-export function FanPostFeed(props: { slug: string; locale: AppLocale }) {
+export function FanPostFeed(props: { slug: string; locale: AppLocale; returnTo?: string }) {
   const auth = usePrivy();
   return <FeedForOwner key={`${props.slug}:${props.locale}:${auth.authenticated}:${auth.user?.id}`} {...props} />;
 }
-function FeedForOwner({ slug, locale }: { slug: string; locale: AppLocale }) {
+function FeedForOwner({ slug, locale, returnTo = `${creatorHomeHref(slug)}?tab=community&locale=${locale}#celebrity-content` }: { slug: string; locale: AppLocale; returnTo?: string }) {
   const auth = usePrivy(), copy = contentCopy(locale), heading = useId(), [cursors, setCursors] = useState<(string | null)[]>([null]);
   const [composing, setComposing] = useState(false), composeTrigger = useRef<HTMLButtonElement>(null);
   const discovery = discoveryCopy(locale);
@@ -26,7 +26,6 @@ function FeedForOwner({ slug, locale }: { slug: string; locale: AppLocale }) {
   const cursor = cursors.at(-1) ?? null;
   const resource = useCommunityResource(`/api/celebrities/${slug}/posts?locale=${toContentLocale(locale)}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, parse, false);
   const refresh = () => { setCursors([null]); resource.retry(); closeComposer(); };
-  const returnTo = `${creatorHomeHref(slug)}?tab=community&locale=${locale}#celebrity-content`;
   return <section className={styles.section} aria-labelledby={heading}><header className={styles.feedHeading}><h2 id={heading}>{copy.community}</h2><p>{discovery.communityIntro}</p></header>
     {auth.ready && (auth.authenticated ? (composing ? <PostComposer slug={slug} locale={locale} onSaved={refresh} onCancel={closeComposer} featured autoFocus /> : <button ref={composeTrigger} type="button" className={styles.composeTrigger} onClick={() => setComposing(true)} aria-label={copy.writePost}><span className={styles.composeIcon}><PenLine size={20} aria-hidden="true" /></span><span>{discovery.writePrompt}</span><strong>{copy.writePost}</strong></button>) : <FanAction href={`/login?locale=${locale}&returnTo=${encodeURIComponent(returnTo)}`}>{copy.login}</FanAction>)}
     {resource.state.status === "ready" ? <>

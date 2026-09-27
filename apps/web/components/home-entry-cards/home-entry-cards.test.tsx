@@ -1,6 +1,6 @@
 import { act, cleanup, createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { HomeEntryCards } from "./home-entry-cards";
+import { ElinaGuideCard, HomeEntryCards } from "./home-entry-cards";
 import { HomeGuideCarousel } from "./home-guide-carousel";
 import type { ComponentProps } from "react";
 
@@ -32,6 +32,45 @@ describe("home entry cards", () => {
     expect(container.querySelector("a a, a button")).toBeNull();
     expect(container.querySelector('a[href*="ifew"], button')).toBeNull();
     expect(container.textContent).not.toMatch(/100일|100-day/);
+  });
+
+  it.each([
+    ["ko", "엘리나와 함께 뱅크시 전시 보러 가요", "팬 인증 → 응모권 받기 → 선물 선택", "이벤트 응모하기"],
+    ["en", "See Banksy with Elina", "Verify fandom → collect tickets → choose a prize", "Enter the raffle"],
+    ["ja", "Elinaと一緒にバンクシー展へ行こう", "ファン認証 → 応募券を受け取る → プレゼントを選ぶ", "抽選に応募する"],
+    ["zh-Hans", "和 Elina 一起去看班克斯展览", "粉丝认证 → 领取抽奖券 → 选择礼物", "参加活动抽奖"],
+    ["zh-Hant", "和 Elina 一起去看班克斯展覽", "粉絲認證 → 領取抽獎券 → 選擇禮物", "參加活動抽獎"],
+    ["es", "Ve a la exposición de Banksy con Elina", "Verifica tu perfil de fan → recibe boletos → elige tu regalo", "Participar en el sorteo"],
+    ["id", "Lihat pameran Banksy bersama Elina", "Verifikasi penggemar → dapatkan tiket undian → pilih hadiah", "Ikuti undian"],
+    ["vi", "Đi xem triển lãm Banksy cùng Elina", "Xác minh người hâm mộ → nhận vé dự thưởng → chọn quà", "Tham gia rút thăm"],
+    ["th", "ไปชมนิทรรศการ Banksy กับ Elina", "ยืนยันสถานะแฟน → รับสิทธิ์ลุ้นรางวัล → เลือกของขวัญ", "เข้าร่วมกิจกรรมชิงรางวัล"],
+    ["pt", "Veja a exposição de Banksy com Elina", "Verifique seu perfil de fã → receba bilhetes → escolha seu presente", "Participar do sorteio"],
+    ["fr", "Découvrez l’exposition Banksy avec Elina", "Validez votre statut de fan → recevez des tickets → choisissez votre cadeau", "Participer au tirage au sort"],
+  ] as const)("uses the Banksy raffle copy in %s", (locale, title, description, action) => {
+    const { container } = render(<HomeEntryCards celebrities={[]} locale={locale} />);
+    expect(container).toHaveTextContent(title);
+    expect(container).toHaveTextContent(description);
+    expect(container).toHaveTextContent(action);
+    expect(container).toHaveTextContent("ELINA × BANKSY");
+  });
+
+  it("uses the same raffle message and destination in the hero and sidebar card", () => {
+    const { container } = render(<>
+      <ElinaGuideCard locale="ko" elina={undefined} hero />
+      <ElinaGuideCard locale="ko" elina={undefined} />
+    </>);
+    const links = container.querySelectorAll("a");
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/c/elina/raffles?locale=ko");
+    }
+    const cards = [container.querySelector("[data-home-hero-banner]"), links[1]];
+    for (const card of cards) {
+      expect(card).toHaveTextContent("엘리나와 함께 뱅크시 전시 보러 가요");
+      expect(card).toHaveTextContent("팬 인증 → 응모권 받기 → 선물 선택");
+      expect(card).toHaveTextContent("이벤트 응모하기");
+      expect(card).toHaveTextContent("ELINA × BANKSY");
+    }
   });
 });
 

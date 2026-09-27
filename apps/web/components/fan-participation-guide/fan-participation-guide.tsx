@@ -16,6 +16,7 @@ import { ifewEventBanner, ifewFanGuideContent, ifewLiveSlug, ifewTikTokEvent } f
 import { ifewRafflesHref, ifewVerificationHref } from "@/features/live/domain/ifew-event";
 import { elinaLiveHref, elinaRafflesHref, elinaVerificationHref } from "@/features/live/domain/elina-event";
 import { SignupGuideLink, SignupGuideView } from "@/features/analytics/client/signup-guide-tracking";
+import { communityCopy } from "@/i18n/catalogs/features__community";
 import type { SignupAction, SignupGuide, SignupPlacement } from "@/features/analytics/domain/signup-funnel-event";
 import styles from "./fan-participation-guide.module.css";
 
@@ -73,7 +74,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
       <FocusFlowHeader locale={locale} mainId={`${creator}-guide-main`} innerClassName={styles.headerInner}>
         <nav className={styles.navigation} aria-label={locale === "ko" ? "주요 메뉴" : translate(locale, localizedMessages.m22d7fc27022b, "Primary navigation")}>
           <Link href={`/?locale=${locale}` as Route}>HOME</Link>
-          <Link href={`/live?locale=${locale}` as Route}>LIVE</Link>
+          <Link href={`/community?locale=${locale}` as Route}>{communityCopy(locale).title}</Link>
           <Link href={`/celebrities?locale=${locale}` as Route}>{locale === "ko" ? "최애" : translate(locale, localizedMessages.mbe39b4e99415, "Favorites")}</Link>
           <Link href={href.my}>MY</Link>
         </nav>
