@@ -87,7 +87,7 @@ function constantTimeEqual(left: string, right: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-async function boundedJson(request: Request): Promise<unknown> {
+export async function boundedJson(request: Request): Promise<unknown> {
   const declared = request.headers.get("content-length");
   if (declared && (!/^\d+$/.test(declared) || Number(declared) > MAX_BODY_BYTES)) throw new Error("BODY_TOO_LARGE");
   if (!request.body) throw new Error("INVALID_BODY");
@@ -167,7 +167,7 @@ function toInput(update: z.infer<typeof updateSchema>): TelegramBugReportInput |
   };
 }
 
-function operatorAuthorized(request: Request, secret?: string): boolean {
+export function operatorAuthorized(request: Request, secret?: string): boolean {
   if (!secret) return false;
   return constantTimeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`);
 }

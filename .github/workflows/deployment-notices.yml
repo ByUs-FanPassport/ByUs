@@ -1,0 +1,63 @@
+name: Deployment notices
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-notice:
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test notice delivery safeguards
+        run: node --test scripts/deployment-notices.test.mjs
+      - name: Check Korean release notes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/deployment-notices.mjs check "$BASE_SHA" "$HEAD_SHA"
+
+  notify:
+    if: >-
+      github.event_name == 'deployment_status' &&
+      github.repository == 'ByUs-FanPassport/ByUs' &&
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.creator.login == 'vercel[bot]' &&
+      github.event.deployment.environment == 'Production' &&
+      github.event.deployment.creator.login == 'vercel[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: telegram-production-notices
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      deployments: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Execute trusted current main; deployed files are read as data with git show.
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Announce successful production deployment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TELEGRAM_BUG_REPORT_OPERATOR_SECRET: ${{ secrets.TELEGRAM_BUG_REPORT_OPERATOR_SECRET }}
+        run: node scripts/deployment-notices.mjs send
