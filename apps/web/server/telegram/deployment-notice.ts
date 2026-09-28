@@ -52,7 +52,7 @@ export function createDeploymentNoticeHandler({ secret, botToken, fetcher = fetc
       const photos = input.images?.map(path => `https://raw.githubusercontent.com/ByUs-FanPassport/ByUs/${deployedSha}/${path}`) ?? [];
       const method = photos.length > 1 ? "sendMediaGroup" : photos.length ? "sendPhoto" : "sendMessage";
       const content = photos.length > 1
-        ? { media: photos.map((media, i) => ({ type: "photo", media, ...(i === 0 ? { caption: input.text, show_caption_above_media: true } : {}) })) }
+        ? { media: photos.map((media, i) => ({ type: "photo", media, show_caption_above_media: true, ...(i === 0 ? { caption: input.text } : {}) })) }
         : photos.length ? { photo: photos[0], caption: input.text, show_caption_above_media: true }
           : { text: input.text, link_preview_options: { is_disabled: true } };
       // One Telegram request keeps text and screenshots together; never fall back to a second send.

@@ -52,6 +52,7 @@ describe("deployment notice boundary", () => {
       expect(sends).toHaveLength(1); expect(String(sends[0][0])).toMatch(/\/sendMediaGroup$/);
       const media = JSON.parse(String((sends[0] as unknown as [string, RequestInit])[1].body)).media;
       expect(media[0].caption).toBe(input.text); expect(media[1].caption).toBeUndefined();
+      expect(media.map((item: { show_caption_above_media: boolean }) => item.show_caption_above_media)).toEqual([true, true]);
     }
   });
   it("rejects unsafe images and excessive captions before any outbound call", async () => {
