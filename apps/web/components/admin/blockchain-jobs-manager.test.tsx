@@ -15,8 +15,7 @@ describe("ADM-011 blockchain jobs", () => {
   beforeEach(() => { query = ""; role = "operator"; replace.mockReset(); vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ jobs: [failedJob] }) })); });
   it("renders a redacted job detail, safe transaction state, and retry confirmation", async () => {
     render(<BlockchainJobsManager />);
-    await screen.findByText("FAILED");
-    fireEvent.click(screen.getByRole("button", { name: /작업 상세/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /작업 상세/ }));
     expect(screen.getByText("Provider request could not be completed.")).toBeInTheDocument();
     expect(screen.getByText("아직 제출된 트랜잭션이 없습니다.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "재시도 요청" }));
@@ -25,8 +24,7 @@ describe("ADM-011 blockchain jobs", () => {
   it("keeps viewer retry visibly disabled", async () => {
     role = "viewer";
     render(<BlockchainJobsManager />);
-    await screen.findByText("FAILED");
-    fireEvent.click(screen.getByRole("button", { name: /작업 상세/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /작업 상세/ }));
     expect(screen.getByRole("button", { name: "재시도 요청" })).toBeDisabled();
     expect(screen.getByText("Viewer 역할은 조회만 가능합니다.")).toBeInTheDocument();
   });

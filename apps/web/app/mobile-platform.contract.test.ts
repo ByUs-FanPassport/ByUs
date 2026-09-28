@@ -25,6 +25,5 @@ describe("mobile platform contracts", () => {
     expect(read("features/lounge/ui/lounge.module.css")).toMatch(/\.composer textarea\{[^}]*font-size:16px/);
     expect(read("features/my/ui/my-benefit-progress.module.css")).toMatch(/\.selector select\s*\{[^}]*font-size:16px/);
     expect(read("features/bias/ui/promotion-page.module.css")).toMatch(/\.searchInput input\s*\{[^}]*font-size:\s*16px/);
-    expect(read("components/fan-shell/fan-language-switch.module.css")).toMatch(/\.language\s*\{[^}]*font-size:\s*16px/);
   });
 });

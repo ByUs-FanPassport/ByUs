@@ -8,15 +8,17 @@ import { contentMessages } from "./catalogs/features__fan_posts__ui";
 import { participationCopy } from "./catalogs/features__schedules__ui__participation";
 import { personalCopy } from "./catalogs/features__my__ui__personal-copy";
 import { accountDeletionCopy } from "./catalogs/features__profile__ui__account-deletion";
+import { discoveryCopy } from "./catalogs/features__fan_posts__discovery";
+import { communityCopy } from "./catalogs/features__community";
 
 const fanWebCatalogs = new Set([
-  "features__fan_posts__ui.ts", "features__schedules__ui__participation.ts",
+  "features__fan_posts__ui.ts", "features__fan_posts__discovery.ts", "features__community.ts", "features__schedules__ui__participation.ts",
   "features__my__ui__personal-copy.ts", "features__profile__ui__account-deletion.ts",
 ]);
 
 describe("localized messages", () => {
   it("keeps fan web copy complete in every locale with matching placeholders", () => {
-    const maps = [contentMessages, personalCopy, accountDeletionCopy, Object.fromEntries(APP_LOCALES.map(locale => [locale, participationCopy(locale)]))];
+    const maps = [contentMessages, personalCopy, accountDeletionCopy, Object.fromEntries(APP_LOCALES.map(locale => [locale, participationCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, discoveryCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, communityCopy(locale)]))];
     const placeholders = (text: string) => (text.match(/\{(?:\d+|[A-Za-z]\w*)\}/g) ?? []).sort();
     for (const map of maps) {
       expect(Object.keys(map).sort()).toEqual([...APP_LOCALES].sort());
