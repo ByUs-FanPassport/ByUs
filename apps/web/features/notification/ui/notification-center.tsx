@@ -430,8 +430,8 @@ export function NotificationCenter() {
                         void openNotification(item);
                       }}
                     >
-                      {!item.readAt ? <span className={styles.dot} aria-hidden="true" /> : null}
                       <span className={styles.copy}>
+                        {!item.readAt ? <span className={styles.dot} aria-hidden="true" /> : null}
                         <strong>{item.title}</strong>
                         <span>
                           {item.detail} · {time(item.createdAt, locale)}

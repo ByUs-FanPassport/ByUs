@@ -254,18 +254,17 @@
   background: #171719;
 }
 
-.row:not([data-unread="true"]) .copy {
-  grid-column: 2;
-}
-
 .copy {
-  display: flex;
+  display: grid;
+  grid-column: 1 / span 2;
+  grid-template-columns: subgrid;
+  align-items: center;
   min-width: 0;
-  flex-direction: column;
-  gap: 7px;
+  row-gap: 7px;
 }
 
 .copy strong {
+  grid-column: 2;
   overflow: hidden;
   font-size: 15px;
   font-weight: 750;
@@ -286,7 +285,8 @@
   line-height: 1.45;
 }
 
-.copy span {
+.copy > span:not(.dot) {
+  grid-column: 2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
