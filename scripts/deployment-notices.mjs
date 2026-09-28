@@ -7,14 +7,17 @@ export const CHECK_NAME = 'Telegram deployment notice';
 // The last deployment before automatic notices were introduced; never advance this bootstrap.
 export const BOOTSTRAP = { id: 6712694578, sha: '401f25159028791b0d680df3c56c1b7e6a354714' };
 const SHA = /^[0-9a-f]{40}$/;
+const IMAGE = /^release-notes\/images\/[a-z0-9-]+\.png$/;
 const git = (...args) => execFileSync(process.env.GIT_EXECUTABLE || 'git', args, { encoding: 'utf8' }).trim();
 
 export function validateNote(note) {
-  if (!note || Object.keys(note).some(key => !['changes', 'path'].includes(key)) ||
+  if (!note || Object.keys(note).some(key => !['changes', 'path', 'images'].includes(key)) ||
       !Array.isArray(note.changes) || note.changes.length < 1 || note.changes.length > 5 ||
       note.changes.some(line => typeof line !== 'string' || line.length < 6 || line.length > 240 ||
         !/[가-힣]/.test(line) || /[\r\n\x00-\x1f\x7f]|https?:\/\//.test(line)) ||
-      typeof note.path !== 'string' || !/^\/[a-zA-Z0-9/_-]*$/.test(note.path) || note.path.startsWith('//')) {
+      typeof note.path !== 'string' || !/^\/[a-zA-Z0-9/_-]*$/.test(note.path) || note.path.startsWith('//') ||
+      (note.images !== undefined && (!Array.isArray(note.images) || !note.images.length || note.images.length > 10 ||
+        note.images.some(path => typeof path !== 'string' || !IMAGE.test(path))))) {
     throw new Error('INVALID_RELEASE_NOTE: use 1–5 short Korean changes and a ByUs site path');
   }
   return note;
@@ -30,12 +33,26 @@ export function readNotes(base, head) {
     if (!/^release-notes\/[a-z0-9-]+\.json$/.test(file)) throw new Error('INVALID_NOTE_FILENAME');
     return validateNote(JSON.parse(git('show', `${head}:${file}`)));
   });
+  for (const path of noticeImages(notes)) {
+    const size = Number(git('cat-file', '-s', `${head}:${path}`));
+    if (size > 5_000_000) throw new Error('RELEASE_IMAGE_TOO_LARGE');
+    const png = execFileSync(process.env.GIT_EXECUTABLE || 'git', ['show', `${head}:${path}`], { maxBuffer: 5_000_000 });
+    if (png.length < 24 || png.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' || png.toString('ascii', 12, 16) !== 'IHDR') throw new Error('INVALID_RELEASE_IMAGE');
+    const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
+    if (!width || !height || width + height > 10000 || Math.max(width / height, height / width) > 20) throw new Error('INVALID_RELEASE_IMAGE_DIMENSIONS');
+  }
   const changedFiles = git('diff', '--name-only', base, head).split('\n');
   const runtimeChanged = changedFiles.some(file =>
     /^(apps\/|scripts\/|supabase\/migrations\/|contracts\/src\/|\.github\/workflows\/|package(?:-lock)?\.json$|vercel\.json$)/.test(file) &&
     !/(?:\.(?:test|spec)\.|\.md$|(?:^|\/)(?:tests?|e2e|__tests__)\/)/.test(file));
   if (!notes.length && runtimeChanged) throw new Error('RELEASE_NOTE_REQUIRED');
   return notes;
+}
+
+export function noticeImages(notes) {
+  const images = [...new Set(notes.flatMap(note => note.images ?? []))];
+  if (images.length > 10) throw new Error('TOO_MANY_RELEASE_IMAGES');
+  return images;
 }
 
 export function checkNotes(base, head, pullRequest = false) {
@@ -50,7 +67,7 @@ export function formatNotice(notes, completedAt) {
   const changes = [...new Set(notes.flatMap(note => note.changes))];
   const links = [...new Set(notes.map(note => `https://byus.kr${note.path}`))];
   const text = `✅ ByUs 수정사항이 반영됐어요\n\n${changes.map(line => `• ${line}`).join('\n')}\n\n확인하기\n${links.join('\n')}\n\n반영 시각: ${time} (한국 시간)`;
-  if (text.length > 3900) throw new Error('RELEASE_NOTICE_TOO_LONG');
+  if (text.length > (noticeImages(notes).length ? 1024 : 3900)) throw new Error('RELEASE_NOTICE_TOO_LONG');
   return text;
 }
 
@@ -105,15 +122,16 @@ export async function notifyDeployment({ event, github, send, notes = readNotes,
   const pendingNotes = notes(base, deployment.sha);
   if (!pendingNotes.length) return { skipped: 'no_new_changes_to_announce' };
   const text = formatNotice(pendingNotes, status.created_at);
+  const images = noticeImages(pendingNotes);
   const claim = { name: CHECK_NAME, head_sha: deployment.sha, external_id: String(deployment.id), status: 'in_progress', details_url: runUrl,
     output: { title: 'Telegram delivery reserved', summary: 'Automatic retry is blocked until this receipt has a definitive outcome.' } };
   const receipt = existing
     ? await github(`/check-runs/${existing.id}`, { method: 'PATCH', body: { status: claim.status, details_url: claim.details_url, output: claim.output } })
     : await github('/check-runs', { method: 'POST', body: claim });
   try {
-    const result = await send({ deploymentId: deployment.id, receiptId: receipt.id, text });
+    const result = await send({ deploymentId: deployment.id, receiptId: receipt.id, text, ...(images.length ? { images } : {}) });
     await github(`/check-runs/${receipt.id}`, { method: 'PATCH', body: { status: 'completed', conclusion: 'success',
-      output: { title: 'Telegram notice delivered', summary: JSON.stringify({ messageId: result.messageId, chatId: result.chatId, deploymentId: deployment.id, base, text }) } } });
+      output: { title: 'Telegram notice delivered', summary: JSON.stringify({ messageId: result.messageId, messageIds: result.messageIds, chatId: result.chatId, deploymentId: deployment.id, base, text, images }) } } });
     return { sent: true, deploymentId: deployment.id, messageId: result.messageId };
   } catch (error) {
     // ponytail: reserve before the one send attempt; ambiguous delivery needs room inspection, never blind retries.

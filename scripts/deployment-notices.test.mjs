@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { BOOTSTRAP, CHECK_NAME, REPOSITORY, formatNotice, readNotes, checkNotes, validateNote, notifyDeployment } from './deployment-notices.mjs';
+import { BOOTSTRAP, CHECK_NAME, REPOSITORY, formatNotice, readNotes, checkNotes, validateNote, notifyDeployment, noticeImages } from './deployment-notices.mjs';
 
 const note = { changes: ['알림 목록의 점을 굵은 제목과 같은 높이에 맞췄어요.'], path: '/notifications' };
 const sha = 'c'.repeat(40), priorSha = 'b'.repeat(40);
@@ -71,6 +71,42 @@ test('reserves before sending and records returned message id', async () => {
   assert.equal(records.writes.at(-1).conclusion, 'success');
   assert.equal(records.sent.length, 1);
   assert.equal(records.notes[0].base, BOOTSTRAP.sha);
+});
+
+test('screenshots travel with the notice in one send and obey caption and path limits', async () => {
+  const illustrated = { ...note, images: ['release-notes/images/notification-after.png'] };
+  const { options, records } = harness(); options.notes = () => [illustrated, illustrated];
+  await notifyDeployment(options);
+  assert.deepEqual(records.sent[0].images, illustrated.images);
+  assert.equal(records.sent.length, 1);
+  for (const images of [[], ['https://evil.test/a.png'], ['release-notes/images/../a.png'], ['release-notes/images/a.svg'], Array(11).fill(illustrated.images[0])]) {
+    assert.throws(() => validateNote({ ...note, images }));
+  }
+  assert.throws(() => noticeImages(Array.from({ length: 11 }, (_, i) => ({ ...note, images: [`release-notes/images/${i}.png`] }))), /TOO_MANY/);
+  const long = { ...illustrated, changes: Array.from({ length: 5 }, (_, i) => `${i}${'가'.repeat(239)}`) };
+  assert.throws(() => formatNotice([long], status.created_at), /TOO_LONG/);
+  assert.ok(formatNotice([{ ...long, images: undefined }], status.created_at));
+});
+
+test('screenshots must exist as PNGs with Telegram-compatible dimensions at the deployed revision', () => {
+  const cwd = process.cwd(), dir = mkdtempSync(join(tmpdir(), 'byus-notice-image-'));
+  const git = (...args) => execFileSync(process.env.GIT_EXECUTABLE || 'git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  try {
+    git('init', '-q'); git('config', 'user.name', 'Test'); git('config', 'user.email', 'test@example.invalid');
+    git('commit', '--allow-empty', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
+    mkdirSync(join(dir, 'release-notes/images'), { recursive: true });
+    const illustrated = { ...note, images: ['release-notes/images/after.png'] };
+    writeFileSync(join(dir, 'release-notes/fix.json'), JSON.stringify(illustrated));
+    git('add', '.'); git('commit', '-qm', 'missing image'); process.chdir(dir);
+    assert.throws(() => readNotes(base, git('rev-parse', 'HEAD')));
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=', 'base64');
+    const path = join(dir, illustrated.images[0]); writeFileSync(path, png); git('add', '.'); git('commit', '-qm', 'image');
+    assert.deepEqual(readNotes(base, git('rev-parse', 'HEAD')), [illustrated]);
+    png.writeUInt32BE(10000, 16); writeFileSync(path, png); git('add', '.'); git('commit', '-qm', 'oversized dimensions');
+    assert.throws(() => readNotes(base, git('rev-parse', 'HEAD')), /DIMENSIONS/);
+    writeFileSync(path, 'not a screenshot'); git('add', '.'); git('commit', '-qm', 'bad png');
+    assert.throws(() => readNotes(base, git('rev-parse', 'HEAD')), /INVALID_RELEASE_IMAGE/);
+  } finally { process.chdir(cwd); rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('ignores preview, failure and other repositories without API or send', async () => {
