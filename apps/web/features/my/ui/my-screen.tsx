@@ -20,7 +20,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useOwnedFanResource } from "../../../components/fan-ui/use-owned-fan-resource";
 import { AuthIntentLink } from "@/components/auth-intent-link";
 import { CreatorImage } from "@/components/fan-ui/creator-image";
-import { GoogleMark } from "@/components/icons";
 import { FanAppFrame, FanContentContainer, type FanLocale } from "@/components/fan-shell/fan-app-shell";
 import { fanActionClassName, FanAction } from "@/components/fan-ui/fan-action";
 import { FanState } from "@/components/fan-ui/fan-state";
@@ -50,7 +49,7 @@ const copy = {
   ko: {
     title: "MY", profileSummary: "내 팬 활동", profileHelp: "최애와 함께한 기록을 한눈에 모았어요.",
     guestTitle: "내 팬 활동을 한곳에 모아보세요.", guestBody: "로그인하면 최애, 예약한 LIVE, 받은 혜택과 수집 기록을 바로 확인할 수 있어요.",
-    login: "Google로 계속하기", loading: "팬 활동을 불러오는 중이에요.", error: "팬 활동을 불러오지 못했어요.", retry: "다시 시도",
+    login: "로그인하기", loading: "팬 활동을 불러오는 중이에요.", error: "팬 활동을 불러오지 못했어요.", retry: "다시 시도",
     creators: "내 최애", creatorsHelp: "크리에이터별 패스포트와 응모권 잔액을 확인하세요.",
     noCreators: "아직 등록한 최애가 없어요.", findCreator: "최애 찾기", live: "내 예약 LIVE", upcoming: "예약 완료",
     history: "지난 LIVE", noLive: "예약한 LIVE가 없어요.", browseLive: "LIVE 둘러보기", rewards: "받은 혜택",
@@ -71,7 +70,7 @@ const copy = {
   en: {
     title: "MY", profileSummary: "My fan activity", profileHelp: "Your moments with all your favorites, in one place.",
     guestTitle: "Keep your fan activity together.", guestBody: "Sign in to see your favorites, reserved LIVE events, rewards, and collection.",
-    login: "Continue with Google", loading: "Loading your fan activity.", error: "We couldn’t load your fan activity.", retry: "Try again",
+    login: "Sign in", loading: "Loading your fan activity.", error: "We couldn’t load your fan activity.", retry: "Try again",
     creators: "My favorites", creatorsHelp: "Check each Fan Passport and its raffle ticket balance.",
     noCreators: "No favorites added yet.", findCreator: "Find favorites", live: "My reserved LIVE", upcoming: "Reserved",
     history: "Past LIVE", noLive: "No reserved LIVE events.", browseLive: "Browse LIVE", rewards: "My rewards",
@@ -167,7 +166,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
   const heading = <header className={styles.pageHeading}><FanHeading as="h1" variant="personal-page">{t.title}</FanHeading></header>;
   return <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
     {!ready ? <>{heading}<MyDashboardSkeleton locale={locale} /></>
-      : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><GoogleMark/><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
+      : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
       : <OwnerScopedDashboard
         key={auth.user?.id ?? "current-owner"}
         summary={state.status === "ready" ? state.data : null}

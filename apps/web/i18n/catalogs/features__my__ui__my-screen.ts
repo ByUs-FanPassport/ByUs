@@ -46,15 +46,15 @@ export const messages = {
     "fr": "Connectez-vous pour voir vos favoris, vos LIVE réservés, vos récompenses et votre collection."
   },
   "m31d61c3cc601": {
-    "ja": "Googleで続ける",
-    "zh-Hans": "使用 Google 继续",
-    "zh-Hant": "使用 Google 繼續",
-    "es": "Continuar con Google",
-    "id": "Lanjutkan dengan Google",
-    "vi": "Tiếp tục với Google",
-    "th": "ดำเนินการต่อด้วย Google",
-    "pt": "Continuar com o Google",
-    "fr": "Continuer avec Google"
+    "ja": "ログイン",
+    "zh-Hans": "登录",
+    "zh-Hant": "登入",
+    "es": "Iniciar sesión",
+    "id": "Masuk",
+    "vi": "Đăng nhập",
+    "th": "ลงชื่อเข้าใช้",
+    "pt": "Entrar",
+    "fr": "Se connecter"
   },
   "m03449d54333c": {
     "ja": "ファン活動を読み込んでいます。",

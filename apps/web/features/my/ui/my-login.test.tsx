@@ -6,9 +6,9 @@ const push = vi.fn();
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false, getAccessToken: vi.fn() }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }), usePathname: () => "/my", useSearchParams: () => new URLSearchParams() }));
 beforeEach(() => { push.mockClear(); sessionStorage.clear(); });
-it.each(["ko", "en"] as const)("clicks the real guest MY CTA and preserves the %s return destination", (locale) => {
+it.each([["ko", "로그인하기"], ["en", "Sign in"], ["ja", "ログイン"], ["zh-Hans", "登录"], ["zh-Hant", "登入"], ["es", "Iniciar sesión"], ["id", "Masuk"], ["vi", "Đăng nhập"], ["th", "ลงชื่อเข้าใช้"], ["pt", "Entrar"], ["fr", "Se connecter"]] as const)("opens login from the provider-neutral MY CTA and preserves the %s return destination", (locale, label) => {
   render(<MyScreen locale={locale} />);
-  fireEvent.click(screen.getByRole("link", { name: locale === "ko" ? "Google로 계속하기" : "Continue with Google" }));
+  fireEvent.click(screen.getByRole("link", { name: label }));
   expect(push).toHaveBeenCalledTimes(1);
   const destination = new URL(push.mock.calls[0][0], "http://localhost");
   expect(destination.pathname).toBe("/login");
