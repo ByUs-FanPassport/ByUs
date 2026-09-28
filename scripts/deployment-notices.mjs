@@ -136,8 +136,8 @@ export async function notifyDeployment({ event, github, send, notes = readNotes,
   } catch (error) {
     // ponytail: reserve before the one send attempt; ambiguous delivery needs room inspection, never blind retries.
     await github(`/check-runs/${receipt.id}`, { method: 'PATCH', body: { status: 'completed', conclusion: error.definitelyNotSent ? 'failure' : 'action_required',
-      output: { title: error.definitelyNotSent ? 'Telegram rejected the notice' : 'Telegram delivery needs manual inspection', summary: error.definitelyNotSent ? 'No message was accepted; rerunning is safe.' : 'A message may already exist. Check the room before changing this receipt or retrying.' } } }).catch(() => {});
-    throw new Error(error.definitelyNotSent ? 'NOTICE_REJECTED' : 'NOTICE_DELIVERY_UNCERTAIN');
+      output: { title: error.definitelyNotSent ? 'Notice was not sent' : 'Telegram delivery needs manual inspection', summary: error.definitelyNotSent ? `No message was accepted; rerunning is safe. Reason: ${error.noticeCode ?? 'NOTICE_REJECTED'}` : 'A message may already exist. Check the room before changing this receipt or retrying.' } } }).catch(() => {});
+    throw new Error(error.definitelyNotSent ? (error.noticeCode ?? 'NOTICE_REJECTED') : 'NOTICE_DELIVERY_UNCERTAIN');
   }
 }
 
@@ -162,6 +162,7 @@ async function main() {
       if (!response.ok || !result.ok || !Number.isSafeInteger(result.messageId) || result.chatId !== -5187701508) {
         const error = new Error('NOTICE_ENDPOINT_FAILED');
         error.definitelyNotSent = ['UNAUTHORIZED', 'INVALID_REQUEST', 'DEPLOYMENT_NOT_READY', 'DEPLOYMENT_VERIFICATION_UNAVAILABLE', 'TELEGRAM_OPERATOR_UNAVAILABLE', 'RECEIPT_NOT_RESERVED', 'TELEGRAM_NOTICE_REJECTED'].includes(result.error?.code);
+        if (error.definitelyNotSent) error.noticeCode = result.error.code;
         throw error;
       }
       return result;

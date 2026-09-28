@@ -62,7 +62,13 @@ export function createDeploymentNoticeHandler({ secret, botToken, fetcher = fetc
         redirect: "error", signal: AbortSignal.timeout(20_000),
       });
       const payload = await response.json();
-      if (payload?.ok === false) return fail("TELEGRAM_NOTICE_REJECTED", 502);
+      if (payload?.ok === false) {
+        console.warn("TELEGRAM_NOTICE_REJECTED", {
+          code: payload.error_code,
+          description: String(payload.description ?? "").replaceAll(botToken, "[redacted]").replace(/https?:\/\/\S+/g, "[url]").slice(0, 240),
+        });
+        return fail("TELEGRAM_NOTICE_REJECTED", 502);
+      }
       const messages = photos.length > 1 ? payload?.result : [payload?.result];
       if (!response.ok || payload?.ok !== true || !Array.isArray(messages) || messages.length !== Math.max(photos.length, 1) ||
           messages.some(message => !Number.isSafeInteger(message?.message_id) || message?.chat?.id !== SALLY_BUG_REPORT_CHAT_ID)) return fail("TELEGRAM_NOTICE_UNCERTAIN", 503);

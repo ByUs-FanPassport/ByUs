@@ -79,7 +79,12 @@ describe("deployment notice boundary", () => {
     expect(fetcher.mock.calls.filter(([url]) => String(url).includes("api.telegram.org"))).toHaveLength(1);
   });
   it("marks a Telegram negative response as a definitive rejection", async () => {
-    const { call } = setup({ telegram: { ok: false, result: { message_id: 0, chat: { id: 0 } } } });
-    expect(await (await call()).json()).toEqual({ error: { code: "TELEGRAM_NOTICE_REJECTED" } });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const telegram = { ok: false, result: null, error_code: 400, description: "Failed https://secret.test/test-token test-token" };
+      const { call } = setup({ telegram });
+      expect(await (await call()).json()).toEqual({ error: { code: "TELEGRAM_NOTICE_REJECTED" } });
+      expect(warn).toHaveBeenCalledWith("TELEGRAM_NOTICE_REJECTED", { code: 400, description: "Failed [url] [redacted]" });
+    } finally { warn.mockRestore(); }
   });
 });

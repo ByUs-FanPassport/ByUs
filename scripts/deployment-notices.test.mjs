@@ -164,6 +164,12 @@ test('a definitive rejection can reuse its receipt without creation-only PATCH f
   assert.equal(records.sent.length, 1);
 });
 
+test('a pre-send rejection preserves its specific cause instead of blaming Telegram', async () => {
+  const { options, records } = harness({ sendError: Object.assign(new Error('rejected'), { definitelyNotSent: true, noticeCode: 'RECEIPT_NOT_RESERVED' }) });
+  await assert.rejects(notifyDeployment(options), /RECEIPT_NOT_RESERVED/);
+  assert.match(records.writes.at(-1).output.summary, /RECEIPT_NOT_RESERVED/);
+});
+
 test('redeploying an already announced revision makes no new claim or message', async () => {
   const { options, records } = harness(); options.notes = () => [];
   assert.equal((await notifyDeployment(options)).skipped, 'no_new_changes_to_announce');
