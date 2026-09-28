@@ -18,7 +18,7 @@ const copy = {
   ko: {
     title: <>엘리나와 함께 <br />뱅크시 전시 보러 가요</>,
     label: "엘리나와 함께 뱅크시 전시 보러 가요",
-    description: "팬 인증 → 응모권 받기 → 선물 선택",
+    description: "팬 인증하고 응모권을 받아 원하는 선물에 응모하세요.",
     action: "이벤트 응모하기",
     fanmeeting: "미국 팬미팅, ByUs와 함께 준비하세요",
     explore: "기획사와 아티스트를 위한 미국 현지 협업",
@@ -26,7 +26,7 @@ const copy = {
   en: {
     title: <>See Banksy <br />with Elina</>,
     label: "See Banksy with Elina",
-    description: "Verify fandom → collect tickets → choose a prize",
+    description: "Verify fandom, get tickets, and enter for a prize.",
     action: "Enter the raffle",
     fanmeeting: "Plan your U.S. fanmeeting with ByUs",
     explore: "U.S. event partnerships for agencies and artists",

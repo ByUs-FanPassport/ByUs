@@ -35,17 +35,17 @@ describe("home entry cards", () => {
   });
 
   it.each([
-    ["ko", "엘리나와 함께 뱅크시 전시 보러 가요", "팬 인증 → 응모권 받기 → 선물 선택", "이벤트 응모하기"],
-    ["en", "See Banksy with Elina", "Verify fandom → collect tickets → choose a prize", "Enter the raffle"],
-    ["ja", "Elinaと一緒にバンクシー展へ行こう", "ファン認証 → 応募券を受け取る → プレゼントを選ぶ", "抽選に応募する"],
-    ["zh-Hans", "和 Elina 一起去看班克斯展览", "粉丝认证 → 领取抽奖券 → 选择礼物", "参加活动抽奖"],
-    ["zh-Hant", "和 Elina 一起去看班克斯展覽", "粉絲認證 → 領取抽獎券 → 選擇禮物", "參加活動抽獎"],
-    ["es", "Ve a la exposición de Banksy con Elina", "Verifica tu perfil de fan → recibe boletos → elige tu regalo", "Participar en el sorteo"],
-    ["id", "Lihat pameran Banksy bersama Elina", "Verifikasi penggemar → dapatkan tiket undian → pilih hadiah", "Ikuti undian"],
-    ["vi", "Đi xem triển lãm Banksy cùng Elina", "Xác minh người hâm mộ → nhận vé dự thưởng → chọn quà", "Tham gia rút thăm"],
-    ["th", "ไปชมนิทรรศการ Banksy กับ Elina", "ยืนยันสถานะแฟน → รับสิทธิ์ลุ้นรางวัล → เลือกของขวัญ", "เข้าร่วมกิจกรรมชิงรางวัล"],
-    ["pt", "Veja a exposição de Banksy com Elina", "Verifique seu perfil de fã → receba bilhetes → escolha seu presente", "Participar do sorteio"],
-    ["fr", "Découvrez l’exposition Banksy avec Elina", "Validez votre statut de fan → recevez des tickets → choisissez votre cadeau", "Participer au tirage au sort"],
+    ["ko", "엘리나와 함께 뱅크시 전시 보러 가요", "팬 인증하고 응모권을 받아 원하는 선물에 응모하세요.", "이벤트 응모하기"],
+    ["en", "See Banksy with Elina", "Verify fandom, get tickets, and enter for a prize.", "Enter the raffle"],
+    ["ja", "Elinaと一緒にバンクシー展へ行こう", "ファン認証で応募券を受け取り、好きな賞品に応募しましょう。", "抽選に応募する"],
+    ["zh-Hans", "和 Elina 一起去看班克斯展览", "完成粉丝认证，领取抽奖券，参与心仪奖品的抽奖。", "参加活动抽奖"],
+    ["zh-Hant", "和 Elina 一起去看班克斯展覽", "完成粉絲認證，領取抽獎券，參加心儀獎品的抽獎。", "參加活動抽獎"],
+    ["es", "Ve a la exposición de Banksy con Elina", "Verifica que eres fan, recibe boletos y participa por un regalo.", "Participar en el sorteo"],
+    ["id", "Lihat pameran Banksy bersama Elina", "Verifikasi penggemar, dapatkan tiket, lalu ikuti undian hadiah.", "Ikuti undian"],
+    ["vi", "Đi xem triển lãm Banksy cùng Elina", "Xác minh người hâm mộ, nhận vé và tham gia rút thăm quà.", "Tham gia rút thăm"],
+    ["th", "ไปชมนิทรรศการ Banksy กับ Elina", "ยืนยันสถานะแฟน รับสิทธิ์ลุ้นรางวัล แล้วร่วมลุ้นของขวัญที่คุณชอบ", "เข้าร่วมกิจกรรมชิงรางวัล"],
+    ["pt", "Veja a exposição de Banksy com Elina", "Verifique seu perfil de fã, receba bilhetes e concorra ao seu presente favorito.", "Participar do sorteio"],
+    ["fr", "Découvrez l’exposition Banksy avec Elina", "Validez votre statut de fan et utilisez vos tickets pour tenter de gagner un cadeau.", "Participer au tirage au sort"],
   ] as const)("uses the Banksy raffle copy in %s", (locale, title, description, action) => {
     const { container } = render(<HomeEntryCards celebrities={[]} locale={locale} />);
     expect(container).toHaveTextContent(title);
@@ -67,7 +67,7 @@ describe("home entry cards", () => {
     const cards = [container.querySelector("[data-home-hero-banner]"), links[1]];
     for (const card of cards) {
       expect(card).toHaveTextContent("엘리나와 함께 뱅크시 전시 보러 가요");
-      expect(card).toHaveTextContent("팬 인증 → 응모권 받기 → 선물 선택");
+      expect(card).toHaveTextContent("팬 인증하고 응모권을 받아 원하는 선물에 응모하세요.");
       expect(card).toHaveTextContent("이벤트 응모하기");
       expect(card).toHaveTextContent("ELINA × BANKSY");
     }

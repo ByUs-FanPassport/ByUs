@@ -13,6 +13,10 @@
 .action > a { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:48px; color:#19191e !important; font-size:16px; font-weight:750; text-decoration:none; }
 .action > a > span { display:inline-flex; align-items:center; gap:6px; }
 .action svg { width:20px; height:20px; flex:none; }
+@media (min-width:768px) {
+  .banner[data-kind="guide"] .copy { justify-content:space-between; }
+  .banner[data-kind="guide"] .action { margin-top:0; }
+}
 .banner[data-kind="live"] .image { display:none; }
 .banner[data-kind="live"] .overlay { display:block; }
 .banner[data-kind="live"] .copy { position:absolute; inset:auto 0 0; width:100%; height:auto; color:#fff; }

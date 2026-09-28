@@ -165,7 +165,7 @@ describe("canonical 03 guest home", () => {
     fireEvent.click(screen.getByRole("button", { name: "2번째 배너 보기" }));
     const hero = screen.getByRole("region", { name: "홈 배너" });
     expect(within(hero).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
-    expect(within(hero).getByText("팬 인증 → 응모권 받기 → 선물 선택")).toBeInTheDocument();
+    expect(within(hero).getByText("팬 인증하고 응모권을 받아 원하는 선물에 응모하세요.")).toBeInTheDocument();
     expect(within(hero).getByText("뱅크시 전시 티켓 · 60명 추첨")).toBeInTheDocument();
     expect(within(hero).getByText(/응모 마감/)).toBeInTheDocument();
     expect(within(hero).getByText("2026.10.07 18:00 (KST)")).toHaveAttribute("datetime", "2026-10-07T09:00:00+00:00");

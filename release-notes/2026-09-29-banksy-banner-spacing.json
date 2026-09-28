@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "홈의 엘리나 × 뱅크시 배너에서 제목과 안내 사이 간격을 고르게 조정했어요.",
+    "화살표로 나열했던 참여 방법을 읽기 쉬운 한 문장으로 바꿨어요.",
+    "첨부는 배포 전에 컴퓨터와 휴대폰 크기로 확인한 테스트 화면이에요."
+  ],
+  "path": "/",
+  "images": [
+    "release-notes/images/2026-09-29-banksy-banner-desktop.png",
+    "release-notes/images/2026-09-29-banksy-banner-mobile.png"
+  ]
+}
