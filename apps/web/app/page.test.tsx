@@ -6,6 +6,7 @@ const repositories = vi.hoisted(() => ({
   list: vi.fn(),
   listPrimaryLives: vi.fn(),
   guidePhotos: vi.fn(),
+  raffles: vi.fn(),
 }));
 
 vi.mock("../server/config/env", () => ({ loadServerEnv: () => ({ SUPABASE_URL: "https://db.test", SUPABASE_SERVICE_ROLE_KEY: "secret" }) }));
@@ -14,15 +15,29 @@ vi.mock("../server/content/published-content-repository", () => ({ createPublish
 
 vi.mock("../server/content/home-banner-repository", () => ({ createHomeBannerRepository: () => ({ list: repositories.homeBanners }) }));
 
+vi.mock("../server/raffle/raffle-dependencies", () => ({ createRaffleDependencies: () => ({ list: repositories.raffles }) }));
+
 import HomePage from "./page";
 
 describe("Home server content isolation", () => {
   beforeEach(() => {
     repositories.homeBanners.mockReset().mockResolvedValue([]);
+    repositories.raffles.mockReset().mockResolvedValue({ raffles: [] });
     repositories.guidePhotos.mockReset().mockResolvedValue(undefined);
     repositories.listFeaturedPublished.mockReset().mockResolvedValue([]);
     repositories.list.mockReset().mockResolvedValue([]);
     repositories.listPrimaryLives.mockReset().mockResolvedValue([]);
+  });
+
+  it("passes current raffle metadata through and omits it when its read fails", async () => {
+    const raffles = [{ title: "Current prize", entryClosesAt: "2026-10-07T09:00:00Z" }];
+    repositories.raffles.mockResolvedValue({ raffles });
+    const result = await HomePage({ searchParams: Promise.resolve({ locale: "en" }) });
+    expect(repositories.raffles).toHaveBeenCalledWith({ celebritySlug: "elina", locale: "en", now: expect.any(Date) });
+    expect(result.props.children[1].props.elinaRaffles).toEqual(raffles);
+    repositories.raffles.mockRejectedValue(new Error("unavailable"));
+    const fallback = await HomePage({ searchParams: Promise.resolve({}) });
+    expect(fallback.props.children[1].props.elinaRaffles).toEqual([]);
   });
 
   it("keeps successful creator content when LIVE loading fails", async () => {

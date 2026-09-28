@@ -2,15 +2,15 @@
 .image { position:absolute; inset:0 0 0 auto; width:40%; overflow:hidden; }
 .desktopImage { position:absolute; inset:0; }
 .overlay { display:none; position:absolute; inset:0; background:linear-gradient(to top, rgb(10 10 12 / 82%) 0%, rgb(10 10 12 / 46%) 36%, rgb(10 10 12 / 8%) 70%, transparent 100%); }
-.copy { position:relative; display:flex; flex-direction:column; width:60%; height:100%; padding:clamp(24px, 4vw, 64px); gap:clamp(12px, 1.6vw, 24px); }
+.copy { position:relative; display:flex; flex-direction:column; width:60%; height:100%; padding:clamp(24px, 3vw, 48px); gap:16px; }
 .eyebrow { display:flex; align-items:center; min-height:24px; color:#ad1d59; font-size:clamp(11px, 1.3vw, 20px); font-weight:750; letter-spacing:.06em; }
 .eyebrow > span { display:inline-flex; align-items:center; gap:6px; }
 .eyebrow svg { width:16px; height:16px; }
-.copy h2 { margin:0; font-size:clamp(24px, 3.5vw, 52px); font-weight:800; line-height:1.2; letter-spacing:-.04em; text-wrap:balance; }
-.description { display:grid; justify-items:start; gap:8px; color:#686873; font-size:clamp(12px, 1.6vw, 22px); line-height:1.4; }
+.copy h2 { margin:0; font-size:clamp(36px, 3vw, 40px); font-weight:800; line-height:1.2; letter-spacing:-.04em; text-wrap:balance; }
+.description { display:grid; justify-items:start; gap:8px; color:#686873; font-size:16px; line-height:1.4; }
 .description [data-tone="on-image"] { font-size:clamp(12px, 1.2vw, 16px); }
 .action { margin-top:auto; }
-.action > a { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:48px; color:#19191e !important; font-size:clamp(13px, 1.6vw, 22px); font-weight:750; text-decoration:none; }
+.action > a { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:48px; color:#19191e !important; font-size:16px; font-weight:750; text-decoration:none; }
 .action > a > span { display:inline-flex; align-items:center; gap:6px; }
 .action svg { width:20px; height:20px; flex:none; }
 .banner[data-kind="live"] .image { display:none; }

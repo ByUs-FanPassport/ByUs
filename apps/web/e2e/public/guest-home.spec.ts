@@ -35,12 +35,12 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
     await expect(desktopContext).toBeVisible();
   }
 
-  const googleActions = page.getByRole("link", { name: "Google로 계속하기" });
+  const signInActions = page.getByRole("link", { name: "로그인하기" });
   const passportActions = page.getByRole("link", {
     name: /Fan Passport 발급받기/,
   });
   const secondaryAction =
-    viewport?.width === 360 ? googleActions.first() : googleActions.last();
+    viewport?.width === 360 ? signInActions.first() : signInActions.last();
   const secondaryActionBox = await secondaryAction.boundingBox();
   expect(secondaryActionBox).not.toBeNull();
   expect(secondaryActionBox!.height).toBe(viewport?.width === 360 ? 48 : 44);

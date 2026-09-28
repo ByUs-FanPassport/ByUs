@@ -1,6 +1,9 @@
+import type { RaffleList } from "@/features/benefit/domain/raffle";
+import { formatRaffleDateTime } from "@/features/benefit/ui/benefit-presentation";
+import { messages as raffleMessages } from "@/i18n/catalogs/features__benefit__ui__creator-raffles-screen";
 import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/components__home-entry-cards__home-entry-cards";
-import { additionalLocales } from "@/i18n/messages";
+import { additionalLocales, translate } from "@/i18n/messages";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
 import { CreatorImage } from "../fan-ui/creator-image";
 import Link from "next/link";
@@ -39,12 +42,22 @@ const copy = {
   }))
 };
 
-export function ElinaGuideCard({ locale, elina, hero = false, priority = false }: { locale: AppLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean }) {
+export function ElinaGuideCard({ locale, elina, hero = false, priority = false, raffles = [] }: { locale: AppLocale; elina: PublishedCelebrity | undefined; hero?: boolean; priority?: boolean; raffles?: RaffleList["raffles"] }) {
   const t = copy[locale];
+  const openRaffles = raffles.filter(raffle => raffle.status === "open");
+  const deadline = openRaffles[0]?.entryClosesAt;
+  const sharedDeadline = deadline && openRaffles.every(raffle => raffle.entryClosesAt !== null && Date.parse(raffle.entryClosesAt) === Date.parse(deadline));
+  const deadlineLabel = locale === "ko" ? "응모 마감" : translate(locale, raffleMessages.mf485736216cc, "Entry deadline");
   // Official image: instagram.com/elina_4_22/p/DdjT4dtk_A1/ (2026-09-21), first carousel photo.
   const image = elina ? <CreatorImage slug={elina.slug} src="/images/celebrities/elina/guide-autumn-20260921.jpg" photos={undefined} position="50% 35%" presentation="portrait" locale={locale} alt="" fill priority={priority} sizes={hero ? "(max-width: 767px) calc(100vw - 32px), 40vw" : "154px"} /> : null;
   if (hero) return <HomeHeroBanner image={image} eyebrow="ELINA × BANKSY" title={t.title}
-    description={t.description}
+    description={<>
+      {openRaffles.length > 0 ? <>
+        <strong className={styles.heroPrizes}>{openRaffles.map(raffle => `${raffle.title} · ${locale === "ko" ? `${raffle.winnerQuantity}명 추첨` : translate(locale, raffleMessages.m6ad6cdce1138, "{0} winners", [raffle.winnerQuantity])}`).join(" · ")}</strong>
+        <span className={styles.heroDeadline}>{deadlineLabel} · {sharedDeadline ? <time dateTime={deadline}>{formatRaffleDateTime(deadline, locale)}</time> : locale === "ko" ? "경품별 확인" : translate(locale, raffleMessages.mcd57c1a36622, "View details")}</span>
+      </> : null}
+      <span>{t.description}</span>
+    </>}
     action={<Link href={elinaRafflesHref(locale)} aria-label={t.label}><span>{t.action}</span><ArrowRight aria-hidden="true" /></Link>} />;
   return <Link className={styles.guide} href={elinaRafflesHref(locale)} aria-label={t.label}>
     <span className={styles.portrait}>{image}</span>

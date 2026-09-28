@@ -1,5 +1,6 @@
 "use client";
 
+import type { RaffleList } from "@/features/benefit/domain/raffle";
 import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/components__live-hero-carousel";
 import { additionalLocales, translate } from "@/i18n/messages";
@@ -95,7 +96,9 @@ export function LiveHeroCarousel({
   homeBanners,
   locale,
   elina,
+  elinaRaffles,
 }: {
+  elinaRaffles?: RaffleList["raffles"];
   elina?: PublishedCelebrity;
   homeBanners: readonly HomeBanner[];
   locale: AppLocale;
@@ -233,7 +236,7 @@ export function LiveHeroCarousel({
             inert={activeIndex !== homeBanners.length}
             data-active={activeIndex === homeBanners.length ? "true" : "false"}
           >
-            <ElinaGuideCard locale={locale} elina={elina} hero priority={homeBanners.length === 0} />
+            <ElinaGuideCard locale={locale} elina={elina} raffles={elinaRaffles} hero priority={homeBanners.length === 0} />
           </article>
         </div>
       </div>

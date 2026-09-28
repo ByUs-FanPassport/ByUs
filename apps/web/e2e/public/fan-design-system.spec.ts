@@ -27,7 +27,7 @@ for (const route of ["/", "/live", "/live/calendar", "/my"]) {
       // Catalog may be empty as real schedules change; check geometry whenever present.
       if (await status.count()) await expect(status).toHaveCSS("min-height", "0px");
     }
-    if (route === "/") await expect(page.getByRole("link", { name: "Google로 계속하기" }).first()).toBeVisible();
+    if (route === "/") await expect(page.getByRole("link", { name: "로그인하기" }).first()).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     // Only the active slide is visible; clipped, lazy carousel images may have viewport bounds.
     if (route === "/") await expect.poll(() => page.locator('[aria-roledescription="slide"][data-active="true"] img').evaluateAll((images) => images.every((node) => {

@@ -1,3 +1,4 @@
+import { createRaffleDependencies } from "../server/raffle/raffle-dependencies";
 import { toContentLocale } from "@/i18n/locales";
 import { parseAppLocale } from "@/i18n/locales";
 import { createHomeBannerRepository } from "../server/content/home-banner-repository";
@@ -26,11 +27,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY,
   });
   const celebrityRepository = createPublishedContentRepositoryFromEnvironment();
-  const [featuredLivesResult, celebritiesResult, celebrityLivesResult, homeBannersResult] = await Promise.allSettled([
+  const [featuredLivesResult, celebritiesResult, celebrityLivesResult, homeBannersResult, elinaRafflesResult] = await Promise.allSettled([
     liveRepository.listFeaturedPublished({ locale: toContentLocale(locale), now: new Date() }),
     celebrityRepository.list(toContentLocale(locale)),
     celebrityRepository.listPrimaryLives(toContentLocale(locale)),
     createHomeBannerRepository({ url: environment.SUPABASE_URL, serviceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY }).list(toContentLocale(locale)),
+    createRaffleDependencies().list({ celebritySlug: "elina", locale: toContentLocale(locale), now: new Date() }),
   ]);
   if (featuredLivesResult.status === "rejected" && celebritiesResult.status === "rejected" && homeBannersResult.status === "rejected") throw new Error("Home content unavailable");
   const contentErrors: HomeContentErrors = {
@@ -46,6 +48,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       dangerouslySetInnerHTML={{ __html: serializeStructuredData(homeStructuredData()) }}
     />
     <GuestHome
+      elinaRaffles={elinaRafflesResult.status === "fulfilled" ? elinaRafflesResult.value.raffles : []}
       homeBanners={homeBannersResult.status === "fulfilled" ? homeBannersResult.value : []}
       celebrities={celebritiesResult.status === "fulfilled" ? celebritiesResult.value : []}
       celebrityLives={celebrityLivesResult.status === "fulfilled" ? celebrityLivesResult.value : []}

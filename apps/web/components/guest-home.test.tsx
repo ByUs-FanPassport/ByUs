@@ -43,7 +43,13 @@ const celebrities = [
   { slug: "elina", locale: "ko", name: "Elina", summary: "Elina summary", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina portrait", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [], displayOrder: 1, fanCount: 3_200_000 },
   { slug: "changha", locale: "ko", name: "Changha", summary: "Changha summary", image: { url: "/images/guest-home/changha-card.jpg", alt: "Changha portrait", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [], displayOrder: 2, fanCount: 1_450_000 },
 ] as const;
-const defaultProps = { homeBanners: [bannerFixture], celebrities, locale: "ko" as const };
+const elinaRaffles = [{
+  id: "6036dfa3-6fe3-4d6f-aa02-93917af4d8de", benefitId: "fff318a6-24c7-4012-8290-3494a55e287c",
+  title: "뱅크시 전시 티켓", summary: "엘리나 경품", imageUrl: null, winnerQuantity: 60,
+  status: "open" as const, entryOpensAt: null, entryClosesAt: "2026-10-07T09:00:00+00:00",
+  fulfillmentMethod: "on_site_pickup" as const, perFanTicketLimit: null,
+}];
+const defaultProps = { homeBanners: [bannerFixture], celebrities, elinaRaffles, locale: "ko" as const };
 const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boolean = () => false) => ({
   states: Object.fromEntries(slugs.map((slug) => [slug, { reacted: reacted(slug) }])),
 });
@@ -136,7 +142,10 @@ describe("canonical 03 guest home", () => {
   it("keeps one mobile sign-in action and the desktop Passport action", () => {
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    expect(screen.getAllByRole("link", { name: "Google로 계속하기" })).toHaveLength(2);
+    const signInLinks = screen.getAllByRole("link", { name: "로그인하기" });
+    expect(signInLinks).toHaveLength(2);
+    for (const link of signInLinks) expect(link).toHaveAttribute("href", "/login?locale=ko");
+    expect(screen.queryByRole("link", { name: /Google|Apple/ })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Fan Passport 발급받기/ })).toHaveLength(1);
     expect(
       screen.getByRole("img", {
@@ -157,6 +166,9 @@ describe("canonical 03 guest home", () => {
     const hero = screen.getByRole("region", { name: "홈 배너" });
     expect(within(hero).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
     expect(within(hero).getByText("팬 인증 → 응모권 받기 → 선물 선택")).toBeInTheDocument();
+    expect(within(hero).getByText("뱅크시 전시 티켓 · 60명 추첨")).toBeInTheDocument();
+    expect(within(hero).getByText(/응모 마감/)).toBeInTheDocument();
+    expect(within(hero).getByText("2026.10.07 18:00 (KST)")).toHaveAttribute("datetime", "2026-10-07T09:00:00+00:00");
     expect(within(hero).getByRole("link", { name: "엘리나와 함께 뱅크시 전시 보러 가요" }))
       .toHaveAttribute("href", "/c/elina/raffles?locale=ko");
   });
@@ -178,6 +190,21 @@ describe("canonical 03 guest home", () => {
     render(<GuestHome {...defaultProps} homeBanners={[]} featuredLives={[featuredLive]} contentErrors={{ homeBanners: true }} />);
     expect(within(screen.getByRole("region", { name: "홈 배너" })).getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "관리자가 등록한 LIVE 상세 보기" })).toBeInTheDocument();
+  });
+
+  it.each(["closed", "cancelled"] as const)("does not promote %s raffle dates as open entries", status => {
+    render(<GuestHome {...defaultProps} featuredLives={[]} homeBanners={[]} elinaRaffles={[{ ...elinaRaffles[0], status }]} />);
+    expect(screen.queryByText(/2026.10.07/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
+  });
+
+  it("keeps different prize deadlines separate and localizes the login entry", () => {
+    render(<GuestHome {...defaultProps} locale="en" featuredLives={[]} homeBanners={[]} elinaRaffles={[
+      elinaRaffles[0], { ...elinaRaffles[0], id: "other", entryClosesAt: "2026-10-09T09:00:00+00:00" },
+    ]} />);
+    expect(screen.getByText("Entry deadline · View details")).toBeInTheDocument();
+    expect(screen.queryByText(/2026.10.07/)).not.toBeInTheDocument();
+    for (const link of screen.getAllByRole("link", { name: "Sign in" })) expect(link).toHaveAttribute("href", "/login?locale=en");
   });
 
   it("localizes the nine-empty-stamp Passport image description", () => {
@@ -539,7 +566,7 @@ describe("canonical 03 guest home", () => {
     privy.ready = false;
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "로그인하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" })).toHaveLength(2);
@@ -566,7 +593,7 @@ describe("canonical 03 guest home", () => {
 
     expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Google로 계속하기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "로그인하기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
     expect(screen.queryByText("실버 1 · 15점")).not.toBeInTheDocument();
     const gradeButtons = screen.getAllByRole("button", { name: /^KARA ·/ });
