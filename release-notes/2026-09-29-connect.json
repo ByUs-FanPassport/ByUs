@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "ByUs 소개 영상과 공홈·인스타그램·팀 연락처를 한곳에서 볼 수 있는 Connect 페이지를 추가했어요.",
+    "영상을 건너뛰거나 다시 볼 수 있고, 한국어와 영어를 선택할 수 있어요.",
+    "첨부는 배포 전 휴대폰과 컴퓨터 크기로 확인한 테스트 화면이에요."
+  ],
+  "path": "/connect",
+  "images": [
+    "release-notes/images/2026-09-29-connect-mobile.png",
+    "release-notes/images/2026-09-29-connect-desktop.png"
+  ]
+}
