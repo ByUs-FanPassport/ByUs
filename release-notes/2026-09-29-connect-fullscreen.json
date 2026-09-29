@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "Connect 첫 화면의 소개 영상이 모바일과 PC 화면 전체를 채우도록 바꿨어요.",
+    "영상 위에서 건너뛰기와 링크 바로 보기를 사용할 수 있고, 작은 화면과 마지막 장면에서 문구가 겹치지 않도록 조정했어요.",
+    "첨부 이미지는 배포 전 실제 브라우저로 확인한 모바일·PC 테스트 화면이에요."
+  ],
+  "path": "/connect",
+  "images": [
+    "release-notes/images/2026-09-29-connect-fullscreen-mobile.png",
+    "release-notes/images/2026-09-29-connect-fullscreen-desktop.png"
+  ]
+}

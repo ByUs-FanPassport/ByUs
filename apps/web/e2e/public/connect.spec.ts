@@ -45,6 +45,62 @@ test("the intro can be skipped by either action and stays skipped for the sessio
   await expect(page.getByRole("button", { name: /비즈니스 연락|Business contact/ })).toBeVisible();
 });
 
+test("the fullscreen film and controls fit the viewport throughout playback", async ({ page }, testInfo) => {
+  if (testInfo.project.name === "chromium-1440") await page.setViewportSize({ width: 1440, height: 900 });
+  await openFreshIntro(page);
+  await page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ }).click();
+  const video = page.locator("video");
+  const viewport = page.viewportSize()!;
+  await expect(video).toHaveCSS("object-fit", "cover");
+  expect(await video.boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  for (const button of [page.getByRole("button", { name: /건너뛰기|Skip/ }), page.getByRole("button", { name: /링크 바로 보기|Explore our links/ }), page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).last()]) {
+    const box = (await button.boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 24);
+    await expect(button).toBeInViewport();
+  }
+  await page.evaluate(() => document.fonts.ready);
+  for (const time of [0.1, 3, 6, 9]) {
+    await video.evaluate((element, at) => new Promise<void>(resolve => {
+      element.addEventListener("seeked", () => resolve(), { once: true });
+      (element as HTMLVideoElement).currentTime = at;
+    }), time);
+    await page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).last().click();
+    await expect(page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ })).toBeVisible();
+    if (time >= 8) await expect(page.getByRole("heading", { level: 1 })).toBeHidden();
+    await testInfo.attach(`connect-fullscreen-${viewport.width}-${time}`, { body: await page.screenshot({ animations: "disabled" }), contentType: "image/png" });
+    await page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ }).click();
+  }
+  await expectAccessible(page);
+  await page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).last().click();
+  await expect(page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ })).toBeVisible();
+});
+
+test("fullscreen controls fit 390px and short 360px screens in both languages", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium-360", "Additional viewport sizes run once.");
+  await openHub(page);
+  for (const language of ["한국어", "English"]) {
+    await page.getByRole("button", { name: language, exact: true }).click();
+    for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+      await page.setViewportSize(viewport);
+      await page.getByRole("button", { name: /소개 영상 다시보기|Watch our story again/ }).click();
+      await page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ }).click();
+      expect(await page.locator("video").boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
+      await expectNoHorizontalOverflow(page);
+      const heading = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
+      const links = page.getByRole("button", { name: /링크 바로 보기|Explore our links/ });
+      const box = (await links.boundingBox())!;
+      expect(heading.y + heading.height).toBeLessThan(box.y);
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 24);
+      expect(await links.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      await testInfo.attach(`connect-fullscreen-${viewport.width}-${language}`, { body: await page.screenshot({ animations: "disabled" }), contentType: "image/png" });
+      await links.click();
+    }
+  }
+});
+
 test("the real intro reaches the hub and replay starts from the beginning", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "chromium-360", "One real 9.6 second playback is sufficient.");
   await openFreshIntro(page);
@@ -88,6 +144,7 @@ test("blocked autoplay and video errors retain recovery and direct links", async
   await page.locator("video").evaluate((video) => video.dispatchEvent(new Event("error")));
   const retry = page.getByRole("button", { name: /다시 시도|Try again/ });
   await expect(retry).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeHidden();
   await retry.click();
   await expect(page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).first()).toBeVisible();
 
