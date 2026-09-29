@@ -591,7 +591,8 @@ describe("canonical 03 guest home", () => {
 
     render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
 
-    expect(await screen.findAllByRole("heading", { name: "카밀리아님, 반가워요." })).toHaveLength(2);
+    expect(await screen.findAllByText("카밀리아님, 반가워요.")).toHaveLength(2);
+    expect(screen.getAllByRole("heading", { name: "나의 팬 활동" })).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "로그인하기" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /^KARA 패스포트,/ })).toHaveLength(2);
@@ -648,9 +649,9 @@ describe("canonical 03 guest home", () => {
       ? Promise.resolve(Response.json(reactionStates(celebrities.map(({ slug }) => slug))))
       : fetcher(url));
     render(<GuestHome {...defaultProps} featuredLives={[]} />);
-    expect(await screen.findAllByRole("heading", { name: "이전님, 반가워요." })).toHaveLength(2);
+    expect(await screen.findAllByText("이전님, 반가워요.")).toHaveLength(2);
     await act(async () => { notifyFanActivityUpdated("owner-a"); });
-    expect(await screen.findAllByRole("heading", { name: "갱신님, 반가워요." })).toHaveLength(2);
+    expect(await screen.findAllByText("갱신님, 반가워요.")).toHaveLength(2);
   });
 
   it("restores the Passport artwork and lets fans page through multiple celebrity Passports", async () => {

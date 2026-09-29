@@ -8,3 +8,9 @@
 - 문서·테스트만 바꾸거나 같은 코드를 다시 배포할 때는 새 수정 안내를 만들지 않아도 된다.
 - 운영 배포 성공 뒤 GitHub Actions가 Sally_Bug_Report 방에 자동 전송한다. 작업 에이전트가 별도로 같은 안내를 보내지 않는다.
 - `NOTICE_DELIVERY_UNCERTAIN`이면 자동 재전송하거나 receipt를 삭제하지 않는다. 방과 GitHub check의 전송 기록을 먼저 확인한다.
+
+# ByUs UI 작업
+
+- UI 신설·수정·검토에는 `/Users/jewel/.codex/instructions/ui-projects/byus.md`를 읽고 현재 checkout의 `DESIGN.md`와 공통 컴포넌트를 확인한다. 전역 `ui-skills-root`·`ui-workflow.md`·`ui-context.md`의 연결을 유지한다.
+- 공통 규칙·다국어·접근성 검사와 실제 화면의 미적 검수를 모두 완료 기준으로 삼는다. 과거 관찰 수치와 현재 계약을 구분하며, 토큰·테스트 통과만으로 시각적 완성도를 통과 처리하지 않는다.
+- 로컬 전역 지침을 사용할 수 없는 환경에서도 `DESIGN.md`의 현재 UI 계약과 완료 기준을 적용한다. 기존 배포 안내 규칙은 그대로 유지한다.

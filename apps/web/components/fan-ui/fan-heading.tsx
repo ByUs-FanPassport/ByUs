@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import type { Route } from "next";
+import { ChevronRight } from "../icons";
 import styles from "./fan-heading.module.css";
 
 export type FanHeadingVariant = "standard" | "editorial" | "personal-page" | "personal-section";
@@ -13,11 +16,11 @@ export function FanHeading({ as: Tag = "h2", variant = "standard", id, children 
   return <Tag id={id} className={`${styles.heading} ${styles[variant]}`} data-fan-heading={variant}>{children}</Tag>;
 }
 
-/** Shared title / description / accessory pattern; each variant preserves its incumbent rhythm. */
-export function FanSectionHeader({ title, description, accessory, variant = "standard", as = "h2", id }: {
+/** The title keeps its reading width; secondary navigation wraps below it. */
+export function FanSectionHeader({ title, description, action, variant = "standard", as = "h2", id }: {
   title: ReactNode;
   description?: ReactNode;
-  accessory?: ReactNode;
+  action?: { label: string; href: string };
   variant?: "standard" | "editorial" | "personal";
   as?: "h1" | "h2" | "h3";
   id?: string;
@@ -27,6 +30,6 @@ export function FanSectionHeader({ title, description, accessory, variant = "sta
       <FanHeading as={as} id={id} variant={variant === "personal" ? "personal-section" : variant}>{title}</FanHeading>
       {description != null ? <p className={styles.description}>{description}</p> : null}
     </div>
-    {accessory}
+    {action ? <Link className={styles.action} href={action.href as Route}><span>{action.label}</span><ChevronRight aria-hidden="true" /></Link> : null}
   </div>;
 }

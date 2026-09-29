@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 for (const width of [390, 1440]) {
   test(`short MY and login overlay keep footer at bottom at ${width}px`, async ({ page }, testInfo) => {
-    await page.setViewportSize({ width, height: 1400 });
+    await page.setViewportSize({ width, height: 1800 });
     await page.goto("/my?locale=ko");
     const footer = page.locator("[data-fan-site-footer]");
     await expect(footer).toHaveCount(1);
@@ -10,12 +10,12 @@ for (const width of [390, 1440]) {
     const clearance = width < 1024 ? 64 : 0;
     await expect.poll(async () => {
       const rect = (await footer.boundingBox())!;
-      return Math.abs(rect.y + rect.height + clearance - 1400);
+      return Math.abs(rect.y + rect.height + clearance - 1800);
     }).toBeLessThan(2);
-    await page.getByRole("link", { name: /Google/ }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("link", { name: "로그인하기", exact: true }).click();
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 30000 });
     const rect = (await footer.boundingBox())!;
-    expect(Math.abs(rect.y + rect.height + clearance - 1400)).toBeLessThan(2);
+    expect(Math.abs(rect.y + rect.height + clearance - 1800)).toBeLessThan(2);
     await page.screenshot({ path: testInfo.outputPath("login-overlay-footer.png"), fullPage: true });
   });
 

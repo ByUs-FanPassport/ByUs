@@ -24,8 +24,8 @@ export function DocumentLocale() {
         if (!isInstagramManagementPath(currentPath)) document.cookie = `byus_page_locale=${locale}; Path=/; SameSite=Lax`;
         if (url.searchParams.has("locale")) {
           url.searchParams.delete("locale");
-          // Let Next synchronize its URL too, including repeated same-page links.
-          window.history.replaceState({ byusLocale: locale }, "", `${url.pathname}${url.search}${url.hash}`);
+          // Keep Next's router state so streamed metadata and history traversal stay attached to this entry.
+          window.history.replaceState({ ...window.history.state, byusLocale: locale }, "", `${url.pathname}${url.search}${url.hash}`);
         } else if (window.history.state?.byusLocale !== locale) {
           // Record the language without changing this clean URL's router state.
           window.history.replaceState({ ...window.history.state, byusLocale: locale }, "");

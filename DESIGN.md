@@ -7,6 +7,7 @@ palette: 'single-gradient-highlight'
 font: 'pretendard'
 source: "live rendered page"
 observed-at: "2026-07-20"
+ui-contract-updated: "2026-09-30"
 theme: "light-only"
 ui-font: "Pretendard Variable"
 base-spacing: "4px"
@@ -22,9 +23,25 @@ also live in feature CSS modules. Check deployed source and rendered desktop /
 mobile states before claiming full alignment. Preserve intentional surface-specific
 differences when consolidating tokens and components. -->
 
+## Current shared content contract (2026-09-30)
+
+- A section reads in this order: heading and description, secondary navigation, filters, content. `FanSectionHeader` owns its `{ label, href }` action; when the row cannot hold a 20rem title column and the action, the action wraps below. Never shrink the title to fit a translation.
+- Section headings use 20px on mobile and 24px from 768px; item names use 16px/700, body copy 16px, metadata 13px. Related copy has 4–8px gaps, subgroups 16px, and major sections 32px/48px. Existing hero artwork/display type remains independent.
+- Creator summaries read image → name → audience metadata → actions. The name may wrap; stateful fan links stay actionable. Social marks remain 20px inside non-shrinking 44px targets and action groups wrap when necessary.
+- Filters have 12px corners and quiet labels. Status pills remain distinct from filters. Community translation belongs to the body, reactions share one row, and secondary/destructive actions live in the accessible More menu.
+- All 11 `APP_LOCALES` use the same composition. Use native language wrapping, flexible heights, and complete accessible labels; do not encode Korean/English-only layout branches. CMS content fallback and proper names retain their existing semantics.
+- For shared composition changes, verify affected home/community screens at 390px and 1440px for every supported language, plus 360px and 768px for Korean, Japanese, Vietnamese and Thai. Read the locale list from current `APP_LOCALES` and cover new scripts/directions when supported. Include applicable guest/owner/loading/empty/error states, long names, keyboard menus, locale switching and fixed-navigation clearance. Scope local changes to their actual impact and reuse unchanged valid evidence.
+
+### Completion requires a visual finish review
+
+- Apply the current user-approved design, then this current role contract. Historical observations and example prompts cannot override it. Reuse shared owners and keep approved hero/profile/display variants; do not normalize every surface into the same card. This document is a design contract, not a claim that an old checkout or production already implements it.
+- Verify both behavior/accessibility and the actual composition. View the affected mobile and desktop screens at native display size with realistic normal content and varied representative images. Confirm a clear first focus and next action, readable title/body/metadata hierarchy, coherent information groups, optical icon alignment, face-legible crops, balanced density and deliberate section rhythm. Compare with the approved product direction and resolve visible disharmony before claiming visual completion.
+- Check translated and long content without shrinking type/targets or hiding meaningful information. Inspect active keyboard focus in Portal menus as well as the surrounding page, and inspect open dialogs for padding, clipping, safe-area and fixed-navigation conflicts. Focus ownership or automated accessibility passes alone do not prove visible focus or aesthetic quality.
+- Keep evidence tied to the changed screen, width, locale and state. Loading-only captures, repeated identical portraits or isolated component fixtures cannot certify a whole page. Report functional checks and visual judgment separately; disclose incomplete states and unresolved material issues. No score or token check guarantees beauty.
+
 ## Intent
 
-The system is an image-first fan utility: editorial artist imagery creates emotion, while quiet product surfaces make reservation, login, discovery, and Passport tasks immediately understandable. The live rendered page is the source of truth for the detailed rules below.
+The system is an image-first fan utility: editorial artist imagery creates emotion, while quiet product surfaces make reservation, login, discovery, and Passport tasks immediately understandable. Current approved role contracts below guide new UI. Historical extraction notes describe their original evidence, not current deployment status.
 
 ## Color
 
@@ -36,7 +53,7 @@ Use Pretendard Variable throughout product UI. Apply the exact hierarchy, weight
 
 ## Image
 
-Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed portraits: 5:4 on mobile and square from 768px, retaining the registered image source and focal position. Its mobile role filters show 36px pills within separate 44px touch targets; search and sort render at the same 14px label size. Use only the fully opened identity-and-stamp Passport asset.
+Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed portraits: 5:4 on mobile and square from 768px, retaining the registered image source and focal position. Role filters use 12px rounded rectangles with at least 44px touch targets; search and sort render at the same 14px label size. Use only the fully opened identity-and-stamp Passport asset.
 
 ## Surfaces
 
@@ -48,7 +65,7 @@ Maintain 44px minimum targets, a 3px Near Black `focus-visible` outline, 160ms c
 
 ## Locked Contract
 
-Preserve the Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel behavior. The global fan information architecture is `HOME · LIVE · 최애 · MY` on desktop and mobile: HOME routes to `/`, LIVE to `/live`, 최애 to `/celebrities`, and MY to `/my`. Passport, benefits, notifications, and settings are MY sub-surfaces and keep MY active. Focused login, onboarding, verification, attendance, and survey flows may use the compact Focus Header. The hero remains the sole dominant visual surface, while the active surface's one most important next action may use the gradient-filled Primary treatment.
+Preserve the Korean copy, artist identities, live data, Google login treatment, opened Passport lifecycle copy, and responsive panel behavior. The global fan information architecture is `HOME · 커뮤니티 · 최애 · MY` on desktop and mobile: HOME routes to `/`, 커뮤니티 to `/community`, 최애 to `/celebrities`, and MY to `/my`. Passport, benefits, notifications, and settings are MY sub-surfaces and keep MY active. Focused login, onboarding, verification, attendance, and survey flows may use the compact Focus Header. The hero remains the sole dominant visual surface, while the active surface's one most important next action may use the gradient-filled Primary treatment.
 
 The Home hero is an independently managed carousel of published home banners, ordered by the administrator's saved order with stable ID ties. Publishing LIVE occurrences does not add hero slides; the LIVE calendar and upcoming list retain their independent schedules. A creator may have at most one published regular-broadcast banner. Banner artwork, copy and destination are localized for Korean and English. Mobile uses the registered mobile artwork, falling back only to the same language's desktop artwork with contain. The existing Elina participation guide remains the final slide. With more than one item the carousel advances horizontally every 6 seconds; hover, keyboard focus and pointer interaction pause it. Reduced-motion users receive no autoplay or large translation. Hidden slides are inert. Keep existing geometry, controls and typography.
 
@@ -154,10 +171,12 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | Role | Font | Size | Weight | Line Height | Letter Spacing | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | Hero event title | Pretendard Variable | `48px` desktop / `32px` mobile | `850` | `1.02` | `-0.04em` | White overlay title, maximum `15ch` |
-| Page and section heading | Pretendard Variable | `24px` from 768px / `20px` mobile | `800` | `1.2` | `-0.03em` | Always paired with a restrained subtitle |
+| Shared section heading | Pretendard Variable | `24px` from 768px / `20px` mobile | Standard `850`, editorial `800`, personal `700` | Shared role leading | Shared role tracking | Description is optional; preserve the MY page-specific breakpoint and leading |
 | Context-card heading | Pretendard Variable | `20px` | `850` | `1.2` | `-0.03em` | “곧 만날 최애”, “최애의 Fan Passport” |
-| Favorite-card metadata | Pretendard Variable | `13px` | `400` | `1.35` | `0` | Two rows below the image: identity/LIVE status, then fan count/social controls |
-| Live-row title | Pretendard Variable | `15px` | `750` | Normal | `-0.02em` | Single-line truncation |
+| Item / creator name | Pretendard Variable | `16px` | `700` | Shared item leading | Shared role tracking | Image → name → audience metadata → actions; names may wrap |
+| Body copy | Pretendard Variable | `16px` | `400` | Shared body leading | `0` | Preserve readable translated content |
+| Metadata | Pretendard Variable | `13px` | Role-specific `400–550` | Shared metadata leading | `0` | Quieter than the item name |
+| Live-row title | Pretendard Variable | `16px` | `700` | Shared item leading | Shared role tracking | Allow wrapping without clipping the title |
 | Section subtitle | Pretendard Variable | `14px` | `550` | `1.5` | `0` | Muted Ink, sentence-style Korean |
 | Primary CTA | Pretendard Variable | `15px` | `800` | Normal | `0` | Compact, direct verb phrase |
 | Status label | Pretendard Variable | `12px` | `800` | Normal | `0.04em` | Uppercase only for UPCOMING |
@@ -180,11 +199,11 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Primary CTA: at most one visible per active main or inert-isolated overlay; some surfaces need none. Use a 320px maximum width, 48px minimum height, full pill radius, Spectrum Relay fill, White text, Pretendard Variable 15px/800, optically centered label, and optional 18px leading/trailing icons. Labels are short verbs describing the immediate next action. Put necessary preconditions or destination details in helper copy 8px below at 13px/550 and connect it with `aria-describedby`.
 - Google login: 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, authentic multicolor G mark, centered label.
 - Passport CTA: label `Fan Passport 발급받기`; 90% of card width, 52px minimum height, full pill radius, White fill, 1px Spectrum Relay outline, solid Spectrum Ink label, centered label and right arrow.
-- Favorite-card metadata: inset 12px from the card edges and below the media field. Group the regular-weight artist name and operator-managed fan count in a compact left column with a 4px gap; keep the fan-verification link and social controls in a separate right column with their full 44px targets. At card widths of 240px or less, place the action group below the identity. All visible metadata text uses `13px/400`; use color, not font weight, for hierarchy.
-- LIVE state: show a blinking red dot plus `LIVE 진행중` / `LIVE NOW` only for an active LIVE, a static muted dot plus `LIVE 예정` / `UPCOMING LIVE` for a scheduled LIVE, on LIVE surfaces. Home creator cards instead show an outlined heart with `입덕하기` / `Become a fan` beside the name, linking to the existing creator fan-verification detail page (`/c/{slug}`) with the current locale; this is navigation, not a saved-favorite toggle. Disable dot animation for reduced-motion users.
-- Celebrity social controls: align the icon group to the far right of the second metadata row. Use optically centered 20×20px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
-- Mobile/tablet context actions: below 1024px, replace the hidden desktop side panel with a regular in-flow action section immediately after the Hero. Keep both `Google로 계속하기` and `Fan Passport 발급받기` visible, 52px high, full-pill, Spectrum-outline controls; use one column on mobile and two columns from 768px.
-- Text links: minimum 44px interaction height, 14px/650, Muted Ink, unboxed chevron treatment.
+- Creator summaries: inset 12px below the media field, then show a wrapping 16px/700 name, quieter 13px audience metadata, and a separate action group. Use a 4–8px gap within related copy and allow actions to wrap without shrinking their 44px targets.
+- LIVE state: show a blinking red dot plus `LIVE 진행중` / `LIVE NOW` only for an active LIVE, a static muted dot plus `LIVE 예정` / `UPCOMING LIVE` for a scheduled LIVE, on LIVE surfaces. Home creator cards instead show an outlined heart with `입덕하기` / `Become a fan` in the action group, linking to the existing creator fan-verification detail page (`/c/{slug}`) with the current locale; this is navigation, not a saved-favorite toggle. Disable dot animation for reduced-motion users.
+- Celebrity social controls: keep the icon group together in the action area after identity and audience metadata; allow the group to wrap. Use optically centered 20×20px brand marks inside separate 44×44px targets and `0px` gap between adjacent targets. Do not render visible YouTube, TikTok, or Instagram labels. Preserve accessible names in the links.
+- Mobile/tablet context actions: below 1024px, keep the existing state-appropriate activity summary and authentication or Passport action in the normal content flow. Reuse the service/passport action roles; do not force duplicate CTAs or invent a destination for unavailable content.
+- Section secondary links: minimum 44px interaction height, 13px/550, Muted Ink, unboxed chevron treatment. Other text-action roles retain their shared typography.
 - Icon-only controls: use 20×20px visible icons inside 44×44px targets with Lucide-style 1.75–2px strokes. The Header language switch is the deliberate exception: use a 24×24px visible glyph inside the same 44×44px target. Adjacent icon-only controls use `0px` group gap while each target remains distinct and non-overlapping. Do not apply this compact rule to controls with visible text.
 - Repeated LIVE-row actions: use the highlighted Secondary treatment rather than Primary or Neutral. Apply the same White fill, 1px Spectrum Relay outline, and Spectrum Ink label/icons to every action in the collection regardless of reservation or replay state. At desktop use a 184×48px outlined pill with a 14px/750 centered label and balanced 18px leading/trailing icons; below 768px reduce the same action to a separate 44×44px icon target.
 - LIVE detail action rail: treat its title as a Page heading, not a Hero overlay title. Use 24px/800 on desktop and 20px/800 on mobile, 14px/550 schedule labels, 14px/750 schedule values, 24px between information groups, and 8px between the Primary and its 13px/550 helper.
@@ -201,24 +220,24 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Inputs and Interactive Controls
 
 - No form input was observed on this page.
-- Focus styling is global and explicit: 3px Near Black outline, 3px offset.
+- Controls use an explicit 3px Near Black focus outline with 3px outer offset. The shared ContentActions/PostCard More menu items use a 3px inset outline (`-3px` offset) to stay inside the compact popup; report-dialog fields and actions keep the default outer offset. Portal content owns its product font and focus styling independently of the page frame.
 - Touch targets remain at least 44px even when the visible icon or label is smaller.
 
 ### Navigation
 
-- Header: sticky, 64px design token and 68px rendered outer height including padding behavior; White with no bottom divider.
+- Header: sticky White shell using the current shared header geometry, with 88px desktop height from 1024px. Preserve the compact mobile header and avoid duplicating historical extraction heights in new CSS.
 - Wordmark: 80px rendered image inside an 88×44px link target.
-- Desktop navigation from 768px: White pill, 44px height, subtle border, active item in Near Black/800 and inactive items in Muted Ink/600.
+- Desktop navigation from 1024px: White pill, 44px height, subtle border, active item in Near Black/800 and inactive items in Muted Ink/600.
 - Desktop optical correction: navigation is translated upward by 1px to align Pretendard with the wordmark.
-- Below 768px, hide the desktop pill and retain brand plus header actions.
+- Below 1024px, hide the desktop pill and retain brand plus header actions.
 - Below 1024px, show a fixed 64px four-column bottom navigation with a thin top line and a 2px active indicator.
-- Desktop and mobile use the same four product destinations: `HOME`, `LIVE`, `최애`, `MY`. Do not replace them with section anchors or separate mobile-only labels.
+- Desktop and mobile use the same four product destinations: `HOME`, `커뮤니티`, `최애`, `MY`. Do not replace them with section anchors or separate mobile-only labels.
 - `/passports`, `/stamps`, `/benefits`, `/notifications`, and `/settings` are MY sub-routes and render MY as the current top-level destination.
 
 ### Image Treatment
 
 - Hero uses full-bleed high-resolution KARA photography with `object-fit: cover` and a slightly right-shifted focal position.
-- Home favorite cards use a nested gallery composition: a square `#F6F6F5` field contains the shared `min(84%, 240px)` square portrait. The `/celebrities` directory fills its entire square media area. Both use the shared per-creator cover crop; do not use contain letterboxing.
+- Home favorite cards use a nested gallery composition: a square `#F6F6F5` field contains the shared `min(84%, 240px)` square portrait. The `/celebrities` directory fills its entire media area, 5:4 below 768px and square from 768px. Both use the shared per-creator cover crop; do not use contain letterboxing.
 - Favorite portraits are direct, colorful, face-legible editorial crops: blue KARA group styling, warm gold Elina close-up, cool dark Changha close-up.
 - Upcoming LIVE avatars reuse the corresponding artist imagery in circular 64px desktop / 56px mobile crops.
 - Passport uses a transparent, fully opened identity-and-stamp-book asset with `object-fit: contain`; it is never shown as a closed burgundy cover.
@@ -226,7 +245,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Distinctive Components
 
 - Status Rail: UPCOMING outline pill plus date on one horizontal rail; the countdown sits below in monospace. Scheduled LIVE events use `D-{days} HH:MM:SS`, omitting the day prefix when less than 24 hours remain, and update once per second. Active events and countdowns that reach zero show `LIVE NOW`.
-- Favorite Gallery Collection: one rounded outer collection, three light media fields, then two compact regular-weight metadata rows with identity/fan-detail link and fan count/real YouTube, TikTok, and Instagram marks.
+- Favorite Gallery Collection: one rounded outer collection with image-led items; each item reads portrait → emphasized name → fan count → fan-detail and social actions. Keep real YouTube, TikTok, and Instagram marks in full-size targets.
 - Logged-out Live Card: heading and subtitle at the top, centered calendar-heart line icon, centered explanatory copy, Google login CTA at the bottom.
 - Fan Passport Card: title/subtitle, opened Passport asset, lifecycle value copy, and login CTA in one quiet vertical composition.
 - Upcoming LIVE Row: circular avatar, identity/title/date block, right-aligned reservation metadata on tablet/desktop, and a 44px chevron action.
@@ -238,8 +257,8 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - Base unit: `4px`.
 - Repeated spacing values: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64px`.
 - Adjacent icon-only action groups are the deliberate exception to the positive spacing scale: use `0px` between separate 44×44px targets and center a 20×20px icon in each target.
-- Content sections are separated by 64px in the current implementation.
-- Section heading rows use a 20px bottom gap and align the title block against an optional text link.
+- Major content sections use the shared 32px mobile / 48px wider-screen gap.
+- Shared section headers use a 16px bottom gap. The optional secondary link wraps below when a 20rem title column and the action do not fit.
 - Dense components use 12–24px internal gaps; avoid arbitrary intermediate spacing.
 
 ### Grid & Container
@@ -256,7 +275,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Whitespace Philosophy
 
 - Whitespace is the primary neutralizing force against colorful artist imagery.
-- Major sections breathe with 64px separation; do not fill gaps with decorative copy or badges.
+- Major sections use the 32px/48px rhythm; judge the whole-page density with real content and do not fill gaps with decorative copy or badges.
 - Left alignment governs discovery and live information. Center alignment is reserved for empty states and authentication prompts.
 - The right context panel stays sticky and task-focused rather than becoming a second scrolling content feed.
 
@@ -285,6 +304,9 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 - The hero is visually dominant without an external shadow.
 - Image objects may use a soft drop-shadow, but their containing surface remains White.
 - Footer: keep navigation links at 13px/550 inside full 44px targets. Use 48px top and 16px bottom padding on desktop, 40px top and 16px bottom padding on mobile, and create hierarchy with grouped whitespace rather than taller link rows.
+- Keep the three service groups separate from a full-width horizontal social row. On mobile, the service navigation uses two group columns and the longer guide group spans both columns with its links in two columns; from 768px, use three compact service columns.
+- Social marks render at 20×20px, centered inside separate 44×44px targets. Business and policy metadata stays at 13px and wraps naturally instead of shrinking.
+- The footer remains normal-flow content and owns no viewport height, bottom-navigation clearance, or safe-area padding. `FanAppFrame`, `FocusFlowFrame`, standalone login, and standalone page layouts own the clearance required by their navigation and viewport context.
 - No glassmorphism, backdrop blur, ambient colored glow, or broad decorative shadow was observed.
 
 ## 7. Do's and Don'ts
@@ -316,13 +338,13 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 | Name | Width | Key Changes |
 | --- | --- | --- |
 | Mobile | `< 768px` | 16px page inset, 20px headings, 4:5 hero, horizontal 288px favorite cards, 56px live avatars, desktop nav hidden |
-| Tablet | `768–1023px` | 32px page inset, 24px headings, 2:1 hero, three fixed favorite columns, 64px live avatars, desktop nav visible |
-| Desktop | `1024–1279px` | Side context panel is always visible and sticky; bottom navigation disappears; no panel toggle |
+| Tablet | `768–1023px` | 32px page inset, 24px headings, 2:1 hero, three visible favorite cards in the horizontal snap rail, 64px live avatars, compact header and bottom navigation |
+| Desktop | `1024–1279px` | Desktop header navigation appears; side context panel is visible and sticky; bottom navigation disappears; no panel toggle |
 | Wide desktop | `≥ 1280px` | 40px page inset, 384px context panel, 32px column gap; social controls remain icon-only |
 
 ### Touch Targets
 
-- All links and buttons maintain at least 44px in one dimension.
+- Standalone links and buttons maintain at least 44×44px interaction areas; inline prose links keep readable native line flow. Never shrink icon targets to fit a translation.
 - Adjacent icon-only actions maintain independent 44×44px hit areas with `0px` visual gap; hit areas must meet edge-to-edge but never overlap.
 - The visible icon remains 20×20px. Text-bearing actions, navigation labels, and isolated icon controls keep their component-specific spacing.
 - Bottom navigation divides the viewport into four equal-width targets with 64px minimum height.
@@ -331,7 +353,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Responsive Layout Strategy
 
 - Desktop behavior: two-column shell with a 944px content column and sticky 384px context panel at 1440px.
-- Tablet behavior: single content column; side context is removed, but the desktop header navigation remains.
+- Tablet behavior: single content column, compact header and bottom navigation; the side context and desktop header navigation are hidden below 1024px.
 - Mobile behavior: compact header, no desktop nav or side panel, horizontal favorite rail, fixed bottom navigation.
 - Desktop context: keep the right activity panel visible without a header toggle or collapse state. The main column retains its two-column width; mobile activity summaries remain in the content flow.
 - Live metadata: reservation count is hidden on mobile, leaving avatar, content, and action columns.
@@ -351,27 +373,27 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 
 ### Quick Summary
 
-Build a white, image-first K-pop fan product with Pretendard typography, a dominant full-color editorial hero, and only one pink-to-violet filled gradient CTA. Repeated LIVE-row actions may reuse that relay as a consistent 1px outline; keep all other utility surfaces neutral with 1px hairlines, 12/16/20px radii, and short two-layer micro-shadows. Use 64px section spacing and strong but compact heading/subtitle pairs. On wide screens, split the page into a large content column and a narrow sticky logged-out context panel. Below 1024px remove that panel; below 768px switch to horizontal snap cards and fixed bottom navigation.
+Build a white, image-first K-pop fan product with Pretendard typography, a dominant full-color editorial hero, and at most one pink-to-violet filled gradient CTA per active surface. Repeated LIVE-row actions may reuse that relay as a consistent 1px outline; keep all other utility surfaces neutral with 1px hairlines, 12/16/20px radii, and short two-layer micro-shadows. Use the shared 32px/48px section spacing and compact heading/optional-description groups with quiet secondary navigation. On wide screens, split the page into a large content column and a narrow sticky logged-out context panel. Below 1024px remove that panel and use fixed bottom navigation; below 768px use the existing horizontal snap collection where appropriate.
 
 ### Example Component Prompts
 
 - Hero: “Create a 2:1 desktop live hero with full-bleed high-resolution artist photography, a restrained left-and-bottom black scrim, a clearly defined outlined UPCOMING rail, 48px white event title, monospace countdown, and one 320×48px spectrum-gradient reservation pill.”
-- Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; center square portraits at 66.5% of each field, then add two 12px-inset regular-weight metadata rows: artist/fan-detail link and compact fan count/three 44px social controls with 20px brand marks.”
-- Navigation: “Create a 64px sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 768px.”
+- Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; use the shared min(84%, 240px) inset portrait, then a wrapping 16px/700 name, 13px fan count and a separate action group with three 44px social controls and 20px brand marks.”
+- Navigation: “Reuse the shared sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 1024px.”
 - Passport: “Create a quiet White Passport utility card with a 20px/850 title, 14px subtitle, fully opened identity-and-stamp asset, centered two-line lifecycle copy, and a 90%-width 52px outlined login CTA.”
-- Live row: “Create a 112px White live row with a 64px circular artist avatar, compact 15px/750 title and 13px/400 metadata stack, plus a right-aligned 184×48px Spectrum-outline Secondary booking pill. Apply the same outline treatment to every action in the collection. Below 768px use a 44px icon-only action without turning repeated rows into filled Primary buttons.”
+- Live row: “Create a 112px White live row with a 64px circular artist avatar, wrapping 16px/700 title and 13px metadata stack, plus a right-aligned 184×48px Spectrum-outline Secondary booking pill. Apply the same outline treatment to every action in the collection. Below 768px use a 44px icon-only action without turning repeated rows into filled Primary buttons.”
 
 ### Ready-to-Use Prompt
 
-Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and exactly one filled Spectrum Relay primary CTA. Repeated LIVE-row actions may use the same relay as a consistent 1px outline. Use a wide content column plus sticky context panel at desktop, a single column below 1024px, and horizontal snap or fixed bottom navigation patterns below 768px. Do not introduce dark cards, extra filled or decorative gradients, glassmorphism, nested cards, or decorative color surfaces.
+Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and at most one filled Spectrum Relay primary CTA per active surface. Repeated LIVE-row actions may use the same relay as a consistent 1px outline. Use a wide content column plus sticky context panel at desktop, a single column with fixed bottom navigation below 1024px, and the existing horizontal snap collection below 768px where appropriate. Do not introduce dark cards, extra filled or decorative gradients, glassmorphism, nested cards, or decorative color surfaces.
 
 ### Iteration Guide
 
-1. Establish the hero image and the single primary action before adding secondary modules.
+1. Establish the screen’s main task and visual focus before adding secondary modules; a utility screen does not need a hero or filled CTA.
 2. Translate scenario information into title/subtitle pairs, compact rows, or one neutral utility card.
 3. Check that colored surfaces do not compete with artist photography.
 4. Verify 44px targets, 3px focus outlines, and mobile in-flow activity access.
-5. Confirm that new components reuse the 4px spacing scale and existing radius/shadow tokens.
+5. Confirm that new components reuse shared roles and tokens, then apply the separate visual finish criteria below. Token compliance alone is insufficient.
 
 ## Optional Appendix: Interaction Patterns
 
@@ -389,11 +411,11 @@ Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scena
 - Lifecycle copy: enumerate meaningful fan actions before promising the stored value, e.g. “팬 인증부터 라이브 예약, 출석, 후기까지”.
 - Voice and tone: warm and encouraging, but never cute, overly promotional, or verbose.
 
-## Optional Appendix: Observed Pages
+## Optional Appendix: Historical Observed Pages (2026-07-20)
 
 - `http://127.0.0.1:5173/candidates/03-fan-pulse-spectrum`: desktop 1440×1100, tablet 768×1024, and mobile 390×844 rendered states; logged-out context panel open and collapsed; hover-capable controls.
 
-## Optional Appendix: Evidence Notes
+## Optional Appendix: Historical Evidence Notes (2026-07-20; not current rules)
 
 - Observed: the live rendered page exposes no root variables on `:root`; reusable tokens are scoped to `[data-fan-pulse-home]` and were read from the loaded stylesheet.
 - Observed: at 1440px the hero is 944×472px, the favorite collection is 944px wide, and the open context panel is 384px wide.
@@ -402,11 +424,11 @@ Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scena
 - Inferred rule: color is intentionally budgeted—photography plus one primary gradient—because neutral utility surfaces preserve visual rest beside the hero.
 - Inferred rule: the side panel is contextual rather than foundational because it is removed entirely below 1024px without replacing the main content flow.
 
-## Shared fan UI implementation (2026-09-05)
+## Shared fan UI implementation (updated 2026-09-30)
 
 The current consolidation covers Home section headers, LIVE catalog headers,
 LIVE calendar page title, MY page/section headings, and shared FanAction controls.
-It preserves the incumbent rendered sizes and responsive breakpoints; it does not
+The migrated roles follow the current shared content contract; this does not
 claim that all screens or all local CSS have been migrated.
 
 - `apps/web/app/globals.css` owns semantic `--fan-*` typography and action tokens,
@@ -414,10 +436,11 @@ claim that all screens or all local CSS have been migrated.
 - `FanHeading` separates semantic `as` (`h1` / `h2` / `h3`) from visual `variant`.
   Standard headings are 20px / 24px at 48rem, weight 850. Editorial headings retain
   weight 800. MY page headings retain their 40rem breakpoint and inherited leading;
-  personal section headings retain 22px / weight 700.
-- `FanSectionHeader` owns title, description, accessory, and their spacing.
-  `standard` and `editorial` preserve the 56px header / 20px bottom gap;
-  `personal` preserves the stacked-to-inline MY layout and 16px bottom gap.
+  personal section headings use 20px / 24px at 48rem, weight 700.
+- `FanSectionHeader` owns title, optional description, optional `{ label, href }`
+  action and their spacing. It wraps its 20rem copy column and secondary action
+  naturally, with a 16px bottom gap. Standard/editorial retain their shared
+  minimum header height; personal headers have no minimum height.
 - Do not add local heading selectors or arbitrary style/className overrides to
   these migrated roles. Add an intentional, reusable variant in the shared module
   only when the existing roles cannot express the product requirement.
@@ -476,9 +499,10 @@ section cards; `--color-utility-canvas` and `--color-surface-focus` are shared
 roles. HOME, artist heroes and Passport artwork retain their existing treatment.
 Do not introduce a parallel hard-coded blue palette from the guide's example hexes.
 
-- Creator directory: maximum three equal-width columns, centered partial row,
-  two columns at 768px and one below; 4:3 media fields contain the full published
-  image instead of cropping portrait heads or group members; published positioning is retained.
+- Creator directory: maximum three equal-width columns, left-aligned partial row,
+  two columns at 768px and one below. The later shared portrait contract applies:
+  full-bleed cover, 5:4 below 768px and square from 768px, preserving registered
+  framing and every face rather than reverting to the historical 4:3 contain layout.
   Use published summaries only, no invented biographies or popular/recommended claims.
   Default order remains the published order. Search, ordering and ownership filters stay.
 - MY (updated 2026-09-10, slide 58): profile then a shared favorite selector,
@@ -570,10 +594,10 @@ claim there are no missions. No question or owner payload is exposed publicly.
 
 ### Creator directory portrait contract
 
-`/celebrities` and Home favorites share `CreatorPortrait` for square profile
-photography. Directory keeps its responsive grid and existing full-card links,
-using the `full-bleed` variant to fill the entire square media area without a gray
-frame. Home keeps the default `min(84%, 240px)` inset portrait. Shared per-creator
+`/celebrities` and Home favorites share `CreatorPortrait` and registered crops.
+Directory keeps its responsive grid and existing full-card links, using the
+`full-bleed` variant to fill a 5:4 media area below 768px and a square from 768px,
+without a gray frame. Home keeps the default `min(84%, 240px)` square inset portrait. Shared per-creator
 cover crops preserve faces, all group
 members and tattoo exclusion. Do not use contain letterboxing, route-local crop
 copies or hover zoom on these portraits. Passport badges remain outside the crop.

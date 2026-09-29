@@ -9,7 +9,7 @@ describe("shared fan headings", () => {
     expect(screen.getByRole("heading")).toHaveAttribute("data-fan-heading", "personal-page");
   });
   it.each(["standard", "editorial", "personal"] as const)("renders the %s title, description and accessible action", (variant) => {
-    render(<FanSectionHeader variant={variant} id="upcoming" title="다가오는 LIVE" description="미리 예약하세요" accessory={<a href="/live">전체 보기</a>} />);
+    render(<FanSectionHeader variant={variant} id="upcoming" title="다가오는 LIVE" description="미리 예약하세요" action={{ href: "/live", label: "전체 보기" }} />);
     expect(screen.getByRole("heading", { level: 2 })).toHaveAttribute("id", "upcoming");
     expect(screen.getByText("미리 예약하세요")).toBeVisible();
     expect(screen.getByRole("link", { name: "전체 보기" })).toHaveAttribute("href", "/live");

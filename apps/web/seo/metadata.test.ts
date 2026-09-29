@@ -1,6 +1,7 @@
 import { APP_LOCALES } from "@/i18n/locales";
+import { communityCopy } from "@/i18n/catalogs/features__community";
 import { describe, expect, it } from "vitest";
-import { canonicalUrl, DEFAULT_SHARE_IMAGE, isPrivatePath, publicMetadata, shareImageUrl } from "./metadata";
+import { canonicalUrl, DEFAULT_SHARE_IMAGE, isPrivatePath, openGraphLocale, pageCopy, publicMetadata, shareImageUrl } from "./metadata";
 import { buildSitemap } from "./sitemap";
 import robots from "@/app/robots";
 import { htmlLimitedBots } from "./bots";
@@ -20,6 +21,26 @@ describe("public search and sharing metadata", () => {
     const meta = publicMetadata({ path: "/ifew", locale: "ko", locales: ["ko"], title: "이퓨", description: "이퓨 소식" });
     expect(meta.alternates?.languages).toEqual({ ko: "https://byus.kr/ifew?locale=ko" });
     expect(meta.openGraph).toMatchObject({ alternateLocale: [] });
+  });
+  it("provides localized primary-page titles and Open Graph locales for every app language", () => {
+    expect(Object.keys(pageCopy.home)).toEqual([...APP_LOCALES]);
+    expect(Object.keys(pageCopy.live)).toEqual([...APP_LOCALES]);
+    expect(Object.keys(pageCopy.celebrities)).toEqual([...APP_LOCALES]);
+    for (const locale of APP_LOCALES) {
+      expect(pageCopy.home[locale].title).not.toHaveLength(0);
+      expect(communityCopy(locale).title).not.toHaveLength(0);
+      expect(pageCopy.live[locale].title).not.toHaveLength(0);
+      expect(pageCopy.celebrities[locale].title).not.toHaveLength(0);
+      expect(publicMetadata({ path: "/", locale, ...pageCopy.home[locale] }).openGraph).toMatchObject({ locale: openGraphLocale(locale) });
+    }
+  });
+  it.each([
+    ["ko", "ko_KR"], ["en", "en_US"], ["ja", "ja_JP"],
+    ["zh-Hans", "zh_CN"], ["zh-Hant", "zh_TW"], ["es", "es_ES"],
+    ["id", "id_ID"], ["vi", "vi_VN"], ["th", "th_TH"],
+    ["pt", "pt_PT"], ["fr", "fr_FR"],
+  ] as const)("maps %s to the Open Graph locale %s", (locale, expected) => {
+    expect(openGraphLocale(locale)).toBe(expected);
   });
   it("resizes approved public assets without changing their source or crop", () => {
     const source = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/lives/ifew/banner.png";

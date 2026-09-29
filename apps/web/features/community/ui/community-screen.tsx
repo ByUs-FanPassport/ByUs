@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FanSectionHeader } from "@/components/fan-ui/fan-heading";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, Camera, CalendarDays, MessageCircle, UsersRound } from "lucide-react";
 import type { PublishedCelebrity } from "@/server/content/content-domain";
@@ -46,7 +47,7 @@ export function CommunityScreen({ creators, creator, locale, tab = "posts" }: {
   const copy = communityCopy(locale), participation = participationCopy(locale), router = useRouter();
   return <FanAppFrame locale={locale} currentPath="/community" mainId="community-main">
     <FanContentContainer as="main" id="community-main" className={styles.page} tabIndex={-1}>
-      <header className={styles.heading}><p>BYUS COMMUNITY</p><h1>{copy.title}</h1><div>{copy.intro}</div></header>
+      <FanSectionHeader as="h1" variant="editorial" title={copy.title} description={copy.intro} />
       {creator ? <>
         <div className={styles.creatorBar}>
           <CreatorAvatar slug={creator.slug} src={creator.image.url} photos={creator.image.photos} position={creator.image.position} size={48} />

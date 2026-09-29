@@ -3,7 +3,7 @@
   --footer-muted: oklch(44% 0 0);
   --footer-line: oklch(91.5% 0 0);
   width: 100%;
-  padding: 40px 0 16px;
+  padding: var(--space-10) 0 var(--space-4);
   border-top: 1px solid var(--footer-line);
   background: #fff;
   color: var(--footer-ink);
@@ -12,14 +12,14 @@
 
 .inner {
   display: grid;
-  gap: 32px;
+  gap: var(--space-8);
 }
 
 .brandColumn {
   display: grid;
   align-content: start;
   justify-items: start;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .brand {
@@ -48,10 +48,11 @@
 .navigation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 16px;
+  gap: var(--space-6) var(--space-4);
 }
 
 .navigation section {
+  min-width: 0;
   display: grid;
   align-content: start;
   row-gap: 0;
@@ -75,32 +76,60 @@
   font-weight: 550;
   line-height: 1.35;
   text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.navigation section:last-child {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-4);
+}
+
+.navigation section:last-child h2 {
+  grid-column: 1 / -1;
+}
+
+.social {
+  grid-column: 1 / -1;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--footer-line);
+}
+
+.social h2 {
+  margin: 0 0 var(--space-1);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .socialLinks {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-1);
 }
 
-.navigation .socialLink {
-  width: fit-content;
+.socialLink {
+  display: inline-flex;
+  width: 44px;
   min-width: 44px;
-  gap: 8px;
   height: 44px;
-  justify-content: flex-start;
-  border-radius: 999rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--footer-muted);
   transition: background-color 160ms cubic-bezier(.2, 0, 0, 1);
 }
 
 .socialLink svg {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 .business {
-  margin-top: 24px;
+  margin-top: var(--space-6);
   color: var(--footer-muted);
   font-size: 13px;
   font-weight: 550;
@@ -110,14 +139,14 @@
 .business dl {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 20px;
+  gap: var(--space-1) var(--space-5);
   margin: 0;
 }
 
 .business dl > div {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 0 var(--space-2);
 }
 
 .business dt {
@@ -138,9 +167,9 @@
   min-height: 44px;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  margin-top: 24px;
-  padding-top: 12px;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  padding-top: var(--space-3);
   color: var(--footer-muted);
   font-size: 13px;
   font-weight: 550;
@@ -149,7 +178,7 @@
 .legalLinks {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .legalLinks a {
@@ -172,39 +201,45 @@
 
 @media (min-width: 48rem) {
   .footer {
-    padding: 48px 0 16px;
+    padding-top: var(--space-12);
   }
 
   .navigation {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .navigation section:last-child {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .navigation section:last-child h2 {
+    grid-column: auto;
   }
 }
 
 @media (min-width: 64rem) {
   .inner {
     grid-template-columns: minmax(240px, 1.2fr) minmax(420px, 1.8fr);
-    gap: 48px;
+    gap: var(--space-12);
   }
 }
 
 @media (max-width: 47.999rem) {
-  .footer {
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  }
-
   .legal {
     min-height: 0;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-    margin-top: 24px;
-    padding-top: 12px;
+    gap: var(--space-1);
+    margin-top: var(--space-6);
+    padding-top: var(--space-3);
   }
 
 }
 
 @media (hover: hover) and (pointer: fine) {
   .navigation a:hover,
+  .socialLink:hover,
   .legal a:hover {
     color: var(--footer-ink);
   }

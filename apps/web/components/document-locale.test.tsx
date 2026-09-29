@@ -34,7 +34,7 @@ describe('browser locale fallback', () => {
     window.history.replaceState({ router: 'keep' }, '', `/elina?${route.query}#fans`);
     render(<LocaleProvider initialLocale="en"><DocumentLocale /><CurrentLocale /></LocaleProvider>);
     expect(window.location.pathname + window.location.search + window.location.hash).toBe('/elina?attendanceCode=KEEP&returnTo=%2Flive%2Felina%23code#fans');
-    expect(window.history.state).toEqual({ byusLocale: 'en' });
+    expect(window.history.state).toEqual({ router: 'keep', byusLocale: 'en' });
     expect(document.cookie).toContain('byus_page_locale=en');
     window.history.replaceState({ router: 'keep', byusLocale: 'ko' }, '', '/elina');
     act(() => window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state })));

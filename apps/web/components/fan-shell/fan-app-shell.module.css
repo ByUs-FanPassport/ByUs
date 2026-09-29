@@ -44,10 +44,10 @@
 .bottomNavigationItem svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .activeBottomItem { color: var(--fan-ink); font-weight: 800; }
 .activeBottomItem::before { position: absolute; top: 0; left: 50%; width: 32px; height: 2px; transform: translateX(-50%); border-radius: 999rem; background: var(--fan-ink); content: ""; }
-@media (min-width:48rem) {
+@media (min-width:64rem) {
   .frame { --fan-header-height: 88px; }
-  .headerInner { grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); }
-  .desktopNav { display: flex; min-height: 44px; align-items: center; gap: 4px; padding: 0; border: 1px solid var(--fan-line); border-radius: 999rem; }
+  .headerInner { grid-template-columns: auto minmax(0,1fr) auto; column-gap: 16px; }
+  .desktopNav { display: flex; justify-self: center; min-height: 44px; align-items: center; gap: 4px; padding: 0; border: 1px solid var(--fan-line); border-radius: 999rem; }
   .desktopNavItem { display: flex; min-width: 88px; min-height: 44px; align-items: center; justify-content: center; padding-inline: 16px; border-radius: 999rem; color: var(--fan-muted); font-size: 14px; font-weight: 650; }
   .activeNav { color: var(--fan-ink); font-weight: 850; }
   .actions { justify-self: end; }

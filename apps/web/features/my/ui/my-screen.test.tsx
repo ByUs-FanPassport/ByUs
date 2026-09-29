@@ -42,7 +42,7 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated: true, user: avatarOwner.id ? { id: avatarOwner.id } : undefined, getAccessToken }),
 }));
 
-afterEach(() => { avatarOwner.id = undefined; vi.useRealTimers(); });
+afterEach(() => { avatarOwner.id = undefined; vi.useRealTimers(); window.history.replaceState(null, "", "/my"); });
 
 describe("unified MY hub", () => {
   it("shows the MY sections while personal data is still being prepared", () => {

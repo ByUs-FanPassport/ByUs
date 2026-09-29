@@ -1,0 +1,16 @@
+{
+  "changes": [
+    "홈과 커뮤니티에서 제목, 설명, 필터와 버튼의 읽는 순서를 정리했어요.",
+    "최애 이름을 더 쉽게 찾을 수 있고, 긴 번역도 제목과 버튼이 겹치지 않도록 조정했어요.",
+    "게시물의 신고·차단과 수정·삭제를 더보기로 모으고, 신고 창을 키보드로 열고 닫을 수 있게 했어요.",
+    "푸터의 안내 메뉴와 소셜 채널을 묶고, 화면 하단의 여백을 정리했어요.",
+    "첨부는 예시 데이터를 넣어 한국어·베트남어·영어로 확인한 로컬 테스트 화면이에요."
+  ],
+  "path": "/",
+  "images": [
+    "release-notes/images/2026-09-29-ui-system-home-ko.png",
+    "release-notes/images/2026-09-29-ui-system-home-vi.png",
+    "release-notes/images/2026-09-29-ui-system-community.png",
+    "release-notes/images/2026-09-29-ui-system-report.png"
+  ]
+}

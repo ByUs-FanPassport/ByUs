@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { APP_LOCALES } from "@/i18n/locales";
 import { FanSiteFooter } from "./fan-site-footer";
 
 const footerCss = readFileSync(
@@ -25,8 +26,9 @@ describe("FanSiteFooter", () => {
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "이용약관 열기" })).toHaveAttribute("href", "/terms?locale=ko");
     expect(within(navigation).getByRole("heading", { name: "안내 및 문의" })).toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "개인정보처리방침 열기" })).not.toBeInTheDocument();
-    expect(within(navigation).getByRole("heading", { name: "소셜" })).toBeInTheDocument();
-    const telegram = within(navigation).getByRole("link", { name: "ByUs Telegram 채널 열기, 새 창" });
+    expect(within(navigation).queryByRole("heading", { name: "소셜" })).not.toBeInTheDocument();
+    expect(within(footer).getByRole("heading", { name: "소셜" })).toBeInTheDocument();
+    const telegram = within(footer).getByRole("link", { name: "ByUs Telegram 채널 열기, 새 창" });
     expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
@@ -55,42 +57,45 @@ describe("FanSiteFooter", () => {
     expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open Terms of Use" })).toHaveAttribute("href", "/terms?locale=en");
     expect(within(navigation).getByRole("heading", { name: "Guides & contact" })).toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open Privacy Policy" })).not.toBeInTheDocument();
-    expect(within(navigation).getByRole("heading", { name: "Social" })).toBeInTheDocument();
-    expect(within(navigation).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
+    expect(within(navigation).queryByRole("heading", { name: "Social" })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("contentinfo")).getByRole("heading", { name: "Social" })).toBeInTheDocument();
+    expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(within(navigation).queryByRole("link", { name: "Contact" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open image credits" })).not.toBeInTheDocument();
   });
 
-  it("uses a compact 4px-based footer rhythm without shrinking link targets", () => {
-    const footerRule = footerCss.match(/\.footer\s*\{([^}]*)\}/)?.[1];
-    const innerRule = footerCss.match(/\.inner\s*\{([^}]*)\}/)?.[1];
-    const headingRule = footerCss.match(/\.navigation h2\s*\{([^}]*)\}/)?.[1];
+  it.each(APP_LOCALES)("keeps every service, social, business, and policy group in %s", (locale) => {
+    render(<FanSiteFooter locale={locale} />);
+
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByRole("navigation").querySelectorAll("section")).toHaveLength(3);
+    expect(within(footer).getByRole("navigation").querySelectorAll("a")).toHaveLength(13);
+    expect(footer.querySelectorAll('a[target="_blank"]')).toHaveLength(4);
+    expect(footer.querySelector(`a[href="/privacy?locale=${locale}"]`)).toBeInTheDocument();
+    expect(footer.querySelector("dl")).toBeInTheDocument();
+  });
+
+  it("keeps compact responsive groups and accessible controls", () => {
     const linkRule = footerCss.match(/\.navigation a\s*\{([^}]*)\}/)?.[1];
     const navigationRule = footerCss.match(/\.navigation\s*\{([^}]*)\}/)?.[1];
-    const socialLinkRule = footerCss.match(/\.navigation \.socialLink\s*\{([^}]*)\}/)?.[1];
+    const serviceGroupRule = footerCss.match(/\.navigation section:last-child\s*\{([^}]*)\}/)?.[1];
+    const socialLinkRule = footerCss.match(/\.socialLink\s*\{([^}]*)\}/)?.[1];
     const socialIconRule = footerCss.match(/\.socialLink svg\s*\{([^}]*)\}/)?.[1];
-    const legalRule = footerCss.match(/\.legal\s*\{([^}]*)\}/)?.[1];
-    const brandImageRule = footerCss.match(/\.brand img\s*\{([^}]*)\}/)?.[1];
 
-    expect(footerRule).toContain("padding: 40px 0 16px");
-    expect(innerRule).toContain("gap: 32px");
-    expect(headingRule).toContain("margin: 0 0 4px");
     expect(linkRule).toContain("min-height: 44px");
     expect(linkRule).toContain("font-size: 13px");
-    expect(linkRule).toContain("line-height: 1.35");
+    expect(linkRule).toContain("overflow-wrap: anywhere");
     expect(navigationRule).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
-    expect(footerCss).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
+    expect(serviceGroupRule).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+    expect(footerCss).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(footerCss.match(/\.social\s*\{([^}]*)\}/)?.[1]).toContain("grid-column: 1 / -1");
+    expect(footerCss.match(/\.socialLinks\s*\{([^}]*)\}/)?.[1]).toContain("flex-direction: row");
     expect(socialLinkRule).toContain("min-width: 44px");
-    expect(footerCss.match(/\.socialLinks\s*\{([^}]*)\}/)?.[1]).toContain("flex-direction: column");
     expect(socialLinkRule).toContain("height: 44px");
-    expect(socialLinkRule).toContain("justify-content: flex-start");
-    expect(socialIconRule).toContain("width: 16px");
-    expect(socialIconRule).toContain("height: 16px");
-    expect(legalRule).toContain("min-height: 44px");
-    expect(legalRule).toContain("margin-top: 24px");
-    expect(legalRule).toContain("padding-top: 12px");
-    expect(brandImageRule).toContain("width: 96px");
-    expect(brandImageRule).toContain("height: 39px");
+    expect(socialLinkRule).toContain("justify-content: center");
+    expect(socialIconRule).toContain("width: 20px");
+    expect(socialIconRule).toContain("height: 20px");
+    expect(footerCss).not.toContain("safe-area-inset-bottom");
   });
 
   it("reserves the footer wordmark at its rendered SVG ratio", () => {

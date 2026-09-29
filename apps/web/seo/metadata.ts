@@ -9,6 +9,24 @@ export const SITE_URL = "https://byus.kr";
 export const DEFAULT_SHARE_IMAGE = `${SITE_URL}/share/default.png`;
 export const NO_INDEX: Metadata["robots"] = { index: false, follow: false };
 
+const OPEN_GRAPH_LOCALES: Record<AppLocale, string> = {
+  ko: "ko_KR",
+  en: "en_US",
+  ja: "ja_JP",
+  "zh-Hans": "zh_CN",
+  "zh-Hant": "zh_TW",
+  es: "es_ES",
+  id: "id_ID",
+  vi: "vi_VN",
+  th: "th_TH",
+  pt: "pt_PT",
+  fr: "fr_FR",
+};
+
+export function openGraphLocale(locale: AppLocale): string {
+  return OPEN_GRAPH_LOCALES[locale];
+}
+
 export function canonicalUrl(path: string, locale: SeoLocale): string {
   const url = new URL(path, SITE_URL);
   // Only explicitly selected language belongs in the canonical URL.
@@ -57,8 +75,8 @@ export function publicMetadata(input: {
     alternates: { canonical: url, languages: languageAlternates(path, input.locales) },
     ...(isRehearsalPath(path) ? { robots: NO_INDEX } : {}),
     openGraph: { title, description, url, type: "website", siteName: "ByUs",
-      locale: locale === "ko" ? "ko_KR" : locale === "en" ? "en_US" : undefined,
-      alternateLocale: (input.locales ?? APP_LOCALES).filter((value) => value !== locale).flatMap((value) => value === "ko" ? ["ko_KR"] : value === "en" ? ["en_US"] : []), images },
+      locale: openGraphLocale(locale),
+      alternateLocale: (input.locales ?? APP_LOCALES).filter((value) => value !== locale).map(openGraphLocale), images },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }

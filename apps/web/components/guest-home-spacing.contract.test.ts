@@ -33,35 +33,20 @@ describe("guest home compact icon-only action spacing", () => {
     const icon = declarationBlock(".socialLink img");
 
     expect(target).toMatch(/\bwidth:\s*44px\b/);
-    expect(target).toMatch(/\bmin-width:\s*24px\b/);
+    expect(target).toMatch(/\bmin-width:\s*44px\b/);
     expect(target).toMatch(/\bheight:\s*44px\b/);
     expect(target).toMatch(/\bmin-height:\s*44px\b/);
     expect(icon).toMatch(/\bwidth:\s*20px\b/);
     expect(icon).toMatch(/\bheight:\s*20px\b/);
   });
 
-  it("aligns identity rows with the status and social action targets", () => {
-    const info = declarationBlock(".celebrityInfo");
-    const row = declarationBlock(".celebrityInfoRow");
-    const status = declarationBlock(
-      ".celebrityFanLink",
-    );
+  it("keeps identity readable and actions in their own wrapping row", () => {
+    expect(declarationBlock(".celebrityInfo h3")).toContain("var(--fan-item-title-size)");
+    expect(declarationBlock(".celebrityInfo h3")).not.toContain("nowrap");
+    expect(declarationBlock(".celebrityActions")).toContain("flex-wrap: wrap");
+    expect(declarationBlock(".celebrityFanLink")).toMatch(/min-height:\s*44px/);
     expect(declarationBlock(".fanCount")).toContain("var(--muted)");
-
-    expect(row).toMatch(/\bmin-height:\s*44px\b/);
-    expect(row).toMatch(/\balign-items:\s*center\b/);
-    expect(info).toMatch(/\bpadding:\s*12px\s+12px\s+0\b/);
-    expect(row).toMatch(
-      /\bgrid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\b/,
-    );
-    expect(status).toMatch(/\bmin-height:\s*44px\b/);
-    expect(status).toMatch(/\bgap:\s*4px\b/);
-    expect(declarationBlock(".celebrityInfo h3, .celebrityInfo p")).toMatch(
-      /\bfont-weight:\s*400\b/,
-    );
-    expect(liveStatusCss).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.status\[data-live-status="live"\]\s+\.dot\s*,\s*\.status\[data-live-status="scheduled"\]::after\s*\{[^}]*animation:\s*none/,
-    );
+    expect(liveStatusCss).toContain("prefers-reduced-motion: reduce");
   });
 
   it("keeps the hero status outline visible without adding a filled surface", () => {

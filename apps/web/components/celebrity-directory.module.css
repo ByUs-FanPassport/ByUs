@@ -30,7 +30,7 @@
 .passportBadge { position: absolute; left: 12px; bottom: 12px; display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 0 12px; border-radius: 999rem; background: rgb(255 255 255 / 94%); color: oklch(26% .08 315); font-size: 12px; font-weight: 800; box-shadow: 0 1px 4px rgb(0 0 0 / 12%); }
 .cardPrimary { order:1; display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:var(--space-4) var(--space-5) var(--space-3); }
 .cardIdentity { flex:1; min-width:0; overflow-wrap:anywhere; }
-.cardPrimary h2 { margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -.025em; }
+.cardPrimary h2 { margin: 0; font-size: var(--fan-item-title-size); font-weight: var(--fan-item-title-weight); line-height: 1.5; overflow-wrap: anywhere; }
 .cardPrimary p,.cardBody p { display: flex; align-items: center; gap: 7px; margin: 4px 0 0; color: oklch(48% 0 0); font-size: 14px; line-height: 1.5; }
 .cardBody { order:3; display:grid; gap:12px; padding:var(--space-4) var(--space-5); }
 .statusDot { width: 7px; height: 7px; flex: 0 0 auto; border: 1px solid oklch(68% 0 0); border-radius: 50%; background: #fff; }

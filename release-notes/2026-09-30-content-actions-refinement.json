@@ -1,0 +1,13 @@
+{
+  "changes": [
+    "게시물 더보기 메뉴에서 키보드로 선택한 항목을 또렷하게 표시해요.",
+    "신고 창의 바깥 여백을 유지하고, 화면 높이가 작아도 내용을 스크롤해 버튼을 사용할 수 있게 했어요.",
+    "신고 창의 글꼴과 입력란 선택 표시를 다른 화면과 맞췄어요.",
+    "첨부는 예시 데이터를 넣어 확인한 로컬 테스트 화면이에요."
+  ],
+  "path": "/community",
+  "images": [
+    "release-notes/images/2026-09-30-content-menu-focus.png",
+    "release-notes/images/2026-09-30-report-dialog-focus.png"
+  ]
+}

@@ -413,7 +413,7 @@ function CollectionTotal({ icon, value, label, href, kind, onClick }: { icon: Re
 }
 
 function SectionTitle({ title, help, href, action }: { title: ReactNode; help?: string; href?: string; action?: string }) {
-  return <FanSectionHeader variant="personal" title={title} description={help} accessory={href && action ? <Link href={href as Route}>{action}<ArrowRight/></Link> : null} />;
+  return <FanSectionHeader variant="personal" title={title} description={help} action={href && action ? { href, label: action } : undefined} />;
 }
 
 function Empty({ text, href, action }: { text: string; href: string; action: string }) {

@@ -119,7 +119,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
   const passportValue = creator?.passport ? formatPassportValue(creator.passport.tier, creator.passport.score, locale, creator.passport.stageProgress ?? undefined) : "";
   return (
     <section className={styles.signedInSummary} aria-labelledby={headingId}>
-      <div className={styles.signedInGreeting}><h2 id={headingId}>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</h2></div>
+      <div className={styles.signedInGreeting}><h2 id={headingId}>{t.signedInPanel}</h2><p>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</p></div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 1 ? <small>{locale === "ko" ? `${passportCount}개` : passportCount}</small> : null}</div>
         {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : translate(locale, localizedMessages.mfa3f5fc72bf9, "Passport carousel")} aria-label={t.myPassport}>
@@ -302,7 +302,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
       <div className={styles.shell}>
         <main id="main-content" className={styles.main}>
           <section className={styles.heroSection} aria-labelledby="live-heading">
-            <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" as="h1" id="live-heading" title={t.liveHeading} description={t.liveSub} action={{ href: `/live${localeQuery}`, label: t.allLive }} />
             {contentErrors.homeBanners ? <ContentLoadError locale={locale} /> : null}
             <LiveHeroCarousel elinaRaffles={elinaRaffles} elina={celebrities.find(celebrity => celebrity.slug === "elina")} homeBanners={homeBanners} locale={locale} />
           </section>
@@ -321,7 +321,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
           </div>
 
           <section id="celebrities" className={`${styles.contentSection} ${styles.favoriteSection}`} aria-labelledby="celebrities-heading">
-            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} accessory={favoritesLoading ? null : <Link className={styles.textLink} href={directoryHref}>{locale === "ko" ? "최애 전체 보기" : translate(locale, localizedMessages.meba9f13bd74e, "View all favorites")} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" id="celebrities-heading" title={t.favorites} description={t.favoritesSub} action={favoritesLoading ? undefined : { href: directoryHref, label: locale === "ko" ? "최애 전체 보기" : translate(locale, localizedMessages.meba9f13bd74e, "View all favorites") }} />
             {!contentErrors.celebrities && celebrities.length > 0 && favoritesLoading ? (
               <div role="status" aria-label={t.myFavoritesLoading} aria-busy="true">
                 <span className={styles.srOnly}>{t.myFavoritesLoading}</span>
@@ -362,12 +362,10 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
                     )}
                   </Link>
                   <div className={styles.celebrityInfo}>
-                    <div className={styles.celebrityInfoRow}>
-                      <h3>{celebrity.name}</h3>
+                    <h3>{celebrity.name}</h3>
+                    <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
+                    <div className={styles.celebrityActions}>
                       <CreatorFanLink slug={celebrity.slug} name={celebrity.name} locale={locale} />
-                    </div>
-                    <div className={`${styles.celebrityInfoRow} ${styles.celebrityAudienceRow}`}>
-                      <p className={styles.fanCount}>{formatFanCount(celebrity.fanCount)}</p>
                       <div className={styles.socialLinks} role="group" aria-label={`${celebrity.name} ${locale === "ko" ? "소셜 채널" : translate(locale, localizedMessages.m81fb78c7ebd5, "social channels")}`}>
                         {celebrity.socialLinks.map((social) => <a className={styles.socialLink} href={social.url} target="_blank" rel="noreferrer" aria-label={`${celebrity.name} ${social.platform === "chzzk" && locale !== "ko" ? "CHZZK" : socialLabel[social.platform]} ${t.social}`} data-social-icon-only="true" data-platform={social.platform} key={social.platform}><Image src={social.platform === "chzzk" ? "/images/guest-home/chzzk.png" : `/images/guest-home/${social.platform}.svg`} alt="" width={20} height={20} aria-hidden="true" /></a>)}
                       </div>
@@ -393,7 +391,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
           </div>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
-            <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} accessory={<Link className={styles.textLink} href={`/live${localeQuery}` as Route}>{t.allLive} <ChevronRight /></Link>} />
+            <FanSectionHeader variant="editorial" id="upcoming-heading" title={t.upcoming} description={t.upcomingSub} action={{ href: `/live${localeQuery}`, label: t.allLive }} />
             {contentErrors.featuredLives ? <ContentLoadError locale={locale} /> : <div className={styles.liveList} data-paginated={upcomingPageCount > 1 ? "true" : undefined}>
               {featuredLives.length > 0 ? visibleFeaturedLives.map((featuredLive) => {
                 return (

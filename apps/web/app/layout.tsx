@@ -1,4 +1,4 @@
-import { DEFAULT_SHARE_IMAGE, SITE_URL, NO_INDEX, isPrivatePath, isRehearsalPath } from "@/seo/metadata";
+import { DEFAULT_SHARE_IMAGE, SITE_URL, NO_INDEX, isPrivatePath, isRehearsalPath, openGraphLocale } from "@/seo/metadata";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
@@ -14,7 +14,7 @@ import { BanksyEntryPromotion } from "../components/banksy-promotion/banksy-prom
 import { FanNextActionGuide } from "../features/onboarding/ui/fan-next-action-guide";
 import { BYUS_BRAND_ICONS } from "./brand-icons";
 import { AuthTransitionBoundary } from "../components/auth-transition-boundary";
-import { parseAppLocale, toContentLocale, type AppLocale } from "../i18n/locales";
+import { parseAppLocale, type AppLocale } from "../i18n/locales";
 import "./globals.css";
 
 const DESCRIPTIONS: Record<AppLocale, string> = {
@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: `/manifest.webmanifest?locale=${locale}`,
     icons: BYUS_BRAND_ICONS,
     appleWebApp: { capable: true, title: "ByUs", statusBarStyle: "default" },
-    openGraph: { locale: toContentLocale(locale) === "en" ? "en_US" : "ko_KR", siteName: "ByUs", type: "website", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "ByUs | Your Bias" }] },
+    openGraph: { locale: openGraphLocale(locale), siteName: "ByUs", type: "website", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "ByUs | Your Bias" }] },
     twitter: { card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE, alt: "ByUs | Your Bias" }] },
   };
 }

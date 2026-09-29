@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const css = (name: string) => readFileSync(resolve(process.cwd(), `components/${name}.module.css`), "utf8");
 
 describe("normal-flow footer layout", () => {
-  it.each(["fan-app-shell", "focus-flow-frame"])("fills short %s pages without overlaying long content", (name) => {
+  it.each(["fan-app-shell", "focus-flow-frame"])("makes %s the short-page height owner while keeping the footer in normal flow", (name) => {
     const styles = css(`fan-shell/${name}`);
     const frame = styles.match(/\.frame\s*\{([^}]+)\}/)?.[1];
     expect(frame).toContain("display: flex");
@@ -14,11 +14,18 @@ describe("normal-flow footer layout", () => {
     expect(frame).toContain("min-height: 100dvh");
     expect(styles).toMatch(/\.frame > \*\s*\{\s*flex-shrink: 0;/);
     expect(styles).toMatch(/\[data-fan-site-footer\]\s*\{\s*margin-top: auto;/);
-    expect(css("fan-shell/fan-site-footer")).not.toMatch(/position:\s*(fixed|absolute)/);
+    const footer = css("fan-shell/fan-site-footer");
+    expect(footer).not.toMatch(/position:\s*(fixed|absolute)/);
+    expect(footer).not.toContain("100dvh");
+    expect(footer).not.toContain("safe-area-inset-bottom");
   });
 
-  it("retains mobile navigation clearance and standalone login grid", () => {
+  it("assigns mobile navigation and standalone safe-area clearance to their frames", () => {
     expect(css("fan-shell/fan-app-shell")).toContain("padding-bottom: calc(64px + env(safe-area-inset-bottom))");
-    expect(css("login-page")).toContain("grid-template-rows: minmax(0, 1fr) auto");
+    expect(css("fan-shell/focus-flow-frame")).toContain("padding-bottom: env(safe-area-inset-bottom)");
+    const login = css("login-page");
+    expect(login).toContain("min-height: 100dvh");
+    expect(login).toContain("grid-template-rows: minmax(0, 1fr) auto");
+    expect(login).toContain("max(24px, env(safe-area-inset-bottom))");
   });
 });

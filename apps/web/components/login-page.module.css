@@ -1,4 +1,4 @@
-.page { position: relative; isolation: isolate; display: grid; min-height: 100svh; box-sizing: border-box; grid-template-rows: minmax(0, 1fr) auto; gap: 24px; padding: 24px 16px; overflow-x: clip; background: #fdfdfe; color: oklch(18% 0 0); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.page { position: relative; isolation: isolate; display: grid; min-height: 100svh; min-height: 100dvh; box-sizing: border-box; grid-template-rows: minmax(0, 1fr) auto; gap: 24px; padding: 24px 16px max(24px, env(safe-area-inset-bottom)); overflow-x: clip; background: #fdfdfe; color: oklch(18% 0 0); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 .background { position: absolute; z-index: -1; inset: 0; display: block; overflow: hidden; }
 .background img { width: 100%; height: 100%; object-fit: cover; }
 .authStage { display: grid; min-height: 0; place-items: center; }
@@ -49,7 +49,7 @@
 .modalBackdrop { align-items: center; justify-content: center; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
 .modalPanel { max-height: calc(100dvh - 48px); overflow-y: auto; background: #fff; }
 @media (max-width: 47.999rem) {
-  .page { gap: 12px; padding: 16px; }
+  .page { gap: 12px; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); }
   .gatewayPanel { display: grid; width: min(100%, 440px); min-height: 0; grid-template-columns: minmax(0, 1fr); overflow: visible; border-radius: 16px; }
   .passportVisual { display: none; }
   .loginColumn { padding: 32px 24px; }

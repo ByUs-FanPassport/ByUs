@@ -30,23 +30,78 @@ describe("content ownership and retries", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(translation)));
     const view = () => <><ContentTranslation targetType="fan_post" targetId={id} locale="en"><p>Original body</p></ContentTranslation><ContentActions targetType="fan_post" targetId={id} locale="en" /></>;
     const { rerender } = render(view());
-    fireEvent.change(screen.getByLabelText("Reason for reporting"), { target: { value: "Private draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Translate" })); await screen.findByText(translation.translatedText);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason for reporting" }), { target: { value: "Private draft" } });
     context.session.generation += 1; rerender(view());
     expect(screen.queryByText(translation.translatedText)).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Reason for reporting")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
+    expect(screen.getByRole("textbox", { name: "Reason for reporting" })).toHaveValue("");
   });
   it("keeps blocking separate from reporting and restores focus after a report", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ id })));
     render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
-    const summary = document.querySelector("summary")!;
-    const block = screen.getByRole("button", { name: "Block author" });
-    expect(block.closest("form")).toBeNull();
-    fireEvent.click(summary);
-    fireEvent.change(screen.getByLabelText("Reason for reporting"), { target: { value: "Spam" } });
-    fireEvent.submit(screen.getByLabelText("Reason for reporting").closest("form")!);
+    const more = screen.getByRole("button", { name: "More" });
+    fireEvent.click(more);
+    expect(screen.getByRole("menuitem", { name: "Block author" }).closest("form")).toBeNull();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason for reporting" }), { target: { value: "Spam" } });
+    fireEvent.submit(screen.getByRole("textbox", { name: "Reason for reporting" }).closest("form")!);
     await screen.findByText("Report submitted.");
-    await waitFor(() => expect(summary).toHaveFocus());
+    await waitFor(() => expect(more).toHaveFocus());
+  });
+  it("opens and closes the More menu from the keyboard without dispatching an action", async () => {
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+    render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
+    const more = screen.getByRole("button", { name: "More" });
+
+    fireEvent.keyDown(more, { key: "ArrowDown" });
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+
+    await waitFor(() => expect(more).toHaveFocus());
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("does not block after confirmation is cancelled", async () => {
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher); vi.stubGlobal("confirm", vi.fn(() => false));
+    render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Block author" }));
+
+    expect(window.confirm).toHaveBeenCalledWith("You will no longer see each other’s posts. Block this author?");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("cancels a report without dispatching and restores focus", async () => {
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+    render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
+    const more = screen.getByRole("button", { name: "More" });
+    fireEvent.click(more);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason for reporting" }), { target: { value: "Draft" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("textbox", { name: "Reason for reporting" })).not.toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+    await waitFor(() => expect(more).toHaveFocus());
+  });
+  it("enters the report dialog from the keyboard and Escape restores the More trigger", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(<ContentActions targetType="fan_post" targetId={id} locale="en" />);
+    const more = screen.getByRole("button", { name: "More" });
+    more.focus(); fireEvent.keyDown(more, { key: "ArrowDown" });
+    const report = await screen.findByRole("menuitem", { name: "Report" });
+    await waitFor(() => expect(report).toHaveFocus());
+    fireEvent.keyDown(report, { key: "Enter" }); fireEvent.keyUp(report, { key: "Enter" });
+    const reason = await screen.findByRole("textbox", { name: "Reason for reporting" });
+    await waitFor(() => expect(reason).toHaveFocus());
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(more).toHaveFocus());
   });
   it("reuses a post creation key after a lost response", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ error: { code: "UNAVAILABLE" } }, { status: 503 })).mockResolvedValueOnce(Response.json({ id, revision: 1, replayed: true }));

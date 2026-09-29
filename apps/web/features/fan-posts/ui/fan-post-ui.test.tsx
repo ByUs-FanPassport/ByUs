@@ -84,7 +84,8 @@ describe("fan post UI navigation and context", () => {
     vi.stubGlobal("confirm", vi.fn(() => true));
     render(<FanPostDetail postId={state.post.id as string} locale="en" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     await waitFor(() => expect(state.replace).toHaveBeenCalledWith("/community?creator=artist&tab=posts&locale=en"));
     expect(state.request).toHaveBeenCalledWith(`/api/posts/${state.post.id}`, "DELETE");

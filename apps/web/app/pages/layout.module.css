@@ -3,6 +3,7 @@
   flex-direction: column;
   box-sizing: border-box;
   min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .frame > * {

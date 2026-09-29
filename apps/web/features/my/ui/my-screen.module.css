@@ -1,4 +1,4 @@
-.main { min-width:0; overflow-x:clip; padding-block:var(--space-8) calc(var(--space-16) + var(--space-8)); }
+.main { min-width:0; overflow-x:clip; padding-block:var(--space-8) var(--fan-section-gap); }
 .pageHeading { margin-block-end:var(--space-8); }
 .guest { display:grid; min-height:360px; place-content:center; justify-items:center; padding:var(--space-10) var(--space-5); border:1px solid var(--color-line-subtle); border-radius:var(--radius-collection); text-align:center; }
 .guest>svg { width:48px; height:48px; margin-block-end:var(--space-6); stroke-width:1.4; }

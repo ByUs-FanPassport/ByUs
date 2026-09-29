@@ -2,7 +2,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-4);
 }
 
 .filters button {
@@ -11,21 +11,24 @@
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 10px;
+  max-width: 100%;
+  padding: 8px 12px;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-control);
   background: var(--color-canvas);
   color: var(--color-ink);
   font: inherit;
   font-size: var(--fan-action-label-size);
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.4;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition: background-color var(--motion-control) var(--motion-easing), color var(--motion-control) var(--motion-easing);
 }
 
 .filters button[aria-pressed="true"] {
+  font-weight: 650;
   border-color: var(--color-ink);
   background: var(--color-ink);
   color: var(--color-canvas);
@@ -47,15 +50,6 @@
   font-size: var(--fan-metadata-size);
   font-weight: 400;
   line-height: 1.5;
-}
-
-@media (max-width: 47.999rem) {
-  .filters[data-compact] { gap: 0 6px; margin-bottom: 16px; }
-  /* A 36px visible pill keeps its separate 44px touch target. */
-  .filters[data-compact] button { position: relative; border: 0; background: transparent; font-size: 14px; padding-inline: 8px; }
-  .filters[data-compact] button::before { content: ""; position: absolute; inset: 4px 0; border: 1px solid var(--color-line); border-radius: inherit; background: var(--color-canvas); }
-  .filters[data-compact] button[aria-pressed="true"]::before { border-color: var(--color-ink); background: var(--color-ink); }
-  .filters[data-compact] button span { position: relative; }
 }
 
 @media (hover: hover) and (pointer: fine) {
