@@ -61,6 +61,10 @@
 .linkCard small { display:block; margin-top:4px; color:#746872; font-size:12px; line-height:1.4; }
 .primary small { color:#ffe4f2; }
 .linkCard>svg { flex:none; }
+.eventCard { padding:10px 16px 10px 12px; border-color:#d9c6ad; background:#f7f0e4; color:#681923 !important; }
+.eventCard>img { flex:none; width:44px; height:66px; border-radius:3px; }
+.eventCard>span { flex:1; }
+.eventCard small { color:#77564e; font-variant-numeric:tabular-nums; }
 .replay { grid-area:replay; display:flex; justify-content:center; align-items:center; gap:8px; min-height:44px; padding:0 12px; border:0; background:transparent; color:#796674; font-size:13px !important; font-weight:600 !important; }
 .credit { grid-area:credit; margin:0; text-align:center; font-size:11px; line-height:1.5; color:#796674; }
 .backdrop { align-items:flex-end; padding:0; background:#231c2466; }
@@ -86,6 +90,7 @@
 .srOnly { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 @media (hover:hover) {
   .linkCard:not(.primary):hover { border-color:#bf9eb2; background:#fff7fc; }
+  .linkCard.eventCard:hover { border-color:#9a6264; background:#f1e5d3; }
   .primary:hover { background:#b90063 !important; }
   .skip:hover, .replay:hover { color:#a90a65; }
   .languages button:hover, .sheetHeader button:hover { background:#f6eaf2; }
