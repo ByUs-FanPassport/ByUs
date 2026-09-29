@@ -1,4 +1,6 @@
 begin;
+select public.configure_telegram_alerts('-1001234567890',true);
+update public.telegram_alert_settings set activated_at='2000-01-01';
 
 do $$
 begin
@@ -172,8 +174,21 @@ begin
 end $$;
 
 do $$
-declare submission uuid:=(select id from telegram_certification_test_ids where name='telegram_submission');
+declare submission uuid:=(select id from telegram_certification_test_ids where name='telegram_submission'); alert_batch jsonb;
 begin
+  delete from public.telegram_alert_outbox where kind<>'certification_approved';
+  alert_batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
+  if alert_batch#>>'{alerts,0,kind}' is distinct from 'certification_approved'
+    or alert_batch#>>'{alerts,0,detail,telegram_actor_id}' is distinct from '7001'
+    or alert_batch#>>'{alerts,0,detail,telegram_username}' is distinct from 'reviewer_1'
+    or alert_batch#>>'{alerts,0,detail,recipient_id}' is distinct from 'a9000000-0000-4000-8000-000000000001'
+    or alert_batch#>>'{alerts,0,actor_name}' is distinct from '검토자'
+    or alert_batch#>>'{alerts,0,detail,actor_id}' is not null then
+    raise exception 'TELEGRAM_CERTIFICATION_DETAIL_IDENTITY_FAILED';
+  end if;
+  perform public.begin_telegram_alert_send((alert_batch->>'batch_id')::uuid,'-1001234567890');
+  perform public.finish_telegram_alert_batch((alert_batch->>'batch_id')::uuid,'sent',123);
+  raise notice 'TELEGRAM_APPROVAL_DETAIL_FIXTURE=%',alert_batch;
   if not exists(select 1 from public.certification_submissions where id=submission and status='approved' and review_source='telegram'
       and reviewed_by_app_user_id is null and reviewed_by_admin_allowlist_id is null and reviewed_by_telegram_user_id=7001 and reviewed_by_telegram_name='검토자')
     or (select count(*) from public.fan_score_ledger where manual_submission_id=submission and points=2)<>1

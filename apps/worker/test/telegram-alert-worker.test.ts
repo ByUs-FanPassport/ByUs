@@ -23,6 +23,34 @@ const csAlerts: TelegramAlertBatch["alerts"] = [
   { kind: "cs_inquiry_created", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:05:00.000Z", inquiry_id: inquiryId, message_body: "문의 내용을 확인해 주세요." },
   { kind: "cs_user_replied", creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-11T10:06:00.000Z", inquiry_id: inquiryId, message_body: "문의 내용을 확인해 주세요." },
 ];
+const actorId = "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19";
+const recipientId = "559fe228-ff92-4a85-a3e9-ad83d9e60f8b";
+type DetailedKind = "fan_post_created" | "fan_post_commented" | "fan_post_liked" | "fan_lounge_posted" | "notice_commented" | "daily_checked_in" | "certification_approved";
+function detailedActivity(kind: DetailedKind, overrides: Record<string, unknown> = {}): TelegramAlertBatch["alerts"][number] {
+  return {
+    kind,
+    creator_name: null,
+    live_title: null,
+    actor_name: "활동자",
+    actor_email: "actor@example.com",
+    winner_count: null,
+    occurred_at: "2026-09-11T10:02:03.000Z",
+    activity_context: null,
+    activity_quantity: null,
+    detail: {
+      actor_id: actorId,
+      recipient_id: recipientId,
+      recipient_name: "받는 사람",
+      creator_name: "크리에이터",
+      context: "게시글 제목",
+      body: "첫 줄\n둘째 줄",
+      path: "/c/creator/community/01234567-1234-4234-8234-012345678901#comment-8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19",
+      result: "좋아요 3개",
+      is_reply: false,
+    },
+    ...overrides,
+  } as TelegramAlertBatch["alerts"][number];
+}
 
 describe("renderTelegramAlertMessage", () => {
   it("renders campaign visits without identities and validates the claim context", async () => {
@@ -139,6 +167,70 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).toContain("https://byus.kr/admin");
     expect(() => renderTelegramAlertMessage([...malicious, malicious[0]!])).toThrow("TELEGRAM_ALERT_INVALID_BATCH");
   });
+
+  it.each([
+    ["fan_post_created", false, "팬 게시글 작성"],
+    ["fan_post_commented", true, "팬 게시글 답글 작성"],
+    ["fan_post_liked", false, "팬 게시글 좋아요"],
+    ["fan_lounge_posted", false, "응원글 작성"],
+    ["fan_lounge_posted", true, "응원글 답글 작성"],
+    ["notice_commented", false, "공지 댓글 작성"],
+    ["daily_checked_in", false, "일일 출석 체크"],
+  ] as const)("renders %s with its Korean label", (kind, isReply, label) => {
+    const alert = detailedActivity(kind);
+    alert.detail!.is_reply = isReply;
+    expect(renderTelegramAlertMessage([alert])).toContain(`• ${label}`);
+  });
+
+  it("renders who-to-whom details, full email, multiline Unicode body, KST time, and canonical link", () => {
+    const email = `${"e".repeat(308)}@example.com`;
+    const body = `${"😀\n".repeat(499)}끝끝`;
+    const alert = detailedActivity("fan_post_commented", { actor_email: email });
+    Object.assign(alert.detail!, {
+      recipient_name: "😀".repeat(48),
+      creator_name: "😀".repeat(120),
+      context: "😀".repeat(160),
+      body,
+      path: `/${"p".repeat(499)}`,
+      result: "😀".repeat(160),
+    });
+    const message = renderTelegramAlertMessage([alert]);
+    expect(message).toContain(`활동자: 활동자 · ${email}`);
+    expect(message).toContain(`활동자 ID: ${actorId}`);
+    expect(message).toContain(`대상 ID: ${recipientId}`);
+    expect(message).toContain(`내용:\n${body.split("\n").map((line) => `│${line}`).join("\n")}`);
+    expect(message).toContain("시각: 2026-09-11 19:02:03 KST");
+    expect(message).toContain(`https://byus.kr${alert.detail!.path}`);
+    expect(message).not.toContain("본문 일부 생략");
+    expect(message.length).toBeLessThanOrEqual(4000);
+  });
+
+  it("truncates a 5000-codepoint post preview within the actual Telegram limit", () => {
+    const alert = detailedActivity("fan_post_created");
+    alert.detail!.body = "😀".repeat(5000);
+    const message = renderTelegramAlertMessage([alert]);
+    expect(message.length).toBeLessThanOrEqual(4000);
+    expect(message).toContain("… (본문 일부 생략)");
+    expect(message).toContain(`https://byus.kr${alert.detail!.path}`);
+    expect(message).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])/u);
+  });
+
+  it("renders a Telegram certification reviewer without inventing an app identity", () => {
+    const alert = detailedActivity("certification_approved", { actor_name: "ByUs 운영자", actor_email: null });
+    Object.assign(alert.detail!, {
+      actor_id: null,
+      telegram_actor_id: "12345678901234567890",
+      telegram_username: "byus_ops",
+      context: "팬 인증 신청",
+      result: "팬 인증 승인",
+    });
+    const message = renderTelegramAlertMessage([alert]);
+    expect(message).toContain("활동자: ByUs 운영자 · @byus_ops");
+    expect(message).toContain("Telegram ID: 12345678901234567890");
+    expect(message).toContain("대상 내용: 팬 인증 신청");
+    expect(message).toContain(`대상 ID: ${recipientId}`);
+    expect(message).not.toMatch(/이메일 미등록|활동자 ID:/u);
+  });
 });
 
 function queue(batch: TelegramAlertBatch | null): TelegramAlertQueue & {
@@ -206,6 +298,18 @@ describe("TelegramAlertWorker", () => {
     const sender: TelegramAlertSender = { sendText: vi.fn().mockResolvedValue(42n) };
     await expect(new TelegramAlertWorker(q, sender, "-1001234567890").runOnce()).rejects.toThrow("database unavailable");
     expect(sender.sendText).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders before begin and never begins or sends an invalid detailed batch", async () => {
+    const invalid = detailedActivity("fan_post_created");
+    invalid.detail!.path = "//evil.example/spoof";
+    const q = queue({ batchId: batch.batchId, alerts: [invalid] });
+    const sender: TelegramAlertSender = { sendText: vi.fn() };
+    await expect(new TelegramAlertWorker(q, sender, "-1001234567890").runOnce())
+      .rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+    expect(q.begin).not.toHaveBeenCalled();
+    expect(sender.sendText).not.toHaveBeenCalled();
+    expect(q.finish).not.toHaveBeenCalled();
   });
 });
 
@@ -288,6 +392,33 @@ describe("SupabaseTelegramAlertQueue", () => {
         batch_id: "559fe228-ff92-4a85-a3e9-ad83d9e60f8b",
         alerts: [{ ...alerts[0], user_id: "private-user-id" }],
       },
+      error: null,
+    });
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890"))
+      .rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+  });
+
+  it.each([
+    ["extra detail key", (() => { const alert = detailedActivity("fan_post_created"); return { ...alert, detail: { ...alert.detail, extra: "private" } }; })()],
+    ["missing detail key", (() => { const alert = detailedActivity("fan_post_created"); const { result: _, ...detail } = alert.detail!; return { ...alert, detail }; })()],
+    ["external-looking path", (() => { const alert = detailedActivity("fan_post_created"); return { ...alert, detail: { ...alert.detail, path: "//evil.example/post" } }; })()],
+    ["control character in path", (() => { const alert = detailedActivity("fan_post_created"); return { ...alert, detail: { ...alert.detail, path: "/c/safe\nhttps://evil.example" } }; })()],
+  ])("rejects %s in strict detail payloads", async (_label, alert) => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { batch_id: "559fe228-ff92-4a85-a3e9-ad83d9e60f8b", alerts: [alert] },
+      error: null,
+    });
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890"))
+      .rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+  });
+
+  it.each([
+    ["missing reviewer identity", (() => { const alert = detailedActivity("certification_approved", { actor_name: "운영자", actor_email: null }); return { ...alert, detail: { ...alert.detail, actor_id: null } }; })()],
+    ["both reviewer identities", (() => { const alert = detailedActivity("certification_approved"); return { ...alert, detail: { ...alert.detail, telegram_actor_id: "12345", telegram_username: null } }; })()],
+    ["Telegram identity on another kind", (() => { const alert = detailedActivity("fan_post_created", { actor_email: null }); return { ...alert, detail: { ...alert.detail, actor_id: null, telegram_actor_id: "12345", telegram_username: null } }; })()],
+  ])("rejects %s", async (_label, alert) => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { batch_id: "559fe228-ff92-4a85-a3e9-ad83d9e60f8b", alerts: [alert] },
       error: null,
     });
     await expect(new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890"))

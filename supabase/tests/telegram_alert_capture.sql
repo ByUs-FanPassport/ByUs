@@ -247,6 +247,38 @@ begin
   end if;
 end $$;
 
+drop trigger telegram_alert_outbox_fixture_failure on public.telegram_alert_outbox;
+
+-- Enriched source projections retain concrete identities and usable resource IDs.
+do $$
+declare actor uuid:='f1000000-0000-4000-8000-000000000003'; creator uuid:='f1100000-0000-4000-8000-000000000001';
+  benefit uuid:='f1900000-0000-4000-8000-000000000001'; entry_id uuid:=gen_random_uuid(); claim_id uuid:=gen_random_uuid();
+  projected jsonb; o public.telegram_alert_outbox;
+begin
+  for o in select * from public.telegram_alert_outbox where kind in ('member_joined','fan_joined','live_reserved','live_attended') loop
+    projected:=public.telegram_fan_activity_detail(o);
+    if projected is null or projected#>>'{detail,actor_id}' is null then raise exception 'TELEGRAM_MAJOR_DETAIL_MISSING %',o.kind; end if;
+    if o.kind='live_attended' and (projected#>>'{detail,path}'<>'/live/telegram-public-live'
+      or projected#>>'{detail,actor_id}'<>actor::text or projected#>>'{detail,result}'<>'LIVE 출석 완료') then
+      raise exception 'TELEGRAM_ATTENDANCE_DETAIL_INVALID';
+    end if;
+  end loop;
+  perform public.post_fan_ticket_entry(actor,creator,'credit',1,'telegram_detail_test',gen_random_uuid(),gen_random_uuid(),2,null,null);
+  perform public.post_fan_ticket_entry(actor,creator,'debit',-1,'benefit_entry',entry_id,gen_random_uuid(),2,null,null);
+  insert into public.benefit_ticket_entries(id,idempotency_key,campaign_id,benefit_id,app_user_id,ticket_amount,ticket_ledger_id,benefit_ticket_total,entered_at)
+    select entry_id,gen_random_uuid(),'f1a00000-0000-4000-8000-000000000001',benefit,actor,1,id,1,clock_timestamp()
+    from public.fan_ticket_ledger where source_type='benefit_entry' and source_id=entry_id;
+  insert into public.benefit_claims(id,benefit_id,app_user_id,celebrity_id,passport_id,idempotency_key,delivery_type,claimed_at)
+    values(claim_id,benefit,actor,creator,'f1700000-0000-4000-8000-000000000001',gen_random_uuid(),'text',clock_timestamp());
+  for o in select * from public.telegram_alert_outbox where activity_source_id in (entry_id,claim_id) loop
+    projected:=public.telegram_fan_activity_detail(o);
+    if projected#>>'{detail,path}' is distinct from '/benefits/'||benefit::text
+      or projected#>>'{detail,actor_id}' is distinct from actor::text then raise exception 'TELEGRAM_BENEFIT_DETAIL_LINK_INVALID %',o.kind; end if;
+  end loop;
+  if (select count(*) from public.telegram_alert_outbox where activity_source_id in (entry_id,claim_id))<>2 then
+    raise exception 'TELEGRAM_BENEFIT_DETAIL_NOT_CAPTURED';
+  end if;
+end $$;
 rollback;
 
 do $$
