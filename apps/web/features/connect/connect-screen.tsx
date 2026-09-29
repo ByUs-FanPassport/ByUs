@@ -20,32 +20,28 @@ const copy = {
   ko: {
     skip: "건너뛰기", intro: "좋아한 순간이,\n나만의 기록으로.",
     title: "함께한 순간을 모으는\n팬 패스포트", description: "좋아하는 아티스트와의 순간을 기록하고,\n새로운 팬 이벤트에도 참여해 보세요.",
-    links: "링크 바로 보기", website: "ByUs 둘러보기", websiteDetail: "팬 활동과 이벤트를 만나보세요",
+    website: "ByUs 둘러보기", websiteDetail: "팬 활동과 이벤트를 만나보세요",
     event: "BYUS DAY 참가 신청", eventDetail: "10.15(목) 19:00 · ByusSpace",
     business: "비즈니스 연락", businessDetail: "이메일 · Telegram", replay: "소개 영상 다시보기",
     play: "소개 영상 재생", pause: "소개 영상 일시정지", loading: "영상을 불러오는 중…",
-    failed: "영상을 재생하지 못했어요.", failedDetail: "아래 링크에서 ByUs를 만나보세요.", retry: "다시 시도",
-    videoLabel: "ByUs 소개: 팬 패스포트에 함께한 순간이 스탬프로 쌓입니다.", progress: "소개 영상 재생 진행",
+    failed: "영상을 재생하지 못했어요.", failedDetail: "건너뛰기를 눌러 ByUs 링크를 확인하세요.", retry: "다시 시도",
+    videoLabel: "ByUs 소개: 팬 패스포트에 함께한 순간이 스탬프로 쌓입니다.",
     poster: "펼쳐진 팬 패스포트에 모인 활동 스탬프", contactTitle: "ByUs 팀에 연락하기", contactHint: "편한 채널로 연락해 주세요.",
     close: "연락처 닫기", email: "이메일", newTab: "새 창에서 열기", nav: "공식 채널", language: "언어 선택", main: "본문 바로가기",
   },
   en: {
     skip: "Skip", intro: "Your favorite moments.\nYour own story.",
     title: "A fan passport for\nyour favorite moments.", description: "Collect moments with your favorite artists\nand discover your next fan experience.",
-    links: "Explore our links", website: "Explore ByUs", websiteDetail: "Discover fan activities and events",
+    website: "Explore ByUs", websiteDetail: "Discover fan activities and events",
     event: "BYUS DAY · RSVP", eventDetail: "Oct 15, 19:00 · ByusSpace",
     business: "Business contact", businessDetail: "Email · Telegram", replay: "Watch our story again",
     play: "Play our story", pause: "Pause our story", loading: "Loading our story…",
-    failed: "The video couldn’t play.", failedDetail: "You can still explore ByUs below.", retry: "Try again",
-    videoLabel: "Introducing ByUs: shared moments become stamps in a fan passport.", progress: "Intro video progress",
+    failed: "The video couldn’t play.", failedDetail: "Select Skip to explore our links.", retry: "Try again",
+    videoLabel: "Introducing ByUs: shared moments become stamps in a fan passport.",
     poster: "An open fan passport filled with activity stamps", contactTitle: "Meet the ByUs team", contactHint: "Reach us on your preferred channel.",
     close: "Close contacts", email: "Email", newTab: "opens in a new tab", nav: "Official channels", language: "Choose language", main: "Skip to content",
   },
 } as const;
-
-function clock(seconds: number) {
-  return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
-}
 
 export function ConnectScreen() {
   const { locale: appLocale, setLocale } = useAppLocale();
@@ -56,7 +52,6 @@ export function ConnectScreen() {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"loading" | "playing" | "paused" | "error">("loading");
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(9.6);
   const [contactOpen, setContactOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -130,7 +125,13 @@ export function ConnectScreen() {
       <a href={`/?locale=${locale}`} aria-label="ByUs" className={styles.logo}>
         <Image src="/images/guest-home/byus-wordmark.svg" width={78} height={32} alt="ByUs" priority />
       </a>
-      {view === "intro" ? <button type="button" className={styles.skip} onClick={showLinks}>{t.skip}<ArrowRight size={16} aria-hidden="true" /></button>
+      {view === "intro" ? <div className={styles.introActions}>
+        {status !== "error" && <button type="button" className={styles.playback} onClick={togglePlayback}
+          disabled={status === "loading"} aria-label={status === "playing" ? t.pause : t.play} title={status === "playing" ? t.pause : t.play}>
+          {status === "playing" ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
+        </button>}
+        <button type="button" className={styles.skip} onClick={showLinks}>{t.skip}<ArrowRight size={16} aria-hidden="true" /></button>
+      </div>
         : <div className={styles.languages} role="group" aria-label={t.language}>
           <button type="button" onClick={() => changeLanguage("ko")} aria-pressed={locale === "ko"} aria-label="한국어" lang="ko">KO</button>
           <button type="button" onClick={() => changeLanguage("en")} aria-pressed={locale === "en"} aria-label="English" lang="en">EN</button>
@@ -148,7 +149,6 @@ export function ConnectScreen() {
         <div className={styles.film}>
           <video key={attempt} ref={videoRef} src={ready ? videoSrc : undefined} poster="/images/connect/intro-poster.webp"
             width={720} height={1280} muted playsInline preload="metadata" aria-label={t.videoLabel}
-            onLoadedMetadata={event => setDuration(event.currentTarget.duration || 9.6)}
             onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
             onPlaying={() => setStatus("playing")} onPause={() => setStatus(value => value === "error" ? value : "paused")}
             onWaiting={() => setStatus("loading")} onError={() => setStatus("error")} onEnded={showLinks} />
@@ -157,20 +157,7 @@ export function ConnectScreen() {
             <button type="button" onClick={replay} className={styles.retry}><RotateCcw size={16} aria-hidden="true" />{t.retry}</button>
           </div> : <>
             {status === "loading" && <div className={styles.loading} role="status"><LoaderCircle size={20} aria-hidden="true" />{t.loading}</div>}
-            {status === "paused" && <button type="button" className={styles.playOverlay} onClick={togglePlayback}><Play size={20} aria-hidden="true" />{t.play}</button>}
           </>}
-        </div>
-        <div className={styles.videoControls}>
-          {status !== "error" && <>
-            <progress value={currentTime} max={duration} aria-label={t.progress} />
-            <div className={styles.controlRow}>
-              <button type="button" onClick={togglePlayback} aria-label={status === "playing" ? t.pause : t.play}>
-                {status === "playing" ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
-              </button>
-              <span className={styles.clock} aria-hidden="true">{clock(currentTime)} / {clock(Math.ceil(duration))}</span>
-            </div>
-          </>}
-          <button type="button" className={styles.directLinks} onClick={showLinks}>{t.links}<ArrowRight size={19} aria-hidden="true" /></button>
         </div>
       </> : <>
         <div className={styles.passport}>

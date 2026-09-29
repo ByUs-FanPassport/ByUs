@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "Connect 소개 영상의 하단 버튼과 시간·진행 표시를 없애 영상 속 문구가 가려지지 않도록 바꿨어요.",
+    "재생·일시정지는 상단의 작은 버튼으로 조작하고, 건너뛰기를 누르면 바로 링크 모음으로 이동할 수 있어요.",
+    "첨부 이미지는 배포 전 실제 브라우저로 확인한 모바일·PC 로컬 검증 화면이에요."
+  ],
+  "path": "/connect",
+  "images": [
+    "release-notes/images/2026-09-29-connect-clear-mobile.png",
+    "release-notes/images/2026-09-29-connect-clear-desktop.png"
+  ]
+}

@@ -28,7 +28,7 @@ async function expectAccessible(page: Page, include?: string) {
   expect((await audit.analyze()).violations).toEqual([]);
 }
 
-test("the intro can be skipped by either action and stays skipped for the session", async ({ page }, testInfo) => {
+test("the header skips the intro by pointer and keyboard and remembers the session", async ({ page }, testInfo) => {
   await openFreshIntro(page);
   await expectNoHorizontalOverflow(page);
   await testInfo.attach("connect-intro", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
@@ -41,8 +41,10 @@ test("the intro can be skipped by either action and stays skipped for the sessio
 
   await page.evaluate((key) => sessionStorage.removeItem(key), seenKey);
   await page.reload();
-  await page.getByRole("button", { name: /링크 바로 보기|Explore our links/ }).click();
+  await page.getByRole("button", { name: /건너뛰기|Skip/ }).focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: /비즈니스 연락|Business contact/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
 });
 
 test("the fullscreen film and controls fit the viewport throughout playback", async ({ page }, testInfo) => {
@@ -57,11 +59,14 @@ test("the fullscreen film and controls fit the viewport throughout playback", as
   await expect(video).toHaveCSS("object-fit", "cover");
   expect(await video.boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
-  for (const button of [page.getByRole("button", { name: /건너뛰기|Skip/ }), page.getByRole("button", { name: /링크 바로 보기|Explore our links/ }), page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).last()]) {
+  await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
+  for (const button of [page.getByRole("button", { name: /건너뛰기|Skip/ }), page.getByRole("button", { name: /소개 영상 재생|Play our story/ })]) {
     const box = (await button.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 24);
+    const header = (await page.getByRole("banner").boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(header.y + header.height);
     await expect(button).toBeInViewport();
   }
   await page.evaluate(() => document.fonts.ready);
@@ -81,24 +86,37 @@ test("the fullscreen film and controls fit the viewport throughout playback", as
   await expect(page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ })).toBeVisible();
 });
 
-test("fullscreen controls fit 390px and short 360px screens in both languages", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "chromium-360", "Additional viewport sizes run once.");
+test("mobile intro actions leave embedded captions clear in both languages", async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.endsWith("-360"), "Additional viewport sizes run on each mobile browser project.");
   await openHub(page);
   for (const language of ["한국어", "English"]) {
     await page.getByRole("button", { name: language, exact: true }).click();
-    for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+    for (const viewport of [{ width: 390, height: 660 }, { width: 360, height: 640 }, { width: 390, height: 844 }]) {
       await page.setViewportSize(viewport);
       await page.getByRole("button", { name: /소개 영상 다시보기|Watch our story again/ }).click();
+      await expect(page.getByRole("status")).toHaveCount(0);
+      const play = page.getByRole("button", { name: /소개 영상 재생|Play our story/ });
+      if (await play.isVisible()) await play.click();
       await page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ }).click();
-      expect(await page.locator("video").boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
+      const video = page.locator("video");
+      const videoBox = (await video.boundingBox())!;
+      expect(videoBox).toMatchObject({ x: 0, y: 0, width: viewport.width });
+      expect(videoBox.height).toBeCloseTo(viewport.height, 1);
       await expectNoHorizontalOverflow(page);
       const heading = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
-      const links = page.getByRole("button", { name: /링크 바로 보기|Explore our links/ });
+      const links = page.getByRole("button", { name: /건너뛰기|Skip/ });
       const box = (await links.boundingBox())!;
-      expect(heading.y + heading.height).toBeLessThan(box.y);
-      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 24);
+      expect(box.y + box.height).toBeLessThanOrEqual(heading.y);
       expect(await links.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
-      await testInfo.attach(`connect-fullscreen-${viewport.width}-${language}`, { body: await page.screenshot({ animations: "disabled" }), contentType: "image/png" });
+      await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
+      for (const time of [0.1, 3, 6, 9]) {
+        await video.evaluate((element, at) => new Promise<void>(resolve => {
+          element.addEventListener("seeked", () => resolve(), { once: true });
+          (element as HTMLVideoElement).currentTime = at;
+        }), time);
+        if (time >= 8) await expect(page.getByRole("heading", { level: 1 })).toBeHidden();
+        await testInfo.attach(`connect-clear-${viewport.width}x${viewport.height}-${language}-${time}`, { body: await page.screenshot({ animations: "disabled" }), contentType: "image/png" });
+      }
       await links.click();
     }
   }
@@ -151,7 +169,7 @@ test("blocked autoplay and video errors retain recovery and direct links", async
   await retry.click();
   await expect(page.getByRole("button", { name: /소개 영상 재생|Play our story/ }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: /링크 바로 보기|Explore our links/ }).click();
+  await page.getByRole("button", { name: /건너뛰기|Skip/ }).click();
   await expect(page.getByRole("link", { name: /Instagram/ })).toBeVisible();
 });
 
