@@ -21,6 +21,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("tab=home&locale=ko"),
 }));
 import { CelebrityFanPage } from "./celebrity-fan-page";
+import { APP_LOCALES, toContentLocale } from "@/i18n/locales";
 
 const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, roles: ["idol"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
 const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, roles: ["idol"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
@@ -100,6 +101,22 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   return request;
 }
 describe("approved fanpage", () => {
+  it.each(APP_LOCALES)("keeps NCHIVE official videos and LIVE available to guests in %s", async (locale) => {
+    const nchive = { ...kara, slug: "nchive", name: "NCHIVE", locale: toContentLocale(locale) };
+    const live = { ...upcomingLive, slug: "nchive-live", celebritySlug: "nchive", title: "NCHIVE LIVE", locale: toContentLocale(locale) };
+    const view = render(<CelebrityFanPage celebrity={nchive} locale={locale} upcomingLive={live} instagramEnabled />);
+    const player = screen.getByTitle(/^NCHIVE · /);
+    const source = new URL(player.getAttribute("src")!);
+    expect(source.origin).toBe("https://www.youtube.com");
+    expect(source.searchParams.get("list")).toBe("UUO-svEJBdWiaViuy0TxVFFg");
+    expect(source.searchParams.get("autoplay")).toBe("0");
+    expect(source.searchParams.get("hl")).toBe(locale);
+    expect(screen.getByRole("link", { name: /NCHIVE LIVE/ })).toHaveAttribute("href", `/live/nchive-live?locale=${locale}`);
+    expect(screen.getByRole("link", { name: "YouTube" })).toHaveAttribute("href", "https://www.youtube.com/channel/UCO-svEJBdWiaViuy0TxVFFg");
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/nchive/raffles"), expect.anything()));
+    view.rerender(<CelebrityFanPage celebrity={kara} locale={locale} upcomingLive={null} />);
+    expect(view.container.querySelector("iframe")).not.toBeInTheDocument();
+  });
   beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
   it("loads the mini calendar anonymously while the destination session is pending", async () => {
     authenticated = true;

@@ -51,6 +51,12 @@ describe("response security headers", () => {
     expect(csp).not.toContain("media-src *");
   });
 
+  it("allows official YouTube videos only as embedded frames", () => {
+    const directives = header("Content-Security-Policy").split(";").map((value) => value.trim());
+    expect(directives.find((value) => value.startsWith("frame-src "))).toContain("https://www.youtube.com");
+    expect(directives.filter((value) => !value.startsWith("frame-src ")).join(";")).not.toContain("https://www.youtube.com");
+  });
+
   it("sets MIME, referrer, capability, and cross-origin isolation policies", () => {
     expect(header("X-Content-Type-Options")).toBe("nosniff");
     expect(header("Referrer-Policy")).toBe("strict-origin-when-cross-origin");

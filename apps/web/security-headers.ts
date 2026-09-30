@@ -21,7 +21,7 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   `child-src ${privyFrameSources.join(" ")}`,
-  `frame-src ${[...privyFrameSources, "https://challenges.cloudflare.com"].join(" ")}`,
+  `frame-src ${[...privyFrameSources, "https://challenges.cloudflare.com", "https://www.youtube.com"].join(" ")}`,
   [
     "connect-src 'self'",
     "https://auth.privy.io",
