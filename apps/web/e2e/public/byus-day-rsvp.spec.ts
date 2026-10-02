@@ -25,6 +25,7 @@ async function fillRsvp(page: Page) {
   await page.locator('[name="koreanName"]').fill("홍길동");
   await page.locator('[name="englishName"]').fill("Gildong Hong");
   await page.locator('[name="phone"]').fill("010-1234-5678");
+  await page.locator('[name="residentRegistrationNumber"]').fill("900101-1234567");
   await page.locator('[name="affiliation"]').fill("샐리랩");
   await page.locator('[name="occupation"]').fill("프로듀서");
   await page.locator('[name="email"]').fill("guest@example.com");
@@ -48,6 +49,12 @@ test("validates required fields and announces errors without sending a request",
   await expect(page.locator('[name="phone"]')).toBeFocused();
   await expect(page.getByText("휴대폰 번호를 확인해 주세요.", { exact: true })).toBeVisible();
   expect(sent).toBe(false);
+  await page.locator('[name="phone"]').fill("010-1234-5678");
+  await page.locator('[name="residentRegistrationNumber"]').fill("123");
+  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
+  await expect(page.locator('[name="residentRegistrationNumber"]')).toBeFocused();
+  await expect(page.getByText("주민등록번호 13자리를 확인해 주세요.", { exact: true })).toBeVisible();
+  expect(sent).toBe(false);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -66,12 +73,13 @@ test("retries a failed submission with the same key and shows a focused receipt"
   await expect(page.getByRole("heading", { name: "신청이 접수되었어요." })).toBeFocused();
   expect(payloads).toHaveLength(2);
   expect(payloads[0].idempotencyKey).toEqual(payloads[1].idempotencyKey);
-  expect(payloads[1]).toMatchObject({ phone: "+821012345678", nationality: "KR", consent: true, koreanName: "홍길동", englishName: "Gildong Hong" });
-  expect(Object.keys(payloads[1]).sort()).toEqual(["affiliation", "consent", "email", "englishName", "idempotencyKey", "koreanName", "locale", "nationality", "occupation", "phone"].sort());
+  expect(payloads[1]).toMatchObject({ phone: "+821012345678", residentRegistrationNumber:"900101-1234567", nationality: "KR", consent: true, koreanName: "홍길동", englishName: "Gildong Hong" });
+  expect(Object.keys(payloads[1]).sort()).toEqual(["affiliation", "consent", "email", "englishName", "idempotencyKey", "koreanName", "locale", "nationality", "occupation", "phone", "residentRegistrationNumber"].sort());
   await expect(page.locator("form")).toHaveCount(0);
   const storage = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
   expect(storage).not.toContain("guest@example.com");
   expect(storage).not.toContain("홍길동");
+  expect(storage).not.toContain("900101");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await testInfo.attach("native-rsvp-receipt", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
 });

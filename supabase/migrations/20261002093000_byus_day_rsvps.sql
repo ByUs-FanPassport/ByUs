@@ -15,29 +15,24 @@ create table public.byus_day_rsvps (
   occupation text not null check(char_length(occupation) between 1 and 120 and occupation !~ '[[:cntrl:]]'),
   email_normalized text not null check(char_length(email_normalized)<=254 and email_normalized=lower(email_normalized) and email_normalized ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
   nationality text not null check(nationality ~ '^[A-Z]{2}$'),
+  resident_registration_number_encrypted text not null check(resident_registration_number_encrypted ~ '^v1\.[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{18}$'),
   consented_at timestamptz not null default clock_timestamp(),
   ip_hash text not null check(ip_hash ~ '^[0-9a-f]{64}$'),
   payload_hash text not null check(payload_hash ~ '^[0-9a-f]{64}$'),
   created_at timestamptz not null default clock_timestamp(),
-  delete_after timestamptz not null default '2026-11-22 00:00:00+09',
-  unique(email_normalized,phone_e164),
-  check(delete_after='2026-11-22 00:00:00+09'::timestamptz)
+  unique(email_normalized,phone_e164)
 );
 
 create table public.byus_day_rsvp_rate_limits (
   ip_hash text primary key check(ip_hash ~ '^[0-9a-f]{64}$'),
   window_started_at timestamptz not null,
-  submission_count integer not null check(submission_count>0),
-  delete_after timestamptz not null default '2026-11-22 00:00:00+09'
-    check(delete_after='2026-11-22 00:00:00+09'::timestamptz)
+  submission_count integer not null check(submission_count>0)
 );
 
 create table public.byus_day_rsvp_idempotency (
   id uuid primary key,
   payload_hash text not null check(payload_hash ~ '^[0-9a-f]{64}$'),
-  created_at timestamptz not null default clock_timestamp(),
-  delete_after timestamptz not null default '2026-11-22 00:00:00+09'
-    check(delete_after='2026-11-22 00:00:00+09'::timestamptz)
+  created_at timestamptz not null default clock_timestamp()
 );
 
 alter table public.byus_day_rsvps enable row level security;
@@ -54,7 +49,7 @@ revoke all on function public.byus_day_rsvp_now() from public,anon,authenticated
 
 create function public.submit_byus_day_rsvp(
   p_id uuid,p_locale text,p_korean_name text,p_english_name text,p_phone_e164 text,
-  p_affiliation text,p_occupation text,p_email text,p_nationality text,p_consent boolean,
+  p_affiliation text,p_occupation text,p_email text,p_nationality text,p_resident_registration_number_encrypted text,p_consent boolean,
   p_ip_hash text,p_payload_hash text
 ) returns boolean language plpgsql security definer set search_path=pg_catalog,public as $$
 declare old_hash text; cfg public.telegram_alert_settings; total integer; now_at timestamptz:=public.byus_day_rsvp_now();
@@ -68,6 +63,7 @@ begin
     or p_occupation is null or char_length(btrim(p_occupation)) not between 1 and 120 or p_occupation ~ '[[:cntrl:]]'
     or p_email is null or p_email<>lower(p_email) or char_length(p_email)>254 or p_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' or p_email ~ '[[:cntrl:]]'
     or p_nationality is null or p_nationality !~ '^[A-Z]{2}$'
+    or p_resident_registration_number_encrypted is null or p_resident_registration_number_encrypted !~ '^v1\.[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{18}$'
     or p_ip_hash is null or p_ip_hash !~ '^[0-9a-f]{64}$' or p_payload_hash is null or p_payload_hash !~ '^[0-9a-f]{64}$'
   then raise exception 'RSVP_INVALID'; end if;
 
@@ -91,8 +87,8 @@ begin
   insert into public.byus_day_rsvp_idempotency(id,payload_hash) values(p_id,p_payload_hash);
   if exists(select 1 from public.byus_day_rsvps where email_normalized=p_email and phone_e164=p_phone_e164) then return true; end if;
 
-  insert into public.byus_day_rsvps(id,locale,korean_name,english_name,phone_e164,affiliation,occupation,email_normalized,nationality,ip_hash,payload_hash)
-  values(p_id,p_locale,btrim(p_korean_name),btrim(p_english_name),p_phone_e164,btrim(p_affiliation),btrim(p_occupation),p_email,p_nationality,p_ip_hash,p_payload_hash);
+  insert into public.byus_day_rsvps(id,locale,korean_name,english_name,phone_e164,affiliation,occupation,email_normalized,nationality,resident_registration_number_encrypted,ip_hash,payload_hash)
+  values(p_id,p_locale,btrim(p_korean_name),btrim(p_english_name),p_phone_e164,btrim(p_affiliation),btrim(p_occupation),p_email,p_nationality,p_resident_registration_number_encrypted,p_ip_hash,p_payload_hash);
 
   -- Shared Telegram queue order is always settings, then outbox.
   select * into cfg from public.telegram_alert_settings where singleton for update;
@@ -104,21 +100,5 @@ begin
   return true;
 end $$;
 
-create function public.purge_byus_day_rsvps() returns void
-language plpgsql security definer set search_path=pg_catalog,public as $$
-declare cfg public.telegram_alert_settings;
-begin
-  if public.byus_day_rsvp_now()<'2026-11-22 00:00:00+09'::timestamptz then return; end if;
-  -- Match claim/configuration lock order so purge cannot strand a claimed privacy-related row.
-  select * into cfg from public.telegram_alert_settings where singleton for update;
-  delete from public.telegram_alert_outbox where kind='byus_day_rsvp_received';
-  delete from public.byus_day_rsvps;
-  delete from public.byus_day_rsvp_rate_limits;
-  delete from public.byus_day_rsvp_idempotency;
-end $$;
-
-revoke all on function public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,boolean,text,text) from public,anon,authenticated,service_role;
-revoke all on function public.purge_byus_day_rsvps() from public,anon,authenticated,service_role;
-grant execute on function public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,boolean,text,text),public.purge_byus_day_rsvps() to service_role;
-
-select cron.schedule('byus-day-rsvp-retention','0 * * * *','select public.purge_byus_day_rsvps()');
+revoke all on function public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,text,boolean,text,text) from public,anon,authenticated,service_role;
+grant execute on function public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,text,boolean,text,text) to service_role;

@@ -2,12 +2,13 @@ import { createHmac } from "node:crypto";
 import { isIP } from "node:net";
 import { getCountries, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { z } from "zod";
+import { encryptResidentRegistrationNumber } from "./rsvp-crypto";
 
 const countries = new Set<string>(getCountries());
 const singleLine = (max: number) => z.string().trim().min(1).max(max).refine((value) => !/[\x00-\x1f\x7f]/u.test(value));
 const nationality = z.string().trim().transform((value) => value.toUpperCase()).refine((value) => countries.has(value));
 const rawSchema = z.object({
-  idempotencyKey: z.uuid(),
+  idempotencyKey: z.uuid().transform((value) => value.toLowerCase()),
   locale: z.enum(["ko", "en"]),
   koreanName: singleLine(80),
   englishName: singleLine(80),
@@ -16,10 +17,11 @@ const rawSchema = z.object({
   occupation: singleLine(120),
   email: z.email().max(254).refine((value) => !/[\r\n]/u.test(value)),
   nationality,
+  residentRegistrationNumber: z.string().regex(/^\d{6}-?\d{7}$/u),
   consent: z.literal(true),
 }).strict();
 
-export type RsvpInput = Omit<z.infer<typeof rawSchema>, "phone"> & { phone: string };
+export type RsvpInput = Omit<z.infer<typeof rawSchema>, "phone" | "residentRegistrationNumber"> & { phone: string; residentRegistrationNumberEncrypted: string };
 export type RsvpRepository = { submit(input: RsvpInput, ipHash: string, payloadHash: string): Promise<void> };
 export class RsvpError extends Error {
   constructor(readonly code: "RSVP_INVALID" | "RSVP_CLOSED" | "RSVP_RATE_LIMITED" | "RSVP_IDEMPOTENCY_CONFLICT" | "RSVP_UNAVAILABLE") { super(code); }
@@ -55,7 +57,19 @@ async function readBody(request: Request) {
   } finally { reader.releaseLock(); }
 }
 
-export function createRsvpHandler(deps: { repository: RsvpRepository; secret: string; vercel: boolean; localDevelopment?: boolean; now?: () => number }) {
+function normalizeResidentRegistrationNumber(value: string): string {
+  const normalized = value.replace("-", "");
+  const marker = Number(normalized[6]);
+  if (marker < 1 || marker > 8) throw new RsvpError("RSVP_INVALID");
+  const year = (marker === 1 || marker === 2 || marker === 5 || marker === 6 ? 1900 : 2000) + Number(normalized.slice(0, 2));
+  const month = Number(normalized.slice(2, 4));
+  const day = Number(normalized.slice(4, 6));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day || date > new Date("2026-10-22T23:59:59+09:00")) throw new RsvpError("RSVP_INVALID");
+  return normalized;
+}
+
+export function createRsvpHandler(deps: { repository: RsvpRepository; secret: string; encryptionKey: Buffer; vercel: boolean; localDevelopment?: boolean; now?: () => number }) {
   return async (request: Request): Promise<Response> => {
     try {
       const origin = request.headers.get("origin");
@@ -70,10 +84,18 @@ export function createRsvpHandler(deps: { repository: RsvpRepository; secret: st
       if (!/^\+?[0-9 ()-]+$/u.test(parsed.data.phone)) throw new RsvpError("RSVP_INVALID");
       const phone = parsePhoneNumberFromString(parsed.data.phone, "KR");
       if (!phone?.isValid() || phone.ext) throw new RsvpError("RSVP_INVALID");
-      const input: RsvpInput = { ...parsed.data, phone: phone.number, email: parsed.data.email.toLowerCase(), nationality: parsed.data.nationality as CountryCode };
+      const normalizedRrn = normalizeResidentRegistrationNumber(parsed.data.residentRegistrationNumber);
+      const { residentRegistrationNumber: _residentRegistrationNumber, ...publicInput } = parsed.data;
+      const input: RsvpInput = {
+        ...publicInput,
+        phone: phone.number,
+        email: parsed.data.email.toLowerCase(),
+        nationality: parsed.data.nationality as CountryCode,
+        residentRegistrationNumberEncrypted: encryptResidentRegistrationNumber(normalizedRrn, parsed.data.idempotencyKey, deps.encryptionKey),
+      };
       const hash = (purpose: string, value: string) => createHmac("sha256", deps.secret).update(`byus-day-rsvp-v1:${purpose}:${value}`).digest("hex");
       const ipHash = hash("ip", clientIp(request, deps.vercel));
-      const payloadHash = hash("payload", JSON.stringify([input.locale, input.koreanName, input.englishName, input.phone, input.affiliation, input.occupation, input.email, input.nationality, input.consent]));
+      const payloadHash = hash("payload", JSON.stringify([input.locale, input.koreanName, input.englishName, input.phone, input.affiliation, input.occupation, input.email, input.nationality, normalizedRrn, input.consent]));
       await deps.repository.submit(input, ipHash, payloadHash);
       return Response.json({ status: "accepted" }, { status: 202, headers: { "cache-control": "no-store" } });
     } catch (error) {

@@ -15,6 +15,7 @@ export function createRsvpRepository(client: RpcClient): RsvpRepository {
       p_occupation: input.occupation,
       p_email: input.email,
       p_nationality: input.nationality,
+      p_resident_registration_number_encrypted: input.residentRegistrationNumberEncrypted,
       p_consent: input.consent,
       p_ip_hash: ipHash,
       p_payload_hash: payloadHash,
