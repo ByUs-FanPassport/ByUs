@@ -1,0 +1,13 @@
+{
+  "changes": [
+    "ByUs 안에서 바로 신청할 수 있는 BYUS DAY 초대 페이지를 열었어요. 10월 22일 목요일, Dragon Hill Lodge에서 본행사와 뒷풀이가 진행돼요.",
+    "한글·영어 이름, 휴대폰 번호, 주민등록번호, 소속·직업, 이메일, 국적을 접수하고 주민등록번호는 암호화해 저장해요.",
+    "신청이 접수되면 운영 Telegram 방으로 알림을 보내요. 개인정보는 행사 종료 후 1개월 동안 보관하고 운영자가 삭제해요.",
+    "첨부 이미지는 배포 전 실제 브라우저로 확인한 모바일·PC 테스트 화면이에요."
+  ],
+  "path": "/byus-day",
+  "images": [
+    "release-notes/images/2026-10-02-byus-day-rsvp-mobile.png",
+    "release-notes/images/2026-10-02-byus-day-rsvp-desktop.png"
+  ]
+}
