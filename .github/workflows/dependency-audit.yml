@@ -31,6 +31,9 @@ jobs:
       - name: Enforce audit baseline
         run: npm run security:audit:baseline
 
+      - name: Reject high and critical advisories in development tools
+        run: npm audit --audit-level=high --ignore-scripts
+
       - name: Verify patched dependency constraints
         run: npm run security:verify
 

@@ -7,6 +7,22 @@ import { mergeAttributes } from "@tiptap/core";
 const root = new URL("../", import.meta.url);
 const lock = JSON.parse(await readFile(new URL("package-lock.json", root), "utf8"));
 
+test("Axios ignores inherited HTTP methods when making a default GET request", async () => {
+  const axios = createRequire(new URL("node_modules/@coinbase/cdp-sdk/package.json", root))("axios");
+  const original = Object.getOwnPropertyDescriptor(Object.prototype, "method");
+  Object.defineProperty(Object.prototype, "method", { value: "delete", configurable: true, writable: true });
+  try {
+    const response = await axios({
+      url: "https://example.invalid",
+      adapter: async (config) => ({ data: config.method, status: 200, statusText: "OK", headers: {}, config }),
+    });
+    assert.equal(response.data, "get");
+  } finally {
+    if (original) Object.defineProperty(Object.prototype, "method", original);
+    else delete Object.prototype.method;
+  }
+});
+
 test("Tiptap keeps __proto__ inert without inheriting executable attributes", () => {
   const merged = mergeAttributes({ class: "notice" }, JSON.parse('{"__proto__":{"onload":"alert(1)"},"title":"safe"}'));
   assert.equal(merged.onload, undefined);

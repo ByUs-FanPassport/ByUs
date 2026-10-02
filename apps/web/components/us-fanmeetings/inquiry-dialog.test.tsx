@@ -28,6 +28,7 @@ describe("Fanmeeting inquiry dialog", () => {
     const request = vi.fn().mockResolvedValue(Response.json({ status: "accepted" }, { status: 202 }));
     vi.stubGlobal("fetch", request);
     renderInquiry();
+    await waitFor(() => expect(screen.getByLabelText("담당자명")).toHaveFocus());
     await fillValid();
     fireEvent.click(screen.getByRole("button", { name: "문의 접수하기" }));
     expect(await screen.findByRole("heading", { name: "문의가 접수됐어요" })).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BenefitRecipientScreen } from "./benefit-recipient-screen";
 
@@ -54,6 +54,11 @@ function fillKoreanShipping() {
   fireEvent.click(screen.getByRole("checkbox", { name: /개인정보 수집·이용에 동의/ }));
 }
 
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-20T00:00:00.000Z"));
+});
+
 afterEach(() => {
   authState.ready = true;
   authState.authenticated = true;
@@ -61,6 +66,7 @@ afterEach(() => {
   authState.token = "token";
   getAccessToken.mockClear();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("Benefit recipient screen", () => {

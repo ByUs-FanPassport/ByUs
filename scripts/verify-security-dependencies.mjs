@@ -41,9 +41,11 @@ const patchedMinimums = {
   nanoid: "3.3.18",
   hono: "4.12.34",
   "@walletconnect/utils": "2.21.9",
-  next: "16.3.3",
+  next: "16.3.8",
   sharp: "0.35.4",
   "baseline-browser-mapping": "2.11.0",
+  vitest: "4.1.11",
+  "@vitest/mocker": "4.1.11",
 };
 for (const [path, metadata] of packages) {
   for (const [name, minimum] of Object.entries(patchedMinimums)) {
@@ -56,7 +58,7 @@ for (const [path, metadata] of packages) {
   }
 
   if (path === "node_modules/axios" || path.endsWith("/node_modules/axios")) {
-    if (isBefore(metadata.version, "1.18.1")) {
+    if (isBefore(metadata.version, "1.20.0")) {
       failures.push(`${path} resolved to vulnerable axios ${metadata.version}`);
     }
   }
@@ -70,8 +72,8 @@ for (const [path, metadata] of packages) {
 }
 
 const axiosOverride = rootManifest.overrides?.["@coinbase/cdp-sdk"]?.axios;
-if (axiosOverride !== "1.18.1") {
-  failures.push("Coinbase CDP axios override must remain pinned to 1.18.1");
+if (axiosOverride !== "1.20.0") {
+  failures.push("Coinbase CDP axios override must remain pinned to 1.20.0");
 }
 
 if (rootManifest.overrides?.["ws@>=8.0.0 <8.21.0"] !== "8.21.1") {
