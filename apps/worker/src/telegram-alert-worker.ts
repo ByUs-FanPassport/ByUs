@@ -420,7 +420,12 @@ function renderLegacyAlert(alert: TelegramAlertSnapshot): string[] {
   if (alert.kind in activityLabels) {
     alertSchema.parse(alert);
     const [label, page] = activityLabels[alert.kind as ActivityKind];
-    const context = cleanPublicName(alert.activity_context ?? null, 160);
+    const context = cleanPublicName(alert.activity_context ?? null, alert.kind === "byus_day_rsvp_received" ? 200 : 160);
+    if (alert.kind === "byus_day_rsvp_received") {
+      return [`• ${label}`,
+        ...(context && !/^누적 \d+명$/u.test(context) ? [`  접수자: ${context}`] : []),
+        `  누적 ${alert.activity_quantity ?? 0}명`, `${ADMIN_URL}/${page}`];
+    }
     return [`• ${label}`, ...(context ? [`  ${context}`] : []),
       ...(alert.kind === "raffle_entered" ? [`  사용 응모권 ${alert.activity_quantity ?? 0}장`] : []), `${ADMIN_URL}/${page}`];
   }

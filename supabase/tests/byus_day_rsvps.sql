@@ -66,15 +66,21 @@ set local byus_day.test_now='2026-10-02 12:00:00+09';
 
 select public.configure_telegram_alerts('-1001234567890',true);
 do $$
-declare envelope text:='v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18); before_alerts bigint;
+declare envelope text:='v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18); before_alerts bigint; alert public.telegram_alert_outbox%rowtype; rsvp_total integer;
 begin
   select count(*) into before_alerts from public.telegram_alert_outbox;
   perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000001','ko','김별','Byeol Kim','+821012345678','ByUs','기획','byeol@example.com','KR',envelope,true,repeat('a',64),repeat('1',64));
   perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000001','ko','김별','Byeol Kim','+821012345678','ByUs','기획','byeol@example.com','KR',envelope,true,repeat('a',64),repeat('1',64));
   if (select count(*) from public.byus_day_rsvps where id='ba000000-0000-4000-8000-000000000001')<>1
     or (select count(*) from public.telegram_alert_outbox)<>before_alerts+1 then raise exception 'idempotent retry duplicated RSVP or alert'; end if;
+  select * into strict alert from public.telegram_alert_outbox where kind='byus_day_rsvp_received';
+  select count(*)::integer into rsvp_total from public.byus_day_rsvps;
   if (select resident_registration_number_encrypted from public.byus_day_rsvps where id='ba000000-0000-4000-8000-000000000001')<>envelope
-    or exists(select 1 from public.telegram_alert_outbox where kind='byus_day_rsvp_received' and activity_context ~ '900101|김별|@') then raise exception 'RRN storage or alert boundary failed'; end if;
+    or alert.activity_context<>'김별 · Byeol Kim' or alert.activity_quantity<>rsvp_total
+    or alert.source_id is not null or alert.activity_source_id is not null or alert.activity_actor_id is not null
+    or alert.activity_context like '%byeol@example.com%' or alert.activity_context like '%+821012345678%'
+    or alert.activity_context like '%900101%' or alert.activity_context like '%'||envelope||'%'
+  then raise exception 'RRN storage or alert boundary failed'; end if;
   begin
     perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000001','ko','김별','Changed','+821012345678','ByUs','기획','byeol@example.com','KR',envelope,true,repeat('a',64),repeat('2',64));
     raise exception 'idempotency conflict accepted';

@@ -53,12 +53,28 @@ function detailedActivity(kind: DetailedKind, overrides: Record<string, unknown>
 }
 
 describe("renderTelegramAlertMessage", () => {
-  it("renders a privacy-free RSVP alert in a mixed batch", () => {
+  it("keeps legacy count-only RSVP alerts compatible in a mixed batch", () => {
     const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: "누적 3명", activity_quantity: 3 };
     const message = renderTelegramAlertMessage([alerts[0]!, rsvp]);
     expect(message).toContain("• 신규 회원 가입");
     expect(message).toContain("• ByUs Day RSVP 접수\n  누적 3명\nhttps://byus.kr/admin/system");
     expect(message).not.toMatch(/김별|010-|byeol@example/u);
+  });
+  it("shows each RSVP guest's Korean and English names alongside the cumulative count", async () => {
+    const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: "김별 · Byeol Kim", activity_quantity: 3 };
+    const rpc = vi.fn().mockResolvedValue({ data: { batch_id: "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19", alerts: [rsvp] }, error: null });
+    const claimed = await new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890");
+    const message = renderTelegramAlertMessage([alerts[0]!, ...claimed!.alerts]);
+    expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  누적 3명");
+    expect(message).not.toMatch(/010-|byeol@example|900101/u);
+  });
+  it("preserves maximum-length RSVP names and removes line and direction controls", () => {
+    const names = `${"가".repeat(80)} · ${"X".repeat(80)}`;
+    const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: names + "\u202e\n", activity_quantity: 3 };
+    const message = renderTelegramAlertMessage([rsvp]);
+    expect(message).toContain(`  접수자: ${names}\n  누적 3명`);
+    expect(message).not.toContain("\u202e");
+    expect(renderTelegramAlertMessage(Array.from({ length: 5 }, () => rsvp)).length).toBeLessThanOrEqual(4000);
   });
   it("renders campaign visits without identities and validates the claim context", async () => {
     const campaign = { kind: "campaign_visited" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-21T00:00:00Z", campaign_name: "Mirrorworld · 뱅크시 이벤트", campaign_channel: "mirrorworld" };
