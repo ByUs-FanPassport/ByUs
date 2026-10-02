@@ -1,0 +1,13 @@
+{
+  "changes": [
+    "ByUs Day 초대 문구를 엔터테인먼트와 기술이 만나는 ‘Enter × Tech의 밤’으로 바꿨어요.",
+    "본행사와 뒷풀이가 같은 장소에서 이어지는 하나의 행사임을 알리고, 차량 없이 방문해 주셔야 한다는 안내도 추가했어요.",
+    "한국어·영어 어느 페이지에서든 영문 포스터 전체를 볼 수 있고, 포스터를 누르면 원본을 새 탭에서 크게 볼 수 있어요.",
+    "첨부 이미지는 배포 전에 실제 브라우저에서 확인한 모바일·PC 테스트 화면이에요."
+  ],
+  "path": "/byus-day",
+  "images": [
+    "release-notes/images/2026-10-02-byus-day-rsvp-enter-tech-mobile.png",
+    "release-notes/images/2026-10-02-byus-day-rsvp-enter-tech-desktop.png"
+  ]
+}

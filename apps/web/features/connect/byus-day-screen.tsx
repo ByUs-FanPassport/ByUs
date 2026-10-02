@@ -12,10 +12,12 @@ import styles from "./byus-day-screen.module.css";
 const copy = {
   ko: {
     back:"ByUs", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
-    headline:"ByUs의 다음 소식을\n함께 나누는 저녁.",
-    introduction:"라이브와 팬덤, 그리고 함께할 사람들.\n새로운 소식을 나누고 편안하게 이야기를 이어가세요.",
-    date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이",
+    headline:"엔터테인먼트와 기술이 만나는\nEnter × Tech의 밤.",
+    introduction:"ByUs Day는 엔터테인먼트와 기술의 지금과 다음을 함께 살펴보는 자리입니다.\n쇼케이스와 파이어사이드 챗, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
+    posterAlt:"ByUs Day Enter × Tech 영문 행사 포스터", posterLink:"영문 포스터 · 새 탭에서 크게 보기",
+    date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
+    vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
     formTitle:"참가 신청", formDescription:"아래 정보를 남겨 주세요. 행사와 출입 안내를 전해 드릴게요.",
     required:"모든 항목 필수", koreanName:"한글 이름", englishName:"영어 이름", phone:"휴대폰 번호", phoneHelp:"해외 번호는 국가번호부터 입력해 주세요.",
     residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"미군기지 출입 명단 제출에 사용합니다.",
@@ -34,10 +36,12 @@ const copy = {
   },
   en: {
     back:"ByUs", language:"Choose language", skip:"Skip to RSVP", invitation:"You’re invited",
-    headline:"An evening for\nwhat’s next at ByUs.",
-    introduction:"Live, fandom, and the people behind it.\nJoin us for news from ByUs and conversations that continue into the night.",
-    date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party",
+    headline:"Where entertainment meets technology.\nEnter × Tech at ByUs Day.",
+    introduction:"Explore what’s next in entertainment and technology through showcases, fireside chats, and networking with the people shaping both worlds.",
+    posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
+    date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
+    vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
     formTitle:"RSVP", formDescription:"Leave your details below. We’ll be in touch with event and entry information.",
     required:"All fields required", koreanName:"Korean name", englishName:"English name", phone:"Mobile number", phoneHelp:"Include your country code for numbers outside Korea.",
     residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Used for the U.S. military base entry list.",
@@ -143,16 +147,22 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <h1 id="event-title" className={styles.title}>BYUS <span>DAY</span></h1>
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
-        <div className={styles.artwork} aria-hidden="true">
-          <Image src="/images/connect/byus-day/poster-en.webp" alt="" width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
-        </div>
+        <figure className={styles.artwork}>
+          <a className={styles.posterLink} href="/images/connect/byus-day/poster-enter-tech-en.webp" target="_blank" rel="noopener noreferrer">
+            <Image src="/images/connect/byus-day/poster-enter-tech-en.webp" alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
+            <span className={styles.posterCaption}>{t.posterLink}</span>
+          </a>
+        </figure>
         <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time><p className={styles.day}>{t.date}</p></div><span className={styles.seal} aria-hidden="true">BYUS<br /><b>22</b><br />OCTOBER</span></div>
         <section className={styles.schedule} aria-labelledby="schedule-title">
           <h2 id="schedule-title">{t.evening}</h2>
           <dl><div><dt>{t.program}</dt><dd>18:30 <span>—</span> 21:30</dd></div><div><dt>{t.afterparty}</dt><dd>21:30 <span>—</span> 24:00</dd></div></dl>
+          <p className={styles.scheduleNote}>{t.scheduleNote}</p>
         </section>
         <section className={styles.venue} aria-labelledby="venue-title"><MapPin size={22} aria-hidden="true" /><div>
-          <h2 id="venue-title">{t.venue}</h2><p className={styles.venueName}>Dragon Hill Lodge <span>(DHL)</span></p><p>{t.location}</p><p className={styles.venueNote}>{t.venueNote}</p>
+          <h2 id="venue-title">{t.venue}</h2><p className={styles.venueName}>Dragon Hill Lodge <span>(DHL)</span></p><p>{t.location}</p>
+          <div className={styles.accessNotes}><p>{t.vehicleEntry}</p><p>{t.vehicleRequest}</p><p>{t.vehicleApology}</p></div>
+          <p className={styles.venueNote}>{t.venueNote}</p>
         </div></section>
       </section>
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>

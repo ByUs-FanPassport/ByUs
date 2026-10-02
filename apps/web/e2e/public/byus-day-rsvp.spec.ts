@@ -33,6 +33,39 @@ async function fillRsvp(page: Page) {
   await page.locator('[name="consent"]').check();
 }
 
+test("shows the complete English poster in both languages and opens the original", async ({ page }, testInfo) => {
+  for (const locale of ["ko", "en"]) {
+    await page.goto(`/connect/byus-day?locale=${locale}`);
+    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-enter-tech-en.webp"]');
+    const poster = posterLink.getByRole("img");
+    await expect(poster).toBeVisible();
+    await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    const geometry = await poster.evaluate(image => {
+      const rect = image.getBoundingClientRect();
+      const container = image.closest("a")!.getBoundingClientRect();
+      return { ratio: rect.height / rect.width, top: rect.top, bottom: rect.bottom, containerTop: container.top, containerBottom: container.bottom };
+    });
+    expect(geometry.ratio).toBeCloseTo(1.5, 2);
+    expect(geometry.top).toBeGreaterThanOrEqual(geometry.containerTop);
+    expect(geometry.bottom).toBeLessThanOrEqual(geometry.containerBottom);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    await expect(page.locator('[name="consent"]')).toHaveAttribute("required", "");
+    await expect(page.locator('[name="consent"]')).not.toBeChecked();
+    await posterLink.focus();
+    await expect(posterLink).toBeFocused();
+    expect(await posterLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-invitation.png`), fullPage: true });
+    const opened = page.context().waitForEvent("page");
+    await posterLink.click();
+    const original = await opened;
+    await original.waitForLoadState("load");
+    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-enter-tech-en\.webp$/);
+    await expect(original.locator("img")).toBeVisible();
+    await original.close();
+  }
+});
+
 test("validates required fields and announces errors without sending a request", async ({ page }) => {
   let sent = false;
   await page.route("**/api/byus-day/rsvp", route => { sent = true; return route.abort(); });
