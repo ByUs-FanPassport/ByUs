@@ -192,7 +192,7 @@ export function FanSiteFooter({ locale }: { locale: FanLocale }) {
           <div><dt>{t.registrationNumber}</dt><dd>736-86-03473</dd></div>
           <div className={styles.businessAddress}>
             <dt>{t.businessAddress}</dt>
-            <dd lang="ko">서울특별시 서초구 효령로31길 28, 3층 제이5호(방배동)</dd>
+            <dd lang="ko">서울특별시 강남구 도산대로28길 46, 6층</dd>
           </div>
         </dl>
       </FanContentContainer>
