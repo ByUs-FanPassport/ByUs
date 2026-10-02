@@ -21,7 +21,7 @@ const copy = {
     skip: "건너뛰기", intro: "좋아한 순간이,\n나만의 기록으로.",
     title: "함께한 순간을 모으는\n팬 패스포트", description: "좋아하는 아티스트와의 순간을 기록하고,\n새로운 팬 이벤트에도 참여해 보세요.",
     website: "ByUs 둘러보기", websiteDetail: "팬 활동과 이벤트를 만나보세요",
-    event: "BYUS DAY 참가 신청", eventDetail: "10.15(목) 19:00 · ByusSpace",
+    event: "BYUS DAY 참가 신청", eventDetail: "10.22(목) 18:30 · Dragon Hill Lodge",
     business: "비즈니스 연락", businessDetail: "이메일 · Telegram", replay: "소개 영상 다시보기",
     play: "소개 영상 재생", pause: "소개 영상 일시정지", loading: "영상을 불러오는 중…",
     failed: "영상을 재생하지 못했어요.", failedDetail: "건너뛰기를 눌러 ByUs 링크를 확인하세요.", retry: "다시 시도",
@@ -33,7 +33,7 @@ const copy = {
     skip: "Skip", intro: "Your favorite moments.\nYour own story.",
     title: "A fan passport for\nyour favorite moments.", description: "Collect moments with your favorite artists\nand discover your next fan experience.",
     website: "Explore ByUs", websiteDetail: "Discover fan activities and events",
-    event: "BYUS DAY · RSVP", eventDetail: "Oct 15, 19:00 · ByusSpace",
+    event: "BYUS DAY · RSVP", eventDetail: "Oct 22, 18:30 · Dragon Hill Lodge",
     business: "Business contact", businessDetail: "Email · Telegram", replay: "Watch our story again",
     play: "Play our story", pause: "Pause our story", loading: "Loading our story…",
     failed: "The video couldn’t play.", failedDetail: "Select Skip to explore our links.", retry: "Try again",
@@ -168,7 +168,7 @@ export function ConnectScreen() {
             <span><strong>{t.website}</strong><small>{t.websiteDetail}</small></span><ArrowUpRight size={22} aria-hidden="true" />
           </a>
           <Link className={`${styles.linkCard} ${styles.eventCard}`} href={`/connect/byus-day?locale=${locale}`}>
-            <Image src={`/images/connect/byus-day/poster-${locale}.webp`} width={44} height={66} sizes="44px" alt="" />
+            <span className={styles.eventDate} aria-hidden="true">OCT<b>22</b></span>
             <span><strong>{t.event}</strong><small>{t.eventDetail}</small></span><ChevronRight size={22} aria-hidden="true" />
           </Link>
           <a className={styles.linkCard} href="https://www.instagram.com/official_byus/" target="_blank" rel="noopener noreferrer">

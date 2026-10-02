@@ -53,6 +53,13 @@ function detailedActivity(kind: DetailedKind, overrides: Record<string, unknown>
 }
 
 describe("renderTelegramAlertMessage", () => {
+  it("renders a privacy-free RSVP alert in a mixed batch", () => {
+    const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: "누적 3명", activity_quantity: 3 };
+    const message = renderTelegramAlertMessage([alerts[0]!, rsvp]);
+    expect(message).toContain("• 신규 회원 가입");
+    expect(message).toContain("• ByUs Day RSVP 접수\n  누적 3명\nhttps://byus.kr/admin/system");
+    expect(message).not.toMatch(/김별|010-|byeol@example/u);
+  });
   it("renders campaign visits without identities and validates the claim context", async () => {
     const campaign = { kind: "campaign_visited" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-21T00:00:00Z", campaign_name: "Mirrorworld · 뱅크시 이벤트", campaign_channel: "mirrorworld" };
     const rpc = vi.fn().mockResolvedValue({ data: { batch_id: "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19", alerts: [campaign] }, error: null });

@@ -218,52 +218,24 @@ test("configured 360px and 1440px hubs and contacts are overflow-free and access
   await testInfo.attach(`connect-${expectedWidth}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
 });
 
-test("BYUS DAY opens the full-width poster, switches languages, and links directly to RSVP", async ({ page }, testInfo) => {
+test("BYUS DAY opens the native invitation and switches languages", async ({ page }, testInfo) => {
   await openHub(page);
   await page.getByRole("button", { name: "한국어", exact: true }).click();
-  await expect(page.getByRole("link", { name: /BYUS DAY 참가 신청/ })).toBeVisible();
-  await page.locator("img").evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
-  await testInfo.attach(`connect-event-${page.viewportSize()!.width}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
-  await page.getByRole("link", { name: /BYUS DAY 참가 신청/ }).click();
-
+  const event = page.getByRole("link", { name: /BYUS DAY 참가 신청/ });
+  await expect(event).toContainText("10.22(목) 18:30 · Dragon Hill Lodge");
+  await event.click();
   for (const locale of ["ko", "en"] as const) {
     if (locale === "en") await page.getByRole("link", { name: "English", exact: true }).click();
-    const poster = page.getByRole("img", { name: /BYUS DAY/ });
-    await expect(poster).toHaveAttribute("src", `/images/connect/byus-day/poster-${locale}.webp`);
-    await expect(poster).toBeVisible();
-    await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1024);
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("BYUS DAY");
+    await expect(page.getByText("2026.10.22", { exact: true })).toBeVisible();
+    await expect(page.getByText("Dragon Hill Lodge", { exact: false })).toBeVisible();
+    await expect(page.locator('a[href*="luma.com"]')).toHaveCount(0);
+    await expect(page.locator('input[name="email"]')).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    expect((await poster.boundingBox())!.width).toBe(Math.min(page.viewportSize()!.width, 1024));
-    const rsvp = page.getByRole("link", { name: locale === "ko" ? /참가 신청/ : /RSVP/ });
-    await expect(rsvp).toHaveAttribute("href", "https://luma.com/hg1qdkvn");
-    await expect(rsvp).toHaveAttribute("target", "_blank");
-    await expect(rsvp).toHaveAttribute("rel", "noopener noreferrer");
-    await expect(rsvp).toBeInViewport();
-    expect((await rsvp.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await expectAccessible(page);
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    const footer = page.getByRole("contentinfo");
-    const posterBox = (await poster.boundingBox())!;
-    expect(posterBox.y + posterBox.height).toBeLessThanOrEqual((await footer.boundingBox())!.y);
-    await expect(rsvp).toBeInViewport();
     await testInfo.attach(`byus-day-${locale}-${page.viewportSize()!.width}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
-    await page.evaluate(() => window.scrollTo(0, 0));
   }
-
-  await page.context().route("https://luma.com/hg1qdkvn", route => route.fulfill({ contentType: "text/html", body: "<title>RSVP destination</title>" }));
-  const destination = page.waitForEvent("popup");
-  await page.getByRole("link", { name: /RSVP/ }).click();
-  const popup = await destination;
-  await expect(popup).toHaveURL("https://luma.com/hg1qdkvn");
-  await popup.close();
-
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.evaluate(key => sessionStorage.removeItem(key), seenKey);
-  await page.getByRole("link", { name: "All links", exact: true }).click();
+  await page.getByRole("link", { name: "ByUs", exact: true }).click();
   await expect(page.getByRole("link", { name: /BYUS DAY · RSVP/ })).toBeVisible();
-  await expect(page.locator("video")).toHaveCount(0);
-  await page.getByRole("button", { name: "한국어", exact: true }).click();
-  await expect(page.getByRole("link", { name: /BYUS DAY 참가 신청/ })).toBeVisible();
 });

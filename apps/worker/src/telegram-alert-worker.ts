@@ -117,6 +117,10 @@ const activityLabels = {
   "campaign_outbound": [
     "뱅크시 외부 링크 이동 요청",
     "campaigns"
+  ],
+  "byus_day_rsvp_received": [
+    "ByUs Day RSVP 접수",
+    "system"
   ]
 } as const;
 type ActivityKind = keyof typeof activityLabels;
@@ -156,6 +160,7 @@ const kindSchema = z.enum([
   "fan_lounge_posted",
   "notice_commented",
   "daily_checked_in",
+  "byus_day_rsvp_received",
 ]);
 const detailKinds = new Set<string>([
   "member_joined",

@@ -53,7 +53,8 @@
 .primary small { color:#ffe4f2; }
 .linkCard>svg { flex:none; }
 .eventCard { padding:10px 16px 10px 12px; border-color:#d9c6ad; background:#f7f0e4; color:#681923 !important; }
-.eventCard>img { flex:none; width:44px; height:66px; border-radius:3px; }
+.eventCard>.eventDate { display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center; width:44px; height:66px; border-radius:3px; color:#f7f0e4; background:#681923; font-size:11px; letter-spacing:.05em; }
+.eventDate b { font:700 28px/1.1 Georgia,serif; letter-spacing:0; }
 .eventCard>span { flex:1; }
 .eventCard small { color:#77564e; font-variant-numeric:tabular-nums; }
 .replay { grid-area:replay; display:flex; justify-content:center; align-items:center; gap:8px; min-height:44px; padding:0 12px; border:0; background:transparent; color:#796674; font-size:13px !important; font-weight:600 !important; }
