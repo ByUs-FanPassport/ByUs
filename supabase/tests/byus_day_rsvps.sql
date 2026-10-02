@@ -66,14 +66,14 @@ set local byus_day.test_now='2026-10-02 12:00:00+09';
 
 select public.configure_telegram_alerts('-1001234567890',true);
 do $$
-declare envelope text:='v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18); before_alerts bigint; alert public.telegram_alert_outbox%rowtype; rsvp_total integer;
+declare envelope text:='v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18); before_alerts bigint; before_alert_ids uuid[]; alert public.telegram_alert_outbox%rowtype; rsvp_total integer;
 begin
-  select count(*) into before_alerts from public.telegram_alert_outbox;
+  select count(*),coalesce(array_agg(id),'{}'::uuid[]) into before_alerts,before_alert_ids from public.telegram_alert_outbox;
   perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000001','ko','김별','Byeol Kim','+821012345678','ByUs','기획','byeol@example.com','KR',envelope,true,repeat('a',64),repeat('1',64));
   perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000001','ko','김별','Byeol Kim','+821012345678','ByUs','기획','byeol@example.com','KR',envelope,true,repeat('a',64),repeat('1',64));
   if (select count(*) from public.byus_day_rsvps where id='ba000000-0000-4000-8000-000000000001')<>1
     or (select count(*) from public.telegram_alert_outbox)<>before_alerts+1 then raise exception 'idempotent retry duplicated RSVP or alert'; end if;
-  select * into strict alert from public.telegram_alert_outbox where kind='byus_day_rsvp_received';
+  select * into strict alert from public.telegram_alert_outbox where kind='byus_day_rsvp_received' and not(id=any(before_alert_ids));
   select count(*)::integer into rsvp_total from public.byus_day_rsvps;
   if (select resident_registration_number_encrypted from public.byus_day_rsvps where id='ba000000-0000-4000-8000-000000000001')<>envelope
     or alert.activity_context<>'김별 · Byeol Kim' or alert.activity_quantity<>rsvp_total
