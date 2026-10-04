@@ -76,6 +76,39 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).not.toContain("\u202e");
     expect(renderTelegramAlertMessage(Array.from({ length: 5 }, () => rsvp)).length).toBeLessThanOrEqual(4000);
   });
+  it("claims and renders RSVP affiliation and job title below the guest names", async () => {
+    const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-04T00:00:00Z", activity_context: "김별 · Byeol Kim", activity_quantity: 3, rsvp: { affiliation: "ByUs", occupation: "프로듀서" } };
+    const rpc = vi.fn().mockResolvedValue({ data: { batch_id: "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19", alerts: [rsvp] }, error: null });
+    const queue = new SupabaseTelegramAlertQueue({ rpc });
+    const claimed = await queue.claim("-1001234567890");
+    for (const companion of [alerts[0]!, detailedActivity("fan_post_created")]) {
+      const message = renderTelegramAlertMessage([companion, ...claimed!.alerts]);
+      expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  소속: ByUs\n  직책: 프로듀서\n  누적 3명\nhttps://byus.kr/admin/system");
+    }
+    for (const invalid of [
+      { ...rsvp, rsvp: { ...rsvp.rsvp, email: "private@example.com" } },
+      { ...rsvp, rsvp: { affiliation: "ByUs" } },
+      { ...rsvp, rsvp: { ...rsvp.rsvp, affiliation: "X".repeat(241) } },
+      { ...rsvp, kind: "business_received" },
+    ]) {
+      rpc.mockResolvedValueOnce({ data: { batch_id: claimed!.batchId, alerts: [invalid] }, error: null });
+      await expect(queue.claim("-1001234567890")).rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+    }
+  });
+  it("sanitizes RSVP details and bounds five maximum-length messages", () => {
+    const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-04T00:00:00Z", activity_context: `${"가".repeat(80)} · ${"X".repeat(80)}`, activity_quantity: 3, rsvp: { affiliation: "소속\n\u202e회사", occupation: "직책\u2028\u2066대표" } };
+    const message = renderTelegramAlertMessage([rsvp]);
+    expect(message).toContain("  소속: 소속 회사\n  직책: 직책 대표");
+    expect(message).not.toMatch(/[\u202e\u2028\u2066]/u);
+    for (const value of ["가".repeat(120), "😀".repeat(120)]) {
+      const longMessage = renderTelegramAlertMessage(Array.from({ length: 5 }, () => ({ ...rsvp, rsvp: { affiliation: value, occupation: value } })));
+      expect(longMessage.length).toBeLessThanOrEqual(4000);
+      expect(longMessage.match(/  소속: /gu)).toHaveLength(5);
+      expect(longMessage.match(/  직책: /gu)).toHaveLength(5);
+      expect(longMessage).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])/u);
+      if (value.length === 120) expect(longMessage).toContain(`  소속: ${value}\n  직책: ${value}`);
+    }
+  });
   it("renders campaign visits without identities and validates the claim context", async () => {
     const campaign = { kind: "campaign_visited" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-09-21T00:00:00Z", campaign_name: "Mirrorworld · 뱅크시 이벤트", campaign_channel: "mirrorworld" };
     const rpc = vi.fn().mockResolvedValue({ data: { batch_id: "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19", alerts: [campaign] }, error: null });

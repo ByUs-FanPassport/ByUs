@@ -20,6 +20,7 @@ const GOOGLE_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encode
 
 const copy = {
   ko: {
+    deadlineLabel:"인적사항 제출 마감", deadline:"10월 12일(월) 자정까지 · 한국시간",
     back:"ByUs", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
     headline:"엔터테인먼트와 기술이 만나는\nEnter × Tech의 밤.",
     introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 대담, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
@@ -55,6 +56,7 @@ const copy = {
     successNote:"신청 접수는 참가 및 기지 출입 확정을 의미하지 않습니다.", return:"ByUs 둘러보기", footer:"라이브 팬덤 플랫폼",
   },
   en: {
+    deadlineLabel:"Personal details deadline", deadline:"By the end of October 12 (Mon), KST",
     back:"ByUs", language:"Choose language", skip:"Skip to RSVP", invitation:"You’re invited",
     headline:"Where entertainment meets technology.\nEnter × Tech at ByUs Day.",
     introduction:"ByUs Day brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
@@ -189,6 +191,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <Link href="/connect/byus-day?locale=en" replace aria-current={locale === "en" ? "true" : undefined} aria-label="English" lang="en">EN</Link>
       </nav>
     </header>
+    <aside className={styles.deadline} aria-label={t.deadlineLabel}><span>{t.deadlineLabel}</span><time dateTime="2026-10-13T00:00:00+09:00">{t.deadline}</time></aside>
     <main className={styles.canvas}>
       <section className={styles.invitation} aria-labelledby="event-title">
         <div className={styles.invitationTop}><p className={styles.eyebrow}>{t.invitation}</p><span aria-hidden="true">✳</span></div>
@@ -231,7 +234,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
             <div className={styles.pair}>{field("affiliation",{ placeholder:t.affiliationPlaceholder, maxLength:120 })}{field("occupation",{ placeholder:t.occupationPlaceholder, maxLength:120 })}</div>
             {field("email",{ type:"email", placeholder:"you@example.com", autoComplete:"email", maxLength:254 })}
             <div className={styles.field}><label htmlFor="rsvp-nationality">{t.nationality}<span className={styles.fieldRequired} aria-hidden="true">{t.fieldRequired}</span></label>
-              <select id="rsvp-nationality" name="nationality" required defaultValue="" aria-invalid={errors.nationality ? true : undefined} aria-describedby={errors.nationality ? "rsvp-nationality-error" : undefined}>
+              <select id="rsvp-nationality" name="nationality" required defaultValue="KR" aria-invalid={errors.nationality ? true : undefined} aria-describedby={errors.nationality ? "rsvp-nationality-error" : undefined}>
                 <option value="" disabled>{t.chooseCountry}</option>{countries.map(country => <option key={country.code} value={country.code}>{country.name}</option>)}
               </select>{errors.nationality && <p id="rsvp-nationality-error" className={styles.fieldError}>{errors.nationality}</p>}
             </div>

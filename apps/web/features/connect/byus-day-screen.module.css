@@ -3,6 +3,12 @@
 .page a{color:inherit;text-decoration:none}
 .page :is(a,button,input,select,summary,[tabindex]):focus-visible{outline:3px solid var(--event-ink);outline-offset:4px}
 .header{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:1280px;min-height:76px;margin:auto;padding:12px 32px;border-bottom:1px solid #68192330}
+.deadline{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;max-width:1216px;margin:24px 32px 0;padding:16px 20px;border:1px solid #68192330;border-radius:8px;background:#efe3d3;font-size:16px;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
+.deadline>span{font-weight:600}
+.deadline time{font-weight:750}
+@media(min-width:1280px){.deadline{margin-inline:auto}}
+@media(max-width:900px){.deadline{margin-inline:24px}}
+@media(max-width:480px){.deadline{margin:20px 20px 0;padding:14px 16px}}
 .back{display:flex;align-items:center;gap:8px;min-height:44px;font-size:18px;font-weight:800}
 .headerCaption,.eyebrow{margin:0;font-size:13px;font-weight:650;letter-spacing:.12em;text-transform:uppercase}
 .headerCaption{color:var(--event-muted)}

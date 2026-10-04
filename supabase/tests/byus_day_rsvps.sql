@@ -53,9 +53,9 @@ begin
     or exists(select 1 from information_schema.columns where table_schema='public' and table_name='byus_day_rsvps' and column_name in ('resident_registration_number','rrn')) then raise exception 'RRN storage boundary mismatch'; end if;
 end$$;
 
-set local byus_day.test_now='2026-10-22 23:59:59.999999+09';
+set local byus_day.test_now='2026-10-12 23:59:59.999999+09';
 select public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000000','ko','직전','Before Close','+821000000000','A','A','before-close@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('0',64),repeat('0',64));
-set local byus_day.test_now='2026-10-23 00:00:00+09';
+set local byus_day.test_now='2026-10-13 00:00:00+09';
 do $$begin
   begin
     perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000099','ko','마감','At Close','+821000000099','A','A','at-close@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('0',64),repeat('9',64));
@@ -77,7 +77,7 @@ begin
   select count(*)::integer into rsvp_total from public.byus_day_rsvps;
   if (select resident_registration_number_encrypted from public.byus_day_rsvps where id='ba000000-0000-4000-8000-000000000001')<>envelope
     or alert.activity_context<>'김별 · Byeol Kim' or alert.activity_quantity<>rsvp_total
-    or alert.source_id is not null or alert.activity_source_id is not null or alert.activity_actor_id is not null
+    or alert.source_id is distinct from 'ba000000-0000-4000-8000-000000000001'::uuid or alert.activity_source_id is not null or alert.activity_actor_id is not null
     or alert.activity_context like '%byeol@example.com%' or alert.activity_context like '%+821012345678%'
     or alert.activity_context like '%900101%' or alert.activity_context like '%'||envelope||'%'
   then raise exception 'RRN storage or alert boundary failed'; end if;
@@ -89,6 +89,31 @@ begin
     perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000002','ko','형식','Bad Envelope','+821000000002','A','A','bad2@example.com','KR','900101-1234567',true,repeat('b',64),repeat('2',64));
     raise exception 'plaintext RRN reached storage';
   exception when others then if sqlerrm<>'RSVP_INVALID' then raise; end if; end;
+end$$;
+
+do $$
+declare batch jsonb; entry jsonb; payload jsonb;
+begin
+  -- Isolate this batch from permission probes and earlier fixtures in the full suite.
+  update public.telegram_alert_settings set next_send_at='-infinity',lease_expires_at=null,batch_id=null;
+  update public.telegram_alert_outbox set available_at='infinity'
+    where source_id is distinct from 'ba000000-0000-4000-8000-000000000001'::uuid;
+  insert into public.telegram_alert_outbox(kind,source_id,activation_id,chat_id,occurred_at,activity_context,activity_quantity)
+    select 'byus_day_rsvp_received',v.source_id,c.activation_id,c.chat_id,clock_timestamp(),v.context,1
+    from public.telegram_alert_settings c cross join (values
+      (null::uuid,'누적 1명'),(null::uuid,'이전 · Legacy Guest'),
+      ('ba000000-0000-4000-8000-000000000088'::uuid,'삭제됨 · Removed Guest')
+    ) v(source_id,context);
+  batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
+  if batch is null or jsonb_array_length(batch->'alerts')<>4 then raise exception 'RSVP claim compatibility failed'; end if;
+  select value into strict payload from jsonb_array_elements(batch->'alerts') where value->>'activity_context'='김별 · Byeol Kim';
+  if payload->'rsvp' is distinct from '{"affiliation":"ByUs","occupation":"기획"}'::jsonb
+    or payload->>'actor_email' is not null or payload::text like '%byeol@example.com%'
+    or payload::text like '%+821012345678%' or payload::text like '%resident_registration%' or payload::text like '%v1.%'
+  then raise exception 'RSVP affiliation/occupation claim boundary failed'; end if;
+  for entry in select value from jsonb_array_elements(batch->'alerts') where value->>'activity_context'<>'김별 · Byeol Kim' loop
+    if entry ? 'rsvp' then raise exception 'legacy or missing RSVP acquired details'; end if;
+  end loop;
 end$$;
 
 do $$

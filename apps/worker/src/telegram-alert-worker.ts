@@ -221,10 +221,17 @@ const alertSchema = z.object({
   campaign_channel: z.string().min(1).max(40).optional(),
   activity_context: z.string().max(320).nullable().optional(),
   activity_quantity: z.number().int().nonnegative().nullable().optional(),
+  rsvp: z.object({
+    affiliation: z.string().min(1).max(240),
+    occupation: z.string().min(1).max(240),
+  }).strict().optional(),
   detail: detailSchema.optional(),
   // PostgreSQL permits 4000 Unicode characters, up to 8000 UTF-16 units.
   message_body: z.string().min(1).max(8000).nullable().optional(),
 }).strict().superRefine((alert, context) => {
+  if (alert.rsvp !== undefined && alert.kind !== "byus_day_rsvp_received") {
+    context.addIssue({ code: "custom", message: "unexpected RSVP details" });
+  }
   if (alert.kind in activityLabels) {
     if (alert.activity_context === undefined || alert.activity_quantity === undefined ||
       [alert.creator_name, alert.live_title, alert.winner_count].some(value => value !== null) ||
@@ -424,6 +431,10 @@ function renderLegacyAlert(alert: TelegramAlertSnapshot): string[] {
     if (alert.kind === "byus_day_rsvp_received") {
       return [`• ${label}`,
         ...(context && !/^누적 \d+명$/u.test(context) ? [`  접수자: ${context}`] : []),
+        ...(alert.rsvp ? [
+          `  소속: ${cleanPublicName(alert.rsvp.affiliation, 120)}`,
+          `  직책: ${cleanPublicName(alert.rsvp.occupation, 120)}`,
+        ] : []),
         `  누적 ${alert.activity_quantity ?? 0}명`, `${ADMIN_URL}/${page}`];
     }
     return [`• ${label}`, ...(context ? [`  ${context}`] : []),
