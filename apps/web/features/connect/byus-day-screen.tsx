@@ -97,7 +97,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   const { locale: appLocale } = useAppLocale();
   const locale = appLocale === "ko" ? "ko" : "en";
   const t = copy[locale];
-  const posterSrc = `/images/connect/byus-day/poster-spaced-${locale}-20261004.webp`;
+  const posterSrc = `/images/connect/byus-day/poster-two-line-${locale}-20261004.webp`;
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [failure, setFailure] = useState("");
   const [pending, setPending] = useState(false);

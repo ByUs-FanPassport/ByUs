@@ -40,7 +40,7 @@ async function fillRsvp(page: Page) {
 test("shows the matching language poster and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/byus-day?locale=${locale}`);
-    const posterLink = page.locator(`a[href="/images/connect/byus-day/poster-spaced-${locale}-20261004.webp"]`);
+    const posterLink = page.locator(`a[href="/images/connect/byus-day/poster-two-line-${locale}-20261004.webp"]`);
     const poster = posterLink.getByRole("img");
     await expect(poster).toBeVisible();
     await expect(poster).toHaveAttribute("alt", locale === "ko" ? "ByUs Day Enter × Tech 한글 행사 포스터" : "ByUs Day Enter × Tech English event poster");
@@ -153,7 +153,7 @@ test("shows the matching language poster and opens the original", async ({ page 
     await posterLink.click();
     const original = await opened;
     await original.waitForLoadState("load");
-    await expect(original).toHaveURL(new RegExp(`/images/connect/byus-day/poster-spaced-${locale}-20261004\\.webp$`));
+    await expect(original).toHaveURL(new RegExp(`/images/connect/byus-day/poster-two-line-${locale}-20261004\\.webp$`));
     await expect(original.locator("img")).toBeVisible();
     await original.close();
   }

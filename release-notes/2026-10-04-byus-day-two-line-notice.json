@@ -1,0 +1,11 @@
+{
+  "changes": [
+    "한글·영문 포스터의 차량 안내를 두 줄로 합쳐 사과 문구가 따로 떨어지지 않도록 정리했어요.",
+    "하단 SECURITY NOTICE의 글자 묶음을 조금 내려 위아래 여백을 맞췄어요.",
+    "첨부 이미지는 로컬 브라우저에서 확인한 수정 후 포스터 하단이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-two-line-notice.png"
+  ]
+}
