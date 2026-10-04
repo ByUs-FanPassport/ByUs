@@ -9,7 +9,7 @@ import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./byus-day-screen.module.css";
 
-const POSTER_SRC = "/images/connect/byus-day/poster-layout-en-20261004.webp";
+const POSTER_SRC = "/images/connect/byus-day/poster-access-policy-en-20261004.webp";
 const ACCESS_CONTROL_URL = "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control";
 const DIRECTIONS_URL = "https://www.dragonhilllodge.com/your-stay/getting-here";
 const GATE_ADDRESS = "서울 용산구 용산동4가 1-10";
@@ -25,7 +25,7 @@ const copy = {
     date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
     programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
     securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로 사용됩니다.",
-    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"공식 출입 안내 · 새 탭에서 보기",
+    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"출입절차 규정 · 새 탭에서 보기",
     registrationPrivacyTitle:"주민등록번호 처리 안내", registrationPrivacyItems:"항목: 주민등록번호 13자리", registrationPrivacyPurpose:"목적: 미군기지 출입 승인 및 신원 확인",
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
@@ -59,7 +59,7 @@ const copy = {
     date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
     programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
     securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used for access approval and identity verification.",
-    accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Official installation access information · Opens in a new tab",
+    accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Installation Access Policy · Opens in a new tab",
     registrationPrivacyTitle:"Resident registration number processing", registrationPrivacyItems:"Information: 13-digit Korean resident registration number", registrationPrivacyPurpose:"Purpose: military base access approval and identity verification",
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",

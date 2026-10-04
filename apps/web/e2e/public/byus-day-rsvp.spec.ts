@@ -38,7 +38,7 @@ async function fillRsvp(page: Page) {
 test("shows the complete English poster in both languages and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/byus-day?locale=${locale}`);
-    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-layout-en-20261004.webp"]');
+    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-access-policy-en-20261004.webp"]');
     const poster = posterLink.getByRole("img");
     await expect(poster).toBeVisible();
     await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
@@ -55,6 +55,7 @@ test("shows the complete English poster in both languages and opens the original
     await expect(security).toBeVisible();
     await expect(security).toContainText("USFKI 5200.08A CH1");
     const officialLink = security.getByRole("link");
+    await expect(officialLink).toHaveText(locale === "ko" ? "출입절차 규정 · 새 탭에서 보기" : "Installation Access Policy · Opens in a new tab");
     await expect(officialLink).toHaveAttribute("href", "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control");
     await expect(officialLink).toHaveAttribute("target", "_blank");
     await officialLink.focus();
@@ -109,7 +110,7 @@ test("shows the complete English poster in both languages and opens the original
     await posterLink.click();
     const original = await opened;
     await original.waitForLoadState("load");
-    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-layout-en-20261004\.webp$/);
+    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-access-policy-en-20261004\.webp$/);
     await expect(original.locator("img")).toBeVisible();
     await original.close();
   }

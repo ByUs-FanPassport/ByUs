@@ -1,0 +1,11 @@
+{
+  "changes": [
+    "보안 안내의 링크 제목을 한국어 ‘출입절차 규정’, 영어 ‘Installation Access Policy’로 바꿨어요.",
+    "포스터에도 같은 문구를 반영했어요. 첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-access-policy-poster.png",
+    "release-notes/images/2026-10-04-byus-day-access-policy-notice.png"
+  ]
+}
