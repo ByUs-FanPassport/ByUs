@@ -9,7 +9,7 @@ import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./byus-day-screen.module.css";
 
-const POSTER_SRC = "/images/connect/byus-day/poster-program-en-20261004.webp";
+const POSTER_SRC = "/images/connect/byus-day/poster-layout-en-20261004.webp";
 const ACCESS_CONTROL_URL = "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control";
 const DIRECTIONS_URL = "https://www.dragonhilllodge.com/your-stay/getting-here";
 const GATE_ADDRESS = "서울 용산구 용산동4가 1-10";
