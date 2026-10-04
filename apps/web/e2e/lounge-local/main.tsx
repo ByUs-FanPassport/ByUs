@@ -26,6 +26,7 @@ import {
 import { FanHistoryScreen } from "../../features/my/ui/fan-history-screen";
 import { NotificationCenter } from "../../features/notification/ui/notification-center";
 import { SettingsScreen } from "../../features/profile/ui/settings-screen";
+import { parseSettingsSection } from "../../features/profile/domain/settings-navigation";
 import { SharePassport } from "../../features/community-stamps/ui/share-passport";
 import { NoticeManager } from "../../components/admin/notice-manager";
 import { ContentReportManager } from "../../components/admin/content-report-manager";
@@ -43,16 +44,20 @@ import Link from "next/link";
 import noticeStyles from "../../components/notice/notice-detail.module.css";
 import { TikTokLiveFallbackFixture, tiktokPlaybackFixtureResponse } from "./tiktok-live-fixture";
 import { CelebrityDirectory } from "../../components/celebrity-directory";
+import { GuestHome } from "../../components/guest-home";
 import { officialVideoFixture } from "./product-quality-fixture";
 import { discoveryChzzkPost, discoveryFixtureResponse, discoveryIds } from "./discovery-fixture";
+import { feedbackBanner, feedbackFixtureResponse, feedbackPublishedCreators } from "./feedback-fixture";
 import { CommunityScreen } from "../../features/community/ui/community-screen";
 import { parseCommunityTab, selectCommunityCreator } from "../../features/community/domain/navigation";
-import { parseAppLocale } from "../../i18n/locales";
+import { parseAppLocale, toContentLocale } from "../../i18n/locales";
 import "../../app/globals.css";
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
 const params = new URLSearchParams(location.search);
-const locale: "ko" | "en" = params.get("locale") === "en" ? "en" : "ko";
-const celebrity = { slug: "elina", locale, name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }, ...(params.has("quality") ? [{ platform: "youtube" as const, url: "https://www.youtube.com/@ElinaKarimova" }] : [])], displayOrder: 0, fanCount: 0 } as const;
+const locale = parseAppLocale(params.get("locale"));
+const feedbackMode = params.get("feedback") === "1";
+const celebrity = { slug: "elina", locale: toContentLocale(locale), name: locale === "ko" ? "엘리나" : "Elina", summary: "엘리나 팬페이지", image: { url: "/images/guest-home/elina-card.jpg", alt: "Elina", position: "center" }, roles: ["creator"] as const, themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/elina_4_22/" }, ...((params.has("quality") || feedbackMode) ? [{ platform: "youtube" as const, url: "https://www.youtube.com/@ElinaKarimova" }] : [])], displayOrder: 0, fanCount: 0 } as const;
 const communityCreators = [celebrity, { ...celebrity, slug: "yuna", name: "Yuna", summary: "Yuna fan page", image: { ...celebrity.image, alt: "Yuna" }, socialLinks: [], displayOrder: 1 }] as const;
 const communityMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_COMMUNITY_MODE === "true";
 const fanWebMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_FAN_WEB_MODE === "true";
@@ -66,6 +71,7 @@ function AccountSwitcher({ children }: { children: ReactNode }) {
 }
 
 function fanWebScreen() {
+  if (feedbackMode && location.pathname === "/") return <GuestHome celebrities={feedbackPublishedCreators(locale)} featuredLives={[]} homeBanners={[feedbackBanner(locale)]} locale={locale} />;
   if (location.pathname === "/community") {
     const communityLocale = parseAppLocale(params.get("locale"));
     const creator = selectCommunityCreator(communityCreators, params.get("creator") ?? undefined);
@@ -92,14 +98,14 @@ function fanWebScreen() {
   if (location.pathname === "/my/requests") return <ParticipationRequests locale={locale} initialTab={params.get("tab") === "fanpages" ? "fanpages" : "schedules"} highlightId={params.get("item") ?? undefined} />;
   if (location.pathname === "/my/activity") return <FanHistoryScreen locale={locale} kind={params.get("kind") === "collection" ? "collection" : params.get("kind") === "rewards" ? "rewards" : "applications"} />;
   if (location.pathname === "/notifications") return <NotificationCenter />;
-  if (location.pathname === "/settings") return <SettingsScreen locale={locale} />;
+  if (location.pathname === "/settings") return <SettingsScreen locale={locale} initialSection={parseSettingsSection(params.get("section"))} />;
   if (location.pathname === "/share-passport") return <ParticipationPage locale={locale} title="Fan Passport" path="/my"><SharePassport creator={celebrity} locale={locale} /></ParticipationPage>;
-  if (location.pathname === "/admin/notices") return <NoticeManager celebrityId="c7200000-0000-4000-8000-000000000001" celebrityName={celebrity.name} role="operator" locale={locale} />;
+  if (location.pathname === "/admin/notices") return <NoticeManager celebrityId="c7200000-0000-4000-8000-000000000001" celebrityName={celebrity.name} role="operator" locale={toContentLocale(locale)} />;
   if (location.pathname === "/admin/content-reports") return <ContentReportManager />;
   if (location.pathname === "/settings/blocked-users") return <BlockedUsers locale={locale} />;
-  if (location.pathname === "/admin/schedules") return <AuthorizedScheduleManager locale={locale} />;
-  if (location.pathname === "/admin/schedule-suggestions") return <AuthorizedScheduleSuggestionManager locale={locale} />;
-  if (location.pathname === "/admin/fanpage-requests") return <AuthorizedFanpageRequestManager locale={locale} />;
+  if (location.pathname === "/admin/schedules") return <AuthorizedScheduleManager locale={toContentLocale(locale)} />;
+  if (location.pathname === "/admin/schedule-suggestions") return <AuthorizedScheduleSuggestionManager locale={toContentLocale(locale)} />;
+  if (location.pathname === "/admin/fanpage-requests") return <AuthorizedFanpageRequestManager locale={toContentLocale(locale)} />;
   const requestedTab = params.get("tab");
   const initialTab = requestedTab === "community" || requestedTab === "media" || requestedTab === "leaderboard" || requestedTab === "notice" || requestedTab === "certifications" ? requestedTab : "home";
   return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} initialTab={initialTab} />;
@@ -110,6 +116,7 @@ const originalFetch = window.fetch.bind(window);
 window.fetch = (input, init) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
   const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+  if (feedbackMode) { const response = feedbackFixtureResponse(url, method, locale); if (response) return Promise.resolve(response); }
   if (params.has("quality") && method === "GET" && url === "/api/celebrities/elina/youtube") return Promise.resolve(Response.json(officialVideoFixture));
   if (params.has("quality") && method === "GET" && url.startsWith("/api/celebrities/elina/media?")) return Promise.resolve(Response.json({ items: [], nextCursor: null }));
   if (location.pathname === "/fixtures/tiktok-live") { const playback = tiktokPlaybackFixtureResponse(url, method, params.get("state")); if (playback) return Promise.resolve(playback); }
@@ -126,5 +133,5 @@ window.fetch = (input, init) => {
 };
 
 document.documentElement.lang = locale;
-const screen = fanWebMode || fanWebPath || params.get("tab") === "community" || params.get("tab") === "media" ? fanWebScreen() : location.pathname.startsWith("/admin") ? <LoungeMessageManager /> : !communityMode && location.pathname.endsWith("/lounge") ? <LoungeScreen celebrity={celebrity} locale={locale} /> : <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} initialTab={params.get("tab") === "leaderboard" ? "leaderboard" : "home"} />;
-createRoot(document.getElementById("root")!).render(<AccountSwitcher>{screen}</AccountSwitcher>);
+const screen = feedbackMode || fanWebMode || fanWebPath || params.get("tab") === "community" || params.get("tab") === "media" ? fanWebScreen() : location.pathname.startsWith("/admin") ? <LoungeMessageManager /> : !communityMode && location.pathname.endsWith("/lounge") ? <LoungeScreen celebrity={celebrity} locale={locale} /> : <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} initialTab={params.get("tab") === "leaderboard" ? "leaderboard" : "home"} />;
+createRoot(document.getElementById("root")!).render(feedbackMode ? screen : <AccountSwitcher>{screen}</AccountSwitcher>);

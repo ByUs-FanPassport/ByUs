@@ -328,7 +328,7 @@ export function NotificationCenter() {
             : null;
   return (
     <FanAppFrame locale={locale} mainId="notification-content" actions={
-        <Link className={styles.settingsLink} href={`/settings?locale=${locale}`} aria-label={c.settings}>
+        <Link className={styles.settingsLink} href={`/settings?locale=${locale}&section=notifications`} aria-label={c.settings}>
           <Settings2 aria-hidden="true" />
         </Link>
       }>
@@ -346,15 +346,16 @@ export function NotificationCenter() {
           </div>
           <p>{c.subtitle}</p>
         </div>
-        <button
+        <FanAction
+          variant="neutral"
           type="button"
           onClick={readAll}
           disabled={pendingAction !== null || state.kind !== "ready" || state.unread === 0}
-          aria-busy={pendingAction === "read-all"}
+          ariaBusy={pendingAction === "read-all"}
+          leadingIcon={<CheckCheck />}
         >
-          <CheckCheck aria-hidden="true" />
           {pendingAction === "read-all" ? c.readingAll : c.all}
-        </button>
+        </FanAction>
       </header>
       {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
       <section className={styles.permission} aria-labelledby="permission-title" aria-describedby="permission-description">
@@ -370,14 +371,15 @@ export function NotificationCenter() {
             </p>
           )}
         </div>
-        <button
+        <FanAction
+          variant="primary"
           type="button"
           onClick={enable}
           disabled={pendingAction !== null || permission === "subscribed" || permission === "denied" || permission === "unsupported"}
-          aria-busy={pendingAction === "enable"}
+          ariaBusy={pendingAction === "enable"}
         >
           {pendingAction === "enable" ? c.enabling : permission === "subscribed" ? c.enabled : c.enable}
-        </button>
+        </FanAction>
       </section>
       {state.kind === "loading" && (
         <FanState kind="loading" title={c.load} />

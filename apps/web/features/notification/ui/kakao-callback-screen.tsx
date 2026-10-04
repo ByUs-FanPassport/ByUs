@@ -155,7 +155,7 @@ export function KakaoCallbackScreen({ locale }: { locale: Locale }) {
   const terminal = useRef(false);
   const [view, setView] = useState<ViewState>("loading");
   const t = copy[locale];
-  const settingsHref = `/settings?locale=${locale}`;
+  const settingsHref = `/settings?locale=${locale}&section=channels`;
 
   useLayoutEffect(() => {
     currentOwner.current = ownerId;

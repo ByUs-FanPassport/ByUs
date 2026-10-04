@@ -20,19 +20,25 @@ describe("fanpage server authority", () => {
     const response = await api.summary(new Request("https://byus.kr/api", { headers: { authorization: "Bearer wrong" } }), "elina");
     expect(response.status).toBe(401); expect(rpc).not.toHaveBeenCalled();
   });
-  it("returns no ranks or own projection at the exact 500 boundary", async () => {
-    rpc.mockResolvedValueOnce({ membershipCount: 500, available: false, asOf: now, rows: [], me: null });
+  it("returns no ranks or own projection below the 100-member boundary", async () => {
+    rpc.mockResolvedValueOnce({ membershipCount: 99, fanCount: 99, available: false, asOf: now, rows: [], me: null });
     const response = await api.leaderboard(request("/api", undefined, true, "GET"), "elina");
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: 500 });
+    expect(await response.json()).toEqual({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: 99, fanCount: 99 });
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: owner, p_locale: "ko" });
   });
-  it("returns Top100 at 501 but never trusts a caller's requested owner", async () => {
-    rpc.mockResolvedValueOnce({ membershipCount: 501, available: true, asOf: now, rows: [row], me: row });
+  it.each([100, 101])("returns Top100 at %i but never trusts a caller's requested owner", async (membershipCount) => {
+    rpc.mockResolvedValueOnce({ membershipCount: 99, fanCount: membershipCount, available: true, asOf: now, rows: [row], me: row });
     const response = await api.leaderboard(request(`/api?appUserId=${other}`, undefined, false, "GET"), "elina");
     expect(response.status).toBe(200); expect((await response.json()).me).toBeNull();
     expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null, p_locale: "ko" });
+  });
+  it("accepts the legacy pre-migration boundary while fanCount is absent", async () => {
+    rpc.mockResolvedValueOnce({ membershipCount: 100, available: false, asOf: now, rows: [], me: null });
+    const response = await api.leaderboard(request("/api", undefined, false, "GET"), "elina");
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: 100 });
   });
   it("passes a validated locale to public read RPCs", async () => {
     rpc.mockResolvedValueOnce({ membershipCount: 0, leaderboardAvailable: false, activity: [] });
@@ -42,9 +48,9 @@ describe("fanpage server authority", () => {
     expect((await api.summary(request("/api?locale=ko&locale=en", undefined, false, "GET"), "elina")).status).toBe(400);
   });
   it("treats a broken server boundary or private field as unavailable rather than exposing it", async () => {
-    rpc.mockResolvedValueOnce({ membershipCount: 500, available: true, asOf: now, rows: [row], me: row });
+    rpc.mockResolvedValueOnce({ membershipCount: 99, fanCount: 99, available: true, asOf: now, rows: [row], me: row });
     expect((await api.leaderboard(request("/api", undefined, false, "GET"), "elina")).status).toBe(503);
-    rpc.mockResolvedValueOnce({ membershipCount: 501, available: true, asOf: now, rows: [{ ...row, email: "secret" }], me: null });
+    rpc.mockResolvedValueOnce({ membershipCount: 99, fanCount: 100, available: true, asOf: now, rows: [{ ...row, email: "secret" }], me: null });
     expect((await api.leaderboard(request("/api", undefined, false, "GET"), "elina")).status).toBe(503);
   });
   it("rejects caller-supplied author and trims the permitted comment", async () => {

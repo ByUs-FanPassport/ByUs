@@ -4,20 +4,28 @@ export const celebritySlugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const characterUrl = z.string().regex(/^\/images\/avatars\/(?:star|heart|fairy|ghost)-(?:cream|pink|lavender)\.webp$/);
 const nickname = z.string().min(1).max(80);
 const row = z.object({ rank: z.number().int().positive(), nickname, avatarUrl: characterUrl, points: z.number().int().nonnegative() }).strict();
+export const LEADERBOARD_MIN_FANS = 100;
 export const fanpageSummarySchema = z.object({
   membershipCount: z.number().int().nonnegative(),
+  fanCount: z.number().int().nonnegative().optional(),
   leaderboardAvailable: z.boolean(),
   activity: z.array(z.object({
     kind: z.enum(["joined", "level_up", "first_certification"]), tier: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]).nullable(),
     nickname, avatarUrl: characterUrl, occurredAt: z.iso.datetime({ offset: true }),
   }).strict()).max(6),
-}).strict();
+}).strict().superRefine((value, ctx) => {
+  const expected = value.fanCount === undefined ? value.membershipCount > 500 : value.fanCount >= LEADERBOARD_MIN_FANS;
+  if (value.leaderboardAvailable !== expected) {
+    ctx.addIssue({ code: "custom", message: "Leaderboard summary boundary mismatch" });
+  }
+});
 export type FanpageSummary = z.infer<typeof fanpageSummarySchema>;
 export const leaderboardSchema = z.object({
-  membershipCount: z.number().int().nonnegative(), available: z.boolean(), asOf: z.iso.datetime({ offset: true }),
+  membershipCount: z.number().int().nonnegative(), fanCount: z.number().int().nonnegative().optional(), available: z.boolean(), asOf: z.iso.datetime({ offset: true }),
   rows: z.array(row).max(100), me: row.nullable(),
 }).strict().superRefine((value, ctx) => {
-  if (value.available !== (value.membershipCount > 500) || (!value.available && (value.rows.length || value.me))) {
+  const expected = value.fanCount === undefined ? value.membershipCount > 500 : value.fanCount >= LEADERBOARD_MIN_FANS;
+  if (value.available !== expected || (!value.available && (value.rows.length || value.me))) {
     ctx.addIssue({ code: "custom", message: "Leaderboard membership boundary mismatch" });
   }
 });

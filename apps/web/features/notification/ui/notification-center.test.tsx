@@ -147,7 +147,7 @@ describe("FAN-019 Notification Center", () => {
     render(<NotificationCenter />);
 
     expect(await screen.findByRole("heading", { name: "Notifications", level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open notification settings" })).toHaveAttribute("href", "/settings?locale=en");
+    expect(screen.getByRole("link", { name: "Open notification settings" })).toHaveAttribute("href", "/settings?locale=en&section=notifications");
     expect(screen.getByRole("link", { name: /KARA LIVE starts in 10 minutes/ })).toHaveAttribute(
       "href",
       "/live/kara-live?locale=en",
@@ -232,7 +232,7 @@ describe("FAN-019 Notification Center", () => {
     expect(screen.queryByText("Notification Center")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "알림 설정 열기" })).toHaveAttribute(
       "href",
-      "/settings?locale=ko",
+      "/settings?locale=ko&section=notifications",
     );
     expect(screen.getByRole("link", { name: "다가오는 LIVE 보기" })).toHaveAttribute(
       "href",

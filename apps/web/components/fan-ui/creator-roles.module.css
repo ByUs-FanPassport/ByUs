@@ -1,17 +1,26 @@
+.filterViewport {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 6px;
+  margin: -6px -6px calc(var(--space-4) - 6px);
+  scroll-padding-inline: 6px;
+}
+
 .filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: max-content;
   gap: 8px;
-  margin-bottom: var(--space-4);
 }
 
 .filters button {
   display: inline-flex;
-  min-width: 44px;
+  min-width: calc(5em + 26px);
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
@@ -21,8 +30,7 @@
   font-size: var(--fan-action-label-size);
   font-weight: 500;
   line-height: 1.4;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--motion-control) var(--motion-easing), color var(--motion-control) var(--motion-easing);
 }

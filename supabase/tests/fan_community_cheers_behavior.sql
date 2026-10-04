@@ -24,6 +24,7 @@ declare
   pass_id uuid;
   activity_id uuid;
   job_id uuid;
+  passport_id uuid;
   reaction_id uuid;
   first_id uuid;
   second_id uuid;
@@ -92,10 +93,13 @@ begin
   end loop;
   alter table public.fan_reactions enable trigger user;
 
+  alter table public.fan_passports disable trigger fan_passports_validate_blockchain_job_link;
   for i in 1..2 loop
     user_id := case when i=1 then fan_ids[1] else fan_ids[27] end;
     attempt_id := extensions.gen_random_uuid();
     pass_id := extensions.gen_random_uuid();
+    passport_id := extensions.gen_random_uuid();
+    job_id := extensions.gen_random_uuid();
     insert into public.quiz_attempts(id,app_user_id,celebrity_id,quiz_id,quiz_version,idempotency_key,status,score,submitted_at)
     values(attempt_id,user_id,creator,quiz_id,1,extensions.gen_random_uuid(),'passed',3,now());
     insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id)
@@ -112,9 +116,12 @@ begin
       ) select id,app_user_id,celebrity_id,null,activity_id,id,mint_status,tx_hash,token_id
         from public.fan_reactions where id=reaction_id;
     end if;
-    insert into public.fan_passports(app_user_id,celebrity_id,quiz_pass_id,issued_at)
-    values(user_id,creator,pass_id,case when i=1 then now()-interval '100 seconds' else now() end);
+    insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload)
+    values(job_id,'passport',passport_id,'fan-community-passport-'||passport_id::text,'{}');
+    insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id,issued_at)
+    values(passport_id,user_id,creator,pass_id,job_id,case when i=1 then now()-interval '100 seconds' else now() end);
   end loop;
+  alter table public.fan_passports enable trigger fan_passports_validate_blockchain_job_link;
 
   result := public.read_celebrity_fan_community('fan-community-qa','ko');
   if result->>'likeCount'<>'26' or result->>'fanCount'<>'27' or result->>'publicFanCount'<>'27'
@@ -188,26 +195,36 @@ begin
   update public.app_users set status='disabled' where id=user_id;
   if public.read_celebrity_cheers('fan-community-qa',null,null,null,20,'ko')::text like '%'||delete_id::text||'%' then raise exception 'inactive author remained visible'; end if;
 
-  for i in 1..499 loop
+  alter table public.fan_passports disable trigger fan_passports_validate_blockchain_job_link;
+  for i in 1..74 loop
     user_id := extensions.gen_random_uuid();
     attempt_id := extensions.gen_random_uuid();
     pass_id := extensions.gen_random_uuid();
+    passport_id := extensions.gen_random_uuid();
+    job_id := extensions.gen_random_uuid();
     insert into public.app_users(id,privy_user_id,verified_email)
     values(user_id,'did:privy:fan-community-scale-'||i,user_id::text||'@scale.example.test');
     insert into public.quiz_attempts(id,app_user_id,celebrity_id,quiz_id,quiz_version,idempotency_key,status,score,submitted_at)
     values(attempt_id,user_id,creator,quiz_id,1,extensions.gen_random_uuid(),'passed',3,now());
     insert into public.quiz_passes(id,app_user_id,celebrity_id,winning_attempt_id)
     values(pass_id,user_id,creator,attempt_id);
-    insert into public.fan_passports(app_user_id,celebrity_id,quiz_pass_id,issued_at)
-    values(user_id,creator,pass_id,now()-make_interval(secs=>500-i));
-    if i=498 and (public.read_celebrity_fanpage('fan-community-qa','ko')->>'leaderboardAvailable')::boolean then
-      raise exception 'fanpage leaderboard opened at 500 members';
+    insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload)
+    values(job_id,'passport',passport_id,'fan-community-scale-passport-'||passport_id::text,'{}');
+    insert into public.fan_passports(id,app_user_id,celebrity_id,quiz_pass_id,blockchain_job_id,issued_at)
+    values(passport_id,user_id,creator,pass_id,job_id,now()-make_interval(secs=>75-i));
+    if i=73 then
+      result := public.read_celebrity_fanpage('fan-community-qa','ko');
+      if result->>'membershipCount'<>'75' or result->>'fanCount'<>'99'
+         or (result->>'leaderboardAvailable')::boolean then
+        raise exception 'fanpage leaderboard opened below 100 active fans: %',result;
+      end if;
     end if;
   end loop;
+  alter table public.fan_passports enable trigger fan_passports_validate_blockchain_job_link;
   result := public.read_celebrity_fanpage('fan-community-qa','ko');
-  if result->>'membershipCount'<>'501' or result->>'leaderboardAvailable'<>'true'
+  if result->>'membershipCount'<>'76' or result->>'fanCount'<>'100' or result->>'leaderboardAvailable'<>'true'
      or jsonb_array_length(result->'activity')<>6 then
-    raise exception 'fanpage 501-member gate or public activity bound changed: %',result;
+    raise exception 'fanpage 100-fan union gate or public activity bound changed: %',result;
   end if;
 
   if has_function_privilege('anon','public.read_celebrity_fan_community(text,public.content_locale)','EXECUTE')

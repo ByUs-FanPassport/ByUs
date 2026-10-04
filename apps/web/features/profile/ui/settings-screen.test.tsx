@@ -5,9 +5,11 @@ import {
   resolveBrowserPermissionState,
   SettingsScreen,
 } from "./settings-screen";
+import type { SettingsSection } from "../domain/settings-navigation";
 
-const { authState, enablePushNotifications } = vi.hoisted(() => ({
-  authState: { user: { id: "owner-a" } },
+const { authState, sessionState, enablePushNotifications } = vi.hoisted(() => ({
+  authState: { authenticated: true, user: { id: "owner-a" } },
+  sessionState: { ready: true, pending: false, ownerId: null as string | null, generation: 0 },
   enablePushNotifications: vi.fn<
     (getToken?: () => Promise<string | null>) => Promise<"subscribed" | "denied" | "unsupported" | "failed">
   >(async () => "subscribed"),
@@ -19,8 +21,9 @@ const router = { replace };
 const getAccessToken = vi.fn().mockResolvedValue("access-token");
 
 vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, authenticated: true, user: authState.user, getAccessToken, logout }),
+  usePrivy: () => ({ ready: true, authenticated: authState.authenticated, user: authState.user, getAccessToken, logout }),
 }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => sessionState }));
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
   usePathname: () => "/settings",
@@ -102,10 +105,19 @@ function setBrowserCapabilities({
   });
 }
 
+function renderSettings(section: SettingsSection, locale: "ko" | "en" = "ko") {
+  window.history.replaceState(null, "", `/settings?locale=${locale}&section=${section}`);
+  return render(<SettingsScreen locale={locale} initialSection={section} />);
+}
+
 describe("FAN-020 settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.user = { id: "owner-a" };
+    authState.authenticated = true;
+    sessionState.ready = true;
+    sessionState.pending = false;
+    sessionState.ownerId = null;
     logout.mockReset().mockResolvedValue(undefined);
     replace.mockClear();
     getAccessToken.mockReset().mockResolvedValue("access-token");
@@ -145,8 +157,51 @@ describe("FAN-020 settings", () => {
     });
   });
 
+  it("shows one stable loading state until the owner session is resolved", () => {
+    sessionState.ready = false;
+    sessionState.pending = true;
+    render(<SettingsScreen locale="ko" initialSection="account" />);
+
+    expect(screen.getByText("설정을 불러오는 중")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves a validated detail section in the unauthenticated return path", async () => {
+    authState.authenticated = false;
+    render(<SettingsScreen locale="ko" initialSection="channels" />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      "/login?returnTo=%2Fsettings%3Flocale%3Dko%26section%3Dchannels&locale=ko",
+    ));
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("opens one query-driven detail, returns focus, and follows popstate", async () => {
+    window.history.replaceState(null, "", "/settings?locale=ko");
+    render(<SettingsScreen locale="ko" initialSection={null} />);
+    const profileRow = await screen.findByRole("button", { name: /프로필Kamilia/ });
+
+    fireEvent.click(profileRow);
+    expect(window.location.search).toContain("section=profile");
+    expect(screen.getByRole("heading", { name: "프로필", level: 1 })).toHaveFocus();
+    expect(screen.queryByRole("button", { name: /연결 및 수신 채널/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "설정으로 돌아가기" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /프로필Kamilia/ })).toHaveFocus());
+    expect(window.location.search).not.toContain("section=");
+
+    window.history.pushState(null, "", "/settings?locale=ko&section=language");
+    fireEvent(window, new PopStateEvent("popstate"));
+    expect(screen.getByRole("heading", { name: "언어", level: 1 })).toHaveFocus();
+
+    window.history.pushState(null, "", "/settings?locale=ko&section=unknown");
+    fireEvent(window, new PopStateEvent("popstate"));
+    expect(screen.getByRole("heading", { name: "설정" })).toBeInTheDocument();
+  });
+
   it("separates read-only connections from consented delivery channels", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("channels");
     expect(await screen.findByText("Google · 로그인에서 확인됨 (읽기 전용)")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Kakao 연결 해제" })).toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Email 수신" })).not.toBeChecked();
@@ -155,8 +210,21 @@ describe("FAN-020 settings", () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels", expect.objectContaining({ method: "PATCH" })));
   });
 
+  it("does not infer browser push status from delivery channel consent in the index", async () => {
+    preferences.browserSubscription = "subscribed";
+    const defaultFetch = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation((input, init) => String(input) === "/api/me/notification-channels"
+      ? Promise.resolve(Response.json({ connections: { ...connections, channels: connections.channels.map((channel) => ({ ...channel, consented: false })) } }))
+      : defaultFetch(input, init));
+    window.history.replaceState(null, "", "/settings?locale=ko");
+    render(<SettingsScreen locale="ko" initialSection={null} />);
+
+    expect(await screen.findByRole("button", { name: "연결 및 수신 채널" })).toBeInTheDocument();
+    expect(screen.queryByText("등록된 브라우저 알림이 없어요.")).not.toBeInTheDocument();
+  });
+
   it("uses the fixed Kakao consent version when withdrawing Kakao delivery", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("channels");
     fireEvent.click(await screen.findByRole("switch", { name: "Kakao 수신" }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/me/notification-channels", expect.objectContaining({
       method: "PATCH", body: JSON.stringify({ channelId: connections.channels[1].id, consented: false, consentVersion: "kakao-alimtalk-v1" }),
@@ -164,8 +232,8 @@ describe("FAN-020 settings", () => {
   });
 
   it("hides activation controls when the server capability is disabled", async () => {
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("channels");
+    await screen.findByRole("heading", { name: "연결 및 수신 채널", level: 1 });
     expect(screen.queryByText("카카오 알림톡")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("휴대폰 번호")).not.toBeInTheDocument();
   });
@@ -180,7 +248,7 @@ describe("FAN-020 settings", () => {
       if (url.endsWith("/phone/request")) return new Promise<Response>((resolve) => { finish = resolve; });
       throw new Error("Unexpected local route");
     });
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("channels");
     const phone = await screen.findByLabelText("휴대폰 번호");
     expect(screen.queryByRole("button", { name: "카카오에서 전화번호 확인" })).not.toBeInTheDocument();
     fireEvent.change(phone, { target: { value: "01012345678" } });
@@ -202,7 +270,7 @@ describe("FAN-020 settings", () => {
       if (url.endsWith("/kakao/enrollment/confirm") && init?.method === "POST") return Response.json({ channel: connections.channels[1] });
       throw new Error(`Unexpected URL ${url}`);
     });
-    const { unmount } = render(<SettingsScreen locale="ko" />);
+    const { unmount } = renderSettings("channels");
     const confirm = await screen.findByRole("button", { name: "이 번호로 알림 받기" });
     expect(screen.getByText("카카오 계정에 등록된 번호로 서비스 알림을 보내드려요.")).toBeInTheDocument();
     expect(confirm).toBeDisabled();
@@ -214,8 +282,26 @@ describe("FAN-020 settings", () => {
     const mutation = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith("/kakao/enrollment/confirm"));
     expect(JSON.stringify(mutation)).not.toContain("01012345678");
     unmount();
-    render(<SettingsScreen locale="en" />);
+    renderSettings("channels", "en");
     expect(await screen.findByText("We'll send service notifications to the number registered to your Kakao account.")).toBeInTheDocument();
+  });
+
+  it.each(["connection", "enrollment"])("returns Kakao %s to the channel detail", async (flow) => {
+    const base = flow === "connection" ? "/api/me/connected-accounts/kakao" : "/api/me/notification-channels/kakao/enrollment";
+    const endpoint = `${base}/start?return=${encodeURIComponent("/settings?locale=ko&section=channels")}`;
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === "/api/me/settings") return Response.json({ settings });
+      if (url === "/api/notifications/preferences") return Response.json({ preferences });
+      if (url === "/api/me/notification-channels") return Response.json({ connections: flow === "connection" ? { accounts: [], channels: [] } : connections, kakaoEnrollment: { enabled: true, pending: null } });
+      if (url === endpoint) return Response.json({ error: "UNAVAILABLE" }, { status: 503 });
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    renderSettings("channels");
+    const button = await screen.findByRole("button", { name: flow === "connection" ? "Kakao 연결" : "카카오에서 전화번호 확인" });
+    if (flow === "enrollment") fireEvent.click(screen.getByRole("checkbox", { name: /이 카카오 계정의 전화번호/ }));
+    fireEvent.click(button);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(endpoint, expect.objectContaining({ method: "POST" })));
   });
 
   it("maps every browser permission capability without requesting permission", () => {
@@ -243,7 +329,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("shows default permission and unsubscribed states before explicit activation", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("notifications");
     expect(
       await screen.findByText("아직 알림 권한을 요청하지 않았어요."),
     ).toBeInTheDocument();
@@ -256,7 +342,7 @@ describe("FAN-020 settings", () => {
 
   it("never repeats the browser prompt after permission is denied", async () => {
     setBrowserCapabilities({ permission: "denied" });
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("notifications");
     expect(
       await screen.findByText("브라우저 설정에서 알림 권한을 허용해 주세요."),
     ).toBeInTheDocument();
@@ -273,7 +359,7 @@ describe("FAN-020 settings", () => {
     "renders unavailable capability states without a fake connect action",
     async (secure, supported, expected) => {
       setBrowserCapabilities({ secure, supported });
-      render(<SettingsScreen locale="ko" />);
+      renderSettings("notifications");
       expect(await screen.findByText(expected)).toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: "브라우저 알림 연결" }),
@@ -290,7 +376,7 @@ describe("FAN-020 settings", () => {
           resolvePush = resolve;
         }),
     );
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("notifications");
     expect(
       await screen.findByText("알림 권한이 허용되어 있어요."),
     ).toBeInTheDocument();
@@ -317,7 +403,7 @@ describe("FAN-020 settings", () => {
   it("keeps account subscription status separate from this browser's permission", async () => {
     preferences = { ...preferences, browserSubscription: "subscribed" };
     setBrowserCapabilities({ permission: "default" });
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("notifications");
     expect(
       await screen.findByText("아직 알림 권한을 요청하지 않았어요."),
     ).toBeInTheDocument();
@@ -325,8 +411,8 @@ describe("FAN-020 settings", () => {
   });
 
   it("moves PWA installation from available to pending and only marks installed on appinstalled", async () => {
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("installation");
+    await screen.findByRole("heading", { name: "앱 설치", level: 1 });
     const prompt = vi.fn().mockResolvedValue(undefined);
     const installEvent = Object.assign(new Event("beforeinstallprompt"), {
       prompt,
@@ -344,7 +430,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("shows PWA unsupported and install error states truthfully", async () => {
-    const view = render(<SettingsScreen locale="ko" />);
+    const view = renderSettings("installation");
     expect(
       await screen.findByText("브라우저 메뉴의 ‘홈 화면에 추가’를 이용해 주세요."),
     ).toBeInTheDocument();
@@ -368,16 +454,16 @@ describe("FAN-020 settings", () => {
       configurable: true,
       value: vi.fn(() => ({ matches: true })),
     });
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("installation");
     expect(await screen.findByText("이 기기에 설치됨")).toBeInTheDocument();
   });
 
   it("shows only the masked immutable Privy wallet and has no withdrawal control", async () => {
-    render(<SettingsScreen locale="ko" />);
-    expect(
-      await screen.findByRole("heading", { name: "설정" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("0x1234…cdef")).toBeInTheDocument();
+    renderSettings("account");
+    expect(await screen.findByRole("heading", { name: "계정" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "설정으로 돌아가기" }));
+    fireEvent.click(screen.getByRole("button", { name: /계정0x1234…cdef/ }));
+    expect(await screen.findByText("0x1234…cdef")).toBeInTheDocument();
     expect(screen.queryByText(/0x[0-9a-f]{40}/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /출금|withdraw/i }),
@@ -470,7 +556,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("renames the profile with PUT and preserves wallet presentation", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     fireEvent.change(screen.getByRole("textbox", { name: "닉네임" }), {
@@ -489,11 +575,13 @@ describe("FAN-020 settings", () => {
     expect(
       await screen.findByText("닉네임을 변경했어요."),
     ).toBeInTheDocument();
-    expect(screen.getByText("0x1234…cdef")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "설정으로 돌아가기" }));
+    fireEvent.click(screen.getByRole("button", { name: /계정0x1234…cdef/ }));
+    expect(await screen.findByText("0x1234…cdef")).toBeInTheDocument();
   });
 
   it("accepts one-character and compatibility-normalized display names before PUT", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -519,7 +607,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("allows a case-only display-name change and preserves the requested casing", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -538,7 +626,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("shows precise inline validation on blur and refreshes it as the value changes", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -565,7 +653,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("keeps nickname API errors beside the field and allows a retry", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -582,7 +670,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("identifies an expired nickname save session without marking the field invalid", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -596,7 +684,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("keeps a nickname draft when the save token is missing and explains reauthentication", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -611,7 +699,7 @@ describe("FAN-020 settings", () => {
   });
 
   it("does not validate or submit an unfinished IME composition", async () => {
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("profile");
     await screen.findByText("Kamilia");
     fireEvent.click(screen.getByRole("button", { name: "변경" }));
     const input = screen.getByRole("textbox", { name: "닉네임" });
@@ -637,8 +725,8 @@ describe("FAN-020 settings", () => {
   });
 
   it("persists language and integrates the notification preference contract", async () => {
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("notifications");
+    await screen.findByRole("heading", { name: "알림", level: 1 });
     expect(localStorage.getItem("byus:locale")).toBe("ko");
     fireEvent.click(screen.getByRole("switch", { name: "설문 참여 알림" }));
     await waitFor(() =>
@@ -654,6 +742,8 @@ describe("FAN-020 settings", () => {
     expect(saved).toHaveAttribute("role", "status");
     expect(saved).toHaveAttribute("data-tone", "success");
     expect(saved.closest("section")).toHaveAccessibleName("알림");
+    fireEvent.click(screen.getByRole("button", { name: "설정으로 돌아가기" }));
+    fireEvent.click(screen.getByRole("button", { name: /언어한국어/ }));
     fireEvent.click(screen.getByRole("button", { name: "English" }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
@@ -670,8 +760,8 @@ describe("FAN-020 settings", () => {
 
   it("locks and serializes preference switches before a delayed token resolves", async () => {
     let resolveToken!: (token: string) => void;
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("notifications");
+    await screen.findByRole("heading", { name: "알림", level: 1 });
     getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
 
     const survey = screen.getByRole("switch", { name: "설문 참여 알림" });
@@ -699,8 +789,8 @@ describe("FAN-020 settings", () => {
       if (url === "/api/me/notification-channels") return Response.json({ connections });
       throw new Error(`Unexpected URL ${url}`);
     });
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("notifications");
+    await screen.findByRole("heading", { name: "알림", level: 1 });
     fireEvent.click(screen.getByRole("switch", { name: "설문 참여 알림" }));
     await waitFor(() => expect(rejectPreference).toBeTypeOf("function"));
     fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 연결" }));
@@ -716,8 +806,8 @@ describe("FAN-020 settings", () => {
 
   it("shares a connection-group lock between channel consent and Kakao", async () => {
     let resolveToken!: (token: string) => void;
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("channels");
+    await screen.findByRole("heading", { name: "연결 및 수신 채널", level: 1 });
     getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
     fireEvent.click(screen.getByRole("switch", { name: "Email 수신" }));
 
@@ -743,13 +833,13 @@ describe("FAN-020 settings", () => {
         return new Promise<Response>((resolve) => { finishDelete = () => resolve(new Response(null, { status: 204 })); });
       throw new Error(`Unexpected URL ${url}`);
     });
-    render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    renderSettings("channels");
+    await screen.findByRole("heading", { name: "연결 및 수신 채널", level: 1 });
     const initialSettingsGets = vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/settings").length;
     const initialPreferenceGets = vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/notifications/preferences").length;
     fireEvent.click(screen.getByRole("button", { name: "Kakao 연결 해제" }));
     expect(screen.getByRole("button", { name: "Kakao 연결 해제 중…" })).toBeDisabled();
-    expect(screen.getByRole("heading", { name: "설정" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "연결 및 수신 채널", level: 1 })).toBeInTheDocument();
     await waitFor(() => expect(finishDelete).toBeTypeOf("function"));
     finishDelete();
     await waitFor(() => expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url) === "/api/me/notification-channels").length).toBe(2));
@@ -759,12 +849,12 @@ describe("FAN-020 settings", () => {
 
   it("does not mutate the next owner after the previous owner's token resolves", async () => {
     let resolveToken!: (token: string) => void;
-    const view = render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    const view = renderSettings("notifications");
+    await screen.findByRole("heading", { name: "알림", level: 1 });
     getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
     fireEvent.click(screen.getByRole("switch", { name: "설문 참여 알림" }));
     authState.user = { id: "owner-b" };
-    view.rerender(<SettingsScreen locale="ko" />);
+    view.rerender(<SettingsScreen locale="ko" initialSection="notifications" />);
     resolveToken("stale-token");
     await waitFor(() => expect(screen.getByRole("switch", { name: "설문 참여 알림" })).toBeEnabled());
     expect(vi.mocked(fetch).mock.calls.filter(([url, init]) =>
@@ -777,8 +867,9 @@ describe("FAN-020 settings", () => {
     ["channel", "Email 수신", "/api/me/notification-channels", "PATCH"],
     ["Kakao", "Kakao 연결 해제", "/api/me/connected-accounts/kakao", "DELETE"],
   ] as const)("does not send a deferred %s mutation after unmount", async (_kind, name, endpoint, method) => {
-    const view = render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    const detail = _kind === "preference" ? "notifications" : "channels";
+    const view = renderSettings(detail);
+    await screen.findByRole("heading", { name: detail === "notifications" ? "알림" : "연결 및 수신 채널", level: 1 });
     let resolveToken!: (token: string) => void;
     getAccessToken.mockImplementationOnce(() => new Promise((resolve) => { resolveToken = resolve; }));
     fireEvent.click(name.includes("수신") || name.includes("알림")
@@ -798,14 +889,14 @@ describe("FAN-020 settings", () => {
   it("clears the previous owner's private settings before the next owner's GET resolves", async () => {
     const view = render(<SettingsScreen locale="ko" />);
     await screen.findByText("Kamilia");
-    expect(screen.getByText("k***@example.com")).toBeInTheDocument();
+    expect(screen.getByText("0x1234…cdef")).toBeInTheDocument();
     vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined));
 
     authState.user = { id: "owner-b" };
     view.rerender(<SettingsScreen locale="ko" />);
 
     expect(screen.queryByText("Kamilia")).not.toBeInTheDocument();
-    expect(screen.queryByText("k***@example.com")).not.toBeInTheDocument();
+    expect(screen.queryByText("0x1234…cdef")).not.toBeInTheDocument();
     expect(screen.getByText("설정을 불러오는 중")).toBeInTheDocument();
   });
 
@@ -816,13 +907,13 @@ describe("FAN-020 settings", () => {
       tokenProvider = provider!;
       return new Promise((resolve) => { finishPush = resolve; });
     });
-    const view = render(<SettingsScreen locale="ko" />);
-    await screen.findByRole("heading", { name: "설정" });
+    const view = renderSettings("notifications");
+    await screen.findByRole("heading", { name: "알림", level: 1 });
     fireEvent.click(screen.getByRole("button", { name: "브라우저 알림 연결" }));
     await waitFor(() => expect(tokenProvider).toBeTypeOf("function"));
 
     authState.user = { id: "owner-b" };
-    view.rerender(<SettingsScreen locale="ko" />);
+    view.rerender(<SettingsScreen locale="ko" initialSection="notifications" />);
     const tokenCallsAfterSwitch = getAccessToken.mock.calls.length;
     await expect(tokenProvider()).resolves.toBeNull();
     expect(getAccessToken).toHaveBeenCalledTimes(tokenCallsAfterSwitch);
@@ -845,7 +936,7 @@ describe("FAN-020 settings", () => {
       throw new Error(`Unexpected URL ${url}`);
     });
 
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("language");
     fireEvent.click(await screen.findByRole("button", { name: "English" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("저장하지 못했어요. 다시 시도해 주세요.");
@@ -868,7 +959,8 @@ describe("settings logout", () => {
   it("waits for Privy logout, prevents double clicks and returns to login", async () => {
     let finish!: () => void;
     logout.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve; }));
-    render(<SettingsScreen locale="ko" />);
+    renderSettings("account");
+    await screen.findByText("설정을 불러오지 못했어요. 다시 시도해 주세요.");
     fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
     expect(screen.getByRole("button", { name: "로그아웃 중…" })).toBeDisabled();
     expect(replace).not.toHaveBeenCalledWith("/login?locale=ko");

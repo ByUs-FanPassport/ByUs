@@ -7,12 +7,16 @@ import { messages as localizedMessages } from "@/i18n/catalogs/features__profile
 import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
 import {
+  ArrowLeft,
   Bell,
+  ChevronRight,
   Download,
   Globe2,
   LogOut,
   Pencil,
+  ShieldBan,
   Smartphone,
+  Trash2,
   WalletCards,
 } from "lucide-react";
 import type { Route } from "next";
@@ -37,6 +41,10 @@ import { AccountDeletion } from "./account-deletion";
 import { BlockedUsers } from "@/features/content-safety/ui/blocked-users";
 import { useAvatar } from "./use-avatar";
 import { personalCopy } from "@/i18n/catalogs/features__my__ui__personal-copy";
+import { useByUsSession } from "@/components/byus-session-provider";
+import { contentCopy } from "@/i18n/catalogs/features__fan_posts__ui";
+import { accountDeletionCopy } from "@/i18n/catalogs/features__profile__ui__account-deletion";
+import { parseSettingsSection, type SettingsSection } from "../domain/settings-navigation";
 
 type Locale = AppLocale;
 type PreferenceKey =
@@ -184,6 +192,8 @@ const copy = {
     saved: "변경 사항을 저장했어요.",
     nicknameSaved: "닉네임을 변경했어요.",
     failed: "저장하지 못했어요. 다시 시도해 주세요.",
+    account: "계정",
+    backToSettings: "설정으로 돌아가기",
   },
   en: {
     logout: "Log out",
@@ -271,6 +281,8 @@ const copy = {
     saved: "Your changes were saved.",
     nicknameSaved: "Display name updated.",
     failed: "We couldn't save that. Try again.",
+    account: "Account",
+    backToSettings: "Back to Settings",
   },
 
   ...additionalLocales((translationLocale) => ({
@@ -359,6 +371,8 @@ const copy = {
     saved: localizedMessages.mcc34d22bc52b[translationLocale],
     nicknameSaved: localizedMessages.m0b46bbc6c7cc[translationLocale],
     failed: localizedMessages.m2f6f0378046d[translationLocale],
+    account: localizedMessages.m0f3c93ce185e[translationLocale],
+    backToSettings: localizedMessages.m96c0a89b4d0a[translationLocale],
   }))
 } as const;
 
@@ -366,11 +380,16 @@ function authHeaders(token: string): HeadersInit {
   return { authorization: `Bearer ${token}` };
 }
 
-export function SettingsScreen({ locale }: { locale: Locale }) {
+export function SettingsScreen({ locale, initialSection = null }: { locale: Locale; initialSection?: SettingsSection | null }) {
   const t = copy[locale];
   const router = useRouter();
+  const session = useByUsSession();
   const { ready, authenticated, user, getAccessToken, logout } = usePrivy();
-  const ownerId = user?.id ?? null;
+  const ownerId = session.ownerId ?? user?.id ?? null;
+  const [section, setSection] = useState<SettingsSection | null>(initialSection);
+  const sectionTriggerRef = useRef<SettingsSection | null>(null);
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const settingsReturnTo = `/settings?locale=${locale}${section ? `&section=${section}` : ""}`;
   const avatarResource = useAvatar();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -419,6 +438,39 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     setMessage(value);
     setMessageError(error);
   }
+  const navigateToSection = useCallback((next: SettingsSection | null, replace = false) => {
+    const url = new URL(window.location.href);
+    if (next) url.searchParams.set("section", next);
+    else url.searchParams.delete("section");
+    window.history[replace ? "replaceState" : "pushState"]({}, "", `${url.pathname}${url.search}${url.hash}`);
+    setSection(next);
+  }, []);
+  const openSection = useCallback((next: SettingsSection) => {
+    sectionTriggerRef.current = next;
+    navigateToSection(next);
+  }, [navigateToSection]);
+  const closeSection = useCallback(() => {
+    const focusSection = section;
+    navigateToSection(null);
+    requestAnimationFrame(() => document.getElementById(`settings-row-${focusSection}`)?.focus());
+  }, [navigateToSection, section]);
+
+  useLayoutEffect(() => {
+    if (section && state === "ready" && ready && session.ready) detailHeadingRef.current?.focus();
+  }, [section, state, ready, session.ready]);
+
+  useEffect(() => {
+    const followHistory = () => {
+      const next = parseSettingsSection(new URLSearchParams(window.location.search).get("section"));
+      setSection(next);
+      if (!next && sectionTriggerRef.current) {
+        const trigger = sectionTriggerRef.current;
+        requestAnimationFrame(() => document.getElementById(`settings-row-${trigger}`)?.focus());
+      }
+    };
+    window.addEventListener("popstate", followHistory);
+    return () => window.removeEventListener("popstate", followHistory);
+  }, []);
   useLayoutEffect(() => {
     const ownerChanged = ownerRef.current !== ownerId;
     activeRef.current = true;
@@ -457,7 +509,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
   }, [ownerId]);
 
   const load = useCallback(async () => {
-    if (!ready || !authenticated) return;
+    if (!ready || !session.ready || !authenticated) return;
     const ownerAtStart = ownerId;
     const generation = ++loadGenerationRef.current;
     setState("loading");
@@ -518,18 +570,20 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       if (activeRef.current && ownerRef.current === ownerAtStart && generation === loadGenerationRef.current)
         setState("error");
     }
-  }, [authenticated, getAccessToken, ownerId, ready]);
+  }, [authenticated, getAccessToken, ownerId, ready, session.ready]);
 
   useEffect(() => {
     if (logoutPending.current) return;
-    if (ready && !authenticated) {
+    if (ready && session.ready && !authenticated) {
       router.replace(
-        `/login?returnTo=${encodeURIComponent(`/settings?locale=${locale}`)}&locale=${locale}`,
+        `/login?returnTo=${encodeURIComponent(settingsReturnTo)}&locale=${locale}`,
       );
-      return;
     }
-    void load();
-  }, [authenticated, load, locale, ready, router]);
+  }, [authenticated, locale, ready, router, session.ready, settingsReturnTo]);
+
+  useEffect(() => {
+    if (ready && session.ready && authenticated) void load();
+  }, [authenticated, load, ready, session.ready]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -777,7 +831,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       if (!isCurrent()) return;
       if (!token) throw new Error("token");
       const base = "/api/me/notification-channels/kakao/enrollment";
-      const endpoint = action === "start" ? `${base}/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}` : `${base}/${action}`;
+      const endpoint = action === "start" ? `${base}/start?return=${encodeURIComponent(`/settings?locale=${locale}&section=channels`)}` : `${base}/${action}`;
       const body = action === "start"
         ? { consented: true, consentVersion: "kakao-alimtalk-v1" }
         : action === "confirm"
@@ -832,7 +886,7 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
         setKakaoEnrollmentConsent(false);
         showNotificationMessage(t.saved);
       } else {
-        const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}`)}`, { method: "POST", headers: authHeaders(token) });
+        const response = await fetch(`/api/me/connected-accounts/kakao/start?return=${encodeURIComponent(`/settings?locale=${locale}&section=channels`)}`, { method: "POST", headers: authHeaders(token) });
         const body = await response.json() as { authorizationUrl?: string };
         if (!response.ok || !body.authorizationUrl) throw new Error("connect");
         if (!activeRef.current || ownerRef.current !== ownerAtStart || generation !== connectionGenerationRef.current) return;
@@ -947,18 +1001,17 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
     </div>
   ) : null;
   const profileSetupHref = appendLoginContext("/onboarding/profile", {
-    returnTo: `/settings?locale=${locale}`,
+    returnTo: settingsReturnTo,
     intent: null,
     entity: null,
     locale,
   });
 
-  if (!ready || state === "loading")
+  if (!ready || !session.ready || state === "loading")
     return (
       <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1} aria-busy="true">
         <span className={styles.spinner} />
         {t.loading}
-        {logoutAction}
       </FanContentContainer></FanAppFrame>
     );
   if (!authenticated) return <FanAppFrame locale={locale} mainId="settings-content"><FanContentContainer as="main" className={styles.center} id="settings-content" tabIndex={-1}>{t.auth}</FanContentContainer></FanAppFrame>;
@@ -982,18 +1035,69 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
       </FanContentContainer></FanAppFrame>
     );
 
+  const blockedLabel = contentCopy(locale).block;
+  const deletionLabel = accountDeletionCopy[locale].title;
+  const sectionLabels: Record<SettingsSection, string> = {
+    profile: t.profile,
+    language: t.language,
+    notifications: t.notifications,
+    channels: t.connections,
+    account: t.account,
+    installation: t.install,
+    blocked: blockedLabel,
+    delete: deletionLabel,
+  };
+  const preferredLanguage = settings.preferredLocale === "ko" ? t.korean : t.english;
+  const installValue = installState === "installed" ? t.installed
+    : installState === "available" ? t.installAction
+      : installState === "checking" ? t.installChecking : t.unsupported;
+  const settingsRows = [
+    { section: "profile" as const, icon: <Pencil />, label: t.profile, value: settings.nickname },
+    { section: "language" as const, icon: <Globe2 />, label: t.language, value: preferredLanguage },
+    { section: "notifications" as const, icon: <Bell />, label: t.notifications, value: t.notificationHelp },
+    { section: "channels" as const, icon: <Bell />, label: t.connections, value: connections.channels.filter((channel) => channel.consented).map((channel) => channel.kind === "email" ? t.emailChannel : t.kakaoChannel).join(" · ") },
+    { section: "account" as const, icon: <WalletCards />, label: t.account, value: settings.wallet?.maskedAddress ?? t.noWallet },
+    { section: "installation" as const, icon: <Smartphone />, label: t.install, value: installValue },
+    { section: "blocked" as const, icon: <ShieldBan />, label: blockedLabel, value: "" },
+    { section: "delete" as const, icon: <Trash2 />, label: deletionLabel, value: "", destructive: true },
+  ];
+
   return (
     <FanAppFrame locale={locale} mainId="settings-content">
     <div className={styles.page}>
       <FanContentContainer as="main" className={styles.main} id="settings-content" tabIndex={-1}>
-        <div className={styles.intro}>
+        {section ? <header className={styles.detailHeader}>
+          <button type="button" onClick={closeSection} aria-label={t.backToSettings}><ArrowLeft aria-hidden="true"/></button>
+          <h1 ref={detailHeadingRef} tabIndex={-1}>{sectionLabels[section]}</h1>
+        </header> : <div className={styles.intro}>
           <h1>{t.title}</h1>
           <span>{t.subtitle}</span>
-        </div>
+        </div>}
 
-        {logoutAction}
+        {!section ? <div className={styles.settingsGroups}>
+          {([{
+            title: t.profile,
+            sections: ["profile", "language"] as const,
+          }, {
+            title: t.notifications,
+            sections: ["notifications", "channels"] as const,
+          }, {
+            title: t.account,
+            sections: ["account", "installation", "blocked", "delete"] as const,
+          }]).map((group) => <section className={styles.settingsGroup} key={group.title} aria-labelledby={`settings-group-${group.sections[0]}`}>
+            <h2 id={`settings-group-${group.sections[0]}`}>{group.title}</h2>
+            <div className={styles.settingsRows}>{group.sections.map((rowSection) => {
+              const row = settingsRows.find((item) => item.section === rowSection)!;
+              return <button id={`settings-row-${row.section}`} type="button" key={row.section} data-destructive={row.destructive || undefined} onClick={() => openSection(row.section)}>
+                <span className={styles.rowIcon} aria-hidden="true">{row.icon}</span>
+                <span className={styles.rowCopy}><strong>{row.label}</strong>{row.value ? <small dir="auto">{row.value}</small> : null}</span>
+                <ChevronRight aria-hidden="true"/>
+              </button>;
+            })}</div>
+          </section>)}
+        </div> : null}
 
-        <section className={styles.section} aria-labelledby="profile-title">
+        {section === "profile" ? <section className={styles.section} aria-labelledby="profile-title">
           <div className={styles.sectionTitle}>
             <div className={styles.icon}>
               <Pencil />
@@ -1135,11 +1239,12 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               {nicknameMessage}
             </p>
           ) : null}
-        </section>
+        </section> : null}
 
+        {section === "language" ? <>
         <section className={styles.section} aria-labelledby="website-language-title">
           <h2 id="website-language-title">{languageSettings[locale].website}</h2>
-          <FanLanguageSwitch locale={locale} href="/settings" />
+          <FanLanguageSwitch locale={locale} href="/settings?section=language" />
         </section>
         <section className={styles.section} aria-labelledby="language-title">
           <div className={styles.sectionTitle}>
@@ -1178,8 +1283,9 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
             </p>
           )}
         </section>
+        </> : null}
 
-        <section
+        {section === "notifications" ? <section
           className={styles.section}
           aria-labelledby="notifications-title"
         >
@@ -1276,8 +1382,14 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               </button>
             )}
           </div>
+        </section> : null}
+
+        {section === "channels" ? <section className={styles.section} aria-labelledby="channels-title">
+          <div className={styles.sectionTitle}>
+            <div className={styles.icon}><Bell /></div>
+            <div><h2 id="channels-title">{t.connections}</h2><p>{t.notificationHelp}</p></div>
+          </div>
           <div className={styles.channelControls}>
-            <h3>{t.connections}</h3>
             {connections.accounts.some((account) => account.provider === "google" && account.status === "connected") && <p>{t.googleReadOnly}</p>}
             {(() => {
               const connected = connections.accounts.some((account) => account.provider === "kakao" && account.status === "connected");
@@ -1327,9 +1439,9 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               {!kakaoEnrollmentConsent && <small id="kakao-enrollment-consent-help">{t.kakaoEnrollmentConsentRequired}</small>}
             </div>}
           </div>
-        </section>
+        </section> : null}
 
-        <section className={styles.section} aria-labelledby="wallet-title">
+        {section === "account" ? <section className={styles.section} aria-labelledby="wallet-title">
           <div className={styles.sectionTitle}>
             <div className={styles.icon}>
               <WalletCards />
@@ -1345,9 +1457,10 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
               <span>{locale === "ko" ? "네트워크" : translate(locale, localizedMessages.m7c538d007755, "Network")} · {settings.wallet.chainId}</span>
             )}
           </div>
-        </section>
+          {logoutAction}
+        </section> : null}
 
-        <section className={styles.section} aria-labelledby="install-title">
+        {section === "installation" ? <section className={styles.section} aria-labelledby="install-title">
           <div className={styles.sectionTitle}>
             <div className={styles.icon}>
               <Smartphone />
@@ -1382,9 +1495,9 @@ export function SettingsScreen({ locale }: { locale: Locale }) {
           ) : (
             <p className={styles.support}>{t.unsupported}</p>
           )}
-        </section>
-        <BlockedUsers locale={locale}/>
-        <AccountDeletion locale={locale}/>
+        </section> : null}
+        {section === "blocked" ? <BlockedUsers locale={locale}/> : null}
+        {section === "delete" ? <AccountDeletion locale={locale}/> : null}
       </FanContentContainer>
     </div>
     </FanAppFrame>

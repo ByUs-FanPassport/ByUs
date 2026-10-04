@@ -1,6 +1,17 @@
 import type { TranslatedMessage } from "../messages";
 
 export const messages = {
+  "visiblePassportCount": {
+    "ja": "パスポート {0}冊",
+    "zh-Hans": "{0} 本 Passport",
+    "zh-Hant": "{0} 本 Passport",
+    "es": "Passports: {0}",
+    "id": "Passport: {0}",
+    "vi": "Passport: {0}",
+    "th": "Passport {0} เล่ม",
+    "pt": "Passports: {0}",
+    "fr": "Passports : {0}"
+  },
   "m1f2d07933f72": {
     "ja": "メインコンテンツへ移動",
     "zh-Hans": "跳到主要内容",

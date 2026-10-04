@@ -49,7 +49,7 @@ describe("Kakao callback landing", () => {
 
   it("posts exactly once in Strict Mode, clears the address, and returns after success", async () => {
     window.history.replaceState({}, "", callbackUrl("strict-success", "a"));
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ returnPath: "/settings?locale=ko" }));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ returnPath: "/settings?locale=ko&section=channels" }));
     render(<StrictMode><KakaoCallbackScreen locale="ko" /></StrictMode>);
 
     expect(window.location.pathname).toBe("/settings/kakao/callback");
@@ -61,7 +61,7 @@ describe("Kakao callback landing", () => {
       headers: expect.objectContaining({ authorization: "Bearer privy-token" }),
       body: JSON.stringify({ code: "strict-success", state: "a".repeat(40) }),
     }));
-    expect(replace).toHaveBeenCalledWith("/settings?locale=ko");
+    expect(replace).toHaveBeenCalledWith("/settings?locale=ko&section=channels");
   });
 
   it("waits until Privy is ready and authenticated", async () => {
@@ -82,7 +82,7 @@ describe("Kakao callback landing", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     const view = render(<KakaoCallbackScreen locale="ko" />);
     expect(await screen.findByRole("heading", { name: /로그인 상태를 확인할 수 없어/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "설정에서 다시 연결하기" })).toHaveAttribute("href", "/settings?locale=ko");
+    expect(screen.getByRole("link", { name: "설정에서 다시 연결하기" })).toHaveAttribute("href", "/settings?locale=ko&section=channels");
     expect(window.location.search).toBe("");
     expect(fetchMock).not.toHaveBeenCalled();
     authState.authenticated = true;
@@ -189,6 +189,6 @@ describe("Kakao callback landing", () => {
     window.history.replaceState({}, "", "/settings/kakao/callback");
     render(<KakaoCallbackScreen locale="en" />);
     expect(await screen.findByRole("heading", { name: "The connection details are missing or invalid." })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Connect again in Settings" })).toHaveAttribute("href", "/settings?locale=en");
+    expect(screen.getByRole("link", { name: "Connect again in Settings" })).toHaveAttribute("href", "/settings?locale=en&section=channels");
   });
 });

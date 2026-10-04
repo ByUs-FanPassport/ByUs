@@ -97,11 +97,11 @@ function PersonalizationLoading({ locale }: { locale: AppLocale }) {
   );
 }
 
-function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }: { locale: AppLocale; summary: MySummary; placement: "desktop" | "mobile"; featuredLives: readonly LiveEventResponse[] }) {
+function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives, celebrities, creatorsUnavailable = false }: { locale: AppLocale; summary: MySummary; placement: "desktop" | "mobile"; featuredLives: readonly LiveEventResponse[]; celebrities: readonly PublishedCelebrity[]; creatorsUnavailable?: boolean }) {
   const owner = useHomeOwner();
   const t = copy[locale];
   const localeQuery = `?locale=${locale}`;
-  const passportCreators = summary.creators.filter((item) => item.passport !== null);
+  const passportCreators = summary.creators.filter((item) => item.passport !== null && celebrities.some((celebrity) => celebrity.slug === item.celebrity.slug));
   const activePassportIndex = Math.max(0, passportCreators.findIndex((item) => item.passport?.id === owner.selectedPassportId));
   const creator = passportCreators[activePassportIndex] ?? null;
   const passportPreview = owner.passportPreview.status === "ready"
@@ -111,6 +111,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
   const reservationCreator = featuredLives.find(({ live }) => live.id === reservation?.id)?.live.celebrity;
   const headingId = `signed-in-home-heading-${placement}`;
   const passportCount = passportCreators.length;
+  const hasHiddenPassports = summary.creators.some((item) => item.passport !== null) && passportCount === 0;
   const selectPassport = (index: number) => {
     const selected = passportCreators[(index + passportCount) % passportCount]?.passport;
     if (selected) owner.selectPassport(selected.id);
@@ -121,8 +122,8 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
     <section className={styles.signedInSummary} aria-labelledby={headingId}>
       <div className={styles.signedInGreeting}><h2 id={headingId}>{t.signedInPanel}</h2><p>{summary.profile.nickname ? `${summary.profile.nickname}${locale === "ko" ? "님, " : ", "}${t.welcome}` : t.welcome}</p></div>
       <div className={styles.summarySection}>
-        <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 1 ? <small>{locale === "ko" ? `${passportCount}개` : passportCount}</small> : null}</div>
-        {creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : translate(locale, localizedMessages.mfa3f5fc72bf9, "Passport carousel")} aria-label={t.myPassport}>
+        <div className={styles.summarySectionHeader}><span>{t.myPassport}</span>{passportCount > 0 ? <small>{locale === "ko" ? `패스포트 ${passportCount}개` : locale === "en" ? `${passportCount} ${passportCount === 1 ? "Passport" : "Passports"}` : translate(locale, localizedMessages.visiblePassportCount, "Passports: {0}", [passportCount])}</small> : null}</div>
+        {creatorsUnavailable ? <><ContentLoadError locale={locale} /><Link className={styles.passportCollectionLink} href={`/passports${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link></> : creator?.passport ? <><div className={styles.passportCarousel} role="group" aria-roledescription={locale === "ko" ? "Passport 슬라이드" : translate(locale, localizedMessages.mfa3f5fc72bf9, "Passport carousel")} aria-label={t.myPassport}>
           <div className={styles.ownedPassportPreview}>
             <Link className={styles.ownedPassportLink} href={`/passports/${creator.passport.id}${localeQuery}` as Route} aria-label={`${passportTitle}, ${passportValue}`}>
               <PassportIdentityArtwork
@@ -151,7 +152,7 @@ function AuthenticatedHomeSummary({ locale, summary, placement, featuredLives }:
           </div> : null}
             <Link className={styles.passportCollectionLink} href={`/passports${localeQuery}` as Route}>{t.allPassports}<ChevronRight /></Link>
           </div>
-        </div></> : <div className={styles.summaryEmpty}><Image className={styles.emptyPassportPreview} src="/images/guest-home/passport-open-blank-9-transparent.png" alt={t.passportPreview} width={1536} height={1024}/><p>{t.noPassport}</p><span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span><Link className={styles.summaryOutlineAction} href={`/celebrities${localeQuery}` as Route}>{t.findFavorite}<ArrowRight /></Link></div>}
+        </div></> : <div className={styles.summaryEmpty}><Image className={styles.emptyPassportPreview} src="/images/guest-home/passport-open-blank-9-transparent.png" alt={t.passportPreview} width={1536} height={1024}/><p>{hasHiddenPassports ? t.myFavoritesUnavailable : t.noPassport}</p>{!hasHiddenPassports && <span className={styles.emptyPassportHint}>{t.passportPreviewHint}</span>}<Link className={styles.summaryOutlineAction} href={`${hasHiddenPassports ? "/passports" : "/celebrities"}${localeQuery}` as Route}>{hasHiddenPassports ? t.allPassports : t.findFavorite}<ArrowRight /></Link></div>}
       </div>
       <div className={styles.summarySection}>
         <div className={styles.summarySectionHeader}><span>{t.reservedLive}</span></div>
@@ -196,7 +197,7 @@ function ContentLoadError({ locale }: { locale: AppLocale }) {
 type GuestHomeProps = { elinaRaffles?: RaffleList["raffles"]; homeBanners?: readonly HomeBanner[]; celebrities: readonly PublishedCelebrity[]; celebrityLives?: readonly PublishedCelebrityLive[]; featuredLives: readonly LiveEventResponse[]; locale: AppLocale; contentErrors?: HomeContentErrors; initialOwnedOnly?: boolean; initialRole?: CreatorRoleFilter };
 
 export function GuestHome(props: GuestHomeProps) {
-  return <HomeOwnerProvider locale={props.locale}><GuestHomeContent {...props} /></HomeOwnerProvider>;
+  return <HomeOwnerProvider locale={props.locale} publishedCreatorSlugs={props.celebrities.map(({ slug }) => slug)}><GuestHomeContent {...props} /></HomeOwnerProvider>;
 }
 
 function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebrityLives = [], featuredLives, locale, contentErrors = {}, initialOwnedOnly, initialRole = "all" }: GuestHomeProps) {
@@ -315,7 +316,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
                 <Link data-service-accent="spectrum-outline" href={`/login${localeQuery}`}><span>{t.signIn}</span></Link>
               </section>
             ) : null}
-            {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} /> : null}
+            {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="mobile" featuredLives={featuredLives} celebrities={celebrities} creatorsUnavailable={contentErrors.celebrities} /> : null}
             {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
             {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
           </div>
@@ -432,7 +433,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
               <div className={styles.passportFooter}><div><strong>{t.passportEmpty}</strong><p>{t.passportHelp}</p></div><AuthIntentLink locale={locale} input={{ sourcePath: "/passports", sourceQuery: localeQuery, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.passportIssue}</span><ArrowRight /></AuthIntentLink></div>
             </section>
           </> : null}
-          {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} /> : null}
+          {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} celebrities={celebrities} creatorsUnavailable={contentErrors.celebrities} /> : null}
           {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
           {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
           <HomeEntryCards locale={locale} celebrities={celebrities} />

@@ -671,7 +671,7 @@ describe("canonical 03 guest home", () => {
     } });
     }));
 
-    render(<GuestHome {...defaultProps} featuredLives={[featuredLive]} />);
+    render(<GuestHome {...defaultProps} celebrities={[...celebrities, { ...celebrities[0], slug: "katseye", name: "KATSEYE" }]} featuredLives={[featuredLive]} />);
 
     const carousels = await screen.findAllByRole("group", { name: "내 패스포트" });
     expect(carousels).toHaveLength(2);
@@ -690,6 +690,41 @@ describe("canonical 03 guest home", () => {
     expect(screen.getAllByRole("link", { name: /^KATSEYE 패스포트,/ })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: /패스포트 전체 보기/ })[0]).toHaveAttribute("href", "/passports?locale=ko");
     await act(async () => {});
+  });
+
+  it("hides unpublished favorites from Home without requesting their Passport preview or changing owned records", async () => {
+    privy.authenticated = true;
+    const hiddenId = "11111111-1111-4111-8111-111111111111";
+    const visibleId = "22222222-2222-4222-8222-222222222222";
+    const ownedCreators = [
+      { celebrity: { slug: "unpublished", name: "Hidden favorite", image: "/hidden.jpg" }, relationship: "passport", passport: { id: hiddenId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
+      { celebrity: { slug: "elina", name: "엘리나", image: "/images/guest-home/elina-card.jpg" }, relationship: "passport", passport: { id: visibleId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
+    ];
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/creator-reactions")) return Response.json(reactionStates(celebrities.map(({ slug }) => slug)));
+      if (url.startsWith("/api/passports/")) return Response.json({ passport: { stamps: [], activities: [], stampSummary: { total: 0 } } });
+      return Response.json({ summary: {
+        profile: { nickname: "팬" }, creators: ownedCreators,
+        live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] },
+        collection: { passportCount: 2, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+      } });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const { rerender } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findAllByRole("link", { name: /^엘리나 패스포트,/ })).toHaveLength(2);
+    expect(screen.getAllByText("패스포트 1개")).toHaveLength(2);
+    expect(screen.queryByText("Hidden favorite")).not.toBeInTheDocument();
+    await waitFor(() => expect(fetcher.mock.calls.some(([url]) => String(url).includes(`/api/passports/${visibleId}`))).toBe(true));
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes(`/api/passports/${hiddenId}`))).toBe(false);
+    rerender(<GuestHome {...defaultProps} celebrities={[]} featuredLives={[]} />);
+    expect(await screen.findAllByText("지금 공개된 내 최애가 없어요.")).not.toHaveLength(0);
+    expect(screen.getAllByRole("link", { name: "패스포트 전체 보기" })).toHaveLength(2);
+    expect(ownedCreators).toHaveLength(2);
+    rerender(<GuestHome {...defaultProps} celebrities={[]} featuredLives={[]} contentErrors={{ celebrities: true }} />);
+    expect(await screen.findAllByText("팬 활동을 불러오지 못했어요.")).not.toHaveLength(0);
+    expect(screen.queryByText("지금 공개된 내 최애가 없어요.")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "패스포트 전체 보기" })).toHaveLength(2);
   });
 
   it("shows truthful authenticated empty states and retries summary failures", async () => {

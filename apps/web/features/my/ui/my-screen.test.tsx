@@ -36,15 +36,32 @@ const summary = {
   unreadNotificationCount: 1,
 };
 const getAccessToken = vi.fn(async () => "token");
-const { avatarOwner } = vi.hoisted(() => ({ avatarOwner: { id: undefined as string | undefined } }));
+const { avatarOwner, sessionState } = vi.hoisted(() => ({
+  avatarOwner: { id: undefined as string | undefined },
+  sessionState: { ready: true, pending: false, ownerId: null as string | null, generation: 0 },
+}));
 
 vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, authenticated: true, user: avatarOwner.id ? { id: avatarOwner.id } : undefined, getAccessToken }),
 }));
+vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => sessionState }));
 
-afterEach(() => { avatarOwner.id = undefined; vi.useRealTimers(); window.history.replaceState(null, "", "/my"); });
+afterEach(() => { avatarOwner.id = undefined; sessionState.ready = true; sessionState.pending = false; sessionState.ownerId = null; vi.useRealTimers(); window.history.replaceState(null, "", "/my"); });
 
 describe("unified MY hub", () => {
+  it("keeps the owned dashboard behind a coherent session transition", () => {
+    sessionState.ready = false;
+    sessionState.pending = true;
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<MyScreen locale="ko" />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("팬 활동을 불러오는 중이에요.");
+    expect(screen.queryByText("내 팬 활동을 한곳에 모아보세요.")).not.toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("shows the MY sections while personal data is still being prepared", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
     render(<MyScreen locale="ko" />);
@@ -67,7 +84,7 @@ describe("unified MY hub", () => {
     render(<MyScreen locale="ko" />);
 
     const link = await screen.findByRole("link", { name: "프로필 수정" });
-    expect(link).toHaveAttribute("href", "/settings?locale=ko");
+    expect(link).toHaveAttribute("href", "/settings?locale=ko&section=profile");
     expect(link.querySelector("img")).toHaveAttribute("src", "/images/avatars/fairy-pink.webp");
     expect(link).not.toHaveTextContent("카");
   });
@@ -119,7 +136,7 @@ describe("unified MY hub", () => {
     expect(screen.getAllByRole("link", { name:"설정" })).toHaveLength(1);
   });
 
-  it("keeps all three re-entry destinations near the profile without claiming an unavailable reservation", async () => {
+  it("separates the three primary destinations from activity history and requests", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     render(<MyScreen locale="ko" />);
 
@@ -127,8 +144,10 @@ describe("unified MY hub", () => {
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음/ })).toHaveAttribute("href", "/live?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /응모·혜택.*혜택 2.*응모 내역 3/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
-    expect(within(shortcuts).getByRole("link", { name: /내 활동 내역/ })).toHaveAttribute("href", "/my/activity?locale=ko");
-    expect(within(shortcuts).getByRole("link", { name: /내 신청 내역/ })).toHaveAttribute("href", "/my/requests?locale=ko");
+    expect(within(shortcuts).queryByRole("link", { name: /내 활동 내역/ })).not.toBeInTheDocument();
+    const records = screen.getByRole("navigation", { name: "내 활동 내역" });
+    expect(within(records).getByRole("link", { name: /내 활동 내역/ })).toHaveAttribute("href", "/my/activity?locale=ko");
+    expect(within(records).getByRole("link", { name: /내 신청 내역/ })).toHaveAttribute("href", "/my/requests?locale=ko");
     expect(within(shortcuts).queryByText("응모 가능")).not.toBeInTheDocument();
   });
 

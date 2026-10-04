@@ -16,7 +16,7 @@ export function FanHeading({ as: Tag = "h2", variant = "standard", id, children 
   return <Tag id={id} className={`${styles.heading} ${styles[variant]}`} data-fan-heading={variant}>{children}</Tag>;
 }
 
-/** The title keeps its reading width; secondary navigation wraps below it. */
+/** Title and navigation share a row; supporting copy stays below both. */
 export function FanSectionHeader({ title, description, action, variant = "standard", as = "h2", id }: {
   title: ReactNode;
   description?: ReactNode;
@@ -26,10 +26,12 @@ export function FanSectionHeader({ title, description, action, variant = "standa
   id?: string;
 }) {
   return <div className={`${styles.sectionHeader} ${styles[variant]}`} data-fan-section-header={variant}>
-    <div className={styles.copy}>
-      <FanHeading as={as} id={id} variant={variant === "personal" ? "personal-section" : variant}>{title}</FanHeading>
-      {description != null ? <p className={styles.description}>{description}</p> : null}
+    <div className={styles.headingRow}>
+      <div className={styles.copy}>
+        <FanHeading as={as} id={id} variant={variant === "personal" ? "personal-section" : variant}>{title}</FanHeading>
+      </div>
+      {action ? <Link className={styles.action} href={action.href as Route}><span>{action.label}</span><ChevronRight aria-hidden="true" /></Link> : null}
     </div>
-    {action ? <Link className={styles.action} href={action.href as Route}><span>{action.label}</span><ChevronRight aria-hidden="true" /></Link> : null}
+    {description != null ? <p className={styles.description}>{description}</p> : null}
   </div>;
 }

@@ -354,3 +354,26 @@
 .loadingTiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); }
 .loadingTiles>span,.loadingRow { display:block; height:140px; border:1px solid var(--color-line); border-radius:var(--radius-card,16px); background:var(--color-soft); }
 .loadingRow { height:88px; }
+
+/* Primary collection and current opportunities lead; history and requests follow the selected favorite. */
+.primaryDestinations { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.secondaryActions { display:grid; gap:var(--space-4); padding-top:var(--space-2); }
+.secondaryActions > h2 { margin:0; font-size:20px; line-height:1.35; letter-spacing:-.025em; }
+.secondaryDestinations { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(max-width:47.99rem) {
+  .primaryDestinations { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .primaryDestinations > a { grid-column:auto; }
+  .primaryDestinations > a:nth-last-child(-n+2) { grid-column:auto; }
+  .secondaryDestinations { grid-template-columns:minmax(0,1fr); }
+  .secondaryDestinations > a,
+  .secondaryDestinations > a:nth-last-child(-n+2) {
+    grid-column:auto;
+    grid-template-columns:44px minmax(0,1fr) 24px;
+    justify-items:initial;
+    align-content:center;
+    padding:var(--space-4);
+    text-align:left;
+  }
+  .secondaryDestinations > a > svg { display:block; }
+  .secondaryDestinations .destinationIcon { width:44px; height:44px; background:var(--color-soft); }
+}

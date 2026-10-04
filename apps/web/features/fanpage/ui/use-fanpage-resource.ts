@@ -4,7 +4,7 @@ import { useByUsSession } from "@/components/byus-session-provider";
 import { useEffect, useRef, useState } from "react";
 import { withRequestDeadline } from "@/features/reliability/client/request-deadline";
 
-type State<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; code: string; membershipCount?: number };
+type State<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; code: string; membershipCount?: number; fanCount?: number };
 /** Public reads may include owner context; a changed owner never sees an old snapshot. */
 export function useFanpageResource<T>(url: string | null, parse: (value: unknown) => T, keepPreviousData = false) {
   const { ready, authenticated, user, getAccessToken } = usePrivy();
@@ -34,7 +34,7 @@ export function useFanpageResource<T>(url: string | null, parse: (value: unknown
         if (!response.ok) {
           setSnapshot(previous => keepPreviousData && response.status >= 500 && previous?.ownerKey === ownerKey && previous.state.status === "ready"
             ? { ...previous, key, refreshFailed: true }
-            : { key, ownerKey, state: { status: "error", code: body.error?.code ?? "UNAVAILABLE", membershipCount: body.membershipCount } });
+            : { key, ownerKey, state: { status: "error", code: body.error?.code ?? "UNAVAILABLE", membershipCount: body.membershipCount, ...(body.fanCount === undefined ? {} : { fanCount: body.fanCount }) } });
           return;
         }
         setSnapshot({ key, ownerKey, state: { status: "ready", data: parse(body) } });

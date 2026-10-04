@@ -120,6 +120,7 @@ describe("CertificationPanel", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "내 인증 내역" }));
     expect(await screen.findByText("보완 필요")).toBeInTheDocument();
+    expect(screen.getByText(/1회차/)).toBeInTheDocument();
   });
   it("filters certifications without making preparing or closed items actionable", async () => {
     const base = {
@@ -188,9 +189,9 @@ describe("CertificationPanel", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(Response.json({ certifications: [] }));
     render(<CertificationPanel slug="kara" locale="en" />);
-    await screen.findByText("No verification missions are available.");
+    await screen.findByText("No verification is available.");
     const missions = screen.getByRole("tab", {
-      name: "Available verification missions",
+      name: "Verification",
     });
     missions.focus();
     fireEvent.keyDown(missions, { key: "ArrowRight" });
@@ -221,7 +222,7 @@ describe("CertificationPanel", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     expect(
-      await screen.findByText("현재 참여할 수 있는 인증이 없어요."),
+      await screen.findByText("등록된 인증이 없어요."),
     ).toBeInTheDocument();
   });
 

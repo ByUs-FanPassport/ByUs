@@ -2,26 +2,26 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m178a185dcf7b": {
-    "ja": "Passport保有者が501人になるとFan Scoreランキングが公開されます。",
-    "zh-Hans": "Passport持有者达到501人时开放Fan Score排行榜。",
-    "zh-Hant": "Passport持有者達到501人時開放Fan Score排行榜。",
-    "es": "La clasificación de Fan Score se abre al llegar a 501 titulares de Passport.",
-    "id": "Peringkat Fan Score dibuka saat ada 501 pemegang Passport.",
-    "vi": "Bảng xếp hạng Fan Score mở khi có 501 người sở hữu Passport.",
-    "th": "อันดับ Fan Score จะเปิดเมื่อมีผู้ถือ Passport ครบ 501 คน",
-    "pt": "O ranking de Fan Score abre ao chegar a 501 titulares de Passport.",
-    "fr": "Le classement Fan Score ouvre à partir de 501 titulaires de Passport."
+    "ja": "ファンが100人になるとFan Scoreランキングが公開されます。",
+    "zh-Hans": "粉丝达到100人时开放Fan Score排行榜。",
+    "zh-Hant": "粉絲達到100人時開放Fan Score排行榜。",
+    "es": "La clasificación de Fan Score se abre al llegar a 100 fans.",
+    "id": "Peringkat Fan Score dibuka saat ada 100 penggemar.",
+    "vi": "Bảng xếp hạng Fan Score mở khi có 100 fan.",
+    "th": "อันดับ Fan Score จะเปิดเมื่อมีแฟนครบ 100 คน",
+    "pt": "O ranking de Fan Score abre ao chegar a 100 fãs.",
+    "fr": "Le classement Fan Score ouvre à partir de 100 fans."
   },
   "m019211255592": {
-    "ja": "{0} / 501人",
-    "zh-Hans": "{0} / 501位粉丝",
-    "zh-Hant": "{0} / 501位粉絲",
-    "es": "{0} / 501 fans",
-    "id": "{0} / 501 penggemar",
-    "vi": "{0} / 501 fan",
-    "th": "แฟน {0} / 501 คน",
-    "pt": "{0} / 501 fãs",
-    "fr": "{0} / 501 fans"
+    "ja": "{0} / 100人",
+    "zh-Hans": "{0} / 100位粉丝",
+    "zh-Hant": "{0} / 100位粉絲",
+    "es": "{0} / 100 fans",
+    "id": "{0} / 100 penggemar",
+    "vi": "{0} / 100 fan",
+    "th": "แฟน {0} / 100 คน",
+    "pt": "{0} / 100 fãs",
+    "fr": "{0} / 100 fans"
   },
   "mc0a4ccdf090d": {
     "ja": "ファン活動ランキング",
@@ -35,15 +35,15 @@ export const messages = {
     "fr": "Votre activité de fan au classement"
   },
   "m01cd18e08921": {
-    "ja": "累計Fan Score · 同点の場合はPassport発行が早い順。",
-    "zh-Hans": "累计Fan Score · 同分时按Passport发行时间较早者优先。",
-    "zh-Hant": "累計Fan Score · 同分時按Passport發行時間較早者優先。",
-    "es": "Fan Score acumulado · En caso de empate, tiene prioridad quien obtuvo antes su Passport.",
-    "id": "Fan Score sepanjang waktu · Jika seri, Passport yang terbit lebih awal diutamakan.",
-    "vi": "Fan Score tích lũy · Khi bằng điểm, người nhận Passport sớm hơn được xếp trên.",
-    "th": "Fan Score สะสมตลอดเวลา · หากคะแนนเท่ากัน ผู้ที่ได้รับ Passport ก่อนจะอยู่อันดับสูงกว่า",
-    "pt": "Fan Score acumulado · Em caso de empate, tem prioridade quem recebeu o Passport primeiro.",
-    "fr": "Fan Score cumulé · En cas d’égalité, le Passport émis en premier est prioritaire."
+    "ja": "累計Fan Score · 同点の場合はPassport発行時刻、未保有なら参加時刻が早い順。",
+    "zh-Hans": "累计Fan Score · 同分时按Passport发行时间排序，无Passport则按参与时间排序。",
+    "zh-Hant": "累計Fan Score · 同分時按Passport發行時間排序，無Passport則按參與時間排序。",
+    "es": "Fan Score acumulado · Los empates se ordenan por la emisión del Passport o, si no lo hay, por la hora de participación.",
+    "id": "Fan Score sepanjang waktu · Jika seri, urutan ditentukan oleh waktu penerbitan Passport, atau waktu partisipasi jika belum memilikinya.",
+    "vi": "Fan Score tích lũy · Khi bằng điểm, xếp theo thời gian cấp Passport hoặc thời gian tham gia nếu chưa có Passport.",
+    "th": "Fan Score สะสม · หากคะแนนเท่ากัน จะเรียงตามเวลาออก Passport หรือเวลาเข้าร่วมหากยังไม่มี Passport",
+    "pt": "Fan Score acumulado · Empates usam a emissão do Passport ou, sem ele, o horário de participação.",
+    "fr": "Fan Score cumulé · Les égalités sont départagées par l’émission du Passport ou, à défaut, par l’heure de participation."
   },
   "m0c416452a30e": {
     "ja": "自分の順位",

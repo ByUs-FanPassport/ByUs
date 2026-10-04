@@ -14,6 +14,7 @@ import { FanAction } from "@/components/fan-ui/fan-action";
 import { FanPostFeed } from "@/features/fan-posts/ui/fan-post-feed";
 import { CertificationPanel } from "@/features/certification/ui/certification-panel";
 import { LeaderboardPanel } from "@/features/fanpage/ui/leaderboard-panel";
+import { LEADERBOARD_MIN_FANS } from "@/features/fanpage/domain/community";
 import { fanCommunitySchema } from "@/features/fanpage/domain/fan-community";
 import { useCommunityResource } from "@/features/fanpage/ui/use-community-resource";
 import { ResourceMessage } from "@/features/fanpage/ui/home-panels";
@@ -26,6 +27,9 @@ const parseFans = (value: unknown) => fanCommunitySchema.parse(value);
 function CommunityFans({ slug, locale, compact = false }: { slug: string; locale: AppLocale; compact?: boolean }) {
   const copy = communityCopy(locale);
   const resource = useCommunityResource(`/api/celebrities/${slug}/fans?locale=${toContentLocale(locale)}`, parseFans);
+  if (!compact && resource.state.status === "ready" && resource.state.data.fanCount >= LEADERBOARD_MIN_FANS) {
+    return <LeaderboardPanel slug={slug} locale={locale} showGathering={false} />;
+  }
   return <section className={styles.fans} aria-label={copy.recentFans}>
     <header><h2><UsersRound size={18} aria-hidden="true" />{copy.recentFans}</h2>
       {resource.state.status === "ready" && <span>{resource.state.data.fanCount.toLocaleString(locale)}{copy.countSuffix}</span>}
@@ -61,7 +65,7 @@ export function CommunityScreen({ creators, creator, locale, tab = "posts" }: {
         <div className={styles.layout}>
           <div className={styles.mainColumn} key={`${creator.slug}:${tab}`}>
             {tab === "posts" ? <FanPostFeed slug={creator.slug} locale={locale} returnTo={communityHref(creator.slug, locale)} />
-              : tab === "fans" ? <><CommunityFans slug={creator.slug} locale={locale} /><LeaderboardPanel slug={creator.slug} locale={locale} showGathering={false} /></>
+              : tab === "fans" ? <CommunityFans slug={creator.slug} locale={locale} />
               : tab === "certifications" ? <CertificationPanel slug={creator.slug} locale={locale} />
               : <section className={styles.requests}><h2>{copy.requests}</h2>
                 <Link href={`/c/${creator.slug}/schedule-suggestions?locale=${locale}`}><CalendarDays aria-hidden="true" /><span>{participation.suggest}<small>{creator.name}</small></span><ArrowRight aria-hidden="true" /></Link>

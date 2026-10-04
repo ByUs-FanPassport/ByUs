@@ -44,6 +44,7 @@ import { MyLiveCountdown } from "./my-live-countdown";
 import styles from "./my-screen.module.css";
 import { participationCopy } from "@/i18n/catalogs/features__schedules__ui__participation";
 import { personalCopy } from "@/i18n/catalogs/features__my__ui__personal-copy";
+import { useByUsSession } from "@/components/byus-session-provider";
 
 const copy = {
   ko: {
@@ -157,6 +158,7 @@ function MyDashboardSkeleton({ locale }: { locale: FanLocale }) {
 
 export function MyScreen({ locale }: { locale: FanLocale }) {
   const auth = usePrivy();
+  const session = useByUsSession();
   const { ready, authenticated } = auth;
   const resource = useOwnedFanResource(`/api/me/summary?locale=${toContentLocale(locale)}&tierStages=1`, parseSummaryResponse, auth);
   const avatarResource = useAvatar();
@@ -165,7 +167,7 @@ export function MyScreen({ locale }: { locale: FanLocale }) {
 
   const heading = <header className={styles.pageHeading}><FanHeading as="h1" variant="personal-page">{t.title}</FanHeading></header>;
   return <FanAppFrame locale={locale} className={fanUtilityCanvasClassName} mainId="my-content" currentPath="/my"><FanContentContainer as="main" className={styles.main} id="my-content" tabIndex={-1}>
-    {!ready ? <>{heading}<MyDashboardSkeleton locale={locale} /></>
+    {!ready || !session.ready ? <>{heading}<MyDashboardSkeleton locale={locale} /></>
       : !authenticated ? <>{heading}<section className={styles.guest}><BookOpen/><h2>{t.guestTitle}</h2><p>{t.guestBody}</p><AuthIntentLink className={fanActionClassName("service", { fullWidth: true })} locale={locale} input={{ sourcePath: "/my", sourceQuery: `?locale=${locale}`, actionType: "OPEN_PASSPORT", targetType: "passport", targetId: "collection" }}><span>{t.login}</span><ArrowRight/></AuthIntentLink></section></>
       : <OwnerScopedDashboard
         key={auth.user?.id ?? "current-owner"}
@@ -237,7 +239,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
 
   return <div className={styles.dashboard}>
     <header className={styles.profileHeader}>
-      <Link className={styles.avatarLink} href={`/settings?locale=${locale}` as Route} aria-label={t.avatarSettings}>
+      <Link className={styles.avatarLink} href={`/settings?locale=${locale}&section=profile` as Route} aria-label={t.avatarSettings}>
         {avatarResource.state.status === "ready"
           ? <Avatar avatar={avatarResource.state.avatar} imageUrl={avatarResource.state.imageUrl} label={t.avatarSettings} size={64}/>
           : <AvatarPlaceholder size={64}/>}
@@ -252,7 +254,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       </div>
     </header>
 
-    <nav className={styles.destinations} aria-label={t.destinations}>
+    <nav className={`${styles.destinations} ${styles.primaryDestinations}`} aria-label={t.destinations}>
       <Link href={`/passports?locale=${locale}` as Route}>
         <span className={styles.destinationIcon} data-kind="passport" aria-hidden="true"><BookOpen /></span>
         <span><strong>{t.myPassport}</strong><small>{t.passportSummary(summary.collection.passportCount)}</small></span>
@@ -268,16 +270,6 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
         <span><strong>{t.benefitEntry}</strong><small>{t.benefitSummary(summary.rewards.availableCount, summary.rewards.entries)}</small></span>
         <ArrowRight aria-hidden="true" />
       </Link>
-      <Link href={`/my/activity?locale=${locale}` as Route}>
-        <span className={styles.destinationIcon} data-kind="activity" aria-hidden="true"><History /></span>
-        <span><strong>{personalCopy[locale].title}</strong><small>{personalCopy[locale].applications} · {personalCopy[locale].rewards} · {personalCopy[locale].collection}</small></span>
-        <ArrowRight aria-hidden="true" />
-      </Link>
-      <Link href={`/my/requests?locale=${locale}` as Route}>
-        <span className={styles.destinationIcon} data-kind="requests" aria-hidden="true"><ListChecks /></span>
-        <span><strong>{participationCopy(locale).requests}</strong><small>{participationCopy(locale).suggest} · {participationCopy(locale).fanpage}</small></span>
-        <ArrowRight aria-hidden="true" />
-      </Link>
     </nav>
 
     <FanSurface appearance="plain" className={`${styles.section} ${styles.favoritesSection}`} id="my-creators">
@@ -290,6 +282,22 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       {summary.creators.length > 6 ? <button type="button" className={styles.moreFavorites} aria-expanded={favoritesOpen} aria-controls="my-favorite-selector" onClick={() => setFavoritesOpen(!favoritesOpen)}>{favoritesOpen ? t.fewerFavorites : `${t.moreFavorites} (${summary.creators.length})`}{favoritesOpen ? <Minus aria-hidden="true"/> : <Plus aria-hidden="true"/>}</button> : null}
       {selected ? <SelectedFavoritePanels key={selected.celebrity.slug} creator={selected} locale={locale}/> : null}
     </FanSurface>
+
+    <section className={styles.secondaryActions} aria-labelledby="my-secondary-actions-title">
+      <h2 id="my-secondary-actions-title">{personalCopy[locale].title}</h2>
+      <nav className={`${styles.destinations} ${styles.secondaryDestinations}`} aria-label={personalCopy[locale].title}>
+        <Link href={`/my/activity?locale=${locale}` as Route}>
+          <span className={styles.destinationIcon} data-kind="activity" aria-hidden="true"><History /></span>
+          <span><strong>{personalCopy[locale].title}</strong><small>{personalCopy[locale].applications} · {personalCopy[locale].rewards} · {personalCopy[locale].collection}</small></span>
+          <ArrowRight aria-hidden="true" />
+        </Link>
+        <Link href={`/my/requests?locale=${locale}` as Route}>
+          <span className={styles.destinationIcon} data-kind="requests" aria-hidden="true"><ListChecks /></span>
+          <span><strong>{participationCopy(locale).requests}</strong><small>{participationCopy(locale).suggest} · {participationCopy(locale).fanpage}</small></span>
+          <ArrowRight aria-hidden="true" />
+        </Link>
+      </nav>
+    </section>
 
     <CommunityStampCollection locale={locale} resource={communityStamps}/>
 

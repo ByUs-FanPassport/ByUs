@@ -78,8 +78,8 @@
   place-items: center;
   padding-inline: 7px;
   border-radius: var(--radius-pill);
-  background: var(--fan-ink);
-  color: #fff;
+  background: var(--color-surface-focus);
+  color: var(--color-service-ink);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   font-weight: 800;
@@ -103,8 +103,6 @@
   line-height: 1.5;
 }
 
-.pageHeading button,
-.permission button,
 .message button,
 .messageAction {
   display: inline-flex;
@@ -129,13 +127,6 @@
   width: 18px;
 }
 
-.pageHeading button:disabled,
-.permission button:disabled {
-  background: #dedee1;
-  color: #66666b;
-  cursor: not-allowed;
-}
-
 .permission {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) auto;
@@ -144,8 +135,8 @@
   margin-bottom: 28px;
   padding: 14px 16px;
   border: 1px solid #e8e8ea;
-  border-radius: 14px;
-  background: #fafafa;
+  border-radius: var(--radius-collection);
+  background: var(--color-canvas);
 }
 
 .permissionIcon {
@@ -154,8 +145,8 @@
   height: 36px;
   place-items: center;
   border-radius: 50%;
-  background: #ededee;
-  color: #37373c;
+  background: var(--color-surface-focus);
+  color: var(--color-service-ink);
 }
 
 .permissionIcon svg {
@@ -240,18 +231,18 @@
 }
 
 .row[data-unread="true"] {
-  background: #fafafa;
+  background: color-mix(in oklch, var(--color-surface-focus) 55%, var(--color-canvas));
 }
 
 .row[data-unread="true"]:hover {
-  background: #f0f0f2;
+  background: var(--color-surface-focus);
 }
 
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #171719;
+  background: var(--color-service-ink);
 }
 
 .copy {
@@ -382,8 +373,6 @@
     color: #171719;
   }
 
-  .pageHeading button:not(:disabled):hover,
-  .permission button:not(:disabled):hover,
   .message button:hover,
   .messageAction:hover {
     background: #303034;

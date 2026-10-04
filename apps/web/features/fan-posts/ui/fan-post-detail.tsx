@@ -1,11 +1,12 @@
 "use client";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { FanHeading } from "@/components/fan-ui/fan-heading";
+import { sanitizeReturnTo } from "@/components/login-intent";
 import { useCommunityResource } from "@/features/fanpage/ui/use-community-resource";
 import { communityHref as hubHref } from "@/features/community/domain/navigation";
 import { postSchema, commentPageSchema } from "../domain/content";
@@ -23,7 +24,7 @@ export function FanPostDetail(props: { postId: string; locale: AppLocale }) {
   return <DetailForOwner key={`${props.postId}:${props.locale}:${auth.authenticated}:${auth.user?.id}`} {...props} />;
 }
 function DetailForOwner({ postId, locale }: { postId: string; locale: AppLocale }) {
-  const copy = contentCopy(locale), auth = usePrivy(), mutation = useContentMutation(locale), fieldId = useId(), router = useRouter();
+  const copy = contentCopy(locale), auth = usePrivy(), mutation = useContentMutation(locale), fieldId = useId(), router = useRouter(), searchParams = useSearchParams();
   const [cursor, setCursor] = useState<string | null>(null), [body, setBody] = useState(""), [parentId, setParentId] = useState<string | null>(null), [replyTarget, setReplyTarget] = useState<{ id: string; nickname: string; body: string } | null>(null);
   const attempt = useRef<{ snapshot: string; key: string } | null>(null);
   const replyTrigger = useRef<HTMLButtonElement | null>(null), restoreReplyFocus = useRef(false);
@@ -40,11 +41,12 @@ function DetailForOwner({ postId, locale }: { postId: string; locale: AppLocale 
   }
   async function remove(id: string) { if (window.confirm(copy.deleteConfirm) && await mutation.request(`/api/post-comments/${id}`, "DELETE")) refresh(); }
   if (post.state.status !== "ready") return <p role="status" className={styles.status}>{post.state.status === "loading" ? copy.loading : copy.unavailable}{post.state.status === "error" && <button className={styles.button} onClick={post.retry}>{copy.retry}</button>}</p>;
-  const data = post.state.data, returnTo = `/c/${data.celebritySlug}/community/${postId}?locale=${locale}`;
-  const communityHref = hubHref(data.celebritySlug, locale);
+  const data = post.state.data, requestedReturn = searchParams.get("returnTo"), safeReturn = sanitizeReturnTo(requestedReturn);
+  const communityHref = (requestedReturn && (safeReturn !== "/" || requestedReturn === "/") ? safeReturn : hubHref(data.celebritySlug, locale)) as Route;
+  const returnTo = `/c/${data.celebritySlug}/community/${postId}?locale=${locale}&returnTo=${encodeURIComponent(communityHref)}`;
   return <section className={`${styles.section} ${styles.postDetail}`}>
     <FanAction href={communityHref} variant="text" leadingIcon={<ArrowLeft />}>{copy.back}</FanAction>
-    <FanHeading as="h1" variant="personal-page">{copy.community}</FanHeading><PostCard post={data} locale={locale} onChanged={refresh} onDeleted={() => router.replace(communityHref)} detail />
+    <FanHeading as="h1" variant="personal-page">{copy.community}</FanHeading><PostCard post={data} locale={locale} returnTo={communityHref} onChanged={refresh} onDeleted={() => router.replace(communityHref)} detail />
     <section className={styles.section} aria-labelledby={`${fieldId}-heading`}><h2 id={`${fieldId}-heading`}>{copy.comments}</h2>
       {auth.ready && (auth.authenticated ? <form className={styles.composer} onSubmit={event => { event.preventDefault(); void submit(); }}>
         {replyTarget && <div id={`${fieldId}-reply-target`} className={styles.row}><span className={styles.status}>{copy.replying}: <strong>{replyTarget.nickname}</strong> · {replyTarget.body.length > 80 ? `${replyTarget.body.slice(0, 80)}…` : replyTarget.body}</span><button type="button" className={styles.button} onClick={() => { restoreReplyFocus.current = true; setParentId(null); setReplyTarget(null); }}>{copy.cancel}</button></div>}

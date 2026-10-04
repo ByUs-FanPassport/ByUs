@@ -46,7 +46,7 @@ const parseHomePassportPreview = (body: unknown): PassportPreview => {
 
 type HomeAuth = ReturnType<typeof usePrivy>;
 
-function HomeOwnerStateProvider({ locale, children, auth }: { locale: AppLocale; children: ReactNode; auth: HomeAuth }) {
+function HomeOwnerStateProvider({ locale, children, auth, publishedCreatorSlugs }: { locale: AppLocale; children: ReactNode; auth: HomeAuth; publishedCreatorSlugs: readonly string[] }) {
   const ownerId = auth.user?.id;
   const privateReady = auth.ready && (!auth.authenticated || Boolean(ownerId));
   const ownerAuth = { ready: privateReady, authenticated: auth.authenticated, user: ownerId ? { id: ownerId } : null, getAccessToken: auth.getAccessToken };
@@ -57,7 +57,7 @@ function HomeOwnerStateProvider({ locale, children, auth }: { locale: AppLocale;
     : summaryResource.state.status === "error" ? { status: "authenticated-error" }
     : { status: "authenticated-ready", summary: summaryResource.state.data };
   const passportIds = personalization.status === "authenticated-ready"
-    ? personalization.summary.creators.flatMap((creator) => creator.passport ? [creator.passport.id] : [])
+    ? personalization.summary.creators.flatMap((creator) => creator.passport && publishedCreatorSlugs.includes(creator.celebrity.slug) ? [creator.passport.id] : [])
     : [];
   const [requestedPassportId, setRequestedPassportId] = useState<string | null>(null);
   const selectedPassportId = requestedPassportId && passportIds.includes(requestedPassportId) ? requestedPassportId : passportIds[0] ?? null;
@@ -83,10 +83,10 @@ function HomeOwnerStateProvider({ locale, children, auth }: { locale: AppLocale;
   return <HomeOwnerContext.Provider value={value}>{children}</HomeOwnerContext.Provider>;
 }
 
-export function HomeOwnerProvider({ locale, children }: { locale: AppLocale; children: ReactNode }) {
+export function HomeOwnerProvider({ locale, children, publishedCreatorSlugs }: { locale: AppLocale; children: ReactNode; publishedCreatorSlugs: readonly string[] }) {
   const auth = usePrivy();
   const ownerKey = !auth.ready ? "auth-loading" : !auth.authenticated ? "guest" : auth.user?.id ?? "owner-loading";
-  return <HomeOwnerStateProvider key={ownerKey} locale={locale} auth={auth}>{children}</HomeOwnerStateProvider>;
+  return <HomeOwnerStateProvider key={ownerKey} locale={locale} auth={auth} publishedCreatorSlugs={publishedCreatorSlugs}>{children}</HomeOwnerStateProvider>;
 }
 
 export function useHomeOwner() {

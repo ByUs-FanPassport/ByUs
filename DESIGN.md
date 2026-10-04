@@ -7,7 +7,7 @@ palette: 'single-gradient-highlight'
 font: 'pretendard'
 source: "live rendered page"
 observed-at: "2026-07-20"
-ui-contract-updated: "2026-09-30"
+ui-contract-updated: "2026-10-04"
 theme: "light-only"
 ui-font: "Pretendard Variable"
 base-spacing: "4px"
@@ -23,14 +23,26 @@ also live in feature CSS modules. Check deployed source and rendered desktop /
 mobile states before claiming full alignment. Preserve intentional surface-specific
 differences when consolidating tokens and components. -->
 
-## Current shared content contract (2026-09-30)
+## Current shared content contract (2026-10-04)
 
-- A section reads in this order: heading and description, secondary navigation, filters, content. `FanSectionHeader` owns its `{ label, href }` action; when the row cannot hold a 20rem title column and the action, the action wraps below. Never shrink the title to fit a translation.
+- A section reads in this order: heading with secondary navigation, description, filters, content. `FanSectionHeader` owns its `{ label, href }` action: the heading and action align in one wrapping row, and supporting copy sits below both. The title has a flexible 10rem basis; long translated actions wrap naturally. Never shrink the title to fit a translation.
 - Section headings use 20px on mobile and 24px from 768px; item names use 16px/700, body copy 16px, metadata 13px. Related copy has 4–8px gaps, subgroups 16px, and major sections 32px/48px. Existing hero artwork/display type remains independent.
 - Creator summaries read image → name → audience metadata → actions. The name may wrap; stateful fan links stay actionable. Social marks remain 20px inside non-shrinking 44px targets and action groups wrap when necessary.
-- Filters have 12px corners and quiet labels. Status pills remain distinct from filters. Community translation belongs to the body, reactions share one row, and secondary/destructive actions live in the accessible More menu.
+- Filters have 12px corners and quiet labels. Creator-role filters use equal-width columns sized by the longest localized label, with a five-character Korean minimum (`5em + 26px`) and 44px minimum height. A narrow viewport scrolls the whole strip horizontally without truncating labels; focus outlines remain visible. Status pills remain distinct from filters. Community translation belongs to the body, reactions share one row, and secondary/destructive actions live in the accessible More menu.
 - All 11 `APP_LOCALES` use the same composition. Use native language wrapping, flexible heights, and complete accessible labels; do not encode Korean/English-only layout branches. CMS content fallback and proper names retain their existing semantics.
 - For shared composition changes, verify affected home/community screens at 390px and 1440px for every supported language, plus 360px and 768px for Korean, Japanese, Vietnamese and Thai. Read the locale list from current `APP_LOCALES` and cover new scripts/directions when supported. Include applicable guest/owner/loading/empty/error states, long names, keyboard menus, locale switching and fixed-navigation clearance. Scope local changes to their actual impact and reuse unchanged valid evidence.
+
+### Content and navigation refinements (2026-10-04)
+
+- Home previews only Passports whose creators are in the current published directory; the explicit Passport count and carousel use that same set. A directory failure shows a recoverable error and a collection link, never a misleading empty collection. The owned collection and historical records remain intact and accessible from MY/Passports. A managed announcement CTA describes and opens its actual destination; creator welcome banners may link directly to the creator home.
+- Creator home is a summary. Full conversation, news and media belong to their named tabs; a personal fan activity card appears on home only. Nicknames wrap without competing with attendance, tier or growth controls. The creator's Fan board remains inside that creator's page, and detail, sign-in and back navigation preserve the originating board and language.
+- Media uses a clear heading, official-channel links, type filters and a consistent content grid. Video previews retain 16:9 framing and text/metadata hierarchy; source failures remain recoverable without hiding successful content.
+- Community creator selection is the primary element in its switcher; Fan page and LIVE are secondary destinations. Auxiliary participation cards stack as concise rows on small screens. Composer visibility defaults to public for new posts, preserves the saved choice when editing, and uses a compact trigger with a responsive dialog/bottom sheet. Focus return, image limits, upload/error states and member-only permissions remain part of the interaction contract. Uploaded images have a quiet visible boundary.
+- A selected post-like heart is filled red and paired with `aria-pressed`; failed requests restore the previous state. Certification cards distinguish open, preparing and ended work, and attempt numbers have an explicit localized label rather than a bare `#1`.
+- The fan list becomes a leaderboard from 100 active fans. Count the deduplicated union of completed creator likes and issued Passport holders, while retaining the separate Passport count. Below 100, show recent fans; at 100 or more, show the top 100 and the signed-in fan's rank. Like-only fans participate with zero points until they earn points.
+- MY separates primary activity destinations from secondary history/request links. Settings is an index of aligned rows leading to query-addressable detail sections with Back navigation, retained locale and visible focus. Entering a detail focuses its heading; returning focuses the originating row. Logout and destructive account actions belong to account details. Authentication and resource restoration use loading states before showing account actions or a guest screen.
+- Notifications use the shared Primary action for enabling browser notifications and a Neutral action for marking all read. Unread counts, dots and permission icons use the existing Spectrum Ink and subtle focus surface; status is also conveyed through labels and weight.
+- These refinements reuse the existing ByUs brand. Public Weverse artist tabs and b.stage community/MY references informed separation of summaries, feeds, media and settings; they do not establish ByUs membership rules or authentication behavior. Source examples: [Weverse artist home](https://weverse.io/enhypen/highlight), [Weverse media](https://weverse.io/enhypen/media), [b.stage community](https://bigbang.bstage.in/community), [b.stage My Posts & Activity](https://bstage.in/article/bstage-tips-7-en/).
 
 ### Completion requires a visual finish review
 
@@ -424,7 +436,7 @@ Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scena
 - Inferred rule: color is intentionally budgeted—photography plus one primary gradient—because neutral utility surfaces preserve visual rest beside the hero.
 - Inferred rule: the side panel is contextual rather than foundational because it is removed entirely below 1024px without replacing the main content flow.
 
-## Shared fan UI implementation (updated 2026-09-30)
+## Shared fan UI implementation (updated 2026-10-04)
 
 The current consolidation covers Home section headers, LIVE catalog headers,
 LIVE calendar page title, MY page/section headings, and shared FanAction controls.
@@ -438,8 +450,8 @@ claim that all screens or all local CSS have been migrated.
   weight 800. MY page headings retain their 40rem breakpoint and inherited leading;
   personal section headings use 20px / 24px at 48rem, weight 700.
 - `FanSectionHeader` owns title, optional description, optional `{ label, href }`
-  action and their spacing. It wraps its 20rem copy column and secondary action
-  naturally, with a 16px bottom gap. Standard/editorial retain their shared
+  action and their spacing. Its heading row wraps the flexible 10rem title and
+  14px secondary action together, with supporting copy below and a 16px bottom gap. Standard/editorial retain their shared
   minimum header height; personal headers have no minimum height.
 - Do not add local heading selectors or arbitrary style/className overrides to
   these migrated roles. Add an intentional, reusable variant in the shared module

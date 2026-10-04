@@ -87,7 +87,7 @@ export function createFanpageHandlers(dependencies: FanpageDependencies) {
         const result = await dependencies.rpc("read_celebrity_fan_leaderboard", { p_slug: slug, p_app_user_id: owner, p_locale: locale(request) });
         if (!result) return fanpageJson({ error: { code: "FANPAGE_NOT_FOUND" } }, 404);
         const body = parseResult(leaderboardSchema, result);
-        if (!body.available) return fanpageJson({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: body.membershipCount }, 403);
+        if (!body.available) return fanpageJson({ error: { code: "LEADERBOARD_NOT_AVAILABLE" }, membershipCount: body.membershipCount, ...(body.fanCount === undefined ? {} : { fanCount: body.fanCount }) }, 403);
         return fanpageJson({ ...body, me: owner ? body.me : null });
       } catch (error) { return fanpageFailure(error); }
     },

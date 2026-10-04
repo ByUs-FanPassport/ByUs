@@ -1,4 +1,10 @@
 {
+  "visiblePassportCount": {
+    "en": "Passports: {0}",
+    "ko": "패스포트 {0}개",
+    "source": "components/guest-home",
+    "id": "components/guest-home:visiblePassportCount"
+  },
   "mabdee7400079": {
     "en": "Promote your fan page | ByUs",
     "ko": "팬페이지 홍보 안내 | ByUs",
@@ -6762,8 +6768,8 @@
     "id": "features/certification/ui/certification-panel:copy.help"
   },
   "m5acaed52a19a": {
-    "en": "Available verification missions",
-    "ko": "참여 가능한 인증",
+    "en": "Verification",
+    "ko": "인증 목록",
     "source": "features/certification/ui/certification-panel",
     "id": "features/certification/ui/certification-panel:copy.missions"
   },
@@ -6792,8 +6798,8 @@
     "id": "features/certification/ui/certification-panel:copy.error"
   },
   "me8850e1b06b4": {
-    "en": "No verification missions are available.",
-    "ko": "현재 참여할 수 있는 인증이 없어요.",
+    "en": "No verification is available.",
+    "ko": "등록된 인증이 없어요.",
     "source": "features/certification/ui/certification-panel",
     "id": "features/certification/ui/certification-panel:copy.empty"
   },
@@ -6892,6 +6898,12 @@
     "ko": "보완 필요",
     "source": "features/certification/ui/certification-panel",
     "id": "features/certification/ui/certification-panel:inline.m3fbc7fdf65ca"
+  },
+  "m1f876e07eb39": {
+    "en": "Attempt {0}",
+    "ko": "{0}회차",
+    "source": "features/certification/ui/certification-panel",
+    "id": "features/certification/ui/certification-panel:copy.attempt"
   },
   "m2f8dbf719303": {
     "en": "Welcome",
@@ -14580,14 +14592,14 @@
     "id": "features/fanpage/ui/fan-score-progress:inline.mcdb14955733a"
   },
   "m178a185dcf7b": {
-    "en": "Fan Score rankings open at 501 Passport holders.",
-    "ko": "패스포트 팬 501명부터 팬점수 순위도 볼 수 있어요.",
+    "en": "The Fan Score leaderboard opens at 100 fans.",
+    "ko": "함께하는 팬 100명부터 팬점수 리더보드를 공개해요.",
     "source": "features/fanpage/ui/leaderboard-panel",
     "id": "features/fanpage/ui/leaderboard-panel:inline.ma4575cfd31dc"
   },
   "m019211255592": {
-    "en": "{0} / 501 fans",
-    "ko": "현재 {0}명 / 501명",
+    "en": "{0} / 100 fans",
+    "ko": "현재 {0}명 / 100명",
     "source": "features/fanpage/ui/leaderboard-panel",
     "id": "features/fanpage/ui/leaderboard-panel:inline.m4944101f9547"
   },
@@ -14598,8 +14610,8 @@
     "id": "features/fanpage/ui/leaderboard-panel:inline.m3c4d2415a424"
   },
   "m01cd18e08921": {
-    "en": "Lifetime Fan Score · Earlier Passport issuance breaks ties.",
-    "ko": "누적 팬점수 기준 · 동점일 때는 패스포트를 먼저 만든 팬이 앞서요.",
+    "en": "Lifetime Fan Score · Ties use Passport issuance time, or participation time for fans without one.",
+    "ko": "누적 팬점수 기준 · 동점이면 패스포트 발급 시각, 패스포트가 없으면 참여 시각이 빠른 팬이 앞서요.",
     "source": "features/fanpage/ui/leaderboard-panel",
     "id": "features/fanpage/ui/leaderboard-panel:inline.m113c97e137e2"
   },
@@ -16090,5 +16102,17 @@
     "ko": "내 스탬프 보기",
     "source": "features/community-stamps/ui/community-stamp-collection",
     "id": "features/community-stamps/ui/community-stamp-collection:inline.mb43cbc171691"
+  },
+  "m0f3c93ce185e": {
+    "en": "Account",
+    "ko": "계정",
+    "source": "features/profile/ui/settings-screen",
+    "id": "features/profile/ui/settings-screen:copy.account"
+  },
+  "m96c0a89b4d0a": {
+    "en": "Back to Settings",
+    "ko": "설정으로 돌아가기",
+    "source": "features/profile/ui/settings-screen",
+    "id": "features/profile/ui/settings-screen:copy.backToSettings"
   }
 }

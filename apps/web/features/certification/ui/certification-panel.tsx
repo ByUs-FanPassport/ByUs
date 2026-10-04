@@ -9,7 +9,6 @@ import {
   BadgeCheck,
   Camera,
   ChevronRight,
-  Clock3,
   Crown,
   History,
   Play,
@@ -41,12 +40,12 @@ const copy = {
   ko: {
     title: "팬 인증",
     help: "팬 활동을 인증하고 점수와 응모권을 모아보세요.",
-    missions: "참여 가능한 인증",
+    missions: "인증 목록",
     all: "전체",
     history: "내 인증 내역",
     loading: "인증을 불러오는 중이에요.",
     error: "인증을 불러오지 못했어요.",
-    empty: "현재 참여할 수 있는 인증이 없어요.",
+    empty: "등록된 인증이 없어요.",
     historyEmpty: "아직 제출한 인증이 없어요.",
     login: "로그인하면 내 인증 내역을 확인할 수 있어요.",
     available: "참여 가능",
@@ -59,16 +58,17 @@ const copy = {
     ticket: "응모권",
     start: "인증하기",
     startQuiz: "퀴즈 풀기",
+    attempt: (value: number) => `${value}회차`,
   },
   en: {
     title: "Fan verification",
     help: "Verify your fan activities to earn Fan Score and raffle tickets.",
-    missions: "Available verification missions",
+    missions: "Verification",
     all: "All",
     history: "My history",
     loading: "Loading verification missions.",
     error: "We couldn’t load verification missions.",
-    empty: "No verification missions are available.",
+    empty: "No verification is available.",
     historyEmpty: "You have no submissions yet.",
     login: "Sign in to see your submission history.",
     available: "Available",
@@ -81,6 +81,7 @@ const copy = {
     ticket: "tickets",
     start: "Get verified",
     startQuiz: "Take quiz",
+    attempt: (value: number) => `Attempt ${value}`,
   },
 
   ...additionalLocales((translationLocale) => ({
@@ -104,6 +105,7 @@ const copy = {
     ticket: localizedMessages.m1925bade61c2[translationLocale],
     start: localizedMessages.mfd7692d3f746[translationLocale],
     startQuiz: localizedMessages.m75cba4550bc8[translationLocale],
+    attempt: (value: number) => translate(translationLocale, localizedMessages.m1f876e07eb39, "Attempt {0}", [value]),
   }))
 } as const;
 
@@ -379,7 +381,6 @@ export function CertificationPanel({
                   }
                   className={styles.row}
                 >
-                  <Clock3 aria-hidden="true" />
                   <span className={styles.rowCopy}>
                     <strong>{item.title}</strong>
                     {item.membershipPlatform ? (
@@ -391,7 +392,7 @@ export function CertificationPanel({
                       {new Intl.DateTimeFormat(locale, { calendar: "gregory",
                         dateStyle: "medium",
                       }).format(new Date(item.submittedAt))}{" "}
-                      · #{item.attemptNumber}
+                      · {t.attempt(item.attemptNumber)}
                     </small>
                     {item.rejectionReason ? (
                       <span className={styles.reason}>

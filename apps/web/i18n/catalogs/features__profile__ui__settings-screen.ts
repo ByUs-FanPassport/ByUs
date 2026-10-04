@@ -1,6 +1,28 @@
 import type { TranslatedMessage } from "../messages";
 
 export const messages = {
+  "m0f3c93ce185e": {
+    "ja": "アカウント",
+    "zh-Hans": "账户",
+    "zh-Hant": "帳戶",
+    "es": "Cuenta",
+    "id": "Akun",
+    "vi": "Tài khoản",
+    "th": "บัญชี",
+    "pt": "Conta",
+    "fr": "Compte"
+  },
+  "m96c0a89b4d0a": {
+    "ja": "設定に戻る",
+    "zh-Hans": "返回设置",
+    "zh-Hant": "返回設定",
+    "es": "Volver a Configuración",
+    "id": "Kembali ke Pengaturan",
+    "vi": "Quay lại Cài đặt",
+    "th": "กลับไปที่การตั้งค่า",
+    "pt": "Voltar às configurações",
+    "fr": "Retour aux paramètres"
+  },
   "m8763f7e0a9f2": {
     "ja": "ログアウト",
     "zh-Hans": "退出登录",

@@ -24,15 +24,15 @@ export const messages = {
     "fr": "Faites vérifier vos activités de fan pour obtenir un score de fan et des tickets de tirage."
   },
   "m5acaed52a19a": {
-    "ja": "参加できる認証ミッション",
-    "zh-Hans": "可参与的认证任务",
-    "zh-Hant": "可參與的認證任務",
-    "es": "Misiones de verificación disponibles",
-    "id": "Misi verifikasi yang tersedia",
-    "vi": "Nhiệm vụ xác minh hiện có",
-    "th": "ภารกิจยืนยันที่ทำได้",
-    "pt": "Missões de verificação disponíveis",
-    "fr": "Missions de vérification disponibles"
+    "ja": "認証一覧",
+    "zh-Hans": "认证列表",
+    "zh-Hant": "認證列表",
+    "es": "Verificaciones",
+    "id": "Daftar verifikasi",
+    "vi": "Danh sách xác minh",
+    "th": "รายการยืนยัน",
+    "pt": "Verificações",
+    "fr": "Vérifications"
   },
   "mfbe0f0d8b589": {
     "ja": "すべて",
@@ -79,15 +79,15 @@ export const messages = {
     "fr": "Impossible de charger les missions de vérification."
   },
   "me8850e1b06b4": {
-    "ja": "現在参加できる認証ミッションはありません。",
-    "zh-Hans": "目前没有可参与的认证任务。",
-    "zh-Hant": "目前沒有可參與的認證任務。",
-    "es": "No hay misiones disponibles.",
-    "id": "Tidak ada misi verifikasi yang tersedia.",
-    "vi": "Không có nhiệm vụ xác minh nào.",
-    "th": "ไม่มีภารกิจยืนยันที่ทำได้",
-    "pt": "Não há missões de verificação disponíveis.",
-    "fr": "Aucune mission de vérification disponible."
+    "ja": "登録されている認証はありません。",
+    "zh-Hans": "暂无认证项目。",
+    "zh-Hant": "目前沒有認證項目。",
+    "es": "No hay verificaciones.",
+    "id": "Belum ada verifikasi.",
+    "vi": "Chưa có mục xác minh nào.",
+    "th": "ยังไม่มีรายการยืนยัน",
+    "pt": "Não há verificações.",
+    "fr": "Aucune vérification n’est disponible."
   },
   "m08188f574c68": {
     "ja": "まだ認証を提出していません。",
@@ -264,5 +264,16 @@ export const messages = {
     "th": "ต้องมีหลักฐานเพิ่มเติม",
     "pt": "Mais comprovantes necessários",
     "fr": "Preuves supplémentaires requises"
+  },
+  "m1f876e07eb39": {
+    "ja": "{0}回目",
+    "zh-Hans": "第{0}次",
+    "zh-Hant": "第{0}次",
+    "es": "Intento {0}",
+    "id": "Percobaan {0}",
+    "vi": "Lần {0}",
+    "th": "ครั้งที่ {0}",
+    "pt": "Tentativa {0}",
+    "fr": "Tentative {0}"
   }
 } satisfies Record<string, TranslatedMessage>;

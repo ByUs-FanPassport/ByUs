@@ -51,7 +51,7 @@ it("shows guest login returning to cheers without reply or reaction controls", a
   authenticated = false; vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...empty, total: 1, comments: [{ ...comment, isOwner: false }] })));
   render(<CheerComments slug="elina" name="Elina" locale="en" />);
   await screen.findByText("늘 응원해요");
-  expect(screen.getByRole("link", { name: "Sign in to leave a cheer" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Felina%3Flocale%3Den%23cheers");
+  expect(screen.getByRole("link", { name: "Sign in to leave a cheer" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Felina%3Ftab%3Dcommunity%26locale%3Den%23cheers");
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });

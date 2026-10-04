@@ -1,0 +1,22 @@
+{
+  "changes": [
+    "엔카이브 배너에서 팬페이지로 이동하며, 홈에는 현재 공개된 최애의 패스포트와 명확한 개수를 보여주고 카테고리 버튼 폭을 맞췄어요.",
+    "팬 게시판에서 글을 쓰고 돌아와도 같은 팬페이지를 유지하며, 모바일 공개 범위 선택·사진 첨부·좋아요 표시를 정리했어요.",
+    "팬 홈의 반복 정보를 줄이고 미디어와 인증 내역을 정리했으며, 함께하는 팬이 100명부터 팬점수 리더보드를 공개해요.",
+    "MY와 알림의 정보 순서를 정리하고, 설정은 항목을 선택해 상세 화면을 여는 방식으로 바꿨어요.",
+    "첨부한 배너는 운영 화면이며, 나머지는 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/",
+  "images": [
+    "release-notes/images/2026-10-04-nchive-banner-after.png",
+    "release-notes/images/2026-10-04-feedback-home.png",
+    "release-notes/images/2026-10-04-feedback-fan-home.png",
+    "release-notes/images/2026-10-04-feedback-community.png",
+    "release-notes/images/2026-10-04-feedback-certification.png",
+    "release-notes/images/2026-10-04-feedback-my.png",
+    "release-notes/images/2026-10-04-feedback-notifications.png",
+    "release-notes/images/2026-10-04-feedback-settings-channels.png",
+    "release-notes/images/2026-10-04-feedback-settings-index.png",
+    "release-notes/images/2026-10-04-feedback-media.png"
+  ]
+}
