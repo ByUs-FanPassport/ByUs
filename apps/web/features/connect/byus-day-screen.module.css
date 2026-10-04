@@ -48,6 +48,19 @@
 .securityNotice a{display:flex;align-items:center;gap:8px;min-height:44px;margin-top:4px;font-size:13px;line-height:1.6;text-decoration:underline;text-underline-offset:4px}
 .securityNotice a svg{flex:none}
 .scheduleNote{margin:14px 0 0;color:var(--event-muted);font-size:14px;line-height:1.6}
+.arrival{margin-top:24px;padding-top:24px;border-top:1px solid #68192330}
+.arrival h2{margin:0;font-size:24px;font-weight:750;line-height:1.5}
+.arrival p{margin:12px 0 0;font-size:16px;line-height:1.65;color:var(--event-muted)}
+.arrivalRoute{display:grid;gap:10px;margin:20px 0;padding:0;list-style:none;counter-reset:arrival}
+.arrivalRoute li{display:flex;align-items:baseline;gap:12px;font-size:16px;font-weight:600;line-height:1.6;counter-increment:arrival}
+.arrivalRoute li::before{content:counter(arrival,decimal-leading-zero);flex:none;color:var(--event-muted);font-size:13px;font-variant-numeric:tabular-nums}
+.arrival .gateAddress{font-weight:700;color:var(--event-ink)}
+.mapLinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.mapLinks a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border:1px solid #68192340;border-radius:8px;font-size:16px;font-weight:600;line-height:1.5}
+.mapLinks a svg,.directionsSource svg{flex:none}
+.arrival .arrivalNote{margin-top:20px}
+.directionsSource{display:flex;align-items:center;gap:8px;min-height:44px;font-size:13px;text-decoration:underline;text-underline-offset:4px}
+.page:lang(ko) .arrival{word-break:keep-all;overflow-wrap:anywhere}
 .venue{display:flex;align-items:flex-start;gap:12px;padding-top:24px;border-top:1px solid #68192330}
 .venue>svg{flex:none;margin-top:4px}
 .venue p{margin:4px 0 0;font-size:16px;color:var(--event-muted);line-height:1.6}
@@ -103,3 +116,27 @@
 @media(max-width:900px){.header{padding-inline:24px}.headerCaption{display:none}.headerRsvp{display:flex;align-items:center;gap:6px;min-height:44px;margin-left:auto;font-size:13px;font-weight:700}.canvas{grid-template-columns:1fr;max-width:680px;gap:40px;padding:32px 24px 40px}.title{font-size:clamp(66px,13vw,92px)}.headline{font-size:24px;margin-top:20px}.registration{padding:28px}.footer{padding-inline:24px}}
 @media(max-width:480px){.header{min-height:64px;padding:8px 20px}.headerCaption{display:none}.canvas{padding:28px 20px 36px;gap:32px}.title{font-size:clamp(56px,15.5vw,74px)}.headline{font-size:22px}.introduction{white-space:normal}.artwork{margin-top:24px}.dateRow{padding:24px 0;gap:8px}.date{font-size:36px}.day{font-size:14px}.seal{width:76px;height:76px;font-size:9px}.seal b{font-size:28px}.schedule h2,.venue h2{font-size:20px}.schedule dd{font-size:20px}.registration{padding:24px 20px;border-radius:12px}.formHeading h2{font-size:20px}.pair{grid-template-columns:1fr;gap:20px}.footer{padding-inline:20px;gap:12px}}
 @media(prefers-reduced-motion:reduce){.page *{scroll-behavior:auto;transition:none!important}}
+
+@media(max-width:767px){.arrival h2{font-size:20px}}
+
+.arrivalMap{margin:20px 0;padding:12px 8px;border:1px solid #68192330;border-radius:8px;background:#faf6ec;color:var(--event-ink)}
+.arrivalMap svg{display:block;width:100%;height:auto;font-family:inherit}
+.arrivalMap figcaption{margin:8px 8px 0;color:var(--event-muted);font-size:13px;line-height:1.6}
+.mapRoad{fill:none;stroke:#c4bbaa;stroke-width:25;stroke-linecap:round;stroke-linejoin:round}
+.mapOverpass{fill:none;stroke:#706359;stroke-width:4;stroke-linecap:round}
+.mapStationText{fill:var(--event-ink);font-size:28px;font-weight:700}
+.mapSmallText{fill:var(--event-ink);font-size:28px;font-weight:600}
+.mapLandmarkBadge{fill:#e5d9c6}
+.mapLandmarkText{fill:var(--event-muted);font-size:24px;font-weight:600}
+.mapExitBadge{fill:#d6b96e}
+.mapBadgeText{fill:var(--event-ink);font-size:30px;font-weight:700}
+.mapWalkPath{fill:none;stroke:currentColor;stroke-width:6;stroke-linecap:round}
+.mapGateBadge{fill:var(--event-ink)}
+.mapGateText{fill:#fffaf2;font-size:28px;font-weight:700}
+.mapParking{fill:#faf6ec;stroke:#8f8172;stroke-width:3}
+.mapHotelBadge{fill:#e5d9c6;stroke:#68192340;stroke-width:2}
+.mapHotelText{fill:var(--event-ink);font-size:40px;font-weight:750}
+.walkingSteps{margin-top:20px;padding:16px;border:1px solid #68192320;border-radius:8px;background:#f5eee2}
+.walkingSteps h3{margin:0;font-size:16px;font-weight:700;line-height:1.5}
+.walkingSteps ol{margin:12px 0 0;padding-left:24px;font-size:16px;line-height:1.65}
+.walkingSteps li+li{margin-top:8px}

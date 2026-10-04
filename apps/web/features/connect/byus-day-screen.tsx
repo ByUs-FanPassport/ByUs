@@ -9,8 +9,12 @@ import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./byus-day-screen.module.css";
 
-const POSTER_SRC = "/images/connect/byus-day/poster-security-en-20261004.webp";
+const POSTER_SRC = "/images/connect/byus-day/poster-program-en-20261004.webp";
 const ACCESS_CONTROL_URL = "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control";
+const DIRECTIONS_URL = "https://www.dragonhilllodge.com/your-stay/getting-here";
+const GATE_ADDRESS = "서울 용산구 용산동4가 1-10";
+const NAVER_MAP_URL = `https://map.naver.com/p/search/${encodeURIComponent(GATE_ADDRESS)}`;
+const GOOGLE_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(GATE_ADDRESS)}`;
 
 const copy = {
   ko: {
@@ -19,13 +23,18 @@ const copy = {
     introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 파이어사이드 챗, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
     posterAlt:"ByUs Day Enter × Tech 영문 행사 포스터", posterLink:"영문 포스터 · 새 탭에서 크게 보기",
     date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
-    programTitle:"본행사 프로그램", programSteps:["체크인·리셉션", "식사·오프닝", "쇼케이스·토크·Q&A", "게임·휴식", "ByUs LIVE·커뮤니티"], afterpartyProgram:"네트워킹·래플",
+    programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
     securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로 사용됩니다.",
     accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"공식 출입 안내 · 새 탭에서 보기",
     registrationPrivacyTitle:"주민등록번호 처리 안내", registrationPrivacyItems:"항목: 주민등록번호 13자리", registrationPrivacyPurpose:"목적: 미군기지 출입 승인 및 신원 확인",
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
     vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
+    mapTitle:"Gate 1에서 호텔까지", mapDescription:"삼각지역 13번 출구와 녹사평역 4번 출구 사이, 고가도로 옆 보행로로 Gate 1에 접근합니다. 출입 확인 후 안내된 보행로를 따라 드래곤힐 로지로 이동합니다.", mapSamgakji:"삼각지역", mapNoksapyeong:"녹사평역", mapExit13:"13번 출구", mapExit4:"4번 출구", mapWar:"전쟁기념관", mapDefense:"국방부", mapDefense2:"", mapOverpass:"고가도로", mapGate:"1번 게이트", mapHotel:"호텔", mapCaption:"위치 참고용 약도 · 실제 거리와 비례하지 않습니다.", walkingTitle:"도보 입장 순서", walkingSteps:["고가도로 바로 옆 인도를 이용해 Gate 1 초소로 이동합니다.", "출입 확인 후 인도를 따라 왼쪽으로 이동합니다.", "주차장을 대각선으로 지나 호텔에 도착합니다."], alternateStation:"녹사평역 4번 출구(6호선)에서도 Gate 1 방향으로 이동할 수 있습니다.",
+    arrivalTitle:"오시는 길", arrivalIntro:"대중교통이나 택시를 이용해 주세요. 아래는 호텔 공식 안내에 따른 Gate 1 주변 경로입니다.",
+    routeStation:"삼각지역 13번 출구 · 4·6호선", routeWalk:"도보 약 5분", routeGate:"용산미군기지 Gate 1 주변", gateAddress:"서울 용산구 용산동4가 1-10",
+    taxiNote:"택시를 이용하시면 위 주소의 Gate 1 주변에서 내려 주세요.", mapIntro:"출입구 주변 참고 위치를 지도에서 확인하세요.", naverMap:"네이버 지도", googleMap:"Google Maps", newTab:"새 탭에서 보기",
+    arrivalNote:"위 경로는 호텔의 일반 방문 안내입니다. 행사 출입구·집합 위치와 입장 절차는 신청자에게 별도로 안내합니다.", officialDirections:"호텔 공식 길 안내",
     formTitle:"참가 신청", formDescription:"아래 정보를 남겨 주세요. 행사와 출입 안내를 전해 드릴게요.",
     required:"모든 항목 필수", koreanName:"한글 이름", englishName:"영어 이름", phone:"휴대폰 번호", phoneHelp:"해외 번호는 국가번호부터 입력해 주세요.",
     residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"출입 승인 및 신원 확인을 위한 필수정보입니다.",
@@ -48,13 +57,18 @@ const copy = {
     introduction:"ByUs Day brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
     posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
     date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
-    programTitle:"Main event program", programSteps:["Check-in & reception", "Dinner & opening", "Showcases, talks & Q&A", "Games & a break", "ByUs LIVE & community"], afterpartyProgram:"Networking & raffle",
+    programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
     securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used for access approval and identity verification.",
     accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Official installation access information · Opens in a new tab",
     registrationPrivacyTitle:"Resident registration number processing", registrationPrivacyItems:"Information: 13-digit Korean resident registration number", registrationPrivacyPurpose:"Purpose: military base access approval and identity verification",
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
     vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
+    mapTitle:"From Gate 1 to the hotel", mapDescription:"Approach Gate 1 via the pedestrian path beside the overpass, between Samgakji Exit 13 and Noksapyeong Exit 4. After the entry check, follow the pedestrian path to Dragon Hill Lodge.", mapSamgakji:"Samgakji", mapNoksapyeong:"Noksapyeong", mapExit13:"Exit 13", mapExit4:"Exit 4", mapWar:"War Memorial", mapDefense:"Ministry of", mapDefense2:"Defense", mapOverpass:"Overpass", mapGate:"Gate 1", mapHotel:"Hotel", mapCaption:"Location guide · Not to scale.", walkingTitle:"Entering on foot", walkingSteps:["Use the pedestrian path right beside the overpass to reach Gate 1.", "After the entry check, follow the pedestrian path towards the left.", "Cross the parking lot diagonally to reach the hotel."], alternateStation:"You can also approach Gate 1 from Noksapyeong Station, Exit 4 (Line 6).",
+    arrivalTitle:"Getting here", arrivalIntro:"Please use public transport or a taxi. This route to the Gate 1 area follows the hotel’s official directions.",
+    routeStation:"Samgakji Station, Exit 13 · Lines 4 & 6", routeWalk:"About a 5-minute walk", routeGate:"Yongsan Garrison Gate 1 area", gateAddress:"1-10 Yongsan-dong 4-ga, Yongsan-gu, Seoul",
+    taxiNote:"If taking a taxi, get off near Gate 1 at the address above.", mapIntro:"View the area around the entrance on a map.", naverMap:"Naver Map", googleMap:"Google Maps", newTab:"Opens in a new tab",
+    arrivalNote:"These are the hotel’s general visitor directions. We’ll send registered guests the event entrance, meeting point, and entry instructions separately.", officialDirections:"Official hotel directions",
     formTitle:"RSVP", formDescription:"Leave your details below. We’ll be in touch with event and entry information.",
     required:"All fields required", koreanName:"Korean name", englishName:"English name", phone:"Mobile number", phoneHelp:"Include your country code for numbers outside Korea.",
     residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Required for base access approval and identity verification.",
@@ -182,6 +196,45 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
           <div className={styles.accessNotes}><p>{t.vehicleEntry}</p><p>{t.vehicleRequest}</p><p>{t.vehicleApology}</p></div>
           <p className={styles.venueNote}>{t.venueNote}</p>
         </div></section>
+        <section className={styles.arrival} aria-labelledby="arrival-title">
+          <h2 id="arrival-title">{t.arrivalTitle}</h2>
+          <p>{t.arrivalIntro}</p>
+          <figure className={styles.arrivalMap}>
+            <svg viewBox="0 0 520 490" role="img" aria-labelledby="arrival-map-title arrival-map-description">
+              <title id="arrival-map-title">{t.mapTitle}</title><desc id="arrival-map-description">{t.mapDescription}</desc>
+              <defs><marker id="arrival-walk-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="currentColor" /></marker></defs>
+              <path className={styles.mapRoad} d="M24 158H496M282 160V438M282 361H340M282 291H327" />
+              <path className={styles.mapOverpass} d="M266 123L272 137V190L264 209M288 123L282 137V190L290 209" />
+              <text className={styles.mapSmallText} x="302" y="108">{t.mapOverpass}</text>
+              <text className={styles.mapSmallText} x="93" y="91" textAnchor="middle">{t.mapWar}</text>
+              <rect className={styles.mapLandmarkBadge} x="150" y="184" width="143" height="66" rx="5" />
+              <text className={styles.mapLandmarkText} x="221" y={t.mapDefense2 ? "211" : "226"} textAnchor="middle">{t.mapDefense}</text>
+              {t.mapDefense2 && <text className={styles.mapLandmarkText} x="221" y="239" textAnchor="middle">{t.mapDefense2}</text>}
+              <rect className={styles.mapExitBadge} x="54" y="151" width="58" height="49" rx="5" /><text className={styles.mapBadgeText} x="83" y="185" textAnchor="middle">13</text>
+              <rect className={styles.mapExitBadge} x="402" y="151" width="58" height="49" rx="5" /><text className={styles.mapBadgeText} x="431" y="185" textAnchor="middle">4</text>
+              <text className={styles.mapStationText} x="83" y="237" textAnchor="middle">{t.mapSamgakji}</text><text className={styles.mapSmallText} x="83" y="272" textAnchor="middle">{t.mapExit13}</text>
+              <text className={styles.mapStationText} x="431" y="237" textAnchor="middle">{t.mapNoksapyeong}</text><text className={styles.mapSmallText} x="431" y="272" textAnchor="middle">{t.mapExit4}</text>
+              <path className={styles.mapWalkPath} d="M307 175V258" markerEnd="url(#arrival-walk-arrow)" />
+              <rect className={styles.mapGateBadge} x="193" y="277" width="178" height="55" rx="8" /><text className={styles.mapGateText} x="282" y="313" textAnchor="middle">{t.mapGate}</text>
+              <circle className={styles.mapParking} cx="361" cy="358" r="25" /><text className={styles.mapSmallText} x="361" y="369" textAnchor="middle">P</text>
+              <rect className={styles.mapHotelBadge} x="364" y="406" width="132" height="62" rx="8" /><text className={styles.mapHotelText} x="430" y="447" textAnchor="middle">DHL</text>
+              <text className={styles.mapSmallText} x="430" y="397" textAnchor="middle">{t.mapHotel}</text>
+            </svg>
+            <figcaption>{t.mapCaption}</figcaption>
+          </figure>
+          <ol className={styles.arrivalRoute}><li>{t.routeStation}</li><li>{t.routeWalk}</li><li>{t.routeGate}</li></ol>
+          <p>{t.alternateStation}</p>
+          <div className={styles.walkingSteps}><h3>{t.walkingTitle}</h3><ol>{t.walkingSteps.map(step => <li key={step}>{step}</li>)}</ol></div>
+          <p className={styles.gateAddress}>{t.gateAddress}</p>
+          <p>{t.taxiNote}</p>
+          <p>{t.mapIntro}</p>
+          <div className={styles.mapLinks}>
+            <a href={NAVER_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.naverMap} · ${t.newTab}`}>{t.naverMap}<ArrowRight size={16} aria-hidden="true" /></a>
+            <a href={GOOGLE_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.googleMap} · ${t.newTab}`}>{t.googleMap}<ArrowRight size={16} aria-hidden="true" /></a>
+          </div>
+          <p className={styles.arrivalNote}>{t.arrivalNote}</p>
+          <a className={styles.directionsSource} href={DIRECTIONS_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.officialDirections} · ${t.newTab}`}>{t.officialDirections}<ArrowRight size={16} aria-hidden="true" /></a>
+        </section>
       </section>
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>
         <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · BYUS DAY</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>

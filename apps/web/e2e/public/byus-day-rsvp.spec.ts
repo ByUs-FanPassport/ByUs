@@ -36,7 +36,7 @@ async function fillRsvp(page: Page) {
 test("shows the complete English poster in both languages and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/byus-day?locale=${locale}`);
-    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-security-en-20261004.webp"]');
+    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-program-en-20261004.webp"]');
     const poster = posterLink.getByRole("img");
     await expect(poster).toBeVisible();
     await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
@@ -58,8 +58,22 @@ test("shows the complete English poster in both languages and opens the original
     await officialLink.focus();
     await expect(officialLink).toBeFocused();
     expect(await officialLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
-    await expect(page.locator("#schedule-title").locator("..").locator("ol li")).toHaveCount(5);
+    await expect(page.locator("#schedule-title").locator("..").locator("ol li")).toHaveText(locale === "ko" ? ["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"] : ["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"]);
     await expect(page.getByText(locale === "ko" ? "네트워킹·래플" : "Networking & raffle", { exact: false })).toBeVisible();
+    const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
+    await expect(arrival).toBeVisible();
+    await expect(arrival.getByRole("img", { name: locale === "ko" ? "Gate 1에서 호텔까지" : "From Gate 1 to the hotel" })).toBeVisible();
+    await expect(arrival).toContainText(locale === "ko" ? "녹사평역 4번 출구" : "Noksapyeong Station, Exit 4");
+    await expect(arrival.locator("h3").locator("..").locator("ol li")).toHaveCount(3);
+    await expect(arrival).toContainText(locale === "ko" ? "삼각지역 13번 출구" : "Samgakji Station, Exit 13");
+    await expect(arrival).toContainText(locale === "ko" ? "도보 약 5분" : "About a 5-minute walk");
+    await expect(arrival).toContainText(locale === "ko" ? "행사 출입구·집합 위치" : "event entrance, meeting point");
+    const mapLinks = arrival.getByRole("link");
+    await expect(mapLinks).toHaveCount(3);
+    await expect(mapLinks.nth(0)).toHaveAttribute("href", /^https:\/\/map\.naver\.com\/p\/search\//);
+    await expect(mapLinks.nth(1)).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);
+    await expect(mapLinks.nth(2)).toHaveAttribute("href", "https://www.dragonhilllodge.com/your-stay/getting-here");
+    for (const link of await mapLinks.all()) await expect(link).toHaveAttribute("rel", "noopener noreferrer");
     const privacy = page.locator("details");
     await expect(privacy).toHaveCount(2);
     for (const section of await privacy.all()) await section.locator("summary").click();
@@ -84,7 +98,7 @@ test("shows the complete English poster in both languages and opens the original
     await posterLink.click();
     const original = await opened;
     await original.waitForLoadState("load");
-    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-security-en-20261004\.webp$/);
+    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-program-en-20261004\.webp$/);
     await expect(original.locator("img")).toBeVisible();
     await original.close();
   }
