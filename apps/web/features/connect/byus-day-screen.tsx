@@ -194,7 +194,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
     <aside className={styles.deadline} aria-label={t.deadlineLabel}><span>{t.deadlineLabel}</span><time dateTime="2026-10-13T00:00:00+09:00">{t.deadline}</time></aside>
     <main className={styles.canvas}>
       <section className={styles.invitation} aria-labelledby="event-title">
-        <div className={styles.invitationTop}><p className={styles.eyebrow}>{t.invitation}</p><span aria-hidden="true">✳</span></div>
+        <div className={styles.invitationTop}><p className={styles.eyebrow}>{t.invitation}</p></div>
         <h1 id="event-title" className={styles.title}>BYUS <span>DAY</span></h1>
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>

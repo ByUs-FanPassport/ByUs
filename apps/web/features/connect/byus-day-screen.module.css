@@ -19,7 +19,6 @@
 .canvas{display:grid;align-items:start;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);column-gap:clamp(40px,6vw,88px);row-gap:48px;max-width:1220px;margin:0 auto;padding:56px 32px 64px}
 .invitation{min-width:0}
 .invitationTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.invitationTop>span{font-size:34px;line-height:1}
 .title{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(70px,7.8vw,112px);font-weight:700;line-height:.98;letter-spacing:-.07em}
 .title span{white-space:nowrap}
 .headline{margin:24px 0 12px;font-size:24px;font-weight:750;line-height:1.45;letter-spacing:-.035em;white-space:pre-line;text-wrap:balance}
