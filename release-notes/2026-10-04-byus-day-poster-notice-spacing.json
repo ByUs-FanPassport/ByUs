@@ -1,0 +1,11 @@
+{
+  "changes": [
+    "한글·영문 포스터 하단의 출입절차 규정 링크를 빼고 안내 문구의 줄 간격과 여백을 넓혔어요.",
+    "규정 링크는 참가 신청 본문에서 확인할 수 있어요. 포스터 QR도 정상 인식되는지 확인했어요.",
+    "첨부 이미지는 새 포스터를 적용한 로컬 검증 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-poster-notice-spacing.png"
+  ]
+}
