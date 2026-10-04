@@ -33,9 +33,28 @@ async function fillRsvp(page: Page) {
   await page.locator('[name="affiliation"]').fill("샐리랩");
   await page.locator('[name="occupation"]').fill("프로듀서");
   await page.locator('[name="email"]').fill("guest@example.com");
-  await page.locator('[name="nationality"]').selectOption("KR");
   await page.locator('[name="consent"]').check();
 }
+
+test("shows the deadline above the invitation and defaults nationality to Korea", async ({ page }, testInfo) => {
+  for (const locale of ["ko", "en"]) {
+    await page.goto(`/connect/byus-day?locale=${locale}`);
+    const deadline = page.getByRole("complementary", { name: locale === "ko" ? "인적사항 제출 마감" : "Personal details deadline" });
+    await expect(deadline).toContainText(locale === "ko" ? "10월 12일(월) 자정까지 · 한국시간" : "By the end of October 12 (Mon), KST");
+    await expect(deadline.locator("time")).toHaveAttribute("datetime", "2026-10-13T00:00:00+09:00");
+    const deadlineBox = await deadline.boundingBox();
+    const titleBox = await page.getByRole("heading", { name: "BYUS DAY", exact: true }).boundingBox();
+    expect(deadlineBox!.y + deadlineBox!.height).toBeLessThan(titleBox!.y);
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-deadline-top.png`) });
+    const nationality = page.locator('[name="nationality"]');
+    await expect(nationality).toHaveValue("KR");
+    await nationality.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-default-nationality.png`) });
+    await nationality.selectOption("JP");
+    await expect(nationality).toHaveValue("JP");
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
+});
 
 test("shows the matching language poster and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {

@@ -49,8 +49,14 @@ describe("ByUs Day RSVP API", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
-  it("closes at 2026-10-23 00:00 KST before touching the repository", async () => {
-    const { submit, handle } = setup(Date.parse("2026-10-22T15:00:00.000Z"));
+  it("accepts the last millisecond of October 12 KST", async () => {
+    const { submit, handle } = setup(Date.parse("2026-10-12T14:59:59.999Z"));
+    expect((await handle(request())).status).toBe(202);
+    expect(submit).toHaveBeenCalledOnce();
+  });
+
+  it("closes at 2026-10-13 00:00 KST before touching the repository", async () => {
+    const { submit, handle } = setup(Date.parse("2026-10-12T15:00:00.000Z"));
     expect((await handle(request())).status).toBe(410);
     expect(submit).not.toHaveBeenCalled();
   });
