@@ -1,0 +1,8 @@
+{
+  "changes": [
+    "일반 개인정보와 주민등록번호 안내의 개인정보 처리자를 (주)셀리랩으로 수정했어요.",
+    "첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": ["release-notes/images/2026-10-04-byus-day-controller-name.png"]
+}

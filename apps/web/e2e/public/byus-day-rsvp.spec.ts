@@ -106,7 +106,7 @@ test("shows the complete English poster in both languages and opens the original
       await dialog.evaluate(async element => {
         await Promise.all(element.parentElement!.getAnimations({ subtree: true }).map(animation => animation.finished));
       });
-      await expect(dialog).toContainText(locale === "ko" ? "ByUs의 운영사 셀리랩" : "Sallylab, the operator of ByUs");
+      await expect(dialog).toContainText(locale === "ko" ? "개인정보 처리자: (주)셀리랩" : "Personal information controller: Sallylab Co., Ltd.");
       await expect(dialog).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
       if (index === 0) {
         await expect(dialog).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
