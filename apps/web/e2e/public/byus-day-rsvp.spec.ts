@@ -45,7 +45,7 @@ test("shows the matching language poster and opens the original", async ({ page 
     await expect(poster).toBeVisible();
     await expect(poster).toHaveAttribute("alt", locale === "ko" ? "ByUs Day Enter × Tech 한글 행사 포스터" : "ByUs Day Enter × Tech English event poster");
     const invitation = page.getByRole("region", { name: "BYUS DAY", exact: true });
-    await expect(invitation).toContainText(locale === "ko" ? "18:30 시작" : "Starts at 18:30");
+    await expect(invitation).toContainText(locale === "ko" ? "2026년 10월 22일 목요일 18:30 시작" : "Thursday, October 22, 2026 · Starts at 18:30");
     await expect(invitation).toContainText(locale === "ko" ? "용산미군기지" : "Yongsan Garrison");
     await expect(page.locator('section[aria-labelledby="schedule-title"]')).toContainText(locale === "ko" ? "같은 호텔 1층 펍" : "pub on the hotel’s first floor");
     await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
