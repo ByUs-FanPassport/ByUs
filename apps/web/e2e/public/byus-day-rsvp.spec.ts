@@ -8,6 +8,8 @@ test.use({ serviceWorkers: "block" });
 let browserErrors: ReturnType<typeof observeBrowserErrors>;
 let mockedFailureStatuses: Set<number>;
 test.beforeEach(async ({ page }) => {
+  // RSVP does not use wallet listings; keep this third-party lookup deterministic.
+  await page.route("https://explorer-api.walletconnect.com/v3/wallets**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ listings: {} }) }));
   mockedFailureStatuses = new Set();
   browserErrors = observeBrowserErrors(page);
 });
@@ -63,12 +65,21 @@ test("shows the complete English poster in both languages and opens the original
     const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
     await expect(arrival).toBeVisible();
     await expect(arrival.getByRole("img", { name: locale === "ko" ? "Gate 1에서 호텔까지" : "From Gate 1 to the hotel" })).toBeVisible();
+    const enlargedMap = arrival.getByRole("link", { name: locale === "ko" ? "약도 크게 보기" : "Enlarge the map" });
+    await expect(enlargedMap).toHaveAttribute("href", `/images/connect/byus-day/gate-1-directions-${locale}-20261004-v2.svg`);
+    await expect(enlargedMap).toHaveAttribute("target", "_blank");
+    const mapOpened = page.context().waitForEvent("page");
+    await enlargedMap.click();
+    const mapPage = await mapOpened;
+    await mapPage.waitForLoadState("load");
+    await expect(mapPage.locator("svg")).toHaveAttribute("viewBox", "0 200 905 520");
+    await mapPage.close();
     await expect(arrival).toContainText(locale === "ko" ? "녹사평역 4번 출구" : "Noksapyeong Station, Exit 4");
     await expect(arrival.locator("h3").locator("..").locator("ol li")).toHaveCount(3);
     await expect(arrival).toContainText(locale === "ko" ? "삼각지역 13번 출구" : "Samgakji Station, Exit 13");
     await expect(arrival).toContainText(locale === "ko" ? "도보 약 5분" : "About a 5-minute walk");
     await expect(arrival).toContainText(locale === "ko" ? "행사 출입구·집합 위치" : "event entrance, meeting point");
-    const mapLinks = arrival.getByRole("link");
+    const mapLinks = arrival.locator('a[href^="https:"]');
     await expect(mapLinks).toHaveCount(3);
     await expect(mapLinks.nth(0)).toHaveAttribute("href", /^https:\/\/map\.naver\.com\/p\/search\//);
     await expect(mapLinks.nth(1)).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);

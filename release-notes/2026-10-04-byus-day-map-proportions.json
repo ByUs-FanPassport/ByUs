@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "오시는 길 약도의 출입구·주차장·호텔 위치와 간격을 원본 호텔 약도의 배치 비율에 맞춰 수정했어요.",
+    "약도를 눌러 큰 화면으로 볼 수 있어요.",
+    "첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-map-proportions-desktop.png",
+    "release-notes/images/2026-10-04-byus-day-map-proportions-mobile.png"
+  ]
+}

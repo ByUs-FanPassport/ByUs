@@ -120,22 +120,11 @@
 @media(max-width:767px){.arrival h2{font-size:20px}}
 
 .arrivalMap{margin:20px 0;padding:12px 8px;border:1px solid #68192330;border-radius:8px;background:#faf6ec;color:var(--event-ink)}
-.arrivalMap svg{display:block;width:100%;height:auto;font-family:inherit}
+.mapEnlargeLink{display:block;cursor:zoom-in}
+.mapEnlargeLink img{display:block;width:100%;height:auto}
+.mapEnlargeLabel{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:8px 8px 0;font-size:16px;font-weight:600;line-height:1.5;text-decoration:underline;text-underline-offset:4px}
+.mapEnlargeLabel svg{flex:none}
 .arrivalMap figcaption{margin:8px 8px 0;color:var(--event-muted);font-size:13px;line-height:1.6}
-.mapRoad{fill:none;stroke:#c4bbaa;stroke-width:25;stroke-linecap:round;stroke-linejoin:round}
-.mapOverpass{fill:none;stroke:#706359;stroke-width:4;stroke-linecap:round}
-.mapStationText{fill:var(--event-ink);font-size:28px;font-weight:700}
-.mapSmallText{fill:var(--event-ink);font-size:28px;font-weight:600}
-.mapLandmarkBadge{fill:#e5d9c6}
-.mapLandmarkText{fill:var(--event-muted);font-size:24px;font-weight:600}
-.mapExitBadge{fill:#d6b96e}
-.mapBadgeText{fill:var(--event-ink);font-size:30px;font-weight:700}
-.mapWalkPath{fill:none;stroke:currentColor;stroke-width:6;stroke-linecap:round}
-.mapGateBadge{fill:var(--event-ink)}
-.mapGateText{fill:#fffaf2;font-size:28px;font-weight:700}
-.mapParking{fill:#faf6ec;stroke:#8f8172;stroke-width:3}
-.mapHotelBadge{fill:#e5d9c6;stroke:#68192340;stroke-width:2}
-.mapHotelText{fill:var(--event-ink);font-size:40px;font-weight:750}
 .walkingSteps{margin-top:20px;padding:16px;border:1px solid #68192320;border-radius:8px;background:#f5eee2}
 .walkingSteps h3{margin:0;font-size:16px;font-weight:700;line-height:1.5}
 .walkingSteps ol{margin:12px 0 0;padding-left:24px;font-size:16px;line-height:1.65}

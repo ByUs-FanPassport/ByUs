@@ -30,7 +30,7 @@ const copy = {
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
     vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
-    mapTitle:"Gate 1에서 호텔까지", mapDescription:"삼각지역 13번 출구와 녹사평역 4번 출구 사이, 고가도로 옆 보행로로 Gate 1에 접근합니다. 출입 확인 후 안내된 보행로를 따라 드래곤힐 로지로 이동합니다.", mapSamgakji:"삼각지역", mapNoksapyeong:"녹사평역", mapExit13:"13번 출구", mapExit4:"4번 출구", mapWar:"전쟁기념관", mapDefense:"국방부", mapDefense2:"", mapOverpass:"고가도로", mapGate:"1번 게이트", mapHotel:"호텔", mapCaption:"위치 참고용 약도 · 실제 거리와 비례하지 않습니다.", walkingTitle:"도보 입장 순서", walkingSteps:["고가도로 바로 옆 인도를 이용해 Gate 1 초소로 이동합니다.", "출입 확인 후 인도를 따라 왼쪽으로 이동합니다.", "주차장을 대각선으로 지나 호텔에 도착합니다."], alternateStation:"녹사평역 4번 출구(6호선)에서도 Gate 1 방향으로 이동할 수 있습니다.",
+    enlargeMap:"약도 크게 보기", mapTitle:"Gate 1에서 호텔까지", mapDescription:"삼각지역 13번 출구와 녹사평역 4번 출구 사이, 고가도로 옆 보행로로 Gate 1에 접근합니다. 출입 확인 후 안내된 보행로를 따라 드래곤힐 로지로 이동합니다.", mapCaption:"위치 참고용 약도 · 실제 거리와 비례하지 않습니다.", walkingTitle:"도보 입장 순서", walkingSteps:["고가도로 바로 옆 인도를 이용해 Gate 1 초소로 이동합니다.", "출입 확인 후 인도를 따라 왼쪽으로 이동합니다.", "주차장을 대각선으로 지나 호텔에 도착합니다."], alternateStation:"녹사평역 4번 출구(6호선)에서도 Gate 1 방향으로 이동할 수 있습니다.",
     arrivalTitle:"오시는 길", arrivalIntro:"대중교통이나 택시를 이용해 주세요. 아래는 호텔 공식 안내에 따른 Gate 1 주변 경로입니다.",
     routeStation:"삼각지역 13번 출구 · 4·6호선", routeWalk:"도보 약 5분", routeGate:"용산미군기지 Gate 1 주변", gateAddress:"서울 용산구 용산동4가 1-10",
     taxiNote:"택시를 이용하시면 위 주소의 Gate 1 주변에서 내려 주세요.", mapIntro:"출입구 주변 참고 위치를 지도에서 확인하세요.", naverMap:"네이버 지도", googleMap:"Google Maps", newTab:"새 탭에서 보기",
@@ -64,7 +64,7 @@ const copy = {
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
     vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
-    mapTitle:"From Gate 1 to the hotel", mapDescription:"Approach Gate 1 via the pedestrian path beside the overpass, between Samgakji Exit 13 and Noksapyeong Exit 4. After the entry check, follow the pedestrian path to Dragon Hill Lodge.", mapSamgakji:"Samgakji", mapNoksapyeong:"Noksapyeong", mapExit13:"Exit 13", mapExit4:"Exit 4", mapWar:"War Memorial", mapDefense:"Ministry of", mapDefense2:"Defense", mapOverpass:"Overpass", mapGate:"Gate 1", mapHotel:"Hotel", mapCaption:"Location guide · Not to scale.", walkingTitle:"Entering on foot", walkingSteps:["Use the pedestrian path right beside the overpass to reach Gate 1.", "After the entry check, follow the pedestrian path towards the left.", "Cross the parking lot diagonally to reach the hotel."], alternateStation:"You can also approach Gate 1 from Noksapyeong Station, Exit 4 (Line 6).",
+    enlargeMap:"Enlarge the map", mapTitle:"From Gate 1 to the hotel", mapDescription:"Approach Gate 1 via the pedestrian path beside the overpass, between Samgakji Exit 13 and Noksapyeong Exit 4. After the entry check, follow the pedestrian path to Dragon Hill Lodge.", mapCaption:"Location guide · Not to scale.", walkingTitle:"Entering on foot", walkingSteps:["Use the pedestrian path right beside the overpass to reach Gate 1.", "After the entry check, follow the pedestrian path towards the left.", "Cross the parking lot diagonally to reach the hotel."], alternateStation:"You can also approach Gate 1 from Noksapyeong Station, Exit 4 (Line 6).",
     arrivalTitle:"Getting here", arrivalIntro:"Please use public transport or a taxi. This route to the Gate 1 area follows the hotel’s official directions.",
     routeStation:"Samgakji Station, Exit 13 · Lines 4 & 6", routeWalk:"About a 5-minute walk", routeGate:"Yongsan Garrison Gate 1 area", gateAddress:"1-10 Yongsan-dong 4-ga, Yongsan-gu, Seoul",
     taxiNote:"If taking a taxi, get off near Gate 1 at the address above.", mapIntro:"View the area around the entrance on a map.", naverMap:"Naver Map", googleMap:"Google Maps", newTab:"Opens in a new tab",
@@ -200,26 +200,11 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
           <h2 id="arrival-title">{t.arrivalTitle}</h2>
           <p>{t.arrivalIntro}</p>
           <figure className={styles.arrivalMap}>
-            <svg viewBox="0 0 520 490" role="img" aria-labelledby="arrival-map-title arrival-map-description">
-              <title id="arrival-map-title">{t.mapTitle}</title><desc id="arrival-map-description">{t.mapDescription}</desc>
-              <defs><marker id="arrival-walk-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="currentColor" /></marker></defs>
-              <path className={styles.mapRoad} d="M24 158H496M282 160V438M282 361H340M282 291H327" />
-              <path className={styles.mapOverpass} d="M266 123L272 137V190L264 209M288 123L282 137V190L290 209" />
-              <text className={styles.mapSmallText} x="302" y="108">{t.mapOverpass}</text>
-              <text className={styles.mapSmallText} x="93" y="91" textAnchor="middle">{t.mapWar}</text>
-              <rect className={styles.mapLandmarkBadge} x="150" y="184" width="143" height="66" rx="5" />
-              <text className={styles.mapLandmarkText} x="221" y={t.mapDefense2 ? "211" : "226"} textAnchor="middle">{t.mapDefense}</text>
-              {t.mapDefense2 && <text className={styles.mapLandmarkText} x="221" y="239" textAnchor="middle">{t.mapDefense2}</text>}
-              <rect className={styles.mapExitBadge} x="54" y="151" width="58" height="49" rx="5" /><text className={styles.mapBadgeText} x="83" y="185" textAnchor="middle">13</text>
-              <rect className={styles.mapExitBadge} x="402" y="151" width="58" height="49" rx="5" /><text className={styles.mapBadgeText} x="431" y="185" textAnchor="middle">4</text>
-              <text className={styles.mapStationText} x="83" y="237" textAnchor="middle">{t.mapSamgakji}</text><text className={styles.mapSmallText} x="83" y="272" textAnchor="middle">{t.mapExit13}</text>
-              <text className={styles.mapStationText} x="431" y="237" textAnchor="middle">{t.mapNoksapyeong}</text><text className={styles.mapSmallText} x="431" y="272" textAnchor="middle">{t.mapExit4}</text>
-              <path className={styles.mapWalkPath} d="M307 175V258" markerEnd="url(#arrival-walk-arrow)" />
-              <rect className={styles.mapGateBadge} x="193" y="277" width="178" height="55" rx="8" /><text className={styles.mapGateText} x="282" y="313" textAnchor="middle">{t.mapGate}</text>
-              <circle className={styles.mapParking} cx="361" cy="358" r="25" /><text className={styles.mapSmallText} x="361" y="369" textAnchor="middle">P</text>
-              <rect className={styles.mapHotelBadge} x="364" y="406" width="132" height="62" rx="8" /><text className={styles.mapHotelText} x="430" y="447" textAnchor="middle">DHL</text>
-              <text className={styles.mapSmallText} x="430" y="397" textAnchor="middle">{t.mapHotel}</text>
-            </svg>
+            <a className={styles.mapEnlargeLink} href={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} target="_blank" rel="noopener noreferrer" aria-label={`${t.enlargeMap} · ${t.newTab}`}>
+              <Image src={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} alt={t.mapTitle} aria-describedby="arrival-map-description" width={905} height={520} sizes="(min-width: 1024px) 580px, 100vw" unoptimized />
+              <span className={styles.mapEnlargeLabel}>{t.enlargeMap}<ArrowRight size={16} aria-hidden="true" /></span>
+            </a>
+            <span id="arrival-map-description" className={styles.srOnly}>{t.mapDescription}</span>
             <figcaption>{t.mapCaption}</figcaption>
           </figure>
           <ol className={styles.arrivalRoute}><li>{t.routeStation}</li><li>{t.routeWalk}</li><li>{t.routeGate}</li></ol>
