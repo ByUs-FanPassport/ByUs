@@ -1,0 +1,9 @@
+{
+  "changes": [
+    "출입절차 규정의 ‘규정’과 출입 승인·신원 확인 목적으로만 사용한다는 안내의 ‘만’을 굵게 표시했어요.",
+    "주민등록번호를 출입 절차 완료 후 지체 없이 파기한다는 안내에서 ‘파기합니다’를 굵게 표시했어요.",
+    "첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": ["release-notes/images/2026-10-04-byus-day-security-emphasis.png", "release-notes/images/2026-10-04-byus-day-retention-emphasis.png"]
+}

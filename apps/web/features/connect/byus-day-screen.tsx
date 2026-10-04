@@ -27,9 +27,9 @@ const copy = {
     posterAlt:"ByUs Day Enter × Tech 영문 행사 포스터", posterLink:"영문 포스터 · 새 탭에서 크게 보기",
     date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
     programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
-    securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로 사용됩니다.",
-    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"출입절차 규정 · 새 탭에서 보기",
-    registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:"보유기간: 출입 절차 완료 후 지체 없이 파기",
+    securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:<>제출 정보는 출입 승인 및 신원 확인 목적으로<strong>만</strong> 사용됩니다.</>,
+    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:<>출입절차 <strong>규정</strong> · 새 탭에서 보기</>,
+    registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:<>보유기간: 출입 절차 완료 후 지체 없이 <strong>파기합니다.</strong></>,
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
     vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
@@ -62,9 +62,9 @@ const copy = {
     posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
     date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
     programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
-    securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used for access approval and identity verification.",
-    accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Installation Access Policy · Opens in a new tab",
-    registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:"Retention: deleted without delay after the access procedure is complete",
+    securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:<>The information is used <strong>only</strong> for access approval and identity verification.</>,
+    accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:<>Installation Access <strong>Policy</strong> · Opens in a new tab</>,
+    registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:<>Retention: <strong>deleted</strong> without delay after the access procedure is complete</>,
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
     vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
@@ -224,7 +224,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
               <h3 id="entry-security-title"><ShieldCheck size={18} aria-hidden="true" />{t.securityTitle}</h3>
               <p>{t.entryRequired}</p><p>{t.entryPurpose}</p>
               <p className={styles.policyReference}>{t.accessPolicy}</p>
-              <a href={ACCESS_CONTROL_URL} target="_blank" rel="noopener noreferrer">{t.accessLink}<ArrowRight size={16} aria-hidden="true" /></a>
+              <a href={ACCESS_CONTROL_URL} target="_blank" rel="noopener noreferrer"><span>{t.accessLink}</span><ArrowRight size={16} aria-hidden="true" /></a>
             </section>
             <ResidentRegistrationNumberField label={t.residentRegistrationNumber} requiredLabel={t.fieldRequired} partLabels={t.registrationPartLabels as [string, string, string]} showLabel={t.showRegistrationNumber} hideLabel={t.hideRegistrationNumber} help={t.registrationNumberHelp} error={errors.residentRegistrationNumber} />
             <div className={styles.pair}>{field("affiliation",{ placeholder:t.affiliationPlaceholder, maxLength:120 })}{field("occupation",{ placeholder:t.occupationPlaceholder, maxLength:120 })}</div>

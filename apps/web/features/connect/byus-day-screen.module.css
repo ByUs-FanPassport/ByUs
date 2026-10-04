@@ -168,3 +168,5 @@
 .arrivalBody .arrivalMap{margin-bottom:0}
 @media(max-width:900px){.eventDetails{grid-template-columns:1fr;gap:32px}.eventDetails .venue{padding-top:32px;border-top:1px solid #68192330}.arrivalBody{grid-template-columns:1fr;gap:24px}.headerRsvp{margin-left:auto}}
 @media(max-width:480px){.arrivalDisclosure>summary{align-items:flex-start;gap:12px}.disclosureAction{font-size:13px;max-width:110px;line-height:1.6}.arrivalSummary{font-size:14px}.program ol{grid-template-columns:1fr}.dateRow{padding:20px 0 16px}}
+
+.securityNotice strong,.privacyCopy strong{font-weight:750}

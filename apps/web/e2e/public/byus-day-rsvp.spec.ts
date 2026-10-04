@@ -116,7 +116,7 @@ test("shows the complete English poster in both languages and opens the original
       } else {
         await expect(dialog).toContainText(locale === "ko" ? "처리항목: 주민등록번호" : "Information processed: Korean resident registration number");
         await expect(dialog).toContainText(locale === "ko" ? "미군기지 출입자 확인 및 출입명단 제출" : "verifying base visitors and submitting the base entry list");
-        await expect(dialog).toContainText(locale === "ko" ? "출입 절차 완료 후 지체 없이 파기" : "deleted without delay after the access procedure is complete");
+        await expect(dialog).toContainText(locale === "ko" ? "출입 절차 완료 후 지체 없이 파기합니다." : "deleted without delay after the access procedure is complete");
         await expect(dialog).not.toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
       }
       const close = dialog.getByRole("button", { name: locale === "ko" ? "닫기" : "Close", exact: true });
