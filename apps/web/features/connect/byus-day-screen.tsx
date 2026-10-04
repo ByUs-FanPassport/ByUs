@@ -9,24 +9,32 @@ import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import styles from "./byus-day-screen.module.css";
 
+const POSTER_SRC = "/images/connect/byus-day/poster-security-en-20261004.webp";
+const ACCESS_CONTROL_URL = "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control";
+
 const copy = {
   ko: {
     back:"ByUs", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
     headline:"엔터테인먼트와 기술이 만나는\nEnter × Tech의 밤.",
-    introduction:"ByUs Day는 엔터테인먼트와 기술의 지금과 다음을 함께 살펴보는 자리입니다.\n쇼케이스와 파이어사이드 챗, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
+    introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 파이어사이드 챗, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
     posterAlt:"ByUs Day Enter × Tech 영문 행사 포스터", posterLink:"영문 포스터 · 새 탭에서 크게 보기",
     date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
+    programTitle:"본행사 프로그램", programSteps:["체크인·리셉션", "식사·오프닝", "쇼케이스·토크·Q&A", "게임·휴식", "ByUs LIVE·커뮤니티"], afterpartyProgram:"네트워킹·래플",
+    securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로 사용됩니다.",
+    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"공식 출입 안내 · 새 탭에서 보기",
+    registrationPrivacyTitle:"주민등록번호 처리 안내", registrationPrivacyItems:"항목: 주민등록번호 13자리", registrationPrivacyPurpose:"목적: 미군기지 출입 승인 및 신원 확인",
+    privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
     vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
     formTitle:"참가 신청", formDescription:"아래 정보를 남겨 주세요. 행사와 출입 안내를 전해 드릴게요.",
     required:"모든 항목 필수", koreanName:"한글 이름", englishName:"영어 이름", phone:"휴대폰 번호", phoneHelp:"해외 번호는 국가번호부터 입력해 주세요.",
-    residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"미군기지 출입 명단 제출에 사용합니다.",
+    residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"출입 승인 및 신원 확인을 위한 필수정보입니다.",
     affiliation:"소속", occupation:"직업", email:"이메일", nationality:"국적", chooseCountry:"국적을 선택해 주세요",
     koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"회사 또는 단체명", occupationPlaceholder:"직업 또는 맡고 있는 일",
-    consent:"개인정보 수집·이용에 동의합니다.", privacyTitle:"개인정보 안내", privacyController:"처리자: 샐리랩(ByUs)",
+    consent:"개인정보 수집·이용에 동의합니다.", privacyTitle:"일반 개인정보 수집·이용 안내", privacyController:"처리자: 샐리랩(ByUs)",
     privacyPurpose:"목적: 참가 신청 접수, 행사 안내, 기지 출입 명단 제출",
-    privacyItems:"항목: 한글·영어 이름, 휴대폰 번호, 주민등록번호, 소속, 직업, 이메일, 국적",
-    privacyRetention:"보관 기간: 행사 종료 후 1개월. 이후 운영자가 삭제합니다.",
+    privacyItems:"항목: 한글·영어 이름, 휴대폰 번호, 소속, 직업, 이메일, 국적",
+    privacyRetention:"보유·파기: 행사 익일인 2026년 10월 23일에 모든 신청 정보를 파기합니다.",
     privacyRefusal:"동의를 거부할 수 있으며, 동의하지 않으면 참가 신청을 접수할 수 없습니다.",
     submit:"참가 신청하기", submitting:"신청을 접수하고 있어요…", secure:"신청 정보는 행사 운영을 위해서만 사용합니다.",
     requiredError:"이 항목을 입력해 주세요.", emailError:"이메일 주소를 확인해 주세요.", phoneError:"휴대폰 번호를 확인해 주세요.", registrationNumberError:"주민등록번호 13자리를 확인해 주세요.", invalidError:"입력한 정보를 확인해 주세요.",
@@ -37,20 +45,25 @@ const copy = {
   en: {
     back:"ByUs", language:"Choose language", skip:"Skip to RSVP", invitation:"You’re invited",
     headline:"Where entertainment meets technology.\nEnter × Tech at ByUs Day.",
-    introduction:"Explore what’s next in entertainment and technology through showcases, fireside chats, and networking with the people shaping both worlds.",
+    introduction:"ByUs Day brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
     posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
     date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
+    programTitle:"Main event program", programSteps:["Check-in & reception", "Dinner & opening", "Showcases, talks & Q&A", "Games & a break", "ByUs LIVE & community"], afterpartyProgram:"Networking & raffle",
+    securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used for access approval and identity verification.",
+    accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Official installation access information · Opens in a new tab",
+    registrationPrivacyTitle:"Resident registration number processing", registrationPrivacyItems:"Information: 13-digit Korean resident registration number", registrationPrivacyPurpose:"Purpose: military base access approval and identity verification",
+    privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
     vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
     formTitle:"RSVP", formDescription:"Leave your details below. We’ll be in touch with event and entry information.",
     required:"All fields required", koreanName:"Korean name", englishName:"English name", phone:"Mobile number", phoneHelp:"Include your country code for numbers outside Korea.",
-    residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Used for the U.S. military base entry list.",
+    residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Required for base access approval and identity verification.",
     affiliation:"Company / organization", occupation:"Occupation / role", email:"Email", nationality:"Nationality", chooseCountry:"Select your nationality",
     koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"Company or organization", occupationPlaceholder:"Your occupation or role",
-    consent:"I agree to the collection and use of my personal information.", privacyTitle:"Privacy details", privacyController:"Controller: Sallylab (ByUs)",
+    consent:"I agree to the collection and use of my personal information.", privacyTitle:"Personal information collection and use", privacyController:"Controller: Sallylab (ByUs)",
     privacyPurpose:"Purpose: RSVP processing, event communication, and submission of the base entry list",
-    privacyItems:"Information: Korean and English names, mobile number, resident registration number, company, occupation, email, and nationality",
-    privacyRetention:"Retention: one month after the event ends. The organizer will then delete the information.",
+    privacyItems:"Information: Korean and English names, mobile number, company, occupation, email, and nationality",
+    privacyRetention:"Retention and deletion: all RSVP information will be deleted on October 23, 2026, the day after the event.",
     privacyRefusal:"You may decline consent. We cannot process your RSVP without it.",
     submit:"Send my RSVP", submitting:"Sending your RSVP…", secure:"Your details are used only to organize this event.",
     requiredError:"Please fill in this field.", emailError:"Please check your email address.", phoneError:"Please check your mobile number.", registrationNumberError:"Please check your 13-digit registration number.", invalidError:"Please check your details.",
@@ -148,8 +161,8 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
         <figure className={styles.artwork}>
-          <a className={styles.posterLink} href="/images/connect/byus-day/poster-enter-tech-en.webp" target="_blank" rel="noopener noreferrer">
-            <Image src="/images/connect/byus-day/poster-enter-tech-en.webp" alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
+          <a className={styles.posterLink} href={POSTER_SRC} target="_blank" rel="noopener noreferrer">
+            <Image src={POSTER_SRC} alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
             <span className={styles.posterCaption}>{t.posterLink}</span>
           </a>
         </figure>
@@ -157,6 +170,11 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <section className={styles.schedule} aria-labelledby="schedule-title">
           <h2 id="schedule-title">{t.evening}</h2>
           <dl><div><dt>{t.program}</dt><dd>18:30 <span>—</span> 21:30</dd></div><div><dt>{t.afterparty}</dt><dd>21:30 <span>—</span> 24:00</dd></div></dl>
+          <div className={styles.program}>
+            <h3>{t.programTitle}</h3>
+            <ol>{t.programSteps.map(step => <li key={step}>{step}</li>)}</ol>
+            <p className={styles.afterpartyProgram}>{t.afterparty} · {t.afterpartyProgram}</p>
+          </div>
           <p className={styles.scheduleNote}>{t.scheduleNote}</p>
         </section>
         <section className={styles.venue} aria-labelledby="venue-title"><MapPin size={22} aria-hidden="true" /><div>
@@ -177,6 +195,12 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
             <legend className={styles.srOnly}>{t.formTitle}</legend>
             <div className={styles.pair}>{field("koreanName",{ placeholder:t.koreanNamePlaceholder })}{field("englishName",{ placeholder:t.englishNamePlaceholder })}</div>
             {field("phone",{ type:"tel", placeholder:"+82 10-1234-5678", autoComplete:"tel", maxLength:30 })}
+            <section className={styles.securityNotice} aria-labelledby="entry-security-title">
+              <h3 id="entry-security-title"><ShieldCheck size={18} aria-hidden="true" />{t.securityTitle}</h3>
+              <p>{t.entryRequired}</p><p>{t.entryPurpose}</p>
+              <p className={styles.policyReference}>{t.accessPolicy}</p>
+              <a href={ACCESS_CONTROL_URL} target="_blank" rel="noopener noreferrer">{t.accessLink}<ArrowRight size={16} aria-hidden="true" /></a>
+            </section>
             {field("residentRegistrationNumber",{ type:"password", placeholder:"000000-0000000", inputMode:"numeric", pattern:"[0-9]{6}-?[0-9]{7}", maxLength:14 })}
             <div className={styles.pair}>{field("affiliation",{ placeholder:t.affiliationPlaceholder, maxLength:120 })}{field("occupation",{ placeholder:t.occupationPlaceholder, maxLength:120 })}</div>
             {field("email",{ type:"email", placeholder:"you@example.com", autoComplete:"email", maxLength:254 })}
@@ -188,7 +212,8 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
             <div className={styles.privacy}>
               <label className={styles.consent}><input type="checkbox" name="consent" required aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "rsvp-consent-error" : undefined} /><span>{t.consent}</span></label>
               {errors.consent && <p id="rsvp-consent-error" className={styles.fieldError}>{errors.consent}</p>}
-              <details><summary>{t.privacyTitle}</summary><div className={styles.privacyCopy}><p>{t.privacyController}</p><p>{t.privacyPurpose}</p><p>{t.privacyItems}</p><p>{t.privacyRetention}</p><p>{t.privacyRefusal}</p></div></details>
+              <details><summary>{t.privacyTitle}</summary><div className={styles.privacyCopy}><p>{t.privacyController}</p><p>{t.privacyPurpose}</p><p>{t.privacyItems}</p><p>{t.privacyRecipient}</p><p>{t.privacyRetention}</p><p>{t.privacyRefusal}</p></div></details>
+              <details><summary>{t.registrationPrivacyTitle}</summary><div className={styles.privacyCopy}><p>{t.privacyController}</p><p>{t.registrationPrivacyItems}</p><p>{t.registrationPrivacyPurpose}</p><p>{t.privacyRecipient}</p><p>{t.privacyRetention}</p><p>{t.registrationRefusal}</p><p>{t.accessPolicy}</p></div></details>
             </div>
           </fieldset>
           {failure && <p className={styles.error} role="alert">{failure}</p>}

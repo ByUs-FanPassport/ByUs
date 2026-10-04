@@ -28,12 +28,25 @@
 .seal{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;width:94px;height:94px;border:1px solid currentColor;border-radius:50%;outline:1px solid #68192365;outline-offset:-6px;transform:rotate(-12deg);font-family:Georgia,"Times New Roman",serif;font-size:10px;letter-spacing:.04em;line-height:1.15}
 .seal b{font-size:33px;line-height:1}
 .schedule{padding:24px 0}
-.schedule h2,.venue h2{margin:0;font-size:20px;line-height:1.5;font-weight:750}
+.schedule h2,.venue h2{margin:0;font-size:24px;line-height:1.5;font-weight:750}
 .schedule dl{margin:16px 0 0}
 .schedule dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:6px 0}
 .schedule dt{font-size:16px;color:var(--event-muted)}
 .schedule dd{margin:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 .schedule dd span{padding-inline:4px;color:#93766c;font-size:16px}
+ .program{margin-top:20px;padding-top:20px;border-top:1px solid #68192320}
+.program h3{margin:0;font-size:16px;font-weight:700;line-height:1.5}
+.program ol{display:grid;gap:10px;margin:12px 0 0;padding:0;list-style:none;counter-reset:program}
+.program li{display:flex;align-items:baseline;gap:12px;font-size:16px;line-height:1.6;counter-increment:program}
+.program li::before{content:counter(program,decimal-leading-zero);flex:none;font-size:13px;font-variant-numeric:tabular-nums;color:var(--event-muted)}
+.afterpartyProgram{margin:16px 0 0;font-size:16px;font-weight:600;line-height:1.6}
+.securityNotice{padding:16px;border:1px solid #68192330;border-radius:8px;background:#f5eee2}
+.securityNotice h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:16px;line-height:1.5;font-weight:700}
+.securityNotice h3 svg{flex:none}
+.securityNotice p{margin:6px 0 0;font-size:16px;line-height:1.65}
+.securityNotice .policyReference{margin-top:12px;font-size:13px;color:var(--event-muted)}
+.securityNotice a{display:flex;align-items:center;gap:8px;min-height:44px;margin-top:4px;font-size:13px;line-height:1.6;text-decoration:underline;text-underline-offset:4px}
+.securityNotice a svg{flex:none}
 .scheduleNote{margin:14px 0 0;color:var(--event-muted);font-size:14px;line-height:1.6}
 .venue{display:flex;align-items:flex-start;gap:12px;padding-top:24px;border-top:1px solid #68192330}
 .venue>svg{flex:none;margin-top:4px}
@@ -66,8 +79,9 @@
 .privacy summary::after{content:"+";margin-left:8px;font-size:18px;text-decoration:none}
 .privacy details[open] summary::after{content:"−"}
 .privacyCopy{padding:12px 16px;border-left:2px solid #bbaa97;color:var(--event-muted)}
-.privacyCopy p{margin:0 0 8px;font-size:13px;line-height:1.65}
+.privacyCopy p{margin:0 0 8px;font-size:16px;line-height:1.65}
 .privacyCopy p:last-child{margin-bottom:0}
+.page:lang(ko) .introduction,.page:lang(ko) .securityNotice p,.page:lang(ko) .privacyCopy p{word-break:keep-all;overflow-wrap:anywhere}
 .submit{margin-top:20px;min-height:54px!important;border:1px solid var(--event-ink)!important;border-radius:8px!important;background:var(--event-ink)!important;color:#fffaf2!important;font-size:16px!important}
 .submit:disabled{opacity:.65}
 .security{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin:14px 0 0;font-size:13px;line-height:1.5;text-align:center;color:var(--event-muted)}

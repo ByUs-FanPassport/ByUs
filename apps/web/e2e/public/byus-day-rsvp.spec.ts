@@ -36,7 +36,7 @@ async function fillRsvp(page: Page) {
 test("shows the complete English poster in both languages and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/byus-day?locale=${locale}`);
-    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-enter-tech-en.webp"]');
+    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-security-en-20261004.webp"]');
     const poster = posterLink.getByRole("img");
     await expect(poster).toBeVisible();
     await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
@@ -49,8 +49,32 @@ test("shows the complete English poster in both languages and opens the original
     expect(geometry.top).toBeGreaterThanOrEqual(geometry.containerTop);
     expect(geometry.bottom).toBeLessThanOrEqual(geometry.containerBottom);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    const security = page.getByRole("region", { name: "SECURITY NOTICE" });
+    await expect(security).toBeVisible();
+    await expect(security).toContainText("USFKI 5200.08A CH1");
+    const officialLink = security.getByRole("link");
+    await expect(officialLink).toHaveAttribute("href", "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control");
+    await expect(officialLink).toHaveAttribute("target", "_blank");
+    await officialLink.focus();
+    await expect(officialLink).toBeFocused();
+    expect(await officialLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+    await expect(page.locator("#schedule-title").locator("..").locator("ol li")).toHaveCount(5);
+    await expect(page.getByText(locale === "ko" ? "네트워킹·래플" : "Networking & raffle", { exact: false })).toBeVisible();
+    const privacy = page.locator("details");
+    await expect(privacy).toHaveCount(2);
+    for (const section of await privacy.all()) await section.locator("summary").click();
+    await expect(privacy.nth(0)).toContainText(locale === "ko" ? "국적" : "nationality");
+    await expect(privacy.nth(0)).not.toContainText(locale === "ko" ? "주민등록번호" : "resident registration number");
+    await expect(privacy.nth(1)).toContainText(locale === "ko" ? "주민등록번호 13자리" : "13-digit Korean resident registration number");
+    for (const section of await privacy.all()) {
+      await expect(section).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
+      await expect(section).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
+      await expect(section).not.toContainText(locale === "ko" ? "1개월" : "one month");
+    }
+    await expect(page.locator('input[type="checkbox"]')).toHaveCount(1);
     await expect(page.locator('[name="consent"]')).toHaveAttribute("required", "");
     await expect(page.locator('[name="consent"]')).not.toBeChecked();
+    await page.keyboard.press("Tab");
     await posterLink.focus();
     await expect(posterLink).toBeFocused();
     expect(await posterLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
@@ -60,7 +84,7 @@ test("shows the complete English poster in both languages and opens the original
     await posterLink.click();
     const original = await opened;
     await original.waitForLoadState("load");
-    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-enter-tech-en\.webp$/);
+    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-security-en-20261004\.webp$/);
     await expect(original.locator("img")).toBeVisible();
     await original.close();
   }

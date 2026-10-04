@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "ByUs Day 참가 신청 페이지에 최신 포스터와 프로그램 소개를 반영했어요.",
+    "주민등록번호 입력 전에 기지 출입 목적과 공식 안내 링크를 확인할 수 있어요.",
+    "일반 개인정보와 주민등록번호 안내를 나누고, 제공처를 용산미군기지 출입 담당부서로 표시했어요.",
+    "모든 신청 정보는 행사 다음 날인 10월 23일에 파기하는 것으로 안내해요.",
+    "첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-rsvp-desktop.png",
+    "release-notes/images/2026-10-04-byus-day-rsvp-mobile.png"
+  ]
+}
