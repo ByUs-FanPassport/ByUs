@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { ArrowLeft, ArrowRight, Check, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, MapPin, ShieldCheck, X } from "lucide-react";
 import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
+import { rememberOverlayTrigger } from "@/components/ui/overlay/focus-return";
+import { ResidentRegistrationNumberField } from "./resident-registration-number-field";
 import styles from "./byus-day-screen.module.css";
 
 const POSTER_SRC = "/images/connect/byus-day/poster-access-policy-en-20261004.webp";
@@ -26,7 +29,7 @@ const copy = {
     programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
     securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로 사용됩니다.",
     accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:"출입절차 규정 · 새 탭에서 보기",
-    registrationPrivacyTitle:"주민등록번호 처리 안내", registrationPrivacyItems:"항목: 주민등록번호 13자리", registrationPrivacyPurpose:"목적: 미군기지 출입 승인 및 신원 확인",
+    registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:"보유기간: 출입 절차 완료 후 지체 없이 파기",
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
     vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
@@ -36,14 +39,15 @@ const copy = {
     taxiNote:"택시를 이용하시면 위 주소의 Gate 1 주변에서 내려 주세요.", mapIntro:"출입구 주변 참고 위치를 지도에서 확인하세요.", naverMap:"네이버 지도", googleMap:"Google Maps", newTab:"새 탭에서 보기",
     arrivalNote:"위 경로는 호텔의 일반 방문 안내입니다. 행사 출입구·집합 위치와 입장 절차는 신청자에게 별도로 안내합니다.", officialDirections:"호텔 공식 길 안내",
     formTitle:"참가 신청", formDescription:"아래 정보를 남겨 주세요. 행사와 출입 안내를 전해 드릴게요.",
-    required:"모든 항목 필수", koreanName:"한글 이름", englishName:"영어 이름", phone:"휴대폰 번호", phoneHelp:"해외 번호는 국가번호부터 입력해 주세요.",
-    residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"출입 승인 및 신원 확인을 위한 필수정보입니다.",
-    affiliation:"소속", occupation:"직업", email:"이메일", nationality:"국적", chooseCountry:"국적을 선택해 주세요",
-    koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"회사 또는 단체명", occupationPlaceholder:"직업 또는 맡고 있는 일",
-    consent:"개인정보 수집·이용에 동의합니다.", privacyTitle:"일반 개인정보 수집·이용 안내", privacyController:"처리자: 샐리랩(ByUs)",
+    required:"모든 항목 필수", fieldRequired:"필수", koreanName:"한글 이름", englishName:"영어 이름", phone:"휴대폰 번호", phoneHelp:"해외 번호는 국가번호부터 입력해 주세요.",
+    residentRegistrationNumber:"주민등록번호", registrationNumberHelp:"출입 승인 및 신원 확인을 위한 필수정보입니다. 앞 7자리만 표시되며, 눈 아이콘으로 전체 번호를 확인할 수 있습니다.",
+    registrationPartLabels:["주민등록번호 앞 6자리", "주민등록번호 뒤 첫 자리", "주민등록번호 뒤 나머지 6자리"], showRegistrationNumber:"주민등록번호 전체 보기", hideRegistrationNumber:"주민등록번호 뒷자리 가리기",
+    affiliation:"소속", occupation:"직책", email:"이메일", nationality:"국적", chooseCountry:"국적을 선택해 주세요",
+    koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"회사 또는 단체명", occupationPlaceholder:"예: 대표, 팀장, 프로듀서",
+    consent:"개인정보 수집·이용에 동의합니다.", privacyTitle:"일반 개인정보 수집·이용 안내", privacyController:"개인정보 처리자: ByUs의 운영사 셀리랩", closePrivacy:"닫기",
     privacyPurpose:"목적: 참가 신청 접수, 행사 안내, 기지 출입 명단 제출",
-    privacyItems:"항목: 한글·영어 이름, 휴대폰 번호, 소속, 직업, 이메일, 국적",
-    privacyRetention:"보유·파기: 행사 익일인 2026년 10월 23일에 모든 신청 정보를 파기합니다.",
+    privacyItems:"항목: 한글·영어 이름, 휴대폰 번호, 소속, 직책, 이메일, 국적",
+    privacyRetention:"보유·파기: 일반 개인정보는 행사 익일인 2026년 10월 23일에 파기합니다.",
     privacyRefusal:"동의를 거부할 수 있으며, 동의하지 않으면 참가 신청을 접수할 수 없습니다.",
     submit:"참가 신청하기", submitting:"신청을 접수하고 있어요…", secure:"신청 정보는 행사 운영을 위해서만 사용합니다.",
     requiredError:"이 항목을 입력해 주세요.", emailError:"이메일 주소를 확인해 주세요.", phoneError:"휴대폰 번호를 확인해 주세요.", registrationNumberError:"주민등록번호 13자리를 확인해 주세요.", invalidError:"입력한 정보를 확인해 주세요.",
@@ -60,7 +64,7 @@ const copy = {
     programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
     securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used for access approval and identity verification.",
     accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:"Installation Access Policy · Opens in a new tab",
-    registrationPrivacyTitle:"Resident registration number processing", registrationPrivacyItems:"Information: 13-digit Korean resident registration number", registrationPrivacyPurpose:"Purpose: military base access approval and identity verification",
+    registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:"Retention: deleted without delay after the access procedure is complete",
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
     vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
@@ -70,14 +74,15 @@ const copy = {
     taxiNote:"If taking a taxi, get off near Gate 1 at the address above.", mapIntro:"View the area around the entrance on a map.", naverMap:"Naver Map", googleMap:"Google Maps", newTab:"Opens in a new tab",
     arrivalNote:"These are the hotel’s general visitor directions. We’ll send registered guests the event entrance, meeting point, and entry instructions separately.", officialDirections:"Official hotel directions",
     formTitle:"RSVP", formDescription:"Leave your details below. We’ll be in touch with event and entry information.",
-    required:"All fields required", koreanName:"Korean name", englishName:"English name", phone:"Mobile number", phoneHelp:"Include your country code for numbers outside Korea.",
-    residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Required for base access approval and identity verification.",
-    affiliation:"Company / organization", occupation:"Occupation / role", email:"Email", nationality:"Nationality", chooseCountry:"Select your nationality",
-    koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"Company or organization", occupationPlaceholder:"Your occupation or role",
-    consent:"I agree to the collection and use of my personal information.", privacyTitle:"Personal information collection and use", privacyController:"Controller: Sallylab (ByUs)",
+    required:"All fields required", fieldRequired:"Required", koreanName:"Korean name", englishName:"English name", phone:"Mobile number", phoneHelp:"Include your country code for numbers outside Korea.",
+    residentRegistrationNumber:"Resident registration number", registrationNumberHelp:"Required for base access approval and identity verification. Only the first 7 digits are shown. Use the eye icon to check the full number.",
+    registrationPartLabels:["First 6 digits of registration number", "First digit after the hyphen", "Last 6 digits of registration number"], showRegistrationNumber:"Show full registration number", hideRegistrationNumber:"Hide last 6 digits of registration number",
+    affiliation:"Company / organization", occupation:"Job title", email:"Email", nationality:"Nationality", chooseCountry:"Select your nationality",
+    koreanNamePlaceholder:"홍길동", englishNamePlaceholder:"Gildong Hong", affiliationPlaceholder:"Company or organization", occupationPlaceholder:"e.g. CEO, Producer",
+    consent:"I agree to the collection and use of my personal information.", privacyTitle:"Personal information collection and use", privacyController:"Personal information controller: Sallylab, the operator of ByUs", closePrivacy:"Close",
     privacyPurpose:"Purpose: RSVP processing, event communication, and submission of the base entry list",
-    privacyItems:"Information: Korean and English names, mobile number, company, occupation, email, and nationality",
-    privacyRetention:"Retention and deletion: all RSVP information will be deleted on October 23, 2026, the day after the event.",
+    privacyItems:"Information: Korean and English names, mobile number, company, job title, email, and nationality",
+    privacyRetention:"Retention and deletion: general personal information will be deleted on October 23, 2026, the day after the event.",
     privacyRefusal:"You may decline consent. We cannot process your RSVP without it.",
     submit:"Send my RSVP", submitting:"Sending your RSVP…", secure:"Your details are used only to organize this event.",
     requiredError:"Please fill in this field.", emailError:"Please check your email address.", phoneError:"Please check your mobile number.", registrationNumberError:"Please check your 13-digit registration number.", invalidError:"Please check your details.",
@@ -97,6 +102,8 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   const [failure, setFailure] = useState("");
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [privacyDialog, setPrivacyDialog] = useState<"general" | "registration" | null>(null);
+  const closePrivacyRef = useRef<HTMLButtonElement>(null);
   const submission = useRef<{ key: string; payload: string } | null>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { if (accepted) successRef.current?.focus(); }, [accepted]);
@@ -107,15 +114,17 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
     const form = event.currentTarget;
     const data = new FormData(form);
     const fieldErrors: Partial<Record<FieldName,string>> = {};
-    for (const element of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select")) {
+    for (const element of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input[name], select[name]")) {
       if (!element.validity.valid || (element.type !== "checkbox" && !element.value.trim())) fieldErrors[element.name as FieldName] = element.validity.typeMismatch ? t.emailError : element.validity.patternMismatch ? t.registrationNumberError : t.requiredError;
     }
     const phone = parsePhoneNumberFromString(String(data.get("phone") ?? "").trim(), { defaultCountry:"KR", extract:false });
     if (!phone?.isValid() || phone.ext) fieldErrors.phone = t.phoneError;
+    if (!/^\d{6}-\d{7}$/.test(String(data.get("residentRegistrationNumber") ?? ""))) fieldErrors.residentRegistrationNumber = t.registrationNumberError;
     setErrors(fieldErrors);
     setFailure("");
     if (Object.keys(fieldErrors).length) {
-      form.querySelector<HTMLElement>('[name="' + Object.keys(fieldErrors)[0] + '"]')?.focus();
+      const firstError = Object.keys(fieldErrors)[0];
+      form.querySelector<HTMLElement>(firstError === "residentRegistrationNumber" ? "#rsvp-residentRegistrationNumber" : '[name="' + firstError + '"]')?.focus();
       return;
     }
     const values = {
@@ -144,15 +153,14 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
     finally { setPending(false); }
   }
 
-  function field(name: Exclude<FieldName,"nationality" | "consent">, options: { type?:"email" | "tel" | "password"; placeholder?:string; autoComplete?:string; maxLength?:number; inputMode?:"numeric"; pattern?:string } = {}) {
+  function field(name: Exclude<FieldName,"nationality" | "consent" | "residentRegistrationNumber">, options: { type?:"email" | "tel"; placeholder?:string; autoComplete?:string; maxLength?:number } = {}) {
     const error = errors[name];
     return <div className={styles.field}>
-      <label htmlFor={"rsvp-" + name}>{t[name]}</label>
+      <label htmlFor={"rsvp-" + name}>{t[name]}<span className={styles.fieldRequired} aria-hidden="true">{t.fieldRequired}</span></label>
       <input id={"rsvp-" + name} name={name} required maxLength={options.maxLength ?? 80} type={options.type ?? "text"}
-        placeholder={options.placeholder} autoComplete={options.autoComplete ?? "off"} inputMode={options.inputMode} pattern={options.pattern} aria-invalid={error ? true : undefined}
-        aria-describedby={[error ? "rsvp-" + name + "-error" : "", name === "phone" ? "rsvp-phone-help" : "", name === "residentRegistrationNumber" ? "rsvp-registration-number-help" : ""].filter(Boolean).join(" ") || undefined} />
+        placeholder={options.placeholder} autoComplete={options.autoComplete ?? "off"} aria-invalid={error ? true : undefined}
+        aria-describedby={[error ? "rsvp-" + name + "-error" : "", name === "phone" ? "rsvp-phone-help" : ""].filter(Boolean).join(" ") || undefined} />
       {name === "phone" && <p id="rsvp-phone-help" className={styles.hint}>{t.phoneHelp}</p>}
-      {name === "residentRegistrationNumber" && <p id="rsvp-registration-number-help" className={styles.hint}>{t.registrationNumberHelp}</p>}
       {error && <p id={"rsvp-" + name + "-error"} className={styles.fieldError}>{error}</p>}
     </div>;
   }
@@ -239,19 +247,19 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
               <p className={styles.policyReference}>{t.accessPolicy}</p>
               <a href={ACCESS_CONTROL_URL} target="_blank" rel="noopener noreferrer">{t.accessLink}<ArrowRight size={16} aria-hidden="true" /></a>
             </section>
-            {field("residentRegistrationNumber",{ type:"password", placeholder:"000000-0000000", inputMode:"numeric", pattern:"[0-9]{6}-?[0-9]{7}", maxLength:14 })}
+            <ResidentRegistrationNumberField label={t.residentRegistrationNumber} requiredLabel={t.fieldRequired} partLabels={t.registrationPartLabels as [string, string, string]} showLabel={t.showRegistrationNumber} hideLabel={t.hideRegistrationNumber} help={t.registrationNumberHelp} error={errors.residentRegistrationNumber} />
             <div className={styles.pair}>{field("affiliation",{ placeholder:t.affiliationPlaceholder, maxLength:120 })}{field("occupation",{ placeholder:t.occupationPlaceholder, maxLength:120 })}</div>
             {field("email",{ type:"email", placeholder:"you@example.com", autoComplete:"email", maxLength:254 })}
-            <div className={styles.field}><label htmlFor="rsvp-nationality">{t.nationality}</label>
+            <div className={styles.field}><label htmlFor="rsvp-nationality">{t.nationality}<span className={styles.fieldRequired} aria-hidden="true">{t.fieldRequired}</span></label>
               <select id="rsvp-nationality" name="nationality" required defaultValue="" aria-invalid={errors.nationality ? true : undefined} aria-describedby={errors.nationality ? "rsvp-nationality-error" : undefined}>
                 <option value="" disabled>{t.chooseCountry}</option>{countries.map(country => <option key={country.code} value={country.code}>{country.name}</option>)}
               </select>{errors.nationality && <p id="rsvp-nationality-error" className={styles.fieldError}>{errors.nationality}</p>}
             </div>
             <div className={styles.privacy}>
-              <label className={styles.consent}><input type="checkbox" name="consent" required aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "rsvp-consent-error" : undefined} /><span>{t.consent}</span></label>
+              <label className={styles.consent}><input type="checkbox" name="consent" required aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "rsvp-consent-error" : undefined} /><span>{t.consent}<span className={styles.fieldRequired} aria-hidden="true">{t.fieldRequired}</span></span></label>
               {errors.consent && <p id="rsvp-consent-error" className={styles.fieldError}>{errors.consent}</p>}
-              <details><summary>{t.privacyTitle}</summary><div className={styles.privacyCopy}><p>{t.privacyController}</p><p>{t.privacyPurpose}</p><p>{t.privacyItems}</p><p>{t.privacyRecipient}</p><p>{t.privacyRetention}</p><p>{t.privacyRefusal}</p></div></details>
-              <details><summary>{t.registrationPrivacyTitle}</summary><div className={styles.privacyCopy}><p>{t.privacyController}</p><p>{t.registrationPrivacyItems}</p><p>{t.registrationPrivacyPurpose}</p><p>{t.privacyRecipient}</p><p>{t.privacyRetention}</p><p>{t.registrationRefusal}</p><p>{t.accessPolicy}</p></div></details>
+              <button type="button" className={styles.privacyLink} aria-haspopup="dialog" onClick={event => { rememberOverlayTrigger(event.currentTarget); setPrivacyDialog("general"); }}>{t.privacyTitle}<ChevronRight size={18} aria-hidden="true" /></button>
+              <button type="button" className={styles.privacyLink} aria-haspopup="dialog" onClick={event => { rememberOverlayTrigger(event.currentTarget); setPrivacyDialog("registration"); }}>{t.registrationPrivacyTitle}<ChevronRight size={18} aria-hidden="true" /></button>
             </div>
           </fieldset>
           {failure && <p className={styles.error} role="alert">{failure}</p>}
@@ -262,5 +270,14 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
       </section>
     </main>
     <footer className={styles.footer}><span className={styles.wordmark}>ByUs</span><span>{t.footer}</span><span>SEOUL, 2026</span></footer>
+    <AccessibleOverlay open={privacyDialog !== null} onClose={() => setPrivacyDialog(null)} labelledBy="rsvp-privacy-dialog-title" initialFocusRef={closePrivacyRef} backdropClassName={styles.privacyBackdrop} contentClassName={styles.privacyDialog} contentAs="section">
+      <div className={styles.privacyDialogHeading}><h2 id="rsvp-privacy-dialog-title">{privacyDialog === "general" ? t.privacyTitle : t.registrationPrivacyTitle}</h2><button ref={closePrivacyRef} type="button" aria-label={t.closePrivacy} onClick={() => setPrivacyDialog(null)}><X size={20} aria-hidden="true" /></button></div>
+      <div className={styles.privacyCopy}>
+        <p>{t.privacyController}</p>
+        {privacyDialog === "general" ? <><p>{t.privacyPurpose}</p><p>{t.privacyItems}</p></> : <><p>{t.registrationPrivacyItems}</p><p>{t.registrationPrivacyPurpose}</p></>}
+        <p>{t.privacyRecipient}</p><p>{privacyDialog === "general" ? t.privacyRetention : t.registrationPrivacyRetention}</p><p>{privacyDialog === "general" ? t.privacyRefusal : t.registrationRefusal}</p>
+        {privacyDialog === "registration" && <p>{t.accessPolicy}</p>}
+      </div>
+    </AccessibleOverlay>
   </div>;
 }

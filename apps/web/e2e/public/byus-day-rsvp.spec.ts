@@ -27,7 +27,9 @@ async function fillRsvp(page: Page) {
   await page.locator('[name="koreanName"]').fill("홍길동");
   await page.locator('[name="englishName"]').fill("Gildong Hong");
   await page.locator('[name="phone"]').fill("010-1234-5678");
-  await page.locator('[name="residentRegistrationNumber"]').fill("900101-1234567");
+  await page.locator('#rsvp-residentRegistrationNumber').fill("900101");
+  await page.locator('#rsvp-registration-part-1').fill("1");
+  await page.locator('#rsvp-registration-part-2').fill("234567");
   await page.locator('[name="affiliation"]').fill("샐리랩");
   await page.locator('[name="occupation"]').fill("프로듀서");
   await page.locator('[name="email"]').fill("guest@example.com");
@@ -86,17 +88,39 @@ test("shows the complete English poster in both languages and opens the original
     await expect(mapLinks.nth(1)).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);
     await expect(mapLinks.nth(2)).toHaveAttribute("href", "https://www.dragonhilllodge.com/your-stay/getting-here");
     for (const link of await mapLinks.all()) await expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    const privacy = page.locator("details");
-    await expect(privacy).toHaveCount(2);
-    for (const section of await privacy.all()) await section.locator("summary").click();
-    await expect(privacy.nth(0)).toContainText(locale === "ko" ? "국적" : "nationality");
-    await expect(privacy.nth(0)).not.toContainText(locale === "ko" ? "주민등록번호" : "resident registration number");
-    await expect(privacy.nth(1)).toContainText(locale === "ko" ? "주민등록번호 13자리" : "13-digit Korean resident registration number");
-    for (const section of await privacy.all()) {
-      await expect(section).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
-      await expect(section).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
-      await expect(section).not.toContainText(locale === "ko" ? "1개월" : "one month");
+    await expect(page.locator("details")).toHaveCount(0);
+    const privacyTitles = locale === "ko" ? ["일반 개인정보 수집·이용 안내", "[필수] 주민등록번호 처리 안내"] : ["Personal information collection and use", "[Required] Resident registration number processing"];
+    for (const [index, title] of privacyTitles.entries()) {
+      const trigger = page.getByRole("button", { name: title, exact: true });
+      await trigger.click();
+      const dialog = page.getByRole("dialog", { name: title });
+      await expect(dialog).toBeVisible();
+      await expect(dialog).toContainText(locale === "ko" ? "ByUs의 운영사 셀리랩" : "Sallylab, the operator of ByUs");
+      await expect(dialog).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
+      if (index === 0) {
+        await expect(dialog).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
+        await expect(dialog).toContainText(locale === "ko" ? "국적" : "nationality");
+        await expect(dialog).toContainText(locale === "ko" ? "직책" : "job title");
+        await expect(dialog).not.toContainText(locale === "ko" ? "주민등록번호" : "resident registration number");
+      } else {
+        await expect(dialog).toContainText(locale === "ko" ? "처리항목: 주민등록번호" : "Information processed: Korean resident registration number");
+        await expect(dialog).toContainText(locale === "ko" ? "미군기지 출입자 확인 및 출입명단 제출" : "verifying base visitors and submitting the base entry list");
+        await expect(dialog).toContainText(locale === "ko" ? "출입 절차 완료 후 지체 없이 파기" : "deleted without delay after the access procedure is complete");
+        await expect(dialog).not.toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
+      }
+      const close = dialog.getByRole("button", { name: locale === "ko" ? "닫기" : "Close", exact: true });
+      await expect(close).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(close).toBeFocused();
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await dialog.screenshot({ path: testInfo.outputPath(`${locale}-privacy-${index}.png`) });
+      if (index === 0) await page.keyboard.press("Escape");
+      else await close.click();
+      await expect(dialog).not.toBeVisible();
+      await expect(trigger).toBeFocused();
     }
+    await expect(page.getByRole("textbox", { name: locale === "ko" ? "직책" : "Job title", exact: true })).toBeVisible();
+    await expect(page.locator('#rsvp label span[aria-hidden="true"]')).toHaveCount(9);
     await expect(page.locator('input[type="checkbox"]')).toHaveCount(1);
     await expect(page.locator('[name="consent"]')).toHaveAttribute("required", "");
     await expect(page.locator('[name="consent"]')).not.toBeChecked();
@@ -133,9 +157,9 @@ test("validates required fields and announces errors without sending a request",
   await expect(page.getByText("휴대폰 번호를 확인해 주세요.", { exact: true })).toBeVisible();
   expect(sent).toBe(false);
   await page.locator('[name="phone"]').fill("010-1234-5678");
-  await page.locator('[name="residentRegistrationNumber"]').fill("123");
+  await page.locator('#rsvp-residentRegistrationNumber').fill("123");
   await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.locator('[name="residentRegistrationNumber"]')).toBeFocused();
+  await expect(page.locator('#rsvp-residentRegistrationNumber')).toBeFocused();
   await expect(page.getByText("주민등록번호 13자리를 확인해 주세요.", { exact: true })).toBeVisible();
   expect(sent).toBe(false);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -187,4 +211,61 @@ test("supports English, mobile keyboard focus, long names, and closed submission
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await testInfo.attach("native-rsvp-closed-english", { body: await page.screenshot({ fullPage:true }), contentType:"image/png" });
+});
+
+test("masks only the last six digits and preserves typing, editing, paste and reveal", async ({ page }) => {
+  for (const locale of ["ko", "en"]) {
+    await page.goto(`/connect/byus-day?locale=${locale}`);
+    const birth = page.locator("#rsvp-residentRegistrationNumber");
+    const first = page.locator("#rsvp-registration-part-1");
+    const last = page.locator("#rsvp-registration-part-2");
+    const complete = page.locator('[name="residentRegistrationNumber"]');
+    await birth.focus();
+    await page.keyboard.type("9001011234567");
+    await expect(birth).toHaveValue("900101");
+    await expect(first).toHaveValue("1");
+    await expect(last).toHaveValue("234567");
+    await expect(complete).toHaveValue("900101-1234567");
+    await expect(birth).toHaveAttribute("type", "text");
+    await expect(first).toHaveAttribute("type", "text");
+    await expect(last).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: locale === "ko" ? "주민등록번호 전체 보기" : "Show full registration number", exact: true }).click();
+    await expect(last).toHaveAttribute("type", "text");
+    const hide = page.getByRole("button", { name: locale === "ko" ? "주민등록번호 뒷자리 가리기" : "Hide last 6 digits of registration number", exact: true });
+    await expect(hide).toHaveAttribute("aria-pressed", "true");
+    await hide.click();
+    await expect(last).toHaveAttribute("type", "password");
+    await expect(complete).toHaveValue("900101-1234567");
+    await birth.fill("901231");
+    await last.fill("456789");
+    await expect(complete).toHaveValue("901231-1456789");
+    await birth.evaluate(element => {
+      const data = new DataTransfer();
+      data.setData("text/plain", "930202-3456789");
+      // Firefox drops constructor-supplied data for untrusted ClipboardEvents.
+      const paste = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(paste, "clipboardData", { value: data });
+      element.dispatchEvent(paste);
+    });
+    await expect(complete).toHaveValue("930202-3456789");
+    await first.evaluate(element => {
+      const data = new DataTransfer();
+      data.setData("text/plain", "2345678");
+      const paste = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(paste, "clipboardData", { value: data });
+      element.dispatchEvent(paste);
+    });
+    await expect(complete).toHaveValue("930202-2345678");
+    await last.focus();
+    await last.evaluate(element => (element as HTMLInputElement).setSelectionRange(0, 0));
+    await page.keyboard.press("Backspace");
+    await expect(first).toBeFocused();
+    for (const control of [birth, first, last, page.getByRole("button", { name: locale === "ko" ? "주민등록번호 전체 보기" : "Show full registration number", exact: true })]) {
+      const rect = await control.boundingBox();
+      expect(rect!.width).toBeGreaterThanOrEqual(44);
+      expect(rect!.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
 });

@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "주민등록번호는 앞 7자리만 기본 표시하고 눈 아이콘으로 전체 번호를 확인할 수 있게 했어요.",
+    "소속 다음 항목을 직책으로 바꾸고 각 항목에 필수 표시를 붙였어요.",
+    "개인정보 안내를 팝업으로 열도록 바꾸고 ByUs의 운영사가 셀리랩임을 표시했어요.",
+    "주민등록번호는 출입 절차 완료 후 지체 없이, 일반 개인정보는 행사 익일에 파기하는 것으로 구분해 안내했어요.",
+    "첨부 이미지는 예시 번호를 입력한 로컬 검증 화면이에요."
+  ],
+  "path": "/connect/byus-day",
+  "images": [
+    "release-notes/images/2026-10-04-byus-day-form-usability.png",
+    "release-notes/images/2026-10-04-byus-day-registration-privacy.png"
+  ]
+}
