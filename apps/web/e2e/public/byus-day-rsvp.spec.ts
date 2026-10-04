@@ -63,10 +63,17 @@ test("shows the complete English poster in both languages and opens the original
     await officialLink.focus();
     await expect(officialLink).toBeFocused();
     expect(await officialLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
-    await expect(page.locator("#schedule-title").locator("..").locator("ol li")).toHaveText(locale === "ko" ? ["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"] : ["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"]);
+    await expect(page.locator('section[aria-labelledby="schedule-title"] ol li')).toHaveText(locale === "ko" ? ["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"] : ["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"]);
     await expect(page.getByText(locale === "ko" ? "네트워킹·래플" : "Networking & raffle", { exact: false })).toBeVisible();
     const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
     await expect(arrival).toBeVisible();
+    await expect(arrival.locator("details")).not.toHaveAttribute("open");
+    const directionsToggle = arrival.locator("summary");
+    await directionsToggle.focus();
+    await expect(directionsToggle).toBeFocused();
+    expect(await directionsToggle.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
+    await page.keyboard.press("Enter");
+    await expect(arrival.locator("details")).toHaveAttribute("open", "");
     await expect(arrival.getByRole("img", { name: locale === "ko" ? "Gate 1에서 호텔까지" : "From Gate 1 to the hotel" })).toBeVisible();
     const enlargedMap = arrival.getByRole("link", { name: locale === "ko" ? "약도 크게 보기" : "Enlarge the map" });
     await expect(enlargedMap).toHaveAttribute("href", `/images/connect/byus-day/gate-1-directions-${locale}-20261004-v2.svg`);
@@ -88,13 +95,17 @@ test("shows the complete English poster in both languages and opens the original
     await expect(mapLinks.nth(1)).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);
     await expect(mapLinks.nth(2)).toHaveAttribute("href", "https://www.dragonhilllodge.com/your-stay/getting-here");
     for (const link of await mapLinks.all()) await expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    await expect(page.locator("details")).toHaveCount(0);
+    await expect(page.locator("#rsvp details")).toHaveCount(0);
     const privacyTitles = locale === "ko" ? ["일반 개인정보 수집·이용 안내", "[필수] 주민등록번호 처리 안내"] : ["Personal information collection and use", "[Required] Resident registration number processing"];
     for (const [index, title] of privacyTitles.entries()) {
       const trigger = page.getByRole("button", { name: title, exact: true });
       await trigger.click();
       const dialog = page.getByRole("dialog", { name: title });
       await expect(dialog).toBeVisible();
+      // Contrast must be measured after the shared overlay fade has settled.
+      await dialog.evaluate(async element => {
+        await Promise.all(element.parentElement!.getAnimations({ subtree: true }).map(animation => animation.finished));
+      });
       await expect(dialog).toContainText(locale === "ko" ? "ByUs의 운영사 셀리랩" : "Sallylab, the operator of ByUs");
       await expect(dialog).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
       if (index === 0) {
@@ -267,5 +278,46 @@ test("masks only the last six digits and preserves typing, editing, paste and re
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
+});
+
+
+test("balances event sections and preserves directions disclosure and deep links", async ({ page }, testInfo) => {
+  for (const locale of ["ko", "en"]) {
+    await page.goto(`/connect/byus-day?locale=${locale}`);
+    const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
+    const disclosure = arrival.locator("details");
+    const toggle = arrival.locator("summary");
+    await expect(disclosure).not.toHaveAttribute("open");
+    await expect(arrival.getByRole("img")).not.toBeVisible();
+    const invitation = await page.getByRole("region", { name: "BYUS DAY", exact: true }).boundingBox();
+    const form = await page.locator("#rsvp").boundingBox();
+    const schedule = await page.locator('section[aria-labelledby="schedule-title"]').boundingBox();
+    const arrivalBox = await arrival.boundingBox();
+    if (page.viewportSize()!.width > 900) {
+      expect(Math.abs(invitation!.y - form!.y)).toBeLessThan(1);
+      expect(Math.abs(invitation!.height - form!.height)).toBeLessThan(400);
+      expect(schedule!.y).toBeGreaterThan(form!.y + form!.height);
+      expect(arrivalBox!.width).toBeGreaterThan(form!.width * 2);
+    }
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-balanced-collapsed.png`), fullPage: true });
+    await page.locator('nav a[href="#arrival-title"]').click();
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(arrival.getByRole("img")).toBeVisible();
+    await toggle.focus();
+    await page.keyboard.press("Space");
+    await expect(disclosure).not.toHaveAttribute("open");
+    await page.locator('nav a[href="#arrival-title"]').click();
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(arrival.getByRole("img")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await arrival.screenshot({ path: testInfo.outputPath(`${locale}-directions-expanded.png`) });
+    // Let the wallet SDK finish its background HEAD probe before navigating.
+    await page.waitForLoadState("networkidle");
+    await page.reload();
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(arrival.getByRole("img")).toBeVisible();
+    await page.waitForLoadState("networkidle");
   }
 });

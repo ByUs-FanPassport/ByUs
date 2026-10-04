@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, MapPin, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, MapPin, ShieldCheck, X } from "lucide-react";
 import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
 import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
@@ -103,10 +103,23 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [privacyDialog, setPrivacyDialog] = useState<"general" | "registration" | null>(null);
+  const arrivalRef = useRef<HTMLDetailsElement>(null);
   const closePrivacyRef = useRef<HTMLButtonElement>(null);
   const submission = useRef<{ key: string; payload: string } | null>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { if (accepted) successRef.current?.focus(); }, [accepted]);
+
+  useEffect(() => {
+    const revealArrival = () => {
+      if (window.location.hash === "#arrival-title" && arrivalRef.current) {
+        arrivalRef.current.open = true;
+        document.getElementById("arrival-title")?.scrollIntoView();
+      }
+    };
+    revealArrival();
+    window.addEventListener("hashchange", revealArrival);
+    return () => window.removeEventListener("hashchange", revealArrival);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -182,52 +195,18 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <h1 id="event-title" className={styles.title}>BYUS <span>DAY</span></h1>
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
+        <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time><p className={styles.day}>{t.date}</p></div><span className={styles.seal} aria-hidden="true">BYUS<br /><b>22</b><br />OCTOBER</span></div>
+        <nav className={styles.sectionLinks} aria-label={locale === "ko" ? "행사 안내" : "Event information"}>
+          <a href="#schedule-title">{t.programTitle}<ArrowRight size={16} aria-hidden="true" /></a>
+          <a href="#arrival-title" onClick={() => { if (arrivalRef.current) arrivalRef.current.open = true; }}>{t.arrivalTitle}<ArrowRight size={16} aria-hidden="true" /></a>
+        </nav>
         <figure className={styles.artwork}>
           <a className={styles.posterLink} href={POSTER_SRC} target="_blank" rel="noopener noreferrer">
             <Image src={POSTER_SRC} alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
             <span className={styles.posterCaption}>{t.posterLink}</span>
           </a>
         </figure>
-        <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time><p className={styles.day}>{t.date}</p></div><span className={styles.seal} aria-hidden="true">BYUS<br /><b>22</b><br />OCTOBER</span></div>
-        <section className={styles.schedule} aria-labelledby="schedule-title">
-          <h2 id="schedule-title">{t.evening}</h2>
-          <dl><div><dt>{t.program}</dt><dd>18:30 <span>—</span> 21:30</dd></div><div><dt>{t.afterparty}</dt><dd>21:30 <span>—</span> 24:00</dd></div></dl>
-          <div className={styles.program}>
-            <h3>{t.programTitle}</h3>
-            <ol>{t.programSteps.map(step => <li key={step}>{step}</li>)}</ol>
-            <p className={styles.afterpartyProgram}>{t.afterparty} · {t.afterpartyProgram}</p>
-          </div>
-          <p className={styles.scheduleNote}>{t.scheduleNote}</p>
-        </section>
-        <section className={styles.venue} aria-labelledby="venue-title"><MapPin size={22} aria-hidden="true" /><div>
-          <h2 id="venue-title">{t.venue}</h2><p className={styles.venueName}>Dragon Hill Lodge <span>(DHL)</span></p><p>{t.location}</p>
-          <div className={styles.accessNotes}><p>{t.vehicleEntry}</p><p>{t.vehicleRequest}</p><p>{t.vehicleApology}</p></div>
-          <p className={styles.venueNote}>{t.venueNote}</p>
-        </div></section>
-        <section className={styles.arrival} aria-labelledby="arrival-title">
-          <h2 id="arrival-title">{t.arrivalTitle}</h2>
-          <p>{t.arrivalIntro}</p>
-          <figure className={styles.arrivalMap}>
-            <a className={styles.mapEnlargeLink} href={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} target="_blank" rel="noopener noreferrer" aria-label={`${t.enlargeMap} · ${t.newTab}`}>
-              <Image src={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} alt={t.mapTitle} aria-describedby="arrival-map-description" width={905} height={520} sizes="(min-width: 1024px) 580px, 100vw" unoptimized />
-              <span className={styles.mapEnlargeLabel}>{t.enlargeMap}<ArrowRight size={16} aria-hidden="true" /></span>
-            </a>
-            <span id="arrival-map-description" className={styles.srOnly}>{t.mapDescription}</span>
-            <figcaption>{t.mapCaption}</figcaption>
-          </figure>
-          <ol className={styles.arrivalRoute}><li>{t.routeStation}</li><li>{t.routeWalk}</li><li>{t.routeGate}</li></ol>
-          <p>{t.alternateStation}</p>
-          <div className={styles.walkingSteps}><h3>{t.walkingTitle}</h3><ol>{t.walkingSteps.map(step => <li key={step}>{step}</li>)}</ol></div>
-          <p className={styles.gateAddress}>{t.gateAddress}</p>
-          <p>{t.taxiNote}</p>
-          <p>{t.mapIntro}</p>
-          <div className={styles.mapLinks}>
-            <a href={NAVER_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.naverMap} · ${t.newTab}`}>{t.naverMap}<ArrowRight size={16} aria-hidden="true" /></a>
-            <a href={GOOGLE_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.googleMap} · ${t.newTab}`}>{t.googleMap}<ArrowRight size={16} aria-hidden="true" /></a>
-          </div>
-          <p className={styles.arrivalNote}>{t.arrivalNote}</p>
-          <a className={styles.directionsSource} href={DIRECTIONS_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.officialDirections} · ${t.newTab}`}>{t.officialDirections}<ArrowRight size={16} aria-hidden="true" /></a>
-        </section>
+
       </section>
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>
         <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · BYUS DAY</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>
@@ -268,6 +247,52 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
           <p className={styles.security}><ShieldCheck size={16} aria-hidden="true" />{t.secure}</p>
         </form>}
       </section>
+      <div className={styles.eventDetails}>
+        <section className={styles.schedule} aria-labelledby="schedule-title">
+          <div className={styles.scheduleTimes}><h2 id="schedule-title">{t.evening}</h2>
+          <dl><div><dt>{t.program}</dt><dd>18:30 <span>—</span> 21:30</dd></div><div><dt>{t.afterparty}</dt><dd>21:30 <span>—</span> 24:00</dd></div></dl></div>
+          <div className={styles.program}>
+            <h3>{t.programTitle}</h3>
+            <ol>{t.programSteps.map(step => <li key={step}>{step}</li>)}</ol>
+            <p className={styles.afterpartyProgram}>{t.afterparty} · {t.afterpartyProgram}</p>
+          </div>
+          <p className={styles.scheduleNote}>{t.scheduleNote}</p>
+        </section>
+        <section className={styles.venue} aria-labelledby="venue-title"><MapPin size={22} aria-hidden="true" /><div>
+          <h2 id="venue-title">{t.venue}</h2><p className={styles.venueName}>Dragon Hill Lodge <span>(DHL)</span></p><p>{t.location}</p>
+          <div className={styles.accessNotes}><p>{t.vehicleEntry}</p><p>{t.vehicleRequest}</p><p>{t.vehicleApology}</p></div>
+          <p className={styles.venueNote}>{t.venueNote}</p>
+        </div></section>
+      </div>
+        <section className={styles.arrival} aria-labelledby="arrival-title">
+          <details ref={arrivalRef} className={styles.arrivalDisclosure}>
+          <summary><span><h2 id="arrival-title">{t.arrivalTitle}</h2><span className={styles.arrivalSummary}>{t.routeStation} · Gate 1</span></span><span className={styles.disclosureAction}><span className={styles.whenClosed}>{locale === "ko" ? "약도·상세 안내" : "Map & directions"}</span><span className={styles.whenOpen}>{locale === "ko" ? "접기" : "Show less"}</span><ChevronDown size={20} aria-hidden="true" /></span></summary>
+          <div className={styles.arrivalBody}><div>
+          <p>{t.arrivalIntro}</p>
+          <figure className={styles.arrivalMap}>
+            <a className={styles.mapEnlargeLink} href={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} target="_blank" rel="noopener noreferrer" aria-label={`${t.enlargeMap} · ${t.newTab}`}>
+              <Image src={`/images/connect/byus-day/gate-1-directions-${locale === "ko" ? "ko" : "en"}-20261004-v2.svg`} alt={t.mapTitle} aria-describedby="arrival-map-description" width={905} height={520} sizes="(min-width: 1024px) 580px, 100vw" unoptimized />
+              <span className={styles.mapEnlargeLabel}>{t.enlargeMap}<ArrowRight size={16} aria-hidden="true" /></span>
+            </a>
+            <span id="arrival-map-description" className={styles.srOnly}>{t.mapDescription}</span>
+            <figcaption>{t.mapCaption}</figcaption>
+          </figure>
+          </div><div>
+          <ol className={styles.arrivalRoute}><li>{t.routeStation}</li><li>{t.routeWalk}</li><li>{t.routeGate}</li></ol>
+          <p>{t.alternateStation}</p>
+          <div className={styles.walkingSteps}><h3>{t.walkingTitle}</h3><ol>{t.walkingSteps.map(step => <li key={step}>{step}</li>)}</ol></div>
+          <p className={styles.gateAddress}>{t.gateAddress}</p>
+          <p>{t.taxiNote}</p>
+          <p>{t.mapIntro}</p>
+          <div className={styles.mapLinks}>
+            <a href={NAVER_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.naverMap} · ${t.newTab}`}>{t.naverMap}<ArrowRight size={16} aria-hidden="true" /></a>
+            <a href={GOOGLE_MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.googleMap} · ${t.newTab}`}>{t.googleMap}<ArrowRight size={16} aria-hidden="true" /></a>
+          </div>
+          <p className={styles.arrivalNote}>{t.arrivalNote}</p>
+          <a className={styles.directionsSource} href={DIRECTIONS_URL} target="_blank" rel="noopener noreferrer" aria-label={`${t.officialDirections} · ${t.newTab}`}>{t.officialDirections}<ArrowRight size={16} aria-hidden="true" /></a>
+          </div></div>
+          </details>
+        </section>
     </main>
     <footer className={styles.footer}><span className={styles.wordmark}>ByUs</span><span>{t.footer}</span><span>SEOUL, 2026</span></footer>
     <AccessibleOverlay open={privacyDialog !== null} onClose={() => setPrivacyDialog(null)} labelledBy="rsvp-privacy-dialog-title" initialFocusRef={closePrivacyRef} backdropClassName={styles.privacyBackdrop} contentClassName={styles.privacyDialog} contentAs="section">

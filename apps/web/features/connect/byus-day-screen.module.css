@@ -6,11 +6,11 @@
 .back{display:flex;align-items:center;gap:8px;min-height:44px;font-size:18px;font-weight:800}
 .headerCaption,.eyebrow{margin:0;font-size:13px;font-weight:650;letter-spacing:.12em;text-transform:uppercase}
 .headerCaption{color:var(--event-muted)}
-.headerRsvp{display:none}
+.headerRsvp{display:flex;align-items:center;gap:6px;min-height:44px;font-size:13px;font-weight:700}.headerCaption{margin-left:auto}.headerRsvp{margin-left:24px}
 .languages{display:flex;gap:4px}
 .languages a{display:grid;place-items:center;width:44px;height:44px;border-radius:8px;font-size:13px;font-weight:700}
 .languages a[aria-current=true]{color:var(--event-paper);background:var(--event-ink)}
-.canvas{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:clamp(40px,6vw,88px);max-width:1220px;margin:0 auto;padding:56px 32px 64px}
+.canvas{display:grid;align-items:start;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);column-gap:clamp(40px,6vw,88px);row-gap:48px;max-width:1220px;margin:0 auto;padding:56px 32px 64px}
 .invitation{min-width:0}
 .invitationTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .invitationTop>span{font-size:34px;line-height:1}
@@ -18,16 +18,16 @@
 .title span{white-space:nowrap}
 .headline{margin:24px 0 12px;font-size:24px;font-weight:750;line-height:1.45;letter-spacing:-.035em;white-space:pre-line;text-wrap:balance}
 .introduction{margin:0;color:var(--event-muted);font-size:16px;line-height:1.7;white-space:pre-line;text-wrap:pretty}
-.artwork{margin:28px 0 0;border:1px solid #68192335;background:#d9cdb8}
+.artwork{margin:16px 0 0;border:1px solid #68192335;background:#d9cdb8}
 .posterLink{display:block;width:100%}
 .artwork img{display:block;width:100%;height:auto}
 .posterCaption{display:flex;align-items:center;min-height:44px;padding:8px 12px;border-top:1px solid #68192335;background:var(--event-paper);font-size:13px;font-weight:650;text-decoration:underline;text-underline-offset:4px}
-.dateRow{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:28px 0;border-bottom:1px solid #68192330}
+.dateRow{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:24px 0 16px;border-bottom:1px solid #68192330}
 .date{display:block;margin-top:4px;font-family:Georgia,"Times New Roman",serif;font-size:46px;font-weight:700;letter-spacing:-.035em;line-height:1.2;font-variant-numeric:tabular-nums}
 .day{margin:4px 0 0;font-size:16px;font-weight:600}
 .seal{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;width:94px;height:94px;border:1px solid currentColor;border-radius:50%;outline:1px solid #68192365;outline-offset:-6px;transform:rotate(-12deg);font-family:Georgia,"Times New Roman",serif;font-size:10px;letter-spacing:.04em;line-height:1.15}
 .seal b{font-size:33px;line-height:1}
-.schedule{padding:24px 0}
+.schedule{min-width:0;padding:0}
 .schedule h2,.venue h2{margin:0;font-size:24px;line-height:1.5;font-weight:750}
 .schedule dl{margin:16px 0 0}
 .schedule dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:6px 0}
@@ -48,7 +48,7 @@
 .securityNotice a{display:flex;align-items:center;gap:8px;min-height:44px;margin-top:4px;font-size:13px;line-height:1.6;text-decoration:underline;text-underline-offset:4px}
 .securityNotice a svg{flex:none}
 .scheduleNote{margin:14px 0 0;color:var(--event-muted);font-size:14px;line-height:1.6}
-.arrival{margin-top:24px;padding-top:24px;border-top:1px solid #68192330}
+.arrival{grid-column:1/-1;min-width:0;border-top:1px solid #68192330;border-bottom:1px solid #68192330}
 .arrival h2{margin:0;font-size:24px;font-weight:750;line-height:1.5}
 .arrival p{margin:12px 0 0;font-size:16px;line-height:1.65;color:var(--event-muted)}
 .arrivalRoute{display:grid;gap:10px;margin:20px 0;padding:0;list-style:none;counter-reset:arrival}
@@ -61,7 +61,7 @@
 .arrival .arrivalNote{margin-top:20px}
 .directionsSource{display:flex;align-items:center;gap:8px;min-height:44px;font-size:13px;text-decoration:underline;text-underline-offset:4px}
 .page:lang(ko) .arrival{word-break:keep-all;overflow-wrap:anywhere}
-.venue{display:flex;align-items:flex-start;gap:12px;padding-top:24px;border-top:1px solid #68192330}
+.venue{min-width:0;display:flex;align-items:flex-start;gap:12px;padding-top:0}
 .venue>svg{flex:none;margin-top:4px}
 .venue p{margin:4px 0 0;font-size:16px;color:var(--event-muted);line-height:1.6}
 .venue .venueName{margin-top:8px;color:var(--event-ink);font-size:20px;font-weight:700}
@@ -148,3 +148,23 @@
 .walkingSteps h3{margin:0;font-size:16px;font-weight:700;line-height:1.5}
 .walkingSteps ol{margin:12px 0 0;padding-left:24px;font-size:16px;line-height:1.65}
 .walkingSteps li+li{margin-top:8px}
+
+.sectionLinks{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:8px}
+.sectionLinks a{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px;font-weight:650}
+.eventDetails{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:clamp(40px,6vw,88px);padding-top:32px;border-top:1px solid #68192330}
+.eventDetails h2,.arrival h2{scroll-margin-top:24px}
+.program ol{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
+.arrivalDisclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:100px;padding:24px 0;cursor:pointer;list-style:none}
+.arrivalDisclosure>summary::-webkit-details-marker{display:none}
+.arrivalSummary{display:block;margin-top:6px;font-size:16px;line-height:1.6;color:var(--event-muted)}
+.disclosureAction{display:flex;align-items:center;gap:12px;flex:none;font-size:14px;font-weight:650}
+.disclosureAction svg{flex:none}
+.whenOpen,.arrivalDisclosure[open] .whenClosed{display:none}
+.arrivalDisclosure[open] .whenOpen{display:inline}
+.arrivalDisclosure[open] .disclosureAction svg{transform:rotate(180deg)}
+.arrivalBody{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:clamp(32px,6vw,88px);padding:8px 0 32px}
+.arrivalBody>div{min-width:0}
+.arrivalBody>div>p:first-child,.arrivalBody .arrivalRoute{margin-top:0}
+.arrivalBody .arrivalMap{margin-bottom:0}
+@media(max-width:900px){.eventDetails{grid-template-columns:1fr;gap:32px}.eventDetails .venue{padding-top:32px;border-top:1px solid #68192330}.arrivalBody{grid-template-columns:1fr;gap:24px}.headerRsvp{margin-left:auto}}
+@media(max-width:480px){.arrivalDisclosure>summary{align-items:flex-start;gap:12px}.disclosureAction{font-size:13px;max-width:110px;line-height:1.6}.arrivalSummary{font-size:14px}.program ol{grid-template-columns:1fr}.dateRow{padding:20px 0 16px}}
