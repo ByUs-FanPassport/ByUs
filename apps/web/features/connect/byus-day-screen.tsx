@@ -12,7 +12,6 @@ import { rememberOverlayTrigger } from "@/components/ui/overlay/focus-return";
 import { ResidentRegistrationNumberField } from "./resident-registration-number-field";
 import styles from "./byus-day-screen.module.css";
 
-const POSTER_SRC = "/images/connect/byus-day/poster-access-policy-en-20261004.webp";
 const ACCESS_CONTROL_URL = "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control";
 const DIRECTIONS_URL = "https://www.dragonhilllodge.com/your-stay/getting-here";
 const GATE_ADDRESS = "서울 용산구 용산동4가 1-10";
@@ -23,12 +22,12 @@ const copy = {
   ko: {
     back:"ByUs", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
     headline:"엔터테인먼트와 기술이 만나는\nEnter × Tech의 밤.",
-    introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 파이어사이드 챗, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
-    posterAlt:"ByUs Day Enter × Tech 영문 행사 포스터", posterLink:"영문 포스터 · 새 탭에서 크게 보기",
-    date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"두 일정 모두 ByUs Day 프로그램이며 같은 장소에서 이어집니다.",
+    introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 대담, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
+    posterAlt:"ByUs Day Enter × Tech 한글 행사 포스터", posterLink:"한글 포스터 · 새 탭에서 크게 보기",
+    date:"2026년 10월 22일 목요일", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"뒷풀이는 본행사에 이어 같은 호텔 1층 펍에서 진행합니다.",
     programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
-    securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:<>제출 정보는 출입 승인 및 신원 확인 목적으로<strong>만</strong> 사용됩니다.</>,
-    accessPolicy:"출입 절차 참고: USFKI 5200.08A CH1", accessLink:<>출입절차 <strong>규정</strong> · 새 탭에서 보기</>,
+    securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로만 사용됩니다.",
+    accessPolicy:"출입 절차 참고: 주한미군 기지 출입통제 지침(USFKI 5200.08A CH1)", accessLink:<>출입절차 <strong>규정</strong> · 새 탭에서 보기</>,
     registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:<>보유기간: 출입 절차 완료 후 지체 없이 <strong>파기합니다.</strong></>,
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
@@ -60,9 +59,9 @@ const copy = {
     headline:"Where entertainment meets technology.\nEnter × Tech at ByUs Day.",
     introduction:"ByUs Day brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
     posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
-    date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"Both are part of ByUs Day and continue at the same venue.",
+    date:"Thursday, October 22, 2026", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"The after-party follows the main event at the pub on the hotel’s first floor.",
     programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
-    securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:<>The information is used <strong>only</strong> for access approval and identity verification.</>,
+    securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used only for access approval and identity verification.",
     accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:<>Installation Access <strong>Policy</strong> · Opens in a new tab</>,
     registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:<>Retention: <strong>deleted</strong> without delay after the access procedure is complete</>,
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
@@ -98,6 +97,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   const { locale: appLocale } = useAppLocale();
   const locale = appLocale === "ko" ? "ko" : "en";
   const t = copy[locale];
+  const posterSrc = `/images/connect/byus-day/poster-final-${locale}-20261004.webp`;
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [failure, setFailure] = useState("");
   const [pending, setPending] = useState(false);
@@ -196,13 +196,14 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
         <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time><p className={styles.day}>{t.date}</p></div><span className={styles.seal} aria-hidden="true">BYUS<br /><b>22</b><br />OCTOBER</span></div>
+        <div className={styles.eventSummary}><p>{locale === "ko" ? "18:30 시작 · 본행사 21:30까지" : "Starts at 18:30 · Main event until 21:30"}</p><p>{locale === "ko" ? "용산미군기지 · 드래곤힐 로지(DHL)" : "Yongsan Garrison · Dragon Hill Lodge (DHL)"}</p></div>
         <nav className={styles.sectionLinks} aria-label={locale === "ko" ? "행사 안내" : "Event information"}>
           <a href="#schedule-title">{t.programTitle}<ArrowRight size={16} aria-hidden="true" /></a>
           <a href="#arrival-title" onClick={() => { if (arrivalRef.current) arrivalRef.current.open = true; }}>{t.arrivalTitle}<ArrowRight size={16} aria-hidden="true" /></a>
         </nav>
         <figure className={styles.artwork}>
-          <a className={styles.posterLink} href={POSTER_SRC} target="_blank" rel="noopener noreferrer">
-            <Image src={POSTER_SRC} alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
+          <a className={styles.posterLink} href={posterSrc} target="_blank" rel="noopener noreferrer">
+            <Image src={posterSrc} alt={t.posterAlt} width={1024} height={1536} sizes="(min-width: 1024px) 580px, 100vw" loading="eager" />
             <span className={styles.posterCaption}>{t.posterLink}</span>
           </a>
         </figure>
@@ -249,7 +250,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
       </section>
       <div className={styles.eventDetails}>
         <section className={styles.schedule} aria-labelledby="schedule-title">
-          <div className={styles.scheduleTimes}><h2 id="schedule-title">{t.evening}</h2>
+          <div><h2 id="schedule-title">{t.evening}</h2>
           <dl><div><dt>{t.program}</dt><dd>18:30 <span>—</span> 21:30</dd></div><div><dt>{t.afterparty}</dt><dd>21:30 <span>—</span> 24:00</dd></div></dl></div>
           <div className={styles.program}>
             <h3>{t.programTitle}</h3>
@@ -299,8 +300,11 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
       <div className={styles.privacyDialogHeading}><h2 id="rsvp-privacy-dialog-title">{privacyDialog === "general" ? t.privacyTitle : t.registrationPrivacyTitle}</h2><button ref={closePrivacyRef} type="button" aria-label={t.closePrivacy} onClick={() => setPrivacyDialog(null)}><X size={20} aria-hidden="true" /></button></div>
       <div className={styles.privacyCopy}>
         <p>{t.privacyController}</p>
-        {privacyDialog === "general" ? <><p>{t.privacyPurpose}</p><p>{t.privacyItems}</p></> : <><p>{t.registrationPrivacyItems}</p><p>{t.registrationPrivacyPurpose}</p></>}
-        <p>{t.privacyRecipient}</p><p>{privacyDialog === "general" ? t.privacyRetention : t.registrationPrivacyRetention}</p><p>{privacyDialog === "general" ? t.privacyRefusal : t.registrationRefusal}</p>
+        <ul>
+          {privacyDialog === "general" ? <><li>{t.privacyPurpose}</li><li>{t.privacyItems}</li></> : <><li>{t.registrationPrivacyItems}</li><li>{t.registrationPrivacyPurpose}</li></>}
+          <li>{t.privacyRecipient}</li><li>{privacyDialog === "general" ? t.privacyRetention : t.registrationPrivacyRetention}</li>
+        </ul>
+        <p>{privacyDialog === "general" ? t.privacyRefusal : t.registrationRefusal}</p>
         {privacyDialog === "registration" && <p>{t.accessPolicy}</p>}
       </div>
     </AccessibleOverlay>

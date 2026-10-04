@@ -37,12 +37,17 @@ async function fillRsvp(page: Page) {
   await page.locator('[name="consent"]').check();
 }
 
-test("shows the complete English poster in both languages and opens the original", async ({ page }, testInfo) => {
+test("shows the matching language poster and opens the original", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/byus-day?locale=${locale}`);
-    const posterLink = page.locator('a[href="/images/connect/byus-day/poster-access-policy-en-20261004.webp"]');
+    const posterLink = page.locator(`a[href="/images/connect/byus-day/poster-final-${locale}-20261004.webp"]`);
     const poster = posterLink.getByRole("img");
     await expect(poster).toBeVisible();
+    await expect(poster).toHaveAttribute("alt", locale === "ko" ? "ByUs Day Enter × Tech 한글 행사 포스터" : "ByUs Day Enter × Tech English event poster");
+    const invitation = page.getByRole("region", { name: "BYUS DAY", exact: true });
+    await expect(invitation).toContainText(locale === "ko" ? "18:30 시작" : "Starts at 18:30");
+    await expect(invitation).toContainText(locale === "ko" ? "용산미군기지" : "Yongsan Garrison");
+    await expect(page.locator('section[aria-labelledby="schedule-title"]')).toContainText(locale === "ko" ? "같은 호텔 1층 펍" : "pub on the hotel’s first floor");
     await expect.poll(() => poster.evaluate(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0)).toBe(true);
     const geometry = await poster.evaluate(image => {
       const rect = image.getBoundingClientRect();
@@ -55,6 +60,8 @@ test("shows the complete English poster in both languages and opens the original
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     const security = page.getByRole("region", { name: "SECURITY NOTICE" });
     await expect(security).toBeVisible();
+    await expect(security.locator("strong")).toHaveText([locale === "ko" ? "규정" : "Policy"]);
+    if (locale === "ko") await expect(security).toContainText("주한미군 기지 출입통제 지침");
     await expect(security).toContainText("USFKI 5200.08A CH1");
     const officialLink = security.getByRole("link");
     await expect(officialLink).toHaveText(locale === "ko" ? "출입절차 규정 · 새 탭에서 보기" : "Installation Access Policy · Opens in a new tab");
@@ -108,6 +115,7 @@ test("shows the complete English poster in both languages and opens the original
       });
       await expect(dialog).toContainText(locale === "ko" ? "개인정보 처리자: (주)셀리랩" : "Personal information controller: Sallylab Co., Ltd.");
       await expect(dialog).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
+      await expect(dialog.locator("ul li")).toHaveCount(4);
       if (index === 0) {
         await expect(dialog).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
         await expect(dialog).toContainText(locale === "ko" ? "국적" : "nationality");
@@ -145,7 +153,7 @@ test("shows the complete English poster in both languages and opens the original
     await posterLink.click();
     const original = await opened;
     await original.waitForLoadState("load");
-    await expect(original).toHaveURL(/\/images\/connect\/byus-day\/poster-access-policy-en-20261004\.webp$/);
+    await expect(original).toHaveURL(new RegExp(`/images/connect/byus-day/poster-final-${locale}-20261004\\.webp$`));
     await expect(original.locator("img")).toBeVisible();
     await original.close();
   }

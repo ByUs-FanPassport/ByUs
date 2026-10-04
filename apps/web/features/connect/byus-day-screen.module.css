@@ -170,3 +170,9 @@
 @media(max-width:480px){.arrivalDisclosure>summary{align-items:flex-start;gap:12px}.disclosureAction{font-size:13px;max-width:110px;line-height:1.6}.arrivalSummary{font-size:14px}.program ol{grid-template-columns:1fr}.dateRow{padding:20px 0 16px}}
 
 .securityNotice strong,.privacyCopy strong{font-weight:750}
+
+.eventSummary{display:grid;gap:4px;margin-top:16px;color:var(--event-ink);font-size:16px;line-height:1.6;font-weight:650;word-break:keep-all}
+.eventSummary p{margin:0}
+.privacyCopy ul{list-style:disc;margin:0 0 20px;padding-left:22px}
+.privacyCopy li{padding-left:2px;margin-bottom:12px;font-size:16px;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
+.privacyCopy li:last-child{margin-bottom:0}
