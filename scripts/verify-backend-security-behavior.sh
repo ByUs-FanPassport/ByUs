@@ -37,5 +37,6 @@ psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_notifications.sq
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_personal.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_account_deletion.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/byus_day_rsvps.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/byus_day_rsvp_admin.sql"
 
 FAN_WEB_DISPOSABLE_DB_URL="postgresql:///byus_clean?host=${PGHOST}&port=${PGPORT}" node "$root_dir/supabase/tests/fan_web_notification_concurrency.mjs"

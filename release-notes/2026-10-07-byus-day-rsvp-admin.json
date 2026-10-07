@@ -1,0 +1,9 @@
+{
+  "changes": [
+    "관리자 메뉴에 ByUs Day RSVP 명단을 추가했어요. 이름·소속·직책·연락처·국적·접수일과 누적 접수 인원을 확인할 수 있어요.",
+    "이름이나 소속, 연락처로 검색하고 새로고침해 최신 접수를 확인할 수 있어요. RSVP 알림의 링크도 참가자 명단으로 연결했어요.",
+    "첨부 이미지는 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/admin/byus-day-rsvps",
+  "images": ["release-notes/images/2026-10-07-byus-day-rsvp-admin.png"]
+}

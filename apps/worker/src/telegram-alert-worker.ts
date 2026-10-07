@@ -120,7 +120,7 @@ const activityLabels = {
   ],
   "byus_day_rsvp_received": [
     "ByUs Day RSVP 접수",
-    "system"
+    "byus-day-rsvps"
   ]
 } as const;
 type ActivityKind = keyof typeof activityLabels;

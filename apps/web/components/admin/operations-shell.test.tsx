@@ -35,6 +35,7 @@ describe("AdminOperationsShell navigation", () => {
     ["/admin/dashboard", "상세 통계"],
     ["/admin/fans", "회원 관리"],
     ["/admin/blockchain-jobs", "디지털 발급 내역"],
+    ["/admin/byus-day-rsvps", "ByUs Day RSVP"],
     ["/admin/system", "시스템 상태"],
     ["/admin/notifications", "알림 전송"],
     ["/admin/audit", "관리자 활동 기록"],

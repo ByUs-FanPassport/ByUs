@@ -57,7 +57,7 @@ describe("renderTelegramAlertMessage", () => {
     const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: "누적 3명", activity_quantity: 3 };
     const message = renderTelegramAlertMessage([alerts[0]!, rsvp]);
     expect(message).toContain("• 신규 회원 가입");
-    expect(message).toContain("• ByUs Day RSVP 접수\n  누적 3명\nhttps://byus.kr/admin/system");
+    expect(message).toContain("• ByUs Day RSVP 접수\n  누적 3명\nhttps://byus.kr/admin/byus-day-rsvps");
     expect(message).not.toMatch(/김별|010-|byeol@example/u);
   });
   it("shows each RSVP guest's Korean and English names alongside the cumulative count", async () => {
@@ -83,7 +83,7 @@ describe("renderTelegramAlertMessage", () => {
     const claimed = await queue.claim("-1001234567890");
     for (const companion of [alerts[0]!, detailedActivity("fan_post_created")]) {
       const message = renderTelegramAlertMessage([companion, ...claimed!.alerts]);
-      expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  소속: ByUs\n  직책: 프로듀서\n  누적 3명\nhttps://byus.kr/admin/system");
+      expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  소속: ByUs\n  직책: 프로듀서\n  누적 3명\nhttps://byus.kr/admin/byus-day-rsvps");
     }
     for (const invalid of [
       { ...rsvp, rsvp: { ...rsvp.rsvp, email: "private@example.com" } },
