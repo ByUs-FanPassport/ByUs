@@ -1,0 +1,11 @@
+{
+  "changes": [
+    "kyaa wave 행사 요약과 참가 신청 상단, 장소 안내에 행사장 내 주차가 불가하다는 내용을 강조했어요.",
+    "한국어·영어로 대중교통 또는 택시 이용을 안내해요. 첨부 이미지는 로컬 검증 화면이에요."
+  ],
+  "path": "/connect/kyaa-wave",
+  "images": [
+    "release-notes/images/2026-10-08-kyaa-wave-parking-360.png",
+    "release-notes/images/2026-10-08-kyaa-wave-parking-1440.png"
+  ]
+}

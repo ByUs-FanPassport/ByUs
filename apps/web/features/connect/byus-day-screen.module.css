@@ -71,13 +71,17 @@
 .venue p{margin:4px 0 0;font-size:16px;color:var(--event-muted);line-height:1.6}
 .venue .venueName{margin-top:8px;color:var(--event-ink);font-size:20px;font-weight:700}
 .venueName span{white-space:nowrap}
-.accessNotes{margin-top:14px;padding-left:12px;border-left:2px solid #bbaa97}
-.venue .accessNotes p{margin:0;font-size:14px;line-height:1.65}
+.accessNotes{margin-top:16px;padding-left:12px;border-left:4px solid var(--event-ink)}
+.venue .accessNotes p{margin:4px 0 0;font-size:16px;line-height:1.65}
+.venue .accessNotes strong{color:var(--event-ink);font-weight:750}
 .venue .venueNote{margin-top:12px;font-size:13px}
 .registration{align-self:start;min-width:0;padding:32px;border:1px solid #68192333;border-radius:16px;background:#fffaf2;box-shadow:0 8px 28px #44261808;scroll-margin-top:24px}
 .formHeading{padding-bottom:24px;border-bottom:1px solid #68192320}
 .formHeading h2{margin:8px 0;font-size:24px;font-weight:750;letter-spacing:-.03em}
 .formHeading>p:last-child{margin:0;font-size:16px;line-height:1.6;color:var(--event-muted);text-wrap:pretty}
+.parkingNotice{margin:20px 0;padding:16px;border:1px solid #68192340;border-left:4px solid var(--event-ink);border-radius:8px;background:var(--event-paper);word-break:keep-all;overflow-wrap:anywhere}
+.parkingNotice h3{margin:0;font-size:20px;font-weight:750;line-height:1.5}
+.parkingNotice p{margin:8px 0 0;font-size:16px;line-height:1.65}
 .required{margin:18px 0;font-size:13px;color:var(--event-muted)}
 .fields{display:grid;gap:20px;min-width:0;margin:0;padding:0;border:0}
 .pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
@@ -178,6 +182,7 @@
 
 .eventSummary{display:grid;gap:6px;margin-top:8px;padding-bottom:16px;border-bottom:1px solid #68192330;color:var(--event-ink);font-size:16px;line-height:1.6;font-weight:650;word-break:keep-all}
 .eventSummary p{margin:0}
+.eventSummary .parkingSummary{margin-top:8px;padding-left:10px;border-left:4px solid var(--event-ink);font-size:16px;font-weight:750}
 .privacyCopy ul{list-style:disc;margin:0 0 20px;padding-left:22px}
 .privacyCopy li{padding-left:2px;margin-bottom:12px;font-size:16px;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
 .privacyCopy li:last-child{margin-bottom:0}

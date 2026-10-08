@@ -32,7 +32,7 @@ const copy = {
     registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:<>보유기간: 출입 절차 완료 후 지체 없이 <strong>파기합니다.</strong></>,
     privacyRecipient:"출입명단 제공처: 용산미군기지 출입 담당부서", registrationRefusal:"정보를 제출하지 않으면 기지 출입 신청을 진행할 수 없습니다.",
     venue:"장소", location:"서울 용산 · 미군기지 내", venueNote:"기지 출입 안내는 신청 후 별도로 전해 드립니다.",
-    vehicleEntry:"미군기지는 등록된 차량만 출입할 수 있습니다.", vehicleRequest:"차량 없이 방문해 주시길 부탁드립니다.", vehicleApology:"불편을 드려 죄송합니다.",
+    parkingTitle:"행사장 내 주차 불가", parkingDescription:"대중교통이나 택시를 이용해 주세요. 차량 없이 방문해 주시기 바랍니다.",
     enlargeMap:"약도 크게 보기", mapTitle:"Gate 1에서 호텔까지", mapDescription:"삼각지역 13번 출구와 녹사평역 4번 출구 사이, 고가도로 옆 보행로로 Gate 1에 접근합니다. 출입 확인 후 안내된 보행로를 따라 드래곤힐 로지로 이동합니다.", mapCaption:"위치 참고용 약도 · 실제 거리와 비례하지 않습니다.", walkingTitle:"도보 입장 순서", walkingSteps:["고가도로 바로 옆 인도를 이용해 Gate 1 초소로 이동합니다.", "출입 확인 후 인도를 따라 왼쪽으로 이동합니다.", "주차장을 대각선으로 지나 호텔에 도착합니다."], alternateStation:"녹사평역 4번 출구(6호선)에서도 Gate 1 방향으로 이동할 수 있습니다.",
     arrivalTitle:"오시는 길", arrivalIntro:"대중교통이나 택시를 이용해 주세요. 아래는 호텔 공식 안내에 따른 Gate 1 주변 경로입니다.",
     routeStation:"삼각지역 13번 출구 · 4·6호선", routeWalk:"도보 약 5분", routeGate:"용산미군기지 Gate 1 주변", gateAddress:"서울 용산구 용산동4가 1-10",
@@ -68,7 +68,7 @@ const copy = {
     registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:<>Retention: <strong>deleted</strong> without delay after the access procedure is complete</>,
     privacyRecipient:"Base entry list recipient: Yongsan Garrison access control office", registrationRefusal:"We cannot submit your base access application without this information.",
     venue:"Venue", location:"Yongsan, Seoul · on the U.S. military base", venueNote:"We’ll share base entry instructions separately after you register.",
-    vehicleEntry:"Only registered vehicles may enter the U.S. military base.", vehicleRequest:"Please do not bring a personal vehicle.", vehicleApology:"We apologize for the inconvenience.",
+    parkingTitle:"No parking at the venue", parkingDescription:"Please use public transport or a taxi. Do not bring a personal vehicle.",
     enlargeMap:"Enlarge the map", mapTitle:"From Gate 1 to the hotel", mapDescription:"Approach Gate 1 via the pedestrian path beside the overpass, between Samgakji Exit 13 and Noksapyeong Exit 4. After the entry check, follow the pedestrian path to Dragon Hill Lodge.", mapCaption:"Location guide · Not to scale.", walkingTitle:"Entering on foot", walkingSteps:["Use the pedestrian path right beside the overpass to reach Gate 1.", "After the entry check, follow the pedestrian path towards the left.", "Cross the parking lot diagonally to reach the hotel."], alternateStation:"You can also approach Gate 1 from Noksapyeong Station, Exit 4 (Line 6).",
     arrivalTitle:"Getting here", arrivalIntro:"Please use public transport or a taxi. This route to the Gate 1 area follows the hotel’s official directions.",
     routeStation:"Samgakji Station, Exit 13 · Lines 4 & 6", routeWalk:"About a 5-minute walk", routeGate:"Yongsan Garrison Gate 1 area", gateAddress:"1-10 Yongsan-dong 4-ga, Yongsan-gu, Seoul",
@@ -199,7 +199,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
         <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time></div><span className={styles.seal} aria-hidden="true">kyaa<br /><b>22</b><br />OCTOBER</span></div>
-        <div className={styles.eventSummary}><p className={styles.day}>{t.date}</p><p>{locale === "ko" ? "장소: 용산미군기지 • 드래곤힐로지(DHL)" : "Venue: Yongsan Garrison • Dragon Hill Lodge (DHL)"}</p></div>
+        <div className={styles.eventSummary}><p className={styles.day}>{t.date}</p><p>{locale === "ko" ? "장소: 용산미군기지 • 드래곤힐로지(DHL)" : "Venue: Yongsan Garrison • Dragon Hill Lodge (DHL)"}</p><p className={styles.parkingSummary}>{t.parkingTitle}</p></div>
         <nav className={styles.sectionLinks} aria-label={locale === "ko" ? "행사 안내" : "Event information"}>
           <a href="#schedule-title">{t.programTitle}<ArrowRight size={16} aria-hidden="true" /></a>
           <a href="#arrival-title" onClick={() => { if (arrivalRef.current) arrivalRef.current.open = true; }}>{t.arrivalTitle}<ArrowRight size={16} aria-hidden="true" /></a>
@@ -214,6 +214,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
       </section>
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>
         <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · kyaa wave</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>
+        <aside className={styles.parkingNotice} aria-label={t.parkingTitle}><h3>{t.parkingTitle}</h3><p>{t.parkingDescription}</p></aside>
         {accepted ? <div className={styles.success} role="status">
           <span className={styles.successMark}><Check size={30} aria-hidden="true" /></span>
           <h3 ref={successRef} tabIndex={-1}>{t.successTitle}</h3><p>{t.successDescription}</p><p className={styles.hint}>{t.successNote}</p>
@@ -264,7 +265,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
         </section>
         <section className={styles.venue} aria-labelledby="venue-title"><MapPin size={22} aria-hidden="true" /><div>
           <h2 id="venue-title">{t.venue}</h2><p className={styles.venueName}>Dragon Hill Lodge <span>(DHL)</span></p><p>{t.location}</p>
-          <div className={styles.accessNotes}><p>{t.vehicleEntry}</p><p>{t.vehicleRequest}</p><p>{t.vehicleApology}</p></div>
+          <div className={styles.accessNotes}><p><strong>{t.parkingTitle}</strong></p><p>{t.parkingDescription}</p></div>
           <p className={styles.venueNote}>{t.venueNote}</p>
         </div></section>
       </div>

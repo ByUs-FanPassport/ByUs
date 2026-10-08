@@ -67,6 +67,17 @@ test("shows the deadline above the invitation and defaults nationality to Korea"
     const titleBox = await page.getByRole("heading", { name: "kyaa wave", exact: true }).boundingBox();
     expect(deadlineBox!.y + deadlineBox!.height).toBeLessThan(titleBox!.y);
     await page.screenshot({ path: testInfo.outputPath(`${locale}-deadline-top.png`) });
+    const parkingTitle = locale === "ko" ? "행사장 내 주차 불가" : "No parking at the venue";
+    const parkingNotice = page.locator("#rsvp").getByRole("complementary", { name: parkingTitle });
+    await expect(parkingNotice.getByRole("heading", { name: parkingTitle })).toBeVisible();
+    await expect(parkingNotice).toContainText(locale === "ko" ? "대중교통이나 택시를 이용해 주세요." : "Please use public transport or a taxi.");
+    await expect(page.getByRole("region", { name: "kyaa wave", exact: true })).toContainText(parkingTitle);
+    await expect(page.getByRole("region", { name: locale === "ko" ? "장소" : "Venue", exact: true })).toContainText(parkingTitle);
+    const parkingBox = await parkingNotice.boundingBox();
+    const firstFieldBox = await page.locator('[name="koreanName"]').boundingBox();
+    expect(parkingBox!.y + parkingBox!.height).toBeLessThan(firstFieldBox!.y);
+    await parkingNotice.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-parking-notice.png`) });
     const nationality = page.locator('[name="nationality"]');
     await expect(nationality).toHaveValue("KR");
     await nationality.scrollIntoViewIfNeeded();
