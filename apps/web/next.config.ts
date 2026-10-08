@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/kyaa-wave", destination: "/connect/kyaa-wave", permanent: true },
+      { source: "/byus-day", destination: "/connect/kyaa-wave", permanent: true },
+      { source: "/connect/byus-day", destination: "/connect/kyaa-wave", permanent: true },
       {
         source: "/live/elina-nualeaf-live/:path*",
         destination: "/live/elina-byus-live/:path*",

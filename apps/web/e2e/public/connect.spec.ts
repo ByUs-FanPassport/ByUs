@@ -218,24 +218,24 @@ test("configured 360px and 1440px hubs and contacts are overflow-free and access
   await testInfo.attach(`connect-${expectedWidth}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
 });
 
-test("BYUS DAY opens the native invitation and switches languages", async ({ page }, testInfo) => {
+test("kyaa wave opens the native invitation and switches languages", async ({ page }, testInfo) => {
   await openHub(page);
   await page.getByRole("button", { name: "한국어", exact: true }).click();
-  const event = page.getByRole("link", { name: /BYUS DAY 참가 신청/ });
+  const event = page.getByRole("link", { name: /kyaa wave 참가 신청/ });
   await expect(event).toContainText("10.22(목) 18:30 · Dragon Hill Lodge");
   await event.click();
   for (const locale of ["ko", "en"] as const) {
     if (locale === "en") await page.getByRole("link", { name: "English", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("BYUS DAY");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("kyaa wave");
     await expect(page.getByText("2026.10.22", { exact: true })).toBeVisible();
-    await expect(page.getByText("Dragon Hill Lodge", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: locale === "ko" ? "장소" : "Venue", exact: true }).getByText("Dragon Hill Lodge (DHL)", { exact: true })).toBeVisible();
     await expect(page.locator('a[href*="luma.com"]')).toHaveCount(0);
     await expect(page.locator('input[name="email"]')).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectAccessible(page);
     await testInfo.attach(`byus-day-${locale}-${page.viewportSize()!.width}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
   }
-  await page.getByRole("link", { name: "ByUs", exact: true }).click();
-  await expect(page.getByRole("link", { name: /BYUS DAY · RSVP/ })).toBeVisible();
+  await page.getByRole("link", { name: "kyaa", exact: true }).click();
+  await expect(page.getByRole("link", { name: /kyaa wave · RSVP/ })).toBeVisible();
 });

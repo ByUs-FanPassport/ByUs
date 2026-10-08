@@ -21,12 +21,12 @@ const GOOGLE_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encode
 const copy = {
   ko: {
     deadlineLabel:"인적사항 제출 마감", deadline:"10월 12일(월) 자정까지 · 한국시간",
-    back:"ByUs", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
+    back:"kyaa", language:"언어 선택", skip:"참가 신청으로 이동", invitation:"초대합니다",
     headline:"엔터테인먼트와 기술이 만나는\nEnter × Tech의 밤.",
-    introduction:"ByUs Day는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 대담, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
-    posterAlt:"ByUs Day Enter × Tech 한글 행사 포스터", posterLink:"한글 포스터 · 새 탭에서 크게 보기",
+    introduction:"kyaa wave는 엔터테인먼트와 기술의 경계를 넘어 새로운 가능성과 협업을 연결하는 자리입니다.\n쇼케이스와 대담, 네트워킹을 통해 새로운 아이디어와 사람을 만나보세요.",
+    posterAlt:"kyaa wave Enter × Tech 한글 행사 포스터", posterLink:"한글 포스터 · 새 탭에서 크게 보기",
     date:"2026년 10월 22일 목요일 18:30 시작", timezone:"한국 시간 · KST", evening:"함께하는 저녁", program:"본행사", afterparty:"뒷풀이", scheduleNote:"뒷풀이는 본행사에 이어 같은 호텔 1층 펍에서 진행합니다.",
-    programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "BYUS LIVE"], afterpartyProgram:"네트워킹·래플",
+    programTitle:"본행사 프로그램", programSteps:["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "kyaa LIVE"], afterpartyProgram:"네트워킹·래플",
     securityTitle:"SECURITY NOTICE", entryRequired:"미군기지 출입 신청을 위해 주민등록번호 제출이 필요합니다.", entryPurpose:"제출 정보는 출입 승인 및 신원 확인 목적으로만 사용됩니다.",
     accessPolicy:"출입 절차 참고: 주한미군 기지 출입통제 지침(USFKI 5200.08A CH1)", accessLink:<>출입절차 <strong>규정</strong> · 새 탭에서 보기</>,
     registrationPrivacyTitle:"[필수] 주민등록번호 처리 안내", registrationPrivacyItems:"처리항목: 주민등록번호", registrationPrivacyPurpose:"이용목적: 미군기지 출입자 확인 및 출입명단 제출", registrationPrivacyRetention:<>보유기간: 출입 절차 완료 후 지체 없이 <strong>파기합니다.</strong></>,
@@ -53,16 +53,16 @@ const copy = {
     requiredError:"이 항목을 입력해 주세요.", emailError:"이메일 주소를 확인해 주세요.", phoneError:"휴대폰 번호를 확인해 주세요.", registrationNumberError:"주민등록번호 13자리를 확인해 주세요.", invalidError:"입력한 정보를 확인해 주세요.",
     unavailable:"신청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.", rateLimited:"신청 요청이 많아요. 잠시 후 다시 시도해 주세요.", closed:"참가 신청이 마감되었습니다.",
     successTitle:"신청이 접수되었어요.", successDescription:"남겨 주신 연락처로 행사와 기지 출입 안내를 전해 드릴게요.",
-    successNote:"신청 접수는 참가 및 기지 출입 확정을 의미하지 않습니다.", return:"ByUs 둘러보기", footer:"라이브 팬덤 플랫폼",
+    successNote:"신청 접수는 참가 및 기지 출입 확정을 의미하지 않습니다.", return:"kyaa 둘러보기", footer:"라이브 팬덤 플랫폼",
   },
   en: {
     deadlineLabel:"Personal details deadline", deadline:"By the end of October 12 (Mon), KST",
-    back:"ByUs", language:"Choose language", skip:"Skip to RSVP", invitation:"You’re invited",
-    headline:"Where entertainment meets technology.\nEnter × Tech at ByUs Day.",
-    introduction:"ByUs Day brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
-    posterAlt:"ByUs Day Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
+    back:"kyaa", language:"Choose language", skip:"Skip to RSVP", invitation:"You’re invited",
+    headline:"Where entertainment meets technology.\nEnter × Tech at kyaa wave.",
+    introduction:"kyaa wave brings people together across entertainment and technology to explore new possibilities and collaborations.\nMeet new people and ideas through showcases, fireside chats, and networking.",
+    posterAlt:"kyaa wave Enter × Tech English event poster", posterLink:"English poster · Open full size in a new tab",
     date:"Thursday, October 22, 2026 · Starts at 18:30", timezone:"Seoul time · KST", evening:"The evening", program:"Main event", afterparty:"After-party", scheduleNote:"The after-party follows the main event at the pub on the hotel’s first floor.",
-    programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "BYUS LIVE"], afterpartyProgram:"Networking & raffle",
+    programTitle:"Main event program", programSteps:["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "kyaa LIVE"], afterpartyProgram:"Networking & raffle",
     securityTitle:"SECURITY NOTICE", entryRequired:"A Korean resident registration number is required to apply for access to the U.S. military base.", entryPurpose:"The information is used only for access approval and identity verification.",
     accessPolicy:"Access procedure reference: USFKI 5200.08A CH1", accessLink:<>Installation Access <strong>Policy</strong> · Opens in a new tab</>,
     registrationPrivacyTitle:"[Required] Resident registration number processing", registrationPrivacyItems:"Information processed: Korean resident registration number", registrationPrivacyPurpose:"Purpose: verifying base visitors and submitting the base entry list", registrationPrivacyRetention:<>Retention: <strong>deleted</strong> without delay after the access procedure is complete</>,
@@ -89,7 +89,7 @@ const copy = {
     requiredError:"Please fill in this field.", emailError:"Please check your email address.", phoneError:"Please check your mobile number.", registrationNumberError:"Please check your 13-digit registration number.", invalidError:"Please check your details.",
     unavailable:"We couldn’t receive your RSVP. Please try again shortly.", rateLimited:"There are too many requests. Please try again later.", closed:"RSVPs are now closed.",
     successTitle:"Your RSVP has been received.", successDescription:"We’ll contact you with event details and base entry instructions.",
-    successNote:"An RSVP does not confirm attendance or access to the base.", return:"Explore ByUs", footer:"Live fandom platform",
+    successNote:"An RSVP does not confirm attendance or access to the base.", return:"Explore kyaa", footer:"Live fandom platform",
   },
 } as const;
 
@@ -99,7 +99,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   const { locale: appLocale } = useAppLocale();
   const locale = appLocale === "ko" ? "ko" : "en";
   const t = copy[locale];
-  const posterSrc = `/images/connect/byus-day/poster-two-line-${locale}-20261004.webp`;
+  const posterSrc = `/images/connect/kyaa-wave/poster-${locale}-20261008.webp`;
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [failure, setFailure] = useState("");
   const [pending, setPending] = useState(false);
@@ -183,22 +183,22 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
   return <div className={styles.page} lang={locale}>
     <a className={styles.skipLink} href="#rsvp">{t.skip}</a>
     <header className={styles.header}>
-      <Link href={`/connect?locale=${locale}#links`} className={styles.back}><ArrowLeft size={18} aria-hidden="true" />{t.back}</Link>
-      <span className={styles.headerCaption}>A BYUS GATHERING</span>
+      <Link href={`/connect?locale=${locale}#links`} className={styles.back}><ArrowLeft size={18} aria-hidden="true" /><Image src="/images/connect/kyaa-wave/logo.svg" alt={t.back} width={100} height={48} className={styles.brandLogo} unoptimized /></Link>
+      <span className={styles.headerCaption}>A kyaa GATHERING</span>
       <a href="#rsvp" className={styles.headerRsvp}>RSVP <ArrowRight size={16} aria-hidden="true" /></a>
       <nav className={styles.languages} aria-label={t.language}>
-        <Link href="/connect/byus-day?locale=ko" replace aria-current={locale === "ko" ? "true" : undefined} aria-label="한국어" lang="ko">KO</Link>
-        <Link href="/connect/byus-day?locale=en" replace aria-current={locale === "en" ? "true" : undefined} aria-label="English" lang="en">EN</Link>
+        <Link href="/connect/kyaa-wave?locale=ko" replace aria-current={locale === "ko" ? "true" : undefined} aria-label="한국어" lang="ko">KO</Link>
+        <Link href="/connect/kyaa-wave?locale=en" replace aria-current={locale === "en" ? "true" : undefined} aria-label="English" lang="en">EN</Link>
       </nav>
     </header>
     <aside className={styles.deadline} aria-label={t.deadlineLabel}><span>{t.deadlineLabel}</span><time dateTime="2026-10-13T00:00:00+09:00">{t.deadline}</time></aside>
     <main className={styles.canvas}>
       <section className={styles.invitation} aria-labelledby="event-title">
         <div className={styles.invitationTop}><p className={styles.eyebrow}>{t.invitation}</p></div>
-        <h1 id="event-title" className={styles.title}>BYUS <span>DAY</span></h1>
+        <h1 id="event-title" className={styles.title}>kyaa wave</h1>
         <p className={styles.headline}>{t.headline}</p>
         <p className={styles.introduction}>{t.introduction}</p>
-        <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time></div><span className={styles.seal} aria-hidden="true">BYUS<br /><b>22</b><br />OCTOBER</span></div>
+        <div className={styles.dateRow}><div><p className={styles.eyebrow}>{t.timezone}</p><time dateTime="2026-10-22" className={styles.date}>2026.10.22</time></div><span className={styles.seal} aria-hidden="true">kyaa<br /><b>22</b><br />OCTOBER</span></div>
         <div className={styles.eventSummary}><p className={styles.day}>{t.date}</p><p>{locale === "ko" ? "장소: 용산미군기지 • 드래곤힐로지(DHL)" : "Venue: Yongsan Garrison • Dragon Hill Lodge (DHL)"}</p></div>
         <nav className={styles.sectionLinks} aria-label={locale === "ko" ? "행사 안내" : "Event information"}>
           <a href="#schedule-title">{t.programTitle}<ArrowRight size={16} aria-hidden="true" /></a>
@@ -213,7 +213,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
 
       </section>
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>
-        <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · BYUS DAY</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>
+        <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · kyaa wave</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>
         {accepted ? <div className={styles.success} role="status">
           <span className={styles.successMark}><Check size={30} aria-hidden="true" /></span>
           <h3 ref={successRef} tabIndex={-1}>{t.successTitle}</h3><p>{t.successDescription}</p><p className={styles.hint}>{t.successNote}</p>
@@ -298,7 +298,7 @@ export function ByusDayScreen({ countries }: { countries: readonly { code: strin
           </details>
         </section>
     </main>
-    <footer className={styles.footer}><span className={styles.wordmark}>ByUs</span><span>{t.footer}</span><span>SEOUL, 2026</span></footer>
+    <footer className={styles.footer}><Image src="/images/connect/kyaa-wave/logo.svg" alt="kyaa" width={100} height={48} className={styles.brandLogo} unoptimized /><span>{t.footer}</span><span>SEOUL, 2026</span></footer>
     <AccessibleOverlay open={privacyDialog !== null} onClose={() => setPrivacyDialog(null)} labelledBy="rsvp-privacy-dialog-title" initialFocusRef={closePrivacyRef} backdropClassName={styles.privacyBackdrop} contentClassName={styles.privacyDialog} contentAs="section">
       <div className={styles.privacyDialogHeading}><h2 id="rsvp-privacy-dialog-title">{privacyDialog === "general" ? t.privacyTitle : t.registrationPrivacyTitle}</h2><button ref={closePrivacyRef} type="button" aria-label={t.closePrivacy} onClick={() => setPrivacyDialog(null)}><X size={20} aria-hidden="true" /></button></div>
       <div className={styles.privacyCopy}>
