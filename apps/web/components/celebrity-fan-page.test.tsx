@@ -291,6 +291,22 @@ describe("approved fanpage", () => {
     expect(screen.queryByText("별빛팬")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "내 패스포트" })).not.toBeInTheDocument();
   });
+  it.each([null, "2026-10-09T00:00:00Z"])("shows the result notice only after publication (%s)", async resultsPublishedAt => {
+    stubHubFetch({ raffles: [{
+      id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444",
+      title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50,
+      status: "closed", entryOpensAt: null, entryClosesAt: "2026-10-08T00:00:00Z", resultsPublishedAt,
+      fulfillmentMethod: "digital", perFanTicketLimit: null,
+    }] });
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
+    await screen.findByRole("heading", { name: "응모 가능한 선물 0" });
+    if (resultsPublishedAt) {
+      expect(screen.getByRole("link", { name: "내 결과 확인" })).toHaveAttribute("href", "/my/raffles?locale=ko");
+      const notice = screen.getByRole("region", { name: "결과 발표" });
+      expect(notice.compareDocumentPosition(screen.getByRole("heading", { name: "KARA", level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    } else expect(screen.queryByRole("region", { name: "결과 발표" })).not.toBeInTheDocument();
+  });
+
   it("shows all open gifts with one shared deadline and one request, retaining the full legacy catalog", async () => {
     const raffle = { id: "22222222-2222-4222-8222-222222222222", benefitId: "44444444-4444-4444-8444-444444444444", title: "전시 티켓", summary: "전시에서 함께해요.", imageUrl: null, winnerQuantity: 50, status: "open", entryOpensAt: null, entryClosesAt: "2099-09-27T15:00:00Z", fulfillmentMethod: "digital", perFanTicketLimit: null };
     stubHubFetch({ raffles: [raffle,

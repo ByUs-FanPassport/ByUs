@@ -10,6 +10,8 @@ import { CommunityStampCollection } from "@/features/community-stamps/ui/communi
 import { useCommunityStamps } from "@/features/community-stamps/ui/use-community-stamps";
 
 import { creatorRafflesHref } from "@/features/benefit/domain/raffle-navigation";
+import { RaffleResultsNotice } from "@/features/benefit/ui/raffle-results-notice";
+import { raffleDiscoveryCopy } from "@/i18n/catalogs/features__benefit__ui__raffle-discovery";
 import { boundFirstLikeCount } from "../../passport/domain/first-like-stamp";
 
 import { usePrivy } from "@privy-io/react-auth";
@@ -254,6 +256,8 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       </div>
     </header>
 
+    {summary.rewards.items.length > 0 ? <RaffleResultsNotice locale={locale} /> : null}
+
     <nav className={`${styles.destinations} ${styles.primaryDestinations}`} aria-label={t.destinations}>
       <Link href={`/passports?locale=${locale}` as Route}>
         <span className={styles.destinationIcon} data-kind="passport" aria-hidden="true"><BookOpen /></span>
@@ -267,7 +271,7 @@ function Dashboard({ summary, locale, avatarResource, refreshSummary, selectedSl
       </Link>
       <Link href={`/my/raffles?locale=${locale}` as Route}>
         <span className={styles.destinationIcon} data-kind="benefit" aria-hidden="true"><Ticket /></span>
-        <span><strong>{t.benefitEntry}</strong><small>{t.benefitSummary(summary.rewards.availableCount, summary.rewards.entries)}</small></span>
+        <span><strong>{raffleDiscoveryCopy[locale].myTitle}</strong><small>{raffleDiscoveryCopy[locale].myDescription}</small></span>
         <ArrowRight aria-hidden="true" />
       </Link>
     </nav>

@@ -12,6 +12,7 @@ export const raffleSchema = z.object({
   status: z.enum(["preparing", "open", "closed", "cancelled"]),
   entryOpensAt: z.string().datetime({ offset: true }).nullable(),
   entryClosesAt: z.string().datetime({ offset: true }).nullable(),
+  resultsPublishedAt: z.string().datetime({ offset: true }).nullable().optional(),
   fulfillmentMethod: z.enum(["digital", "physical_shipping", "on_site_pickup"]),
   fulfillmentPolicy: raffleFulfillmentPolicySchema.nullable().optional(),
   perFanTicketLimit: z.number().int().positive().nullable(),

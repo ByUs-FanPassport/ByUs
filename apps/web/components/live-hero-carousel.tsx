@@ -104,7 +104,9 @@ export function LiveHeroCarousel({
   locale: AppLocale;
 }) {
   const t = carouselCopy[locale];
-  const total = homeBanners.length + 1;
+  const resultsAnnounced = elinaRaffles?.some(raffle => raffle.resultsPublishedAt && raffle.status !== "cancelled");
+  const slides = resultsAnnounced ? [null, ...homeBanners] : [...homeBanners, null];
+  const total = slides.length;
   const hasControls = total > 1;
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -220,24 +222,15 @@ export function LiveHeroCarousel({
     >
       <div className={styles.heroViewport} ref={viewportRef}>
         <div className={styles.heroTrack}>
-          {homeBanners.map((banner, index) => (
-            <article className={styles.heroCard} key={banner.id}
+          {slides.map((banner, index) => (
+            <article className={`${styles.heroCard} ${banner ? "" : styles.campaignHeroCard}`} key={banner?.id ?? "elina-guide"}
               aria-hidden={index !== activeIndex} aria-roledescription="slide"
               aria-label={t.position(index + 1, total)} inert={index !== activeIndex}
               data-active={index === activeIndex ? "true" : "false"}>
-              <ManagedHomeBanner banner={banner} locale={locale} priority={index === 0} />
+              {banner ? <ManagedHomeBanner banner={banner} locale={locale} priority={index === 0} />
+                : <ElinaGuideCard locale={locale} elina={elina} raffles={elinaRaffles} hero priority={index === 0} />}
             </article>
           ))}
-          <article
-            className={`${styles.heroCard} ${styles.campaignHeroCard}`}
-            aria-hidden={activeIndex !== homeBanners.length}
-            aria-roledescription="slide"
-            aria-label={t.position(total, total)}
-            inert={activeIndex !== homeBanners.length}
-            data-active={activeIndex === homeBanners.length ? "true" : "false"}
-          >
-            <ElinaGuideCard locale={locale} elina={elina} raffles={elinaRaffles} hero priority={homeBanners.length === 0} />
-          </article>
         </div>
       </div>
 
@@ -250,14 +243,14 @@ export function LiveHeroCarousel({
             className={styles.carouselDots}
             style={{ "--carousel-width": `${total * 44 + 44}px` } as CSSProperties}
           >
-            {[...homeBanners.map((banner) => banner.id), "elina-guide"].map((key, index) => (
+            {slides.map((banner, index) => (
               <button
                 type="button"
                 className={styles.carouselDot}
                 aria-label={t.goTo(index + 1)}
                 aria-current={index === activeIndex ? "true" : undefined}
                 onClick={() => goTo(index, true)}
-                key={key}
+                key={banner?.id ?? "elina-guide"}
               >
                 <span aria-hidden="true" />
               </button>
