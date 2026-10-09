@@ -7,6 +7,7 @@ export const ownedRaffleResultSchema = z.object({
   benefitId: z.string().uuid(),
   campaignId: z.string().uuid(),
   title: z.string().min(1),
+  imageUrl: z.string().regex(/^(\/[^/\s@][^\s@]*|https:\/\/[a-z0-9][a-z0-9.-]*\/[^\s@]+)$/).nullable().optional(),
   benefitHref: z.string().regex(/^\/benefits\/[0-9a-f-]{36}$/),
   state: z.enum(["not_entered", "pending", "won", "not_won", "cancelled"]),
   enteredTickets: z.number().int().nonnegative(),

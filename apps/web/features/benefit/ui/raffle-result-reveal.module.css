@@ -1,0 +1,64 @@
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.stage, .stage * { box-sizing: border-box; }
+.media { position: relative; isolation: isolate; min-width: 0; min-height: 440px; overflow: hidden; background: #f6f6f5; }
+.art { position: absolute; inset: 0; opacity: 0; }
+.art img { object-fit: cover; }
+.content { min-width: 0; padding: 32px; align-self: center; }
+.invitation { padding-block: 16px; }
+.eyebrow { font-size: 13px; color: var(--color-muted); }
+.invitation h2 { font-size: 24px; line-height: 1.35; letter-spacing: -.035em; margin: 16px 0; text-wrap: balance; }
+.invitation p { color: var(--color-muted); font-size: 16px; line-height: 1.65; margin: 0 0 28px; word-break: keep-all; }
+.invitation h3 { font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--color-muted); margin: 24px 0 0; overflow-wrap: anywhere; }
+.invitation button { min-height: 48px; }
+.ticket { position: absolute; inset: 28px; filter: drop-shadow(0 5px 8px #2020200a); }
+.ticketTop, .ticketBottom { position: absolute; left: 0; width: 100%; background: #fff; border: 1px solid #e6e4e1; padding: 28px; }
+.ticketTop { top: 0; height: 66%; border-radius: 14px 14px 0 0; border-bottom: 1px dashed #d2cfcc; display: flex; flex-direction: column; align-items: flex-start; }
+.ticketTop > span { font-size: 13px; font-weight: 700; letter-spacing: .07em; }
+.ticketTop > svg { position: absolute; top: 56px; right: 24px; width: 80px; height: 80px; fill: #efb8d0; stroke: #efb8d0; }
+.ticketTop strong { position: relative; max-width: 210px; margin-top: auto; font-size: 32px; font-weight: 800; line-height: 1.3; letter-spacing: -.04em; word-break: keep-all; }
+.ticketBottom { bottom: 0; height: 34%; border-top: 0; border-radius: 0 0 14px 14px; display: flex; flex-direction: column; justify-content: center; gap: 7px; font-size: 16px; font-weight: 700; }
+.ticketBottom > span:nth-child(2) { font-size: 13px; font-weight: 400; color: var(--color-muted); }
+.ticketBottom i { position: absolute; bottom: 30px; right: 24px; width: 64px; height: 16px; opacity: .6; background: repeating-linear-gradient(90deg,#ccc 0 1px,transparent 1px 4px,#ccc 4px 6px,transparent 6px 8px); }
+.seal { position: absolute; top: calc(66% - 24px); right: 28px; width: 48px; height: 48px; display: grid; place-items: center; color: #fff; background: #202020; border-radius: 50%; box-shadow: 0 0 0 6px #fff; }
+.seal svg { width: 24px; height: 24px; }
+.stage[data-phase="anticipating"] .media { background: #fcf3f7; }
+.stage:is([data-phase="revealing"], [data-phase="revealed"]) .art { opacity: 1; }
+.stage:is([data-phase="revealing"], [data-phase="revealed"]) :is(.ticketTop, .ticketBottom, .seal) { opacity: 0; }
+.gift { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px; background: #fcf3f7; text-align: center; }
+.gift svg { width: 72px; height: 72px; stroke: #a21c56; stroke-width: 1.2; }
+.gift span { font-size: 16px; font-weight: 700; line-height: 1.5; }
+.stage[data-outcome="not_won"] .art { padding: 28px; background: #f8f3f4; }
+.thankYou { height: 100%; padding: 28px 20px; border: 1px solid #e8dedb; border-radius: 14px; background: #fffdfb; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 20px; text-align: center; }
+.thankYou > span { font-size: 13px; color: #756d6f; letter-spacing: .07em; }
+.thankYou > span:last-child { font-size: 18px; font-weight: 700; }
+.thankYou svg { width: 76px; height: 70px; margin-top: auto; fill: #f0cadb; stroke: #b56387; stroke-width: 1.3; }
+.thankYou strong { max-width: 230px; font-size: 32px; font-weight: 800; letter-spacing: -.04em; line-height: 1.3; word-break: keep-all; margin-bottom: auto; }
+.particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.particles i { position: absolute; top: 52%; left: 50%; width: 6px; height: 11px; border-radius: 1px; background: var(--particle-color); opacity: 0; }
+.particles i:nth-child(4n) { border-radius: 50%; }
+.replay { display: flex; width: fit-content; margin: 12px auto -8px; font-size: 13px; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@container (max-width: 650px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .media { min-height: 0; aspect-ratio: 1.24; }
+  .content { padding: 24px; }
+  .invitation { padding-block: 0; }
+  .invitation h2 { font-size: 20px; }
+  .ticket { inset: 18px 28px; }
+  .ticketTop, .ticketBottom { padding: 20px 24px; }
+  .ticketTop { height: 68%; }
+  .ticketTop > span { font-size: 11px; }
+  .ticketTop > svg { top: 22px; right: 20px; width: 64px; height: 64px; }
+  .ticketTop strong { max-width: 170px; font-size: 24px; }
+  .ticketBottom { height: 32%; padding-block: 10px; font-size: 13px; gap: 3px; }
+  .ticketBottom > span:nth-child(2) { font-size: 11px; }
+  .ticketBottom i { bottom: 18px; width: 48px; height: 14px; }
+  .seal { top: calc(68% - 20px); right: 24px; width: 40px; height: 40px; }
+  .stage[data-outcome="not_won"] .art { padding: 18px 28px; }
+  .thankYou { display: grid; grid-template-columns: 1fr 64px; grid-template-rows: auto 1fr auto; padding: 16px 20px; gap: 8px; text-align: left; }
+  .thankYou > span { grid-column: 1 / -1; font-size: 11px; }
+  .thankYou > span:last-child { font-size: 16px; }
+  .thankYou svg { grid-column: 2; grid-row: 2; width: 60px; height: 60px; margin: 0; }
+  .thankYou strong { grid-column: 1; grid-row: 2; font-size: 24px; margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .stage *, .stage *::before, .stage *::after { animation: none !important; transition: none !important; } }

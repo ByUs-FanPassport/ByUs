@@ -5,7 +5,7 @@ import type { AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__raffle-result-panel";
 import { additionalLocales, translate } from "@/i18n/messages";
 import { usePrivy } from "@privy-io/react-auth";
-import { ArrowRight, Clock3, Gift, RotateCcw, TicketCheck, XCircle } from "lucide-react";
+import { ArrowRight, Clock3, Gift, Heart, RotateCcw, TicketCheck, XCircle } from "lucide-react";
 import { useCallback } from "react";
 
 import { withLocalePath } from "@/components/locale-path";
@@ -15,6 +15,7 @@ import { useOwnedFanResource } from "@/components/fan-ui/use-owned-fan-resource"
 import { isRecipientOverdue } from "../domain/raffle-fulfillment-policy";
 import { ownedRaffleResultSchema, type OwnedRaffleResult } from "../domain/raffle-result";
 import { formatRaffleDateTime } from "./benefit-presentation";
+import { RaffleResultReveal } from "./raffle-result-reveal";
 import styles from "./raffle-result-panel.module.css";
 
 type Locale = AppLocale;
@@ -161,7 +162,7 @@ function resultStatus(result: OwnedRaffleResult, locale: Locale) {
   }
 }
 
-export function RaffleResultPanel({ result, locale, embedded = false }: { result: OwnedRaffleResult; locale: Locale; embedded?: boolean }) {
+export function RaffleResultPanel({ result, locale, embedded = false, ownerId }: { result: OwnedRaffleResult; locale: Locale; embedded?: boolean; ownerId?: string }) {
   const t = copy[locale];
   const recipientHref = result.winnerId
     ? withLocalePath(`/my/rewards/${result.winnerId}/recipient`, locale)
@@ -174,7 +175,7 @@ export function RaffleResultPanel({ result, locale, embedded = false }: { result
     : result.state === "pending"
       ? { title: t.pending, description: t.pendingHelp, icon: <Clock3 /> }
       : result.state === "not_won"
-        ? { title: t.notWon, description: t.notWonHelp, icon: <XCircle /> }
+        ? { title: t.notWon, description: t.notWonHelp, icon: <Heart /> }
         : result.state === "cancelled"
           ? { title: t.cancelled, description: t.cancelledHelp, icon: <XCircle /> }
           : { title: wonStatus!.title, description: wonStatus!.description, icon: <Gift /> };
@@ -190,17 +191,29 @@ export function RaffleResultPanel({ result, locale, embedded = false }: { result
   if (embedded && result.state === "not_entered") {
     return <p className={styles.emptySummary} role="status"><TicketCheck aria-hidden="true" />{t.notEntered}</p>;
   }
-  return (
-    <section className={`${styles.panel} ${embedded ? styles.embedded : ""}`} aria-labelledby={`raffle-result-${result.benefitId}`}>
+  const headingId = `raffle-result-${result.benefitId}`;
+  const revealOutcome = result.state === "not_won" ? "not_won"
+    : result.state === "won" && !isClosed && !result.recipientSubmitted && result.fulfillmentStatus === "information_required" ? "won" : null;
+  const storageKey = ownerId && result.publishedAt
+    ? `byus:raffle-result:v1:${ownerId}:${result.campaignId}:${result.benefitId}:${result.publishedAt}:${result.state}` : null;
+  const actions = (
+      <div className={styles.actions}>
+        {showRecipientAction ? <FanAction variant="primary" href={recipientHref} trailingIcon={<ArrowRight />}>{recipientLabel}</FanAction> : null}
+        {isClosed ? <FanAction variant="neutral" href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : null}
+        {result.state === "not_won" ? <FanAction variant="neutral" href={withLocalePath("/benefits", locale)}>{t.other}</FanAction> : null}
+      </div>
+  );
+  const details = <>
       <span className={styles.eyebrow}>{t.heading}</span>
       <div className={styles.status} data-state={result.state}>
         <span aria-hidden="true">{state.icon}</span>
         <div>
-          <h2 id={`raffle-result-${result.benefitId}`}>{state.title}</h2>
+          <h2 id={headingId} data-result-heading tabIndex={-1}>{state.title}</h2>
           <p>{state.description}</p>
         </div>
       </div>
-      {!embedded ? <h3>{result.title}</h3> : null}
+      {!embedded ? <h3 className={styles.prizeTitle}>{result.title}</h3> : null}
+      {revealOutcome ? actions : null}
       <dl className={styles.facts}>
         {result.enteredTickets > 0 ? <div><dt>{t.entered}</dt><dd>{result.enteredTickets}</dd></div> : null}
         {!embedded && result.entryClosesAt ? <div><dt>{t.closed}</dt><dd><time dateTime={result.entryClosesAt}>{formatRaffleDateTime(result.entryClosesAt, locale)}</time></dd></div> : null}
@@ -217,13 +230,11 @@ export function RaffleResultPanel({ result, locale, embedded = false }: { result
       </dl>
       {result.state === "won" && result.fulfillmentStatus === "pickup_available" && result.policy?.pickupInstructions[toContentLocale(locale)]
         ? <p className={styles.instructions}>{result.policy.pickupInstructions[toContentLocale(locale)]}</p> : null}
-      <div className={styles.actions}>
-        {showRecipientAction ? <FanAction variant="primary" href={recipientHref} trailingIcon={<ArrowRight />}>{recipientLabel}</FanAction> : null}
-        {isClosed ? <FanAction variant="neutral" href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : null}
-        {result.state === "not_won" ? <FanAction variant="neutral" href={withLocalePath("/benefits", locale)}>{t.other}</FanAction> : null}
-      </div>
-    </section>
-  );
+      {!revealOutcome ? actions : null}
+  </>;
+  return <section className={`${styles.panel} ${embedded ? styles.embedded : ""} ${revealOutcome ? styles.revealPanel : ""}`} aria-labelledby={headingId}>
+    {revealOutcome ? <RaffleResultReveal key={storageKey ?? `${result.campaignId}:${result.benefitId}:${result.state}`} storageKey={storageKey} outcome={revealOutcome} title={embedded ? "" : result.title} imageUrl={result.imageUrl} headingId={headingId} announcement={state.title} locale={locale}>{details}</RaffleResultReveal> : details}
+  </section>;
 }
 
 export function BenefitRaffleResult({ benefitId, locale, embedded = false }: { benefitId: string; locale: Locale; embedded?: boolean }) {
@@ -242,5 +253,5 @@ export function BenefitRaffleResult({ benefitId, locale, embedded = false }: { b
   }
   if (resource.state.status === "loading") return <FanState kind="loading" title={copy[locale].loading} />;
   if (resource.state.status === "error") return <FanState kind="error" title={copy[locale].error} description={copy[locale].errorHelp} actions={<FanAction variant="neutral" onClick={resource.retry} leadingIcon={<RotateCcw />}>{copy[locale].retry}</FanAction>} />;
-  return <RaffleResultPanel result={resource.state.data} locale={locale} embedded={embedded} />;
+  return <RaffleResultPanel result={resource.state.data} locale={locale} embedded={embedded} ownerId={auth.user?.id} />;
 }

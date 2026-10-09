@@ -136,7 +136,7 @@ function MyRafflesOwnerScreen({ locale, auth }: { locale: FanLocale; auth: Retur
     content = items.length === 0
       ? <FanState kind="empty" title={t.empty} description={t.emptyHelp} icon={<TicketCheck />} actions={<FanAction variant="primary" href={withLocalePath("/benefits", locale)}>{t.browse}</FanAction>} />
       : <>
-          <div className={styles.list}>{items.map((item) => <RaffleResultPanel key={`${item.campaignId}:${item.benefitId}`} result={item} locale={locale} />)}</div>
+          <div className={styles.list}>{items.map((item) => <RaffleResultPanel key={`${item.campaignId}:${item.benefitId}`} result={item} locale={locale} ownerId={auth.user?.id} />)}</div>
           {moreError ? <p className={styles.moreError} role="alert">{t.moreError}</p> : null}
           {nextCursor ? <div className={styles.more}><FanAction variant="neutral" onClick={() => void loadMore()} disabled={loadingMore} ariaBusy={loadingMore}>{t.more}</FanAction></div> : null}
         </>;

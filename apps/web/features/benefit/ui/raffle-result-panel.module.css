@@ -11,7 +11,11 @@
 .status > span svg { width: 21px; height: 21px; }
 .status h2 { margin: 0; font-size: clamp(20px, 4vw, 26px); letter-spacing: -.03em; }
 .status p { margin: 7px 0 0; color: oklch(42% 0 0); line-height: 1.55; }
-.panel > h3 { margin: 26px 0 10px; font-size: 16px; }
+.revealPanel { padding: 0; overflow: hidden; container-type: inline-size; background: #fff; }
+.revealPanel .status h2 { font-size: clamp(20px, 4vw, 24px); }
+.revealPanel .actions { margin: 20px 0 24px; }
+.revealPanel .actions > * { width: 100%; }
+.prizeTitle { margin: 26px 0 10px; font-size: 16px; }
 .facts { margin: 0; border-top: 1px solid oklch(89% 0 0); }
 .facts div { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid oklch(91% 0 0); }
 .facts dt { color: oklch(45% 0 0); font-size: 13px; }

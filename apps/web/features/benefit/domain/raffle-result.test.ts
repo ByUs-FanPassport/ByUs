@@ -10,6 +10,14 @@ const pending = {
   recipientDeadlineAt: null, recipientSubmitted: false, recipientEditable: false, policy: null,
 };
 describe("owned raffle result publication boundary", () => {
+  it("accepts optional public prize images and rejects unsafe sources", () => {
+    for (const imageUrl of [undefined, null, "/prizes/statue.jpg", "https://example.com/statue.jpg"]) {
+      expect(ownedRaffleResultSchema.safeParse({ ...pending, imageUrl }).success).toBe(true);
+    }
+    for (const imageUrl of ["javascript:alert(1)", "data:image/svg+xml,test", "//example.com/prize.jpg", "https://user@example.com/prize.jpg"]) {
+      expect(ownedRaffleResultSchema.safeParse({ ...pending, imageUrl }).success).toBe(false);
+    }
+  });
   it("accepts a pending entry without revealing an unpublished winner", () => {
     expect(ownedRaffleResultSchema.parse(pending).state).toBe("pending");
     expect(ownedRaffleResultSchema.safeParse({ ...pending, winnerId: pending.benefitId }).success).toBe(false);

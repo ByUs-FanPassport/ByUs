@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "내 래플과 경품 상세에서 티켓을 열어 당첨·낙첨 결과를 확인할 수 있어요.",
+    "결과 연출 건너뛰기와 모션 줄이기를 지원하고, 수령·배송 상태는 계속 바로 확인할 수 있어요.",
+    "첨부 화면은 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/my/raffles",
+  "images": [
+    "release-notes/images/2026-10-09-raffle-winner.png",
+    "release-notes/images/2026-10-09-raffle-not-won.png"
+  ]
+}
