@@ -34,6 +34,17 @@ describe("fanpage server authority", () => {
     expect(response.status).toBe(200); expect((await response.json()).me).toBeNull();
     expect(rpc).toHaveBeenCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null, p_locale: "ko" });
   });
+  it("validates leaderboard categories and keeps all on the rolling-compatible overload", async () => {
+    rpc.mockResolvedValue({ membershipCount: 100, fanCount: 100, available: true, asOf: now, rows: [row], me: null });
+    expect((await api.leaderboard(request("/api?category=all", undefined, false, "GET"), "elina")).status).toBe(200);
+    expect(rpc).toHaveBeenLastCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null, p_locale: "ko" });
+    expect((await api.leaderboard(request("/api?category=mission", undefined, false, "GET"), "elina")).status).toBe(200);
+    expect(rpc).toHaveBeenLastCalledWith("read_celebrity_fan_leaderboard", { p_slug: "elina", p_app_user_id: null, p_locale: "ko", p_category: "mission" });
+    for (const query of ["category=", "category=other", "category=live&category=mission"]) {
+      expect((await api.leaderboard(request(`/api?${query}`, undefined, false, "GET"), "elina")).status).toBe(400);
+    }
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
   it("accepts the legacy pre-migration boundary while fanCount is absent", async () => {
     rpc.mockResolvedValueOnce({ membershipCount: 100, available: false, asOf: now, rows: [], me: null });
     const response = await api.leaderboard(request("/api", undefined, false, "GET"), "elina");
