@@ -64,6 +64,7 @@ describe("canonical 03 guest home", () => {
     routerActions.push.mockReset();
     window.history.replaceState({}, "", "/");
     vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -573,6 +574,7 @@ describe("canonical 03 guest home", () => {
   });
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-07-21T00:00:00Z"));
     privy.authenticated = true;
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
@@ -617,7 +619,23 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByText("LIVE 상세 보기")).not.toBeInTheDocument();
   });
 
+  it("shows the empty reservation state instead of an elapsed scheduled LIVE from a stale summary", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-09T00:00:00Z"));
+    privy.authenticated = true;
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
+      profile: { nickname: "Fan" }, creators: [],
+      live: { upcoming: [{ id: featuredLive.live.id, slug: "expired-live", title: "이퓨 정기 LIVE", startsAt: "2026-09-29T22:00:00Z", effectiveStatus: "scheduled", attended: false }], history: [] },
+      rewards: { availableCount: 0, entries: 0, items: [] },
+      collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
+    } })));
+    render(<GuestHome {...defaultProps} featuredLives={[]} />);
+    expect(await screen.findAllByText("예약한 LIVE가 없어요.")).toHaveLength(2);
+    expect(document.querySelector("[data-reserved-live]")).toBeNull();
+    expect(screen.queryByText("시작 확인 중")).not.toBeInTheDocument();
+  });
+
   it.each([true, false])("matches a reserved creator by LIVE identity, with matching data: %s", async (hasMatchingLive) => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-07-21T00:00:00Z"));
     privy.authenticated = true;
     const reserved = { id: "22222222-2222-4222-8222-222222222222", slug: "reserved-live", title: featuredLive.live.title, startsAt: "2026-09-12T00:00:00.000Z", effectiveStatus: "scheduled", attended: false };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {

@@ -68,12 +68,10 @@ export function prioritizeReservedLives(
 ) {
   const rank = (event: MySummary["live"]["upcoming"][number]) => {
     if (event.effectiveStatus === "live") return 0;
-    if (event.effectiveStatus === "scheduled" && Date.parse(event.startsAt) >= now) return 1;
-    if (event.effectiveStatus === "scheduled") return 2;
-    return 3;
+    return 1;
   };
   return events
-    .filter((event) => event.effectiveStatus === "live" || event.effectiveStatus === "scheduled")
+    .filter((event) => event.effectiveStatus === "live" || (event.effectiveStatus === "scheduled" && Date.parse(event.startsAt) > now))
     .toSorted((left, right) => {
     const rankDifference = rank(left) - rank(right);
     if (rankDifference) return rankDifference;

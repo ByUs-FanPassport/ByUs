@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { mySummarySchema, type MySummary } from "../../features/my/domain/my-summary";
+import { mySummarySchema, prioritizeReservedLives, type MySummary } from "../../features/my/domain/my-summary";
 import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 
 interface RpcClient {
@@ -21,8 +21,15 @@ export class SupabaseMySummaryRepository implements MySummaryRepository {
       p_as_of: input.asOf.toISOString(),
     });
     if (error) throw new Error("MY summary query failed");
-    try { return mySummarySchema.parse(data); }
+    let summary: MySummary;
+    try { summary = mySummarySchema.parse(data); }
     catch { throw new Error("MY summary projection is invalid"); }
+    const upcoming = prioritizeReservedLives(summary.live.upcoming, input.asOf.getTime());
+    const upcomingIds = new Set(upcoming.map((event) => event.id));
+    // Open-ended recurring schedules can stay scheduled after their start; preserve them as history.
+    const history = [...summary.live.history, ...summary.live.upcoming.filter((event) => !upcomingIds.has(event.id))]
+      .toSorted((left, right) => Date.parse(right.startsAt) - Date.parse(left.startsAt) || right.id.localeCompare(left.id));
+    return { ...summary, live: { upcoming, history } };
   }
 }
 
