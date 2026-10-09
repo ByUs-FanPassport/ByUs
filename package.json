@@ -24,7 +24,8 @@
       "axios": "1.20.0"
     },
     "ws@>=8.0.0 <8.21.0": "8.21.1",
-    "@walletconnect/utils@>=2.21.0 <2.21.9": "2.21.9"
+    "@walletconnect/utils@>=2.21.0 <2.21.9": "2.21.9",
+    "fast-glob": "$fast-glob"
   },
   "scripts": {
     "env:local:dev": "node scripts/sync-web-dev-env.mjs",
@@ -51,6 +52,7 @@
   },
   "devDependencies": {
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.8"
+    "eslint-config-next": "16.3.8",
+    "fast-glob": "file:tools/eslint-root-glob"
   }
 }
