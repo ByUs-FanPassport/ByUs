@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import type { Route } from "next";
 import { useState, type ReactNode } from "react";
 import { LoungeScreen } from "../../features/lounge/ui/lounge-screen";
 import { CelebrityFanPage } from "../../components/celebrity-fan-page";
@@ -39,6 +40,9 @@ import { QuizResultScreen } from "../../features/quiz/ui/quiz-result-screen";
 import { LiveSurveyScreen } from "../../features/live/ui/live-survey-screen";
 import { FanAppFrame, FanContentContainer } from "../../components/fan-shell/fan-app-shell";
 import { ChzzkPostBody } from "../../features/fanpage/ui/chzzk-posts";
+import { NoticeDetail } from "../../components/notice/notice-detail";
+import { sanitizeReturnTo } from "../../components/login-intent";
+import { boardHref, parseFanPageTab, resolveBoardSection, resolveBoardSource } from "../../features/fanpage/domain/board-navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import noticeStyles from "../../components/notice/notice-detail.module.css";
@@ -61,7 +65,7 @@ const celebrity = { slug: "elina", locale: toContentLocale(locale), name: locale
 const communityCreators = [celebrity, { ...celebrity, slug: "yuna", name: "Yuna", summary: "Yuna fan page", image: { ...celebrity.image, alt: "Yuna" }, socialLinks: [], displayOrder: 1 }] as const;
 const communityMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_COMMUNITY_MODE === "true";
 const fanWebMode = (import.meta.env as unknown as Record<string, string | undefined>).VITE_FAN_WEB_MODE === "true";
-const fanWebPath = location.pathname === "/community" || /^\/(?:c\/elina\/(?:community\/|schedule-suggestions|updates\/chzzk\/|verify\/(?:questions|result))|live\/(?:calendar\/schedules\/|discovery-survey\/survey)|bias\/requests|my\/(?:activity|requests|rewards\/[0-9a-f-]{36}\/recipient)|s\/[a-f0-9]{32}|settings\/blocked-users|admin\/(?:schedules|schedule-suggestions|fanpage-requests))/.test(location.pathname);
+const fanWebPath = location.pathname === "/community" || /^\/(?:c\/elina\/(?:community\/|notices\/|schedule-suggestions|updates\/chzzk\/|verify\/(?:questions|result))|live\/(?:calendar\/schedules\/|discovery-survey\/survey)|bias\/requests|my\/(?:activity|requests|rewards\/[0-9a-f-]{36}\/recipient)|s\/[a-f0-9]{32}|settings\/blocked-users|admin\/(?:schedules|schedule-suggestions|fanpage-requests))/.test(location.pathname);
 
 function AccountSwitcher({ children }: { children: ReactNode }) {
   const [identity, setIdentity] = useState(() => localStorage.getItem("lounge-test-identity") ?? "guest");
@@ -80,10 +84,16 @@ function fanWebScreen() {
   if (location.pathname === "/fixtures/tiktok-live") return <TikTokLiveFallbackFixture locale={locale} />;
   if (location.pathname === "/celebrities") return <CelebrityDirectory celebrities={[{ ...celebrity, upcomingLive: null }]} locale={locale} initialQuery={params.get("q") ?? ""} />;
   const detail = location.pathname.match(/^\/c\/elina\/community\/([0-9a-f-]{36})$/);
+  const notice = location.pathname.match(/^\/c\/elina\/notices\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
   const schedule = location.pathname.match(/^\/live\/calendar\/schedules\/([0-9a-f-]{36})$/);
   if (detail) return <FanAppFrame locale={locale} mainId="fan-post-main"><FanContentContainer as="main" id="fan-post-main" tabIndex={-1} style={{ paddingBlock: 32 }}><FanPostDetail postId={detail[1]} locale={locale} /></FanContentContainer></FanAppFrame>;
+  if (notice) return <FanAppFrame locale={locale} mainId="notice-detail-main"><FanContentContainer as="main" id="notice-detail-main" tabIndex={-1}><NoticeDetail slug="elina" noticeSlug={notice[1]} locale={locale} /></FanContentContainer></FanAppFrame>;
   if (schedule) return <ScheduleDetail id={schedule[1]} locale={locale} />;
-  if (/^\/c\/elina\/updates\/chzzk\/[1-9]\d{0,14}$/.test(location.pathname)) return <FanAppFrame locale={locale} mainId="chzzk-detail-main"><FanContentContainer as="main" id="chzzk-detail-main" className={`${noticeStyles.page} ${noticeStyles.standalone}`} tabIndex={-1}><Link className={noticeStyles.back} href={`/elina?tab=notice&locale=${locale}#celebrity-content`}><ArrowLeft aria-hidden="true" />{locale === "ko" ? "소식 목록" : "All updates"}</Link><article className={noticeStyles.article}><header className={noticeStyles.header}><h1>오늘 방송도 함께해 주셔서 고마워요</h1><div className={noticeStyles.meta}><span>CHZZK</span><time dateTime={discoveryChzzkPost.date}>{discoveryChzzkPost.date.replaceAll("-", ".")}</time></div></header><ChzzkPostBody post={discoveryChzzkPost} name={celebrity.name} locale={locale} communityUrl="https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045/community" /></article></FanContentContainer></FanAppFrame>;
+  if (/^\/c\/elina\/updates\/chzzk\/[1-9]\d{0,14}$/.test(location.pathname)) {
+    const requestedReturn = params.get("returnTo"), safeReturn = sanitizeReturnTo(requestedReturn);
+    const returnTo = (requestedReturn && (safeReturn !== "/" || requestedReturn === "/") ? safeReturn : boardHref("elina", locale, { source: "official" })) as Route;
+    return <FanAppFrame locale={locale} mainId="chzzk-detail-main"><FanContentContainer as="main" id="chzzk-detail-main" className={`${noticeStyles.page} ${noticeStyles.standalone}`} tabIndex={-1}><Link className={noticeStyles.back} href={returnTo}><ArrowLeft aria-hidden="true" />{locale === "ko" ? "소식 목록" : "All updates"}</Link><article className={noticeStyles.article}><header className={noticeStyles.header}><h1>오늘 방송도 함께해 주셔서 고마워요</h1><div className={noticeStyles.meta}><span>CHZZK</span><time dateTime={discoveryChzzkPost.date}>{discoveryChzzkPost.date.replaceAll("-", ".")}</time></div></header><ChzzkPostBody post={discoveryChzzkPost} name={celebrity.name} locale={locale} communityUrl="https://chzzk.naver.com/0a3f97086cb81d3360c69fdf5d020045/community" /></article></FanContentContainer></FanAppFrame>;
+  }
   if (location.pathname === "/c/elina/verify/questions") return <QuizQuestionsScreen slug="elina" locale={locale} />;
   if (location.pathname === "/c/elina/verify/result") return <QuizResultScreen attemptId={params.get("attempt")} passportId={params.get("passport")} celebritySlug="elina" celebrityName={celebrity.name} locale={locale} />;
   if (location.pathname === "/live/discovery-survey/survey") return <LiveSurveyScreen slug="discovery-survey" locale={locale} />;
@@ -107,8 +117,13 @@ function fanWebScreen() {
   if (location.pathname === "/admin/schedule-suggestions") return <AuthorizedScheduleSuggestionManager locale={toContentLocale(locale)} />;
   if (location.pathname === "/admin/fanpage-requests") return <AuthorizedFanpageRequestManager locale={toContentLocale(locale)} />;
   const requestedTab = params.get("tab");
-  const initialTab = requestedTab === "community" || requestedTab === "media" || requestedTab === "leaderboard" || requestedTab === "notice" || requestedTab === "certifications" ? requestedTab : "home";
-  return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null} initialTab={initialTab} />;
+  const requestedNews = params.get("news"), requestedMedia = params.get("media");
+  return <CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={null}
+    initialTab={parseFanPageTab(requestedTab)}
+    initialBoardSection={resolveBoardSection(requestedTab, params.get("section"))}
+    initialBoardSource={resolveBoardSource(requestedTab, params.get("source"))}
+    initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"}
+    initialMediaFilter={requestedMedia === "photos" || requestedMedia === "videos" || requestedMedia === "replays" ? requestedMedia : undefined} />;
 }
 
 // Read-only visual fixtures stay inside the standalone loopback harness.
@@ -120,7 +135,7 @@ window.fetch = (input, init) => {
   if (params.has("quality") && method === "GET" && url === "/api/celebrities/elina/youtube") return Promise.resolve(Response.json(officialVideoFixture));
   if (params.has("quality") && method === "GET" && url.startsWith("/api/celebrities/elina/media?")) return Promise.resolve(Response.json({ items: [], nextCursor: null }));
   if (location.pathname === "/fixtures/tiktok-live") { const playback = tiktokPlaybackFixtureResponse(url, method, params.get("state")); if (playback) return Promise.resolve(playback); }
-  if (params.has("quality") && method === "GET" && url === "/api/celebrities/elina/instagram") return Promise.resolve(params.has("partialError") ? Response.json({}, { status: 503 }) : Response.json({ items: [], updatedAt: null }));
+  if ((params.has("quality") || params.has("partialError")) && method === "GET" && url === "/api/celebrities/elina/instagram") return Promise.resolve(params.has("partialError") ? Response.json({}, { status: 503 }) : Response.json({ items: [], updatedAt: null }));
   if (params.has("quality") && method === "GET" && url.startsWith("/api/live-events?")) return Promise.resolve(Response.json({ catalog: { replay: [] } }));
   const discoveryResponse = discoveryFixtureResponse(url, method, location.pathname);
   if (discoveryResponse) return Promise.resolve(discoveryResponse);

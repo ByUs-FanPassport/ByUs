@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CreatorMediaPanel } from "./creator-media-panel";
 
-const state = vi.hoisted(() => ({ query: "tab=media&locale=ko", failure: "", allEmpty: false, replace: vi.fn(), more: vi.fn() }));
+const state = vi.hoisted(() => ({ query: "tab=board&section=media&locale=ko", failure: "", allEmpty: false, replace: vi.fn(), more: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/elina", useSearchParams: () => new URLSearchParams(state.query), useRouter: () => ({ replace: state.replace }) }));
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false }) }));
 vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => ({ ready: true, generation: 0 }) }));
@@ -17,17 +17,23 @@ vi.mock("@/features/fanpage/ui/use-news-source", () => ({ useNewsSource: (url: s
     retry: vi.fn(), loadMore: state.more,
   };
 } }));
-beforeEach(() => { state.query = "tab=media&locale=ko"; state.replace.mockClear(); state.failure = ""; state.allEmpty = false; });
+beforeEach(() => { state.query = "tab=board&section=media&locale=ko"; state.replace.mockClear(); state.failure = ""; state.allEmpty = false; });
 afterEach(cleanup);
 
 it("makes the thumbnail and text one link, and restores the media filter from its URL", () => {
   const { rerender } = render(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);
   const photo = screen.getByRole("link", { name: /함께한 사진/ });
   expect(photo.querySelector("img")).not.toBeNull();
-  expect(photo).toHaveAttribute("href", "/c/elina/notices/photo?locale=ko");
+  let photoHref = new URL(photo.getAttribute("href")!, "https://byus.test");
+  expect(photoHref.searchParams.get("locale")).toBe("ko");
+  expect(photoHref.searchParams.get("returnTo")).toBe("/elina?tab=board&section=media&locale=ko#celebrity-content");
+  state.query = "tab=board&section=media&locale=ko&media=photos";
+  rerender(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);
+  photoHref = new URL(screen.getByRole("link", { name: /함께한 사진/ }).getAttribute("href")!, "https://byus.test");
+  expect(photoHref.searchParams.get("returnTo")).toBe("/elina?tab=board&section=media&locale=ko&media=photos#celebrity-content");
   fireEvent.click(screen.getByRole("button", { name: "다시보기" }));
-  expect(state.replace).toHaveBeenCalledWith("/elina?tab=media&locale=ko&media=replays", { scroll: false });
-  state.query = "tab=media&locale=ko&media=replays";
+  expect(state.replace).toHaveBeenCalledWith("/elina?tab=board&section=media&locale=ko&media=replays#celebrity-content", { scroll: false });
+  state.query = "tab=board&section=media&locale=ko&media=replays";
   rerender(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);
   expect(screen.getByRole("button", { name: "다시보기" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByRole("link", { name: /함께한 사진/ })).not.toBeInTheDocument();
@@ -35,14 +41,15 @@ it("makes the thumbnail and text one link, and restores the media filter from it
   expect(screen.queryByRole("button", { name: /더 보기/ })).not.toBeInTheDocument();
 });
 
-it("gives an empty media filter a clear label and a route back to the creator", () => {
-  state.query = "tab=media&locale=ko&media=videos";
+it("clears an empty media filter without repeating its title", () => {
+  state.query = "tab=board&section=media&locale=ko&media=videos";
   render(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);
 
   const empty = screen.getByRole("status");
-  expect(empty).toHaveTextContent("영상");
   expect(empty).toHaveTextContent("아직 등록된 항목이 없어요.");
-  expect(screen.getByRole("link", { name: "돌아가기" })).toHaveAttribute("href", "/elina?locale=ko");
+  expect(empty.querySelector("strong")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "전체 보기" }));
+  expect(state.replace).toHaveBeenCalledWith("/elina?tab=board&section=media&locale=ko#celebrity-content", { scroll: false });
 });
 
 const officialChannel = [{ platform: "youtube" as const, url: "https://www.youtube.com/@ElinaKarimova" }];
@@ -57,11 +64,20 @@ it("labels official sources and keeps successful media visible when YouTube fail
 it("shows verified video attribution and keeps true empty distinct from source failure", () => {
   const { rerender } = render(<CreatorMediaPanel slug="elina" locale="ko" socialLinks={officialChannel} />);
   expect(screen.getByRole("link", { name: /공식 채널 영상/ })).toHaveTextContent("YouTube");
+  expect(screen.getByRole("link", { name: /공식 채널 영상/ })).toHaveAttribute("href", "https://www.youtube.com/watch?v=abcdefghijk");
   state.allEmpty = true;
   rerender(<CreatorMediaPanel slug="elina" locale="ko" socialLinks={officialChannel} />);
   expect(screen.getByText(/아직 모아둔 미디어/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "피드" })).toHaveAttribute("href", "/elina?tab=board&locale=ko#celebrity-content");
   state.failure = "all";
   rerender(<CreatorMediaPanel slug="elina" locale="ko" socialLinks={officialChannel} />);
   expect(screen.queryByText(/아직 모아둔 미디어/)).not.toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: "다시 시도" }).length).toBeGreaterThan(0);
+});
+
+it("links an all-empty creator without official channels back to the board feed", () => {
+  state.allEmpty = true;
+  render(<CreatorMediaPanel slug="elina" locale="ko" />);
+  expect(screen.getByRole("status")).toHaveTextContent("아직 등록된 항목이 없어요.");
+  expect(screen.getByRole("link", { name: "피드" })).toHaveAttribute("href", "/elina?tab=board&locale=ko#celebrity-content");
 });

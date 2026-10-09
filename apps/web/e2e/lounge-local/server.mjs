@@ -121,6 +121,8 @@ export async function startHarness({ communityMode = false, fanWebMode = false }
   const { createFanCommunityHandlers } = await vite.ssrLoadModule(path.join(web, "server/fanpage/community-routes.ts"));
   const { fanpageFailure, fanpageJson, createFanpageHandlers } = await vite.ssrLoadModule(path.join(web, "server/fanpage/routes.ts"));
   const { createContentHandlers } = await vite.ssrLoadModule(path.join(web, "server/fan-posts/routes.ts"));
+  const { createFeedHandler } = await vite.ssrLoadModule(path.join(web, "server/fan-posts/feed.ts"));
+  const { discoveryChzzkPost } = await vite.ssrLoadModule(path.join(here, "discovery-fixture.ts"));
   const { normalizePublicImage } = await vite.ssrLoadModule(path.join(web, "server/media/public-image-processing.ts"));
   const { createParticipationHandler } = await vite.ssrLoadModule(path.join(web, "server/schedules/routes.ts"));
   const { createFanHistoryHandler } = await vite.ssrLoadModule(path.join(web, "server/my/fan-history-route.ts"));
@@ -145,7 +147,7 @@ export async function startHarness({ communityMode = false, fanWebMode = false }
   const allowedRpc = new Set([
     "read_celebrity_lounge", "post_celebrity_lounge_message", "remove_owned_lounge_message", "set_lounge_message_reaction", "read_admin_lounge_messages", "hide_admin_lounge_message",
     "read_celebrity_notice_comments", "post_celebrity_notice_comment", "remove_owned_notice_comment", "read_celebrity_fan_community", "read_celebrity_fan_leaderboard", "read_celebrity_cheers", "post_celebrity_cheer",
-    "read_fan_notices", "read_fan_notice", "read_fan_posts", "save_fan_post", "read_fan_post", "remove_fan_post", "read_fan_post_comments", "post_fan_post_comment", "remove_fan_post_comment", "set_fan_post_like",
+    "read_unified_creator_feed", "read_fan_notices", "read_fan_notice", "read_fan_posts", "save_fan_post", "read_fan_post", "remove_fan_post", "read_fan_post_comments", "post_fan_post_comment", "remove_fan_post_comment", "set_fan_post_like",
     "reserve_content_asset", "finish_content_asset_upload", "abandon_content_asset_upload", "read_content_asset", "read_admin_content_asset", "post_content_report", "block_content_author", "read_content_blocks", "remove_content_block",
     "read_content_translation", "fan_web_content_target", "reserve_content_translation_request", "save_content_translation", "read_admin_content_reports", "resolve_admin_content_report",
     "fan_web_list_schedules", "fan_web_get_schedule", "fan_web_set_schedule_subscription", "fan_web_list_owned_schedule_suggestions", "fan_web_submit_schedule_suggestion",
@@ -181,6 +183,15 @@ export async function startHarness({ communityMode = false, fanWebMode = false }
   const participation = createParticipationHandler(dependencies);
   const history = createFanHistoryHandler(dependencies);
   const officialMedia = createOfficialMediaHandler(dependencies);
+  const chzzkDone = { offset: 1, anchor: null, fingerprint: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", count: 0 };
+  const feed = createFeedHandler({ ...dependencies,
+    async chzzkChannel(slug) { return slug === "elina" ? "0a3f97086cb81d3360c69fdf5d020045" : null; },
+    async readChzzk(_channelId, checkpoint) {
+      if (checkpoint?.offset) return { items: [], start: checkpoint, hasMore: false, frontier: null, truncated: false };
+      const start = { offset: 0, anchor: "a".repeat(64), fingerprint: "b".repeat(64), count: 1 };
+      return { items: [{ item: discoveryChzzkPost, after: chzzkDone, hasMore: false }], start, hasMore: true, frontier: null, truncated: false };
+    },
+  });
   handleApi = async (req, res, next) => {
     if (!req.url?.startsWith("/api/")) return next();
     // No LAN binding and no cross-origin requests can access synthetic identities.
@@ -203,6 +214,7 @@ export async function startHarness({ communityMode = false, fanWebMode = false }
         const admin = url.pathname.match(/^\/api\/admin\/lounge-messages(?:\/([^/]+))?$/);
         const comments = url.pathname.match(/^\/api\/celebrities\/([^/]+)\/notices\/([^/]+)\/comments$/);
         const notice = url.pathname.match(/^\/api\/celebrities\/([^/]+)\/notices\/([^/]+)$/);
+        const creatorFeed = url.pathname.match(/^\/api\/celebrities\/([^/]+)\/feed$/);
         const posts = url.pathname.match(/^\/api\/celebrities\/([^/]+)\/posts$/);
         const media = url.pathname.match(/^\/api\/celebrities\/([^/]+)\/media$/);
         const post = url.pathname.match(/^\/api\/posts\/([^/]+)$/);
@@ -225,6 +237,7 @@ export async function startHarness({ communityMode = false, fanWebMode = false }
         else if (admin) response = admin[1] ? await handlers.adminHide(request, admin[1]) : await handlers.adminList(request);
         else if (comments) response = request.method === "GET" ? await fanpage.comments(request, comments[1], comments[2]) : await fanpage.postComment(request, comments[1], comments[2]);
         else if (fanWebMode && notice) response = await content.notice(request, notice[1], notice[2]);
+        else if (fanWebMode && creatorFeed) response = await feed(request, creatorFeed[1]);
         else if (fanWebMode && media) response = await officialMedia(request, media[1]);
         else if (fanWebMode && posts) response = await content.posts(request, posts[1]);
         else if (fanWebMode && postComments) response = await content.comments(request, postComments[1]);

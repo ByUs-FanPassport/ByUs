@@ -25,7 +25,7 @@ describe("paused public lounge", () => {
   });
   it.each(["ko", "en"] as const)("returns an existing lounge link to the %s fan page", async (locale) => {
     vi.mocked(loadSeoCreator).mockResolvedValue({ slug: "elina" } as Awaited<ReturnType<typeof loadSeoCreator>>);
-    await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ locale }) })).rejects.toThrow(`REDIRECT:/elina?locale=${locale}#cheers`);
+    await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ locale }) })).rejects.toThrow(`REDIRECT:/elina?tab=board&source=fans&locale=${locale}#celebrity-content`);
     expect(loadSeoCreator).toHaveBeenCalledWith("elina", locale);
   });
   it("does not expose a missing or unpublished creator through the redirect", async () => {

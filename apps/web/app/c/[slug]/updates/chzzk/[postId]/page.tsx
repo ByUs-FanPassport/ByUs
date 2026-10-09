@@ -3,6 +3,8 @@ import { translate } from "@/i18n/messages";
 import { toContentLocale } from "@/i18n/locales";
 import { parseAppLocale } from "@/i18n/locales";
 import Link from "next/link";
+import type { Route } from "next";
+import { sanitizeReturnTo } from "@/components/login-intent";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { FanAppFrame, FanContentContainer } from "@/components/fan-shell/fan-app-shell";
@@ -17,10 +19,12 @@ export const dynamic = "force-dynamic";
 
 export default async function ChzzkDetailPage({ params, searchParams }: {
   params: Promise<{ slug: string; postId: string }>;
-  searchParams: Promise<{ locale?: string }>;
+  searchParams: Promise<{ locale?: string; returnTo?: string }>;
 }) {
   const { slug, postId } = await params;
-  const locale = parseAppLocale((await searchParams).locale);
+  const query = await searchParams, locale = parseAppLocale(query.locale);
+  const safeReturn = sanitizeReturnTo(query.returnTo);
+  const returnTo = query.returnTo && (safeReturn !== "/" || query.returnTo === "/") ? safeReturn : `/${slug}?tab=notice&locale=${locale}#celebrity-content`;
   const ko = locale === "ko";
   if (!/^[1-9]\d{0,14}$/.test(postId)) notFound();
   const creator = await createPublishedContentRepositoryFromEnvironment().findBySlug(toContentLocale(locale), slug);
@@ -33,7 +37,7 @@ export default async function ChzzkDetailPage({ params, searchParams }: {
   if (!post && !unavailable) notFound();
   return <FanAppFrame locale={locale} mainId="chzzk-detail-main">
     <FanContentContainer as="main" id="chzzk-detail-main" className={`${styles.page} ${styles.standalone}`} tabIndex={-1}>
-      <Link className={styles.back} href={`/${slug}?tab=notice&locale=${locale}#celebrity-content`}><ArrowLeft aria-hidden="true" />{locale === "ko" ? "소식 목록" : translate(locale, localizedMessages.mafa93c1c71bf, "All updates")}</Link>
+      <Link className={styles.back} href={returnTo as Route}><ArrowLeft aria-hidden="true" />{locale === "ko" ? "소식 목록" : translate(locale, localizedMessages.mafa93c1c71bf, "All updates")}</Link>
       <article className={styles.article}>
         <header className={styles.header}><h1>{post ? chzzkPostTitle(post, locale) : (locale === "ko" ? "소식을 불러오지 못했어요" : translate(locale, localizedMessages.m451dc28c270a, "Couldn't load this update"))}</h1>
           {post && <div className={styles.meta}><span>{locale === "ko" ? "치지직" : translate(locale, localizedMessages.m95155b6fa4d3, "CHZZK")}</span><time dateTime={post.date}>{post.date.replaceAll("-", ".")}</time></div>}

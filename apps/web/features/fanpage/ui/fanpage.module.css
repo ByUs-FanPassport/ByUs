@@ -26,6 +26,10 @@
 .tabs>a,.tabs>button{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;background:none;border:0;color:#66636c;font-size:14px;font-weight:750;text-align:center}
 .tabs [aria-current=page]{color:#17161b}
 .tabs [aria-current=page]::after{content:"";position:absolute;bottom:-1px;left:24%;right:24%;height:3px;background:#ff0080}
+.boardTabs{display:flex;align-items:center;gap:8px;min-height:52px;margin:-8px 0 28px;overflow-x:auto;border-bottom:1px solid #e8e7ec;scrollbar-width:none}
+.boardTabs::-webkit-scrollbar{display:none}
+.boardTabs>a{display:flex;flex:none;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:999px;color:#66636c;font-size:14px;font-weight:650;white-space:nowrap}
+.boardTabs>a[aria-current=page]{background:#f3f1f5;color:#17161b;font-weight:800}
 
 .fanbar{display:flex;min-height:80px;align-items:center;justify-content:space-between;gap:28px;padding:14px 24px;border:1px solid #ffcee5;background:linear-gradient(90deg,#fff4f9,#fff9fc);border-radius:14px;margin-bottom:32px}
 .fanbar p{margin:5px 0 0;color:var(--fanpage-text-muted);font-size:13px;line-height:1.6}
@@ -47,7 +51,7 @@
 .page .darkButton,.darkButton{border-color:#19181b;background:#19181b;color:#fff}
 .page .pillButton,.pillButton{border-color:#ffd2e7;background:#fff;color:#25242a;border-radius:999px;white-space:nowrap}
 .pillButton svg,.primaryButton svg,.darkButton svg{width:18px;height:18px;flex:none}
-.content{scroll-margin-top:110px;min-height:260px}.homeGrid{display:grid;grid-template-columns:minmax(0,840fr) minmax(300px,488fr);gap:32px;align-items:start}
+.content{width:100%;scroll-margin-top:110px;min-height:260px}.homeGrid{display:grid;grid-template-columns:minmax(0,840fr) minmax(300px,488fr);gap:32px;align-items:start}
 .mainColumn,.sideColumn{display:grid;min-width:0;align-content:start;gap:28px}
 .sectionHeading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
 .sectionHeading h2,.activity h2{margin:0;font-size:22px;font-weight:800;line-height:1.3;letter-spacing:-.035em}
@@ -108,15 +112,9 @@
 @media(max-width:767px){.headerIdentity,.headerLogin{display:none}}
 .headerLogin{min-height:44px;padding:12px;font-size:14px;font-weight:750}
 
-.communityLayout { display:grid; grid-template-columns:minmax(0,1fr); gap:32px; max-width:1100px; margin-inline:auto; }
-.communityMain { display:grid; min-width:0; align-content:start; gap:32px; }
 .mediaLayout { display:grid; min-width:0; gap:32px; }
-.communityOfficial { min-width:0; padding-top:24px; border-top:1px solid var(--color-line); }
-.communitySource { margin:0 0 16px; color:var(--color-muted); font-size:12px; font-weight:700; }
-.communityMediaLink { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; margin-top:16px; color:var(--color-ink); font-size:13px; font-weight:650; text-decoration:none; }
-@media(min-width:1000px) { .communityLayout { grid-template-columns:minmax(0,720px) minmax(0,300px); gap:48px; }.communityOfficial { padding:0; border:0; }.communityOfficial h2 { font-size:18px; } }
 
-@media(max-width:767px) { .tabs { scroll-snap-type:x mandatory; scroll-padding-inline:0; }.tabs>a,.tabs>button { flex:0 0 25%; min-width:max-content; scroll-snap-align:start; } }
+@media(max-width:767px) { .tabs { scroll-snap-type:x mandatory; scroll-padding-inline:0; }.tabs>a,.tabs>button { flex:0 0 auto; min-width:max(88px,25%); scroll-snap-align:start; }.boardTabs{margin:-4px 0 24px}.boardTabs>a{padding-inline:14px;font-size:13px} }
 
 .officialVideos{display:grid;gap:16px;min-width:0}
 .officialVideoFrame{display:block;width:100%;aspect-ratio:16/9;min-height:200px;border:0;border-radius:12px;background:#f7f6f8}

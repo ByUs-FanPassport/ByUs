@@ -11,6 +11,7 @@ import { notFound, redirect } from "next/navigation";
 import type { Route } from "next";
 import { CelebrityFanPage, type CelebrityFanTab } from "@/components/celebrity-fan-page";
 import { createPublishedContentRepositoryFromEnvironment } from "@/server/content/published-content-repository";
+import { parseFanPageTab, resolveBoardSection, resolveBoardSource } from "@/features/fanpage/domain/board-navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -28,16 +29,18 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     locales: translated ? ["ko", "en"] : [toContentLocale(locale)] });
 }
 
-export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; news?: string; authIntent?: string }> }) {
+export default async function CelebrityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ locale?: string; tab?: string; section?: string; source?: string; news?: string; media?: string; authIntent?: string }> }) {
   const { slug } = await params;
   if (!isCreatorHandle(slug)) notFound();
-  const { locale: requestedLocale, tab: requestedTab, news: requestedNews, authIntent: requestedAuthIntent } = await searchParams;
+  const { locale: requestedLocale, tab: requestedTab, section: requestedSection, source: requestedSource, news: requestedNews, media: requestedMedia, authIntent: requestedAuthIntent } = await searchParams;
   const locale = parseAppLocale(requestedLocale);
   if (requestedTab === "raffles" || requestedTab === "benefits") {
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
     redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
   }
-  const initialTab: CelebrityFanTab = requestedTab === "community" || requestedTab === "media" || requestedTab === "notice" || requestedTab === "live" || requestedTab === "benefits" || requestedTab === "certifications" || requestedTab === "raffles" || requestedTab === "leaderboard" ? requestedTab : "home";
+  const initialTab: CelebrityFanTab = parseFanPageTab(requestedTab);
+  const initialBoardSection = resolveBoardSection(requestedTab, requestedSection);
+  const initialBoardSource = resolveBoardSource(requestedTab, requestedSource);
   const repository = createPublishedContentRepositoryFromEnvironment();
   const [celebrity, primaryLives] = await Promise.all([
     loadSeoCreator(slug, locale),
@@ -45,5 +48,5 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   ]);
   if (!celebrity) notFound();
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
-  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
+  return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialBoardSection={initialBoardSection} initialBoardSource={initialBoardSource} initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} initialMediaFilter={requestedMedia === "photos" || requestedMedia === "videos" || requestedMedia === "replays" ? requestedMedia : undefined} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
 }

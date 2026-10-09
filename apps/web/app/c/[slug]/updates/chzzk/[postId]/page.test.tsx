@@ -33,4 +33,13 @@ describe("CHZZK detail page",()=>{
   render(await Page(props()));
   expect(screen.getByRole("heading",{name:"소식을 불러오지 못했어요"})).toBeInTheDocument();
  });
+ it.each([
+  ["/jenny-jeong?tab=board&source=official&locale=ko#celebrity-content", "/jenny-jeong?tab=board&source=official&locale=ko#celebrity-content"],
+  ["https://external.invalid", "/jenny-jeong?tab=notice&locale=ko#celebrity-content"],
+ ])("preserves a safe originating feed and rejects external return URLs: %s",async(returnTo,expected)=>{
+  mocks.find.mockResolvedValue({name:"정제니",socialLinks:[{platform:"chzzk",url:CHZZK_CHANNEL_URL}]});
+  mocks.read.mockResolvedValue({id:"123",text:"방송 일정",date:"2026-09-10",images:[]});
+  render(await Page({...props(),searchParams:Promise.resolve({locale:"ko",returnTo})}));
+  expect(screen.getByRole("link",{name:"소식 목록"})).toHaveAttribute("href",expected);
+ });
 });

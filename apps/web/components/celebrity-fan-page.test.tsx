@@ -8,6 +8,7 @@ let membershipCount = 3;
 const getAccessToken = vi.fn();
 const session = { ready: true, pending: false, ownerId: null as string | null, generation: 0 };
 const routerPush = vi.fn();
+const routerReplace = vi.fn();
 const analytics = vi.hoisted(() => ({
   pageViewIdempotencyKey: vi.fn<(eventName: string, routeKey: string, ownerId: string | null) => Promise<string>>(async () => "page:creator_page_view:11111111-1111-4111-8111-111111111111"),
   recordProductEventV1: vi.fn<typeof import("../features/analytics/client/product-event-client").recordProductEventV1>(async () => true),
@@ -17,7 +18,7 @@ vi.mock("./byus-session-provider", () => ({ useByUsSession: () => session }));
 vi.mock("@/features/analytics/client/product-event-client", () => analytics);
 vi.mock("next/navigation", () => ({
   usePathname: () => "/kara",
-  useRouter: () => ({ push: routerPush }),
+  useRouter: () => ({ push: routerPush, replace: routerReplace }),
   useSearchParams: () => new URLSearchParams("tab=home&locale=ko"),
 }));
 import { CelebrityFanPage } from "./celebrity-fan-page";
@@ -111,13 +112,13 @@ describe("approved fanpage", () => {
     expect(source.searchParams.get("list")).toBe("UUO-svEJBdWiaViuy0TxVFFg");
     expect(source.searchParams.get("autoplay")).toBe("0");
     expect(source.searchParams.get("hl")).toBe(locale);
-    expect(within(screen.getByRole("navigation", { name: new RegExp("NCHIVE") })).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", `/nchive?tab=live&locale=${locale}#celebrity-content`);
+    expect(screen.getByRole("link", { name: "LIVE" })).toHaveAttribute("href", `/nchive?tab=board&section=live&locale=${locale}#celebrity-content`);
     expect(screen.getByRole("link", { name: "YouTube" })).toHaveAttribute("href", "https://www.youtube.com/channel/UCO-svEJBdWiaViuy0TxVFFg");
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/nchive/raffles"), expect.anything()));
     view.rerender(<CelebrityFanPage celebrity={kara} locale={locale} upcomingLive={null} initialTab="media" />);
     expect(view.container.querySelector("iframe")).not.toBeInTheDocument();
   });
-  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); vi.unstubAllGlobals(); stubHubFetch(); });
+  beforeEach(() => { authenticated = false; membershipCount = 3; ownerId = "owner-one"; Object.assign(session, { ready: true, pending: false, ownerId: null, generation: 0 }); getAccessToken.mockReset().mockResolvedValue("token"); analytics.pageViewIdempotencyKey.mockReset().mockResolvedValue("page:creator_page_view:11111111-1111-4111-8111-111111111111"); analytics.recordProductEventV1.mockReset().mockResolvedValue(true); routerPush.mockReset(); routerReplace.mockReset(); window.history.replaceState({}, "", "/kara"); vi.unstubAllGlobals(); stubHubFetch(); });
   it("loads the mini calendar anonymously while the destination session is pending", async () => {
     authenticated = true;
     Object.assign(session, { ready: false, pending: true, ownerId: "owner-one", generation: 1 });
@@ -189,32 +190,36 @@ describe("approved fanpage", () => {
     expect(analytics.recordProductEventV1.mock.calls[0]?.[0].idempotencyKey)
       .toBe("page:creator_page_view:22222222-2222-4222-8222-222222222222");
   });
-  it("opens the fan gathering tab before ranking eligibility without trusting social followers", async () => {
+  it("shows the five fan-page destinations before ranking eligibility without trusting social followers", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={upcomingLive} />);
     const menu = screen.getByRole("navigation", { name: "KARA 팬페이지 메뉴" });
-    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "소식", "팬 게시판", "미디어", "LIVE", "찐팬 인증", "래플 응모", "리더보드"]);
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "게시판", "찐팬 인증", "이벤트", "팬 리더보드"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
-    expect(within(menu).getByRole("link", { name: "래플 응모" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(within(menu).getByRole("link", { name: "이벤트" })).toHaveAttribute("href", "/kara?tab=events&locale=ko#celebrity-content");
     expect(menu).toHaveAttribute("id", "celebrity-content");
-    expect(within(menu).getByRole("link", { name: "팬 게시판" })).toHaveAttribute("href", "/kara?tab=community&locale=ko#celebrity-content");
-    expect(within(menu).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", "/kara?tab=live&locale=ko#celebrity-content");
-    expect(within(menu).getByRole("link", { name: "리더보드" })).toHaveAttribute("href", "/community?creator=kara&tab=fans&locale=ko");
+    expect(within(menu).getByRole("link", { name: "게시판" })).toHaveAttribute("href", "/kara?tab=board&locale=ko#celebrity-content");
+    expect(within(menu).getByRole("link", { name: "팬 리더보드" })).toHaveAttribute("href", "/kara?tab=leaderboard&locale=ko#celebrity-content");
     expect(within(menu).queryByText("집계 중")).not.toBeInTheDocument();
     expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();
-    expect(within(menu).getByRole("link", { name: "찐팬 인증" })).toHaveAttribute("href", "/community?creator=kara&tab=certifications&locale=ko");
+    expect(within(menu).getByRole("link", { name: "찐팬 인증" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();
   });
   it("opens the leaderboard at 100 and renders only safe ranking fields", async () => {
     membershipCount = 100;
     render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="leaderboard" />);
-    expect(await screen.findByRole("link", { name: "리더보드" })).toHaveAttribute("href", "/community?creator=kara&tab=fans&locale=ko");
+    expect(await screen.findByRole("link", { name: "팬 리더보드" })).toHaveAttribute("href", "/kara?tab=leaderboard&locale=ko#celebrity-content");
     expect(await screen.findByText("선두팬")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
   });
   it("returns header sign-in to the same creator board and language", async () => {
     render(<CelebrityFanPage celebrity={kara} locale="en" upcomingLive={null} initialTab="community" />);
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Fkara%3Ftab%3Dcommunity%26locale%3Den%23celebrity-content");
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login?locale=en&returnTo=%2Fkara%3Ftab%3Dboard%26source%3Dfans%26locale%3Den%23celebrity-content");
     await waitFor(() => expect(fetch).toHaveBeenCalled());
+  });
+  it("moves a stored cheers anchor to the fan feed", () => {
+    window.history.replaceState({}, "", "/kara?locale=ko#cheers");
+    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
+    expect(routerReplace).toHaveBeenCalledWith("/kara?tab=board&source=fans&locale=ko#celebrity-content");
   });
   it("shows the gathering at 99 while keeping the ranking table locked", async () => {
     membershipCount = 99;
@@ -247,12 +252,15 @@ describe("approved fanpage", () => {
     view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="notice" />);
     expect(screen.queryByLabelText("내 팬 활동")).not.toBeInTheDocument();
   });
-  it("keeps cheers off home and available inside this creator's fan board", async () => {
+  it("removes the separate cheers card and exposes the board sections", async () => {
     const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
     expect(screen.queryByRole("heading", { name: "응원댓글" })).not.toBeInTheDocument();
 
     view.rerender(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} initialTab="community" />);
-    expect(await screen.findByRole("heading", { name: "응원댓글" })).toBeInTheDocument();
+    const boardMenu = screen.getByRole("navigation", { name: "게시판 메뉴" });
+    expect(within(boardMenu).getAllByRole("link").map(link => link.textContent)).toEqual(["피드", "공식 미디어", "LIVE"]);
+    expect(within(boardMenu).getByRole("link", { name: "피드" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("heading", { name: "응원댓글" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("내 팬 활동")).not.toBeInTheDocument();
   });
   it("uses this celebrity's server stage for its badge and nearest-stage progress", async () => {
@@ -296,7 +304,7 @@ describe("approved fanpage", () => {
     expect(await screen.findByRole("heading", { name: "응모 가능한 선물 3" })).toBeInTheDocument();
     for (const title of ["전시 티켓", "콜라보 케이스", "한정판 스태츄"]) expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
     for (const title of ["준비 중 선물", "마감된 선물", "취소된 선물"]) expect(screen.queryByText(title)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "래플 응모 3" })).toHaveAttribute("href", "/c/kara/raffles?locale=ko");
+    expect(screen.getByRole("link", { name: "이벤트 3" })).toHaveAttribute("href", "/kara?tab=events&locale=ko#celebrity-content");
     expect(screen.getByRole("link", { name: "전시 티켓 응모하기" })).toHaveAttribute("href", "/c/kara/raffles/44444444-4444-4444-8444-444444444444?locale=ko");
     expect(screen.queryByRole("link", { name: /전체 래플 보기|내 응모 내역/ })).not.toBeInTheDocument();
     expect(view.container.querySelectorAll('time[datetime="2099-09-27T15:00:00Z"]')).toHaveLength(1);
@@ -352,7 +360,7 @@ describe("approved fanpage", () => {
   it("preserves English labels and locale in actions", async () => {
     const links = [{ platform: "chzzk" as const, url: "https://chzzk.naver.com/channel" }];
     render(<CelebrityFanPage celebrity={{ ...kara, locale: "en", socialLinks: links }} locale="en" upcomingLive={{ ...upcomingLive, locale: "en" }} />);
-    expect(screen.getByRole("link", { name: "Fan verification" })).toHaveAttribute("href", "/community?creator=kara&tab=certifications&locale=en");
+    expect(screen.getByRole("link", { name: "Fan verification" })).toHaveAttribute("href", "/kara?tab=certifications&locale=en#celebrity-content");
     expect(screen.getByRole("link", { name: "CHZZK, new window" })).toHaveTextContent("CHZZK");
     expect(await screen.findByText("No public updates yet.")).toBeInTheDocument();
   });

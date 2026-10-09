@@ -8,6 +8,9 @@ const state = vi.hoisted(() => ({
   authenticated: true,
   replace: vi.fn(),
   request: vi.fn(),
+  retry: vi.fn(),
+  feedError: "",
+  unavailableSources: [] as string[],
   returnTo: null as string | null,
   post: {} as Record<string, unknown>,
   comments: [] as Record<string, unknown>[],
@@ -34,11 +37,12 @@ vi.mock("@/features/fanpage/ui/use-community-resource", () => ({
     }
     if (url.startsWith("/api/posts/")) return { state: { status: "ready", data: state.post }, retry: vi.fn() };
     const cursor = new URL(url, "https://example.test").searchParams.get("cursor") ?? "first";
-    return { state: { status: "ready", data: state.pages[cursor] }, retry: vi.fn() };
+    return { state: state.feedError ? { status: "error", code: state.feedError } : { status: "ready", data: { ...state.pages[cursor], unavailableSources: state.unavailableSources } }, retry: state.retry };
   },
 }));
 
 const post = (body: string, isOwner = false) => ({
+  kind: "fan_post",
   id: "10000000-0000-4000-8000-000000000001",
   celebritySlug: "artist",
   body,
@@ -58,6 +62,7 @@ beforeEach(() => {
   state.authenticated = true;
   state.replace.mockReset();
   state.request.mockReset().mockResolvedValue({ ok: true });
+  state.retry.mockReset(); state.feedError = ""; state.unavailableSources = [];
   state.returnTo = null;
   state.post = post("Post body");
   state.comments = [];
@@ -67,6 +72,61 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("fan post UI navigation and context", () => {
+  it("combines official, fan and legacy cheer posts with one composer and preserves each action target", () => {
+    const returnTo = "/artist?tab=board&locale=en#celebrity-content";
+    state.pages = { first: { items: [
+      { kind: "notice", noticeKind: "standard", id: "20000000-0000-4000-8000-000000000001", slug: "artist-update", title: "A note from the artist", body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "See you at the next show." }] }] }, postType: "artist_post", publishedAt: "2026-10-09T01:00:00Z", visibility: "public", revision: 1, pinned: false, commentCount: 3 },
+      post("A fan’s story"),
+      { kind: "cheer", id: "30000000-0000-4000-8000-000000000001", nickname: "Early fan", avatarUrl: "/images/avatars/star-pink.webp", body: "An older cheer remains here.", createdAt: "2026-09-20T01:00:00Z", isOwner: false },
+    ], nextCursor: null } };
+    render(<FanPostFeed slug="artist" creatorName="Artist" locale="en" source="all" returnTo={returnTo} />);
+    expect(screen.getByText("See you at the next show.")).toBeInTheDocument();
+    expect(screen.getByText("A fan’s story")).toBeInTheDocument();
+    expect(screen.getByText("An older cheer remains here.")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Write a post" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^Like/ })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Comments 3" })).toHaveAttribute("href", `/c/artist/notices/artist-update?locale=en&returnTo=${encodeURIComponent(returnTo)}#comments`);
+    expect(screen.getByRole("link", { name: "Fan posts" })).toHaveAttribute("href", "/artist?tab=board&source=fans&locale=en#celebrity-content");
+  });
+
+  it("does not present a fan composer in the official filter and resets drafts on source changes", () => {
+    state.pages = { first: { items: [], nextCursor: null } };
+    const view = render(<FanPostFeed slug="artist" locale="en" source="all" />);
+    fireEvent.click(screen.getByRole("button", { name: "Write a post" }));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Unpublished draft" } });
+    view.rerender(<FanPostFeed slug="artist" locale="en" source="official" />);
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Write a post" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Official" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("confirms deleting an old cheer through its existing API", async () => {
+    state.pages = { first: { items: [{ kind: "cheer", id: "30000000-0000-4000-8000-000000000001", nickname: "Me", avatarUrl: "/images/avatars/star-pink.webp", body: "My old cheer", createdAt: "2026-09-20T01:00:00Z", isOwner: true }], nextCursor: null } };
+    render(<FanPostFeed slug="artist" locale="en" source="fans" />);
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    expect(state.request).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(state.request).toHaveBeenCalledWith("/api/cheers/30000000-0000-4000-8000-000000000001", "DELETE"));
+  });
+
+  it("keeps source failures and unfinished scans distinct from an empty feed", () => {
+    state.pages = { first: { items: [], nextCursor: "scan-more" } };
+    const view = render(<FanPostFeed slug="artist" locale="en" source="all" />);
+    expect(screen.queryByText("No posts yet")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Older posts" })).toBeInTheDocument();
+    state.pages.first.nextCursor = null;
+    state.unavailableSources = ["chzzk"];
+    view.rerender(<FanPostFeed slug="artist" locale="en" source="all" />);
+    expect(screen.getByText(/CHZZK updates couldn’t load/)).toBeInTheDocument();
+    expect(screen.queryByText("No posts yet")).not.toBeInTheDocument();
+    state.feedError = "FEED_CURSOR_EXPIRED";
+    view.rerender(<FanPostFeed slug="artist" locale="en" source="all" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("The feed has changed");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(state.retry).toHaveBeenCalledOnce();
+  });
   it("uses a quiet visibility dialog and returns focus before cancelling the composer", async () => {
     state.pages = { first: { items: [], nextCursor: null } };
     render(<FanPostFeed slug="artist" locale="en" />);

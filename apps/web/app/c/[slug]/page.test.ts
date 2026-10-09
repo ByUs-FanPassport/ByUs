@@ -14,6 +14,12 @@ describe("legacy creator home redirect", () => {
     await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ tab: "benefits", locale: "ko" }) }))
       .rejects.toThrow("308:/c/elina/raffles?locale=ko");
   });
+  it("passes the new board and event destinations through to the canonical creator handle", async () => {
+    await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ tab: "board", section: "media", locale: "ja" }) }))
+      .rejects.toThrow("308:/elina?tab=board&section=media&locale=ja");
+    await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ tab: "events", locale: "ja" }) }))
+      .rejects.toThrow("308:/elina?tab=events&locale=ja");
+  });
   it("does not redirect reserved service paths as creators", async () => {
     await expect(Page({ params: Promise.resolve({ slug: "login" }), searchParams: Promise.resolve({}) })).rejects.toThrow("404");
   });

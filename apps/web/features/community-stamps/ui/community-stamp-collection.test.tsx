@@ -15,3 +15,8 @@ it("offers owned Stamps instead of an endless retry for an unavailable creator, 
   fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
   expect(retry).toHaveBeenCalledOnce();
 });
+
+it("sends creator comment activity to the fan feed", () => {
+  render(<CommunityStampCollection locale="ko" creator="elina" resource={{ state: { status: "ready", data: { stamps: [], today: "2026-10-09" } }, retry: vi.fn(), replaceData: vi.fn(), refreshFailed: false }} />);
+  expect(screen.getByRole("link", { name: "댓글 남기기" })).toHaveAttribute("href", "/elina?tab=board&source=fans&locale=ko#celebrity-content");
+});

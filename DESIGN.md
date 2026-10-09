@@ -7,7 +7,7 @@ palette: 'single-gradient-highlight'
 font: 'pretendard'
 source: "live rendered page"
 observed-at: "2026-07-20"
-ui-contract-updated: "2026-10-04"
+ui-contract-updated: "2026-10-09"
 theme: "light-only"
 ui-font: "Pretendard Variable"
 base-spacing: "4px"
@@ -23,7 +23,7 @@ also live in feature CSS modules. Check deployed source and rendered desktop /
 mobile states before claiming full alignment. Preserve intentional surface-specific
 differences when consolidating tokens and components. -->
 
-## Current shared content contract (2026-10-04)
+## Current shared content contract (2026-10-09)
 
 - A section reads in this order: heading with secondary navigation, description, filters, content. `FanSectionHeader` owns its `{ label, href }` action: the heading and action align in one wrapping row, and supporting copy sits below both. The title has a flexible 10rem basis; long translated actions wrap naturally. Never shrink the title to fit a translation.
 - Section headings use 20px on mobile and 24px from 768px; item names use 16px/700, body copy 16px, metadata 13px. Related copy has 4–8px gaps, subgroups 16px, and major sections 32px/48px. Existing hero artwork/display type remains independent.
@@ -43,6 +43,14 @@ differences when consolidating tokens and components. -->
 - MY separates primary activity destinations from secondary history/request links. Settings is an index of aligned rows leading to query-addressable detail sections with Back navigation, retained locale and visible focus. Entering a detail focuses its heading; returning focuses the originating row. Logout and destructive account actions belong to account details. Authentication and resource restoration use loading states before showing account actions or a guest screen.
 - Notifications use the shared Primary action for enabling browser notifications and a Neutral action for marking all read. Unread counts, dots and permission icons use the existing Spectrum Ink and subtle focus surface; status is also conveyed through labels and weight.
 - These refinements reuse the existing ByUs brand. Public Weverse artist tabs and b.stage community/MY references informed separation of summaries, feeds, media and settings; they do not establish ByUs membership rules or authentication behavior. Source examples: [Weverse artist home](https://weverse.io/enhypen/highlight), [Weverse media](https://weverse.io/enhypen/media), [b.stage community](https://bigbang.bstage.in/community), [b.stage My Posts & Activity](https://bstage.in/article/bstage-tips-7-en/).
+
+### Creator board and unified feed (2026-10-09)
+
+- Creator pages have five primary destinations: Home, Board, Fan verification, Events and Fan leaderboard. Board contains Feed, Official media and LIVE. Keep the creator, language and originating board filter when entering details or signing in; legacy news, media, LIVE, lounge and cheer links resolve to their corresponding destination.
+- Feed is one chronological conversation combining official posts, fan posts and existing cheers, with All, Official and Fan posts source filters. Pinned standard notices precede pinned welcome notices; an unpinned welcome notice follows its publication time. Use one existing composer in All and Fan posts. Each content type keeps only its supported reactions, comments and owner actions.
+- The board navigation, filters and feed share the full `FanContentContainer` edges: 1440px maximum width and 16/32/40px responsive gutters. There is no secondary official-news column. Individual text and media retain readable widths inside the full-width feed. Creator home may retain its calendar beside the summary.
+- Official media uses three columns on desktop, two on tablet and one on mobile. Keep a purposeful empty state with a filter reset or Feed destination; a failed source has a retry action while successful content remains visible. Official channels stay available above the grid.
+- A new fan post shares the existing one-time first-comment reward eligibility with cheers and notice comments. Do not suggest a new score reward or retroactively reward existing fan posts. Existing content and reward history remain intact.
 
 ### Completion requires a visual finish review
 

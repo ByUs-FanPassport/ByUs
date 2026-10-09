@@ -3,6 +3,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, ImagePlus } from "lucide-react";
 import { discoveryCopy } from "@/i18n/catalogs/features__fan_posts__discovery";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { usePrivy } from "@privy-io/react-auth";
+import { useByUsSession } from "@/components/byus-session-provider";
+import { notifyFanActivityUpdated } from "@/components/fan-ui/fan-activity-updates";
 import { AccessibleOverlay } from "@/components/ui/overlay/accessible-overlay";
 import { assetSchema, type ContentAsset, type FanPost } from "../domain/content";
 import { ContentAssetImage } from "@/features/content-safety/ui/content-asset";
@@ -13,6 +16,7 @@ import styles from "@/features/content-safety/ui/content.module.css";
 
 export function PostComposer({ slug, locale, post, onSaved, onCancel, featured = false, autoFocus = false }: { slug: string; locale: AppLocale; post?: FanPost; onSaved: () => void; onCancel?: () => void; featured?: boolean; autoFocus?: boolean }) {
   const copy = contentCopy(locale), mutation = useContentMutation(locale), fieldId = useId();
+  const auth = usePrivy(), session = useByUsSession();
   const [body, setBody] = useState(post?.body ?? ""), [visibility, setVisibility] = useState<"public" | "members">(post?.visibility ?? "public");
   const [assets, setAssets] = useState<ContentAsset[]>(post?.assets ?? []), [problem, setProblem] = useState(""), [visibilityOpen, setVisibilityOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false), photoInput = useRef<HTMLInputElement>(null);
@@ -42,7 +46,7 @@ export function PostComposer({ slug, locale, post, onSaved, onCancel, featured =
     if (!attempt.current || attempt.current.snapshot !== snapshot) attempt.current = { snapshot, key: crypto.randomUUID() };
     const result = post ? await mutation.request(`/api/posts/${post.id}`, "PATCH", { ...value, expectedRevision: post.revision })
       : await mutation.request(`/api/celebrities/${slug}/posts`, "POST", { ...value, idempotencyKey: attempt.current.key });
-    if (result) { setBody(""); setAssets([]); attempt.current = null; onSaved(); }
+    if (result) { setBody(""); setAssets([]); attempt.current = null; if (!post) notifyFanActivityUpdated(session.ownerId ?? auth.user?.id); onSaved(); }
   }
   return <form className={`${styles.composer}${featured ? ` ${styles.composerFeatured}` : ""}`} onSubmit={event => { event.preventDefault(); void save(); }}>
     <label htmlFor={`${fieldId}-body`}>{post ? copy.edit : copy.writePost}<textarea id={`${fieldId}-body`} rows={3} autoFocus={autoFocus} placeholder={discoveryCopy(locale).writePrompt} maxLength={5000} value={body} disabled={mutation.busy} onChange={event => setBody(event.target.value)} /></label>

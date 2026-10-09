@@ -1,5 +1,5 @@
 import { parseAppLocale } from "@/i18n/locales";
-import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+import { boardHref } from "@/features/fanpage/domain/board-navigation";
 import { notFound, redirect } from "next/navigation";
 import { loadSeoCreator } from "@/server/seo/public-content";
 export const dynamic = "force-dynamic";
@@ -9,5 +9,5 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const locale = parseAppLocale(query.locale);
   const celebrity = await loadSeoCreator(slug, locale);
   if (!celebrity) notFound();
-  redirect(`${creatorHomeHref(celebrity.slug)}?locale=${locale}#cheers`);
+  redirect(boardHref(celebrity.slug, locale, { source: "fans" }));
 }

@@ -4,6 +4,7 @@ import { messages as localizedMessages } from "@/i18n/catalogs/features__communi
 import { translate, additionalLocales } from "@/i18n/messages";
 import type { AppLocale } from "@/i18n/locales";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
+import { boardHref } from "@/features/fanpage/domain/board-navigation";
 
 import { usePrivy } from "@privy-io/react-auth";
 import { Check, Copy, RotateCcw, X } from "lucide-react";
@@ -90,7 +91,7 @@ function OwnerCollection({ locale, creator, resource }: { locale: Locale; creato
       {resource.refreshFailed && <p role="alert" className={styles.status}>{locale === "ko" ? "최신 기록을 확인하지 못했어요." : translate(locale, localizedMessages.m4bdba754452a, "Couldn’t refresh your Stamps.")} <button className={styles.action} onClick={resource.retry}>{locale === "ko" ? "다시 시도" : translate(locale, localizedMessages.m11bce3427a8f, "Retry")}</button></p>}
       <ul className={styles.grid}>{kinds.map(kind => {
         const stamp = earned(kind); const info = COMMUNITY_STAMPS[kind];
-        const href = creator ? `${creatorHomeHref(creator)}?locale=${locale}${kind === "daily_checkin" ? "#daily-checkin" : "#cheers"}` : kind === "share" ? `/passports?locale=${locale}` : `/celebrities?locale=${locale}`;
+        const href = creator ? kind === "daily_checkin" ? `${creatorHomeHref(creator)}?locale=${locale}#daily-checkin` : boardHref(creator, locale, { source: "fans" }) : kind === "share" ? `/passports?locale=${locale}` : `/celebrities?locale=${locale}`;
         return <li className={styles.card} data-earned={!!stamp} key={kind}>
           <CommunityStampArtwork kind={kind} locale={locale} className={styles.art} decorative/>
           <h3>{info[locale]}</h3>{stamp && <span className={styles.state}><Check aria-hidden="true"/>{locale === "ko" ? "획득" : translate(locale, localizedMessages.ma5f24c183a36, "Earned")}</span>}
