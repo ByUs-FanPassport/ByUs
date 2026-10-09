@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "수령 정보를 제출하면 완료 화면으로 바뀌고, 다시 방문해도 전달 버튼이 반복해서 표시되지 않아요.",
+    "정보를 바꾸려면 확인·수정을 선택해야 하며, 내용이 같으면 다시 전송할 수 없어요.",
+    "첨부 이미지는 가상 데이터를 넣은 로컬 검증 화면이에요."
+  ],
+  "path": "/my/raffles",
+  "images": [
+    "release-notes/images/2026-10-09-recipient-submit-complete-390.png",
+    "release-notes/images/2026-10-09-recipient-submit-complete-1440.png"
+  ]
+}

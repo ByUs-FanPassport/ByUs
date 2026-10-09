@@ -19,6 +19,7 @@ import {
   BENEFIT_RECIPIENT_CONSENT_VERSION,
   recipientInputSchema,
   recipientSaveResultSchema,
+  type RecipientInput,
 } from "../domain/fulfillment";
 import { myRewardsSchema, type MyReward } from "../domain/my-reward";
 import { isRecipientOverdue } from "../domain/raffle-fulfillment-policy";
@@ -63,6 +64,14 @@ const emptyDraft = (): Draft => ({
   address2: "",
   consented: false,
 });
+
+function recipientMatchesInput(recipient: OwnedRecipientDetails["recipient"], input: RecipientInput) {
+  return Boolean(recipient
+    && (["name", "phone", "postalCode", "address1", "address2"] as const)
+      .every((field) => (recipient[field] ?? "") === (input[field] ?? ""))
+    && (!input.phoneCountry || recipient.phoneCountry === input.phoneCountry)
+    && (!input.shippingCountry || recipient.shippingCountry === input.shippingCountry));
+}
 
 async function readReward(input: {
   token: string;
@@ -133,6 +142,7 @@ function BenefitRecipientOwnerScreen({
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const currentOwnerKey = useRef(ownerKey);
   const latestLocale = useRef(locale);
@@ -140,6 +150,7 @@ function BenefitRecipientOwnerScreen({
   const mounted = useRef(false);
   const postInFlight = useRef<Promise<void> | null>(null);
   const postController = useRef<AbortController | null>(null);
+  const pendingRecipient = useRef<RecipientInput | null>(null);
   const fieldRefs = useRef<Partial<Record<Field, HTMLInputElement | null>>>({});
 
   const recipientPathname = useMemo(() => `/my/rewards/${winnerId}/recipient`, [winnerId]);
@@ -165,6 +176,7 @@ function BenefitRecipientOwnerScreen({
   }, [locale]);
 
   const clearPrivateState = useCallback(() => {
+    pendingRecipient.current = null;
     setDraft(emptyDraft());
     setErrors({});
     setMessage(null);
@@ -255,10 +267,16 @@ function BenefitRecipientOwnerScreen({
   const needsForm = Boolean(
     reward
       && details?.editable
+      && (!submitted || editing)
       && details.claimDisposition === "active"
       && !overdue
       && reward.method !== "digital",
   );
+
+  useEffect(() => {
+    if (editing) fieldRefs.current.name?.focus();
+    else if (submitted) document.getElementById("recipient-content")?.focus();
+  }, [editing, submitted]);
 
   function updateField(field: Field, value: string | boolean) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -308,10 +326,21 @@ function BenefitRecipientOwnerScreen({
     if (result.kind === "reward") {
       setView({ kind: "reward", reward: result.reward, details: result.details });
       if (!result.details.editable || result.details.claimDisposition === "unclaimed") {
+        setEditing(false);
         clearPrivateState();
         setSubmitPhase("idle");
         return;
       }
+      if (pendingRecipient.current && result.details.recipient
+        && !recipientMatchesInput(result.details.recipient, pendingRecipient.current)) {
+        setEditing(true);
+        setDraft((current) => ({ ...current, consented: false }));
+        setMessage(currentCopy.retrySubmit);
+        setSubmitPhase("idle");
+        return;
+      }
+      pendingRecipient.current = null;
+      setEditing(false);
       if (result.details.recipient) hydrateDraft(result.details);
       else setDraft((current) => ({ ...current, consented: false }));
       setErrors({});
@@ -331,7 +360,7 @@ function BenefitRecipientOwnerScreen({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (postInFlight.current || !reward || !details || !needsForm || submitPhase !== "idle") return;
+    if (postInFlight.current || !reward || !details || !needsForm || submitPhase !== "idle" || recipientUnchanged) return;
     const nextErrors = validate(reward.method);
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
@@ -374,6 +403,7 @@ function BenefitRecipientOwnerScreen({
         });
         controller = new AbortController();
         postController.current = controller;
+        pendingRecipient.current = input;
         postStarted = true;
         const response = await fetch(`/api/me/rewards/${winnerId}/recipient`, {
           method: "POST",
@@ -485,7 +515,10 @@ function BenefitRecipientOwnerScreen({
       </dl>
       <div className={styles.actions}>
         <FanAction variant="primary" href={withLocalePath("/my", locale)}>{t.backMy}</FanAction>
-        {showContact ? <FanAction href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction> : <FanAction href={detailUrl}>{t.benefit}</FanAction>}
+        {showContact ? <FanAction href={withLocalePath("/my/inquiries", locale)}>{t.contact}</FanAction>
+          : submitted && details?.editable && reward.method !== "digital"
+            ? <FanAction onClick={() => { hydrateDraft(details); setMessage(null); setEditing(true); }}>{t.editTitle}</FanAction>
+            : <FanAction href={detailUrl}>{t.benefit}</FanAction>}
       </div>
     </FanSurface>);
   }
@@ -494,11 +527,22 @@ function BenefitRecipientOwnerScreen({
   const busy = submitPhase === "posting" || submitPhase === "reconciling";
   const locked = submitPhase === "confirmation_required";
   let phoneLast4: string | null = null;
+  let phoneE164: string | null = null;
   try {
-    phoneLast4 = normalizeRecipientPhone(draft.phoneCountry, draft.phone).last4;
+    const phone = normalizeRecipientPhone(draft.phoneCountry, draft.phone);
+    phoneLast4 = phone.last4;
+    phoneE164 = phone.e164;
   } catch {
     phoneLast4 = null;
   }
+  const recipient = details?.recipient;
+  const recipientUnchanged = Boolean(recipient
+    && draft.name.trim() === recipient.name
+    && phoneE164 === recipient.phone
+    && draft.phoneCountry === (recipient.phoneCountry ?? "KR")
+    && (!shipping || (draft.postalCode.trim() === (recipient.postalCode ?? "")
+      && draft.address1.trim() === (recipient.address1 ?? "")
+      && draft.address2.trim() === (recipient.address2 ?? ""))));
   const field = (name: Exclude<Field, "consented">, label: string, props: React.InputHTMLAttributes<HTMLInputElement>) => {
     const errorId = `${name}-error`;
     return <label className={styles.field} htmlFor={name}>
@@ -567,7 +611,7 @@ function BenefitRecipientOwnerScreen({
         <div className={styles.actions}>
           {locked
             ? <FanAction variant="primary" type="button" onClick={() => void confirmStatus()}>{t.checkStatus}</FanAction>
-            : <FanAction variant="primary" type="submit" disabled={busy} ariaBusy={busy}>{submitPhase === "posting" ? t.submitting : submitPhase === "reconciling" ? t.reconciling : t.submit}</FanAction>}
+            : <FanAction variant="primary" type="submit" disabled={busy || recipientUnchanged} ariaBusy={busy}>{submitPhase === "posting" ? t.submitting : submitPhase === "reconciling" ? t.reconciling : t.submit}</FanAction>}
           <FanAction href={withLocalePath("/my", locale)}>{t.backMy}</FanAction>
         </div>
       </form>
