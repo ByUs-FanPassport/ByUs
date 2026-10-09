@@ -26,7 +26,7 @@ it("uses server-ranked category results and keeps the filter focused through loa
   vi.stubGlobal("fetch", fetcher);
   render(<LeaderboardPanel slug="elina" locale="ko" />);
   await screen.findByRole("table");
-  const filter = screen.getByRole("button", { name: "미션", exact: true });
+  const filter = screen.getByRole("button", { name: /^미션$/ });
   filter.focus(); fireEvent.click(filter);
   await waitFor(() => expect(fetcher).toHaveBeenCalledWith(expect.stringContaining("category=mission"), expect.anything()));
   expect(filter).toHaveFocus(); expect(filter).toHaveAttribute("aria-pressed", "true");
