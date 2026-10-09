@@ -84,7 +84,7 @@ create_notification_lambda() {
   local retry_delay_seconds=5
   local error_file="${package_dir}/create-function-error.txt"
   while (( attempt <= max_attempts )); do
-    if aws lambda create-function --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --architectures arm64 --role "$role_arn" --handler index.handler --zip-file "fileb://${package_file}" --timeout 60 --memory-size 256 --environment "$lambda_environment" > /dev/null 2>"$error_file"; then
+    if aws lambda create-function --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --architectures arm64 --role "$role_arn" --handler index.handler --zip-file "fileb://${package_file}" --timeout 300 --memory-size 256 --environment "$lambda_environment" > /dev/null 2>"$error_file"; then
       return 0
     fi
     if ! grep -Fq 'role defined for the function cannot be assumed by Lambda' "$error_file"; then
@@ -103,7 +103,7 @@ create_notification_lambda() {
 if aws lambda get-function --profile "$profile" --region "$region" --function-name "$function_name" >/dev/null 2>&1; then
   aws lambda update-function-code --profile "$profile" --region "$region" --function-name "$function_name" --zip-file "fileb://${package_file}" >/dev/null
   aws lambda wait function-updated-v2 --profile "$profile" --region "$region" --function-name "$function_name"
-  aws lambda update-function-configuration --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --handler index.handler --timeout 60 --memory-size 256 --environment "$lambda_environment" >/dev/null
+  aws lambda update-function-configuration --profile "$profile" --region "$region" --function-name "$function_name" --runtime nodejs24.x --handler index.handler --timeout 300 --memory-size 256 --environment "$lambda_environment" >/dev/null
 else
   create_notification_lambda
 fi

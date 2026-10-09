@@ -14,6 +14,23 @@ describe("external notification channel isolation", () => {
     await expect(queue.claim("ses-worker",25,120)).rejects.toThrow("claim failed");
     expect(rpc).toHaveBeenCalledTimes(1);
   });
+  it("gives every SES queue RPC a five-second abort signal", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(new AbortController().signal);
+    const request = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("[]", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    try {
+      const queue = SupabaseExternalNotificationQueue.create(
+        "https://project.supabase.co", "s".repeat(48), "prod", true,
+      );
+      await expect(queue.claim("ses-worker", 40, 300)).resolves.toEqual([]);
+      expect(timeout).toHaveBeenCalledExactlyOnceWith(5_000);
+      expect(request).toHaveBeenCalledOnce();
+    } finally {
+      timeout.mockRestore();request.mockRestore();
+    }
+  });
 });
 
 it.each([true,false])( "returns final email eligibility %s from the lease-aware RPC",async(eligible)=>{

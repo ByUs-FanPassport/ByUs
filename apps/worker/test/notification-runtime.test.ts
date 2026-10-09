@@ -1,8 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const state=vi.hoisted(()=>({queue:vi.fn(),external:vi.fn(),ses:vi.fn(),http:vi.fn(),inquiry:vi.fn(),reminders:vi.fn(),kakaoQueue:vi.fn(),kakaoWorker:vi.fn(),solapi:vi.fn(),telegram:vi.fn(),commands:vi.fn(),certifications:vi.fn()}));
+const state=vi.hoisted(()=>({queue:vi.fn(),push:vi.fn(),external:vi.fn(),ses:vi.fn(),http:vi.fn(),inquiry:vi.fn(),reminders:vi.fn(),kakaoQueue:vi.fn(),kakaoWorker:vi.fn(),solapi:vi.fn(),telegram:vi.fn(),commands:vi.fn(),certifications:vi.fn()}));
 vi.mock("../src/adapters/supabase-notification-queue.js",()=>({SupabaseNotificationQueue:{create:()=>({})}}));
 vi.mock("../src/adapters/web-push-sender.js",()=>({WebPushSender:class {}}));
-vi.mock("../src/notification-worker.js",()=>({NotificationWorker:class {async runOnce(){return 2;}}}));
+vi.mock("../src/notification-worker.js",()=>({NotificationWorker:class {constructor(...args:unknown[]){state.push(...args);}async runOnce(){return 2;}}}));
 vi.mock("../src/adapters/supabase-external-notification-queue.js",()=>({SupabaseExternalNotificationQueue:{create:state.queue}}));
 vi.mock("../src/adapters/notification-test-sink.js",()=>({NotificationTestSinkSender:class {}}));
 vi.mock("../src/adapters/ses-email-sender.js",()=>({SesEmailSender:class {constructor(config:unknown){state.ses(config);}}}));
@@ -29,12 +29,18 @@ it("keeps all external providers dormant by default",async()=>{
  expect(state.commands).toHaveBeenCalledExactlyOnceWith(parseNotificationEnv(source));
  expect(state.certifications).toHaveBeenCalledExactlyOnceWith(parseNotificationEnv(source));
 });
-it("wires SES to the email-only queue without HTTP/Kakao provider configuration",async()=>{
- const env=parseNotificationEnv({...source,NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2",SES_REGION:"ap-northeast-2",SES_FROM_EMAIL:"notifications@byus.kr"});
- expect(await runNotificationWorkerOnce(env)).toBe(3);
+it("keeps push at two while wiring a 40-item, 300-second SES batch",async()=>{
+ const env=parseNotificationEnv({...source,NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2",NOTIFICATION_EMAIL_BATCH_SIZE:"40",SES_REGION:"ap-northeast-2",SES_FROM_EMAIL:"notifications@byus.kr"});
+ const remainingTimeInMillis=()=>250_000;
+ expect(await runNotificationWorkerOnce(env,remainingTimeInMillis)).toBe(3);
  expect(state.queue).toHaveBeenCalledWith(env.SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,"dev",true);
+ expect(state.push).toHaveBeenCalledWith(expect.anything(),expect.anything(),{
+  workerId:"runtime-test",batchSize:2,leaseSeconds:120,
+ });
  expect(state.ses).toHaveBeenCalledExactlyOnceWith({region:"ap-northeast-2",fromEmail:"notifications@byus.kr",storageOrigin:"https://example.supabase.co"});
- expect(state.http).not.toHaveBeenCalled();expect(state.external).toHaveBeenCalledTimes(1);
+ expect(state.http).not.toHaveBeenCalled();expect(state.external).toHaveBeenCalledWith(undefined,expect.anything(),{
+  workerId:"runtime-test:external",batchSize:40,leaseSeconds:300,remainingTimeInMillis,
+ });
 });
 it("preserves the Dev sink for both channels",async()=>{
  const env=parseNotificationEnv({...source,NOTIFICATION_EXTERNAL_MODE:"test_sink"});

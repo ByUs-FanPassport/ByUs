@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createNotificationLambdaHandler } from "../src/notification-lambda.js";
+import type { NotificationWorkerEnv } from "../src/notification-env.js";
 const secret = JSON.stringify({
   NOTIFICATION_WORKER_ENABLED: "true",
   NOTIFICATION_WORKER_ID: "notify-prod-1",
@@ -13,7 +14,10 @@ const secret = JSON.stringify({
 });
 describe("notification Lambda", () => {
   it("loads validated Secrets Manager config and runs once", async () => {
-    const runWorker = vi.fn(async () => 3);
+    const runWorker = vi.fn(async (
+      _env: NotificationWorkerEnv,
+      _remainingTimeInMillis?: () => number,
+    ) => 3);
     const handler = createNotificationLambdaHandler(
       { loadSecret: vi.fn(async () => secret), runWorker },
       {
@@ -22,10 +26,14 @@ describe("notification Lambda", () => {
         NOTIFICATION_WORKER_SECRET_ID: "byus/notification/prod",
       },
     );
+    const context = { getRemainingTimeInMillis: vi.fn(() => 275_000) };
     await expect(
-      handler({ source: "byus.notification-cron", environment: "prod" }),
+      handler({ source: "byus.notification-cron", environment: "prod" }, context),
     ).resolves.toEqual({ enabled: true, claimed: 3 });
     expect(runWorker).toHaveBeenCalledOnce();
+    const remainingTimeInMillis = runWorker.mock.calls[0]?.[1];
+    expect(remainingTimeInMillis?.()).toBe(275_000);
+    expect(context.getRemainingTimeInMillis).toHaveBeenCalledOnce();
   });
   it("rejects cross-environment invocation before reading secrets", async () => {
     const loadSecret = vi.fn(async () => secret);

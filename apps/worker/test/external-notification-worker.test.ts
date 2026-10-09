@@ -11,6 +11,43 @@ describe("ExternalNotificationWorker",()=>{
  it("never sends an expired lease",async()=>{const q=queue([{...job,leaseExpiresAt:"2020-01-01T00:00:00Z"}]);const send=vi.fn();await new ExternalNotificationWorker(q,{kakao:{send},email:{send}}, {workerId:"worker",batchSize:25,leaseSeconds:120}).runOnce();expect(send).not.toHaveBeenCalled();});
 });
 
+it("sends 40 distinct emails once with at least 200ms between provider calls",async()=>{
+ vi.useFakeTimers();vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
+ try {
+  const emails=Array.from({length:40},(_,index)=>({...job,id:`email-${index}`,notificationId:`notification-${index}`,channel:"email" as const,templateKey:"live_reserved",destination:`fan-${index}@example.invalid`,leaseExpiresAt:"2026-10-09T00:05:00Z"}));
+  const q=queue(emails);const starts:number[]=[];
+  const send=vi.fn(async()=>{starts.push(Date.now());return{providerMessageId:`ses-${starts.length}`};});
+  const run=new ExternalNotificationWorker(q,{kakao:{send},email:{send}},{workerId:"worker",batchSize:40,leaseSeconds:300,remainingTimeInMillis:()=>300_000}).runOnce();
+  await vi.runAllTimersAsync();
+  await expect(run).resolves.toBe(40);
+  expect(q.beginEmail).toHaveBeenCalledTimes(40);expect(new Set(vi.mocked(q.beginEmail).mock.calls.map(([value])=>value.id)).size).toBe(40);
+  expect(send).toHaveBeenCalledTimes(40);expect(starts.slice(1).every((time,index)=>time-starts[index]!>=200)).toBe(true);
+ } finally {vi.useRealTimers();}
+});
+
+it("stops before the durable begin when a slow SES send leaves under 30 seconds",async()=>{
+ vi.useFakeTimers();vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
+ try {
+  const emails=[0,1].map(index=>({...job,id:`email-${index}`,channel:"email" as const,templateKey:"live_reserved",leaseExpiresAt:"2026-10-09T00:05:00Z"}));
+  const q=queue(emails);const deadline=Date.now()+46_000;
+  const send=vi.fn(async()=>{await new Promise(resolve=>setTimeout(resolve,17_000));return{providerMessageId:"ses"};});
+  const run=new ExternalNotificationWorker(q,{kakao:{send},email:{send}},{workerId:"worker",batchSize:40,leaseSeconds:300,remainingTimeInMillis:()=>deadline-Date.now()}).runOnce();
+  await vi.runAllTimersAsync();await run;
+  expect(q.beginEmail).toHaveBeenCalledTimes(1);expect(send).toHaveBeenCalledTimes(1);expect(q.revalidateEmail).toHaveBeenCalledTimes(1);
+ } finally {vi.useRealTimers();}
+});
+
+it("stops before the durable begin when a slow revalidation leaves under 30 lease seconds",async()=>{
+ vi.useFakeTimers();vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
+ try {
+  const email={...job,channel:"email" as const,templateKey:"live_reserved",leaseExpiresAt:"2026-10-09T00:00:32Z"};
+  const q=queue([email]);vi.mocked(q.revalidateEmail).mockImplementation(async()=>{await new Promise(resolve=>setTimeout(resolve,3_000));return true;});
+  const send=vi.fn();const run=new ExternalNotificationWorker(q,{kakao:{send},email:{send}},{workerId:"worker",batchSize:40,leaseSeconds:300,remainingTimeInMillis:()=>300_000}).runOnce();
+  await vi.runAllTimersAsync();await run;
+  expect(q.revalidateEmail).toHaveBeenCalledOnce();expect(q.beginEmail).not.toHaveBeenCalled();expect(send).not.toHaveBeenCalled();
+ } finally {vi.useRealTimers();}
+});
+
 it.each(["live_24h", "live_cancelled"])("blocks %s emails before provider and preserves Kakao", async(templateKey)=>{
  const email={...job,channel:"email" as const,templateKey};
  const q=queue([email,{...job,templateKey}]);const send=vi.fn(async()=>({providerMessageId:"m"}));
