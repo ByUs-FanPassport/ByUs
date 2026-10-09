@@ -120,3 +120,5 @@
 .officialVideoFrame:focus-visible{outline:3px solid #17161b;outline-offset:4px}
 @media(min-width:768px){.hero:has([data-creator-hero="nchive"]) .scrim{background:linear-gradient(90deg,#fff 0%,#fff 31%,transparent 47%)}}
 @media(max-width:767px){.hero:has([data-creator-hero="nchive"]){height:auto}.hero:has([data-creator-hero="nchive"]) .heroContent{height:auto;padding-top:320px}.hero:has([data-creator-hero="nchive"]) .heroPicture{bottom:auto;height:320px}.hero:has([data-creator-hero="nchive"]) .scrim{background:linear-gradient(180deg,transparent 260px,#fff 320px)}}
+
+.resultAnnouncement { margin-bottom:16px; }

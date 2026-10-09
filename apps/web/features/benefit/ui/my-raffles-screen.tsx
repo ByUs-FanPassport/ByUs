@@ -3,6 +3,7 @@
 import { toContentLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__benefit__ui__my-raffles-screen";
 import { additionalLocales } from "@/i18n/messages";
+import { raffleDiscoveryCopy } from "@/i18n/catalogs/features__benefit__ui__raffle-discovery";
 import { usePrivy } from "@privy-io/react-auth";
 import { ArrowLeft, RotateCcw, TicketCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -118,7 +119,7 @@ function MyRafflesOwnerScreen({ locale, auth }: { locale: FanLocale; auth: Retur
   const heading = (
     <header className={styles.heading}>
       <FanAction variant="text" href={withLocalePath("/my", locale)} leadingIcon={<ArrowLeft />}>{t.back}</FanAction>
-      <FanHeading as="h1" variant="personal-page">{t.title}</FanHeading>
+      <FanHeading as="h1" variant="personal-page">{raffleDiscoveryCopy[locale].myTitle}</FanHeading>
       <p>{t.description}</p>
     </header>
   );
@@ -128,7 +129,7 @@ function MyRafflesOwnerScreen({ locale, auth }: { locale: FanLocale; auth: Retur
   else if (!auth.authenticated) {
     const returnTo = withLocalePath("/my/raffles", locale);
     const login = withLocalePath(`/login?returnTo=${encodeURIComponent(returnTo)}`, locale);
-    content = <FanState kind="auth" title={t.title} actions={<FanAction variant="primary" href={login}>{t.login}</FanAction>} />;
+    content = <FanState kind="auth" title={raffleDiscoveryCopy[locale].myTitle} actions={<FanAction variant="primary" href={login}>{raffleDiscoveryCopy[locale].loginAction}</FanAction>} />;
   } else if (resource.state.status === "loading") content = <FanState kind="loading" title={t.loading} />;
   else if (resource.state.status === "error") content = <FanState kind="error" title={t.error} description={t.errorHelp} actions={<FanAction variant="neutral" onClick={() => { setExtraPages([]); resource.retry(); }} leadingIcon={<RotateCcw />}>{t.retry}</FanAction>} />;
   else {

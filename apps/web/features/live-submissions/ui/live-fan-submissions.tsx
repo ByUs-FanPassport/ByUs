@@ -45,7 +45,7 @@ function Submissions({ slug, celebritySlug, locale }: { slug: string; celebrityS
         if (result) { setSaved(false); resource.retry(); }
       }}>{c.delete}</FanAction></li>)}</ul></>}
       <h3>{c.selected}</h3>{data.items.length ? <ul className={styles.list}>{data.items.map(item => <li key={item.id} className={styles.row}><strong>{item.nickname}</strong><span className={styles.badge}>{c[item.kind]}</span>
-        <ContentTranslation targetType="live_submission" targetId={item.id} sourceRevision={item.revision} locale={locale}><p>{item.body}</p></ContentTranslation>
+        <ContentTranslation sourceText={item.body} targetType="live_submission" targetId={item.id} sourceRevision={item.revision} locale={locale}><p>{item.body}</p></ContentTranslation>
         <ContentActions targetType="live_submission" targetId={item.id} locale={locale} canBlock={!item.isOwner} onChanged={resource.retry} />
       </li>)}</ul> : <p>{c.empty}</p>}
       <div className={styles.actions}>{cursor && <FanAction onClick={() => setCursor(null)}>{c.firstPage}</FanAction>}{data.nextCursor && <FanAction onClick={() => setCursor(data.nextCursor)}>{c.more}</FanAction>}</div>

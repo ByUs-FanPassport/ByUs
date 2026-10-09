@@ -56,7 +56,7 @@ export function FeedItemCard(props: Props) {
       <ContentActions targetType="notice" targetId={item.id} locale={locale} canBlock={false} onChanged={onChanged} />
     </header>
     <Link className={feedStyles.title} href={href}>{item.title}</Link>
-    {text && <ContentTranslation targetType="notice" targetId={item.id} sourceRevision={item.revision} locale={locale}><p className={`${styles.body} ${feedStyles.excerpt}`}>{text}</p></ContentTranslation>}
+    {text && <ContentTranslation sourceText={`${item.title}\n${text}`} targetType="notice" targetId={item.id} sourceRevision={item.revision} locale={locale}><p className={`${styles.body} ${feedStyles.excerpt}`}>{text}</p></ContentTranslation>}
     {media && <Link href={href} className={feedStyles.media} aria-label={feed.readPost}>{media.asset ? <ContentAssetImage asset={media.asset} locale={locale} alt={media.title} /> : media.image ? <img src={media.image} alt={media.title} loading="lazy" /> : null}</Link>}
     <div className={styles.actions}><Link href={href} className={styles.button}>{feed.readPost}</Link><Link href={`${href}#comments` as Route} className={styles.button}><MessageCircle size={16} aria-hidden="true" />{copy.comments} {item.commentCount.toLocaleString(locale)}</Link></div>
   </article>;
@@ -74,7 +74,7 @@ function CheerCard({ item, locale, onChanged }: { item: Extract<FeedItem, { kind
         <Menu.Portal><Menu.Positioner className={styles.menuPositioner} sideOffset={4} align="end"><Menu.Popup className={styles.menuPopup}><Menu.Item className={`${styles.menuItem} ${styles.menuItemDanger}`} onClick={() => { if (trigger.current) rememberOverlayTrigger(trigger.current); setConfirming(true); }}>{copy.delete}</Menu.Item></Menu.Popup></Menu.Positioner></Menu.Portal>
       </Menu.Root> : <ContentActions targetType="cheer" targetId={item.id} locale={locale} onChanged={onChanged} />}
     </header>
-    <ContentTranslation targetType="cheer" targetId={item.id} locale={locale}><p className={styles.body}>{item.body}</p></ContentTranslation>
+    <ContentTranslation sourceText={item.body} targetType="cheer" targetId={item.id} locale={locale}><p className={styles.body}>{item.body}</p></ContentTranslation>
     {confirming && <AlertDialog open onClose={() => setConfirming(false)} labelledBy={`${id}-delete`} initialFocusRef={cancel} busy={mutation.busy} backdropClassName={styles.reportBackdrop} contentClassName={styles.reportDialog}>
       <h2 id={`${id}-delete`}>{copy.deleteConfirm}</h2><div className={styles.actions}><button ref={cancel} type="button" className={fanActionClassName("neutral")} disabled={mutation.busy} onClick={() => setConfirming(false)}>{copy.cancel}</button><FanAction disabled={mutation.busy} onClick={() => void remove()}>{copy.delete}</FanAction></div>
       {mutation.error && <p className={styles.error} role="alert">{mutation.error}</p>}
