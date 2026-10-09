@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "시작 시각이 지났는데도 예정 상태로 남아 있던 LIVE를 홈의 예약 목록과 MY의 예약 건수에서 제외했어요.",
+    "지난 예약은 MY의 지난 LIVE에서 계속 볼 수 있으며, 방송 중인 LIVE와 앞으로 시작할 예약은 유지돼요.",
+    "첨부 이미지는 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/my",
+  "images": [
+    "release-notes/images/2026-10-09-expired-live-home.png",
+    "release-notes/images/2026-10-09-expired-live-my.png"
+  ]
+}

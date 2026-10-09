@@ -46,7 +46,7 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => sessionState }));
 
-afterEach(() => { avatarOwner.id = undefined; sessionState.ready = true; sessionState.pending = false; sessionState.ownerId = null; vi.useRealTimers(); window.history.replaceState(null, "", "/my"); });
+afterEach(() => { avatarOwner.id = undefined; sessionState.ready = true; sessionState.pending = false; sessionState.ownerId = null; vi.useRealTimers(); vi.restoreAllMocks(); window.history.replaceState(null, "", "/my"); });
 
 describe("unified MY hub", () => {
   it("keeps the owned dashboard behind a coherent session transition", () => {
@@ -152,6 +152,7 @@ describe("unified MY hub", () => {
   });
 
   it("links reservation count to the owned schedule and preserves its nearest event", async () => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-01T00:00:00Z"));
     const later = { id: "77777777-7777-4777-8777-777777777777", slug: "later-live", title: "두 번째 예약", startsAt: "2026-09-20T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
     const sooner = { id: "88888888-8888-4888-8888-888888888888", slug: "sooner-live", title: "가장 가까운 예약", startsAt: "2026-09-18T11:00:00.000Z", effectiveStatus: "scheduled", attended: false };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
@@ -163,6 +164,18 @@ describe("unified MY hub", () => {
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 2개/ })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 2건/ })).toHaveAttribute("href", "#my-reserved-live");
     expect(within(screen.getByRole("region", { name: "내 예약 LIVE" })).getByRole("link", { name: /가장 가까운 예약/ })).toHaveAttribute("href", "/live/sooner-live?locale=ko");
+  });
+
+  it("keeps elapsed reservations in history without counting them as upcoming or showing a countdown", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-09T00:00:00Z"));
+    const elapsed = { id, slug: "ifew-live", title: "이퓨 정기 LIVE", startsAt: "2026-09-29T22:00:00Z", effectiveStatus: "scheduled", attended: false };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [], history: [elapsed] } } })));
+    render(<MyScreen locale="ko" />);
+    const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
+    expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음/ })).toHaveAttribute("href", "/live?locale=ko");
+    fireEvent.click(screen.getByText("지난 LIVE (1)"));
+    expect(screen.getByRole("link", { name: /이퓨 정기 LIVE/ })).toHaveAttribute("href", "/live/ifew-live?locale=ko");
+    expect(screen.queryByText("시작 확인 중")).not.toBeInTheDocument();
   });
 
   it("follows the selected favorite and trusts its server stage label, segment, and artwork", async () => {
@@ -332,6 +345,7 @@ describe("unified MY hub", () => {
 });
 
 it("places selected favorite details before the owner-wide records without a repeated overview", async () => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-01T00:00:00Z"));
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: { ...summary, live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-06T00:00:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] } } })));
   render(<MyScreen locale="ko"/>);
   const event=await screen.findByText("내 예약 LIVE", { selector: "strong" });
@@ -342,6 +356,7 @@ it("places selected favorite details before the owner-wide records without a rep
 
 
 it("shows a date-led reserved event and keeps recent records below favorites in the main column", async () => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-01T00:00:00Z"));
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary: {
     ...summary,
     live: { upcoming: [{ id, slug:"reserved-live", title:"내 예약 LIVE", startsAt:"2026-09-18T11:30:00.000Z", effectiveStatus:"scheduled", attended:false }], history:[] },
