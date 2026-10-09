@@ -1,4 +1,6 @@
 "use client";
+import { generateText, type JSONContent } from "@tiptap/core";
+import { noticeExtensions } from "./tiptap-extensions";
 import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +38,7 @@ export function NoticeDetail({ slug, noticeSlug, locale }: { slug: string; notic
       <div className={`${styles.layout} ${related.length ? styles.relatedLayout : ""}`}>
         <article className={styles.article}>
           <header className={styles.header}><span>{notice.postType === "artist_post" ? copy.artistPost : copy.notice} · {copy[notice.visibility]}</span><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
-          <ContentTranslation targetType="notice" targetId={notice.id} sourceRevision={notice.revision} locale={locale}><NoticeBody document={notice.body} locale={locale} /></ContentTranslation>
+          <ContentTranslation sourceText={`${notice.title}\n${generateText(notice.body as JSONContent, noticeExtensions)}`} targetType="notice" targetId={notice.id} sourceRevision={notice.revision} locale={locale}><NoticeBody document={notice.body} locale={locale} /></ContentTranslation>
           <ContentActions targetType="notice" targetId={notice.id} locale={locale} canBlock={false} onChanged={detail.retry} />
           <NoticeComments slug={slug} noticeSlug={noticeSlug} locale={locale} welcome={notice.kind === "welcome"} />
         </article>
