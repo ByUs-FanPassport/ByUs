@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FanPostDetail } from "./fan-post-detail";
 import { FanPostFeed } from "./fan-post-feed";
@@ -59,6 +59,7 @@ const post = (body: string, isOwner = false) => ({
 });
 
 beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
   state.authenticated = true;
   state.replace.mockReset();
   state.request.mockReset().mockResolvedValue({ ok: true });
@@ -236,12 +237,48 @@ describe("fan post UI navigation and context", () => {
 
     fireEvent.click(reply);
 
-    const textarea = screen.getByRole("textbox", { name: "Write a comment" });
+    const textarea = screen.getByRole("textbox", { name: "Reply" });
+    expect(textarea.closest("li")).toHaveAttribute("id", `comment-${state.comments[0].id}`);
+    expect(textarea).toHaveFocus();
     const description = document.getElementById(textarea.getAttribute("aria-describedby")!);
     expect(description).toHaveTextContent("Alex");
     expect(description).toHaveTextContent("A comment that identifies the exact reply target");
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(reply).toHaveFocus());
+  });
+
+  it("preserves separate comment and reply drafts and retries the same reply after failure", async () => {
+    state.comments = ["Alex", "Sam"].map((nickname, index) => ({
+      id: `comment-${index}`, postId: state.post.id, parentId: null, body: `${nickname}'s comment`, revision: 1,
+      author: { nickname, avatarUrl: "/images/avatars/heart-pink.webp" }, createdAt: "2026-09-26T01:00:00Z", isOwner: false,
+    }));
+    render(<FanPostDetail postId={state.post.id as string} locale="en" />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Write a comment" }), { target: { value: "My top-level draft" } });
+    const alex = within(document.getElementById("comment-comment-0")!);
+    const sam = within(document.getElementById("comment-comment-1")!);
+    fireEvent.click(alex.getByRole("button", { name: "Reply" }));
+    expect(screen.getByRole("button", { name: "Post" })).toBeDisabled();
+    fireEvent.change(alex.getByRole("textbox", { name: "Reply" }), { target: { value: "Reply to Alex" } });
+    fireEvent.click(sam.getByRole("button", { name: "Reply" }));
+    expect(sam.getByRole("textbox", { name: "Reply" })).toHaveValue("");
+    fireEvent.change(sam.getByRole("textbox", { name: "Reply" }), { target: { value: "Reply to Sam" } });
+    fireEvent.click(alex.getByRole("button", { name: "Reply" }));
+    expect(alex.getByRole("textbox", { name: "Reply" })).toHaveValue("Reply to Alex");
+    state.request.mockResolvedValueOnce(null);
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(state.request).toHaveBeenCalledTimes(1));
+    const first = state.request.mock.calls[0][2];
+    expect(first).toMatchObject({ body: "Reply to Alex", parentId: "comment-0" });
+    expect(alex.getByRole("textbox", { name: "Reply" })).toHaveValue("Reply to Alex");
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Write a comment" })).toHaveValue("My top-level draft"));
+    expect(state.request.mock.calls[1][2]).toEqual(first);
+    fireEvent.click(sam.getByRole("button", { name: "Reply" }));
+    expect(sam.getByRole("textbox", { name: "Reply" })).toHaveValue("Reply to Sam");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("textbox", { name: "Write a comment" })).toHaveValue("My top-level draft");
+    fireEvent.click(alex.getByRole("button", { name: "Reply" }));
+    expect(alex.getByRole("textbox", { name: "Reply" })).toHaveValue("");
   });
 
   it("keeps the reply target visible while comments move to another page", () => {
