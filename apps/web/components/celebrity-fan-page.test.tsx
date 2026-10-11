@@ -205,12 +205,12 @@ describe("approved fanpage", () => {
     expect(within(menu).getByRole("link", { name: "찐팬 인증" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();
   });
-  it("offers brand Passport verification without raffle requests", async () => {
+  it("uses the shared home, navigation and calendar for a brand", async () => {
     const fetcher = stubHubFetch();
-    render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} initialTab="events" />);
+    render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} />);
 
     const menu = screen.getByRole("navigation", { name: "런뮤직 팬페이지 메뉴" });
-    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "게시판"]);
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "게시판", "찐팬 인증", "이벤트", "팬 리더보드"]);
     expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText(runmusic.summary)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "공식 웹사이트, 새 창" })).toHaveAttribute("href", runmusic.websiteUrl);
@@ -220,16 +220,30 @@ describe("approved fanpage", () => {
     expect(within(menu).getByRole("link", { name: "게시판" })).toHaveAttribute("href", "/runmusic?tab=board&locale=ko#celebrity-content");
     expect(screen.getByLabelText("내 팬 활동")).toBeInTheDocument();
     expect(screen.getByText("퀴즈로 패스포트를 만들고 팬 활동을 시작하세요.")).toBeInTheDocument();
-    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/raffles"))).toBe(false);
+    expect(await screen.findByRole("heading", { name: "런뮤직 일정" })).toBeInTheDocument();
+    expect(document.getElementById("daily-checkin")).toBeInTheDocument();
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/raffles"))).toBe(true);
   });
-  it("restores an owned brand Passport without exposing attendance ticket actions", async () => {
+  it("keeps an owned brand Passport and shared check-in without enrolling a ticket policy", async () => {
     authenticated = true;
     const fetcher = stubHubFetch({ passports: [{ ...ownedPassport, celebrity: runmusic }] });
     render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} />);
     expect(await screen.findByRole("link", { name: "내 패스포트" })).toHaveAttribute("href", `/passports/${ownedPassport.id}?locale=ko`);
     expect(screen.queryByText("퀴즈로 패스포트를 만들고 팬 활동을 시작하세요.")).not.toBeInTheDocument();
     expect(fetcher.mock.calls.filter(([url]) => String(url).includes("/api/me/summary"))).toHaveLength(1);
-    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/tickets") || String(url).includes("/runmusic/raffles"))).toBe(false);
+    expect(document.getElementById("daily-checkin")).toBeInTheDocument();
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/raffles"))).toBe(true);
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/tickets"))).toBe(false);
+  });
+  it.each(["live", "media"] as const)("opens a brand's shared %s board instead of its feed", async (section) => {
+    const fetcher = stubHubFetch();
+    render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} initialTab={section} />);
+    const boardMenu = screen.getByRole("navigation", { name: "게시판 메뉴" });
+    expect(within(boardMenu).getAllByRole("link").map(link => link.textContent)).toEqual(["피드", "공식 미디어", "LIVE"]);
+    expect(within(boardMenu).getByRole("link", { name: section === "live" ? "LIVE" : "공식 미디어" })).toHaveAttribute("aria-current", "page");
+    expect(within(boardMenu).getByRole("link", { name: "LIVE" })).toHaveAttribute("href", "/runmusic?tab=board&section=live&locale=ko#celebrity-content");
+    if (section === "live") await waitFor(() => expect(fetcher.mock.calls.some(([url]) => String(url).startsWith("/api/live-events?"))).toBe(true));
+    expect(screen.queryByRole("button", { name: "글 쓰기" })).not.toBeInTheDocument();
   });
   it("shows a generic ticket action for any profile and marks hero outbound links", () => {
     const ticketUrl = "https://wgrw.raceplan.co.kr/entryperson";

@@ -332,37 +332,37 @@ export const messages = {
     "fr": "Voir tous les Stamps obtenus"
   },
   "mb2d78c607ac6": {
-    "ja": "Stampの発行が完了しました。",
-    "zh-Hans": "Stamp已发行。",
-    "zh-Hant": "Stamp已發行。",
-    "es": "Tu Stamp se ha emitido.",
-    "id": "Stamp-mu sudah diterbitkan.",
-    "vi": "Stamp của bạn đã được phát hành.",
-    "th": "ออก Stamp ของคุณแล้ว",
-    "pt": "Seu Stamp foi emitido.",
-    "fr": "Votre Stamp a été émis."
+    "ja": "記録の登録が完了しました。",
+    "zh-Hans": "记录登记已完成。",
+    "zh-Hant": "記錄登記已完成。",
+    "es": "El registro de la actividad se ha completado.",
+    "id": "Pendaftaran catatan selesai.",
+    "vi": "Đã hoàn tất đăng ký bản ghi.",
+    "th": "ลงทะเบียนบันทึกเสร็จแล้ว",
+    "pt": "O cadastro do registro foi concluído.",
+    "fr": "L’enregistrement de l’activité est terminé."
   },
   "ma9cc402faf99": {
-    "ja": "Stampの発行状況を確認中です。",
-    "zh-Hans": "正在确认Stamp发行状态。",
-    "zh-Hant": "正在確認Stamp發行狀態。",
-    "es": "Estamos comprobando el estado de emisión de tu Stamp.",
-    "id": "Kami sedang memeriksa status penerbitan Stamp-mu.",
-    "vi": "Chúng tôi đang kiểm tra trạng thái phát hành Stamp của bạn.",
-    "th": "เรากำลังตรวจสอบสถานะการออก Stamp ของคุณ",
-    "pt": "Estamos verificando o status de emissão do seu Stamp.",
-    "fr": "Nous vérifions l’état d’émission de votre Stamp."
+    "ja": "記録の登録状況を確認してください。",
+    "zh-Hans": "请查看记录登记状态。",
+    "zh-Hant": "請查看記錄登記狀態。",
+    "es": "Comprueba el estado del registro de la actividad.",
+    "id": "Periksa status pendaftaran catatan.",
+    "vi": "Hãy kiểm tra trạng thái đăng ký bản ghi.",
+    "th": "โปรดตรวจสอบสถานะการลงทะเบียนบันทึก",
+    "pt": "Verifique o status do cadastro do registro.",
+    "fr": "Vérifiez l’état de l’enregistrement."
   },
   "mb7d9b53a9daa": {
-    "ja": "Stampを準備中です。",
-    "zh-Hans": "正在准备Stamp。",
-    "zh-Hant": "正在準備Stamp。",
-    "es": "Tu Stamp se está preparando.",
-    "id": "Stamp-mu sedang disiapkan.",
-    "vi": "Stamp của bạn đang được chuẩn bị.",
-    "th": "กำลังเตรียม Stamp ของคุณ",
-    "pt": "Seu Stamp está sendo preparado.",
-    "fr": "Votre Stamp est en préparation."
+    "ja": "記録を登録しています。",
+    "zh-Hans": "正在登记记录。",
+    "zh-Hant": "正在登記記錄。",
+    "es": "Estamos registrando tu actividad.",
+    "id": "Catatanmu sedang didaftarkan.",
+    "vi": "Đang đăng ký bản ghi.",
+    "th": "กำลังลงทะเบียนบันทึก",
+    "pt": "Seu registro está sendo cadastrado.",
+    "fr": "Enregistrement de votre activité en cours."
   },
   "m3fe0e05ee0cd": {
     "ja": "閉じる",
@@ -387,15 +387,15 @@ export const messages = {
     "fr": "Date d’obtention"
   },
   "ma33046b6d7ff": {
-    "ja": "発行記録を見る",
-    "zh-Hans": "查看发行记录",
-    "zh-Hant": "查看發行記錄",
-    "es": "Ver registro de emisión",
-    "id": "Lihat catatan penerbitan",
-    "vi": "Xem bản ghi phát hành",
-    "th": "ดูบันทึกการออก",
-    "pt": "Ver registro de emissão",
-    "fr": "Voir l’enregistrement d’émission"
+    "ja": "登録記録を見る",
+    "zh-Hans": "查看登记记录",
+    "zh-Hant": "查看登記記錄",
+    "es": "Ver el comprobante de registro",
+    "id": "Lihat bukti pendaftaran",
+    "vi": "Xem bản ghi đăng ký",
+    "th": "ดูบันทึกการลงทะเบียน",
+    "pt": "Ver comprovante de registro",
+    "fr": "Voir la preuve d’enregistrement"
   },
   "m4ea3e8203ad1": {
     "ja": "自分のコードは使用できません。",

@@ -36,15 +36,14 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   const locale = parseAppLocale(requestedLocale);
   const celebrity = await loadSeoCreator(slug, locale);
   if (!celebrity) notFound();
-  const isBrand = celebrity.roles.includes("brand");
-  if (!isBrand && (requestedTab === "raffles" || requestedTab === "benefits")) {
+  if (requestedTab === "raffles" || requestedTab === "benefits") {
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
     redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
   }
-  const initialTab: CelebrityFanTab = parseFanPageTab(requestedTab, isBrand);
-  const initialBoardSection = resolveBoardSection(requestedTab, requestedSection, isBrand);
+  const initialTab: CelebrityFanTab = parseFanPageTab(requestedTab);
+  const initialBoardSection = resolveBoardSection(requestedTab, requestedSection);
   const initialBoardSource = resolveBoardSource(requestedTab, requestedSource);
-  const primaryLives = isBrand ? [] : await createPublishedContentRepositoryFromEnvironment().listPrimaryLives(toContentLocale(locale));
+  const primaryLives = await createPublishedContentRepositoryFromEnvironment().listPrimaryLives(toContentLocale(locale));
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
   return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialBoardSection={initialBoardSection} initialBoardSource={initialBoardSource} initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} initialMediaFilter={requestedMedia === "photos" || requestedMedia === "videos" || requestedMedia === "replays" ? requestedMedia : undefined} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
 }

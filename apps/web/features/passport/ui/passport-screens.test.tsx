@@ -40,7 +40,7 @@ describe("passport fan screens", () => {
     const dialog = await screen.findByRole("dialog", { name: selectedLocale === "ko" ? "스탬프 상세" : "Stamp details" });
     expect(within(dialog).getByRole("heading", { name: selectedLocale === "ko" ? "첫 좋아요" : "First Like" })).toBeInTheDocument();
     expect(within(dialog).queryByText(/팬 점수|Fan Score/)).not.toBeInTheDocument();
-    fireEvent.click(within(dialog).getByText(selectedLocale === "ko" ? "발급 정보" : "Issuance details"));
+    fireEvent.click(within(dialog).getByText(selectedLocale === "ko" ? "기록 등록 정보" : "Record registration details"));
     expect(within(dialog).queryByRole("link")).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: selectedLocale === "ko" ? "상세 닫기" : "Close details" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -64,6 +64,37 @@ describe("passport fan screens", () => {
     expect(screen.getByRole("status", { name })).toHaveAttribute("aria-busy", "true");
   });
 
+  it.each([
+    ["queued", "기록을 등록하고 있어요"],
+    ["processing", "기록을 등록하고 있어요"],
+    ["retryable", "기록을 등록하고 있어요"],
+    ["permanent_failure", "기록 등록 상태를 확인해 주세요"],
+    ["minted", "기록 등록이 완료됐어요"],
+  ] as const)("shows the %s record registration state without changing the issued Stamp", async (status, expected) => {
+    const statusMint = status === "minted" ? mint : { status, txHash: null, tokenId: null };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: { ...stampDetail, mint: statusMint } })));
+
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+    expect(screen.getByText("받은 날").nextSibling).toHaveTextContent("2026");
+    if (status === "queued") {
+      fireEvent.click(screen.getByText("기록 등록 정보"));
+      expect(screen.getByText("등록 확인 정보가 아직 없어요.")).toBeInTheDocument();
+    }
+  });
+
+  it("does not show a completed registration when a minted record has no transaction hash", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      stamp: { ...stampDetail, mint: { status: "minted", txHash: null, tokenId: "42" } },
+    })));
+
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    expect(await screen.findByText("기록 등록 상태를 확인해 주세요")).toBeInTheDocument();
+    expect(screen.queryByText("기록 등록이 완료됐어요")).not.toBeInTheDocument();
+  });
+
   it.each(["ko", "en"])("retains the existing collection detail and section links (%s)", async (selectedLocale) => {
     locale = selectedLocale;
     const open = locale === "ko" ? "패스포트 보기" : "Open Passport";
@@ -77,7 +108,7 @@ describe("passport fan screens", () => {
     expect(container.querySelector("img[data-image-presentation=portrait]")).toBeInTheDocument();
     expect(container.querySelector("#collection")).toBeInTheDocument();
     expect(container.querySelector("a a")).toBeNull();
-    expect(screen.queryByText("발급이 완료됐어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("기록 등록이 완료됐어요")).not.toBeInTheDocument();
   });
 
   it("shows the server stage and committed badge asset in the opted-in collection", async () => {
@@ -199,11 +230,11 @@ describe("passport fan screens", () => {
 
     expect(await screen.findByRole("button", { name: "첫 좋아요" })).toBeInTheDocument();
     expect(screen.getByLabelText("첫 좋아요를 남긴 날")).toBeInTheDocument();
-    expect(screen.queryByText("안전하게 발급을 준비하고 있어요")).not.toBeInTheDocument();
+    expect(screen.queryByText("기록을 등록하고 있어요")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "첫 좋아요" }));
-    expect(screen.getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
+    expect(screen.getByText("기록을 등록하고 있어요")).toBeInTheDocument();
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
-    expect(screen.queryByRole("link", { name: /첫 좋아요 발급 기록/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /첫 좋아요 등록 기록/ })).not.toBeInTheDocument();
   });
 
   it("links a minted First Reaction to its validated transaction while counting exactly one display stamp", async () => {
@@ -231,14 +262,14 @@ describe("passport fan screens", () => {
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
 
     expect(await screen.findByRole("button", { name: "첫 좋아요" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /첫 좋아요 발급 기록/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /첫 좋아요 등록 기록/ })).not.toBeInTheDocument();
     const trigger = screen.getByRole("button", { name: "첫 좋아요" });
     trigger.focus();
     fireEvent.click(trigger);
     const dialog = await screen.findByRole("dialog", { name: "스탬프 상세" });
-    fireEvent.click(within(dialog).getByText("발급 정보"));
+    fireEvent.click(within(dialog).getByText("기록 등록 정보"));
     const transactionLink = within(dialog).getByRole("link", {
-      name: `첫 좋아요 발급 기록 ${firstReactionTx}, 발급 기록을 새 탭에서 열기`,
+      name: `첫 좋아요 등록 기록 ${firstReactionTx}, 등록 기록을 새 탭에서 열기`,
     });
     expect(transactionLink).toHaveTextContent(maskedHash(firstReactionTx));
     expect(transactionLink).toHaveAttribute("href", `${explorerBaseUrl}/tx/${firstReactionTx}`);
@@ -269,15 +300,15 @@ describe("passport fan screens", () => {
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl={explorerBaseUrl} />);
     fireEvent.click(await screen.findByRole("button", { name: "첫 좋아요" }));
     const history = await screen.findByRole("dialog", { name: "스탬프 상세" });
-    fireEvent.click(within(history).getByText("발급 정보"));
-    expect(within(history).getByText("안전하게 발급을 준비하고 있어요")).toBeInTheDocument();
+    fireEvent.click(within(history).getByText("기록 등록 정보"));
+    expect(within(history).getByText("기록을 등록하고 있어요")).toBeInTheDocument();
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/me/avatar", expect.any(Object)));
     expect(container.querySelector("[data-fan-avatar] img")).toBeNull();
     fireEvent.focus(window);
     await waitFor(() => expect(passportReads).toBe(2));
     expect(history).toBeInTheDocument();
     await act(async () => { finish(Response.json({ passport: { ...detail, firstReaction: { ...detail.firstReaction, mintStatus: "minted", txHash: tx } } })); });
-    expect(await within(history).findByText("발급이 완료됐어요")).toBeInTheDocument();
+    expect(await within(history).findByText("기록 등록이 완료됐어요")).toBeInTheDocument();
     expect(within(history).getByRole("link")).toHaveAttribute("href", `${explorerBaseUrl}/tx/${tx}`);
     expect(screen.getByText("스탬프").previousSibling).toHaveTextContent("1");
   });
@@ -432,12 +463,12 @@ describe("passport fan screens", () => {
   it("links the masked Stamp transaction to the validated GIWA Sepolia Explorer URL", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ stamp: stampDetail }), { status: 200 })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
-    const summary = await screen.findByText("발급 정보");
+    const summary = await screen.findByText("기록 등록 정보");
     const disclosure = summary.closest("details");
     expect(disclosure).not.toHaveAttribute("open");
     fireEvent.click(summary);
     const transactionLink = screen.getByRole("link", {
-      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
+      name: `등록 기록 ${mint.txHash}, 등록 기록을 새 탭에서 열기`,
     });
     expect(transactionLink).toHaveTextContent("0xaaaaaa…aaaaaa");
     expect(transactionLink).not.toHaveTextContent(mint.txHash);
@@ -459,11 +490,22 @@ describe("passport fan screens", () => {
     })));
     render(<PassportDetailScreen id={passport.id} explorerBaseUrl={`${explorerBaseUrl}/`} />);
 
-    const summary = await screen.findByText("발급 정보");
+    const summary = await screen.findByText("기록 등록 정보");
     fireEvent.click(summary);
     expect(screen.getByRole("link", {
-      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
+      name: `등록 기록 ${mint.txHash}, 등록 기록을 새 탭에서 열기`,
     })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
+  });
+
+  it("keeps a processing transaction hash as text without linking to Explorer", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      stamp: { ...stampDetail, mint: { status: "processing", txHash: mint.txHash, tokenId: null } },
+    })));
+    render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
+
+    fireEvent.click(await screen.findByText("기록 등록 정보"));
+    expect(screen.getByText(maskedHash(mint.txHash))).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /등록 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -483,9 +525,9 @@ describe("passport fan screens", () => {
     })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorer} />);
 
-    fireEvent.click(await screen.findByText("발급 정보"));
+    fireEvent.click(await screen.findByText("기록 등록 정보"));
     expect(screen.getByText(maskedHash(transactionHash))).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /발급 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /등록 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
   });
 
   it("renders no transaction link when the transaction hash is null", async () => {
@@ -494,9 +536,9 @@ describe("passport fan screens", () => {
     })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    fireEvent.click(await screen.findByText("발급 정보"));
-    expect(screen.queryByText("발급 기록")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /발급 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByText("기록 등록 정보"));
+    expect(screen.queryByText("등록 기록")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /등록 기록을 새 탭에서 열기/ })).not.toBeInTheDocument();
   });
 
   it("provides an English transaction-link name with the full hash and new-tab purpose", async () => {
@@ -504,9 +546,9 @@ describe("passport fan screens", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stamp: stampDetail })));
     render(<StampDetailScreen id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
-    fireEvent.click(await screen.findByText("Issuance details"));
+    fireEvent.click(await screen.findByText("Record registration details"));
     expect(screen.getByRole("link", {
-      name: `Issuance record ${mint.txHash}, open issuance record in a new tab`,
+      name: `Registration record ${mint.txHash}, open registration record in a new tab`,
     })).toHaveTextContent("0xaaaaaa…aaaaaa");
   });
 
@@ -538,9 +580,9 @@ describe("passport fan screens", () => {
     render(<StampDetailOverlay id={stampDetail.id} explorerBaseUrl={explorerBaseUrl} />);
 
     expect(await screen.findByRole("dialog", { name: "스탬프 상세" })).toBeInTheDocument();
-    fireEvent.click(screen.getByText("발급 정보"));
+    fireEvent.click(screen.getByText("기록 등록 정보"));
     expect(screen.getByRole("link", {
-      name: `발급 기록 ${mint.txHash}, 발급 기록을 새 탭에서 열기`,
+      name: `등록 기록 ${mint.txHash}, 등록 기록을 새 탭에서 열기`,
     })).toHaveAttribute("href", `${explorerBaseUrl}/tx/${mint.txHash}`);
     const close = await screen.findByRole("button", { name: "상세 닫기" });
     fireEvent.click(close);

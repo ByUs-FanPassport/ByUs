@@ -85,11 +85,15 @@ declare
   after_reaction_fan uuid := '95500000-0000-4000-8000-000000000013';
   after_reaction uuid := '95500000-0000-4000-8000-000000000014';
   after_job uuid := '95500000-0000-4000-8000-000000000015';
+  excluded_fan uuid := '95500000-0000-4000-8000-000000000020';
+  native_post_key uuid := '95500000-0000-4000-8000-000000000021';
   brand_id uuid;
   draft_id uuid;
   person_id uuid;
   quiz_id uuid;
   post_id uuid;
+  award_count bigint;
+  ticket_balance bigint;
   result jsonb;
   brand_payload jsonb := '{
     "slug":"runmusic",
@@ -132,12 +136,14 @@ begin
     (fan,'did:privy:brand-fanpage-proof','brand-fanpage-fan@byus.test'),
     (native_fan,'did:privy:brand-fanpage-native','brand-fanpage-native@byus.test'),
     (no_reaction_fan,'did:privy:brand-fanpage-no-reaction','brand-fanpage-no-reaction@byus.test'),
-    (after_reaction_fan,'did:privy:brand-fanpage-after-reaction','brand-fanpage-after-reaction@byus.test');
+    (after_reaction_fan,'did:privy:brand-fanpage-after-reaction','brand-fanpage-after-reaction@byus.test'),
+    (excluded_fan,'did:privy:brand-fanpage-excluded','brand-fanpage-excluded@byus.test');
   insert into public.user_wallets(app_user_id,chain_id,address) values
     (fan,91342,'0x9550000000000000000000000000000000000003'),
     (native_fan,91342,'0x9550000000000000000000000000000000000005'),
     (no_reaction_fan,91342,'0x9550000000000000000000000000000000000012'),
-    (after_reaction_fan,91342,'0x9550000000000000000000000000000000000013');
+    (after_reaction_fan,91342,'0x9550000000000000000000000000000000000013'),
+    (excluded_fan,91342,'0x9550000000000000000000000000000000000020');
 
   insert into public.celebrities(id,slug,image_url,roles)
   values(legacy_null,'brand-null-role-proof','/null-role.jpg','{artist}');
@@ -214,7 +220,6 @@ begin
     'update public.celebrities set roles=''{artist}'' where id=%L',brand_id
   ), 'celebrities_brand_role_consistency');
 
-  insert into public.fan_ticket_activity_policy(celebrity_id) values(brand_id);
   result := public.react_to_creator(fan,brand_id,legacy_reaction,legacy_job,'0x'||repeat('a',64));
   if result->>'created' <> 'true' or result->>'blockchainJobId' <> legacy_job::text then
     raise exception 'brand legacy reaction was not created: %',result;
@@ -223,6 +228,38 @@ begin
   if result->>'created' <> 'false' or result->>'reactionId' <> legacy_reaction::text then
     raise exception 'brand legacy reaction replay failed: %',result;
   end if;
+
+  result := public.save_fan_post(
+    fan,'runmusic',null,'브랜드 게시물','public','{}',null,extensions.gen_random_uuid());
+  post_id := (result->>'id')::uuid;
+  if public.recover_first_comment_community_stamp(fan,brand_id) then
+    raise exception 'brand first-comment recovery replay awarded twice';
+  end if;
+  if public.recover_first_comment_community_stamp(excluded_fan,brand_id) then
+    raise exception 'brand first-comment recovery used another owner''s post';
+  end if;
+  insert into public.fan_posts(
+    id,celebrity_id,app_user_id,body,visibility,idempotency_key,create_request_hash,first_comment_eligible
+  ) values (
+    '95500000-0000-4000-8000-000000000022',brand_id,excluded_fan,
+    '기존 비대상 게시물','public','95500000-0000-4000-8000-000000000023',repeat('0',64),false
+  );
+  if public.recover_first_comment_community_stamp(excluded_fan,brand_id) then
+    raise exception 'brand first-comment recovery used ineligible evidence';
+  end if;
+  result := public.check_in_community_stamp(fan,'runmusic');
+  if result->>'awarded'<>'true'
+    or public.check_in_community_stamp(fan,'runmusic')->>'awarded'<>'false'
+    or (select count(*) from public.community_stamps
+      where app_user_id=fan and celebrity_id=brand_id
+        and kind in ('first_comment','daily_checkin'))<>2
+    or exists(select 1 from public.fan_ticket_activity_awards
+      where app_user_id=fan and celebrity_id=brand_id)
+    or public.get_fan_ticket_balance(fan,brand_id)<>0 then
+    raise exception 'policy-less brand stamp or zero-ticket boundary failed';
+  end if;
+
+  insert into public.fan_ticket_activity_policy(celebrity_id) values(brand_id);
 
   insert into public.fan_action_bindings(
     id,chain_id,environment_id,hub_proxy,relayer,schema_uid,schema_version,
@@ -246,24 +283,46 @@ begin
     or result->'blockchainJobId' <> 'null'::jsonb then
     raise exception 'brand native reaction was not created: %',result;
   end if;
+  result := public.save_fan_post(
+    native_fan,'runmusic',null,'브랜드 정책 게시물','public','{}',null,native_post_key);
+  post_id := (result->>'id')::uuid;
+  if public.check_in_community_stamp(native_fan,'runmusic')->>'awarded'<>'true' then
+    raise exception 'policy brand check-in was not awarded';
+  end if;
+  award_count := (select count(*) from public.fan_ticket_activity_awards
+    where app_user_id=native_fan and celebrity_id=brand_id);
+  ticket_balance := public.get_fan_ticket_balance(native_fan,brand_id);
   result := public.react_to_creator(native_fan,brand_id,native_reaction,native_job,'0x'||repeat('b',64));
   if result->>'created' <> 'false' or result->>'reactionId' <> native_reaction::text then
     raise exception 'brand native reaction replay failed: %',result;
   end if;
+  result := public.save_fan_post(
+    native_fan,'runmusic',null,'브랜드 정책 게시물','public','{}',null,native_post_key);
+  if result->>'replayed'<>'true'
+    or public.check_in_community_stamp(native_fan,'runmusic')->>'awarded'<>'false'
+    or (select count(*) from public.fan_ticket_activity_awards
+      where app_user_id=native_fan and celebrity_id=brand_id)<>award_count
+    or public.get_fan_ticket_balance(native_fan,brand_id)<>ticket_balance
+    or award_count<>3 or ticket_balance<>3
+    or exists(select action_key from public.fan_ticket_activity_awards
+      where app_user_id=native_fan and celebrity_id=brand_id
+        and action_key in ('reaction','comment','checkin')
+      group by action_key having count(*)<>1)
+    or (select count(*) from public.fan_ticket_activity_awards
+      where app_user_id=native_fan and celebrity_id=brand_id
+        and action_key in ('reaction','comment','checkin'))<>3
+    or (select count(*) from public.community_stamps
+      where app_user_id=native_fan and celebrity_id=brand_id
+        and kind in ('first_comment','daily_checkin'))<>2 then
+    raise exception 'policy brand activity did not remain exactly-once across retries';
+  end if;
+  perform public.post_fan_post_comment(native_fan,post_id,null,'브랜드 댓글',extensions.gen_random_uuid());
+  perform public.set_fan_post_like(native_fan,post_id,true);
   if (select count(*) from public.fan_reactions where celebrity_id=brand_id
-    and app_user_id in (fan,native_fan)) <> 2 then
-    raise exception 'brand reaction rows were not persisted once per fan';
-  end if;
-
-  result := public.save_fan_post(fan,'runmusic',null,'브랜드 게시물','public','{}',null,extensions.gen_random_uuid());
-  post_id := (result->>'id')::uuid;
-  perform public.post_fan_post_comment(fan,post_id,null,'브랜드 댓글',extensions.gen_random_uuid());
-  perform public.set_fan_post_like(fan,post_id,true);
-  if public.recover_first_comment_community_stamp(fan,brand_id) then
-    raise exception 'brand first comment stamp recovery succeeded';
-  end if;
-  if exists(select 1 from public.community_stamps where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
-    or exists(select 1 from public.fan_ticket_activity_awards where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
+      and app_user_id in (fan,native_fan)) <> 2
+    or exists(select 1 from public.fan_ticket_activity_awards
+      where app_user_id=fan and celebrity_id=brand_id
+        and action_key in ('reaction','comment','checkin'))
     or exists(select 1 from public.fan_score_ledger where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
     or exists(select 1 from public.fan_passports where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
     or (select count(*) from public.first_reaction_stamps
@@ -271,7 +330,7 @@ begin
     or (select count(*) from public.fan_activities
       where app_user_id in (fan,native_fan) and celebrity_id=brand_id
         and activity_type='first_reaction') <> 2 then
-    raise exception 'brand reaction stamp or unrelated reward boundary failed';
+    raise exception 'brand reaction stamp or score/passport boundary failed';
   end if;
 
   result:=pg_temp.complete_brand_quiz(
@@ -329,15 +388,35 @@ begin
     group by app_user_id having count(*)<>1
   ) or (select count(*) from public.fan_ticket_ledger
     where app_user_id in (fan,native_fan,no_reaction_fan,after_reaction_fan)
-      and celebrity_id=brand_id and source_type='passport_verification')<>4 then
-    raise exception 'brand quiz verification reward policy changed or replay duplicated credit';
+      and celebrity_id=brand_id and source_type='passport_verification')<>4
+    or (select count(*) from public.fan_ticket_activity_awards
+      where app_user_id in (fan,native_fan,no_reaction_fan,after_reaction_fan)
+        and celebrity_id=brand_id and action_key='verification' and scope_key='once')<>4
+    or exists(select 1 from public.fan_ticket_activity_awards award
+      join public.fan_ticket_ledger ledger on ledger.id=award.ledger_id
+      where award.app_user_id in (fan,native_fan,no_reaction_fan,after_reaction_fan)
+        and award.celebrity_id=brand_id and award.action_key='verification'
+        and (ledger.source_type<>'passport_verification'
+          or ledger.source_id<>award.source_id)) then
+    raise exception 'brand quiz verification did not adopt its existing credit exactly once';
   end if;
 
   result := public.save_admin_celebrity(actor,correlation,null,
     jsonb_set(brand_payload,'{slug}','"brand-draft-proof"'));
   draft_id := (result->>'id')::uuid;
+  insert into public.fan_posts(
+    id,celebrity_id,app_user_id,body,visibility,idempotency_key,create_request_hash,first_comment_eligible
+  ) values (
+    '95500000-0000-4000-8000-000000000024',draft_id,excluded_fan,
+    '비공개 브랜드 게시물','public','95500000-0000-4000-8000-000000000025',repeat('1',64),true
+  );
   if exists(select 1 from public.published_celebrities where slug='brand-draft-proof') then
     raise exception 'draft brand leaked to public projection';
+  end if;
+  if public.recover_first_comment_community_stamp(excluded_fan,draft_id)
+    or exists(select 1 from public.community_stamps
+      where app_user_id=excluded_fan and celebrity_id=draft_id and kind='first_comment') then
+    raise exception 'private brand first-comment recovery succeeded';
   end if;
 
   result := public.save_admin_celebrity(actor,correlation,null,person_payload);
@@ -386,11 +465,24 @@ begin
     archived_by_admin_allowlist_id=actor,archive_reason='Brand fanpage archive proof'
   where id=brand_id;
   alter table public.celebrities enable trigger celebrities_enforce_lifecycle;
+  insert into public.fan_posts(
+    id,celebrity_id,app_user_id,body,visibility,idempotency_key,create_request_hash,first_comment_eligible
+  ) values (
+    '95500000-0000-4000-8000-000000000026',brand_id,excluded_fan,
+    '보관 브랜드 게시물','public','95500000-0000-4000-8000-000000000027',repeat('2',64),true
+  );
   if exists(select 1 from public.published_celebrities where slug='runmusic') then
     raise exception 'archived brand leaked to public projection';
   end if;
+  if public.recover_first_comment_community_stamp(excluded_fan,brand_id)
+    or exists(select 1 from public.community_stamps
+      where app_user_id=excluded_fan and celebrity_id=brand_id and kind='first_comment')
+    or exists(select 1 from public.fan_ticket_activity_awards
+      where app_user_id=excluded_fan and celebrity_id in (brand_id,draft_id)) then
+    raise exception 'other-user, ineligible or archived brand evidence escaped recovery guards';
+  end if;
 
-  raise notice 'BRAND_FANPAGES runmusic registration, HTTPS website, role boundaries, quiz/passport issuance, welcome exclusion, reaction timing/replay, legacy/native lanes, reward boundaries, draft/archive projection and person regression: PASS';
+  raise notice 'BRAND_FANPAGES runmusic registration, HTTPS website, role boundaries, common stamps, policy activity exactly-once, quiz credit adoption, recovery exclusions, media/member permissions, draft/archive projection and person regression: PASS';
 end $$;
 
 rollback;

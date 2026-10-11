@@ -6,7 +6,7 @@ import { fanPageNavigationCopy } from "@/i18n/catalogs/features__fanpage__naviga
 describe("fan page board navigation", () => {
   it("maps legacy tabs into the five-item fan page navigation", () => {
     for (const tab of ["community", "notice", "media", "live"]) expect(parseFanPageTab(tab)).toBe("board");
-    expect(parseFanPageTab("events")).toBe("events");
+    for (const tab of ["home", "board", "certifications", "events", "leaderboard"]) expect(parseFanPageTab(tab)).toBe(tab);
     expect(parseFanPageTab("benefits")).toBe("events");
     expect(parseFanPageTab("unknown")).toBe("home");
   });
@@ -19,16 +19,6 @@ describe("fan page board navigation", () => {
     expect(resolveBoardSource("notice", undefined)).toBe("official");
     expect(resolveBoardSource("board", "official")).toBe("official");
     expect(resolveBoardSource("board", "unknown")).toBe("all");
-  });
-
-  it("limits brand pages to home and the combined board feed", () => {
-    expect(parseFanPageTab("board", true)).toBe("board");
-    for (const tab of ["certifications", "events", "leaderboard", "raffles", "benefits", "unknown"]) {
-      expect(parseFanPageTab(tab, true)).toBe("home");
-    }
-    expect(parseFanPageTab("notice", true)).toBe("board");
-    expect(resolveBoardSection("board", "media", true)).toBe("feed");
-    expect(resolveBoardSection("live", undefined, true)).toBe("feed");
   });
 
   it("builds stable canonical board and top-level links", () => {

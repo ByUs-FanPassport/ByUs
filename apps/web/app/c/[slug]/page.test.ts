@@ -14,6 +14,11 @@ describe("legacy creator home redirect", () => {
     await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ tab: "benefits", locale: "ko" }) }))
       .rejects.toThrow("308:/c/elina/raffles?locale=ko");
   });
+  it.each(["raffles", "benefits"])("preserves the brand %s catalog and auth intent", async (tab) => {
+    const authIntent = "11111111-1111-4111-8111-111111111111";
+    await expect(Page({ params: Promise.resolve({ slug: "runmusic" }), searchParams: Promise.resolve({ tab, locale: "ja", authIntent }) }))
+      .rejects.toThrow(`308:/c/runmusic/raffles?locale=ja&authIntent=${authIntent}`);
+  });
   it("passes the new board and event destinations through to the canonical creator handle", async () => {
     await expect(Page({ params: Promise.resolve({ slug: "elina" }), searchParams: Promise.resolve({ tab: "board", section: "media", locale: "ja" }) }))
       .rejects.toThrow("308:/elina?tab=board&section=media&locale=ja");
