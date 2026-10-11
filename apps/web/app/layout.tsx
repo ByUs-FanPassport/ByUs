@@ -9,6 +9,7 @@ import { PwaRegistration } from "../components/pwa-registration";
 import { readPublicPrivyTestAccountPolicy } from "../components/privy-test-account-policy";
 import { readPublicPrivyAppleLoginPolicy } from "../components/privy-apple-login-policy";
 import { AcquisitionSessionTracker } from "../features/analytics/client/acquisition-session-tracker";
+import { OutboundLinkTracker } from "../features/analytics/client/outbound-link-tracker";
 import { VercelTelemetry } from "../features/analytics/client/vercel-telemetry";
 import { BanksyEntryPromotion } from "../components/banksy-promotion/banksy-promotion";
 import { FanNextActionGuide } from "../features/onboarding/ui/fan-next-action-guide";
@@ -82,6 +83,7 @@ export default async function RootLayout({
           {process.env.VERCEL_ENV === "production" && <VercelTelemetry />}
           <Suspense fallback={null}>
             <AcquisitionSessionTracker />
+            <OutboundLinkTracker />
           </Suspense>
           <Suspense fallback={null}>
             <DocumentLocale />

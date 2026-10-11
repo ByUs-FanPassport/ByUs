@@ -8,7 +8,7 @@ import type { AdminSession } from "../admin/admin-session-gate";
 const uuid = z.string().uuid();
 // Preserve old editing clients during the additive primary-role rollout.
 // New CMS writes use primaryRole, never this legacy activity array.
-const legacyRolesSchema = z.array(z.enum(["artist", "creator", "show_host"]))
+const legacyRolesSchema = z.array(z.enum(["artist", "creator", "show_host", "brand"]))
   .min(1).max(3).refine((roles) => new Set(roles).size === roles.length);
 const localization = z.object({
   name: z.string().trim().min(1).max(120),
@@ -26,6 +26,19 @@ export const celebrityPayload = z.object({
   roles: legacyRolesSchema.optional(),
   // Omission from an existing edit preserves the locked row's primary role.
   primaryRole: creatorRoleSchema.optional(),
+  websiteUrl: z.string().url().refine((value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password;
+    } catch { return false; }
+  }, "must be an HTTPS URL without credentials").nullable().optional(),
+  // Omission from an edit preserves the existing ticket URL; null clears it.
+  ticketUrl: z.string().max(2048).url().refine((value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password;
+    } catch { return false; }
+  }, "must be an HTTPS URL without credentials").nullable().optional(),
   localizations: z.object({ ko: localization, en: localization }),
   themes: z
     .array(

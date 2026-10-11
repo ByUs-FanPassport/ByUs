@@ -21,6 +21,16 @@ describe("fan page board navigation", () => {
     expect(resolveBoardSource("board", "unknown")).toBe("all");
   });
 
+  it("limits brand pages to home and the combined board feed", () => {
+    expect(parseFanPageTab("board", true)).toBe("board");
+    for (const tab of ["certifications", "events", "leaderboard", "raffles", "benefits", "unknown"]) {
+      expect(parseFanPageTab(tab, true)).toBe("home");
+    }
+    expect(parseFanPageTab("notice", true)).toBe("board");
+    expect(resolveBoardSection("board", "media", true)).toBe("feed");
+    expect(resolveBoardSection("live", undefined, true)).toBe("feed");
+  });
+
   it("builds stable canonical board and top-level links", () => {
     expect(boardHref("elina", "ko")).toBe("/elina?tab=board&locale=ko#celebrity-content");
     expect(boardHref("elina", "ja", { source: "fans" })).toBe("/elina?tab=board&source=fans&locale=ja#celebrity-content");

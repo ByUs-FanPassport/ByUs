@@ -858,7 +858,7 @@ describe("canonical 03 guest home", () => {
     expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
     expect(screen.queryByRole("link", { name: "KARA 입덕 완료" })).not.toBeInTheDocument();
     for (const card of container.querySelectorAll("#home-creator-rail article")) expect(card.textContent).not.toMatch(/크리에이터|아이돌/);
-    const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+    const filters = screen.getByRole("group", { name: "분류로 찾기" });
     expect(within(filters).getByRole("button", { name: "아이돌" })).toBeInTheDocument();
     expect(within(filters).getByRole("button", { name: "크리에이터" })).toBeInTheDocument();
   });
@@ -911,7 +911,7 @@ it("renders the verified CHZZK channel with its icon and keeps Instagram", () =>
 
 it("filters any assigned role and carries it into the directory without exposing empty roles", () => {
   const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
-  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  const filters = screen.getByRole("group", { name: "분류로 찾기" });
   expect(within(filters).queryByRole("button", { name: "쇼호스트" })).not.toBeInTheDocument();
   fireEvent.click(within(filters).getByRole("button", { name: "크리에이터" }));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(2);
@@ -957,7 +957,7 @@ it.each(["owned", "empty", "error", "guest"] as const)("hides intermediate filte
   const expectSkeleton = () => {
     const section = screen.getByRole("region", { name: "당신의 최애" });
     expect(within(section).getByRole("status")).toHaveAttribute("aria-busy", "true");
-    expect(within(section).queryByRole("group", { name: "직군으로 찾기" })).not.toBeInTheDocument();
+    expect(within(section).queryByRole("group", { name: "분류로 찾기" })).not.toBeInTheDocument();
     expect(within(section).queryByRole("article")).not.toBeInTheDocument();
     expect(within(section).queryByRole("link")).not.toBeInTheDocument();
   };
@@ -1001,7 +1001,7 @@ it("keeps the chosen filter and cards visible during background personalization 
 
 it("places My favorites first and sends guests to login with a restorable Home filter", () => {
   render(<GuestHome {...defaultProps} featuredLives={[]} />);
-  const filters = screen.getByRole("group", { name: "직군으로 찾기" });
+  const filters = screen.getByRole("group", { name: "분류로 찾기" });
   expect(within(filters).getAllByRole("button").slice(0, 2).map((button) => button.textContent)).toEqual(["내 최애", "전체"]);
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
   const login = new URL(routerActions.push.mock.calls[0]![0], "https://byus.test");
@@ -1019,7 +1019,7 @@ it("defaults to My favorites after loading and excludes first-reaction-only crea
     return Response.json({ summary });
   }));
   const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
-  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
+  const filters = await screen.findByRole("group", { name: "분류로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toHaveAttribute("aria-pressed", "true"));
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(1);
   fireEvent.click(within(filters).getByRole("button", { name: "내 최애" }));
@@ -1046,7 +1046,7 @@ it.each(["none", "explicit-all", "role"] as const)("keeps the appropriate defaul
   }));
   const { container } = render(<GuestHome {...defaultProps} featuredLives={[]}
     initialOwnedOnly={mode === "explicit-all" ? false : undefined} initialRole={mode === "role" ? "creator" : "all"} />);
-  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
+  const filters = await screen.findByRole("group", { name: "분류로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
   expect(within(filters).getByRole("button", { name: mode === "role" ? "크리에이터" : "전체" })).toHaveAttribute("aria-pressed", "true");
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(mode === "role" ? 2 : 3);
@@ -1063,9 +1063,9 @@ it("preserves an explicit All choice once personal data resolves", async () => {
     return pendingSummary;
   }));
   const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} initialOwnedOnly={false} />);
-  expect(screen.queryByRole("group", { name: "직군으로 찾기" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: "분류로 찾기" })).not.toBeInTheDocument();
   await act(async () => { resolveSummary(Response.json({ summary: favoriteSummary() })); });
-  const filters = await screen.findByRole("group", { name: "직군으로 찾기" });
+  const filters = await screen.findByRole("group", { name: "분류로 찾기" });
   await waitFor(() => expect(within(filters).getByRole("button", { name: "내 최애" })).toBeEnabled());
   expect(within(filters).getByRole("button", { name: "전체" })).toHaveAttribute("aria-pressed", "true");
   expect(container.querySelectorAll("#home-creator-rail article")).toHaveLength(3);

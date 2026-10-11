@@ -27,7 +27,8 @@ describe("ProductEventV1", () => {
   it("freezes the v1 allowlist including Ticket measurement events", () => {
     expect(PRODUCT_EVENT_NAMES).toContain("ticket_credited");
     expect(PRODUCT_EVENT_NAMES).toContain("ticket_debited");
-    expect(PRODUCT_EVENT_NAMES).toHaveLength(22);
+    expect(PRODUCT_EVENT_NAMES).toContain("outbound_link_click");
+    expect(PRODUCT_EVENT_NAMES).toHaveLength(23);
     expect(productEventV1Schema.parse(base)).toEqual(base);
   });
 
@@ -50,6 +51,7 @@ describe("ProductEventV1", () => {
       "creator_page_view",
       "live_page_view",
       "live_cta_click",
+      "outbound_link_click",
       "benefit_page_view",
       "signup_guide_view", "signup_guide_cta", "login_started", "login_result",
     ]);

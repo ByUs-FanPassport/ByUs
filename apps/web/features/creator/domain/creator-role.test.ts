@@ -16,7 +16,7 @@ describe("single creator role", () => {
     expect(matchesCreatorRole(people[0].roles, "creator")).toBe(true);
     expect(matchesCreatorRole(people[0].roles, "actor")).toBe(false);
     expect(matchesCreatorRole(people[0].roles, "all")).toBe(true);
-    expect(CREATOR_ROLES).toEqual(["idol", "singer", "actor", "creator", "show_host"]);
+    expect(CREATOR_ROLES).toEqual(["idol", "singer", "actor", "creator", "show_host", "brand"]);
   });
 
   it("parses old or malformed URLs as all and preserves supported codes", () => {
@@ -27,8 +27,8 @@ describe("single creator role", () => {
   });
 
   it("uses the approved localized category names", () => {
-    expect(CREATOR_ROLES.map((role) => creatorRoleLabel(role, "ko"))).toEqual(["아이돌", "가수", "배우", "크리에이터", "쇼호스트"]);
-    expect(CREATOR_ROLES.map((role) => creatorRoleFilterLabel(role, "en"))).toEqual(["Idols", "Singers", "Actors", "Creators", "Show hosts"]);
+    expect(CREATOR_ROLES.map((role) => creatorRoleLabel(role, "ko"))).toEqual(["아이돌", "가수", "배우", "크리에이터", "쇼호스트", "브랜드"]);
+    expect(CREATOR_ROLES.map((role) => creatorRoleFilterLabel(role, "en"))).toEqual(["Idols", "Singers", "Actors", "Creators", "Show hosts", "Brands"]);
     expect(creatorRoleFilterLabel("all", "ko")).toBe("전체");
   });
 });

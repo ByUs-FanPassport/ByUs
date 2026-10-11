@@ -126,7 +126,13 @@ async function location(target: ReturnType<typeof setup>, url = "https://byus.te
   const response = await target.run(new Request(url), { slug });
   expect(response.status).toBe(307);
   expect(response.headers.get("cache-control")).toBe("no-store");
-  return response.headers.get("location");
+  const destination = response.headers.get("location")!;
+  const attribution = new URL(destination).searchParams;
+  expect(attribution.get("utm_source")).toBe("byus");
+  expect(attribution.get("utm_medium")).toBe("referral");
+  expect(attribution.get("utm_campaign")).toBe("live");
+  expect(attribution.get("utm_content")).toBe("content.social");
+  return destination.replace(/[?&]utm_source=byus&utm_medium=referral&utm_campaign=live&utm_content=content.social$/, "");
 }
 
 describe("GET live watch handler", () => {

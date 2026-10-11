@@ -15,7 +15,7 @@ import {
 } from "../media/public-image-reader";
 
 const PUBLIC_COLUMNS =
-  "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role";
+  "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role,website_url,ticket_url";
 const PUBLIC_LIST_PAGE_SIZE = 500;
 
 type QueryResult = PromiseLike<{

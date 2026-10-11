@@ -36,6 +36,15 @@ function request(body: unknown, authorization?: string): Request {
 }
 
 describe("product event HTTP boundary", () => {
+  it("accepts anonymous outbound clicks but rejects bearer identity and raw destinations", async () => {
+    const repo = repository(), identify = vi.fn().mockResolvedValue(null);
+    const handler = createRecordProductEventHandler({ identify, repository: repo, now: () => now });
+    const outbound = { ...input, eventName: "outbound_link_click", celebrityId: null, source: "web.outbound", properties: { destinationHost: "tickets.example", campaign: "runmusic", placement: "fanpage_hero", linkKind: "ticket" } };
+    expect((await handler(request(outbound))).status).toBe(201);
+    expect((await handler(request(outbound, "Bearer valid"))).status).toBe(400);
+    expect((await handler(request({ ...outbound, properties: { ...outbound.properties, url: "https://tickets.example/?token=private" } }))).status).toBe(400);
+    expect(repo.record).toHaveBeenCalledTimes(1);
+  });
   it("hashes the anonymous session only on the server before persistence", async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: { id: "33333333-3333-4333-8333-333333333333", replayed: false },

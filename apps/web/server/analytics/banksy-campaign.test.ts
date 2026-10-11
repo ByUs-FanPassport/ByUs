@@ -54,7 +54,7 @@ describe("Banksy public measurement", () => {
     const request = new Request(`https://byus.kr/o/banksy/exhibition?surface=raffle_receipt&visit=${visit}&request=${id}&url=https://evil.test`, { headers: { referer: "https://facebook.com/" } });
     const response = await handlers.outbound(request, "exhibition");
     expect(repository.outbound).toHaveBeenCalledWith({ visitId: visit, requestId: id, destination: "exhibition", surface: "raffle_receipt" });
-    expect(response.headers.get("location")).toBe(banksyDestinations.exhibition);
+    expect(response.headers.get("location")).toBe(`${banksyDestinations.exhibition}&utm_source=byus&utm_medium=referral&utm_campaign=banksy&utm_content=content.website`);
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect((await handlers.outbound(request, "invalid")).status).toBe(404);
   });
@@ -62,7 +62,7 @@ describe("Banksy public measurement", () => {
     const { handlers, repository } = setup();
     repository.outbound.mockRejectedValueOnce(new Error("offline"));
     const response = await handlers.outbound(new Request("https://byus.kr/o/banksy/goods?surface=raffle_list&visit=invalid"), "goods");
-    expect(response.headers.get("location")).toBe(banksyDestinations.goods);
+    expect(response.headers.get("location")).toBe(`${banksyDestinations.goods}?utm_source=byus&utm_medium=referral&utm_campaign=banksy&utm_content=content.website`);
     expect(repository.outbound.mock.calls[0][0].visitId).toBeNull();
   });
 });

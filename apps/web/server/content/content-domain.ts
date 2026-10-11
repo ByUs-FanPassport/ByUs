@@ -46,6 +46,8 @@ const publishedCelebrityRowSchema = z.object({
   image_alt: z.string().trim().min(1).max(300),
   image_position: z.string().trim().min(1).max(100),
   primary_role: creatorRoleSchema,
+  website_url: httpsUrl.nullable().optional(),
+  ticket_url: httpsUrl.max(2048).nullable().optional(),
   themes: z.array(themeSchema),
   social_links: z.array(socialLinkSchema),
   display_order: z.number().int().min(0),
@@ -75,6 +77,8 @@ export type PublishedCelebrity = Readonly<{
   summary: string;
   image: Readonly<{ url: string; alt: string; position: string; photos?: PhotoSet }>;
   roles: readonly CreatorRole[];
+  websiteUrl?: string | null;
+  ticketUrl?: string | null;
   themes: readonly Readonly<{ slug: string; name: string }>[];
   socialLinks: readonly Readonly<{
     platform: "youtube" | "tiktok" | "instagram" | "chzzk";
@@ -116,6 +120,8 @@ export function parsePublishedCelebrity(value: unknown): PublishedCelebrity {
     summary: row.summary,
     image: { url: row.image_url, alt: row.image_alt, position: row.image_position },
     roles: [row.primary_role],
+    websiteUrl: row.website_url ?? null,
+    ticketUrl: row.ticket_url ?? null,
     themes: row.themes,
     socialLinks: row.social_links,
     displayOrder: row.display_order,

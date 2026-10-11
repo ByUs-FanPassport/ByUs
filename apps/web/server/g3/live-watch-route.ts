@@ -1,4 +1,5 @@
 import "server-only";
+import { decorateOutboundUrl } from "@/features/analytics/domain/outbound-link";
 import { INSTAGRAM_LIVE_MAX_AGE_MS } from "../../features/live/domain/instagram-live";
 import { YOUTUBE_LIVE_MAX_AGE_MS } from "../../features/live/domain/youtube-channel";
 
@@ -35,9 +36,10 @@ function errorResponse(code: string, status: number): Response {
 }
 
 function redirect(location: string): Response {
+  const target = decorateOutboundUrl(location, "https://byus.kr", { campaign: "live", placement: "content", linkKind: "social" })?.href ?? location;
   return new Response(null, {
     status: 307,
-    headers: { ...noStoreHeaders, location },
+    headers: { ...noStoreHeaders, location: target },
   });
 }
 

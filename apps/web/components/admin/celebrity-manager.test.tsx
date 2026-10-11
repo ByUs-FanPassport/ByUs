@@ -20,7 +20,7 @@ it("requires exactly one primary role and saves no legacy activity array", async
   const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [celebrity] }) });
   vi.stubGlobal("fetch", fetchMock);
   render(<AuthorizedCelebrityManager environment="Development" />);
-  const primary = screen.getByRole("combobox", { name: "대표 직군" });
+  const primary = screen.getByRole("combobox", { name: "대표 분류" });
   expect(primary).toBeInvalid();
   expect(screen.queryByRole("group", { name: "추가 직군" })).not.toBeInTheDocument();
   fireEvent.click(await screen.findByRole("button", { name: /직군 검증.*가수/ }));
@@ -34,7 +34,32 @@ it("requires exactly one primary role and saves no legacy activity array", async
   const payload = JSON.parse(request.body).payload;
   expect(payload.primaryRole).toBe("show_host");
   expect(payload).not.toHaveProperty("roles");
-  expect(Array.from(primary.querySelectorAll("option")).map((option) => option.value)).toEqual(["", "idol", "singer", "actor", "creator", "show_host"]);
+  expect(Array.from(primary.querySelectorAll("option")).map((option) => option.value)).toEqual(["", "idol", "singer", "actor", "creator", "show_host", "brand"]);
+});
+
+it("keeps saved person and brand profiles in their category and saves blank external URLs as null", async () => {
+  const brand = { ...celebrity, id: "44444444-4444-4444-8444-444444444444", slug: "runmusic", primaryRole: "brand", websiteUrl: "https://runmusic.example", ticketUrl: "https://wgrw.raceplan.co.kr/entryperson", localizations: { ko: { name: "런뮤직", summary: "브랜드 소개", imageAlt: "런뮤직 로고" }, en: { name: "Runmusic", summary: "Brand profile", imageAlt: "Runmusic logo" } } };
+  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [brand] }) });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<AuthorizedCelebrityManager environment="Development" />);
+
+  fireEvent.click(await screen.findByRole("button", { name: /런뮤직.*브랜드/ }));
+  const primary = document.querySelector<HTMLSelectElement>('select[required]')!;
+  expect(primary).toHaveValue("brand");
+  expect(primary.querySelector<HTMLOptionElement>('option[value="singer"]')).toBeDisabled();
+  expect(primary.querySelector<HTMLOptionElement>('option[value="brand"]')).not.toBeDisabled();
+  expect(screen.queryByRole("link", { name: "팬 퀴즈" })).not.toBeInTheDocument();
+
+  const website = screen.getByRole("textbox", { name: "공식 웹사이트" });
+  expect(website).toHaveValue("https://runmusic.example");
+  fireEvent.change(website, { target: { value: "" } });
+  const ticket = screen.getByRole("textbox", { name: "예매·참가 신청 URL" });
+  expect(ticket).toHaveValue("https://wgrw.raceplan.co.kr/entryperson");
+  fireEvent.change(ticket, { target: { value: "" } });
+  fireEvent.submit(primary.closest("form")!);
+  await waitFor(() => expect(fetchMock.mock.calls.some(([, init]) => init.method === "POST")).toBe(true));
+  const [, request] = fetchMock.mock.calls.find(([, init]) => init.method === "POST")!;
+  expect(JSON.parse(request.body).payload).toEqual(expect.objectContaining({ websiteUrl: null, ticketUrl: null }));
 });
 
 it("makes list scope and new-versus-edit mode explicit", async () => {

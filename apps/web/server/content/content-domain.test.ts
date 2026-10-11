@@ -49,10 +49,26 @@ describe("published content boundary", () => {
         position: "center 46%",
       },
       roles: ["idol"] as const, themes: [{ slug: "beauty", name: "뷰티" }],
+      websiteUrl: null,
+      ticketUrl: null,
       socialLinks: [{ platform: "youtube", url: "https://youtube.com/@kara" }],
       displayOrder: 0,
       fanCount: 12_800_000,
     });
+  });
+
+  it("accepts only bounded credential-free HTTPS ticket URLs", () => {
+    expect(parsePublishedCelebrity({
+      ...completeRow,
+      ticket_url: "https://wgrw.raceplan.co.kr/entryperson",
+    }).ticketUrl).toBe("https://wgrw.raceplan.co.kr/entryperson");
+    for (const ticket_url of [
+      "http://wgrw.raceplan.co.kr/entryperson",
+      "https://user:secret@wgrw.raceplan.co.kr/entryperson",
+      `https://example.com/${"a".repeat(2048)}`,
+    ]) {
+      expect(() => parsePublishedCelebrity({ ...completeRow, ticket_url })).toThrow();
+    }
   });
 
   it.each(["name", "summary", "image_alt"])(
@@ -134,6 +150,14 @@ it("accepts CHZZK alongside existing public social links", () => {
 it.each([undefined, null, "", "artist", [], ["idol"], "host"])("rejects invalid primary role %j even with valid legacy roles", (primary_role) => {
   expect(() => parsePublishedCelebrity({ ...completeRow, primary_role, roles: ["artist", "creator"] })).toThrow();
 });
-it.each(["idol", "singer", "actor", "creator", "show_host"])("projects one %s role without leaking legacy activities", (primary_role) => {
+it.each(["idol", "singer", "actor", "creator", "show_host", "brand"])("projects one %s role without leaking legacy activities", (primary_role) => {
   expect(parsePublishedCelebrity({ ...completeRow, primary_role, roles: ["artist", "creator"] }).roles).toEqual([primary_role]);
+});
+
+
+it("projects a brand website and rejects unsafe public website links", () => {
+  expect(parsePublishedCelebrity({ ...completeRow, primary_role: "brand", website_url: "https://example.com/festival" })).toMatchObject({ roles: ["brand"], websiteUrl: "https://example.com/festival" });
+  for (const website_url of ["http://example.com", "javascript:alert(1)", "https://user:password@example.com", "//example.com"]) {
+    expect(() => parsePublishedCelebrity({ ...completeRow, website_url })).toThrow();
+  }
 });

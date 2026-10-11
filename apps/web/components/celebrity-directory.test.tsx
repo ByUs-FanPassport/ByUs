@@ -409,7 +409,7 @@ it("places My favorites before All and the five public roles", () => {
     displayOrder: index,
   }));
   render(<CelebrityDirectory celebrities={roles} locale="en" />);
-  const group = screen.getByRole("group", { name: "Browse by role" });
+  const group = screen.getByRole("group", { name: "Browse by category" });
   expect(within(group).getAllByRole("button").map((button) => button.textContent)).toEqual([
     "My favorites", "All", "Idols", "Singers", "Actors", "Creators", "Show hosts",
   ]);
@@ -446,4 +446,18 @@ it("offers a favorite request at discovery and preserves an unmatched name", asy
     expect(url.searchParams.get("name")).toBe("새 최애 & 이름");
     expect(url.searchParams.get("locale")).toBe("ko");
   }
+});
+
+
+it("discovers brands separately from people without losing search or locale", () => {
+  const brand = { ...publishedCelebrityFixtures[0], slug: "runmusic", name: "RUN&MUSIC FESTIVAL", roles: ["brand"] as const, fanCount: 0, upcomingLive: null };
+  window.history.replaceState({}, "", "/celebrities?locale=en");
+  render(<CelebrityDirectory celebrities={[...publishedCelebrityFixtures, brand]} locale="en" />);
+  fireEvent.click(screen.getByRole("button", { name: "Brands" }));
+  expect(screen.getAllByRole("article")).toHaveLength(1);
+  expect(screen.getByRole("article")).toHaveTextContent("RUN&MUSIC FESTIVAL");
+  expect(new URL(window.location.href).searchParams.get("role")).toBe("brand");
+  expect(new URL(window.location.href).searchParams.get("locale")).toBe("en");
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "festival" } });
+  expect(screen.getAllByRole("article")).toHaveLength(1);
 });

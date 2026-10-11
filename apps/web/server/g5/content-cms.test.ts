@@ -26,6 +26,24 @@ describe("content CMS", () => {
       expect(commandPayload.safeParse({ action: "save", celebrityId: actor.allowlistId, payload: { ...payload, roles } }).success).toBe(false);
     }
   });
+  it("supports brand registration and optional safe website and ticket edits", () => {
+    const payload = { slug: "runmusic", imageUrl: "/brand.jpg", imagePosition: "center", displayOrder: 0, fanCount: 0, primaryRole: "brand", localizations: { ko: { name: "브랜드", summary: "소개", imageAlt: "로고" }, en: { name: "Brand", summary: "Profile", imageAlt: "Logo" } }, themes: [], socialLinks: [] };
+    expect(commandPayload.safeParse({ action: "save", celebrityId: null, payload }).success).toBe(true);
+    expect(Object.hasOwn(celebrityPayload.parse(payload), "websiteUrl")).toBe(false);
+    expect(Object.hasOwn(celebrityPayload.parse(payload), "ticketUrl")).toBe(false);
+    for (const websiteUrl of [null, "https://example.com/festival"]) {
+      expect(celebrityPayload.parse({ ...payload, websiteUrl }).websiteUrl).toBe(websiteUrl);
+    }
+    for (const websiteUrl of ["", "http://example.com", "//example.com", "javascript:alert(1)", "https://user:secret@example.com"]) {
+      expect(celebrityPayload.safeParse({ ...payload, websiteUrl }).success).toBe(false);
+    }
+    for (const ticketUrl of [null, "https://wgrw.raceplan.co.kr/entryperson"]) {
+      expect(celebrityPayload.parse({ ...payload, ticketUrl }).ticketUrl).toBe(ticketUrl);
+    }
+    for (const ticketUrl of ["", "http://example.com", "//example.com", "javascript:alert(1)", "https://user:secret@example.com", `https://example.com/${"a".repeat(2048)}`]) {
+      expect(celebrityPayload.safeParse({ ...payload, ticketUrl }).success).toBe(false);
+    }
+  });
   it("requires complete KO and EN celebrity content", () => {
     expect(() =>
       celebrityPayload.parse({

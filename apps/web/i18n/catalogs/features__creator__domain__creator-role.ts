@@ -1,6 +1,7 @@
 import type { TranslatedMessage } from "../messages";
 
 export const messages = {
+  brand: { ja: "ブランド", "zh-Hans": "品牌", "zh-Hant": "品牌", es: "Marca", id: "Merek", vi: "Thương hiệu", th: "แบรนด์", pt: "Marca", fr: "Marque" },
   "m18490cca1879": {
     "ja": "アイドル",
     "zh-Hans": "偶像",

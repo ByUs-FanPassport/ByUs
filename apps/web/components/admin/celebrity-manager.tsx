@@ -32,6 +32,8 @@ type Celebrity = {
   displayOrder: number;
   fanCount: number | null;
   primaryRole: CreatorRole | null;
+  websiteUrl?: string | null;
+  ticketUrl?: string | null;
   everPublishedAt?: string | null;
   archivedAt: string | null;
   updatedAt: string;
@@ -51,6 +53,8 @@ const blank: CelebrityDraft = {
   displayOrder: 0,
   fanCount: null,
   primaryRole: null,
+  websiteUrl: null,
+  ticketUrl: null,
   localizations: {
     ko: { name: "", summary: "", imageAlt: "" },
     en: { name: "", summary: "", imageAlt: "" },
@@ -109,6 +113,18 @@ function isDraftValid(draft: CelebrityDraft): boolean {
     (draft.fanCount === null ||
       (Number.isInteger(draft.fanCount) && draft.fanCount >= 0)) &&
     draft.primaryRole !== null &&
+    (!draft.websiteUrl || (() => {
+      try {
+        const url = new URL(draft.websiteUrl);
+        return url.protocol === "https:" && !url.username && !url.password;
+      } catch { return false; }
+    })()) &&
+    (!draft.ticketUrl || (draft.ticketUrl.length <= 2048 && (() => {
+      try {
+        const url = new URL(draft.ticketUrl);
+        return url.protocol === "https:" && !url.username && !url.password;
+      } catch { return false; }
+    })())) &&
     themesValid &&
     socialLinksValid
   );
@@ -201,6 +217,8 @@ function CelebrityCms({
         displayOrder: current.displayOrder,
         fanCount: current.fanCount,
         primaryRole: current.primaryRole,
+        websiteUrl: current.websiteUrl ?? null,
+        ticketUrl: current.ticketUrl ?? null,
         localizations: current.localizations,
         themes: current.themes,
         socialLinks: current.socialLinks,
@@ -425,8 +443,8 @@ function CelebrityCms({
               if (!draftIsValid) {
                 setMessage(
                   locale === "ko"
-                    ? "KO·EN 필수 정보와 주소 경로, 이미지, 직군, 테마·채널 형식을 확인하세요."
-                    : "Check required KO and EN fields, slug, image, role, theme, and channel formats.",
+                    ? "KO·EN 필수 정보와 주소 경로, 이미지, 직군, 웹사이트·예매 링크, 테마·채널 형식을 확인하세요."
+                    : "Check required KO and EN fields, slug, image, role, website and ticket links, theme, and channel formats.",
                 );
                 return;
               }
@@ -578,14 +596,36 @@ function CelebrityCms({
             </fieldset>
             <fieldset disabled={!canEdit || !!current?.archivedAt}>
               <legend>
-                {locale === "ko" ? "직군과 채널" : "Role and channels"}
+                {locale === "ko" ? "분류와 채널" : "Category and channels"}
               </legend>
               <label>
-                <span>{locale === "ko" ? "대표 직군" : "Primary role"}</span>
+                <span>{locale === "ko" ? "대표 분류" : "Primary category"}</span>
                 <select required value={draft.primaryRole ?? ""} onChange={(event) => setDraft((d) => ({ ...d, primaryRole: event.target.value as CreatorRole }))}>
-                  <option value="" disabled>{locale === "ko" ? "직군을 선택하세요" : "Select a role"}</option>
-                  {CREATOR_ROLES.map((role) => <option key={role} value={role}>{creatorRoleLabel(role, locale)}</option>)}
+                  <option value="" disabled>{locale === "ko" ? "분류를 선택하세요" : "Select a category"}</option>
+                  {CREATOR_ROLES.map((role) => <option key={role} value={role} disabled={Boolean(current?.primaryRole) && (current?.primaryRole === "brand") !== (role === "brand")}>{creatorRoleLabel(role, locale)}</option>)}
                 </select>
+                {current?.primaryRole && <small>{locale === "ko" ? "저장된 항목은 인물과 브랜드 사이에서 전환할 수 없습니다." : "Saved profiles cannot switch between person and brand."}</small>}
+              </label>
+              <label>
+                <span>{locale === "ko" ? "공식 웹사이트" : "Official website"}</span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://example.com"
+                  value={draft.websiteUrl ?? ""}
+                  onChange={(event) => setDraft((value) => ({ ...value, websiteUrl: event.target.value.trim() || null }))}
+                />
+              </label>
+              <label>
+                <span>{locale === "ko" ? "예매·참가 신청 URL" : "Ticket or registration URL"}</span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  maxLength={2048}
+                  placeholder="https://example.com/tickets"
+                  value={draft.ticketUrl ?? ""}
+                  onChange={(event) => setDraft((value) => ({ ...value, ticketUrl: event.target.value.trim() || null }))}
+                />
               </label>
               <label>
                 <span>
@@ -692,12 +732,12 @@ function CelebrityCms({
                     ? "필수 정보가 입력되어 저장할 수 있습니다."
                     : "Required information is complete and ready to save."
                   : locale === "ko"
-                    ? "KO·EN 필수 정보와 주소 경로, 이미지, 직군, 테마·채널 형식을 확인하세요."
-                    : "Check required KO and EN fields, slug, image, role, theme, and channel formats."}
+                    ? "KO·EN 필수 정보와 주소 경로, 이미지, 직군, 웹사이트·예매 링크, 테마·채널 형식을 확인하세요."
+                    : "Check required KO and EN fields, slug, image, role, website and ticket links, theme, and channel formats."}
               </p>
             )}
             <div className={styles.formActions}>
-              {current && (
+              {current && draft.primaryRole !== "brand" && (
                 <Link
                   href={`/admin/celebrities/${current.id}/quiz` as Route}
                   className={styles.secondaryButton}
@@ -796,6 +836,7 @@ function CelebrityCms({
           celebrityName={current.localizations[locale]?.name || current.slug}
           role={role}
           locale={locale}
+          isBrand={current.primaryRole === "brand"}
         />
       )}
     </AdminOperationsShell>

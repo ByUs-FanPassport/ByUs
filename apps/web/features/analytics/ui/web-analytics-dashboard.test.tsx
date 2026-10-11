@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WebAnalyticsData } from "../domain/web-analytics";
+import type { OutboundAnalyticsData } from "../domain/outbound-analytics";
 
 const auth = vi.hoisted(() => ({ status: "authorized", email: "admin@example.invalid", getAccessToken: vi.fn(async (): Promise<string | null> => "admin-token") }));
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ getAccessToken: auth.getAccessToken }) }));
@@ -18,7 +19,16 @@ const data: WebAnalyticsData = {
     browsers: [], operatingSystems: [],
   },
 };
+const outboundData: OutboundAnalyticsData = {
+  days: 7, from: "2026-09-05T00:00:00Z", to: "2026-09-12T00:00:00Z",
+  totals: { clicks: 12, sessions: 9 },
+  rows: [{ campaign: "runmusic", destinationHost: "wgrw.raceplan.co.kr", placement: "fanpage_hero", linkKind: "ticket", clicks: 12, sessions: 9 }],
+  truncated: false,
+};
 const response = (payload: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(payload), { status }));
+const analyticsResponse = (url: string, web = data) => url.includes("/outbound")
+  ? response({ ...outboundData, days: url.includes("days=30") ? 30 : 7 })
+  : response({ ...web, days: url.includes("days=30") ? 30 : 7 });
 beforeEach(() => { auth.status = "authorized"; auth.email = "admin@example.invalid"; auth.getAccessToken.mockReset().mockResolvedValue("admin-token"); });
 
 describe("WebAnalyticsContent", () => {
@@ -42,13 +52,15 @@ describe("WebAnalyticsContent", () => {
 
 describe("WebAnalyticsDashboard", () => {
   it("requests authenticated analytics and applies the selected period", async () => {
-    const fetcher = vi.fn().mockImplementation((url: string) => response({ ...data, days: url.includes("days=30") ? 30 : 7 }));
+    const fetcher = vi.fn().mockImplementation((url: string) => analyticsResponse(url));
     vi.stubGlobal("fetch", fetcher);
     render(<WebAnalyticsDashboard />);
     await screen.findByText("/pages/elina-fan-guide");
     expect(fetcher).toHaveBeenCalledWith("/api/admin/analytics/web?days=7", expect.objectContaining({ headers: { authorization: "Bearer admin-token" }, cache: "no-store" }));
+    expect(fetcher).toHaveBeenCalledWith("/api/admin/analytics/outbound?days=7", expect.objectContaining({ headers: { authorization: "Bearer admin-token" }, cache: "no-store" }));
     fireEvent.click(screen.getByRole("button", { name: "최근 30일" }));
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/admin/analytics/web?days=30", expect.anything()));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith("/api/admin/analytics/outbound?days=30", expect.anything()));
     await screen.findByText("/pages/elina-fan-guide");
   });
   it("never requests analytics when admin access is denied", () => {
@@ -59,7 +71,7 @@ describe("WebAnalyticsDashboard", () => {
     expect(screen.queryByText("/pages/elina-fan-guide")).not.toBeInTheDocument();
   });
   it("handles expired tokens without fetching and does not show data after access revocation", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => response(data)));
+    vi.stubGlobal("fetch", vi.fn((url: string) => analyticsResponse(url)));
     const view = render(<WebAnalyticsDashboard />);
     await screen.findByText("/pages/elina-fan-guide");
     auth.status = "denied"; view.rerender(<WebAnalyticsDashboard />);
@@ -70,21 +82,24 @@ describe("WebAnalyticsDashboard", () => {
     expect(screen.queryByText("/pages/elina-fan-guide")).not.toBeInTheDocument();
   });
   it("shows an error instead of fabricated zeros and recovers on retry", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockImplementationOnce(() => response({ error: { code: "WEB_ANALYTICS_UNAVAILABLE" } }, 503)).mockImplementation(() => response(data)));
+    vi.stubGlobal("fetch", vi.fn((url: string) => url.includes("/outbound") ? response(outboundData) : response({ error: { code: "WEB_ANALYTICS_UNAVAILABLE" } }, 503)));
     render(<WebAnalyticsDashboard />);
     await screen.findByRole("alert");
     expect(screen.queryByRole("img", { name: /^방문자/ })).not.toBeInTheDocument();
+    expect(screen.getByText("wgrw.raceplan.co.kr")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    vi.mocked(fetch).mockImplementation((url: string | URL | Request) => analyticsResponse(String(url)));
     await screen.findByText("/pages/elina-fan-guide");
   });
   it("hides previous account data immediately while the next account request is pending", async () => {
-    const fetcher = vi.fn().mockImplementationOnce(() => response(data)).mockImplementation(() => new Promise(() => {}));
+    const fetcher = vi.fn((url: string) => auth.email === "admin@example.invalid" ? analyticsResponse(url) : new Promise(() => {}));
     vi.stubGlobal("fetch", fetcher);
     const view = render(<WebAnalyticsDashboard />);
     await screen.findByText("/pages/elina-fan-guide");
     auth.email = "other@example.invalid";
     view.rerender(<WebAnalyticsDashboard />);
     expect(screen.queryByText("/pages/elina-fan-guide")).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText("방문 통계를 불러오고 있습니다.")).toBeInTheDocument();
+    expect(screen.getByText("외부 링크 집계를 불러오고 있습니다.")).toBeInTheDocument();
   });
 });

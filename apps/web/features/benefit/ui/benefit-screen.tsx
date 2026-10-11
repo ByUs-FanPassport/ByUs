@@ -1506,6 +1506,7 @@ function BenefitDetailOwnerScreen({
               {deliveredClaim.deliveryType === "external_url" ? (
                 <a
                   href={deliveredClaim.deliveryValue}
+                  data-outbound-tracking="off"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${c.open}: ${benefit.title}, ${locale === "ko" ? "새 창" : translate(locale, localizedMessages.mef883edf5f13, "new window")}`}

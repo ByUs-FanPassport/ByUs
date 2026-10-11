@@ -8,6 +8,7 @@ import { AdminOperationsShell, type AdminLocale } from "../../../components/admi
 import { useAdminSession } from "../../../components/admin/use-admin-session";
 import { webAnalyticsSchema, type WebAnalyticsData, type WebAnalyticsDays, type WebAnalyticsRow } from "../domain/web-analytics";
 import { AnalyticsLineChart } from "./analytics-line-chart";
+import { OutboundAnalytics } from "./outbound-analytics";
 import base from "./admin-overview-dashboard.module.css";
 import styles from "./web-analytics-dashboard.module.css";
 
@@ -130,5 +131,6 @@ export function WebAnalyticsDashboard({ locale = "ko" }: { locale?: AdminLocale 
     {visible.status === "loading" && <div className={base.loading} role="status"><div className={base.skeletonChart} /><span>{ko ? "방문 통계를 불러오고 있습니다." : "Loading web traffic…"}</span></div>}
     {visible.status === "error" && <section className={base.error} role="alert"><CircleAlert aria-hidden="true" /><h2>{ko ? "방문 통계를 불러오지 못했습니다" : "Could not load web traffic"}</h2><p>{ko ? "잠시 후 다시 시도해 주세요. 서비스 현황과 회원 통계는 계속 확인할 수 있습니다." : "Try again in a moment. Service and member analytics remain available."}</p><button type="button" onClick={() => setRefresh((value) => value + 1)}>{ko ? "다시 시도" : "Try again"}</button></section>}
     {visible.status === "ready" && <><WebAnalyticsContent data={visible.data} locale={locale} /><p className={styles.updated}>{ko ? "마지막 조회" : "Last fetched"} {date(visible.data.fetchedAt, locale, true)} · UTC · Vercel Web Analytics</p></>}
+    <OutboundAnalytics days={days} refresh={refresh} locale={locale} />
   </div></AdminOperationsShell>;
 }

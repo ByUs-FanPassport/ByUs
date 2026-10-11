@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { SIGNUP_CLIENT_EVENT_NAMES, SIGNUP_SERVER_EVENT_NAMES, validateSignupEvent } from "./signup-funnel-event";
+import { validateOutboundEvent } from "./outbound-link";
 
 export const PRODUCT_EVENT_NAMES = [
   "creator_page_view",
   "live_page_view",
   "live_cta_click",
+  "outbound_link_click",
   "benefit_page_view",
   "reaction_completed",
   "passport_issued",
@@ -29,6 +31,7 @@ export const CLIENT_PRODUCT_EVENT_NAMES = [
   "creator_page_view",
   "live_page_view",
   "live_cta_click",
+  "outbound_link_click",
   "benefit_page_view",
   ...SIGNUP_CLIENT_EVENT_NAMES,
 ] as const satisfies readonly ProductEventName[];
@@ -66,6 +69,7 @@ export const productEventV1Schema = productEventV1BaseSchema.superRefine((event,
     context.addIssue({ code: "custom", message: "Exactly one event owner is required" });
   }
   validateSignupEvent(event, context);
+  validateOutboundEvent(event, context);
 });
 
 export const clientProductEventV1Schema = productEventV1BaseSchema
@@ -73,7 +77,7 @@ export const clientProductEventV1Schema = productEventV1BaseSchema
   .refine((event) => clientProductEventNameSchema.safeParse(event.eventName).success, {
     message: "Completion events are server-only",
     path: ["eventName"],
-  }).superRefine(validateSignupEvent);
+  }).superRefine(validateSignupEvent).superRefine(validateOutboundEvent);
 
 export type ProductEventV1 = z.infer<typeof productEventV1Schema>;
 export type ClientProductEventV1 = z.infer<typeof clientProductEventV1Schema>;

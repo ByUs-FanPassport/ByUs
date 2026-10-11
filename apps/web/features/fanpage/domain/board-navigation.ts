@@ -8,13 +8,15 @@ export type BoardSection = "feed" | "media" | "live";
 export type BoardFeedSource = "all" | "official" | "fans";
 export type BoardNewsFilter = "all" | "artist_post" | "notice" | "chzzk";
 
-export function parseFanPageTab(value: unknown): FanPageTab {
+export function parseFanPageTab(value: unknown, brand = false): FanPageTab {
   if (value === "community" || value === "notice" || value === "media" || value === "live") return "board";
+  if (brand && value !== "board") return "home";
   if (value === "raffles" || value === "benefits") return "events";
   return FAN_PAGE_TABS.includes(value as FanPageTab) ? value as FanPageTab : "home";
 }
 
-export function resolveBoardSection(tab: unknown, section: unknown): BoardSection {
+export function resolveBoardSection(tab: unknown, section: unknown, brand = false): BoardSection {
+  if (brand) return "feed";
   if (tab === "media" || tab === "live") return tab;
   return section === "media" || section === "live" ? section : "feed";
 }

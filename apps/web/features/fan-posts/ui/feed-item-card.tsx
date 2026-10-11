@@ -25,11 +25,11 @@ import { PostCard } from "./post-card";
 import styles from "@/features/content-safety/ui/content.module.css";
 import feedStyles from "./fan-post-feed.module.css";
 
-type Props = { item: FeedItem; slug: string; creatorName?: string; locale: AppLocale; returnTo: string; onChanged: () => void };
+type Props = { item: FeedItem; slug: string; creatorName?: string; locale: AppLocale; returnTo: string; onChanged: () => void; officialPostLabel?: string };
 const dateLabel = (date: string, locale: AppLocale) => new Intl.DateTimeFormat(locale, { calendar: "gregory", dateStyle: "medium", ...(date.length > 10 ? { timeStyle: "short" as const } : {}), timeZone: "Asia/Seoul" }).format(new Date(date));
 
 export function FeedItemCard(props: Props) {
-  const { item, slug, locale, creatorName, returnTo, onChanged } = props;
+  const { item, slug, locale, creatorName, returnTo, onChanged, officialPostLabel } = props;
   const copy = contentCopy(locale), feed = feedCopy(locale);
   if (item.kind === "fan_post") return <PostCard post={item} locale={locale} returnTo={returnTo} onChanged={onChanged} />;
   if (item.kind === "cheer") return <CheerCard item={item} locale={locale} onChanged={onChanged} />;
@@ -50,7 +50,7 @@ export function FeedItemCard(props: Props) {
     <header className={styles.meta}>
       <span className={feedStyles.officialMark}><BadgeCheck size={20} aria-hidden="true" /></span>
       <strong>{item.postType === "artist_post" ? creatorName ?? feed.official : "ByUs"}</strong>
-      <span className={feedStyles.officialLabel}>{item.pinned && <Pin size={14} aria-hidden="true" />}{item.postType === "artist_post" ? copy.artistPost : copy.notice}</span>
+      <span className={feedStyles.officialLabel}>{item.pinned && <Pin size={14} aria-hidden="true" />}{item.postType === "artist_post" ? officialPostLabel ?? copy.artistPost : copy.notice}</span>
       <time dateTime={item.publishedAt}>{dateLabel(item.publishedAt, locale)}</time>
       {item.visibility === "members" && <span className={styles.badge}>{copy.members}</span>}
       <ContentActions targetType="notice" targetId={item.id} locale={locale} canBlock={false} onChanged={onChanged} />

@@ -90,6 +90,25 @@ describe("fan post UI navigation and context", () => {
     expect(screen.getByRole("link", { name: "Fan posts" })).toHaveAttribute("href", "/artist?tab=board&source=fans&locale=en#celebrity-content");
   });
 
+  it("uses brand official copy and keeps new brand posts public", async () => {
+    state.pages = { first: { items: [
+      { kind: "notice", noticeKind: "standard", id: "20000000-0000-4000-8000-000000000002", slug: "brand-update", title: "Brand note", body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Brand news" }] }] }, postType: "artist_post", publishedAt: "2026-10-09T01:00:00Z", visibility: "public", revision: 1, pinned: false, commentCount: 0 },
+    ], nextCursor: null } };
+    render(<FanPostFeed slug="brand" creatorName="Brand" locale="en" source="all" officialPostLabel="Brand updates" allowMembers={false} />);
+
+    expect(screen.getByText("Brand updates")).toBeInTheDocument();
+    expect(screen.queryByText("Artist update")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Write a post" }));
+    expect(screen.queryByRole("button", { name: /Visibility/ })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Write a post" }), { target: { value: "Public brand conversation" } });
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    await waitFor(() => expect(state.request).toHaveBeenCalledWith(
+      "/api/celebrities/brand/posts",
+      "POST",
+      expect.objectContaining({ body: "Public brand conversation", visibility: "public" }),
+    ));
+  });
+
   it("does not present a fan composer in the official filter and resets drafts on source changes", () => {
     state.pages = { first: { items: [], nextCursor: null } };
     const view = render(<FanPostFeed slug="artist" locale="en" source="all" />);

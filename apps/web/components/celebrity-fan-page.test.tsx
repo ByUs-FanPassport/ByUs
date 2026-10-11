@@ -26,6 +26,7 @@ import { APP_LOCALES, toContentLocale } from "@/i18n/locales";
 
 const kara = { slug: "kara", locale: "ko", name: "KARA", summary: "KARA summary", image: { url: "/images/guest-home/kara-card.jpg", alt: "KARA portrait", position: "center" }, roles: ["idol"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 12_800_000 } as const;
 const katseye = { slug: "katseye", locale: "ko", name: "KATSEYE", summary: "KATSEYE summary", image: { url: "/images/celebrities/katseye/card.webp", alt: "KATSEYE portrait", position: "center" }, roles: ["idol"] as const, themes: [], socialLinks: [], displayOrder: 0, fanCount: 0 } as const;
+const runmusic = { slug: "runmusic", locale: "ko", name: "런뮤직", summary: "음악과 사람을 연결하는 공식 브랜드입니다.", image: { url: "/images/runmusic/logo.webp", alt: "런뮤직 로고", position: "center" }, roles: ["brand"] as const, websiteUrl: "https://runmusic.example", themes: [], socialLinks: [{ platform: "instagram" as const, url: "https://instagram.com/runmusic" }], displayOrder: 0, fanCount: 0 } as const;
 const upcomingLive = { slug: "kara-nualeaf", celebritySlug: "kara", locale: "ko", title: "KARA × NUALEAF LIVE", startsAt: "2026-07-24T11:00:00.000Z", effectiveStatus: "scheduled" } as const;
 const ownedPassport = {
   id: "8a6c0050-4c52-4e0f-b73a-e2f4aab48b85",
@@ -203,6 +204,33 @@ describe("approved fanpage", () => {
     expect(await screen.findByText("아직 공개된 소식이 없어요.")).toBeInTheDocument();
     expect(within(menu).getByRole("link", { name: "찐팬 인증" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();
+  });
+  it("renders the focused brand home without creator-only surfaces or raffle requests", async () => {
+    const fetcher = stubHubFetch();
+    render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} initialTab="events" />);
+
+    const menu = screen.getByRole("navigation", { name: "런뮤직 팬페이지 메뉴" });
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["홈", "게시판"]);
+    expect(within(menu).getByRole("link", { name: "홈" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText(runmusic.summary)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "공식 웹사이트, 새 창" })).toHaveAttribute("href", runmusic.websiteUrl);
+    expect(screen.getByRole("link", { name: "공식 웹사이트, 새 창" })).toHaveAttribute("data-outbound-kind", "website");
+    expect(screen.getByRole("link", { name: "Instagram, 새 창" })).toHaveAttribute("data-outbound-kind", "social");
+    expect(screen.getByRole("button", { name: "브랜드 소식" })).toBeInTheDocument();
+    expect(within(menu).getByRole("link", { name: "게시판" })).toHaveAttribute("href", "/runmusic?tab=board&locale=ko#celebrity-content");
+    expect(screen.queryByLabelText("내 팬 활동")).not.toBeInTheDocument();
+    expect(screen.queryByText("찐팬 인증")).not.toBeInTheDocument();
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/raffles"))).toBe(false);
+  });
+  it("shows a generic ticket action for any profile and marks hero outbound links", () => {
+    const ticketUrl = "https://wgrw.raceplan.co.kr/entryperson";
+    const { container } = render(<CelebrityFanPage celebrity={{ ...kara, ticketUrl }} locale="ko" upcomingLive={null} />);
+
+    const hero = container.querySelector("[data-outbound-placement='fanpage_hero']");
+    expect(hero).toHaveAttribute("data-outbound-campaign", "kara");
+    expect(hero?.querySelector("[data-outbound-kind='ticket']")).toContainElement(screen.getByRole("link", { name: "예매·참가 신청, 새 창" }));
+    expect(screen.getByRole("link", { name: "예매·참가 신청, 새 창" })).toHaveAttribute("href", ticketUrl);
+    expect(screen.getByRole("link", { name: "예매·참가 신청, 새 창" })).toHaveAttribute("target", "_blank");
   });
   it("opens the leaderboard at 100 and renders only safe ranking fields", async () => {
     membershipCount = 100;

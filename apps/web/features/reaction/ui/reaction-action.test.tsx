@@ -57,6 +57,18 @@ describe("ReactionAction", () => {
     expect(fetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
 
+  it("records brand interest without promising a Stamp or Passport", async () => {
+    const saved = { ...existing(), created: true, passportExists: false };
+    const fetch = vi.fn(async (_: RequestInfo | URL, init?: RequestInit) => response(init?.method === "POST" ? saved : { reaction: null }));
+    vi.stubGlobal("fetch", fetch);
+    render(<ReactionAction slug="runmusic" locale="en" variant="compact" passportEnabled={false} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Leave a like" }));
+    expect(await screen.findByRole("button", { name: "Like recorded" })).toBeDisabled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Stamp|Passport/)).not.toBeInTheDocument();
+    expect(fetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     privy.ready = true;

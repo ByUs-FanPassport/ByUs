@@ -34,19 +34,17 @@ export default async function CelebrityPage({ params, searchParams }: { params: 
   if (!isCreatorHandle(slug)) notFound();
   const { locale: requestedLocale, tab: requestedTab, section: requestedSection, source: requestedSource, news: requestedNews, media: requestedMedia, authIntent: requestedAuthIntent } = await searchParams;
   const locale = parseAppLocale(requestedLocale);
-  if (requestedTab === "raffles" || requestedTab === "benefits") {
+  const celebrity = await loadSeoCreator(slug, locale);
+  if (!celebrity) notFound();
+  const isBrand = celebrity.roles.includes("brand");
+  if (!isBrand && (requestedTab === "raffles" || requestedTab === "benefits")) {
     const authIntent = sanitizeAuthIntentId(requestedAuthIntent);
     redirect(`${creatorRafflesHref(slug, locale)}${authIntent ? `&authIntent=${authIntent}` : ""}` as Route);
   }
-  const initialTab: CelebrityFanTab = parseFanPageTab(requestedTab);
-  const initialBoardSection = resolveBoardSection(requestedTab, requestedSection);
+  const initialTab: CelebrityFanTab = parseFanPageTab(requestedTab, isBrand);
+  const initialBoardSection = resolveBoardSection(requestedTab, requestedSection, isBrand);
   const initialBoardSource = resolveBoardSource(requestedTab, requestedSource);
-  const repository = createPublishedContentRepositoryFromEnvironment();
-  const [celebrity, primaryLives] = await Promise.all([
-    loadSeoCreator(slug, locale),
-    repository.listPrimaryLives(toContentLocale(locale)),
-  ]);
-  if (!celebrity) notFound();
+  const primaryLives = isBrand ? [] : await createPublishedContentRepositoryFromEnvironment().listPrimaryLives(toContentLocale(locale));
   const upcomingLive = primaryLives.find((live) => live.celebritySlug === slug) ?? null;
   return <><CelebrityFanPage celebrity={celebrity} locale={locale} upcomingLive={upcomingLive} initialTab={initialTab} initialBoardSection={initialBoardSection} initialBoardSource={initialBoardSource} initialNewsFilter={requestedNews === "artist_post" || requestedNews === "notice" || requestedNews === "chzzk" ? requestedNews : "all"} initialMediaFilter={requestedMedia === "photos" || requestedMedia === "videos" || requestedMedia === "replays" ? requestedMedia : undefined} instagramEnabled={process.env.INSTAGRAM_INTEGRATION_ENABLED === "true"} />{process.env.VERCEL_ENV === "production" && <VercelTelemetry publicCreatorSlug={slug} />}</>;
 }

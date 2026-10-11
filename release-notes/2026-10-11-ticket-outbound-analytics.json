@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "팬페이지에서 예매·참가 신청 버튼을 누르면 공식 신청 페이지로 이동해요.",
+    "일반 외부 링크에 유입 경로 정보를 자동으로 붙이고, 링크 클릭을 익명으로 집계해요.",
+    "관리자 방문 통계에서 최근 7일·30일·90일의 외부 링크 클릭 수와 세션 수를 확인할 수 있어요.",
+    "첨부 이미지는 공식 자료와 예시 데이터로 확인한 로컬 화면이며, 외부 구매 완료는 집계하지 않아요."
+  ],
+  "path": "/admin/traffic",
+  "images": [
+    "release-notes/images/2026-10-11-ticket-outbound-390.png",
+    "release-notes/images/2026-10-11-ticket-outbound-1440.png",
+    "release-notes/images/2026-10-11-outbound-analytics-1440.png"
+  ]
+}

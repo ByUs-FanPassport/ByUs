@@ -43,7 +43,7 @@ function normalize(row: any): Notice {
   };
 }
 
-export function NoticeManager({ celebrityId, celebrityName, role, locale }: { celebrityId: string; celebrityName: string; role: string; locale: AdminLocale }) {
+export function NoticeManager({ celebrityId, celebrityName, role, locale, isBrand = false }: { celebrityId: string; celebrityName: string; role: string; locale: AdminLocale; isBrand?: boolean }) {
   const { getAccessToken } = usePrivy();
   const canEdit = role !== "viewer";
   const [query, setQuery] = useState("");
@@ -158,7 +158,7 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
     let postSucceeded = false;
     try {
       const result = await request("POST", {
-        action: "save", id: current?.id, expectedRevision: current?.revision, slug, pinned, postType, visibility,
+        action: "save", id: current?.id, expectedRevision: current?.revision, slug, pinned, postType, visibility: isBrand ? "public" : visibility,
         localizations: {
           ko: { title: titles.ko, body: bodies.ko },
           en: { title: titles.en, body: bodies.en },
@@ -250,8 +250,8 @@ export function NoticeManager({ celebrityId, celebrityName, role, locale }: { ce
         <div className={styles.language}><button type="button" disabled={interactionLocked} aria-pressed={language === "ko"} onClick={() => setLanguage("ko")}>KO</button><button type="button" disabled={interactionLocked} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button></div>
         <div className={styles.fields}><label><span>Slug</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" onChange={(event) => setSlug(event.target.value)} /></label><label><span>{locale === "ko" ? "제목" : "Title"}</span><input disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} value={titles[language]} onChange={(event) => setTitles((value) => ({ ...value, [language]: event.target.value }))} /></label><label className={styles.pin}><input type="checkbox" disabled={!canEdit || interactionLocked || !!current?.archivedAt || current?.publicationStatus === "published"} checked={pinned} onChange={(event) => setPinned(event.target.checked)} /><Pin />{locale === "ko" ? "상단 고정" : "Pin Notice"}</label></div>
         <div className={styles.fields}>
-          <label><span>{locale === "ko" ? "글 구분" : "Post type"}</span><select disabled={toolbarDisabled} value={postType} onChange={event => setPostType(event.target.value as Notice["postType"])}><option value="notice">{locale === "ko" ? "공지" : "Notice"}</option><option value="artist_post">{locale === "ko" ? "아티스트 글" : "Artist post"}</option></select></label>
-          <label><span>{locale === "ko" ? "공개 범위" : "Visibility"}</span><select disabled={toolbarDisabled} value={visibility} onChange={event => setVisibility(event.target.value as Notice["visibility"])}><option value="public">{locale === "ko" ? "전체 공개" : "Public"}</option><option value="members">{locale === "ko" ? "회원 공개" : "Members only"}</option></select></label>
+          <label><span>{locale === "ko" ? "글 구분" : "Post type"}</span><select disabled={toolbarDisabled} value={postType} onChange={event => setPostType(event.target.value as Notice["postType"])}><option value="notice">{locale === "ko" ? "공지" : "Notice"}</option><option value="artist_post">{isBrand ? locale === "ko" ? "브랜드 소식" : "Brand update" : locale === "ko" ? "아티스트 글" : "Artist post"}</option></select></label>
+          <label><span>{locale === "ko" ? "공개 범위" : "Visibility"}</span><select disabled={toolbarDisabled} value={isBrand ? "public" : visibility} onChange={event => setVisibility(event.target.value as Notice["visibility"])}><option value="public">{locale === "ko" ? "전체 공개" : "Public"}</option>{!isBrand && <option value="members">{locale === "ko" ? "회원 공개" : "Members only"}</option>}</select></label>
         </div>
         <div className={styles.toolbar} aria-label={locale === "ko" ? "본문 서식" : "Body formatting"}>
           <button type="button" disabled={toolbarDisabled} onClick={() => editor?.chain().focus().toggleBold().run()} aria-label="Bold"><Bold /></button>

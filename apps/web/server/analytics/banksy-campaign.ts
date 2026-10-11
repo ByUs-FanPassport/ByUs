@@ -1,4 +1,5 @@
 import "server-only";
+import { decorateOutboundUrl } from "@/features/analytics/domain/outbound-link";
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -93,7 +94,8 @@ export function createBanksyPublicHandlers(repository: Pick<BanksyRepository, "l
           await repository.outbound({ destination: destination.data, surface: surface.data, visitId: visit.success ? visit.data : null, requestId: id.success ? id.data : crypto.randomUUID() });
         } catch { console.error("outbound_link_visit_failed", { campaign: "banksy" }); }
       }
-      return redirect(banksyDestinations[destination.data]);
+      const target = banksyDestinations[destination.data];
+      return redirect(decorateOutboundUrl(target, new URL(request.url).origin, { campaign: "banksy", placement: "content", linkKind: "website" })?.href ?? target);
     },
   };
 }

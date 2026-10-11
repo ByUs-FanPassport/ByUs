@@ -24,7 +24,7 @@ export function CreatorRoleFilterControl({ roles, value, onChange, locale, contr
   ownedDisabled?: boolean;
   compact?: boolean;
 }) {
-  return <div className={styles.filterViewport}><div className={styles.filters} data-compact={compact || undefined} role="group" aria-label={locale === "ko" ? "직군으로 찾기" : translate(locale, localizedMessages.m61fa7982f0ed, "Browse by role")}>
+  return <div className={styles.filterViewport}><div className={styles.filters} data-compact={compact || undefined} role="group" aria-label={locale === "ko" ? "분류로 찾기" : translate(locale, localizedMessages.m61fa7982f0ed, "Browse by category")}>
     {onSelectOwned ? <button
       type="button"
       data-owned-filter="true"

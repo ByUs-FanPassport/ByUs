@@ -21,7 +21,7 @@ import styles from "./notice-detail.module.css";
 
 const parseNotice = (value: unknown) => { const item = noticeSchema.parse(value); return { ...item, body: parseNoticeDocument(item.body) }; };
 const parseRecent = (value: unknown) => z.object({ notices: z.array(noticeSchema.omit({ body: true })), nextCursor: z.string().nullable() }).parse(value);
-export function NoticeDetail({ slug, noticeSlug, locale }: { slug: string; noticeSlug: string; locale: AppLocale }) {
+export function NoticeDetail({ slug, noticeSlug, locale, officialPostLabel }: { slug: string; noticeSlug: string; locale: AppLocale; officialPostLabel?: string }) {
   const copy = contentCopy(locale), base = `/api/celebrities/${slug}/notices`;
   const requestedReturn = useSearchParams().get("returnTo"), safeReturn = sanitizeReturnTo(requestedReturn);
   const returnTo = requestedReturn && (safeReturn !== "/" || requestedReturn === "/") ? safeReturn : `${creatorHomeHref(slug)}?tab=notice&locale=${locale}`;
@@ -35,7 +35,7 @@ export function NoticeDetail({ slug, noticeSlug, locale }: { slug: string; notic
     {!notice ? <p role={detail.state.status === "error" ? "alert" : "status"}>{detail.state.status === "error" ? copy.unavailable : copy.loading}{detail.state.status === "error" && <button type="button" onClick={detail.retry}>{copy.retry}</button>}</p> :
       <div className={`${styles.layout} ${related.length ? styles.relatedLayout : ""}`}>
         <article className={styles.article}>
-          <header className={styles.header}><span>{notice.postType === "artist_post" ? copy.artistPost : copy.notice} · {copy[notice.visibility]}</span><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
+          <header className={styles.header}><span>{notice.postType === "artist_post" ? officialPostLabel ?? copy.artistPost : copy.notice} · {copy[notice.visibility]}</span><h1>{notice.title}</h1><div className={styles.meta}><time dateTime={notice.publishedAt}>{format(notice.publishedAt)}</time><NoticeShare title={notice.title} locale={locale} /></div></header>
           <ContentTranslation targetType="notice" targetId={notice.id} sourceRevision={notice.revision} locale={locale}><NoticeBody document={notice.body} locale={locale} /></ContentTranslation>
           <ContentActions targetType="notice" targetId={notice.id} locale={locale} canBlock={false} onChanged={detail.retry} />
           <NoticeComments slug={slug} noticeSlug={noticeSlug} locale={locale} welcome={notice.kind === "welcome"} />

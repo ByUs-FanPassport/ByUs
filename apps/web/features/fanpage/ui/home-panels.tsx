@@ -94,13 +94,14 @@ export function NoticePanel({ slug, locale, full = false }: { slug: string; loca
     </section>
   );
 }
-export function useCreatorRaffles(slug: string, locale: AppLocale) {
-  const resource = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}`, parseRaffles);
+export function useCreatorRaffles(slug: string, locale: AppLocale, enabled = true) {
+  const resource = useFanpageResource(enabled ? `/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}` : null, parseRaffles);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
+    if (!enabled) return;
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [enabled]);
   const available = resource.state.status === "ready"
     ? resource.state.data.filter(raffle => raffle.benefitId && raffleStatus(raffle, now) === "open") : [];
   return { ...resource, available };

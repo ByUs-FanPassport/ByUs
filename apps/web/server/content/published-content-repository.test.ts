@@ -50,12 +50,21 @@ describe("SupabasePublishedContentRepository", () => {
     ]);
     expect(client.from).toHaveBeenCalledWith("published_celebrities");
     expect(query.select).toHaveBeenCalledWith(
-      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role",
+      "slug,locale,name,summary,image_url,image_alt,image_position,themes,social_links,display_order,fan_count,primary_role,website_url,ticket_url",
     );
     expect(query.eq).toHaveBeenCalledWith("locale", "ko");
     expect(query.order).toHaveBeenNthCalledWith(1, "display_order", { ascending: true });
     expect(query.order).toHaveBeenNthCalledWith(2, "slug", { ascending: true });
     expect(query.range).toHaveBeenCalledWith(0, 499);
+  });
+
+  it("keeps brand and person classifications in a mixed public list", async () => {
+    const query = queryResult([row, { ...row, slug: "runmusic", primary_role: "brand", website_url: "https://example.com/festival", ticket_url: "https://wgrw.raceplan.co.kr/entryperson", fan_count: 0 }]);
+    const repository = new SupabasePublishedContentRepository({ from: () => query });
+    expect(await repository.list("ko")).toEqual([
+      expect.objectContaining({ slug: "kara", roles: ["idol"], websiteUrl: null, ticketUrl: null }),
+      expect.objectContaining({ slug: "runmusic", roles: ["brand"], websiteUrl: "https://example.com/festival", ticketUrl: "https://wgrw.raceplan.co.kr/entryperson" }),
+    ]);
   });
 
   it("finds one published projection by canonical locale and slug", async () => {
