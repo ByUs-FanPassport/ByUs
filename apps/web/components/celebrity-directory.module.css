@@ -52,6 +52,9 @@
 @media (max-width: 47.999rem) {
   .media { aspect-ratio: 5 / 4; }
   .media > span[data-variant="full-bleed"] { height: 100%; aspect-ratio: auto; }
+  .media:has(> span[data-variant="full-bleed"] > [data-image-fit="contain"]) { aspect-ratio: auto; }
+  .media > span[data-variant="full-bleed"]:has(> [data-image-fit="contain"]) { height: auto; }
+  .media > span[data-variant="full-bleed"] > [data-image-fit="contain"] { height: auto; }
   .cardPrimary { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 16px; }
   .cardIdentity { flex-basis: min-content; }
   .card[data-passport-owned="true"] .cardPrimary { padding-right: 72px; }

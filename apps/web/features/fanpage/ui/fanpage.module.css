@@ -96,6 +96,11 @@
 
 .livePhoto{position:relative;width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#f7f6f8}
 @media(max-width:767px){.livePhoto{aspect-ratio:1.5}}
+@media(max-width:767px){
+  .livePhoto:has(> [data-mobile-fit="contain"]){aspect-ratio:auto}
+  .livePhoto>[data-mobile-fit="contain"]{position:relative}
+  .livePhoto>[data-mobile-fit="contain"] img{display:block;position:relative!important;height:auto!important;aspect-ratio:auto 1.5}
+}
 
 .fanbar > p > button, .muted > button { min-height: 44px; min-width: 44px; }
 

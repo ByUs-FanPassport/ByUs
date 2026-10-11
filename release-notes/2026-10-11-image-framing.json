@@ -1,0 +1,15 @@
+{
+  "changes": [
+    "LIVE 상세와 모바일 LIVE 목록, 최애 목록에서 사진 주변의 불필요한 빈 띠를 줄이고 전체 사진을 보존했어요.",
+    "게시글 사진의 테두리가 사진 크기에 맞게 표시되고, 좁은 화면의 홈 배너는 사진 위 빈 공간 없이 안내와 버튼을 보여줘요.",
+    "앞으로 이미지가 바뀔 때도 모바일과 큰 화면에서 잘림·왜곡·여백을 확인하도록 공통 검수 기준을 마련했어요.",
+    "첨부 이미지는 실제 화면 구성요소와 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/celebrities",
+  "images": [
+    "release-notes/images/2026-10-11-image-framing-home.png",
+    "release-notes/images/2026-10-11-image-framing-live.png",
+    "release-notes/images/2026-10-11-image-framing-directory.png",
+    "release-notes/images/2026-10-11-image-framing-posts.png"
+  ]
+}

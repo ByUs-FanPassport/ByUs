@@ -34,4 +34,19 @@ describe("independent image roles", () => {
     view.rerender(<EventPhoto photos={undefined} src="/poster.jpg" alt="LIVE" />);
     expect(view.container.querySelector("picture")?.style.getPropertyValue("--event-photo-mobile-fit")).toBe("contain");
   });
+
+  it("exposes resolved breakpoint framing without treating unapproved crops as cover", () => {
+    const landscape = binding("/wide.jpg");
+    landscape.frames["event.home.desktop"] = { fit: "cover", x: 40, y: 30, approvedAssetRevision: 1 };
+    const view = render(<EventPhoto photos={{ landscape }} src="/square.jpg" alt="LIVE" />);
+    const picture = () => view.container.querySelector("picture");
+    expect(picture()).toHaveAttribute("data-desktop-fit", "cover");
+    expect(picture()).toHaveAttribute("data-mobile-fit", "contain");
+    landscape.asset.revision = 2;
+    view.rerender(<EventPhoto photos={{ landscape }} src="/square.jpg" alt="LIVE" />);
+    expect(picture()).toHaveAttribute("data-desktop-fit", "contain");
+    view.rerender(<EventPhoto photos={undefined} src="/square.jpg" alt="LIVE" surface="detail" />);
+    expect(picture()).toHaveAttribute("data-desktop-fit", "contain");
+    expect(picture()).toHaveAttribute("data-mobile-fit", "contain");
+  });
 });

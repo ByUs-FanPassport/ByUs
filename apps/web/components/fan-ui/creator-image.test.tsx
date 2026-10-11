@@ -6,6 +6,14 @@ import { creatorCalendarPhotos, creatorImageSizes, parkMyunghoProfile, resolveCr
 const previous = "https://gmrykvmtmuaeswpajteq.supabase.co/storage/v1/object/public/cms-assets/celebrities/park-myungho/profile-dcc87957756c27df.jpg";
 
 describe("shared creator photography", () => {
+  it("exposes the resolved fit so directory layout can preserve an unapproved full photo", () => {
+    const binding = { asset: { id: "photo", url: "/square.jpg", width: 800, height: 800, mimeType: "image/jpeg", revision: 1 }, alt: { ko: "사진", en: "Photo" }, frames: { "identity.square": { fit: "cover" as const, x: 50, y: 50, approvedAssetRevision: 1 } }, revision: 1 };
+    const view = render(<CreatorImage slug="example" src="/fallback.jpg" photos={{ profile: binding }} alt="Photo" width={420} height={420} sizes="420px" />);
+    expect(screen.getByRole("img")).toHaveAttribute("data-image-fit", "cover");
+    binding.asset.revision = 2;
+    view.rerender(<CreatorImage slug="example" src="/fallback.jpg" photos={{ profile: binding }} alt="Photo" width={420} height={420} sizes="420px" />);
+    expect(screen.getByRole("img")).toHaveAttribute("data-image-fit", "contain");
+  });
   it("uses the approved source across all identity presentations without overriding a later CMS replacement", () => {
     for (const presentation of ["portrait", "avatar", "passport", "collection", "vertical", "calendar"] as CreatorImagePresentation[]) {
       if (["portrait", "avatar", "passport"].includes(presentation)) expect(resolveCreatorImage({ slug: "park-myungho", src: previous, presentation }).src).toBe(parkMyunghoProfile);

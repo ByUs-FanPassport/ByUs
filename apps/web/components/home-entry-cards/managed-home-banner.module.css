@@ -1,4 +1,5 @@
 .root { width:100%; height:100%; }
 .artwork, .unavailable { display:block; width:100%; height:100%; background:#19191e; }
-.artwork img { display:block; width:100%; height:100%; object-fit:contain; }
+/* Extra height belongs below the artwork, where the description and action sit. */
+.artwork img { display:block; width:100%; height:100%; object-fit:contain; object-position:center top; }
 .unavailable { background:linear-gradient(145deg,#2d2334,#19191e); }

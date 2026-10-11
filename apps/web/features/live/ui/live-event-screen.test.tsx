@@ -139,6 +139,12 @@ function ifewPayload(primaryAction = "reserve") {
 }
 
 describe("LiveEventScreen", () => {
+  it("lets a still photo use its natural frame", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(payload()));
+    const { container } = render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
+    await screen.findByRole("heading", { name: "KARA × NUALEAF LIVE" });
+    expect(container.querySelector('[data-event-photo="detail"]')?.parentElement).toHaveAttribute("data-natural-photo", "true");
+  });
   it('promotes attendance and exposes the input during its configured window even before scheduled LIVE status changes', async () => {
     const response = payload();
     const now = Date.now();
@@ -451,6 +457,7 @@ describe("LiveEventScreen", () => {
 
     render(<LiveEventScreen slug="kara-nualeaf" locale="ko" />);
     const video = await screen.findByTestId("active-preview-video");
+    expect(document.querySelector('[data-event-photo="detail"]')?.parentElement).not.toHaveAttribute("data-natural-photo");
     expect(video).toHaveAttribute(
       "poster",
       "https://assets.example/kara-landscape.webp",

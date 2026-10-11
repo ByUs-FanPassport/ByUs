@@ -110,6 +110,19 @@
   object-position: center 36%;
 }
 
+/* Full stills follow their source; approved crops and video previews retain the fixed frame. */
+/* shortcut: legacy sources reserve 2:1 until load; use measured dimensions when their API supplies them. */
+@media (max-width: 767px) {
+  .heroMedia[data-natural-photo]:has(> [data-mobile-fit="contain"]) { aspect-ratio: auto; }
+  .heroMedia[data-natural-photo] > [data-mobile-fit="contain"] { position: relative; }
+  .heroMedia[data-natural-photo] > [data-mobile-fit="contain"] img { display: block; position: relative !important; height: auto !important; aspect-ratio: auto 2 / 1; }
+}
+@media (min-width: 768px) {
+  .heroMedia[data-natural-photo]:has(> [data-desktop-fit="contain"]) { aspect-ratio: auto; }
+  .heroMedia[data-natural-photo] > [data-desktop-fit="contain"] { position: relative; }
+  .heroMedia[data-natural-photo] > [data-desktop-fit="contain"] img { display: block; position: relative !important; height: auto !important; aspect-ratio: auto 2 / 1; }
+}
+
 .actionRail {
   display: flex;
   min-width: 0;

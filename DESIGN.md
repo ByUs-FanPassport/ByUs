@@ -57,6 +57,7 @@ differences when consolidating tokens and components. -->
 
 ### Completion requires a visual finish review
 
+- Image work must follow the repository-wide [image framing and review contract](docs/design/image-framing.md), including its role owners, deliberate-space exceptions, loaded mobile/desktop evidence and access-gap reporting. This applies to new screens and source replacements as well as existing UI.
 - Apply the current user-approved design, then this current role contract. Historical observations and example prompts cannot override it. Reuse shared owners and keep approved hero/profile/display variants; do not normalize every surface into the same card. This document is a design contract, not a claim that an old checkout or production already implements it.
 - Verify both behavior/accessibility and the actual composition. View the affected mobile and desktop screens at native display size with realistic normal content and varied representative images. Confirm a clear first focus and next action, readable title/body/metadata hierarchy, coherent information groups, optical icon alignment, face-legible crops, balanced density and deliberate section rhythm. Compare with the approved product direction and resolve visible disharmony before claiming visual completion.
 - Reject unintended blank bands around image content, including letterboxing from fixed frames/minimum heights and excess space baked into the source. Inspect the source and the rendered image separately at mobile and desktop widths. Text/logo banners use their natural aspect ratio and a content-sized frame; do not stretch, crop essential text/logos, or hide empty space with blurred duplicates. Preserve deliberate composition, required padding and existing approved artwork treatments. If a fixed slot cannot show the complete content without empty bands, use suitable artwork or adjust that slot before passing visual review.
@@ -77,7 +78,7 @@ Use Pretendard Variable throughout product UI. Apply the exact hierarchy, weight
 
 ## Image
 
-Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed portraits: 5:4 on mobile and square from 768px, retaining the registered image source and focal position. Role filters use 12px rounded rectangles with at least 44px touch targets; search and sort render at the same 14px label size. Use only the fully opened identity-and-stamp Passport asset.
+Use face-legible, editorial, full-color artist photography. Preserve the approved hero crop and Home's inset square favorite artwork within a Gallery Gray field. The `/celebrities` directory uses full-bleed portraits: 5:4 for approved cover crops on mobile and square from 768px; mobile full-image (`contain`) sources use their natural ratio, retaining the registered image source and focal position. Role filters use 12px rounded rectangles with at least 44px touch targets; search and sort render at the same 14px label size. Use only the fully opened identity-and-stamp Passport asset.
 
 ## Surfaces
 
@@ -261,7 +262,7 @@ The page uses asymmetry only at desktop scale. The main content owns the visual 
 ### Image Treatment
 
 - Hero uses full-bleed high-resolution KARA photography with `object-fit: cover` and a slightly right-shifted focal position.
-- Home favorite cards use a nested gallery composition: a square `#F6F6F5` field contains the shared `min(84%, 240px)` square portrait. The `/celebrities` directory fills its entire media area, 5:4 below 768px and square from 768px. Both use the shared per-creator cover crop; do not use contain letterboxing.
+- Home favorite cards use a nested gallery composition: a square `#F6F6F5` field contains the shared `min(84%, 240px)` square portrait. The `/celebrities` directory fills its entire media area, 5:4 below 768px and square from 768px. Both use the shared per-creator framing. Mobile directory images requiring `contain` use a content-sized frame instead of 5:4 letterboxing; never promote an unapproved crop to cover.
 - Favorite portraits are direct, colorful, face-legible editorial crops: blue KARA group styling, warm gold Elina close-up, cool dark Changha close-up.
 - Upcoming LIVE avatars reuse the corresponding artist imagery in circular 64px desktop / 56px mobile crops.
 - Passport uses a transparent, fully opened identity-and-stamp-book asset with `object-fit: contain`; it is never shown as a closed burgundy cover.
@@ -525,8 +526,8 @@ Do not introduce a parallel hard-coded blue palette from the guide's example hex
 
 - Creator directory: maximum three equal-width columns, left-aligned partial row,
   two columns at 768px and one below. The later shared portrait contract applies:
-  full-bleed cover, 5:4 below 768px and square from 768px, preserving registered
-  framing and every face rather than reverting to the historical 4:3 contain layout.
+  full-bleed approved cover, 5:4 below 768px and square from 768px (mobile
+  `contain` sources use their natural ratio), preserving registered framing and every face rather than reverting to the historical 4:3 contain layout.
   Use published summaries only, no invented biographies or popular/recommended claims.
   Default order remains the published order. Search, ordering and ownership filters stay.
 - MY (updated 2026-09-10, slide 58): profile then a shared favorite selector,
@@ -620,8 +621,9 @@ claim there are no missions. No question or owner payload is exposed publicly.
 
 `/celebrities` and Home favorites share `CreatorPortrait` and registered crops.
 Directory keeps its responsive grid and existing full-card links, using the
-`full-bleed` variant to fill a 5:4 media area below 768px and a square from 768px,
-without a gray frame. Home keeps the default `min(84%, 240px)` square inset portrait. Shared per-creator
+`full-bleed` variant to fill a 5:4 media area below 768px for approved cover crops
+and a square from 768px, without a gray frame. On mobile, full-image (`contain`)
+sources keep their natural aspect ratio instead of acquiring blank side bands. Home keeps the default `min(84%, 240px)` square inset portrait. Shared per-creator
 cover crops preserve faces, all group
 members and tattoo exclusion. Do not use contain letterboxing, route-local crop
 copies or hover zoom on these portraits. Passport badges remain outside the crop.

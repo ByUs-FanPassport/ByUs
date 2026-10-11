@@ -5,6 +5,8 @@ on:
     paths:
       - "apps/web/**"
       - "DESIGN.md"
+      - "AGENTS.md"
+      - "docs/design/**"
       - "package*.json"
       - ".github/workflows/fan-design-system.yml"
   push:
@@ -12,6 +14,8 @@ on:
     paths:
       - "apps/web/**"
       - "DESIGN.md"
+      - "AGENTS.md"
+      - "docs/design/**"
       - "package*.json"
       - ".github/workflows/fan-design-system.yml"
   workflow_dispatch:

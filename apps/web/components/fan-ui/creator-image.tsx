@@ -28,7 +28,7 @@ export function CreatorImage({ slug, src, presentation = "portrait", position, p
   const alt = imageProps.alt === "" ? "" : photos?.[role]?.alt[toContentLocale(locale)] ?? imageProps.alt;
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const photo = !image.src || image.src === failedSource ? fallback : <Image {...imageProps} alt={alt} className={framed ? undefined : imageProps.className} src={image.src} sizes={creatorImageSizes(sizes, image.crop.scale)}
-    data-creator-image={slug} data-image-presentation={presentation}
+    data-creator-image={slug} data-image-presentation={presentation} data-image-fit={image.crop.fit ?? "cover"}
     style={{ objectFit: image.crop.fit ?? "cover", objectPosition: image.crop.position,
       transform: image.crop.scale !== 1 || image.crop.translateX ? `${image.crop.translateX ? `translateX(${image.crop.translateX}) ` : ""}scale(${image.crop.scale})` : undefined,
       transformOrigin: image.crop.origin }}

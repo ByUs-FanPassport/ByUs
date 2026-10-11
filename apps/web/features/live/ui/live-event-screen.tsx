@@ -1444,7 +1444,7 @@ export function LiveEventScreen({
           onClick={() => { requestAnimationFrame(() => { (fanCodeInputRef.current ?? fanCodeRef.current)?.focus(); fanCodeRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' }); }); }}
         />}
         <div className={styles.detailLayout}>
-          <div className={styles.heroMedia}>
+          <div className={styles.heroMedia} data-natural-photo={!live.preview || undefined}>
             <EventPhoto photos={live.photos} src={live.heroImage.url} alt={live.heroImage.alt} locale={locale} surface="detail" priority sizes="(min-width: 1440px) 960px, (min-width: 1024px) 66vw, calc(100vw - 32px)" />
             {live.preview ? (
               <ActivePreviewVideo
