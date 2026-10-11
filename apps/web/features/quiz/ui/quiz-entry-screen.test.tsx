@@ -44,8 +44,8 @@ describe("QuizEntryScreen", () => {
     });
 
     render(<QuizEntryScreen locale="ko" slug="kara" />);
-    expect(await screen.findByRole("heading", { name: /KARA를 향한/ })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /KARA를 향한/ })
+    expect(await screen.findByRole("heading", { name: "KARA 나의 팬심을 확인해 보세요." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "KARA 나의 팬심을 확인해 보세요." })
       .closest('[data-content-alignment="top"]')).not.toBeNull();
     expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/kara?locale=ko");
     const home = screen.getByRole("link", { name: "ByUs 홈" });

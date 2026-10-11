@@ -49,10 +49,9 @@ const copy = {
     unavailableBody: (name: string) => `${name}의 새 팬 인증이 열리면 다시 참여해 주세요.`,
     fanPage: (name?: string) => name ? `${name} 팬페이지로 돌아가기` : "팬페이지로 돌아가기",
     eyebrow: "팬 인증 · 시작 전",
-    title: (name: string) => `${name}를 향한\n나의 팬심을 확인해 보세요.`,
+    title: (name: string) => `${name}\n나의 팬심을 확인해 보세요.`,
     description: "간단한 퀴즈를 통과하면 첫 팬 인증 Stamp와 Fan Passport를 받을 수 있어요.",
     questionCount: (count: number) => `${count}문항`,
-    questionCountTail: "으로 팬심 확인",
     passThreshold: (count: number) => `${count}문항 이상`,
     passThresholdTail: " 정답이면 인증 완료",
     saved: "답변은 문항마다 안전하게 저장",
@@ -80,7 +79,6 @@ const copy = {
     title: (name: string) => `See how well you know\n${name}.`,
     description: "Pass a short quiz to receive your first Fan Verification Stamp and Fan Passport.",
     questionCount: (count: number) => `${count} questions`,
-    questionCountTail: " about your favorite creator",
     passThreshold: (count: number) => `At least ${count} correct`,
     passThresholdTail: " to pass",
     saved: "Each answer is saved securely",
@@ -109,7 +107,6 @@ const copy = {
     title: (name: string) => translate(translationLocale, localizedMessages.m2342b08e5b5b, "See how well you know\n{0}.", [name]),
     description: localizedMessages.me8b8a3dcf2ea[translationLocale],
     questionCount: (count: number) => translate(translationLocale, localizedMessages.mbbfb2a916e4d, "{0} questions", [count]),
-    questionCountTail: localizedMessages.mf5082ce93c91[translationLocale],
     passThreshold: (count: number) => translate(translationLocale, localizedMessages.mc9041df7d4b2, "At least {0} correct", [count]),
     passThresholdTail: localizedMessages.md55660c432ca[translationLocale],
     saved: localizedMessages.m1368cd0da861[translationLocale],
@@ -336,7 +333,7 @@ export function QuizEntryScreen({
             </header>
             <p className={styles.description}>{t.description}</p>
             <ul className={styles.facts}>
-              <li><Check aria-hidden="true" /><span><strong>{t.questionCount(screen.intro.quiz.totalQuestions)}</strong>{t.questionCountTail}</span></li>
+              <li><Check aria-hidden="true" /><span><strong>{t.questionCount(screen.intro.quiz.totalQuestions)}</strong></span></li>
               <li><Check aria-hidden="true" /><span><strong>{t.passThreshold(screen.intro.quiz.passThreshold)}</strong>{t.passThresholdTail}</span></li>
               <li><Check aria-hidden="true" /><span>{t.saved}</span></li>
             </ul>

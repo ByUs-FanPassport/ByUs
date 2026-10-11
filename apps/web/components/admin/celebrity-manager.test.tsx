@@ -48,7 +48,7 @@ it("keeps saved person and brand profiles in their category and saves blank exte
   expect(primary).toHaveValue("brand");
   expect(primary.querySelector<HTMLOptionElement>('option[value="singer"]')).toBeDisabled();
   expect(primary.querySelector<HTMLOptionElement>('option[value="brand"]')).not.toBeDisabled();
-  expect(screen.queryByRole("link", { name: "팬 퀴즈" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "팬 퀴즈" })).toHaveAttribute("href", `/admin/celebrities/${brand.id}/quiz`);
 
   const website = screen.getByRole("textbox", { name: "공식 웹사이트" });
   expect(website).toHaveValue("https://runmusic.example");

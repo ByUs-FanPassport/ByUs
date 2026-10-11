@@ -25,6 +25,49 @@ create function pg_temp.brand_questions() returns jsonb language sql immutable a
   ) order by q) from generate_series(1,3) q
 $$;
 
+create function pg_temp.complete_brand_quiz(
+  p_app_user_id uuid,p_celebrity_id uuid,p_source_type text,p_source_id uuid,p_stamp_id uuid
+) returns jsonb language plpgsql as $$
+declare
+  v_attempt_id uuid;
+  answer record;
+  result jsonb;
+begin
+  perform public.start_owned_quiz_attempt_v2(
+    p_app_user_id,'runmusic',extensions.gen_random_uuid(),p_source_type,p_source_id
+  );
+  select id into strict v_attempt_id from public.quiz_attempts
+  where app_user_id=p_app_user_id and celebrity_id=p_celebrity_id and status='open';
+  for answer in
+    select question.id question_id,option.id option_id
+    from public.quiz_attempt_questions question
+    join public.quiz_attempt_options option
+      on option.attempt_question_id=question.id and option.is_correct
+    where question.attempt_id=v_attempt_id
+  loop
+    perform public.save_owned_quiz_answer(
+      p_app_user_id,v_attempt_id,answer.question_id,answer.option_id
+    );
+  end loop;
+  result:=public.submit_owned_quiz_attempt(
+    p_app_user_id,v_attempt_id,p_stamp_id,
+    'byus:passport:v1:'||p_app_user_id::text||':runmusic',
+    '0x'||encode(extensions.digest('passport:'||p_app_user_id::text,'sha256'),'hex'),
+    'byus:stamp:v1:'||p_stamp_id::text,
+    '0x'||encode(extensions.digest('stamp:'||p_stamp_id::text,'sha256'),'hex')
+  );
+  if result is distinct from public.submit_owned_quiz_attempt(
+    p_app_user_id,v_attempt_id,p_stamp_id,
+    'byus:passport:v1:'||p_app_user_id::text||':runmusic',
+    '0x'||encode(extensions.digest('passport:'||p_app_user_id::text,'sha256'),'hex'),
+    'byus:stamp:v1:'||p_stamp_id::text,
+    '0x'||encode(extensions.digest('stamp:'||p_stamp_id::text,'sha256'),'hex')
+  ) then
+    raise exception 'brand quiz submit replay changed its result';
+  end if;
+  return result;
+end $$;
+
 do $$
 declare
   actor uuid := '95500000-0000-4000-8000-000000000001';
@@ -38,6 +81,10 @@ declare
   legacy_job uuid := '95500000-0000-4000-8000-000000000009';
   native_reaction uuid := '95500000-0000-4000-8000-000000000010';
   native_job uuid := '95500000-0000-4000-8000-000000000011';
+  no_reaction_fan uuid := '95500000-0000-4000-8000-000000000012';
+  after_reaction_fan uuid := '95500000-0000-4000-8000-000000000013';
+  after_reaction uuid := '95500000-0000-4000-8000-000000000014';
+  after_job uuid := '95500000-0000-4000-8000-000000000015';
   brand_id uuid;
   draft_id uuid;
   person_id uuid;
@@ -83,10 +130,14 @@ begin
     (viewer,'brand-fanpage-viewer@byus.test','viewer',true);
   insert into public.app_users(id,privy_user_id,verified_email) values
     (fan,'did:privy:brand-fanpage-proof','brand-fanpage-fan@byus.test'),
-    (native_fan,'did:privy:brand-fanpage-native','brand-fanpage-native@byus.test');
+    (native_fan,'did:privy:brand-fanpage-native','brand-fanpage-native@byus.test'),
+    (no_reaction_fan,'did:privy:brand-fanpage-no-reaction','brand-fanpage-no-reaction@byus.test'),
+    (after_reaction_fan,'did:privy:brand-fanpage-after-reaction','brand-fanpage-after-reaction@byus.test');
   insert into public.user_wallets(app_user_id,chain_id,address) values
     (fan,91342,'0x9550000000000000000000000000000000000003'),
-    (native_fan,91342,'0x9550000000000000000000000000000000000005');
+    (native_fan,91342,'0x9550000000000000000000000000000000000005'),
+    (no_reaction_fan,91342,'0x9550000000000000000000000000000000000012'),
+    (after_reaction_fan,91342,'0x9550000000000000000000000000000000000013');
 
   insert into public.celebrities(id,slug,image_url,roles)
   values(legacy_null,'brand-null-role-proof','/null-role.jpg','{artist}');
@@ -153,13 +204,9 @@ begin
   end if;
   set constraints all deferred;
 
-  perform pg_temp.expect_error(format(
-    'insert into public.celebrity_quizzes(celebrity_id,version) values(%L,1)',brand_id
-  ), 'brand profiles do not support quizzes or passports');
-  perform pg_temp.expect_error(format(
-    'insert into public.fan_passports(app_user_id,celebrity_id,quiz_pass_id) values(%L,%L,%L)',
-    fan,brand_id,extensions.gen_random_uuid()
-  ), 'brand profiles do not support quizzes or passports');
+  perform public.save_admin_quiz_version(actor,correlation,brand_id,null,pg_temp.brand_questions());
+  select id into quiz_id from public.celebrity_quizzes where celebrity_id=brand_id and version=1;
+  perform public.publish_admin_quiz_version(actor,correlation,brand_id,quiz_id);
   perform pg_temp.expect_error(format(
     'update public.celebrities set primary_role=''actor'',roles=''{artist}'' where id=%L',brand_id
   ), 'existing person and brand profiles cannot be converted');
@@ -216,12 +263,74 @@ begin
     raise exception 'brand first comment stamp recovery succeeded';
   end if;
   if exists(select 1 from public.community_stamps where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
-    or exists(select 1 from public.first_reaction_stamps where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
     or exists(select 1 from public.fan_ticket_activity_awards where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
-    or exists(select 1 from public.fan_activities where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
     or exists(select 1 from public.fan_score_ledger where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
-    or exists(select 1 from public.fan_passports where app_user_id in (fan,native_fan) and celebrity_id=brand_id) then
-    raise exception 'brand reaction/post/comment/like produced a reward, score or passport';
+    or exists(select 1 from public.fan_passports where app_user_id in (fan,native_fan) and celebrity_id=brand_id)
+    or (select count(*) from public.first_reaction_stamps
+      where app_user_id in (fan,native_fan) and celebrity_id=brand_id) <> 2
+    or (select count(*) from public.fan_activities
+      where app_user_id in (fan,native_fan) and celebrity_id=brand_id
+        and activity_type='first_reaction') <> 2 then
+    raise exception 'brand reaction stamp or unrelated reward boundary failed';
+  end if;
+
+  result:=pg_temp.complete_brand_quiz(
+    fan,brand_id,'reaction',legacy_reaction,'95500000-0000-4000-8000-000000000016'
+  );
+  if result->'attempt'->>'status'<>'passed'
+    or not exists(select 1 from public.fan_passports passport
+      join public.first_reaction_stamps stamp on stamp.passport_id=passport.id
+      where passport.app_user_id=fan and passport.celebrity_id=brand_id
+        and stamp.reaction_id=legacy_reaction)
+    or not exists(select 1 from public.fan_passports
+      where app_user_id=fan and celebrity_id=brand_id
+        and blockchain_job_id is not null and fan_action_outbox_id is null) then
+    raise exception 'brand legacy quiz or reaction-before-passport flow failed: %',result;
+  end if;
+
+  insert into public.fan_action_producer_routes(action_code,binding_id,enabled,policy_version,enabled_at)
+  values(1,binding_id,true,1,now());
+  result:=pg_temp.complete_brand_quiz(
+    native_fan,brand_id,'reaction',native_reaction,'95500000-0000-4000-8000-000000000017'
+  );
+  if result->'attempt'->>'status'<>'passed'
+    or not exists(select 1 from public.fan_passports passport
+      join public.first_reaction_stamps stamp on stamp.passport_id=passport.id
+      where passport.app_user_id=native_fan and passport.celebrity_id=brand_id
+        and passport.blockchain_job_id is null and passport.fan_action_outbox_id is not null
+        and stamp.reaction_id=native_reaction) then
+    raise exception 'brand native quiz or reaction-before-passport flow failed: %',result;
+  end if;
+
+  perform pg_temp.complete_brand_quiz(
+    no_reaction_fan,brand_id,'creator_page',brand_id,'95500000-0000-4000-8000-000000000018'
+  );
+  if exists(select 1 from public.first_reaction_stamps
+    where app_user_id=no_reaction_fan and celebrity_id=brand_id) then
+    raise exception 'brand no-reaction quiz created a reaction stamp';
+  end if;
+
+  perform pg_temp.complete_brand_quiz(
+    after_reaction_fan,brand_id,'creator_page',brand_id,'95500000-0000-4000-8000-000000000019'
+  );
+  perform public.react_to_creator(
+    after_reaction_fan,brand_id,after_reaction,after_job,'0x'||repeat('c',64)
+  );
+  if not exists(select 1 from public.fan_passports passport
+    join public.first_reaction_stamps stamp on stamp.passport_id=passport.id
+    where passport.app_user_id=after_reaction_fan and passport.celebrity_id=brand_id
+      and stamp.reaction_id=after_reaction) then
+    raise exception 'brand reaction-after-passport flow failed';
+  end if;
+  if exists(
+    select app_user_id from public.fan_ticket_ledger
+    where app_user_id in (fan,native_fan,no_reaction_fan,after_reaction_fan)
+      and celebrity_id=brand_id and source_type='passport_verification'
+    group by app_user_id having count(*)<>1
+  ) or (select count(*) from public.fan_ticket_ledger
+    where app_user_id in (fan,native_fan,no_reaction_fan,after_reaction_fan)
+      and celebrity_id=brand_id and source_type='passport_verification')<>4 then
+    raise exception 'brand quiz verification reward policy changed or replay duplicated credit';
   end if;
 
   result := public.save_admin_celebrity(actor,correlation,null,
@@ -281,7 +390,7 @@ begin
     raise exception 'archived brand leaked to public projection';
   end if;
 
-  raise notice 'BRAND_FANPAGES runmusic registration, HTTPS website, role boundaries, quiz/passport and welcome exclusion, legacy/native reaction replay, reward exclusion, draft/archive projection and person regression: PASS';
+  raise notice 'BRAND_FANPAGES runmusic registration, HTTPS website, role boundaries, quiz/passport issuance, welcome exclusion, reaction timing/replay, legacy/native lanes, reward boundaries, draft/archive projection and person regression: PASS';
 end $$;
 
 rollback;

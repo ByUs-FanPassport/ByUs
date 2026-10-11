@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "브랜드 팬페이지에서도 퀴즈를 풀고 Fan Passport를 발급받을 수 있어요.",
+    "이미 좋아요를 남긴 팬도 패스포트를 만들면 첫 좋아요 도장을 함께 확인할 수 있어요.",
+    "첨부 이미지는 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/runmusic",
+  "images": [
+    "release-notes/images/2026-10-11-brand-passport-entry.png",
+    "release-notes/images/2026-10-11-brand-passport-quiz.png"
+  ]
+}

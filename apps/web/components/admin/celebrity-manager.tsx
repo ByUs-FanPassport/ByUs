@@ -737,7 +737,7 @@ function CelebrityCms({
               </p>
             )}
             <div className={styles.formActions}>
-              {current && draft.primaryRole !== "brand" && (
+              {current && (
                 <Link
                   href={`/admin/celebrities/${current.id}/quiz` as Route}
                   className={styles.secondaryButton}

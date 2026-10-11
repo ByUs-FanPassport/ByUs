@@ -73,8 +73,8 @@ function calendarPayload(events: unknown[] = [], month = currentCalendarMonth())
 }
 
 function summaryPayload(passports: unknown[] = [], nickname = "별빛팬") {
-  const supplied = passports[0] as { stageProgress?: unknown } | undefined;
-  return { summary: { profile: { nickname }, creators: passports.length ? [{ celebrity: { slug: "kara", name: "KARA", image: kara.image.url }, relationship: "passport", passport: { id: ownedPassport.id, tier: "Silver", score: 8, remainingToNextTier: 2, ...(supplied?.stageProgress ? { stageProgress: supplied.stageProgress } : {}) }, ticketBalance: 3, firstReaction: null }] : [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: passports.length, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 } };
+  const supplied = passports[0] as { celebrity?: { slug: string; name: string }; stageProgress?: unknown } | undefined;
+  return { summary: { profile: { nickname }, creators: passports.length ? [{ celebrity: { slug: supplied?.celebrity?.slug ?? "kara", name: supplied?.celebrity?.name ?? "KARA", image: kara.image.url }, relationship: "passport", passport: { id: ownedPassport.id, tier: "Silver", score: 8, remainingToNextTier: 2, ...(supplied?.stageProgress ? { stageProgress: supplied.stageProgress } : {}) }, ticketBalance: 3, firstReaction: null }] : [], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: passports.length, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 } };
 }
 function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffles = [], nickname = "별빛팬" }: { notices?: unknown[]; passports?: unknown[]; calendarEvents?: unknown[]; raffles?: unknown[]; nickname?: string } = {}) {
   const request = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
@@ -205,7 +205,7 @@ describe("approved fanpage", () => {
     expect(within(menu).getByRole("link", { name: "찐팬 인증" })).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
     expect(screen.queryByText("12,800,000")).not.toBeInTheDocument();
   });
-  it("renders the focused brand home without creator-only surfaces or raffle requests", async () => {
+  it("offers brand Passport verification without raffle requests", async () => {
     const fetcher = stubHubFetch();
     render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} initialTab="events" />);
 
@@ -218,9 +218,18 @@ describe("approved fanpage", () => {
     expect(screen.getByRole("link", { name: "Instagram, 새 창" })).toHaveAttribute("data-outbound-kind", "social");
     expect(screen.getByRole("button", { name: "브랜드 소식" })).toBeInTheDocument();
     expect(within(menu).getByRole("link", { name: "게시판" })).toHaveAttribute("href", "/runmusic?tab=board&locale=ko#celebrity-content");
-    expect(screen.queryByLabelText("내 팬 활동")).not.toBeInTheDocument();
-    expect(screen.queryByText("찐팬 인증")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("내 팬 활동")).toBeInTheDocument();
+    expect(screen.getByText("퀴즈로 패스포트를 만들고 팬 활동을 시작하세요.")).toBeInTheDocument();
     expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/raffles"))).toBe(false);
+  });
+  it("restores an owned brand Passport without exposing attendance ticket actions", async () => {
+    authenticated = true;
+    const fetcher = stubHubFetch({ passports: [{ ...ownedPassport, celebrity: runmusic }] });
+    render(<CelebrityFanPage celebrity={runmusic} locale="ko" upcomingLive={null} />);
+    expect(await screen.findByRole("link", { name: "내 패스포트" })).toHaveAttribute("href", `/passports/${ownedPassport.id}?locale=ko`);
+    expect(screen.queryByText("퀴즈로 패스포트를 만들고 팬 활동을 시작하세요.")).not.toBeInTheDocument();
+    expect(fetcher.mock.calls.filter(([url]) => String(url).includes("/api/me/summary"))).toHaveLength(1);
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes("/runmusic/tickets") || String(url).includes("/runmusic/raffles"))).toBe(false);
   });
   it("shows a generic ticket action for any profile and marks hero outbound links", () => {
     const ticketUrl = "https://wgrw.raceplan.co.kr/entryperson";

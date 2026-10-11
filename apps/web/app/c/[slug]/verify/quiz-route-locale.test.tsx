@@ -9,6 +9,9 @@ const { findBySlug } = vi.hoisted(() => ({ findBySlug: vi.fn() }));
 vi.mock("../../../../server/content/published-content-repository", () => ({
   createPublishedContentRepositoryFromEnvironment: () => ({ findBySlug }),
 }));
+vi.mock("@/server/seo/public-content", () => ({
+  loadSeoCreator: (slug: string, locale: string) => findBySlug(locale, slug),
+}));
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
@@ -30,6 +33,15 @@ describe("fan verification route locale contract", () => {
     });
 
     expect(element.props).toMatchObject({ locale: "en", slug: "katseye" });
+  });
+
+  it("allows a published brand to enter the same Passport verification flow", async () => {
+    findBySlug.mockResolvedValue({ name: "RUN&MUSIC FESTIVAL", roles: ["brand"] });
+    const element = await QuizEntryPage({
+      params: Promise.resolve({ slug: "runmusic" }),
+      searchParams: Promise.resolve({ locale: "ko" }),
+    });
+    expect(element.props).toMatchObject({ locale: "ko", slug: "runmusic" });
   });
 
   it("passes only a validated LIVE return target to every verification route", async () => {

@@ -166,17 +166,6 @@ export const messages = {
     "pt": "{0} perguntas",
     "fr": "{0} questions"
   },
-  "mf5082ce93c91": {
-    "ja": " お気に入りのクリエイターについて",
-    "zh-Hans": "，内容与你喜爱的创作者有关",
-    "zh-Hant": "，內容與你喜愛的創作者有關",
-    "es": " sobre tu creador favorito",
-    "id": " tentang kreator favorit Anda",
-    "vi": " về nhà sáng tạo yêu thích",
-    "th": " เกี่ยวกับครีเอเตอร์คนโปรดของคุณ",
-    "pt": " sobre seu criador favorito",
-    "fr": " sur votre créateur favori"
-  },
   "mc9041df7d4b2": {
     "ja": "{0}問以上正解",
     "zh-Hans": "至少答对 {0} 题",
