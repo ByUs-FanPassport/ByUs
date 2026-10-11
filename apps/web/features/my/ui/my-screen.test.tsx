@@ -117,10 +117,11 @@ describe("unified MY hub", () => {
     expect(screen.getByText("골드까지 35점")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "다가오는 LIVE" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "받은 혜택" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "내 결과 확인" })).toHaveAttribute("href", "/my/raffles?locale=ko");
     expect(screen.getByText("수령 완료")).toBeInTheDocument();
     expect(screen.queryByText("사용 가능한 혜택")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "KARA 이벤트" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /응모·혜택.*혜택 2 · 응모 내역 3/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
+    expect(screen.getByRole("link", { name: /래플 결과.*당첨 여부와 응모 내역 확인/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
     expect(screen.getByRole("heading", { name: "내 최애 1" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveLength(1);
     expect(screen.getByRole("link", { name: /^스탬프 3$/ })).toHaveAttribute("href", "/passports?locale=ko#collection");
@@ -143,7 +144,7 @@ describe("unified MY hub", () => {
     const shortcuts = await screen.findByRole("navigation", { name: "내 활동 바로가기" });
     expect(within(shortcuts).getByRole("link", { name: /내 패스포트.*발급 1개/ })).toHaveAttribute("href", "/passports?locale=ko");
     expect(within(shortcuts).getByRole("link", { name: /예약한 LIVE.*예약 없음/ })).toHaveAttribute("href", "/live?locale=ko");
-    expect(within(shortcuts).getByRole("link", { name: /응모·혜택.*혜택 2.*응모 내역 3/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
+    expect(within(shortcuts).getByRole("link", { name: /래플 결과.*당첨 여부와 응모 내역 확인/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
     expect(within(shortcuts).queryByRole("link", { name: /내 활동 내역/ })).not.toBeInTheDocument();
     const records = screen.getByRole("navigation", { name: "내 활동 내역" });
     expect(within(records).getByRole("link", { name: /내 활동 내역/ })).toHaveAttribute("href", "/my/activity?locale=ko");
@@ -271,7 +272,7 @@ describe("unified MY hub", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     render(<MyScreen locale="en" />);
 
-    expect(await screen.findByRole("link", { name: /Entries & rewards.*2 rewards · 3 entries/ })).toHaveAttribute("href", "/my/raffles?locale=en");
+    expect(await screen.findByRole("link", { name: /Raffle results.*Results and entry history/ })).toHaveAttribute("href", "/my/raffles?locale=en");
     expect(screen.getByRole("heading", { name: "KARA events" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explore events" })).toHaveAttribute("href", "/c/kara/raffles?locale=en");
     expect(within(screen.getByRole("region", { name: "KARA fan activity" })).getByText("4")).toBeInTheDocument();
@@ -283,8 +284,9 @@ describe("unified MY hub", () => {
     })));
     render(<MyScreen locale={locale} />);
 
-    const shortcut = await screen.findByRole("link", { name: locale === "ko" ? /응모·혜택.*응모 내역 1/ : /Entries & rewards.*1 entries/ });
+    const shortcut = await screen.findByRole("link", { name: locale === "ko" ? /래플 결과.*당첨 여부와 응모 내역 확인/ : /Raffle results.*Results and entry history/ });
     expect(shortcut).toHaveAttribute("href", `/my/raffles?locale=${locale}`);
+    expect(screen.queryByRole("region", { name: locale === "ko" ? "결과 발표" : "Results announced" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: locale === "ko" ? "받은 혜택" : "My rewards" })).not.toBeInTheDocument();
   });
 
@@ -294,7 +296,7 @@ describe("unified MY hub", () => {
     })));
     render(<MyScreen locale="ko" />);
 
-    expect(await screen.findByRole("link", { name: /응모·혜택/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
+    expect(await screen.findByRole("link", { name: /래플 결과.*당첨 여부와 응모 내역 확인/ })).toHaveAttribute("href", "/my/raffles?locale=ko");
     expect(screen.queryByRole("heading", { name: "받은 혜택" })).not.toBeInTheDocument();
   });
 

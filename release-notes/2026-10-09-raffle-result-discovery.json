@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "홈 배너와 MY, 최애 페이지에서 발표된 래플 결과를 쉽게 찾을 수 있도록 안내를 추가했어요.",
+    "결과가 발표되면 홈에서는 발표 배너를 먼저 보여주고, MY와 최애 페이지 상단에서 내 결과 확인으로 이동할 수 있어요.",
+    "응모 종료와 결과 발표를 구분하고, 로그인 후에도 결과 확인 화면으로 돌아올 수 있어요.",
+    "첨부 이미지는 예시 데이터를 사용한 로컬 검증 화면입니다."
+  ],
+  "path": "/my/raffles",
+  "images": [
+    "release-notes/images/2026-10-09-raffle-results-home.png",
+    "release-notes/images/2026-10-09-raffle-results-my.png",
+    "release-notes/images/2026-10-09-raffle-results-creator.png"
+  ]
+}

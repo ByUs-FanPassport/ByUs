@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "한국어로 보는 한국어 게시물처럼 같은 언어로 판별되는 글과 이모지·주소만 있는 글에는 번역 보기가 나타나지 않아요.",
+    "다른 언어의 글은 본문 바로 아래에서 번역하고 원문으로 돌아갈 수 있어요. 짧거나 언어가 불분명한 글은 번역 기능을 유지해요.",
+    "첨부 이미지는 예시 게시물로 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/community",
+  "images": [
+    "release-notes/images/2026-10-09-contextual-translation-mobile.png",
+    "release-notes/images/2026-10-09-contextual-translation-desktop.png"
+  ]
+}

@@ -3,6 +3,9 @@
   padding-top: 64px;
   padding-bottom: 96px;
 }
+.main:focus {
+  outline: none;
+}
 .layout {
   width: min(100%, 720px);
   margin: 0 auto;

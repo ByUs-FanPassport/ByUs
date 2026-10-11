@@ -15,6 +15,13 @@ describe("notification AWS deployment contract", () => {
       'function_name="byus-notification-worker-${environment}"',
     );
     expect(script).not.toContain("byus-mint-worker");
+    expect(script.match(/--timeout 300/g)).toHaveLength(2);
+    expect(script).toContain("--reserved-concurrent-executions 1");
+    const notificationTemplate = readFileSync(
+      resolve(root, "infrastructure/aws/notification-worker-template.yaml"), "utf8",
+    ).split("  BenefitMaintenanceFunction:")[0]!;
+    expect(notificationTemplate).toContain("Timeout: 300");
+    expect(notificationTemplate).toContain("ReservedConcurrentExecutions: 1");
   });
   it("creates a one-minute EventBridge target with exact invocation input and permission", () => {
     expect(script).toContain("rate(1 minute)");

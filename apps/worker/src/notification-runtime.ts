@@ -17,7 +17,10 @@ import { runTelegramAlertWorkerOnce } from "./telegram-alert-worker.js";
 import { runTelegramCommandWorkerOnce } from "./telegram-command-worker.js";
 import { runTelegramCertificationWorkerOnce } from "./telegram-certification-worker.js";
 
-async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
+async function runFanNotificationsOnce(
+  env: NotificationWorkerEnv,
+  remainingTimeInMillis?: () => number,
+) {
   const push = await new NotificationWorker(
     SupabaseNotificationQueue.create(
       env.SUPABASE_URL,
@@ -39,7 +42,7 @@ async function runFanNotificationsOnce(env: NotificationWorkerEnv) {
   const sink=new NotificationTestSinkSender(queue);
   const ses=env.NOTIFICATION_EXTERNAL_MODE==="ses_email"?new SesEmailSender({region:env.SES_REGION!,fromEmail:env.SES_FROM_EMAIL!,storageOrigin:new URL(env.SUPABASE_URL).origin}):null;
   const senders=env.NOTIFICATION_EXTERNAL_MODE==="test_sink"?{email:sink,kakao:sink}:ses?{email:ses,kakao:ses}:{email:new EmailSender({url:env.EMAIL_PROVIDER_URL!,token:env.EMAIL_PROVIDER_TOKEN!}),kakao:new KakaoSender({url:env.KAKAO_PROVIDER_URL!,token:env.KAKAO_PROVIDER_TOKEN!})};
-  const external=await new ExternalNotificationWorker(queue,senders,{workerId:`${env.NOTIFICATION_WORKER_ID}:external`,batchSize:env.NOTIFICATION_WORKER_BATCH_SIZE,leaseSeconds:env.NOTIFICATION_WORKER_LEASE_SECONDS}).runOnce();
+  const external=await new ExternalNotificationWorker(queue,senders,{workerId:`${env.NOTIFICATION_WORKER_ID}:external`,batchSize:env.NOTIFICATION_EXTERNAL_MODE==="ses_email"?env.NOTIFICATION_EMAIL_BATCH_SIZE:env.NOTIFICATION_WORKER_BATCH_SIZE,leaseSeconds:env.NOTIFICATION_EXTERNAL_MODE==="ses_email"?300:env.NOTIFICATION_WORKER_LEASE_SECONDS,...(remainingTimeInMillis ? { remainingTimeInMillis } : {})}).runOnce();
   return push+external;
 }
 
@@ -55,10 +58,13 @@ export async function runKakaoNotificationsOnce(env: NotificationWorkerEnv) {
   ).runOnce();
 }
 
-export async function runNotificationWorkerOnce(env: NotificationWorkerEnv) {
+export async function runNotificationWorkerOnce(
+  env: NotificationWorkerEnv,
+  remainingTimeInMillis?: () => number,
+) {
   // Each queue advances independently. Newly queued reminders can dispatch next tick.
   const results = await Promise.allSettled([
-    runFanNotificationsOnce(env),
+    runFanNotificationsOnce(env, remainingTimeInMillis),
     runBusinessInquiryOnce(env),
     runRaffleRecipientRemindersOnce(env),
     runKakaoNotificationsOnce(env),

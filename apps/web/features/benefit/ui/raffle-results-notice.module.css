@@ -1,0 +1,10 @@
+.notice { display:flex; align-items:center; flex-wrap:wrap; gap:16px; box-sizing:border-box; }
+.notice * { box-sizing:border-box; }
+.icon { display:grid; place-items:center; flex:none; width:48px; height:48px; border-radius:16px; color:var(--color-service-ink); background:var(--color-surface); }
+.icon svg { width:24px; height:24px; }
+.copy { flex:1 1 220px; min-width:0; }
+.copy h2 { margin:0; color:var(--color-ink); font-size:20px; font-weight:750; line-height:1.35; text-wrap:pretty; overflow-wrap:anywhere; }
+.copy p { margin:8px 0 0; color:var(--color-muted); font-size:16px; line-height:1.5; overflow-wrap:anywhere; }
+.notice > a { flex:none; max-width:100%; color:#fff; }
+@media (min-width:768px) { .copy h2 { font-size:24px; } }
+@media (max-width:599px) { .icon { width:44px; height:44px; } .copy { flex-basis:calc(100% - 60px); } .notice > a { width:100%; } }

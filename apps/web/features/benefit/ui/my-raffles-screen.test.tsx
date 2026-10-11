@@ -70,7 +70,7 @@ describe("MyRafflesScreen", () => {
   it("uses a login returnTo and never presents auth as not selected", () => {
     authenticated = false;
     render(<MyRafflesScreen locale="en" />);
-    const link = screen.getByRole("link", { name: "Sign in to view raffle history" });
+    const link = screen.getByRole("link", { name: "Sign in to check my results" });
     expect(link.getAttribute("href")).toContain("returnTo=%2Fmy%2Fraffles%3Flocale%3Den");
     expect(screen.queryByText("You weren’t selected this time")).not.toBeInTheDocument();
   });

@@ -24,7 +24,11 @@ function redact(value: string) {
 export class SupabaseExternalNotificationQueue implements ExternalNotificationQueue {
   constructor(private readonly client: Rpc, private readonly environment: "dev" | "prod", private readonly emailOnly = false) {}
   static create(url: string, key: string, environment: "dev" | "prod", emailOnly = false) {
-    return new this(createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }), environment, emailOnly);
+    return new this(createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      ...(emailOnly ? { global: { fetch: (input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(5_000) }) } } : {}),
+    }), environment, emailOnly);
   }
   async claim(workerId: string, batchSize: number, leaseSeconds: number) {
     const { data, error } = await this.client.rpc("claim_email_notification_deliveries_safely", {

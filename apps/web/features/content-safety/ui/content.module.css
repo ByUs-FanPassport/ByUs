@@ -76,3 +76,8 @@
 @media(max-width:479px) { .composeTrigger { padding:8px 14px; }.composeTrigger strong { display:none; }.composerTools { align-items:center; gap:8px; }.visibilityTrigger { margin-left:-10px; }.composer .actions > button { flex:1; } }
 
 .composer .actions button[data-fan-action-emphasis="primary"] { width:auto; min-width:104px; min-height:44px; border-radius:12px; background:var(--fanpage-action-solid,var(--color-ink)); color:#fff; box-shadow:none; }
+
+.translation:has(> .translationButton) > p:first-child { margin-bottom:0; }
+.translationButton { display:inline-flex; align-items:center; min-width:44px; min-height:44px; padding:4px 0; border:0; border-radius:4px; background:transparent; color:var(--color-muted); font:inherit; font-size:13px; text-align:start; cursor:pointer; }
+.translationButton:disabled { opacity:.5; cursor:wait; }
+@media(hover:hover) { .translationButton:hover { color:var(--color-ink); text-decoration:underline; text-underline-offset:3px; } }

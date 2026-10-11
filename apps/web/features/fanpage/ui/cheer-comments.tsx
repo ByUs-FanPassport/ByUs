@@ -83,7 +83,7 @@ function CommentsForOwner({ slug, name, locale }: { slug: string; name: string; 
       {data.comments.length === 0 ? <p className={styles.empty}>{locale === "ko" ? "첫 응원을 남겨 주세요." : translate(locale, localizedMessages.m525a3ea46cff, "Be the first to leave a cheer.")}</p> : <ul className={styles.commentList}>
         {data.comments.map(comment => <li key={comment.id} data-cheer-id={comment.id}><img src={comment.avatarUrl} alt="" width={32} height={32} /><div>
           <div className={styles.meta}><strong>{comment.nickname}</strong><time dateTime={comment.createdAt}>{new Intl.DateTimeFormat(locale, { calendar: "gregory", month: "short", day: "numeric", timeZone: "Asia/Seoul" }).format(new Date(comment.createdAt))}</time>{comment.isOwner && <button disabled={busy} aria-label={locale === "ko" ? "내 응원댓글 삭제" : translate(locale, localizedMessages.m64d6c6bc70e0, "Delete my cheer")} onClick={() => void mutate(comment.id)}>{locale === "ko" ? "삭제" : translate(locale, localizedMessages.mf83922cd2596, "Delete")}</button>}</div>
-          <ContentTranslation targetType="cheer" targetId={comment.id} locale={locale}><p>{comment.body}</p></ContentTranslation>
+          <ContentTranslation sourceText={comment.body} targetType="cheer" targetId={comment.id} locale={locale}><p>{comment.body}</p></ContentTranslation>
           <ContentActions targetType="cheer" targetId={comment.id} locale={locale} canBlock={!comment.isOwner} onChanged={resource.retry} />
         </div></li>)}
       </ul>}

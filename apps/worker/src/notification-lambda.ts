@@ -58,7 +58,10 @@ function emitMaintenanceMetric(
 export function createNotificationLambdaHandler(
   deps: {
     loadSecret(id: string): Promise<string>;
-    runWorker(env: NotificationWorkerEnv): Promise<number>;
+    runWorker(
+      env: NotificationWorkerEnv,
+      remainingTimeInMillis?: () => number,
+    ): Promise<number>;
     runMaintenance?(env: BenefitMaintenanceEnv): Promise<BenefitMaintenanceResult>;
     emitMaintenanceMetric?: (
       environment: "dev" | "prod",
@@ -73,7 +76,10 @@ export function createNotificationLambdaHandler(
     NOTIFICATION_WORKER_SECRET_ID: source.NOTIFICATION_WORKER_SECRET_ID,
     BENEFIT_MAINTENANCE_ENABLED: source.BENEFIT_MAINTENANCE_ENABLED,
   });
-  return async (event: unknown) => {
+  return async (
+    event: unknown,
+    context?: { getRemainingTimeInMillis(): number },
+  ) => {
     const input = invocation.parse(event);
     if (input.environment !== config.NOTIFICATION_WORKER_ENVIRONMENT)
       throw new Error("notification worker invocation environment mismatch");
@@ -112,6 +118,12 @@ export function createNotificationLambdaHandler(
       ...secret,
       NOTIFICATION_WORKER_ENABLED: "true",
     });
-    return { enabled: true, claimed: await deps.runWorker(env) };
+    return {
+      enabled: true,
+      claimed: await deps.runWorker(
+        env,
+        context ? () => context.getRemainingTimeInMillis() : undefined,
+      ),
+    };
   };
 }

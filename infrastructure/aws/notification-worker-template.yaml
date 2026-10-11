@@ -26,8 +26,9 @@ Resources:
       Runtime: nodejs24.x
       Architectures: [arm64]
       Handler: index.handler
-      Timeout: 60
+      Timeout: 300
       MemorySize: 256
+      ReservedConcurrentExecutions: 1
       Role: !Ref WorkerRoleArn
       Code: { S3Bucket: !Ref CodeBucket, S3Key: !Ref CodeKey }
       Environment:

@@ -91,6 +91,20 @@ it("renders a managed banner with its own artwork and preserves the guide", () =
   expect(container.querySelector('article[aria-hidden="true"]')).toHaveAttribute("inert");
 });
 
+it("puts announced raffle results first while preserving the other banners and controls", () => {
+  const { container } = render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" elinaRaffles={[{
+    id: "11111111-1111-4111-8111-111111111111", benefitId: "22222222-2222-4222-8222-222222222222",
+    title: "한정판 스태츄", summary: "선물", imageUrl: null, winnerQuantity: 1, status: "closed",
+    entryOpensAt: null, entryClosesAt: "2026-10-08T00:00:00Z", resultsPublishedAt: "2026-10-09T00:00:00Z",
+    fulfillmentMethod: "physical_shipping", perFanTicketLimit: null,
+  }]} />);
+  expect(container.querySelector('[data-active="true"]')).toHaveTextContent("래플 결과가 발표됐어요");
+  expect(screen.getByRole("link", { name: "내 결과 확인" })).toHaveAttribute("href", "/my/raffles?locale=ko");
+  fireEvent.click(screen.getByRole("button", { name: "다음 배너" }));
+  expect(screen.getByRole("link", { name: "방송 일정 보기" })).toBeInTheDocument();
+  expect(container.querySelectorAll("article")).toHaveLength(2);
+});
+
 it("retains copy and the CTA when an image cannot load", () => {
   const { container } = render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" />);
   fireEvent.error(container.querySelector("picture img")!);

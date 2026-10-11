@@ -5,6 +5,8 @@ const characterUrl = z.string().regex(/^\/images\/avatars\/(?:star|heart|fairy|g
 const nickname = z.string().min(1).max(80);
 const row = z.object({ rank: z.number().int().positive(), nickname, avatarUrl: characterUrl, points: z.number().int().nonnegative() }).strict();
 export const LEADERBOARD_MIN_FANS = 100;
+export const LEADERBOARD_CATEGORIES = ["all", "knowledge", "live", "mission", "certification"] as const;
+export const leaderboardCategorySchema = z.enum(LEADERBOARD_CATEGORIES);
 export const fanpageSummarySchema = z.object({
   membershipCount: z.number().int().nonnegative(),
   fanCount: z.number().int().nonnegative().optional(),

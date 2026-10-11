@@ -45,6 +45,7 @@ declare
   legacy_benefit uuid:='d2000000-0000-4000-8000-000000000004';
   legacy_campaign uuid:='d9000000-0000-4000-8000-000000000001';
   legacy_live uuid; legacy_creator uuid;
+  discovery_draw uuid:=gen_random_uuid();
   key1 uuid:='d8000000-0000-4000-8000-000000000001';
   result jsonb; state jsonb; public_result jsonb; analytics jsonb;
   celebrity_template jsonb; benefit_template jsonb;
@@ -325,7 +326,33 @@ begin
     raise exception 'legacy LIVE public filter/projection changed';
   end if;
 
-  if has_function_privilege('service_role','public.enter_owned_benefit_v2_before_creator_fan_gate(uuid,uuid,uuid,integer,text,boolean,timestamptz)','execute')
+  public_result:=public.get_public_raffles(
+    (select slug from public.celebrities where id=legacy_creator),'ko',now()+interval '2 days');
+  select x into state from jsonb_array_elements(public_result->'raffles') x where (x->>'benefitId')::uuid=legacy_benefit;
+  if state->>'status'<>'closed' or state->'resultsPublishedAt' is distinct from 'null'::jsonb then
+    raise exception 'closed raffle must not imply published results';
+  end if;
+  insert into public.benefit_draws(id,campaign_id,idempotency_key,algorithm,seed_hash,actor_app_user_id,actor_admin_allowlist_id,correlation_id)
+    values(discovery_draw,legacy_campaign,gen_random_uuid(),'sha256-weighted-rank-v1',repeat('a',64),actor,allowlist,gen_random_uuid());
+  insert into public.benefit_draw_publications(draw_id,campaign_id,actor_app_user_id,actor_admin_allowlist_id,correlation_id,published_at)
+    values(discovery_draw,legacy_campaign,actor,allowlist,gen_random_uuid(),now()+interval '2 days');
+  public_result:=public.get_public_raffles(
+    (select slug from public.celebrities where id=legacy_creator),'ko',now()+interval '2 days');
+  select x into result from jsonb_array_elements(public_result->'raffles') x where (x->>'benefitId')::uuid=legacy_benefit;
+  if (result->>'resultsPublishedAt')::timestamptz is distinct from now()+interval '2 days'
+    or result-'resultsPublishedAt' is distinct from state-'resultsPublishedAt'
+    or result ?| array['winnerId','appUserId','state','enteredTickets'] then
+    raise exception 'public raffle announcement must expose only publication timing';
+  end if;
+  if exists(select 1 from jsonb_array_elements(public.get_public_raffles('creator-raffle-owner','ko',now())->'raffles') x
+    where x->>'resultsPublishedAt' is not null) then
+    raise exception 'announcement crossed campaign boundary';
+  end if;
+
+  if has_function_privilege('anon','public.get_public_raffles(text,public.content_locale,timestamptz)','execute')
+    or has_function_privilege('authenticated','public.get_public_raffles(text,public.content_locale,timestamptz)','execute')
+    or not has_function_privilege('service_role','public.get_public_raffles(text,public.content_locale,timestamptz)','execute')
+    or has_function_privilege('service_role','public.enter_owned_benefit_v2_before_creator_fan_gate(uuid,uuid,uuid,integer,text,boolean,timestamptz)','execute')
     or has_function_privilege('service_role','public.submit_benefit_application_before_creator_raffle_gate(uuid,uuid,uuid,timestamptz)','execute')
     or has_function_privilege('service_role','public.claim_benefit_before_creator_raffle_gate(uuid,uuid,uuid,timestamptz)','execute')
     or has_function_privilege('anon','public.save_admin_creator_benefit_campaign(uuid,uuid,uuid,uuid,integer,uuid,timestamptz,timestamptz,jsonb,boolean)','execute')

@@ -388,7 +388,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
           </section>
 
           <div className={styles.mobileGuides}>
-            <HomeEntryCards locale={locale} celebrities={celebrities} />
+            <HomeEntryCards locale={locale} celebrities={celebrities} elinaRaffles={elinaRaffles} />
           </div>
 
           <section id="upcoming" className={styles.contentSection} aria-labelledby="upcoming-heading">
@@ -436,7 +436,7 @@ function GuestHomeContent({ elinaRaffles, homeBanners = [], celebrities, celebri
           {personalization.state.status === "authenticated-ready" ? <AuthenticatedHomeSummary locale={locale} summary={personalization.state.summary} placement="desktop" featuredLives={featuredLives} celebrities={celebrities} creatorsUnavailable={contentErrors.celebrities} /> : null}
           {personalization.state.status === "authenticated-error" ? <PersonalizationError locale={locale} retry={personalization.retry} /> : null}
           {personalization.state.status === "auth-loading" || personalization.state.status === "authenticated-loading" ? <PersonalizationLoading locale={locale} /> : null}
-          <HomeEntryCards locale={locale} celebrities={celebrities} />
+          <HomeEntryCards locale={locale} celebrities={celebrities} elinaRaffles={elinaRaffles} />
         </aside>
       </div>
 

@@ -196,7 +196,10 @@ describe("canonical 03 guest home", () => {
   it.each(["closed", "cancelled"] as const)("does not promote %s raffle dates as open entries", status => {
     render(<GuestHome {...defaultProps} featuredLives={[]} homeBanners={[]} elinaRaffles={[{ ...elinaRaffles[0], status }]} />);
     expect(screen.queryByText(/2026.10.07/)).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "엘리나와 함께 뱅크시 전시 보러 가요" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: status === "closed" ? "응모가 끝났어요" : "래플이 취소됐어요" })).toBeInTheDocument();
+    for (const link of screen.getAllByRole("link", { name: "응모 내역 확인" })) {
+      expect(link).toHaveAttribute("href", "/my/raffles?locale=ko");
+    }
   });
 
   it("keeps different prize deadlines separate and localizes the login entry", () => {

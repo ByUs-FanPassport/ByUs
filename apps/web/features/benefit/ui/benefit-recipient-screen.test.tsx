@@ -88,7 +88,17 @@ describe("Benefit recipient screen", () => {
     fireEvent.click(submit);
 
     expect(await screen.findByText("수령 정보를 전달했어요.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "수령 정보 확인·수정" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "수령 정보를 전달했어요." })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "수령 정보 전달하기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "수령 정보 확인·수정" }));
+    expect(screen.getByLabelText(/이름/)).toHaveFocus();
+    const unchangedSubmit = screen.getByRole("button", { name: "수령 정보 전달하기" });
+    expect(unchangedSubmit).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(unchangedSubmit);
+    expect(unchangedSubmit).toBeDisabled();
     const posts = fetcher.mock.calls.filter(([, init]) => (init as RequestInit | undefined)?.method === "POST");
     expect(posts).toHaveLength(1);
     expect(JSON.parse(String((posts[0][1] as RequestInit).body))).toEqual({
@@ -139,15 +149,49 @@ describe("Benefit recipient screen", () => {
     expect(fetcher.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === "POST")).toBe(false);
   });
 
-  it("hydrates an editable Unicode recipient", async () => {
+  it("keeps a saved Unicode recipient in the completed view until explicitly editing", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(rewardsResponse(reward("on_site_pickup", "ready")))
       .mockResolvedValueOnce(detailsResponse({ policy: pickupPolicy, recipient: { name: "山田 太郎", phone: "+819012345678", phoneCountry: "JP", postalCode: null, address1: null, address2: null, shippingCountry: null } })));
     render(<BenefitRecipientScreen winnerId={winnerId} locale="en" />);
-    expect(await screen.findByRole("heading", { name: "Review recipient details" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your recipient details were submitted." })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Review recipient details" }));
     expect(screen.getByLabelText(/Name/)).toHaveValue("山田 太郎");
     expect(screen.getByRole("combobox", { name: "Country calling code" })).toHaveTextContent("JP+81");
     expect(screen.getByText("Last 4 digits of phone number").nextSibling).toHaveTextContent("5678");
+    expect(screen.getByRole("button", { name: "Submit recipient details" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Name/), { target: { value: "山田 花子" } });
+    expect(screen.getByRole("button", { name: "Submit recipient details" })).toBeEnabled();
+  });
+
+  it.each(["saved", "response_lost", "not_saved"] as const)("reconciles an explicit edit after %s", async (outcome) => {
+    const recipient = { name: "Alex Kim", phone: "+12133734253", phoneCountry: "US", postalCode: null, address1: null, address2: null, shippingCountry: null };
+    const saved = outcome !== "not_saved";
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(rewardsResponse(reward("on_site_pickup", "ready")))
+      .mockResolvedValueOnce(detailsResponse({ policy: pickupPolicy, revision: 2, recipient }))
+      .mockResolvedValueOnce(outcome === "saved"
+        ? Response.json({ winnerId, method: "on_site_pickup", status: "ready", revision: 3 })
+        : Response.json({}, { status: 503 }))
+      .mockResolvedValueOnce(rewardsResponse(reward("on_site_pickup", "ready")))
+      .mockResolvedValueOnce(detailsResponse({ policy: pickupPolicy, revision: saved ? 3 : 2, recipient: saved ? { ...recipient, name: "Alex Lee" } : recipient }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<BenefitRecipientScreen winnerId={winnerId} locale="en" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Review recipient details" }));
+    fireEvent.change(screen.getByLabelText(/Name/), { target: { value: "Alex Lee" } });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Submit recipient details" }));
+    if (saved) {
+      expect(await screen.findByRole("heading", { name: "Your recipient details were submitted." })).toBeInTheDocument();
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    } else {
+      expect(await screen.findByText("Status confirmed. You can submit again.")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Name/)).toHaveValue("Alex Lee");
+      expect(screen.getByRole("checkbox")).not.toBeChecked();
+      expect(screen.queryByRole("heading", { name: "Your recipient details were submitted." })).not.toBeInTheDocument();
+    }
+    expect(fetcher.mock.calls.filter(([, init]) => (init as RequestInit | undefined)?.method === "POST")).toHaveLength(1);
   });
 
   it("shows a passed deadline with support and does not auto-cancel the win", async () => {
