@@ -39,6 +39,14 @@ export interface AvatarImageDownload {
   contentType: string;
 }
 
+export interface PublicAvatarRepository {
+  publicImage(publicImageId: string, revision: number): Promise<AvatarImageDownload | null>;
+}
+
+const publicImageSchema = z.object({
+  objectPath: z.string().regex(/^[0-9a-f-]{36}\/[0-9]+-[0-9a-f-]{36}\.webp$/),
+}).strict().nullable();
+
 export interface AvatarRepository {
   ensure(appUserId: string): Promise<Avatar>;
   selectCharacter(input: {
@@ -233,6 +241,27 @@ export class SupabaseAvatarRepository implements AvatarRepository {
     };
   }
 
+  async publicImage(publicImageId: string, revision: number): Promise<AvatarImageDownload | null> {
+    const lookup = async () => {
+      const { data, error } = await this.client.rpc("read_public_avatar_image", {
+        p_public_image_id: publicImageId,
+        p_revision: revision,
+      });
+      if (error) throw mapRpcError(error);
+      const parsed = publicImageSchema.safeParse(data);
+      if (!parsed.success) throw new AvatarRepositoryError("AVATAR_UNAVAILABLE");
+      return parsed.data;
+    };
+    const current = await lookup();
+    if (!current) return null;
+    const result = await this.client.storage.from(AVATAR_BUCKET).download(current.objectPath);
+    // A photo may be removed or replaced while its private object is downloading.
+    const latest = await lookup();
+    if (latest?.objectPath !== current.objectPath) return null;
+    if (result.error || !result.data) throw new AvatarRepositoryError("STORAGE_UNAVAILABLE");
+    return { bytes: await result.data.arrayBuffer(), contentType: "image/webp" };
+  }
+
   private async mutate(
     name: string,
     parameters: Record<string, unknown>,
@@ -281,7 +310,7 @@ export class SupabaseAvatarRepository implements AvatarRepository {
 export function createSupabaseAvatarRepository(
   config: { url: string; serviceRoleKey: string },
   existingClient?: AvatarClient,
-): AvatarRepository {
+): AvatarRepository & PublicAvatarRepository {
   const client =
     existingClient ??
     (createClient(config.url, config.serviceRoleKey, {

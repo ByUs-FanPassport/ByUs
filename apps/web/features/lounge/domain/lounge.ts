@@ -1,17 +1,16 @@
 import { z } from "zod";
+import { publicAvatarUrlSchema } from "../../profile/domain/avatar";
 
 export const LOUNGE_EMOJIS = ["❤️", "👍", "😂", "🥹", "🔥", "👏"] as const;
 
-const avatarUrlSchema = z.string().regex(
-  /^\/images\/avatars\/(?:star|heart|fairy|ghost)-(?:cream|pink|lavender)\.webp$/,
-);
+
 const nicknameSchema = z.string().min(1).max(80);
 
 export const loungeMessageSchema = z.object({
   id: z.uuid(),
   body: z.string().min(1).max(1000),
   nickname: nicknameSchema,
-  avatarUrl: avatarUrlSchema,
+  avatarUrl: publicAvatarUrlSchema,
   createdAt: z.iso.datetime({ offset: true }),
   isOwner: z.boolean(),
   replyTo: z.object({

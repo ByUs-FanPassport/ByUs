@@ -43,6 +43,7 @@ jobs:
         run: >-
           npm run test --workspace @byus/web -- --maxWorkers=3
           features/auth server/auth server/fan-auth
+          server/avatar features/profile/domain/public-avatar.test.ts
           features/community-stamps server/community-stamps
           server/notice/notice-admin-security.test.ts server/notification
           server/fan-posts server/content-translation server/schedules

@@ -1,9 +1,8 @@
 import { z } from "zod";
+import { publicAvatarUrlSchema } from "../../profile/domain/avatar";
 import { commentSchema } from "./community";
 
-const characterUrlSchema = z.string().regex(
-  /^\/images\/avatars\/(?:star|heart|fairy|ghost)-(?:cream|pink|lavender)\.webp$/,
-);
+
 const nicknameSchema = z.string().min(1).max(80);
 
 export const fanCommunitySchema = z.object({
@@ -12,7 +11,7 @@ export const fanCommunitySchema = z.object({
   publicFanCount: z.number().int().nonnegative(),
   fans: z.array(z.object({
     nickname: nicknameSchema,
-    avatarUrl: characterUrlSchema,
+    avatarUrl: publicAvatarUrlSchema,
   }).strict()).max(24),
 }).strict();
 

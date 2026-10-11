@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { publicAvatarUrlSchema } from "../../profile/domain/avatar";
 import { APP_LOCALES } from "@/i18n/locales";
 
 export const targetTypeSchema = z.enum(["fan_post", "fan_post_comment", "notice", "notice_comment", "cheer", "live_submission"]);
 export type TargetType = z.infer<typeof targetTypeSchema>;
 export const visibilitySchema = z.enum(["public", "members"]);
 const instant = z.iso.datetime({ offset: true });
-const avatar = z.string().regex(/^\/images\/avatars\/(?:star|heart|fairy|ghost)-(?:cream|pink|lavender)\.webp$/);
-export const authorSchema = z.object({ nickname: z.string().min(1).max(80), avatarUrl: avatar }).strict();
+
+export const authorSchema = z.object({ nickname: z.string().min(1).max(80), avatarUrl: publicAvatarUrlSchema }).strict();
 export const assetSchema = z.object({ id: z.uuid(), width: z.number().int().positive(), height: z.number().int().positive() }).strict();
 export type ContentAsset = z.infer<typeof assetSchema>;
 export const postSchema = z.object({
@@ -34,7 +35,7 @@ export const translationInputSchema = targetSchema.extend({ targetLocale: z.enum
 export const translationSchema = z.object({
   targetType: targetTypeSchema, targetId: z.uuid(), targetLocale: z.enum(APP_LOCALES), translatedText: z.string().min(1).max(100_000), sourceRevision: z.number().int().positive(), cached: z.boolean(),
 }).strict();
-export const blockSchema = z.object({ id: z.uuid(), nickname: z.string(), avatarUrl: avatar, createdAt: instant }).strict();
+export const blockSchema = z.object({ id: z.uuid(), nickname: z.string(), avatarUrl: publicAvatarUrlSchema, createdAt: instant }).strict();
 export const blocksSchema = z.object({ items: z.array(blockSchema) }).strict();
 export const reportSchema = z.object({
   id: z.uuid(), targetType: targetTypeSchema, targetId: z.uuid(), targetRevision: z.number().int().positive(),

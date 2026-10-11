@@ -37,6 +37,54 @@ function client() {
 }
 
 describe("avatar repository CAS and private object lifecycle", () => {
+  it("downloads only the current public photo and rechecks it before returning", async () => {
+    const db = client();
+    const objectPath = rawAvatar().objectPath;
+    db.domainRpc.mockResolvedValue({ data: { objectPath }, error: null });
+    const repository = new SupabaseAvatarRepository(db as never);
+    expect(await repository.publicImage(generatedId, 2)).toMatchObject({ contentType: "image/webp" });
+    expect(db.domainRpc).toHaveBeenCalledTimes(2);
+    expect(db.domainRpc).toHaveBeenCalledWith("read_public_avatar_image", { p_public_image_id: generatedId, p_revision: 2 });
+    expect(db.download).toHaveBeenCalledWith(objectPath);
+  });
+
+  it("never downloads unavailable public photos and discards a photo revoked during download", async () => {
+    const db = client();
+    db.domainRpc.mockResolvedValueOnce({ data: null, error: null });
+    const repository = new SupabaseAvatarRepository(db as never);
+    expect(await repository.publicImage(generatedId, 2)).toBeNull();
+    expect(db.download).not.toHaveBeenCalled();
+    db.domainRpc.mockResolvedValueOnce({ data: { objectPath: rawAvatar().objectPath }, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
+    expect(await repository.publicImage(generatedId, 2)).toBeNull();
+    expect(db.download).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails closed on invalid public metadata, RPC errors, and storage failures", async () => {
+    const db = client();
+    const repository = new SupabaseAvatarRepository(db as never);
+    db.domainRpc.mockResolvedValueOnce({ data: { objectPath: "../private" }, error: null });
+    await expect(repository.publicImage(generatedId, 2)).rejects.toMatchObject({ code: "AVATAR_UNAVAILABLE" });
+    expect(db.download).not.toHaveBeenCalled();
+    db.domainRpc.mockResolvedValueOnce({ data: null, error: { message: "failure" } });
+    await expect(repository.publicImage(generatedId, 2)).rejects.toMatchObject({ code: "AVATAR_UNAVAILABLE" });
+    db.domainRpc.mockResolvedValue({ data: { objectPath: rawAvatar().objectPath }, error: null });
+    db.download.mockResolvedValueOnce({ data: null, error: { message: "missing" } } as never);
+    await expect(repository.publicImage(generatedId, 2)).rejects.toMatchObject({ code: "STORAGE_UNAVAILABLE" });
+  });
+
+  it("discards downloads when the final lookup changes or fails", async () => {
+    const db = client();
+    const repository = new SupabaseAvatarRepository(db as never);
+    const current = { data: { objectPath: rawAvatar().objectPath }, error: null };
+    db.domainRpc.mockResolvedValueOnce(current)
+      .mockResolvedValueOnce({ data: { objectPath: `${userId}/3-${generatedId}.webp` }, error: null });
+    expect(await repository.publicImage(generatedId, 2)).toBeNull();
+    db.domainRpc.mockResolvedValueOnce(current)
+      .mockResolvedValueOnce({ data: null, error: { message: "lookup failed" } });
+    await expect(repository.publicImage(generatedId, 2)).rejects.toMatchObject({ code: "AVATAR_UNAVAILABLE" });
+  });
+
   it("lazily ensures one owner-scoped avatar through the service RPC", async () => {
     const db = client();
     db.domainRpc.mockResolvedValueOnce({

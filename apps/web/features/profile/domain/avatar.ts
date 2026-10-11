@@ -18,6 +18,12 @@ export const AVATAR_CHARACTER_IDS = [
 export const avatarCharacterIdSchema = z.enum(AVATAR_CHARACTER_IDS);
 export type AvatarCharacterId = z.infer<typeof avatarCharacterIdSchema>;
 
+export const publicAvatarUrlSchema = z.string().refine((value) => {
+  if (/^\/images\/avatars\/(?:star|heart|fairy|ghost)-(?:cream|pink|lavender)\.webp$/.test(value)) return true;
+  const match = /^\/api\/fan-avatars\/([^/?#]+)\?revision=(0|[1-9][0-9]{0,9})$/.exec(value);
+  return match !== null && z.uuid().safeParse(match[1]).success && Number(match[2]) <= 2147483647;
+}, "Invalid public avatar URL");
+
 export const AVATAR_CHARACTER_CATALOG = AVATAR_CHARACTER_IDS.map((id) => ({
   id,
   assetPath: `/images/avatars/${id}.webp`,
