@@ -590,7 +590,7 @@ describe("canonical 03 guest home", () => {
       json: async () => ({
         summary: {
           profile: { nickname: "카밀리아" },
-          creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35, stageProgress: { policyVersion: 2, current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 }, next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 }, remaining: 15, progressPercent: 0 } }, ticketBalance: 4, firstReaction: null }],
+          creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/images/guest-home/kara-card.jpg", isPublic: true }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Silver", score: 15, remainingToNextTier: 35, stageProgress: { policyVersion: 2, current: { key: "silver-1", tier: "Silver", subdivision: 1, rank: 2, minimumScore: 15 }, next: { key: "silver-2", tier: "Silver", subdivision: 2, rank: 3, minimumScore: 30 }, remaining: 15, progressPercent: 0 } }, ticketBalance: 4, firstReaction: null }],
           live: { upcoming: [{ id: featuredLive.live.id, slug: "kara-live", title: "KARA LIVE", startsAt: "2026-07-31T11:00:00.000Z", effectiveStatus: "scheduled", attended: false }], history: [] },
           rewards: { availableCount: 0, entries: 0, items: [] },
           collection: { passportCount: 1, stampCount: 2, collectibleCount: 0, recent: [] },
@@ -690,9 +690,9 @@ describe("canonical 03 guest home", () => {
       return Response.json({ summary: {
       profile: { nickname: "카밀리아" },
       creators: [
-        { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
-        { celebrity: { slug: "katseye", name: "KATSEYE", image: "/katseye.jpg" }, relationship: "passport", passport: { id: "22222222-2222-4222-8222-222222222222", tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: null },
-        { celebrity: { slug: "reaction-only", name: "Reaction Only", image: "/reaction.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
+        { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
+        { celebrity: { slug: "katseye", name: "KATSEYE", image: "/katseye.jpg", isPublic: true }, relationship: "passport", passport: { id: "22222222-2222-4222-8222-222222222222", tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: null },
+        { celebrity: { slug: "reaction-only", name: "Reaction Only", image: "/reaction.jpg", isPublic: false }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
       ],
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 2, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
     } });
@@ -724,8 +724,8 @@ describe("canonical 03 guest home", () => {
     const hiddenId = "11111111-1111-4111-8111-111111111111";
     const visibleId = "22222222-2222-4222-8222-222222222222";
     const ownedCreators = [
-      { celebrity: { slug: "unpublished", name: "Hidden favorite", image: "/hidden.jpg" }, relationship: "passport", passport: { id: hiddenId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
-      { celebrity: { slug: "elina", name: "엘리나", image: "/images/guest-home/elina-card.jpg" }, relationship: "passport", passport: { id: visibleId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
+      { celebrity: { slug: "unpublished", name: "Hidden favorite", image: "/hidden.jpg", isPublic: false }, relationship: "passport", passport: { id: hiddenId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
+      { celebrity: { slug: "elina", name: "엘리나", image: "/images/guest-home/elina-card.jpg", isPublic: true }, relationship: "passport", passport: { id: visibleId, tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 0, firstReaction: null },
     ];
     const fetcher = vi.fn(async (input: string | URL | Request) => {
       const url = String(input);
@@ -807,7 +807,7 @@ describe("canonical 03 guest home", () => {
         firstReaction: { reactionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1", stampId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2", activityId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3", reactionType: "FirstReaction", mintStatus: "queued", txHash: null, issuedAt: "2026-09-11T00:00:00Z" },
       } }) };
       return { ok: true, json: async () => ({ summary: {
-      profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
+      profile: { nickname: "Fan" }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 10, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
       } }) };
     }));
@@ -825,7 +825,7 @@ describe("canonical 03 guest home", () => {
     const passportId = "11111111-1111-4111-8111-111111111111";
     const summary = {
       profile: { nickname: "Fan" },
-      creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: passportId, tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
+      creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id: passportId, tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 3, firstReaction: null }],
       live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 1, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,
     };
     const fetcher = vi.fn(async (input: string | URL | Request) => {
@@ -855,13 +855,13 @@ describe("canonical 03 guest home", () => {
     privy.user.id = "owner-b";
     view.rerender(<GuestHome {...defaultProps} featuredLives={[]} />);
     expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
-    await act(async () => { resolveOld(Response.json({ summary: { ...empty, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 0, firstReaction: null }] } })); });
+    await act(async () => { resolveOld(Response.json({ summary: { ...empty, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Gold", score: 50, remainingToNextTier: 70 }, ticketBalance: 0, firstReaction: null }] } })); });
     expect(screen.getByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
   });
 
   it("does not mark reaction-only creators complete and removes role text only inside cards", async () => {
     privy.authenticated = true;
-    const summary = { profile: { nickname: null }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-01T00:00:00Z", txHash: null } }], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
+    const summary = { profile: { nickname: null }, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-01T00:00:00Z", txHash: null } }], live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] }, collection: { passportCount: 0, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0 };
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     const { container } = render(<GuestHome {...defaultProps} featuredLives={[]} />);
     expect(await screen.findByRole("link", { name: "KARA 입덕하기" })).not.toHaveAttribute("data-verified");
@@ -946,8 +946,8 @@ function favoriteSummary() {
   return {
     profile: { nickname: "Fan" },
     creators: [
-      { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
-      { celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg" }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
+      { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 1, remainingToNextTier: 14 }, ticketBalance: 1, firstReaction: null },
+      { celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg", isPublic: true }, relationship: "first_reaction_only", passport: null, ticketBalance: 0, firstReaction: { completedAt: "2026-09-03T10:00:00.000Z", txHash: null } },
     ],
     live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] },
     collection: { passportCount: 1, stampCount: 0, collectibleCount: 0, recent: [] }, unreadNotificationCount: 0,

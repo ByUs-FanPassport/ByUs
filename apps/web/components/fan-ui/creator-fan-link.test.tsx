@@ -8,7 +8,7 @@ const getAccessToken = vi.fn(async () => "token");
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated, user: { id: ownerId }, getAccessToken }) }));
 const summary = (verified: boolean, slug = "elina") => ({
   profile: { nickname: null },
-  creators: [{ celebrity: { slug, name: "엘리나", image: "/elina.jpg" }, relationship: verified ? "passport" : "first_reaction_only",
+  creators: [{ celebrity: { slug, name: "엘리나", image: "/elina.jpg", isPublic: true }, relationship: verified ? "passport" : "first_reaction_only",
     passport: verified ? { id: "11111111-1111-4111-8111-111111111111", tier: "Bronze", score: 0, remainingToNextTier: 10 } : null,
     ticketBalance: 0, firstReaction: { completedAt: "2026-09-01T00:00:00Z", txHash: null } }],
   live: { upcoming: [], history: [] }, rewards: { availableCount: 0, entries: 0, items: [] },
