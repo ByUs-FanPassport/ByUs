@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-import { createInstagramCallbackHandler, createInstagramConfirmHandler, createInstagramInviteHandler, createInstagramStartHandler, type InstagramRouteDependencies } from "./routes";
+import { createInstagramCallbackHandler, createInstagramConfirmHandler, createInstagramDeletionStatusHandler, createInstagramInviteHandler, createInstagramStartHandler, type InstagramRouteDependencies } from "./routes";
 import { secretHash } from "./crypto";
 import type { InstagramRepository } from "./repository";
 
@@ -69,6 +69,8 @@ describe("Instagram creator browser flow", () => {
     expect(html).not.toContain("<script");
     expect(html).toContain("연결 대상");
     expect(html).toContain("@creator_test");
+    expect(html).toContain("Kyaa 팬페이지");
+    expect(html).not.toContain("ByUs 팬페이지");
   });
   it("rejects foreign origin, missing cookie, duplicate and missing CSRF without consuming invite", async () => {
     const { deps, repository } = setup();
@@ -105,6 +107,7 @@ describe("Instagram creator browser flow", () => {
     expect(response.status).toBe(200);
     expect(repository.transition.mock.calls.map((call) => call[0])).toEqual(["peek_state", "consume", "cancel"]);
     expect(service.callback).not.toHaveBeenCalled();
+    expect(await response.text()).toContain("Kyaa 담당자");
   });
   it("redirects from OAuth code URL to a clean confirmation URL with HttpOnly pending secret", async () => {
     const { deps } = setup();
@@ -136,10 +139,15 @@ describe("Instagram creator browser flow", () => {
     expect((await confirm(form("/connect/instagram/confirm", { action: "confirm", csrf: "wrong" }))).status).toBe(400);
     expect(repository.transition).toHaveBeenCalledTimes(1);
     expect(repository.transition).toHaveBeenCalledWith("peek_pending", secretHash(pending), secretHash(browser));
+    const cancelled = await confirm(form("/connect/instagram/confirm", { action: "cancel", csrf: secretHash(`instagram-form:${browser}:${pending}`) }));
+    expect(await cancelled.text()).toContain("Kyaa에 Instagram 계정을 연결하지 않았어요");
     service.sync.mockRejectedValueOnce(new Error("media unavailable"));
     const response = await confirm(form("/connect/instagram/confirm", { action: "confirm", csrf: secretHash(`instagram-form:${browser}:${pending}`) }));
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain("Instagram을 연결했어요");
+    const html = await response.text();
+    expect(html).toContain("Instagram을 연결했어요");
+    expect(html).toContain("Kyaa 담당자");
+    expect(html).not.toContain("ByUs 담당자");
     expect(repository.transition).toHaveBeenCalledWith("confirm", secretHash(pending), secretHash(browser));
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
   });
@@ -158,5 +166,21 @@ describe("Instagram creator browser flow", () => {
     expect(html).toContain('<html lang="en">');
     expect(html).toContain("Privacy Policy");
     expect(html).toContain("Connect this account");
+    expect(html).toContain("Kyaa cannot publish posts or send messages");
+    expect(html).not.toContain("ByUs cannot publish posts or send messages");
+  });
+
+  it.each([
+    ["ko", "Kyaa에 저장된 Instagram 연결 정보"],
+    ["en", "stored by Kyaa"],
+  ])("uses Kyaa on the %s deletion confirmation page", async (locale, copy) => {
+    const { deps, repository } = setup();
+    repository.deletionStatus.mockResolvedValue(true);
+    const response = await createInstagramDeletionStatusHandler(deps)(new Request(`${origin}/connect/instagram/deletion-status?id=${secret}&locale=${locale}`));
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain(copy);
+    expect(html).not.toContain("stored by ByUs");
+    expect(html).not.toContain("ByUs에 저장된");
   });
 });

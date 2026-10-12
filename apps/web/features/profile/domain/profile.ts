@@ -17,7 +17,7 @@ export type FanProfile = z.infer<typeof fanProfileSchema>;
 
 const prohibitedNicknameEntries = [
   "admin", "administrator", "system", "operator", "official",
-  "관리자", "운영자", "공식", "byus", "바이어스",
+  "관리자", "운영자", "공식", "byus", "바이어스", "kyaa",
   "fuck", "shit", "bitch", "시발", "씨발", "병신",
 ] as const;
 

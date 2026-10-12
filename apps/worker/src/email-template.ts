@@ -421,7 +421,7 @@ export function renderNotificationEmail(
             </tr>
             <tr>
               <td style="padding:16px 24px 20px;border-top:1px solid #eeeeee;font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic',Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#666666;text-align:center;">
-                <div style="font-weight:400;">kyaa · Your Bias</div>
+                <div style="font-weight:400;">Kyaa. Every Fan Moment Counts.</div>
                 <div style="padding-top:7px;"><a href="${settingsUrl}" style="color:#666666;text-decoration:underline;">${settings}</a></div>
               </td>
             </tr>

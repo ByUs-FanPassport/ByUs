@@ -1,7 +1,7 @@
 import { ByusDayRsvpManager } from "@/components/admin/byus-day-rsvp-manager";
 import { NO_INDEX } from "@/seo/metadata";
 
-export const metadata = { title: "ByUs Day RSVP | kyaa Admin", robots: NO_INDEX };
+export const metadata = { title: "kyaa wave registrations | kyaa Admin", robots: NO_INDEX };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
   const locale = (await searchParams).lang === "en" ? "en" : "ko";

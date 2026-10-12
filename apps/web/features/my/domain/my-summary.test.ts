@@ -4,7 +4,7 @@ import { mySummarySchema } from "./my-summary";
 const id = "11111111-1111-4111-8111-111111111111";
 const summary = {
   profile: { nickname: "Kamilia" },
-  creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport", passport: { id, tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: { completedAt: "2026-07-21T00:00:00.000Z", txHash: null } }],
+  creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: { id, tier: "Silver", score: 15, remainingToNextTier: 35 }, ticketBalance: 4, firstReaction: { completedAt: "2026-07-21T00:00:00.000Z", txHash: null } }],
   live: { upcoming: [], history: [] },
   rewards: { availableCount: 0, entries: 2, items: [] },
   collection: { passportCount: 1, stampCount: 2, collectibleCount: 0, recent: [{ kind: "stamp", id, title: "KARA Stamp", occurredAt: "2026-07-21T00:00:00.000Z", href: `/passports/${id}` }] },
@@ -38,5 +38,10 @@ describe("MY summary contract", () => {
   it("rejects invalid counts and unsafe collection links", () => {
     expect(mySummarySchema.safeParse({ ...summary, unreadNotificationCount: -1 }).success).toBe(false);
     expect(mySummarySchema.safeParse({ ...summary, collection: { ...summary.collection, recent: [{ ...summary.collection.recent[0], href: "https://evil.example" }] } }).success).toBe(false);
+  });
+
+  it("requires the server-computed public directory state", () => {
+    const { isPublic: _isPublic, ...celebrity } = summary.creators[0].celebrity;
+    expect(mySummarySchema.safeParse({ ...summary, creators: [{ ...summary.creators[0], celebrity }] }).success).toBe(false);
   });
 });

@@ -17,27 +17,29 @@ const liveItemSchema = z.object({
   attended: z.boolean(),
 }).strict();
 
-export const mySummarySchema = z.object({
+const ownerCreatorSchema = z.object({
+  celebrity: z.object({
+    slug: z.string(),
+    name: z.string(),
+    image: safeImageUrl,
+    imagePosition: z.string().trim().min(1).max(100).optional(),
+    photos: z.custom<PhotoSet>().optional(),
+  }).strict(),
+  relationship: z.enum(["passport", "first_reaction_only"]),
+  passport: z.object({
+    id: uuid,
+    tier: z.enum(FAN_TIERS),
+    score: z.number().int().nonnegative(),
+    remainingToNextTier: z.number().int().nonnegative(),
+    stageProgress: fanStageProgressSchema.nullable().optional(),
+  }).strict().nullable(),
+  ticketBalance: z.number().int().nonnegative(),
+  firstReaction: z.object({ completedAt: dateTime, txHash: z.string().trim().min(1).nullable() }).strict().nullable(),
+}).strict();
+
+export const ownerMySummarySchema = z.object({
   profile: z.object({ nickname: z.string().nullable() }).strict(),
-  creators: z.array(z.object({
-    celebrity: z.object({
-      slug: z.string(),
-      name: z.string(),
-      image: safeImageUrl,
-      imagePosition: z.string().trim().min(1).max(100).optional(),
-      photos: z.custom<PhotoSet>().optional(),
-    }).strict(),
-    relationship: z.enum(["passport", "first_reaction_only"]),
-    passport: z.object({
-      id: uuid,
-      tier: z.enum(FAN_TIERS),
-      score: z.number().int().nonnegative(),
-      remainingToNextTier: z.number().int().nonnegative(),
-      stageProgress: fanStageProgressSchema.nullable().optional(),
-    }).strict().nullable(),
-    ticketBalance: z.number().int().nonnegative(),
-    firstReaction: z.object({ completedAt: dateTime, txHash: z.string().trim().min(1).nullable() }).strict().nullable(),
-  }).strict()),
+  creators: z.array(ownerCreatorSchema),
   live: z.object({ upcoming: z.array(liveItemSchema), history: z.array(liveItemSchema) }).strict(),
   rewards: z.object({
     availableCount: z.number().int().nonnegative(),
@@ -59,6 +61,13 @@ export const mySummarySchema = z.object({
   unreadNotificationCount: z.number().int().nonnegative(),
 }).strict();
 
+export const mySummarySchema = ownerMySummarySchema.extend({
+  creators: z.array(ownerCreatorSchema.extend({
+    celebrity: ownerCreatorSchema.shape.celebrity.extend({ isPublic: z.boolean() }),
+  })),
+});
+
+export type OwnerMySummary = z.infer<typeof ownerMySummarySchema>;
 export type MySummary = z.infer<typeof mySummarySchema>;
 
 /** Order eligible server-provided reservations without promoting public LIVE records. */

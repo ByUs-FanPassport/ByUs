@@ -65,10 +65,12 @@ differences when consolidating tokens and components. -->
 - Check translated and long content without shrinking type/targets or hiding meaningful information. Inspect active keyboard focus in Portal menus as well as the surrounding page, and inspect open dialogs for padding, clipping, safe-area and fixed-navigation conflicts. Focus ownership or automated accessibility passes alone do not prove visible focus or aesthetic quality.
 - Keep evidence tied to the changed screen, width, locale and state. Loading-only captures, repeated identical portraits or isolated component fixtures cannot certify a whole page. Report functional checks and visual judgment separately; disclose incomplete states and unresolved material issues. No score or token check guarantees beauty.
 
-## Brand copy (2026-10-12)
+## Brand copy (2026-10-13)
 
 - The approved slogan is `Kyaa. Every Fan Moment Counts.` in every locale. Use it for the home heading, default page/share title, installed app name, and guide footers. Preserve the existing kyaa wordmark artwork.
 - Current partner banner copy uses `NCHIVE × Kyaa` and `WELCOME TO KYAA`. Internal identifiers, legacy URLs, and historical records retain their existing names.
+- The connect introduction and Passport artwork use Kyaa. Preserve the whole book, stamps and outro copy with contained video framing; the wide layout places copy beside the film on its paper canvas. Keep playback, skip, replay and reduced-motion behavior. New Membership artwork has a new content-addressed URL; issued artwork remains available.
+- MY keeps owned Passports, points, tickets and entry history for unpublished fan pages, while hiding public participation links and requests that would lead to an unavailable page.
 
 ## Intent
 

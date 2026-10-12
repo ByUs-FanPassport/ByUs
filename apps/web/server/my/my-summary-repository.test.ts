@@ -37,24 +37,43 @@ describe("MY summary repository", () => {
     await expect(new SupabaseMySummaryRepository({ rpc: async () => ({ data: { nope: true }, error: null }) }).get({ appUserId: id, locale: "en", asOf: new Date() })).rejects.toThrow("projection is invalid");
   });
 
-  it("batch-attaches public creator photos while preserving owners without a public projection", async () => {
+  it("keeps the owner RPC contract unchanged", async () => {
+    const data = { ...valid, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true }, relationship: "passport", passport: null, ticketBalance: 0, firstReaction: null }] };
+    await expect(new SupabaseMySummaryRepository({ rpc: async () => ({ data, error: null }) }).get({ appUserId: id, locale: "ko", asOf: new Date() })).rejects.toThrow("projection is invalid");
+  });
+
+  it("combines public directory state while preserving private owner records", async () => {
     const data = {
       ...valid,
       creators: [
         { celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport" as const, passport: null, ticketBalance: 0, firstReaction: null },
-        { celebrity: { slug: "private", name: "Private", image: "/private.jpg" }, relationship: "passport" as const, passport: null, ticketBalance: 0, firstReaction: null },
+        { celebrity: { slug: "private", name: "Private", image: "/private.jpg" }, relationship: "passport" as const, passport: { id, tier: "Silver" as const, score: 22, remainingToNextTier: 28 }, ticketBalance: 7, firstReaction: null },
       ],
     };
     const readCelebrityPhotoSetsBySlug = vi.fn().mockResolvedValue({ kara: { portrait: null } });
+    const list = vi.fn().mockResolvedValue([{ slug: "kara" }]);
     const repository = new PublicImageMySummaryRepository(
       new SupabaseMySummaryRepository({ rpc: vi.fn().mockResolvedValue({ data, error: null }) }),
       { readCelebrityPhotoSetsBySlug, readLivePhotoSetsBySlug: vi.fn() },
+      { list },
     );
 
     const result = await repository.get({ appUserId: id, locale: "ko", asOf: new Date() });
 
     expect(readCelebrityPhotoSetsBySlug).toHaveBeenCalledExactlyOnceWith(["kara", "private"]);
-    expect(result.creators[0]?.celebrity.photos).toEqual({ portrait: null });
-    expect(result.creators[1]?.celebrity).toEqual(data.creators[1]?.celebrity);
+    expect(list).toHaveBeenCalledExactlyOnceWith("ko");
+    expect(result.creators[0]?.celebrity).toMatchObject({ isPublic: true, photos: { portrait: null } });
+    expect(result.creators[1]).toMatchObject({ celebrity: { isPublic: false }, passport: { score: 22 }, ticketBalance: 7 });
+  });
+
+  it("does not reinterpret a failed public directory read as private", async () => {
+    const data = { ...valid, creators: [{ celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" }, relationship: "passport" as const, passport: null, ticketBalance: 0, firstReaction: null }] };
+    const repository = new PublicImageMySummaryRepository(
+      new SupabaseMySummaryRepository({ rpc: vi.fn().mockResolvedValue({ data, error: null }) }),
+      { readCelebrityPhotoSetsBySlug: vi.fn().mockResolvedValue({}), readLivePhotoSetsBySlug: vi.fn() },
+      { list: vi.fn().mockRejectedValue(new Error("directory unavailable")) },
+    );
+
+    await expect(repository.get({ appUserId: id, locale: "ko", asOf: new Date() })).rejects.toThrow("directory unavailable");
   });
 });

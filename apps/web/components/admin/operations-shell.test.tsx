@@ -35,7 +35,7 @@ describe("AdminOperationsShell navigation", () => {
     ["/admin/dashboard", "상세 통계"],
     ["/admin/fans", "회원 관리"],
     ["/admin/blockchain-jobs", "디지털 발급 내역"],
-    ["/admin/byus-day-rsvps", "ByUs Day RSVP"],
+    ["/admin/byus-day-rsvps", "kyaa wave 참가 신청"],
     ["/admin/system", "시스템 상태"],
     ["/admin/notifications", "알림 전송"],
     ["/admin/audit", "관리자 활동 기록"],
@@ -45,6 +45,13 @@ describe("AdminOperationsShell navigation", () => {
     const desktopNavigation = screen.getAllByRole("navigation", { name: "관리자 메뉴" })[0];
     expect(within(desktopNavigation).getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
     expect(within(desktopNavigation).getAllByRole("link").filter((link) => link.hasAttribute("aria-current"))).toHaveLength(1);
+  });
+
+  it("uses the kyaa wave name in English navigation", () => {
+    pathname = "/admin/byus-day-rsvps";
+    render(<AdminOperationsShell locale="en"><p>content</p></AdminOperationsShell>);
+    const desktopNavigation = screen.getAllByRole("navigation", { name: "Admin menu" })[0];
+    expect(within(desktopNavigation).getByRole("link", { name: "kyaa wave registrations" })).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps the analytics item current for both dashboard query views", () => {

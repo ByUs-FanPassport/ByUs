@@ -142,7 +142,7 @@ begin
      or v_body #>> '{content,2,attrs,level}' <> '2'
      or v_body #>> '{content,2,content,0,text}' <> '어떤 순간에 팬이 되셨나요?'
      or v_body #>> '{content,3,content,0,text}' <> '처음 좋아하게 된 영상이나 기억을 댓글로 남겨주세요. 짧은 인사도 좋아요.'
-     or v_body #>> '{content,4,content,0,text}' <> 'ByUs 운영팀' then
+     or v_body #>> '{content,4,content,0,text}' <> 'Kyaa 운영팀' then
     raise exception 'KO Tiptap welcome body mismatch';
   end if;
   select body_json into v_body from public.celebrity_notice_localizations
@@ -151,7 +151,7 @@ begin
      or v_body #>> '{content,1,content,0,text}' <> 'Complete fan verification to create your fan passport.'
      or v_body #>> '{content,2,content,0,text}' <> 'What made you a fan?'
      or v_body #>> '{content,3,content,0,text}' <> 'Share the video or memory that started it all in the comments. A quick hello is welcome too.'
-     or v_body #>> '{content,4,content,0,text}' <> 'The ByUs Team' then
+     or v_body #>> '{content,4,content,0,text}' <> 'The Kyaa Team' then
     raise exception 'EN Tiptap welcome body mismatch';
   end if;
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { benefitScorePercent, fanTierProgress, latestCertificationHistory, localizedPath, nextRaffleBoundary, rankedPassportCreators, recommendCertification, selectOpenRaffle, type MyCreator } from "./my-progress";
 
 function creator(slug: string, tier: "Bronze" | "Silver" | "Gold", score: number): MyCreator {
-  return { celebrity: { slug, name: slug, image: "/test.jpg" }, relationship: "passport", passport: { id: slug, tier, score, remainingToNextTier: 0 }, ticketBalance: 0, firstReaction: null };
+  return { celebrity: { slug, name: slug, image: "/test.jpg", isPublic: true }, relationship: "passport", passport: { id: slug, tier, score, remainingToNextTier: 0 }, ticketBalance: 0, firstReaction: null };
 }
 
 describe("MY representative and benefit score", () => {

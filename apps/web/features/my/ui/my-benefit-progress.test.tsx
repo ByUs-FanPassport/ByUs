@@ -10,7 +10,7 @@ vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authent
 afterEach(() => { owner.id = "owner-a"; });
 const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
 const creators: PassportCreator[] = ids.map((id, index) => ({
-  celebrity: { slug: index ? "katseye" : "kara", name: index ? "KATSEYE" : "KARA", image: "/test.jpg" },
+  celebrity: { slug: index ? "katseye" : "kara", name: index ? "KATSEYE" : "KARA", image: "/test.jpg", isPublic: true },
   relationship: "passport", passport: { id, tier: "Silver", score: 8, remainingToNextTier: 7 }, firstReaction: null, ticketBalance: 0,
 }));
 const benefit: NextPassportBenefit = {

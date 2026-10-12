@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "소개 영상·패스포트 이미지와 새로 발급되는 멤버십 스탬프를 Kyaa로 바꿨어요.",
+    "환영 공지, LIVE 소개, 이메일, Instagram 연결 안내와 관리자 행사명을 현재 브랜드에 맞췄어요.",
+    "알림 목록을 불러오지 못하던 오류와 MY에서 비공개 팬페이지로 이동하던 문제를 고쳤어요.",
+    "Kyaa를 포함한 새 닉네임을 제한하며, 기존 닉네임과 발급 기록은 유지해요.",
+    "첨부 이미지는 로컬에서 확인한 수정 후 화면이에요."
+  ],
+  "path": "/connect",
+  "images": [
+    "release-notes/images/2026-10-13-kyaa-connect-mobile.png",
+    "release-notes/images/2026-10-13-kyaa-connect-desktop.png"
+  ]
+}

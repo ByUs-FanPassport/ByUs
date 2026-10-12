@@ -38,6 +38,8 @@ psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_participation.sq
 bash "$root_dir/supabase/tests/fan_web_participation_concurrency.sh"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_notifications.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_personal.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/kyaa_nickname_protection.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/kyaa_content_branding.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_web_account_deletion.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/public_fan_avatars.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/byus_day_rsvps.sql"

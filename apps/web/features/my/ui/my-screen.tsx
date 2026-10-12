@@ -338,7 +338,7 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
   const [now, setNow] = useState(() => Date.now());
   const slug = encodeURIComponent(creator.celebrity.slug);
   const parseRaffles = useCallback((body: unknown) => raffleListSchema.parse(body).raffles, []);
-  const raffles = useFanpageResource(`/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}`, parseRaffles);
+  const raffles = useFanpageResource(creator.celebrity.isPublic ? `/api/celebrities/${slug}/raffles?locale=${toContentLocale(locale)}` : null, parseRaffles);
   const raffleState = raffles.state;
   const retryRaffles = raffles.retry;
   const openRaffles = raffleState.status === "ready" ? selectOpenRaffles(raffleState.data, new Date(now)) : [];
@@ -359,12 +359,13 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
           <SectionTitle title={t.fanTier(creator.celebrity.name)} href={creator.passport ? `/passports/${creator.passport.id}?locale=${locale}` : undefined} action={creator.passport ? t.myPassport : undefined}/>
           {creator.passport ? <FanGrade creator={creator as PassportCreator} locale={locale}/> : <p className={styles.panelState}>{locale === "ko" ? `${creator.celebrity.name} 팬 인증을 시작하고 첫 팬등급을 만들어보세요.` : translate(locale, localizedMessages.m343c50cb9a59, "Start {0} fan verification to earn your first tier.", [creator.celebrity.name])}</p>}
         </div>
-        <div className={styles.panelAction}><Link className={styles.fanActivityLink} href={activityHref}>{creator.passport ? (locale === "ko" ? "참여할 팬 활동 보기" : translate(locale, localizedMessages.m51c0c8f56b17, "Explore fan activities")) : t.startPassport}<ArrowRight aria-hidden="true"/></Link></div>
+        {creator.celebrity.isPublic ? <div className={styles.panelAction}><Link className={styles.fanActivityLink} href={activityHref}>{creator.passport ? (locale === "ko" ? "참여할 팬 활동 보기" : translate(locale, localizedMessages.m51c0c8f56b17, "Explore fan activities")) : t.startPassport}<ArrowRight aria-hidden="true"/></Link></div> : null}
       </section>
       <section className={styles.activityPanel}>
         <div className={styles.panelContent}>
           <SectionTitle title={locale === "ko" ? `${creator.celebrity.name} 이벤트` : translate(locale, localizedMessages.m11202455f80b, "{0} events", [creator.celebrity.name])} href={`/my/raffles?locale=${locale}`} action={locale === "ko" ? "내 응모 내역" : translate(locale, localizedMessages.m59a59a47cffd, "My entries")}/>
-          {raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "이벤트를 불러오는 중이에요." : translate(locale, localizedMessages.mf4c9eb491dff, "Loading events.")}</p>
+          {!creator.celebrity.isPublic ? <p className={styles.panelState}>{locale === "ko" ? "현재 진행 중인 이벤트가 없어요." : translate(locale, localizedMessages.m0fca25890c94, "No events are open right now.")}</p>
+            : raffleState.status === "loading" ? <p className={styles.panelState} role="status">{locale === "ko" ? "이벤트를 불러오는 중이에요." : translate(locale, localizedMessages.mf4c9eb491dff, "Loading events.")}</p>
             : raffleState.status === "error" ? <div className={styles.panelState} role="alert"><p>{locale === "ko" ? "이벤트를 불러오지 못했어요." : translate(locale, localizedMessages.mdd8573a9baf2, "We couldn’t load events.")}</p><button type="button" onClick={retryRaffles}>{t.retry}</button></div>
             : openRaffles.length > 0 ? <div className={styles.eventSummary}>
               <div className={styles.eventTitle}><span className={styles.eventIcon}><Gift aria-hidden="true"/></span><h3>{ko ? <>응모할 수 있는 선물 <em>{openRaffles.length}종</em></> : locale === "en" ? <>{openRaffles.length} {openRaffles.length === 1 ? "gift" : "gifts"} to enter for</> : translate(locale, localizedMessages.mb3e721bb6234, "{0} gifts to enter for", [openRaffles.length])}</h3></div>
@@ -372,9 +373,9 @@ function SelectedFavoritePanels({ creator, locale }: { creator: MyCreator; local
               <p className={styles.eventDeadline}>{locale === "ko" ? "가장 가까운 마감 · " : translate(locale, localizedMessages.m7d4e6ed6ba76, "Next deadline · ")}<time dateTime={openRaffles[0].entryClosesAt!}>{formatClosing(openRaffles[0].entryClosesAt!, locale)}</time></p>
             </div> : <p className={styles.panelState}>{locale === "ko" ? "현재 진행 중인 이벤트가 없어요." : translate(locale, localizedMessages.m0fca25890c94, "No events are open right now.")}</p>}
           <div className={styles.eventWallet}><span><Ticket aria-hidden="true"/>{locale === "ko" ? "보유 응모권" : translate(locale, localizedMessages.ma88be67e1498, "Available tickets")}</span><strong>{creator.ticketBalance}{ko ? "장" : ""}</strong></div>
-          <Link className={styles.ticketHistoryLink} href={`/c/${creator.celebrity.slug}/tickets?locale=${locale}` as Route}>{FAN_TICKET_CREATOR_SLUGS.has(creator.celebrity.slug) ? (locale === "ko" ? "응모권 모으기 · 내역 보기" : translate(locale, localizedMessages.md2234a576ef5, "Collect tickets · View history")) : (locale === "ko" ? "응모권 내역 보기" : translate(locale, localizedMessages.m88bda75c40da, "View ticket history"))}<ArrowRight aria-hidden="true"/></Link>
+          {creator.celebrity.isPublic ? <Link className={styles.ticketHistoryLink} href={`/c/${creator.celebrity.slug}/tickets?locale=${locale}` as Route}>{FAN_TICKET_CREATOR_SLUGS.has(creator.celebrity.slug) ? (locale === "ko" ? "응모권 모으기 · 내역 보기" : translate(locale, localizedMessages.md2234a576ef5, "Collect tickets · View history")) : (locale === "ko" ? "응모권 내역 보기" : translate(locale, localizedMessages.m88bda75c40da, "View ticket history"))}<ArrowRight aria-hidden="true"/></Link> : null}
         </div>
-        <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{locale === "ko" ? "이벤트 보러 가기" : translate(locale, localizedMessages.m65e43e1ae2a9, "Explore events")}</FanAction></div>
+        {creator.celebrity.isPublic ? <div className={styles.panelAction}><FanAction fullWidth href={raffleAllHref} trailingIcon={<ArrowRight/>}>{locale === "ko" ? "이벤트 보러 가기" : translate(locale, localizedMessages.m65e43e1ae2a9, "Explore events")}</FanAction></div> : null}
       </section>
     </div>
   </FanSurface>;

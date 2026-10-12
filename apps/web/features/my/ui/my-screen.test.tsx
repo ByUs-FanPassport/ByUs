@@ -7,7 +7,7 @@ const benefitId = "22222222-2222-4222-8222-222222222222";
 const summary = {
   profile: { nickname: "카밀리아" },
   creators: [{
-    celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg" },
+    celebrity: { slug: "kara", name: "KARA", image: "/kara.jpg", isPublic: true },
     relationship: "passport",
     passport: { id, tier: "Silver", score: 15, remainingToNextTier: 35 },
     ticketBalance: 4,
@@ -103,6 +103,34 @@ describe("unified MY hub", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "팬 인증 시작하기" })[0]).toHaveAttribute("href", "/kara?tab=certifications&locale=ko#celebrity-content");
   });
+  it("keeps private creator ownership data without requesting or linking public surfaces", async () => {
+    const privateSummary = {
+      ...summary,
+      creators: [{
+        ...summary.creators[0],
+        celebrity: { ...summary.creators[0].celebrity, slug: "katseye", name: "KATSEYE", isPublic: false },
+        ticketBalance: 7,
+      }],
+    };
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/me/summary")) return Response.json({ summary: privateSummary });
+      if (url.startsWith("/api/me/avatar")) return Response.json({ avatar: null });
+      return Response.json({ items: [] });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<MyScreen locale="ko" />);
+
+    const favorite = await screen.findByRole("region", { name: "KATSEYE 팬 활동" });
+    expect(within(favorite).getByRole("progressbar", { name: "다음 팬등급 진행률" })).toBeInTheDocument();
+    expect(within(favorite).getByText("7장")).toBeInTheDocument();
+    expect(within(favorite).getByRole("link", { name: "내 응모 내역" })).toHaveAttribute("href", "/my/raffles?locale=ko");
+    expect(within(favorite).queryByRole("link", { name: "참여할 팬 활동 보기" })).not.toBeInTheDocument();
+    expect(within(favorite).queryByRole("link", { name: "이벤트 보러 가기" })).not.toBeInTheDocument();
+    expect(within(favorite).queryByRole("link", { name: /응모권.*내역 보기/ })).not.toBeInTheDocument();
+    expect(fetcher.mock.calls.some(([input]) => String(input).includes("/api/celebrities/katseye/raffles"))).toBe(false);
+  });
   it("keeps each total in its corresponding section and groups the selected favorite", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ summary })));
     render(<MyScreen locale="ko" />);
@@ -189,7 +217,7 @@ describe("unified MY hub", () => {
     } as const;
     const second = {
       ...summary.creators[0],
-      celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg" },
+      celebrity: { slug: "elina", name: "Elina", image: "/elina.jpg", isPublic: true },
       passport: { ...summary.creators[0].passport, id: "66666666-6666-4666-8666-666666666666", tier: "Gold", score: 80, remainingToNextTier: 40, stageProgress },
     };
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {

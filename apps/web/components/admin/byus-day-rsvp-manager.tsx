@@ -14,7 +14,7 @@ import styles from "./byus-day-rsvp-manager.module.css";
 
 const copy = {
   ko: {
-    description: "ByUs Day에 접수한 참가자 명단을 확인하세요.", total: "누적 접수", unit: "명",
+    title: "kyaa wave 참가 신청", description: "kyaa wave 참가 신청 명단을 확인하세요.", total: "누적 접수", unit: "명",
     attendees: "참가자 명단", order: "최신 접수순", refresh: "새로고침", searchHelp: "이름, 소속, 직책, 이메일, 전화번호로 검색할 수 있어요.",
     name: "접수자", affiliation: "소속", occupation: "직책", contact: "연락처", nationality: "국적", date: "접수일 (KST)",
     loading: "접수 명단을 불러오는 중입니다.", error: "접수 명단을 불러오지 못했습니다.", retry: "다시 시도",
@@ -23,7 +23,7 @@ const copy = {
     exportCsv: "전체 명단 CSV", koreanName: "한글 이름", englishName: "영문 이름", phone: "전화번호", email: "이메일",
   },
   en: {
-    description: "View the people registered for ByUs Day.", total: "Total registrations", unit: "",
+    title: "kyaa wave registrations", description: "View the people registered for kyaa wave.", total: "Total registrations", unit: "",
     attendees: "Attendee list", order: "Newest first", refresh: "Refresh", searchHelp: "Search by name, organization, role, email or phone number.",
     name: "Attendee", affiliation: "Organization", occupation: "Role", contact: "Contact", nationality: "Nationality", date: "Registered (KST)",
     loading: "Loading registrations.", error: "Registrations could not be loaded.", retry: "Try again",
@@ -100,7 +100,7 @@ function Attendees({ locale, adminRole, getAccessToken }: {
   ], attendees));
   return <AdminOperationsShell locale={locale} adminRole={adminRole}>
     <header className={styles.heading}>
-      <div><h1>ByUs Day RSVP</h1><p>{t.description}</p></div>
+      <div><h1>{t.title}</h1><p>{t.description}</p></div>
       <div className={styles.total} aria-live="polite"><span>{t.total}</span><strong>{state.status === "ready" ? attendees.length.toLocaleString(locale) : "—"}<small>{t.unit}</small></strong></div>
     </header>
     <section className={styles.panel} aria-labelledby="rsvp-attendees-heading">

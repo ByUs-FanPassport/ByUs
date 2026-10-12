@@ -6,9 +6,9 @@ const axeTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function openFreshIntro(page: Page) {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/connect");
+  await page.goto("/connect", { waitUntil: "domcontentloaded" });
   await page.evaluate((key) => sessionStorage.removeItem(key), seenKey);
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator("video")).toBeVisible();
 }
 
@@ -56,8 +56,12 @@ test("the fullscreen film and controls fit the viewport throughout playback", as
   await page.getByRole("button", { name: /소개 영상 일시정지|Pause our story/ }).click();
   const video = page.locator("video");
   const viewport = page.viewportSize()!;
-  await expect(video).toHaveCSS("object-fit", "cover");
-  expect(await video.boundingBox()).toEqual({ x: 0, y: 0, ...viewport });
+  await expect(video).toHaveCSS("object-fit", "contain");
+  const videoBox = (await video.boundingBox())!;
+  expect(videoBox.y).toBe(0);
+  expect(videoBox.height).toBe(viewport.height);
+  expect(videoBox.x).toBeGreaterThanOrEqual(0);
+  expect(videoBox.x + videoBox.width).toBeLessThanOrEqual(viewport.width);
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
   await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
   await expect(page.getByRole("progressbar")).toHaveCount(0);
@@ -139,7 +143,7 @@ test("reduced motion opens a 390px hub without downloading the intro", async ({ 
   test.skip(testInfo.project.name !== "chromium-360", "The dedicated 390px check runs once.");
   const videoRequests: string[] = [];
   page.on("request", (request) => {
-    if (request.url().includes("/images/connect/intro.mp4")) videoRequests.push(request.url());
+    if (request.url().includes("/images/connect/kyaa-intro.mp4")) videoRequests.push(request.url());
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await openHub(page);
@@ -231,7 +235,8 @@ test("kyaa wave opens the native invitation and switches languages", async ({ pa
     await expect(page.getByText("2026.10.22", { exact: true })).toBeVisible();
     await expect(page.getByRole("region", { name: locale === "ko" ? "장소" : "Venue", exact: true }).getByText("Dragon Hill Lodge (DHL)", { exact: true })).toBeVisible();
     await expect(page.locator('a[href*="luma.com"]')).toHaveCount(0);
-    await expect(page.locator('input[name="email"]')).toBeVisible();
+    await expect(page.locator('input[name="email"]')).toHaveCount(0);
+    await expect(page.getByRole("complementary", { name: locale === "ko" ? "참가 신청 마감" : "RSVPs closed", exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectAccessible(page);
     await testInfo.attach(`byus-day-${locale}-${page.viewportSize()!.width}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });

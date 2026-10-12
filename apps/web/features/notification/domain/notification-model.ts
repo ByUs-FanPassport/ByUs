@@ -20,7 +20,7 @@ export const notificationKindSchema = z.enum([
 export const safeNotificationPathSchema = z
   .string()
   .regex(
-    /^\/(?:my(?:\/requests\?tab=(?:schedules|fanpages)&item=[0-9a-f-]{36})?|passports|live\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/survey)?|live\/calendar\/schedules\/[0-9a-f-]{36}|benefits\/[0-9a-f-]{36}|c\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:community\/[0-9a-f-]{36}(?:#comment-[0-9a-f-]{36})?|notices\/[a-z0-9]+(?:-[a-z0-9]+)*))$/,
+    /^\/(?:my(?:\/requests\?tab=(?:schedules|fanpages)&item=[0-9a-f-]{36}|\/rewards\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/recipient)?|passports|live\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/survey)?|live\/calendar\/schedules\/[0-9a-f-]{36}|benefits\/[0-9a-f-]{36}|c\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:community\/[0-9a-f-]{36}(?:#comment-[0-9a-f-]{36})?|notices\/[a-z0-9]+(?:-[a-z0-9]+)*))$/,
   );
 export const notificationItemSchema = z.object({
   id: z.uuid(),

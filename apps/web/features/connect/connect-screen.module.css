@@ -34,7 +34,7 @@
 .intro .eyebrow { display:none; }
 .intro:has(.videoNotice) .copy, .intro[data-outro=true] .copy { visibility:hidden; }
 .film { position:absolute; z-index:0; inset:0; overflow:hidden; background:#ead6bf; }
-.film video { display:block; width:100%; height:100%; object-fit:cover; }
+.film video { display:block; width:100%; height:100%; object-fit:contain; }
 .loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; background:#231c2426; color:#fff; text-shadow:0 1px 4px #231c24; }
 .loading svg { animation:spin 1.2s linear infinite; }
 .videoNotice { z-index:1; position:absolute; inset:0; padding:24px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; background:#f8eef4; text-align:center; }
@@ -100,10 +100,10 @@
   .immersive .header { min-height:0; padding:40px var(--intro-gutter) 0; }
   .immersive .logo { width:112px; height:48px; justify-content:center; border-radius:24px; background:#fffafdeb; }
   .intro { min-height:0; padding:0; }
-  .intro .copy { top:auto; bottom:26.8%; text-shadow:0 1px 3px #140d16cc; }
-  .intro .copy h1, .page[lang=en] .intro .copy h1 { font-size:60px; line-height:1.12; letter-spacing:-1.6px; color:#fff; }
-  .intro .eyebrow { display:block; margin-bottom:18px; color:#f6dce9; font-size:11px; }
-  .film::after { content:''; position:absolute; inset:0; background:#140d1666; pointer-events:none; }
+  .intro .copy { top:42%; bottom:auto; inset-inline-end:54%; }
+  .intro .copy h1, .page[lang=en] .intro .copy h1 { font-size:48px; line-height:1.2; letter-spacing:-1.2px; }
+  .intro .eyebrow { display:block; margin-bottom:18px; font-size:11px; }
+  .film { padding-inline-start:48%; }
   .hub { grid-template-areas:'. passport' 'copy passport' 'links passport' 'replay passport' 'credit passport' '. passport'; grid-template-rows:1fr auto auto auto auto 1fr; row-gap:24px; }
   .copy h1, .page[lang=en] .copy h1 { font-size:clamp(36px,3.2vw,46px); letter-spacing:-1.3px; line-height:1.22; }
   .page[lang=en] .copy h1 { font-size:clamp(32px,2.78vw,40px); }

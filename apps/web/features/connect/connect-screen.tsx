@@ -10,7 +10,7 @@ import { rememberOverlayTrigger } from "@/components/ui/overlay/focus-return";
 import styles from "./connect-screen.module.css";
 
 const seenKey = "byus:connect:intro-seen:v1";
-const videoSrc = "/images/connect/intro.mp4";
+const videoSrc = "/images/connect/kyaa-intro.mp4";
 const contacts = [
   { ko: "김보석", en: "Boseok Kim", handle: "pifbetter" },
   { ko: "김재영", en: "Jaeyoung Kim", handle: "ljyk11" },
@@ -147,7 +147,7 @@ export function ConnectScreen() {
 
       {view === "intro" ? <>
         <div className={styles.film}>
-          <video key={attempt} ref={videoRef} src={ready ? videoSrc : undefined} poster="/images/connect/intro-poster.webp"
+          <video key={attempt} ref={videoRef} src={ready ? videoSrc : undefined} poster="/images/connect/kyaa-intro-poster.webp"
             width={720} height={1280} muted playsInline preload="metadata" aria-label={t.videoLabel}
             onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
             onPlaying={() => setStatus("playing")} onPause={() => setStatus(value => value === "error" ? value : "paused")}
@@ -161,7 +161,7 @@ export function ConnectScreen() {
         </div>
       </> : <>
         <div className={styles.passport}>
-          <Image src="/images/connect/passport-spread.webp" alt={t.poster} width={960} height={720} sizes="(min-width: 1000px) 580px, 390px" priority />
+          <Image src="/images/connect/kyaa-passport-spread.webp" alt={t.poster} width={1200} height={900} sizes="(min-width: 1000px) 580px, 390px" priority />
         </div>
         <nav className={styles.links} aria-label={t.nav}>
           <a className={`${styles.linkCard} ${styles.primary}`} href={`/?locale=${locale}`}>
