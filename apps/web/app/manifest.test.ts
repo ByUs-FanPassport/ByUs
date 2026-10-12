@@ -7,6 +7,7 @@ import { createManifest } from "../components/pwa-manifest";
 describe("PWA-001 install contract", () => {
   it("publishes a standalone manifest with required PNG icon sizes", async () => {
     const value = createManifest("ko");
+    expect(value.name).toBe("Kyaa. Every Fan Moment Counts.");
     expect(value.display).toBe("standalone");
     expect(value.start_url).toBe("/?locale=ko");
     expect(value.id).toBe("/");

@@ -1,3 +1,4 @@
+import { APP_LOCALES } from "@/i18n/locales";
 import { bannerFixture } from "../e2e/banner-local/fixture";
 import "@testing-library/jest-dom/vitest";
 import { act } from "react";
@@ -55,6 +56,11 @@ const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boo
 });
 
 describe("canonical 03 guest home", () => {
+  it.each(APP_LOCALES)("shows the approved Kyaa slogan in %s", (locale) => {
+    render(<GuestHome {...defaultProps} featuredLives={[]} locale={locale} />);
+    expect(screen.getByRole("heading", { level: 1, name: "Kyaa. Every Fan Moment Counts." })).toBeInTheDocument();
+  });
+
   afterEach(() => {
     privy.ready = true;
     privy.authenticated = false;

@@ -662,14 +662,14 @@ export const messages = {
     "fr": "Ce n’est pas un problème si certains détails restent à décider."
   },
   "m1d46854470b4": {
-    "ja": "kyaa. Your Bias.    ·    米国ファンミーティング",
-    "zh-Hans": "kyaa. Your Bias.    ·    美国粉丝见面会",
-    "zh-Hant": "kyaa. Your Bias.    ·    美國粉絲見面會",
-    "es": "kyaa. Your Bias.    ·    Encuentros con fans en EE. UU.",
-    "id": "kyaa. Your Bias.    ·    Fanmeeting Amerika Serikat",
-    "vi": "kyaa. Your Bias.    ·    Fanmeeting tại Hoa Kỳ",
-    "th": "kyaa. Your Bias.    ·    แฟนมีตติ้งในสหรัฐฯ",
-    "pt": "kyaa. Your Bias.    ·    Encontros de fãs nos Estados Unidos",
-    "fr": "kyaa. Your Bias.    ·    Rencontres de fans aux États-Unis"
+    "ja": "Kyaa. Every Fan Moment Counts.    ·    米国ファンミーティング",
+    "zh-Hans": "Kyaa. Every Fan Moment Counts.    ·    美国粉丝见面会",
+    "zh-Hant": "Kyaa. Every Fan Moment Counts.    ·    美國粉絲見面會",
+    "es": "Kyaa. Every Fan Moment Counts.    ·    Encuentros con fans en EE. UU.",
+    "id": "Kyaa. Every Fan Moment Counts.    ·    Fanmeeting Amerika Serikat",
+    "vi": "Kyaa. Every Fan Moment Counts.    ·    Fanmeeting tại Hoa Kỳ",
+    "th": "Kyaa. Every Fan Moment Counts.    ·    แฟนมีตติ้งในสหรัฐฯ",
+    "pt": "Kyaa. Every Fan Moment Counts.    ·    Encontros de fãs nos Estados Unidos",
+    "fr": "Kyaa. Every Fan Moment Counts.    ·    Rencontres de fans aux États-Unis"
   }
 } satisfies Record<string, TranslatedMessage>;

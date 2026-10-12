@@ -45,13 +45,13 @@ export async function generateMetadata(): Promise<Metadata> {
         ...(process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : {}),
       },
     },
-    title: "kyaa | Your Bias",
+    title: "Kyaa. Every Fan Moment Counts.",
     description: DESCRIPTIONS[locale],
     manifest: `/manifest.webmanifest?locale=${locale}`,
     icons: BYUS_BRAND_ICONS,
     appleWebApp: { capable: true, title: "kyaa", statusBarStyle: "default" },
-    openGraph: { locale: openGraphLocale(locale), siteName: "kyaa", type: "website", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "kyaa | Your Bias" }] },
-    twitter: { card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE, alt: "kyaa | Your Bias" }] },
+    openGraph: { locale: openGraphLocale(locale), siteName: "kyaa", type: "website", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "Kyaa. Every Fan Moment Counts." }] },
+    twitter: { card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE, alt: "Kyaa. Every Fan Moment Counts." }] },
   };
 }
 

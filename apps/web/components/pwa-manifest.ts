@@ -5,7 +5,7 @@ import type { AppLocale } from "./locale-path";
 
 export function createManifest(locale: AppLocale): MetadataRoute.Manifest {
   return {
-    name: "kyaa | Your Bias",
+    name: "Kyaa. Every Fan Moment Counts.",
     short_name: "kyaa",
     description: locale === "ko" ? "최애의 라이브와 함께한 순간을 Fan Passport에 기록하세요." : translate(locale, localizedMessages.mdafefe2ef1a5, "Record moments with each of your favorites in a Fan Passport."),
     id: "/",

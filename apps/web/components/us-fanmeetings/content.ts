@@ -97,7 +97,7 @@ export const fanmeetingContent = {
       "출연자와 희망 도시, 일정 등\n현재 정해진 내용을 문의창에 남겨주세요.",
     email: "프로젝트 문의하기",
     note: "아직 정해지지 않은 내용은 비워두셔도 괜찮습니다.",
-    footer: "kyaa. Your Bias.    ·    미국 팬미팅",
+    footer: "Kyaa. Every Fan Moment Counts.    ·    미국 팬미팅",
   },
   en: {
     hero: "Bring your fanmeeting\nto the U.S.",
@@ -200,7 +200,7 @@ export const fanmeetingContent = {
       "Tell us who will be appearing, your preferred city and dates,\nand any other details you have so far.",
     email: "Tell us about your project",
     note: "It’s fine if some details are still undecided.",
-    footer: "kyaa. Your Bias.    ·    U.S. Fanmeetings",
+    footer: "Kyaa. Every Fan Moment Counts.    ·    U.S. Fanmeetings",
   },
 
   ...additionalLocales((translationLocale) => ({
