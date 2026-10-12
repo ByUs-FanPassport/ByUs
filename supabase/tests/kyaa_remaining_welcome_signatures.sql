@@ -74,7 +74,8 @@ begin
     raise exception 'Remaining welcome signature mismatch: target %, updated %', v_target_count, v_updated_count;
   end if;
 
-  if exists (
+  -- Historical seed rows have different IDs and are outside this migration.
+  if v_notice_count = 8 and exists (
     select 1
     from public.celebrity_notice_localizations localization
     join public.celebrity_notices notice on notice.id = localization.notice_id
