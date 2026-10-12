@@ -10,6 +10,7 @@
 .panelHeading h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
 .panelHeading span { display: block; margin-top: 4px; color: var(--secondary-ink); font-size: 13px; }
 .refresh { display: inline-flex; align-items: center; gap: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .refresh svg { width: 16px; height: 16px; }
 .search { display: grid; gap: 8px; margin-bottom: 24px; }
 .search label { width: 100%; max-width: 480px; }

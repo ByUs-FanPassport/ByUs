@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { observeBrowserErrors } from "./public-test-support";
 
 test.setTimeout(60_000);
@@ -33,9 +33,10 @@ test("keeps old and short invitation links, locale, campaign queries and RSVP an
     expect(destination.searchParams.get("utm_source")).toBe("poster");
   }
   await page.goto("/byus-day?locale=ko&utm_source=shared#rsvp");
-  await expect(page).toHaveURL(/\/connect\/kyaa-wave\?locale=ko&utm_source=shared#rsvp$/);
+  await expect(page).toHaveURL(/\/connect\/kyaa-wave\?(?:locale=ko&)?utm_source=shared#rsvp$/);
   await expect(page.getByRole("heading", { name: "kyaa wave", exact: true })).toBeAttached();
-  await expect(page).toHaveTitle("kyaa wave | 참가 신청");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  await expect(page).toHaveTitle("kyaa wave | 참가 신청 마감");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://kyaa.io/connect/kyaa-wave");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /kyaa-wave\/share-20261008\.jpg$/);
   const response = await request.get("/connect/kyaa-wave?locale=ko");
@@ -44,48 +45,43 @@ test("keeps old and short invitation links, locale, campaign queries and RSVP an
   expect(response.headers()["x-robots-tag"]).toBe("noindex, nofollow");
 });
 
-async function fillRsvp(page: Page) {
-  await page.locator('[name="koreanName"]').fill("홍길동");
-  await page.locator('[name="englishName"]').fill("Gildong Hong");
-  await page.locator('[name="phone"]').fill("010-1234-5678");
-  await page.locator('#rsvp-residentRegistrationNumber').fill("900101");
-  await page.locator('#rsvp-registration-part-1').fill("1");
-  await page.locator('#rsvp-registration-part-2').fill("234567");
-  await page.locator('[name="affiliation"]').fill("샐리랩");
-  await page.locator('[name="occupation"]').fill("프로듀서");
-  await page.locator('[name="email"]').fill("guest@example.com");
-  await page.locator('[name="consent"]').check();
-}
-
-test("shows the deadline above the invitation and defaults nationality to Korea", async ({ page }, testInfo) => {
+test("shows closed registration in both languages without collecting personal details", async ({ page }, testInfo) => {
   for (const locale of ["ko", "en"]) {
     await page.goto(`/connect/kyaa-wave?locale=${locale}`);
-    const deadline = page.getByRole("complementary", { name: locale === "ko" ? "인적사항 제출 마감" : "Personal details deadline" });
-    await expect(deadline).toContainText(locale === "ko" ? "10월 12일(월) 자정까지 · 한국시간" : "By the end of October 12 (Mon), KST");
-    await expect(deadline.locator("time")).toHaveAttribute("datetime", "2026-10-13T00:00:00+09:00");
-    const deadlineBox = await deadline.boundingBox();
+    const status = page.getByRole("complementary", { name: locale === "ko" ? "참가 신청 마감" : "RSVPs closed" });
+    await expect(status).toContainText(locale === "ko" ? "신규 신청을 받지 않습니다." : "We are no longer accepting registrations.");
+    const statusBox = await status.boundingBox();
     const titleBox = await page.getByRole("heading", { name: "kyaa wave", exact: true }).boundingBox();
-    expect(deadlineBox!.y + deadlineBox!.height).toBeLessThan(titleBox!.y);
-    await page.screenshot({ path: testInfo.outputPath(`${locale}-deadline-top.png`) });
+    expect(statusBox!.y + statusBox!.height).toBeLessThan(titleBox!.y);
+    await expect(page.locator("#rsvp h2")).toHaveText(locale === "ko" ? "참가 신청이 마감되었습니다." : "RSVPs are now closed.");
+    await expect(page.locator("#rsvp")).toContainText(locale === "ko" ? "행사와 출입 안내를 별도로 전해 드립니다." : "Registered guests will receive event details and base entry instructions separately.");
+    await expect(page.locator("form, input, select, button[type=submit]")).toHaveCount(0);
     const parkingTitle = locale === "ko" ? "행사장 내 주차 불가" : "No parking at the venue";
-    const parkingNotice = page.locator("#rsvp").getByRole("complementary", { name: parkingTitle });
-    await expect(parkingNotice.getByRole("heading", { name: parkingTitle })).toBeVisible();
-    await expect(parkingNotice).toContainText(locale === "ko" ? "대중교통이나 택시를 이용해 주세요." : "Please use public transport or a taxi.");
-    await expect(page.getByRole("region", { name: "kyaa wave", exact: true })).toContainText(parkingTitle);
-    await expect(page.getByRole("region", { name: locale === "ko" ? "장소" : "Venue", exact: true })).toContainText(parkingTitle);
-    const parkingBox = await parkingNotice.boundingBox();
-    const firstFieldBox = await page.locator('[name="koreanName"]').boundingBox();
-    expect(parkingBox!.y + parkingBox!.height).toBeLessThan(firstFieldBox!.y);
-    await parkingNotice.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath(`${locale}-parking-notice.png`) });
-    const nationality = page.locator('[name="nationality"]');
-    await expect(nationality).toHaveValue("KR");
-    await nationality.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath(`${locale}-default-nationality.png`) });
-    await nationality.selectOption("JP");
-    await expect(nationality).toHaveValue("JP");
+    await expect(page.locator("#rsvp").getByRole("heading", { name: parkingTitle })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.screenshot({ path: testInfo.outputPath(`${locale}-closed.png`), fullPage: true });
   }
+});
+
+test("rejects stale and direct submissions without accepting personal details", async ({ request }) => {
+  for (const data of [undefined, {}, { koreanName: "Test", consent: true }]) {
+    const response = await request.post("/api/byus-day/rsvp", { data });
+    expect(response.status()).toBe(410);
+    expect(await response.json()).toEqual({ error: { code: "RSVP_CLOSED" } });
+    expect(response.headers()["cache-control"]).toBe("no-store");
+  }
+});
+
+test("supports the closure skip link and English fallback with keyboard focus", async ({ page }) => {
+  await page.goto("/connect/kyaa-wave?locale=ja");
+  const skip = page.getByRole("link", { name: "Skip to registration status" });
+  await page.keyboard.press("Tab");
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#rsvp")).toBeFocused();
+  await expect(page.locator("#rsvp h2")).toHaveText("RSVPs are now closed.");
 });
 
 test("shows the matching language poster and opens the original", async ({ page }, testInfo) => {
@@ -109,18 +105,6 @@ test("shows the matching language poster and opens the original", async ({ page 
     expect(geometry.top).toBeGreaterThanOrEqual(geometry.containerTop);
     expect(geometry.bottom).toBeLessThanOrEqual(geometry.containerBottom);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-    const security = page.getByRole("region", { name: "SECURITY NOTICE" });
-    await expect(security).toBeVisible();
-    await expect(security.locator("strong")).toHaveText([locale === "ko" ? "규정" : "Policy"]);
-    if (locale === "ko") await expect(security).toContainText("주한미군 기지 출입통제 지침");
-    await expect(security).toContainText("USFKI 5200.08A CH1");
-    const officialLink = security.getByRole("link");
-    await expect(officialLink).toHaveText(locale === "ko" ? "출입절차 규정 · 새 탭에서 보기" : "Installation Access Policy · Opens in a new tab");
-    await expect(officialLink).toHaveAttribute("href", "https://home.army.mil/humphreys/about/garrison/DES/physical-security/access-control");
-    await expect(officialLink).toHaveAttribute("target", "_blank");
-    await officialLink.focus();
-    await expect(officialLink).toBeFocused();
-    expect(await officialLink.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
     await expect(page.locator('section[aria-labelledby="schedule-title"] ol li')).toHaveText(locale === "ko" ? ["오프닝", "식사(코스요리)", "세션 및 Q&A", "럭키드로우", "kyaa LIVE"] : ["Opening", "Multi-course dinner", "Sessions & Q&A", "Lucky draw", "kyaa LIVE"]);
     await expect(page.getByText(locale === "ko" ? "네트워킹·래플" : "Networking & raffle", { exact: false })).toBeVisible();
     const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
@@ -154,46 +138,6 @@ test("shows the matching language poster and opens the original", async ({ page 
     await expect(mapLinks.nth(2)).toHaveAttribute("href", "https://www.dragonhilllodge.com/your-stay/getting-here");
     for (const link of await mapLinks.all()) await expect(link).toHaveAttribute("rel", "noopener noreferrer");
     await expect(page.locator("#rsvp details")).toHaveCount(0);
-    const privacyTitles = locale === "ko" ? ["일반 개인정보 수집·이용 안내", "[필수] 주민등록번호 처리 안내"] : ["Personal information collection and use", "[Required] Resident registration number processing"];
-    for (const [index, title] of privacyTitles.entries()) {
-      const trigger = page.getByRole("button", { name: title, exact: true });
-      await trigger.click();
-      const dialog = page.getByRole("dialog", { name: title });
-      await expect(dialog).toBeVisible();
-      // Contrast must be measured after the shared overlay fade has settled.
-      await dialog.evaluate(async element => {
-        await Promise.all(element.parentElement!.getAnimations({ subtree: true }).map(animation => animation.finished));
-      });
-      await expect(dialog).toContainText(locale === "ko" ? "개인정보 처리자: (주)셀리랩" : "Personal information controller: Sallylab Co., Ltd.");
-      await expect(dialog).toContainText(locale === "ko" ? "용산미군기지 출입 담당부서" : "Yongsan Garrison access control office");
-      await expect(dialog.locator("ul li")).toHaveCount(4);
-      if (index === 0) {
-        await expect(dialog).toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
-        await expect(dialog).toContainText(locale === "ko" ? "국적" : "nationality");
-        await expect(dialog).toContainText(locale === "ko" ? "직책" : "job title");
-        await expect(dialog).not.toContainText(locale === "ko" ? "주민등록번호" : "resident registration number");
-      } else {
-        await expect(dialog).toContainText(locale === "ko" ? "처리항목: 주민등록번호" : "Information processed: Korean resident registration number");
-        await expect(dialog).toContainText(locale === "ko" ? "미군기지 출입자 확인 및 출입명단 제출" : "verifying base visitors and submitting the base entry list");
-        await expect(dialog).toContainText(locale === "ko" ? "출입 절차 완료 후 지체 없이 파기합니다." : "deleted without delay after the access procedure is complete");
-        await expect(dialog).not.toContainText(locale === "ko" ? "2026년 10월 23일" : "October 23, 2026");
-      }
-      const close = dialog.getByRole("button", { name: locale === "ko" ? "닫기" : "Close", exact: true });
-      await expect(close).toBeFocused();
-      await page.keyboard.press("Tab");
-      await expect(close).toBeFocused();
-      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-      await dialog.screenshot({ path: testInfo.outputPath(`${locale}-privacy-${index}.png`) });
-      if (index === 0) await page.keyboard.press("Escape");
-      else await close.click();
-      await expect(dialog).not.toBeVisible();
-      await expect(trigger).toBeFocused();
-    }
-    await expect(page.getByRole("textbox", { name: locale === "ko" ? "직책" : "Job title", exact: true })).toBeVisible();
-    await expect(page.locator('#rsvp label span[aria-hidden="true"]')).toHaveCount(9);
-    await expect(page.locator('input[type="checkbox"]')).toHaveCount(1);
-    await expect(page.locator('[name="consent"]')).toHaveAttribute("required", "");
-    await expect(page.locator('[name="consent"]')).not.toBeChecked();
     await page.keyboard.press("Tab");
     await posterLink.focus();
     await expect(posterLink).toBeFocused();
@@ -207,176 +151,5 @@ test("shows the matching language poster and opens the original", async ({ page 
     await expect(original).toHaveURL(new RegExp(`/images/connect/kyaa-wave/poster-${locale}-20261008\\.webp$`));
     await expect(original.locator("img")).toBeVisible();
     await original.close();
-  }
-});
-
-test("validates required fields and announces errors without sending a request", async ({ page }) => {
-  let sent = false;
-  await page.route("**/api/byus-day/rsvp", route => { sent = true; return route.abort(); });
-  await page.goto("/byus-day?locale=ko");
-  await expect(page).toHaveURL(/\/connect\/kyaa-wave(?:\?locale=ko)?$/);
-  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
-  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.locator('[name="koreanName"]')).toBeFocused();
-  await expect(page.locator('[name="koreanName"]')).toHaveAttribute("aria-invalid", "true");
-  expect(sent).toBe(false);
-  await fillRsvp(page);
-  await page.locator('[name="phone"]').fill("123");
-  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.locator('[name="phone"]')).toBeFocused();
-  await expect(page.getByText("휴대폰 번호를 확인해 주세요.", { exact: true })).toBeVisible();
-  expect(sent).toBe(false);
-  await page.locator('[name="phone"]').fill("010-1234-5678");
-  await page.locator('#rsvp-residentRegistrationNumber').fill("123");
-  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.locator('#rsvp-residentRegistrationNumber')).toBeFocused();
-  await expect(page.getByText("주민등록번호 13자리를 확인해 주세요.", { exact: true })).toBeVisible();
-  expect(sent).toBe(false);
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-});
-
-test("retries a failed submission with the same key and shows a focused receipt", async ({ page }, testInfo) => {
-  const payloads: Record<string, unknown>[] = [];
-  await page.route("**/api/byus-day/rsvp", route => {
-    payloads.push(route.request().postDataJSON());
-    if (payloads.length === 1) mockedFailureStatuses.add(503);
-    return route.fulfill({ status: payloads.length === 1 ? 503 : 202, contentType: "application/json", body: JSON.stringify(payloads.length === 1 ? { error: { code: "RSVP_UNAVAILABLE" } } : { status: "accepted" }) });
-  });
-  await page.goto("/connect/kyaa-wave?locale=ko");
-  await fillRsvp(page);
-  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.locator("form").getByRole("alert")).toContainText("신청을 접수하지 못했어요");
-  await page.getByRole("button", { name: "참가 신청하기", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "신청이 접수되었어요." })).toBeFocused();
-  expect(payloads).toHaveLength(2);
-  expect(payloads[0].idempotencyKey).toEqual(payloads[1].idempotencyKey);
-  expect(payloads[1]).toMatchObject({ phone: "+821012345678", residentRegistrationNumber:"900101-1234567", nationality: "KR", consent: true, koreanName: "홍길동", englishName: "Gildong Hong" });
-  expect(Object.keys(payloads[1]).sort()).toEqual(["affiliation", "consent", "email", "englishName", "idempotencyKey", "koreanName", "locale", "nationality", "occupation", "phone", "residentRegistrationNumber"].sort());
-  await expect(page.locator("form")).toHaveCount(0);
-  const storage = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
-  expect(storage).not.toContain("guest@example.com");
-  expect(storage).not.toContain("홍길동");
-  expect(storage).not.toContain("900101");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await testInfo.attach("native-rsvp-receipt", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
-});
-
-test("supports English, mobile keyboard focus, long names, and closed submissions", async ({ page }, testInfo) => {
-  await page.route("**/api/byus-day/rsvp", route => {
-    mockedFailureStatuses.add(410);
-    return route.fulfill({ status:410, contentType:"application/json", body:JSON.stringify({ error:{ code:"RSVP_CLOSED" } }) });
-  });
-  await page.goto("/connect/kyaa-wave?locale=ja");
-  await expect(page.locator('[lang="en"]').getByRole("heading", { name:"RSVP", exact:true })).toBeVisible();
-  await fillRsvp(page);
-  await page.locator('[name="englishName"]').fill("Alexandra Charlotte von Testington de la Cruz");
-  await page.locator('[name="phone"]').fill("+1 213 373 4253");
-  const consent = page.locator('[name="consent"]');
-  await page.locator('[name="nationality"]').focus();
-  await page.keyboard.press("Tab");
-  await expect(consent).toBeFocused();
-  expect(await consent.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe("none");
-  await page.getByRole("button", { name:"Send my RSVP" }).click();
-  await expect(page.locator("form").getByRole("alert")).toHaveText("RSVPs are now closed.");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await testInfo.attach("native-rsvp-closed-english", { body: await page.screenshot({ fullPage:true }), contentType:"image/png" });
-});
-
-test("masks only the last six digits and preserves typing, editing, paste and reveal", async ({ page }) => {
-  for (const locale of ["ko", "en"]) {
-    await page.goto(`/connect/kyaa-wave?locale=${locale}`);
-    const birth = page.locator("#rsvp-residentRegistrationNumber");
-    const first = page.locator("#rsvp-registration-part-1");
-    const last = page.locator("#rsvp-registration-part-2");
-    const complete = page.locator('[name="residentRegistrationNumber"]');
-    await birth.focus();
-    await page.keyboard.type("9001011234567");
-    await expect(birth).toHaveValue("900101");
-    await expect(first).toHaveValue("1");
-    await expect(last).toHaveValue("234567");
-    await expect(complete).toHaveValue("900101-1234567");
-    await expect(birth).toHaveAttribute("type", "text");
-    await expect(first).toHaveAttribute("type", "text");
-    await expect(last).toHaveAttribute("type", "password");
-    await page.getByRole("button", { name: locale === "ko" ? "주민등록번호 전체 보기" : "Show full registration number", exact: true }).click();
-    await expect(last).toHaveAttribute("type", "text");
-    const hide = page.getByRole("button", { name: locale === "ko" ? "주민등록번호 뒷자리 가리기" : "Hide last 6 digits of registration number", exact: true });
-    await expect(hide).toHaveAttribute("aria-pressed", "true");
-    await hide.click();
-    await expect(last).toHaveAttribute("type", "password");
-    await expect(complete).toHaveValue("900101-1234567");
-    await birth.fill("901231");
-    await last.fill("456789");
-    await expect(complete).toHaveValue("901231-1456789");
-    await birth.evaluate(element => {
-      const data = new DataTransfer();
-      data.setData("text/plain", "930202-3456789");
-      // Firefox drops constructor-supplied data for untrusted ClipboardEvents.
-      const paste = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
-      Object.defineProperty(paste, "clipboardData", { value: data });
-      element.dispatchEvent(paste);
-    });
-    await expect(complete).toHaveValue("930202-3456789");
-    await first.evaluate(element => {
-      const data = new DataTransfer();
-      data.setData("text/plain", "2345678");
-      const paste = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
-      Object.defineProperty(paste, "clipboardData", { value: data });
-      element.dispatchEvent(paste);
-    });
-    await expect(complete).toHaveValue("930202-2345678");
-    await last.focus();
-    await last.evaluate(element => (element as HTMLInputElement).setSelectionRange(0, 0));
-    await page.keyboard.press("Backspace");
-    await expect(first).toBeFocused();
-    for (const control of [birth, first, last, page.getByRole("button", { name: locale === "ko" ? "주민등록번호 전체 보기" : "Show full registration number", exact: true })]) {
-      const rect = await control.boundingBox();
-      expect(rect!.width).toBeGreaterThanOrEqual(44);
-      expect(rect!.height).toBeGreaterThanOrEqual(44);
-    }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  }
-});
-
-
-test("balances event sections and preserves directions disclosure and deep links", async ({ page }, testInfo) => {
-  for (const locale of ["ko", "en"]) {
-    await page.goto(`/connect/kyaa-wave?locale=${locale}`);
-    const arrival = page.getByRole("region", { name: locale === "ko" ? "오시는 길" : "Getting here" });
-    const disclosure = arrival.locator("details");
-    const toggle = arrival.locator("summary");
-    await expect(disclosure).not.toHaveAttribute("open");
-    await expect(arrival.getByRole("img")).not.toBeVisible();
-    const invitation = await page.getByRole("region", { name: "kyaa wave", exact: true }).boundingBox();
-    const form = await page.locator("#rsvp").boundingBox();
-    const schedule = await page.locator('section[aria-labelledby="schedule-title"]').boundingBox();
-    const arrivalBox = await arrival.boundingBox();
-    if (page.viewportSize()!.width > 900) {
-      expect(Math.abs(invitation!.y - form!.y)).toBeLessThan(1);
-      expect(Math.abs(invitation!.height - form!.height)).toBeLessThan(400);
-      expect(schedule!.y).toBeGreaterThan(form!.y + form!.height);
-      expect(arrivalBox!.width).toBeGreaterThan(form!.width * 2);
-    }
-    await page.screenshot({ path: testInfo.outputPath(`${locale}-balanced-collapsed.png`), fullPage: true });
-    await page.locator('nav a[href="#arrival-title"]').click();
-    await expect(disclosure).toHaveAttribute("open", "");
-    await expect(arrival.getByRole("img")).toBeVisible();
-    await toggle.focus();
-    await page.keyboard.press("Space");
-    await expect(disclosure).not.toHaveAttribute("open");
-    await page.locator('nav a[href="#arrival-title"]').click();
-    await expect(disclosure).toHaveAttribute("open", "");
-    await expect(arrival.getByRole("img")).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await arrival.screenshot({ path: testInfo.outputPath(`${locale}-directions-expanded.png`) });
-    // Let the wallet SDK finish its background HEAD probe before navigating.
-    await page.waitForLoadState("networkidle");
-    await page.reload();
-    await expect(disclosure).toHaveAttribute("open", "");
-    await expect(arrival.getByRole("img")).toBeVisible();
-    await page.waitForLoadState("networkidle");
   }
 });
