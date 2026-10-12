@@ -21,3 +21,10 @@ it("masks unexpected database results and details", async () => {
   const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "private SQL detail" } });
   await expect(createRsvpRepository({ rpc }).submit(input, "a", "b")).rejects.toMatchObject({ code: "RSVP_UNAVAILABLE" });
 });
+
+
+it("sets the staff exception only from the server-side repository option", async () => {
+  const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+  await createRsvpRepository({ rpc }, true).submit(input, "a".repeat(64), "b".repeat(64));
+  expect(rpc).toHaveBeenCalledExactlyOnceWith("submit_byus_day_rsvp", expect.objectContaining({ p_staff: true }));
+});

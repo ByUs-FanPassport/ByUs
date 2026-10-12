@@ -3,10 +3,11 @@ import { RsvpError, type RsvpInput, type RsvpRepository } from "./rsvp-route";
 
 type RpcClient = { rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message?: string } | null }> };
 
-export function createRsvpRepository(client: RpcClient): RsvpRepository {
+export function createRsvpRepository(client: RpcClient, staff = false): RsvpRepository {
   return { async submit(input: RsvpInput, ipHash: string, payloadHash: string) {
     const { data, error } = await client.rpc("submit_byus_day_rsvp", {
       p_id: input.idempotencyKey,
+      ...(staff ? { p_staff: true } : {}),
       p_locale: input.locale,
       p_korean_name: input.koreanName,
       p_english_name: input.englishName,

@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, MapPin } from "lucide-react";
 import { useAppLocale } from "@/components/locale-provider";
 import { FanAction } from "@/components/fan-ui/fan-action";
+import { StaffRsvpForm } from "./staff-rsvp-form";
 import styles from "./byus-day-screen.module.css";
 
 const DIRECTIONS_URL = "https://www.dragonhilllodge.com/your-stay/getting-here";
@@ -52,10 +53,17 @@ const copy = {
   },
 } as const;
 
-export function ByusDayScreen() {
+export function ByusDayScreen({ staffCountries }: { staffCountries?: readonly { code: string; name: string }[] } = {}) {
   const { locale: appLocale } = useAppLocale();
   const locale = appLocale === "ko" ? "ko" : "en";
-  const t = copy[locale];
+  const t = staffCountries ? { ...copy[locale], ...(locale === "ko" ? {
+    deadlineLabel: "스태프 참가 신청", deadline: "스태프 전용 접수 링크입니다.", skip: "스태프 신청으로 이동",
+    formTitle: "스태프 참가 신청", formDescription: "아래 정보를 남겨 주세요. 행사와 출입 안내를 전해 드릴게요.",
+  } : {
+    deadlineLabel: "Staff RSVP", deadline: "Registration for event staff.", skip: "Skip to staff RSVP",
+    formTitle: "Staff RSVP", formDescription: "Please leave your details for event and base entry instructions.",
+  }) } : copy[locale];
+  const pagePath = staffCountries ? "/connect/kyaa-wave/staff" : "/connect/kyaa-wave";
   const posterSrc = `/images/connect/kyaa-wave/poster-${locale}-20261008.webp`;
   const arrivalRef = useRef<HTMLDetailsElement>(null);
 
@@ -78,8 +86,8 @@ export function ByusDayScreen() {
       <span className={styles.headerCaption}>A kyaa GATHERING</span>
       <a href="#rsvp" className={styles.headerRsvp}>{t.deadlineLabel} <ArrowRight size={16} aria-hidden="true" /></a>
       <nav className={styles.languages} aria-label={t.language}>
-        <Link href="/connect/kyaa-wave?locale=ko" replace aria-current={locale === "ko" ? "true" : undefined} aria-label="한국어" lang="ko">KO</Link>
-        <Link href="/connect/kyaa-wave?locale=en" replace aria-current={locale === "en" ? "true" : undefined} aria-label="English" lang="en">EN</Link>
+        <Link href={`${pagePath}?locale=ko`} replace aria-current={locale === "ko" ? "true" : undefined} aria-label="한국어" lang="ko">KO</Link>
+        <Link href={`${pagePath}?locale=en`} replace aria-current={locale === "en" ? "true" : undefined} aria-label="English" lang="en">EN</Link>
       </nav>
     </header>
     <aside className={styles.deadline} aria-label={t.deadlineLabel}><span>{t.deadlineLabel}</span><strong>{t.deadline}</strong></aside>
@@ -106,9 +114,11 @@ export function ByusDayScreen() {
       <section id="rsvp" className={styles.registration} aria-labelledby="rsvp-title" tabIndex={-1}>
         <div className={styles.formHeading}><p className={styles.eyebrow}>RSVP · kyaa wave</p><h2 id="rsvp-title">{t.formTitle}</h2><p>{t.formDescription}</p></div>
         <aside className={styles.parkingNotice} aria-label={t.parkingTitle}><h3>{t.parkingTitle}</h3><p>{t.parkingDescription}</p></aside>
+        {staffCountries ? <StaffRsvpForm locale={locale} countries={staffCountries} /> : <>
         <p className={styles.closedNote}>{locale === "ko" ? "신청하신 분들께는 행사와 출입 안내를 별도로 전해 드립니다." : "Registered guests will receive event details and base entry instructions separately."}</p>
         <p className={styles.hint}>{t.successNote}</p>
         <FanAction href={"/?locale=" + locale} variant="neutral" fullWidth className={styles.return}>{t.return}</FanAction>
+        </>}
       </section>
       <div className={styles.eventDetails}>
         <section className={styles.schedule} aria-labelledby="schedule-title">

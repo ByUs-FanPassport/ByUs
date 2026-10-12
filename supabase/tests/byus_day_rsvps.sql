@@ -39,7 +39,7 @@ $$;
 set local byus_day.test_now='2026-10-02 12:00:00+09';
 
 do $$
-declare signature text:='public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,text,boolean,text,text)';
+declare signature text:='public.submit_byus_day_rsvp(uuid,text,text,text,text,text,text,text,text,text,boolean,text,text,boolean)';
 begin
   if has_table_privilege('anon','public.byus_day_rsvps','select') or has_table_privilege('authenticated','public.byus_day_rsvps','select')
     or has_table_privilege('service_role','public.byus_day_rsvps','select') then raise exception 'RSVP table is readable'; end if;
@@ -60,6 +60,17 @@ do $$begin
   begin
     perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000099','ko','마감','At Close','+821000000099','A','A','at-close@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('0',64),repeat('9',64));
     raise exception 'cutoff accepted exact-boundary RSVP';
+  exception when others then if sqlerrm<>'RSVP_CLOSED' then raise; end if; end;
+end$$;
+-- The service-only staff route shares storage but has its own event-end cutoff.
+select public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000081','ko','스태프','Staff','+821000000081','A','A','staff81@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('8',64),repeat('8',64),true);
+set local byus_day.test_now='2026-10-22 23:59:59.999999+09';
+select public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000082','ko','스태프','Staff Last','+821000000082','A','A','staff82@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('8',64),repeat('9',64),true);
+set local byus_day.test_now='2026-10-23 00:00:00+09';
+do $$begin
+  begin
+    perform public.submit_byus_day_rsvp('ba000000-0000-4000-8000-000000000083','ko','스태프','Staff Closed','+821000000083','A','A','staff83@example.com','KR','v1.'||repeat('a',16)||'.'||repeat('b',22)||'.'||repeat('c',18),true,repeat('8',64),repeat('9',64),true);
+    raise exception 'staff cutoff accepted exact-boundary RSVP';
   exception when others then if sqlerrm<>'RSVP_CLOSED' then raise; end if; end;
 end$$;
 set local byus_day.test_now='2026-10-02 12:00:00+09';

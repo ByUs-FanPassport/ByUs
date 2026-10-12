@@ -97,3 +97,23 @@ describe("ByUs Day RSVP API", () => {
     expect(response.status).toBe({ RSVP_CLOSED: 410, RSVP_RATE_LIMITED: 429, RSVP_IDEMPOTENCY_CONFLICT: 409, RSVP_UNAVAILABLE: 503 }[code]);
   });
 });
+
+
+describe("staff RSVP after public registration closes", () => {
+  it.each([
+    ["2026-10-13T00:00:00+09:00", 202],
+    ["2026-10-22T23:59:59.999+09:00", 202],
+    ["2026-10-23T00:00:00+09:00", 410],
+  ])("returns %s at the staff deadline boundary", async (time, status) => {
+    const submit = vi.fn().mockResolvedValue(undefined);
+    const handle = createRsvpHandler({ repository: { submit }, secret: "test-key", encryptionKey: Buffer.alloc(32, 7), vercel: true, staff: true, now: () => Date.parse(time as string) });
+    expect((await handle(request())).status).toBe(status);
+    expect(submit).toHaveBeenCalledTimes(status === 202 ? 1 : 0);
+  });
+
+  it("does not allow the request body to choose staff mode", async () => {
+    const { submit, handle } = setup(Date.parse("2026-10-13T00:00:00+09:00"));
+    expect((await handle(request({ ...input, staff: true }))).status).toBe(410);
+    expect(submit).not.toHaveBeenCalled();
+  });
+});

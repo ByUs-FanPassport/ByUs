@@ -69,7 +69,7 @@ function normalizeResidentRegistrationNumber(value: string): string {
   return normalized;
 }
 
-export function createRsvpHandler(deps: { repository: RsvpRepository; secret: string; encryptionKey: Buffer; vercel: boolean; localDevelopment?: boolean; now?: () => number }) {
+export function createRsvpHandler(deps: { repository: RsvpRepository; secret: string; encryptionKey: Buffer; vercel: boolean; localDevelopment?: boolean; staff?: boolean; now?: () => number }) {
   return async (request: Request): Promise<Response> => {
     try {
       const origin = request.headers.get("origin");
@@ -78,7 +78,7 @@ export function createRsvpHandler(deps: { repository: RsvpRepository; secret: st
       if (deps.localDevelopment && !deps.vercel && ["localhost", "127.0.0.1"].includes(requestUrl.hostname)) allowed.add(requestUrl.origin);
       if (!origin || !allowed.has(origin) || origin !== requestUrl.origin || request.headers.get("sec-fetch-site") === "cross-site") throw new RsvpError("RSVP_INVALID");
       if (!deps.vercel && !deps.localDevelopment) throw new RsvpError("RSVP_UNAVAILABLE");
-      if ((deps.now?.() ?? Date.now()) >= Date.parse("2026-10-13T00:00:00+09:00")) throw new RsvpError("RSVP_CLOSED");
+      if ((deps.now?.() ?? Date.now()) >= Date.parse(deps.staff ? "2026-10-23T00:00:00+09:00" : "2026-10-13T00:00:00+09:00")) throw new RsvpError("RSVP_CLOSED");
       const parsed = rawSchema.safeParse(await readBody(request));
       if (!parsed.success) throw new RsvpError("RSVP_INVALID");
       if (!/^\+?[0-9 ()-]+$/u.test(parsed.data.phone)) throw new RsvpError("RSVP_INVALID");
