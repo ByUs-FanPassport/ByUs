@@ -10,5 +10,15 @@ it("sends localized subject and body to the HTTP provider",async()=>{
  const fetch=vi.fn(async()=>new Response(JSON.stringify({id:"m"}),{status:200}));vi.stubGlobal("fetch",fetch);
  await new EmailSender({url:"https://email.test/send",token:"x".repeat(16)}).send({...job,locale:"en",payload:{...job.payload,title:"한국어 제목",detail:"한국어 본문"}});
  const body=JSON.parse((fetch.mock.calls[0] as unknown as [string,RequestInit])[1].body as string);
- expect(body.subject).not.toMatch(/[가-힣]/);expect(body.html).not.toMatch(/[가-힣]/);expect(body.deepLink).toBe("https://byus.kr/my?locale=en");
+ expect(body.subject).not.toMatch(/[가-힣]/);expect(body.html).not.toMatch(/[가-힣]/);expect(body.deepLink).toBe("https://kyaa.io/my?locale=en");
+});
+it.each(["https://byus.kr/my", "https://kyaa.io/my"])("accepts canonical absolute link %s",async(deepLink)=>{
+ const fetch=vi.fn(async()=>new Response(JSON.stringify({id:"m"}),{status:200}));vi.stubGlobal("fetch",fetch);
+ await new EmailSender({url:"https://email.test/send",token:"x".repeat(16)}).send({...job,payload:{...job.payload,deepLink}});
+ expect(JSON.parse((fetch.mock.calls[0] as unknown as [string,RequestInit])[1].body as string).deepLink).toContain(deepLink);
+});
+it("rejects an unrelated absolute link",async()=>{
+ const fetch=vi.fn();vi.stubGlobal("fetch",fetch);
+ await expect(new EmailSender({url:"https://email.test/send",token:"x".repeat(16)}).send({...job,payload:{...job.payload,deepLink:"https://example.com/my"}})).rejects.toMatchObject({code:"EMAIL_INVALID_DEEP_LINK"});
+ expect(fetch).not.toHaveBeenCalled();
 });

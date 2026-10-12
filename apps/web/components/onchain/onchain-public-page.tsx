@@ -14,7 +14,7 @@ import styles from "./onchain-public-page.module.css";
 const copy = {
   ko: {
     eyebrow: "PUBLIC ONCHAIN RECORDS",
-    title: "ByUs 온체인 기록",
+    title: "kyaa 온체인 기록",
     intro: "서비스의 팬 행동을 GIWA Sepolia 테스트넷에 기록합니다. 아래 실적은 QA 지갑과 과거 이관을 제외한 확정 기록입니다.",
     testnet: "GIWA Sepolia 테스트넷",
     testnetDetail: "공개 지표는 ActionHub 배포 이후의 선언된 블록 범위를 집계합니다. 이전 Passport·Stamp 활동은 포함하지 않습니다.",
@@ -87,8 +87,8 @@ const copy = {
   },
   en: {
     eyebrow: "PUBLIC ONCHAIN RECORDS",
-    title: "ByUs onchain records",
-    intro: "ByUs records fan actions from the service on the GIWA Sepolia testnet. The results below are finalized records excluding QA wallets and historical imports.",
+    title: "kyaa onchain records",
+    intro: "kyaa records fan actions from the service on the GIWA Sepolia testnet. The results below are finalized records excluding QA wallets and historical imports.",
     testnet: "GIWA Sepolia testnet",
     testnetDetail: "Public metrics cover the declared block range since the ActionHub deployment. Earlier Passport and Stamp activity is excluded.",
     available: "At the latest finalized block",

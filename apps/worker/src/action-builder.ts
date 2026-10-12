@@ -41,7 +41,7 @@ export function renderActionMetadata(document: MetadataDocument, actionCode: num
     ...document,
     schema: "https://byus.kr/schemas/credential-metadata-v2.json",
     version: 2,
-    ...(actionCode === 4 ? { name: "ByUs Mission Completion Stamp", description: "A soulbound ByUs Mission Completion Stamp credential." } : {}),
+    ...(actionCode === 4 ? { name: "kyaa Mission Completion Stamp", description: "A soulbound kyaa Mission Completion Stamp credential." } : {}),
     attributes,
   };
 }

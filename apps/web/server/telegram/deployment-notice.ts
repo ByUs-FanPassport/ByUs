@@ -11,9 +11,9 @@ const requestSchema = z.object({
   receiptId: z.number().int().positive().safe(),
   images: z.array(z.string().regex(/^release-notes\/images\/[a-z0-9-]+\.png$/)).min(1).max(10).optional(),
   text: z.string().min(20).max(3900).refine(text => {
-    if (!text.startsWith("✅ ByUs 수정사항이 반영됐어요\n") || !/[가-힣]/.test(text) || /[\x00-\x09\x0b-\x1f\x7f]/.test(text)) return false;
+    if (!/^✅ (?:kyaa|ByUs) 수정사항이 반영됐어요\n/.test(text) || !/[가-힣]/.test(text) || /[\x00-\x09\x0b-\x1f\x7f]/.test(text)) return false;
     const links = text.match(/https?:\/\/\S+/g) ?? [];
-    return links.length > 0 && links.every(link => /^https:\/\/byus\.kr\/[a-zA-Z0-9/_-]*$/.test(link));
+    return links.length > 0 && links.every(link => /^https:\/\/(?:kyaa\.io|byus\.kr)\/[a-zA-Z0-9/_-]*$/.test(link));
   }),
 }).strict().refine(input => !input.images?.length || input.text.length <= 1024);
 

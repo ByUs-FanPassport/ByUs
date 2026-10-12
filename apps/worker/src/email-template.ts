@@ -83,9 +83,9 @@ export interface RenderedNotificationEmail {
   text: string;
 }
 
-const SETTINGS_URL = "https://byus.kr/settings";
+const SETTINGS_URL = "https://kyaa.io/settings";
 const DEFAULT_LOGO_URL =
-  "https://byus.kr/images/guest-home/byus-wordmark-transparent.png";
+  "https://kyaa.io/images/guest-home/kyaa-wordmark-transparent.png";
 
 function escapeHtml(value: string): string {
   return value
@@ -392,7 +392,7 @@ export function renderNotificationEmail(
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;">
             <tr>
               <td align="center" style="padding:18px 24px 20px 24px;">
-                <img src="${logoSource}" alt="ByUs" width="120" height="49" crossorigin="anonymous" style="display:block;width:120px;height:49px;border:0;line-height:100%;outline:none;text-decoration:none;">
+                <img src="${logoSource}" alt="kyaa" width="120" height="49" crossorigin="anonymous" style="display:block;width:120px;height:49px;border:0;line-height:100%;outline:none;text-decoration:none;">
               </td>
             </tr>
             <tr>
@@ -421,7 +421,7 @@ export function renderNotificationEmail(
             </tr>
             <tr>
               <td style="padding:16px 24px 20px;border-top:1px solid #eeeeee;font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic',Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#666666;text-align:center;">
-                <div style="font-weight:400;">ByUs · Your Bias</div>
+                <div style="font-weight:400;">kyaa · Your Bias</div>
                 <div style="padding-top:7px;"><a href="${settingsUrl}" style="color:#666666;text-decoration:underline;">${settings}</a></div>
               </td>
             </tr>

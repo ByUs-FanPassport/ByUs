@@ -70,15 +70,15 @@ describe("FAN-007 quiz questions", () => {
     replace.mockReset();
   });
 
-  it("uses the canonical ByUs wordmark in an accessible home link", () => {
+  it("uses the canonical kyaa wordmark in an accessible home link", () => {
     privyState = { ready: true, authenticated: false };
     render(<QuizQuestionsScreen locale="ko" slug="kara" />);
 
-    const home = screen.getByRole("link", { name: "ByUs 홈" });
+    const home = screen.getByRole("link", { name: "kyaa 홈" });
     expect(home).toHaveAttribute("href", "/?locale=ko");
-    expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute(
+    expect(within(home).getByRole("img", { name: "kyaa" })).toHaveAttribute(
       "src",
-      "/images/guest-home/byus-wordmark.svg",
+      "/images/guest-home/kyaa-wordmark.svg",
     );
   });
 

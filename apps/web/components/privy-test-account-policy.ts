@@ -10,7 +10,7 @@ export function isPrivyTestAccountLoginEnabled(
   if (source.enabled !== "true" || source.appEnvironment !== "development") return false;
   try {
     const hostname = new URL(source.appUrl ?? "").hostname.toLowerCase();
-    return hostname !== "byus.kr" && hostname !== "www.byus.kr";
+    return !["byus.kr", "www.byus.kr", "kyaa.io", "www.kyaa.io"].includes(hostname);
   } catch {
     return false;
   }

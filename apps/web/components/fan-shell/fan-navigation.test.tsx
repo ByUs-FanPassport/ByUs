@@ -22,7 +22,7 @@ const items: readonly FanNavigationItem[] = [
 ];
 
 describe("fan navigation primitives", () => {
-  it("provides a reusable semantic header frame with the ByUs home link", () => {
+  it("provides a reusable semantic header frame with the kyaa home link", () => {
     render(
       <FanHeader>
         <span>화면별 도구</span>
@@ -30,7 +30,7 @@ describe("fan navigation primitives", () => {
     );
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "ByUs 홈" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "kyaa 홈" })).toHaveAttribute(
       "href",
       "/",
     );

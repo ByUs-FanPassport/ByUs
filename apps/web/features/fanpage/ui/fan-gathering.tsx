@@ -124,7 +124,7 @@ export function FanGathering({ fans, fanCount, locale }: { fans: Fan[]; fanCount
   const current = useMemo(() => [...fans].sort((a, b) => nameHash(a.nickname) - nameHash(b.nickname)), [fans]);
   const count = fanCount.toLocaleString(locale);
   return <section className={styles.panel} aria-labelledby={titleId} data-fan-gathering>
-    <div className={styles.top}><span><Heart size={15} aria-hidden="true" /> BYUS FANS</span></div>
+    <div className={styles.top}><span><Heart size={15} aria-hidden="true" /> KYAA FANS</span></div>
     <h2 id={titleId}>{locale === "ko" ? "좋아하는 마음으로 모인 팬들" : translate(locale, localizedMessages.m25a5ce8b9549, "Fans, brought together")}</h2>
     <p className={styles.description}>{ko ? <><strong>{count}명</strong>이 좋아요와 패스포트로 함께하고 있어요.</> : locale === "en" ? <><strong>{count} {fanCount === 1 ? "fan" : "fans"}</strong> joined with a like or Passport.</> : translate(locale, localizedMessages.m72cd99c57af2, "{0} fans joined with a like or Passport.", [count])}</p>
     {current.length ? <MarbleTray key={JSON.stringify(current)} fans={current} paused={paused || reduced} locale={locale} /> : <div className={styles.empty}><Heart size={28} aria-hidden="true" /><p>{locale === "ko" ? "아직 함께하는 팬이 없어요." : translate(locale, localizedMessages.mae1619294e22, "No fans have joined yet.")}</p></div>}

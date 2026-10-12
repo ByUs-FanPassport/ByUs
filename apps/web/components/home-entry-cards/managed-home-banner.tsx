@@ -35,7 +35,7 @@ export function ManagedHomeBanner({ banner, locale, priority = false }: { banner
   const artwork = <BannerArtwork key={`${banner.desktopImage.id}:${banner.mobileImage?.id ?? ""}`} banner={banner} priority={priority} />;
   return <div className={styles.root} data-managed-home-banner={banner.id}>
     <HomeHeroBanner kind="live" image={null} fullImage={artwork}
-      eyebrow={banner.kind === "regular_live" ? (locale === "ko" ? "정기 방송" : translate(locale, localizedMessages.me0d4dde550fa, "Regular LIVE")) : (locale === "ko" ? "ByUs 소식" : translate(locale, localizedMessages.m11331552a52b, "ByUs news"))}
+      eyebrow={banner.kind === "regular_live" ? (locale === "ko" ? "정기 방송" : translate(locale, localizedMessages.me0d4dde550fa, "Regular LIVE")) : (locale === "ko" ? "kyaa 소식" : translate(locale, localizedMessages.m11331552a52b, "kyaa news"))}
       title={banner.title} description={banner.description}
       action={<Link href={localizedBannerHref(banner.href, locale) as Route}><span>{banner.ctaLabel}</span><ArrowRight aria-hidden="true" /></Link>} />
   </div>;

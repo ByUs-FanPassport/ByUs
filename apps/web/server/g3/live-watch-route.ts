@@ -36,7 +36,7 @@ function errorResponse(code: string, status: number): Response {
 }
 
 function redirect(location: string): Response {
-  const target = decorateOutboundUrl(location, "https://byus.kr", { campaign: "live", placement: "content", linkKind: "social" })?.href ?? location;
+  const target = decorateOutboundUrl(location, "https://kyaa.io", { campaign: "live", placement: "content", linkKind: "social" })?.href ?? location;
   return new Response(null, {
     status: 307,
     headers: { ...noStoreHeaders, location: target },

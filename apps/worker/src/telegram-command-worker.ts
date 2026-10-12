@@ -165,7 +165,7 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
   let message: string;
   switch (payload.command) {
     case "help": message = [
-      "🤖 ByUs 관리자 명령어",
+      "🤖 kyaa 관리자 명령어",
       "/users 회원 현황",
       "/today 오늘 가입·팬 가입·예약·출석",
       "/lives 공개 라이브 현황",
@@ -182,8 +182,8 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
       `Telegram 대기/전송 중 ${payload.telegram_pending}건 · 거절 ${payload.telegram_failed}건 · 결과 불명 ${payload.telegram_unknown}건`,
       `가장 오래된 대기: ${payload.telegram_oldest_pending_at ? seoulTime(payload.telegram_oldest_pending_at) + " KST" : "없음"}`,
       "현재 DB 상태이며 워커 가동을 보증하지 않습니다. Telegram 완료 이력은 30일 보관합니다.",
-      "https://byus.kr/admin/inquiries", "https://byus.kr/admin/certifications",
-      "https://byus.kr/admin/blockchain-jobs", "https://byus.kr/admin/notifications", "https://byus.kr/admin/system",
+      "https://kyaa.io/admin/inquiries", "https://kyaa.io/admin/certifications",
+      "https://kyaa.io/admin/blockchain-jobs", "https://kyaa.io/admin/notifications", "https://kyaa.io/admin/system",
     ].join("\n"); break;
     case "marketing": {
       const c = payload.current, p = payload.previous;
@@ -209,7 +209,7 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
         ...payload.campaign_sources.map(source => `• ${bounded(source.name,80)} [${bounded(source.channel,40)}] 방문 ${source.visits} → 외부 이동 ${source.outbound_sessions} (${ratio(source.outbound_sessions,source.visits)})`),
         "계정·활동 집계에는 운영/테스트 계정이 포함됩니다. 신규 계정의 프로필·팬 패스는 각 기간 종료 시점 기준입니다.",
         "방문은 사람 수가 아니며, 외부 도착·구매·유입별 응모 전환을 뜻하지 않습니다.",
-        `확인/실험 후보: ${next}`, "https://byus.kr/admin/campaigns",
+        `확인/실험 후보: ${next}`, "https://kyaa.io/admin/campaigns",
       ].join("\n"); break;
     }
     case "users": message = [

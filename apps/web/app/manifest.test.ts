@@ -26,18 +26,29 @@ describe("PWA-001 install contract", () => {
     expect(value.description).toContain("Record moments with each of your favorites");
   });
 
-  it("publishes opaque Apple and PWA icons matching the wordmark SVG", async () => {
-    const source = readFileSync(resolve(process.cwd(), "public/byus-app-icon.svg"));
+  it("publishes opaque Apple and PWA icons matching the approved app icon", async () => {
+    const source = readFileSync(resolve(process.cwd(), "public/kyaa-app-icon-1024.png"));
     for (const [file, size] of [
       ["apple-touch-icon.png", 180],
-      ["byus-app-icon-192.png", 192],
-      ["byus-app-icon-512.png", 512],
+      ["kyaa-app-icon-192.png", 192],
+      ["kyaa-app-icon-512.png", 512],
     ] as const) {
       const icon = sharp(resolve(process.cwd(), "public", file));
       expect(await icon.metadata()).toMatchObject({ width: size, height: size });
       expect((await icon.stats()).isOpaque).toBe(true);
       const expected = await sharp(source).resize(size, size).removeAlpha().raw().toBuffer();
       expect(await icon.removeAlpha().raw().toBuffer()).toEqual(expected);
+    }
+  });
+
+  it("keeps legacy icon URLs on the current artwork", () => {
+    for (const [legacy, current] of [
+      ["byus-app-icon-192.png", "kyaa-app-icon-192.png"],
+      ["byus-app-icon-512.png", "kyaa-app-icon-512.png"],
+    ] as const) {
+      expect(readFileSync(resolve(process.cwd(), "public", legacy))).toEqual(
+        readFileSync(resolve(process.cwd(), "public", current)),
+      );
     }
   });
 

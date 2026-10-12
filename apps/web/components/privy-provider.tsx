@@ -21,7 +21,7 @@ export function ByUsPrivyProvider({
 }) {
   const { locale } = useAppLocale();
   if (!appId) {
-    throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is required to initialize ByUs authentication.");
+    throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is required to initialize kyaa authentication.");
   }
 
   return (
@@ -38,8 +38,8 @@ export function ByUsPrivyProvider({
         appearance: {
           theme: "light",
           accentColor: "#8A18B8",
-          logo: "/images/guest-home/byus-wordmark.svg",
-          landingHeader: locale === "ko" ? "ByUs 시작하기" : translate(locale, localizedMessages.mec65a0eab4d9, "Get started with ByUs"),
+          logo: "/images/guest-home/kyaa-wordmark.svg",
+          landingHeader: locale === "ko" ? "kyaa 시작하기" : translate(locale, localizedMessages.mec65a0eab4d9, "Get started with kyaa"),
           loginMessage: testAccountLoginEnabled
             ? appleLoginEnabled
               ? locale === "ko" ? "Google, Apple 또는 Privy Test Account 이메일로 로그인하세요." : translate(locale, localizedMessages.m9bbd915ffa25, "Sign in with Google, Apple or your Privy Test Account email.")

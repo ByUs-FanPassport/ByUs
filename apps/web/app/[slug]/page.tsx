@@ -24,7 +24,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const otherLocale = toContentLocale(locale) === "en" ? "ko" : "en";
   const translated = await loadSeoCreator(slug, otherLocale);
   const photo = resolvePhoto(celebrity.image.photos, "creator.hero.desktop", celebrity.image.url, locale);
-  return publicMetadata({ path: creatorHomeHref(slug), locale, title: `${celebrity.name} | ByUs`, description: celebrity.summary,
+  return publicMetadata({ path: creatorHomeHref(slug), locale, title: `${celebrity.name} | kyaa`, description: celebrity.summary,
     image: photo.src, imageAlt: photo.alt ?? celebrity.image.alt,
     locales: translated ? ["ko", "en"] : [toContentLocale(locale)] });
 }

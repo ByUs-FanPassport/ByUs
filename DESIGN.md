@@ -14,7 +14,7 @@ base-spacing: "4px"
 radius-scale: "12px / 16px / 20px / pill"
 ---
 
-# Design System: ByUs Fan Pulse Spectrum
+# Design System: kyaa Fan Pulse Spectrum
 
 <!-- Maintenance note (2026-09-05): This document describes the Fan Pulse
 Spectrum foundation, not a verified 1:1 specification of every current byus.kr
@@ -46,7 +46,7 @@ differences when consolidating tokens and components. -->
 - The available leaderboard replaces the animated fan gathering. Overall, Quiz, LIVE (reservation/attendance), Missions and Verification filters rank the entire eligible fan population on the server. Only Overall includes score adjustments and zero-point fans; category lists show fans with positive points. Existing lifetime score, tie order and threshold stay unchanged. Use the shared circular `Avatar`; ranks 1–3 retain numbered gold, silver and bronze badges on mobile. Show activity earning rules without claiming fixed mission or verification rewards.
 - MY separates primary activity destinations from secondary history/request links. Settings is an index of aligned rows leading to query-addressable detail sections with Back navigation, retained locale and visible focus. Entering a detail focuses its heading; returning focuses the originating row. Logout and destructive account actions belong to account details. Authentication and resource restoration use loading states before showing account actions or a guest screen.
 - Notifications use the shared Primary action for enabling browser notifications and a Neutral action for marking all read. Unread counts, dots and permission icons use the existing Spectrum Ink and subtle focus surface; status is also conveyed through labels and weight.
-- These refinements reuse the existing ByUs brand. Public Weverse artist tabs and b.stage community/MY references informed separation of summaries, feeds, media and settings; they do not establish ByUs membership rules or authentication behavior. Source examples: [Weverse artist home](https://weverse.io/enhypen/highlight), [Weverse media](https://weverse.io/enhypen/media), [b.stage community](https://bigbang.bstage.in/community), [b.stage My Posts & Activity](https://bstage.in/article/bstage-tips-7-en/).
+- These refinements reuse the existing kyaa brand. Public Weverse artist tabs and b.stage community/MY references informed separation of summaries, feeds, media and settings; they do not establish kyaa membership rules or authentication behavior. Source examples: [Weverse artist home](https://weverse.io/enhypen/highlight), [Weverse media](https://weverse.io/enhypen/media), [b.stage community](https://bigbang.bstage.in/community), [b.stage My Posts & Activity](https://bstage.in/article/bstage-tips-7-en/).
 
 ### Creator board and unified feed (2026-10-09)
 
@@ -405,13 +405,13 @@ Build a white, image-first K-pop fan product with Pretendard typography, a domin
 
 - Hero: “Create a 2:1 desktop live hero with full-bleed high-resolution artist photography, a restrained left-and-bottom black scrim, a clearly defined outlined UPCOMING rail, 48px white event title, monospace countdown, and one 320×48px spectrum-gradient reservation pill.”
 - Card: “Create a White favorite collection with a 16px outer radius, 24px padding, micro hairline and short two-layer shadow. Place three square Gallery Gray media fields inside; use the shared min(84%, 240px) inset portrait, then a wrapping 16px/700 name, 13px fan count and a separate action group with three 44px social controls and 20px brand marks.”
-- Navigation: “Reuse the shared sticky White header with an 80px ByUs wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 1024px.”
+- Navigation: “Reuse the shared sticky White header with an 80px kyaa wordmark, a 44px hairline pill navigation optically shifted upward by 1px, and 44px language/menu controls. Use a 24px visible language glyph inside its 44px target. Hide the pill below 1024px.”
 - Passport: “Create a quiet White Passport utility card with a 20px/850 title, 14px subtitle, fully opened identity-and-stamp asset, centered two-line lifecycle copy, and a 90%-width 52px outlined login CTA.”
 - Live row: “Create a 112px White live row with a 64px circular artist avatar, wrapping 16px/700 title and 13px metadata stack, plus a right-aligned 184×48px Spectrum-outline Secondary booking pill. Apply the same outline treatment to every action in the collection. Below 768px use a 44px icon-only action without turning repeated rows into filled Primary buttons.”
 
 ### Ready-to-Use Prompt
 
-Using the ByUs Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and at most one filled Spectrum Relay primary CTA per active surface. Repeated LIVE-row actions may use the same relay as a consistent 1px outline. Use a wide content column plus sticky context panel at desktop, a single column with fixed bottom navigation below 1024px, and the existing horizontal snap collection below 768px where appropriate. Do not introduce dark cards, extra filled or decorative gradients, glassmorphism, nested cards, or decorative color surfaces.
+Using the kyaa Fan Pulse Spectrum design system, turn the supplied product scenario into a responsive fan-platform screen. Preserve the White/Near Black shell, Pretendard hierarchy, 4px spacing scale, 12/16/20px radius ladder, hairline-plus-micro-shadow surfaces, face-legible editorial imagery, and at most one filled Spectrum Relay primary CTA per active surface. Repeated LIVE-row actions may use the same relay as a consistent 1px outline. Use a wide content column plus sticky context panel at desktop, a single column with fixed bottom navigation below 1024px, and the existing horizontal snap collection below 768px where appropriate. Do not introduce dark cards, extra filled or decorative gradients, glassmorphism, nested cards, or decorative color surfaces.
 
 ### Iteration Guide
 

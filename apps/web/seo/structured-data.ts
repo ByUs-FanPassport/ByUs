@@ -10,8 +10,8 @@ export type PublicFaq = {
 
 /**
  * Keep the site identity identical on every localized home URL. The legal
- * pages identify Sallylab Inc. as the company that provides ByUs, while these
- * social URLs are the official ByUs channels published in the site footer.
+ * pages identify Sallylab Inc. as the company that provides kyaa, while these
+ * social URLs are the official channels published in the site footer.
  */
 export function homeStructuredData() {
   return {
@@ -22,10 +22,10 @@ export function homeStructuredData() {
         "@id": ORGANIZATION_ID,
         name: "Sallylab Inc.",
         url: `${SITE_URL}/`,
-        email: "biz@sallylab.io",
+        email: "support@kyaa.io",
         brand: {
           "@type": "Brand",
-          name: "ByUs",
+          name: "kyaa",
           url: `${SITE_URL}/`,
         },
         sameAs: [
@@ -39,7 +39,7 @@ export function homeStructuredData() {
         "@type": "WebSite",
         "@id": WEBSITE_ID,
         url: `${SITE_URL}/`,
-        name: "ByUs",
+        name: "kyaa",
         publisher: { "@id": ORGANIZATION_ID },
       },
     ],

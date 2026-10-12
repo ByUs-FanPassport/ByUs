@@ -8,11 +8,11 @@ describe("FocusFlowBrand", () => {
   it("renders the canonical wordmark as an accessible home target", () => {
     render(<FocusFlowBrand />);
 
-    const home = screen.getByRole("link", { name: "ByUs 홈" });
+    const home = screen.getByRole("link", { name: "kyaa 홈" });
     expect(home).toHaveAttribute("href", "/");
-    expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute(
+    expect(within(home).getByRole("img", { name: "kyaa" })).toHaveAttribute(
       "src",
-      "/images/guest-home/byus-wordmark.svg",
+      "/images/guest-home/kyaa-wordmark.svg",
     );
   });
 });

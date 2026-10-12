@@ -13,14 +13,14 @@ export const messages = {
     "fr": "LIVE régulier"
   },
   "m11331552a52b": {
-    "ja": "ByUsのお知らせ",
-    "zh-Hans": "ByUs 动态",
-    "zh-Hant": "ByUs 動態",
-    "es": "Novedades de ByUs",
-    "id": "Kabar ByUs",
-    "vi": "Tin ByUs",
-    "th": "ข่าว ByUs",
-    "pt": "Notícias do ByUs",
-    "fr": "Actualités de ByUs"
+    "ja": "kyaaのお知らせ",
+    "zh-Hans": "kyaa 动态",
+    "zh-Hant": "kyaa 動態",
+    "es": "Novedades de kyaa",
+    "id": "Kabar kyaa",
+    "vi": "Tin kyaa",
+    "th": "ข่าว kyaa",
+    "pt": "Notícias do kyaa",
+    "fr": "Actualités de kyaa"
   }
 } satisfies Record<string, TranslatedMessage>;

@@ -39,7 +39,7 @@ self.addEventListener("push", (event) => {
   try { payload = event.data ? event.data.json() : {}; } catch {}
   const notificationId = typeof payload.notificationId === "string" && /^[0-9a-f-]{36}$/.test(payload.notificationId) ? payload.notificationId : null;
   const locale = payload.locale === "en" ? "en" : "ko";
-  const title = typeof payload.title === "string" ? payload.title : locale === "en" ? "ByUs notification" : "ByUs 알림";
+  const title = typeof payload.title === "string" ? payload.title : locale === "en" ? "kyaa notification" : "kyaa 알림";
   const body = typeof payload.body === "string" ? payload.body : locale === "en" ? "Review your new notification." : "새 알림을 확인해 주세요.";
   event.waitUntil(self.registration.showNotification(title, {
     body, icon: "/byus-app-icon-192.png", badge: "/byus-app-icon-192.png",

@@ -254,7 +254,7 @@ describe("MintWorker", () => {
       metadataUri: "ipfs://bafy-metadata",
     }]);
     expect(metadata.documents[0]).toMatchObject({
-      name: "ByUs First Reaction",
+      name: "kyaa First Reaction",
       image: "ipfs://bafy-assets/credentials/v1/reaction/first/kara.png",
     });
     expect(queue.prepared).toHaveLength(1);
@@ -276,7 +276,7 @@ describe("MintWorker", () => {
     const queue = new FakeQueue([collectibleJob]); const metadata = new FakeMetadata(); const chain = new FakeChain();
     await expect(worker(queue, metadata, chain).runOnce()).resolves.toBe(1);
     expect(chain.preparedJobs).toEqual([{ entityType: "collectible", payload: collectiblePayload, metadataUri: "ipfs://bafy-metadata" }]);
-    expect(metadata.documents[0]).toMatchObject({ name: "ByUs Digital Collectible" });
+    expect(metadata.documents[0]).toMatchObject({ name: "kyaa Digital Collectible" });
   });
 
   it("decodes a celebrity-scoped Community Stamp through the existing stamp mint pipeline", async () => {
@@ -303,8 +303,8 @@ describe("MintWorker", () => {
       metadataUri: "ipfs://bafy-metadata",
     }]);
     expect(metadata.documents[0]).toMatchObject({
-      name: "ByUs First Comment Stamp",
-      image: "https://byus.kr/images/community-stamps/first-comment.png",
+      name: "kyaa First Comment Stamp",
+      image: "https://kyaa.io/images/community-stamps/first-comment.png",
     });
     expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]);
   });

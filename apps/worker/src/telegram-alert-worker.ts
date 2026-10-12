@@ -2,13 +2,13 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { NotificationWorkerEnv } from "./notification-env.js";
 
-const ADMIN_URL = "https://byus.kr/admin";
+const ADMIN_URL = "https://kyaa.io/admin";
 const ADMIN_INQUIRY_URL = `${ADMIN_URL}/inquiries`;
 const TELEGRAM_API_ORIGIN = "https://api.telegram.org";
 const TELEGRAM_TIMEOUT_MS = 8_000;
 const TELEGRAM_MESSAGE_LIMIT = 4_000;
 const TELEGRAM_BATCH_LIMIT = 5;
-const SITE_URL = "https://byus.kr";
+const SITE_URL = "https://kyaa.io";
 const PROD_SUPABASE_HOST = "gmrykvmtmuaeswpajteq.supabase.co";
 const BOT_TOKEN = /^[1-9]\d{5,11}:[A-Za-z0-9_-]{35}$/;
 const GROUP_OR_CHANNEL_CHAT_ID = /^-[1-9]\d{5,19}$/;
@@ -119,7 +119,7 @@ const activityLabels = {
     "campaigns"
   ],
   "byus_day_rsvp_received": [
-    "ByUs Day RSVP 접수",
+    "kyaa Day RSVP 접수",
     "byus-day-rsvps"
   ]
 } as const;
@@ -381,7 +381,7 @@ function detailedMessage(input: readonly TelegramAlertSnapshot[]): string | null
   }
   const bodies = input.map((alert) => alert.detail?.body == null ? null : cleanDetailText(alert.detail.body));
   const render = (currentBodies: readonly (string | null)[], truncated: ReadonlySet<number>) => [
-    "🎉 ByUs 주요 소식",
+    "🎉 kyaa 주요 소식",
     "",
     ...input.flatMap((alert, index) => alert.detail
       ? renderDetailedAlert(alert, currentBodies[index] ?? null, truncated.has(index))
@@ -475,7 +475,7 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
   if (detail) return detail;
   const lines = input.flatMap(renderLegacyAlert);
   const message = [
-    "🎉 ByUs 주요 소식",
+    "🎉 kyaa 주요 소식",
     "",
     ...lines,
     "",

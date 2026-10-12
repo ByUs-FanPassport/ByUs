@@ -233,15 +233,15 @@ export const messages = {
     "fr": "Connecter Instagram"
   },
   "m3d1edbc7f2d5": {
-    "ja": "ByUsへ移動",
-    "zh-Hans": "前往 ByUs",
-    "zh-Hant": "前往 ByUs",
-    "es": "Ir a ByUs",
-    "id": "Buka ByUs",
-    "vi": "Đi đến ByUs",
-    "th": "ไปที่ ByUs",
-    "pt": "Ir para o ByUs",
-    "fr": "Accéder à ByUs"
+    "ja": "kyaaへ移動",
+    "zh-Hans": "前往 kyaa",
+    "zh-Hant": "前往 kyaa",
+    "es": "Ir a kyaa",
+    "id": "Buka kyaa",
+    "vi": "Đi đến kyaa",
+    "th": "ไปที่ kyaa",
+    "pt": "Ir para o kyaa",
+    "fr": "Accéder à kyaa"
   },
   "m1f8922b9db6b": {
     "ja": "すべてのガイド",
@@ -508,15 +508,15 @@ export const messages = {
     "fr": "03  Un événement approche ?"
   },
   "m0076c426b54c": {
-    "ja": "イベントがある場合は、まずByUs担当者と日程や特典を相談してください。\nファンが参加方法を理解しやすいよう、ファンページの案内と宣伝文を一緒に準備しましょう。",
-    "zh-Hans": "如有活动，请先与 ByUs 联系人商定日程和权益。\n共同准备粉丝页面说明和推广文案，让粉丝了解参与方式。",
-    "zh-Hant": "如有活動，請先與 ByUs 聯繫人商定時程和權益。\n共同準備粉絲頁面說明和推廣文案，讓粉絲瞭解參與方式。",
-    "es": "Primero acuerda el calendario y los beneficios con tu contacto de ByUs.\nPreparen juntos las instrucciones de la página y los mensajes para que los fans sepan cómo participar.",
-    "id": "Sepakati jadwal dan manfaat dengan kontak ByUs terlebih dahulu.\nSiapkan petunjuk halaman dan pesan promosi agar penggemar memahami cara berpartisipasi.",
-    "vi": "Trước tiên, hãy thống nhất lịch trình và quyền lợi với người liên hệ tại ByUs.\nCùng chuẩn bị hướng dẫn về trang người hâm mộ và nội dung quảng bá để người hâm mộ hiểu cách tham gia.",
-    "th": "ตกลงกำหนดการและสิทธิประโยชน์กับผู้ติดต่อ ByUs ก่อน\nเตรียมคำแนะนำหน้าแฟนและข้อความโปรโมตร่วมกัน เพื่อให้แฟนเข้าใจวิธีเข้าร่วม",
-    "pt": "Primeiro, combine a agenda e os benefícios com seu contato no ByUs.\nPreparem juntos as instruções da página de fãs e as mensagens promocionais para que os fãs saibam como participar.",
-    "fr": "Convenez d’abord du programme et des avantages avec votre contact ByUs.\nPréparez ensemble les instructions de votre page de fans et les messages promotionnels pour expliquer aux fans comment participer."
+    "ja": "イベントがある場合は、まずkyaa担当者と日程や特典を相談してください。\nファンが参加方法を理解しやすいよう、ファンページの案内と宣伝文を一緒に準備しましょう。",
+    "zh-Hans": "如有活动，请先与 kyaa 联系人商定日程和权益。\n共同准备粉丝页面说明和推广文案，让粉丝了解参与方式。",
+    "zh-Hant": "如有活動，請先與 kyaa 聯繫人商定時程和權益。\n共同準備粉絲頁面說明和推廣文案，讓粉絲瞭解參與方式。",
+    "es": "Primero acuerda el calendario y los beneficios con tu contacto de kyaa.\nPreparen juntos las instrucciones de la página y los mensajes para que los fans sepan cómo participar.",
+    "id": "Sepakati jadwal dan manfaat dengan kontak kyaa terlebih dahulu.\nSiapkan petunjuk halaman dan pesan promosi agar penggemar memahami cara berpartisipasi.",
+    "vi": "Trước tiên, hãy thống nhất lịch trình và quyền lợi với người liên hệ tại kyaa.\nCùng chuẩn bị hướng dẫn về trang người hâm mộ và nội dung quảng bá để người hâm mộ hiểu cách tham gia.",
+    "th": "ตกลงกำหนดการและสิทธิประโยชน์กับผู้ติดต่อ kyaa ก่อน\nเตรียมคำแนะนำหน้าแฟนและข้อความโปรโมตร่วมกัน เพื่อให้แฟนเข้าใจวิธีเข้าร่วม",
+    "pt": "Primeiro, combine a agenda e os benefícios com seu contato no kyaa.\nPreparem juntos as instruções da página de fãs e as mensagens promocionais para que os fãs saibam como participar.",
+    "fr": "Convenez d’abord du programme et des avantages avec votre contact kyaa.\nPréparez ensemble les instructions de votre page de fans et les messages promotionnels pour expliquer aux fans comment participer."
   },
   "m78e5abbeef54": {
     "ja": "日程と特典を相談",

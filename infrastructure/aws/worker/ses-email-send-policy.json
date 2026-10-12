@@ -4,10 +4,16 @@
     {
       "Effect": "Allow",
       "Action": "ses:SendEmail",
-      "Resource": "arn:aws:ses:ap-northeast-2:200151116034:identity/byus.kr",
+      "Resource": [
+        "arn:aws:ses:ap-northeast-2:200151116034:identity/byus.kr",
+        "arn:aws:ses:ap-northeast-2:200151116034:identity/kyaa.io"
+      ],
       "Condition": {
         "StringEquals": {
-          "ses:FromAddress": "notifications@byus.kr"
+          "ses:FromAddress": [
+            "notifications@byus.kr",
+            "notifications@kyaa.io"
+          ]
         }
       }
     }

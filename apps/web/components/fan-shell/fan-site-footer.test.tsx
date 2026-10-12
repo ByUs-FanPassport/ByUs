@@ -17,7 +17,7 @@ describe("FanSiteFooter", () => {
     render(<FanSiteFooter locale="ko" />);
 
     const footer = screen.getByRole("contentinfo");
-    const navigation = within(footer).getByRole("navigation", { name: "ByUs 하단 메뉴" });
+    const navigation = within(footer).getByRole("navigation", { name: "kyaa 하단 메뉴" });
     expect(within(navigation).getByRole("link", { name: "커뮤니티" })).toHaveAttribute("href", "/community?locale=ko");
     expect(within(navigation).getByRole("link", { name: "팬미팅 협업 문의" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=ko");
     expect(within(navigation).getByRole("link", { name: "이용 가이드" })).toHaveAttribute("href", "/guide?locale=ko");
@@ -28,7 +28,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).queryByRole("link", { name: "개인정보처리방침 열기" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("heading", { name: "소셜" })).not.toBeInTheDocument();
     expect(within(footer).getByRole("heading", { name: "소셜" })).toBeInTheDocument();
-    const telegram = within(footer).getByRole("link", { name: "ByUs Telegram 채널 열기, 새 창" });
+    const telegram = within(footer).getByRole("link", { name: "kyaa Telegram 채널 열기, 새 창" });
     expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
@@ -38,15 +38,15 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).getByRole("link", { name: "문의하기" })).toHaveAttribute("href", "/my/inquiries?locale=ko");
     expect(within(navigation).getByRole("link", { name: "온체인 기록" })).toHaveAttribute("href", "/pages/onchain?locale=ko");
     expect(within(navigation).queryByRole("link", { name: "이미지 출처 열기" })).not.toBeInTheDocument();
-    expect(footer).not.toHaveTextContent("biz@sallylab.io");
-    expect(within(footer).getByText("© 2026 ByUs. All rights reserved.")).toBeInTheDocument();
+    expect(footer).not.toHaveTextContent("support@kyaa.io");
+    expect(within(footer).getByText("© 2026 kyaa. All rights reserved.")).toBeInTheDocument();
     expect(footer).not.toHaveTextContent(/Instagram|LinkedIn|채용/);
   });
 
   it("preserves the English locale on fan routes", () => {
     render(<FanSiteFooter locale="en" />);
 
-    const navigation = screen.getByRole("navigation", { name: "ByUs footer navigation" });
+    const navigation = screen.getByRole("navigation", { name: "kyaa footer navigation" });
     expect(within(navigation).getByRole("link", { name: "Community" })).toHaveAttribute("href", "/community?locale=en");
     expect(within(navigation).getByRole("link", { name: "Favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
     expect(within(navigation).getByRole("link", { name: "Fanmeeting partnerships" })).toHaveAttribute("href", "/pages/us-fanmeetings?locale=en");
@@ -59,7 +59,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).queryByRole("link", { name: "Open Privacy Policy" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("heading", { name: "Social" })).not.toBeInTheDocument();
     expect(within(screen.getByRole("contentinfo")).getByRole("heading", { name: "Social" })).toBeInTheDocument();
-    expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open ByUs Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
+    expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open kyaa Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
     expect(within(navigation).queryByRole("link", { name: "Contact" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open image credits" })).not.toBeInTheDocument();
   });
@@ -100,8 +100,8 @@ describe("FanSiteFooter", () => {
 
   it("reserves the footer wordmark at its rendered SVG ratio", () => {
     render(<FanSiteFooter locale="ko" />);
-    const wordmark = screen.getByRole("img", { name: "ByUs" });
+    const wordmark = screen.getByRole("img", { name: "kyaa" });
     expect(wordmark).toHaveAttribute("width", "96");
-    expect(wordmark).toHaveAttribute("height", "39");
+    expect(wordmark).toHaveAttribute("height", "46");
   });
 });

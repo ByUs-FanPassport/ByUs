@@ -43,7 +43,7 @@ export function CalendarArt({ month, celebrity, compact = false }: {
             <span className={styles.name}>{shown.name}</span>
             <Image className={styles.cardStar} src="/images/calendar/star-spark.svg" alt="" width={16} height={16} />
           </div>)}
-        </div> : <Image className={styles.brand} src="/images/calendar/lettering/byus.svg" alt="" width={360} height={210} />}
+        </div> : <Image className={styles.brand} src="/images/calendar/lettering/kyaa.svg" alt="" width={360} height={174} />}
         <Image className={styles.star} src="/images/calendar/star-handwritten.svg" alt="" width={40} height={40} />
       </div>
     </div>

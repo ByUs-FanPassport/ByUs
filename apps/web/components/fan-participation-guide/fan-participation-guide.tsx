@@ -88,7 +88,7 @@ export function FanParticipationGuide({ locale, creator, images }: { locale: Fan
       <main className={styles.main} id={`${creator}-guide-main`} tabIndex={-1}>
         <section className={`${styles.hero} ${creator === "ifew" ? styles.eventHero : ""}`} aria-labelledby={`${creator}-guide-title`}>
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>BYUS GUIDE&nbsp;&nbsp;/&nbsp;&nbsp;{creator.toUpperCase()}</p>
+            <p className={styles.eyebrow}>KYAA GUIDE&nbsp;&nbsp;/&nbsp;&nbsp;{creator.toUpperCase()}</p>
             <h1 id={`${creator}-guide-title`}>{t.heroTitle}</h1>
             <p className={styles.heroDescription}>{t.heroDescription}</p>
             {"heroSchedule" in t ? <p className={styles.schedule}><CalendarDays aria-hidden="true" size={18} /><time dateTime={creator === "elina" ? "2026-09-18T20:30:00+09:00" : "2026-09-12T08:00:00+09:00"}>{t.heroSchedule}</time></p> : null}

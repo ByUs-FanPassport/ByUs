@@ -122,7 +122,7 @@ export function WebAnalyticsDashboard({ locale = "ko" }: { locale?: AdminLocale 
   if (state.status === "unauthenticated" || state.status === "denied") return <AdminAccessState status={state.status} locale={locale} />;
   const visible: State = state.status === "ready" && (state.owner !== owner || state.data.days !== days) ? { status: "loading" } : state;
   return <AdminOperationsShell locale={locale} adminRole={session.admin.role}><div className={`${base.dashboard} ${styles.dashboard}`}>
-    <header className={base.header}><div><p>BYUS · WEB ANALYTICS</p><h1>{ko ? "방문 통계" : "Web traffic"}</h1><span>{ko ? "팬들이 어떤 페이지를 찾고, 어디에서 들어오는지 확인하세요." : "See which pages fans visit and how they find ByUs."}</span></div>
+    <header className={base.header}><div><p>KYAA · WEB ANALYTICS</p><h1>{ko ? "방문 통계" : "Web traffic"}</h1><span>{ko ? "팬들이 어떤 페이지를 찾고, 어디에서 들어오는지 확인하세요." : "See which pages fans visit and how they find kyaa."}</span></div>
       <button className={base.refresh} type="button" onClick={() => setRefresh((value) => value + 1)} disabled={visible.status === "loading"}><RefreshCw aria-hidden="true" />{ko ? "새로고침" : "Refresh"}</button>
     </header>
     <div className={base.toolbar}><div className={base.segmented} role="group" aria-label={ko ? "방문 통계 조회 기간" : "Traffic reporting period"}>

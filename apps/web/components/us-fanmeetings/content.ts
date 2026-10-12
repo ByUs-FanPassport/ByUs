@@ -4,7 +4,7 @@ import { additionalLocales } from "@/i18n/messages";
 export const fanmeetingContent = {
   ko: {
     hero: "미국 팬미팅을\n함께 만듭니다.",
-    desc: "팬 참여 기획부터 장소·제작·현장 운영까지.\nByUs가 미국 현지 운영 파트너와 함께 준비합니다.",
+    desc: "팬 참여 기획부터 장소·제작·현장 운영까지.\nkyaa가 미국 현지 운영 파트너와 함께 준비합니다.",
     cta: "팬미팅 문의하기",
     scope: "지원 범위 보기",
     audience: "크리에이터 · 기획사 · 브랜드를 위한 미국 프로젝트",
@@ -12,7 +12,7 @@ export const fanmeetingContent = {
     visualServices: ["장소", "제작", "현장 운영"],
     rolesTitle: "팬이 모이는 과정부터,\n현장에서 만나는 순간까지.",
     roleA: "팬 참여 기획",
-    roleADesc: "팬 참여를 준비하는 ByUs",
+    roleADesc: "팬 참여를 준비하는 kyaa",
     roleB: "미국 현장 운영",
     roleBDesc: "미국 현지 운영 파트너와 함께",
     a: [
@@ -97,11 +97,11 @@ export const fanmeetingContent = {
       "출연자와 희망 도시, 일정 등\n현재 정해진 내용을 문의창에 남겨주세요.",
     email: "프로젝트 문의하기",
     note: "아직 정해지지 않은 내용은 비워두셔도 괜찮습니다.",
-    footer: "ByUs. Your Bias.    ·    미국 팬미팅",
+    footer: "kyaa. Your Bias.    ·    미국 팬미팅",
   },
   en: {
     hero: "Bring your fanmeeting\nto the U.S.",
-    desc: "Plan your fanmeeting with ByUs and our U.S. event partner, from fan engagement to venues, production, and on-site operations.",
+    desc: "Plan your fanmeeting with kyaa and our U.S. event partner, from fan engagement to venues, production, and on-site operations.",
     cta: "Discuss your fanmeeting",
     scope: "Explore our support",
     audience: "FOR CELEBRITIES, CREATORS, TALENT AGENCIES & BRANDS",
@@ -109,7 +109,7 @@ export const fanmeetingContent = {
     visualServices: ["Venues", "Production", "On-site operations"],
     rolesTitle: "From bringing fans together\nto meeting them in person.",
     roleA: "Fan engagement",
-    roleADesc: "Fan engagement with ByUs",
+    roleADesc: "Fan engagement with kyaa",
     roleB: "U.S. event operations",
     roleBDesc: "With our U.S. event partner",
     a: [
@@ -200,7 +200,7 @@ export const fanmeetingContent = {
       "Tell us who will be appearing, your preferred city and dates,\nand any other details you have so far.",
     email: "Tell us about your project",
     note: "It’s fine if some details are still undecided.",
-    footer: "ByUs. Your Bias.    ·    U.S. Fanmeetings",
+    footer: "kyaa. Your Bias.    ·    U.S. Fanmeetings",
   },
 
   ...additionalLocales((translationLocale) => ({

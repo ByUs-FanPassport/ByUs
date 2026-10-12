@@ -38,7 +38,7 @@ test('plain Korean message includes exact change, approved link and Korean compl
   const message = formatNotice([note, note], status.created_at);
   assert.match(message, /9월 28일 23:40/);
   assert.equal(message.split(note.changes[0]).length - 1, 1);
-  assert.match(message, /https:\/\/byus.kr\/notifications/);
+  assert.match(message, /https:\/\/kyaa.io\/notifications/);
   for (const invalid of [{ ...note, path: '//evil.test' }, { ...note, changes: ['Use CSS subgrid'] }, { ...note, changes: ['안내 https://evil.test'] }, { ...note, path: '/\\evil.test' }]) assert.throws(() => validateNote(invalid));
   assert.throws(() => formatNotice([], status.created_at), /RELEASE_NOTE_REQUIRED/);
 });

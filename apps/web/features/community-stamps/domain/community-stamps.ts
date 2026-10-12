@@ -32,7 +32,7 @@ export type SharedPassportActivity = z.infer<typeof sharedPassportActivitySchema
 export const communityAwardResultSchema = z.object({ awarded: z.boolean() }).strict();
 
 export const COMMUNITY_STAMPS = {
-  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", help: { ko: "가입하면 받는 기념 스탬프예요.", en: "A welcome Stamp for joining ByUs.",
+  welcome: { asset: "welcome", ko: "가입기념", en: "Welcome", scope: "account", help: { ko: "가입하면 받는 기념 스탬프예요.", en: "A welcome Stamp for joining kyaa.",
   ...additionalLocales((translationLocale) => (localizedMessages.m1126b31a7c01[translationLocale]))
 },
   ...additionalLocales((translationLocale) => (localizedMessages.m2f8dbf719303[translationLocale]))

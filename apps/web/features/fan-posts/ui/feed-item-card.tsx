@@ -49,7 +49,7 @@ export function FeedItemCard(props: Props) {
   return <article className={feedStyles.card} data-feed-kind="notice">
     <header className={styles.meta}>
       <span className={feedStyles.officialMark}><BadgeCheck size={20} aria-hidden="true" /></span>
-      <strong>{item.postType === "artist_post" ? creatorName ?? feed.official : "ByUs"}</strong>
+      <strong>{item.postType === "artist_post" ? creatorName ?? feed.official : "kyaa"}</strong>
       <span className={feedStyles.officialLabel}>{item.pinned && <Pin size={14} aria-hidden="true" />}{item.postType === "artist_post" ? officialPostLabel ?? copy.artistPost : copy.notice}</span>
       <time dateTime={item.publishedAt}>{dateLabel(item.publishedAt, locale)}</time>
       {item.visibility === "members" && <span className={styles.badge}>{copy.members}</span>}

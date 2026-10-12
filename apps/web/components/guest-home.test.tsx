@@ -470,7 +470,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("button", { name: /팬 활동/ })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "로그인 및 Fan Passport 시작" })).toBeInTheDocument();
     const guideCards = screen.getAllByRole("link", { name: "엘리나와 함께 뱅크시 전시 보러 가요" });
-    const fanmeetingCards = screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" });
+    const fanmeetingCards = screen.getAllByRole("link", { name: "미국 팬미팅, kyaa와 함께 준비하세요" });
     expect(guideCards).toHaveLength(2);
     expect(fanmeetingCards).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
@@ -573,7 +573,7 @@ describe("canonical 03 guest home", () => {
     expect(screen.queryByRole("link", { name: "로그인하기" })).not.toBeInTheDocument();
     expect(screen.getAllByText("팬 활동을 불러오는 중이에요.")).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /이퓨.*100일/ })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "미국 팬미팅, ByUs와 함께 준비하세요" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "미국 팬미팅, kyaa와 함께 준비하세요" })).toHaveLength(2);
   });
 
   it("renders the authenticated Passport-first state from the MY summary", async () => {

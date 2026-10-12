@@ -28,7 +28,7 @@ export function BusinessInquiryPage({ kind, locale }: { kind: BusinessPageKind; 
         <main className={styles.main} id={`${kind}-main`} tabIndex={-1}>
           <section className={styles.hero} aria-labelledby={`${kind}-title`}>
             <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>ByUs <span aria-hidden="true">/</span> {t.eyebrow}</p>
+              <p className={styles.eyebrow}>kyaa <span aria-hidden="true">/</span> {t.eyebrow}</p>
               <h1 id={`${kind}-title`}>{t.hero}</h1>
               <p className={styles.description}>{t.description}</p>
               <InquiryButton className={styles.cta}>{t.cta}</InquiryButton>
@@ -43,7 +43,7 @@ export function BusinessInquiryPage({ kind, locale }: { kind: BusinessPageKind; 
                 </>
               ) : (
                 <div className={local.partnerVisual}>
-                  <Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={128} height={52} />
+                  <Image src="/images/guest-home/kyaa-wordmark.svg" alt="kyaa" width={128} height={62} />
                   <ul>{t.visualLabels.map((label, index) => {
                     const Icon = partnerIcons[index];
                     return <li key={label}><Icon size={24} aria-hidden="true" /><span>{label}</span></li>;
@@ -83,7 +83,7 @@ export function BusinessInquiryPage({ kind, locale }: { kind: BusinessPageKind; 
 
           <section className={styles.inquiry} aria-labelledby="inquiry-title">
             <div className={styles.inquiryMessage}><p className={styles.eyebrow}>LET’S TALK.</p><h2 id="inquiry-title">{t.closeTitle}</h2><p>{t.closeDescription}</p></div>
-            <div className={styles.contact}><InquiryButton className={styles.email}>biz@sallylab.io</InquiryButton><InquiryButton className={local.secondaryCta}>{t.cta}</InquiryButton></div>
+            <div className={styles.contact}><InquiryButton className={styles.email}>support@kyaa.io</InquiryButton><InquiryButton className={local.secondaryCta}>{t.cta}</InquiryButton></div>
           </section>
           <Link className={local.related} href={`${relatedPath}?locale=${locale}`}>{t.related}<ArrowRight size={18} aria-hidden="true" /></Link>
         </main>

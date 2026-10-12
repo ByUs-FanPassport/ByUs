@@ -11,7 +11,7 @@ export type LegalSection = {
   items?: readonly string[];
   contact?: {
     before: string;
-    email: "biz@sallylab.io";
+    email: "support@kyaa.io";
     after?: string;
   };
 };
@@ -26,7 +26,7 @@ export type LegalDocumentContent = {
 
 export const legalLabels = {
   ko: {
-    notice: "ByUs 법적 고지",
+    notice: "kyaa 법적 고지",
     effectiveDate: {
       privacy: "시행일: 2026년 9월 11일",
       terms: "시행일: 2026년 7월 25일",
@@ -36,7 +36,7 @@ export const legalLabels = {
     languageAriaLabel: "언어 선택, 현재 한국어",
   },
   en: {
-    notice: "ByUs Legal Notice",
+    notice: "kyaa Legal Notice",
     effectiveDate: {
       privacy: "Effective date: September 11, 2026",
       terms: "Effective date: July 25, 2026",
@@ -67,10 +67,10 @@ export const legalLabels = {
 export const legalDocuments = {
   privacy: {
     ko: {
-      metadataTitle: "개인정보처리방침 | ByUs",
-      metadataDescription: "ByUs 개인정보처리방침",
+      metadataTitle: "개인정보처리방침 | kyaa",
+      metadataDescription: "kyaa 개인정보처리방침",
       title: "개인정보처리방침",
-      description: "Sallylab Inc.는 ByUs를 이용하는 팬의 개인정보를 필요한 범위에서만 처리하고 안전하게 보호하기 위해 다음과 같이 개인정보처리방침을 안내합니다.",
+      description: "Sallylab Inc.는 kyaa를 이용하는 팬의 개인정보를 필요한 범위에서만 처리하고 안전하게 보호하기 위해 다음과 같이 개인정보처리방침을 안내합니다.",
       sections: [
         {
           heading: "1. 처리하는 개인정보",
@@ -104,11 +104,11 @@ export const legalDocuments = {
         },
         {
           heading: "3. 보유 및 이용 기간",
-          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 카카오 알림톡 수신 동의를 철회하거나 Kakao 연결을 해제하면 ByUs 내부 저장소의 원본 전화번호와 완료되지 않은 등록 정보를 삭제합니다. 동의·철회 이력, 발송 대조값과 제공사 접수·결과 기록은 관계 법령 준수, 분쟁 또는 보안 대응에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다. 그 밖에 관계 법령에서 일정 기간 보관을 요구하는 경우에도 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
+          paragraphs: ["개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 카카오 알림톡 수신 동의를 철회하거나 Kakao 연결을 해제하면 kyaa 내부 저장소의 원본 전화번호와 완료되지 않은 등록 정보를 삭제합니다. 동의·철회 이력, 발송 대조값과 제공사 접수·결과 기록은 관계 법령 준수, 분쟁 또는 보안 대응에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다. 그 밖에 관계 법령에서 일정 기간 보관을 요구하는 경우에도 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다."],
         },
         {
           heading: "4. 외부 서비스 이용 및 처리 위탁",
-          items: ["Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. ByUs는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.", "연결 해제 또는 유효한 삭제 요청을 처리하면 ByUs의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다.", "카카오 알림톡 등록은 이용자의 별도 동의 후 Kakao의 phone_number 권한으로 해당 카카오 계정에서 확인된 전화번호를 조회합니다. 이 과정에서 발급된 Kakao 접근 토큰은 보관하지 않습니다.", "수탁자: 솔라피 주식회사(SOLAPI). 위탁 업무: 카카오 알림톡 발송과 제공사 접수·배달 결과 확인. 이 업무를 위해 수신 전화번호와 메시지 발송에 필요한 정보가 전달됩니다. 솔라피 주식회사는 공식 개인정보처리방침에 따라 수신번호·메시지 내용·발송일시·발송결과 등 메시지 발송 이력을 발송일로부터 1년간 보관합니다."],
+          items: ["Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. kyaa는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.", "연결 해제 또는 유효한 삭제 요청을 처리하면 kyaa의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다.", "카카오 알림톡 등록은 이용자의 별도 동의 후 Kakao의 phone_number 권한으로 해당 카카오 계정에서 확인된 전화번호를 조회합니다. 이 과정에서 발급된 Kakao 접근 토큰은 보관하지 않습니다.", "수탁자: 솔라피 주식회사(SOLAPI). 위탁 업무: 카카오 알림톡 발송과 제공사 접수·배달 결과 확인. 이 업무를 위해 수신 전화번호와 메시지 발송에 필요한 정보가 전달됩니다. 솔라피 주식회사는 공식 개인정보처리방침에 따라 수신번호·메시지 내용·발송일시·발송결과 등 메시지 발송 이력을 발송일로부터 1년간 보관합니다."],
           paragraphs: ["회사는 로그인과 Embedded Wallet 제공을 위해 Google 및 Privy의 인증·지갑 서비스를 이용합니다. 각 서비스 제공자는 인증 과정에서 필요한 식별 정보와 기술 정보를 자체 정책에 따라 처리할 수 있습니다. 회사는 서비스 제공에 필요한 범위를 넘어 개인정보를 판매하지 않습니다."],
         },
         {
@@ -123,21 +123,21 @@ export const legalDocuments = {
           heading: "7. 문의처",
           contact: {
             before: "개인정보 보호와 관련한 문의 및 권리 행사는 Sallylab Inc.의 개인정보 담당 창구 ",
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: "로 보내 주세요.",
           },
         },
         {
           heading: "8. 방침의 변경",
-          paragraphs: ["법령이나 서비스 내용이 변경되어 본 방침을 수정하는 경우, 시행 전에 ByUs 서비스 내에서 변경 내용과 시행일을 안내합니다."],
+          paragraphs: ["법령이나 서비스 내용이 변경되어 본 방침을 수정하는 경우, 시행 전에 kyaa 서비스 내에서 변경 내용과 시행일을 안내합니다."],
         },
       ],
     },
     en: {
-      metadataTitle: "Privacy Policy | ByUs",
-      metadataDescription: "ByUs Privacy Policy",
+      metadataTitle: "Privacy Policy | kyaa",
+      metadataDescription: "kyaa Privacy Policy",
       title: "Privacy Policy",
-      description: "Sallylab Inc. provides this Privacy Policy to explain how we process only the personal information necessary to operate ByUs and how we protect it securely.",
+      description: "Sallylab Inc. provides this Privacy Policy to explain how we process only the personal information necessary to operate kyaa and how we protect it securely.",
       sections: [
         {
           heading: "1. Personal Information We Process",
@@ -171,11 +171,11 @@ export const legalDocuments = {
         },
         {
           heading: "3. Retention and Use Period",
-          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If you withdraw consent for Kakao service notifications or disconnect Kakao, we delete the original phone number from ByUs systems and any incomplete registration information. Consent and withdrawal history, delivery correlation values, and provider acceptance and result records may be stored separately for the scope and period necessary to comply with applicable laws, resolve disputes, or respond to security incidents. We may also store information separately where applicable laws require retention for a certain period."],
+          paragraphs: ["We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If you withdraw consent for Kakao service notifications or disconnect Kakao, we delete the original phone number from kyaa systems and any incomplete registration information. Consent and withdrawal history, delivery correlation values, and provider acceptance and result records may be stored separately for the scope and period necessary to comply with applicable laws, resolve disputes, or respond to security incidents. We may also store information separately where applicable laws require retention for a certain period."],
         },
         {
           heading: "4. External Services and Processing Providers",
-          items: ["Instagram connection requires separate consent from the professional account owner. ByUs requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.", "When disconnection or a valid deletion request is processed, ByUs deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings.", "Kakao service notification registration uses Kakao's phone_number permission, with your separate consent, to read the phone number confirmed through that Kakao account. We do not retain the Kakao access token issued during this process.", "Processor: 솔라피 주식회사 (SOLAPI). Processing service: sending Kakao service notifications and checking provider acceptance and delivery results. The recipient phone number and information required to send the message are provided for this service. Under its official Privacy Policy, 솔라피 주식회사 retains message delivery records, including the recipient number, message content, delivery time, and delivery result, for one year from the delivery date."],
+          items: ["Instagram connection requires separate consent from the professional account owner. kyaa requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.", "When disconnection or a valid deletion request is processed, kyaa deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings.", "Kakao service notification registration uses Kakao's phone_number permission, with your separate consent, to read the phone number confirmed through that Kakao account. We do not retain the Kakao access token issued during this process.", "Processor: 솔라피 주식회사 (SOLAPI). Processing service: sending Kakao service notifications and checking provider acceptance and delivery results. The recipient phone number and information required to send the message are provided for this service. Under its official Privacy Policy, 솔라피 주식회사 retains message delivery records, including the recipient number, message content, delivery time, and delivery result, for one year from the delivery date."],
           paragraphs: ["We use Google and Privy authentication and wallet services to provide login and Embedded Wallet functionality. Each provider may process identifiers and technical information required for authentication under its own policies. We do not sell personal information beyond what is necessary to provide the service."],
         },
         {
@@ -190,13 +190,13 @@ export const legalDocuments = {
           heading: "7. Contact",
           contact: {
             before: "For privacy inquiries or requests to exercise your rights, contact the Sallylab Inc. privacy team at ",
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: ".",
           },
         },
         {
           heading: "8. Changes to This Policy",
-          paragraphs: ["If we revise this Policy because of changes to applicable laws or the service, we will provide notice of the changes and their effective date through the ByUs service before the revised Policy takes effect."],
+          paragraphs: ["If we revise this Policy because of changes to applicable laws or the service, we will provide notice of the changes and their effective date through the kyaa service before the revised Policy takes effect."],
         },
       ],
     },
@@ -258,7 +258,7 @@ export const legalDocuments = {
           heading: localizedMessages.m24722fff928d[translationLocale],
           contact: {
             before: localizedMessages.mad0f86fcbb93[translationLocale],
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: ".",
           },
         },
@@ -271,14 +271,14 @@ export const legalDocuments = {
 },
   terms: {
     ko: {
-      metadataTitle: "이용약관 | ByUs",
-      metadataDescription: "ByUs 서비스 이용약관",
+      metadataTitle: "이용약관 | kyaa",
+      metadataDescription: "kyaa 서비스 이용약관",
       title: "이용약관",
-      description: "이 약관은 Sallylab Inc.가 제공하는 ByUs 서비스의 이용 조건과 회사 및 이용자의 권리와 책임을 정합니다.",
+      description: "이 약관은 Sallylab Inc.가 제공하는 kyaa 서비스의 이용 조건과 회사 및 이용자의 권리와 책임을 정합니다.",
       sections: [
         {
           heading: "1. 약관의 목적과 적용",
-          paragraphs: ["이 약관은 ByUs 웹·앱과 이에 연결된 팬 인증, LIVE 참여, Fan Passport, Stamp, 혜택 및 알림 기능에 적용됩니다. 이용자가 Google 로그인을 완료하고 서비스를 사용하면 이 약관과 개인정보처리방침에 동의한 것으로 봅니다."],
+          paragraphs: ["이 약관은 kyaa 웹·앱과 이에 연결된 팬 인증, LIVE 참여, Fan Passport, Stamp, 혜택 및 알림 기능에 적용됩니다. 이용자가 Google 로그인을 완료하고 서비스를 사용하면 이 약관과 개인정보처리방침에 동의한 것으로 봅니다."],
         },
         {
           heading: "2. 계정과 인증",
@@ -290,7 +290,7 @@ export const legalDocuments = {
         },
         {
           heading: "3. 팬 인증과 디지털 기록",
-          paragraphs: ["팬 인증 결과, Fan Passport와 Stamp는 ByUs 안에서 팬 활동을 기록하고 관련 기능을 제공하기 위한 디지털 기록입니다. 별도의 명시가 없는 한 현금, 증권, 투자 상품 또는 회사에 대한 권리를 의미하지 않습니다."],
+          paragraphs: ["팬 인증 결과, Fan Passport와 Stamp는 kyaa 안에서 팬 활동을 기록하고 관련 기능을 제공하기 위한 디지털 기록입니다. 별도의 명시가 없는 한 현금, 증권, 투자 상품 또는 회사에 대한 권리를 의미하지 않습니다."],
         },
         {
           heading: "4. LIVE와 혜택",
@@ -322,21 +322,21 @@ export const legalDocuments = {
           heading: "9. 문의",
           contact: {
             before: "서비스 또는 약관에 관한 문의는 Sallylab Inc.의 ",
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: "로 보내 주세요.",
           },
         },
       ],
     },
     en: {
-      metadataTitle: "Terms of Use | ByUs",
-      metadataDescription: "ByUs Terms of Use",
+      metadataTitle: "Terms of Use | kyaa",
+      metadataDescription: "kyaa Terms of Use",
       title: "Terms of Use",
-      description: "These Terms of Use set out the conditions for using the ByUs service provided by Sallylab Inc. and the rights and responsibilities of the company and its users.",
+      description: "These Terms of Use set out the conditions for using the kyaa service provided by Sallylab Inc. and the rights and responsibilities of the company and its users.",
       sections: [
         {
           heading: "1. Purpose and Scope",
-          paragraphs: ["These Terms apply to the ByUs web and app services and their connected fan verification, LIVE participation, Fan Passport, Stamp, benefit, and notification features. By completing Google login and using the service, you agree to these Terms and the Privacy Policy."],
+          paragraphs: ["These Terms apply to the kyaa web and app services and their connected fan verification, LIVE participation, Fan Passport, Stamp, benefit, and notification features. By completing Google login and using the service, you agree to these Terms and the Privacy Policy."],
         },
         {
           heading: "2. Accounts and Authentication",
@@ -348,7 +348,7 @@ export const legalDocuments = {
         },
         {
           heading: "3. Fan Verification and Digital Records",
-          paragraphs: ["Fan verification results, Fan Passports, and Stamps are digital records used to record fan activities and provide related features within ByUs. Unless expressly stated otherwise, they do not represent cash, securities, investment products, or rights in the company."],
+          paragraphs: ["Fan verification results, Fan Passports, and Stamps are digital records used to record fan activities and provide related features within kyaa. Unless expressly stated otherwise, they do not represent cash, securities, investment products, or rights in the company."],
         },
         {
           heading: "4. LIVE and Benefits",
@@ -380,7 +380,7 @@ export const legalDocuments = {
           heading: "9. Contact",
           contact: {
             before: "For questions about the service or these Terms, contact Sallylab Inc. at ",
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: ".",
           },
         },
@@ -439,7 +439,7 @@ export const legalDocuments = {
           heading: localizedMessages.m7464ecc66cee[translationLocale],
           contact: {
             before: localizedMessages.m1fed95c279e9[translationLocale],
-            email: "biz@sallylab.io",
+            email: "support@kyaa.io",
             after: ".",
           },
         },

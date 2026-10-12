@@ -3,6 +3,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { AuthError } from "../../features/auth/domain/auth-errors";
 import type { AuthorizedFan } from "../fan-auth/fan-auth-gate";
+import { requireSameAppOrigin } from "../config/app-origin";
 import { KAKAO_ALIMTALK_CONSENT_VERSION } from "./kakao-phone-enrollment";
 import { normalizeManualKoreanMobile, phoneCodeDigest, phoneRateKey, PhoneSmsError, type PhoneSmsEnrollmentRepository } from "./phone-sms-enrollment";
 import type { PhoneSmsProvider } from "./phone-sms-provider";
@@ -41,8 +42,8 @@ export function createPhoneSmsHandler(action: "request" | "verify" | "confirm" |
   return async (request: Request) => {
     if (!deps.enabled) return json({ error: { code: "PHONE_SMS_UNAVAILABLE" } }, 503);
     try {
-      if (request.method !== "POST" || request.headers.get("origin") !== deps.origin || new URL(request.url).origin !== deps.origin
-        || request.headers.get("sec-fetch-site") === "cross-site") throw new PhoneSmsError("PHONE_SMS_INVALID_REQUEST");
+      if (request.method !== "POST") throw new PhoneSmsError("PHONE_SMS_INVALID_REQUEST");
+      try { requireSameAppOrigin(request, deps.origin); } catch { throw new PhoneSmsError("PHONE_SMS_INVALID_REQUEST"); }
       const { appUserId: owner } = await deps.authorize(request.headers.get("authorization") ?? "");
       if (action === "request") {
         const body = await read(request, requestSchema);

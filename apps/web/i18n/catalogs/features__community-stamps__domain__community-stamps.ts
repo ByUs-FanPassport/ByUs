@@ -2,15 +2,15 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m1126b31a7c01": {
-    "ja": "ByUsに登録すると受け取れる記念Stampです。",
-    "zh-Hans": "加入ByUs即可获得的纪念Stamp。",
-    "zh-Hant": "加入ByUs即可獲得的紀念Stamp。",
-    "es": "Un Stamp de bienvenida por unirte a ByUs.",
-    "id": "Stamp selamat datang karena bergabung dengan ByUs.",
-    "vi": "Stamp chào mừng khi bạn tham gia ByUs.",
-    "th": "Stamp ต้อนรับเมื่อเข้าร่วม ByUs",
-    "pt": "Um Stamp de boas-vindas por entrar no ByUs.",
-    "fr": "Un Stamp de bienvenue pour votre inscription à ByUs."
+    "ja": "kyaaに登録すると受け取れる記念Stampです。",
+    "zh-Hans": "加入kyaa即可获得的纪念Stamp。",
+    "zh-Hant": "加入kyaa即可獲得的紀念Stamp。",
+    "es": "Un Stamp de bienvenida por unirte a kyaa.",
+    "id": "Stamp selamat datang karena bergabung dengan kyaa.",
+    "vi": "Stamp chào mừng khi bạn tham gia kyaa.",
+    "th": "Stamp ต้อนรับเมื่อเข้าร่วม kyaa",
+    "pt": "Um Stamp de boas-vindas por entrar no kyaa.",
+    "fr": "Un Stamp de bienvenue pour votre inscription à kyaa."
   },
   "m57edb71ad308": {
     "ja": "大好きな人に最初のコメントを残してみましょう。",

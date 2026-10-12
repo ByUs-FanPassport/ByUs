@@ -34,7 +34,7 @@ export function PublicContentState(props: PublicContentStateProps) {
   const t = labels[locale];
   return <main className={styles.page} aria-live="polite" aria-busy={props.state === "loading"}>
     <div className={styles.state} role={props.state === "error" ? "alert" : "status"}>
-      <span className={styles.wordmark}>ByUs</span>
+      <span className={styles.wordmark}>kyaa</span>
       <h1>{props.state === "loading" ? t.loading[props.scope] : t.error[props.scope]}</h1>
       {props.state === "loading" ? <div className={styles.progress} aria-hidden="true" /> : <><p>{t.help}</p><div className={styles.actions}><button type="button" onClick={props.retry}>{t.retry}</button><Link href={`/?locale=${locale}`}>{t.home}</Link></div></>}
     </div>

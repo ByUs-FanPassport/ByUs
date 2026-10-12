@@ -7,8 +7,8 @@ export class EmailSender implements ExternalNotificationSender {
   async send(job: ExternalNotificationJob) {
     if (job.channel !== "email") throw new ExternalNotificationError("EMAIL_INVALID_CHANNEL", false);
     assertEmailTemplateEnabled(job.templateKey);
-    const link = new URL(job.payload.deepLink, "https://byus.kr");
-    if (link.origin !== "https://byus.kr" || link.username || link.password) {
+    const link = new URL(job.payload.deepLink, "https://kyaa.io");
+    if (!new Set(["https://byus.kr", "https://kyaa.io"]).has(link.origin) || link.username || link.password) {
       throw new ExternalNotificationError("EMAIL_INVALID_DEEP_LINK", false);
     }
     link.searchParams.set("locale", job.locale);

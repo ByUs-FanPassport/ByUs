@@ -45,6 +45,16 @@ describe("Instagram administrator boundary", () => {
     expect(repository.issueInvite).toHaveBeenCalledWith(expect.objectContaining({ celebrityId: flow.celebrity_id, username: "creator_test", userId: identity.user_id, locale: "ko" }));
     expect(JSON.stringify(repository.issueInvite.mock.calls)).not.toContain(new URL(body.connectionUrl).searchParams.get("invite"));
   });
+  it.each(["https://byus.kr", "https://kyaa.io"])("creates an invite on the exact trusted request host %s", async (requestOrigin) => {
+    const { deps } = setup(); deps.config = { ...deps.config, origin: "https://kyaa.io", redirectUri: "https://kyaa.io/connect/instagram/callback" };
+    const response = await createInstagramInviteHandler(deps)(new Request(`${requestOrigin}/api/admin/instagram/invites`, { method: "POST", body: JSON.stringify({ celebrityId: flow.celebrity_id, expectedUsername: "creator_test" }) }));
+    expect(new URL((await response.json()).connectionUrl).origin).toBe(requestOrigin);
+  });
+  it("rejects an invite request on an untrusted host", async () => {
+    const { deps, repository } = setup(); deps.config = { ...deps.config, origin: "https://kyaa.io", redirectUri: "https://kyaa.io/connect/instagram/callback" };
+    expect((await createInstagramInviteHandler(deps)(new Request("https://attacker.test/api/admin/instagram/invites", { method: "POST", body: "{}" }))).status).toBe(400);
+    expect(repository.issueInvite).not.toHaveBeenCalled();
+  });
 });
 
 describe("Instagram creator browser flow", () => {
@@ -103,6 +113,22 @@ describe("Instagram creator browser flow", () => {
     expect(response.headers.get("location")).toBe("/connect/instagram/confirm?locale=ko");
     expect(response.headers.get("set-cookie")).toContain("__Host-byus_ig_pending=");
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
+  });
+  it.each(["https://byus.kr", "https://kyaa.io"])("exchanges an invite callback with the exact trusted host %s", async (requestOrigin) => {
+    const { deps, service } = setup(); deps.config = { ...deps.config, origin: "https://kyaa.io", redirectUri: "https://kyaa.io/connect/instagram/callback" };
+    const response = await createInstagramCallbackHandler(deps)(new Request(`${requestOrigin}/connect/instagram/callback?state=${secret}&code=test-code`, { headers: { cookie } }));
+    expect(response.status).toBe(303);
+    expect(service.callback).toHaveBeenCalledWith("test-code", secret, browser, `${requestOrigin}/connect/instagram/callback`);
+  });
+  it("rejects an untrusted callback before exchanging a code", async () => {
+    const { deps, service } = setup(); deps.config = { ...deps.config, origin: "https://kyaa.io", redirectUri: "https://kyaa.io/connect/instagram/callback" };
+    expect((await createInstagramCallbackHandler(deps)(new Request(`https://attacker.test/connect/instagram/callback?state=${secret}&code=test-code`, { headers: { cookie } }))).status).toBe(400);
+    expect(service.callback).not.toHaveBeenCalled();
+  });
+  it("rejects an invite state bound to the other trusted host", async () => {
+    const { deps, service } = setup(); deps.config = { ...deps.config, origin: "https://kyaa.io", redirectUri: "https://kyaa.io/connect/instagram/callback" };
+    expect((await createInstagramCallbackHandler(deps)(new Request(`https://kyaa.io/connect/instagram/callback?state=b.${secret}&code=test-code`, { headers: { cookie } }))).status).toBe(400);
+    expect(service.callback).not.toHaveBeenCalled();
   });
   it("requires explicit confirmation with CSRF and keeps success despite an initial media error", async () => {
     const { deps, repository, service } = setup();

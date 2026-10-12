@@ -21,15 +21,15 @@ export function FanWordmarkLink({
   priority = true,
 }: FanWordmarkLinkProps) {
   const resolvedHref = href ?? (locale ? `/?locale=${locale}` as Route : "/");
-  const resolvedAriaLabel = ariaLabel ?? (!locale || locale === "ko" ? "ByUs 홈" : translate(locale ?? "en", localizedMessages.mae9332c916d9, "ByUs home"));
+  const resolvedAriaLabel = ariaLabel ?? (!locale || locale === "ko" ? "kyaa 홈" : translate(locale ?? "en", localizedMessages.mae9332c916d9, "kyaa home"));
 
   return (
     <Link className={className} href={resolvedHref} aria-label={resolvedAriaLabel}>
       <Image
-        src="/images/guest-home/byus-wordmark.svg"
-        alt="ByUs"
+        src="/images/guest-home/kyaa-wordmark.svg"
+        alt="kyaa"
         width={80}
-        height={30}
+        height={39}
         style={{ height: "auto" }}
         priority={priority}
       />

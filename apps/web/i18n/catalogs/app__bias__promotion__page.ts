@@ -2,15 +2,15 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "mabdee7400079": {
-    "ja": "ファンページの宣伝方法 | ByUs",
-    "zh-Hans": "推广您的粉丝页面 | ByUs",
-    "zh-Hant": "推廣您的粉絲頁面 | ByUs",
-    "es": "Promociona tu página de fans | ByUs",
-    "id": "Promosikan halaman penggemar | ByUs",
-    "vi": "Quảng bá trang người hâm mộ | ByUs",
-    "th": "โปรโมตหน้าแฟนของคุณ | ByUs",
-    "pt": "Promova sua página de fãs | ByUs",
-    "fr": "Faites la promotion de votre page de fans | ByUs"
+    "ja": "ファンページの宣伝方法 | kyaa",
+    "zh-Hans": "推广您的粉丝页面 | kyaa",
+    "zh-Hant": "推廣您的粉絲頁面 | kyaa",
+    "es": "Promociona tu página de fans | kyaa",
+    "id": "Promosikan halaman penggemar | kyaa",
+    "vi": "Quảng bá trang người hâm mộ | kyaa",
+    "th": "โปรโมตหน้าแฟนของคุณ | kyaa",
+    "pt": "Promova sua página de fãs | kyaa",
+    "fr": "Faites la promotion de votre page de fans | kyaa"
   },
   "mac2697327da4": {
     "ja": "自分のファンページのリンクを探し、プロフィール、ストーリー、LIVE用の宣伝文をコピーできます。",

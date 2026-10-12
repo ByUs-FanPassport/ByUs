@@ -56,7 +56,7 @@ const officialChannel = [{ platform: "youtube" as const, url: "https://www.youtu
 it("labels official sources and keeps successful media visible when YouTube fails", () => {
   state.failure = "youtube";
   render(<CreatorMediaPanel slug="elina" locale="ko" socialLinks={officialChannel} />);
-  expect(screen.getByRole("link", { name: /함께한 사진/ })).toHaveTextContent("ByUs");
+  expect(screen.getByRole("link", { name: /함께한 사진/ })).toHaveTextContent("kyaa");
   expect(screen.getByRole("link", { name: /함께한 LIVE/ })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "YouTube" })).toHaveAttribute("target", "_blank");
   expect(screen.queryByText(/아직 모아둔 미디어/)).not.toBeInTheDocument();

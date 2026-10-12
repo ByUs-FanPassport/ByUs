@@ -2,26 +2,26 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m8fb00b25bfe1": {
-    "ja": "ByUs オンチェーン記録",
-    "zh-Hans": "ByUs 链上记录",
-    "zh-Hant": "ByUs 鏈上記錄",
-    "es": "Registros onchain de ByUs",
-    "id": "Catatan onchain ByUs",
-    "vi": "Hồ sơ onchain của ByUs",
-    "th": "บันทึกออนเชนของ ByUs",
-    "pt": "Registros onchain do ByUs",
-    "fr": "Registres onchain de ByUs"
+    "ja": "kyaa オンチェーン記録",
+    "zh-Hans": "kyaa 链上记录",
+    "zh-Hant": "kyaa 鏈上記錄",
+    "es": "Registros onchain de kyaa",
+    "id": "Catatan onchain kyaa",
+    "vi": "Hồ sơ onchain của kyaa",
+    "th": "บันทึกออนเชนของ kyaa",
+    "pt": "Registros onchain do kyaa",
+    "fr": "Registres onchain de kyaa"
   },
   "mcf9e123a8736": {
-    "ja": "ByUsはサービス内のファン行動をGIWA Sepoliaテストネットに記録します。以下の実績は、QAウォレットと過去データの移行を除いた確定済み記録です。",
-    "zh-Hans": "ByUs 将服务中的粉丝行为记录在 GIWA Sepolia 测试网。以下数据为排除 QA 钱包和历史导入后的最终记录。",
-    "zh-Hant": "ByUs 將服務中的粉絲行為記錄在 GIWA Sepolia 測試網。以下資料為排除 QA 錢包和歷史導入後的最終記錄。",
-    "es": "ByUs registra las acciones de fans del servicio en la red de prueba GIWA Sepolia. Los resultados siguientes son registros definitivos que excluyen las carteras de QA y las importaciones históricas.",
-    "id": "ByUs mencatat tindakan penggemar dari layanan di testnet GIWA Sepolia. Hasil di bawah adalah catatan final setelah mengecualikan dompet QA dan impor historis.",
-    "vi": "ByUs ghi lại hành động của người hâm mộ trên testnet GIWA Sepolia. Kết quả dưới đây là hồ sơ đã chốt, không gồm ví QA và dữ liệu nhập lịch sử.",
-    "th": "ByUs บันทึกกิจกรรมแฟนจากบริการไว้บนเทสต์เน็ต GIWA Sepolia ผลลัพธ์ด้านล่างเป็นบันทึกที่เสร็จสมบูรณ์แล้ว โดยไม่รวมวอลเล็ต QA และข้อมูลย้อนหลังที่นำเข้า",
-    "pt": "O ByUs registra ações de fãs do serviço na testnet GIWA Sepolia. Os resultados abaixo são registros finalizados, sem carteiras de QA e importações históricas.",
-    "fr": "ByUs enregistre les actions de fans du service sur le testnet GIWA Sepolia. Les résultats ci-dessous sont des registres finalisés, hors portefeuilles QA et importations historiques."
+    "ja": "kyaaはサービス内のファン行動をGIWA Sepoliaテストネットに記録します。以下の実績は、QAウォレットと過去データの移行を除いた確定済み記録です。",
+    "zh-Hans": "kyaa 将服务中的粉丝行为记录在 GIWA Sepolia 测试网。以下数据为排除 QA 钱包和历史导入后的最终记录。",
+    "zh-Hant": "kyaa 將服務中的粉絲行為記錄在 GIWA Sepolia 測試網。以下資料為排除 QA 錢包和歷史導入後的最終記錄。",
+    "es": "kyaa registra las acciones de fans del servicio en la red de prueba GIWA Sepolia. Los resultados siguientes son registros definitivos que excluyen las carteras de QA y las importaciones históricas.",
+    "id": "kyaa mencatat tindakan penggemar dari layanan di testnet GIWA Sepolia. Hasil di bawah adalah catatan final setelah mengecualikan dompet QA dan impor historis.",
+    "vi": "kyaa ghi lại hành động của người hâm mộ trên testnet GIWA Sepolia. Kết quả dưới đây là hồ sơ đã chốt, không gồm ví QA và dữ liệu nhập lịch sử.",
+    "th": "kyaa บันทึกกิจกรรมแฟนจากบริการไว้บนเทสต์เน็ต GIWA Sepolia ผลลัพธ์ด้านล่างเป็นบันทึกที่เสร็จสมบูรณ์แล้ว โดยไม่รวมวอลเล็ต QA และข้อมูลย้อนหลังที่นำเข้า",
+    "pt": "O kyaa registra ações de fãs do serviço na testnet GIWA Sepolia. Os resultados abaixo são registros finalizados, sem carteiras de QA e importações históricas.",
+    "fr": "kyaa enregistre les actions de fans du service sur le testnet GIWA Sepolia. Les résultats ci-dessous sont des registres finalisés, hors portefeuilles QA et importations historiques."
   },
   "m74719a97f8d5": {
     "ja": "GIWA Sepoliaテストネット",

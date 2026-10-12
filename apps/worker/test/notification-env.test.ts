@@ -12,13 +12,19 @@ const valid = {
   WEB_PUSH_VAPID_PRIVATE_KEY: "B".repeat(43),
 };
 describe("notification worker secrets", () => {
-  it("allows SES email without Kakao and requires the approved region and sender", () => {
-    const ses = {...valid, NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2", NOTIFICATION_EMAIL_BATCH_SIZE:"40", SES_REGION:"ap-northeast-2", SES_FROM_EMAIL:"notifications@byus.kr"};
-    expect(parseNotificationEnv(ses)).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:2,NOTIFICATION_EMAIL_BATCH_SIZE:40});
+  it.each(["notifications@byus.kr", "notifications@kyaa.io"])("allows approved SES sender %s without Kakao", (SES_FROM_EMAIL) => {
+    const ses = {...valid, NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:"2", NOTIFICATION_EMAIL_BATCH_SIZE:"40", SES_REGION:"ap-northeast-2", SES_FROM_EMAIL};
+    expect(parseNotificationEnv(ses)).toMatchObject({NOTIFICATION_EXTERNAL_MODE:"ses_email",NOTIFICATION_WORKER_BATCH_SIZE:2,NOTIFICATION_EMAIL_BATCH_SIZE:40,SES_FROM_EMAIL});
     expect(() => parseNotificationEnv({...ses, NOTIFICATION_WORKER_BATCH_SIZE:"25"})).toThrow();
     expect(() => parseNotificationEnv({...ses, NOTIFICATION_EMAIL_BATCH_SIZE:"41"})).toThrow();
     expect(() => parseNotificationEnv({...ses, SES_FROM_EMAIL:undefined})).toThrow();
     expect(() => parseNotificationEnv({...ses, SES_REGION:"us-east-1"})).toThrow();
+  });
+  it("rejects unrelated SES senders and requires the same validated setting for business inquiries", () => {
+    expect(() => parseNotificationEnv({...valid, NOTIFICATION_EXTERNAL_MODE:"ses_email", NOTIFICATION_WORKER_BATCH_SIZE:"2", SES_REGION:"ap-northeast-2", SES_FROM_EMAIL:"notifications@example.com"})).toThrow();
+    const business = {...valid, BUSINESS_INQUIRY_MODE:"ses_email", NOTIFICATION_EXTERNAL_ENVIRONMENT:"prod"};
+    expect(() => parseNotificationEnv(business)).toThrow();
+    expect(parseNotificationEnv({...business, SES_REGION:"ap-northeast-2", SES_FROM_EMAIL:"notifications@byus.kr"})).toMatchObject({BUSINESS_INQUIRY_MODE:"ses_email"});
   });
   it("accepts complete VAPID and queue configuration without exposing values", () => {
     expect(parseNotificationEnv(valid)).toMatchObject({
@@ -64,7 +70,7 @@ it("inquiry sending is separately gated and production-only", () => {
   const source = { NOTIFICATION_WORKER_ID: "inquiry-test", SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "s".repeat(48), WEB_PUSH_VAPID_SUBJECT: "mailto:ops@byus.kr", WEB_PUSH_VAPID_PUBLIC_KEY: "a".repeat(88), WEB_PUSH_VAPID_PRIVATE_KEY: "b".repeat(43) };
   expect(parseNotificationEnv(source).BUSINESS_INQUIRY_MODE).toBe("disabled");
   expect(() => parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email" })).toThrow();
-  expect(parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email", NOTIFICATION_EXTERNAL_ENVIRONMENT: "prod" }).BUSINESS_INQUIRY_MODE).toBe("ses_email");
+  expect(parseNotificationEnv({ ...source, BUSINESS_INQUIRY_MODE: "ses_email", NOTIFICATION_EXTERNAL_ENVIRONMENT: "prod", SES_REGION: "ap-northeast-2", SES_FROM_EMAIL: "notifications@byus.kr" }).BUSINESS_INQUIRY_MODE).toBe("ses_email");
 });
 
 it("keeps Telegram configuration raw so invalid values cannot fail common parsing", () => {

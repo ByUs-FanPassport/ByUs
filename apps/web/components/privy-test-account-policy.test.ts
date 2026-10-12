@@ -13,6 +13,8 @@ describe("public Privy Test Account policy", () => {
   it.each([
     ["https://byus.kr", "development", "true"],
     ["https://www.byus.kr", "development", "true"],
+    ["https://kyaa.io", "development", "true"],
+    ["https://www.kyaa.io", "development", "true"],
     ["https://preview.byus.vercel.app", "production", "true"],
     ["https://preview.byus.vercel.app", "development", "false"],
     [undefined, "development", "true"],

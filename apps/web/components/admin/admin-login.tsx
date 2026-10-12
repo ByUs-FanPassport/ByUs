@@ -31,11 +31,11 @@ export function AdminLogin({ access = "unauthenticated" }: { access?: AdminAcces
   return (
     <main className={styles.loginPage}>
       <section className={styles.loginPanel} aria-labelledby="admin-login-heading">
-        <Link className={styles.wordmark} href="/" aria-label="ByUs 홈으로 돌아가기">ByUs</Link>
+        <Link className={styles.wordmark} href="/" aria-label="kyaa 홈으로 돌아가기">kyaa</Link>
         <div className={styles.loginHeading}>
           <span className={styles.iconTile} aria-hidden="true"><LockKeyhole /></span>
           <div>
-            <p className={styles.productLabel}>ByUs Admin</p>
+            <p className={styles.productLabel}>kyaa Admin</p>
             <h1 id="admin-login-heading">운영자 로그인</h1>
           </div>
         </div>
@@ -43,7 +43,7 @@ export function AdminLogin({ access = "unauthenticated" }: { access?: AdminAcces
         {isDenied ? (
           <div className={styles.deniedNotice} role="alert">
             <strong>등록된 관리자 계정이 아닙니다</strong>
-            <p>관리자 데이터는 표시되지 않았습니다. 권한이 필요하다면 ByUs 운영 책임자에게 계정 등록을 요청해 주세요.</p>
+            <p>관리자 데이터는 표시되지 않았습니다. 권한이 필요하다면 kyaa 운영 책임자에게 계정 등록을 요청해 주세요.</p>
           </div>
         ) : isChecking ? (
           <div className={styles.checkingNotice} role="status" aria-live="polite">

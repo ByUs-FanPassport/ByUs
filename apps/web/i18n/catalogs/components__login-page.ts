@@ -233,15 +233,15 @@ export const messages = {
     "fr": "Réessayer"
   },
   "mb2e8e1adc638": {
-    "ja": "ByUsホームに戻る",
-    "zh-Hans": "返回ByUs首页",
-    "zh-Hant": "返回ByUs首頁",
-    "es": "Volver al inicio de ByUs",
-    "id": "Kembali ke beranda ByUs",
-    "vi": "Quay lại trang chủ ByUs",
-    "th": "กลับหน้าแรก ByUs",
-    "pt": "Voltar ao início do ByUs",
-    "fr": "Retour à l’accueil ByUs"
+    "ja": "kyaaホームに戻る",
+    "zh-Hans": "返回kyaa首页",
+    "zh-Hant": "返回kyaa首頁",
+    "es": "Volver al inicio de kyaa",
+    "id": "Kembali ke beranda kyaa",
+    "vi": "Quay lại trang chủ kyaa",
+    "th": "กลับหน้าแรก kyaa",
+    "pt": "Voltar ao início do kyaa",
+    "fr": "Retour à l’accueil kyaa"
   },
   "m25a4dd3e23d7": {
     "ja": "大好きな人との瞬間を記録しましょう。",

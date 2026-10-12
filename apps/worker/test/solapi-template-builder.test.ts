@@ -130,6 +130,11 @@ describe("SOLAPI reviewed template manifest", () => {
     }
   });
 
+  it.each(["https://byus.kr", "https://kyaa.io"])("accepts the canonical %s origin", (origin) => {
+    const manifest = SOLAPI_PENDING_TEMPLATES[0];
+    expect(() => buildSolapiRequest({ ...liveInput("live_reserved"), deepLink: `${origin}/live/kara-fan_meeting?locale=ko` }, [approvalFor(manifest)])).not.toThrow();
+  });
+
   it.each(SOLAPI_PENDING_TEMPLATES)(
     "builds the exact registered mapping for $artifactName",
     (manifest) => {

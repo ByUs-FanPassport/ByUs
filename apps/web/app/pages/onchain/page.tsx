@@ -22,8 +22,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return publicMetadata({
     path: "/pages/onchain",
     locale,
-    title: locale === "ko" ? "ByUs 온체인 기록 | ByUs" : translate(locale, localizedMessages.me9ce14ecd1e0, "ByUs onchain records | ByUs"),
-    description: locale === "ko" ? "GIWA Sepolia에 기록된 ByUs 팬 행동 지표와 검증 근거를 확인하세요." : translate(locale, localizedMessages.m3a31c7871cfc, "Review ByUs fan action metrics and verification evidence recorded on GIWA Sepolia."),
+    title: locale === "ko" ? "kyaa 온체인 기록 | kyaa" : translate(locale, localizedMessages.me9ce14ecd1e0, "kyaa onchain records | kyaa"),
+    description: locale === "ko" ? "GIWA Sepolia에 기록된 kyaa 팬 행동 지표와 검증 근거를 확인하세요." : translate(locale, localizedMessages.m3a31c7871cfc, "Review kyaa fan action metrics and verification evidence recorded on GIWA Sepolia."),
   });
 }
 

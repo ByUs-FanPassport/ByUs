@@ -515,7 +515,7 @@ export function LoginPage({
   const content = (
     <div className={styles.contents} data-fan-surface lang={locale}>
         <div className={styles.panelHeader}>
-          <Link className={styles.brand} href={`/?locale=${locale}`} aria-label={locale === "ko" ? "ByUs 홈으로 돌아가기" : translate(locale, localizedMessages.mb2e8e1adc638, "Return to ByUs home")}><Image src="/images/guest-home/byus-wordmark.svg" alt="ByUs" width={96} height={36} priority /></Link>
+          <Link className={styles.brand} href={`/?locale=${locale}`} aria-label={locale === "ko" ? "kyaa 홈으로 돌아가기" : translate(locale, localizedMessages.mb2e8e1adc638, "Return to kyaa home")}><Image src="/images/guest-home/kyaa-wordmark.svg" alt="kyaa" width={96} height={46} priority /></Link>
           {presentation === "overlay" && (
             <button
               ref={closeButtonRef}

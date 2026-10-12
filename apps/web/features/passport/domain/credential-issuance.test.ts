@@ -13,7 +13,7 @@ const stampId = "82479946-5c2b-4cb7-838a-cd48f260bbcf";
 const recipient = "0x82162619589cfE3e0DCC58C43DfBf121844f8e9C";
 
 describe("credential issuance contract", () => {
-  it("derives only canonical ByUs Passport and Stamp operation keys", () => {
+  it("derives only canonical kyaa Passport and Stamp operation keys", () => {
     expect(
       deriveCredentialId(`byus:passport:v1:${appUserId}:kara`),
     ).toBe("0x9646a4e4d2c97e0824fbd1cfde719c3399035db1c3dcaf20fd2e472ce18e276c");

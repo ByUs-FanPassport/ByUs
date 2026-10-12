@@ -2,15 +2,15 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m1a5c7fab95c1": {
-    "ja": "ByUsホーム",
-    "zh-Hans": "ByUs 首页",
-    "zh-Hant": "ByUs 首頁",
-    "es": "Inicio de ByUs",
-    "id": "Beranda ByUs",
-    "vi": "Trang chủ ByUs",
-    "th": "หน้าหลัก ByUs",
-    "pt": "Início da ByUs",
-    "fr": "Accueil ByUs"
+    "ja": "kyaaホーム",
+    "zh-Hans": "kyaa 首页",
+    "zh-Hant": "kyaa 首頁",
+    "es": "Inicio de kyaa",
+    "id": "Beranda kyaa",
+    "vi": "Trang chủ kyaa",
+    "th": "หน้าหลัก kyaa",
+    "pt": "Início da kyaa",
+    "fr": "Accueil kyaa"
   },
   "m7cecac15d1c8": {
     "ja": "言語",
@@ -57,15 +57,15 @@ export const messages = {
     "fr": "Aperçu du Fan Passport avant émission"
   },
   "m8968f5dd8d60": {
-    "ja": "ByUsで使用する表示名を選択してください。",
-    "zh-Hans": "选择你在 ByUs 使用的显示名称。",
-    "zh-Hant": "選擇你在 ByUs 使用的顯示名稱。",
-    "es": "Elige el nombre visible que usarás en ByUs.",
-    "id": "Pilih nama tampilan yang akan Anda gunakan di ByUs.",
-    "vi": "Chọn tên hiển thị sẽ dùng trên ByUs.",
-    "th": "เลือกชื่อที่จะแสดงบน ByUs",
-    "pt": "Escolha o nome de exibição que usará na ByUs.",
-    "fr": "Choisissez le nom d’affichage que vous utiliserez sur ByUs."
+    "ja": "kyaaで使用する表示名を選択してください。",
+    "zh-Hans": "选择你在 kyaa 使用的显示名称。",
+    "zh-Hant": "選擇你在 kyaa 使用的顯示名稱。",
+    "es": "Elige el nombre visible que usarás en kyaa.",
+    "id": "Pilih nama tampilan yang akan Anda gunakan di kyaa.",
+    "vi": "Chọn tên hiển thị sẽ dùng trên kyaa.",
+    "th": "เลือกชื่อที่จะแสดงบน kyaa",
+    "pt": "Escolha o nome de exibição que usará na kyaa.",
+    "fr": "Choisissez le nom d’affichage que vous utiliserez sur kyaa."
   },
   "md0d20638439b": {
     "ja": "プロフィールを完成すると元の画面に戻り、続きから進められます。",

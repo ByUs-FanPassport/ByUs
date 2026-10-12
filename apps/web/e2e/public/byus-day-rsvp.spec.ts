@@ -36,7 +36,7 @@ test("keeps old and short invitation links, locale, campaign queries and RSVP an
   await expect(page).toHaveURL(/\/connect\/kyaa-wave\?locale=ko&utm_source=shared#rsvp$/);
   await expect(page.getByRole("heading", { name: "kyaa wave", exact: true })).toBeAttached();
   await expect(page).toHaveTitle("kyaa wave | 참가 신청");
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://byus.kr/connect/kyaa-wave");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://kyaa.io/connect/kyaa-wave");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /kyaa-wave\/share-20261008\.jpg$/);
   const response = await request.get("/connect/kyaa-wave?locale=ko");
   expect(response.status()).toBe(200);

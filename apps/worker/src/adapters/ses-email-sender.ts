@@ -20,7 +20,8 @@ export interface SesEmailSenderConfig {
   fetcher?: typeof fetch;
 }
 
-const DEFAULT_TRUSTED_ORIGIN = "https://byus.kr";
+const DEFAULT_TRUSTED_ORIGIN = "https://kyaa.io";
+const CANONICAL_ORIGINS = new Set(["https://byus.kr", "https://kyaa.io"]);
 const RETRYABLE_ERROR_NAMES = new Set([
   "InternalFailure",
   "InternalServerError",
@@ -69,7 +70,7 @@ function resolveDeepLink(value: string, origin: string): string {
       throw new Error("protocol-relative URL is not trusted");
     }
     const url = new URL(value, `${origin}/`);
-    if (url.protocol !== "https:" || url.origin !== origin || url.username || url.password) {
+    if (url.protocol !== "https:" || (!CANONICAL_ORIGINS.has(url.origin) && url.origin !== origin) || url.username || url.password) {
       throw new Error("URL is outside the trusted origin");
     }
     return url.href;
@@ -153,6 +154,7 @@ export class SesEmailSender implements ExternalNotificationSender {
         new SendEmailCommand({
           FromEmailAddress: this.config.fromEmail,
           Destination: { ToAddresses: [job.destination] },
+          ReplyToAddresses: ["support@kyaa.io"],
           Content: {
             Simple: {
               Attachments: assets.attachments,

@@ -156,15 +156,15 @@ export const messages = {
     "fr": "Un samedi matin\nà attendre avec impatience."
   },
   "md690a1be143f": {
-    "ja": "9月12日（土）午前8時から午後1時まで。ByUsでifewの100日記念LIVEを予約し、MYで予約内容を確認してください。",
-    "zh-Hans": "9 月 12 日周六上午 8 点至下午 1 点。在 ByUs 预约 ifew 的 100 天纪念 LIVE，然后前往 MY 查看预约。",
-    "zh-Hant": "9 月 12 日週六上午 8 點至下午 1 點。在 ByUs 預約 ifew 的 100 天紀念 LIVE，然後前往 MY 查看預約。",
-    "es": "El sábado 12 de septiembre, de 8:00 a 13:00. Reserva en ByUs un lugar para el LIVE del centenario de ifew y consulta tu reserva en MY.",
-    "id": "Sabtu, 12 September, pukul 08.00 hingga 13.00. Pesan tempat di ByUs untuk LIVE perayaan 100 hari ifew, lalu temukan reservasi Anda di MY.",
-    "vi": "Thứ Bảy, ngày 12 tháng 9, từ 8 giờ sáng đến 1 giờ chiều. Đặt chỗ trên ByUs cho LIVE kỷ niệm 100 ngày của ifew, sau đó xem đặt chỗ trong MY.",
-    "th": "วันเสาร์ที่ 12 กันยายน เวลา 08:00 ถึง 13:00 น. จองที่บน ByUs สำหรับ LIVE ฉลอง 100 วันของ ifew แล้วดูรายการจองใน MY",
-    "pt": "Sábado, 12 de setembro, das 8h às 13h. Reserve seu lugar na ByUs para a LIVE de comemoração dos 100 dias de ifew e encontre sua reserva em MY.",
-    "fr": "Samedi 12 septembre, de 8 h à 13 h. Réservez votre place sur ByUs pour le LIVE célébrant les 100 jours d’ifew, puis retrouvez votre réservation dans MY."
+    "ja": "9月12日（土）午前8時から午後1時まで。kyaaでifewの100日記念LIVEを予約し、MYで予約内容を確認してください。",
+    "zh-Hans": "9 月 12 日周六上午 8 点至下午 1 点。在 kyaa 预约 ifew 的 100 天纪念 LIVE，然后前往 MY 查看预约。",
+    "zh-Hant": "9 月 12 日週六上午 8 點至下午 1 點。在 kyaa 預約 ifew 的 100 天紀念 LIVE，然後前往 MY 查看預約。",
+    "es": "El sábado 12 de septiembre, de 8:00 a 13:00. Reserva en kyaa un lugar para el LIVE del centenario de ifew y consulta tu reserva en MY.",
+    "id": "Sabtu, 12 September, pukul 08.00 hingga 13.00. Pesan tempat di kyaa untuk LIVE perayaan 100 hari ifew, lalu temukan reservasi Anda di MY.",
+    "vi": "Thứ Bảy, ngày 12 tháng 9, từ 8 giờ sáng đến 1 giờ chiều. Đặt chỗ trên kyaa cho LIVE kỷ niệm 100 ngày của ifew, sau đó xem đặt chỗ trong MY.",
+    "th": "วันเสาร์ที่ 12 กันยายน เวลา 08:00 ถึง 13:00 น. จองที่บน kyaa สำหรับ LIVE ฉลอง 100 วันของ ifew แล้วดูรายการจองใน MY",
+    "pt": "Sábado, 12 de setembro, das 8h às 13h. Reserve seu lugar na kyaa para a LIVE de comemoração dos 100 dias de ifew e encontre sua reserva em MY.",
+    "fr": "Samedi 12 septembre, de 8 h à 13 h. Réservez votre place sur kyaa pour le LIVE célébrant les 100 jours d’ifew, puis retrouvez votre réservation dans MY."
   },
   "mf0239476954e": {
     "ja": "予約する",
@@ -189,15 +189,15 @@ export const messages = {
     "fr": "Voir mes réservations"
   },
   "m63bfdea50767": {
-    "ja": "時刻はすべて韓国標準時（KST、UTC+9）です。\nByUsでの予約にはifew Passportが必要です。",
-    "zh-Hans": "所有时间均为韩国标准时间（KST，UTC+9）。\n在 ByUs 预约需要 ifew Passport。",
-    "zh-Hant": "所有時間均為韓國標準時間（KST，UTC+9）。\n在 ByUs 預約需要 ifew Passport。",
-    "es": "Todas las horas corresponden a la hora estándar de Corea (KST, UTC+9).\nSe necesita un ifew Passport para reservar en ByUs.",
-    "id": "Semua waktu menggunakan Waktu Standar Korea (KST, UTC+9).\nifew Passport diperlukan untuk melakukan reservasi di ByUs.",
-    "vi": "Tất cả thời gian đều theo Giờ chuẩn Hàn Quốc (KST, UTC+9).\nCần có ifew Passport để đặt chỗ trên ByUs.",
-    "th": "เวลาทั้งหมดเป็นเวลามาตรฐานเกาหลี (KST, UTC+9)\nต้องมี ifew Passport เพื่อจองบน ByUs",
-    "pt": "Todos os horários estão no Horário Padrão da Coreia (KST, UTC+9).\nÉ necessário ter um Passport de ifew para reservar na ByUs.",
-    "fr": "Tous les horaires sont indiqués en heure normale de Corée (KST, UTC+9).\nUn Passport ifew est requis pour réserver sur ByUs."
+    "ja": "時刻はすべて韓国標準時（KST、UTC+9）です。\nkyaaでの予約にはifew Passportが必要です。",
+    "zh-Hans": "所有时间均为韩国标准时间（KST，UTC+9）。\n在 kyaa 预约需要 ifew Passport。",
+    "zh-Hant": "所有時間均為韓國標準時間（KST，UTC+9）。\n在 kyaa 預約需要 ifew Passport。",
+    "es": "Todas las horas corresponden a la hora estándar de Corea (KST, UTC+9).\nSe necesita un ifew Passport para reservar en kyaa.",
+    "id": "Semua waktu menggunakan Waktu Standar Korea (KST, UTC+9).\nifew Passport diperlukan untuk melakukan reservasi di kyaa.",
+    "vi": "Tất cả thời gian đều theo Giờ chuẩn Hàn Quốc (KST, UTC+9).\nCần có ifew Passport để đặt chỗ trên kyaa.",
+    "th": "เวลาทั้งหมดเป็นเวลามาตรฐานเกาหลี (KST, UTC+9)\nต้องมี ifew Passport เพื่อจองบน kyaa",
+    "pt": "Todos os horários estão no Horário Padrão da Coreia (KST, UTC+9).\nÉ necessário ter um Passport de ifew para reservar na kyaa.",
+    "fr": "Tous les horaires sont indiqués en heure normale de Corée (KST, UTC+9).\nUn Passport ifew est requis pour réserver sur kyaa."
   },
   "m82d939e89ce5": {
     "ja": "LIVE中に共有されるコードで\nチェックイン。",
@@ -211,15 +211,15 @@ export const messages = {
     "fr": "Faites votre check-in avec le code\npartagé pendant le LIVE."
   },
   "m288dacffc1bb": {
-    "ja": "TikTok @ifewknowで100日をお祝いしましょう。配信中に案内される出席コードを確認し、下のボタンからByUsに入力してください。",
-    "zh-Hans": "在 TikTok @ifewknow 一起庆祝 100 天。留意直播中公布的出席代码，然后点击下方按钮在 ByUs 输入。",
-    "zh-Hant": "在 TikTok @ifewknow 一起慶祝 100 天。留意直播中公佈的出席代碼，然後點擊下方按鈕在 ByUs 輸入。",
-    "es": "Celebra los 100 días en TikTok @ifewknow. Busca el código de asistencia que se comparte durante la transmisión y usa el botón de abajo para introducirlo en ByUs.",
-    "id": "Rayakan 100 hari di TikTok @ifewknow. Cari kode kehadiran yang dibagikan selama siaran, lalu gunakan tombol di bawah untuk memasukkannya di ByUs.",
-    "vi": "Cùng kỷ niệm 100 ngày trên TikTok @ifewknow. Tìm mã điểm danh được chia sẻ trong buổi phát sóng, rồi dùng nút bên dưới để nhập mã trên ByUs.",
-    "th": "ฉลอง 100 วันบน TikTok @ifewknow มองหารหัสเข้าร่วมที่แชร์ระหว่างการถ่ายทอด แล้วใช้ปุ่มด้านล่างเพื่อกรอกบน ByUs",
-    "pt": "Comemore 100 dias no TikTok @ifewknow. Procure o código de presença compartilhado durante a transmissão e use o botão abaixo para inseri-lo na ByUs.",
-    "fr": "Célébrez les 100 jours sur TikTok @ifewknow. Repérez le code de présence partagé pendant la diffusion, puis utilisez le bouton ci-dessous pour le saisir sur ByUs."
+    "ja": "TikTok @ifewknowで100日をお祝いしましょう。配信中に案内される出席コードを確認し、下のボタンからkyaaに入力してください。",
+    "zh-Hans": "在 TikTok @ifewknow 一起庆祝 100 天。留意直播中公布的出席代码，然后点击下方按钮在 kyaa 输入。",
+    "zh-Hant": "在 TikTok @ifewknow 一起慶祝 100 天。留意直播中公佈的出席代碼，然後點擊下方按鈕在 kyaa 輸入。",
+    "es": "Celebra los 100 días en TikTok @ifewknow. Busca el código de asistencia que se comparte durante la transmisión y usa el botón de abajo para introducirlo en kyaa.",
+    "id": "Rayakan 100 hari di TikTok @ifewknow. Cari kode kehadiran yang dibagikan selama siaran, lalu gunakan tombol di bawah untuk memasukkannya di kyaa.",
+    "vi": "Cùng kỷ niệm 100 ngày trên TikTok @ifewknow. Tìm mã điểm danh được chia sẻ trong buổi phát sóng, rồi dùng nút bên dưới để nhập mã trên kyaa.",
+    "th": "ฉลอง 100 วันบน TikTok @ifewknow มองหารหัสเข้าร่วมที่แชร์ระหว่างการถ่ายทอด แล้วใช้ปุ่มด้านล่างเพื่อกรอกบน kyaa",
+    "pt": "Comemore 100 dias no TikTok @ifewknow. Procure o código de presença compartilhado durante a transmissão e use o botão abaixo para inseri-lo na kyaa.",
+    "fr": "Célébrez les 100 jours sur TikTok @ifewknow. Repérez le code de présence partagé pendant la diffusion, puis utilisez le bouton ci-dessous pour le saisir sur kyaa."
   },
   "mc99b7c304613": {
     "ja": "出席コードを入力",
@@ -244,15 +244,15 @@ export const messages = {
     "fr": "Voir l’événement TikTok"
   },
   "mc6e113e028d1": {
-    "ja": "9月12日08:00～13:00 KSTにコードを入力してください。\nByUsでの予約とTikTokイベントへの登録は別です。",
-    "zh-Hans": "请于 9 月 12 日 08:00–13:00 KST 输入代码。\nByUs 预约与 TikTok 活动报名互不相同。",
-    "zh-Hant": "請於 9 月 12 日 08:00–13:00 KST 輸入代碼。\nByUs 預約與 TikTok 活動報名互不相同。",
-    "es": "Introduce tu código el 12 de septiembre, de 08:00 a 13:00 KST.\nLa reserva en ByUs es independiente de la inscripción al evento de TikTok.",
-    "id": "Masukkan kode Anda pada 12 September, pukul 08.00–13.00 KST.\nReservasi ByUs terpisah dari pendaftaran acara TikTok.",
-    "vi": "Nhập mã vào ngày 12 tháng 9, 08:00–13:00 KST.\nĐặt chỗ trên ByUs và đăng ký sự kiện TikTok là hai việc riêng biệt.",
-    "th": "กรอกรหัสวันที่ 12 กันยายน เวลา 08:00–13:00 KST\nการจองบน ByUs แยกจากการลงทะเบียนกิจกรรม TikTok",
-    "pt": "Insira seu código em 12 de setembro, das 08:00 às 13:00 KST.\nA reserva na ByUs é separada da inscrição no evento do TikTok.",
-    "fr": "Saisissez votre code le 12 septembre, de 08:00 à 13:00 KST.\nLa réservation ByUs est distincte de l’inscription à l’événement TikTok."
+    "ja": "9月12日08:00～13:00 KSTにコードを入力してください。\nkyaaでの予約とTikTokイベントへの登録は別です。",
+    "zh-Hans": "请于 9 月 12 日 08:00–13:00 KST 输入代码。\nkyaa 预约与 TikTok 活动报名互不相同。",
+    "zh-Hant": "請於 9 月 12 日 08:00–13:00 KST 輸入代碼。\nkyaa 預約與 TikTok 活動報名互不相同。",
+    "es": "Introduce tu código el 12 de septiembre, de 08:00 a 13:00 KST.\nLa reserva en kyaa es independiente de la inscripción al evento de TikTok.",
+    "id": "Masukkan kode Anda pada 12 September, pukul 08.00–13.00 KST.\nReservasi kyaa terpisah dari pendaftaran acara TikTok.",
+    "vi": "Nhập mã vào ngày 12 tháng 9, 08:00–13:00 KST.\nĐặt chỗ trên kyaa và đăng ký sự kiện TikTok là hai việc riêng biệt.",
+    "th": "กรอกรหัสวันที่ 12 กันยายน เวลา 08:00–13:00 KST\nการจองบน kyaa แยกจากการลงทะเบียนกิจกรรม TikTok",
+    "pt": "Insira seu código em 12 de setembro, das 08:00 às 13:00 KST.\nA reserva na kyaa é separada da inscrição no evento do TikTok.",
+    "fr": "Saisissez votre code le 12 septembre, de 08:00 à 13:00 KST.\nLa réservation kyaa est distincte de l’inscription à l’événement TikTok."
   },
   "m4aa3de48507e": {
     "ja": "Banksy展チケット。\n当選者5名、各2枚。",
@@ -354,15 +354,15 @@ export const messages = {
     "fr": "Repérez le code de présence pendant la diffusion"
   },
   "m0355c5437439": {
-    "ja": "ByUsでコードを入力",
-    "zh-Hans": "在 ByUs 输入代码",
-    "zh-Hant": "在 ByUs 輸入代碼",
-    "es": "Introduce tu código en ByUs",
-    "id": "Masukkan kode Anda di ByUs",
-    "vi": "Nhập mã trên ByUs",
-    "th": "กรอกรหัสบน ByUs",
-    "pt": "Insira seu código na ByUs",
-    "fr": "Saisissez votre code sur ByUs"
+    "ja": "kyaaでコードを入力",
+    "zh-Hans": "在 kyaa 输入代码",
+    "zh-Hant": "在 kyaa 輸入代碼",
+    "es": "Introduce tu código en kyaa",
+    "id": "Masukkan kode Anda di kyaa",
+    "vi": "Nhập mã trên kyaa",
+    "th": "กรอกรหัสบน kyaa",
+    "pt": "Insira seu código na kyaa",
+    "fr": "Saisissez votre code sur kyaa"
   },
   "m7d861e6df9e8": {
     "ja": "9月12日08:00～13:00 KST",
@@ -530,15 +530,15 @@ export const messages = {
     "fr": "Voir les détails du LIVE"
   },
   "m34da268adce6": {
-    "ja": "ByUs. Your Bias.",
-    "zh-Hans": "ByUs. Your Bias.",
-    "zh-Hant": "ByUs. Your Bias.",
-    "es": "ByUs. Your Bias.",
-    "id": "ByUs. Your Bias.",
-    "vi": "ByUs. Your Bias.",
-    "th": "ByUs. Your Bias.",
-    "pt": "ByUs. Your Bias.",
-    "fr": "ByUs. Your Bias."
+    "ja": "kyaa. Your Bias.",
+    "zh-Hans": "kyaa. Your Bias.",
+    "zh-Hant": "kyaa. Your Bias.",
+    "es": "kyaa. Your Bias.",
+    "id": "kyaa. Your Bias.",
+    "vi": "kyaa. Your Bias.",
+    "th": "kyaa. Your Bias.",
+    "pt": "kyaa. Your Bias.",
+    "fr": "kyaa. Your Bias."
   },
   "mb91b2ba739ca": {
     "ja": "屋外で撮影されたifewのプロフィール写真",

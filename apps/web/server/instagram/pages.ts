@@ -26,16 +26,16 @@ export function instagramPage(title: string, content: string, status = 200, extr
   headers.set("content-security-policy", `default-src 'none'; style-src 'sha256-${styleHash}'; form-action 'self' https://www.instagram.com; base-uri 'none'; frame-ancestors 'none'`);
   if (extraHeaders) new Headers(extraHeaders).forEach((value, key) => headers.append(key, value));
   const privacy = locale === "ko" ? "개인정보처리방침" : "Privacy Policy";
-  return new Response(`<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · ByUs</title><style>${styles}</style></head><body><main><div class="brand">ByUs</div><h1>${escapeHtml(title)}</h1>${content}<p class="foot"><a href="/privacy?locale=${locale}">${privacy}</a></p></main></body></html>`, { status, headers });
+  return new Response(`<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · kyaa</title><style>${styles}</style></head><body><main><div class="brand">kyaa</div><h1>${escapeHtml(title)}</h1>${content}<p class="foot"><a href="/privacy?locale=${locale}">${privacy}</a></p></main></body></html>`, { status, headers });
 }
 
 export function unavailablePage(locale: InstagramLocale = "ko") {
   return locale === "ko"
-    ? instagramPage("Instagram 연결을 준비하고 있어요", "<p>아직 계정 연결을 시작할 수 없어요. ByUs 담당자에게 연결 링크를 요청해 주세요.</p>", 503, undefined, locale)
-    : instagramPage("Instagram connection is unavailable", "<p>You cannot start the connection yet. Ask your ByUs contact for a connection link.</p>", 503, undefined, locale);
+    ? instagramPage("Instagram 연결을 준비하고 있어요", "<p>아직 계정 연결을 시작할 수 없어요. kyaa 담당자에게 연결 링크를 요청해 주세요.</p>", 503, undefined, locale)
+    : instagramPage("Instagram connection is unavailable", "<p>You cannot start the connection yet. Ask your kyaa contact for a connection link.</p>", 503, undefined, locale);
 }
 
 export function failedPage(message?: string, locale: InstagramLocale = "ko", status = 400) {
-  const fallback = locale === "ko" ? "연결 링크가 만료되었거나 이미 사용되었어요. ByUs 담당자에게 새 링크를 요청해 주세요." : "This connection link has expired or has already been used. Ask your ByUs contact for a new link.";
+  const fallback = locale === "ko" ? "연결 링크가 만료되었거나 이미 사용되었어요. kyaa 담당자에게 새 링크를 요청해 주세요." : "This connection link has expired or has already been used. Ask your kyaa contact for a new link.";
   return instagramPage(locale === "ko" ? "계정을 연결하지 못했어요" : "We couldn't connect the account", `<p role="alert">${escapeHtml(message ?? fallback)}</p>`, status, undefined, locale);
 }

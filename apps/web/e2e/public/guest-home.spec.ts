@@ -12,7 +12,7 @@ test("FAN-001 public home is responsive and accessible", async ({ page }, testIn
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
-  await expect(page).toHaveTitle(/ByUs/);
+  await expect(page).toHaveTitle(/kyaa/);
   const hero = page.getByRole("region", { name: "홈 배너", exact: true });
   const managedBanners = hero.locator("[data-managed-home-banner]");
   // Occurrences and banners are independent; the existing guide is the final slide.

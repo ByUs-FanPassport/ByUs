@@ -42,9 +42,9 @@ type Copy = {
 
 const copy: Record<AppLocale, Copy> = {
   ko: {
-    home: "ByUs 홈", language: "언어", heading: (name) => `${name} 팬 인증에 사용할 닉네임을 정해 주세요.`,
+    home: "kyaa 홈", language: "언어", heading: (name) => `${name} 팬 인증에 사용할 닉네임을 정해 주세요.`,
     subtitle: (name) => `팬 인증을 통과하면 ${name} Fan Passport와 활동 기록에 표시돼요.`, preview: "발급 예정 Fan Passport 미리보기",
-    genericHeading: "ByUs에서 사용할 닉네임을 정해 주세요.",
+    genericHeading: "kyaa에서 사용할 닉네임을 정해 주세요.",
     genericSubtitle: "프로필을 완성하면 이전 화면으로 돌아가 계속할 수 있어요.",
     progress: "프로필 설정 · 1 / 1",
     verification: "팬 인증 준비", pending: "발급 예정", owner: "공개 이름", placeholderOwner: "닉네임",
@@ -61,9 +61,9 @@ const copy: Record<AppLocale, Copy> = {
     auth: "로그인 후 닉네임 설정을 이어갈 수 있어요.",
   },
   en: {
-    home: "ByUs home", language: "Language", heading: (name) => `Choose a display name for your ${name} fan verification.`,
+    home: "kyaa home", language: "Language", heading: (name) => `Choose a display name for your ${name} fan verification.`,
     subtitle: (name) => `After verification, it will appear in your ${name} Fan Passport and activity history.`, preview: "Fan Passport preview before issuance",
-    genericHeading: "Choose the display name you'll use on ByUs.",
+    genericHeading: "Choose the display name you'll use on kyaa.",
     genericSubtitle: "Complete your profile to return and continue where you left off.",
     progress: "Profile setup · 1 / 1",
     verification: "Fan verification", pending: "Pending issuance", owner: "Public name", placeholderOwner: "Display name",

@@ -3,13 +3,14 @@ import { EMAIL_STAR } from "./email-star.js";
 import { EMAIL_LOGO } from "./email-logo.js";
 
 const MAX_POSTER_BYTES = 3 * 1024 * 1024;
+const CANONICAL_ORIGINS = new Set(["https://byus.kr", "https://kyaa.io"]);
 
 export async function emailInlineAssets(
   imageUrl: string | undefined,
   config: { origin: string; storageOrigin?: string | undefined; fetcher?: typeof fetch | undefined },
 ): Promise<{ attachments: Attachment[]; posterContentId?: string }> {
   const attachments: Attachment[] = [{
-    RawContent: EMAIL_LOGO, FileName: "byus-logo.png", ContentType: "image/png",
+    RawContent: EMAIL_LOGO, FileName: "kyaa-logo.png", ContentType: "image/png",
     ContentDisposition: "INLINE", ContentId: "byus-logo", ContentTransferEncoding: "BASE64",
   }, {
     RawContent: EMAIL_STAR, FileName: "byus-star.png", ContentType: "image/png",
@@ -20,7 +21,7 @@ export async function emailInlineAssets(
   // No arbitrary hosts, credentials, query strings or redirects (SSRF boundary).
   try {
     const url = new URL(imageUrl);
-    const allowed = (url.origin === config.origin && url.pathname.startsWith("/images/")) ||
+    const allowed = ((CANONICAL_ORIGINS.has(url.origin) || url.origin === config.origin) && url.pathname.startsWith("/images/")) ||
       (url.origin === config.storageOrigin && url.pathname.startsWith("/storage/v1/object/public/cms-assets/"));
     if (!allowed || url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return { attachments };
     const response = await (config.fetcher ?? fetch)(url.href, {

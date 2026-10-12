@@ -35,9 +35,9 @@ export const elinaFanGuideContent = {
       {
         label: "04  /  9월 18일 방송 당일",
         title: "방송을 보고 출석하면\n응모권 10장을 더 받아요.",
-        body: "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 ByUs의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 10장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
+        body: "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 kyaa의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 10장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
         actions: ["출석할 LIVE 화면 보기", "선물 응모하러 가기"],
-        note: "코드 입력은 9월 18일 오후 8시 30분부터 9월 19일 00:00(KST), 방송 당일 밤 12시까지 가능해요. 방송을 보다가 이 ByUs 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
+        note: "코드 입력은 9월 18일 오후 8시 30분부터 9월 19일 00:00(KST), 방송 당일 밤 12시까지 가능해요. 방송을 보다가 이 kyaa 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
       },
     ],
     liveCard: {
@@ -48,7 +48,7 @@ export const elinaFanGuideContent = {
     },
     missionCards: [
       ["Instagram에서 LIVE 시청", "9월 18일 오후 8:30 · KST"],
-      ["ByUs로 돌아와 코드 입력", "출석 완료 시 응모권 +10장"],
+      ["kyaa로 돌아와 코드 입력", "출석 완료 시 응모권 +10장"],
     ],
     historyTitle: "예약과 응모 완료를 확인하세요.",
     historyBody: "MY에서 예약한 LIVE, 내 응모 내역과 발표 후 당첨 여부를 확인할 수 있어요.",
@@ -64,7 +64,7 @@ export const elinaFanGuideContent = {
     ],
     closingTitle: "팬 인증부터 LIVE 예약까지,\n지금 시작해 볼까요?",
     closingAction: "팬 인증하고 시작하기",
-    footer: "ByUs. Your Bias.    ·    한국어 / EN",
+    footer: "kyaa. Your Bias.    ·    한국어 / EN",
     imageAlt: "바다를 배경으로 선 엘리나",
     prizeAlt: "뱅크시 관람권, 비피오 케이스, 뱅크시 한정판 스태츄",
   },
@@ -102,9 +102,9 @@ export const elinaFanGuideContent = {
       {
         label: "04  /  SEPTEMBER 18",
         title: "Watch and check in.\nEarn 10 more tickets.",
-        body: "Watch the LIVE on Instagram, then return to the ByUs LIVE page and enter the code shared during the broadcast. Complete check-in to earn 10 raffle tickets, then use them to enter for your favorite prize.",
+        body: "Watch the LIVE on Instagram, then return to the kyaa LIVE page and enter the code shared during the broadcast. Complete check-in to earn 10 raffle tickets, then use them to enter for your favorite prize.",
         actions: ["Open the LIVE check-in page", "Enter for a prize"],
-        note: "Code entry is open from September 18 at 8:30 PM until September 19 at 00:00 KST (midnight at the end of September 18). Return to the ByUs LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
+        note: "Code entry is open from September 18 at 8:30 PM until September 19 at 00:00 KST (midnight at the end of September 18). Return to the kyaa LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
       },
     ],
     liveCard: {
@@ -115,7 +115,7 @@ export const elinaFanGuideContent = {
     },
     missionCards: [
       ["Watch on Instagram", "September 18 · 8:30 PM KST"],
-      ["Return to ByUs and enter the code", "Complete check-in to earn +10 tickets"],
+      ["Return to kyaa and enter the code", "Complete check-in to earn +10 tickets"],
     ],
     historyTitle: "Check your reservation and entries.",
     historyBody: "Find your reserved LIVE and raffle entries in MY. Results appear there after the announcement.",
@@ -131,7 +131,7 @@ export const elinaFanGuideContent = {
     ],
     closingTitle: "Start with fan verification,\nthen reserve your spot.",
     closingAction: "Verify and get started",
-    footer: "ByUs. Your Bias.    ·    KO / English",
+    footer: "kyaa. Your Bias.    ·    KO / English",
     imageAlt: "Elina standing by the sea",
     prizeAlt: "Banksy exhibition ticket, Beepio cases, and a Banksy limited-edition statue",
   },

@@ -123,15 +123,15 @@ export function createInstagramProvider(
   }
   const bearer = (accessToken: string) => ({ authorization: `Bearer ${accessToken}` });
   return {
-    authorizationUrl(state) {
+    authorizationUrl(state, redirectUri = config.redirectUri) {
       const url = new URL("https://www.instagram.com/oauth/authorize");
-      url.search = new URLSearchParams({ client_id: config.appId, redirect_uri: config.redirectUri, response_type: "code", scope: "instagram_business_basic", state, enable_fb_login: "false", force_reauth: "true" }).toString();
+      url.search = new URLSearchParams({ client_id: config.appId, redirect_uri: redirectUri, response_type: "code", scope: "instagram_business_basic", state, enable_fb_login: "false", force_reauth: "true" }).toString();
       return url.toString();
     },
-    async exchange(code) {
+    async exchange(code, redirectUri = config.redirectUri) {
       const result = await call("short_token", "https://api.instagram.com/oauth/access_token", {
         method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ client_id: config.appId, client_secret: config.appSecret, grant_type: "authorization_code", redirect_uri: config.redirectUri, code }),
+        body: new URLSearchParams({ client_id: config.appId, client_secret: config.appSecret, grant_type: "authorization_code", redirect_uri: redirectUri, code }),
       });
       const shortResponse = shortResponseSchema.safeParse(result);
       if (!shortResponse.success) {

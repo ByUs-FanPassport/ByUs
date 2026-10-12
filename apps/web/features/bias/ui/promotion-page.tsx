@@ -220,7 +220,7 @@ export function PromotionPage({
               {(locale === "ko" ? "Instagram 연결" : translate(locale, localizedMessages.mf6d5d2a932c2, "Connect Instagram"))}
             </a>
             <a className={styles.desktopNav} href={`/?locale=${locale}`}>
-              {(locale === "ko" ? "ByUs로 이동" : translate(locale, localizedMessages.m3d1edbc7f2d5, "Go to ByUs"))} ↗
+              {(locale === "ko" ? "kyaa로 이동" : translate(locale, localizedMessages.m3d1edbc7f2d5, "Go to kyaa"))} ↗
             </a>
             <a className={styles.mobileNav} href={guideHref("/bias")}>
               {(locale === "ko" ? "전체 가이드" : translate(locale, localizedMessages.m1f8922b9db6b, "All guides"))}
@@ -408,7 +408,7 @@ export function PromotionPage({
               {(locale === "ko" ? "03  진행할 이벤트가 있나요?" : translate(locale, localizedMessages.m23350a8c3ab9, "03  Have an event coming up?"))}
             </h2>
             <p className={styles.description}>
-              {(locale === "ko" ? "이벤트가 있다면 담당자와 일정·혜택을 먼저 협의해주세요.\n팬들이 참여 방법을 쉽게 이해하도록, 팬페이지 안내와 홍보 문구를 함께 준비해요." : translate(locale, localizedMessages.m0076c426b54c, "Agree on the schedule and benefits with your ByUs contact first.\nPrepare your fan page instructions and promotional messages together so fans know how to take part."))}
+              {(locale === "ko" ? "이벤트가 있다면 담당자와 일정·혜택을 먼저 협의해주세요.\n팬들이 참여 방법을 쉽게 이해하도록, 팬페이지 안내와 홍보 문구를 함께 준비해요." : translate(locale, localizedMessages.m0076c426b54c, "Agree on the schedule and benefits with your kyaa contact first.\nPrepare your fan page instructions and promotional messages together so fans know how to take part."))}
             </p>
             <ol className={styles.steps}>
               {[
@@ -454,7 +454,7 @@ export function PromotionPage({
           </section>
         </main>
         <footer className={styles.footer}>
-          <span>© ByUs · Sallylab Inc.</span>
+          <span>© kyaa · Sallylab Inc.</span>
           <div>
             <a href={guideHref("/bias")}>
               {(locale === "ko" ? "셀럽 가이드" : translate(locale, localizedMessages.mb758697a1e1b, "Celebrity guides"))}
@@ -587,7 +587,7 @@ function PromotionPreview({
   locale: Locale;
   variant: number;
 }) {
-  const url = profile ? `byus.kr/${profile.slug}` : "byus.kr/…";
+  const url = profile ? `kyaa.io/${profile.slug}` : "kyaa.io/…";
   const previewCopy = promotionCopy(profile?.slug ?? "", locale);
   const instagram = profile?.socialLinks.find(
     (link) => link.platform === "instagram",
@@ -661,10 +661,10 @@ function PromotionPreview({
           <span className={styles.liveTag}>LIVE</span>
           <div className={styles.liveAddress}>
             <Image
-              src="/images/guest-home/byus-wordmark.svg"
-              alt="ByUs"
+              src="/images/guest-home/kyaa-wordmark.svg"
+              alt="kyaa"
               width={80}
-              height={30}
+              height={39}
             />
             <strong>{url}</strong>
           </div>

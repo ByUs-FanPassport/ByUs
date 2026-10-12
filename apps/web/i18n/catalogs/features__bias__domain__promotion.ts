@@ -2,37 +2,37 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m08ee38c69565": {
-    "ja": "皆さん、私のLIVEファンページがByUsにオープンしました！\n毎週のLIVEスケジュールを確認して、\nいいね💜やチェックインでいろいろな特典を受け取ってください！\n{0}",
-    "zh-Hans": "大家好，我的 LIVE 粉丝页面已在 ByUs 上线！\n欢迎查看每周 LIVE 日程，\n记得点赞💜并签到，领取各种权益！\n{0}",
-    "zh-Hant": "大家好，我的 LIVE 粉絲頁面已在 ByUs 上線！\n歡迎查看每周 LIVE 時程，\n記得點贊💜並簽到，領取各種權益！\n{0}",
-    "es": "¡Hola! ¡Mi página de LIVE ya está disponible en ByUs!\nConsulta mi calendario semanal\ny disfruta de diversos beneficios dando Me gusta 💜 y registrando tu asistencia.\n{0}",
-    "id": "Halo semuanya! Halaman penggemar LIVE saya sudah dibuka di ByUs!\nLihat jadwal LIVE mingguan saya,\ndan nikmati berbagai manfaat dengan memberi suka 💜 dan check-in!\n{0}",
-    "vi": "Xin chào mọi người! Trang người hâm mộ LIVE của mình đã mở trên ByUs!\nHãy xem lịch LIVE hằng tuần,\nvà đừng quên nhận nhiều quyền lợi bằng cách thả tim 💜 và điểm danh nhé!\n{0}",
-    "th": "สวัสดีทุกคน! หน้าแฟน LIVE ของฉันเปิดบน ByUs แล้ว!\nเข้ามาดูกำหนดการ LIVE ประจำสัปดาห์\nและอย่าลืมรับสิทธิประโยชน์มากมายด้วยการกดถูกใจ 💜 และเช็กอินนะ!\n{0}",
-    "pt": "Oi, pessoal! Minha página de fãs LIVE já está no ByUs!\nConfiram minha agenda semanal de LIVE\ne aproveitem vários benefícios deixando uma curtida 💜 e fazendo check-in!\n{0}",
-    "fr": "Bonjour à tous ! Ma page de fans LIVE est ouverte sur ByUs !\nRetrouvez mon programme de LIVE de la semaine\net profitez de différents avantages en laissant un J’aime 💜 et en enregistrant vos visites !\n{0}"
+    "ja": "皆さん、私のLIVEファンページがkyaaにオープンしました！\n毎週のLIVEスケジュールを確認して、\nいいね💜やチェックインでいろいろな特典を受け取ってください！\n{0}",
+    "zh-Hans": "大家好，我的 LIVE 粉丝页面已在 kyaa 上线！\n欢迎查看每周 LIVE 日程，\n记得点赞💜并签到，领取各种权益！\n{0}",
+    "zh-Hant": "大家好，我的 LIVE 粉絲頁面已在 kyaa 上線！\n歡迎查看每周 LIVE 時程，\n記得點贊💜並簽到，領取各種權益！\n{0}",
+    "es": "¡Hola! ¡Mi página de LIVE ya está disponible en kyaa!\nConsulta mi calendario semanal\ny disfruta de diversos beneficios dando Me gusta 💜 y registrando tu asistencia.\n{0}",
+    "id": "Halo semuanya! Halaman penggemar LIVE saya sudah dibuka di kyaa!\nLihat jadwal LIVE mingguan saya,\ndan nikmati berbagai manfaat dengan memberi suka 💜 dan check-in!\n{0}",
+    "vi": "Xin chào mọi người! Trang người hâm mộ LIVE của mình đã mở trên kyaa!\nHãy xem lịch LIVE hằng tuần,\nvà đừng quên nhận nhiều quyền lợi bằng cách thả tim 💜 và điểm danh nhé!\n{0}",
+    "th": "สวัสดีทุกคน! หน้าแฟน LIVE ของฉันเปิดบน kyaa แล้ว!\nเข้ามาดูกำหนดการ LIVE ประจำสัปดาห์\nและอย่าลืมรับสิทธิประโยชน์มากมายด้วยการกดถูกใจ 💜 และเช็กอินนะ!\n{0}",
+    "pt": "Oi, pessoal! Minha página de fãs LIVE já está no kyaa!\nConfiram minha agenda semanal de LIVE\ne aproveitem vários benefícios deixando uma curtida 💜 e fazendo check-in!\n{0}",
+    "fr": "Bonjour à tous ! Ma page de fans LIVE est ouverte sur kyaa !\nRetrouvez mon programme de LIVE de la semaine\net profitez de différents avantages en laissant un J’aime 💜 et en enregistrant vos visites !\n{0}"
   },
   "m03b30b02220c": {
-    "ja": "LIVEスケジュールやさまざまなお知らせはByUsでチェックしてください！\n{0}",
-    "zh-Hans": "现在就到 ByUs 查看我的 LIVE 日程和更多动态！\n{0}",
-    "zh-Hant": "現在就到 ByUs 查看我的 LIVE 時程和更多動態！\n{0}",
-    "es": "¡Consulta mi calendario de LIVE y más novedades en ByUs!\n{0}",
-    "id": "Lihat jadwal LIVE dan kabar terbaru saya di ByUs!\n{0}",
-    "vi": "Từ giờ, hãy xem lịch LIVE và nhiều tin mới khác trên ByUs!\n{0}",
-    "th": "ดูกำหนดการ LIVE และข่าวสารอื่น ๆ ของฉันบน ByUs ได้เลย!\n{0}",
-    "pt": "Confira minha agenda de LIVE e outras novidades no ByUs!\n{0}",
-    "fr": "Retrouvez mon programme de LIVE et mes autres nouveautés sur ByUs !\n{0}"
+    "ja": "LIVEスケジュールやさまざまなお知らせはkyaaでチェックしてください！\n{0}",
+    "zh-Hans": "现在就到 kyaa 查看我的 LIVE 日程和更多动态！\n{0}",
+    "zh-Hant": "現在就到 kyaa 查看我的 LIVE 時程和更多動態！\n{0}",
+    "es": "¡Consulta mi calendario de LIVE y más novedades en kyaa!\n{0}",
+    "id": "Lihat jadwal LIVE dan kabar terbaru saya di kyaa!\n{0}",
+    "vi": "Từ giờ, hãy xem lịch LIVE và nhiều tin mới khác trên kyaa!\n{0}",
+    "th": "ดูกำหนดการ LIVE และข่าวสารอื่น ๆ ของฉันบน kyaa ได้เลย!\n{0}",
+    "pt": "Confira minha agenda de LIVE e outras novidades no kyaa!\n{0}",
+    "fr": "Retrouvez mon programme de LIVE et mes autres nouveautés sur kyaa !\n{0}"
   },
   "m3b9adafe4d7e": {
-    "ja": "もうすぐLIVEで会いましょう💜\nByUsでLIVEへの出席を記録して、かわいいStampも集めてください！\n{0}",
-    "zh-Hans": "期待很快在 LIVE 见到大家💜\n在 ByUs 记录 LIVE 签到，别忘了收集可爱的 Stamp！\n{0}",
-    "zh-Hant": "期待很快在 LIVE 見到大家💜\n在 ByUs 記錄 LIVE 簽到，別忘了收集可愛的 Stamp！\n{0}",
-    "es": "Nos vemos pronto en mi LIVE 💜\nRegistra tu asistencia en ByUs y colecciona los bonitos Stamp.\n{0}",
-    "id": "Sampai jumpa di LIVE saya 💜\nCatat check-in LIVE di ByUs dan kumpulkan Stamp yang menarik!\n{0}",
-    "vi": "Hẹn gặp mọi người trong buổi LIVE sắp tới 💜\nHãy ghi lại lần điểm danh LIVE trên ByUs và nhớ nhận những Stamp xinh xắn nhé!\n{0}",
-    "th": "แล้วพบกันใน LIVE เร็ว ๆ นี้ 💜\nบันทึกการเช็กอิน LIVE บน ByUs และอย่าลืมสะสม Stamp น่ารัก ๆ นะ!\n{0}",
-    "pt": "Vejo vocês em breve na minha LIVE 💜\nRegistre seus check-ins de LIVE no ByUs e não deixe de colecionar os Stamps fofos!\n{0}",
-    "fr": "À bientôt en LIVE 💜\nEnregistrez vos présences aux LIVE sur ByUs et collectionnez les petits Stamps !\n{0}"
+    "ja": "もうすぐLIVEで会いましょう💜\nkyaaでLIVEへの出席を記録して、かわいいStampも集めてください！\n{0}",
+    "zh-Hans": "期待很快在 LIVE 见到大家💜\n在 kyaa 记录 LIVE 签到，别忘了收集可爱的 Stamp！\n{0}",
+    "zh-Hant": "期待很快在 LIVE 見到大家💜\n在 kyaa 記錄 LIVE 簽到，別忘了收集可愛的 Stamp！\n{0}",
+    "es": "Nos vemos pronto en mi LIVE 💜\nRegistra tu asistencia en kyaa y colecciona los bonitos Stamp.\n{0}",
+    "id": "Sampai jumpa di LIVE saya 💜\nCatat check-in LIVE di kyaa dan kumpulkan Stamp yang menarik!\n{0}",
+    "vi": "Hẹn gặp mọi người trong buổi LIVE sắp tới 💜\nHãy ghi lại lần điểm danh LIVE trên kyaa và nhớ nhận những Stamp xinh xắn nhé!\n{0}",
+    "th": "แล้วพบกันใน LIVE เร็ว ๆ นี้ 💜\nบันทึกการเช็กอิน LIVE บน kyaa และอย่าลืมสะสม Stamp น่ารัก ๆ นะ!\n{0}",
+    "pt": "Vejo vocês em breve na minha LIVE 💜\nRegistre seus check-ins de LIVE no kyaa e não deixe de colecionar os Stamps fofos!\n{0}",
+    "fr": "À bientôt en LIVE 💜\nEnregistrez vos présences aux LIVE sur kyaa et collectionnez les petits Stamps !\n{0}"
   },
   "mebb43a6cd00d": {
     "ja": "私のファンページは{0}です。\nLIVEスケジュールや参加できる活動を確認して、\nいいねやチェックインで一緒に楽しみましょう！",

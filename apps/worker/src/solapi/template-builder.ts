@@ -94,16 +94,16 @@ function parseDeepLink(value: unknown, target: "live" | "benefit"): string {
   }
   const absolute = value.startsWith("https://");
   if (!absolute && (!value.startsWith("/") || value.startsWith("//"))) fail("SOLAPI_INVALID_DEEP_LINK");
-  if (absolute && !value.startsWith("https://byus.kr/")) fail("SOLAPI_INVALID_DEEP_LINK");
+  if (absolute && !value.startsWith("https://byus.kr/") && !value.startsWith("https://kyaa.io/")) fail("SOLAPI_INVALID_DEEP_LINK");
   let parsed: URL;
   try {
-    parsed = new URL(value, "https://byus.kr");
+    parsed = new URL(value, "https://kyaa.io");
   } catch {
     fail("SOLAPI_INVALID_DEEP_LINK");
   }
   if (
     parsed.protocol !== "https:" ||
-    parsed.hostname !== "byus.kr" ||
+    !["byus.kr", "kyaa.io"].includes(parsed.hostname) ||
     parsed.username !== "" ||
     parsed.password !== "" ||
     parsed.port !== "" ||

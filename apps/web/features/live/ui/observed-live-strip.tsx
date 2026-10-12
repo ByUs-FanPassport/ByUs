@@ -163,6 +163,6 @@ function LiveCards({ items, locale, headingId, onWatch }: { items: ObservedLiveC
 }
 
 function watchLabel(item: ObservedLiveCard, locale: AppLocale): string {
-  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : item.playbackAvailable === true ? "ByUs" : "TikTok";
+  const provider = item.platform === "youtube" ? "YouTube" : item.platform === "instagram" ? "Instagram" : item.platform === "chzzk" ? "CHZZK" : item.playbackAvailable === true ? "kyaa" : "TikTok";
   return locale === "ko" ? `${provider}에서 시청` : translate(locale, localizedMessages.m7ce4b315a780, "Watch on {0}", [provider]);
 }

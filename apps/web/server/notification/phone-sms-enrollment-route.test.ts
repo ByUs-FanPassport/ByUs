@@ -12,7 +12,7 @@ function setup() {
     provider: { send: vi.fn(async () => ({ status: "accepted" as const, providerMessageId: "message-id", providerGroupId: "group-id" })) } };
   return deps;
 }
-const req = (body: unknown, origin = "https://byus.kr") => new Request("https://byus.kr/api/me/notification-channels/kakao/phone/request", { method: "POST", headers: { origin, "content-type": "application/json", authorization: "Bearer test" }, body: JSON.stringify(body) });
+const req = (body: unknown, origin = "https://byus.kr", requestOrigin = "https://byus.kr") => new Request(`${requestOrigin}/api/me/notification-channels/kakao/phone/request`, { method: "POST", headers: { origin, "content-type": "application/json", authorization: "Bearer test" }, body: JSON.stringify(body) });
 describe("manual phone verification routes", () => {
   it.each(["01012345678", "010-1234-5678", "+82 10-1234-5678"])("normalizes %s", (value) => expect(normalizeManualKoreanMobile(value)).toBe("01012345678"));
   it.each(["02012345678", "+12025550123", "010123456789", "0101234<script>"])("rejects %s", (value) => expect(() => normalizeManualKoreanMobile(value)).toThrow());
@@ -73,6 +73,15 @@ describe("manual phone verification routes", () => {
     expect((await handler(req({ phone: "0".repeat(2000), requestId: id }))).status).toBe(400);
     vi.mocked(deps.authorize).mockRejectedValue(new AuthError("AUTHENTICATION_REQUIRED", 401, "Required"));
     expect((await handler(req({ phone: "01012345678", requestId: id }))).status).toBe(401);
+    expect(deps.provider.send).not.toHaveBeenCalled();
+  });
+  it.each(["https://byus.kr", "https://kyaa.io"])("accepts same-origin production SMS requests on %s", async (origin) => {
+    const deps = setup(); deps.origin = "https://kyaa.io";
+    expect((await createPhoneSmsHandler("request", deps)(req({ phone: "01012345678", requestId: id }, origin, origin))).status).toBe(200);
+  });
+  it("rejects a trusted URL with a mismatched browser origin", async () => {
+    const deps = setup(); deps.origin = "https://kyaa.io";
+    expect((await createPhoneSmsHandler("request", deps)(req({ phone: "01012345678", requestId: id }, "https://kyaa.io", "https://byus.kr"))).status).toBe(400);
     expect(deps.provider.send).not.toHaveBeenCalled();
   });
   it("reports rate limiting without exposing internal error text", async () => {

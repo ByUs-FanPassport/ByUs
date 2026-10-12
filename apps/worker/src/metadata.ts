@@ -51,10 +51,10 @@ export function renderMetadata(job: BlockchainJob, payload: JobPayload, assetBas
   const document: MetadataDocument = {
     schema: "https://byus.kr/schemas/credential-metadata-v1.json",
     version: 1,
-    name: `ByUs ${credential}`,
-    description: `A soulbound ByUs ${credential} credential.`,
+    name: `kyaa ${credential}`,
+    description: `A soulbound kyaa ${credential} credential.`,
     image: community
-      ? `https://byus.kr/images/community-stamps/${community.asset}.png`
+      ? `https://kyaa.io/images/community-stamps/${community.asset}.png`
       : job.entityType === "stamp" && (payload as StampPayload).stampType === "Membership"
       ? MEMBERSHIP_STAMP_IMAGE_URI
       : `${assetBaseUri.replace(/\/$/, "")}/${assetPath}`,

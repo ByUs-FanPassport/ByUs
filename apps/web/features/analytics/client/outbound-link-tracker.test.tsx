@@ -16,7 +16,7 @@ function setup() {
 describe("global outbound tracking", () => {
   it("decorates anchors, preserves ordinary navigation, and records one event for keyboard click or middle click", () => {
     const anchor = setup(); start();
-    expect(anchor.href).toContain("q=a%20b&utm_source=byus");
+    expect(anchor.href).toContain("q=a%20b&utm_source=kyaa");
     expect(anchor.href).toContain("utm_campaign=runmusic");
     const click = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, detail: 0 });
     anchor.querySelector("span")!.dispatchEvent(click);
@@ -33,7 +33,7 @@ describe("global outbound tracking", () => {
     const dynamic = document.createElement("a"); dynamic.href = "https://other.example/?utm_source=partner"; document.body.append(dynamic);
     await waitFor(() => expect(dynamic.href).toContain("utm_campaign=runmusic"));
     anchor.setAttribute("href", "https://changed.example/path");
-    await waitFor(() => expect(anchor.href).toContain("utm_source=byus"));
+    await waitFor(() => expect(anchor.href).toContain("utm_source=kyaa"));
     stop.pop()!();
     expect(anchor.getAttribute("href")).toBe("https://changed.example/path");
     expect(dynamic.getAttribute("href")).toBe("https://other.example/?utm_source=partner");

@@ -11,7 +11,7 @@ describe("U.S. fanmeeting inquiries", () => {
       const { container } = render(<UsFanmeetingsPage locale={locale} />);
       expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
       expect(screen.getByRole("button", { name: locale === "ko" ? "팬미팅 문의하기" : "Discuss your fanmeeting" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "biz@sallylab.io" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "support@kyaa.io" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: locale === "ko" ? "프로젝트 문의하기" : "Tell us about your project" })).toBeInTheDocument();
       expect(
         screen.getByRole("combobox", { name: locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English" }),
@@ -37,7 +37,7 @@ describe("U.S. fanmeeting inquiries", () => {
     const metadata = await generateMetadata({ searchParams });
     expect(metadata.title).toContain("Bring your fanmeeting to the U.S.");
     expect(metadata.alternates?.canonical).toBe(
-      "https://byus.kr/pages/us-fanmeetings?locale=en",
+      "https://kyaa.io/pages/us-fanmeetings?locale=en",
     );
   });
 
@@ -47,7 +47,7 @@ describe("U.S. fanmeeting inquiries", () => {
         searchParams: Promise.resolve({ locale }),
       });
       expect(metadata.alternates?.canonical).toBe(
-        "https://byus.kr/pages/us-fanmeetings?locale=ko",
+        "https://kyaa.io/pages/us-fanmeetings?locale=ko",
       );
     }
   });

@@ -49,7 +49,7 @@ describe("PassportIssuanceCeremony", () => {
     render(<PassportIssuanceCeremony issuance={aggregate} />);
     expect(screen.getByRole("main", { name: "KARA Passport 발급 완료" })).toBeInTheDocument();
     expect(screen.getByText("첫 팬 인증 Stamp와 팬 점수 +1이 기록됐어요.")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
+    expect(screen.getByRole("img", { name: "kyaa" })).toHaveAttribute("src", expect.stringContaining("kyaa-wordmark.svg"));
     expect(screen.getByRole("progressbar", { name: "Passport 발급 과정" })).toHaveAttribute("value", "1");
     expect(screen.queryByRole("link", { name: "Passport 열기" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));

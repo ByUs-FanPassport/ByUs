@@ -51,12 +51,12 @@ export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CRE
   const chzzk = useNewsSource(channelId ? `/api/celebrities/${encodeURIComponent(slug)}/chzzk` : null, parseChzzk, key);
   const replay = useNewsSource(`/api/live-events?locale=${toContentLocale(locale)}`, parseReplay, key);
   const sources = [
-    ...(filter !== "replays" ? [{ name: "ByUs", resource: official }, { name: "Instagram", resource: instagram }] : []),
+    ...(filter !== "replays" ? [{ name: "kyaa", resource: official }, { name: "Instagram", resource: instagram }] : []),
     ...(channelId && (filter === "all" || filter === "photos") ? [{ name: "CHZZK", resource: chzzk }] : []),
     ...(filter === "all" || filter === "replays" ? [{ name: c.replays, resource: replay }] : []),
     ...(socialLinks.some(link => link.platform === "youtube") && (filter === "all" || filter === "videos") ? [{ name: "YouTube", resource: youtube }] : []),
   ];
-  const items: Media[] = [...official.state.data.map(item => ({ ...item, source: "ByUs" })), ...instagram.state.data.map(item => ({ ...item, source: "Instagram" })), ...youtube.state.data.map(item => ({ ...item, source: "YouTube" })), ...chzzk.state.data.map(item => ({ ...item, source: "CHZZK", href: `https://chzzk.naver.com/${channelId}/community` })), ...replay.state.data.filter(item => item.slug === slug).map(item => ({ ...item, source: c.replays }))]
+  const items: Media[] = [...official.state.data.map(item => ({ ...item, source: "kyaa" })), ...instagram.state.data.map(item => ({ ...item, source: "Instagram" })), ...youtube.state.data.map(item => ({ ...item, source: "YouTube" })), ...chzzk.state.data.map(item => ({ ...item, source: "CHZZK", href: `https://chzzk.naver.com/${channelId}/community` })), ...replay.state.data.filter(item => item.slug === slug).map(item => ({ ...item, source: c.replays }))]
     .filter(item => filter === "all" || item.kind === filter).sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || a.id.localeCompare(b.id));
   return <section className={mediaStyles.panel} aria-label={`${c.photos} · ${c.videos}`}>
     <div className={mediaStyles.heading}><FanSectionHeader title={`${c.photos} · ${c.videos}`} description={discovery.mediaIntro} /></div>
@@ -69,7 +69,7 @@ export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CRE
       const href = internal ? `${item.href}?${new URLSearchParams({ locale, returnTo: boardHref(slug, locale, { section: "media", mediaFilter: filter === "all" ? undefined : filter }) })}` : item.href;
       return <li key={item.id} data-media-kind={item.kind}><a href={href} target={internal ? undefined : "_blank"} rel={internal ? undefined : "noopener noreferrer"}>{item.asset ? <ContentAssetImage asset={item.asset} locale={locale} alt="" /> : item.image ? <Image src={item.image} width={640} height={360} alt="" unoptimized referrerPolicy="no-referrer" /> : <span className={styles.videoLink} aria-hidden="true">▶</span>}<span className={mediaStyles.cardBody}><strong>{item.title.slice(0, 120) || c[item.kind]}</strong><span className={mediaStyles.meta}>{item.source} · {c[item.kind]}{!internal && <ArrowUpRight size={12} aria-hidden="true" />} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(locale)}</time></span></span></a></li>;
     })}</ul>
-    {filter !== "replays" && official.state.nextCursor && <FanAction onClick={official.loadMore} disabled={official.state.moreLoading}>ByUs · {official.state.moreLoading ? c.loading : c.more}</FanAction>}
+    {filter !== "replays" && official.state.nextCursor && <FanAction onClick={official.loadMore} disabled={official.state.moreLoading}>kyaa · {official.state.moreLoading ? c.loading : c.more}</FanAction>}
     {filter !== "replays" && official.state.moreError && <ParticipationState locale={locale} status="error" retry={official.loadMore} />}
     {(filter === "all" || filter === "photos") && chzzk.state.nextCursor && <FanAction onClick={chzzk.loadMore} disabled={chzzk.state.moreLoading}>CHZZK · {chzzk.state.moreLoading ? c.loading : c.more}</FanAction>}
     {(filter === "all" || filter === "photos") && chzzk.state.moreError && <ParticipationState locale={locale} status="error" retry={chzzk.loadMore} />}

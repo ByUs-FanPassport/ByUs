@@ -35,15 +35,15 @@ export const messages = {
     "fr": "Participer au tirage au sort"
   },
   "m16b2e3b23b97": {
-    "ja": "米国ファンミーティングをByUsと一緒に企画しましょう",
-    "zh-Hans": "与 ByUs 一起筹备美国粉丝见面会",
-    "zh-Hant": "與 ByUs 一起籌備美國粉絲見面會",
-    "es": "Organiza tu fanmeeting en EE. UU. con ByUs",
-    "id": "Rencanakan fanmeeting AS bersama ByUs",
-    "vi": "Lên kế hoạch fanmeeting tại Hoa Kỳ cùng ByUs",
-    "th": "วางแผนแฟนมีตติ้งในสหรัฐฯ กับ ByUs",
-    "pt": "Planeje seu encontro com fãs nos EUA com o ByUs",
-    "fr": "Organisez votre rencontre de fans aux États-Unis avec ByUs"
+    "ja": "米国ファンミーティングをkyaaと一緒に企画しましょう",
+    "zh-Hans": "与 kyaa 一起筹备美国粉丝见面会",
+    "zh-Hant": "與 kyaa 一起籌備美國粉絲見面會",
+    "es": "Organiza tu fanmeeting en EE. UU. con kyaa",
+    "id": "Rencanakan fanmeeting AS bersama kyaa",
+    "vi": "Lên kế hoạch fanmeeting tại Hoa Kỳ cùng kyaa",
+    "th": "วางแผนแฟนมีตติ้งในสหรัฐฯ กับ kyaa",
+    "pt": "Planeje seu encontro com fãs nos EUA com o kyaa",
+    "fr": "Organisez votre rencontre de fans aux États-Unis avec kyaa"
   },
   "mb8abbbaa625c": {
     "ja": "芸能事務所とアーティスト向けの米国現地パートナーシップ",

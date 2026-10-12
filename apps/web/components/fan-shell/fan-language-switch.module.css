@@ -116,10 +116,6 @@
 }
 
 @media (max-width: 420px) {
-  .trigger {
-    max-inline-size: 116px;
-  }
-
   .trigger > svg:first-child {
     display: none;
   }

@@ -154,7 +154,7 @@ describe("published celebrity directory", () => {
 
   it("prioritizes editorial leads and exposes useful search and sort controls", () => {
     render(<CelebrityDirectory celebrities={publishedCelebrityFixtures} locale="ko" />);
-    expect(screen.getAllByRole("link", { name: "ByUs 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
+    expect(screen.getAllByRole("link", { name: "kyaa 홈" })[0]).toHaveAttribute("href", "/?locale=ko");
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByRole("article")[0]).toHaveTextContent("Changha");
     expect(screen.getByRole("link", { name: "KARA 만나보기" })).toHaveAttribute("href", "/kara?locale=ko");

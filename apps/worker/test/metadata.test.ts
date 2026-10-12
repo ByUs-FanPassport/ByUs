@@ -47,9 +47,9 @@ describe("credential metadata", () => {
     const membershipPayload: StampPayloadV1 = { recipient: payload.recipient, celebritySlug: "elina", issuanceId: payload.passportId, stampType: "Membership" };
     const membershipJob = { ...job, entityType: "stamp" as const, payload: membershipPayload };
     const first = renderMetadata(membershipJob, membershipPayload, "ipfs://existing-credential-assets/v1");
-    expect(first.name).toBe("ByUs Membership Stamp");
+    expect(first.name).toBe("kyaa Membership Stamp");
     expect(first.image).toBe(MEMBERSHIP_STAMP_IMAGE_URI);
-    expect(first.image).toMatch(/^https:\/\/byus\.kr\/images\/stamps\/membership-[a-f0-9]{64}\.png$/);
+    expect(first.image).toMatch(/^https:\/\/kyaa\.io\/images\/stamps\/membership-[a-f0-9]{64}\.png$/);
     expect(renderMetadata(membershipJob, membershipPayload, "ipfs://different-base/v2")).toEqual(first);
     const serialized = JSON.stringify(first);
     expect(serialized).not.toContain(payload.recipient);
@@ -66,7 +66,7 @@ describe("credential metadata", () => {
     };
     const reactionJob = { ...job, entityType: "reaction" as const, payload: reactionPayload };
     const metadata = renderMetadata(reactionJob, reactionPayload, "ipfs://bafy-assets/credentials/v1");
-    expect(metadata.name).toBe("ByUs First Reaction");
+    expect(metadata.name).toBe("kyaa First Reaction");
     expect(metadata.image).toBe("ipfs://bafy-assets/credentials/v1/reaction/first/kara.png");
   });
 
@@ -80,7 +80,7 @@ describe("credential metadata", () => {
     };
     const collectibleJob = { ...job, entityType: "collectible" as const, payload: collectiblePayload };
     const metadata = renderMetadata(collectibleJob, collectiblePayload, "ipfs://bafy-assets/credentials/v1");
-    expect(metadata.name).toBe("ByUs Digital Collectible");
+    expect(metadata.name).toBe("kyaa Digital Collectible");
     expect(metadata.image).toBe("ipfs://bafy-assets/credentials/v1/collectible/kara/kara-september-live.png");
     expect(JSON.stringify(metadata)).not.toContain(collectiblePayload.claimId);
   });

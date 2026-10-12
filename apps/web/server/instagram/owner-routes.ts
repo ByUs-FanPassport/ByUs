@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { appOriginForRequest, bindAppOrigin, readAppOriginBinding, requireSameAppOrigin } from "../config/app-origin";
 import type { InstagramConfig } from "./config";
 import { newSecret, secretHash } from "./crypto";
 import { instagramLocale, opaqueSecret, type InstagramProvider } from "./model";
@@ -44,17 +45,23 @@ function failure(error: unknown) {
   if (status === 503 || message.toLowerCase().includes("unavailable")) return json({ error: { code: "INSTAGRAM_UNAVAILABLE" } }, 503);
   return json({ error: { code: message.includes("MISMATCH") ? "ACCOUNT_MISMATCH" : "CONFLICT" } }, 409);
 }
+function redirectUri(request: Request, config: InstagramConfig, sameOrigin = false) {
+  const origin = sameOrigin ? requireSameAppOrigin(request, config.origin) : appOriginForRequest(request, config.origin);
+  return `${origin}/connect/instagram/callback`;
+}
 export const isOwnerInstagramState = (value: string | null) => value?.startsWith("owner.") ?? false;
 
 export function createInstagramOwnerStartHandler(dependencies: InstagramOwnerDependencies) {
   return async (request: Request) => {
     try {
+      const callbackUri = redirectUri(request, dependencies.config, true);
       const appUserId = await actor(request, dependencies);
       const body = z.object({ locale: instagramLocale }).strict().parse(await request.json());
       const browser = newSecret();
-      const state = newSecret();
+      const origin = new URL(callbackUri).origin;
+      const state = bindAppOrigin(newSecret(), origin);
       await dependencies.ownerRepository.transition("start", secretHash(state), appUserId, secretHash(browser), { locale: body.locale });
-      return withCookies(json({ authorizationUrl: dependencies.provider.authorizationUrl(`owner.${state}`) }),
+      return withCookies(json({ authorizationUrl: dependencies.provider.authorizationUrl(`owner.${state}`, callbackUri) }),
         setCookie(dependencies.config, "browser", browser), setCookie(dependencies.config, "pending", "", true));
     } catch (error) { return failure(error); }
   };
@@ -64,10 +71,13 @@ export function createInstagramOwnerCallbackHandler(dependencies: InstagramOwner
   return async (request: Request) => {
     let locale: "ko" | "en" = "ko";
     try {
+      const callbackUri = redirectUri(request, dependencies.config);
       const query = new URL(request.url).searchParams;
       const states = query.getAll("state");
       if (states.length !== 1 || !states[0].startsWith("owner.")) throw new Error("OWNER_FLOW");
-      const state = opaqueSecret.parse(states[0].slice(6));
+      const rawState = states[0].slice(6);
+      opaqueSecret.parse(readAppOriginBinding(rawState, new URL(callbackUri).origin));
+      const state = rawState;
       const browser = readCookie(request, dependencies.config, "browser");
       locale = (await dependencies.ownerRepository.transition("peek_state", secretHash(state), null, secretHash(browser))).locale;
       if (query.has("error")) {
@@ -80,7 +90,7 @@ export function createInstagramOwnerCallbackHandler(dependencies: InstagramOwner
       const codes = query.getAll("code");
       if (codes.length !== 1) throw new Error("OWNER_FLOW");
       const code = z.string().min(1).max(4096).parse(codes[0]);
-      const pending = await dependencies.ownerService.callback(code, state, browser);
+      const pending = await dependencies.ownerService.callback(code, state, browser, callbackUri);
       return withCookies(new Response(null, { status: 303, headers: { ...privateHeaders, location: `/connect/instagram?step=confirm&locale=${locale}` } }),
         setCookie(dependencies.config, "pending", pending));
     } catch (error) {

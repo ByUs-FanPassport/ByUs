@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { createKakaoPkce, hashKakaoSubject, type KakaoConnectionPort } from "../../features/notification/domain/kakao-connection";
 import { kakaoConnectionCallbackSchema, safeKakaoReturnPathSchema } from "../../features/notification/domain/kakao-connection-schema";
 import type { AuthorizedFan } from "../fan-auth/fan-auth-gate";
+import { bindAppOrigin, readAppOriginBinding, requireSameAppOrigin } from "../config/app-origin";
 import type { SupabaseKakaoConnectionRepository } from "./kakao-connection-repository";
 import { KAKAO_ALIMTALK_CONSENT_VERSION, readKakaoEnrollmentProfile } from "./kakao-phone-enrollment";
 
@@ -21,11 +22,12 @@ export interface KakaoConnectionRouteDependencies {
 }
 const headers={"cache-control":"no-store",vary:"Authorization"};
 function auth(request:Request,deps:KakaoConnectionRouteDependencies){return deps.authorize(request.headers.get("authorization")??"");}
+function redirectUri(request:Request,deps:KakaoConnectionRouteDependencies){const configured=new URL(deps.redirectUri);return `${requireSameAppOrigin(request,configured.origin)}${configured.pathname}`;}
 export function createKakaoStartHandler(deps:KakaoConnectionRouteDependencies){return async(request:Request)=>{
   if(request.method!=="POST")return Response.json({error:{code:"METHOD_NOT_ALLOWED"}},{status:405,headers:{...headers,allow:"POST"}});
   let owner:AuthorizedFan;
   try{owner=await auth(request,deps);}catch{return Response.json({error:{code:"UNAUTHORIZED"}},{status:401,headers});}
-  try { const url=new URL(request.url); const values=url.searchParams.getAll("return"); if(values.length>1)throw new Error("duplicate return"); const returnPath=safeKakaoReturnPathSchema.parse(values[0]??"/settings"); const pkce=createKakaoPkce(); await deps.repository.createState({appUserId:owner.appUserId,stateHash:pkce.stateHash,codeVerifier:pkce.codeVerifier,returnPath}); return Response.json({authorizationUrl:deps.port.authorizationUrl({state:pkce.state,codeChallenge:pkce.codeChallenge,redirectUri:deps.redirectUri})},{headers}); }
+  try { const callbackUri=redirectUri(request,deps);const url=new URL(request.url); const values=url.searchParams.getAll("return"); if(values.length>1)throw new Error("duplicate return"); const returnPath=safeKakaoReturnPathSchema.parse(values[0]??"/settings"); const pkce=createKakaoPkce();const state=bindAppOrigin(pkce.state,new URL(callbackUri).origin); await deps.repository.createState({appUserId:owner.appUserId,stateHash:createHash("sha256").update(state).digest("hex"),codeVerifier:pkce.codeVerifier,returnPath}); return Response.json({authorizationUrl:deps.port.authorizationUrl({state,codeChallenge:pkce.codeChallenge,redirectUri:callbackUri})},{headers}); }
   catch{return Response.json({error:{code:"KAKAO_CONNECTION_START_FAILED"}},{status:400,headers});}
 };}
 export function createKakaoEnrollmentStartHandler(deps:KakaoConnectionRouteDependencies){return async(request:Request)=>{
@@ -33,19 +35,39 @@ export function createKakaoEnrollmentStartHandler(deps:KakaoConnectionRouteDepen
   let owner:AuthorizedFan;
   try{owner=await auth(request,deps);}catch{return Response.json({error:{code:"UNAUTHORIZED"}},{status:401,headers});}
   try {
+    const callbackUri=redirectUri(request,deps);
     const body=await request.json() as {consented?:unknown;consentVersion?:unknown};
     if(body.consented!==true||body.consentVersion!==KAKAO_ALIMTALK_CONSENT_VERSION)throw new Error("consent required");
     const url=new URL(request.url);const values=url.searchParams.getAll("return");if(values.length>1)throw new Error("duplicate return");
-    const returnPath=safeKakaoReturnPathSchema.parse(values[0]??"/settings");const pkce=createKakaoPkce();
-    await deps.repository.createState({appUserId:owner.appUserId,stateHash:pkce.stateHash,codeVerifier:pkce.codeVerifier,returnPath,purpose:"alimtalk"});
-    return Response.json({authorizationUrl:deps.port.authorizationUrl({state:pkce.state,codeChallenge:pkce.codeChallenge,redirectUri:deps.redirectUri,scope:"phone_number"})},{headers});
+    const returnPath=safeKakaoReturnPathSchema.parse(values[0]??"/settings");const pkce=createKakaoPkce();const state=bindAppOrigin(pkce.state,new URL(callbackUri).origin);
+    await deps.repository.createState({appUserId:owner.appUserId,stateHash:createHash("sha256").update(state).digest("hex"),codeVerifier:pkce.codeVerifier,returnPath,purpose:"alimtalk"});
+    return Response.json({authorizationUrl:deps.port.authorizationUrl({state,codeChallenge:pkce.codeChallenge,redirectUri:callbackUri,scope:"phone_number"})},{headers});
   } catch{return Response.json({error:{code:"KAKAO_ENROLLMENT_START_FAILED"}},{status:400,headers});}
 };}
 export function createKakaoCallbackHandler(deps:KakaoConnectionRouteDependencies){return async(request:Request)=>{
   if(request.method!=="POST")return Response.json({error:{code:"METHOD_NOT_ALLOWED"}},{status:405,headers:{...headers,allow:"POST"}});
   let owner:AuthorizedFan;
   try{owner=await auth(request,deps);}catch{return Response.json({error:{code:"UNAUTHORIZED"}},{status:401,headers});}
-  try { const body=kakaoConnectionCallbackSchema.parse(await request.json()); const stateHash=createHash("sha256").update(body.state).digest("hex");const saved=await deps.repository.consumeState({appUserId:owner.appUserId,stateHash}); const returnPath=safeKakaoReturnPathSchema.parse(saved.returnPath);if(saved.purpose==="alimtalk"&&deps.enrollmentEnabled!==true)throw new Error("enrollment disabled");const exchanged=await deps.port.exchange({code:body.code,codeVerifier:saved.codeVerifier,redirectUri:deps.redirectUri,includePhone:saved.purpose==="alimtalk"});const subjectHash=hashKakaoSubject(exchanged.kakaoSubject);if(saved.purpose==="alimtalk"){if(saved.consentVersion!==KAKAO_ALIMTALK_CONSENT_VERSION)throw new Error("invalid consent");const profile=readKakaoEnrollmentProfile(exchanged);const account=await deps.repository.complete({appUserId:owner.appUserId,subjectHash});const pending=await deps.repository.stageEnrollment({appUserId:owner.appUserId,stateHash,subjectHash:hashKakaoSubject(profile.subject),phone:profile.phone});return Response.json({account,returnPath,enrollmentPending:true,pending:{id:pending.id,destinationLabel:pending.destinationLabel,expiresAt:pending.expiresAt}},{headers});}const account=await deps.repository.complete({appUserId:owner.appUserId,subjectHash}); return Response.json({account,returnPath},{headers}); }
+  try {
+    const callbackUri=redirectUri(request,deps);
+    const body=kakaoConnectionCallbackSchema.parse(await request.json());
+    readAppOriginBinding(body.state,new URL(callbackUri).origin);
+    const stateHash=createHash("sha256").update(body.state).digest("hex");
+    const saved=await deps.repository.consumeState({appUserId:owner.appUserId,stateHash});
+    const returnPath=safeKakaoReturnPathSchema.parse(saved.returnPath);
+    if(saved.purpose==="alimtalk"&&deps.enrollmentEnabled!==true)throw new Error("enrollment disabled");
+    const exchanged=await deps.port.exchange({code:body.code,codeVerifier:saved.codeVerifier,redirectUri:callbackUri,includePhone:saved.purpose==="alimtalk"});
+    const subjectHash=hashKakaoSubject(exchanged.kakaoSubject);
+    if(saved.purpose==="alimtalk"){
+      if(saved.consentVersion!==KAKAO_ALIMTALK_CONSENT_VERSION)throw new Error("invalid consent");
+      const profile=readKakaoEnrollmentProfile(exchanged);
+      const account=await deps.repository.complete({appUserId:owner.appUserId,subjectHash});
+      const pending=await deps.repository.stageEnrollment({appUserId:owner.appUserId,stateHash,subjectHash:hashKakaoSubject(profile.subject),phone:profile.phone});
+      return Response.json({account,returnPath,enrollmentPending:true,pending:{id:pending.id,destinationLabel:pending.destinationLabel,expiresAt:pending.expiresAt}},{headers});
+    }
+    const account=await deps.repository.complete({appUserId:owner.appUserId,subjectHash});
+    return Response.json({account,returnPath},{headers});
+  }
   catch{return Response.json({error:{code:"KAKAO_CONNECTION_CALLBACK_FAILED"}},{status:400,headers});}
 };}
 export function createKakaoDisconnectHandler(deps:KakaoConnectionRouteDependencies){return async(request:Request)=>{try{const owner=await auth(request,deps);return Response.json({account:await deps.repository.disconnect(owner.appUserId)},{headers});}catch{return Response.json({error:{code:"KAKAO_DISCONNECT_FAILED"}},{status:400,headers});}};}

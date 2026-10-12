@@ -13,15 +13,15 @@ export const messages = {
     "fr": "Guide et questions fréquentes"
   },
   "m0daebd272cc6": {
-    "ja": "ByUsでのファン認証、Fan Passport、LIVEの予約と出席、特典への応募の仕組みをご案内します。",
-    "zh-Hans": "了解 ByUs 的粉丝认证、Fan Passport、LIVE 预约与出席以及奖品抽奖报名如何运作。",
-    "zh-Hant": "瞭解 ByUs 的粉絲認證、Fan Passport、LIVE 預約與出席以及獎品抽獎報名如何運作。",
-    "es": "Descubre cómo funcionan en ByUs la verificación de fans, los Fan Passports, las reservas y la asistencia a LIVE y las inscripciones a premios.",
-    "id": "Pelajari cara kerja verifikasi penggemar, Fan Passport, reservasi dan kehadiran LIVE, serta pendaftaran hadiah di ByUs.",
-    "vi": "Tìm hiểu cách hoạt động của xác minh người hâm mộ, Fan Passport, đặt chỗ và tham dự LIVE, cùng đăng ký quà tặng trên ByUs.",
-    "th": "ดูวิธีการทำงานของการยืนยันแฟนคลับ Fan Passports การจองและเข้าร่วม LIVE และการสมัครรางวัลบน ByUs",
-    "pt": "Saiba como funcionam a verificação de fã, os Fan Passports, as reservas e a presença em LIVE e as inscrições em sorteios na ByUs.",
-    "fr": "Découvrez comment fonctionnent sur ByUs la vérification de fan, les Fan Passports, les réservations et la présence aux LIVE, ainsi que les participations aux tirages."
+    "ja": "kyaaでのファン認証、Fan Passport、LIVEの予約と出席、特典への応募の仕組みをご案内します。",
+    "zh-Hans": "了解 kyaa 的粉丝认证、Fan Passport、LIVE 预约与出席以及奖品抽奖报名如何运作。",
+    "zh-Hant": "瞭解 kyaa 的粉絲認證、Fan Passport、LIVE 預約與出席以及獎品抽獎報名如何運作。",
+    "es": "Descubre cómo funcionan en kyaa la verificación de fans, los Fan Passports, las reservas y la asistencia a LIVE y las inscripciones a premios.",
+    "id": "Pelajari cara kerja verifikasi penggemar, Fan Passport, reservasi dan kehadiran LIVE, serta pendaftaran hadiah di kyaa.",
+    "vi": "Tìm hiểu cách hoạt động của xác minh người hâm mộ, Fan Passport, đặt chỗ và tham dự LIVE, cùng đăng ký quà tặng trên kyaa.",
+    "th": "ดูวิธีการทำงานของการยืนยันแฟนคลับ Fan Passports การจองและเข้าร่วม LIVE และการสมัครรางวัลบน kyaa",
+    "pt": "Saiba como funcionam a verificação de fã, os Fan Passports, as reservas e a presença em LIVE e as inscrições em sorteios na kyaa.",
+    "fr": "Découvrez comment fonctionnent sur kyaa la vérification de fan, les Fan Passports, les réservations et la présence aux LIVE, ainsi que les participations aux tirages."
   },
   "mfaed6476c28b": {
     "ja": "ファン活動を始める",
@@ -68,15 +68,15 @@ export const messages = {
     "fr": "Voir le programme des LIVE"
   },
   "m4275d91e03ef": {
-    "ja": "ByUsでの参加手順",
-    "zh-Hans": "在 ByUs 的参与步骤",
-    "zh-Hant": "在 ByUs 的參與步驟",
-    "es": "Cómo participar en ByUs",
-    "id": "Cara berpartisipasi di ByUs",
-    "vi": "Cách tham gia trên ByUs",
-    "th": "วิธีเข้าร่วมบน ByUs",
-    "pt": "Como participar na ByUs",
-    "fr": "Comment participer sur ByUs"
+    "ja": "kyaaでの参加手順",
+    "zh-Hans": "在 kyaa 的参与步骤",
+    "zh-Hant": "在 kyaa 的參與步驟",
+    "es": "Cómo participar en kyaa",
+    "id": "Cara berpartisipasi di kyaa",
+    "vi": "Cách tham gia trên kyaa",
+    "th": "วิธีเข้าร่วมบน kyaa",
+    "pt": "Como participar na kyaa",
+    "fr": "Comment participer sur kyaa"
   },
   "m4bd73608cdc1": {
     "ja": "ファン認証、予約、出席、特典への応募は別々の手順です。それぞれ確認し、完了する必要があります。",
@@ -189,15 +189,15 @@ export const messages = {
     "fr": "Que contient un Fan Passport ?"
   },
   "md231d4e64298": {
-    "ja": "Fan Passportは、ByUsでお気に入りのクリエイターと行ったファン活動のデジタル記録です。",
-    "zh-Hans": "Fan Passport 是你在 ByUs 与喜欢的创作者共同开展粉丝活动的数字记录。",
-    "zh-Hant": "Fan Passport 是你在 ByUs 與喜歡的創作者共同進行粉絲活動的數字記錄。",
-    "es": "Un Fan Passport es un registro digital de tus actividades como fan con un creador favorito en ByUs.",
-    "id": "Fan Passport adalah catatan digital aktivitas Anda sebagai penggemar bersama kreator favorit di ByUs.",
-    "vi": "Fan Passport là hồ sơ kỹ thuật số về hoạt động người hâm mộ của bạn với nhà sáng tạo yêu thích trên ByUs.",
-    "th": "Fan Passport คือบันทึกดิจิทัลของกิจกรรมแฟนคลับกับครีเอเตอร์ที่ชื่นชอบบน ByUs",
-    "pt": "Um Fan Passport é um registro digital das suas atividades de fã com um criador favorito na ByUs.",
-    "fr": "Un Fan Passport est un registre numérique de vos activités de fan avec un créateur favori sur ByUs."
+    "ja": "Fan Passportは、kyaaでお気に入りのクリエイターと行ったファン活動のデジタル記録です。",
+    "zh-Hans": "Fan Passport 是你在 kyaa 与喜欢的创作者共同开展粉丝活动的数字记录。",
+    "zh-Hant": "Fan Passport 是你在 kyaa 與喜歡的創作者共同進行粉絲活動的數字記錄。",
+    "es": "Un Fan Passport es un registro digital de tus actividades como fan con un creador favorito en kyaa.",
+    "id": "Fan Passport adalah catatan digital aktivitas Anda sebagai penggemar bersama kreator favorit di kyaa.",
+    "vi": "Fan Passport là hồ sơ kỹ thuật số về hoạt động người hâm mộ của bạn với nhà sáng tạo yêu thích trên kyaa.",
+    "th": "Fan Passport คือบันทึกดิจิทัลของกิจกรรมแฟนคลับกับครีเอเตอร์ที่ชื่นชอบบน kyaa",
+    "pt": "Um Fan Passport é um registro digital das suas atividades de fã com um criador favorito na kyaa.",
+    "fr": "Un Fan Passport est un registre numérique de vos activités de fan avec un créateur favori sur kyaa."
   },
   "m231eb1d4add4": {
     "ja": "ファン認証に合格すると、お気に入りごとにPassportが作成されます。",
@@ -365,15 +365,15 @@ export const messages = {
     "fr": "Où poser une question sur le service ?"
   },
   "m8004c4734a4a": {
-    "ja": "ByUsチーム（biz@sallylab.io）までお問い合わせください。ByUsはSallylab Inc.が運営しています。",
-    "zh-Hans": "请发送邮件至 biz@sallylab.io 联系 ByUs 团队。ByUs 由 Sallylab Inc. 运营。",
-    "zh-Hant": "請發送郵件至 biz@sallylab.io 聯繫 ByUs 團隊。ByUs 由 Sallylab Inc. 營運。",
-    "es": "Contacta al equipo de ByUs en biz@sallylab.io. Sallylab Inc. opera ByUs.",
-    "id": "Hubungi tim ByUs di biz@sallylab.io. ByUs dioperasikan oleh Sallylab Inc.",
-    "vi": "Liên hệ đội ngũ ByUs tại biz@sallylab.io. ByUs do Sallylab Inc. vận hành.",
-    "th": "ติดต่อทีม ByUs ที่ biz@sallylab.io โดย Sallylab Inc. เป็นผู้ดำเนินงาน ByUs",
-    "pt": "Entre em contato com a equipe da ByUs pelo e-mail biz@sallylab.io. A ByUs é operada pela Sallylab Inc.",
-    "fr": "Contactez l’équipe ByUs à biz@sallylab.io. ByUs est exploité par Sallylab Inc."
+    "ja": "kyaaチーム（support@kyaa.io）までお問い合わせください。kyaaはSallylab Inc.が運営しています。",
+    "zh-Hans": "请发送邮件至 support@kyaa.io 联系 kyaa 团队。kyaa 由 Sallylab Inc. 运营。",
+    "zh-Hant": "請發送郵件至 support@kyaa.io 聯繫 kyaa 團隊。kyaa 由 Sallylab Inc. 營運。",
+    "es": "Contacta al equipo de kyaa en support@kyaa.io. Sallylab Inc. opera kyaa.",
+    "id": "Hubungi tim kyaa di support@kyaa.io. kyaa dioperasikan oleh Sallylab Inc.",
+    "vi": "Liên hệ đội ngũ kyaa tại support@kyaa.io. kyaa do Sallylab Inc. vận hành.",
+    "th": "ติดต่อทีม kyaa ที่ support@kyaa.io โดย Sallylab Inc. เป็นผู้ดำเนินงาน kyaa",
+    "pt": "Entre em contato com a equipe da kyaa pelo e-mail support@kyaa.io. A kyaa é operada pela Sallylab Inc.",
+    "fr": "Contactez l’équipe kyaa à support@kyaa.io. kyaa est exploité par Sallylab Inc."
   },
   "m31aa657e0010": {
     "ja": "さらにサポートが必要ですか？",
@@ -387,15 +387,15 @@ export const messages = {
     "fr": "Besoin d’aide supplémentaire ?"
   },
   "med934a1ccf6c": {
-    "ja": "アカウントやサービス利用についてはByUsチームにお問い合わせください。",
-    "zh-Hans": "如对账户或服务使用有疑问，请联系 ByUs 团队。",
-    "zh-Hant": "如對帳戶或服務使用有疑問，請聯繫 ByUs 團隊。",
-    "es": "Contacta al equipo de ByUs si tienes preguntas sobre tu cuenta o el uso del servicio.",
-    "id": "Hubungi tim ByUs jika ada pertanyaan tentang akun atau penggunaan layanan.",
-    "vi": "Liên hệ đội ngũ ByUs nếu có câu hỏi về tài khoản hoặc cách sử dụng dịch vụ.",
-    "th": "ติดต่อทีม ByUs หากมีคำถามเกี่ยวกับบัญชีหรือการใช้บริการ",
-    "pt": "Entre em contato com a equipe da ByUs para tirar dúvidas sobre sua conta ou o uso do serviço.",
-    "fr": "Contactez l’équipe ByUs pour toute question concernant votre compte ou l’utilisation du service."
+    "ja": "アカウントやサービス利用についてはkyaaチームにお問い合わせください。",
+    "zh-Hans": "如对账户或服务使用有疑问，请联系 kyaa 团队。",
+    "zh-Hant": "如對帳戶或服務使用有疑問，請聯繫 kyaa 團隊。",
+    "es": "Contacta al equipo de kyaa si tienes preguntas sobre tu cuenta o el uso del servicio.",
+    "id": "Hubungi tim kyaa jika ada pertanyaan tentang akun atau penggunaan layanan.",
+    "vi": "Liên hệ đội ngũ kyaa nếu có câu hỏi về tài khoản hoặc cách sử dụng dịch vụ.",
+    "th": "ติดต่อทีม kyaa หากมีคำถามเกี่ยวกับบัญชีหรือการใช้บริการ",
+    "pt": "Entre em contato com a equipe da kyaa para tirar dúvidas sobre sua conta ou o uso do serviço.",
+    "fr": "Contactez l’équipe kyaa pour toute question concernant votre compte ou l’utilisation du service."
   },
   "m04559da2b8cc": {
     "ja": "サポートに問い合わせる",

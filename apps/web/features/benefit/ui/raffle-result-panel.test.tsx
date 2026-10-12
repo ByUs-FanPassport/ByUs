@@ -100,7 +100,7 @@ describe("RaffleResultPanel", () => {
     })} locale="ko" />);
     expect(screen.getByRole("heading", { name: label })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "수령 정보 입력하기" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "ByUs에 문의하기" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "kyaa에 문의하기" })).toBeInTheDocument();
   });
 });
 

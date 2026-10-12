@@ -16,6 +16,7 @@ import {
   boundedText, reauthenticationAuthorizationUrl, verifyReauthenticationCode,
   type ReauthenticationProviderConfig,
 } from "./reauthentication-provider";
+import { appOriginForRequest, bindAppOrigin, readAppOriginBinding, requireSameAppOrigin } from "../../config/app-origin";
 
 const COOKIE_NAME = "__Host-byus-provider-reauth";
 const opaqueToken = /^[A-Za-z0-9_-]{43}$/;
@@ -101,9 +102,9 @@ function callbackFailureResponse(input: {
 export async function startReauthentication(request: Request, dependencies: ReauthenticationRouteDependencies): Promise<Response> {
   const responseHeaders = headers();
   try {
-    if (new URL(request.url).origin !== dependencies.config.origin
-      || request.headers.get("origin") !== dependencies.config.origin
-      || !request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    let requestOrigin: string;
+    try { requestOrigin = requireSameAppOrigin(request, dependencies.config.origin); } catch { requestOrigin = ""; }
+    if (!requestOrigin || !request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
       return Response.json({ error: { code: "INVALID_REAUTHENTICATION_REQUEST" } }, { status: 400, headers: responseHeaders });
     }
     const bearer = /^Bearer[ \t]+([^\s]+)$/i.exec(request.headers.get("authorization")?.trim() ?? "");
@@ -116,7 +117,7 @@ export async function startReauthentication(request: Request, dependencies: Reau
     if (!account || !available) {
       return Response.json({ error: { code: "REAUTHENTICATION_PROVIDER_UNAVAILABLE" } }, { status: 403, headers: responseHeaders });
     }
-    const state = randomBytes(32).toString("base64url");
+    const state = bindAppOrigin(randomBytes(32).toString("base64url"), requestOrigin);
     const nonce = randomBytes(32).toString("base64url");
     const browserBinding = randomBytes(32).toString("base64url");
     const returnPath = appendLoginContext("/login", {
@@ -137,7 +138,7 @@ export async function startReauthentication(request: Request, dependencies: Reau
     if (created !== true) throw new Error("Reauthentication challenge could not be created");
     responseHeaders.set("set-cookie", cookie(browserBinding, input.provider));
     return Response.json({ authorizationUrl: reauthenticationAuthorizationUrl({
-      config: dependencies.config, provider: input.provider, state, nonce,
+      config: { ...dependencies.config, origin: requestOrigin }, provider: input.provider, state, nonce,
     }) }, { status: 200, headers: responseHeaders });
   } catch {
     return Response.json({ error: { code: "REAUTHENTICATION_UNAVAILABLE" } }, { status: 503, headers: responseHeaders });
@@ -150,12 +151,11 @@ export async function completeReauthentication(
   const responseHeaders = headers();
   let requestOrigin: string;
   try {
-    requestOrigin = new URL(request.url).origin;
+    requestOrigin = appOriginForRequest(request, dependencies.config.origin);
   } catch {
     return invalidCallbackResponse(responseHeaders);
   }
   if ((provider !== "apple" && provider !== "google")
-    || requestOrigin !== dependencies.config.origin
     || (provider === "apple" && request.method !== "POST")
     || (provider === "google" && request.method !== "GET")
     || (provider === "apple" && !request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded"))) {
@@ -168,7 +168,10 @@ export async function completeReauthentication(
       : new URL(request.url).searchParams;
     const state = parameters.get("state");
     const browserBinding = readCookie(request);
-    if (!state || !opaqueToken.test(state) || parameters.getAll("state").length !== 1 || !browserBinding) {
+    let unboundState = "";
+    try { unboundState = state ? readAppOriginBinding(state, requestOrigin) : ""; }
+    catch { return invalidCallbackResponse(responseHeaders); }
+    if (!state || !opaqueToken.test(unboundState) || parameters.getAll("state").length !== 1 || !browserBinding) {
       throw new Error("Invalid callback binding");
     }
     const row = await dependencies.repository.call("read_apple_reauth_challenge", {
@@ -182,7 +185,7 @@ export async function completeReauthentication(
       throw new Error("Provider authorization was not completed");
     }
     const subjectHash = await (dependencies.verifyCode ?? verifyReauthenticationCode)({
-      config: dependencies.config, provider, code,
+      config: { ...dependencies.config, origin: requestOrigin }, provider, code,
       expectedNonceHash: challenge.nonceHash, expectedSubjectHash: challenge.providerSubjectHash,
     });
     const currentSubject = await dependencies.resolver.findProviderSubject(challenge.privyUserId, provider);
@@ -193,7 +196,7 @@ export async function completeReauthentication(
       p_state_hash: sha256(state), p_cookie_hash: sha256(browserBinding), p_provider_subject_hash: subjectHash,
     });
     if (completed !== true) throw new Error("Reauthentication challenge is no longer valid");
-    const destination = new URL(safeLoginPath(challenge.returnPath), dependencies.config.origin);
+    const destination = new URL(safeLoginPath(challenge.returnPath), requestOrigin);
     destination.searchParams.set("reauth", "complete");
     responseHeaders.set("set-cookie", cookie("", provider, 0));
     responseHeaders.set("location", destination.toString());
@@ -201,7 +204,7 @@ export async function completeReauthentication(
   } catch {
     return callbackFailureResponse({
       responseHeaders,
-      origin: dependencies.config.origin,
+      origin: requestOrigin,
       provider: validatedChallenge?.provider ?? provider,
       returnPath: validatedChallenge?.returnPath,
     });

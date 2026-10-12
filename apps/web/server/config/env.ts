@@ -66,7 +66,8 @@ const PRODUCTION_SUPABASE_HOSTNAME = "gmrykvmtmuaeswpajteq.supabase.co";
 function isProductionHostname(value: string): boolean {
   try {
     const hostname = new URL(value).hostname.toLowerCase();
-    return hostname === "byus.kr" || hostname === "www.byus.kr";
+    return hostname === "byus.kr" || hostname === "www.byus.kr" ||
+      hostname === "kyaa.io" || hostname === "www.kyaa.io";
   } catch {
     return false;
   }
@@ -108,6 +109,10 @@ const serverEnvSchema = publicEnvSchema
     PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: booleanFlag,
     SUPABASE_URL: httpsUrl,
     SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(16),
+    LEGACY_DOMAIN_REDIRECT_STATUS: z.preprocess(
+      (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+      z.enum(["307", "308"]).optional(),
+    ),
     GOOGLE_TRANSLATION_API_KEY: optionalNonEmptyString,
     GIWA_CHAIN_ID: z.coerce.number().int().refine((value) => value === 91342),
     GIWA_RPC_URL: httpsUrl,

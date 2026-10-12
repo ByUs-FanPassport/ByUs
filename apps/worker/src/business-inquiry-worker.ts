@@ -73,7 +73,9 @@ export class SesInquirySender implements InquirySender {
   constructor(private readonly client: SesClient = new SESv2Client({
     region: "ap-northeast-2", maxAttempts: 1,
     requestHandler: { connectionTimeout: 2000, requestTimeout: 8000, throwOnRequestTimeout: true },
-  })) {}
+  }), private readonly fromEmail = "notifications@byus.kr") {
+    if (!["notifications@byus.kr", "notifications@kyaa.io"].includes(fromEmail)) throw new InquirySendError("rejected");
+  }
   async send(job: BusinessInquiry) {
     if (job.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(job.email) || /[\r\n]/.test(job.email)) throw new InquirySendError("rejected");
     const inquiryType = job.inquiry_type ?? "fanmeeting";
@@ -82,7 +84,7 @@ export class SesInquirySender implements InquirySender {
     let result: { MessageId?: string };
     try {
       result = await this.client.send(new SendEmailCommand({
-        FromEmailAddress: "notifications@byus.kr",
+        FromEmailAddress: this.fromEmail,
         Destination: { ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] },
         ReplyToAddresses: [job.email],
         Content: { Simple: {
@@ -109,6 +111,6 @@ export async function runBusinessInquiryOnce(env: NotificationWorkerEnv) {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5000) }) },
   });
-  const sender = env.BUSINESS_INQUIRY_MODE === "ses_email" ? new SesInquirySender() : null;
+  const sender = env.BUSINESS_INQUIRY_MODE === "ses_email" ? new SesInquirySender(undefined, env.SES_FROM_EMAIL!) : null;
   return new BusinessInquiryWorker(new SupabaseInquiryQueue(db), sender).runOnce();
 }

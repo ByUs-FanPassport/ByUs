@@ -31,7 +31,7 @@ describe("public pages layout", () => {
     expect(footer).toHaveAttribute("data-fan-site-footer");
     expect(within(footer).getByRole("link", { name: /Privacy Policy|개인정보처리방침/ })).toHaveAttribute("href", `/privacy?locale=${locale}`);
     expect(within(footer).getByRole("link", { name: /Terms of Use|이용약관/ })).toHaveAttribute("href", `/terms?locale=${locale}`);
-    expect(footer).toHaveTextContent("© 2026 ByUs. All rights reserved.");
+    expect(footer).toHaveTextContent("© 2026 kyaa. All rights reserved.");
     expect(within(footer).getByRole("link", { name: /팬이 있는 당신에게|For everyone with fans/ })).toHaveAttribute("href", `/pages/creator-onboarding?locale=${locale}`);
     expect(within(footer).getByRole("link", { name: /파트너 협업 제안|Partnership proposals/ })).toHaveAttribute("href", `/pages/partners?locale=${locale}`);
     expect(screen.getAllByRole("main")).toHaveLength(1);
@@ -40,16 +40,16 @@ describe("public pages layout", () => {
   it("updates a persistent layout's footer after language navigation", () => {
     navigation.search = "locale=ko";
     const { rerender } = render(<PagesLayout><main>Content</main></PagesLayout>);
-    expect(screen.getByRole("navigation", { name: "ByUs 하단 메뉴" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "kyaa 하단 메뉴" })).toBeInTheDocument();
     navigation.search = "locale=en";
     rerender(<PagesLayout><main>Content</main></PagesLayout>);
-    expect(screen.getByRole("navigation", { name: "ByUs footer navigation" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "kyaa footer navigation" })).toBeInTheDocument();
     expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
   });
 
   it.each(["", "locale=de", "locale=en&locale=ko"])("matches the page's Korean fallback for %s", (search) => {
     navigation.search = search;
     render(<PagesLayout><main>Content</main></PagesLayout>);
-    expect(screen.getByRole("navigation", { name: "ByUs 하단 메뉴" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "kyaa 하단 메뉴" })).toBeInTheDocument();
   });
 });

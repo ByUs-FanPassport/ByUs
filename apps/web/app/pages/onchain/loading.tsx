@@ -7,7 +7,7 @@ export default function Loading() {
       <section className={styles.hero} aria-live="polite">
         <FanContentContainer>
           <p className={styles.eyebrow}>PUBLIC ONCHAIN RECORDS</p>
-          <h1>ByUs onchain records</h1>
+          <h1>kyaa onchain records</h1>
           <p className={styles.intro} role="status">GIWA Sepolia의 최신 확정 스냅샷을 불러오는 중입니다. / Loading the latest finalized GIWA Sepolia snapshot…</p>
         </FanContentContainer>
       </section>

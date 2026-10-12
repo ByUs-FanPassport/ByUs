@@ -11,7 +11,7 @@ type Query = { locale?: string; creator?: string | string[]; tab?: string };
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Query> }) {
   const locale = parseAppLocale((await searchParams).locale), copy = communityCopy(locale);
-  return publicMetadata({ path: "/community", locale, title: `${copy.title} | ByUs`, description: copy.intro });
+  return publicMetadata({ path: "/community", locale, title: `${copy.title} | kyaa`, description: copy.intro });
 }
 
 export default async function CommunityPage({ searchParams }: { searchParams: Promise<Query> }) {

@@ -87,7 +87,15 @@ function dependencies(overrides: {
       if (parameters.p_state_hash !== expectedState || parameters.p_cookie_hash !== expectedCookie) {
         return null;
       }
-      return captured.challenge;
+      return {
+        nonceHash: captured.challenge.nonceHash,
+        privyUserId: captured.challenge.privyUserId,
+        sessionHash: captured.challenge.sessionHash,
+        provider: captured.challenge.provider,
+        providerSubjectHash: captured.challenge.providerSubjectHash,
+        generation: captured.challenge.generation,
+        returnPath: captured.challenge.returnPath,
+      };
     }
     return overrides.completeResult ?? true;
   });
@@ -166,9 +174,11 @@ function callbackRequest(
     duplicateCode?: boolean;
     method?: string;
     error?: string;
+    origin?: string;
   } = {},
 ): Request {
   const provider = input.provider ?? started.provider;
+  const origin = input.origin ?? ORIGIN;
   const parameters = new URLSearchParams();
   if (input.state !== "") parameters.append("state", input.state ?? started.state);
   if (input.duplicateState) parameters.append("state", input.state ?? started.state);
@@ -178,7 +188,7 @@ function callbackRequest(
   const cookie = input.cookie === undefined ? `${COOKIE_NAME}=${started.binding}` : input.cookie;
 
   if (provider === "apple") {
-    return new Request(`${ORIGIN}/api/auth/apple/reauth/callback/apple`, {
+    return new Request(`${origin}/api/auth/apple/reauth/callback/apple`, {
       method: input.method ?? "POST",
       headers: {
         cookie,
@@ -188,12 +198,24 @@ function callbackRequest(
     });
   }
   return new Request(
-    `${ORIGIN}/api/auth/apple/reauth/callback/google?${parameters.toString()}`,
+    `${origin}/api/auth/apple/reauth/callback/google?${parameters.toString()}`,
     { method: input.method ?? "GET", headers: { cookie } },
   );
 }
 
 describe("reauthentication start route", () => {
+  it.each(["https://byus.kr", "https://kyaa.io"])("binds a production reauthentication challenge to request host %s", async (origin) => {
+    const deps = dependencies(); deps.config = { ...deps.config, origin: "https://kyaa.io" };
+    const original = startRequest("google");
+    const response = await startReauthentication(new Request(`${origin}/api/auth/apple/reauth/start`, {
+      method: "POST", headers: { ...Object.fromEntries(original.headers), origin }, body: await original.text(),
+    }), deps);
+    expect(response.status).toBe(200);
+    expect(deps.captured.challenge).not.toHaveProperty("origin");
+    const authorizationUrl = new URL((await response.json()).authorizationUrl);
+    expect(authorizationUrl.searchParams.get("redirect_uri")).toBe(`${origin}/api/auth/apple/reauth/callback/google`);
+    expect(authorizationUrl.searchParams.get("state")).toMatch(origin === "https://byus.kr" ? /^b\.[A-Za-z0-9_-]{43}$/u : /^k\.[A-Za-z0-9_-]{43}$/u);
+  });
   it("preserves a Traditional Chinese UI and nested return path through reauthentication", async () => {
     const deps = dependencies();
     const response = await startReauthentication(startRequest("google", { body: JSON.stringify({
@@ -350,6 +372,55 @@ describe("reauthentication callback route", () => {
       );
     },
   );
+
+  it("completes an old-host challenge after the canonical origin changes", async () => {
+    const deps = dependencies(); deps.config = { ...deps.config, origin: "https://kyaa.io" };
+    const original = startRequest("google");
+    const startResponse = await startReauthentication(new Request("https://byus.kr/api/auth/apple/reauth/start", {
+      method: "POST", headers: { ...Object.fromEntries(original.headers), origin: "https://byus.kr" }, body: await original.text(),
+    }), deps);
+    const authorizationUrl = new URL((await startResponse.json()).authorizationUrl);
+    const state = authorizationUrl.searchParams.get("state")!;
+    const nonce = authorizationUrl.searchParams.get("nonce")!;
+    const binding = new RegExp(`${COOKIE_NAME}=([^;]+)`).exec(startResponse.headers.get("set-cookie")!)![1];
+    const started = { provider: "google" as const, state, nonce, binding, cookie: "", authorizationUrl };
+    const response = await completeReauthentication(callbackRequest(started, { origin: "https://byus.kr" }), "google", deps);
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toContain("https://byus.kr/login?");
+    expect(deps.verifyCode).toHaveBeenCalledWith(expect.objectContaining({ config: expect.objectContaining({ origin: "https://byus.kr" }) }));
+  });
+
+  it("completes a legacy unbound state on the old host after the canonical origin changes", async () => {
+    const deps = dependencies(); deps.config = { ...deps.config, origin: "https://kyaa.io" };
+    const original = startRequest("google");
+    const startResponse = await startReauthentication(new Request("https://byus.kr/api/auth/apple/reauth/start", {
+      method: "POST", headers: { ...Object.fromEntries(original.headers), origin: "https://byus.kr" }, body: await original.text(),
+    }), deps);
+    const authorizationUrl = new URL((await startResponse.json()).authorizationUrl);
+    const boundState = authorizationUrl.searchParams.get("state")!;
+    const state = boundState.slice(boundState.indexOf(".") + 1);
+    deps.captured.challenge!.stateHash = sha256(state);
+    const binding = new RegExp(`${COOKIE_NAME}=([^;]+)`).exec(startResponse.headers.get("set-cookie")!)![1];
+    const started = { provider: "google" as const, state, nonce: authorizationUrl.searchParams.get("nonce")!, binding, cookie: "", authorizationUrl };
+    const response = await completeReauthentication(callbackRequest(started, { origin: "https://byus.kr" }), "google", deps);
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toContain("https://byus.kr/login?");
+    expect(deps.verifyCode).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a trusted callback host that does not match the challenge host", async () => {
+    const deps = dependencies(); deps.config = { ...deps.config, origin: "https://kyaa.io" };
+    const original = startRequest("google");
+    const startResponse = await startReauthentication(new Request("https://byus.kr/api/auth/apple/reauth/start", {
+      method: "POST", headers: { ...Object.fromEntries(original.headers), origin: "https://byus.kr" }, body: await original.text(),
+    }), deps);
+    const authorizationUrl = new URL((await startResponse.json()).authorizationUrl);
+    const state = authorizationUrl.searchParams.get("state")!;
+    const binding = new RegExp(`${COOKIE_NAME}=([^;]+)`).exec(startResponse.headers.get("set-cookie")!)![1];
+    const started = { provider: "google" as const, state, nonce: authorizationUrl.searchParams.get("nonce")!, binding, cookie: "", authorizationUrl };
+    expect((await completeReauthentication(callbackRequest(started, { origin: "https://kyaa.io" }), "google", deps)).status).toBe(400);
+    expect(deps.verifyCode).not.toHaveBeenCalled();
+  });
 
   it.each([
     ["missing state", { state: "" }],

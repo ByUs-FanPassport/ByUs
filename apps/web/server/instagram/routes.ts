@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import type { AdminSession } from "../admin/admin-session-gate";
+import { appOriginForRequest, bindAppOrigin, readAppOriginBinding, requireSameAppOrigin } from "../config/app-origin";
 import type { InstagramConfig } from "./config";
 import { constantTimeEqual, newSecret, secretHash, verifyInstagramSignedRequest } from "./crypto";
 import { InstagramError, instagramId, instagramIdentitySchema, instagramLocale, instagramUsername, opaqueSecret, type InstagramLocale, type InstagramProvider } from "./model";
@@ -36,7 +37,11 @@ function clearCookies(response: Response, config: InstagramConfig) {
 function redirect(path: string) { return new Response(null, { status: 303, headers: { ...privateHeaders, location: path } }); }
 function csrf(browser: string, secret: string) { return secretHash(`instagram-form:${browser}:${secret}`); }
 function requireOrigin(request: Request, config: InstagramConfig) {
-  if (request.headers.get("origin") !== config.origin) throw new Error("Invalid form origin");
+  requireSameAppOrigin(request, config.origin);
+}
+function requestConfig(request: Request, config: InstagramConfig): InstagramConfig {
+  const origin = appOriginForRequest(request, config.origin);
+  return { ...config, origin, redirectUri: `${origin}/connect/instagram/callback` };
 }
 async function smallForm(request: Request) {
   if (!request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded")) throw new Error("Invalid form");
@@ -78,10 +83,11 @@ export function createInstagramInviteHandler(deps: InstagramRouteDependencies) {
   return async (request: Request) => {
     try { await requireOperator(request, deps); } catch { return json({ error: { code: "FORBIDDEN" } }, 403); }
     try {
+      const config = requestConfig(request, deps.config);
       const body = z.object({ celebrityId: z.string().uuid(), expectedUsername: instagramUsername, expectedUserId: instagramId.nullable().default(null), locale: instagramLocale.default("ko") }).strict().parse(await request.json());
       const invite = newSecret();
       await deps.repository.issueInvite({ celebrityId: body.celebrityId, username: body.expectedUsername, userId: body.expectedUserId, hash: secretHash(invite), locale: body.locale });
-      return json({ connectionUrl: `${deps.config.origin}/connect/instagram/start?invite=${invite}&locale=${body.locale}`, expiresIn: 86400 });
+      return json({ connectionUrl: `${config.origin}/connect/instagram/start?invite=${invite}&locale=${body.locale}`, expiresIn: 86400 });
     } catch { return json({ error: { code: "INSTAGRAM_INVITE_FAILED" } }, 400); }
   };
 }
@@ -90,6 +96,7 @@ export function createInstagramStartHandler(deps: InstagramRouteDependencies) {
   return async (request: Request) => {
     let pageLocale: InstagramLocale = queryLocale(request) ?? "ko";
     try {
+      const config = requestConfig(request, deps.config);
       if (request.method === "GET") {
         const invite = opaqueSecret.parse(oneQuery(request, "invite"));
         const flow = await deps.repository.transition("peek_invite", secretHash(invite));
@@ -99,22 +106,22 @@ export function createInstagramStartHandler(deps: InstagramRouteDependencies) {
         const content = pageLocale === "ko"
           ? `<p>사진과 릴스를 ByUs 팬페이지에 표시할 수 있도록 계정을 연결해 주세요.</p><dl class="account"><dt>연결할 팬페이지</dt><dd>${escapeHtml(flow.celebrity_name || flow.celebrity_slug || "")}</dd><dt>연결할 Instagram 계정</dt><dd>@${escapeHtml(flow.expected_username)}</dd></dl><p>Instagram에서 로그인하고 읽기 권한을 허용한 다음, 연결할 계정을 한 번 더 확인해 주세요.</p><form method="post" action="/connect/instagram/start"><input type="hidden" name="invite" value="${invite}"><input type="hidden" name="locale" value="ko"><input type="hidden" name="csrf" value="${csrf(browser, invite)}"><div class="actions"><button type="submit">Instagram으로 연결하기</button></div></form>`
           : `<p>Connect your account to show photos and reels on your ByUs fan page.</p><dl class="account"><dt>Fan page</dt><dd>${escapeHtml(flow.celebrity_name || flow.celebrity_slug || "")}</dd><dt>Instagram account</dt><dd>@${escapeHtml(flow.expected_username)}</dd></dl><p>Sign in to Instagram, allow read access, and confirm the account once more.</p><form method="post" action="/connect/instagram/start"><input type="hidden" name="invite" value="${invite}"><input type="hidden" name="locale" value="en"><input type="hidden" name="csrf" value="${csrf(browser, invite)}"><div class="actions"><button type="submit">Continue with Instagram</button></div></form>`;
-        return instagramPage(pageLocale === "ko" ? "Instagram을 연결해 주세요" : "Connect Instagram", content, 200, { "set-cookie": setCookie(deps.config, "browser", browser) }, pageLocale);
+        return instagramPage(pageLocale === "ko" ? "Instagram을 연결해 주세요" : "Connect Instagram", content, 200, { "set-cookie": setCookie(config, "browser", browser) }, pageLocale);
       }
       if (request.method !== "POST") return json({ error: { code: "METHOD_NOT_ALLOWED" } }, 405);
       requireOrigin(request, deps.config);
       const body = await smallForm(request);
       const invite = opaqueSecret.parse(body.get("invite"));
-      const browser = readCookie(request, deps.config, "browser");
+      const browser = readCookie(request, config, "browser");
       if (!constantTimeEqual(body.get("csrf") ?? "", csrf(browser, invite))) throw new Error();
       const submittedLocale = body.get("locale");
       if (submittedLocale !== null) instagramLocale.parse(submittedLocale);
       const flow = await deps.repository.transition("peek_invite", secretHash(invite));
       if (!flow) throw new Error();
       pageLocale = flow.locale;
-      const state = newSecret();
+      const state = bindAppOrigin(newSecret(), config.origin);
       await deps.repository.transition("start", secretHash(invite), secretHash(browser), { next_hash: secretHash(state) });
-      return redirect(deps.provider.authorizationUrl(state));
+      return redirect(deps.provider.authorizationUrl(state, config.redirectUri));
     } catch { return failedPage(undefined, pageLocale); }
   };
 }
@@ -122,9 +129,12 @@ export function createInstagramStartHandler(deps: InstagramRouteDependencies) {
 export function createInstagramCallbackHandler(deps: InstagramRouteDependencies) {
   return async (request: Request) => {
     let pageLocale: InstagramLocale = "ko";
+    let config = deps.config;
     try {
-      const state = opaqueSecret.parse(oneQuery(request, "state"));
-      const browser = readCookie(request, deps.config, "browser");
+      config = requestConfig(request, deps.config);
+      const state = oneQuery(request, "state");
+      opaqueSecret.parse(readAppOriginBinding(state, config.origin));
+      const browser = readCookie(request, config, "browser");
       const stateFlow = await deps.repository.transition("peek_state", secretHash(state), secretHash(browser));
       if (!stateFlow) throw new Error();
       pageLocale = stateFlow.locale;
@@ -133,18 +143,18 @@ export function createInstagramCallbackHandler(deps: InstagramRouteDependencies)
         if (query.getAll("error").length !== 1 || query.has("code")) throw new Error();
         await deps.repository.transition("consume", secretHash(state), secretHash(browser));
         await deps.repository.transition("cancel", secretHash(state), secretHash(browser));
-        return clearCookies(pageLocale === "ko" ? instagramPage("연결을 취소했어요", "<p>Instagram 계정이 연결되지 않았어요. 다시 연결하려면 ByUs 담당자에게 새 링크를 요청해 주세요.</p>", 200, undefined, pageLocale) : instagramPage("Connection cancelled", "<p>Your Instagram account was not connected. Ask your ByUs contact for a new link to try again.</p>", 200, undefined, pageLocale), deps.config);
+        return clearCookies(pageLocale === "ko" ? instagramPage("연결을 취소했어요", "<p>Instagram 계정이 연결되지 않았어요. 다시 연결하려면 ByUs 담당자에게 새 링크를 요청해 주세요.</p>", 200, undefined, pageLocale) : instagramPage("Connection cancelled", "<p>Your Instagram account was not connected. Ask your ByUs contact for a new link to try again.</p>", 200, undefined, pageLocale), config);
       }
       const code = z.string().min(1).max(4096).parse(oneQuery(request, "code"));
-      const pending = await deps.service.callback(code, state, browser);
+      const pending = await deps.service.callback(code, state, browser, config.redirectUri);
       const response = redirect(`/connect/instagram/confirm?locale=${pageLocale}`);
-      response.headers.append("set-cookie", setCookie(deps.config, "pending", pending));
+      response.headers.append("set-cookie", setCookie(config, "pending", pending));
       return response;
     } catch (error) {
       const mismatch = error instanceof InstagramError && error.code === "ACCOUNT_MISMATCH";
       return clearCookies(failedPage(mismatch ? (pageLocale === "ko"
         ? "요청받은 Instagram 계정과 로그인한 계정이 달라요. 연결하지 않았으니 ByUs 담당자에게 새 링크를 요청해 주세요."
-        : "The signed-in Instagram account does not match the requested account. Nothing was connected; ask your ByUs contact for a new link.") : undefined, pageLocale), deps.config);
+        : "The signed-in Instagram account does not match the requested account. Nothing was connected; ask your ByUs contact for a new link.") : undefined, pageLocale), config);
     }
   };
 }
@@ -152,9 +162,11 @@ export function createInstagramCallbackHandler(deps: InstagramRouteDependencies)
 export function createInstagramConfirmHandler(deps: InstagramRouteDependencies) {
   return async (request: Request) => {
     let pageLocale: InstagramLocale = queryLocale(request) ?? "ko";
+    let config = deps.config;
     try {
-      const browser = readCookie(request, deps.config, "browser");
-      const pending = readCookie(request, deps.config, "pending");
+      config = requestConfig(request, deps.config);
+      const browser = readCookie(request, config, "browser");
+      const pending = readCookie(request, config, "pending");
       const preview = await deps.repository.transition("peek_pending", secretHash(pending), secretHash(browser));
       if (!preview) throw new Error();
       pageLocale = preview.locale;
@@ -170,10 +182,10 @@ export function createInstagramConfirmHandler(deps: InstagramRouteDependencies) 
       if (!constantTimeEqual(body.get("csrf") ?? "", csrf(browser, pending))) throw new Error();
       const action = z.enum(["confirm", "cancel"]).parse(body.get("action"));
       const flow = await deps.repository.transition(action, secretHash(pending), secretHash(browser));
-      if (action === "cancel") return clearCookies(pageLocale === "ko" ? instagramPage("연결을 취소했어요", "<p>ByUs에 Instagram 계정을 연결하지 않았어요.</p><p>Instagram에서 허용한 접근 권한은 Instagram의 앱 및 웹사이트 설정에서 해제할 수 있어요.</p>", 200, undefined, pageLocale) : instagramPage("Connection cancelled", "<p>Your Instagram account was not connected to ByUs.</p><p>You can remove the access you granted in Instagram's Apps and Websites settings.</p>", 200, undefined, pageLocale), deps.config);
+      if (action === "cancel") return clearCookies(pageLocale === "ko" ? instagramPage("연결을 취소했어요", "<p>ByUs에 Instagram 계정을 연결하지 않았어요.</p><p>Instagram에서 허용한 접근 권한은 Instagram의 앱 및 웹사이트 설정에서 해제할 수 있어요.</p>", 200, undefined, pageLocale) : instagramPage("Connection cancelled", "<p>Your Instagram account was not connected to ByUs.</p><p>You can remove the access you granted in Instagram's Apps and Websites settings.</p>", 200, undefined, pageLocale), config);
       // A failed media fetch must not turn a successful account confirmation into an error.
       if (flow) await deps.service.sync(flow.celebrity_id).catch(() => undefined);
-      return clearCookies(pageLocale === "ko" ? instagramPage("Instagram을 연결했어요", "<p>연결이 완료되었어요. 최신 사진과 릴스는 확인이 끝나면 팬페이지에 표시돼요.</p><p>연결 해제는 ByUs 담당자에게 요청하거나 Instagram의 앱 및 웹사이트 설정에서 진행할 수 있어요.</p>", 200, undefined, pageLocale) : instagramPage("Instagram connected", "<p>The connection is complete. Recent photos and reels will appear on the fan page after verification.</p><p>To disconnect, contact ByUs or use Instagram's Apps and Websites settings.</p>", 200, undefined, pageLocale), deps.config);
+      return clearCookies(pageLocale === "ko" ? instagramPage("Instagram을 연결했어요", "<p>연결이 완료되었어요. 최신 사진과 릴스는 확인이 끝나면 팬페이지에 표시돼요.</p><p>연결 해제는 ByUs 담당자에게 요청하거나 Instagram의 앱 및 웹사이트 설정에서 진행할 수 있어요.</p>", 200, undefined, pageLocale) : instagramPage("Instagram connected", "<p>The connection is complete. Recent photos and reels will appear on the fan page after verification.</p><p>To disconnect, contact ByUs or use Instagram's Apps and Websites settings.</p>", 200, undefined, pageLocale), config);
     } catch { return failedPage(undefined, pageLocale); }
   };
 }

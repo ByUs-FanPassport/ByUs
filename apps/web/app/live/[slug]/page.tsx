@@ -22,7 +22,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
   const schedule = new Intl.DateTimeFormat(locale, { calendar: "gregory",
     timeZone: "Asia/Seoul", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: locale === "en",
   }).format(new Date(live.startsAt));
-  return publicMetadata({ path: `/live/${slug}`, locale, title: `${live.title} | ByUs`,
+  return publicMetadata({ path: `/live/${slug}`, locale, title: `${live.title} | kyaa`,
     description: `${live.celebrity.name} · ${schedule} KST · ${live.watch.provider}. ${live.description}`,
     image: photo.src, imageAlt: photo.alt ?? live.heroImage.alt,
     locales: translated ? ["ko", "en"] : [toContentLocale(locale)] });

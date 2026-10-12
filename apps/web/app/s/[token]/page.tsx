@@ -9,8 +9,8 @@ import { SharedPassportLanding } from "@/features/community-stamps/ui/shared-pas
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Shared Passport | ByUs", robots: NO_INDEX, referrer: "no-referrer",
-  openGraph: { title: "A favorite worth sharing | ByUs", images: ["/share/default.png"] },
+  title: "Shared Passport | kyaa", robots: NO_INDEX, referrer: "no-referrer",
+  openGraph: { title: "A favorite worth sharing | kyaa", images: ["/share/default.png"] },
 };
 
 export default async function SharedPassportPage({ params, searchParams }: {

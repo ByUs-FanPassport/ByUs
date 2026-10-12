@@ -26,7 +26,7 @@ function deps() {
 function callbackRequest(body: unknown, authorization = "Bearer x") {
   return new Request("https://dev.byus.test/api/me/connected-accounts/kakao/callback", {
     method: "POST",
-    headers: { authorization, "content-type": "application/json" },
+    headers: { authorization, origin: "https://dev.byus.test", "content-type": "application/json" },
     body: JSON.stringify(body),
   });
 }
@@ -37,17 +37,17 @@ describe("Kakao connection routes", () => {
     expect((await createKakaoStartHandler(d)(new Request("https://dev.byus.test/api"))).status).toBe(405);
     d.authorize.mockRejectedValueOnce(new Error("no"));
     expect((await createKakaoStartHandler(d)(new Request("https://dev.byus.test/api", { method: "POST" }))).status).toBe(401);
-    const response = await createKakaoStartHandler(d)(new Request("https://dev.byus.test/api?return=%2Fsettings%3Flocale%3Den", { method: "POST", headers: { authorization: "Bearer x" } }));
+    const response = await createKakaoStartHandler(d)(new Request("https://dev.byus.test/api?return=%2Fsettings%3Flocale%3Den", { method: "POST", headers: { authorization: "Bearer x", origin: "https://dev.byus.test" } }));
     expect(response.status).toBe(200);
     expect(d._repository.createState).toHaveBeenCalledWith(expect.objectContaining({ appUserId: "owner", returnPath: "/settings?locale=en" }));
   });
 
   it("requires explicit fixed consent and requests phone_number only for enrollment", async () => {
     const d = deps();
-    const invalid = new Request("https://dev.byus.test/api?return=%2Fsettings", { method: "POST", headers: { authorization: "Bearer x", "content-type": "application/json" }, body: JSON.stringify({ consented: false, consentVersion: "kakao-alimtalk-v1" }) });
+    const invalid = new Request("https://dev.byus.test/api?return=%2Fsettings", { method: "POST", headers: { authorization: "Bearer x", origin: "https://dev.byus.test", "content-type": "application/json" }, body: JSON.stringify({ consented: false, consentVersion: "kakao-alimtalk-v1" }) });
     expect((await createKakaoEnrollmentStartHandler(d)(invalid)).status).toBe(400);
     expect(d._repository.createState).not.toHaveBeenCalled();
-    const valid = new Request("https://dev.byus.test/api?return=%2Fsettings", { method: "POST", headers: { authorization: "Bearer x", "content-type": "application/json" }, body: JSON.stringify({ consented: true, consentVersion: "kakao-alimtalk-v1" }) });
+    const valid = new Request("https://dev.byus.test/api?return=%2Fsettings", { method: "POST", headers: { authorization: "Bearer x", origin: "https://dev.byus.test", "content-type": "application/json" }, body: JSON.stringify({ consented: true, consentVersion: "kakao-alimtalk-v1" }) });
     expect((await createKakaoEnrollmentStartHandler(d)(valid)).status).toBe(200);
     expect(d._repository.createState).toHaveBeenCalledWith(expect.objectContaining({ purpose: "alimtalk" }));
     expect(d.port.authorizationUrl).toHaveBeenCalledWith(expect.objectContaining({ scope: "phone_number" }));
@@ -59,7 +59,7 @@ describe("Kakao connection routes", () => {
     "https://dev.byus.test/api?return=/settings&return=/my",
   ])("rejects an unsafe or duplicate return without creating state: %s", async (url) => {
     const d = deps();
-    expect((await createKakaoStartHandler(d)(new Request(url, { method: "POST", headers: { authorization: "Bearer x" } }))).status).toBe(400);
+    expect((await createKakaoStartHandler(d)(new Request(url, { method: "POST", headers: { authorization: "Bearer x", origin: "https://dev.byus.test" } }))).status).toBe(400);
     expect(d._repository.createState).not.toHaveBeenCalled();
   });
 
@@ -78,6 +78,32 @@ describe("Kakao connection routes", () => {
     expect(d._repository.consumeState).toHaveBeenCalledWith({ appUserId: "owner", stateHash: expect.stringMatching(/^[0-9a-f]{64}$/) });
     expect(d.port.exchange).toHaveBeenCalledWith(expect.objectContaining({ redirectUri: "https://dev.byus.test/settings/kakao/callback" }));
     expect(JSON.stringify(d._repository.complete.mock.calls)).not.toContain("token");
+  });
+
+  it.each(["https://byus.kr", "https://kyaa.io"])("uses the trusted request host for Kakao start and exchange on %s", async (origin) => {
+    const d = deps(); d.redirectUri = "https://kyaa.io/settings/kakao/callback";
+    await createKakaoStartHandler(d)(new Request(`${origin}/api`, { method: "POST", headers: { authorization: "Bearer x", origin } }));
+    expect(d.port.authorizationUrl).toHaveBeenCalledWith(expect.objectContaining({ redirectUri: `${origin}/settings/kakao/callback`, state: expect.stringMatching(origin === "https://byus.kr" ? /^b\./ : /^k\./) }));
+    const request = new Request(`${origin}/api/me/connected-accounts/kakao/callback`, { method: "POST", headers: { authorization: "Bearer x", origin, "content-type": "application/json" }, body: JSON.stringify({ code: "c", state: "s".repeat(40) }) });
+    expect((await createKakaoCallbackHandler(d)(request)).status).toBe(200);
+    expect(d.port.exchange).toHaveBeenCalledWith(expect.objectContaining({ redirectUri: `${origin}/settings/kakao/callback` }));
+  });
+
+  it("rejects a Kakao state bound to the other trusted host before consumption", async () => {
+    const d = deps(); d.redirectUri = "https://kyaa.io/settings/kakao/callback";
+    const request = new Request("https://kyaa.io/api", { method: "POST", headers: { authorization: "Bearer x", origin: "https://kyaa.io", "content-type": "application/json" }, body: JSON.stringify({ code: "c", state: `b.${"s".repeat(43)}` }) });
+    expect((await createKakaoCallbackHandler(d)(request)).status).toBe(400);
+    expect(d._repository.consumeState).not.toHaveBeenCalled();
+  });
+
+  it("rejects an untrusted Kakao request origin before creating or consuming state", async () => {
+    const d = deps(); d.redirectUri = "https://kyaa.io/settings/kakao/callback";
+    const start = new Request("https://attacker.test/api", { method: "POST", headers: { authorization: "Bearer x", origin: "https://attacker.test" } });
+    expect((await createKakaoStartHandler(d)(start)).status).toBe(400);
+    expect(d._repository.createState).not.toHaveBeenCalled();
+    const callback = new Request("https://attacker.test/api", { method: "POST", headers: { authorization: "Bearer x", origin: "https://attacker.test", "content-type": "application/json" }, body: JSON.stringify({ code: "c", state: "s".repeat(40) }) });
+    expect((await createKakaoCallbackHandler(d)(callback)).status).toBe(400);
+    expect(d._repository.consumeState).not.toHaveBeenCalled();
   });
 
   it("stages an enrollment from the same profile response after connecting the exact subject", async () => {

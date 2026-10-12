@@ -104,7 +104,7 @@ export function AdminOperationsShell({ locale, children, adminRole }: { locale: 
   return (
     <div className={styles.adminPage}>
       <header className={styles.topbar}>
-        <Link className={styles.brand} href={localizedHref("/admin")}>ByUs <span>Admin</span></Link>
+        <Link className={styles.brand} href={localizedHref("/admin")}>kyaa <span>Admin</span></Link>
         <div className={styles.topActions}>
           <span className={styles.environment}>{t.environment}</span>
           <Link className={styles.serviceLink} href="/" target="_blank">{t.openService}<ExternalLink aria-hidden="true" /></Link>

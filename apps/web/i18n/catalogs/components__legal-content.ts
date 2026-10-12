@@ -2,15 +2,15 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "m9cc8a37e9587": {
-    "ja": "ByUs 法的通知",
-    "zh-Hans": "ByUs 法律声明",
-    "zh-Hant": "ByUs 法律聲明",
-    "es": "Aviso legal de ByUs",
-    "id": "Pemberitahuan Hukum ByUs",
-    "vi": "Thông báo pháp lý của ByUs",
-    "th": "ประกาศทางกฎหมายของ ByUs",
-    "pt": "Aviso legal do ByUs",
-    "fr": "Mentions légales de ByUs"
+    "ja": "kyaa 法的通知",
+    "zh-Hans": "kyaa 法律声明",
+    "zh-Hant": "kyaa 法律聲明",
+    "es": "Aviso legal de kyaa",
+    "id": "Pemberitahuan Hukum kyaa",
+    "vi": "Thông báo pháp lý của kyaa",
+    "th": "ประกาศทางกฎหมายของ kyaa",
+    "pt": "Aviso legal do kyaa",
+    "fr": "Mentions légales de kyaa"
   },
   "m04176cbfe77c": {
     "ja": "施行日：2026年9月11日",
@@ -68,26 +68,26 @@ export const messages = {
     "fr": "Choisir la langue, actuellement le français"
   },
   "m6fd73ee9a050": {
-    "ja": "プライバシーポリシー | ByUs",
-    "zh-Hans": "隐私政策 | ByUs",
-    "zh-Hant": "隱私政策 | ByUs",
-    "es": "Política de privacidad | ByUs",
-    "id": "Kebijakan Privasi | ByUs",
-    "vi": "Chính sách quyền riêng tư | ByUs",
-    "th": "นโยบายความเป็นส่วนตัว | ByUs",
-    "pt": "Política de Privacidade | ByUs",
-    "fr": "Politique de confidentialité | ByUs"
+    "ja": "プライバシーポリシー | kyaa",
+    "zh-Hans": "隐私政策 | kyaa",
+    "zh-Hant": "隱私政策 | kyaa",
+    "es": "Política de privacidad | kyaa",
+    "id": "Kebijakan Privasi | kyaa",
+    "vi": "Chính sách quyền riêng tư | kyaa",
+    "th": "นโยบายความเป็นส่วนตัว | kyaa",
+    "pt": "Política de Privacidade | kyaa",
+    "fr": "Politique de confidentialité | kyaa"
   },
   "mc249cedcdc5e": {
-    "ja": "ByUs プライバシーポリシー",
-    "zh-Hans": "ByUs 隐私政策",
-    "zh-Hant": "ByUs 隱私政策",
-    "es": "Política de privacidad de ByUs",
-    "id": "Kebijakan Privasi ByUs",
-    "vi": "Chính sách quyền riêng tư của ByUs",
-    "th": "นโยบายความเป็นส่วนตัวของ ByUs",
-    "pt": "Política de Privacidade do ByUs",
-    "fr": "Politique de confidentialité de ByUs"
+    "ja": "kyaa プライバシーポリシー",
+    "zh-Hans": "kyaa 隐私政策",
+    "zh-Hant": "kyaa 隱私政策",
+    "es": "Política de privacidad de kyaa",
+    "id": "Kebijakan Privasi kyaa",
+    "vi": "Chính sách quyền riêng tư của kyaa",
+    "th": "นโยบายความเป็นส่วนตัวของ kyaa",
+    "pt": "Política de Privacidade do kyaa",
+    "fr": "Politique de confidentialité de kyaa"
   },
   "m11f0aaaa4630": {
     "ja": "プライバシーポリシー",
@@ -101,15 +101,15 @@ export const messages = {
     "fr": "Politique de confidentialité"
   },
   "me46e68309758": {
-    "ja": "Sallylab Inc.は、ByUsの運営に必要な範囲でのみ個人情報を取り扱い、安全に保護する方法について、本プライバシーポリシーでご案内します。",
-    "zh-Hans": "Sallylab Inc. 通过本隐私政策说明我们如何仅在运营 ByUs 所需的范围内处理个人信息，以及如何安全保护这些信息。",
-    "zh-Hant": "Sallylab Inc. 透過本隱私政策說明我們如何僅在營運 ByUs 所需的範圍內處理個人資料，以及如何安全保護這些資料。",
-    "es": "Sallylab Inc. presenta esta Política de privacidad para explicar cómo tratamos únicamente la información personal necesaria para operar ByUs y cómo la protegemos de forma segura.",
-    "id": "Sallylab Inc. menyediakan Kebijakan Privasi ini untuk menjelaskan cara kami memproses hanya informasi pribadi yang diperlukan untuk mengoperasikan ByUs dan melindunginya dengan aman.",
-    "vi": "Sallylab Inc. cung cấp Chính sách quyền riêng tư này để giải thích cách chúng tôi chỉ xử lý thông tin cá nhân cần thiết cho việc vận hành ByUs và cách bảo vệ thông tin đó an toàn.",
-    "th": "Sallylab Inc. จัดทำนโยบายความเป็นส่วนตัวฉบับนี้เพื่ออธิบายว่าเราประมวลผลเฉพาะข้อมูลส่วนบุคคลที่จำเป็นต่อการให้บริการ ByUs และปกป้องข้อมูลดังกล่าวอย่างปลอดภัยอย่างไร",
-    "pt": "A Sallylab Inc. apresenta esta Política de Privacidade para explicar como tratamos apenas os dados pessoais necessários para operar o ByUs e como os protegemos com segurança.",
-    "fr": "Sallylab Inc. présente cette Politique de confidentialité afin d’expliquer comment nous traitons uniquement les données personnelles nécessaires au fonctionnement de ByUs et comment nous les protégeons de manière sécurisée."
+    "ja": "Sallylab Inc.は、kyaaの運営に必要な範囲でのみ個人情報を取り扱い、安全に保護する方法について、本プライバシーポリシーでご案内します。",
+    "zh-Hans": "Sallylab Inc. 通过本隐私政策说明我们如何仅在运营 kyaa 所需的范围内处理个人信息，以及如何安全保护这些信息。",
+    "zh-Hant": "Sallylab Inc. 透過本隱私政策說明我們如何僅在營運 kyaa 所需的範圍內處理個人資料，以及如何安全保護這些資料。",
+    "es": "Sallylab Inc. presenta esta Política de privacidad para explicar cómo tratamos únicamente la información personal necesaria para operar kyaa y cómo la protegemos de forma segura.",
+    "id": "Sallylab Inc. menyediakan Kebijakan Privasi ini untuk menjelaskan cara kami memproses hanya informasi pribadi yang diperlukan untuk mengoperasikan kyaa dan melindunginya dengan aman.",
+    "vi": "Sallylab Inc. cung cấp Chính sách quyền riêng tư này để giải thích cách chúng tôi chỉ xử lý thông tin cá nhân cần thiết cho việc vận hành kyaa và cách bảo vệ thông tin đó an toàn.",
+    "th": "Sallylab Inc. จัดทำนโยบายความเป็นส่วนตัวฉบับนี้เพื่ออธิบายว่าเราประมวลผลเฉพาะข้อมูลส่วนบุคคลที่จำเป็นต่อการให้บริการ kyaa และปกป้องข้อมูลดังกล่าวอย่างปลอดภัยอย่างไร",
+    "pt": "A Sallylab Inc. apresenta esta Política de Privacidade para explicar como tratamos apenas os dados pessoais necessários para operar o kyaa e como os protegemos com segurança.",
+    "fr": "Sallylab Inc. présente cette Politique de confidentialité afin d’expliquer comment nous traitons uniquement les données personnelles nécessaires au fonctionnement de kyaa et comment nous les protégeons de manière sécurisée."
   },
   "m1eda7bbe7402": {
     "ja": "1. 取り扱う個人情報",
@@ -365,15 +365,15 @@ export const messages = {
     "fr": "3. Durée de conservation et d’utilisation"
   },
   "mc54081fa5ad1": {
-    "ja": "個人情報は、サービスの提供とアカウントの維持に必要な期間保有し、利用目的が達成された場合または削除を求められた場合は遅滞なく削除します。実物特典の受取情報は、配送または現地受取の完了から30日後に削除します。Kakaoサービス通知への同意を撤回するかKakao連携を解除した場合、ByUsシステム内の元の電話番号と未完了の登録情報を削除します。同意・撤回履歴、配信照合値、提供事業者の受付・結果記録は、適用法令の遵守、紛争解決、セキュリティ事故への対応に必要な範囲と期間に限り、別途保管する場合があります。また、適用法令により一定期間の保管が義務付けられる情報も、必要な範囲と期間に限り別途保管する場合があります。",
-    "zh-Hans": "我们会在提供服务和维持账户所需的期限内保存个人信息。处理目的实现或您要求删除时，我们会立即删除。实物权益收件信息会在配送或现场领取完成30天后删除。如果您撤回对 Kakao 服务通知的同意或断开 Kakao 连接，我们会删除 ByUs 系统中保存的原始电话号码和未完成的登记信息。同意与撤回记录、发送关联值以及服务提供商的受理和结果记录，可能会在遵守适用法律、解决争议或应对安全事件所必需的范围和期限内单独保存。适用法律要求保存一定期限的信息，也可能在必要范围和期限内单独保存。",
-    "zh-Hant": "我們會在提供服務和維持帳戶所需的期限內保留個人資料。處理目的實現或您要求刪除時，我們會立即刪除。實物權益收件資料會在配送或現場領取完成30天後刪除。如果您撤回對 Kakao 服務通知的同意或斷開 Kakao 連接，我們會刪除 ByUs 系統中保存的原始電話號碼和未完成的登記資訊。同意與撤回記錄、傳送關聯值以及服務提供商的受理和結果記錄，可能會在遵守適用法律、解決爭議或應對安全事件所必需的範圍和期限內單獨保存。適用法律要求保留一定期限的資訊，也可能在必要範圍和期限內單獨保存。",
-    "es": "Conservamos la información personal durante el tiempo necesario para prestar el servicio y mantener tu cuenta. La eliminamos sin demora indebida cuando se cumple la finalidad del tratamiento o cuando solicitas su eliminación. Eliminamos los datos del destinatario de beneficios físicos 30 días después de completar el envío o la recogida presencial. Si retiras el consentimiento para las notificaciones del servicio de Kakao o desconectas Kakao, eliminamos de los sistemas de ByUs el número de teléfono original y cualquier información de registro incompleta. El historial de consentimiento y retirada, los valores de correlación de entrega y los registros de aceptación y resultados del proveedor pueden conservarse por separado durante el alcance y el plazo necesarios para cumplir las leyes aplicables, resolver disputas o responder a incidentes de seguridad. También podemos conservar información por separado cuando las leyes aplicables exijan hacerlo durante un periodo determinado.",
-    "id": "Kami menyimpan informasi pribadi selama diperlukan untuk menyediakan layanan dan mempertahankan akun Anda. Kami menghapusnya tanpa penundaan yang tidak semestinya setelah tujuan pemrosesan terpenuhi atau Anda meminta penghapusan. Data penerima manfaat fisik dihapus 30 hari setelah pengiriman atau pengambilan di lokasi selesai. Jika Anda menarik persetujuan notifikasi layanan Kakao atau memutuskan Kakao, kami menghapus nomor telepon asli dari sistem ByUs dan informasi pendaftaran yang belum selesai. Riwayat persetujuan dan penarikan, nilai korelasi pengiriman, serta catatan penerimaan dan hasil penyedia dapat disimpan terpisah sejauh dan selama diperlukan untuk mematuhi hukum, menyelesaikan sengketa, atau menanggapi insiden keamanan. Informasi juga dapat disimpan terpisah jika hukum yang berlaku mewajibkan penyimpanan selama periode tertentu.",
-    "vi": "Chúng tôi lưu giữ thông tin cá nhân trong thời gian cần thiết để cung cấp dịch vụ và duy trì tài khoản của bạn. Thông tin được xóa không chậm trễ khi mục đích xử lý đã hoàn thành hoặc khi bạn yêu cầu xóa. Dữ liệu người nhận quyền lợi hiện vật được xóa 30 ngày sau khi hoàn tất giao hàng hoặc nhận tại chỗ. Nếu bạn rút lại đồng ý nhận thông báo dịch vụ Kakao hoặc ngắt kết nối Kakao, chúng tôi xóa số điện thoại gốc khỏi hệ thống ByUs và mọi thông tin đăng ký chưa hoàn tất. Lịch sử đồng ý và rút lại, giá trị đối chiếu giao hàng, cùng hồ sơ tiếp nhận và kết quả của nhà cung cấp có thể được lưu riêng trong phạm vi và thời hạn cần thiết để tuân thủ luật áp dụng, giải quyết tranh chấp hoặc ứng phó sự cố bảo mật. Chúng tôi cũng có thể lưu riêng thông tin khi luật áp dụng yêu cầu lưu trong một thời hạn nhất định.",
-    "th": "เราเก็บรักษาข้อมูลส่วนบุคคลตราบเท่าที่จำเป็นต่อการให้บริการและดูแลบัญชีของคุณ และจะลบโดยไม่ล่าช้าเกินสมควรเมื่อบรรลุวัตถุประสงค์ในการประมวลผลหรือเมื่อคุณขอให้ลบ เราลบรายละเอียดผู้รับของรางวัลที่เป็นสิ่งของเมื่อครบ 30 วันหลังจัดส่งหรือรับ ณ สถานที่เสร็จสิ้น หากคุณเพิกถอนความยินยอมรับการแจ้งเตือนบริการ Kakao หรือยกเลิกการเชื่อมต่อ Kakao เราจะลบหมายเลขโทรศัพท์ต้นฉบับออกจากระบบ ByUs และลบข้อมูลการลงทะเบียนที่ยังไม่เสร็จ ประวัติการยินยอมและเพิกถอน ค่าที่ใช้เชื่อมโยงการจัดส่ง และบันทึกการรับคำขอและผลจากผู้ให้บริการอาจถูกเก็บแยกไว้ตามขอบเขตและระยะเวลาที่จำเป็นเพื่อปฏิบัติตามกฎหมายที่ใช้บังคับ ระงับข้อพิพาท หรือรับมือเหตุการณ์ด้านความปลอดภัย นอกจากนี้ เราอาจเก็บข้อมูลแยกไว้เมื่อกฎหมายที่ใช้บังคับกำหนดให้ต้องเก็บตามระยะเวลาหนึ่ง",
-    "pt": "Mantemos os dados pessoais pelo tempo necessário para fornecer o serviço e manter sua conta. Nós os excluímos sem demora indevida quando a finalidade do tratamento é cumprida ou quando você solicita a exclusão. Excluímos os dados de destinatários de recompensas físicas 30 dias após a conclusão da entrega ou retirada no local. Se você retirar o consentimento para notificações de serviço do Kakao ou desconectar o Kakao, excluímos dos sistemas do ByUs o número de telefone original e todas as informações de cadastro incompletas. O histórico de consentimento e retirada, os valores de correlação de entrega e os registros de aceite e resultado do provedor podem ser armazenados separadamente pelo escopo e período necessários para cumprir as leis aplicáveis, resolver disputas ou responder a incidentes de segurança. Também podemos armazenar informações separadamente quando as leis aplicáveis exigirem retenção por determinado período.",
-    "fr": "Nous conservons les données personnelles aussi longtemps que nécessaire pour fournir le service et maintenir votre compte. Nous les supprimons sans délai injustifié lorsque la finalité du traitement est atteinte ou lorsque vous demandez leur suppression. Nous supprimons les coordonnées des destinataires de récompenses physiques 30 jours après la fin de la livraison ou du retrait sur place. Si vous retirez votre consentement aux notifications de service Kakao ou déconnectez Kakao, nous supprimons des systèmes ByUs le numéro de téléphone d’origine et toute information d’inscription incomplète. L’historique des consentements et retraits, les valeurs de corrélation de livraison et les enregistrements d’acceptation et de résultat du prestataire peuvent être conservés séparément pendant la durée et dans la mesure nécessaires au respect des lois applicables, à la résolution des litiges ou à la réponse aux incidents de sécurité. Nous pouvons également conserver des informations séparément lorsque les lois applicables l’exigent pendant une certaine durée."
+    "ja": "個人情報は、サービスの提供とアカウントの維持に必要な期間保有し、利用目的が達成された場合または削除を求められた場合は遅滞なく削除します。実物特典の受取情報は、配送または現地受取の完了から30日後に削除します。Kakaoサービス通知への同意を撤回するかKakao連携を解除した場合、kyaaシステム内の元の電話番号と未完了の登録情報を削除します。同意・撤回履歴、配信照合値、提供事業者の受付・結果記録は、適用法令の遵守、紛争解決、セキュリティ事故への対応に必要な範囲と期間に限り、別途保管する場合があります。また、適用法令により一定期間の保管が義務付けられる情報も、必要な範囲と期間に限り別途保管する場合があります。",
+    "zh-Hans": "我们会在提供服务和维持账户所需的期限内保存个人信息。处理目的实现或您要求删除时，我们会立即删除。实物权益收件信息会在配送或现场领取完成30天后删除。如果您撤回对 Kakao 服务通知的同意或断开 Kakao 连接，我们会删除 kyaa 系统中保存的原始电话号码和未完成的登记信息。同意与撤回记录、发送关联值以及服务提供商的受理和结果记录，可能会在遵守适用法律、解决争议或应对安全事件所必需的范围和期限内单独保存。适用法律要求保存一定期限的信息，也可能在必要范围和期限内单独保存。",
+    "zh-Hant": "我們會在提供服務和維持帳戶所需的期限內保留個人資料。處理目的實現或您要求刪除時，我們會立即刪除。實物權益收件資料會在配送或現場領取完成30天後刪除。如果您撤回對 Kakao 服務通知的同意或斷開 Kakao 連接，我們會刪除 kyaa 系統中保存的原始電話號碼和未完成的登記資訊。同意與撤回記錄、傳送關聯值以及服務提供商的受理和結果記錄，可能會在遵守適用法律、解決爭議或應對安全事件所必需的範圍和期限內單獨保存。適用法律要求保留一定期限的資訊，也可能在必要範圍和期限內單獨保存。",
+    "es": "Conservamos la información personal durante el tiempo necesario para prestar el servicio y mantener tu cuenta. La eliminamos sin demora indebida cuando se cumple la finalidad del tratamiento o cuando solicitas su eliminación. Eliminamos los datos del destinatario de beneficios físicos 30 días después de completar el envío o la recogida presencial. Si retiras el consentimiento para las notificaciones del servicio de Kakao o desconectas Kakao, eliminamos de los sistemas de kyaa el número de teléfono original y cualquier información de registro incompleta. El historial de consentimiento y retirada, los valores de correlación de entrega y los registros de aceptación y resultados del proveedor pueden conservarse por separado durante el alcance y el plazo necesarios para cumplir las leyes aplicables, resolver disputas o responder a incidentes de seguridad. También podemos conservar información por separado cuando las leyes aplicables exijan hacerlo durante un periodo determinado.",
+    "id": "Kami menyimpan informasi pribadi selama diperlukan untuk menyediakan layanan dan mempertahankan akun Anda. Kami menghapusnya tanpa penundaan yang tidak semestinya setelah tujuan pemrosesan terpenuhi atau Anda meminta penghapusan. Data penerima manfaat fisik dihapus 30 hari setelah pengiriman atau pengambilan di lokasi selesai. Jika Anda menarik persetujuan notifikasi layanan Kakao atau memutuskan Kakao, kami menghapus nomor telepon asli dari sistem kyaa dan informasi pendaftaran yang belum selesai. Riwayat persetujuan dan penarikan, nilai korelasi pengiriman, serta catatan penerimaan dan hasil penyedia dapat disimpan terpisah sejauh dan selama diperlukan untuk mematuhi hukum, menyelesaikan sengketa, atau menanggapi insiden keamanan. Informasi juga dapat disimpan terpisah jika hukum yang berlaku mewajibkan penyimpanan selama periode tertentu.",
+    "vi": "Chúng tôi lưu giữ thông tin cá nhân trong thời gian cần thiết để cung cấp dịch vụ và duy trì tài khoản của bạn. Thông tin được xóa không chậm trễ khi mục đích xử lý đã hoàn thành hoặc khi bạn yêu cầu xóa. Dữ liệu người nhận quyền lợi hiện vật được xóa 30 ngày sau khi hoàn tất giao hàng hoặc nhận tại chỗ. Nếu bạn rút lại đồng ý nhận thông báo dịch vụ Kakao hoặc ngắt kết nối Kakao, chúng tôi xóa số điện thoại gốc khỏi hệ thống kyaa và mọi thông tin đăng ký chưa hoàn tất. Lịch sử đồng ý và rút lại, giá trị đối chiếu giao hàng, cùng hồ sơ tiếp nhận và kết quả của nhà cung cấp có thể được lưu riêng trong phạm vi và thời hạn cần thiết để tuân thủ luật áp dụng, giải quyết tranh chấp hoặc ứng phó sự cố bảo mật. Chúng tôi cũng có thể lưu riêng thông tin khi luật áp dụng yêu cầu lưu trong một thời hạn nhất định.",
+    "th": "เราเก็บรักษาข้อมูลส่วนบุคคลตราบเท่าที่จำเป็นต่อการให้บริการและดูแลบัญชีของคุณ และจะลบโดยไม่ล่าช้าเกินสมควรเมื่อบรรลุวัตถุประสงค์ในการประมวลผลหรือเมื่อคุณขอให้ลบ เราลบรายละเอียดผู้รับของรางวัลที่เป็นสิ่งของเมื่อครบ 30 วันหลังจัดส่งหรือรับ ณ สถานที่เสร็จสิ้น หากคุณเพิกถอนความยินยอมรับการแจ้งเตือนบริการ Kakao หรือยกเลิกการเชื่อมต่อ Kakao เราจะลบหมายเลขโทรศัพท์ต้นฉบับออกจากระบบ kyaa และลบข้อมูลการลงทะเบียนที่ยังไม่เสร็จ ประวัติการยินยอมและเพิกถอน ค่าที่ใช้เชื่อมโยงการจัดส่ง และบันทึกการรับคำขอและผลจากผู้ให้บริการอาจถูกเก็บแยกไว้ตามขอบเขตและระยะเวลาที่จำเป็นเพื่อปฏิบัติตามกฎหมายที่ใช้บังคับ ระงับข้อพิพาท หรือรับมือเหตุการณ์ด้านความปลอดภัย นอกจากนี้ เราอาจเก็บข้อมูลแยกไว้เมื่อกฎหมายที่ใช้บังคับกำหนดให้ต้องเก็บตามระยะเวลาหนึ่ง",
+    "pt": "Mantemos os dados pessoais pelo tempo necessário para fornecer o serviço e manter sua conta. Nós os excluímos sem demora indevida quando a finalidade do tratamento é cumprida ou quando você solicita a exclusão. Excluímos os dados de destinatários de recompensas físicas 30 dias após a conclusão da entrega ou retirada no local. Se você retirar o consentimento para notificações de serviço do Kakao ou desconectar o Kakao, excluímos dos sistemas do kyaa o número de telefone original e todas as informações de cadastro incompletas. O histórico de consentimento e retirada, os valores de correlação de entrega e os registros de aceite e resultado do provedor podem ser armazenados separadamente pelo escopo e período necessários para cumprir as leis aplicáveis, resolver disputas ou responder a incidentes de segurança. Também podemos armazenar informações separadamente quando as leis aplicáveis exigirem retenção por determinado período.",
+    "fr": "Nous conservons les données personnelles aussi longtemps que nécessaire pour fournir le service et maintenir votre compte. Nous les supprimons sans délai injustifié lorsque la finalité du traitement est atteinte ou lorsque vous demandez leur suppression. Nous supprimons les coordonnées des destinataires de récompenses physiques 30 jours après la fin de la livraison ou du retrait sur place. Si vous retirez votre consentement aux notifications de service Kakao ou déconnectez Kakao, nous supprimons des systèmes kyaa le numéro de téléphone d’origine et toute information d’inscription incomplète. L’historique des consentements et retraits, les valeurs de corrélation de livraison et les enregistrements d’acceptation et de résultat du prestataire peuvent être conservés séparément pendant la durée et dans la mesure nécessaires au respect des lois applicables, à la résolution des litiges ou à la réponse aux incidents de sécurité. Nous pouvons également conserver des informations séparément lorsque les lois applicables l’exigent pendant une certaine durée."
   },
   "m07d5d91060a1": {
     "ja": "4. 外部サービスの利用および処理委託先",
@@ -387,26 +387,26 @@ export const messages = {
     "fr": "4. Services externes et sous-traitants"
   },
   "mbf80c131b865": {
-    "ja": "Instagram連携には、プロアカウント所有者による別途の同意が必要です。ByUsは基本的な読み取り権限のみを要求し、投稿、コメント、メッセージ送信の権限は要求しません。元のメディアファイルは保存せず、Instagram提供のURLを使用して表示します。カードを選択すると元の投稿が開きます。",
-    "zh-Hans": "连接 Instagram 需要专业账户所有者另行同意。ByUs 仅请求基本读取权限，不请求发布、评论或发送消息的权限。我们不会保存原始媒体文件，而是通过 Instagram 提供的 URL 显示媒体；点击卡片会打开原帖。",
-    "zh-Hant": "連接 Instagram 需要專業帳戶所有者另行同意。ByUs 僅請求基本讀取權限，不請求發布、評論或傳送訊息的權限。我們不會儲存原始媒體檔案，而是透過 Instagram 提供的 URL 顯示媒體；按一下卡片會打開原帖。",
-    "es": "La conexión con Instagram requiere el consentimiento independiente del titular de la cuenta profesional. ByUs solicita acceso básico de lectura, sin permisos para publicar, comentar o enviar mensajes. Mostramos el contenido mediante URL proporcionadas por Instagram sin almacenar los archivos originales; las tarjetas abren las publicaciones originales.",
-    "id": "Koneksi Instagram memerlukan persetujuan terpisah dari pemilik akun profesional. ByUs meminta akses baca dasar tanpa izin untuk memublikasikan, berkomentar, atau mengirim pesan. Kami menampilkan media menggunakan URL dari Instagram tanpa menyimpan berkas media asli; kartu akan membuka postingan asli.",
-    "vi": "Việc kết nối Instagram cần sự đồng ý riêng của chủ tài khoản chuyên nghiệp. ByUs chỉ yêu cầu quyền đọc cơ bản, không yêu cầu quyền đăng bài, bình luận hoặc gửi tin nhắn. Chúng tôi hiển thị phương tiện qua URL do Instagram cung cấp mà không lưu tệp gốc; thẻ sẽ mở bài đăng gốc.",
-    "th": "การเชื่อมต่อ Instagram ต้องได้รับความยินยอมแยกต่างหากจากเจ้าของบัญชีมืออาชีพ ByUs ขอสิทธิ์อ่านขั้นพื้นฐาน โดยไม่ขอสิทธิ์เผยแพร่ แสดงความคิดเห็น หรือส่งข้อความ เราแสดงสื่อผ่าน URL ที่ Instagram ให้มาโดยไม่จัดเก็บไฟล์สื่อต้นฉบับ และเมื่อกดการ์ดจะเปิดโพสต์ต้นฉบับ",
-    "pt": "A conexão ao Instagram exige consentimento separado do titular da conta profissional. O ByUs solicita acesso básico de leitura, sem permissões para publicar, comentar ou enviar mensagens. Exibimos a mídia por meio de URLs fornecidas pelo Instagram sem armazenar os arquivos originais; os cartões abrem as publicações originais.",
-    "fr": "La connexion Instagram nécessite le consentement distinct du titulaire du compte professionnel. ByUs demande un accès de lecture de base, sans autorisation de publier, commenter ou envoyer des messages. Nous affichons les médias à l’aide des URL fournies par Instagram sans stocker les fichiers d’origine ; les cartes ouvrent les publications d’origine."
+    "ja": "Instagram連携には、プロアカウント所有者による別途の同意が必要です。kyaaは基本的な読み取り権限のみを要求し、投稿、コメント、メッセージ送信の権限は要求しません。元のメディアファイルは保存せず、Instagram提供のURLを使用して表示します。カードを選択すると元の投稿が開きます。",
+    "zh-Hans": "连接 Instagram 需要专业账户所有者另行同意。kyaa 仅请求基本读取权限，不请求发布、评论或发送消息的权限。我们不会保存原始媒体文件，而是通过 Instagram 提供的 URL 显示媒体；点击卡片会打开原帖。",
+    "zh-Hant": "連接 Instagram 需要專業帳戶所有者另行同意。kyaa 僅請求基本讀取權限，不請求發布、評論或傳送訊息的權限。我們不會儲存原始媒體檔案，而是透過 Instagram 提供的 URL 顯示媒體；按一下卡片會打開原帖。",
+    "es": "La conexión con Instagram requiere el consentimiento independiente del titular de la cuenta profesional. kyaa solicita acceso básico de lectura, sin permisos para publicar, comentar o enviar mensajes. Mostramos el contenido mediante URL proporcionadas por Instagram sin almacenar los archivos originales; las tarjetas abren las publicaciones originales.",
+    "id": "Koneksi Instagram memerlukan persetujuan terpisah dari pemilik akun profesional. kyaa meminta akses baca dasar tanpa izin untuk memublikasikan, berkomentar, atau mengirim pesan. Kami menampilkan media menggunakan URL dari Instagram tanpa menyimpan berkas media asli; kartu akan membuka postingan asli.",
+    "vi": "Việc kết nối Instagram cần sự đồng ý riêng của chủ tài khoản chuyên nghiệp. kyaa chỉ yêu cầu quyền đọc cơ bản, không yêu cầu quyền đăng bài, bình luận hoặc gửi tin nhắn. Chúng tôi hiển thị phương tiện qua URL do Instagram cung cấp mà không lưu tệp gốc; thẻ sẽ mở bài đăng gốc.",
+    "th": "การเชื่อมต่อ Instagram ต้องได้รับความยินยอมแยกต่างหากจากเจ้าของบัญชีมืออาชีพ kyaa ขอสิทธิ์อ่านขั้นพื้นฐาน โดยไม่ขอสิทธิ์เผยแพร่ แสดงความคิดเห็น หรือส่งข้อความ เราแสดงสื่อผ่าน URL ที่ Instagram ให้มาโดยไม่จัดเก็บไฟล์สื่อต้นฉบับ และเมื่อกดการ์ดจะเปิดโพสต์ต้นฉบับ",
+    "pt": "A conexão ao Instagram exige consentimento separado do titular da conta profissional. O kyaa solicita acesso básico de leitura, sem permissões para publicar, comentar ou enviar mensagens. Exibimos a mídia por meio de URLs fornecidas pelo Instagram sem armazenar os arquivos originais; os cartões abrem as publicações originais.",
+    "fr": "La connexion Instagram nécessite le consentement distinct du titulaire du compte professionnel. kyaa demande un accès de lecture de base, sans autorisation de publier, commenter ou envoyer des messages. Nous affichons les médias à l’aide des URL fournies par Instagram sans stocker les fichiers d’origine ; les cartes ouvrent les publications d’origine."
   },
   "m093f5c2b4d55": {
-    "ja": "連携解除または有効な削除リクエストを処理すると、ByUsは連携済みアカウント情報、アクセストークン、メディアキャッシュ、連携処理データを削除します。削除確認コードのハッシュは30日間、削除と再連携の競合防止に使うアカウントハッシュは最長2日間保管した後、削除します。アカウント所有者はInstagramの「アプリとウェブサイト」設定からMetaへのアクセスを取り消すこともできます。",
-    "zh-Hans": "处理断开连接或有效删除请求后，ByUs 会删除相关账户信息、访问令牌、媒体缓存和连接流程数据。删除确认码的哈希值保存30天，用于避免删除与重新连接冲突的账户哈希值最多保存2天，之后会予以清理。账户所有者也可以在 Instagram 的“应用和网站”设置中撤销 Meta 访问权限。",
-    "zh-Hant": "處理斷開連接或有效刪除請求後，ByUs 會刪除相關帳戶資訊、存取權杖、媒體緩存和連接流程資料。刪除確認碼的哈希值保留30天，用於避免刪除與重新連接衝突的帳戶哈希值最多保留2天，之後會予以清理。帳戶所有者也可以在 Instagram 的“應用程式和網站”設定中撤銷 Meta 存取權限。",
-    "es": "Al procesar una desconexión o una solicitud de eliminación válida, ByUs elimina la información de la cuenta conectada, el token de acceso, la caché multimedia y los datos del proceso de conexión. El código de confirmación de eliminación se conserva cifrado mediante hash durante 30 días, y el hash de cuenta usado para evitar conflictos entre eliminación y reconexión, durante un máximo de 2 días. El titular también puede revocar el acceso de Meta en la configuración de Aplicaciones y sitios web de Instagram.",
-    "id": "Saat pemutusan koneksi atau permintaan penghapusan yang sah diproses, ByUs menghapus informasi akun terhubung, token akses, cache media, dan data alur koneksi. Kode konfirmasi penghapusan dalam bentuk hash disimpan 30 hari, sedangkan hash akun untuk mencegah konflik penghapusan dan penyambungan ulang disimpan hingga 2 hari sebelum dihapus. Pemilik akun juga dapat mencabut akses Meta di pengaturan Aplikasi dan Situs Web Instagram.",
-    "vi": "Khi xử lý ngắt kết nối hoặc yêu cầu xóa hợp lệ, ByUs xóa thông tin tài khoản đã kết nối, mã truy cập, bộ nhớ đệm phương tiện và dữ liệu quy trình kết nối. Mã xác nhận xóa dạng băm được lưu 30 ngày, còn hàm băm tài khoản dùng để tránh xung đột giữa xóa và kết nối lại được lưu tối đa 2 ngày rồi xóa. Chủ tài khoản cũng có thể thu hồi quyền truy cập Meta trong phần cài đặt Ứng dụng và Trang web của Instagram.",
-    "th": "เมื่อดำเนินการยกเลิกการเชื่อมต่อหรือคำขอลบที่ถูกต้อง ByUs จะลบข้อมูลบัญชีที่เชื่อมต่อ โทเค็นการเข้าถึง แคชสื่อ และข้อมูลขั้นตอนการเชื่อมต่อ รหัสยืนยันการลบแบบแฮชจะเก็บไว้ 30 วัน และแฮชบัญชีที่ใช้ป้องกันการลบกับเชื่อมต่อใหม่ทับซ้อนกันจะเก็บไว้ไม่เกิน 2 วันก่อนล้างข้อมูล เจ้าของบัญชียังเพิกถอนสิทธิ์เข้าถึงของ Meta ได้โดยตรงในการตั้งค่าแอปและเว็บไซต์ของ Instagram",
-    "pt": "Quando uma desconexão ou solicitação de exclusão válida é processada, o ByUs exclui as informações da conta conectada, o token de acesso, o cache de mídia e os dados do fluxo de conexão. Um código de confirmação de exclusão em hash é mantido por 30 dias, e um hash da conta usado para evitar conflitos entre exclusão e reconexão é mantido por até 2 dias antes da limpeza. Os titulares também podem revogar o acesso da Meta nas configurações de Aplicativos e sites do Instagram.",
-    "fr": "Lorsqu’une déconnexion ou une demande de suppression valide est traitée, ByUs supprime les informations du compte connecté, le jeton d’accès, le cache des médias et les données du parcours de connexion. Un code de confirmation de suppression haché est conservé pendant 30 jours, et un hachage du compte destiné à éviter les conflits entre suppression et reconnexion pendant 2 jours au maximum avant son nettoyage. Les titulaires peuvent également révoquer l’accès de Meta dans les paramètres Applications et sites web d’Instagram."
+    "ja": "連携解除または有効な削除リクエストを処理すると、kyaaは連携済みアカウント情報、アクセストークン、メディアキャッシュ、連携処理データを削除します。削除確認コードのハッシュは30日間、削除と再連携の競合防止に使うアカウントハッシュは最長2日間保管した後、削除します。アカウント所有者はInstagramの「アプリとウェブサイト」設定からMetaへのアクセスを取り消すこともできます。",
+    "zh-Hans": "处理断开连接或有效删除请求后，kyaa 会删除相关账户信息、访问令牌、媒体缓存和连接流程数据。删除确认码的哈希值保存30天，用于避免删除与重新连接冲突的账户哈希值最多保存2天，之后会予以清理。账户所有者也可以在 Instagram 的“应用和网站”设置中撤销 Meta 访问权限。",
+    "zh-Hant": "處理斷開連接或有效刪除請求後，kyaa 會刪除相關帳戶資訊、存取權杖、媒體緩存和連接流程資料。刪除確認碼的哈希值保留30天，用於避免刪除與重新連接衝突的帳戶哈希值最多保留2天，之後會予以清理。帳戶所有者也可以在 Instagram 的“應用程式和網站”設定中撤銷 Meta 存取權限。",
+    "es": "Al procesar una desconexión o una solicitud de eliminación válida, kyaa elimina la información de la cuenta conectada, el token de acceso, la caché multimedia y los datos del proceso de conexión. El código de confirmación de eliminación se conserva cifrado mediante hash durante 30 días, y el hash de cuenta usado para evitar conflictos entre eliminación y reconexión, durante un máximo de 2 días. El titular también puede revocar el acceso de Meta en la configuración de Aplicaciones y sitios web de Instagram.",
+    "id": "Saat pemutusan koneksi atau permintaan penghapusan yang sah diproses, kyaa menghapus informasi akun terhubung, token akses, cache media, dan data alur koneksi. Kode konfirmasi penghapusan dalam bentuk hash disimpan 30 hari, sedangkan hash akun untuk mencegah konflik penghapusan dan penyambungan ulang disimpan hingga 2 hari sebelum dihapus. Pemilik akun juga dapat mencabut akses Meta di pengaturan Aplikasi dan Situs Web Instagram.",
+    "vi": "Khi xử lý ngắt kết nối hoặc yêu cầu xóa hợp lệ, kyaa xóa thông tin tài khoản đã kết nối, mã truy cập, bộ nhớ đệm phương tiện và dữ liệu quy trình kết nối. Mã xác nhận xóa dạng băm được lưu 30 ngày, còn hàm băm tài khoản dùng để tránh xung đột giữa xóa và kết nối lại được lưu tối đa 2 ngày rồi xóa. Chủ tài khoản cũng có thể thu hồi quyền truy cập Meta trong phần cài đặt Ứng dụng và Trang web của Instagram.",
+    "th": "เมื่อดำเนินการยกเลิกการเชื่อมต่อหรือคำขอลบที่ถูกต้อง kyaa จะลบข้อมูลบัญชีที่เชื่อมต่อ โทเค็นการเข้าถึง แคชสื่อ และข้อมูลขั้นตอนการเชื่อมต่อ รหัสยืนยันการลบแบบแฮชจะเก็บไว้ 30 วัน และแฮชบัญชีที่ใช้ป้องกันการลบกับเชื่อมต่อใหม่ทับซ้อนกันจะเก็บไว้ไม่เกิน 2 วันก่อนล้างข้อมูล เจ้าของบัญชียังเพิกถอนสิทธิ์เข้าถึงของ Meta ได้โดยตรงในการตั้งค่าแอปและเว็บไซต์ของ Instagram",
+    "pt": "Quando uma desconexão ou solicitação de exclusão válida é processada, o kyaa exclui as informações da conta conectada, o token de acesso, o cache de mídia e os dados do fluxo de conexão. Um código de confirmação de exclusão em hash é mantido por 30 dias, e um hash da conta usado para evitar conflitos entre exclusão e reconexão é mantido por até 2 dias antes da limpeza. Os titulares também podem revogar o acesso da Meta nas configurações de Aplicativos e sites do Instagram.",
+    "fr": "Lorsqu’une déconnexion ou une demande de suppression valide est traitée, kyaa supprime les informations du compte connecté, le jeton d’accès, le cache des médias et les données du parcours de connexion. Un code de confirmation de suppression haché est conservé pendant 30 jours, et un hachage du compte destiné à éviter les conflits entre suppression et reconnexion pendant 2 jours au maximum avant son nettoyage. Les titulaires peuvent également révoquer l’accès de Meta dans les paramètres Applications et sites web d’Instagram."
   },
   "m2f8221b0ed77": {
     "ja": "Kakaoサービス通知への登録では、別途の同意を得たうえでKakaoのphone_number権限を使用し、そのKakaoアカウントで確認された電話番号を取得します。この過程で発行されたKakaoアクセストークンは保存しません。",
@@ -519,37 +519,37 @@ export const messages = {
     "fr": "8. Modifications de cette Politique"
   },
   "ma09e75b8e30f": {
-    "ja": "適用法令またはサービス内容の変更に伴い本ポリシーを改定する場合は、改定後のポリシーが施行される前に、変更内容と施行日をByUsサービス内でお知らせします。",
-    "zh-Hans": "如果因适用法律或服务内容变更而修订本政策，我们会在修订政策生效前，通过 ByUs 服务告知变更内容和生效日期。",
-    "zh-Hant": "如果因適用法律或服務內容變更而修訂本政策，我們會在修訂政策生效前，透過 ByUs 服務告知變更內容和生效日期。",
-    "es": "Si revisamos esta política debido a cambios en las leyes aplicables o en el servicio, informaremos de los cambios y de su fecha de entrada en vigor mediante el servicio ByUs antes de que la revisión sea aplicable.",
-    "id": "Jika Kebijakan ini direvisi karena perubahan hukum atau layanan, kami akan memberi tahu perubahan dan tanggal berlakunya melalui layanan ByUs sebelum Kebijakan yang direvisi berlaku.",
-    "vi": "Nếu sửa đổi Chính sách này do thay đổi luật hoặc dịch vụ, chúng tôi sẽ thông báo nội dung thay đổi và ngày có hiệu lực qua dịch vụ ByUs trước khi chính sách sửa đổi có hiệu lực.",
-    "th": "หากเราแก้ไขนโยบายนี้เนื่องจากกฎหมายที่ใช้บังคับหรือบริการมีการเปลี่ยนแปลง เราจะแจ้งรายละเอียดการเปลี่ยนแปลงและวันที่มีผลผ่านบริการ ByUs ก่อนนโยบายฉบับแก้ไขมีผลบังคับใช้",
-    "pt": "Se revisarmos esta Política devido a alterações nas leis aplicáveis ou no serviço, avisaremos sobre as mudanças e sua data de vigência pelo serviço ByUs antes que a Política revisada entre em vigor.",
-    "fr": "Si nous révisons cette Politique en raison de changements apportés aux lois applicables ou au service, nous vous informerons des modifications et de leur date d’entrée en vigueur par l’intermédiaire du service ByUs avant la prise d’effet de la Politique révisée."
+    "ja": "適用法令またはサービス内容の変更に伴い本ポリシーを改定する場合は、改定後のポリシーが施行される前に、変更内容と施行日をkyaaサービス内でお知らせします。",
+    "zh-Hans": "如果因适用法律或服务内容变更而修订本政策，我们会在修订政策生效前，通过 kyaa 服务告知变更内容和生效日期。",
+    "zh-Hant": "如果因適用法律或服務內容變更而修訂本政策，我們會在修訂政策生效前，透過 kyaa 服務告知變更內容和生效日期。",
+    "es": "Si revisamos esta política debido a cambios en las leyes aplicables o en el servicio, informaremos de los cambios y de su fecha de entrada en vigor mediante el servicio kyaa antes de que la revisión sea aplicable.",
+    "id": "Jika Kebijakan ini direvisi karena perubahan hukum atau layanan, kami akan memberi tahu perubahan dan tanggal berlakunya melalui layanan kyaa sebelum Kebijakan yang direvisi berlaku.",
+    "vi": "Nếu sửa đổi Chính sách này do thay đổi luật hoặc dịch vụ, chúng tôi sẽ thông báo nội dung thay đổi và ngày có hiệu lực qua dịch vụ kyaa trước khi chính sách sửa đổi có hiệu lực.",
+    "th": "หากเราแก้ไขนโยบายนี้เนื่องจากกฎหมายที่ใช้บังคับหรือบริการมีการเปลี่ยนแปลง เราจะแจ้งรายละเอียดการเปลี่ยนแปลงและวันที่มีผลผ่านบริการ kyaa ก่อนนโยบายฉบับแก้ไขมีผลบังคับใช้",
+    "pt": "Se revisarmos esta Política devido a alterações nas leis aplicáveis ou no serviço, avisaremos sobre as mudanças e sua data de vigência pelo serviço kyaa antes que a Política revisada entre em vigor.",
+    "fr": "Si nous révisons cette Politique en raison de changements apportés aux lois applicables ou au service, nous vous informerons des modifications et de leur date d’entrée en vigueur par l’intermédiaire du service kyaa avant la prise d’effet de la Politique révisée."
   },
   "m23fd78f6ad62": {
-    "ja": "利用規約 | ByUs",
-    "zh-Hans": "使用条款 | ByUs",
-    "zh-Hant": "使用條款 | ByUs",
-    "es": "Términos de uso | ByUs",
-    "id": "Ketentuan Penggunaan | ByUs",
-    "vi": "Điều khoản sử dụng | ByUs",
-    "th": "ข้อกำหนดการใช้งาน | ByUs",
-    "pt": "Termos de Uso | ByUs",
-    "fr": "Conditions d’utilisation | ByUs"
+    "ja": "利用規約 | kyaa",
+    "zh-Hans": "使用条款 | kyaa",
+    "zh-Hant": "使用條款 | kyaa",
+    "es": "Términos de uso | kyaa",
+    "id": "Ketentuan Penggunaan | kyaa",
+    "vi": "Điều khoản sử dụng | kyaa",
+    "th": "ข้อกำหนดการใช้งาน | kyaa",
+    "pt": "Termos de Uso | kyaa",
+    "fr": "Conditions d’utilisation | kyaa"
   },
   "m4b060e1a4d9a": {
-    "ja": "ByUs サービス利用規約",
-    "zh-Hans": "ByUs 服务使用条款",
-    "zh-Hant": "ByUs 服務使用條款",
-    "es": "Términos de uso del servicio ByUs",
-    "id": "Ketentuan Penggunaan Layanan ByUs",
-    "vi": "Điều khoản sử dụng dịch vụ ByUs",
-    "th": "ข้อกำหนดการใช้งาน ByUs",
-    "pt": "Termos de Uso do ByUs",
-    "fr": "Conditions d’utilisation de ByUs"
+    "ja": "kyaa サービス利用規約",
+    "zh-Hans": "kyaa 服务使用条款",
+    "zh-Hant": "kyaa 服務使用條款",
+    "es": "Términos de uso del servicio kyaa",
+    "id": "Ketentuan Penggunaan Layanan kyaa",
+    "vi": "Điều khoản sử dụng dịch vụ kyaa",
+    "th": "ข้อกำหนดการใช้งาน kyaa",
+    "pt": "Termos de Uso do kyaa",
+    "fr": "Conditions d’utilisation de kyaa"
   },
   "m797c79546a11": {
     "ja": "利用規約",
@@ -563,15 +563,15 @@ export const messages = {
     "fr": "Conditions d’utilisation"
   },
   "mafff687cb83b": {
-    "ja": "本利用規約は、Sallylab Inc.が提供するByUsサービスの利用条件ならびに当社と利用者の権利および責任を定めるものです。",
-    "zh-Hans": "本使用条款规定 Sallylab Inc. 提供的 ByUs 服务的使用条件，以及公司与用户的权利和责任。",
-    "zh-Hant": "本使用條款規定 Sallylab Inc. 提供的 ByUs 服務的使用條件，以及公司與用戶的權利和責任。",
-    "es": "Estos Términos de uso establecen las condiciones de uso del servicio ByUs proporcionado por Sallylab Inc. y los derechos y responsabilidades de la empresa y sus usuarios.",
-    "id": "Ketentuan ini menetapkan syarat penggunaan layanan ByUs yang disediakan Sallylab Inc. serta hak dan tanggung jawab perusahaan dan pengguna.",
-    "vi": "Các Điều khoản này quy định điều kiện sử dụng dịch vụ ByUs do Sallylab Inc. cung cấp, cùng quyền và trách nhiệm của công ty và người dùng.",
-    "th": "ข้อกำหนดการใช้งานนี้กำหนดเงื่อนไขการใช้บริการ ByUs ที่ Sallylab Inc. ให้บริการ รวมถึงสิทธิและความรับผิดชอบของบริษัทและผู้ใช้",
-    "pt": "Estes Termos de Uso estabelecem as condições de uso do serviço ByUs fornecido pela Sallylab Inc. e os direitos e responsabilidades da empresa e dos usuários.",
-    "fr": "Les présentes Conditions d’utilisation définissent les modalités d’utilisation du service ByUs fourni par Sallylab Inc., ainsi que les droits et responsabilités de l’entreprise et de ses utilisateurs."
+    "ja": "本利用規約は、Sallylab Inc.が提供するkyaaサービスの利用条件ならびに当社と利用者の権利および責任を定めるものです。",
+    "zh-Hans": "本使用条款规定 Sallylab Inc. 提供的 kyaa 服务的使用条件，以及公司与用户的权利和责任。",
+    "zh-Hant": "本使用條款規定 Sallylab Inc. 提供的 kyaa 服務的使用條件，以及公司與用戶的權利和責任。",
+    "es": "Estos Términos de uso establecen las condiciones de uso del servicio kyaa proporcionado por Sallylab Inc. y los derechos y responsabilidades de la empresa y sus usuarios.",
+    "id": "Ketentuan ini menetapkan syarat penggunaan layanan kyaa yang disediakan Sallylab Inc. serta hak dan tanggung jawab perusahaan dan pengguna.",
+    "vi": "Các Điều khoản này quy định điều kiện sử dụng dịch vụ kyaa do Sallylab Inc. cung cấp, cùng quyền và trách nhiệm của công ty và người dùng.",
+    "th": "ข้อกำหนดการใช้งานนี้กำหนดเงื่อนไขการใช้บริการ kyaa ที่ Sallylab Inc. ให้บริการ รวมถึงสิทธิและความรับผิดชอบของบริษัทและผู้ใช้",
+    "pt": "Estes Termos de Uso estabelecem as condições de uso do serviço kyaa fornecido pela Sallylab Inc. e os direitos e responsabilidades da empresa e dos usuários.",
+    "fr": "Les présentes Conditions d’utilisation définissent les modalités d’utilisation du service kyaa fourni par Sallylab Inc., ainsi que les droits et responsabilités de l’entreprise et de ses utilisateurs."
   },
   "m41633f1be348": {
     "ja": "1. 目的と適用範囲",
@@ -585,15 +585,15 @@ export const messages = {
     "fr": "1. Objet et champ d’application"
   },
   "mf85d07a12a73": {
-    "ja": "本規約は、ByUsのウェブ・アプリサービスと、それに関連するファン認証、LIVE参加、Fan Passport、Stamp、特典、通知機能に適用されます。Googleログインを完了してサービスを利用することにより、本規約およびプライバシーポリシーに同意したものとみなされます。",
-    "zh-Hans": "本条款适用于 ByUs 网站、应用及其关联的粉丝认证、LIVE 参与、Fan Passport、Stamp、权益和通知功能。完成 Google 登录并使用服务，即表示您同意本条款和隐私政策。",
-    "zh-Hant": "本條款適用於 ByUs 網站、應用及其關聯的粉絲認證、LIVE 參與、Fan Passport、Stamp、權益和通知功能。完成 Google 登入並使用服務，即表示您同意本條款和隱私政策。",
-    "es": "Estos Términos se aplican a los servicios web y de aplicación de ByUs, y a sus funciones relacionadas de verificación de fans, participación en LIVE, Fan Passport, Stamp, beneficios y notificaciones. Al completar el inicio de sesión con Google y usar el servicio, aceptas estos Términos y la Política de privacidad.",
-    "id": "Ketentuan ini berlaku untuk layanan web dan aplikasi ByUs serta fitur terkait berupa verifikasi penggemar, partisipasi LIVE, Fan Passport, Stamp, manfaat, dan notifikasi. Dengan menyelesaikan login Google dan menggunakan layanan, Anda menyetujui Ketentuan dan Kebijakan Privasi ini.",
-    "vi": "Các Điều khoản này áp dụng cho dịch vụ web, ứng dụng ByUs và các tính năng liên quan gồm xác minh người hâm mộ, tham gia LIVE, Fan Passport, Stamp, quyền lợi và thông báo. Khi hoàn tất đăng nhập Google và sử dụng dịch vụ, bạn đồng ý với các Điều khoản và Chính sách quyền riêng tư này.",
-    "th": "ข้อกำหนดนี้ใช้กับบริการเว็บและแอป ByUs รวมถึงฟีเจอร์ที่เชื่อมโยงกัน ได้แก่ การยืนยันแฟน การเข้าร่วม LIVE, Fan Passport, Stamp สิทธิประโยชน์ และการแจ้งเตือน เมื่อเข้าสู่ระบบด้วย Google และใช้บริการ ถือว่าคุณยอมรับข้อกำหนดนี้และนโยบายความเป็นส่วนตัว",
-    "pt": "Estes Termos se aplicam aos serviços web e de aplicativo do ByUs e aos recursos relacionados de verificação de fã, participação em LIVE, Fan Passport, Stamp, benefícios e notificações. Ao concluir o login pelo Google e usar o serviço, você concorda com estes Termos e com a Política de Privacidade.",
-    "fr": "Les présentes Conditions s’appliquent aux services web et applicatifs de ByUs ainsi qu’aux fonctionnalités associées de vérification de fan, de participation aux LIVE, de Fan Passport, de Stamp, d’avantages et de notifications. En vous connectant avec Google et en utilisant le service, vous acceptez les présentes Conditions et la Politique de confidentialité."
+    "ja": "本規約は、kyaaのウェブ・アプリサービスと、それに関連するファン認証、LIVE参加、Fan Passport、Stamp、特典、通知機能に適用されます。Googleログインを完了してサービスを利用することにより、本規約およびプライバシーポリシーに同意したものとみなされます。",
+    "zh-Hans": "本条款适用于 kyaa 网站、应用及其关联的粉丝认证、LIVE 参与、Fan Passport、Stamp、权益和通知功能。完成 Google 登录并使用服务，即表示您同意本条款和隐私政策。",
+    "zh-Hant": "本條款適用於 kyaa 網站、應用及其關聯的粉絲認證、LIVE 參與、Fan Passport、Stamp、權益和通知功能。完成 Google 登入並使用服務，即表示您同意本條款和隱私政策。",
+    "es": "Estos Términos se aplican a los servicios web y de aplicación de kyaa, y a sus funciones relacionadas de verificación de fans, participación en LIVE, Fan Passport, Stamp, beneficios y notificaciones. Al completar el inicio de sesión con Google y usar el servicio, aceptas estos Términos y la Política de privacidad.",
+    "id": "Ketentuan ini berlaku untuk layanan web dan aplikasi kyaa serta fitur terkait berupa verifikasi penggemar, partisipasi LIVE, Fan Passport, Stamp, manfaat, dan notifikasi. Dengan menyelesaikan login Google dan menggunakan layanan, Anda menyetujui Ketentuan dan Kebijakan Privasi ini.",
+    "vi": "Các Điều khoản này áp dụng cho dịch vụ web, ứng dụng kyaa và các tính năng liên quan gồm xác minh người hâm mộ, tham gia LIVE, Fan Passport, Stamp, quyền lợi và thông báo. Khi hoàn tất đăng nhập Google và sử dụng dịch vụ, bạn đồng ý với các Điều khoản và Chính sách quyền riêng tư này.",
+    "th": "ข้อกำหนดนี้ใช้กับบริการเว็บและแอป kyaa รวมถึงฟีเจอร์ที่เชื่อมโยงกัน ได้แก่ การยืนยันแฟน การเข้าร่วม LIVE, Fan Passport, Stamp สิทธิประโยชน์ และการแจ้งเตือน เมื่อเข้าสู่ระบบด้วย Google และใช้บริการ ถือว่าคุณยอมรับข้อกำหนดนี้และนโยบายความเป็นส่วนตัว",
+    "pt": "Estes Termos se aplicam aos serviços web e de aplicativo do kyaa e aos recursos relacionados de verificação de fã, participação em LIVE, Fan Passport, Stamp, benefícios e notificações. Ao concluir o login pelo Google e usar o serviço, você concorda com estes Termos e com a Política de Privacidade.",
+    "fr": "Les présentes Conditions s’appliquent aux services web et applicatifs de kyaa ainsi qu’aux fonctionnalités associées de vérification de fan, de participation aux LIVE, de Fan Passport, de Stamp, d’avantages et de notifications. En vous connectant avec Google et en utilisant le service, vous acceptez les présentes Conditions et la Politique de confidentialité."
   },
   "m7dc3d9aecc68": {
     "ja": "2. アカウントと認証",
@@ -651,15 +651,15 @@ export const messages = {
     "fr": "3. Vérification de fan et registres numériques"
   },
   "mfa945b35fc18": {
-    "ja": "ファン認証の結果、Fan Passport、Stampは、ByUs内でファン活動を記録し、関連機能を提供するためのデジタル記録です。別途明示されない限り、現金、有価証券、投資商品、または当社に対する権利を意味するものではありません。",
-    "zh-Hans": "粉丝认证结果、Fan Passport 和 Stamp 是用于在 ByUs 中记录粉丝活动并提供相关功能的数字记录。除非另有明确说明，否则不代表现金、证券、投资产品或对公司的权利。",
-    "zh-Hant": "粉絲認證結果、Fan Passport 和 Stamp 是用於在 ByUs 中記錄粉絲活動並提供相關功能的數位記錄。除非另有明確說明，否則不代表現金、證券、投資產品或對公司的權利。",
-    "es": "Los resultados de verificación de fans, Fan Passport y Stamp son registros digitales utilizados para registrar actividades de fans y ofrecer funciones relacionadas dentro de ByUs. Salvo que se indique expresamente lo contrario, no representan efectivo, valores, productos de inversión ni derechos sobre la empresa.",
-    "id": "Hasil verifikasi penggemar, Fan Passport, dan Stamp adalah catatan digital untuk merekam aktivitas penggemar dan menyediakan fitur terkait di ByUs. Kecuali dinyatakan lain, hal tersebut tidak mewakili uang tunai, sekuritas, produk investasi, atau hak atas perusahaan.",
-    "vi": "Kết quả xác minh người hâm mộ, Fan Passport và Stamp là hồ sơ số dùng để ghi lại hoạt động và cung cấp tính năng liên quan trong ByUs. Trừ khi có quy định rõ khác, chúng không đại diện cho tiền mặt, chứng khoán, sản phẩm đầu tư hoặc quyền đối với công ty.",
-    "th": "ผลการยืนยันแฟน Fan Passport และ Stamp เป็นบันทึกดิจิทัลที่ใช้บันทึกกิจกรรมแฟนและให้บริการฟีเจอร์ที่เกี่ยวข้องภายใน ByUs เว้นแต่จะระบุไว้อย่างชัดแจ้งเป็นอย่างอื่น สิ่งเหล่านี้ไม่ใช่เงินสด หลักทรัพย์ ผลิตภัณฑ์การลงทุน หรือสิทธิในบริษัท",
-    "pt": "Os resultados da verificação de fã, os Fan Passports e os Stamps são registros digitais usados para registrar atividades de fã e fornecer recursos relacionados no ByUs. Salvo indicação expressa em contrário, eles não representam dinheiro, valores mobiliários, produtos de investimento ou direitos na empresa.",
-    "fr": "Les résultats de vérification de fan, les Fan Passports et les Stamps sont des registres numériques servant à consigner les activités de fan et à fournir des fonctionnalités associées dans ByUs. Sauf indication expresse contraire, ils ne représentent ni des espèces, ni des titres, ni des produits d’investissement, ni des droits dans l’entreprise."
+    "ja": "ファン認証の結果、Fan Passport、Stampは、kyaa内でファン活動を記録し、関連機能を提供するためのデジタル記録です。別途明示されない限り、現金、有価証券、投資商品、または当社に対する権利を意味するものではありません。",
+    "zh-Hans": "粉丝认证结果、Fan Passport 和 Stamp 是用于在 kyaa 中记录粉丝活动并提供相关功能的数字记录。除非另有明确说明，否则不代表现金、证券、投资产品或对公司的权利。",
+    "zh-Hant": "粉絲認證結果、Fan Passport 和 Stamp 是用於在 kyaa 中記錄粉絲活動並提供相關功能的數位記錄。除非另有明確說明，否則不代表現金、證券、投資產品或對公司的權利。",
+    "es": "Los resultados de verificación de fans, Fan Passport y Stamp son registros digitales utilizados para registrar actividades de fans y ofrecer funciones relacionadas dentro de kyaa. Salvo que se indique expresamente lo contrario, no representan efectivo, valores, productos de inversión ni derechos sobre la empresa.",
+    "id": "Hasil verifikasi penggemar, Fan Passport, dan Stamp adalah catatan digital untuk merekam aktivitas penggemar dan menyediakan fitur terkait di kyaa. Kecuali dinyatakan lain, hal tersebut tidak mewakili uang tunai, sekuritas, produk investasi, atau hak atas perusahaan.",
+    "vi": "Kết quả xác minh người hâm mộ, Fan Passport và Stamp là hồ sơ số dùng để ghi lại hoạt động và cung cấp tính năng liên quan trong kyaa. Trừ khi có quy định rõ khác, chúng không đại diện cho tiền mặt, chứng khoán, sản phẩm đầu tư hoặc quyền đối với công ty.",
+    "th": "ผลการยืนยันแฟน Fan Passport และ Stamp เป็นบันทึกดิจิทัลที่ใช้บันทึกกิจกรรมแฟนและให้บริการฟีเจอร์ที่เกี่ยวข้องภายใน kyaa เว้นแต่จะระบุไว้อย่างชัดแจ้งเป็นอย่างอื่น สิ่งเหล่านี้ไม่ใช่เงินสด หลักทรัพย์ ผลิตภัณฑ์การลงทุน หรือสิทธิในบริษัท",
+    "pt": "Os resultados da verificação de fã, os Fan Passports e os Stamps são registros digitais usados para registrar atividades de fã e fornecer recursos relacionados no kyaa. Salvo indicação expressa em contrário, eles não representam dinheiro, valores mobiliários, produtos de investimento ou direitos na empresa.",
+    "fr": "Les résultats de vérification de fan, les Fan Passports et les Stamps sont des registres numériques servant à consigner les activités de fan et à fournir des fonctionnalités associées dans kyaa. Sauf indication expresse contraire, ils ne représentent ni des espèces, ni des titres, ni des produits d’investissement, ni des droits dans l’entreprise."
   },
   "m6ff84b9b6ad2": {
     "ja": "4. LIVEと特典",

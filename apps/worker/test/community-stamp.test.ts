@@ -27,13 +27,13 @@ function job(payload: unknown): BlockchainJob {
 }
 
 const names = {
-  welcome: "ByUs Welcome Stamp",
-  first_comment: "ByUs First Comment Stamp",
-  subscription: "ByUs Subscription Stamp",
-  support: "ByUs Support Stamp",
-  share: "ByUs Share Stamp",
-  invite: "ByUs Invite Stamp",
-  daily_checkin: "ByUs Daily Check-in Stamp",
+  welcome: "kyaa Welcome Stamp",
+  first_comment: "kyaa First Comment Stamp",
+  subscription: "kyaa Subscription Stamp",
+  support: "kyaa Support Stamp",
+  share: "kyaa Share Stamp",
+  invite: "kyaa Invite Stamp",
+  daily_checkin: "kyaa Daily Check-in Stamp",
 } as const;
 
 const assets = {
@@ -87,7 +87,7 @@ describe("community stamp metadata", () => {
     const document = renderMetadata(job(payload), payload, "ipfs://unused");
 
     expect(document.name).toBe(names[stampKind]);
-    expect(document.image).toBe(`https://byus.kr/images/community-stamps/${assets[stampKind]}.png`);
+    expect(document.image).toBe(`https://kyaa.io/images/community-stamps/${assets[stampKind]}.png`);
     const serialized = JSON.stringify(document);
     expect(serialized).not.toContain(recipient);
     expect(serialized).not.toContain(issuanceId);

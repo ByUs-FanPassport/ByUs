@@ -2,14 +2,14 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "mae9332c916d9": {
-    "ja": "ByUsホーム",
-    "zh-Hans": "ByUs 首页",
-    "zh-Hant": "ByUs 首頁",
-    "es": "Inicio de ByUs",
-    "id": "Beranda ByUs",
-    "vi": "Trang chủ ByUs",
-    "th": "หน้าแรก ByUs",
-    "pt": "Página inicial do ByUs",
-    "fr": "Accueil ByUs"
+    "ja": "kyaaホーム",
+    "zh-Hans": "kyaa 首页",
+    "zh-Hant": "kyaa 首頁",
+    "es": "Inicio de kyaa",
+    "id": "Beranda kyaa",
+    "vi": "Trang chủ kyaa",
+    "th": "หน้าแรก kyaa",
+    "pt": "Página inicial do kyaa",
+    "fr": "Accueil kyaa"
   }
 } satisfies Record<string, TranslatedMessage>;

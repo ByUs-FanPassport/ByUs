@@ -12,7 +12,7 @@ describe("shared business inquiry email", () => {
     ["fanmeeting", "미국 팬미팅 문의"], ["creator", "팬 활동 문의"], ["partner", "파트너 협업 문의"],
   ] as const)("renders %s with a content excerpt and the same readable template", (inquiry_type, label) => {
     const result = renderBusinessInquiryEmail({ ...job, inquiry_type });
-    expect(result.subject).toBe(`[ByUs ${label}] 팬 활동 상담하기`);
+    expect(result.subject).toBe(`[kyaa ${label}] 팬 활동 상담하기`);
     for (const body of [result.text, result.html]) {
       for (const value of [label, job.contact_name, job.company, job.email, job.message, "문의 내용", "이 메일에 답장하면 문의자에게 전달됩니다."]) expect(body).toContain(value);
       expect(body).not.toContain(job.id);
@@ -27,7 +27,7 @@ describe("shared business inquiry email", () => {
   it("keeps the legacy default and original English text", () => {
     const message = "A fan meeting in New York\r\n\r\nPlease share available dates.\nThank you.";
     const result = renderBusinessInquiryEmail({ ...job, locale: "en", message });
-    expect(result.subject).toMatch(/^\[ByUs 미국 팬미팅 문의\] A fan meeting in New York/);
+    expect(result.subject).toMatch(/^\[kyaa 미국 팬미팅 문의\] A fan meeting in New York/);
     expect(result.text).toContain(message);
     expect(result.html).toContain('lang="en"');
     expect(result.html).toContain("New York<br><br>Please share available dates.<br>Thank you.");
@@ -46,7 +46,7 @@ describe("shared business inquiry email", () => {
   it("normalizes subject whitespace and header controls without altering the body", () => {
     const message = "  협업\r\n\t제안\u0000\u202e 내용  ";
     const result = renderBusinessInquiryEmail({ ...job, message });
-    expect(result.subject).toBe("[ByUs 미국 팬미팅 문의] 협업 제안 내용");
+    expect(result.subject).toBe("[kyaa 미국 팬미팅 문의] 협업 제안 내용");
     expect(result.text).toContain(message);
   });
 
@@ -63,6 +63,6 @@ describe("shared business inquiry email", () => {
 
   it("keeps short excerpts intact and uses only the category for an empty message", () => {
     expect(inquirySubjectExcerpt("가".repeat(60))).toBe("가".repeat(60));
-    expect(renderBusinessInquiryEmail({ ...job, message: "  \n " }).subject).toBe("[ByUs 미국 팬미팅 문의]");
+    expect(renderBusinessInquiryEmail({ ...job, message: "  \n " }).subject).toBe("[kyaa 미국 팬미팅 문의]");
   });
 });

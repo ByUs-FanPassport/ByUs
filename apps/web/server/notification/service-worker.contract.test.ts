@@ -8,7 +8,7 @@ describe("localized notification service worker", () => {
   it("stores a validated locale with the notification and localizes fallbacks", () => {
     expect(worker).toContain('payload.locale === "en" ? "en" : "ko"');
     expect(worker).toContain('data: { notificationId, locale }');
-    expect(worker).toContain('"ByUs notification"');
+    expect(worker).toContain('"kyaa notification"');
     expect(worker).toContain('"Review your new notification."');
   });
 

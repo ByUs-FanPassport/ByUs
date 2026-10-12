@@ -48,7 +48,7 @@ describe("SES inquiry envelope", () => {
     expect(input.FromEmailAddress).toBe("notifications@byus.kr");
     expect(input.Destination).toEqual({ ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] });
     expect(input.ReplyToAddresses).toEqual([job.email]);
-    expect(input.Content.Simple.Subject.Data).toBe("[ByUs 미국 팬미팅 문의] 미국 팬미팅 문의 일정을 상담하고 싶어요.");
+    expect(input.Content.Simple.Subject.Data).toBe("[kyaa 미국 팬미팅 문의] 미국 팬미팅 문의 일정을 상담하고 싶어요.");
     expect(input.Content.Simple.Body.Text.Data).toContain("미국 팬미팅 문의");
     expect(input.Content.Simple.Body.Text.Data).toContain(job.message);
     expect(input.Content.Simple.Body.Html.Charset).toBe("UTF-8");
@@ -62,9 +62,17 @@ describe("SES inquiry envelope", () => {
     const send = vi.fn().mockResolvedValue({ MessageId: "ses-id" });
     await new SesInquirySender({ send }).send({ ...job, inquiry_type: inquiryType });
     const input = send.mock.calls[0]![0].input;
-    expect(input.Content.Simple.Subject.Data).toBe(`[ByUs ${label}] 미국 팬미팅 문의 일정을 상담하고 싶어요.`);
+    expect(input.Content.Simple.Subject.Data).toBe(`[kyaa ${label}] 미국 팬미팅 문의 일정을 상담하고 싶어요.`);
     expect(input.Content.Simple.Body.Text.Data).toContain(label);
     expect(input.Content.Simple.Body.Html.Data).toContain(label);
+  });
+  it("uses the kyaa sender without changing internal recipients or the inquiry Reply-To", async () => {
+    const send = vi.fn().mockResolvedValue({ MessageId: "ses-id" });
+    await new SesInquirySender({ send }, "notifications@kyaa.io").send(job);
+    const input = send.mock.calls[0]![0].input;
+    expect(input.FromEmailAddress).toBe("notifications@kyaa.io");
+    expect(input.Destination).toEqual({ ToAddresses: ["biz@sallylab.io"], CcAddresses: ["jongho@sallylab.io", "jaeyeong@sallylab.io"] });
+    expect(input.ReplyToAddresses).toEqual([job.email]);
   });
   it.each(["TimeoutError", "InternalServerError", "RequestTimeout", "Error"])("classifies %s as ambiguous without logging provider detail", async (name) => {
     const send = vi.fn().mockRejectedValue({ name, message: "private contact" });

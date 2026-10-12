@@ -5,12 +5,12 @@ import styles from "./focus-flow-brand.module.css";
 
 export function FocusFlowBrand() {
   return (
-    <Link className={styles.brand} href="/" aria-label="ByUs 홈">
+    <Link className={styles.brand} href="/" aria-label="kyaa 홈">
       <Image
-        src="/images/guest-home/byus-wordmark.svg"
-        alt="ByUs"
+        src="/images/guest-home/kyaa-wordmark.svg"
+        alt="kyaa"
         width={80}
-        height={30}
+        height={39}
         priority
       />
     </Link>

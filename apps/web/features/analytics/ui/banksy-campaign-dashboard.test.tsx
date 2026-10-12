@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CampaignAdminData } from "../domain/banksy-campaign";
 
@@ -19,7 +19,14 @@ const data: CampaignAdminData = {
   },
 };
 
-beforeEach(() => { auth.role = "admin"; auth.getAccessToken.mockReset().mockResolvedValue("admin-token"); });
+const writeText = vi.fn(async () => undefined);
+
+beforeEach(() => {
+  auth.role = "admin";
+  auth.getAccessToken.mockReset().mockResolvedValue("admin-token");
+  writeText.mockClear();
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+});
 
 describe("BanksyCampaignContent", () => {
   it("shows zero totals as an unavailable rate and attributes source performance by link", () => {
@@ -31,6 +38,10 @@ describe("BanksyCampaignContent", () => {
     expect(screen.getByRole("row", { name: /링크 없음 \/ 직접 방문 0 0 —/ })).toBeInTheDocument();
     expect(screen.getByText(/반복 클릭은 요청 여러 건, 세션 한 건/)).toBeInTheDocument();
     expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `https://kyaa.io/t/${linkId}` })).toHaveAttribute(
+      "href",
+      `https://kyaa.io/t/${linkId}`,
+    );
   });
 
   it("renders truthful empty tables", () => {
@@ -42,6 +53,13 @@ describe("BanksyCampaignContent", () => {
 });
 
 describe("BanksyCampaignDashboard", () => {
+  it("copies the current campaign link domain", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(data), { status: 200 })));
+    render(<BanksyCampaignDashboard />);
+    fireEvent.click(await screen.findByRole("button", { name: "링크 복사" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(`https://kyaa.io/t/${linkId}`));
+  });
+
   it("keeps viewer access read-only", async () => {
     auth.role = "viewer";
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(data), { status: 200 })));

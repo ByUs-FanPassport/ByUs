@@ -376,7 +376,7 @@ const ifewLiveCopy = {
   ko: {
     fanCode: "출석 코드",
     fanCodeHelper:
-      "LIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 ByUs에 출석을 남길 수 있어요.",
+      "LIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 kyaa에 출석을 남길 수 있어요.",
     attendance: {
       label: "출석 코드 입력",
       beforeLive:
@@ -390,7 +390,7 @@ const ifewLiveCopy = {
     stepHelpers: [
       "이퓨 Fan Passport를 발급받아요",
       "일정을 미리 저장해요. 예약은 선택이에요",
-      "방송에서 공개된 출석 코드를 ByUs에 입력해요",
+      "방송에서 공개된 출석 코드를 kyaa에 입력해요",
       "이퓨 응모권으로 뱅크시 관람권 추첨에 응모해요",
     ],
     prizeAction: "뱅크시 관람권 추첨 응모하기",
@@ -399,7 +399,7 @@ const ifewLiveCopy = {
   en: {
     fanCode: "Attendance code",
     fanCodeHelper:
-      "Enter the attendance code shared during the LIVE here to record your attendance on ByUs.",
+      "Enter the attendance code shared during the LIVE here to record your attendance on kyaa.",
     attendance: {
       label: "Enter attendance code",
       beforeLive:
@@ -413,7 +413,7 @@ const ifewLiveCopy = {
     stepHelpers: [
       "Get your ifew Fan Passport",
       "Save the schedule. Reservation is optional",
-      "Enter the broadcast’s attendance code on ByUs",
+      "Enter the broadcast’s attendance code on kyaa",
       "Use your ifew raffle tickets to enter the Banksy ticket draw",
     ],
     prizeAction: "Enter the Banksy ticket draw",
@@ -1280,7 +1280,7 @@ export function LiveEventScreen({
     ? { ...c.attendance, ...eventCopy.attendance }
     : c.attendance;
   const elinaSteps = ({ ko: ["팬 인증", "LIVE 예약", "선물 응모", "방송 당일 출석"], en: ["Verify", "Reserve", "Enter for prizes", "LIVE check-in"], ...additionalLocales((translationLocale) => ([localizedMessages.mc1710e55de0d[translationLocale], localizedMessages.m30f072d4f05f[translationLocale], localizedMessages.mfa0fca66bf63[translationLocale], localizedMessages.med9574a43a55[translationLocale]])) })[locale];
-  const elinaStepHelpers = ({ ko: ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "ByUs에 코드 입력하고 2장 추가"], en: ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to ByUs, enter the code and earn 2"], ...additionalLocales((translationLocale) => ([localizedMessages.mcdbf7d4c741f[translationLocale], localizedMessages.m256a94549924[translationLocale], localizedMessages.m0e68ee041cca[translationLocale], localizedMessages.m52dd9000cd4f[translationLocale]])) })[locale];
+  const elinaStepHelpers = ({ ko: ["첫 인증으로 응모권 1장", "첫 예약으로 응모권 1장", "모은 응모권으로 직접 응모해요", "kyaa에 코드 입력하고 2장 추가"], en: ["Earn 1 ticket on first verification", "Earn 1 ticket on first reservation", "Use your tickets to enter separately", "Return to kyaa, enter the code and earn 2"], ...additionalLocales((translationLocale) => ([localizedMessages.mcdbf7d4c741f[translationLocale], localizedMessages.m256a94549924[translationLocale], localizedMessages.m0e68ee041cca[translationLocale], localizedMessages.m52dd9000cd4f[translationLocale]])) })[locale];
   const journeySteps = live.attendanceConfigured === false ? c.steps.slice(0, 2) : eventCopy?.steps ?? (isElinaLive ? elinaSteps : c.steps.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const journeyStepHelpers = live.attendanceConfigured === false ? c.stepHelpers.slice(0, 2) : eventCopy?.stepHelpers ?? (isElinaLive ? elinaStepHelpers : c.stepHelpers.filter((_, index) => live.missionsAvailable !== false || index !== 3));
   const statusLabel =

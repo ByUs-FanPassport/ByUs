@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServiceGuidePage } from "./service-guide-page";
+import { serviceGuideContent } from "./content";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -45,5 +46,13 @@ describe("ServiceGuidePage", () => {
     expect(main).toHaveTextContent("Access to the service does not guarantee eligibility for every event");
     expect(screen.getByRole("link", { name: "Find favorites" })).toHaveAttribute("href", "/celebrities?locale=en");
     expect(screen.getByRole("link", { name: "View LIVE schedule" })).toHaveAttribute("href", "/live?locale=en");
+  });
+
+  it("publishes the support address in every locale", () => {
+    for (const content of Object.values(serviceGuideContent)) {
+      const supportAnswer = content.faqs.find(({ question }) => /문의|ask|service|servicio|serviço|サービス|服务|服務|layanan|dịch vụ|บริการ/i.test(question))?.answer;
+      expect(supportAnswer).toContain("support@kyaa.io");
+      expect(supportAnswer).not.toContain("biz@sallylab.io");
+    }
   });
 });

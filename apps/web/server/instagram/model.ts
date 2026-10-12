@@ -41,8 +41,8 @@ export interface InstagramToken {
   expiresIn: number;
 }
 export interface InstagramProvider {
-  authorizationUrl(state: string): string;
-  exchange(code: string): Promise<{ token: InstagramToken; identity: InstagramIdentity }>;
+  authorizationUrl(state: string, redirectUri?: string): string;
+  exchange(code: string, redirectUri?: string): Promise<{ token: InstagramToken; identity: InstagramIdentity }>;
   refresh(accessToken: string): Promise<InstagramToken>;
   media(accessToken: string, identity: InstagramIdentity): Promise<InstagramMedia[]>;
   revoke(accessToken: string, userId: string): Promise<void>;

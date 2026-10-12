@@ -73,7 +73,7 @@ export function createRsvpHandler(deps: { repository: RsvpRepository; secret: st
   return async (request: Request): Promise<Response> => {
     try {
       const origin = request.headers.get("origin");
-      const allowed = new Set(["https://byus.kr", "https://www.byus.kr"]);
+      const allowed = new Set(["https://byus.kr", "https://www.byus.kr", "https://kyaa.io", "https://www.kyaa.io"]);
       const requestUrl = new URL(request.url);
       if (deps.localDevelopment && !deps.vercel && ["localhost", "127.0.0.1"].includes(requestUrl.hostname)) allowed.add(requestUrl.origin);
       if (!origin || !allowed.has(origin) || origin !== requestUrl.origin || request.headers.get("sec-fetch-site") === "cross-site") throw new RsvpError("RSVP_INVALID");

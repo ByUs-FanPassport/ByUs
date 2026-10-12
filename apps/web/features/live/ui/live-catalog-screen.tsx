@@ -164,7 +164,7 @@ function LiveGroup({
                   }
                 >
                   <div className={styles.meta}>
-                    <span className={styles.creatorName}>{item.live.celebrity.name}{!item.live.brand || item.live.brand.name.trim().toLowerCase() === "byus" ? "" : ` · ${item.live.brand.name}`}</span>
+                    <span className={styles.creatorName}>{item.live.celebrity.name}{!item.live.brand || ["byus", "kyaa"].includes(item.live.brand.name.trim().toLowerCase()) ? "" : ` · ${item.live.brand.name}`}</span>
                     {isReserved ? <span className={styles.reservationStatus}><CircleCheck aria-hidden="true" />{t.reserved}</span> : null}
                     {item.live.effectiveStatus === "live" ? (
                       <LiveStatusIndicator

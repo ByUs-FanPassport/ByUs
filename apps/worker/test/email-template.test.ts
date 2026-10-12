@@ -118,7 +118,7 @@ describe("notification email template layout and safety", () => {
     expect(result.html).toContain("margin-top:-234px");
     expect(result.html).toContain('src="cid:byus-star"');
     expect(result.html).toContain("Sep 20, 2026");
-    expect(result.html).toContain("ByUs · Your Bias");
+    expect(result.html).toContain("kyaa · Your Bias");
     expect(result.html).toContain("Notification settings");
     expect(result.html).toContain("@media only screen and (max-width:480px)");
     expect(result.html).toContain("overflow-wrap:anywhere");

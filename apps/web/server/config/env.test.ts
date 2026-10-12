@@ -25,6 +25,7 @@ const validEnv = {
   PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "false",
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key-value",
+  LEGACY_DOMAIN_REDIRECT_STATUS: "",
   GIWA_CHAIN_ID: "91342",
   GIWA_RPC_URL: "https://sepolia-rpc.giwa.io",
   GIWA_EXPLORER_URL: "https://sepolia-explorer.giwa.io",
@@ -172,6 +173,13 @@ describe("server environment", () => {
     });
   });
 
+  it("keeps legacy domain redirect off by default and accepts only staged statuses", () => {
+    expect(parseServerEnv(validEnv).LEGACY_DOMAIN_REDIRECT_STATUS).toBeUndefined();
+    expect(parseServerEnv({ ...validEnv, LEGACY_DOMAIN_REDIRECT_STATUS: "307" }).LEGACY_DOMAIN_REDIRECT_STATUS).toBe("307");
+    expect(parseServerEnv({ ...validEnv, LEGACY_DOMAIN_REDIRECT_STATUS: "308" }).LEGACY_DOMAIN_REDIRECT_STATUS).toBe("308");
+    expect(() => parseServerEnv({ ...validEnv, LEGACY_DOMAIN_REDIRECT_STATUS: "301" })).toThrowError(/LEGACY_DOMAIN_REDIRECT_STATUS/);
+  });
+
   it("keeps Kakao fail-closed in test sink and requires complete provider configuration", () => {
     expect(parseServerEnv(validEnv)).toMatchObject({ KAKAO_OAUTH_MODE: "test_sink" });
     expect(() => parseServerEnv({ ...validEnv, KAKAO_OAUTH_MODE: "provider" })).toThrowError(/KAKAO_OAUTH_MODE/);
@@ -244,7 +252,8 @@ describe("server environment", () => {
         !key.endsWith("_SITE_VERIFICATION") &&
         key !== "PRIVY_APP_ENVIRONMENT" &&
         key !== "PRIVY_APPLE_LOGIN_ENABLED" &&
-        key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED",
+        key !== "PRIVY_TEST_ACCOUNT_LOGIN_ENABLED" &&
+        key !== "LEGACY_DOMAIN_REDIRECT_STATUS",
     );
 
     for (const key of serverKeys) {
@@ -312,6 +321,18 @@ describe("server environment", () => {
       NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
     })).toThrowError(/PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
   });
+
+  it.each(["https://kyaa.io", "https://www.kyaa.io"])(
+    "treats %s as production for Privy test-account fail-closed policy",
+    (NEXT_PUBLIC_APP_URL) => {
+      expect(() => parseServerEnv({
+        ...validEnv,
+        NEXT_PUBLIC_APP_URL,
+        NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+        PRIVY_TEST_ACCOUNT_LOGIN_ENABLED: "true",
+      })).toThrowError(/NEXT_PUBLIC_PRIVY_TEST_ACCOUNT_LOGIN_ENABLED/);
+    },
+  );
 
   it("enables Apple login only when matching client and server flags are explicit", () => {
     expect(parseServerEnv({

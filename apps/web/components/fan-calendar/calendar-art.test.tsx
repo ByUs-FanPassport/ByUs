@@ -20,7 +20,7 @@ describe("calendar art transition", () => {
     expect(container.querySelector('[data-calendar-art-mode="byus"]')).toBeInTheDocument();
     expect(container.querySelector('[data-calendar-art-mode="changha"]')).not.toBeInTheDocument();
   });
-  it("does not replace the ByUs node when all/multiple selections share the same visual", () => {
+  it("does not replace the kyaa node when all/multiple selections share the same visual", () => {
     const { container, rerender } = render(<CalendarArt month="2026-09" />);
     const brand = container.querySelector('[data-calendar-art-mode="byus"]');
     rerender(<CalendarArt month="2026-10" />);

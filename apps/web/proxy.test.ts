@@ -1,7 +1,74 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { proxy } from "./proxy";
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe("legacy domain redirect", () => {
+  it.each(["https://byus.kr", "https://www.byus.kr"])("redirects public GET and HEAD from %s without changing the URL", (origin) => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
+    for (const method of ["GET", "HEAD"]) {
+      const response = proxy(new NextRequest(`${origin}/live/elina?locale=en#schedule`, { method }));
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe("https://kyaa.io/live/elina?locale=en#schedule");
+      expect(response.headers.get("cache-control")).toContain("no-store");
+    }
+  });
+
+  it("supports the final 308 mode without enabling redirects by default", () => {
+    expect(proxy(new NextRequest("https://byus.kr/live/elina")).headers.has("location")).toBe(false);
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "308");
+    const response = proxy(new NextRequest("https://byus.kr/live/elina"));
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe("https://kyaa.io/live/elina");
+    expect(response.headers.has("cache-control")).toBe(false);
+  });
+
+  it.each(["", "true", "301", "invalid"])("keeps redirect disabled for value %j", (value) => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", value);
+    expect(proxy(new NextRequest("https://byus.kr/live/elina")).headers.has("location")).toBe(false);
+  });
+
+  it.each([
+    "/login", "/my", "/c/elina/tickets", "/settings/kakao/callback", "/connect/instagram/callback", "/s/secret-token", "/t/secret-token",
+    "/o/banksy/private", "/api/public/data", "/api/provider/webhook", "/_next/static/chunk.js", "/images/photo.webp",
+    "/sw.js", "/manifest.webmanifest", "/favicon.ico", "/c/elina/metadata.json",
+  ])("keeps excluded legacy path %s on the old origin", (path) => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
+    expect(proxy(new NextRequest(`https://byus.kr${path}`)).headers.has("location")).toBe(false);
+  });
+
+  it.each(["code", "state", "error", "error_description", "privy_oauth_code", "privy_oauth_state"])(
+    "does not redirect an OAuth return carrying %s",
+    (key) => {
+      vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
+      expect(proxy(new NextRequest(`https://byus.kr/?${key}=opaque`)).headers.has("location")).toBe(false);
+    },
+  );
+
+  it.each(["307", "308"])("keeps authenticated ticket history on the old host in %s mode for GET and HEAD", (status) => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", status);
+    for (const method of ["GET", "HEAD"]) {
+      const response = proxy(new NextRequest("https://byus.kr/c/elina/tickets?locale=ko", { method }));
+      expect(response.headers.has("location")).toBe(false);
+      expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    }
+  });
+
+  it("does not redirect POST, kyaa, preview, local, or insecure lookalike origins", () => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
+    const requests = [
+      new NextRequest("https://byus.kr/live/elina", { method: "POST" }),
+      new NextRequest("https://kyaa.io/live/elina"),
+      new NextRequest("https://byus-preview.vercel.app/live/elina"),
+      new NextRequest("http://localhost:3000/live/elina"),
+      new NextRequest("https://byus.kr.attacker.test/live/elina"),
+      new NextRequest("http://byus.kr/live/elina"),
+    ];
+    for (const request of requests) expect(proxy(request).headers.has("location")).toBe(false);
+  });
+});
 
 describe("admin API proxy prefilter", () => {
   it("rejects a missing bearer header without an admin payload", async () => {
@@ -40,7 +107,7 @@ describe("page locale proxy", () => {
     expect(response.headers.get("x-middleware-request-x-byus-locale")).toBe("en");
     expect(new URL(response.headers.get("x-middleware-rewrite")!).searchParams.get("locale")).toBe("en");
   });
-  it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
+  it.each(["/my", "/admin", "/passports/id", "/c/ifew/verify/result", "/c/ifew/tickets", "/live/ifew-rehearsal"])("marks %s noindex without replacing authentication", (path) => {
     const response = proxy(new NextRequest(`https://byus.example${path}?locale=en&lang=en`, { headers: { "x-byus-pathname": "/" } }));
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
     expect(response.headers.get("x-middleware-request-x-byus-pathname")).toBe(path);

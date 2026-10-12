@@ -8,7 +8,7 @@ type Props = { searchParams: Promise<{ locale?: string | string[] }> };
 export async function generateMetadata({ searchParams }: Props) {
   const locale = parseAppLocale((await searchParams).locale);
   const t = businessPageContent.partner[locale];
-  return publicMetadata({ path: businessPagePaths.partner, locale, title: `${t.title} | ByUs`, description: t.description.replace(/\n/g, " ") });
+  return publicMetadata({ path: businessPagePaths.partner, locale, title: `${t.title} | kyaa`, description: t.description.replace(/\n/g, " ") });
 }
 
 export default async function Page({ searchParams }: Props) {

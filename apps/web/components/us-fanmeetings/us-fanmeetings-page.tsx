@@ -16,7 +16,7 @@ import { fanmeetingContent } from "./content";
 import { FanmeetingInquiryProvider, InquiryButton } from "./inquiry-dialog";
 import styles from "./us-fanmeetings-page.module.css";
 
-export const FANMEETING_EMAIL = "biz@sallylab.io";
+export const FANMEETING_EMAIL = "support@kyaa.io";
 const serviceIcons = [MapPin, ClipboardCheck, Clapperboard, UsersRound];
 const visualServiceIcons = [MapPin, Clapperboard, UsersRound];
 
@@ -64,7 +64,7 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
         <section className={styles.hero} aria-labelledby="fanmeeting-title">
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>
-              ByUs <span aria-hidden="true">/</span> U.S. FANMEETINGS
+              kyaa <span aria-hidden="true">/</span> U.S. FANMEETINGS
             </p>
             <h1 id="fanmeeting-title">{t.hero}</h1>
             <p className={styles.description}>{t.desc}</p>
@@ -86,10 +86,10 @@ export function UsFanmeetingsPage({ locale }: { locale: FanLocale }) {
               </div>
               <div className={styles.stageBackdrop}>
                 <Image
-                  src="/images/guest-home/byus-wordmark.svg"
+                  src="/images/guest-home/kyaa-wordmark.svg"
                   alt=""
                   width={110}
-                  height={45}
+                  height={53}
                 />
                 <span>FANS. IN PERSON.</span>
               </div>

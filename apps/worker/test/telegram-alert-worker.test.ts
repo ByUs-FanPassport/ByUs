@@ -57,7 +57,7 @@ describe("renderTelegramAlertMessage", () => {
     const rsvp = { kind: "byus_day_rsvp_received" as const, creator_name: null, live_title: null, actor_name: null, actor_email: null, winner_count: null, occurred_at: "2026-10-02T00:00:00Z", activity_context: "누적 3명", activity_quantity: 3 };
     const message = renderTelegramAlertMessage([alerts[0]!, rsvp]);
     expect(message).toContain("• 신규 회원 가입");
-    expect(message).toContain("• ByUs Day RSVP 접수\n  누적 3명\nhttps://byus.kr/admin/byus-day-rsvps");
+    expect(message).toContain("• kyaa Day RSVP 접수\n  누적 3명\nhttps://kyaa.io/admin/byus-day-rsvps");
     expect(message).not.toMatch(/김별|010-|byeol@example/u);
   });
   it("shows each RSVP guest's Korean and English names alongside the cumulative count", async () => {
@@ -65,7 +65,7 @@ describe("renderTelegramAlertMessage", () => {
     const rpc = vi.fn().mockResolvedValue({ data: { batch_id: "8f34398c-0c7a-4de0-8ca8-4c6aa2c2de19", alerts: [rsvp] }, error: null });
     const claimed = await new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890");
     const message = renderTelegramAlertMessage([alerts[0]!, ...claimed!.alerts]);
-    expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  누적 3명");
+    expect(message).toContain("• kyaa Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  누적 3명");
     expect(message).not.toMatch(/010-|byeol@example|900101/u);
   });
   it("preserves maximum-length RSVP names and removes line and direction controls", () => {
@@ -83,7 +83,7 @@ describe("renderTelegramAlertMessage", () => {
     const claimed = await queue.claim("-1001234567890");
     for (const companion of [alerts[0]!, detailedActivity("fan_post_created")]) {
       const message = renderTelegramAlertMessage([companion, ...claimed!.alerts]);
-      expect(message).toContain("• ByUs Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  소속: ByUs\n  직책: 프로듀서\n  누적 3명\nhttps://byus.kr/admin/byus-day-rsvps");
+      expect(message).toContain("• kyaa Day RSVP 접수\n  접수자: 김별 · Byeol Kim\n  소속: ByUs\n  직책: 프로듀서\n  누적 3명\nhttps://kyaa.io/admin/byus-day-rsvps");
     }
     for (const invalid of [
       { ...rsvp, rsvp: { ...rsvp.rsvp, email: "private@example.com" } },
@@ -115,7 +115,7 @@ describe("renderTelegramAlertMessage", () => {
     const queue = new SupabaseTelegramAlertQueue({ rpc });
     const claimed = await queue.claim("-1001234567890");
     const message = renderTelegramAlertMessage(claimed!.alerts);
-    expect(message).toContain("• 캠페인 링크로 새 방문\n  Mirrorworld · 뱅크시 이벤트\n  채널: mirrorworld · 브라우저 세션 1건\nhttps://byus.kr/admin/campaigns");
+    expect(message).toContain("• 캠페인 링크로 새 방문\n  Mirrorworld · 뱅크시 이벤트\n  채널: mirrorworld · 브라우저 세션 1건\nhttps://kyaa.io/admin/campaigns");
     expect(message).not.toMatch(/닉네임|이메일/);
     for (const invalid of [{ ...campaign, campaign_name: undefined }, { ...campaign, actor_email: "private@example.com" }]) {
       rpc.mockResolvedValueOnce({ data: { batch_id: claimed!.batchId, alerts: [invalid] }, error: null });
@@ -124,7 +124,7 @@ describe("renderTelegramAlertMessage", () => {
   });
   it("shows each actor and full email while keeping draw results identity-free", () => {
     expect(renderTelegramAlertMessage(alerts)).toBe([
-      "🎉 ByUs 주요 소식",
+      "🎉 kyaa 주요 소식",
       "",
       "• 신규 회원 가입",
       "  제이",
@@ -141,7 +141,7 @@ describe("renderTelegramAlertMessage", () => {
       "• 엘리나 · 서울 팬미팅 추첨 결과 공개 · 당첨 5명",
       "",
       "관리자에서 확인하기",
-      "https://byus.kr/admin",
+      "https://kyaa.io/admin",
     ].join("\n"));
     expect(renderTelegramAlertMessage(alerts)).not.toContain("draw@example.com");
   });
@@ -166,17 +166,17 @@ describe("renderTelegramAlertMessage", () => {
       requester_email: "name@example.com",
     })));
     expect(message).toBe([
-      "🎉 ByUs 주요 소식",
+      "🎉 kyaa 주요 소식",
       "",
       "• 새 CS 문의 접수",
       "내용: 문의 내용을 확인해 주세요.",
-      `https://byus.kr/admin/inquiries/${inquiryId}`,
+      `https://kyaa.io/admin/inquiries/${inquiryId}`,
       "• CS 문의에 새 메시지",
       "내용: 문의 내용을 확인해 주세요.",
-      `https://byus.kr/admin/inquiries/${inquiryId}`,
+      `https://kyaa.io/admin/inquiries/${inquiryId}`,
       "",
       "관리자에서 확인하기",
-      "https://byus.kr/admin",
+      "https://kyaa.io/admin",
     ].join("\n"));
     expect(message).not.toMatch(/Private|name@example\.com/u);
   });
@@ -195,7 +195,7 @@ describe("renderTelegramAlertMessage", () => {
   it("preserves existing event rendering in a mixed CS batch", () => {
     const message = renderTelegramAlertMessage([alerts[0]!, csAlerts[0]!, alerts[4]!]);
     expect(message).toContain("• 신규 회원 가입\n  제이\n  jay@example.com");
-    expect(message).toContain(`• 새 CS 문의 접수\n내용: 문의 내용을 확인해 주세요.\nhttps://byus.kr/admin/inquiries/${inquiryId}`);
+    expect(message).toContain(`• 새 CS 문의 접수\n내용: 문의 내용을 확인해 주세요.\nhttps://kyaa.io/admin/inquiries/${inquiryId}`);
     expect(message).toContain("• 엘리나 · 서울 팬미팅 추첨 결과 공개 · 당첨 5명");
     expect(message).not.toContain("draw@example.com");
   });
@@ -220,7 +220,7 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).not.toContain("닉네임\n");
     expect(message).not.toContain("private-");
     expect(message).not.toContain("0xprivate");
-    expect(message).toContain("https://byus.kr/admin");
+    expect(message).toContain("https://kyaa.io/admin");
     expect(() => renderTelegramAlertMessage([...malicious, malicious[0]!])).toThrow("TELEGRAM_ALERT_INVALID_BATCH");
   });
 
@@ -256,7 +256,7 @@ describe("renderTelegramAlertMessage", () => {
     expect(message).toContain(`대상 ID: ${recipientId}`);
     expect(message).toContain(`내용:\n${body.split("\n").map((line) => `│${line}`).join("\n")}`);
     expect(message).toContain("시각: 2026-09-11 19:02:03 KST");
-    expect(message).toContain(`https://byus.kr${alert.detail!.path}`);
+    expect(message).toContain(`https://kyaa.io${alert.detail!.path}`);
     expect(message).not.toContain("본문 일부 생략");
     expect(message.length).toBeLessThanOrEqual(4000);
   });
@@ -267,7 +267,7 @@ describe("renderTelegramAlertMessage", () => {
     const message = renderTelegramAlertMessage([alert]);
     expect(message.length).toBeLessThanOrEqual(4000);
     expect(message).toContain("… (본문 일부 생략)");
-    expect(message).toContain(`https://byus.kr${alert.detail!.path}`);
+    expect(message).toContain(`https://kyaa.io${alert.detail!.path}`);
     expect(message).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])/u);
   });
 

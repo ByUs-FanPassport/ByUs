@@ -61,7 +61,7 @@ describe("canonical fan action domain", () => {
   });
   it("labels mission metadata explicitly while preserving the existing Survey artwork URI", () => {
     const document = renderActionMetadata({ schema: "https://byus.kr/schemas/credential-metadata-v1.json", version: 1, name: "ByUs Survey Stamp", description: "survey", image: "ipfs://assets/stamp/survey/kara.png", attributes: [{ trait_type: "Credential", value: "Survey Stamp" }, { trait_type: "Metadata Version", value: "1" }] }, 4, 1);
-    expect(document).toMatchObject({ schema: "https://byus.kr/schemas/credential-metadata-v2.json", version: 2, name: "ByUs Mission Completion Stamp", image: "ipfs://assets/stamp/survey/kara.png" });
+    expect(document).toMatchObject({ schema: "https://byus.kr/schemas/credential-metadata-v2.json", version: 2, name: "kyaa Mission Completion Stamp", image: "ipfs://assets/stamp/survey/kara.png" });
     expect(document.attributes).toContainEqual({ trait_type: "Action", value: "MISSION_COMPLETED" });
   });
 });

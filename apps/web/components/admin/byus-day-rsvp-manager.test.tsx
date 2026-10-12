@@ -13,7 +13,7 @@ vi.mock("./admin-access-state", () => ({ AdminAccessState: ({ status }: { status
 
 const attendees = Array.from({ length: 21 }, (_, index) => ({
   id: `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`, koreanName: `접수자 ${index}`, englishName: `Guest ${index}`,
-  affiliation: index === 20 ? "특별한 소속" : "ByUs", occupation: "매니저", phone: "+821000000001",
+  affiliation: index === 20 ? "특별한 소속" : "kyaa", occupation: "매니저", phone: "+821000000001",
   email: `guest${index}@example.com`, nationality: "KR", createdAt: "2026-10-07T04:00:00+00:00",
 }));
 const fetchMock = vi.fn();

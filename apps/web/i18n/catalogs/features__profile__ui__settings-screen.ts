@@ -79,15 +79,15 @@ export const messages = {
     "fr": "Paramètres"
   },
   "mdaafda9be2b2": {
-    "ja": "ByUsのプロフィールと通知を管理します。",
-    "zh-Hans": "管理你的 ByUs 个人资料和通知。",
-    "zh-Hant": "管理你的 ByUs 個人資料和通知。",
-    "es": "Administra tu perfil y tus notificaciones de ByUs.",
-    "id": "Kelola profil dan notifikasi ByUs Anda.",
-    "vi": "Quản lý hồ sơ và thông báo ByUs của bạn.",
-    "th": "จัดการโปรไฟล์และการแจ้งเตือน ByUs",
-    "pt": "Gerencie seu perfil e suas notificações na ByUs.",
-    "fr": "Gérez votre profil et vos notifications ByUs."
+    "ja": "kyaaのプロフィールと通知を管理します。",
+    "zh-Hans": "管理你的 kyaa 个人资料和通知。",
+    "zh-Hant": "管理你的 kyaa 個人資料和通知。",
+    "es": "Administra tu perfil y tus notificaciones de kyaa.",
+    "id": "Kelola profil dan notifikasi kyaa Anda.",
+    "vi": "Quản lý hồ sơ và thông báo kyaa của bạn.",
+    "th": "จัดการโปรไฟล์และการแจ้งเตือน kyaa",
+    "pt": "Gerencie seu perfil e suas notificações na kyaa.",
+    "fr": "Gérez votre profil et vos notifications kyaa."
   },
   "mc7fba50a9917": {
     "ja": "プロフィール",
@@ -112,15 +112,15 @@ export const messages = {
     "fr": "Nom d’affichage"
   },
   "m96a33c44da86": {
-    "ja": "ByUsで他のファンに表示される名前です。",
-    "zh-Hans": "这是其他粉丝在 ByUs 看到的你的名称。",
-    "zh-Hant": "這是其他粉絲在 ByUs 看到的你的名稱。",
-    "es": "Así te verán otros fans en ByUs.",
-    "id": "Nama ini akan terlihat oleh penggemar lain di ByUs.",
-    "vi": "Đây là tên người hâm mộ khác sẽ thấy trên ByUs.",
-    "th": "นี่คือชื่อที่แฟนคลับคนอื่นจะเห็นบน ByUs",
-    "pt": "É assim que outros fãs verão você na ByUs.",
-    "fr": "C’est ainsi que les autres fans vous verront sur ByUs."
+    "ja": "kyaaで他のファンに表示される名前です。",
+    "zh-Hans": "这是其他粉丝在 kyaa 看到的你的名称。",
+    "zh-Hant": "這是其他粉絲在 kyaa 看到的你的名稱。",
+    "es": "Así te verán otros fans en kyaa.",
+    "id": "Nama ini akan terlihat oleh penggemar lain di kyaa.",
+    "vi": "Đây là tên người hâm mộ khác sẽ thấy trên kyaa.",
+    "th": "นี่คือชื่อที่แฟนคลับคนอื่นจะเห็นบน kyaa",
+    "pt": "É assim que outros fãs verão você na kyaa.",
+    "fr": "C’est ainsi que les autres fans vous verront sur kyaa."
   },
   "m9cb82aa6061a": {
     "ja": "変更",
@@ -706,26 +706,26 @@ export const messages = {
     "fr": "Installer l’application"
   },
   "m0c4c7655ff06": {
-    "ja": "ByUsをホーム画面に追加すると、よりすばやくアクセスできます。",
-    "zh-Hans": "将 ByUs 添加到主屏幕，访问更快捷。",
-    "zh-Hant": "將 ByUs 添加到主畫面，使用更快捷。",
-    "es": "Añade ByUs a la pantalla de inicio para acceder más rápido.",
-    "id": "Tambahkan ByUs ke layar utama untuk akses yang lebih cepat.",
-    "vi": "Thêm ByUs vào màn hình chính để truy cập nhanh hơn.",
-    "th": "เพิ่ม ByUs ไปยังหน้าจอหลักเพื่อเข้าถึงได้เร็วขึ้น",
-    "pt": "Adicione a ByUs à tela inicial para acessá-la mais rapidamente.",
-    "fr": "Ajoutez ByUs à votre écran d’accueil pour y accéder plus rapidement."
+    "ja": "kyaaをホーム画面に追加すると、よりすばやくアクセスできます。",
+    "zh-Hans": "将 kyaa 添加到主屏幕，访问更快捷。",
+    "zh-Hant": "將 kyaa 添加到主畫面，使用更快捷。",
+    "es": "Añade kyaa a la pantalla de inicio para acceder más rápido.",
+    "id": "Tambahkan kyaa ke layar utama untuk akses yang lebih cepat.",
+    "vi": "Thêm kyaa vào màn hình chính để truy cập nhanh hơn.",
+    "th": "เพิ่ม kyaa ไปยังหน้าจอหลักเพื่อเข้าถึงได้เร็วขึ้น",
+    "pt": "Adicione a kyaa à tela inicial para acessá-la mais rapidamente.",
+    "fr": "Ajoutez kyaa à votre écran d’accueil pour y accéder plus rapidement."
   },
   "mf7724c014fed": {
-    "ja": "ByUsをインストール",
-    "zh-Hans": "安装 ByUs",
-    "zh-Hant": "安裝 ByUs",
-    "es": "Instalar ByUs",
-    "id": "Instal ByUs",
-    "vi": "Cài đặt ByUs",
-    "th": "ติดตั้ง ByUs",
-    "pt": "Instalar a ByUs",
-    "fr": "Installer ByUs"
+    "ja": "kyaaをインストール",
+    "zh-Hans": "安装 kyaa",
+    "zh-Hant": "安裝 kyaa",
+    "es": "Instalar kyaa",
+    "id": "Instal kyaa",
+    "vi": "Cài đặt kyaa",
+    "th": "ติดตั้ง kyaa",
+    "pt": "Instalar a kyaa",
+    "fr": "Installer kyaa"
   },
   "m62549f14759c": {
     "ja": "インストール可能か確認中です。",
@@ -827,15 +827,15 @@ export const messages = {
     "fr": "Terminez d’abord votre profil."
   },
   "me01e6582ce64": {
-    "ja": "ByUsで使用する表示名を決めると、設定に進めます。",
-    "zh-Hans": "选择在 ByUs 使用的显示名称后，即可继续设置。",
-    "zh-Hant": "選擇在 ByUs 使用的顯示名稱後，即可繼續設定。",
-    "es": "Elige el nombre visible que usarás en ByUs para continuar a Configuración.",
-    "id": "Pilih nama tampilan yang akan digunakan di ByUs untuk melanjutkan ke Pengaturan.",
-    "vi": "Chọn tên hiển thị bạn sẽ dùng trên ByUs để tiếp tục đến Cài đặt.",
-    "th": "เลือกชื่อที่จะแสดงบน ByUs เพื่อดำเนินการต่อไปยังการตั้งค่า",
-    "pt": "Escolha o nome de exibição que usará na ByUs para continuar até Configurações.",
-    "fr": "Choisissez le nom d’affichage que vous utiliserez sur ByUs pour accéder aux Paramètres."
+    "ja": "kyaaで使用する表示名を決めると、設定に進めます。",
+    "zh-Hans": "选择在 kyaa 使用的显示名称后，即可继续设置。",
+    "zh-Hant": "選擇在 kyaa 使用的顯示名稱後，即可繼續設定。",
+    "es": "Elige el nombre visible que usarás en kyaa para continuar a Configuración.",
+    "id": "Pilih nama tampilan yang akan digunakan di kyaa untuk melanjutkan ke Pengaturan.",
+    "vi": "Chọn tên hiển thị bạn sẽ dùng trên kyaa để tiếp tục đến Cài đặt.",
+    "th": "เลือกชื่อที่จะแสดงบน kyaa เพื่อดำเนินการต่อไปยังการตั้งค่า",
+    "pt": "Escolha o nome de exibição que usará na kyaa para continuar até Configurações.",
+    "fr": "Choisissez le nom d’affichage que vous utiliserez sur kyaa pour accéder aux Paramètres."
   },
   "m5ceca38f6077": {
     "ja": "プロフィールを設定",

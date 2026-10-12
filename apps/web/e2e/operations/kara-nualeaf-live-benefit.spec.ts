@@ -24,7 +24,7 @@ function stableUuid(operation: string, fanIdentity: string) {
 
 test("public shell and login gate remain executable without fan credentials", async ({ page, request }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/ByUs/);
+  await expect(page).toHaveTitle(/kyaa/);
   await expect(page.getByRole("link", { name: /라이브 예약하기/ })).toBeVisible();
   const unauthorized = await request.post("/api/live-events/00000000-0000-4000-8000-000000000000/reservation", {
     data: { idempotencyKey: "00000000-0000-4000-8000-000000000001" },

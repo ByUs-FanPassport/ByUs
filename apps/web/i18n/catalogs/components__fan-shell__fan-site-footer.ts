@@ -112,15 +112,15 @@ export const messages = {
     "fr": "Conditions d’utilisation"
   },
   "m426ae2de78d1": {
-    "ja": "ByUsフッターナビゲーション",
-    "zh-Hans": "ByUs 页脚导航",
-    "zh-Hant": "ByUs 頁尾導航",
-    "es": "Navegación del pie de página de ByUs",
-    "id": "Navigasi footer ByUs",
-    "vi": "Điều hướng chân trang ByUs",
-    "th": "เมนูด้านล่างของ ByUs",
-    "pt": "Navegação do rodapé da ByUs",
-    "fr": "Navigation du pied de page ByUs"
+    "ja": "kyaaフッターナビゲーション",
+    "zh-Hans": "kyaa 页脚导航",
+    "zh-Hant": "kyaa 頁尾導航",
+    "es": "Navegación del pie de página de kyaa",
+    "id": "Navigasi footer kyaa",
+    "vi": "Điều hướng chân trang kyaa",
+    "th": "เมนูด้านล่างของ kyaa",
+    "pt": "Navegação do rodapé da kyaa",
+    "fr": "Navigation du pied de page kyaa"
   },
   "m2c5ffc3483d2": {
     "ja": "ファンミーティング提携",
@@ -244,37 +244,37 @@ export const messages = {
     "fr": "Adresse enregistrée"
   },
   "mfafaf28d4070": {
-    "ja": "ByUsホーム",
-    "zh-Hans": "ByUs 首页",
-    "zh-Hant": "ByUs 首頁",
-    "es": "Inicio de ByUs",
-    "id": "Beranda ByUs",
-    "vi": "Trang chủ ByUs",
-    "th": "หน้าหลัก ByUs",
-    "pt": "Início da ByUs",
-    "fr": "Accueil ByUs"
+    "ja": "kyaaホーム",
+    "zh-Hans": "kyaa 首页",
+    "zh-Hant": "kyaa 首頁",
+    "es": "Inicio de kyaa",
+    "id": "Beranda kyaa",
+    "vi": "Trang chủ kyaa",
+    "th": "หน้าหลัก kyaa",
+    "pt": "Início da kyaa",
+    "fr": "Accueil kyaa"
   },
   "m447c7b7bbd23": {
-    "ja": "ByUsのTelegramチャンネルを新しいウィンドウで開く",
-    "zh-Hans": "在新窗口打开 ByUs Telegram 频道",
-    "zh-Hant": "在新窗口打開 ByUs Telegram 頻道",
-    "es": "Abrir el canal de Telegram de ByUs en una ventana nueva",
-    "id": "Buka kanal Telegram ByUs, jendela baru",
-    "vi": "Mở kênh Telegram ByUs, cửa sổ mới",
-    "th": "เปิดช่อง Telegram ของ ByUs ในหน้าต่างใหม่",
-    "pt": "Abrir o canal da ByUs no Telegram, nova janela",
-    "fr": "Ouvrir la chaîne Telegram de ByUs, nouvelle fenêtre"
+    "ja": "kyaaのTelegramチャンネルを新しいウィンドウで開く",
+    "zh-Hans": "在新窗口打开 kyaa Telegram 频道",
+    "zh-Hant": "在新窗口打開 kyaa Telegram 頻道",
+    "es": "Abrir el canal de Telegram de kyaa en una ventana nueva",
+    "id": "Buka kanal Telegram kyaa, jendela baru",
+    "vi": "Mở kênh Telegram kyaa, cửa sổ mới",
+    "th": "เปิดช่อง Telegram ของ kyaa ในหน้าต่างใหม่",
+    "pt": "Abrir o canal da kyaa no Telegram, nova janela",
+    "fr": "Ouvrir la chaîne Telegram de kyaa, nouvelle fenêtre"
   },
   "maf19023c88d3": {
-    "ja": "ByUsの{0}を新しいウィンドウで開く",
-    "zh-Hans": "在新窗口打开 ByUs {0}",
-    "zh-Hant": "在新窗口打開 ByUs {0}",
-    "es": "Abrir {0} de ByUs en una ventana nueva",
-    "id": "Buka {0} ByUs, jendela baru",
-    "vi": "Mở {0} của ByUs, cửa sổ mới",
-    "th": "เปิด {0} ของ ByUs ในหน้าต่างใหม่",
-    "pt": "Abrir {0} da ByUs, nova janela",
-    "fr": "Ouvrir {0} de ByUs, nouvelle fenêtre"
+    "ja": "kyaaの{0}を新しいウィンドウで開く",
+    "zh-Hans": "在新窗口打开 kyaa {0}",
+    "zh-Hant": "在新窗口打開 kyaa {0}",
+    "es": "Abrir {0} de kyaa en una ventana nueva",
+    "id": "Buka {0} kyaa, jendela baru",
+    "vi": "Mở {0} của kyaa, cửa sổ mới",
+    "th": "เปิด {0} ของ kyaa ในหน้าต่างใหม่",
+    "pt": "Abrir {0} da kyaa, nova janela",
+    "fr": "Ouvrir {0} de kyaa, nouvelle fenêtre"
   },
   "mc2da954c6e18": {
     "ja": "プライバシーポリシーを開く",

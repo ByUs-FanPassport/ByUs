@@ -420,7 +420,7 @@ describe("FAN-020 settings", () => {
     });
     fireEvent(window, installEvent);
     fireEvent.click(
-      await screen.findByRole("button", { name: "ByUs 설치하기" }),
+      await screen.findByRole("button", { name: "kyaa 설치하기" }),
     );
     expect(await screen.findByText("설치 요청 확인 중…")).toBeInTheDocument();
     expect(screen.queryByText("이 기기에 설치됨")).not.toBeInTheDocument();
@@ -441,7 +441,7 @@ describe("FAN-020 settings", () => {
     });
     fireEvent(window, installEvent);
     fireEvent.click(
-      await screen.findByRole("button", { name: "ByUs 설치하기" }),
+      await screen.findByRole("button", { name: "kyaa 설치하기" }),
     );
     expect(
       await screen.findByText(
@@ -481,8 +481,8 @@ describe("FAN-020 settings", () => {
   });
 
   it.each([
-    ["ko", "프로필 설정을 먼저 완료해 주세요.", "ByUs에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.", "프로필 설정하기"],
-    ["en", "Complete your profile first.", "Choose the display name you'll use on ByUs to continue to Settings.", "Set up profile"],
+    ["ko", "프로필 설정을 먼저 완료해 주세요.", "kyaa에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.", "프로필 설정하기"],
+    ["en", "Complete your profile first.", "Choose the display name you'll use on kyaa to continue to Settings.", "Set up profile"],
   ] as const)("offers %s profile setup only for the exact PROFILE_REQUIRED response", async (locale, title, body, action) => {
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input);

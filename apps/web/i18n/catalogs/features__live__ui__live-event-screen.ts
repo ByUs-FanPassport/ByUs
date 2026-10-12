@@ -805,15 +805,15 @@ export const messages = {
     "fr": "Code de présence"
   },
   "m371c2f660b46": {
-    "ja": "LIVE中に共有された出席コードをここに入力すると、ByUsに出席を記録できます。",
-    "zh-Hans": "在此输入LIVE中公布的出席代码，即可在ByUs记录出席。",
-    "zh-Hant": "在此輸入LIVE中公佈的出席代碼，即可在ByUs記錄出席。",
-    "es": "Introduce aquí el código compartido durante el LIVE para registrar tu asistencia en ByUs.",
-    "id": "Masukkan kode kehadiran yang dibagikan saat LIVE di sini untuk mencatat kehadiranmu di ByUs.",
-    "vi": "Nhập mã điểm danh được chia sẻ trong LIVE tại đây để ghi nhận điểm danh trên ByUs.",
-    "th": "กรอกรหัสเข้าร่วมที่แชร์ระหว่าง LIVE ที่นี่เพื่อบันทึกการเข้าร่วมบน ByUs",
-    "pt": "Digite aqui o código divulgado durante o LIVE para registrar sua presença no ByUs.",
-    "fr": "Saisissez ici le code communiqué pendant le LIVE pour enregistrer votre présence sur ByUs."
+    "ja": "LIVE中に共有された出席コードをここに入力すると、kyaaに出席を記録できます。",
+    "zh-Hans": "在此输入LIVE中公布的出席代码，即可在kyaa记录出席。",
+    "zh-Hant": "在此輸入LIVE中公佈的出席代碼，即可在kyaa記錄出席。",
+    "es": "Introduce aquí el código compartido durante el LIVE para registrar tu asistencia en kyaa.",
+    "id": "Masukkan kode kehadiran yang dibagikan saat LIVE di sini untuk mencatat kehadiranmu di kyaa.",
+    "vi": "Nhập mã điểm danh được chia sẻ trong LIVE tại đây để ghi nhận điểm danh trên kyaa.",
+    "th": "กรอกรหัสเข้าร่วมที่แชร์ระหว่าง LIVE ที่นี่เพื่อบันทึกการเข้าร่วมบน kyaa",
+    "pt": "Digite aqui o código divulgado durante o LIVE para registrar sua presença no kyaa.",
+    "fr": "Saisissez ici le code communiqué pendant le LIVE pour enregistrer votre présence sur kyaa."
   },
   "m31c62ef02fb7": {
     "ja": "出席コードを入力",
@@ -926,15 +926,15 @@ export const messages = {
     "fr": "Enregistrez la date. La réservation est facultative"
   },
   "m5af701c505c4": {
-    "ja": "配信中に公開された出席コードをByUsで入力",
-    "zh-Hans": "在ByUs输入直播中公布的出席代码",
-    "zh-Hant": "在ByUs輸入直播中公佈的出席代碼",
-    "es": "Introduce en ByUs el código de asistencia de la transmisión",
-    "id": "Masukkan kode kehadiran dari siaran di ByUs",
-    "vi": "Nhập mã điểm danh của buổi phát sóng trên ByUs",
-    "th": "กรอกรหัสเข้าร่วมจากการถ่ายทอดบน ByUs",
-    "pt": "Digite o código de presença da transmissão no ByUs",
-    "fr": "Saisissez le code de présence du direct sur ByUs"
+    "ja": "配信中に公開された出席コードをkyaaで入力",
+    "zh-Hans": "在kyaa输入直播中公布的出席代码",
+    "zh-Hant": "在kyaa輸入直播中公佈的出席代碼",
+    "es": "Introduce en kyaa el código de asistencia de la transmisión",
+    "id": "Masukkan kode kehadiran dari siaran di kyaa",
+    "vi": "Nhập mã điểm danh của buổi phát sóng trên kyaa",
+    "th": "กรอกรหัสเข้าร่วมจากการถ่ายทอดบน kyaa",
+    "pt": "Digite o código de presença da transmissão no kyaa",
+    "fr": "Saisissez le code de présence du direct sur kyaa"
   },
   "m26439d5fae3a": {
     "ja": "ifewの抽選券を使ってBanksyチケット抽選に応募",
@@ -1168,15 +1168,15 @@ export const messages = {
     "fr": "Utilisez vos tickets pour participer séparément"
   },
   "m52dd9000cd4f": {
-    "ja": "ByUsに戻り、コードを入力して2枚獲得",
-    "zh-Hans": "返回ByUs，输入代码并获得2张",
-    "zh-Hant": "返回ByUs，輸入代碼並獲得2張",
-    "es": "Vuelve a ByUs, introduce el código y consigue 2 boletos",
-    "id": "Kembali ke ByUs, masukkan kode, dan dapatkan 2 tiket",
-    "vi": "Quay lại ByUs, nhập mã và nhận thêm 2 vé",
-    "th": "กลับไปที่ ByUs กรอกรหัส แล้วรับเพิ่ม 2 ใบ",
-    "pt": "Volte ao ByUs, digite o código e ganhe 2",
-    "fr": "Revenez sur ByUs, saisissez le code et gagnez-en 2"
+    "ja": "kyaaに戻り、コードを入力して2枚獲得",
+    "zh-Hans": "返回kyaa，输入代码并获得2张",
+    "zh-Hant": "返回kyaa，輸入代碼並獲得2張",
+    "es": "Vuelve a kyaa, introduce el código y consigue 2 boletos",
+    "id": "Kembali ke kyaa, masukkan kode, dan dapatkan 2 tiket",
+    "vi": "Quay lại kyaa, nhập mã và nhận thêm 2 vé",
+    "th": "กลับไปที่ kyaa กรอกรหัส แล้วรับเพิ่ม 2 ใบ",
+    "pt": "Volte ao kyaa, digite o código e ganhe 2",
+    "fr": "Revenez sur kyaa, saisissez le code et gagnez-en 2"
   },
   "mfecd6473737d": {
     "ja": "TikTokが新しいタブで開きます。ここに戻って出席コードを入力してください。",

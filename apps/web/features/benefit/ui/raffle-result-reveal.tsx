@@ -143,11 +143,11 @@ export function RaffleResultReveal({ children, storageKey, outcome, title, image
         {outcome === "won" ? imageUrl && failedImage !== imageUrl
           ? <Image src={imageUrl} alt="" fill sizes="(min-width: 768px) 430px, 100vw" unoptimized={bypassImageOptimization(imageUrl)} onError={() => setFailedImage(imageUrl)} />
           : <div className={styles.gift}><Gift />{title ? <span>{title}</span> : null}</div>
-          : <div className={styles.thankYou}><span>WITH LOVE</span><Heart /><strong>{t.thanks}</strong><span>ByUs</span></div>}
+          : <div className={styles.thankYou}><span>WITH LOVE</span><Heart /><strong>{t.thanks}</strong><span>kyaa</span></div>}
       </div>
       <div className={styles.ticket} data-ticket>
-        <div className={styles.ticketTop} data-ticket-top><span>BYUS RAFFLE</span><Sparkles /><strong>{t.ticket}</strong></div>
-        <div className={styles.ticketBottom} data-ticket-bottom><span>{t.result}</span><span>ByUs</span><i /></div>
+        <div className={styles.ticketTop} data-ticket-top><span>KYAA RAFFLE</span><Sparkles /><strong>{t.ticket}</strong></div>
+        <div className={styles.ticketBottom} data-ticket-bottom><span>{t.result}</span><span>kyaa</span><i /></div>
         <div className={styles.seal} data-seal><Sparkles /></div>
       </div>
       {outcome === "won" && phase === "revealing" ? <div className={styles.particles}>{Array.from({ length: 22 }, (_, i) => <i key={i} data-particle style={{ "--particle-color": ["#e7a5c1", "#282525", "#f3e6cd"][i % 3] } as CSSProperties} />)}</div> : null}

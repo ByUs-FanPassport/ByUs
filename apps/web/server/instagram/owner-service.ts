@@ -42,13 +42,13 @@ export function createInstagramOwnerService(deps: {
   }
 
   return {
-    async callback(code: string, state: string, browser: string) {
+    async callback(code: string, state: string, browser: string, redirectUri?: string) {
       const hash = secretHash(state);
       const browserHash = secretHash(browser);
       await deps.repository.transition("consume", hash, null, browserHash);
       let ownerStage: OwnerDiagnostic["stage"] | null = null;
       try {
-        const { token, identity } = await deps.provider.exchange(code);
+        const { token, identity } = await deps.provider.exchange(code, redirectUri);
         ownerStage = "resolve";
         const target = await deps.repository.transition("resolve", hash, null, browserHash, { identity });
         if (!target.celebrity_id) throw new Error("Instagram owner mapping unavailable");

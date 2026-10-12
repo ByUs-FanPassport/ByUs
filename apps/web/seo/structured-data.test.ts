@@ -3,18 +3,18 @@ import { describe, expect, it } from "vitest";
 import { faqStructuredData, homeStructuredData, serializeStructuredData } from "./structured-data";
 
 describe("public structured data", () => {
-  it("connects one stable WebSite identity to the confirmed ByUs operator", () => {
+  it("connects one stable WebSite identity to the confirmed kyaa operator", () => {
     const data = homeStructuredData();
     const organization = data["@graph"][0];
     const website = data["@graph"][1];
 
     expect(organization).toMatchObject({
       "@type": "Organization",
-      "@id": "https://byus.kr/#organization",
+      "@id": "https://kyaa.io/#organization",
       name: "Sallylab Inc.",
-      url: "https://byus.kr/",
-      email: "biz@sallylab.io",
-      brand: { "@type": "Brand", name: "ByUs", url: "https://byus.kr/" },
+      url: "https://kyaa.io/",
+      email: "support@kyaa.io",
+      brand: { "@type": "Brand", name: "kyaa", url: "https://kyaa.io/" },
     });
     expect(organization.sameAs).toEqual([
       "https://www.instagram.com/official_byus/",
@@ -24,10 +24,10 @@ describe("public structured data", () => {
     ]);
     expect(website).toEqual({
       "@type": "WebSite",
-      "@id": "https://byus.kr/#website",
-      url: "https://byus.kr/",
-      name: "ByUs",
-      publisher: { "@id": "https://byus.kr/#organization" },
+      "@id": "https://kyaa.io/#website",
+      url: "https://kyaa.io/",
+      name: "kyaa",
+      publisher: { "@id": "https://kyaa.io/#organization" },
     });
   });
 

@@ -17,7 +17,7 @@ const response = (body: unknown, status = 200) => new Response(JSON.stringify(bo
 beforeEach(() => { authenticated = true; owner = "owner-a"; query = ""; push.mockReset(); getAccessToken.mockReset().mockResolvedValue("test-bearer"); fetchMock.mockReset().mockResolvedValue(response({ connections: [] })); vi.stubGlobal("fetch", fetchMock); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 describe("Creator Instagram connection", () => {
-  it("requires ByUs login before making any Instagram request and preserves the return path", () => {
+  it("requires kyaa login before making any Instagram request and preserves the return path", () => {
     authenticated = false;
     render(<CreatorInstagramPage locale="ko" />);
     fireEvent.click(screen.getByRole("button", { name: "Instagram 연결하기" }));
@@ -73,7 +73,7 @@ describe("Creator Instagram connection", () => {
     expect(screen.getByRole("button", { name: "이 계정 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
   });
-  it("discards an in-flight response on a ByUs account switch", async () => {
+  it("discards an in-flight response on a kyaa account switch", async () => {
     let finish: (r: Response) => void = () => {};
     fetchMock.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })).mockResolvedValueOnce(response({ connections: [] }));
     const view = render(<CreatorInstagramPage locale="ko" />);

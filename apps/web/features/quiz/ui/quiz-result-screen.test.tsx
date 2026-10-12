@@ -52,7 +52,7 @@ describe("QuizResultScreen", () => {
     render(<QuizResultScreen attemptId={attemptId} passportId={passportId} celebritySlug="kara" celebrityName="KARA" locale="ko" />);
     const returnTo = `/c/kara/verify/result?attempt=${attemptId}&passport=${passportId}&locale=ko`;
     expect(screen.getByRole("heading", { name: "로그인이 필요해요." })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "ByUs" })).toHaveAttribute("src", expect.stringContaining("byus-wordmark.svg"));
+    expect(screen.getByRole("img", { name: "kyaa" })).toHaveAttribute("src", expect.stringContaining("kyaa-wordmark.svg"));
     expect(screen.getByRole("link", { name: "로그인하고 결과 확인하기" })).toHaveAttribute(
       "href",
       `/login?returnTo=${encodeURIComponent(returnTo)}&locale=ko&intent=passport`,

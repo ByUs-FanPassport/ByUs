@@ -42,6 +42,16 @@ describe("public inquiry API", () => {
   it("does not derive trusted origin from the request Host", async () => {
     const { handle } = setup(); expect((await handle(request(input, { origin: "https://evil.example" }, "https://evil.example/api"))).status).toBe(400);
   });
+  it.each(["https://kyaa.io", "https://www.kyaa.io"])("accepts an exact same-origin inquiry from %s", async (origin) => {
+    const { submit, handle } = setup();
+    expect((await handle(request(input, { origin }, `${origin}/api/inquiries/fanmeeting`))).status).toBe(202);
+    expect(submit).toHaveBeenCalledOnce();
+  });
+  it("rejects a trusted origin header when the inquiry request URL host differs", async () => {
+    const { submit, handle } = setup();
+    expect((await handle(request(input, { origin: "https://kyaa.io" }, "https://byus.kr/api/inquiries/fanmeeting"))).status).toBe(400);
+    expect(submit).not.toHaveBeenCalled();
+  });
   it("does not trust arbitrary forwarded-for when Vercel IP is missing", async () => {
     const { submit, handle } = setup(); expect((await handle(request(input, { "x-vercel-forwarded-for": "", "x-forwarded-for": "192.0.2.8" }))).status).toBe(503); expect(submit).not.toHaveBeenCalled();
   });

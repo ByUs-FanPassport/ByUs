@@ -23,7 +23,7 @@ export class SolapiPhoneSmsProvider implements PhoneSmsProvider {
         method: "POST", redirect: "error", cache: "no-store", signal: AbortSignal.timeout(8000),
         headers: { "content-type": "application/json", authorization: `HMAC-SHA256 apiKey=${this.config.apiKey}, date=${date}, salt=${salt}, signature=${signature}` },
         body: JSON.stringify({ messages: [{ to: input.phone, from: this.config.sender, type: "SMS", country: "82", autoTypeDetect: false,
-          text: `[ByUs] 인증번호 ${input.code} (5분 이내 입력)`, customFields: { challengeId: input.challengeId } }], showMessageList: true }),
+          text: `[kyaa] 인증번호 ${input.code} (5분 이내 입력)`, customFields: { challengeId: input.challengeId } }], showMessageList: true }),
       });
       if (response.status >= 500 || response.status === 429) return { status: "unknown" };
       const data = object(await response.json());

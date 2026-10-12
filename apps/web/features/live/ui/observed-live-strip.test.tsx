@@ -50,7 +50,7 @@ describe("observed LIVE cards", () => {
     render(<ObservedLiveStrip locale={locale} />);
     await settle();
     expect(screen.getByRole("heading", { name: locale === "ko" ? "지금 LIVE 중" : "Live now" })).toBeInTheDocument();
-    const button = screen.getByRole("button", { name: /ByUs/ });
+    const button = screen.getByRole("button", { name: /kyaa/ });
     expect(button).toHaveAttribute("aria-haspopup", "dialog");
     expect(fetcher).toHaveBeenCalledWith(`/api/public/live-now?locale=${locale}&v=4`, expect.objectContaining({ cache: "no-store" }));
   });
@@ -59,7 +59,7 @@ describe("observed LIVE cards", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response([{ ...card, playbackAvailable: false }])));
     render(<ObservedLiveStrip locale="ko" />);
     await settle();
-    expect(screen.queryByRole("button", { name: /박명호|이퓨.*ByUs/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /박명호|이퓨.*kyaa/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /TikTok에서 시청, 새 창/ })).toHaveAttribute("href", card.watchUrl);
   });
 
@@ -93,7 +93,7 @@ describe("observed LIVE cards", () => {
 
     expect(screen.getByRole("heading", { name: "지금 LIVE 중" })).toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(3);
-    expect(screen.getByRole("button", { name: /ByUs/ })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByRole("button", { name: /kyaa/ })).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByRole("link", { name: /YouTube에서 시청, 새 창/ })).toHaveAttribute("href", youtube.watchUrl);
     expect(screen.getByRole("link", { name: /Instagram에서 시청, 새 창/ })).toHaveAttribute("href", instagram.watchUrl);
     expect(screen.getByRole("link", { name: /CHZZK에서 시청, 새 창/ })).toHaveAttribute("href", chzzk.watchUrl);
@@ -113,7 +113,7 @@ describe("observed LIVE cards", () => {
       .mockResolvedValueOnce(response([card, second]))
       .mockResolvedValue(response([], [targetFor(card, "offline", endedAt)], endedAt)));
     render(<ObservedLiveStrip locale="ko" />); await settle();
-    expect(screen.getAllByRole("button", { name: /ByUs/ })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /kyaa/ })).toHaveLength(2);
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(screen.queryByRole("region")).not.toBeInTheDocument();
   });
@@ -140,7 +140,7 @@ describe("observed LIVE cards", () => {
     const second = { ...card, celebritySlug: "elina", creatorName: "엘리나" };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response([card, second])).mockResolvedValue(response([card])));
     render(<ObservedLiveStrip locale="ko" />); await settle();
-    fireEvent.click(screen.getByRole("button", { name: /이퓨.*ByUs/ })); await settle();
+    fireEvent.click(screen.getByRole("button", { name: /이퓨.*kyaa/ })); await settle();
     const dialog = screen.getByRole("dialog", { name: "이퓨 LIVE" });
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(screen.getByRole("dialog", { name: "이퓨 LIVE" })).toBe(dialog);
@@ -157,23 +157,23 @@ describe("observed LIVE cards", () => {
       .mockResolvedValue(response([], [targetFor(card, "offline", oldOfflineAt)], new Date(start + 60_000).toISOString())));
     render(<ObservedLiveStrip locale="ko" />); await settle();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kyaa/ })).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kyaa/ })).toBeInTheDocument();
   });
 
   it("updates the position after a swipe and resets when the visible roster changes", async () => {
     const second = { ...card, celebritySlug: "elina", creatorName: "엘리나" };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response([card, second])).mockResolvedValue(response([second])));
     render(<ObservedLiveStrip locale="ko" />); await settle();
-    const links = screen.getAllByRole("button", { name: /ByUs/ });
+    const links = screen.getAllByRole("button", { name: /kyaa/ });
     const grid = links[0].parentElement!;
     Object.defineProperty(links[0], "offsetLeft", { value: 8 });
     Object.defineProperty(links[1], "offsetLeft", { value: 374 });
     fireEvent.scroll(grid, { target: { scrollLeft: 366 } });
     expect(screen.getByText("2 / 2")).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(screen.getAllByRole("button", { name: /ByUs/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /kyaa/ })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "다음 LIVE" })).not.toBeInTheDocument();
   });
 
@@ -185,16 +185,16 @@ describe("observed LIVE cards", () => {
     expect(image).toHaveAttribute("src", "/creator.jpg");
     fireEvent.error(image);
     expect(image).toHaveStyle({ visibility: "hidden" });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kyaa/ })).toBeInTheDocument();
   });
 
   it("retains a prior success after 503 only until its original 90-second expiry", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response()).mockResolvedValue(new Response(null, { status: 503 })));
     render(<ObservedLiveStrip locale="ko" />); await settle();
     await act(async () => { await vi.advanceTimersByTimeAsync(89_999); });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kyaa/ })).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
-    expect(screen.queryByRole("button", { name: /ByUs/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /kyaa/ })).not.toBeInTheDocument();
   });
 
   it("does not let unsafe or malformed responses erase a fresh card", async () => {
@@ -209,9 +209,9 @@ describe("observed LIVE cards", () => {
       .mockResolvedValue({ ok: true, json: async () => ({ items: [] }) }));
     render(<ObservedLiveStrip locale="ko" />); await settle();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByRole("button", { name: /kyaa/ })).toHaveAttribute("aria-haspopup", "dialog");
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(screen.getByRole("button", { name: /ByUs/ })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByRole("button", { name: /kyaa/ })).toHaveAttribute("aria-haspopup", "dialog");
   });
 
   it("expires cards even while a hidden tab does not poll", async () => {

@@ -25,7 +25,7 @@ const date = (value: string, locale: AdminLocale) => new Intl.DateTimeFormat(loc
 
 const copy = {
   ko: {
-    eyebrow: "BYUS · CAMPAIGN TRACKING", title: "뱅크시 캠페인", description: "공유 링크를 만들고 응모 페이지 방문과 외부 이동을 확인하세요.", refresh: "새로고침",
+    eyebrow: "KYAA · CAMPAIGN TRACKING", title: "뱅크시 캠페인", description: "공유 링크를 만들고 응모 페이지 방문과 외부 이동을 확인하세요.", refresh: "새로고침",
     periods: { 7: "최근 7일", 30: "최근 30일", 90: "최근 90일" }, create: "공유 링크 만들기", createHelp: "링크는 기존 엘리나 경품 응모 페이지로 연결됩니다.",
     creator: "크리에이터", channel: "채널", contentType: "콘텐츠 유형", name: "링크 이름", locale: "랜딩 언어", ko: "한국어", en: "English", submit: "링크 생성", saving: "저장 중…",
     viewer: "뷰어 권한은 링크와 통계를 조회할 수 있지만 링크를 만들거나 중지할 수 없습니다.", links: "공유 링크", linkHelp: "중지한 링크도 응모 페이지로 열리지만 유입 집계에서는 제외됩니다.", noLinks: "아직 만든 공유 링크가 없습니다.",
@@ -34,7 +34,7 @@ const copy = {
     caveat: "목적지별 수치는 선택 기간의 이동 기준입니다. 반복 클릭은 요청 여러 건, 세션 한 건이며 목적지 간 세션 수는 중복될 수 있습니다.", mirrorworldLegacy: "Mirrorworld 기존 경유 요청", legacy: "Instagram 기존 경유 요청", legacyHelp: "방문 세션과 연결되지 않아 이동률 계산에는 포함하지 않습니다.", loadFailed: "캠페인 데이터를 불러오지 못했습니다.", retry: "다시 시도", landing: "기존 응모 페이지",
   },
   en: {
-    eyebrow: "BYUS · CAMPAIGN TRACKING", title: "Banksy campaign", description: "Create share links and measure visits to the raffle page and outbound sessions.", refresh: "Refresh",
+    eyebrow: "KYAA · CAMPAIGN TRACKING", title: "Banksy campaign", description: "Create share links and measure visits to the raffle page and outbound sessions.", refresh: "Refresh",
     periods: { 7: "Last 7 days", 30: "Last 30 days", 90: "Last 90 days" }, create: "Create share link", createHelp: "Links open the existing Elina raffle page.",
     creator: "Creator", channel: "Channel", contentType: "Content type", name: "Link name", locale: "Landing language", ko: "Korean", en: "English", submit: "Create link", saving: "Saving…",
     viewer: "Viewers can see links and analytics, but cannot create or stop links.", links: "Share links", linkHelp: "Stopped links still open the raffle page, but no longer attribute visits.", noLinks: "No share links have been created yet.",
@@ -54,7 +54,7 @@ export function BanksyCampaignContent({ data, locale = "ko", canWrite = false, b
     <section className={base.panel} aria-labelledby="campaign-links-title">
       <div className={base.panelHeading}><div><h2 id="campaign-links-title">{t.links}</h2><p>{t.linkHelp}</p></div><Link className={styles.landingLink} href={BANKSY_LANDING} target="_blank">{t.landing}<ExternalLink aria-hidden="true" /></Link></div>
       {data.links.length === 0 ? <p className={styles.empty}>{t.noLinks}</p> : <ul className={styles.linkList}>{data.links.map((link) => {
-        const href = `https://byus.kr/t/${link.id}`;
+        const href = `https://kyaa.io/t/${link.id}`;
         return <li key={link.id} className={!link.active ? styles.inactive : undefined}>
           <div className={styles.linkInfo}><div><strong>{link.name}</strong><span className={link.active ? styles.activeBadge : styles.stoppedBadge}>{link.active ? t.active : t.stopped}</span></div><p>{link.creator} · {link.channel} · {link.contentType} · {link.locale}</p><a href={href} target="_blank" rel="noreferrer">{href}</a><small>{t.created} {date(link.createdAt, locale)}</small></div>
           <div className={styles.rowActions}><button type="button" onClick={() => onCopy?.(link.id)}><Copy aria-hidden="true" />{copyState?.id === link.id ? copyState.ok ? t.copied : t.copyFailed : t.copy}</button>{canWrite && link.active && <button className={styles.stopButton} type="button" disabled={busyId === link.id} onClick={() => onStop?.(link.id)}>{busyId === link.id ? t.stopping : t.stop}</button>}</div>
@@ -138,7 +138,7 @@ export function BanksyCampaignDashboard({ locale = "ko" }: { locale?: AdminLocal
     if (await command(draft)) setDraft((current) => ({ ...current, id: freshId(), name: "" }));
   }
   async function copyLink(id: string) {
-    try { await navigator.clipboard.writeText(`https://byus.kr/t/${id}`); setCopyState({ id, ok: true }); }
+    try { await navigator.clipboard.writeText(`https://kyaa.io/t/${id}`); setCopyState({ id, ok: true }); }
     catch { setCopyState({ id, ok: false }); }
   }
 
@@ -149,7 +149,7 @@ export function BanksyCampaignDashboard({ locale = "ko" }: { locale?: AdminLocal
     <header className={base.header}><div><p>{t.eyebrow}</p><h1>{t.title}</h1><span>{t.description}</span></div><button className={base.refresh} type="button" disabled={visible.status === "loading"} onClick={() => setRefresh((value) => value + 1)}><RefreshCw aria-hidden="true" />{t.refresh}</button></header>
     <div className={base.toolbar}><div className={base.segmented} role="group" aria-label={t.analytics}>{([7, 30, 90] as const).map((value) => <button key={value} type="button" aria-pressed={days === value} onClick={() => setDays(value)}>{t.periods[value]}</button>)}</div></div>
     {canWrite ? <section className={`${base.panel} ${styles.createPanel}`} aria-labelledby="create-campaign-link"><div className={base.panelHeading}><div><h2 id="create-campaign-link">{t.create}</h2><p>{t.createHelp}</p></div></div><form onSubmit={create}>
-      <label><span>{t.creator}</span><select value={draft.creator} disabled={busyId !== null} onChange={(event) => change("creator", event.target.value as Draft["creator"])}><option value="elina">Elina</option><option value="byus">ByUs</option></select></label>
+      <label><span>{t.creator}</span><select value={draft.creator} disabled={busyId !== null} onChange={(event) => change("creator", event.target.value as Draft["creator"])}><option value="elina">Elina</option><option value="byus">kyaa</option></select></label>
       <label><span>{t.channel}</span><select value={draft.channel} disabled={busyId !== null} onChange={(event) => change("channel", event.target.value as Draft["channel"])}>{channels.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>{t.contentType}</span><select value={draft.contentType} disabled={busyId !== null} onChange={(event) => change("contentType", event.target.value as Draft["contentType"])}>{contentTypes.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>{t.name}</span><input required maxLength={80} value={draft.name} disabled={busyId !== null} onChange={(event) => change("name", event.target.value)} /></label>

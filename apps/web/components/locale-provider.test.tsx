@@ -39,16 +39,16 @@ describe('document and authentication locale', () => {
     state.query = 'locale=en'; state.pathname = '/'; state.mounts = 0;
     const Tree = () => <LocaleProvider initialLocale="en"><ByUsPrivyProvider appId="test"><DocumentLocale /><PublicContentState state="loading" scope="home" /></ByUsPrivyProvider></LocaleProvider>;
     const view = render(<Tree />);
-    expect(state.header).toBe('Get started with ByUs');
+    expect(state.header).toBe('Get started with kyaa');
     expect(document.documentElement.lang).toBe('en');
     state.query = 'locale=ko';
     view.rerender(<Tree />);
-    expect(state.header).toBe('ByUs 시작하기');
+    expect(state.header).toBe('kyaa 시작하기');
     expect(document.documentElement.lang).toBe('ko');
     expect(screen.getByRole('heading').textContent).toContain('불러오고');
     state.query = 'locale=en';
     view.rerender(<Tree />);
-    expect(state.header).toBe('Get started with ByUs');
+    expect(state.header).toBe('Get started with kyaa');
     expect(state.mounts).toBe(1);
   });
   it('uses the callback cookie on client navigation and lets an explicit query win', () => {

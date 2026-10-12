@@ -76,6 +76,8 @@ const completionSchema = z.object({
     return url.protocol === "https:" && !url.username && !url.password && (
       url.hostname === "byus.kr" ||
       url.hostname === "www.byus.kr" ||
+      url.hostname === "kyaa.io" ||
+      url.hostname === "www.kyaa.io" ||
       url.hostname.endsWith(".vercel.app")
     );
   }),

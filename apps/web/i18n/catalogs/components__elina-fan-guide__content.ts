@@ -310,15 +310,15 @@ export const messages = {
     "fr": "Regardez et confirmez votre présence.\nGagnez 10 tickets de plus."
   },
   "mf929a4ddbe2e": {
-    "ja": "InstagramでLIVEを視聴した後、ByUsのLIVEページに戻り、配信中に公開されたコードを入力してください。チェックインを完了すると抽選券を10枚獲得でき、希望の賞品に応募できます。",
-    "zh-Hans": "在Instagram观看LIVE后，返回ByUs LIVE页面并输入直播中公布的代码。完成签到可获得10张抽奖券，再用它们参与心仪奖品的抽选。",
-    "zh-Hant": "在Instagram觀看LIVE後，返回ByUs LIVE頁面並輸入直播中公佈的代碼。完成簽到可獲得10張抽獎券，再用它們參與心儀獎品的抽選。",
-    "es": "Mira el LIVE en Instagram, vuelve a la página LIVE de ByUs e introduce el código compartido durante la transmisión. Completa el registro para conseguir 10 boletos y úsalos para participar por tu premio favorito.",
-    "id": "Tonton LIVE di Instagram, lalu kembali ke halaman LIVE ByUs dan masukkan kode yang dibagikan selama siaran. Selesaikan check-in untuk mendapatkan 10 tiket undian, lalu gunakan untuk mengikuti undian hadiah favoritmu.",
-    "vi": "Xem LIVE trên Instagram, sau đó quay lại trang LIVE của ByUs và nhập mã được chia sẻ trong buổi phát sóng. Hoàn tất điểm danh để nhận 10 vé quay thưởng rồi dùng chúng để tham gia nhận phần quà yêu thích.",
-    "th": "รับชม LIVE บน Instagram แล้วกลับมาที่หน้า LIVE ของ ByUs เพื่อกรอกรหัสที่แชร์ระหว่างการถ่ายทอด เช็กอินให้เสร็จเพื่อรับบัตรจับรางวัล 10 ใบ แล้วใช้ลุ้นของรางวัลที่ต้องการ",
-    "pt": "Assista ao LIVE no Instagram, volte para a página do LIVE no ByUs e digite o código divulgado na transmissão. Confirme presença para ganhar 10 tickets de sorteio e use-os para concorrer ao seu prêmio favorito.",
-    "fr": "Regardez le LIVE sur Instagram, puis revenez sur la page LIVE de ByUs et saisissez le code communiqué pendant le direct. Confirmez votre présence pour gagner 10 tickets de tirage au sort, puis utilisez-les pour tenter de gagner votre cadeau préféré."
+    "ja": "InstagramでLIVEを視聴した後、kyaaのLIVEページに戻り、配信中に公開されたコードを入力してください。チェックインを完了すると抽選券を10枚獲得でき、希望の賞品に応募できます。",
+    "zh-Hans": "在Instagram观看LIVE后，返回kyaa LIVE页面并输入直播中公布的代码。完成签到可获得10张抽奖券，再用它们参与心仪奖品的抽选。",
+    "zh-Hant": "在Instagram觀看LIVE後，返回kyaa LIVE頁面並輸入直播中公佈的代碼。完成簽到可獲得10張抽獎券，再用它們參與心儀獎品的抽選。",
+    "es": "Mira el LIVE en Instagram, vuelve a la página LIVE de kyaa e introduce el código compartido durante la transmisión. Completa el registro para conseguir 10 boletos y úsalos para participar por tu premio favorito.",
+    "id": "Tonton LIVE di Instagram, lalu kembali ke halaman LIVE kyaa dan masukkan kode yang dibagikan selama siaran. Selesaikan check-in untuk mendapatkan 10 tiket undian, lalu gunakan untuk mengikuti undian hadiah favoritmu.",
+    "vi": "Xem LIVE trên Instagram, sau đó quay lại trang LIVE của kyaa và nhập mã được chia sẻ trong buổi phát sóng. Hoàn tất điểm danh để nhận 10 vé quay thưởng rồi dùng chúng để tham gia nhận phần quà yêu thích.",
+    "th": "รับชม LIVE บน Instagram แล้วกลับมาที่หน้า LIVE ของ kyaa เพื่อกรอกรหัสที่แชร์ระหว่างการถ่ายทอด เช็กอินให้เสร็จเพื่อรับบัตรจับรางวัล 10 ใบ แล้วใช้ลุ้นของรางวัลที่ต้องการ",
+    "pt": "Assista ao LIVE no Instagram, volte para a página do LIVE no kyaa e digite o código divulgado na transmissão. Confirme presença para ganhar 10 tickets de sorteio e use-os para concorrer ao seu prêmio favorito.",
+    "fr": "Regardez le LIVE sur Instagram, puis revenez sur la page LIVE de kyaa et saisissez le code communiqué pendant le direct. Confirmez votre présence pour gagner 10 tickets de tirage au sort, puis utilisez-les pour tenter de gagner votre cadeau préféré."
   },
   "ma3c830606914": {
     "ja": "LIVEチェックインページを開く",
@@ -343,15 +343,15 @@ export const messages = {
     "fr": "Participer pour un cadeau"
   },
   "mf5fabcca671f": {
-    "ja": "コードは9月18日午後8:30から9月19日午前0:00 KST（9月18日終了時の深夜）まで入力できます。Instagramで視聴した後、ByUsのLIVEページに戻ってください。チェックインは予約とは別で、Elina Passportが必要です。",
-    "zh-Hans": "代码可在9月18日晚上8:30至9月19日00:00 KST（9月18日结束时的午夜）输入。在Instagram观看后请返回ByUs LIVE页面。签到与预约相互独立，且需要Elina Passport。",
-    "zh-Hant": "代碼可在9月18日晚上8:30至9月19日00:00 KST（9月18日結束時的午夜）輸入。在Instagram觀看後請返回ByUs LIVE頁面。簽到與預約相互獨立，且需要Elina Passport。",
-    "es": "Puedes introducir el código desde el 18 de septiembre a las 20:30 hasta el 19 de septiembre a las 00:00 KST. Vuelve a la página LIVE de ByUs después de verlo en Instagram. El registro es independiente de la reserva y requiere un Elina Passport.",
-    "id": "Kode dapat dimasukkan dari 18 September pukul 20.30 hingga 19 September pukul 00.00 KST, yaitu tengah malam di akhir 18 September. Setelah menonton di Instagram, kembali ke halaman LIVE ByUs. Check-in terpisah dari reservasi dan memerlukan Elina Passport.",
-    "vi": "Có thể nhập mã từ 20:30 ngày 18 tháng 9 đến 00:00 KST ngày 19 tháng 9, tức nửa đêm cuối ngày 18 tháng 9. Sau khi xem trên Instagram, hãy quay lại trang LIVE của ByUs. Điểm danh tách biệt với đặt chỗ và cần có Elina Passport.",
-    "th": "กรอกรหัสได้ตั้งแต่ 18 กันยายน เวลา 20:30 น. ถึง 19 กันยายน เวลา 00:00 น. KST หลังรับชมบน Instagram ให้กลับมาที่หน้า LIVE ของ ByUs การเช็กอินแยกจากการจองและต้องมี Elina Passport",
-    "pt": "O código pode ser digitado de 18 de setembro, às 20h30, até 19 de setembro, às 00h KST, meia-noite ao fim de 18 de setembro. Volte à página do LIVE no ByUs após assistir no Instagram. A presença é separada da reserva e exige um Passport Elina.",
-    "fr": "La saisie du code est ouverte du 18 septembre à 20 h 30 au 19 septembre à 00 h KST, soit minuit à la fin du 18 septembre. Revenez sur la page LIVE de ByUs après avoir regardé sur Instagram. La confirmation de présence est distincte de la réservation et nécessite un Passport Elina."
+    "ja": "コードは9月18日午後8:30から9月19日午前0:00 KST（9月18日終了時の深夜）まで入力できます。Instagramで視聴した後、kyaaのLIVEページに戻ってください。チェックインは予約とは別で、Elina Passportが必要です。",
+    "zh-Hans": "代码可在9月18日晚上8:30至9月19日00:00 KST（9月18日结束时的午夜）输入。在Instagram观看后请返回kyaa LIVE页面。签到与预约相互独立，且需要Elina Passport。",
+    "zh-Hant": "代碼可在9月18日晚上8:30至9月19日00:00 KST（9月18日結束時的午夜）輸入。在Instagram觀看後請返回kyaa LIVE頁面。簽到與預約相互獨立，且需要Elina Passport。",
+    "es": "Puedes introducir el código desde el 18 de septiembre a las 20:30 hasta el 19 de septiembre a las 00:00 KST. Vuelve a la página LIVE de kyaa después de verlo en Instagram. El registro es independiente de la reserva y requiere un Elina Passport.",
+    "id": "Kode dapat dimasukkan dari 18 September pukul 20.30 hingga 19 September pukul 00.00 KST, yaitu tengah malam di akhir 18 September. Setelah menonton di Instagram, kembali ke halaman LIVE kyaa. Check-in terpisah dari reservasi dan memerlukan Elina Passport.",
+    "vi": "Có thể nhập mã từ 20:30 ngày 18 tháng 9 đến 00:00 KST ngày 19 tháng 9, tức nửa đêm cuối ngày 18 tháng 9. Sau khi xem trên Instagram, hãy quay lại trang LIVE của kyaa. Điểm danh tách biệt với đặt chỗ và cần có Elina Passport.",
+    "th": "กรอกรหัสได้ตั้งแต่ 18 กันยายน เวลา 20:30 น. ถึง 19 กันยายน เวลา 00:00 น. KST หลังรับชมบน Instagram ให้กลับมาที่หน้า LIVE ของ kyaa การเช็กอินแยกจากการจองและต้องมี Elina Passport",
+    "pt": "O código pode ser digitado de 18 de setembro, às 20h30, até 19 de setembro, às 00h KST, meia-noite ao fim de 18 de setembro. Volte à página do LIVE no kyaa após assistir no Instagram. A presença é separada da reserva e exige um Passport Elina.",
+    "fr": "La saisie du code est ouverte du 18 septembre à 20 h 30 au 19 septembre à 00 h KST, soit minuit à la fin du 18 septembre. Revenez sur la page LIVE de kyaa après avoir regardé sur Instagram. La confirmation de présence est distincte de la réservation et nécessite un Passport Elina."
   },
   "m1cbd001ea1a7": {
     "ja": "ElinaとInstagram LIVE",
@@ -420,15 +420,15 @@ export const messages = {
     "fr": "18 septembre · 20 h 30 KST"
   },
   "me53d1a75ce25": {
-    "ja": "ByUsに戻ってコードを入力",
-    "zh-Hans": "返回ByUs并输入代码",
-    "zh-Hant": "返回ByUs並輸入代碼",
-    "es": "Volver a ByUs e introducir el código",
-    "id": "Kembali ke ByUs dan masukkan kode",
-    "vi": "Quay lại ByUs và nhập mã",
-    "th": "กลับไปที่ ByUs และกรอกรหัส",
-    "pt": "Voltar ao ByUs e digitar o código",
-    "fr": "Revenir sur ByUs et saisir le code"
+    "ja": "kyaaに戻ってコードを入力",
+    "zh-Hans": "返回kyaa并输入代码",
+    "zh-Hant": "返回kyaa並輸入代碼",
+    "es": "Volver a kyaa e introducir el código",
+    "id": "Kembali ke kyaa dan masukkan kode",
+    "vi": "Quay lại kyaa và nhập mã",
+    "th": "กลับไปที่ kyaa และกรอกรหัส",
+    "pt": "Voltar ao kyaa e digitar o código",
+    "fr": "Revenir sur kyaa et saisir le code"
   },
   "m1e3a56f753a7": {
     "ja": "チェックイン完了で抽選券+10枚",
@@ -640,15 +640,15 @@ export const messages = {
     "fr": "Vérifier et commencer"
   },
   "mca079ef76357": {
-    "ja": "ByUs. Your Bias.",
-    "zh-Hans": "ByUs. Your Bias.",
-    "zh-Hant": "ByUs. Your Bias.",
-    "es": "ByUs. Your Bias.",
-    "id": "ByUs. Your Bias.",
-    "vi": "ByUs. Your Bias.",
-    "th": "ByUs. Your Bias.",
-    "pt": "ByUs. Your Bias.",
-    "fr": "ByUs. Your Bias."
+    "ja": "kyaa. Your Bias.",
+    "zh-Hans": "kyaa. Your Bias.",
+    "zh-Hant": "kyaa. Your Bias.",
+    "es": "kyaa. Your Bias.",
+    "id": "kyaa. Your Bias.",
+    "vi": "kyaa. Your Bias.",
+    "th": "kyaa. Your Bias.",
+    "pt": "kyaa. Your Bias.",
+    "fr": "kyaa. Your Bias."
   },
   "me864016bbde1": {
     "ja": "海辺に立つElina",

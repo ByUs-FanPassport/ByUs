@@ -101,6 +101,14 @@ describe("Instagram Login HTTP provider", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(config.redirectUri);
   });
 
+  it("uses a per-flow callback URI for authorization and token exchange", async () => {
+    const redirectUri = "https://kyaa.io/connect/instagram/callback";
+    expect(new URL(createInstagramProvider(config).authorizationUrl("state-value", redirectUri)).searchParams.get("redirect_uri")).toBe(redirectUri);
+    const request = transport({ access_token: "short-test", user_id: identity.id, permissions: ["instagram_business_basic"] }, longToken, identity);
+    await createInstagramProvider(config, request).exchange("test-code", redirectUri);
+    expect((request.mock.calls[0][1]?.body as URLSearchParams).get("redirect_uri")).toBe(redirectUri);
+  });
+
   it.each([
     { data: [{ access_token: "short-test", user_id: identity.id, permissions: "instagram_business_basic" }] },
     { access_token: "short-test", user_id: identity.id, permissions: ["instagram_business_basic"] },

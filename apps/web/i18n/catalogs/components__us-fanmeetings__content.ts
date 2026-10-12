@@ -13,15 +13,15 @@ export const messages = {
     "fr": "Organisez votre rencontre de fans\naux États-Unis."
   },
   "ma9f1cbace901": {
-    "ja": "ファンとの交流から会場、制作、現地運営まで、ByUsと米国のイベントパートナーがファンミーティングを一緒に企画します。",
-    "zh-Hans": "从粉丝互动到场地、制作和现场运营，ByUs与美国活动合作伙伴共同策划您的粉丝见面会。",
-    "zh-Hant": "從粉絲互動到場地、製作和現場運營，ByUs與美國活動合作夥伴共同規劃您的粉絲見面會。",
-    "es": "Planifica tu encuentro con fans junto a ByUs y nuestro socio de eventos en Estados Unidos, desde la interacción con los fans hasta el lugar, la producción y las operaciones presenciales.",
-    "id": "Rencanakan fanmeeting bersama ByUs dan mitra acara kami di Amerika Serikat, mulai dari partisipasi fan hingga lokasi, produksi, dan operasional di tempat.",
-    "vi": "Lên kế hoạch fanmeeting cùng ByUs và đối tác sự kiện tại Hoa Kỳ, từ hoạt động thu hút fan đến địa điểm, sản xuất và vận hành tại chỗ.",
-    "th": "วางแผนแฟนมีตติ้งกับ ByUs และพาร์ทเนอร์ในสหรัฐฯ ตั้งแต่การมีส่วนร่วมของแฟน สถานที่ การผลิต ไปจนถึงการดำเนินงานหน้างาน",
-    "pt": "Planeje seu encontro de fãs com o ByUs e nosso parceiro de eventos nos Estados Unidos, do engajamento dos fãs aos espaços, à produção e à operação no local.",
-    "fr": "Préparez votre rencontre de fans avec ByUs et notre partenaire événementiel aux États-Unis, des activités des fans aux lieux, à la production et à l’organisation sur place."
+    "ja": "ファンとの交流から会場、制作、現地運営まで、kyaaと米国のイベントパートナーがファンミーティングを一緒に企画します。",
+    "zh-Hans": "从粉丝互动到场地、制作和现场运营，kyaa与美国活动合作伙伴共同策划您的粉丝见面会。",
+    "zh-Hant": "從粉絲互動到場地、製作和現場運營，kyaa與美國活動合作夥伴共同規劃您的粉絲見面會。",
+    "es": "Planifica tu encuentro con fans junto a kyaa y nuestro socio de eventos en Estados Unidos, desde la interacción con los fans hasta el lugar, la producción y las operaciones presenciales.",
+    "id": "Rencanakan fanmeeting bersama kyaa dan mitra acara kami di Amerika Serikat, mulai dari partisipasi fan hingga lokasi, produksi, dan operasional di tempat.",
+    "vi": "Lên kế hoạch fanmeeting cùng kyaa và đối tác sự kiện tại Hoa Kỳ, từ hoạt động thu hút fan đến địa điểm, sản xuất và vận hành tại chỗ.",
+    "th": "วางแผนแฟนมีตติ้งกับ kyaa และพาร์ทเนอร์ในสหรัฐฯ ตั้งแต่การมีส่วนร่วมของแฟน สถานที่ การผลิต ไปจนถึงการดำเนินงานหน้างาน",
+    "pt": "Planeje seu encontro de fãs com o kyaa e nosso parceiro de eventos nos Estados Unidos, do engajamento dos fãs aos espaços, à produção e à operação no local.",
+    "fr": "Préparez votre rencontre de fans avec kyaa et notre partenaire événementiel aux États-Unis, des activités des fans aux lieux, à la production et à l’organisation sur place."
   },
   "m93456ec7af53": {
     "ja": "ファンミーティングについて相談",
@@ -123,15 +123,15 @@ export const messages = {
     "fr": "Participation des fans"
   },
   "m48d21c65dbcf": {
-    "ja": "ByUsによるファンとの交流",
-    "zh-Hans": "由ByUs支持粉丝互动",
-    "zh-Hant": "由ByUs支援粉絲互動",
-    "es": "Interacción con fans junto a ByUs",
-    "id": "Partisipasi fan bersama ByUs",
-    "vi": "Thu hút fan cùng ByUs",
-    "th": "การมีส่วนร่วมของแฟนกับ ByUs",
-    "pt": "Engajamento dos fãs com o ByUs",
-    "fr": "Participation des fans avec ByUs"
+    "ja": "kyaaによるファンとの交流",
+    "zh-Hans": "由kyaa支持粉丝互动",
+    "zh-Hant": "由kyaa支援粉絲互動",
+    "es": "Interacción con fans junto a kyaa",
+    "id": "Partisipasi fan bersama kyaa",
+    "vi": "Thu hút fan cùng kyaa",
+    "th": "การมีส่วนร่วมของแฟนกับ kyaa",
+    "pt": "Engajamento dos fãs com o kyaa",
+    "fr": "Participation des fans avec kyaa"
   },
   "m5f7de8e85daf": {
     "ja": "米国でのイベント運営",
@@ -662,14 +662,14 @@ export const messages = {
     "fr": "Ce n’est pas un problème si certains détails restent à décider."
   },
   "m1d46854470b4": {
-    "ja": "ByUs. Your Bias.    ·    米国ファンミーティング",
-    "zh-Hans": "ByUs. Your Bias.    ·    美国粉丝见面会",
-    "zh-Hant": "ByUs. Your Bias.    ·    美國粉絲見面會",
-    "es": "ByUs. Your Bias.    ·    Encuentros con fans en EE. UU.",
-    "id": "ByUs. Your Bias.    ·    Fanmeeting Amerika Serikat",
-    "vi": "ByUs. Your Bias.    ·    Fanmeeting tại Hoa Kỳ",
-    "th": "ByUs. Your Bias.    ·    แฟนมีตติ้งในสหรัฐฯ",
-    "pt": "ByUs. Your Bias.    ·    Encontros de fãs nos Estados Unidos",
-    "fr": "ByUs. Your Bias.    ·    Rencontres de fans aux États-Unis"
+    "ja": "kyaa. Your Bias.    ·    米国ファンミーティング",
+    "zh-Hans": "kyaa. Your Bias.    ·    美国粉丝见面会",
+    "zh-Hant": "kyaa. Your Bias.    ·    美國粉絲見面會",
+    "es": "kyaa. Your Bias.    ·    Encuentros con fans en EE. UU.",
+    "id": "kyaa. Your Bias.    ·    Fanmeeting Amerika Serikat",
+    "vi": "kyaa. Your Bias.    ·    Fanmeeting tại Hoa Kỳ",
+    "th": "kyaa. Your Bias.    ·    แฟนมีตติ้งในสหรัฐฯ",
+    "pt": "kyaa. Your Bias.    ·    Encontros de fãs nos Estados Unidos",
+    "fr": "kyaa. Your Bias.    ·    Rencontres de fans aux États-Unis"
   }
 } satisfies Record<string, TranslatedMessage>;

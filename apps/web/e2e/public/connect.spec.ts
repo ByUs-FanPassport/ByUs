@@ -184,7 +184,7 @@ test("contact links, language switching, focus trap, and focus return work", asy
   const dialog = page.getByRole("dialog");
   const close = dialog.getByRole("button", { name: /연락처 닫기|Close contacts/ });
   await expect(close).toBeFocused();
-  await expect(dialog.getByRole("link", { name: /biz@sallylab\.io/ })).toHaveAttribute("href", "mailto:biz@sallylab.io");
+  await expect(dialog.getByRole("link", { name: /support@kyaa\.io/ })).toHaveAttribute("href", "mailto:support@kyaa.io");
   for (const handle of ["pifbetter", "ljyk11", "managerdelta"]) {
     await expect(dialog.locator(`a[href="https://t.me/${handle}"]`)).toHaveAttribute("target", "_blank");
   }

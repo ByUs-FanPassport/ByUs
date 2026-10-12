@@ -33,7 +33,7 @@ export function outboundTrackingAllowed(pathname: string) {
 export function outboundCampaign(pathname: string, publishedSlug?: string) {
   if (publishedSlug && outboundCampaignSchema.safeParse(publishedSlug).success
     && (pathname === `/${publishedSlug}` || pathname.startsWith(`/c/${publishedSlug}/`))) return publishedSlug;
-  return ({ "/": "home", "/celebrities": "celebrities", "/community": "community", "/live": "live", "/benefits": "benefits", "/guide": "guide" } as Record<string, string>)[pathname] ?? "byus";
+  return ({ "/": "home", "/celebrities": "celebrities", "/community": "community", "/live": "live", "/benefits": "benefits", "/guide": "guide" } as Record<string, string>)[pathname] ?? "kyaa";
 }
 
 const sensitiveKey = /^(?:x-amz-|x-goog-|oauth)|(?:token|signature|secret|credential|session|authorization)|(?:^|_)(?:sig|auth|code|state|redirect_uri|redirect_url|key)(?:$|_)|^(?:apiKey|clientKey|redirectUri|redirectUrl)$/i;
@@ -47,7 +47,7 @@ export function decorateOutboundUrl(href: string, origin: string, context: Outbo
     const fragment = url.hash.slice(1);
     const fragmentParams = new URLSearchParams(fragment.includes("?") ? fragment.slice(fragment.indexOf("?") + 1) : fragment);
     if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.port
-      || url.origin === new URL(origin).origin || /(?:^|\.)byus\.kr$/i.test(url.hostname)
+      || url.origin === new URL(origin).origin || /(?:^|\.)(?:byus\.kr|kyaa\.io)$/i.test(url.hostname)
       || sensitiveHost.test(url.hostname) || sensitivePath.test(url.pathname)
       || /\.(?:pdf|zip|csv|xlsx?|docx?|hwpx?|png|jpe?g|webp|gif|mp[34])$/i.test(url.pathname)
       || sensitivePath.test(fragment.split("?")[0])
@@ -55,7 +55,7 @@ export function decorateOutboundUrl(href: string, origin: string, context: Outbo
     const properties = outboundPropertiesSchema.safeParse({ ...context, destinationHost: url.hostname });
     if (!properties.success) return null;
     const existingKeys = new Set([...url.searchParams.keys()].map(key => key.toLowerCase()));
-    const defaults = { utm_source: "byus", utm_medium: "referral", utm_campaign: context.campaign, utm_content: `${context.placement}.${context.linkKind}` };
+    const defaults = { utm_source: "kyaa", utm_medium: "referral", utm_campaign: context.campaign, utm_content: `${context.placement}.${context.linkKind}` };
     const additions = Object.entries(defaults).filter(([key]) => !existingKeys.has(key))
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&");
     const hashAt = href.indexOf("#"), base = hashAt < 0 ? href : href.slice(0, hashAt), hash = hashAt < 0 ? "" : href.slice(hashAt);

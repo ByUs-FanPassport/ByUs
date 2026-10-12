@@ -92,10 +92,10 @@ describe("LIVE catalog", () => {
     unmount();
   });
 
-  it("omits only ByUs brand metadata and uses the LIVE start for its countdown", () => {
-    const byus = { ...base, live: { ...base.live, id: "byus-event", slug: "byus-event", brand: { ...base.live.brand, name: "ByUs" } } };
+  it("omits only kyaa brand metadata and uses the LIVE start for its countdown", () => {
+    const byus = { ...base, live: { ...base.live, id: "byus-event", slug: "byus-event", brand: { ...base.live.brand, name: "kyaa" } } };
     render(<LiveCatalogScreen locale="ko" initialCatalog={{ liveNow: [], upcoming: [byus, base], replay: [] }} />);
-    expect(screen.queryByText("KARA · ByUs")).not.toBeInTheDocument();
+    expect(screen.queryByText("KARA · kyaa")).not.toBeInTheDocument();
     expect(screen.getByText("KARA · NUALEAF")).toBeInTheDocument();
     expect(screen.getAllByText(/^D-\d+$/)).toHaveLength(2);
   });

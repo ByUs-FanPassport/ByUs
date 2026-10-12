@@ -1,4 +1,4 @@
-# ByUs 외부 링크 측정
+# kyaa 외부 링크 측정
 
 일반 외부 링크의 UTM과 클릭 집계를 공통 기능으로 사용한다. 특정 브랜드만을 위한 기능이 아니다.
 
@@ -6,9 +6,9 @@
 
 `app/layout.tsx`의 `OutboundLinkTracker`가 HTTP(S) 외부 앵커를 초기 렌더와 동적 삽입 때 처리한다. 정상적인 `<a href>` 또는 `FanAction external`을 사용하면 기본 적용된다. 새 창, 링크 복사에도 장식된 주소가 남는다. 서버 리다이렉트에는 `decorateOutboundUrl`을 사용한다. 기존 Banksy 리다이렉트와 LIVE 시청 이동도 이 함수를 사용하며 기존 전용 클릭 집계는 유지한다.
 
-- 누락된 값만 추가: `utm_source=byus`, `utm_medium=referral`, `utm_campaign=<공개 맥락 또는 byus>`, `utm_content=<위치>.<종류>`.
+- 누락된 값만 추가: `utm_source=kyaa`, `utm_medium=referral`, `utm_campaign=<공개 맥락 또는 kyaa>`, `utm_content=<위치>.<종류>`.
 - 기존 UTM과 쿼리·해시의 원문 바이트는 보존한다.
-- 게시된 프로필의 DTO에서만 `data-outbound-campaign={slug}`를 표시한다. 현재 주소와 일치하는 marker를 사용하고, 그 외에는 고정 공개 목록 또는 `byus`로 제한한다.
+- 게시된 프로필의 DTO에서만 `data-outbound-campaign={slug}`를 표시한다. 현재 주소와 일치하는 marker를 사용하고, 그 외에는 고정 공개 목록 또는 `kyaa`로 제한한다.
 - `data-outbound-placement`: `fanpage_hero`, `header`, `footer`, `content`.
 - `data-outbound-kind`: `ticket`, `website`, `social`, `external`. 앵커 또는 부모 요소에 지정한다. 자유 입력 문구로 종류를 추정하지 않는다.
 

@@ -19,7 +19,7 @@ export async function generateMetadata({
     path: "/bias/promotion",
     locale,
     title:
-      locale === "ko" ? "팬페이지 홍보 안내 | ByUs" : translate(locale, localizedMessages.mabdee7400079, "Promote your fan page | ByUs"),
+      locale === "ko" ? "팬페이지 홍보 안내 | kyaa" : translate(locale, localizedMessages.mabdee7400079, "Promote your fan page | kyaa"),
     description:
       locale === "ko" ? "내 팬페이지 링크를 찾고 프로필, 스토리, 라이브용 홍보 문구를 복사하세요." : translate(locale, localizedMessages.mac2697327da4, "Find your fan page and copy ready-to-use promotional messages."),
   });

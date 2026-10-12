@@ -354,15 +354,15 @@ export const messages = {
     "fr": "Charger les messages précédents"
   },
   "m2eb0209031b3": {
-    "ja": "ByUsサポート",
-    "zh-Hans": "ByUs 支持",
-    "zh-Hant": "ByUs 支援",
-    "es": "Soporte de ByUs",
-    "id": "Dukungan ByUs",
-    "vi": "Hỗ trợ ByUs",
-    "th": "ฝ่ายสนับสนุน ByUs",
-    "pt": "Suporte da ByUs",
-    "fr": "Assistance ByUs"
+    "ja": "kyaaサポート",
+    "zh-Hans": "kyaa 支持",
+    "zh-Hant": "kyaa 支援",
+    "es": "Soporte de kyaa",
+    "id": "Dukungan kyaa",
+    "vi": "Hỗ trợ kyaa",
+    "th": "ฝ่ายสนับสนุน kyaa",
+    "pt": "Suporte da kyaa",
+    "fr": "Assistance kyaa"
   },
   "m2eb4d983af76": {
     "ja": "あなた",

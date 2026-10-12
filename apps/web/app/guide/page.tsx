@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return publicMetadata({
     path: "/guide",
     locale,
-    title: `${content.metadataTitle} | ByUs`,
+    title: `${content.metadataTitle} | kyaa`,
     description: content.metadataDescription,
   });
 }

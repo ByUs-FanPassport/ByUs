@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { bypassImageOptimization } from "@/components/fan-ui/public-image-policy";
 
 export type SeoLocale = AppLocale;
-export const SITE_URL = "https://byus.kr";
+export const SITE_URL = "https://kyaa.io";
 export const DEFAULT_SHARE_IMAGE = `${SITE_URL}/share/default.png`;
 export const NO_INDEX: Metadata["robots"] = { index: false, follow: false };
 
@@ -43,7 +43,7 @@ export function isRehearsalPath(path: string): boolean {
 
 export function isPrivatePath(path: string): boolean {
   return /^\/(?:admin|my|passports|stamps|settings|notifications|onboarding|login|creator|connect|s)(?:\/|$)/.test(path)
-    || /^\/c\/[^/]+\/verify(?:\/|$)/.test(path)
+    || /^\/c\/[^/]+\/(?:verify|tickets)(?:\/|$)/.test(path)
     || /^\/live\/[^/]+\/(?:missions|survey)(?:\/|$)/.test(path);
 }
 
@@ -68,13 +68,13 @@ export function publicMetadata(input: {
   const { path, locale, title, description } = input;
   const url = canonicalUrl(path, locale);
   const image = shareImageUrl(input.image);
-  const images = [{ url: image, alt: input.imageAlt || "ByUs | Your Bias",
+  const images = [{ url: image, alt: input.imageAlt || "kyaa | Your Bias",
     ...(image === DEFAULT_SHARE_IMAGE ? { width: 1200, height: 630 } : {}) }];
   return {
     title, description,
     alternates: { canonical: url, languages: languageAlternates(path, input.locales) },
     ...(isRehearsalPath(path) ? { robots: NO_INDEX } : {}),
-    openGraph: { title, description, url, type: "website", siteName: "ByUs",
+    openGraph: { title, description, url, type: "website", siteName: "kyaa",
       locale: openGraphLocale(locale),
       alternateLocale: (input.locales ?? APP_LOCALES).filter((value) => value !== locale).map(openGraphLocale), images },
     twitter: { card: "summary_large_image", title, description, images },
@@ -83,20 +83,20 @@ export function publicMetadata(input: {
 
 export const pageCopy = {
   home: {
-    ko: { title: "ByUs | 최애의 LIVE와 팬 패스포트", description: "최애의 LIVE 일정을 확인하고 팬 인증, 예약, 출석으로 함께한 순간을 Fan Passport에 기록하세요." },
-    en: { title: "ByUs | LIVE moments and your Fan Passport", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
+    ko: { title: "kyaa | 최애의 LIVE와 팬 패스포트", description: "최애의 LIVE 일정을 확인하고 팬 인증, 예약, 출석으로 함께한 순간을 Fan Passport에 기록하세요." },
+    en: { title: "kyaa | LIVE moments and your Fan Passport", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
 
   ...additionalLocales((translationLocale) => ({ title: localizedMessages.mc4254c713e43[translationLocale], description: localizedMessages.m66f358c91b9f[translationLocale] }))
 },
   live: {
-    ko: { title: "LIVE 일정 | ByUs", description: "진행 중인 LIVE와 예정된 방송을 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },
-    en: { title: "LIVE events and schedules | ByUs", description: "Explore ongoing and upcoming LIVE events. Reserve a spot for your favorite creator’s LIVE and record the moments you share." },
+    ko: { title: "LIVE 일정 | kyaa", description: "진행 중인 LIVE와 예정된 방송을 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },
+    en: { title: "LIVE events and schedules | kyaa", description: "Explore ongoing and upcoming LIVE events. Reserve a spot for your favorite creator’s LIVE and record the moments you share." },
 
   ...additionalLocales((translationLocale) => ({ title: localizedMessages.m70c75a25ee29[translationLocale], description: localizedMessages.m449445c22831[translationLocale] }))
 },
   celebrities: {
-    ko: { title: "셀럽과 크리에이터 | ByUs", description: "ByUs의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요." },
-    en: { title: "Celebrities and creators | ByUs", description: "Meet the celebrities and creators on ByUs. Explore updates and LIVE schedules, and create a Fan Passport for your favorite creator." },
+    ko: { title: "셀럽과 크리에이터 | kyaa", description: "kyaa의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요." },
+    en: { title: "Celebrities and creators | kyaa", description: "Meet the celebrities and creators on kyaa. Explore updates and LIVE schedules, and create a Fan Passport for your favorite creator." },
 
   ...additionalLocales((translationLocale) => ({ title: localizedMessages.m83574df4c2b6[translationLocale], description: localizedMessages.ma7d9afcd4b2d[translationLocale] }))
 },

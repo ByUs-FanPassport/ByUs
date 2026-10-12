@@ -19,6 +19,12 @@ function setup({ deploymentValue = deployment, statusValue = status, receiptValu
   return { call, fetcher };
 }
 describe("deployment notice boundary", () => {
+  it("accepts the new brand while preserving queued legacy notices", async () => {
+    const { call } = setup();
+    expect((await call()).status).toBe(200);
+    expect((await call({ ...input, text: input.text.replace("ByUs", "kyaa").replace("byus.kr", "kyaa.io") })).status).toBe(200);
+    expect((await call({ ...input, text: input.text.replace("byus.kr", "kyaa.io.evil.test") })).status).toBe(400);
+  });
   it("uses fixed room, no parse mode, no redirects, and returns the Telegram message id", async () => {
     const { call, fetcher } = setup(); expect(await (await call()).json()).toEqual({ ok: true, messageId: 321, chatId: -5187701508 });
     const send = fetcher.mock.calls.find(([url]) => String(url).includes("api.telegram.org"));

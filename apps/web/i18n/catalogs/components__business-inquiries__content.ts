@@ -13,26 +13,26 @@ export const messages = {
     "fr": "Pour tous ceux qui ont des fans"
   },
   "mf938d6104e6b": {
-    "ja": "ファンがいますか？\nByUsで始めましょう。",
-    "zh-Hans": "有粉丝吗？\n从 ByUs 开始吧。",
-    "zh-Hant": "有粉絲嗎？\n從 ByUs 開始吧。",
-    "es": "¿Tienes fans?\nEmpieza con ByUs.",
-    "id": "Punya penggemar?\nMulai bersama ByUs.",
-    "vi": "Có người hâm mộ?\nHãy bắt đầu cùng ByUs.",
-    "th": "มีแฟนคลับใช่ไหม\nมาเริ่มต้นกับ ByUs กัน",
-    "pt": "Tem fãs?\nComece com a ByUs.",
-    "fr": "Vous avez des fans ?\nCommencez avec ByUs."
+    "ja": "ファンがいますか？\nkyaaで始めましょう。",
+    "zh-Hans": "有粉丝吗？\n从 kyaa 开始吧。",
+    "zh-Hant": "有粉絲嗎？\n從 kyaa 開始吧。",
+    "es": "¿Tienes fans?\nEmpieza con kyaa.",
+    "id": "Punya penggemar?\nMulai bersama kyaa.",
+    "vi": "Có người hâm mộ?\nHãy bắt đầu cùng kyaa.",
+    "th": "มีแฟนคลับใช่ไหม\nมาเริ่มต้นกับ kyaa กัน",
+    "pt": "Tem fãs?\nComece com a kyaa.",
+    "fr": "Vous avez des fans ?\nCommencez avec kyaa."
   },
   "m68036ee9b0e3": {
-    "ja": "あなた自身やチーム、物語を応援するファンがいるなら、\nByUsでファンと次の活動を企画しましょう。",
-    "zh-Hans": "无论粉丝关注的是你、你的团队还是你的故事，\n都可以在 ByUs 与他们策划下一次活动。",
-    "zh-Hant": "無論粉絲關注的是你、你的團隊還是你的故事，\n都可以在 ByUs 與他們策劃下一次活動。",
-    "es": "Si hay fans que te siguen a ti, a tu equipo o a tu historia,\nplanifica con ellos tu próxima actividad en ByUs.",
-    "id": "Baik mereka mengikuti Anda, tim Anda, maupun kisah Anda,\nrencanakan aktivitas berikutnya bersama penggemar di ByUs.",
-    "vi": "Dù người hâm mộ dõi theo bạn, đội ngũ hay câu chuyện của bạn,\nhãy cùng họ lên kế hoạch cho hoạt động tiếp theo trên ByUs.",
-    "th": "ไม่ว่าแฟนคลับจะติดตามคุณ ทีมของคุณ หรือเรื่องราวของคุณ\nมาวางแผนกิจกรรมครั้งต่อไปกับพวกเขาบน ByUs",
-    "pt": "Se os fãs acompanham você, sua equipe ou sua história,\nplaneje sua próxima atividade com eles na ByUs.",
-    "fr": "Que les fans vous suivent pour vous, votre équipe ou votre histoire,\nplanifiez votre prochaine activité avec eux sur ByUs."
+    "ja": "あなた自身やチーム、物語を応援するファンがいるなら、\nkyaaでファンと次の活動を企画しましょう。",
+    "zh-Hans": "无论粉丝关注的是你、你的团队还是你的故事，\n都可以在 kyaa 与他们策划下一次活动。",
+    "zh-Hant": "無論粉絲關注的是你、你的團隊還是你的故事，\n都可以在 kyaa 與他們策劃下一次活動。",
+    "es": "Si hay fans que te siguen a ti, a tu equipo o a tu historia,\nplanifica con ellos tu próxima actividad en kyaa.",
+    "id": "Baik mereka mengikuti Anda, tim Anda, maupun kisah Anda,\nrencanakan aktivitas berikutnya bersama penggemar di kyaa.",
+    "vi": "Dù người hâm mộ dõi theo bạn, đội ngũ hay câu chuyện của bạn,\nhãy cùng họ lên kế hoạch cho hoạt động tiếp theo trên kyaa.",
+    "th": "ไม่ว่าแฟนคลับจะติดตามคุณ ทีมของคุณ หรือเรื่องราวของคุณ\nมาวางแผนกิจกรรมครั้งต่อไปกับพวกเขาบน kyaa",
+    "pt": "Se os fãs acompanham você, sua equipe ou sua história,\nplaneje sua próxima atividade com eles na kyaa.",
+    "fr": "Que les fans vous suivent pour vous, votre équipe ou votre histoire,\nplanifiez votre prochaine activité avec eux sur kyaa."
   },
   "m5340b6825041": {
     "ja": "ファン活動について相談する",
@@ -398,15 +398,15 @@ export const messages = {
     "fr": "Ce service est-il réservé aux créateurs et aux célébrités ?"
   },
   "m0e52ba0535cd": {
-    "ja": "個人、チーム、ブランドや知的財産（IP）の担当者など、ファンとの活動を企画する方ならどなたでもお問い合わせいただけます。活動内容をお聞かせいただき、ByUsでできるサポートをご相談します。",
-    "zh-Hans": "任何计划与粉丝开展活动的人都可以联系我们，包括个人、团队以及品牌或知识产权（IP）代表。请介绍你的活动，我们会商讨 ByUs 能够提供的支持。",
-    "zh-Hant": "任何計劃與粉絲進行活動的人都可以聯繫我們，包括個人、團隊以及品牌或智慧財產權（IP）代表。請介紹你的活動，我們會商討 ByUs 能夠提供的支援。",
-    "es": "Cualquier persona que planifique actividades con fans puede contactarnos, incluidas personas independientes, equipos y representantes de marcas o propiedad intelectual (IP). Cuéntanos sobre tu trabajo y hablaremos sobre cómo podría ayudarte ByUs.",
-    "id": "Siapa pun yang merencanakan aktivitas bersama penggemar dapat menghubungi kami, termasuk individu, tim, dan perwakilan merek atau kekayaan intelektual (IP). Ceritakan kegiatan Anda, lalu kami akan membahas dukungan yang dapat diberikan ByUs.",
-    "vi": "Bất kỳ ai đang lên kế hoạch hoạt động cùng người hâm mộ đều có thể liên hệ, bao gồm cá nhân, đội nhóm và đại diện thương hiệu hoặc sở hữu trí tuệ (IP). Hãy chia sẻ về hoạt động của bạn, chúng tôi sẽ trao đổi về cách ByUs có thể hỗ trợ.",
-    "th": "ทุกคนที่วางแผนกิจกรรมร่วมกับแฟนคลับสามารถติดต่อได้ รวมถึงบุคคล ทีม และตัวแทนแบรนด์หรือทรัพย์สินทางปัญญา (IP) บอกเราเกี่ยวกับงานของคุณ แล้วเราจะหารือว่า ByUs ช่วยได้อย่างไร",
-    "pt": "Qualquer pessoa que planeje atividades com fãs pode entrar em contato, incluindo indivíduos, equipes e representantes de marcas ou propriedade intelectual (IP). Conte sobre seu trabalho e conversaremos sobre como a ByUs pode apoiar você.",
-    "fr": "Toute personne qui prévoit des activités avec des fans peut nous contacter, notamment les particuliers, les équipes et les représentants de marques ou de propriété intellectuelle (PI). Parlez-nous de votre activité et nous verrons comment ByUs peut vous aider."
+    "ja": "個人、チーム、ブランドや知的財産（IP）の担当者など、ファンとの活動を企画する方ならどなたでもお問い合わせいただけます。活動内容をお聞かせいただき、kyaaでできるサポートをご相談します。",
+    "zh-Hans": "任何计划与粉丝开展活动的人都可以联系我们，包括个人、团队以及品牌或知识产权（IP）代表。请介绍你的活动，我们会商讨 kyaa 能够提供的支持。",
+    "zh-Hant": "任何計劃與粉絲進行活動的人都可以聯繫我們，包括個人、團隊以及品牌或智慧財產權（IP）代表。請介紹你的活動，我們會商討 kyaa 能夠提供的支援。",
+    "es": "Cualquier persona que planifique actividades con fans puede contactarnos, incluidas personas independientes, equipos y representantes de marcas o propiedad intelectual (IP). Cuéntanos sobre tu trabajo y hablaremos sobre cómo podría ayudarte kyaa.",
+    "id": "Siapa pun yang merencanakan aktivitas bersama penggemar dapat menghubungi kami, termasuk individu, tim, dan perwakilan merek atau kekayaan intelektual (IP). Ceritakan kegiatan Anda, lalu kami akan membahas dukungan yang dapat diberikan kyaa.",
+    "vi": "Bất kỳ ai đang lên kế hoạch hoạt động cùng người hâm mộ đều có thể liên hệ, bao gồm cá nhân, đội nhóm và đại diện thương hiệu hoặc sở hữu trí tuệ (IP). Hãy chia sẻ về hoạt động của bạn, chúng tôi sẽ trao đổi về cách kyaa có thể hỗ trợ.",
+    "th": "ทุกคนที่วางแผนกิจกรรมร่วมกับแฟนคลับสามารถติดต่อได้ รวมถึงบุคคล ทีม และตัวแทนแบรนด์หรือทรัพย์สินทางปัญญา (IP) บอกเราเกี่ยวกับงานของคุณ แล้วเราจะหารือว่า kyaa ช่วยได้อย่างไร",
+    "pt": "Qualquer pessoa que planeje atividades com fãs pode entrar em contato, incluindo indivíduos, equipes e representantes de marcas ou propriedade intelectual (IP). Conte sobre seu trabalho e conversaremos sobre como a kyaa pode apoiar você.",
+    "fr": "Toute personne qui prévoit des activités avec des fans peut nous contacter, notamment les particuliers, les équipes et les représentants de marques ou de propriété intellectuelle (PI). Parlez-nous de votre activité et nous verrons comment kyaa peut vous aider."
   },
   "m14b311ae6ed7": {
     "ja": "所属事務所がなくても始められますか？",
@@ -541,15 +541,15 @@ export const messages = {
     "fr": "Réunissez marques et créateurs\npour leurs fans."
   },
   "m49588b042547": {
-    "ja": "著名人やクリエイター向けの商品やアイデアがありますか？\n商品販売、ライブショッピング、グッズ、\nブランドコンテンツ、ファンイベントについてByUsにご相談ください。",
-    "zh-Hans": "有想向名人或创作者推荐的产品或创意吗？\n欢迎与 ByUs 商讨商品销售、直播购物、周边产品、\n品牌内容或粉丝活动。",
-    "zh-Hant": "有想向名人或創作者推薦的產品或創意嗎？\n歡迎與 ByUs 商討商品銷售、直播購物、周邊產品、\n品牌內容或粉絲活動。",
-    "es": "¿Tienes un producto o una idea para una celebridad o un creador?\nHablemos con ByUs sobre ventas de productos, compras en directo, artículos promocionales,\ncontenido de marca o eventos para fans.",
-    "id": "Punya produk atau ide untuk selebritas atau kreator?\nMari bahas penjualan produk, belanja langsung, merchandise,\nkonten bermerek, atau acara penggemar bersama ByUs.",
-    "vi": "Bạn có sản phẩm hoặc ý tưởng dành cho người nổi tiếng hay nhà sáng tạo?\nHãy cùng ByUs trao đổi về bán sản phẩm, mua sắm trực tiếp, hàng lưu niệm,\nnội dung thương hiệu hoặc sự kiện dành cho người hâm mộ.",
-    "th": "มีสินค้าหรือไอเดียสำหรับคนดังหรือครีเอเตอร์หรือไม่\nมาหารือเรื่องการขายสินค้า ไลฟ์ชอปปิง สินค้าที่ระลึก\nคอนเทนต์แบรนด์ หรือกิจกรรมแฟนคลับกับ ByUs",
-    "pt": "Tem um produto ou uma ideia para uma celebridade ou um criador?\nConverse com a ByUs sobre vendas de produtos, live shopping, produtos oficiais,\nconteúdo de marca ou eventos para fãs.",
-    "fr": "Vous avez un produit ou une idée à proposer à une célébrité ou à un créateur ?\nDiscutez avec ByUs de vente de produits, de live shopping, de produits dérivés,\nde contenu de marque ou d’événements pour les fans."
+    "ja": "著名人やクリエイター向けの商品やアイデアがありますか？\n商品販売、ライブショッピング、グッズ、\nブランドコンテンツ、ファンイベントについてkyaaにご相談ください。",
+    "zh-Hans": "有想向名人或创作者推荐的产品或创意吗？\n欢迎与 kyaa 商讨商品销售、直播购物、周边产品、\n品牌内容或粉丝活动。",
+    "zh-Hant": "有想向名人或創作者推薦的產品或創意嗎？\n歡迎與 kyaa 商討商品銷售、直播購物、周邊產品、\n品牌內容或粉絲活動。",
+    "es": "¿Tienes un producto o una idea para una celebridad o un creador?\nHablemos con kyaa sobre ventas de productos, compras en directo, artículos promocionales,\ncontenido de marca o eventos para fans.",
+    "id": "Punya produk atau ide untuk selebritas atau kreator?\nMari bahas penjualan produk, belanja langsung, merchandise,\nkonten bermerek, atau acara penggemar bersama kyaa.",
+    "vi": "Bạn có sản phẩm hoặc ý tưởng dành cho người nổi tiếng hay nhà sáng tạo?\nHãy cùng kyaa trao đổi về bán sản phẩm, mua sắm trực tiếp, hàng lưu niệm,\nnội dung thương hiệu hoặc sự kiện dành cho người hâm mộ.",
+    "th": "มีสินค้าหรือไอเดียสำหรับคนดังหรือครีเอเตอร์หรือไม่\nมาหารือเรื่องการขายสินค้า ไลฟ์ชอปปิง สินค้าที่ระลึก\nคอนเทนต์แบรนด์ หรือกิจกรรมแฟนคลับกับ kyaa",
+    "pt": "Tem um produto ou uma ideia para uma celebridade ou um criador?\nConverse com a kyaa sobre vendas de produtos, live shopping, produtos oficiais,\nconteúdo de marca ou eventos para fãs.",
+    "fr": "Vous avez un produit ou une idée à proposer à une célébrité ou à un créateur ?\nDiscutez avec kyaa de vente de produits, de live shopping, de produits dérivés,\nde contenu de marque ou d’événements pour les fans."
   },
   "mbbf6437b36b9": {
     "ja": "コラボレーションを提案",
@@ -640,15 +640,15 @@ export const messages = {
     "fr": "Quel type de collaboration\navez-vous en tête ?"
   },
   "md5749d6d51ef": {
-    "ja": "ByUsのファン認証、LIVE参加、ファンイベントを商品やコンテンツのキャンペーンに組み込めます。ご提案を確認後、参加者、各チームの役割、条件をご相談します。",
-    "zh-Hans": "借助 ByUs，可将粉丝认证、LIVE 参与和粉丝活动融入产品或内容推广。审核提案后，我们会商讨参与方、各团队的职责和合作条件。",
-    "zh-Hant": "借助 ByUs，可將粉絲認證、LIVE 參與和粉絲活動融入產品或內容推廣。審核提案後，我們會商討參與方、各團隊的職責和合作條件。",
-    "es": "Incorpora la verificación de fans, la participación en LIVE y los eventos para fans a la campaña de tu producto o contenido con ByUs. Después de revisar la propuesta, hablaremos sobre los participantes, la función de cada equipo y las condiciones.",
-    "id": "Tambahkan verifikasi penggemar, partisipasi LIVE, dan acara penggemar ke kampanye produk atau konten Anda bersama ByUs. Setelah meninjau proposal, kami akan membahas pihak yang terlibat, peran setiap tim, dan ketentuannya.",
-    "vi": "Kết hợp xác minh người hâm mộ, tham gia LIVE và sự kiện dành cho người hâm mộ vào chiến dịch sản phẩm hoặc nội dung cùng ByUs. Sau khi xem xét đề xuất, chúng tôi sẽ trao đổi về các bên tham gia, vai trò của từng đội và điều khoản.",
-    "th": "เพิ่มการยืนยันแฟนคลับ การเข้าร่วม LIVE และกิจกรรมแฟนคลับในแคมเปญสินค้าหรือคอนเทนต์ด้วย ByUs หลังตรวจสอบข้อเสนอ เราจะหารือผู้ที่เกี่ยวข้อง บทบาทของแต่ละทีม และเงื่อนไข",
-    "pt": "Inclua a verificação de fãs, a participação em LIVE e os eventos para fãs em sua campanha de produto ou conteúdo com a ByUs. Após analisar sua proposta, conversaremos sobre os participantes, o papel de cada equipe e as condições.",
-    "fr": "Intégrez la vérification des fans, la participation aux LIVE et les événements pour les fans à votre campagne de produit ou de contenu avec ByUs. Après examen de votre proposition, nous discuterons des participants, du rôle de chaque équipe et des conditions."
+    "ja": "kyaaのファン認証、LIVE参加、ファンイベントを商品やコンテンツのキャンペーンに組み込めます。ご提案を確認後、参加者、各チームの役割、条件をご相談します。",
+    "zh-Hans": "借助 kyaa，可将粉丝认证、LIVE 参与和粉丝活动融入产品或内容推广。审核提案后，我们会商讨参与方、各团队的职责和合作条件。",
+    "zh-Hant": "借助 kyaa，可將粉絲認證、LIVE 參與和粉絲活動融入產品或內容推廣。審核提案後，我們會商討參與方、各團隊的職責和合作條件。",
+    "es": "Incorpora la verificación de fans, la participación en LIVE y los eventos para fans a la campaña de tu producto o contenido con kyaa. Después de revisar la propuesta, hablaremos sobre los participantes, la función de cada equipo y las condiciones.",
+    "id": "Tambahkan verifikasi penggemar, partisipasi LIVE, dan acara penggemar ke kampanye produk atau konten Anda bersama kyaa. Setelah meninjau proposal, kami akan membahas pihak yang terlibat, peran setiap tim, dan ketentuannya.",
+    "vi": "Kết hợp xác minh người hâm mộ, tham gia LIVE và sự kiện dành cho người hâm mộ vào chiến dịch sản phẩm hoặc nội dung cùng kyaa. Sau khi xem xét đề xuất, chúng tôi sẽ trao đổi về các bên tham gia, vai trò của từng đội và điều khoản.",
+    "th": "เพิ่มการยืนยันแฟนคลับ การเข้าร่วม LIVE และกิจกรรมแฟนคลับในแคมเปญสินค้าหรือคอนเทนต์ด้วย kyaa หลังตรวจสอบข้อเสนอ เราจะหารือผู้ที่เกี่ยวข้อง บทบาทของแต่ละทีม และเงื่อนไข",
+    "pt": "Inclua a verificação de fãs, a participação em LIVE e os eventos para fãs em sua campanha de produto ou conteúdo com a kyaa. Após analisar sua proposta, conversaremos sobre os participantes, o papel de cada equipe e as condições.",
+    "fr": "Intégrez la vérification des fans, la participation aux LIVE et les événements pour les fans à votre campagne de produit ou de contenu avec kyaa. Après examen de votre proposition, nous discuterons des participants, du rôle de chaque équipe et des conditions."
   },
   "m7d89fd1c078e": {
     "ja": "コマース＆共同購入",
@@ -684,15 +684,15 @@ export const messages = {
     "fr": "Vente en direct"
   },
   "mb473941badab": {
-    "ja": "外部チャンネルで行うライブショッピングをご提案ください。ByUsのLIVE予約、チェックイン、ファン特典をどう活用できるかご相談します。",
-    "zh-Hans": "提出在外部频道开展直播购物活动。我们会商讨如何利用 ByUs LIVE 预约、签到和粉丝福利提供支持。",
-    "zh-Hant": "提出在外部頻道進行直播購物活動。我們會商討如何利用 ByUs LIVE 預約、簽到和粉絲福利提供支援。",
-    "es": "Propón un evento de compras en directo en un canal externo. Hablaremos sobre cómo pueden apoyarlo las reservas y los registros de asistencia de ByUs LIVE, además de los beneficios para fans.",
-    "id": "Ajukan acara belanja langsung di kanal eksternal. Kami akan membahas bagaimana reservasi LIVE, check-in, dan manfaat penggemar ByUs dapat mendukungnya.",
-    "vi": "Đề xuất sự kiện mua sắm trực tiếp trên kênh bên ngoài. Chúng tôi sẽ trao đổi về cách đặt chỗ, điểm danh LIVE và quyền lợi người hâm mộ của ByUs có thể hỗ trợ.",
-    "th": "เสนอไลฟ์ชอปปิงบนช่องภายนอก เราจะหารือว่าการจอง LIVE การเช็กอิน และสิทธิประโยชน์แฟนคลับของ ByUs จะช่วยสนับสนุนได้อย่างไร",
-    "pt": "Proponha um evento de live shopping em um canal externo. Conversaremos sobre como as reservas, os check-ins e os benefícios para fãs da ByUs LIVE podem apoiá-lo.",
-    "fr": "Proposez un événement de live shopping sur une chaîne externe. Nous discuterons de la façon dont les réservations, les check-ins et les avantages pour les fans de ByUs LIVE peuvent le soutenir."
+    "ja": "外部チャンネルで行うライブショッピングをご提案ください。kyaaのLIVE予約、チェックイン、ファン特典をどう活用できるかご相談します。",
+    "zh-Hans": "提出在外部频道开展直播购物活动。我们会商讨如何利用 kyaa LIVE 预约、签到和粉丝福利提供支持。",
+    "zh-Hant": "提出在外部頻道進行直播購物活動。我們會商討如何利用 kyaa LIVE 預約、簽到和粉絲福利提供支援。",
+    "es": "Propón un evento de compras en directo en un canal externo. Hablaremos sobre cómo pueden apoyarlo las reservas y los registros de asistencia de kyaa LIVE, además de los beneficios para fans.",
+    "id": "Ajukan acara belanja langsung di kanal eksternal. Kami akan membahas bagaimana reservasi LIVE, check-in, dan manfaat penggemar kyaa dapat mendukungnya.",
+    "vi": "Đề xuất sự kiện mua sắm trực tiếp trên kênh bên ngoài. Chúng tôi sẽ trao đổi về cách đặt chỗ, điểm danh LIVE và quyền lợi người hâm mộ của kyaa có thể hỗ trợ.",
+    "th": "เสนอไลฟ์ชอปปิงบนช่องภายนอก เราจะหารือว่าการจอง LIVE การเช็กอิน และสิทธิประโยชน์แฟนคลับของ kyaa จะช่วยสนับสนุนได้อย่างไร",
+    "pt": "Proponha um evento de live shopping em um canal externo. Conversaremos sobre como as reservas, os check-ins e os benefícios para fãs da kyaa LIVE podem apoiá-lo.",
+    "fr": "Proposez un événement de live shopping sur une chaîne externe. Nous discuterons de la façon dont les réservations, les check-ins et les avantages pour les fans de kyaa LIVE peuvent le soutenir."
   },
   "m8251a4326219": {
     "ja": "グッズ＆IPコラボレーション",
@@ -992,15 +992,15 @@ export const messages = {
     "fr": "Qui gère les ventes, la production et la livraison ?"
   },
   "m8723db69486f": {
-    "ja": "販売チャンネル、制作計画、配送・カスタマーサポート体制を共有してください。担当チームが行う業務、ByUsが支援するページやファン活動、費用をご相談します。",
-    "zh-Hans": "请分享销售渠道、生产计划以及配送和客户支持安排。我们会商讨由你的团队负责的工作、ByUs 支持的页面和粉丝活动，以及相关费用。",
-    "zh-Hant": "請分享銷售渠道、生產計劃以及配送和客戶支援安排。我們會商討由你的團隊負責的工作、ByUs 支援的頁面和粉絲活動，以及相關費用。",
-    "es": "Comparte tus canales de venta, planes de producción y organización de entregas y atención al cliente. Hablaremos sobre las tareas que realizará tu equipo, las páginas y actividades para fans que apoyará ByUs y los costos.",
-    "id": "Bagikan kanal penjualan, rencana produksi, serta pengaturan pengiriman dan dukungan pelanggan. Kami akan membahas tugas tim Anda, halaman dan aktivitas penggemar yang didukung ByUs, serta biayanya.",
-    "vi": "Hãy chia sẻ kênh bán, kế hoạch sản xuất, phương án giao hàng và hỗ trợ khách hàng. Chúng tôi sẽ trao đổi về công việc do đội ngũ của bạn phụ trách, các trang và hoạt động được ByUs hỗ trợ cùng chi phí.",
-    "th": "แชร์ช่องทางขาย แผนการผลิต และการจัดส่งกับบริการลูกค้า เราจะหารืองานที่ทีมของคุณรับผิดชอบ หน้าและกิจกรรมที่ ByUs สนับสนุน รวมถึงค่าใช้จ่าย",
-    "pt": "Compartilhe seus canais de venda, planos de produção e condições de entrega e atendimento ao cliente. Conversaremos sobre quais tarefas sua equipe realizará, quais páginas e atividades para fãs a ByUs apoiará e os custos.",
-    "fr": "Indiquez vos canaux de vente, vos plans de production ainsi que les modalités de livraison et de service client. Nous discuterons des tâches de votre équipe, des pages et activités que ByUs prendra en charge, ainsi que des coûts."
+    "ja": "販売チャンネル、制作計画、配送・カスタマーサポート体制を共有してください。担当チームが行う業務、kyaaが支援するページやファン活動、費用をご相談します。",
+    "zh-Hans": "请分享销售渠道、生产计划以及配送和客户支持安排。我们会商讨由你的团队负责的工作、kyaa 支持的页面和粉丝活动，以及相关费用。",
+    "zh-Hant": "請分享銷售渠道、生產計劃以及配送和客戶支援安排。我們會商討由你的團隊負責的工作、kyaa 支援的頁面和粉絲活動，以及相關費用。",
+    "es": "Comparte tus canales de venta, planes de producción y organización de entregas y atención al cliente. Hablaremos sobre las tareas que realizará tu equipo, las páginas y actividades para fans que apoyará kyaa y los costos.",
+    "id": "Bagikan kanal penjualan, rencana produksi, serta pengaturan pengiriman dan dukungan pelanggan. Kami akan membahas tugas tim Anda, halaman dan aktivitas penggemar yang didukung kyaa, serta biayanya.",
+    "vi": "Hãy chia sẻ kênh bán, kế hoạch sản xuất, phương án giao hàng và hỗ trợ khách hàng. Chúng tôi sẽ trao đổi về công việc do đội ngũ của bạn phụ trách, các trang và hoạt động được kyaa hỗ trợ cùng chi phí.",
+    "th": "แชร์ช่องทางขาย แผนการผลิต และการจัดส่งกับบริการลูกค้า เราจะหารืองานที่ทีมของคุณรับผิดชอบ หน้าและกิจกรรมที่ kyaa สนับสนุน รวมถึงค่าใช้จ่าย",
+    "pt": "Compartilhe seus canais de venda, planos de produção e condições de entrega e atendimento ao cliente. Conversaremos sobre quais tarefas sua equipe realizará, quais páginas e atividades para fãs a kyaa apoiará e os custos.",
+    "fr": "Indiquez vos canaux de vente, vos plans de production ainsi que les modalités de livraison et de service client. Nous discuterons des tâches de votre équipe, des pages et activités que kyaa prendra en charge, ainsi que des coûts."
   },
   "m3cbafecadbc7": {
     "ja": "商品やチケットでイベントに協賛できますか？",
@@ -1047,15 +1047,15 @@ export const messages = {
     "fr": "Partagez vos idées et votre proposition.\nNotre équipe examinera votre demande et vous répondra par e-mail."
   },
   "m1d9a381aa88a": {
-    "ja": "ByUsガイドを見る",
-    "zh-Hans": "查看 ByUs 指南",
-    "zh-Hant": "查看 ByUs 指南",
-    "es": "Explorar la guía de ByUs",
-    "id": "Jelajahi panduan ByUs",
-    "vi": "Khám phá hướng dẫn ByUs",
-    "th": "ดูคู่มือ ByUs",
-    "pt": "Explore o guia da ByUs",
-    "fr": "Consulter le guide ByUs"
+    "ja": "kyaaガイドを見る",
+    "zh-Hans": "查看 kyaa 指南",
+    "zh-Hant": "查看 kyaa 指南",
+    "es": "Explorar la guía de kyaa",
+    "id": "Jelajahi panduan kyaa",
+    "vi": "Khám phá hướng dẫn kyaa",
+    "th": "ดูคู่มือ kyaa",
+    "pt": "Explore o guia da kyaa",
+    "fr": "Consulter le guide kyaa"
   },
   "mc6ace05e496d": {
     "ja": "米国でのファンミーティングを計画中ですか？",

@@ -128,7 +128,7 @@ export function FanAppHeader({
       innerClassName={styles.headerInner}
       brandClassName={styles.brand}
       brandHref={`/?locale=${locale}` as Route}
-      brandAriaLabel={locale === "ko" ? "ByUs 홈" : translate(locale, localizedMessages.m84a200a175f6, "ByUs home")}
+      brandAriaLabel={locale === "ko" ? "kyaa 홈" : translate(locale, localizedMessages.m84a200a175f6, "kyaa home")}
     >
       <FanPrimaryNavigation
         activeItemClassName={styles.activeNav}

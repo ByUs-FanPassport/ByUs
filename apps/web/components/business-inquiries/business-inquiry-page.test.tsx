@@ -20,6 +20,7 @@ describe("business inquiry pages", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("combobox", { name: locale === "ko" ? "언어 선택, 현재 한국어" : "Choose language, currently English" })).toHaveValue(locale);
+    expect(screen.getByRole("button", { name: "support@kyaa.io" })).toBeInTheDocument();
     expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
     fireEvent.click(screen.getAllByRole("button", { name: t.cta })[0]);
     const dialog = await screen.findByRole("dialog");
@@ -85,12 +86,12 @@ describe("business inquiry pages", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(businessPageContent[kind].en.hero.replace(/\n/g, " "));
     const result = await metadata({ searchParams });
     expect(result.title).toContain(businessPageContent[kind].en.title);
-    expect(result.alternates?.canonical).toBe(`https://byus.kr${businessPagePaths[kind]}?locale=en`);
+    expect(result.alternates?.canonical).toBe(`https://kyaa.io${businessPagePaths[kind]}?locale=en`);
     for (const locale of ["de", ["en", "ko"], undefined]) {
-      expect((await metadata({ searchParams: Promise.resolve({ locale }) })).alternates?.canonical).toBe(`https://byus.kr${businessPagePaths[kind]}?locale=ko`);
+      expect((await metadata({ searchParams: Promise.resolve({ locale }) })).alternates?.canonical).toBe(`https://kyaa.io${businessPagePaths[kind]}?locale=ko`);
     }
     const urls = buildSitemap([]).map((item) => item.url);
-    expect(urls).toContain(`https://byus.kr${businessPagePaths[kind]}?locale=ko`);
-    expect(urls).toContain(`https://byus.kr${businessPagePaths[kind]}?locale=en`);
+    expect(urls).toContain(`https://kyaa.io${businessPagePaths[kind]}?locale=ko`);
+    expect(urls).toContain(`https://kyaa.io${businessPagePaths[kind]}?locale=en`);
   });
 });

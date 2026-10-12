@@ -55,7 +55,7 @@ export function CreatorInstagramPage({ locale }: { locale: "ko" | "en" }) {
   const showFailure = useCallback((failure: unknown) => {
     if (failure instanceof ConnectionRequestError && failure.status === 401) {
       setAccount(null); setAccounts([]); setDataOwner(currentOwner.current); setScreen("intro"); setReauth(true);
-      setError(t("ByUs 로그인이 만료됐어요. 다시 로그인한 뒤 연결을 이어가 주세요.", "Your ByUs session expired. Sign in again to continue."));
+      setError(t("kyaa 로그인이 만료됐어요. 다시 로그인한 뒤 연결을 이어가 주세요.", "Your kyaa session expired. Sign in again to continue."));
     } else if (failure instanceof ConnectionRequestError && failure.status === 409) {
       setError(t("연결 상태가 변경됐어요. 새로고침한 뒤 다시 확인해 주세요.", "The connection changed. Reload this page and try again."));
     } else {
@@ -121,7 +121,7 @@ export function CreatorInstagramPage({ locale }: { locale: "ko" | "en" }) {
         const outcome = z.object({ disconnected: z.literal(true), remoteRevocation: z.enum(["confirmed", "unconfirmed", "not_needed"]) }).parse(result);
         const remaining = accounts.filter(a => a.celebrityId !== account?.celebrityId);
         setAccounts(remaining); setAccount(remaining[0] ?? null); setScreen(remaining.length ? "manage" : "intro");
-        setNotice(outcome.remoteRevocation === "unconfirmed" ? t("ByUs 연결을 해제했어요. Instagram의 앱 및 웹사이트 설정에서도 접근 권한을 해제할 수 있어요.", "Disconnected from ByUs. You can also revoke access in Instagram's Apps and Websites settings.") : t("Instagram 연결을 해제했어요.", "Instagram disconnected."));
+        setNotice(outcome.remoteRevocation === "unconfirmed" ? t("kyaa 연결을 해제했어요. Instagram의 앱 및 웹사이트 설정에서도 접근 권한을 해제할 수 있어요.", "Disconnected from kyaa. You can also revoke access in Instagram's Apps and Websites settings.") : t("Instagram 연결을 해제했어요.", "Instagram disconnected."));
       } else {
         const next = accountResponse.parse(result).account;
         setAccount(next);

@@ -334,7 +334,7 @@ describe("TelegramCertificationCallbackWorker", () => {
     await expect(worker.handle(callback)).resolves.toBe(result);
     expect(queue.approve).toHaveBeenCalledExactlyOnceWith(chatId, callback);
     expect(api.answerCallback).toHaveBeenCalledExactlyOnceWith(callback.queryId, answerText, false);
-    expect(api.editProcessed).toHaveBeenCalledExactlyOnceWith(321, "기존 인증 문구", completionText, `https://byus.kr/admin/certifications?status=${status}&submission=${submissionId}`);
+    expect(api.editProcessed).toHaveBeenCalledExactlyOnceWith(321, "기존 인증 문구", completionText, `https://kyaa.io/admin/certifications?status=${status}&submission=${submissionId}`);
     expect(api.answerCallback.mock.invocationCallOrder[0]).toBeLessThan(api.editProcessed.mock.invocationCallOrder[0]!);
   });
 

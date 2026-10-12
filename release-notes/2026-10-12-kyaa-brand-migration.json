@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "웹 서비스 이름과 로고를 kyaa로 바꿨어요.",
+    "공유되는 대표 주소를 kyaa.io로 변경했어요.",
+    "공개 문의 주소를 support@kyaa.io로 변경했어요.",
+    "첨부 이미지는 개발 환경에서 공개 화면을 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/guide",
+  "images": [
+    "release-notes/images/2026-10-12-kyaa-guide-desktop.png"
+  ]
+}

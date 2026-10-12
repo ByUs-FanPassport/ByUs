@@ -106,9 +106,13 @@ export const legacyImageDimensions: Readonly<Record<string, readonly [number, nu
     1672,
     941
   ],
+  "/images/guest-home/kyaa-wordmark-transparent.png": [
+    1200,
+    580
+  ],
   "/images/guest-home/byus-wordmark-transparent.png": [
     1200,
-    493
+    580
   ],
   "/images/guest-home/changha-card.jpg": [
     1080,

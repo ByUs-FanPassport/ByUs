@@ -35,15 +35,15 @@ export const messages = {
     "fr": "Favoris"
   },
   "m84a200a175f6": {
-    "ja": "ByUsホーム",
-    "zh-Hans": "ByUs首页",
-    "zh-Hant": "ByUs首頁",
-    "es": "Inicio de ByUs",
-    "id": "Beranda ByUs",
-    "vi": "Trang chủ ByUs",
-    "th": "หน้าแรก ByUs",
-    "pt": "Início do ByUs",
-    "fr": "Accueil ByUs"
+    "ja": "kyaaホーム",
+    "zh-Hans": "kyaa首页",
+    "zh-Hant": "kyaa首頁",
+    "es": "Inicio de kyaa",
+    "id": "Beranda kyaa",
+    "vi": "Trang chủ kyaa",
+    "th": "หน้าแรก kyaa",
+    "pt": "Início do kyaa",
+    "fr": "Accueil kyaa"
   },
   "m5cfebe367665": {
     "ja": "メインナビゲーション",

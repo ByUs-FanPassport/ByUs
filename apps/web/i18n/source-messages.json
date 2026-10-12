@@ -6,8 +6,8 @@
     "id": "components/guest-home:visiblePassportCount"
   },
   "mabdee7400079": {
-    "en": "Promote your fan page | ByUs",
-    "ko": "팬페이지 홍보 안내 | ByUs",
+    "en": "Promote your fan page | kyaa",
+    "ko": "팬페이지 홍보 안내 | kyaa",
     "source": "app/bias/promotion/page",
     "id": "app/bias/promotion/page:inline.m53e3fc2aef35"
   },
@@ -54,20 +54,20 @@
     "id": "app/not-found:inline.m13214fc935c5"
   },
   "me9ce14ecd1e0": {
-    "en": "ByUs onchain records | ByUs",
-    "ko": "ByUs 온체인 기록 | ByUs",
+    "en": "kyaa onchain records | kyaa",
+    "ko": "kyaa 온체인 기록 | kyaa",
     "source": "app/pages/onchain/page",
     "id": "app/pages/onchain/page:inline.m1baa3ae051b5"
   },
   "m3a31c7871cfc": {
-    "en": "Review ByUs fan action metrics and verification evidence recorded on GIWA Sepolia.",
-    "ko": "GIWA Sepolia에 기록된 ByUs 팬 행동 지표와 검증 근거를 확인하세요.",
+    "en": "Review kyaa fan action metrics and verification evidence recorded on GIWA Sepolia.",
+    "ko": "GIWA Sepolia에 기록된 kyaa 팬 행동 지표와 검증 근거를 확인하세요.",
     "source": "app/pages/onchain/page",
     "id": "app/pages/onchain/page:inline.m2d38865de624"
   },
   "m7a17fb5bbdee": {
-    "en": "Kakao connection | ByUs",
-    "ko": "카카오 연결 | ByUs",
+    "en": "Kakao connection | kyaa",
+    "ko": "카카오 연결 | kyaa",
     "source": "app/settings/kakao/callback/page",
     "id": "app/settings/kakao/callback/page:inline.mb2d81dc262ad"
   },
@@ -102,14 +102,14 @@
     "id": "components/business-inquiries/content:businessPageContent.creator.title"
   },
   "mf938d6104e6b": {
-    "en": "Have fans?\nGet started with ByUs.",
-    "ko": "팬이 있는 누구나,\nByUs에서 함께해요",
+    "en": "Have fans?\nGet started with kyaa.",
+    "ko": "팬이 있는 누구나,\nkyaa에서 함께해요",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.creator.hero"
   },
   "m68036ee9b0e3": {
-    "en": "Whether fans follow you, your team, or your story,\nplan your next activity with them on ByUs.",
-    "ko": "나를, 우리 팀을, 우리의 이야기를 좋아하는 팬이 있다면.\n팬과 함께할 다음 활동을 ByUs에서 준비하세요.",
+    "en": "Whether fans follow you, your team, or your story,\nplan your next activity with them on kyaa.",
+    "ko": "나를, 우리 팀을, 우리의 이야기를 좋아하는 팬이 있다면.\n팬과 함께할 다음 활동을 kyaa에서 준비하세요.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.creator.description"
   },
@@ -312,7 +312,7 @@
     "id": "components/business-inquiries/content:businessPageContent.creator.faqs.0.question"
   },
   "m0e52ba0535cd": {
-    "en": "Anyone planning activities with fans can get in touch, including individuals, teams, and representatives of brands or intellectual property (IP). Tell us about your work, and we’ll discuss how ByUs could support you.",
+    "en": "Anyone planning activities with fans can get in touch, including individuals, teams, and representatives of brands or intellectual property (IP). Tell us about your work, and we’ll discuss how kyaa could support you.",
     "ko": "네. 팬과 함께할 활동을 준비하는 개인, 팀, 브랜드·IP 관계자 모두 문의할 수 있어요. 현재 활동을 알려주시면 적합한 운영 방식을 함께 검토합니다.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.creator.faqs.0.answer"
@@ -390,8 +390,8 @@
     "id": "components/business-inquiries/content:businessPageContent.partner.hero"
   },
   "m49588b042547": {
-    "en": "Have a product or idea for a celebrity or creator?\nLet’s discuss product sales, live shopping, merchandise,\nbranded content, or fan events with ByUs.",
-    "ko": "셀럽·크리에이터에게 제안하고 싶은 제품과 아이디어.\n커머스, 라이브커머스, 굿즈, 광고부터 팬 이벤트까지\nByUs와 함께할 협업을 제안해 주세요.",
+    "en": "Have a product or idea for a celebrity or creator?\nLet’s discuss product sales, live shopping, merchandise,\nbranded content, or fan events with kyaa.",
+    "ko": "셀럽·크리에이터에게 제안하고 싶은 제품과 아이디어.\n커머스, 라이브커머스, 굿즈, 광고부터 팬 이벤트까지\nkyaa와 함께할 협업을 제안해 주세요.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.partner.description"
   },
@@ -444,8 +444,8 @@
     "id": "components/business-inquiries/content:businessPageContent.partner.supportTitle"
   },
   "md5749d6d51ef": {
-    "en": "Build fan verification, LIVE participation, and fan events into your product or content campaign with ByUs. After reviewing your proposal, we’ll discuss who’s involved, each team’s role, and the terms.",
-    "ko": "제품과 콘텐츠에 ByUs의 팬 인증, LIVE 참여, 이벤트를 더할 수 있습니다. 제안 내용을 검토한 뒤 참여자와 각 팀의 역할, 진행 조건을 함께 정합니다.",
+    "en": "Build fan verification, LIVE participation, and fan events into your product or content campaign with kyaa. After reviewing your proposal, we’ll discuss who’s involved, each team’s role, and the terms.",
+    "ko": "제품과 콘텐츠에 kyaa의 팬 인증, LIVE 참여, 이벤트를 더할 수 있습니다. 제안 내용을 검토한 뒤 참여자와 각 팀의 역할, 진행 조건을 함께 정합니다.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.partner.supportDescription"
   },
@@ -468,8 +468,8 @@
     "id": "components/business-inquiries/content:businessPageContent.partner.services.1.title"
   },
   "mb473941badab": {
-    "en": "Propose a live shopping event on an external channel. We’ll discuss how ByUs LIVE reservations, check-ins, and fan benefits can support it.",
-    "ko": "외부 채널에서 진행할 판매 방송을 제안해 주세요. ByUs의 LIVE 예약·출석과 팬 혜택을 활용한 참여 흐름을 함께 준비합니다.",
+    "en": "Propose a live shopping event on an external channel. We’ll discuss how kyaa LIVE reservations, check-ins, and fan benefits can support it.",
+    "ko": "외부 채널에서 진행할 판매 방송을 제안해 주세요. kyaa의 LIVE 예약·출석과 팬 혜택을 활용한 참여 흐름을 함께 준비합니다.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.partner.services.1.description"
   },
@@ -636,8 +636,8 @@
     "id": "components/business-inquiries/content:businessPageContent.partner.faqs.2.question"
   },
   "m8723db69486f": {
-    "en": "Share your sales channels, production plans, and delivery and customer support arrangements. We’ll discuss which tasks your team will handle, which pages and fan activities ByUs will support, and the costs.",
-    "ko": "제안하실 판매 채널, 제작 방식, 배송·고객 응대 조건을 알려주세요. 파트너가 맡을 업무와 ByUs의 페이지·팬 참여 운영 범위, 비용을 각각 협의합니다.",
+    "en": "Share your sales channels, production plans, and delivery and customer support arrangements. We’ll discuss which tasks your team will handle, which pages and fan activities kyaa will support, and the costs.",
+    "ko": "제안하실 판매 채널, 제작 방식, 배송·고객 응대 조건을 알려주세요. 파트너가 맡을 업무와 kyaa의 페이지·팬 참여 운영 범위, 비용을 각각 협의합니다.",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.partner.faqs.2.answer"
   },
@@ -666,8 +666,8 @@
     "id": "components/business-inquiries/content:businessPageContent.partner.closeDescription"
   },
   "m1d9a381aa88a": {
-    "en": "Explore the ByUs guide",
-    "ko": "ByUs 이용 가이드 보기",
+    "en": "Explore the kyaa guide",
+    "ko": "kyaa 이용 가이드 보기",
     "source": "components/business-inquiries/content",
     "id": "components/business-inquiries/content:businessPageContent.partner.guide"
   },
@@ -1200,8 +1200,8 @@
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.steps.3.title"
   },
   "mf929a4ddbe2e": {
-    "en": "Watch the LIVE on Instagram, then return to the ByUs LIVE page and enter the code shared during the broadcast. Complete check-in to earn 10 raffle tickets, then use them to enter for your favorite prize.",
-    "ko": "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 ByUs의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 10장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
+    "en": "Watch the LIVE on Instagram, then return to the kyaa LIVE page and enter the code shared during the broadcast. Complete check-in to earn 10 raffle tickets, then use them to enter for your favorite prize.",
+    "ko": "Instagram에서 LIVE를 시청하고, 방송에서 알려주는 코드를 kyaa의 LIVE 화면에 입력하세요. 출석을 완료하면 응모권 10장을 받아 원하는 선물에 추가로 응모할 수 있어요.",
     "source": "components/elina-fan-guide/content",
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.steps.3.body"
   },
@@ -1218,8 +1218,8 @@
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.steps.3.actions.1"
   },
   "mf5fabcca671f": {
-    "en": "Code entry is open from September 18 at 8:30 PM until September 19 at 00:00 KST (midnight at the end of September 18). Return to the ByUs LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
-    "ko": "코드 입력은 9월 18일 오후 8시 30분부터 9월 19일 00:00(KST), 방송 당일 밤 12시까지 가능해요. 방송을 보다가 이 ByUs 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
+    "en": "Code entry is open from September 18 at 8:30 PM until September 19 at 00:00 KST (midnight at the end of September 18). Return to the kyaa LIVE page after watching on Instagram. Check-in is separate from reservation and requires an Elina Passport.",
+    "ko": "코드 입력은 9월 18일 오후 8시 30분부터 9월 19일 00:00(KST), 방송 당일 밤 12시까지 가능해요. 방송을 보다가 이 kyaa 화면으로 돌아와 주세요. 예약과 출석은 별도이며, 엘리나 Passport가 필요해요.",
     "source": "components/elina-fan-guide/content",
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.steps.3.note"
   },
@@ -1260,8 +1260,8 @@
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.missionCards.0.1"
   },
   "me53d1a75ce25": {
-    "en": "Return to ByUs and enter the code",
-    "ko": "ByUs로 돌아와 코드 입력",
+    "en": "Return to kyaa and enter the code",
+    "ko": "kyaa로 돌아와 코드 입력",
     "source": "components/elina-fan-guide/content",
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.missionCards.1.0"
   },
@@ -1380,8 +1380,8 @@
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.closingAction"
   },
   "mca079ef76357": {
-    "en": "ByUs. Your Bias.    ·    KO / English",
-    "ko": "ByUs. Your Bias.    ·    한국어 / EN",
+    "en": "kyaa. Your Bias.    ·    KO / English",
+    "ko": "kyaa. Your Bias.    ·    한국어 / EN",
     "source": "components/elina-fan-guide/content",
     "id": "components/elina-fan-guide/content:elinaFanGuideContent.footer"
   },
@@ -1434,8 +1434,8 @@
     "id": "components/fan-shell/fan-app-shell:inline.m2328864ad5d4"
   },
   "m84a200a175f6": {
-    "en": "ByUs home",
-    "ko": "ByUs 홈",
+    "en": "kyaa home",
+    "ko": "kyaa 홈",
     "source": "components/fan-shell/fan-app-shell",
     "id": "components/fan-shell/fan-app-shell:inline.md0192fc5fca5"
   },
@@ -1518,8 +1518,8 @@
     "id": "components/fan-shell/fan-site-footer:copy.terms"
   },
   "m426ae2de78d1": {
-    "en": "ByUs footer navigation",
-    "ko": "ByUs 하단 메뉴",
+    "en": "kyaa footer navigation",
+    "ko": "kyaa 하단 메뉴",
     "source": "components/fan-shell/fan-site-footer",
     "id": "components/fan-shell/fan-site-footer:copy.nav"
   },
@@ -1590,20 +1590,20 @@
     "id": "components/fan-shell/fan-site-footer:copy.businessAddress"
   },
   "mfafaf28d4070": {
-    "en": "ByUs home",
-    "ko": "ByUs 홈",
+    "en": "kyaa home",
+    "ko": "kyaa 홈",
     "source": "components/fan-shell/fan-site-footer",
     "id": "components/fan-shell/fan-site-footer:inline.md0192fc5fca5"
   },
   "m447c7b7bbd23": {
-    "en": "Open ByUs Telegram channel, new window",
-    "ko": "ByUs Telegram 채널 열기, 새 창",
+    "en": "Open kyaa Telegram channel, new window",
+    "ko": "kyaa Telegram 채널 열기, 새 창",
     "source": "components/fan-shell/fan-site-footer",
     "id": "components/fan-shell/fan-site-footer:inline.mc970eb571060"
   },
   "maf19023c88d3": {
-    "en": "Open ByUs {0}, new window",
-    "ko": "ByUs {0} 열기, 새 창",
+    "en": "Open kyaa {0}, new window",
+    "ko": "kyaa {0} 열기, 새 창",
     "source": "components/fan-shell/fan-site-footer",
     "id": "components/fan-shell/fan-site-footer:inline.mc4dc5fe164e1"
   },
@@ -1620,8 +1620,8 @@
     "id": "components/fan-shell/fan-site-footer:inline.m8f4c645a1138"
   },
   "mae9332c916d9": {
-    "en": "ByUs home",
-    "ko": "ByUs 홈",
+    "en": "kyaa home",
+    "ko": "kyaa 홈",
     "source": "components/fan-shell/fan-wordmark-link",
     "id": "components/fan-shell/fan-wordmark-link:inline.md0192fc5fca5"
   },
@@ -2148,8 +2148,8 @@
     "id": "components/guest-home:inline.mcd41f0122fb6"
   },
   "ma1bde353710b": {
-    "en": "Your ByUs guide with Elina",
-    "ko": "엘리나와 함께 ByUs 참여 가이드",
+    "en": "Your kyaa guide with Elina",
+    "ko": "엘리나와 함께 kyaa 참여 가이드",
     "source": "components/home-entry-cards/home-entry-cards",
     "id": "components/home-entry-cards/home-entry-cards:copy.label"
   },
@@ -2166,8 +2166,8 @@
     "id": "components/home-entry-cards/home-entry-cards:copy.action"
   },
   "m16b2e3b23b97": {
-    "en": "Plan your U.S. fanmeeting with ByUs",
-    "ko": "미국 팬미팅, ByUs와 함께 준비하세요",
+    "en": "Plan your U.S. fanmeeting with kyaa",
+    "ko": "미국 팬미팅, kyaa와 함께 준비하세요",
     "source": "components/home-entry-cards/home-entry-cards",
     "id": "components/home-entry-cards/home-entry-cards:copy.fanmeeting"
   },
@@ -2220,8 +2220,8 @@
     "id": "components/home-entry-cards/managed-home-banner:inline.ma3e8f36d0a12"
   },
   "m11331552a52b": {
-    "en": "ByUs news",
-    "ko": "ByUs 소식",
+    "en": "kyaa news",
+    "ko": "kyaa 소식",
     "source": "components/home-entry-cards/managed-home-banner",
     "id": "components/home-entry-cards/managed-home-banner:inline.mf43678a7f0b7"
   },
@@ -2310,8 +2310,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.1.title"
   },
   "md690a1be143f": {
-    "en": "Saturday, September 12, from 8 AM to 1 PM. Reserve your spot on ByUs for ifew’s 100-day celebration LIVE, then find your reservation in MY.",
-    "ko": "9월 12일 토요일 오전 8시부터 오후 1시까지.\nByUs에서 이퓨의 100일 기념 LIVE를 예약하고\nMY에서 예약 내역을 확인하세요.",
+    "en": "Saturday, September 12, from 8 AM to 1 PM. Reserve your spot on kyaa for ifew’s 100-day celebration LIVE, then find your reservation in MY.",
+    "ko": "9월 12일 토요일 오전 8시부터 오후 1시까지.\nkyaa에서 이퓨의 100일 기념 LIVE를 예약하고\nMY에서 예약 내역을 확인하세요.",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.1.body"
   },
@@ -2328,8 +2328,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.1.actions.1"
   },
   "m63bfdea50767": {
-    "en": "All times are Korea Standard Time (KST, UTC+9).\nAn ifew Passport is required to reserve on ByUs.",
-    "ko": "한국 시간(KST, UTC+9) 기준이에요.\nByUs 예약에는 이퓨 Passport가 필요해요.",
+    "en": "All times are Korea Standard Time (KST, UTC+9).\nAn ifew Passport is required to reserve on kyaa.",
+    "ko": "한국 시간(KST, UTC+9) 기준이에요.\nkyaa 예약에는 이퓨 Passport가 필요해요.",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.1.note"
   },
@@ -2340,8 +2340,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.2.title"
   },
   "m288dacffc1bb": {
-    "en": "Celebrate 100 days on TikTok @ifewknow. Look for the attendance code shared during the broadcast, then use the button below to enter it on ByUs.",
-    "ko": "TikTok @ifewknow에서 100일을 함께 축하해요.\n방송 중 알려주는 출석 코드를\n아래 버튼을 눌러 ByUs에 입력하세요.",
+    "en": "Celebrate 100 days on TikTok @ifewknow. Look for the attendance code shared during the broadcast, then use the button below to enter it on kyaa.",
+    "ko": "TikTok @ifewknow에서 100일을 함께 축하해요.\n방송 중 알려주는 출석 코드를\n아래 버튼을 눌러 kyaa에 입력하세요.",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.2.body"
   },
@@ -2358,8 +2358,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.2.actions.1"
   },
   "mc6e113e028d1": {
-    "en": "Enter your code on September 12, 08:00–13:00 KST.\nA ByUs reservation is separate from TikTok event registration.",
-    "ko": "출석 코드 입력: 9월 12일(토) 08:00–13:00 KST.\nByUs 예약과 TikTok 이벤트 등록은 별개예요.",
+    "en": "Enter your code on September 12, 08:00–13:00 KST.\nA kyaa reservation is separate from TikTok event registration.",
+    "ko": "출석 코드 입력: 9월 12일(토) 08:00–13:00 KST.\nkyaa 예약과 TikTok 이벤트 등록은 별개예요.",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.steps.2.note"
   },
@@ -2418,8 +2418,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.missionCards.0.1"
   },
   "m0355c5437439": {
-    "en": "Enter your code on ByUs",
-    "ko": "ByUs에 출석 코드 입력",
+    "en": "Enter your code on kyaa",
+    "ko": "kyaa에 출석 코드 입력",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.missionCards.1.0"
   },
@@ -2514,8 +2514,8 @@
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.closingAction"
   },
   "m34da268adce6": {
-    "en": "ByUs. Your Bias.    ·    KO / English",
-    "ko": "ByUs. Your Bias.    ·    한국어 / EN",
+    "en": "kyaa. Your Bias.    ·    KO / English",
+    "ko": "kyaa. Your Bias.    ·    한국어 / EN",
     "source": "components/ifew-fan-guide/content",
     "id": "components/ifew-fan-guide/content:ifewFanGuideContent.footer"
   },
@@ -2550,8 +2550,8 @@
     "id": "components/instagram-recent-activity:inline.m46828dfd1543"
   },
   "m9cc8a37e9587": {
-    "en": "ByUs Legal Notice",
-    "ko": "ByUs 법적 고지",
+    "en": "kyaa Legal Notice",
+    "ko": "kyaa 법적 고지",
     "source": "components/legal-content",
     "id": "components/legal-content:legalLabels.notice"
   },
@@ -2586,14 +2586,14 @@
     "id": "components/legal-content:legalLabels.languageAriaLabel"
   },
   "m6fd73ee9a050": {
-    "en": "Privacy Policy | ByUs",
-    "ko": "개인정보처리방침 | ByUs",
+    "en": "Privacy Policy | kyaa",
+    "ko": "개인정보처리방침 | kyaa",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.metadataTitle"
   },
   "mc249cedcdc5e": {
-    "en": "ByUs Privacy Policy",
-    "ko": "ByUs 개인정보처리방침",
+    "en": "kyaa Privacy Policy",
+    "ko": "kyaa 개인정보처리방침",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.metadataDescription"
   },
@@ -2604,8 +2604,8 @@
     "id": "components/legal-content:legalDocuments.privacy.title"
   },
   "me46e68309758": {
-    "en": "Sallylab Inc. provides this Privacy Policy to explain how we process only the personal information necessary to operate ByUs and how we protect it securely.",
-    "ko": "Sallylab Inc.는 ByUs를 이용하는 팬의 개인정보를 필요한 범위에서만 처리하고 안전하게 보호하기 위해 다음과 같이 개인정보처리방침을 안내합니다.",
+    "en": "Sallylab Inc. provides this Privacy Policy to explain how we process only the personal information necessary to operate kyaa and how we protect it securely.",
+    "ko": "Sallylab Inc.는 kyaa를 이용하는 팬의 개인정보를 필요한 범위에서만 처리하고 안전하게 보호하기 위해 다음과 같이 개인정보처리방침을 안내합니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.description"
   },
@@ -2748,8 +2748,8 @@
     "id": "components/legal-content:legalDocuments.privacy.sections.2.heading"
   },
   "mc54081fa5ad1": {
-    "en": "We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If you withdraw consent for Kakao service notifications or disconnect Kakao, we delete the original phone number from ByUs systems and any incomplete registration information. Consent and withdrawal history, delivery correlation values, and provider acceptance and result records may be stored separately for the scope and period necessary to comply with applicable laws, resolve disputes, or respond to security incidents. We may also store information separately where applicable laws require retention for a certain period.",
-    "ko": "개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 카카오 알림톡 수신 동의를 철회하거나 Kakao 연결을 해제하면 ByUs 내부 저장소의 원본 전화번호와 완료되지 않은 등록 정보를 삭제합니다. 동의·철회 이력, 발송 대조값과 제공사 접수·결과 기록은 관계 법령 준수, 분쟁 또는 보안 대응에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다. 그 밖에 관계 법령에서 일정 기간 보관을 요구하는 경우에도 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다.",
+    "en": "We retain personal information for as long as necessary to provide the service and maintain your account. We delete it without undue delay when the purpose of processing has been fulfilled or when you request deletion. We delete physical reward recipient details 30 days after shipping or on-site pickup is completed. If you withdraw consent for Kakao service notifications or disconnect Kakao, we delete the original phone number from kyaa systems and any incomplete registration information. Consent and withdrawal history, delivery correlation values, and provider acceptance and result records may be stored separately for the scope and period necessary to comply with applicable laws, resolve disputes, or respond to security incidents. We may also store information separately where applicable laws require retention for a certain period.",
+    "ko": "개인정보는 서비스 제공과 계정 유지에 필요한 기간 동안 보유하며, 처리 목적이 달성되거나 이용자가 삭제를 요청한 경우 지체 없이 파기합니다. 실물 혜택 수령 정보는 배송 또는 현장 수령 완료 후 30일이 지나면 삭제합니다. 카카오 알림톡 수신 동의를 철회하거나 Kakao 연결을 해제하면 kyaa 내부 저장소의 원본 전화번호와 완료되지 않은 등록 정보를 삭제합니다. 동의·철회 이력, 발송 대조값과 제공사 접수·결과 기록은 관계 법령 준수, 분쟁 또는 보안 대응에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다. 그 밖에 관계 법령에서 일정 기간 보관을 요구하는 경우에도 해당 목적에 필요한 범위와 기간 동안 분리하여 보관할 수 있습니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.sections.2.paragraphs.0"
   },
@@ -2760,14 +2760,14 @@
     "id": "components/legal-content:legalDocuments.privacy.sections.3.heading"
   },
   "mbf80c131b865": {
-    "en": "Instagram connection requires separate consent from the professional account owner. ByUs requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.",
-    "ko": "Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. ByUs는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.",
+    "en": "Instagram connection requires separate consent from the professional account owner. kyaa requests basic read access, without publishing, commenting, or messaging permissions. We display media using Instagram-provided URLs without storing the original media files; cards open the original posts.",
+    "ko": "Instagram 연결은 프로계정 소유자의 별도 동의로 진행됩니다. kyaa는 기본 읽기 권한을 사용하며 게시·댓글 작성·메시지 전송 권한을 요청하지 않습니다. 미디어 원본 파일을 보관하지 않고 Instagram이 제공하는 주소로 표시하며, 카드를 누르면 원본 게시물로 이동합니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.sections.3.items.0"
   },
   "m093f5c2b4d55": {
-    "en": "When disconnection or a valid deletion request is processed, ByUs deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings.",
-    "ko": "연결 해제 또는 유효한 삭제 요청을 처리하면 ByUs의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다.",
+    "en": "When disconnection or a valid deletion request is processed, kyaa deletes the connected account information, access token, media cache, and connection-flow data. A hashed deletion confirmation code is retained for 30 days, and an account hash used to prevent deletion/reconnection races for up to 2 days before cleanup. Account owners can also revoke Meta access in Instagram's Apps and Websites settings.",
+    "ko": "연결 해제 또는 유효한 삭제 요청을 처리하면 kyaa의 해당 계정 정보·접근 토큰·미디어 캐시·연결 진행 정보를 삭제합니다. 삭제 확인코드는 해시로 30일, 삭제와 재연결의 경합 방지용 계정 해시는 최대 2일 보관한 후 정리합니다. Meta 측 접근 권한은 Instagram의 앱 및 웹사이트 설정에서도 직접 철회할 수 있습니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.sections.3.items.1"
   },
@@ -2832,20 +2832,20 @@
     "id": "components/legal-content:legalDocuments.privacy.sections.7.heading"
   },
   "ma09e75b8e30f": {
-    "en": "If we revise this Policy because of changes to applicable laws or the service, we will provide notice of the changes and their effective date through the ByUs service before the revised Policy takes effect.",
-    "ko": "법령이나 서비스 내용이 변경되어 본 방침을 수정하는 경우, 시행 전에 ByUs 서비스 내에서 변경 내용과 시행일을 안내합니다.",
+    "en": "If we revise this Policy because of changes to applicable laws or the service, we will provide notice of the changes and their effective date through the kyaa service before the revised Policy takes effect.",
+    "ko": "법령이나 서비스 내용이 변경되어 본 방침을 수정하는 경우, 시행 전에 kyaa 서비스 내에서 변경 내용과 시행일을 안내합니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.privacy.sections.7.paragraphs.0"
   },
   "m23fd78f6ad62": {
-    "en": "Terms of Use | ByUs",
-    "ko": "이용약관 | ByUs",
+    "en": "Terms of Use | kyaa",
+    "ko": "이용약관 | kyaa",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.terms.metadataTitle"
   },
   "m4b060e1a4d9a": {
-    "en": "ByUs Terms of Use",
-    "ko": "ByUs 서비스 이용약관",
+    "en": "kyaa Terms of Use",
+    "ko": "kyaa 서비스 이용약관",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.terms.metadataDescription"
   },
@@ -2856,8 +2856,8 @@
     "id": "components/legal-content:legalDocuments.terms.title"
   },
   "mafff687cb83b": {
-    "en": "These Terms of Use set out the conditions for using the ByUs service provided by Sallylab Inc. and the rights and responsibilities of the company and its users.",
-    "ko": "이 약관은 Sallylab Inc.가 제공하는 ByUs 서비스의 이용 조건과 회사 및 이용자의 권리와 책임을 정합니다.",
+    "en": "These Terms of Use set out the conditions for using the kyaa service provided by Sallylab Inc. and the rights and responsibilities of the company and its users.",
+    "ko": "이 약관은 Sallylab Inc.가 제공하는 kyaa 서비스의 이용 조건과 회사 및 이용자의 권리와 책임을 정합니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.terms.description"
   },
@@ -2868,8 +2868,8 @@
     "id": "components/legal-content:legalDocuments.terms.sections.0.heading"
   },
   "mf85d07a12a73": {
-    "en": "These Terms apply to the ByUs web and app services and their connected fan verification, LIVE participation, Fan Passport, Stamp, benefit, and notification features. By completing Google login and using the service, you agree to these Terms and the Privacy Policy.",
-    "ko": "이 약관은 ByUs 웹·앱과 이에 연결된 팬 인증, LIVE 참여, Fan Passport, Stamp, 혜택 및 알림 기능에 적용됩니다. 이용자가 Google 로그인을 완료하고 서비스를 사용하면 이 약관과 개인정보처리방침에 동의한 것으로 봅니다.",
+    "en": "These Terms apply to the kyaa web and app services and their connected fan verification, LIVE participation, Fan Passport, Stamp, benefit, and notification features. By completing Google login and using the service, you agree to these Terms and the Privacy Policy.",
+    "ko": "이 약관은 kyaa 웹·앱과 이에 연결된 팬 인증, LIVE 참여, Fan Passport, Stamp, 혜택 및 알림 기능에 적용됩니다. 이용자가 Google 로그인을 완료하고 서비스를 사용하면 이 약관과 개인정보처리방침에 동의한 것으로 봅니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.terms.sections.0.paragraphs.0"
   },
@@ -2904,8 +2904,8 @@
     "id": "components/legal-content:legalDocuments.terms.sections.2.heading"
   },
   "mfa945b35fc18": {
-    "en": "Fan verification results, Fan Passports, and Stamps are digital records used to record fan activities and provide related features within ByUs. Unless expressly stated otherwise, they do not represent cash, securities, investment products, or rights in the company.",
-    "ko": "팬 인증 결과, Fan Passport와 Stamp는 ByUs 안에서 팬 활동을 기록하고 관련 기능을 제공하기 위한 디지털 기록입니다. 별도의 명시가 없는 한 현금, 증권, 투자 상품 또는 회사에 대한 권리를 의미하지 않습니다.",
+    "en": "Fan verification results, Fan Passports, and Stamps are digital records used to record fan activities and provide related features within kyaa. Unless expressly stated otherwise, they do not represent cash, securities, investment products, or rights in the company.",
+    "ko": "팬 인증 결과, Fan Passport와 Stamp는 kyaa 안에서 팬 활동을 기록하고 관련 기능을 제공하기 위한 디지털 기록입니다. 별도의 명시가 없는 한 현금, 증권, 투자 상품 또는 회사에 대한 권리를 의미하지 않습니다.",
     "source": "components/legal-content",
     "id": "components/legal-content:legalDocuments.terms.sections.2.paragraphs.0"
   },
@@ -3186,8 +3186,8 @@
     "id": "components/login-page:inline.m06bf4d8c89ab"
   },
   "mb2e8e1adc638": {
-    "en": "Return to ByUs home",
-    "ko": "ByUs 홈으로 돌아가기",
+    "en": "Return to kyaa home",
+    "ko": "kyaa 홈으로 돌아가기",
     "source": "components/login-page",
     "id": "components/login-page:inline.m713f51e240ff"
   },
@@ -3300,13 +3300,13 @@
     "id": "components/notice/notice-share:inline.mbaf05cbc00d2"
   },
   "m8fb00b25bfe1": {
-    "en": "ByUs onchain records",
-    "ko": "ByUs 온체인 기록",
+    "en": "kyaa onchain records",
+    "ko": "kyaa 온체인 기록",
     "source": "components/onchain/onchain-public-page",
     "id": "components/onchain/onchain-public-page:copy.title"
   },
   "mcf9e123a8736": {
-    "en": "ByUs records fan actions from the service on the GIWA Sepolia testnet. The results below are finalized records excluding QA wallets and historical imports.",
+    "en": "kyaa records fan actions from the service on the GIWA Sepolia testnet. The results below are finalized records excluding QA wallets and historical imports.",
     "ko": "서비스의 팬 행동을 GIWA Sepolia 테스트넷에 기록합니다. 아래 실적은 QA 지갑과 과거 이관을 제외한 확정 기록입니다.",
     "source": "components/onchain/onchain-public-page",
     "id": "components/onchain/onchain-public-page:copy.intro"
@@ -3798,8 +3798,8 @@
     "id": "components/onchain/onchain-public-page:inline.m89221173e59a"
   },
   "mec65a0eab4d9": {
-    "en": "Get started with ByUs",
-    "ko": "ByUs 시작하기",
+    "en": "Get started with kyaa",
+    "ko": "kyaa 시작하기",
     "source": "components/privy-provider",
     "id": "components/privy-provider:inline.m69a40db27f3a"
   },
@@ -3894,7 +3894,7 @@
     "id": "components/service-guide/content:serviceGuideContent.metadataTitle"
   },
   "m0daebd272cc6": {
-    "en": "Learn how fan verification, Fan Passports, LIVE reservations and attendance, and prize entries work on ByUs.",
+    "en": "Learn how fan verification, Fan Passports, LIVE reservations and attendance, and prize entries work on kyaa.",
     "ko": "팬 인증, Fan Passport, LIVE 예약·출석, 선물 응모를 이용하는 방법과 자주 묻는 질문을 확인하세요.",
     "source": "components/service-guide/content",
     "id": "components/service-guide/content:serviceGuideContent.metadataDescription"
@@ -3924,8 +3924,8 @@
     "id": "components/service-guide/content:serviceGuideContent.secondaryAction"
   },
   "m4275d91e03ef": {
-    "en": "How to participate on ByUs",
-    "ko": "ByUs 참여 순서",
+    "en": "How to participate on kyaa",
+    "ko": "kyaa 참여 순서",
     "source": "components/service-guide/content",
     "id": "components/service-guide/content:serviceGuideContent.overviewTitle"
   },
@@ -3990,8 +3990,8 @@
     "id": "components/service-guide/content:serviceGuideContent.passportTitle"
   },
   "md231d4e64298": {
-    "en": "A Fan Passport is a digital record of your fan activities with a favorite creator on ByUs.",
-    "ko": "Fan Passport는 ByUs 안에서 최애와 함께한 팬 활동을 기록하는 디지털 기록이에요.",
+    "en": "A Fan Passport is a digital record of your fan activities with a favorite creator on kyaa.",
+    "ko": "Fan Passport는 kyaa 안에서 최애와 함께한 팬 활동을 기록하는 디지털 기록이에요.",
     "source": "components/service-guide/content",
     "id": "components/service-guide/content:serviceGuideContent.passportDescription"
   },
@@ -4086,8 +4086,8 @@
     "id": "components/service-guide/content:serviceGuideContent.faqs.5.question"
   },
   "m8004c4734a4a": {
-    "en": "Contact the ByUs team at biz@sallylab.io. ByUs is operated by Sallylab Inc.",
-    "ko": "Sallylab Inc.의 ByUs 문의 창구인 biz@sallylab.io로 보내 주세요.",
+    "en": "Contact the kyaa team at support@kyaa.io. kyaa is operated by Sallylab Inc.",
+    "ko": "Sallylab Inc.의 kyaa 문의 창구인 support@kyaa.io로 보내 주세요.",
     "source": "components/service-guide/content",
     "id": "components/service-guide/content:serviceGuideContent.faqs.5.answer"
   },
@@ -4098,8 +4098,8 @@
     "id": "components/service-guide/content:serviceGuideContent.contactTitle"
   },
   "med934a1ccf6c": {
-    "en": "Contact the ByUs team with questions about your account or use of the service.",
-    "ko": "계정이나 서비스 이용 문의는 ByUs 운영팀에서 확인해 드릴게요.",
+    "en": "Contact the kyaa team with questions about your account or use of the service.",
+    "ko": "계정이나 서비스 이용 문의는 kyaa 운영팀에서 확인해 드릴게요.",
     "source": "components/service-guide/content",
     "id": "components/service-guide/content:serviceGuideContent.contactDescription"
   },
@@ -4116,8 +4116,8 @@
     "id": "components/us-fanmeetings/content:fanmeetingContent.hero"
   },
   "ma9f1cbace901": {
-    "en": "Plan your fanmeeting with ByUs and our U.S. event partner, from fan engagement to venues, production, and on-site operations.",
-    "ko": "팬 참여 기획부터 장소·제작·현장 운영까지.\nByUs가 미국 현지 운영 파트너와 함께 준비합니다.",
+    "en": "Plan your fanmeeting with kyaa and our U.S. event partner, from fan engagement to venues, production, and on-site operations.",
+    "ko": "팬 참여 기획부터 장소·제작·현장 운영까지.\nkyaa가 미국 현지 운영 파트너와 함께 준비합니다.",
     "source": "components/us-fanmeetings/content",
     "id": "components/us-fanmeetings/content:fanmeetingContent.desc"
   },
@@ -4176,8 +4176,8 @@
     "id": "components/us-fanmeetings/content:fanmeetingContent.roleA"
   },
   "m48d21c65dbcf": {
-    "en": "Fan engagement with ByUs",
-    "ko": "팬 참여를 준비하는 ByUs",
+    "en": "Fan engagement with kyaa",
+    "ko": "팬 참여를 준비하는 kyaa",
     "source": "components/us-fanmeetings/content",
     "id": "components/us-fanmeetings/content:fanmeetingContent.roleADesc"
   },
@@ -4470,8 +4470,8 @@
     "id": "components/us-fanmeetings/content:fanmeetingContent.note"
   },
   "m1d46854470b4": {
-    "en": "ByUs. Your Bias.    ·    U.S. Fanmeetings",
-    "ko": "ByUs. Your Bias.    ·    미국 팬미팅",
+    "en": "kyaa. Your Bias.    ·    U.S. Fanmeetings",
+    "ko": "kyaa. Your Bias.    ·    미국 팬미팅",
     "source": "components/us-fanmeetings/content",
     "id": "components/us-fanmeetings/content:fanmeetingContent.footer"
   },
@@ -5034,8 +5034,8 @@
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.deadlinePassed"
   },
   "m338a725406f1": {
-    "en": "Your winning history remains available. Contact ByUs if you need help with submission.",
-    "ko": "당첨 이력은 유지돼요. 제출과 관련해 도움이 필요하면 ByUs에 문의해 주세요.",
+    "en": "Your winning history remains available. Contact kyaa if you need help with submission.",
+    "ko": "당첨 이력은 유지돼요. 제출과 관련해 도움이 필요하면 kyaa에 문의해 주세요.",
     "source": "features/benefit/ui/benefit-recipient-presentation",
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.deadlinePassedBody"
   },
@@ -5046,8 +5046,8 @@
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.unclaimed"
   },
   "m25add08bd374": {
-    "en": "Your winning history remains available. Contact ByUs with collection questions.",
-    "ko": "당첨 이력은 유지돼요. 수령과 관련한 문의는 ByUs에 알려 주세요.",
+    "en": "Your winning history remains available. Contact kyaa with collection questions.",
+    "ko": "당첨 이력은 유지돼요. 수령과 관련한 문의는 kyaa에 알려 주세요.",
     "source": "features/benefit/ui/benefit-recipient-presentation",
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.unclaimedBody"
   },
@@ -5058,14 +5058,14 @@
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.locked"
   },
   "mafc7598c3a84": {
-    "en": "These details can no longer be edited. Contact ByUs if you need a change.",
-    "ko": "현재는 정보를 수정할 수 없어요. 변경이 필요하면 ByUs에 문의해 주세요.",
+    "en": "These details can no longer be edited. Contact kyaa if you need a change.",
+    "ko": "현재는 정보를 수정할 수 없어요. 변경이 필요하면 kyaa에 문의해 주세요.",
     "source": "features/benefit/ui/benefit-recipient-presentation",
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.lockedBody"
   },
   "mfbc414826fbc": {
-    "en": "Contact ByUs",
-    "ko": "ByUs에 문의하기",
+    "en": "Contact kyaa",
+    "ko": "kyaa에 문의하기",
     "source": "features/benefit/ui/benefit-recipient-presentation",
     "id": "features/benefit/ui/benefit-recipient-presentation:recipientCopy.contact"
   },
@@ -6258,8 +6258,8 @@
     "id": "features/benefit/ui/raffle-result-panel:copy.overdue"
   },
   "m28c4623b6580": {
-    "en": "Your winning history remains available. Contact ByUs if you need help.",
-    "ko": "당첨 이력은 유지돼요. 필요한 경우 ByUs에 문의해 주세요.",
+    "en": "Your winning history remains available. Contact kyaa if you need help.",
+    "ko": "당첨 이력은 유지돼요. 필요한 경우 kyaa에 문의해 주세요.",
     "source": "features/benefit/ui/raffle-result-panel",
     "id": "features/benefit/ui/raffle-result-panel:copy.overdueHelp"
   },
@@ -6270,14 +6270,14 @@
     "id": "features/benefit/ui/raffle-result-panel:copy.unclaimed"
   },
   "m221ca2c793ef": {
-    "en": "Your winning history remains available. Contact ByUs with collection questions.",
-    "ko": "당첨 이력은 유지돼요. 수령과 관련한 문의는 ByUs에 알려 주세요.",
+    "en": "Your winning history remains available. Contact kyaa with collection questions.",
+    "ko": "당첨 이력은 유지돼요. 수령과 관련한 문의는 kyaa에 알려 주세요.",
     "source": "features/benefit/ui/raffle-result-panel",
     "id": "features/benefit/ui/raffle-result-panel:copy.unclaimedHelp"
   },
   "m5f3408b81704": {
-    "en": "Contact ByUs",
-    "ko": "ByUs에 문의하기",
+    "en": "Contact kyaa",
+    "ko": "kyaa에 문의하기",
     "source": "features/benefit/ui/raffle-result-panel",
     "id": "features/benefit/ui/raffle-result-panel:copy.contact"
   },
@@ -6330,20 +6330,20 @@
     "id": "features/benefit/ui/recipient-phone-field:selectCopy.selected"
   },
   "m08ee38c69565": {
-    "en": "Hi, everyone! My LIVE fan page is now open on ByUs!\nCheck out my weekly LIVE schedule,\nand be sure to enjoy a variety of benefits by leaving a like 💜 and checking in!\n{0}",
-    "ko": "여러분, 제 라이브 팬페이지가 ByUs에 오픈되었어요!\n매주 라이브 스케줄도 확인하시고,\n좋아요💜랑 출석체크로 다양한 혜택도 꼭 받아가세요!\n{0}",
+    "en": "Hi, everyone! My LIVE fan page is now open on kyaa!\nCheck out my weekly LIVE schedule,\nand be sure to enjoy a variety of benefits by leaving a like 💜 and checking in!\n{0}",
+    "ko": "여러분, 제 라이브 팬페이지가 kyaa에 오픈되었어요!\n매주 라이브 스케줄도 확인하시고,\n좋아요💜랑 출석체크로 다양한 혜택도 꼭 받아가세요!\n{0}",
     "source": "features/bias/domain/promotion",
     "id": "features/bias/domain/promotion:copy.general"
   },
   "m03b30b02220c": {
-    "en": "Check my LIVE schedule and more updates on ByUs!\n{0}",
-    "ko": "라이브 스케줄과 다양한 소식은 이제 ByUs에서 확인하세요!\n{0}",
+    "en": "Check my LIVE schedule and more updates on kyaa!\n{0}",
+    "ko": "라이브 스케줄과 다양한 소식은 이제 kyaa에서 확인하세요!\n{0}",
     "source": "features/bias/domain/promotion",
     "id": "features/bias/domain/promotion:copy.bio"
   },
   "m3b9adafe4d7e": {
-    "en": "See you at my LIVE soon 💜\nLog your LIVE check-ins on ByUs and be sure to collect the cute stamps!\n{0}",
-    "ko": "곧 라이브에서 만나요 💜\nByUs에서 라이브 출석도 기록하고 예쁜 스탬프도 꼭 받아가세요!\n{0}",
+    "en": "See you at my LIVE soon 💜\nLog your LIVE check-ins on kyaa and be sure to collect the cute stamps!\n{0}",
+    "ko": "곧 라이브에서 만나요 💜\nkyaa에서 라이브 출석도 기록하고 예쁜 스탬프도 꼭 받아가세요!\n{0}",
     "source": "features/bias/domain/promotion",
     "id": "features/bias/domain/promotion:copy.story"
   },
@@ -8442,8 +8442,8 @@
     "id": "features/live/ui/live-event-screen:ifewLiveCopy.fanCode"
   },
   "m371c2f660b46": {
-    "en": "Enter the attendance code shared during the LIVE here to record your attendance on ByUs.",
-    "ko": "LIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 ByUs에 출석을 남길 수 있어요.",
+    "en": "Enter the attendance code shared during the LIVE here to record your attendance on kyaa.",
+    "ko": "LIVE 방송에서 알려주는 출석 코드를 이 화면에 입력하면 kyaa에 출석을 남길 수 있어요.",
     "source": "features/live/ui/live-event-screen",
     "id": "features/live/ui/live-event-screen:ifewLiveCopy.fanCodeHelper"
   },
@@ -8508,8 +8508,8 @@
     "id": "features/live/ui/live-event-screen:ifewLiveCopy.stepHelpers.1"
   },
   "m5af701c505c4": {
-    "en": "Enter the broadcast’s attendance code on ByUs",
-    "ko": "방송에서 공개된 출석 코드를 ByUs에 입력해요",
+    "en": "Enter the broadcast’s attendance code on kyaa",
+    "ko": "방송에서 공개된 출석 코드를 kyaa에 입력해요",
     "source": "features/live/ui/live-event-screen",
     "id": "features/live/ui/live-event-screen:ifewLiveCopy.stepHelpers.2"
   },
@@ -8640,8 +8640,8 @@
     "id": "features/live/ui/live-event-screen:inline.m53d59bab9b20.2"
   },
   "m52dd9000cd4f": {
-    "en": "Return to ByUs, enter the code and earn 2",
-    "ko": "ByUs에 코드 입력하고 2장 추가",
+    "en": "Return to kyaa, enter the code and earn 2",
+    "ko": "kyaa에 코드 입력하고 2장 추가",
     "source": "features/live/ui/live-event-screen",
     "id": "features/live/ui/live-event-screen:inline.m53d59bab9b20.3"
   },
@@ -11400,8 +11400,8 @@
     "id": "features/profile/ui/phone-sms-enrollment:copy.replaced"
   },
   "m1a5c7fab95c1": {
-    "en": "ByUs home",
-    "ko": "ByUs 홈",
+    "en": "kyaa home",
+    "ko": "kyaa 홈",
     "source": "features/profile/ui/profile-onboarding-screen",
     "id": "features/profile/ui/profile-onboarding-screen:copy.home"
   },
@@ -11430,8 +11430,8 @@
     "id": "features/profile/ui/profile-onboarding-screen:copy.preview"
   },
   "m8968f5dd8d60": {
-    "en": "Choose the display name you'll use on ByUs.",
-    "ko": "ByUs에서 사용할 닉네임을 정해 주세요.",
+    "en": "Choose the display name you'll use on kyaa.",
+    "ko": "kyaa에서 사용할 닉네임을 정해 주세요.",
     "source": "features/profile/ui/profile-onboarding-screen",
     "id": "features/profile/ui/profile-onboarding-screen:copy.genericHeading"
   },
@@ -11616,8 +11616,8 @@
     "id": "features/profile/ui/settings-screen:copy.title"
   },
   "mdaafda9be2b2": {
-    "en": "Manage your ByUs profile and notifications.",
-    "ko": "ByUs에서 사용할 프로필과 알림을 관리하세요.",
+    "en": "Manage your kyaa profile and notifications.",
+    "ko": "kyaa에서 사용할 프로필과 알림을 관리하세요.",
     "source": "features/profile/ui/settings-screen",
     "id": "features/profile/ui/settings-screen:copy.subtitle"
   },
@@ -11634,8 +11634,8 @@
     "id": "features/profile/ui/settings-screen:copy.nickname"
   },
   "m96a33c44da86": {
-    "en": "This is how other fans will see you on ByUs.",
-    "ko": "ByUs에서 다른 팬들에게 표시되는 이름이에요.",
+    "en": "This is how other fans will see you on kyaa.",
+    "ko": "kyaa에서 다른 팬들에게 표시되는 이름이에요.",
     "source": "features/profile/ui/settings-screen",
     "id": "features/profile/ui/settings-screen:copy.nicknameHelp"
   },
@@ -11958,14 +11958,14 @@
     "id": "features/profile/ui/settings-screen:copy.install"
   },
   "m0c4c7655ff06": {
-    "en": "Add ByUs to your home screen for faster access.",
-    "ko": "홈 화면에 ByUs를 추가하면 더 빠르게 열 수 있어요.",
+    "en": "Add kyaa to your home screen for faster access.",
+    "ko": "홈 화면에 kyaa를 추가하면 더 빠르게 열 수 있어요.",
     "source": "features/profile/ui/settings-screen",
     "id": "features/profile/ui/settings-screen:copy.installHelp"
   },
   "mf7724c014fed": {
-    "en": "Install ByUs",
-    "ko": "ByUs 설치하기",
+    "en": "Install kyaa",
+    "ko": "kyaa 설치하기",
     "source": "features/profile/ui/settings-screen",
     "id": "features/profile/ui/settings-screen:copy.installAction"
   },
@@ -12024,8 +12024,8 @@
     "id": "features/profile/ui/settings-screen:copy.profileRequiredTitle"
   },
   "me01e6582ce64": {
-    "en": "Choose the display name you'll use on ByUs to continue to Settings.",
-    "ko": "ByUs에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.",
+    "en": "Choose the display name you'll use on kyaa to continue to Settings.",
+    "ko": "kyaa에서 사용할 닉네임을 정하면 설정을 이어갈 수 있어요.",
     "source": "features/profile/ui/settings-screen",
     "id": "features/profile/ui/settings-screen:copy.profileRequiredBody"
   },
@@ -12846,8 +12846,8 @@
     "id": "features/support/ui/copy:supportCopy.earlier"
   },
   "m2eb0209031b3": {
-    "en": "ByUs support",
-    "ko": "ByUs 운영팀",
+    "en": "kyaa support",
+    "ko": "kyaa 운영팀",
     "source": "features/support/ui/copy",
     "id": "features/support/ui/copy:supportCopy.team"
   },
@@ -13416,8 +13416,8 @@
     "id": "features/tickets/ui/fan-ticket-history-screen:inline.m84b41c410efb"
   },
   "mc4254c713e43": {
-    "en": "ByUs | LIVE moments and your Fan Passport",
-    "ko": "ByUs | 최애의 LIVE와 팬 패스포트",
+    "en": "kyaa | LIVE moments and your Fan Passport",
+    "ko": "kyaa | 최애의 LIVE와 팬 패스포트",
     "source": "seo/metadata",
     "id": "seo/metadata:pageCopy.home.title"
   },
@@ -13428,8 +13428,8 @@
     "id": "seo/metadata:pageCopy.home.description"
   },
   "m70c75a25ee29": {
-    "en": "LIVE events and schedules | ByUs",
-    "ko": "LIVE 일정 | ByUs",
+    "en": "LIVE events and schedules | kyaa",
+    "ko": "LIVE 일정 | kyaa",
     "source": "seo/metadata",
     "id": "seo/metadata:pageCopy.live.title"
   },
@@ -13440,14 +13440,14 @@
     "id": "seo/metadata:pageCopy.live.description"
   },
   "m83574df4c2b6": {
-    "en": "Celebrities and creators | ByUs",
-    "ko": "셀럽과 크리에이터 | ByUs",
+    "en": "Celebrities and creators | kyaa",
+    "ko": "셀럽과 크리에이터 | kyaa",
     "source": "seo/metadata",
     "id": "seo/metadata:pageCopy.celebrities.title"
   },
   "ma7d9afcd4b2d": {
-    "en": "Meet the celebrities and creators on ByUs. Explore updates and LIVE schedules, and create a Fan Passport for your favorite creator.",
-    "ko": "ByUs의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요.",
+    "en": "Meet the celebrities and creators on kyaa. Explore updates and LIVE schedules, and create a Fan Passport for your favorite creator.",
+    "ko": "kyaa의 셀럽과 크리에이터를 만나보세요. 최애의 소식과 LIVE 일정을 확인하고 팬 패스포트를 시작하세요.",
     "source": "seo/metadata",
     "id": "seo/metadata:pageCopy.celebrities.description"
   },
@@ -15624,8 +15624,8 @@
     "id": "features/bias/ui/promotion-page:inline.m137cd55adc26"
   },
   "m3d1edbc7f2d5": {
-    "en": "Go to ByUs",
-    "ko": "ByUs로 이동",
+    "en": "Go to kyaa",
+    "ko": "kyaa로 이동",
     "source": "features/bias/ui/promotion-page",
     "id": "features/bias/ui/promotion-page:inline.m55fab022c14e"
   },
@@ -15774,7 +15774,7 @@
     "id": "features/bias/ui/promotion-page:inline.m3fa08b7398a0"
   },
   "m0076c426b54c": {
-    "en": "Agree on the schedule and benefits with your ByUs contact first.\nPrepare your fan page instructions and promotional messages together so fans know how to take part.",
+    "en": "Agree on the schedule and benefits with your kyaa contact first.\nPrepare your fan page instructions and promotional messages together so fans know how to take part.",
     "ko": "이벤트가 있다면 담당자와 일정·혜택을 먼저 협의해주세요.\n팬들이 참여 방법을 쉽게 이해하도록, 팬페이지 안내와 홍보 문구를 함께 준비해요.",
     "source": "features/bias/ui/promotion-page",
     "id": "features/bias/ui/promotion-page:inline.m541d0b521bf9"

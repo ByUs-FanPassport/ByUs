@@ -14,7 +14,7 @@ describe("public legal pages", () => {
     expect(screen.getByRole("heading", { level: 1, name: "개인정보처리방침" })).toBeInTheDocument();
     expect(screen.getByText("시행일: 2026년 9월 11일")).toBeInTheDocument();
     expect(screen.getAllByText(/Sallylab Inc\./).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "biz@sallylab.io" })).toHaveAttribute("href", "mailto:biz@sallylab.io");
+    expect(screen.getByRole("link", { name: "support@kyaa.io" })).toHaveAttribute("href", "mailto:support@kyaa.io");
     expect(screen.getByText(/Google 및 Privy 인증 식별자/)).toBeInTheDocument();
     expect(screen.getByText(/실물 혜택 배송 또는 현장 수령을 위한 이름·연락처/)).toBeInTheDocument();
     expect(screen.getByText(/배송 또는 현장 수령 완료 후 30일/)).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("public legal pages", () => {
     expect(screen.getByText(/Kakao's phone_number permission/)).toBeInTheDocument();
     expect(screen.getByText(/Processor: 솔라피 주식회사 \(SOLAPI\)/)).toBeInTheDocument();
     expect(screen.getByText(/for one year from the delivery date/)).toBeInTheDocument();
-    expect(screen.getByText(/delete the original phone number from ByUs systems and any incomplete registration information/)).toBeInTheDocument();
+    expect(screen.getByText(/delete the original phone number from kyaa systems and any incomplete registration information/)).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Choose language, currently English" })).toHaveValue("en");
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/?locale=en");
     expect(container.querySelector("[data-fan-surface]")).toHaveAttribute("lang", "en");
@@ -76,12 +76,12 @@ describe("public legal pages", () => {
 
   it("localizes legal metadata", async () => {
     await expect(generatePrivacyMetadata({ searchParams: searchParams("en") })).resolves.toMatchObject({
-      title: "Privacy Policy | ByUs",
-      description: "ByUs Privacy Policy",
+      title: "Privacy Policy | kyaa",
+      description: "kyaa Privacy Policy",
     });
     await expect(generateTermsMetadata({ searchParams: searchParams("ko") })).resolves.toMatchObject({
-      title: "이용약관 | ByUs",
-      description: "ByUs 서비스 이용약관",
+      title: "이용약관 | kyaa",
+      description: "kyaa 서비스 이용약관",
     });
   });
 

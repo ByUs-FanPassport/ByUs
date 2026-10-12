@@ -2,15 +2,15 @@ import type { TranslatedMessage } from "../messages";
 
 export const messages = {
   "mec65a0eab4d9": {
-    "ja": "ByUsを始める",
-    "zh-Hans": "开始使用ByUs",
-    "zh-Hant": "開始使用ByUs",
-    "es": "Empezar con ByUs",
-    "id": "Mulai dengan ByUs",
-    "vi": "Bắt đầu với ByUs",
-    "th": "เริ่มต้นกับ ByUs",
-    "pt": "Começar no ByUs",
-    "fr": "Commencer avec ByUs"
+    "ja": "kyaaを始める",
+    "zh-Hans": "开始使用kyaa",
+    "zh-Hant": "開始使用kyaa",
+    "es": "Empezar con kyaa",
+    "id": "Mulai dengan kyaa",
+    "vi": "Bắt đầu với kyaa",
+    "th": "เริ่มต้นกับ kyaa",
+    "pt": "Começar no kyaa",
+    "fr": "Commencer avec kyaa"
   },
   "m9bbd915ffa25": {
     "ja": "Google、Apple、またはPrivy Test Accountのメールアドレスでログインしてください。",

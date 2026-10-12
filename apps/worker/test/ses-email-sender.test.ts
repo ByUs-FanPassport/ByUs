@@ -28,10 +28,10 @@ function mockSend() {
   return vi.fn<SesV2SendClient["send"]>();
 }
 
-function sender(send: SesV2SendClient["send"], trustedOrigin?: string) {
+function sender(send: SesV2SendClient["send"], trustedOrigin?: string, fromEmail = "notifications@byus.kr") {
   return new SesEmailSender({
     region: "ap-northeast-2",
-    fromEmail: "notifications@byus.kr",
+    fromEmail,
     ...(trustedOrigin ? { trustedOrigin } : {}),
     client: { send },
     fetcher: vi.fn().mockResolvedValue(new Response(new Uint8Array([255,216,255,224]), {headers:{"content-type":"image/jpeg"}})),
@@ -39,7 +39,7 @@ function sender(send: SesV2SendClient["send"], trustedOrigin?: string) {
 }
 
 describe("SES email sender", () => {
-  it("renders published context and resolves a local poster against ByUs", async () => {
+  it("renders published context and resolves a local poster against kyaa", async () => {
     const send=mockSend().mockResolvedValue({MessageId:"html-mail"});
     await sender(send).send({...job,payload:{...job.payload,context:{title:"Artist <LIVE>",imageUrl:"/images/live/poster.jpg",startsAt:"2026-09-20T10:00:00Z"}}});
     const html=send.mock.calls[0]![0].input.Content!.Simple!.Body!.Html!.Data!;
@@ -68,6 +68,7 @@ describe("SES email sender", () => {
     expect(command.input).toEqual({
       FromEmailAddress: "notifications@byus.kr",
       Destination: { ToAddresses: ["fan@example.com"] },
+      ReplyToAddresses: ["support@kyaa.io"],
       Content: {
         Simple: {
           Attachments: [expect.objectContaining({ContentId:"byus-logo",ContentDisposition:"INLINE",ContentType:"image/png"}),expect.objectContaining({ContentId:"byus-star",ContentDisposition:"INLINE"})],
@@ -75,13 +76,25 @@ describe("SES email sender", () => {
           Body: {
             Html: { Data: expect.stringContaining("LIVE"), Charset: "UTF-8" },
             Text: {
-              Data: expect.stringContaining("https://byus.kr/my"),
+              Data: expect.stringContaining("https://kyaa.io/my"),
               Charset: "UTF-8",
             },
           },
         },
       },
     });
+  });
+
+  it.each(["https://byus.kr/my?tab=live", "https://kyaa.io/my?tab=live"])("accepts canonical absolute deep link %s", async (deepLink) => {
+    const send = mockSend().mockResolvedValue({ MessageId: "message" });
+    await sender(send).send({ ...job, payload: { ...job.payload, deepLink } });
+    expect(send.mock.calls[0]![0].input.Content!.Simple!.Body!.Text!.Data).toContain(deepLink);
+  });
+
+  it.each(["notifications@byus.kr", "notifications@kyaa.io"])("sends from approved address %s", async (fromEmail) => {
+    const send = mockSend().mockResolvedValue({ MessageId: "message" });
+    await sender(send, undefined, fromEmail).send(job);
+    expect(send.mock.calls[0]![0].input.FromEmailAddress).toBe(fromEmail);
   });
 
   it("accepts an absolute deep link on a configured trusted origin", async () => {

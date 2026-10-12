@@ -10,7 +10,7 @@ import { KakaoCallbackScreen } from "@/features/notification/ui/kakao-callback-s
 export async function generateMetadata(): Promise<Metadata> {
   const locale = parseAppLocale((await headers()).get("x-byus-locale"));
   return {
-    title: locale === "ko" ? "카카오 연결 | ByUs" : translate(locale, localizedMessages.m7a17fb5bbdee, "Kakao connection | ByUs"),
+    title: locale === "ko" ? "카카오 연결 | kyaa" : translate(locale, localizedMessages.m7a17fb5bbdee, "Kakao connection | kyaa"),
     robots: { index: false, follow: false },
     referrer: "no-referrer",
   };

@@ -11,11 +11,19 @@ describe("email inline assets", () => {
     expect(result.attachments.map(a => a.ContentId)).toEqual(["byus-logo", "byus-star", "byus-poster"]);
     expect(fetcher).toHaveBeenCalledWith(`${origin}/images/poster.jpg`, expect.objectContaining({redirect:"error",signal:expect.any(AbortSignal)}));
     expect(result.attachments[0]!.RawContent!.slice(0,8)).toEqual(Buffer.from([137,80,78,71,13,10,26,10]));
+    expect(result.attachments[0]).toMatchObject({ FileName: "kyaa-logo.png" });
+    expect(Buffer.from(result.attachments[0]!.RawContent!).readUInt32BE(16)).toBe(1200);
+    expect(Buffer.from(result.attachments[0]!.RawContent!).readUInt32BE(20)).toBe(490);
+    expect(result.attachments[0]!.RawContent![25]).toBe(6);
   });
   it("embeds the CMS pipeline's actual WebP poster format", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(Buffer.from("RIFF1234WEBPdata"), {headers:{"content-type":"image/webp"}}));
     const result = await emailInlineAssets(`${origin}/images/landscape-poster.webp`,{origin,fetcher});
     expect(result.attachments[2]).toMatchObject({ContentId:"byus-poster",ContentType:"image/webp",FileName:"live-poster.webp"});
+  });
+  it.each(["https://byus.kr", "https://kyaa.io"])("embeds historical and current canonical poster origin %s", async (imageOrigin) => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(image, {headers:{"content-type":"image/jpeg"}}));
+    expect((await emailInlineAssets(`${imageOrigin}/images/poster.jpg`, {origin:"https://kyaa.io",fetcher})).posterContentId).toBe("byus-poster");
   });
   it.each([
     "https://127.0.0.1/images/a.jpg", "https://evil.example/images/a.jpg", "http://byus.kr/images/a.jpg",

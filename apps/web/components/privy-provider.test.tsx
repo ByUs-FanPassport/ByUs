@@ -9,13 +9,17 @@ vi.mock("@privy-io/react-auth", () => ({
   PrivyProvider: (props: { children: React.ReactNode }) => provider(props),
 }));
 
-describe("ByUs Privy provider policy", () => {
+describe("kyaa Privy provider policy", () => {
   it("keeps production authentication Google-only", () => {
     render(<ByUsPrivyProvider appId="app-production"><span>child</span></ByUsPrivyProvider>);
     expect(provider).toHaveBeenLastCalledWith(expect.objectContaining({
       config: expect.objectContaining({
         loginMethods: ["google"],
         allowOAuthInEmbeddedBrowsers: true,
+        appearance: expect.objectContaining({
+          logo: "/images/guest-home/kyaa-wordmark.svg",
+          landingHeader: "kyaa 시작하기",
+        }),
       }),
     }));
   });

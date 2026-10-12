@@ -7,6 +7,14 @@ const origin = "https://byus.kr";
 const event = { schemaVersion: 1, eventName: "outbound_link_click", source: "web.outbound", idempotencyKey: "outbound:11111111", anonymousSessionId: "session-11111111", celebrityId: null, liveEventId: null, missionId: null, benefitId: null, occurredAt: "2026-10-11T00:00:00Z", properties: { ...context, destinationHost: "wgrw.raceplan.co.kr" } };
 
 describe("outbound URL attribution", () => {
+  it("keeps both brand domains internal and labels new external links as kyaa", () => {
+    for (const appOrigin of ["https://byus.kr", "https://kyaa.io"]) {
+      for (const host of ["byus.kr", "www.byus.kr", "kyaa.io", "www.kyaa.io"]) {
+        expect(decorateOutboundUrl(`https://${host}/live`, appOrigin, context)).toBeNull();
+      }
+      expect(decorateOutboundUrl("https://tickets.example/entry", appOrigin, context)?.href).toContain("utm_source=kyaa");
+    }
+  });
   it("adds missing defaults without changing query bytes, duplicates, existing UTMs or hash", () => {
     const href = "https://tickets.example/entry?a=a%20b&a=a+b&utm_source=partner&UTM_MEDIUM=email#seat%20A";
     expect(decorateOutboundUrl(href, origin, context)?.href).toBe("https://tickets.example/entry?a=a%20b&a=a+b&utm_source=partner&UTM_MEDIUM=email&utm_campaign=runmusic&utm_content=fanpage_hero.ticket#seat%20A");
@@ -27,8 +35,8 @@ describe("outbound URL attribution", () => {
   });
   it("uses only a matching published marker or a fixed route for campaign", () => {
     expect(outboundCampaign("/runmusic", "runmusic")).toBe("runmusic");
-    expect(outboundCampaign("/my/private-id", "runmusic")).toBe("byus");
-    expect(outboundCampaign("/someone-secret")).toBe("byus");
+    expect(outboundCampaign("/my/private-id", "runmusic")).toBe("kyaa");
+    expect(outboundCampaign("/someone-secret")).toBe("kyaa");
     expect(outboundCampaign("/celebrities")).toBe("celebrities");
     expect(outboundCampaign("/c/runmusic/notices/start", "runmusic")).toBe("runmusic");
     expect(outboundTrackingAllowed("/admin/content")).toBe(false);

@@ -13,9 +13,9 @@ describe("FocusFlowHeader", () => {
     );
 
     const banner = screen.getByRole("banner");
-    const home = within(banner).getByRole("link", { name: "ByUs home" });
+    const home = within(banner).getByRole("link", { name: "kyaa home" });
     expect(home).toHaveAttribute("href", "/?locale=en");
-    expect(within(home).getByRole("img", { name: "ByUs" })).toBeInTheDocument();
+    expect(within(home).getByRole("img", { name: "kyaa" })).toBeInTheDocument();
     expect(within(banner).getByRole("link", { name: "KO / EN" })).toHaveAttribute("href", "?locale=en");
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute(
       "href",

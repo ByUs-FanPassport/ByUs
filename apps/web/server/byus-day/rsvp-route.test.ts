@@ -49,6 +49,18 @@ describe("ByUs Day RSVP API", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it.each(["https://kyaa.io", "https://www.kyaa.io"])("accepts an exact same-origin request from %s", async (origin) => {
+    const { submit, handle } = setup();
+    expect((await handle(request(input, { origin }, `${origin}/api/byus-day/rsvp`))).status).toBe(202);
+    expect(submit).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a trusted origin header when the request URL host differs", async () => {
+    const { submit, handle } = setup();
+    expect((await handle(request(input, { origin: "https://kyaa.io" }, "https://byus.kr/api/byus-day/rsvp"))).status).toBe(400);
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("accepts the last millisecond of October 12 KST", async () => {
     const { submit, handle } = setup(Date.parse("2026-10-12T14:59:59.999Z"));
     expect((await handle(request())).status).toBe(202);

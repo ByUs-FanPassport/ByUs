@@ -11,7 +11,7 @@ export async function generateMetadata({
 }: Props): Promise<Metadata> {
   const locale = parseAppLocale((await searchParams).locale);
   const content = fanmeetingContent[locale];
-  const title = `${content.hero.replace(/\n/g, " ")} | ByUs`;
+  const title = `${content.hero.replace(/\n/g, " ")} | kyaa`;
   const description = content.desc.replace(/\n/g, " ");
   return publicMetadata({ path: "/pages/us-fanmeetings", locale, title, description });
 }

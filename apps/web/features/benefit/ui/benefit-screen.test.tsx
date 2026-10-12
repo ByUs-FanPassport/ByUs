@@ -1008,7 +1008,7 @@ describe("benefit screens", () => {
             claimId: "a1f86df9-f5e4-4ee1-b375-d18092b63e6a",
             benefitId: benefit.id,
             deliveryType: "text",
-            deliveryValue: "ByUs 디지털 메시지가 보관함에 추가되었어요.",
+            deliveryValue: "kyaa 디지털 메시지가 보관함에 추가되었어요.",
             claimedAt: "2026-07-21T00:00:00.000Z",
             replayed: false,
           }),
@@ -1019,7 +1019,7 @@ describe("benefit screens", () => {
       await screen.findByRole("button", { name: /혜택 수령하기/ }),
     );
     expect(
-      await screen.findByText("ByUs 디지털 메시지가 보관함에 추가되었어요."),
+      await screen.findByText("kyaa 디지털 메시지가 보관함에 추가되었어요."),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "코드 복사" }),

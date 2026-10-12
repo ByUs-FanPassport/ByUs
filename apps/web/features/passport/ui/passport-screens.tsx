@@ -171,7 +171,7 @@ export function PassportCollectionScreen() {
     </div>
     <div id="collection" className={styles.collectionAnchor}>{fetcher.state.status === "loading" ? <Skeleton locale={locale} /> : fetcher.state.status === "error" ? <StateMessage locale={locale} kind={fetcher.state.kind} retry={fetcher.retry} returnTo={`/passports?locale=${locale}`} /> : fetcher.state.data.length === 0 ? <section className={styles.empty} role="status"><BookOpen aria-hidden="true" /><h2>{c.emptyTitle}</h2><p>{c.emptyBody}</p><Link className={styles.primaryButton} href={withLocale("/celebrities", locale)}>{c.emptyAction}<ArrowRight aria-hidden="true" /></Link></section> : <>
       <section className={styles.collection} aria-label={locale === "ko" ? "Passport 목록" : translate(locale, localizedMessages.mbba0de6c334a, "Passport collection")}>{fetcher.state.data.map((passport) => <article className={styles.passportCard} key={passport.id}>
-        <div className={styles.collectionCardLabel}><span>FAN PASSPORT</span><span aria-hidden="true">ByUs.</span></div>
+        <div className={styles.collectionCardLabel}><span>FAN PASSPORT</span><span aria-hidden="true">kyaa.</span></div>
         <div className={styles.collectionCardMain}>
           <Link className={styles.cardMainLink} href={withLocale(`/passports/${passport.id}`, locale)} aria-label={`${passport.celebrity.name} · ${c.open}`}>
             <div className={styles.cardMedia}><CreatorImage locale={locale} slug={passport.celebrity.slug} src={passport.celebrity.image.url} alt={passport.celebrity.image.alt} fill sizes="92px" presentation="portrait" position={passport.celebrity.image.position} photos={passport.celebrity.photos} /></div>

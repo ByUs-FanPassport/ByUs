@@ -129,6 +129,17 @@ describe("Telegram bug report operator routes", () => {
     expect(recordCompletionError).not.toHaveBeenCalled();
   });
 
+  it.each(["https://kyaa.io", "https://www.kyaa.io/deployments/abcdef1"])("accepts kyaa completion URL %s", async (deploymentUrl) => {
+    const complete = vi.fn(async () => undefined);
+    const response = await createTelegramBugReportCompletionHandler({
+      secret: operatorSecret,
+      repository: { get: vi.fn(async () => report), complete, recordCompletionError: vi.fn() },
+      telegram: { setOkayReaction: vi.fn(async () => undefined) },
+    })(completionRequest({ commit: "abcdef1", deploymentUrl }), 55);
+    expect(response.status).toBe(200);
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({ deploymentUrl }));
+  });
+
   it("is idempotent after completion and does not send a second reaction", async () => {
     const completed = { ...report, status: "completed" as const, completion_reaction: "👌" };
     const complete = vi.fn();

@@ -48,8 +48,8 @@ describe("QuizEntryScreen", () => {
     expect(screen.getByRole("heading", { name: "KARA 나의 팬심을 확인해 보세요." })
       .closest('[data-content-alignment="top"]')).not.toBeNull();
     expect(screen.getByRole("link", { name: "KARA 팬페이지로 돌아가기" })).toHaveAttribute("href", "/kara?locale=ko");
-    const home = screen.getByRole("link", { name: "ByUs 홈" });
-    expect(within(home).getByRole("img", { name: "ByUs" })).toHaveAttribute("src", "/images/guest-home/byus-wordmark.svg");
+    const home = screen.getByRole("link", { name: "kyaa 홈" });
+    expect(within(home).getByRole("img", { name: "kyaa" })).toHaveAttribute("src", "/images/guest-home/kyaa-wordmark.svg");
     fireEvent.click(screen.getByRole("button", { name: "팬 인증 시작하기" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith(`/c/kara/verify/questions?attempt=${attemptId}&locale=ko`));

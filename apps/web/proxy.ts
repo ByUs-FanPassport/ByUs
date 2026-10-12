@@ -3,7 +3,39 @@ import { isPrivatePath, isRehearsalPath } from "./seo/metadata";
 import { isInstagramManagementPath, requestLocale } from "./components/locale-path";
 import { isAppLocale } from "./i18n/locales";
 
+const LEGACY_APP_ORIGINS = new Set(["https://byus.kr", "https://www.byus.kr"]);
+const OAUTH_RETURN_PARAMETERS = new Set(["code", "state", "error", "error_description"]);
+
+function legacyRedirectStatus(): 307 | 308 | null {
+  const value = process.env.LEGACY_DOMAIN_REDIRECT_STATUS;
+  return value === "307" ? 307 : value === "308" ? 308 : null;
+}
+
+function preservesLegacyOrigin(request: NextRequest): boolean {
+  const path = request.nextUrl.pathname;
+  return isPrivatePath(path)
+    || /^\/(?:api|_next|images)(?:\/|$)/.test(path)
+    || /(?:^|\/)(?:callback|webhook)(?:\/|$)/.test(path)
+    || /^\/(?:t|o)(?:\/|$)/.test(path)
+    || path === "/sw.js"
+    || path === "/manifest.webmanifest"
+    || /(?:^|\/)metadata\.json$/.test(path)
+    || /\.[a-z0-9]+$/i.test(path)
+    || [...request.nextUrl.searchParams.keys()].some((key) =>
+      OAUTH_RETURN_PARAMETERS.has(key) || key.startsWith("privy_oauth_"));
+}
+
 export function proxy(request: NextRequest): NextResponse {
+  const redirectStatus = legacyRedirectStatus();
+  if (redirectStatus && (request.method === "GET" || request.method === "HEAD")
+    && LEGACY_APP_ORIGINS.has(request.nextUrl.origin) && !preservesLegacyOrigin(request)) {
+    const destination = request.nextUrl.clone();
+    destination.protocol = "https:";
+    destination.host = "kyaa.io";
+    const response = NextResponse.redirect(destination, redirectStatus);
+    if (redirectStatus === 307) response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
   if (!request.nextUrl.pathname.startsWith("/api/admin/")) {
     const isAdminPage =
       request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/");

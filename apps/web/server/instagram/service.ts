@@ -9,13 +9,13 @@ export function createInstagramService(deps: { repository: InstagramRepository; 
   const { repository, provider, vault } = deps;
   const now = deps.now ?? Date.now;
   return {
-    async callback(code: string, state: string, browser: string) {
+    async callback(code: string, state: string, browser: string, redirectUri?: string) {
       const hash = secretHash(state);
       const browserHash = secretHash(browser);
       const flow = await repository.transition("consume", hash, browserHash);
       if (!flow) throw new Error("Instagram flow unavailable");
       try {
-        const { token, identity } = await provider.exchange(code);
+        const { token, identity } = await provider.exchange(code, redirectUri);
         if (identity.username !== flow.expected_username || (flow.expected_user_id && identity.user_id !== flow.expected_user_id)) throw new InstagramError("ACCOUNT_MISMATCH");
         const pending = newSecret();
         const issuedAt = now();

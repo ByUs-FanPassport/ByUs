@@ -354,15 +354,15 @@ export const messages = {
     "fr": "La date limite pour fournir les coordonnées du destinataire est dépassée"
   },
   "m28c4623b6580": {
-    "ja": "当選履歴は引き続き確認できます。サポートが必要な場合はByUsにお問い合わせください。",
-    "zh-Hans": "您的中奖记录仍会保留。如需帮助，请联系 ByUs。",
-    "zh-Hant": "您的中獎記錄仍會保留。如需幫助，請聯繫 ByUs。",
-    "es": "Tu historial de premios seguirá disponible. Contacta con ByUs si necesitas ayuda.",
-    "id": "Riwayat kemenangan tetap tersedia. Hubungi ByUs jika perlu bantuan.",
-    "vi": "Lịch sử trúng vẫn được lưu. Liên hệ ByUs nếu cần trợ giúp.",
-    "th": "ประวัติการได้รับรางวัลของคุณยังคงอยู่ หากต้องการความช่วยเหลือ โปรดติดต่อ ByUs",
-    "pt": "Seu histórico de prêmios continua disponível. Entre em contato com o ByUs se precisar de ajuda.",
-    "fr": "Votre historique de gains reste disponible. Contactez ByUs si vous avez besoin d’aide."
+    "ja": "当選履歴は引き続き確認できます。サポートが必要な場合はkyaaにお問い合わせください。",
+    "zh-Hans": "您的中奖记录仍会保留。如需帮助，请联系 kyaa。",
+    "zh-Hant": "您的中獎記錄仍會保留。如需幫助，請聯繫 kyaa。",
+    "es": "Tu historial de premios seguirá disponible. Contacta con kyaa si necesitas ayuda.",
+    "id": "Riwayat kemenangan tetap tersedia. Hubungi kyaa jika perlu bantuan.",
+    "vi": "Lịch sử trúng vẫn được lưu. Liên hệ kyaa nếu cần trợ giúp.",
+    "th": "ประวัติการได้รับรางวัลของคุณยังคงอยู่ หากต้องการความช่วยเหลือ โปรดติดต่อ kyaa",
+    "pt": "Seu histórico de prêmios continua disponível. Entre em contato com o kyaa se precisar de ajuda.",
+    "fr": "Votre historique de gains reste disponible. Contactez kyaa si vous avez besoin d’aide."
   },
   "m4210d2f579d4": {
     "ja": "特典の受取期間は終了しました",
@@ -376,26 +376,26 @@ export const messages = {
     "fr": "Le retrait du prix est clos"
   },
   "m221ca2c793ef": {
-    "ja": "当選履歴は引き続き確認できます。受取についてはByUsにお問い合わせください。",
-    "zh-Hans": "您的中奖记录仍会保留。如对领取有疑问，请联系 ByUs。",
-    "zh-Hant": "您的中獎記錄仍會保留。如對領取有疑問，請聯繫 ByUs。",
-    "es": "Tu historial seguirá disponible. Contacta con ByUs si tienes dudas sobre la recogida.",
-    "id": "Riwayat kemenangan tetap tersedia. Hubungi ByUs jika ada pertanyaan.",
-    "vi": "Lịch sử trúng vẫn được lưu. Liên hệ ByUs nếu có câu hỏi.",
-    "th": "ประวัติการได้รับรางวัลของคุณยังคงอยู่ หากมีข้อสอบถามเรื่องการรับของรางวัล โปรดติดต่อ ByUs",
-    "pt": "Seu histórico de prêmios continua disponível. Entre em contato com o ByUs se tiver dúvidas sobre o recebimento.",
-    "fr": "Votre historique de gains reste disponible. Contactez ByUs pour toute question sur le retrait."
+    "ja": "当選履歴は引き続き確認できます。受取についてはkyaaにお問い合わせください。",
+    "zh-Hans": "您的中奖记录仍会保留。如对领取有疑问，请联系 kyaa。",
+    "zh-Hant": "您的中獎記錄仍會保留。如對領取有疑問，請聯繫 kyaa。",
+    "es": "Tu historial seguirá disponible. Contacta con kyaa si tienes dudas sobre la recogida.",
+    "id": "Riwayat kemenangan tetap tersedia. Hubungi kyaa jika ada pertanyaan.",
+    "vi": "Lịch sử trúng vẫn được lưu. Liên hệ kyaa nếu có câu hỏi.",
+    "th": "ประวัติการได้รับรางวัลของคุณยังคงอยู่ หากมีข้อสอบถามเรื่องการรับของรางวัล โปรดติดต่อ kyaa",
+    "pt": "Seu histórico de prêmios continua disponível. Entre em contato com o kyaa se tiver dúvidas sobre o recebimento.",
+    "fr": "Votre historique de gains reste disponible. Contactez kyaa pour toute question sur le retrait."
   },
   "m5f3408b81704": {
-    "ja": "ByUsに問い合わせる",
-    "zh-Hans": "联系 ByUs",
-    "zh-Hant": "聯繫 ByUs",
-    "es": "Contactar con ByUs",
-    "id": "Hubungi ByUs",
-    "vi": "Liên hệ ByUs",
-    "th": "ติดต่อ ByUs",
-    "pt": "Entrar em contato com o ByUs",
-    "fr": "Contacter ByUs"
+    "ja": "kyaaに問い合わせる",
+    "zh-Hans": "联系 kyaa",
+    "zh-Hant": "聯繫 kyaa",
+    "es": "Contactar con kyaa",
+    "id": "Hubungi kyaa",
+    "vi": "Liên hệ kyaa",
+    "th": "ติดต่อ kyaa",
+    "pt": "Entrar em contato com o kyaa",
+    "fr": "Contacter kyaa"
   },
   "m48ae48a7d34f": {
     "ja": "受取場所",

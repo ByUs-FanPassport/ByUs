@@ -80,7 +80,7 @@ describe("live event domain", () => {
     ).toThrow();
   });
 
-  it("builds a calendar URL containing UTC dates and canonical ByUs live URL", () => {
+  it("builds a calendar URL containing UTC dates and canonical kyaa live URL", () => {
     const result = new URL(createGoogleCalendarUrl({ canonicalAppUrl: "https://byus.example", liveSlug: "kara-move-again", title: "KARA LIVE", startsAt: "2026-07-24T11:00:00Z", endsAt: "2026-07-24T12:00:00Z", description: "함께 시청해요" }));
     expect(result.origin).toBe("https://calendar.google.com");
     expect(result.searchParams.get("dates")).toBe("20260724T110000Z/20260724T120000Z");
@@ -99,7 +99,7 @@ describe("live event domain", () => {
         reservationClosesAt: "2026-08-01T11:00:00.000Z",
         title: "KATSEYE LIVE",
         description: "함께 만나요.",
-        productContext: "ByUs LIVE",
+        productContext: "kyaa LIVE",
         photos: { landscape: null },
         heroImage: { url: "/hero.webp", alt: "KATSEYE" },
         celebrity: {
@@ -110,7 +110,7 @@ describe("live event domain", () => {
           photos: { portrait: null },
           fanCount: 6_800_000,
         },
-        brand: { slug: "byus", name: "ByUs", logo: "/logo.svg", websiteUrl: null },
+        brand: { slug: "byus", name: "kyaa", logo: "/logo.svg", websiteUrl: null },
         watch: { available: false, mode: "unavailable", provider: "youtube", url: "https://youtube.com/live/abc123" },
         preview: {
           kind: "artist_teaser",

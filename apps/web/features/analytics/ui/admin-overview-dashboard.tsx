@@ -164,7 +164,7 @@ export function AdminOverviewDashboard({ locale = "ko" }: { locale?: AdminLocale
   const visibleState = state.status === "ready" && (state.owner !== owner || state.data.days !== Number(days)) ? { status: "loading" as const } : state;
   const ko = locale === "ko";
   return <AdminOperationsShell locale={locale} adminRole={session.admin.role}><div className={styles.dashboard}>
-    <header className={styles.header}><div><p>{ko ? "BYUS 운영 대시보드" : "BYUS OPERATIONS"}</p><h1>{ko ? "서비스 현황" : "Service overview"}</h1><span>{ko ? "회원의 성장과 팬들의 참여, 오늘 처리할 일을 한눈에 확인하세요." : "Member growth, fan participation and the work that needs your attention."}</span></div>
+    <header className={styles.header}><div><p>{ko ? "KYAA 운영 대시보드" : "KYAA OPERATIONS"}</p><h1>{ko ? "서비스 현황" : "Service overview"}</h1><span>{ko ? "회원의 성장과 팬들의 참여, 오늘 처리할 일을 한눈에 확인하세요." : "Member growth, fan participation and the work that needs your attention."}</span></div>
       <button className={styles.refresh} type="button" onClick={() => setRefresh((v) => v + 1)} disabled={visibleState.status === "loading"}><RefreshCw aria-hidden="true" />{ko ? "새로고침" : "Refresh"}</button>
     </header>
     <div className={styles.toolbar}><div className={styles.segmented} role="group" aria-label={ko ? "대시보드 조회 기간" : "Dashboard period"}>{(["7", "30", "90"] as const).map((v) => <button key={v} type="button" aria-pressed={days === v} onClick={() => setDays(v)}>{ko ? `최근 ${v}일` : `Last ${v} days`}</button>)}</div><p aria-live="polite">{visibleState.status === "ready" ? `${ko ? "업데이트" : "Updated"} ${date(visibleState.data.asOf, locale, true)} · KST` : visibleState.status === "loading" ? ko ? "현황을 불러오는 중…" : "Loading overview…" : ko ? "현황을 불러오지 못했습니다" : "Overview unavailable"}</p></div>

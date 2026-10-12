@@ -18,7 +18,7 @@ export function validateNote(note) {
       typeof note.path !== 'string' || !/^\/[a-zA-Z0-9/_-]*$/.test(note.path) || note.path.startsWith('//') ||
       (note.images !== undefined && (!Array.isArray(note.images) || !note.images.length || note.images.length > 10 ||
         note.images.some(path => typeof path !== 'string' || !IMAGE.test(path))))) {
-    throw new Error('INVALID_RELEASE_NOTE: use 1–5 short Korean changes and a ByUs site path');
+    throw new Error('INVALID_RELEASE_NOTE: use 1–5 short Korean changes and a kyaa site path');
   }
   return note;
 }
@@ -65,8 +65,8 @@ export function formatNotice(notes, completedAt) {
   notes.forEach(validateNote);
   const time = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(completedAt));
   const changes = [...new Set(notes.flatMap(note => note.changes))];
-  const links = [...new Set(notes.map(note => `https://byus.kr${note.path}`))];
-  const text = `✅ ByUs 수정사항이 반영됐어요\n\n${changes.map(line => `• ${line}`).join('\n')}\n\n확인하기\n${links.join('\n')}\n\n반영 시각: ${time} (한국 시간)`;
+  const links = [...new Set(notes.map(note => `https://kyaa.io${note.path}`))];
+  const text = `✅ kyaa 수정사항이 반영됐어요\n\n${changes.map(line => `• ${line}`).join('\n')}\n\n확인하기\n${links.join('\n')}\n\n반영 시각: ${time} (한국 시간)`;
   if (text.length > (noticeImages(notes).length ? 1024 : 3900)) throw new Error('RELEASE_NOTICE_TOO_LONG');
   return text;
 }
@@ -157,7 +157,7 @@ async function main() {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
   const result = await notifyDeployment({ event, github, runUrl: `https://github.com/${REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
     send: async body => {
-      const response = await fetch('https://byus.kr/api/internal/telegram/deployment-notices', { method: 'POST', headers: { authorization: `Bearer ${process.env.TELEGRAM_BUG_REPORT_OPERATOR_SECRET}`, 'content-type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(45_000) });
+      const response = await fetch('https://kyaa.io/api/internal/telegram/deployment-notices', { method: 'POST', headers: { authorization: `Bearer ${process.env.TELEGRAM_BUG_REPORT_OPERATOR_SECRET}`, 'content-type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(45_000) });
       const result = await response.json();
       if (!response.ok || !result.ok || !Number.isSafeInteger(result.messageId) || result.chatId !== -5187701508) {
         const error = new Error('NOTICE_ENDPOINT_FAILED');

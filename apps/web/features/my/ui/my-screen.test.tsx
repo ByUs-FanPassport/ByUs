@@ -21,7 +21,7 @@ const summary = {
       rewardResultId: "33333333-3333-4333-8333-333333333333",
       winnerId: "44444444-4444-4444-8444-444444444444",
       benefitId,
-      title: "ByUs Watch Party 기념 코드",
+      title: "kyaa Watch Party 기념 코드",
       campaignId: "55555555-5555-4555-8555-555555555555",
       result: "won",
       method: "on_site_pickup",

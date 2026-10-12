@@ -22,7 +22,7 @@ export function inquirySubjectExcerpt(message: string): string {
 export function renderBusinessInquiryEmail(job: BusinessInquiry) {
   const label = inquiryEmailLabels[job.inquiry_type ?? "fanmeeting"];
   const excerpt = inquirySubjectExcerpt(job.message);
-  const subject = `[ByUs ${label}]${excerpt ? ` ${excerpt}` : ""}`;
+  const subject = `[kyaa ${label}]${excerpt ? ` ${excerpt}` : ""}`;
   const text = [
     label, "", `담당자: ${job.contact_name}`, `소속: ${job.company}`,
     `회신 이메일: ${job.email}`, "", "문의 내용", job.message, "",
