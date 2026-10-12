@@ -14,7 +14,7 @@ describe("public search and sharing metadata", () => {
     expect(canonicalUrl("/?locale=en&utm_source=kakao&owned=1#start", "ko")).toBe("https://kyaa.io/?locale=ko");
     const meta = publicMetadata({ path: "/live/ifew", locale: "en", title: "ifew LIVE | kyaa", description: "Meet ifew." });
     expect(meta.alternates).toEqual({ canonical: "https://kyaa.io/live/ifew?locale=en", languages: Object.fromEntries(APP_LOCALES.map(locale => [locale, `https://kyaa.io/live/ifew?locale=${locale}`])) });
-    expect(meta.openGraph).toMatchObject({ title: "ifew LIVE | kyaa", type: "website", siteName: "kyaa", url: "https://kyaa.io/live/ifew?locale=en", locale: "en_US", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "kyaa | Your Bias" }] });
+    expect(meta.openGraph).toMatchObject({ title: "ifew LIVE | kyaa", type: "website", siteName: "kyaa", url: "https://kyaa.io/live/ifew?locale=en", locale: "en_US", images: [{ url: DEFAULT_SHARE_IMAGE, width: 1200, height: 630, alt: "Kyaa. Every Fan Moment Counts." }] });
     expect(meta.twitter).toMatchObject({ card: "summary_large_image", images: [{ url: DEFAULT_SHARE_IMAGE }] });
   });
   it("does not advertise missing translations", () => {
@@ -27,7 +27,7 @@ describe("public search and sharing metadata", () => {
     expect(Object.keys(pageCopy.live)).toEqual([...APP_LOCALES]);
     expect(Object.keys(pageCopy.celebrities)).toEqual([...APP_LOCALES]);
     for (const locale of APP_LOCALES) {
-      expect(pageCopy.home[locale].title).not.toHaveLength(0);
+      expect(pageCopy.home[locale].title).toBe("Kyaa. Every Fan Moment Counts.");
       expect(communityCopy(locale).title).not.toHaveLength(0);
       expect(pageCopy.live[locale].title).not.toHaveLength(0);
       expect(pageCopy.celebrities[locale].title).not.toHaveLength(0);

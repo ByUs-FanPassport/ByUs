@@ -68,7 +68,7 @@ export function publicMetadata(input: {
   const { path, locale, title, description } = input;
   const url = canonicalUrl(path, locale);
   const image = shareImageUrl(input.image);
-  const images = [{ url: image, alt: input.imageAlt || "kyaa | Your Bias",
+  const images = [{ url: image, alt: input.imageAlt || "Kyaa. Every Fan Moment Counts.",
     ...(image === DEFAULT_SHARE_IMAGE ? { width: 1200, height: 630 } : {}) }];
   return {
     title, description,
@@ -83,10 +83,10 @@ export function publicMetadata(input: {
 
 export const pageCopy = {
   home: {
-    ko: { title: "kyaa | 최애의 LIVE와 팬 패스포트", description: "최애의 LIVE 일정을 확인하고 팬 인증, 예약, 출석으로 함께한 순간을 Fan Passport에 기록하세요." },
-    en: { title: "kyaa | LIVE moments and your Fan Passport", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
+    ko: { title: "Kyaa. Every Fan Moment Counts.", description: "최애의 LIVE 일정을 확인하고 팬 인증, 예약, 출석으로 함께한 순간을 Fan Passport에 기록하세요." },
+    en: { title: "Kyaa. Every Fan Moment Counts.", description: "Discover your favorite creators and their LIVE events. Verify your fandom, reserve a spot for a LIVE, and record your attendance in your Fan Passport." },
 
-  ...additionalLocales((translationLocale) => ({ title: localizedMessages.mc4254c713e43[translationLocale], description: localizedMessages.m66f358c91b9f[translationLocale] }))
+  ...additionalLocales((translationLocale) => ({ title: "Kyaa. Every Fan Moment Counts.", description: localizedMessages.m66f358c91b9f[translationLocale] }))
 },
   live: {
     ko: { title: "LIVE 일정 | kyaa", description: "진행 중인 LIVE와 예정된 방송을 확인하세요. 최애의 LIVE를 예약하고 함께한 순간을 기록하세요." },

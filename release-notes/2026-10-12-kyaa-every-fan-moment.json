@@ -1,0 +1,12 @@
+{
+  "changes": [
+    "홈의 슬로건을 “Kyaa. Every Fan Moment Counts.”로 바꾸고, 링크 공유 미리보기와 앱 설치 이름에도 반영했어요.",
+    "NCHIVE 배너의 ByUs 표기를 Kyaa로 바꾸고, 이미지 안의 환영 문구도 맞췄어요.",
+    "첨부 이미지는 공개 콘텐츠를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/",
+  "images": [
+    "release-notes/images/2026-10-12-kyaa-slogan-desktop.png",
+    "release-notes/images/2026-10-12-kyaa-slogan-mobile.png"
+  ]
+}

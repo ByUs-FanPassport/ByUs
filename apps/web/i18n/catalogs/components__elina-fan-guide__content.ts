@@ -640,15 +640,15 @@ export const messages = {
     "fr": "Vérifier et commencer"
   },
   "mca079ef76357": {
-    "ja": "kyaa. Your Bias.",
-    "zh-Hans": "kyaa. Your Bias.",
-    "zh-Hant": "kyaa. Your Bias.",
-    "es": "kyaa. Your Bias.",
-    "id": "kyaa. Your Bias.",
-    "vi": "kyaa. Your Bias.",
-    "th": "kyaa. Your Bias.",
-    "pt": "kyaa. Your Bias.",
-    "fr": "kyaa. Your Bias."
+    "ja": "Kyaa. Every Fan Moment Counts.",
+    "zh-Hans": "Kyaa. Every Fan Moment Counts.",
+    "zh-Hant": "Kyaa. Every Fan Moment Counts.",
+    "es": "Kyaa. Every Fan Moment Counts.",
+    "id": "Kyaa. Every Fan Moment Counts.",
+    "vi": "Kyaa. Every Fan Moment Counts.",
+    "th": "Kyaa. Every Fan Moment Counts.",
+    "pt": "Kyaa. Every Fan Moment Counts.",
+    "fr": "Kyaa. Every Fan Moment Counts."
   },
   "me864016bbde1": {
     "ja": "海辺に立つElina",

@@ -10,7 +10,7 @@ export async function GET() {
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px", background: "#ffffff", color: "#171717" }}>
       {/* The canonical wordmark is an image asset, not typeset UI text. */}
       <img src={`data:image/png;base64,${wordmark.toString("base64")}`} alt="kyaa" width={440} height={181} />
-      <div style={{ display: "flex", fontSize: 44, marginTop: 28 }}>Your Bias</div>
+      <div style={{ display: "flex", fontSize: 44, marginTop: 28 }}>Every Fan Moment Counts.</div>
       <div style={{ display: "flex", fontSize: 26, marginTop: 64, color: "#737373" }}>kyaa.io</div>
     </div>,
     { width: 1200, height: 630 },
