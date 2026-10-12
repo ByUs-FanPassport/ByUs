@@ -10,6 +10,10 @@
 **/node_modules
 apps/fan-web
 apps/web/.next
+apps/web/test-results
+apps/web/playwright-report
+apps/worker/dist
+apps/worker/dist-lambda
 artifacts
 contracts
 design
@@ -17,8 +21,6 @@ docs
 outputs
 supabase
 tmp
-scripts
-!scripts/
 scripts/*
 !scripts/local-production-env.mjs
 !scripts/local-production-env.d.mts
