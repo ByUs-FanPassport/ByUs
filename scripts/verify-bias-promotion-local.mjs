@@ -225,14 +225,14 @@ try {
       .waitFor();
     assert.equal(
       await page.evaluate(() => navigator.clipboard.readText()),
-      "https://byus.kr/elina",
+      "https://kyaa.io/elina",
     );
     await page
       .getByRole("button", { name: "홍보 글 복사", exact: true })
       .click();
     assert(
       (await page.evaluate(() => navigator.clipboard.readText())).includes(
-        "https://byus.kr/elina",
+        "https://kyaa.io/elina",
       ),
     );
     for (const label of [
@@ -243,7 +243,7 @@ try {
       await page.getByRole("button", { name: label, exact: true }).click();
       assert(
         (await page.evaluate(() => navigator.clipboard.readText())).includes(
-          "byus.kr/elina",
+          "kyaa.io/elina",
         ),
       );
     }
@@ -275,7 +275,7 @@ try {
       await page
         .getByRole("link", { name: "팬페이지 열기" })
         .getAttribute("href"),
-      "https://byus.kr/ifewknow",
+      "https://kyaa.io/ifewknow",
     );
     await all.click();
     await page.getByRole("textbox").fill("zzzz-unmatched");
@@ -292,7 +292,7 @@ try {
       await page
         .getByRole("link", { name: "팬페이지 열기" })
         .getAttribute("href"),
-      "https://byus.kr/ifewknow",
+      "https://kyaa.io/ifewknow",
     );
     await page.getByRole("link", { name: "EN", exact: true }).click();
     await page.getByRole("heading", { name: /Let fans know/ }).waitFor();
@@ -300,7 +300,7 @@ try {
       await page
         .getByRole("link", { name: "Open fan page" })
         .getAttribute("href"),
-      "https://byus.kr/ifewknow?locale=en",
+      "https://kyaa.io/ifewknow?locale=en",
     );
     await noOverflow();
     await page.screenshot({

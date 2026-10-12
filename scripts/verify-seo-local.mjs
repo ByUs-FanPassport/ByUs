@@ -18,10 +18,10 @@ for (const path of paths) {
     const doc = new JSDOM(html).window.document;
     const meta = (key) => doc.head.querySelector(`meta[property="${key}"],meta[name="${key}"]`)?.content;
     const canonical = doc.head.querySelector('link[rel="canonical"]')?.href;
-    assert.equal(canonical, `https://byus.kr${path}?locale=${locale}`);
+    assert.equal(canonical, `https://kyaa.io${path}?locale=${locale}`);
     assert.equal(meta('og:url'), canonical);
     assert.equal(meta('og:type'), 'website');
-    assert.equal(meta('og:site_name'), 'ByUs');
+    assert.equal(meta('og:site_name'), 'kyaa');
     assert.equal(meta('twitter:card'), 'summary_large_image');
     assert.equal(meta('og:locale'), locale === 'en' ? 'en_US' : 'ko_KR');
     assert.equal(doc.documentElement.lang, locale);
@@ -42,7 +42,7 @@ for (const path of paths) {
         }
       }
     }
-    for (const other of ['ko', 'en']) assert.equal(doc.head.querySelector(`link[hreflang="${other}"]`)?.href, `https://byus.kr${path}?locale=${other}`);
+    for (const other of ['ko', 'en']) assert.equal(doc.head.querySelector(`link[hreflang="${other}"]`)?.href, `https://kyaa.io${path}?locale=${other}`);
     if (path.startsWith('/live/')) {
       assert(doc.querySelector('h1')?.textContent?.trim(), 'LIVE title must be in initial HTML');
       assert(doc.body.textContent.includes('KST'), 'LIVE timezone must be in initial HTML');
@@ -73,7 +73,7 @@ for (const userAgent of ['facebookexternalhit/1.1', 'Twitterbot', 'TelegramBot',
 const robots = await fetch(`${origin}/robots.txt`);
 assert.equal(robots.status, 200);
 assert(robots.headers.get('content-type').includes('text/plain'));
-assert((await robots.text()).includes('Sitemap: https://byus.kr/sitemap.xml'));
+assert((await robots.text()).includes('Sitemap: https://kyaa.io/sitemap.xml'));
 const sitemap = await fetch(`${origin}/sitemap.xml`);
 assert.equal(sitemap.status, 200);
 const xml = await sitemap.text();
@@ -82,7 +82,7 @@ const urls = [...doc.querySelectorAll('url > loc')].map((node) => node.textConte
 assert(urls.length >= 12);
 assert.equal(new Set(urls).size, urls.length);
 assert(!urls.some((url) => /rehearsal|\/my|\/admin|\/verify|\/passports/.test(url)));
-assert(urls.every((url) => /^https:\/\/byus\.kr\/.*\?locale=(ko|en)$/.test(url)));
+assert(urls.every((url) => /^https:\/\/kyaa\.io\/.*\?locale=(ko|en)$/.test(url)));
 report.sitemapUrls = urls.length;
 await writeFile(new URL('sitemap.xml', output), xml);
 for (const path of ['/my', '/admin', '/passports', '/settings', '/notifications', '/live/ifew-100-days-tiktok-20260912-rehearsal']) {

@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 
 const KEYCHAIN_SERVICE = "codex.telegram.bug-report-operator";
 const KEYCHAIN_ACCOUNT = "byus.kr";
-const DEFAULT_BASE_URL = "https://byus.kr";
+const DEFAULT_BASE_URL = "https://kyaa.io";
 
 function usage() {
   process.stderr.write([

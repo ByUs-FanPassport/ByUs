@@ -88,7 +88,7 @@ try {
     const response = await fetch(`${origin}/${slug}?locale=${locale}`, { headers: { "user-agent": "kakaotalk-scrap/1.0" } });
     assert.equal(response.status, 200, `${slug} ${locale}`);
     const html = await response.text();
-    assert(html.includes(`https://byus.kr/${slug}?locale=${locale}`), "canonical root");
+    assert(html.includes(`https://kyaa.io/${slug}?locale=${locale}`), "canonical root");
     assert(html.includes("celebrity-detail-main"), "server rendered creator");
     report.pages.push({ slug, locale, status: response.status });
   }
@@ -101,8 +101,8 @@ try {
   assert.equal(redirect.headers.get("location"), old.replace("/c/", "/"));
   report.redirects.push({ status: 308, location: redirect.headers.get("location") });
   const sitemap = await (await fetch(`${origin}/sitemap.xml`)).text();
-  assert(sitemap.includes("https://byus.kr/ifewknow?locale=ko"));
-  assert(!sitemap.includes("https://byus.kr/c/"));
+  assert(sitemap.includes("https://kyaa.io/ifewknow?locale=ko"));
+  assert(!sitemap.includes("https://kyaa.io/c/"));
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on("pageerror", (error) => console.log("browser error:", error.message));

@@ -20,7 +20,7 @@ export function createInstagramTestGateway({ upstreamPort, publicOrigin }) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", origin);
     if (url.pathname === "/privacy" && request.method === "GET") {
-      response.writeHead(302, { ...responseHeaders, location: "https://byus.kr/privacy" }); response.end(); return;
+      response.writeHead(302, { ...responseHeaders, location: "https://kyaa.io/privacy" }); response.end(); return;
     }
     if (!methods.get(url.pathname)?.has(request.method)) {
       response.writeHead(404, responseHeaders); response.end(); return;
