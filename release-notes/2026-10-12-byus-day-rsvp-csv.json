@@ -1,0 +1,9 @@
+{
+  "changes": [
+    "ByUs Day RSVP 관리자 화면에 전체 명단을 CSV로 내려받는 버튼을 추가했어요.",
+    "검색어와 현재 페이지에 관계없이 불러온 전체 참가자의 이름, 소속, 직책, 연락처, 국적, 접수일을 저장할 수 있어요.",
+    "첨부 화면은 예시 참가자 정보로 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/admin/byus-day-rsvps",
+  "images": ["release-notes/images/2026-10-12-byus-day-rsvp-csv.png"]
+}

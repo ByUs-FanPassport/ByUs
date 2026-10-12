@@ -33,7 +33,7 @@ export function createCsv<Row>(columns: PerformanceColumn<Row>[], rows: Row[]) {
   return `\uFEFF${lines.join("\r\n")}`;
 }
 
-function downloadCsv(filename: string, content: string) {
+export function downloadCsv(filename: string, content: string) {
   const url = URL.createObjectURL(
     new Blob([content], { type: "text/csv;charset=utf-8" }),
   );

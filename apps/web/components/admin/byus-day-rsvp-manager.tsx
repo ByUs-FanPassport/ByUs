@@ -1,8 +1,9 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { RefreshCw, UsersRound } from "lucide-react";
+import { Download, RefreshCw, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createCsv, downloadCsv } from "@/features/analytics/ui/performance-table";
 import { rsvpAttendeesSchema, type RsvpAttendee } from "@/features/connect/rsvp-admin";
 import { AdminAccessState } from "./admin-access-state";
 import { AdminListSearch, AdminPagination, useAdminPagination } from "./admin-pagination";
@@ -19,6 +20,7 @@ const copy = {
     loading: "접수 명단을 불러오는 중입니다.", error: "접수 명단을 불러오지 못했습니다.", retry: "다시 시도",
     empty: "아직 접수된 참가자가 없습니다.", noResults: "검색 결과가 없습니다.", clear: "검색 초기화",
     scroll: "표를 좌우로 움직여 전체 정보를 확인하세요.",
+    exportCsv: "전체 명단 CSV", koreanName: "한글 이름", englishName: "영문 이름", phone: "전화번호", email: "이메일",
   },
   en: {
     description: "View the people registered for ByUs Day.", total: "Total registrations", unit: "",
@@ -27,6 +29,7 @@ const copy = {
     loading: "Loading registrations.", error: "Registrations could not be loaded.", retry: "Try again",
     empty: "No one has registered yet.", noResults: "No registrations match your search.", clear: "Clear search",
     scroll: "Scroll horizontally to see all attendee details.",
+    exportCsv: "Export all to CSV", koreanName: "Korean name", englishName: "English name", phone: "Phone", email: "Email",
   },
 } as const;
 
@@ -85,6 +88,16 @@ function Attendees({ locale, adminRole, getAccessToken }: {
 
   if (state.status === "unauthenticated" || state.status === "denied") return <AdminAccessState status={state.status} locale={locale} />;
   const refresh = () => setRevision(value => value + 1);
+  const exportCsv = () => downloadCsv("byus-day-rsvps.csv", createCsv<RsvpAttendee>([
+    { key: "koreanName", label: t.koreanName, value: item => item.koreanName },
+    { key: "englishName", label: t.englishName, value: item => item.englishName },
+    { key: "affiliation", label: t.affiliation, value: item => item.affiliation },
+    { key: "occupation", label: t.occupation, value: item => item.occupation },
+    { key: "phone", label: t.phone, value: item => item.phone },
+    { key: "email", label: t.email, value: item => item.email },
+    { key: "nationality", label: t.nationality, value: item => regions.of(item.nationality) ?? item.nationality },
+    { key: "createdAt", label: t.date, value: item => `${date.format(new Date(item.createdAt))} ${time.format(new Date(item.createdAt))}` },
+  ], attendees));
   return <AdminOperationsShell locale={locale} adminRole={adminRole}>
     <header className={styles.heading}>
       <div><h1>ByUs Day RSVP</h1><p>{t.description}</p></div>
@@ -93,9 +106,14 @@ function Attendees({ locale, adminRole, getAccessToken }: {
     <section className={styles.panel} aria-labelledby="rsvp-attendees-heading">
       <div className={styles.panelHeading}>
         <div><h2 id="rsvp-attendees-heading">{t.attendees}</h2><span>{t.order}</span></div>
-        <button className={`${shared.secondaryButton} ${styles.refresh}`} type="button" onClick={refresh} disabled={state.status === "loading"}>
-          <RefreshCw aria-hidden="true" />{t.refresh}
-        </button>
+        <div className={styles.actions}>
+          <button className={`${shared.secondaryButton} ${styles.refresh}`} type="button" onClick={exportCsv} disabled={state.status !== "ready" || attendees.length === 0}>
+            <Download aria-hidden="true" />{t.exportCsv}
+          </button>
+          <button className={`${shared.secondaryButton} ${styles.refresh}`} type="button" onClick={refresh} disabled={state.status === "loading"}>
+            <RefreshCw aria-hidden="true" />{t.refresh}
+          </button>
+        </div>
       </div>
       <div className={styles.search}>
         <AdminListSearch value={query} onChange={setQuery} locale={locale} disabled={state.status !== "ready"} />
