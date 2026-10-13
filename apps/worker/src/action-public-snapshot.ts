@@ -1,5 +1,6 @@
 import {
   createPublicClient,
+  custom,
   decodeAbiParameters,
   decodeEventLog,
   decodeFunctionData,
@@ -19,12 +20,14 @@ import type { ActionLifecycleTransaction, FinalizedIndexedFanAction, IndexedCred
 
 const ZERO_HASH = `0x${"0".repeat(64)}` as Hash;
 const ZERO_ADDRESS = `0x${"0".repeat(40)}` as Address;
-const LOG_CHUNK_BLOCKS = 10_000n;
+const LOG_CHUNK_BLOCKS = 1_000n;
 const MAX_SCAN_BLOCKS = 5_000_000n;
 const MAX_HUB_LOGS = 50_000;
 const MAX_ACTIONS = 10_000;
 const MAX_EVENT_BLOCKS = 5_000;
-const SNAPSHOT_DEADLINE_MS = 45_000;
+// shortcut: full-history verification is capped at four minutes; use an incremental verified index when it outgrows this budget.
+const SNAPSHOT_DEADLINE_MS = 240_000;
+const READ_BATCH_SIZE = 64;
 
 type ActionRecord = {
   occurrenceId: Hash; actionId: Hash; easUID: Hash; requestHash: Hash; recordHash: Hash;
@@ -82,6 +85,32 @@ function assertNotAborted(signal: AbortSignal): void {
   if (signal.aborted) throw signal.reason instanceof Error ? signal.reason : new Error("Action public snapshot deadline exceeded");
 }
 
+function snapshotClient(options: FinalizedActionSnapshotOptions, signal: AbortSignal): PublicClient {
+  const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
+  let nextRequest = 0;
+  const pacedFetch: typeof fetch = async (input, init) => {
+    const body = JSON.parse(String(init?.body));
+    const wait = Math.max(0, nextRequest - Date.now());
+    // Pace reads at 2,000 CU/s to leave room in the shared 3,000 CU/s Nodit Business quota.
+    const units = (Array.isArray(body) ? body : [body]).reduce((total, item) => total + (item.method === "eth_getLogs" ? 66 : 26), 0);
+    nextRequest = Date.now() + wait + Math.ceil(units / 2);
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+    assertNotAborted(signal);
+    return fetch(input, init);
+  };
+  const transportOptions = { timeout: 15_000, retryCount: 0, fetchOptions: { signal }, fetchFn: pacedFetch };
+  const direct = createPublicClient({ chain, transport: http(options.rpcUrl, transportOptions) });
+  const batched = createPublicClient({ chain, transport: http(options.rpcUrl, { ...transportOptions, batch: { batchSize: 16, wait: 5 } }) });
+  return createPublicClient({ chain, batch: { multicall: { deployless: true, wait: 5 } },
+    transport: custom({ request: async (args) => {
+      assertNotAborted(signal);
+      if (args.method !== "eth_getLogs") return batched.request(args);
+      // Keep log scans separate from batches of quick state/transaction reads.
+      return direct.request(args);
+    } }, { retryCount: 0 }),
+  });
+}
+
 function canonicalActionId(occurrenceId: Hash, revision: number): Hash {
   return keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint32" }], [occurrenceId, revision]));
 }
@@ -93,7 +122,7 @@ function credentialKey(chainId: number, nftContract: Address, tokenId: bigint): 
   ));
 }
 
-async function loadHubLogs(client: PublicClient, address: Address, fromBlock: bigint, toBlock: bigint, signal: AbortSignal) {
+async function loadHubLogs(client: PublicClient, address: Address | Address[], fromBlock: bigint, toBlock: bigint, signal: AbortSignal) {
   if (fromBlock > toBlock) throw new Error("Action public snapshot deployment block is after finalized head");
   if (toBlock - fromBlock + 1n > MAX_SCAN_BLOCKS) throw new Error("Action public snapshot block range cap exceeded");
   const logs: Awaited<ReturnType<PublicClient["getLogs"]>> = [];
@@ -102,9 +131,9 @@ async function loadHubLogs(client: PublicClient, address: Address, fromBlock: bi
     const end = start + LOG_CHUNK_BLOCKS - 1n < toBlock ? start + LOG_CHUNK_BLOCKS - 1n : toBlock;
     ranges.push({ fromBlock: start, toBlock: end });
   }
-  for (let index = 0; index < ranges.length; index += 4) {
+  for (let index = 0; index < ranges.length; index += 16) {
     assertNotAborted(signal);
-    const chunks = await Promise.all(ranges.slice(index, index + 4).map((range) => client.getLogs({ address, ...range })));
+    const chunks = await Promise.all(ranges.slice(index, index + 16).map((range) => client.getLogs({ address, ...range })));
     for (const chunk of chunks) {
       if (logs.length + chunk.length > MAX_HUB_LOGS) throw new Error("Action public snapshot Hub log cap exceeded");
       logs.push(...chunk);
@@ -309,9 +338,9 @@ async function readFinalizedActionSnapshotInner(
   options: FinalizedActionSnapshotOptions,
   signal: AbortSignal,
   pinnedFinalized?: { number: bigint; hash: Hash; timestamp: bigint },
+  pinnedLogs?: Awaited<ReturnType<PublicClient["getLogs"]>>,
 ): Promise<FinalizedActionSnapshot> {
-  const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
-  const client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 0, fetchOptions: { signal } }) });
+  const client = options.client ?? snapshotClient(options, signal);
   assertNotAborted(signal);
   const finalized = pinnedFinalized ?? await client.getBlock({ blockTag: "finalized" });
   if (!finalized.hash) throw new Error("Action public snapshot finalized block has no hash");
@@ -323,7 +352,7 @@ async function readFinalizedActionSnapshotInner(
     client.getChainId(),
     client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "environmentId", blockNumber }),
     client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "eas", blockNumber }),
-    loadHubLogs(client, options.hubAddress, options.fromBlock, blockNumber, signal),
+    pinnedLogs ?? loadHubLogs(client, options.hubAddress, options.fromBlock, blockNumber, signal),
   ]);
   if (actualChainId !== options.chainId
     || !sameHex(actualEnvironment, options.environmentId)
@@ -361,18 +390,18 @@ async function readFinalizedActionSnapshotInner(
   }
   if (eventBlocks.size > MAX_EVENT_BLOCKS) throw new Error("Action public snapshot event block cap exceeded");
   const canonicalEventBlocks = [...eventBlocks];
-  for (let index = 0; index < canonicalEventBlocks.length; index += 16) {
+  for (let index = 0; index < canonicalEventBlocks.length; index += READ_BATCH_SIZE) {
     assertNotAborted(signal);
-    await Promise.all(canonicalEventBlocks.slice(index, index + 16).map(async ([number, expectedHash]) => {
+    await Promise.all(canonicalEventBlocks.slice(index, index + READ_BATCH_SIZE).map(async ([number, expectedHash]) => {
       const canonical = await client.getBlock({ blockNumber: BigInt(number) });
       if (!canonical.hash || !sameHex(canonical.hash, expectedHash)) throw new Error("Action public snapshot event block reorg");
     }));
   }
 
   const records = new Map<string, ActionRecord>();
-  for (let index = 0; index < events.recorded.length; index += 16) {
+  for (let index = 0; index < events.recorded.length; index += READ_BATCH_SIZE) {
     assertNotAborted(signal);
-    await Promise.all(events.recorded.slice(index, index + 16).map(async (event) => {
+    await Promise.all(events.recorded.slice(index, index + READ_BATCH_SIZE).map(async (event) => {
       const [record, schema] = await Promise.all([
         client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "getAction", args: [event.actionId], blockNumber }) as Promise<ActionRecord>,
         client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "getSchema", args: [event.schemaVersion], blockNumber }),
@@ -391,16 +420,19 @@ async function readFinalizedActionSnapshotInner(
     occurrenceEvents.push(event);
     eventsByOccurrence.set(key, occurrenceEvents);
   }
-  for (const [occurrenceKey, occurrenceEvents] of eventsByOccurrence) {
+  const occurrences = [...eventsByOccurrence];
+  for (let index = 0; index < occurrences.length; index += READ_BATCH_SIZE) {
     assertNotAborted(signal);
-    const occurrenceId = occurrenceEvents[0]!.occurrenceId;
-    const latestActionId = await client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "latestActionId", args: [occurrenceId], blockNumber });
-    const latestEvent = recordedById.get(latestActionId.toLowerCase());
-    const maximumRevision = Math.max(...occurrenceEvents.map((event) => event.revision));
-    if (!latestEvent || latestEvent.occurrenceId.toLowerCase() !== occurrenceKey || latestEvent.revision !== maximumRevision) {
-      throw new Error("Action public snapshot latest action log incomplete");
-    }
-    latestByOccurrence.set(occurrenceKey, latestActionId);
+    await Promise.all(occurrences.slice(index, index + READ_BATCH_SIZE).map(async ([occurrenceKey, occurrenceEvents]) => {
+      const occurrenceId = occurrenceEvents[0]!.occurrenceId;
+      const latestActionId = await client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "latestActionId", args: [occurrenceId], blockNumber });
+      const latestEvent = recordedById.get(latestActionId.toLowerCase());
+      const maximumRevision = Math.max(...occurrenceEvents.map((event) => event.revision));
+      if (!latestEvent || latestEvent.occurrenceId.toLowerCase() !== occurrenceKey || latestEvent.revision !== maximumRevision) {
+        throw new Error("Action public snapshot latest action log incomplete");
+      }
+      latestByOccurrence.set(occurrenceKey, latestActionId);
+    }));
   }
 
   for (const event of events.recorded) {
@@ -454,9 +486,9 @@ async function readFinalizedActionSnapshotInner(
   const receiptCache = new Map<string, Awaited<ReturnType<PublicClient["getTransactionReceipt"]>>>();
   const verifiedBindings = new Map<string, Promise<Address>>();
   const actions: FinalizedIndexedFanAction[] = [];
-  for (let index = 0; index < events.recorded.length; index += 8) {
+  for (let index = 0; index < events.recorded.length; index += READ_BATCH_SIZE) {
     assertNotAborted(signal);
-    const batch = await Promise.all(events.recorded.slice(index, index + 8).map(async (event): Promise<FinalizedIndexedFanAction> => {
+    const batch = await Promise.all(events.recorded.slice(index, index + READ_BATCH_SIZE).map(async (event): Promise<FinalizedIndexedFanAction> => {
     const record = records.get(event.actionId.toLowerCase())!;
     const refs = refsByAction.get(event.actionId.toLowerCase()) ?? [];
     const { sourceOccurrence, bindingVersion } = await verifyRecordedTransaction(client, options, event, record, events.corrected, blockNumber);
@@ -591,16 +623,24 @@ export async function readFinalizedActionSnapshot(options: FinalizedActionSnapsh
       if (uniqueHubs.size !== deployments.length) throw new Error("Action public snapshot duplicate Hub deployment");
       if (deployments.length === 1 && !options.deployments) return readFinalizedActionSnapshotInner(options, controller.signal);
 
-      const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
-      const client = options.client ?? createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 0, fetchOptions: { signal: controller.signal } }) });
+      const client = options.client ?? snapshotClient(options, controller.signal);
       const finalized = await client.getBlock({ blockTag: "finalized" });
       if (!finalized.hash) throw new Error("Action public snapshot finalized block has no hash");
       const pinned = { number: finalized.number, hash: finalized.hash, timestamp: finalized.timestamp };
+      for (const deployment of deployments) {
+        if (deployment.fromBlock > pinned.number) throw new Error("Action public snapshot deployment block is after finalized head");
+      }
+      const fromBlock = deployments.reduce((minimum, deployment) => deployment.fromBlock < minimum ? deployment.fromBlock : minimum, deployments[0]!.fromBlock);
+      const logs = await loadHubLogs(client, deployments.map((deployment) => deployment.hubAddress), fromBlock, pinned.number, controller.signal);
+      for (const log of logs) {
+        if (!uniqueHubs.has(getAddress(log.address).toLowerCase())) throw new Error("Action public snapshot unexpected Hub log address");
+      }
       const snapshots = await Promise.all(deployments.map(async (deployment) => {
         const { deployments: _ignoredDeployments, ...sharedOptions } = options;
         const snapshot = await readFinalizedActionSnapshotInner({
           ...sharedOptions, client, hubAddress: deployment.hubAddress, fromBlock: deployment.fromBlock,
-        }, controller.signal, pinned);
+        }, controller.signal, pinned, logs.filter((log) => sameHex(log.address, deployment.hubAddress)
+          && (log.blockNumber == null || log.blockNumber >= deployment.fromBlock)));
         snapshot.deployments[0]!.label = deployment.label ?? "ActionHub";
         return snapshot;
       }));

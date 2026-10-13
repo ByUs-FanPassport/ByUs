@@ -221,7 +221,8 @@ suite("ActionWorker to ActionHub local Anvil", () => {
     expect(await publicClient.readContract({ address: passport, abi: passportArtifact.abi, functionName: "name" })).toBe("ByUs Fan Passport");
     await publicClient.request({ method: "anvil_mine", params: ["0x80"] } as any);
     const mixed = await readFinalizedActionSnapshot({ rpcUrl, chainId: 91342, hubAddress: hub, fromBlock: 0n,
-      environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp }, 2: { 0: nextPassport, 1: nextStamp } }, client: publicClient });
+      deployments: [{ hubAddress: hub, fromBlock: 0n }],
+      environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp }, 2: { 0: nextPassport, 1: nextStamp } } });
     expect(mixed.actions).toHaveLength(3);
     expect(new Set(mixed.actions.flatMap((action) => action.credentials.map((credential) => credential.credentialKey))).size).toBe(6);
     expect(aggregateFanActionMetrics(mixed.actions, { ...boundary, asOfEpochSeconds: mixed.timestamp })).toMatchObject({ uniqueActiveWallets: 1, passportCredentials: 3, mintedCredentials: 6, transactions: 3 });

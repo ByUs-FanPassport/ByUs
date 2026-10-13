@@ -313,7 +313,7 @@ it("propagates an EAS RPC failure instead of converting it to false", async () =
   await expect(readFinalizedActionSnapshot(makeFixture({ easFailure: true }).options)).rejects.toThrow("EAS RPC unavailable");
 });
 
-it("aborts the whole snapshot after its 45 second deadline", async () => {
+it("allows a paced history scan and still aborts the whole snapshot at its deadline", async () => {
   vi.useFakeTimers();
   try {
     const client = { getBlock: vi.fn(() => new Promise(() => undefined)) };
@@ -322,8 +322,12 @@ it("aborts the whole snapshot after its 45 second deadline", async () => {
       environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } },
       client: client as unknown as PublicClient,
     });
+    let settled = false;
+    void pending.finally(() => { settled = true; }).catch(() => undefined);
     const assertion = expect(pending).rejects.toThrow("deadline exceeded");
     await vi.advanceTimersByTimeAsync(45_000);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(195_000);
     await assertion;
   } finally {
     vi.useRealTimers();
@@ -413,8 +417,8 @@ it("reads every allowlisted Hub at one common finalized block and keeps an empty
     environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } }, client: client as unknown as PublicClient,
   });
   expect(getBlock.mock.calls.filter(([request]) => request.blockTag === "finalized")).toHaveLength(1);
-  expect(client.getLogs).toHaveBeenCalledTimes(2);
-  expect(client.getLogs).toHaveBeenCalledWith(expect.objectContaining({ address: hub, fromBlock: 1n, toBlock: 120n }));
+  expect(client.getLogs).toHaveBeenCalledTimes(1);
+  expect(client.getLogs).toHaveBeenCalledWith(expect.objectContaining({ address: [hub, newHub], fromBlock: 1n, toBlock: 120n }));
   expect(result.deployments).toEqual([
     expect.objectContaining({ label: "Legacy ActionHub", actionCount: 0 }),
     expect.objectContaining({ label: "New ActionHub", actionCount: 0 }),
@@ -426,8 +430,8 @@ it("fails the whole multi-Hub snapshot when one source cannot be read", async ()
   const client = {
     getChainId: vi.fn().mockResolvedValue(91342),
     getBlock: vi.fn().mockResolvedValue({ number: 120n, hash: finalBlockHash, timestamp: 200_000n }),
-    getLogs: vi.fn(async ({ address: target }: { address: Address }) => {
-      if (getAddress(target) === getAddress(newHub)) throw new Error("new Hub RPC unavailable");
+    getLogs: vi.fn(async ({ address: target }: { address: Address | Address[] }) => {
+      if ((Array.isArray(target) ? target : [target]).some((item) => getAddress(item) === getAddress(newHub))) throw new Error("new Hub RPC unavailable");
       return [];
     }),
     readContract: vi.fn(async ({ functionName }: { functionName: string }) => functionName === "environmentId" ? environmentId : eas),
@@ -437,6 +441,22 @@ it("fails the whole multi-Hub snapshot when one source cannot be read", async ()
     deployments: [{ hubAddress: hub, fromBlock: 1n }, { hubAddress: newHub, fromBlock: 110n }],
     environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } }, client: client as unknown as PublicClient,
   })).rejects.toThrow("new Hub RPC unavailable");
+});
+
+it("rejects logs from a Hub outside the requested combined scan", async () => {
+  const fixture = makeFixture();
+  fixture.client.getLogs.mockResolvedValue([{ ...hubLog("FanActionRecorded", {}), address: address("99") }]);
+  await expect(readFinalizedActionSnapshot({ ...fixture.options,
+    deployments: [{ hubAddress: hub, fromBlock: 1n }, { hubAddress: address("17"), fromBlock: 110n }],
+  })).rejects.toThrow("unexpected Hub log address");
+});
+
+it("keeps rejecting an event without a block number in the combined scan", async () => {
+  const fixture = makeFixture();
+  fixture.client.getLogs.mockResolvedValue([{ ...hubLog("FanActionRecorded", {}), blockNumber: null }]);
+  await expect(readFinalizedActionSnapshot({ ...fixture.options,
+    deployments: [{ hubAddress: hub, fromBlock: 1n }],
+  })).rejects.toThrow("known Hub event lacks canonical location");
 });
 
 function sameUid(value: unknown, expected: Hash): boolean {

@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { unstable_cache } from "next/cache";
 import { readFinalizedActionSnapshot } from "../../../worker/src/action-public-snapshot";
 import { onchainConfig } from "./public-config";
@@ -6,19 +7,21 @@ import { projectPublicOnchainSnapshot } from "./public-aggregate";
 import type { PublicOnchainResult, PublicOnchainSnapshot } from "./public-types";
 
 // Bump this namespace whenever verification or exclusion rules change; Next persists the cache across deployments.
+const readConfig = { ...onchainConfig, rpcUrl: process.env.GIWA_PUBLIC_READ_RPC_URL?.trim() || onchainConfig.rpcUrl };
 let pending: Promise<PublicOnchainSnapshot> | undefined;
 const readSnapshot = unstable_cache(async () => {
-  pending ??= readFinalizedActionSnapshot(onchainConfig).then((snapshot) => projectPublicOnchainSnapshot(snapshot)).finally(() => { pending = undefined; });
+  pending ??= readFinalizedActionSnapshot(readConfig).then((snapshot) => projectPublicOnchainSnapshot(snapshot)).finally(() => { pending = undefined; });
   return pending;
 }, [
   "byus-public-onchain-v4-binding-provenance",
+  createHash("sha256").update(readConfig.rpcUrl).digest("hex"),
   ...onchainConfig.deployments.flatMap(({ hubAddress, fromBlock, label, writeStatus }) => [hubAddress, fromBlock.toString(), label, writeStatus]),
   onchainConfig.environmentId,
   onchainConfig.schemaUid,
   onchainConfig.easAddress,
   ...Object.entries(onchainConfig.assetBindings).flatMap(([version, assets]) => [version, ...Object.entries(assets).flatMap(([kind, address]) => [kind, address])]),
   ...onchainConfig.qaWallets,
-], { revalidate: 300 });
+], { revalidate: 600 });
 
 export async function getPublicOnchainResult(): Promise<PublicOnchainResult> {
   try {

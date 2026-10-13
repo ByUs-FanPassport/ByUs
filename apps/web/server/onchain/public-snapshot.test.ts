@@ -1,12 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ read: vi.fn(), project: vi.fn() }));
+const mocks = vi.hoisted(() => ({ read: vi.fn(), project: vi.fn(), cache: vi.fn((fn: () => unknown, _keys: string[], _options: unknown) => fn) }));
 vi.mock("server-only", () => ({}));
-vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown) => fn }));
+vi.mock("next/cache", () => ({ unstable_cache: mocks.cache }));
 vi.mock("../../../worker/src/action-public-snapshot", () => ({ readFinalizedActionSnapshot: mocks.read }));
 vi.mock("./public-aggregate", () => ({ projectPublicOnchainSnapshot: mocks.project }));
 import { getPublicOnchainResult } from "./public-snapshot";
 import { onchainConfig } from "./public-config";
-afterEach(() => { vi.clearAllMocks(); });
+afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
 it("fails closed on an RPC or attestation validation failure", async () => {
   mocks.read.mockRejectedValue(new Error("private diagnostic payload"));
   expect(await getPublicOnchainResult()).toEqual({ state: "unavailable" });
@@ -23,4 +23,16 @@ it("coalesces concurrent reads and uses only the fixed public deployment", async
   expect(results.every((result) => result.state === "available")).toBe(true);
   expect(mocks.read).toHaveBeenCalledTimes(1);
   expect(mocks.read).toHaveBeenCalledWith(onchainConfig);
+});
+
+it("uses a server-only read RPC without changing deployment identities or exposing its key", async () => {
+  vi.stubEnv("GIWA_PUBLIC_READ_RPC_URL", "https://giwa-sepolia.nodit.io/private-read-key");
+  vi.resetModules();
+  const { getPublicOnchainResult: readWithPrivateRpc } = await import("./public-snapshot");
+  mocks.read.mockResolvedValue({});
+  mocks.project.mockReturnValue({ generatedAt: new Date().toISOString() });
+  const result = await readWithPrivateRpc();
+  expect(mocks.read).toHaveBeenCalledWith({ ...onchainConfig, rpcUrl: "https://giwa-sepolia.nodit.io/private-read-key" });
+  expect(JSON.stringify(result)).not.toContain("private-read-key");
+  expect(JSON.stringify(mocks.cache.mock.calls.at(-1)?.[1])).not.toContain("private-read-key");
 });
