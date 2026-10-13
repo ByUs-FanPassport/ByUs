@@ -17,3 +17,7 @@ Before switching producer routes:
 5. Lock and recheck the 10 enabled routes, empty canary scope, current public context coverage and verified contracts; switch routes atomically. Preserve all queued payloads and snapshots. Unpause and verify new issuance, old issuance lookup, duplicate source replay and mixed public counts using the designated QA actor.
 
 For recovery, pause transmission and repeat the invocation/lease barrier while continuing receipt reconciliation. Preserve successful transactions and signed payloads. Correct the compatible path; never blanket-rewrite queue bindings or blindly reissue assets.
+
+## Scheduled on 2026-10-13
+
+All three deployments are confirmed in the [public receipts](deployments/2026-10-13-kyaa-binding-2-plan.json.receipts.json). The existing Timelock scheduled operation `0x736e5ad8a93b2b7644ab87ee5a54aaab48606e9b6e1dfa804c12e14b7fdf105d` in transaction `0x79f12169a541258d5129e0a3cdf244033179cc929cca3efbad06577b53a500f6`. Earliest execution is **2026-10-15 11:28:20 UTC / 20:28:20 KST**. Scheduling did not upgrade the Hub or activate binding-2 producer routes.

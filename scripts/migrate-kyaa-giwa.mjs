@@ -35,6 +35,19 @@ export function assertKyaaEnvelope(tx,step){
 function checkPrivate(p){if(fs.existsSync(p)){const s=fs.lstatSync(p);assert(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&(s.mode&0o077)===0,'UNSAFE_JOURNAL');}}
 function persist(p,v){checkPrivate(p);const tmp=p+'.tmp';const fd=fs.openSync(tmp,'wx',0o600);try{fs.writeFileSync(fd,json(v));fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(tmp,p);}
 async function readReceipt(c,txHash){try{return await c.getTransactionReceipt({hash:txHash});}catch(e){if(e.name!=='TransactionReceiptNotFoundError')throw e;return null;}}
+export async function confirmedKyaaReceipt(c,txHash){
+ for(let attempt=0;attempt<6;attempt++){
+  try{
+   const receipt=await c.waitForTransactionReceipt({hash:txHash,pollingInterval:1000,timeout:55000});
+   assert((await c.getBlock({blockNumber:receipt.blockNumber})).hash===receipt.blockHash,'NONCANONICAL_RECEIPT');
+   return receipt;
+  }catch(e){
+   if(e.name!=='BlockNotFoundError'||attempt===5)throw e;
+   // GIWA receipt RPC can briefly lead its block RPC; retry reads, never transmission.
+   await new Promise(resolve=>setTimeout(resolve,1000));
+  }
+ }
+}
 function runtimeMatches(actual,artifact){
  if(!actual||actual.length!==artifact.deployedBytecode.object.length)return false;
  let expected=artifact.deployedBytecode.object;
@@ -98,8 +111,8 @@ async function main(){
     const signed=await account.signTransaction(tx);saved={id:step.id,nonce:step.nonce,signed,hash:keccak256(signed)};journal.steps.push(saved);persist(journalFile,journal);
     assert(await c.sendRawTransaction({serializedTransaction:signed})===saved.hash,'BROADCAST_HASH');
    }
-   receipt??=await c.waitForTransactionReceipt({hash:saved.hash,pollingInterval:1000,timeout:55000});
-   assert(receipt.status==='success'&&receipt.from.toLowerCase()===d.admin&&(receipt.to?.toLowerCase()??null)===(step.to??null)&&(await c.getBlock({blockNumber:receipt.blockNumber})).hash===receipt.blockHash,'CANONICAL_RECEIPT');
+   receipt=await confirmedKyaaReceipt(c,saved.hash);
+   assert(receipt.status==='success'&&receipt.from.toLowerCase()===d.admin&&(receipt.to?.toLowerCase()??null)===(step.to??null),'CANONICAL_RECEIPT');
    if(a[step.id])assert(receipt.contractAddress?.toLowerCase()===plan.addresses[step.id]&&runtimeMatches(await c.getBytecode({address:plan.addresses[step.id]}),a[step.id]),'DEPLOYED_RUNTIME');
    saved.receipt={hash:saved.hash,blockNumber:String(receipt.blockNumber),blockHash:receipt.blockHash};persist(journalFile,journal);console.log(json({step:step.id,...saved.receipt}));
   }

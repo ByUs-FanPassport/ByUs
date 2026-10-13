@@ -1,0 +1,37 @@
+{
+  "manifestHash": "0x447adb2f49817c572f7903c1bc52731617fe2708c98985bab35c6e391c9c3832",
+  "addresses": {
+    "passport": "0xb6c5f48d770a732deb374226eda1e5be209b7ed4",
+    "stamp": "0x527a70c0f7cf129650dc282b709327c5958a4ccf",
+    "implementation": "0xb135c7070eb7dedbea16c8468f27e17c82f6d5f4"
+  },
+  "operation": "0x736e5ad8a93b2b7644ab87ee5a54aaab48606e9b6e1dfa804c12e14b7fdf105d",
+  "timestamp": "1792063700",
+  "readyAt": "2026-10-15T11:28:20.000Z",
+  "transactions": [
+    {
+      "id": "passport",
+      "hash": "0x128ae2d0a6f02462c71858ffa1d789c72e4bab83cd89db2a48c8b7ec3db4213f",
+      "blockNumber": "38545606",
+      "blockHash": "0xb63c91cfffeead23560f6153282dfb1a09ffc384c70e6868c07009ddf4b0d729"
+    },
+    {
+      "id": "stamp",
+      "hash": "0x4afd56916ca97bd0b61dc7a0b504e7d36366fc77f9508495ec554139eb656641",
+      "blockNumber": "38545699",
+      "blockHash": "0x6aa504484a9703f414730be7169bd347708d4fc17fabacaa3ef07f232d3c70b2"
+    },
+    {
+      "id": "implementation",
+      "hash": "0xdfaa21e3a15ef23de2e8d2138721a8740fb557438ff944446003e6c070fbdb1f",
+      "blockNumber": "38545780",
+      "blockHash": "0xf9ff2e822e7603588f2c1f2c1d10e2994589a9c7524c4eaf412dbe278655d052"
+    },
+    {
+      "id": "schedule",
+      "hash": "0x79f12169a541258d5129e0a3cdf244033179cc929cca3efbad06577b53a500f6",
+      "blockNumber": "38545784",
+      "blockHash": "0xa967633dbfd8a03bec9a0e45503d2ecee3f66e3c7d6f3dc3badc01659ad1e2a8"
+    }
+  ]
+}
