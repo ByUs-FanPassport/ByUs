@@ -36,3 +36,14 @@ it("uses a server-only read RPC without changing deployment identities or exposi
   expect(JSON.stringify(result)).not.toContain("private-read-key");
   expect(JSON.stringify(mocks.cache.mock.calls.at(-1)?.[1])).not.toContain("private-read-key");
 });
+
+it("caches a full large ledger without dropping records or exceeding the storage budget", async () => {
+  vi.resetModules();
+  const { getPublicOnchainResult: readLargeSnapshot } = await import("./public-snapshot");
+  const snapshot = { generatedAt: new Date().toISOString(), actions: Array.from({ length: 1200 }, (_,index) => ({ actionId: index, proof: "x".repeat(1300) })) };
+  mocks.read.mockResolvedValue({});
+  mocks.project.mockReturnValue(snapshot);
+  expect(await readLargeSnapshot()).toEqual({ state: "available", snapshot });
+  const stored = await mocks.cache.mock.calls.at(-1)![0]();
+  expect(Buffer.byteLength(JSON.stringify(stored))).toBeLessThan(512_000);
+});
