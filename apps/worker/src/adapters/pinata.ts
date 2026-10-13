@@ -15,8 +15,8 @@ export class PinataMetadataAdapter implements MetadataPort {
       body: JSON.stringify({
         pinataContent: document,
         pinataMetadata: {
-          name: `byus-credential-v1-${operationKey}`,
-          keyvalues: { application: "byus", schemaVersion: "1" },
+          name: `kyaa-credential-v1-${operationKey}`,
+          keyvalues: { application: "kyaa", schemaVersion: "1" },
         },
         pinataOptions: { cidVersion: 1 },
       }),

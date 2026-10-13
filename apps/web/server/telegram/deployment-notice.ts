@@ -5,7 +5,8 @@ import { boundedJson, operatorAuthorized } from "./bug-report-routes";
 import { SALLY_BUG_REPORT_CHAT_ID } from "./bug-report-repository";
 
 const HEADERS = { "cache-control": "private, no-store", vary: "Authorization" };
-const GITHUB_REPO = "https://api.github.com/repos/ByUs-FanPassport/ByUs";
+const REPOSITORY_ID = 1307387500;
+const REPOSITORY_PATHS = ["ByUs-FanPassport/ByUs", "ByUs-FanPassport/kyaa", "kyaa-io/ByUs", "kyaa-io/kyaa"];
 const requestSchema = z.object({
   deploymentId: z.number().int().positive().safe(),
   receiptId: z.number().int().positive().safe(),
@@ -28,11 +29,23 @@ export function createDeploymentNoticeHandler({ secret, botToken, fetcher = fetc
     try { input = requestSchema.parse(await boundedJson(request)); }
     catch { return fail("INVALID_REQUEST", 400); }
     let deployedSha: string;
+    let deployedRepository: string;
     try {
-      async function github(path: string) {
-        const response = await fetcher(`${GITHUB_REPO}${path}`, { headers: { accept: "application/vnd.github+json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000) });
+      async function canonicalRepository(): Promise<string> {
+        const response = await fetcher(`https://api.github.com/repositories/${REPOSITORY_ID}`, { headers: { accept: "application/vnd.github+json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000) });
         if (!response.ok) throw new Error("GITHUB_UNAVAILABLE");
-        return response.json();
+        const repository = await response.json();
+        if (repository.id !== REPOSITORY_ID || !REPOSITORY_PATHS.includes(repository.full_name)) throw new Error("UNTRUSTED_REPOSITORY");
+        return repository.full_name;
+      }
+      let repository = await canonicalRepository();
+      async function github(path: string) {
+        for (let attempt = 0; ; attempt++) {
+          const response = await fetcher(`https://api.github.com/repos/${repository}${path}`, { headers: { accept: "application/vnd.github+json" }, cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(10_000) });
+          if (response.status === 301 && attempt === 0) { repository = await canonicalRepository(); continue; }
+          if (!response.ok) throw new Error("GITHUB_UNAVAILABLE");
+          return response.json();
+        }
       }
       const [deployment, statuses, receipt] = await Promise.all([
         github(`/deployments/${input.deploymentId}`),
@@ -45,11 +58,12 @@ export function createDeploymentNoticeHandler({ secret, botToken, fetcher = fetc
       if (receipt.id !== input.receiptId || receipt.name !== "Telegram deployment notice" || receipt.app?.slug !== "github-actions" ||
           receipt.head_sha !== deployment.sha || receipt.external_id !== String(deployment.id) || receipt.status !== "in_progress") return fail("RECEIPT_NOT_RESERVED", 409);
       deployedSha = deployment.sha;
+      deployedRepository = input.images?.length ? await canonicalRepository() : repository;
     } catch { return fail("DEPLOYMENT_VERIFICATION_UNAVAILABLE", 503); }
 
     // The globally serialized CI sender owns the receipt. Never retry a POST with an uncertain result.
     try {
-      const photos = input.images?.map(path => `https://raw.githubusercontent.com/ByUs-FanPassport/ByUs/${deployedSha}/${path}`) ?? [];
+      const photos = input.images?.map(path => `https://raw.githubusercontent.com/${deployedRepository}/${deployedSha}/${path}`) ?? [];
       const method = photos.length > 1 ? "sendMediaGroup" : photos.length ? "sendPhoto" : "sendMessage";
       const content = photos.length > 1
         ? { media: photos.map((media, i) => ({ type: "photo", media, show_caption_above_media: true, ...(i === 0 ? { caption: input.text } : {}) })) }

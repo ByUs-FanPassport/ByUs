@@ -1,26 +1,26 @@
 <p align="center">
-  <a href="https://byus.kr/?locale=en">
-    <img src="apps/web/public/images/guest-home/byus-wordmark.svg" width="240" alt="ByUs">
+  <a href="https://kyaa.io/?locale=en">
+    <img src="apps/web/public/images/guest-home/kyaa-wordmark.svg" width="240" alt="kyaa">
   </a>
 </p>
 
-<h1 align="center">Turn fan participation into lasting value.</h1>
+<h1 align="center">Kyaa. Every Fan Moment Counts.</h1>
 
 <p align="center">
-  ByUs is a fan-commerce platform that connects verified fandom, LIVE participation,
+  kyaa is a fan-commerce platform that connects verified fandom, LIVE participation,
   portable credentials, and real benefits in one consumer journey.
 </p>
 
 <p align="center">
-  <a href="https://byus.kr/?locale=en"><img alt="Live product" src="https://img.shields.io/badge/Live_Product-byus.kr-7B5CFF?style=flat-square"></a>
+  <a href="https://kyaa.io/?locale=en"><img alt="Live product" src="https://img.shields.io/badge/Live_Product-kyaa.io-7B5CFF?style=flat-square"></a>
   <a href="https://github.com/ByUs-FanPassport/ByUs---GitBook"><img alt="Developer docs" src="https://img.shields.io/badge/Developer_Docs-GitBook-FF5CDA?style=flat-square"></a>
   <a href="https://docs.giwa.io/giwa-chain/en/"><img alt="GIWA Sepolia" src="https://img.shields.io/badge/GIWA_Sepolia-91342-17191C?style=flat-square"></a>
   <a href="https://github.com/ByUs-FanPassport/ByUs/actions/workflows/dependency-audit.yml"><img alt="Dependency audit" src="https://github.com/ByUs-FanPassport/ByUs/actions/workflows/dependency-audit.yml/badge.svg"></a>
 </p>
 
-## What ByUs does
+## What kyaa does
 
-Fan activity is valuable, but it is usually fragmented across content, community, LIVE, and commerce platforms. ByUs turns verified participation into a persistent fan record:
+Fan activity is valuable, but it is usually fragmented across content, community, LIVE, and commerce platforms. kyaa turns verified participation into a persistent fan record:
 
 1. **Discover** a favorite creator and an upcoming LIVE.
 2. **Sign in** with Google while an embedded EVM wallet is provisioned in the background.
@@ -29,6 +29,8 @@ Fan activity is valuable, but it is usually fragmented across content, community
 5. **Grow** Fan Score through reservations, attendance, and surveys.
 6. **Unlock** benefits based on verified activity—not follower count.
 
+The previews below show the earlier ByUs release; the current product is available at [kyaa.io](https://kyaa.io/?locale=en).
+
 | Discover and participate | Verify and unlock |
 | --- | --- |
 | <img src=".github/assets/discover.png" alt="ByUs creator and LIVE discovery screen"> | <img src=".github/assets/verify.png" alt="ByUs fan verification screen"> |
@@ -36,7 +38,7 @@ Fan activity is valuable, but it is usually fragmented across content, community
 
 ## Product architecture
 
-ByUs is database-first. Supabase remains the operational source of truth for identity, activity, score, eligibility, claims, and mint state. GIWA provides the public ownership and verification layer for issued credentials.
+kyaa is database-first. Supabase remains the operational source of truth for identity, activity, score, eligibility, claims, and mint state. GIWA provides the public ownership and verification layer for issued credentials.
 
 ```mermaid
 flowchart LR
@@ -98,7 +100,7 @@ Both credential contracts are non-transferable. A fan can prove the record, but 
 - [Successful Stamp mint](https://sepolia-explorer.giwa.io/tx/0x4c3bcf6e47388b30c289bf83c468f67fb2047799b47e31b5181e83c44c5ef627)
 - [Standalone contract repository](https://github.com/ByUs-FanPassport/ByUs-Contracts)
 
-> The current deployment is on GIWA Sepolia testnet. ByUs does not put private fan profiles, quiz answers, activity logs, CRM data, or benefit fulfillment data on-chain.
+> The current deployment is on GIWA Sepolia testnet. kyaa does not put private fan profiles, quiz answers, activity logs, CRM data, or benefit fulfillment data on-chain. Existing ByUs contracts and issued credentials retain their original names and addresses.
 
 ## Repository map
 

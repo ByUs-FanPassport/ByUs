@@ -1,0 +1,9 @@
+{
+  "changes": [
+    "공식 주소 안내의 서비스 이름을 kyaa로 맞췄어요. 기존에 발급된 Passport와 Stamp의 이름·주소는 그대로 유지돼요.",
+    "개발 저장소의 이름이 바뀌는 동안에도 수정 안내를 전달할 수 있도록 연결을 정비했어요.",
+    "첨부 이미지는 공개 주소 안내를 확인한 로컬 화면이에요."
+  ],
+  "path": "/pages/onchain",
+  "images": ["release-notes/images/2026-10-13-kyaa-address-labels-local.png"]
+}

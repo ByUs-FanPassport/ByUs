@@ -21,18 +21,18 @@ export const onchainConfig = {
 } as const;
 
 export const officialAddresses = [
-  { name: "ByUs ActionHub · new", role: "actionHub", address: onchainConfig.deployments[1].hubAddress },
-  { name: "ByUs ActionHub · legacy", role: "actionHub", address: onchainConfig.deployments[0].hubAddress },
-  { name: "Fan Passport · ERC-721", role: "passport", address: onchainConfig.assets[0] },
-  { name: "ByUs Stamp · ERC-1155", role: "stamp", address: onchainConfig.assets[1] },
-  { name: "ByUs ActionHub implementation", role: "implementation", address: "0x049b758b3d1cc0c66408b264c7f9a96ea479860b" },
-  { name: "ByUs ActionCodec", role: "codec", address: "0x4e44a1c183bac430f30033bd1a639c696b93612a" },
-  { name: "ByUs PublicContextRegistry V3", role: "registry", address: "0x4e104e5dfb3d466a2aac9ed0cf7572578068529b" },
+  { name: "kyaa ActionHub · current", role: "actionHub", address: onchainConfig.deployments[1].hubAddress },
+  { name: "kyaa ActionHub · legacy", role: "actionHub", address: onchainConfig.deployments[0].hubAddress },
+  { name: "Fan Passport · ByUs ERC-721", role: "passport", address: onchainConfig.assets[0] },
+  { name: "Stamp · ByUs ERC-1155", role: "stamp", address: onchainConfig.assets[1] },
+  { name: "kyaa ActionHub implementation", role: "implementation", address: "0x049b758b3d1cc0c66408b264c7f9a96ea479860b" },
+  { name: "kyaa ActionCodec", role: "codec", address: "0x4e44a1c183bac430f30033bd1a639c696b93612a" },
+  { name: "kyaa PublicContextRegistry V3", role: "registry", address: "0x4e104e5dfb3d466a2aac9ed0cf7572578068529b" },
   { name: "EAS", role: "eas", address: onchainConfig.easAddress },
   { name: "Schema Registry", role: "schema", address: "0x4200000000000000000000000000000000000020" },
-  { name: "ByUs Timelock", role: "timelock", address: "0x40eaeb0b73c50da5053502eb3b836a6effe54642" },
-  { name: "ByUs_Admin", role: "admin", address: "0xeee82f960476c888950c798c444c1fd92cbbfe50" },
-  { name: "ByUs action writer", role: "writer", address: "0xd0f5dd0885ca87f2c9f4d1017fa1714dd98dc815" },
+  { name: "kyaa Timelock", role: "timelock", address: "0x40eaeb0b73c50da5053502eb3b836a6effe54642" },
+  { name: "kyaa admin", role: "admin", address: "0xeee82f960476c888950c798c444c1fd92cbbfe50" },
+  { name: "kyaa action writer", role: "writer", address: "0xd0f5dd0885ca87f2c9f4d1017fa1714dd98dc815" },
 ] as const;
 
 export const actionDefinitions = [

@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { BOOTSTRAP, CHECK_NAME, REPOSITORY, formatNotice, readNotes, checkNotes, validateNote, notifyDeployment, noticeImages } from './deployment-notices.mjs';
+import { BOOTSTRAP, CHECK_NAME, REPOSITORY, REPOSITORY_ID, createGithubClient, formatNotice, readNotes, checkNotes, validateNote, notifyDeployment, noticeImages } from './deployment-notices.mjs';
 
 const note = { changes: ['알림 목록의 점을 굵은 제목과 같은 높이에 맞췄어요.'], path: '/notifications' };
 const sha = 'c'.repeat(40), priorSha = 'b'.repeat(40);
@@ -16,7 +16,7 @@ function harness({ existing, prior, sendError, saveError } = {}) {
   if (existing) receipts.set(sha, [existing]);
   if (prior) receipts.set(prior.sha, [prior.receipt]);
   const records = { sent: [], notes: [], writes: [] };
-  const options = { event: { repository: { full_name: REPOSITORY }, deployment, deployment_status: status }, assertOnMain: () => {}, runUrl: 'https://github.com/ByUs-FanPassport/ByUs/actions/runs/1',
+  const options = { event: { repository: { id: REPOSITORY_ID, full_name: REPOSITORY }, deployment, deployment_status: status }, assertOnMain: () => {}, runUrl: 'https://github.com/ByUs-FanPassport/ByUs/actions/runs/1',
     notes: (base, head) => { records.notes.push({ base, head }); return [note]; },
     send: async body => { records.sent.push(body); if (sendError) throw sendError; return { messageId: 77, chatId: -5187701508 }; },
     github: async (path, init) => {
@@ -114,10 +114,60 @@ test('ignores preview, failure and other repositories without API or send', asyn
     { deployment: { ...deployment, environment: 'Preview' }, deployment_status: status },
     { deployment, deployment_status: { ...status, state: 'failure' } },
     { deployment, deployment_status: status, repository: { full_name: 'other/repo' } },
+    { deployment, deployment_status: status, repository: { id: REPOSITORY_ID + 1, full_name: REPOSITORY } },
+    { deployment, deployment_status: status, repository: { full_name: REPOSITORY } },
   ]) {
-    const { options, records } = harness(); options.event = { repository: { full_name: REPOSITORY }, ...event };
+    const { options, records } = harness(); options.event = { repository: { id: REPOSITORY_ID, full_name: REPOSITORY }, ...event };
     options.github = () => { throw new Error('must not call'); };
     assert.ok((await notifyDeployment(options)).skipped); assert.equal(records.sent.length, 0);
+  }
+});
+
+test('accepts the same repository through each organization and repository rename phase', async () => {
+  for (const full_name of ['ByUs-FanPassport/ByUs', 'ByUs-FanPassport/kyaa', 'kyaa-io/ByUs', 'kyaa-io/kyaa']) {
+    const { options, records } = harness(); options.event.repository.full_name = full_name;
+    assert.equal((await notifyDeployment(options)).sent, true);
+    assert.equal(records.sent.length, 1);
+  }
+});
+
+test('resolves the trusted numeric repository before calls and re-resolves a renamed GET without following Location', async () => {
+  const calls = []; let renamed = false;
+  const github = createGithubClient({ token: 'test-token', fetcher: async (url, init) => {
+    calls.push({ url, init });
+    if (url === `https://api.github.com/repositories/${REPOSITORY_ID}`) return Response.json({ id: REPOSITORY_ID, full_name: renamed ? 'kyaa-io/kyaa' : 'ByUs-FanPassport/ByUs' });
+    if (url === 'https://api.github.com/repos/ByUs-FanPassport/ByUs/deployments/1') {
+      renamed = true;
+      return new Response(null, { status: 301, headers: { location: 'https://evil.test/steal-token' } });
+    }
+    assert.equal(url, 'https://api.github.com/repos/kyaa-io/kyaa/deployments/1');
+    return Response.json({ id: 1 });
+  } });
+  assert.deepEqual(await github('/deployments/1'), { id: 1 });
+  assert.equal(calls.length, 4);
+  assert.ok(calls.every(call => call.url.startsWith('https://api.github.com/') && call.init.redirect !== 'follow'));
+});
+
+test('rejects reused names and unknown canonical repositories before authenticated mutation', async () => {
+  for (const repository of [{ id: REPOSITORY_ID + 1, full_name: REPOSITORY }, { id: REPOSITORY_ID, full_name: 'other/repo' }]) {
+    const calls = [];
+    const github = createGithubClient({ token: 'test-token', fetcher: async (url) => { calls.push(url); return Response.json(repository); } });
+    await assert.rejects(github('/check-runs', { method: 'POST', body: {} }), /UNTRUSTED_REPOSITORY/);
+    assert.deepEqual(calls, [`https://api.github.com/repositories/${REPOSITORY_ID}`]);
+  }
+});
+
+test('never retries a GitHub mutation with an uncertain result', async () => {
+  for (const timeout of [false, true]) {
+    let mutations = 0;
+    const github = createGithubClient({ token: 'test-token', fetcher: async (url) => {
+      if (url.endsWith(`/repositories/${REPOSITORY_ID}`)) return Response.json({ id: REPOSITORY_ID, full_name: REPOSITORY });
+      mutations++;
+      if (timeout) throw new Error('timeout');
+      return new Response(null, { status: 301 });
+    } });
+    await assert.rejects(github('/check-runs', { method: 'POST', body: {} }));
+    assert.equal(mutations, 1);
   }
 });
 

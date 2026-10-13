@@ -2,7 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-export const REPOSITORY = 'ByUs-FanPassport/ByUs';
+export const REPOSITORY = 'kyaa-io/kyaa';
+export const REPOSITORY_ID = 1307387500;
+const REPOSITORY_PATHS = ['ByUs-FanPassport/ByUs', 'ByUs-FanPassport/kyaa', 'kyaa-io/ByUs', REPOSITORY];
 export const CHECK_NAME = 'Telegram deployment notice';
 // The last deployment before automatic notices were introduced; never advance this bootstrap.
 export const BOOTSTRAP = { id: 6712694578, sha: '401f25159028791b0d680df3c56c1b7e6a354714' };
@@ -84,8 +86,29 @@ export function receiptState(receipt) {
   return 'uncertain';
 }
 
+export function createGithubClient({ token, fetcher = fetch }) {
+  const headers = { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'content-type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' };
+  async function canonicalRepository() {
+    const response = await fetcher(`https://api.github.com/repositories/${REPOSITORY_ID}`, { headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15_000) });
+    if (!response.ok) throw new Error(`GITHUB_HTTP_${response.status}`);
+    const repository = await response.json();
+    if (repository.id !== REPOSITORY_ID || !REPOSITORY_PATHS.includes(repository.full_name)) throw new Error('UNTRUSTED_REPOSITORY');
+    return repository.full_name;
+  }
+  return async (path, { method = 'GET', body } = {}) => {
+    let repository = await canonicalRepository();
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetcher(`https://api.github.com/repos/${repository}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined, redirect: 'manual', signal: AbortSignal.timeout(15_000) });
+      // Re-resolve only a renamed read; never follow Location or replay an uncertain write.
+      if (response.status === 301 && method === 'GET' && attempt === 0) { repository = await canonicalRepository(); continue; }
+      if (!response.ok) throw new Error(`GITHUB_HTTP_${response.status}`);
+      return response.json();
+    }
+  };
+}
+
 export async function notifyDeployment({ event, github, send, notes = readNotes, assertOnMain = sha => git('merge-base', '--is-ancestor', sha, 'origin/main'), runUrl }) {
-  if (event.repository?.full_name !== REPOSITORY || !eligibleDeployment(event.deployment, event.deployment_status)) return { skipped: 'not_production_success' };
+  if (event.repository?.id !== REPOSITORY_ID || !REPOSITORY_PATHS.includes(event.repository.full_name) || !eligibleDeployment(event.deployment, event.deployment_status)) return { skipped: 'not_production_success' };
   const deployment = await github(`/deployments/${event.deployment.id}`);
   const [status] = await github(`/deployments/${deployment.id}/statuses?per_page=100`);
   if (!eligibleDeployment(deployment, status) || deployment.sha !== event.deployment.sha) return { skipped: 'deployment_no_longer_successful' };
@@ -149,13 +172,9 @@ async function main() {
   }
   if (process.argv[2] !== 'send') throw new Error('Usage: deployment-notices.mjs check <base-sha> <head-sha> | send');
   if (!process.env.GITHUB_TOKEN || !process.env.TELEGRAM_BUG_REPORT_OPERATOR_SECRET) throw new Error('NOTICE_CREDENTIALS_MISSING');
-  const github = async (path, { method = 'GET', body } = {}) => {
-    const response = await fetch(`https://api.github.com/repos/${REPOSITORY}${path}`, { method, headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: 'application/vnd.github+json', 'content-type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' }, body: body ? JSON.stringify(body) : undefined, redirect: 'error', signal: AbortSignal.timeout(15_000) });
-    if (!response.ok) throw new Error(`GITHUB_HTTP_${response.status}`);
-    return response.json();
-  };
+  const github = createGithubClient({ token: process.env.GITHUB_TOKEN });
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
-  const result = await notifyDeployment({ event, github, runUrl: `https://github.com/${REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+  const result = await notifyDeployment({ event, github, runUrl: `https://github.com/${event.repository?.full_name}/actions/runs/${process.env.GITHUB_RUN_ID}`,
     send: async body => {
       const response = await fetch('https://kyaa.io/api/internal/telegram/deployment-notices', { method: 'POST', headers: { authorization: `Bearer ${process.env.TELEGRAM_BUG_REPORT_OPERATOR_SECRET}`, 'content-type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(45_000) });
       const result = await response.json();

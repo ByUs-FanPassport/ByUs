@@ -32,7 +32,8 @@ jobs:
   notify:
     if: >-
       github.event_name == 'deployment_status' &&
-      github.repository == 'ByUs-FanPassport/ByUs' &&
+      github.event.repository.id == 1307387500 &&
+      contains(fromJSON('["ByUs-FanPassport/ByUs", "ByUs-FanPassport/kyaa", "kyaa-io/ByUs", "kyaa-io/kyaa"]'), github.repository) &&
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.creator.login == 'vercel[bot]' &&
       github.event.deployment.environment == 'Production' &&
