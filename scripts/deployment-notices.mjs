@@ -92,7 +92,7 @@ export function createGithubClient({ token, fetcher = fetch }) {
     const response = await fetcher(`https://api.github.com/repositories/${REPOSITORY_ID}`, { headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15_000) });
     if (!response.ok) throw new Error(`GITHUB_HTTP_${response.status}`);
     const repository = await response.json();
-    if (repository.id !== REPOSITORY_ID || !REPOSITORY_PATHS.includes(repository.full_name)) throw new Error('UNTRUSTED_REPOSITORY');
+    if (repository.id !== REPOSITORY_ID || repository.full_name !== REPOSITORY) throw new Error('UNTRUSTED_REPOSITORY');
     return repository.full_name;
   }
   return async (path, { method = 'GET', body } = {}) => {

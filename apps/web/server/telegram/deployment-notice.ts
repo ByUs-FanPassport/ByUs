@@ -6,7 +6,7 @@ import { SALLY_BUG_REPORT_CHAT_ID } from "./bug-report-repository";
 
 const HEADERS = { "cache-control": "private, no-store", vary: "Authorization" };
 const REPOSITORY_ID = 1307387500;
-const REPOSITORY_PATHS = ["ByUs-FanPassport/ByUs", "ByUs-FanPassport/kyaa", "kyaa-io/ByUs", "kyaa-io/kyaa"];
+const REPOSITORY = "kyaa-io/kyaa";
 const requestSchema = z.object({
   deploymentId: z.number().int().positive().safe(),
   receiptId: z.number().int().positive().safe(),
@@ -35,7 +35,7 @@ export function createDeploymentNoticeHandler({ secret, botToken, fetcher = fetc
         const response = await fetcher(`https://api.github.com/repositories/${REPOSITORY_ID}`, { headers: { accept: "application/vnd.github+json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000) });
         if (!response.ok) throw new Error("GITHUB_UNAVAILABLE");
         const repository = await response.json();
-        if (repository.id !== REPOSITORY_ID || !REPOSITORY_PATHS.includes(repository.full_name)) throw new Error("UNTRUSTED_REPOSITORY");
+        if (repository.id !== REPOSITORY_ID || repository.full_name !== REPOSITORY) throw new Error("UNTRUSTED_REPOSITORY");
         return repository.full_name;
       }
       let repository = await canonicalRepository();

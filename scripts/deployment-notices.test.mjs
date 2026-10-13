@@ -131,12 +131,12 @@ test('accepts the same repository through each organization and repository renam
   }
 });
 
-test('resolves the trusted numeric repository before calls and re-resolves a renamed GET without following Location', async () => {
+test('resolves the trusted numeric repository again after GET 301 without following Location', async () => {
   const calls = []; let renamed = false;
   const github = createGithubClient({ token: 'test-token', fetcher: async (url, init) => {
     calls.push({ url, init });
-    if (url === `https://api.github.com/repositories/${REPOSITORY_ID}`) return Response.json({ id: REPOSITORY_ID, full_name: renamed ? 'kyaa-io/kyaa' : 'ByUs-FanPassport/ByUs' });
-    if (url === 'https://api.github.com/repos/ByUs-FanPassport/ByUs/deployments/1') {
+    if (url === `https://api.github.com/repositories/${REPOSITORY_ID}`) return Response.json({ id: REPOSITORY_ID, full_name: REPOSITORY });
+    if (!renamed && url === 'https://api.github.com/repos/kyaa-io/kyaa/deployments/1') {
       renamed = true;
       return new Response(null, { status: 301, headers: { location: 'https://evil.test/steal-token' } });
     }
@@ -149,7 +149,7 @@ test('resolves the trusted numeric repository before calls and re-resolves a ren
 });
 
 test('rejects reused names and unknown canonical repositories before authenticated mutation', async () => {
-  for (const repository of [{ id: REPOSITORY_ID + 1, full_name: REPOSITORY }, { id: REPOSITORY_ID, full_name: 'other/repo' }]) {
+  for (const repository of [{ id: REPOSITORY_ID + 1, full_name: REPOSITORY }, { id: REPOSITORY_ID, full_name: 'other/repo' }, ...['ByUs-FanPassport/ByUs', 'ByUs-FanPassport/kyaa', 'kyaa-io/ByUs'].map(full_name => ({ id: REPOSITORY_ID, full_name }))]) {
     const calls = [];
     const github = createGithubClient({ token: 'test-token', fetcher: async (url) => { calls.push(url); return Response.json(repository); } });
     await assert.rejects(github('/check-runs', { method: 'POST', body: {} }), /UNTRUSTED_REPOSITORY/);

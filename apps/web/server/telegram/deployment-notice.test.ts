@@ -6,14 +6,14 @@ const input = { deploymentId: 100, receiptId: 200, text: "✅ ByUs 수정사항�
 const deployment = { id: 100, sha: "a".repeat(40), environment: "Production", creator: { login: "vercel[bot]" } };
 const status = { state: "success", environment: "Production", creator: deployment.creator };
 const receipt = { id: 200, head_sha: deployment.sha, name: "Telegram deployment notice", external_id: "100", app: { slug: "github-actions" }, status: "in_progress" };
-const repository = { id: 1307387500, full_name: "ByUs-FanPassport/ByUs" };
+const repository = { id: 1307387500, full_name: "kyaa-io/kyaa" };
 function setup({ deploymentValue = deployment, statusValue = status, receiptValue = receipt, repositoryValue = repository, githubRedirect = false, telegram = { ok: true, result: { message_id: 321, chat: { id: -5187701508 } } } as { ok: boolean; result: unknown }, timeout = false } = {}) {
   let renamed = false;
   const fetcher = vi.fn(async (url: string | URL | Request) => {
     const path = String(url);
     if (path.includes("api.telegram.org")) { if (timeout) throw new Error("secret URL must not leak"); return Response.json(telegram); }
     if (path === `https://api.github.com/repositories/${repository.id}`) return Response.json(renamed ? { ...repositoryValue, full_name: "kyaa-io/kyaa" } : repositoryValue);
-    if (githubRedirect && path.includes("/repos/ByUs-FanPassport/ByUs/")) { renamed = true; return new Response(null, { status: 301, headers: { location: "https://evil.test/redirect" } }); }
+    if (githubRedirect && !renamed && path.includes("/repos/kyaa-io/kyaa/")) { renamed = true; return new Response(null, { status: 301, headers: { location: "https://evil.test/redirect" } }); }
     if (path.includes("/statuses?")) return Response.json([statusValue]);
     if (path.includes("/check-runs/")) return Response.json(receiptValue);
     return Response.json(deploymentValue);
@@ -47,9 +47,9 @@ describe("deployment notice boundary", () => {
     const sends = fetcher.mock.calls.filter(([url]) => String(url).includes("api.telegram.org"));
     expect(sends).toHaveLength(1); expect(String(sends[0][0])).toMatch(/\/sendPhoto$/);
     const options = (sends[0] as unknown as [string, RequestInit])[1];
-    expect(JSON.parse(String(options.body))).toEqual({ chat_id: -5187701508, photo: `https://raw.githubusercontent.com/ByUs-FanPassport/ByUs/${deployment.sha}/release-notes/images/after.png`, caption: input.text, show_caption_above_media: true });
+    expect(JSON.parse(String(options.body))).toEqual({ chat_id: -5187701508, photo: `https://raw.githubusercontent.com/kyaa-io/kyaa/${deployment.sha}/release-notes/images/after.png`, caption: input.text, show_caption_above_media: true });
   });
-  it.each(["ByUs-FanPassport/ByUs", "ByUs-FanPassport/kyaa", "kyaa-io/ByUs", "kyaa-io/kyaa"])("pins API and photo URLs to the verified canonical repository %s", async (full_name) => {
+  it.each(["kyaa-io/kyaa"])("pins API and photo URLs to the verified canonical repository %s", async (full_name) => {
     const { call, fetcher } = setup({ repositoryValue: { ...repository, full_name } });
     expect((await call({ ...input, images: ["release-notes/images/after.png"] })).status).toBe(200);
     const apiCalls = fetcher.mock.calls.filter(([url]) => String(url).includes("/repos/"));
@@ -69,6 +69,7 @@ describe("deployment notice boundary", () => {
   it.each([
     { ...repository, id: repository.id + 1 },
     { ...repository, full_name: "other/repo" },
+    ...["ByUs-FanPassport/ByUs", "ByUs-FanPassport/kyaa", "kyaa-io/ByUs"].map(full_name => ({ ...repository, full_name })),
   ])("rejects a reused name or unrelated canonical repository before Telegram", async (repositoryValue) => {
     const { call, fetcher } = setup({ repositoryValue });
     expect((await call()).status).toBe(503);

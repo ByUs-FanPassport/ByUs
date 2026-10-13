@@ -13,9 +13,9 @@
 
 <p align="center">
   <a href="https://kyaa.io/?locale=en"><img alt="Live product" src="https://img.shields.io/badge/Live_Product-kyaa.io-7B5CFF?style=flat-square"></a>
-  <a href="https://github.com/ByUs-FanPassport/ByUs---GitBook"><img alt="Developer docs" src="https://img.shields.io/badge/Developer_Docs-GitBook-FF5CDA?style=flat-square"></a>
+  <a href="https://github.com/kyaa-io/kyaa-docs"><img alt="Developer docs" src="https://img.shields.io/badge/Developer_Docs-GitBook-FF5CDA?style=flat-square"></a>
   <a href="https://docs.giwa.io/giwa-chain/en/"><img alt="GIWA Sepolia" src="https://img.shields.io/badge/GIWA_Sepolia-91342-17191C?style=flat-square"></a>
-  <a href="https://github.com/ByUs-FanPassport/ByUs/actions/workflows/dependency-audit.yml"><img alt="Dependency audit" src="https://github.com/ByUs-FanPassport/ByUs/actions/workflows/dependency-audit.yml/badge.svg"></a>
+  <a href="https://github.com/kyaa-io/kyaa/actions/workflows/dependency-audit.yml"><img alt="Dependency audit" src="https://github.com/kyaa-io/kyaa/actions/workflows/dependency-audit.yml/badge.svg"></a>
 </p>
 
 ## What kyaa does
@@ -98,7 +98,7 @@ Both credential contracts are non-transferable. A fan can prove the record, but 
 
 - [Successful Passport mint](https://sepolia-explorer.giwa.io/tx/0x7574bdeb18ca5ecfcffcbc581cad353e9bfdff69d7f3c792d3add471f54c504e)
 - [Successful Stamp mint](https://sepolia-explorer.giwa.io/tx/0x4c3bcf6e47388b30c289bf83c468f67fb2047799b47e31b5181e83c44c5ef627)
-- [Standalone contract repository](https://github.com/ByUs-FanPassport/ByUs-Contracts)
+- [Standalone contract repository](https://github.com/kyaa-io/kyaa-contracts)
 
 > The current deployment is on GIWA Sepolia testnet. kyaa does not put private fan profiles, quiz answers, activity logs, CRM data, or benefit fulfillment data on-chain. Existing ByUs contracts and issued credentials retain their original names and addresses.
 
@@ -125,8 +125,8 @@ scripts               Build, security, media, deployment, and verification tools
 - Maintainer-approved development values for Privy, Supabase, and GIWA
 
 ```bash
-git clone https://github.com/ByUs-FanPassport/ByUs.git
-cd ByUs
+git clone https://github.com/kyaa-io/kyaa.git
+cd kyaa
 npm ci
 
 cp apps/web/.env.example apps/web/.env.local
@@ -153,7 +153,7 @@ cd contracts
 forge test
 ```
 
-The full environment model, worker lifecycle, and verification commands are documented in the [ByUs Developer Documentation](https://github.com/ByUs-FanPassport/ByUs---GitBook).
+The full environment model, worker lifecycle, and verification commands are documented in the [kyaa Developer Documentation](https://github.com/kyaa-io/kyaa-docs).
 
 ## Security and privacy
 
@@ -169,11 +169,11 @@ Please read [SECURITY.md](SECURITY.md) before reporting a vulnerability.
 ## Documentation
 
 - [Pitch deck (PDF)](https://docs.google.com/presentation/d/10a9xoaRKJhAXzbBOguwKFM-wmOPlmRg9gy_EFRr0rss/export/pdf)
-- [Developer documentation source](https://github.com/ByUs-FanPassport/ByUs---GitBook)
-- [Product journey](https://github.com/ByUs-FanPassport/ByUs---GitBook/blob/main/getting-started/product-journey.md)
-- [Architecture overview](https://github.com/ByUs-FanPassport/ByUs---GitBook/blob/main/architecture/overview.md)
-- [GIWA network and contracts](https://github.com/ByUs-FanPassport/ByUs---GitBook/blob/main/giwa/network-and-contracts.md)
-- [ByUs Contracts](https://github.com/ByUs-FanPassport/ByUs-Contracts)
+- [Developer documentation source](https://github.com/kyaa-io/kyaa-docs)
+- [Product journey](https://github.com/kyaa-io/kyaa-docs/blob/main/getting-started/product-journey.md)
+- [Architecture overview](https://github.com/kyaa-io/kyaa-docs/blob/main/architecture/overview.md)
+- [GIWA network and contracts](https://github.com/kyaa-io/kyaa-docs/blob/main/giwa/network-and-contracts.md)
+- [kyaa Contracts](https://github.com/kyaa-io/kyaa-contracts)
 
 ## License
 
