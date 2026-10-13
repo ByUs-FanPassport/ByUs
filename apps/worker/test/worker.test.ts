@@ -111,6 +111,17 @@ function worker(queue: QueuePort, metadata: MetadataPort, chain: ChainPort) {
 }
 
 describe("MintWorker", () => {
+  it("holds a transaction when transmission pauses during preparation and still recovers its receipt", async () => {
+    const queue = new FakeQueue([job()]); const metadata = new FakeMetadata(); const chain = new FakeChain();
+    const admission = vi.spyOn(queue, "admitMint").mockResolvedValue(false).mockResolvedValueOnce(true);
+    await worker(queue, metadata, chain).runOnce();
+    expect(chain.prepareCount).toBe(1); expect(chain.broadcastCount).toBe(0);
+    expect(queue.prepared).toHaveLength(1); expect(queue.writerReleaseCalls).toBe(1);
+    expect(queue.retried).toEqual([]); expect(queue.completed).toEqual([]);
+    await worker(queue, metadata, chain).runOnce();
+    expect(queue.completed).toEqual([{ txHash, tokenId: 7n }]); expect(admission).toHaveBeenCalledTimes(2);
+    expect(chain.prepareCount).toBe(1); expect(chain.broadcastCount).toBe(0);
+  });
   it("pins metadata, persists the signed transaction before broadcast, and completes from receipt", async () => {
     const queue = new FakeQueue([job()]);
     const metadata = new FakeMetadata();

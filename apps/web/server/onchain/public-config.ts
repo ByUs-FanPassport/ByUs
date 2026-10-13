@@ -16,15 +16,15 @@ export const onchainConfig = {
   environmentId: "0xd5bc532db275cd70e5f55280b01cd2acc6b30b90d5aaa451adeb4b9a8f02c264",
   schemaUid: "0xbd97671d89c9f4bb246e33369389332486f406ab821a0c7f88860034759c5c0b",
   easAddress: "0x4200000000000000000000000000000000000021",
-  assets: { 0: "0x17f9fb7658a326dd88db523739c227faf50fca20", 1: "0x1adcde3473c4e884e60205b397ece744d8892285" },
+  assetBindings: { 1: { 0: "0x17f9fb7658a326dd88db523739c227faf50fca20", 1: "0x1adcde3473c4e884e60205b397ece744d8892285" } },
   qaWallets: ["0x29b000d7791c671a9556a0c83b985b7487364082"],
 } as const;
 
 export const officialAddresses = [
   { name: "kyaa ActionHub · current", role: "actionHub", address: onchainConfig.deployments[1].hubAddress },
   { name: "kyaa ActionHub · legacy", role: "actionHub", address: onchainConfig.deployments[0].hubAddress },
-  { name: "Fan Passport · ByUs ERC-721", role: "passport", address: onchainConfig.assets[0] },
-  { name: "Stamp · ByUs ERC-1155", role: "stamp", address: onchainConfig.assets[1] },
+  { name: "Fan Passport · ByUs ERC-721", role: "passport", address: onchainConfig.assetBindings[1][0] },
+  { name: "Stamp · ByUs ERC-1155", role: "stamp", address: onchainConfig.assetBindings[1][1] },
   { name: "kyaa ActionHub implementation", role: "implementation", address: "0x049b758b3d1cc0c66408b264c7f9a96ea479860b" },
   { name: "kyaa ActionCodec", role: "codec", address: "0x4e44a1c183bac430f30033bd1a639c696b93612a" },
   { name: "kyaa PublicContextRegistry V3", role: "registry", address: "0x4e104e5dfb3d466a2aac9ed0cf7572578068529b" },

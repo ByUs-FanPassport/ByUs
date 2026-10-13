@@ -71,6 +71,7 @@ export class ActionWorker {
         prepared = await this.chain.prepare(payload);
         job = await this.queue.recordPrepared(job, prepared);
       }
+      if (!(await this.queue.admitDispatch(job))) return;
       const broadcastHash = await this.chain.broadcast(prepared.signedTransaction);
       if (broadcastHash.toLowerCase() !== prepared.txHash.toLowerCase()) {
         throw new WorkerError("TRANSACTION_HASH_MISMATCH", `Broadcast hash ${broadcastHash} did not match prepared hash ${prepared.txHash}`, false);

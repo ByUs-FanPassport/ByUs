@@ -11,12 +11,12 @@ const readSnapshot = unstable_cache(async () => {
   pending ??= readFinalizedActionSnapshot(onchainConfig).then((snapshot) => projectPublicOnchainSnapshot(snapshot)).finally(() => { pending = undefined; });
   return pending;
 }, [
-  "byus-public-onchain-v3-multi-hub-calldata-provenance",
+  "byus-public-onchain-v4-binding-provenance",
   ...onchainConfig.deployments.flatMap(({ hubAddress, fromBlock, label, writeStatus }) => [hubAddress, fromBlock.toString(), label, writeStatus]),
   onchainConfig.environmentId,
   onchainConfig.schemaUid,
   onchainConfig.easAddress,
-  ...Object.entries(onchainConfig.assets).flatMap(([kind, address]) => [kind, address]),
+  ...Object.entries(onchainConfig.assetBindings).flatMap(([version, assets]) => [version, ...Object.entries(assets).flatMap(([kind, address]) => [kind, address])]),
   ...onchainConfig.qaWallets,
 ], { revalidate: 300 });
 

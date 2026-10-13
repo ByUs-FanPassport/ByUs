@@ -489,6 +489,7 @@ contract ByUsActionHub is Initializable, UUPSUpgradeable {
     function getAssetBinding(uint32 bindingVersion, CredentialKind kind)
         public
         view
+        virtual
         returns (address)
     {
         if (bindingVersion != 1) return address(0);

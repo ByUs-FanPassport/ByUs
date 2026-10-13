@@ -15,7 +15,7 @@ contract ByUsCredentialsTest is Test {
     ByUsPassport internal passport;
     ByUsStamp internal stamp;
 
-    function setUp() public {
+    function setUp() public virtual {
         passport = new ByUsPassport(admin, relayer);
         stamp = new ByUsStamp(admin, relayer);
     }

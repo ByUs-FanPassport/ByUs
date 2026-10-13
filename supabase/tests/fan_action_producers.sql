@@ -264,6 +264,15 @@ begin
     where occurrence.source_namespace='quiz_passes' and occurrence.app_user_id=owner)=2,
     'enabled quiz did not enqueue both credentials');
 
+  -- A newly registered LIVE must use binding 2 while older non-LIVE routes stay on binding 1.
+  insert into public.fan_action_bindings(chain_id,environment_id,hub_proxy,relayer,schema_uid,schema_version,
+    binding_version,asset_base_uri,assets)
+    select chain_id,environment_id,hub_proxy,relayer,schema_uid,schema_version,2,asset_base_uri,
+      assets||jsonb_build_object('1','0xabababababababababababababababababababab')
+    from public.fan_action_bindings where id=binding returning id into binding;
+  update public.fan_action_producer_routes set binding_id=binding where action_code in(2,3,4,5);
+  insert into public.fan_action_verified_creators(binding_id,creator_id,verified_block_number,verified_block_hash,verified_at)
+    values(binding,creator,123456,'0x'||repeat('8',64),clock_timestamp());
   select * into strict template_live from public.live_events where publication_status='published' limit 1;
   select * into strict template_localization from public.live_event_localizations
     where live_event_id=template_live.id and locale='ko';
@@ -288,6 +297,12 @@ begin
     if sqlerrm<>'FAN_ACTION_CAMPAIGN_NOT_PUBLIC' then raise; end if;
   end;
   update public.live_events set publication_status='published',published_at=observed,ever_published_at=observed where id=live_reserve;
+  begin
+    perform public.fan_action_native_enabled(2,owner,creator,live_reserve);
+    raise exception 'unverified binding 2 LIVE unexpectedly accepted';
+  exception when others then
+    if sqlerrm<>'FAN_ACTION_CONTEXT_NOT_VERIFIED' then raise; end if;
+  end;
   insert into public.fan_action_verified_campaigns(
     binding_id,campaign_id,creator_id,verified_block_number,verified_block_hash,verified_at
   ) values(binding,live_reserve,creator,123456,'0x'||repeat('8',64),clock_timestamp());
@@ -300,6 +315,10 @@ begin
     'byus:stamp:v1:'||reservation_stamp::text,'0x'||repeat('d',64));
   perform pg_temp.assert(exists(select 1 from public.stamps where id=reservation_stamp and fan_action_outbox_id is not null and blockchain_job_id is null),
     'enabled reservation did not use v2');
+  perform pg_temp.assert(exists(select 1 from public.stamps s join public.fan_action_outbox o on o.id=s.fan_action_outbox_id
+    where s.id=reservation_stamp and o.binding_id=binding and o.source_snapshot->>'bindingVersion'='2'
+      and o.source_snapshot#>>'{credentials,0,nftContract}'='0xabababababababababababababababababababab'),
+    'registered LIVE did not select the new NFT contract');
   result:=public.reserve_owned_live_event(owner,live_reserve,'fa130000-0000-4000-8000-000000000011',reservation_stamp,
     'byus:stamp:v1:'||reservation_stamp::text,'0x'||repeat('d',64));
   perform pg_temp.assert((select count(*) from public.live_reservations

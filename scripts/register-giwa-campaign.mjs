@@ -16,15 +16,17 @@ const assert = (ok, reason) => { if (!ok) throw Error(reason); };
 const uuid = (s) => { assert(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(s), 'INVALID_UUID'); return '0x' + s.replaceAll('-', '').padStart(64, '0'); };
 const json = (v) => JSON.stringify(v, (_k, x) => typeof x === 'bigint' ? String(x) : x, 2);
 const quote = (v) => "'" + String(v).replaceAll("'", "''") + "'";
-export function prepareCampaignRegistration(row) {
+export const KYAA_BINDING_ID = 'f03415d0-3235-4bd7-bee5-a8a9c36c163a';
+export function prepareCampaignRegistration(row, binding = CAMPAIGN_DEPLOYMENT.binding) {
+  assert([CAMPAIGN_DEPLOYMENT.binding, KYAA_BINDING_ID].includes(binding), 'UNKNOWN_CAMPAIGN_BINDING');
   assert(row && row.publication_status === 'published' && row.archived_at === null, 'PUBLISHED_LIVE_REQUIRED');
   assert(typeof row.slug === 'string' && /^[a-z0-9][a-z0-9-]{0,249}$/.test(row.slug), 'INVALID_PUBLIC_SLUG');
   const source = { id: row.id, celebrity_id: row.celebrity_id, slug: row.slug };
-  const manifest = { format: 'byus-campaign-registration-v1', ...CAMPAIGN_DEPLOYMENT, source, gas: '150000', maxFeePerGas: '100000000', value: '0', data: encodeFunctionData({ abi, functionName: 'registerCampaign', args: [uuid(row.id), uuid(row.celebrity_id), row.slug] }) };
+  const manifest = { format: 'byus-campaign-registration-v1', ...CAMPAIGN_DEPLOYMENT, binding, source, gas: '150000', maxFeePerGas: '100000000', value: '0', data: encodeFunctionData({ abi, functionName: 'registerCampaign', args: [uuid(row.id), uuid(row.celebrity_id), row.slug] }) };
   return { ...manifest, hash: keccak256(stringToHex(json(manifest))) };
 }
 export function validateCampaignRegistration(manifest, row, approvedHash) {
-  assert(manifest.hash === approvedHash && JSON.stringify(manifest) === JSON.stringify(prepareCampaignRegistration(row)), 'MANIFEST_OR_PUBLISHED_SOURCE_CHANGED');
+  assert(manifest.hash === approvedHash && JSON.stringify(manifest) === JSON.stringify(prepareCampaignRegistration(row, manifest.binding)), 'MANIFEST_OR_PUBLISHED_SOURCE_CHANGED');
   return manifest;
 }
 export function assertRegistrationEnvelope(tx, manifest) {
@@ -44,7 +46,8 @@ async function main() {
   const campaign = mode === 'prepare' ? option('--campaign') : JSON.parse(fs.readFileSync(manifestPath)).source.id;
   uuid(campaign);
   const row = JSON.parse(sql(`select row_to_json(x) from(select id,celebrity_id,slug,publication_status,archived_at from public.live_events where id=${quote(campaign)})x`));
-  const manifest = mode === 'prepare' ? prepareCampaignRegistration(row) : validateCampaignRegistration(JSON.parse(fs.readFileSync(manifestPath)), row, option('--approved-hash'));
+  const activeBinding = mode === 'prepare' ? sql('select min(binding_id::text) from public.fan_action_producer_routes where action_code in(2,3,4,5) and enabled having count(*)=4 and count(distinct binding_id)=1') : null;
+  const manifest = mode === 'prepare' ? prepareCampaignRegistration(row, activeBinding) : validateCampaignRegistration(JSON.parse(fs.readFileSync(manifestPath)), row, option('--approved-hash'));
   const binding = JSON.parse(sql(`select row_to_json(x) from(select b.id,b.hub_proxy,b.chain_id,exists(select 1 from public.fan_action_verified_creators v where v.binding_id=b.id and v.creator_id=${quote(row.celebrity_id)}) as creator_verified from public.fan_action_bindings b where b.id=${quote(manifest.binding)})x`));
   assert(binding?.hub_proxy === manifest.hub && binding.chain_id === manifest.chainId && binding.creator_verified, 'ACTIVE_BINDING_VERIFIED_CREATOR_REQUIRED');
   assert(sql(`select count(*) from public.fan_action_producer_routes where action_code in(2,3,4,5) and enabled and binding_id=${quote(manifest.binding)}`) === '4', 'LIVE_ROUTES_CHANGED');

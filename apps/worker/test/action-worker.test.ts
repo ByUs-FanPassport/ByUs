@@ -38,7 +38,7 @@ describe("ActionWorker", () => {
   it("freezes canonical payload and signed bytes before broadcast under the shared writer lease", async () => {
     const queue = new Queue(); const chain = new Chain(); const events: string[] = []; queue.events = events; chain.events = events;
     await expect(worker(queue, chain).runOnce()).resolves.toBe(1);
-    expect(events).toEqual(["freeze", "admit-dispatch", "admit-writer", "prepare", "record-signed", "broadcast", "complete", "release-writer"]);
+    expect(events).toEqual(["freeze", "admit-dispatch", "admit-writer", "prepare", "record-signed", "admit-dispatch", "broadcast", "complete", "release-writer"]);
     expect(queue.completed).toBe(1);
   });
   it("recovers a stored signed transaction from receipt without repinning, resigning, or taking a writer lease", async () => {
@@ -53,5 +53,17 @@ describe("ActionWorker", () => {
     const queue = new Queue(); queue.admitted = false; const chain = new Chain(); chain.receiptResult = null;
     await worker(queue, chain).runOnce();
     expect(chain.prepareCalls).toBe(0); expect(chain.broadcastCalls).toBe(0); expect(queue.events).toEqual(["freeze", "admit-dispatch"]);
+  });
+  it("holds a transaction when transmission pauses during preparation and still recovers its receipt", async () => {
+    const queue = new Queue(); const chain = new Chain();
+    const admission = vi.spyOn(queue, "admitDispatch").mockResolvedValue(false).mockResolvedValueOnce(true);
+    await worker(queue, chain).runOnce();
+    expect(chain.prepareCalls).toBe(1); expect(chain.broadcastCalls).toBe(0);
+    expect(queue.jobs[0]?.signedTransaction).toBe(signedTransaction);
+    expect(queue.events.at(-1)).toBe("release-writer");
+    expect(queue.retried).toEqual([]); expect(queue.completed).toBe(0);
+    await worker(queue, chain).runOnce();
+    expect(queue.completed).toBe(1); expect(admission).toHaveBeenCalledTimes(2);
+    expect(chain.prepareCalls).toBe(1); expect(chain.broadcastCalls).toBe(0);
   });
 });

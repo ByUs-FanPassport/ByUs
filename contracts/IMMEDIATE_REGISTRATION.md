@@ -23,7 +23,9 @@ on the previous Hub.
 
 `scripts/register-giwa-campaign.mjs` handles one published LIVE whose creator is
 already registered and verified in the current production binding. It reads the
-LIVE ID, creator ID and public slug from the production database. It never
+LIVE ID, creator ID, public slug and the common enabled binding of all four LIVE
+routes from the production database. It accepts the existing binding or the
+kyaa binding `f03415d0-3235-4bd7-bee5-a8a9c36c163a`. It never
 creates a reservation, attendance, mission, survey response or fan transaction.
 
 Run from the repository root with the existing local environment and pooler URL
@@ -71,8 +73,13 @@ and campaign ownership, then inserts the internal campaign proof atomically.
 Normal eligible LIVE actions can then use the native action path. Existing
 service conditions, such as attendance opening times, still apply.
 
-An unverified LIVE stays on the existing service fallback until its proof is
-admitted. This CLI does not backfill actions performed before activation.
+Before the kyaa cutover, an unverified LIVE retains the existing service fallback.
+After a route uses binding version 2, missing creator/campaign proof, disabled
+routes and canary exclusion fail closed instead of issuing an older NFT.
+Finish every existing registration manifest and signing journal through
+`finalize` before switching LIVE routes. Saved manifests retain their original
+binding and hash; do not rewrite or re-sign them for the new binding.
+This CLI does not backfill actions performed before activation.
 A new creator must first be registered by the registrar and receive a finalized
 creator proof; this one-LIVE CLI deliberately does not grant roles or register
 an unknown creator as a side effect.

@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { decodeFunctionData, parseAbi } from 'viem';
 import { prepareCampaignRegistration, validateCampaignRegistration, assertRegistrationEnvelope } from './register-giwa-campaign.mjs';
 const row={id:'c0960f8b-f01c-4308-97f8-3d13173922e8',celebrity_id:'18ec5319-95fb-4134-95f4-97ff95ae726b',slug:'elina-banksy-instagram-20260918',publication_status:'published',archived_at:null};
+test('new binding registration and saved legacy manifests remain independently verifiable',()=>{
+  const legacy=prepareCampaignRegistration(row);
+  const next=prepareCampaignRegistration(row,'f03415d0-3235-4bd7-bee5-a8a9c36c163a');
+  assert.equal(next.binding,'f03415d0-3235-4bd7-bee5-a8a9c36c163a');
+  assert.notEqual(next.hash,legacy.hash);
+  assert.equal(validateCampaignRegistration(legacy,row,legacy.hash),legacy);
+  assert.equal(validateCampaignRegistration(next,row,next.hash),next);
+  assert.throws(()=>validateCampaignRegistration({...legacy,binding:next.binding},row,legacy.hash));
+  assert.throws(()=>prepareCampaignRegistration(row,'f03415d0-3235-4bd7-bee5-a8a9c36c163b'));
+});
 test('published LIVE maps exact campaign and creator IDs into direct registration',()=>{const m=prepareCampaignRegistration(row);const d=decodeFunctionData({abi:parseAbi(['function registerCampaign(bytes32,bytes32,string)']),data:m.data});assert.equal(d.functionName,'registerCampaign');assert.equal(d.args[0],'0x'+row.id.replaceAll('-','').padStart(64,'0'));assert.equal(d.args[1],'0x'+row.celebrity_id.replaceAll('-','').padStart(64,'0'));assert.equal(d.args[2],row.slug);assert.equal(validateCampaignRegistration(m,row,m.hash),m);});
 test('draft, archived, malformed IDs and changed ownership fail before signing',()=>{for(const bad of [{...row,publication_status:'draft'},{...row,archived_at:'2026-09-14'},{...row,id:'bad'}])assert.throws(()=>prepareCampaignRegistration(bad));const m=prepareCampaignRegistration(row);assert.throws(()=>validateCampaignRegistration(m,{...row,celebrity_id:'6cfe1fac-5c48-44ed-a865-f4c0dc86e916'},m.hash));assert.throws(()=>validateCampaignRegistration({...m,registry:'0x'+'11'.repeat(20)},row,m.hash));});
 test('signed envelope rejects wrong chain, recipient, value and fee escalation',()=>{const m=prepareCampaignRegistration(row),tx={type:'eip1559',chainId:m.chainId,to:m.registry,data:m.data,value:0n,gas:150000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n};assert.doesNotThrow(()=>assertRegistrationEnvelope(tx,m));for(const change of[{chainId:1},{to:m.hub},{value:1n},{data:'0x'},{gas:150001n},{maxFeePerGas:100000001n},{maxPriorityFeePerGas:101n}])assert.throws(()=>assertRegistrationEnvelope({...tx,...change},m));});

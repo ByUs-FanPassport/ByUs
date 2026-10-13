@@ -17,3 +17,11 @@ export BYUS_CLEAN_DB_UPGRADE_MIGRATION=20260912152008_live_alert_delivery_cutove
 export BYUS_CLEAN_DB_UPGRADE_BEFORE_FILE="$ROOT_DIR/supabase/tests/fixtures/live_alert_delivery_safety_before.sql"
 export BYUS_CLEAN_DB_UPGRADE_AFTER_FILE="$ROOT_DIR/supabase/tests/fixtures/live_alert_delivery_safety_after.sql"
 bash "$ROOT_DIR/scripts/verify-clean-migration-chain.sh"
+
+# Exercise the new migration against an event created by the previous functions.
+unset BYUS_CLEAN_DB_SHELL_ASSERTION_FILE
+export BYUS_CLEAN_DB_ASSERTION_FILE=
+export BYUS_CLEAN_DB_UPGRADE_MIGRATION=20261013110000_kyaa_credential_cutover.sql
+export BYUS_CLEAN_DB_UPGRADE_BEFORE_FILE="$ROOT_DIR/supabase/tests/fixtures/kyaa_credential_cutover_before.sql"
+export BYUS_CLEAN_DB_UPGRADE_AFTER_FILE="$ROOT_DIR/supabase/tests/fixtures/kyaa_credential_cutover_after.sql"
+bash "$ROOT_DIR/scripts/verify-clean-migration-chain.sh"

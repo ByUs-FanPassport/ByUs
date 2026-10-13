@@ -10,6 +10,7 @@ import { actionCodes, type ActionSourceSnapshotV1, type FanActionJob } from "../
 import { actionHubAbi, ViemActionHubAdapter } from "../src/adapters/viem-action-hub.js";
 import { ViemActionLogReader } from "../src/action-chain-reader.js";
 import { aggregateFanActionMetrics } from "../src/action-metrics.js";
+import { readFinalizedActionSnapshot } from "../src/action-public-snapshot.js";
 
 const enabled = process.env.RUN_ACTION_ANVIL_INTEGRATION === "1";
 const suite = enabled ? describe : describe.skip;
@@ -180,9 +181,54 @@ suite("ActionWorker to ActionHub local Anvil", () => {
       await expect(receiptAdapter(corruptEas).receipt(payload, submission)).rejects.toMatchObject({ code: "EAS_ATTESTATION_MISMATCH" });
     }
 
+    const generationSnapshot = (key: string, bindingVersion: number, passportAddress: Address, stampAddress: Address): ActionSourceSnapshotV1 => ({
+      ...snapshot, canonicalSourceKey: key, bindingVersion,
+      credentials: [0, 1].map((kind) => {
+        const issuanceKey = keccak256(stringToHex(`${key}:${kind}`));
+        return { kind: kind as 0 | 1, nftContract: kind === 0 ? passportAddress : stampAddress, issuanceKey, mode: "MINT",
+          metadata: { operationKey: `${key}:${kind}`, legacyEntityType: kind === 0 ? "passport" : "stamp",
+            legacyPayload: kind === 0 ? { recipient: snapshot.recipient, celebritySlug: "kara", passportId: issuanceKey }
+              : { recipient: snapshot.recipient, celebritySlug: "kara", issuanceId: issuanceKey, stampType: "Knowledge" } } };
+      }),
+    });
+    const metadata = { pin: async (_document: unknown, key: string) => `ipfs://${key}` };
+    const pendingSnapshot = generationSnapshot("queued-before-cutover", 1, passport, stamp);
+    const pendingPayload = await buildCanonicalActionPayload({ ...job, sourceSnapshot: pendingSnapshot }, pendingSnapshot, metadata, chain);
+    const nextPassport = await deploy("KyaaPassport.sol/KyaaPassport.json", [timelock, hub]);
+    const nextStamp = await deploy("KyaaStamp.sol/KyaaStamp.json", [timelock, hub]);
+    const nextHubArtifact = await artifact("KyaaActionHub.sol/KyaaActionHub.json");
+    const nextImplementation = await deploy("KyaaActionHub.sol/KyaaActionHub.json", [hub, nextPassport, nextStamp]);
+    const initializeKyaa = encodeFunctionData({ abi: nextHubArtifact.abi, functionName: "initializeKyaaBinding" });
+    const upgrade = encodeFunctionData({ abi: nextHubArtifact.abi, functionName: "upgradeToAndCall", args: [nextImplementation, initializeKyaa] });
+    const upgradeSalt = keccak256(stringToHex("kyaa-binding-2"));
+    hash = await wallet.writeContract({ address: timelock, abi: timelockArtifact.abi, functionName: "schedule", args: [hub, 0n, upgrade, predecessor, upgradeSalt, 172800n], account });
+    await publicClient.waitForTransactionReceipt({ hash });
+    await publicClient.request({ method: "evm_increaseTime", params: [172801] } as any);
+    await publicClient.request({ method: "evm_mine", params: [] } as any);
+    hash = await wallet.writeContract({ address: timelock, abi: timelockArtifact.abi, functionName: "execute", args: [hub, 0n, upgrade, predecessor, upgradeSalt], account });
+    await publicClient.waitForTransactionReceipt({ hash });
+    await expect(chain.findExisting(payload)).resolves.toMatchObject({ txHash: submission.txHash });
+    const nextSnapshot = generationSnapshot("after-cutover", 2, nextPassport, nextStamp);
+    const nextPayload = await buildCanonicalActionPayload({ ...job, sourceSnapshot: nextSnapshot }, nextSnapshot, metadata, chain);
+    for (const queued of [pendingPayload, nextPayload]) {
+      const prepared = await chain.prepare(queued);
+      await chain.broadcast(prepared.signedTransaction);
+      await publicClient.waitForTransactionReceipt({ hash: prepared.txHash });
+      expect((await chain.receipt(queued, prepared))?.credentials).toHaveLength(2);
+      await expect(chain.findExisting(queued)).resolves.toMatchObject({ txHash: prepared.txHash });
+    }
+    expect(await publicClient.readContract({ address: nextPassport, abi: passportArtifact.abi, functionName: "name" })).toBe("kyaa Fan Passport");
+    expect(await publicClient.readContract({ address: passport, abi: passportArtifact.abi, functionName: "name" })).toBe("ByUs Fan Passport");
+    await publicClient.request({ method: "anvil_mine", params: ["0x80"] } as any);
+    const mixed = await readFinalizedActionSnapshot({ rpcUrl, chainId: 91342, hubAddress: hub, fromBlock: 0n,
+      environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp }, 2: { 0: nextPassport, 1: nextStamp } }, client: publicClient });
+    expect(mixed.actions).toHaveLength(3);
+    expect(new Set(mixed.actions.flatMap((action) => action.credentials.map((credential) => credential.credentialKey))).size).toBe(6);
+    expect(aggregateFanActionMetrics(mixed.actions, { ...boundary, asOfEpochSeconds: mixed.timestamp })).toMatchObject({ uniqueActiveWallets: 1, passportCredentials: 3, mintedCredentials: 6, transactions: 3 });
+
     hash = await wallet.writeContract({ address: eas, abi: easArtifact.abi, functionName: "forceRecipient", args: [receipt!.easUid, account.address], account });
     await publicClient.waitForTransactionReceipt({ hash });
     await expect(chain.receipt(payload, submission)).rejects.toMatchObject({ code: "EAS_ATTESTATION_MISMATCH" });
     await expect(new ViemActionLogReader({ rpcUrl, chainId: 91342, hubAddress: hub, fromBlock: 0n, client: publicClient }).read(environmentId)).rejects.toThrow("EAS record mismatch");
-  }, 60_000);
+  }, 120_000);
 });

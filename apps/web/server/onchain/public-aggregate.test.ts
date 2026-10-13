@@ -13,7 +13,7 @@ function action(overrides: Partial<FinalizedIndexedFanAction> = {}): FinalizedIn
     easAttester: config.hubAddress, easRecipient: fan, easRevocationTime: 0n, easExpirationTime: 0n,
     easIsAttestationValid: true, status: "ACTIVE", origin: "NATIVE", finality: "finalized", txHash: hash(3),
     creatorId: hash(4), campaignId: hash(0), occurredDay: 20000, easUid: hash(5), blockNumber: 100n, blockHash: hash(6),
-    credentials: [{ credentialKey: hash(7), kind: 1, linkOrigin: 0, nftContract: config.assets[1], tokenId: "323" }],
+    credentials: [{ credentialKey: hash(7), kind: 1, linkOrigin: 0, nftContract: config.assetBindings[1][1], tokenId: "323" }],
     ...overrides,
   };
 }

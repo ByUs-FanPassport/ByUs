@@ -76,6 +76,7 @@ function hubLog(eventName: "FanActionRecorded" | "CredentialLinked" | "FanAction
 }
 
 function makeFixture(options: {
+  bindingVersion?: number;
   refs?: Ref[];
   invalidated?: boolean;
   includeInvalidation?: boolean;
@@ -103,7 +104,7 @@ function makeFixture(options: {
   const request = {
     sourceOccurrence, revision: 1, actionCode: 10, schemaVersion: 1, policyVersion: 1,
     fan, creatorId, campaignId, occurredDay: 1, evidenceCommitment: hash("41"),
-    migrationBatchId, bindingVersion: 1,
+    migrationBatchId, bindingVersion: options.bindingVersion ?? 1,
   } as const;
   const intents = refs.map((ref) => ({
     kind: ref.kind, mode: ref.linkOrigin === 0 ? 0 : 1, issuanceKey: ref.issuanceKey,
@@ -117,7 +118,7 @@ function makeFixture(options: {
       : hubLog("FanActionInvalidated", {})] : []),
   ];
   let finalBlockReads = 0;
-  const readContract = vi.fn(async ({ address: target, functionName, blockNumber }: { address: Address; functionName: string; blockNumber?: bigint }) => {
+  const readContract = vi.fn(async ({ address: target, functionName, args, blockNumber }: { address: Address; functionName: string; args?: readonly unknown[]; blockNumber?: bigint }) => {
     expect(blockNumber).toBe(120n);
     if (getAddress(target) === getAddress(hub)) {
       if (functionName === "environmentId") return environmentId;
@@ -126,6 +127,7 @@ function makeFixture(options: {
       if (functionName === "getAction") return record;
       if (functionName === "latestActionId") return options.latestActionId ?? actionId;
       if (functionName === "hashRequest") return record.requestHash;
+      if (functionName === "getAssetBinding") return Number(args?.[1]) === 0 ? passport : stamp;
     }
     if (getAddress(target) === getAddress(eas)) {
       if (options.easFailure) throw new Error("EAS RPC unavailable");
@@ -162,7 +164,7 @@ function makeFixture(options: {
   };
   return { client, options: {
     rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: hub, fromBlock: 1n,
-    environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp }, client: client as unknown as PublicClient,
+    environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } }, client: client as unknown as PublicClient,
   } };
 }
 
@@ -317,7 +319,7 @@ it("aborts the whole snapshot after its 45 second deadline", async () => {
     const client = { getBlock: vi.fn(() => new Promise(() => undefined)) };
     const pending = readFinalizedActionSnapshot({
       rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: hub, fromBlock: 1n,
-      environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp },
+      environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } },
       client: client as unknown as PublicClient,
     });
     const assertion = expect(pending).rejects.toThrow("deadline exceeded");
@@ -362,6 +364,20 @@ it("rejects credential events from an asset outside the fixed kind binding", asy
   await expect(readFinalizedActionSnapshot(makeFixture({ refs: [ref] }).options)).rejects.toThrow("unknown credential asset");
 });
 
+it("uses the calldata binding version to validate credentials from the same Hub", async () => {
+  const nextPassport = address("78");
+  const ref = { nftContract: nextPassport, tokenId: 7n, kind: 0, issuanceKey: hash("51"), linkOrigin: 1 };
+  const fixture = makeFixture({ refs: [ref], bindingVersion: 2 });
+  const previous = fixture.client.readContract.getMockImplementation()!;
+  fixture.client.readContract.mockImplementation(async (args) => args.functionName === "getAssetBinding" ? nextPassport : previous(args));
+  const options = { ...fixture.options, assetBindings: { 1: { 0: passport, 1: stamp }, 2: { 0: nextPassport } } };
+  const result = await readFinalizedActionSnapshot(options);
+  expect(result.actions[0]?.credentials[0]?.nftContract).toBe(getAddress(nextPassport));
+  await expect(readFinalizedActionSnapshot({ ...options, assetBindings: { 1: { 0: nextPassport } } })).rejects.toThrow("unknown credential asset");
+  fixture.client.readContract.mockImplementation(async (args) => args.functionName === "getAssetBinding" ? passport : previous(args));
+  await expect(readFinalizedActionSnapshot(options)).rejects.toThrow("credential binding mismatch");
+});
+
 it("rejects a zero-quantity ERC-1155 mint", async () => {
   const ref = { nftContract: stamp, tokenId: 8n, kind: 1, issuanceKey: hash("52"), linkOrigin: 0 };
   const transfer = {
@@ -394,7 +410,7 @@ it("reads every allowlisted Hub at one common finalized block and keeps an empty
       { label: "Legacy ActionHub", hubAddress: hub, fromBlock: 1n },
       { label: "New ActionHub", hubAddress: newHub, fromBlock: 110n },
     ],
-    environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp }, client: client as unknown as PublicClient,
+    environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } }, client: client as unknown as PublicClient,
   });
   expect(getBlock.mock.calls.filter(([request]) => request.blockTag === "finalized")).toHaveLength(1);
   expect(client.getLogs).toHaveBeenCalledTimes(2);
@@ -419,7 +435,7 @@ it("fails the whole multi-Hub snapshot when one source cannot be read", async ()
   await expect(readFinalizedActionSnapshot({
     rpcUrl: "http://localhost:8545", chainId: 91342, hubAddress: newHub, fromBlock: 1n,
     deployments: [{ hubAddress: hub, fromBlock: 1n }, { hubAddress: newHub, fromBlock: 110n }],
-    environmentId, schemaUid, easAddress: eas, assets: { 0: passport, 1: stamp }, client: client as unknown as PublicClient,
+    environmentId, schemaUid, easAddress: eas, assetBindings: { 1: { 0: passport, 1: stamp } }, client: client as unknown as PublicClient,
   })).rejects.toThrow("new Hub RPC unavailable");
 });
 

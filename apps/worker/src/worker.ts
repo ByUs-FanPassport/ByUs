@@ -77,6 +77,7 @@ export class MintWorker {
         job = await this.queue.recordPrepared(job, submission);
       }
 
+      if (!(await this.queue.admitMint(job))) return;
       const broadcastHash = await this.chain.broadcast(submission.signedTransaction);
       if (broadcastHash.toLowerCase() !== submission.txHash.toLowerCase()) {
         throw new WorkerError("TRANSACTION_HASH_MISMATCH", `Broadcast hash ${broadcastHash} did not match prepared hash ${submission.txHash}`, false);

@@ -36,6 +36,7 @@ readonly VALIDATOR=(npx --yes "@openzeppelin/upgrades-core@$UPGRADES_CORE_VERSIO
 "${VALIDATOR[@]}" --contract ByUsActionHubV2 --reference ByUsActionHub --requireReference
 
 "${VALIDATOR[@]}" --contract ByUsActionHubContextV2 --reference ByUsActionHub --requireReference
+"${VALIDATOR[@]}" --contract KyaaActionHub --reference ByUsActionHub --requireReference
 
 if "${VALIDATOR[@]}" --contract ByUsActionHubIncompatible --reference ByUsActionHub \
     --requireReference >"$TEMP_ROOT/incompatible.log" 2>&1; then

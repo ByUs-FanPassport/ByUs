@@ -67,7 +67,7 @@ export interface FinalizedActionSnapshotOptions {
   environmentId: Hash;
   schemaUid: Hash;
   easAddress: Address;
-  assets: Readonly<Record<number, Address>>;
+  assetBindings: Readonly<Record<number, Readonly<Record<number, Address>>>>;
   deployments?: readonly FinalizedActionDeployment[];
   client?: PublicClient;
 }
@@ -261,7 +261,7 @@ async function verifyRecordedTransaction(
   record: ActionRecord,
   corrected: readonly CorrectedEvent[],
   blockNumber: bigint,
-): Promise<Hash> {
+): Promise<{ sourceOccurrence: Hash; bindingVersion: number }> {
   const transaction = await client.getTransaction({ hash: event.transactionHash });
   if (!sameHex(transaction.hash, event.transactionHash) || !transaction.blockHash || transaction.blockNumber == null
     || transaction.blockNumber !== event.blockNumber || !sameHex(transaction.blockHash, event.blockHash)
@@ -284,7 +284,7 @@ async function verifyRecordedTransaction(
     args: [decoded.operation, decoded.request, decoded.intents], blockNumber,
   });
   if (!sameHex(requestHash, record.requestHash)) throw new Error("Action public snapshot transaction request hash mismatch");
-  return decoded.request.sourceOccurrence;
+  return { sourceOccurrence: decoded.request.sourceOccurrence, bindingVersion: decoded.request.bindingVersion };
 }
 
 async function verifyStandaloneInvalidation(client: PublicClient, hubAddress: Address, event: InvalidatedEvent): Promise<void> {
@@ -336,8 +336,6 @@ async function readFinalizedActionSnapshotInner(
   if (recordedById.size !== events.recorded.length) throw new Error("Action public snapshot duplicate record event");
   const refsByAction = new Map<string, CredentialRef[]>();
   for (const ref of events.credentials) {
-    const expectedAsset = options.assets[ref.kind];
-    if (!expectedAsset || getAddress(ref.nftContract) !== getAddress(expectedAsset)) throw new Error("Action public snapshot unknown credential asset");
     const refs = refsByAction.get(ref.actionId.toLowerCase()) ?? [];
     refs.push(ref);
     refsByAction.set(ref.actionId.toLowerCase(), refs);
@@ -454,13 +452,26 @@ async function readFinalizedActionSnapshotInner(
   }
 
   const receiptCache = new Map<string, Awaited<ReturnType<PublicClient["getTransactionReceipt"]>>>();
+  const verifiedBindings = new Map<string, Promise<Address>>();
   const actions: FinalizedIndexedFanAction[] = [];
   for (let index = 0; index < events.recorded.length; index += 8) {
     assertNotAborted(signal);
     const batch = await Promise.all(events.recorded.slice(index, index + 8).map(async (event): Promise<FinalizedIndexedFanAction> => {
     const record = records.get(event.actionId.toLowerCase())!;
     const refs = refsByAction.get(event.actionId.toLowerCase()) ?? [];
-    const sourceOccurrence = await verifyRecordedTransaction(client, options, event, record, events.corrected, blockNumber);
+    const { sourceOccurrence, bindingVersion } = await verifyRecordedTransaction(client, options, event, record, events.corrected, blockNumber);
+    const bindingAssets = options.assetBindings[bindingVersion] ?? {};
+    for (const ref of refs) {
+      const expectedAsset = bindingAssets[ref.kind];
+      if (!expectedAsset || getAddress(ref.nftContract) !== getAddress(expectedAsset)) throw new Error("Action public snapshot unknown credential asset");
+      const key = `${bindingVersion}:${ref.kind}`;
+      let actualAsset = verifiedBindings.get(key);
+      if (!actualAsset) {
+        actualAsset = client.readContract({ address: options.hubAddress, abi: actionHubAbi, functionName: "getAssetBinding", args: [bindingVersion, ref.kind], blockNumber });
+        verifiedBindings.set(key, actualAsset);
+      }
+      if (getAddress(await actualAsset) !== getAddress(expectedAsset)) throw new Error("Action public snapshot credential binding mismatch");
+    }
     const [attestation, easValid] = await Promise.all([
       client.readContract({ address: options.easAddress, abi: easAbi, functionName: "getAttestation", args: [record.easUID], blockNumber }),
       client.readContract({ address: options.easAddress, abi: easAbi, functionName: "isAttestationValid", args: [record.easUID], blockNumber }),
@@ -500,7 +511,7 @@ async function readFinalizedActionSnapshotInner(
         || receipt.status !== "success" || receipt.blockNumber !== ref.blockNumber || !sameHex(receipt.blockHash, ref.blockHash)) {
         throw new Error("Action public snapshot mint receipt mismatch");
       }
-      assertMintLog(ref, record.fan, receipt, options.assets[ref.kind]!);
+      assertMintLog(ref, record.fan, receipt, bindingAssets[ref.kind]!);
     }
 
     let original = event;
