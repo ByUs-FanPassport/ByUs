@@ -1,6 +1,4 @@
 import "@testing-library/jest-dom/vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { act } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -11,16 +9,19 @@ import {
   VerificationSealArtwork,
   type PassportStampRecord,
 } from "./passport-stamp-artwork";
-import { STAMP_METADATA, stampTypeLabel } from "../domain/passport-read-model";
+import { stampTypeLabel } from "../domain/passport-read-model";
 
 describe("Passport Stamp artwork", () => {
-  it("localizes Japanese score units and uses an existing first-reaction image", () => {
+  it("localizes Japanese score units and uses the shared kyaa artwork", () => {
     const { container } = render(<>
       <StampArtwork type="knowledge" locale="ja" points={3} />
       <StampArtwork type="first_reaction" locale="ja" />
     </>);
     expect(screen.getByRole("img", { name: /3 点獲得/ })).toBeInTheDocument();
-    expect(container.querySelector("img")).toHaveAttribute("src", expect.stringContaining("first-like-en.webp"));
+    expect([...container.querySelectorAll("img")].map((image) => decodeURIComponent(image.src))).toEqual(expect.arrayContaining([
+      expect.stringContaining("/images/credentials/v2/knowledge.png"),
+      expect.stringContaining("/images/credentials/v2/reaction.png"),
+    ]));
   });
 
   it("keeps the Passport skeleton visible until both data and the base artwork are ready", async () => {
@@ -41,30 +42,18 @@ describe("Passport Stamp artwork", () => {
     expect(canvas).toHaveAttribute("aria-busy", "false");
   });
 
-  it("uses brand-neutral, text-labelled artwork rather than celebrity-specific image assets", () => {
+  it("uses shared kyaa artwork without celebrity-specific image assets", () => {
     const { container } = render(
       <StampArtwork type="knowledge" locale="ko" />,
     );
 
     expect(screen.getByRole("img", { name: "팬 인증 Stamp" })).toBeInTheDocument();
-    expect(screen.getByText("인증")).toBeInTheDocument();
-    expect(container.querySelector("img")).toBeNull();
+    expect(decodeURIComponent(container.querySelector("img")!.src)).toContain("/images/credentials/v2/knowledge.png");
     expect(container.innerHTML).not.toMatch(/kara|nualeaf/i);
   });
 
-  it("keeps the reusable vintage frame transparent and free of baked product data", () => {
-    const frame = readFileSync(
-      join(process.cwd(), "public/images/stamps/vintage-seal-frame.svg"),
-      "utf8",
-    );
-
-    expect(frame).toContain('viewBox="0 0 256 256"');
-    expect(frame).not.toMatch(/kara|katseye|nualeaf|verified|2026|\+1/i);
-    expect(frame).not.toMatch(/<rect[^>]+fill=["']#fff/i);
-  });
-
-  it("renders a localized, data-driven verification seal above the shared frame", () => {
-    render(
+  it("keeps the actual date and points visible beside the shared verification artwork", () => {
+    const { container } = render(
       <VerificationSealArtwork
         celebrityName="KATSEYE"
         issuedAt="2026-07-26T08:00:00.000Z"
@@ -74,13 +63,12 @@ describe("Passport Stamp artwork", () => {
     );
 
     const seal = screen.getByRole("img", { name: /KATSEYE 팬 인증 Stamp.*1점 획득/ });
-    expect(seal).toHaveTextContent("팬 인증");
-    expect(seal).toHaveTextContent("VERIFIED");
     expect(seal).toHaveTextContent("2026.07.26");
     expect(seal).toHaveTextContent("+1");
+    expect(decodeURIComponent(container.querySelector("img")!.src)).toContain("/images/credentials/v2/knowledge.png");
   });
 
-  it("uses the shared domain labels, short labels, and ink tokens for every Stamp", () => {
+  it("uses shared domain labels and the matching artwork for every Stamp", () => {
     const { container } = render(
       <>
         <StampArtwork type="reservation" locale="en" />
@@ -89,19 +77,15 @@ describe("Passport Stamp artwork", () => {
     );
     const reservation = screen.getByRole("img", { name: `${stampTypeLabel("en", "reservation")} Stamp` });
     const survey = screen.getByRole("img", { name: `${stampTypeLabel("ko", "survey")} Stamp` });
-    expect(reservation).toHaveTextContent(STAMP_METADATA.reservation.shortLabel.en);
-    expect(reservation).toHaveStyle({ "--stamp-ink": STAMP_METADATA.reservation.inkToken });
-    expect(survey).toHaveTextContent(STAMP_METADATA.survey.shortLabel.ko);
-    expect(survey).toHaveStyle({ "--stamp-ink": STAMP_METADATA.survey.inkToken });
+    expect(decodeURIComponent(reservation.querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/reservation.png");
+    expect(decodeURIComponent(survey.querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/survey.png");
     expect(container.innerHTML).not.toContain("LIVE Reservation");
   });
 
-  it("renders membership with the shared Crown artwork and localized label", () => {
+  it("renders membership with the shared kyaa artwork and localized label", () => {
     const { container } = render(<StampArtwork type="membership" locale="ko" />);
     const stamp = screen.getByRole("img", { name: "멤버십 인증 Stamp" });
-    expect(stamp).toHaveTextContent("멤버십");
-    expect(stamp).toHaveStyle({ "--stamp-ink": STAMP_METADATA.membership.inkToken });
-    expect(container.querySelector("svg.lucide-crown")).toBeInTheDocument();
+    expect(decodeURIComponent(container.querySelector("img")!.src)).toContain("/images/credentials/v2/membership.png");
   });
 
   it("keeps duplicate Stamp records and places every earned record in its own slot", () => {

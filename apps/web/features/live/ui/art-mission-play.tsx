@@ -6,6 +6,7 @@ import type { AppLocale } from "@/i18n/locales";
 import { creatorHomeHref } from "@/features/creator/domain/creator-navigation";
 
 import Image from "next/image";
+import { credentialArtworkAsset } from "@/components/fan-ui/credential-artwork";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, Check, Circle, CircleCheck } from "lucide-react";
@@ -144,7 +145,7 @@ export function ArtMissionPlay({ missions, locale, answers, submissions, errors,
         {completionArtwork && <div className={styles.printImage}><Image unoptimized src={completionArtwork.url} alt="" width={320} height={430} /></div>}
         <div className={styles.printCaption}><span>{pickedArtwork ? (locale === "ko" ? "내가 고른 작품" : translate(locale, localizedMessages.m5b43318c4b9a, "MY PICK")) : "ART PLAY"}</span><strong>{pickedArtwork?.label ?? (locale === "ko" ? "엘리나와 뱅크시" : translate(locale, localizedMessages.mf7eac854df8e, "Elina × Banksy"))}</strong></div>
       </div>
-      <span className={styles.completionSeal}>{locale === "ko" ? "참여 완료" : translate(locale, localizedMessages.md0d8019e4800, "COMPLETED")}</span>
+      <Image className={styles.completionSeal} src={credentialArtworkAsset("mission")} alt="" width={1254} height={1254} />
     </div>
     {result && <section className={styles.rewardSection} aria-label={locale === "ko" ? "이번 미션 보상" : translate(locale, localizedMessages.m64265bca10e8, "Rewards from this mission")}>
       <p>{result.type === "quiz" ? (locale === "ko" ? "이번 퀴즈 참여로 기록됐어요" : translate(locale, localizedMessages.m33b6e0464945, "Recorded for this quiz")) : (locale === "ko" ? "이번 투표 참여로 기록됐어요" : translate(locale, localizedMessages.mfa977f62286e, "Recorded for this vote"))}</p>

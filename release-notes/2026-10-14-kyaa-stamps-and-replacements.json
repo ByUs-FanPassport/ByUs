@@ -1,0 +1,15 @@
+{
+  "changes": [
+    "여권·발급 완료·커뮤니티·공유 화면의 도장 이미지를 새 kyaa 디자인으로 통일했어요.",
+    "모바일 도장 상세창의 닫기 버튼이 화면 안에 보이도록 수정했어요.",
+    "기존 NFT 재발급이 확인되면 원래 활동과 점수는 유지하면서 새 NFT의 등록 기록을 보여주도록 준비했어요.",
+    "첨부 이미지는 예시 데이터를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/my",
+  "images": [
+    "release-notes/images/2026-10-14-kyaa-stamps-passport-390.png",
+    "release-notes/images/2026-10-14-kyaa-stamps-community-1440.png",
+    "release-notes/images/2026-10-14-kyaa-stamps-stamp-dialog-390.png",
+    "release-notes/images/2026-10-14-kyaa-stamps-issuance-complete-390.png"
+  ]
+}

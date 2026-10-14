@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { mintFactsSchema } from "../../passport/domain/passport-read-model";
 
 export const reactionResultSchema = z.object({
   reactionId: z.uuid(),
   status: z.literal("completed"),
   mintStatus: z.enum(["queued", "processing", "minted", "retryable", "permanent_failure"]),
+  mint: mintFactsSchema.optional(),
   // Fan Action reactions use an outbox instead of a legacy blockchain job.
   // The write RPC includes the outbox ID; the owned read projection omits it.
   blockchainJobId: z.uuid().nullable(),

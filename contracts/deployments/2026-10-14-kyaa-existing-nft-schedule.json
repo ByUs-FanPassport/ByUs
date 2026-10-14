@@ -1,0 +1,28 @@
+{
+  "migrator": "0xd72c1ac7f0ec0fcfe596050cff21f6fb477cee0c",
+  "operation": "0x6746e9d35826ada0ba6c47d84bb125dc351a2e10e83d62bf14b76f11918e6734",
+  "readyAt": "2026-10-16T01:29:46.000Z",
+  "transactions": [
+    {
+      "id": "deploy",
+      "hash": "0x8535f8608c33bffb69f7d35d0ddd1e4f073bfa1ef39d0bbdf1deab7485b6578b",
+      "blockNumber": "38596268",
+      "blockHash": "0xa49f020ca939f1a7569f4bfd0081f892752c55b000642e803a66b7482ee6c4a5"
+    },
+    {
+      "id": "schedule",
+      "hash": "0xea49f7b6931472a6eb563ffbca36efecab879b8dce6316b5f3a3d05ba9894bcb",
+      "blockNumber": "38596270",
+      "blockHash": "0xb660a136e244bd166632f4856d0eafe5e8040496f49b7696d385dd5dc13fc231"
+    }
+  ],
+  "chainId": 91342,
+  "batchId": "0xfd14e05133ca360ff1062bf86c0a9624b058d1c5ec3662a25b362625cbf133b6",
+  "manifestHash": "0xdce3e959642e70db42091bc8340a1e23959d4a5146ea270b266bb38e60ca2564",
+  "reviewHash": "0xb08d872acc4eb5093e34ca0090e7f537bb12af3fc58dcc0236e9458e96f47def",
+  "root": "0xb5979b86d5910a3e8ad068e2fe9fc468899aa36699ecae1d49047047839b0bb0",
+  "maxItems": 1723,
+  "maxMints": 1723,
+  "expiresAt": "1794532827",
+  "state": "scheduled; not activated; no replacement NFTs minted"
+}

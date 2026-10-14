@@ -32,9 +32,9 @@ export function buildKyaaPlan(a,nonce,delay){
 export function assertKyaaEnvelope(tx,step){
  assert(tx.type==='eip1559'&&tx.chainId===91342&&tx.nonce===step.nonce&&(tx.to?.toLowerCase()??null)===(step.to??null)&&tx.data===step.data&&(tx.value??0n)===0n&&tx.gas===BigInt(step.gas)&&tx.maxFeePerGas>0n&&tx.maxFeePerGas<=100000000n&&tx.maxPriorityFeePerGas>=0n&&tx.maxPriorityFeePerGas<=tx.maxFeePerGas,'TRANSACTION_ENVELOPE');
 }
-function checkPrivate(p){if(fs.existsSync(p)){const s=fs.lstatSync(p);assert(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&(s.mode&0o077)===0,'UNSAFE_JOURNAL');}}
-function persist(p,v){checkPrivate(p);const tmp=p+'.tmp';const fd=fs.openSync(tmp,'wx',0o600);try{fs.writeFileSync(fd,json(v));fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(tmp,p);}
-async function readReceipt(c,txHash){try{return await c.getTransactionReceipt({hash:txHash});}catch(e){if(e.name!=='TransactionReceiptNotFoundError')throw e;return null;}}
+export function checkPrivate(p){if(fs.existsSync(p)){const s=fs.lstatSync(p);assert(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&(s.mode&0o077)===0,'UNSAFE_JOURNAL');}}
+export function persist(p,v){checkPrivate(p);const tmp=p+'.tmp';const fd=fs.openSync(tmp,'wx',0o600);try{fs.writeFileSync(fd,json(v));fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(tmp,p);}
+export async function readReceipt(c,txHash){try{return await c.getTransactionReceipt({hash:txHash});}catch(e){if(e.name!=='TransactionReceiptNotFoundError')throw e;return null;}}
 export async function confirmedKyaaReceipt(c,txHash){
  for(let attempt=0;attempt<6;attempt++){
   try{
@@ -48,7 +48,7 @@ export async function confirmedKyaaReceipt(c,txHash){
   }
  }
 }
-function runtimeMatches(actual,artifact){
+export function runtimeMatches(actual,artifact){
  if(!actual||actual.length!==artifact.deployedBytecode.object.length)return false;
  let expected=artifact.deployedBytecode.object;
  for(const refs of Object.values(artifact.deployedBytecode.immutableReferences??{}))for(const {start,length} of refs){const from=2+start*2,to=from+length*2;expected=expected.slice(0,from)+actual.slice(from,to)+expected.slice(to);}

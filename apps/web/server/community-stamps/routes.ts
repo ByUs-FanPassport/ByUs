@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { AuthError } from "@/features/auth/domain/auth-errors";
 import { communityShareTokenSchema, communityShareLinkSchema, communityShareDestinationSchema, communityAwardResultSchema, communityCreatorSlugSchema, communityInviteSchema, communityStampCollectionSchema } from "@/features/community-stamps/domain/community-stamps";
+import { validateOwnerMintReplacements } from "@/server/onchain/owner-mint-replacement";
 
 export interface CommunityStampDependencies {
   authorize(authorization: string | null): Promise<{ appUserId: string }>;
@@ -44,7 +45,9 @@ export function createCommunityStampHandlers(deps: CommunityStampDependencies) {
         if (query.getAll("creator").length > 1) throw new Error("COMMUNITY_STAMP_INVALID_REQUEST");
         const creator = communityCreatorSlugSchema.nullable().parse(query.get("creator"));
         const data = await deps.rpc("get_owned_community_stamps", { p_app_user_id: appUserId, p_celebrity_slug: creator });
-        return json(parseResponse(communityStampCollectionSchema, data));
+        const collection = parseResponse(communityStampCollectionSchema, data);
+        const mints = await validateOwnerMintReplacements(collection.stamps.map((stamp) => stamp.mint));
+        return json({ ...collection, stamps: collection.stamps.map((stamp, index) => ({ ...stamp, mint: mints[index]! })) });
       } catch (error) { return communityStampFailure(error); }
     },
     async action(request: Request, action: string) {

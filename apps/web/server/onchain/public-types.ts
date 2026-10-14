@@ -6,12 +6,19 @@ export interface PublicOnchainMetrics {
   lifecycleTransactions: number;
   currentActionTransactions: number;
 }
+export interface PublicRepresentativeAsset {
+  nftContract: string; tokenId: string; owner: string; issuanceKey: string; metadataHash: string;
+  migration: {
+    migratorAddress: string; batchId: string; txHash: string; blockNumber: string;
+    sourceHub: string; sourceActionId: string; minted: boolean;
+  };
+}
 export interface PublicOnchainAction {
   actionId: string; occurrenceId: string; sourceOccurrence: string; revision: number; actionCode: number;
   wallet: string; creatorId: string; campaignId: string; occurredDay: number;
   easUid: string; txHash: string; blockNumber: string; hubAddress: string; environmentId: string; sourceDeployment: string;
   status: "ACTIVE" | "INVALIDATED"; current: boolean; qa: boolean; origin: "NATIVE" | "HISTORICAL";
-  credentials: { kind: number; nftContract: string; tokenId: string; linkOrigin: number }[];
+  credentials: { kind: number; nftContract: string; tokenId: string; linkOrigin: number; representativeAsset?: PublicRepresentativeAsset }[];
 }
 export interface PublicOnchainSnapshot {
   version: 2;

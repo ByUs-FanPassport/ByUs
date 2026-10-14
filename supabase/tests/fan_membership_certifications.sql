@@ -347,6 +347,30 @@ begin
     or not has_function_privilege('service_role','public.get_owned_passport_detail(uuid,uuid,public.content_locale)','EXECUTE') then
     raise exception 'membership RPC privilege boundary mismatch';
   end if;
+
+  -- A finalized replacement must stop being representative when membership approval is withdrawn.
+  declare replacement_id uuid; batch text:='0x'||repeat('a',64); original_tx text:='0x'||repeat('b',64);
+  begin
+    update public.blockchain_jobs set status='PROCESSING',lease_owner='replacement-test',lease_expires_at=now()+interval '1 minute'
+      where entity_type='stamp' and entity_id=v_stamp_id;
+    update public.blockchain_jobs set status='COMPLETED',lease_owner=null,lease_expires_at=null,tx_hash=original_tx,token_id=901,completed_at=clock_timestamp()
+      where entity_type='stamp' and entity_id=v_stamp_id;
+    insert into public.nft_credential_replacement_batches(batch_id,chain_id,migrator,environment_id,merkle_root,manifest_hash,max_items,max_mints,expires_at)
+      values(batch,91342,'0x'||repeat('a',40),batch,batch,batch,1,1,now()+interval '7 days');
+    insert into public.nft_credential_replacements(batch_id,leaf_hash,credential_kind,old_contract,old_token_id,
+      old_metadata_uri,old_tx_hash,new_contract,new_token_id,new_metadata_uri,issuance_key,recipient,source_action_id,source_hub,
+      tx_hash,block_number,block_hash,finalized_block_number,finalized_block_hash,minted)
+      values(batch,batch,1,'0x1adcde3473c4e884e60205b397ece744d8892285',901,'ipfs://old',original_tx,
+        '0x527a70c0f7cf129650dc282b709327c5958a4ccf',902,'ipfs://new',batch,'0xd100000000000000000000000000000000000001',
+        '0x'||repeat('0',64),'0x'||repeat('0',40),'0x'||repeat('c',64),100,batch,110,batch,true) returning id into replacement_id;
+    insert into public.nft_credential_replacement_entities
+      values('stamp',v_stamp_id,'d1000000-0000-4000-8000-000000000001',replacement_id,original_tx);
+    if public.effective_fan_action_mint('d1000000-0000-4000-8000-000000000001','stamp',v_stamp_id,'minted',original_tx,'901')->>'tokenId'<>'902'
+      then raise exception 'approved membership replacement missing'; end if;
+    update public.certification_submissions set status='rejected',rejection_reason='Fixture approval withdrawn' where id=second_submission;
+    if public.effective_fan_action_mint('d1000000-0000-4000-8000-000000000001','stamp',v_stamp_id,'minted',original_tx,'901')->>'tokenId'<>'901'
+      then raise exception 'withdrawn membership still projects replacement'; end if;
+  end;
 end $$;
 
 select 'fan membership certifications behavioral verification passed' as result;

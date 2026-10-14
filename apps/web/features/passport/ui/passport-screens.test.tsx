@@ -30,7 +30,7 @@ describe("passport fan screens", () => {
     const { container } = render(<PassportDetailScreen id={passport.id} explorerBaseUrl="javascript:alert(1)" />);
     const card = await screen.findByRole("button", { name: selectedLocale === "ko" ? "첫 좋아요" : "First Like" });
     expect(container.querySelectorAll("[data-passport-stamp]")).toHaveLength(3);
-    expect(decodeURIComponent(card.querySelector("img")!.getAttribute("src")!)).toContain(`/images/stamps/first-like-${selectedLocale}.webp`);
+    expect(decodeURIComponent(card.querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/reaction.png");
     expect(within(card).queryByRole("link")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: selectedLocale === "ko" ? /^3\s*스탬프$/ : /^3\s*Stamps$/ })).toHaveAttribute("href", "#stamp-book");
     expect(screen.getByText(selectedLocale === "ko" ? "팬 점수" : "Fan Score").previousSibling).toHaveTextContent("15");

@@ -29,12 +29,13 @@ it("sends creator comment activity to the fan feed", () => {
 });
 
 it.each(APP_LOCALES)("shows translated Stamp instructions in %s", (locale) => {
-  render(<CommunityStampCollection locale={locale} resource={{ state: { status: "ready", data: { stamps: [], today: "2026-10-09" } }, retry: vi.fn(), replaceData: vi.fn(), refreshFailed: false }} />);
+  const { container } = render(<CommunityStampCollection locale={locale} resource={{ state: { status: "ready", data: { stamps: [], today: "2026-10-09" } }, retry: vi.fn(), replaceData: vi.fn(), refreshFailed: false }} />);
 
   for (const kind of AVAILABLE_COMMUNITY_STAMPS) {
     const help = COMMUNITY_STAMPS[kind].help[locale];
     expect(help).toBeTruthy();
     expect(screen.getByText(help)).toBeInTheDocument();
+    expect([...container.querySelectorAll("img")].some(image => decodeURIComponent(image.src).includes(`/images/credentials/v2/${kind}.png`))).toBe(true);
   }
   if (locale !== "en") expect(COMMUNITY_STAMPS.first_comment.help[locale]).not.toBe(COMMUNITY_STAMPS.first_comment.help.en);
 });

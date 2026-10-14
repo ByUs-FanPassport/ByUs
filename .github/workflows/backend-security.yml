@@ -49,6 +49,7 @@ jobs:
           server/fan-posts server/content-translation server/schedules
           server/profile/account-deletion.test.ts server/my/fan-history-route.test.ts
           server/onchain app/api/public/onchain
+          server/g4/passport-read-repository.test.ts server/reaction/reaction-repository.test.ts
       - run: npm run test --workspace @byus/worker
       - run: npm run build --workspace @byus/worker
       - run: sudo apt-get update && sudo apt-get install -y postgresql
@@ -66,7 +67,7 @@ jobs:
           version: stable
       - run: forge test --root contracts
       - name: Verify immediate-registration deployment plan guards
-        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs scripts/pin-metadata-assets.test.mjs
+        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs scripts/pin-metadata-assets.test.mjs scripts/migrate-existing-nfts-giwa.test.mjs scripts/replace-existing-nfts-giwa.test.mjs
       - name: Exercise worker to ActionHub on local Anvil
         run: RUN_ACTION_ANVIL_INTEGRATION=1 npm run test --workspace @byus/worker -- test/action-anvil.integration.test.ts
       - name: Validate ActionHub namespace upgrade compatibility

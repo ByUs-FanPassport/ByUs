@@ -1,22 +1,13 @@
 "use client";
 
-import { toContentLocale, type AppLocale } from "@/i18n/locales";
+import type { AppLocale } from "@/i18n/locales";
+import { credentialArtworkAsset, type CredentialArtworkKey } from "@/components/fan-ui/credential-artwork";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__ui__passport-stamp-artwork";
 import { translate } from "@/i18n/messages";
-import {
-  BadgeCheck,
-  CalendarCheck,
-  ClipboardCheck,
-  Crown,
-  Radio,
-  type LucideIcon,
-} from "lucide-react";
 import Image from "next/image";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 
 import {
-  STAMP_METADATA,
-  stampShortLabel,
   stampTypeLabel,
   levelLabel,
   levelSchema,
@@ -39,12 +30,13 @@ function pointUnit(locale: AppLocale, points: number): string {
   }[locale];
 }
 
-const stampIcons: Record<PassportStampType, LucideIcon> = {
-  knowledge: BadgeCheck,
-  reservation: CalendarCheck,
-  attendance: Radio,
-  survey: ClipboardCheck,
-  membership: Crown,
+const stampArtwork: Record<PassportDisplayStampType, CredentialArtworkKey> = {
+  knowledge: "knowledge",
+  reservation: "reservation",
+  attendance: "attendance",
+  survey: "survey",
+  membership: "membership",
+  first_reaction: "reaction",
 };
 
 export function StampArtwork({
@@ -82,34 +74,16 @@ export function StampArtwork({
       ? locale === "ko" ? `${points}점 획득` : translate(locale, localizedMessages.m2ffacf60eac4, "{0} {1} earned", [points, pointUnit(locale, points)])
       : null,
   ].filter(Boolean).join(", ");
-  if (type === "first_reaction") {
-    return <span className={styles.stamp} data-compact={compact} data-stamp-type={type}
-      aria-hidden={decorative || undefined} role={decorative ? undefined : "img"}
-      aria-label={decorative ? undefined : stampDescription}>
-      <Image className={styles.stampAsset} src={`/images/stamps/first-like-${toContentLocale(locale)}.webp`} width={512} height={512} alt="" aria-hidden="true" />
-    </span>;
-  }
-  const Icon = stampIcons[type];
-  const stampStyle = {
-    "--stamp-ink": STAMP_METADATA[type].inkToken,
-  } as CSSProperties;
-
   return (
     <span
       className={styles.stamp}
-      style={stampStyle}
       data-compact={compact}
       data-stamp-type={type}
       aria-hidden={decorative || undefined}
       role={decorative ? undefined : "img"}
       aria-label={decorative ? undefined : stampDescription}
     >
-      <span className={styles.frame} aria-hidden="true" />
-      <span className={styles.accentDots} aria-hidden="true"><i /><i /></span>
-      <span className={styles.inner}>
-        <Icon aria-hidden="true" />
-        <span>{stampShortLabel(locale, type)}</span>
-      </span>
+      <Image className={styles.stampAsset} src={credentialArtworkAsset(stampArtwork[type])} width={1254} height={1254} alt="" aria-hidden="true" />
     </span>
   );
 }
@@ -148,11 +122,8 @@ export function VerificationSealArtwork({
       aria-label={accessibleLabel}
       data-verification-seal
     >
-      <span className={styles.verificationFrame} aria-hidden="true" />
-      <span className={styles.verificationDots} aria-hidden="true"><i /><i /></span>
+      <Image className={styles.stampAsset} src={credentialArtworkAsset("knowledge")} width={1254} height={1254} alt="" aria-hidden="true" />
       <span className={styles.verificationCopy} aria-hidden="true">
-        <span className={styles.verificationTitle}>{locale === "ko" ? "팬 인증" : translate(locale, localizedMessages.mca74f42669ae, "FAN")}</span>
-        <strong>VERIFIED</strong>
         <span className={styles.verificationDate}>{visualDate(issuedAt)}</span>
         <b>+{points}</b>
       </span>

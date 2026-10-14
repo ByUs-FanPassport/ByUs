@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: mocks.cache }));
 vi.mock("../../../worker/src/action-public-snapshot", () => ({ readFinalizedActionSnapshot: mocks.read }));
 vi.mock("./public-aggregate", () => ({ projectPublicOnchainSnapshot: mocks.project }));
+vi.mock("./credential-replacements", () => ({ readFinalizedCredentialReplacements: vi.fn() }));
 import { getPublicOnchainResult } from "./public-snapshot";
 import { onchainConfig } from "./public-config";
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
@@ -46,4 +47,14 @@ it("caches a full large ledger without dropping records or exceeding the storage
   expect(await readLargeSnapshot()).toEqual({ state: "available", snapshot });
   const stored = await mocks.cache.mock.calls.at(-1)![0]();
   expect(Buffer.byteLength(JSON.stringify(stored))).toBeLessThan(512_000);
+});
+
+it("includes the optional migrator deployment state in the persistent cache namespace", async () => {
+  vi.resetModules();
+  await import("./public-snapshot");
+  const keys = mocks.cache.mock.calls.at(-1)?.[1] as string[];
+  expect(keys).toContain(onchainConfig.credentialReplacement.deployment?.address ?? "credential-migrator-disabled");
+  expect(keys).toContain(onchainConfig.credentialReplacement.deployment?.fromBlock.toString() ?? "credential-migrator-disabled");
+  expect(keys).toContain(onchainConfig.credentialReplacement.timelock);
+  expect(keys).toContain(onchainConfig.credentialReplacement.operator);
 });

@@ -8,6 +8,7 @@ import { parseStampDetail, type StampDetail } from "../../features/passport/doma
 import { attachPassportGrowth } from "./passport-growth";
 import { createPublicImageRoleReader, type PublicImageRoleReader } from "../media/public-image-reader";
 import { SupabaseCreatorReactionBatchRepository } from "../reaction/creator-reaction-batch-repository";
+import { validateOwnerMintReplacements } from "../onchain/owner-mint-replacement";
 
 export interface PassportReadRepository {
   findCollection(input: { appUserId: string; locale: PassportLocale; includeStages?: boolean }): Promise<PassportCollection>;
@@ -37,6 +38,8 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
     let passports: PassportCollection;
     try { passports = parsePassportCollection(data ?? [], locale); }
     catch { throw new Error("Passport collection projection is invalid"); }
+    const guardedMints = await validateOwnerMintReplacements(passports.map((passport) => passport.mint));
+    passports = passports.map((passport, index) => ({ ...passport, mint: guardedMints[index]! }));
     const reactions = new SupabaseCreatorReactionBatchRepository(this.client);
     const recorded = new Map<string, boolean>();
     const slugs = [...new Set(passports.map((passport) => passport.celebrity.slug))];
@@ -54,7 +57,18 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
     if (error) throw new Error("Passport detail query failed");
     const row = oneRow(data);
     if (row === null) return null;
-    try { return attachPassportGrowth(parsePassportDetailRecord(row, locale)); }
+    try {
+      const passport = attachPassportGrowth(parsePassportDetailRecord(row, locale));
+      const mints = [passport.mint, ...passport.stamps.map((stamp) => stamp.mint), ...(passport.firstReaction?.mint ? [passport.firstReaction.mint] : [])];
+      const guarded = await validateOwnerMintReplacements(mints);
+      let index = 0;
+      const mint = guarded[index++]!;
+      const stamps = passport.stamps.map((stamp) => ({ ...stamp, mint: guarded[index++]! }));
+      const firstReaction = passport.firstReaction?.mint
+        ? { ...passport.firstReaction, mint: guarded[index]!, mintStatus: guarded[index]!.status, txHash: guarded[index]!.txHash }
+        : passport.firstReaction;
+      return { ...passport, mint, stamps, firstReaction };
+    }
     catch { throw new Error("Passport detail projection is invalid"); }
   }
 
@@ -64,7 +78,11 @@ export class SupabasePassportReadRepository implements PassportReadRepository {
     if (error) throw new Error("Stamp detail query failed");
     const row = oneRow(data);
     if (row === null) return null;
-    try { return parseStampDetail(row, locale); }
+    try {
+      const stamp = parseStampDetail(row, locale);
+      const [mint] = await validateOwnerMintReplacements([stamp.mint]);
+      return { ...stamp, mint: mint! };
+    }
     catch { throw new Error("Stamp detail projection is invalid"); }
   }
 }

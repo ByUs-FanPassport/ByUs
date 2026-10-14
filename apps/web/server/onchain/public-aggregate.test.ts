@@ -3,9 +3,15 @@ import type { FinalizedActionSnapshot } from "../../../worker/src/action-public-
 import type { ActionLifecycleTransaction, FinalizedIndexedFanAction } from "../../../worker/src/action-metrics";
 import { projectPublicOnchainSnapshot } from "./public-aggregate";
 import { onchainConfig as config } from "./public-config";
+import { credentialAssetKey } from "./credential-replacements";
+import type { PublicRepresentativeAsset } from "./public-types";
 
 const hash = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as const;
 const fan = "0x0000000000000000000000000000000000000001";
+const representative: PublicRepresentativeAsset = {
+  nftContract: config.assetBindings[2][1], tokenId: "456", owner: fan, issuanceKey: hash(20), metadataHash: hash(21),
+  migration: { migratorAddress: "0x0000000000000000000000000000000000000009", batchId: hash(22), txHash: hash(23), blockNumber: "99", sourceHub: config.hubAddress, sourceActionId: hash(2), minted: true },
+};
 function action(overrides: Partial<FinalizedIndexedFanAction> = {}): FinalizedIndexedFanAction {
   return {
     chainId: config.chainId, sourceOccurrence: hash(12), occurrenceId: hash(1), actionId: hash(2), revision: 1, actionCode: 10,
@@ -78,5 +84,63 @@ describe("public chain-only projection", () => {
     expect(result.raw.uniqueActiveWallets).toBe(1);
     expect(result.raw.mintedCredentials).toBe(1);
     expect(result.actions).toHaveLength(2);
+  });
+
+  it("adds one verified representative to every revision without changing original proofs or KPIs", () => {
+    const old = action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false });
+    const next = action({ revision: 2, actionId: hash(9), txHash: hash(10), credentials: [{ ...old.credentials[0], linkOrigin: 1 }] });
+    const source = snapshot([old, next]);
+    const baseline = projectPublicOnchainSnapshot(source, new Date("2026-10-14T00:00:00Z"));
+    const projected = projectPublicOnchainSnapshot(source, new Date("2026-10-14T00:00:00Z"), new Map([
+      [credentialAssetKey(old.credentials[0]!.nftContract, old.credentials[0]!.tokenId), representative],
+    ]));
+    expect(baseline.actions.every((item) => item.credentials.every((credential) => credential.representativeAsset === undefined))).toBe(true);
+    expect(projected.actions.map((item) => item.credentials[0]?.representativeAsset)).toEqual([representative, representative]);
+    expect(projected.business).toEqual(baseline.business);
+    expect(projected.raw).toEqual(baseline.raw);
+    expect(projected.actions.map(({ credentials, ...item }) => ({ ...item, credentials: credentials.map(({ representativeAsset: _representativeAsset, ...credential }) => credential) })))
+      .toEqual(baseline.actions);
+  });
+
+  it.each([
+    ["revoked", action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false })],
+    ["EAS-invalid", action({ easIsAttestationValid: false })],
+    ["expired", action({ easExpirationTime: 1789300000n })],
+    ["different recipient", action({ recipient: "0x0000000000000000000000000000000000000002", easRecipient: "0x0000000000000000000000000000000000000002" })],
+  ])("does not expose a representative when the current action is %s", (_label, current) => {
+    const result = projectPublicOnchainSnapshot(snapshot([current as FinalizedIndexedFanAction]), new Date(), new Map([
+      [credentialAssetKey(current.credentials[0]!.nftContract, current.credentials[0]!.tokenId), representative],
+    ]));
+    expect(result.actions[0]?.credentials[0]?.representativeAsset).toBeUndefined();
+  });
+
+  it("removes the representative from every revision when the current revision drops the old asset", () => {
+    const old = action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false });
+    const next = action({ revision: 2, actionId: hash(9), txHash: hash(10), credentials: [] });
+    const result = projectPublicOnchainSnapshot(snapshot([old, next]), new Date(), new Map([
+      [credentialAssetKey(old.credentials[0]!.nftContract, old.credentials[0]!.tokenId), representative],
+    ]));
+    expect(result.actions.flatMap((item) => item.credentials).every((credential) => credential.representativeAsset === undefined)).toBe(true);
+  });
+
+  it("does not let an unrelated active occurrence revive an invalidated migration source", () => {
+    const sourceAction = action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false });
+    const unrelated = action({ occurrenceId: hash(30), actionId: hash(31), txHash: hash(32) });
+    const result = projectPublicOnchainSnapshot(snapshot([sourceAction, unrelated]), new Date(), new Map([
+      [credentialAssetKey(sourceAction.credentials[0]!.nftContract, sourceAction.credentials[0]!.tokenId), representative],
+    ]));
+    expect(result.actions.flatMap((item) => item.credentials).every((credential) => credential.representativeAsset === undefined)).toBe(true);
+  });
+
+  it("does not let another Hub revive an invalidated current-Hub migration source", () => {
+    const sourceAction = action({ status: "INVALIDATED", easRevocationTime: 1n, easIsAttestationValid: false });
+    const legacy = config.deployments[0];
+    const otherHub = action({ hubProxy: legacy.hubAddress, easAttester: legacy.hubAddress, actionId: hash(31), txHash: hash(32) });
+    const source = snapshot([sourceAction, otherHub]);
+    source.deployments = config.deployments.map((deployment) => ({ ...deployment, actionCount: 1 }));
+    const result = projectPublicOnchainSnapshot(source, new Date(), new Map([
+      [credentialAssetKey(sourceAction.credentials[0]!.nftContract, sourceAction.credentials[0]!.tokenId), representative],
+    ]));
+    expect(result.actions.flatMap((item) => item.credentials).every((credential) => credential.representativeAsset === undefined)).toBe(true);
   });
 });

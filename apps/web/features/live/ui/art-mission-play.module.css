@@ -77,7 +77,7 @@
 .printCaption { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 1px 1px; text-align: left; }
 .printCaption span { color: #8a6876; font-size: 9px; font-weight: 600; letter-spacing: .5px; }
 .printCaption strong { font-size: 14px; line-height: 1.35; }
-.completionSeal { position: absolute; right: max(0px, calc(50% - 150px)); bottom: 10px; padding: 10px 14px; border: 3px double currentColor; color: #ad185b; background: #fff4f8; font-size: 12px; font-weight: 800; letter-spacing: 1px; transform: rotate(7deg); }
+.completionSeal { position: absolute; right: max(0px, calc(50% - 164px)); bottom: -6px; width: 112px; height: 112px; object-fit: contain; transform: rotate(7deg); }
 .confetti { position: fixed; inset: 0; z-index: 4; overflow: hidden; pointer-events: none; contain: strict; }
 .confetti i { position: absolute; left: 50%; top: 36%; width: 6px; height: 13px; background: #c91f70; opacity: 0; }
 .confetti i:nth-child(3n) { width: 8px; height: 8px; background: #e8a8c3; }

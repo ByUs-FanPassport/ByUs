@@ -20,6 +20,11 @@ export const onchainConfig = {
     1: { 0: "0x17f9fb7658a326dd88db523739c227faf50fca20", 1: "0x1adcde3473c4e884e60205b397ece744d8892285" },
     2: { 0: "0xb6c5f48d770a732deb374226eda1e5be209b7ed4", 1: "0x527a70c0f7cf129650dc282b709327c5958a4ccf" },
   },
+  credentialReplacement: {
+    deployment: { address: "0xd72c1ac7f0ec0fcfe596050cff21f6fb477cee0c", fromBlock: 38596268n } as undefined | { address: `0x${string}`; fromBlock: bigint },
+    timelock: "0x40eaeb0b73c50da5053502eb3b836a6effe54642",
+    operator: "0xeee82f960476c888950c798c444c1fd92cbbfe50",
+  },
   qaWallets: ["0x29b000d7791c671a9556a0c83b985b7487364082"],
 } as const;
 

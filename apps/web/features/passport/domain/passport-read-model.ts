@@ -130,7 +130,26 @@ export const mintFactsSchema = z.object({
   status: mintStatusSchema,
   txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/).nullable(),
   tokenId: z.string().regex(/^(?:0|[1-9][0-9]*)$/).nullable(),
+  nftContract: z.string().regex(/^0x[0-9a-f]{40}$/).optional(),
+  metadataUri: z.string().startsWith("ipfs://").max(2048).optional(),
+  originalAsset: z.object({
+    nftContract: z.string().regex(/^0x[0-9a-f]{40}$/),
+    tokenId: z.string().regex(/^[1-9][0-9]*$/),
+    metadataUri: z.string().min(1).max(2048),
+    txHash: z.string().regex(/^0x[0-9a-f]{64}$/),
+  }).strict().optional(),
+  replacement: z.object({
+    batchId: z.string().regex(/^0x[0-9a-f]{64}$/),
+    sourceActionId: z.string().regex(/^0x[0-9a-f]{64}$/),
+    sourceHub: z.string().regex(/^0x[0-9a-f]{40}$/),
+    blockNumber: z.string().regex(/^(?:0|[1-9][0-9]*)$/),
+    blockHash: z.string().regex(/^0x[0-9a-f]{64}$/),
+  }).strict().optional(),
 }).strict().superRefine((value, context) => {
+  if ([value.nftContract, value.metadataUri, value.originalAsset, value.replacement].some(Boolean)
+      && (value.status !== "minted" || !value.nftContract || !value.metadataUri || !value.originalAsset || !value.replacement)) {
+    context.addIssue({ code: "custom", message: "Replacement credential lacks complete provenance" });
+  }
   if (value.status === "minted" && (!value.txHash || !value.tokenId || value.tokenId === "0")) {
     context.addIssue({ code: "custom", message: "Minted credential lacks final chain facts" });
   }

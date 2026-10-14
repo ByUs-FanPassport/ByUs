@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
+const replacementGuard = vi.hoisted(() => vi.fn(async <T>(mints: T[]) => mints));
+vi.mock("../onchain/owner-mint-replacement", () => ({ validateOwnerMintReplacements: replacementGuard }));
 import { AuthError } from "@/features/auth/domain/auth-errors";
 import { createCommunityStampHandlers } from "./routes";
 const owner = "11111111-1111-4111-8111-111111111111";
@@ -11,7 +13,10 @@ const authorize = vi.fn(async (header: string | null) => {
 const api = createCommunityStampHandlers({ rpc, authorize });
 const request = (body: unknown = {}, path = "", authenticated = true) => new Request(`https://byus.kr/api/community-stamps${path}`, { method: "POST", headers: authenticated ? { authorization: "Bearer valid" } : {}, body: JSON.stringify(body) });
 describe("community stamp authority", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    replacementGuard.mockImplementation(async (mints) => mints);
+  });
   it("rejects unauthenticated mutation before touching storage", async () => {
     expect((await api.action(request({}, "", false), "welcome")).status).toBe(401);
     expect(rpc).not.toHaveBeenCalled();
@@ -77,5 +82,20 @@ describe("community stamp authority", () => {
     const response = await api.collection(new Request("https://byus.kr/api/community-stamps?creator=elina&appUserId=other", { headers: { authorization: "Bearer valid" } }));
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledWith("get_owned_community_stamps", { p_app_user_id: owner, p_celebrity_slug: "elina" });
+  });
+  it("serializes guarded mint facts for every owned community stamp", async () => {
+    const oldTx = `0x${"a".repeat(64)}`;
+    replacementGuard.mockResolvedValueOnce([{ status: "minted", txHash: oldTx, tokenId: "11" }]);
+    rpc.mockResolvedValueOnce({ stamps: [{
+      id: "70000000-0000-4000-8000-000000000001", kind: "welcome", celebritySlug: null,
+      issuedAt: "2026-09-13T00:00:00.000Z", mint: {
+        status: "minted", txHash: `0x${"b".repeat(64)}`, tokenId: "22", nftContract: `0x${"2".repeat(40)}`, metadataUri: "ipfs://replacement.json",
+        originalAsset: { nftContract: `0x${"1".repeat(40)}`, tokenId: "11", metadataUri: "ipfs://original.json", txHash: oldTx },
+        replacement: { batchId: `0x${"3".repeat(64)}`, sourceActionId: `0x${"4".repeat(64)}`, sourceHub: `0x${"5".repeat(40)}`, blockNumber: "99", blockHash: `0x${"6".repeat(64)}` },
+      },
+    }], today: "2026-09-13" });
+    const response = await api.collection(new Request("https://byus.kr/api/community-stamps", { headers: { authorization: "Bearer valid" } }));
+    expect(await response.json()).toMatchObject({ stamps: [{ mint: { txHash: oldTx, tokenId: "11" } }] });
+    expect(replacementGuard).toHaveBeenCalledTimes(1);
   });
 });

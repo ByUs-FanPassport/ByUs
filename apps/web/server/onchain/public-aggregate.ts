@@ -3,9 +3,17 @@ import { aggregateFanActionMetrics, isTrustedCurrentAction } from "../../../work
 import type { FinalizedActionSnapshot } from "../../../worker/src/action-public-snapshot";
 import { onchainConfig } from "./public-config";
 import type { PublicOnchainSnapshot } from "./public-types";
+import type { PublicRepresentativeAsset } from "./public-types";
+import { credentialAssetKey } from "./credential-replacements";
+
+const ZERO_ADDRESS = `0x${"0".repeat(40)}`;
 
 /** Pure projection: every metric input comes from the validated chain snapshot. */
-export function projectPublicOnchainSnapshot(source: FinalizedActionSnapshot, generatedAt = new Date()): PublicOnchainSnapshot {
+export function projectPublicOnchainSnapshot(
+  source: FinalizedActionSnapshot,
+  generatedAt = new Date(),
+  representatives: ReadonlyMap<string, PublicRepresentativeAsset> = new Map(),
+): PublicOnchainSnapshot {
   const hubProxies = source.deployments.map(({ hubAddress }) => hubAddress);
   const boundary = {
     chainId: onchainConfig.chainId, environmentId: onchainConfig.environmentId,
@@ -31,6 +39,25 @@ export function projectPublicOnchainSnapshot(source: FinalizedActionSnapshot, ge
     const key = `${getAddress(action.hubProxy).toLowerCase()}:${action.occurrenceId.toLowerCase()}`;
     latest.set(key, Math.max(latest.get(key) ?? 0, action.revision));
   }
+  const isCurrent = (action: FinalizedActionSnapshot["actions"][number]) => {
+    const key = `${getAddress(action.hubProxy).toLowerCase()}:${action.occurrenceId.toLowerCase()}`;
+    return latest.get(key) === action.revision && isTrustedCurrentAction(action, boundary);
+  };
+  const currentActions = source.actions.filter(isCurrent);
+  const authorizedRepresentatives = new Set<string>();
+  for (const [key, representative] of representatives) {
+    const native = getAddress(representative.migration.sourceHub) !== getAddress(ZERO_ADDRESS);
+    const sourceAction = native ? source.actions.find((action) =>
+      getAddress(action.hubProxy) === getAddress(representative.migration.sourceHub)
+      && action.actionId.toLowerCase() === representative.migration.sourceActionId.toLowerCase()) : undefined;
+    if (native && !sourceAction) continue;
+    const authorized = currentActions.some((action) =>
+      (!native || (getAddress(action.hubProxy) === getAddress(sourceAction!.hubProxy)
+        && action.occurrenceId.toLowerCase() === sourceAction!.occurrenceId.toLowerCase()))
+      && getAddress(representative.owner) === getAddress(action.recipient)
+      && action.credentials.some((credential) => credentialAssetKey(credential.nftContract, credential.tokenId) === key));
+    if (authorized) authorizedRepresentatives.add(key);
+  }
   const metrics = (value: typeof raw, lifecycleTransactions: number) => ({
     uniqueActiveWallets: value.uniqueActiveWallets, actionCounts: value.actionCounts,
     passportCredentials: value.passportCredentials, mintedCredentials: value.mintedCredentials,
@@ -55,7 +82,6 @@ export function projectPublicOnchainSnapshot(source: FinalizedActionSnapshot, ge
     raw: metrics(raw, source.lifecycleTransactions.length),
     excludedQaWallets: [...onchainConfig.qaWallets], excludedQaActions: qaSources.size, historicalActions: raw.historicalActions,
     actions: source.actions.map((action) => {
-      const latestKey = `${getAddress(action.hubProxy).toLowerCase()}:${action.occurrenceId.toLowerCase()}`;
       return {
         actionId: action.actionId, occurrenceId: action.occurrenceId, sourceOccurrence: action.sourceOccurrence,
         revision: action.revision, actionCode: action.actionCode, wallet: action.recipient,
@@ -64,9 +90,13 @@ export function projectPublicOnchainSnapshot(source: FinalizedActionSnapshot, ge
         hubAddress: getAddress(action.hubProxy), environmentId: action.environmentId,
         sourceDeployment: deploymentNames.get(getAddress(action.hubProxy).toLowerCase()) ?? "ActionHub",
         status: action.status,
-        current: latest.get(latestKey) === action.revision && isTrustedCurrentAction(action, boundary),
+        current: isCurrent(action),
         qa: qaSources.has(action.sourceOccurrence.toLowerCase()), origin: action.origin,
-        credentials: action.credentials.map(({ kind, nftContract, tokenId, linkOrigin }) => ({ kind, nftContract, tokenId, linkOrigin })),
+        credentials: action.credentials.map(({ kind, nftContract, tokenId, linkOrigin }) => {
+          const key = credentialAssetKey(nftContract, tokenId);
+          const representativeAsset = authorizedRepresentatives.has(key) ? representatives.get(key) : undefined;
+          return { kind, nftContract, tokenId, linkOrigin, ...(representativeAsset ? { representativeAsset } : {}) };
+        }),
       };
     }),
     transactions: source.lifecycleTransactions.map((tx) => ({

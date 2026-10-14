@@ -2,7 +2,7 @@ import { type AppLocale } from "@/i18n/locales";
 import { messages as localizedMessages } from "@/i18n/catalogs/features__passport__domain__first-like-stamp";
 import { translate } from "@/i18n/messages";
 import { z } from "zod";
-import { mintStatusSchema, stampTypeLabel, type PassportLocale, type PassportStampType } from "./passport-read-model";
+import { mintFactsSchema, mintStatusSchema, stampTypeLabel, type PassportLocale, type PassportStampType } from "./passport-read-model";
 
 export const firstReactionStampSchema = z.object({
   reactionId: z.uuid(),
@@ -11,6 +11,7 @@ export const firstReactionStampSchema = z.object({
   reactionType: z.literal("FirstReaction"),
   mintStatus: mintStatusSchema,
   txHash: z.string().nullable(),
+  mint: mintFactsSchema.optional(),
   issuedAt: z.iso.datetime({ offset: true }),
 }).strict();
 

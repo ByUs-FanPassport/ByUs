@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
+const replacementGuard = vi.hoisted(() => vi.fn(async <T>(mints: T[]) => mints));
+vi.mock("../onchain/owner-mint-replacement", () => ({ validateOwnerMintReplacements: replacementGuard }));
 import { SupabaseReactionRepository } from "./reaction-repository";
 import { createGetReactionHandler, createPostReactionHandler } from "./reaction-route";
 
@@ -56,5 +58,20 @@ describe("creator reaction RPC response compatibility", () => {
   ])("still rejects malformed or unexpected response fields", async (data) => {
     const { repository } = setup(data);
     await expect(repository.find({ appUserId: "owner", celebritySlug: "changha" })).rejects.toMatchObject({ code: "REACTION_UNAVAILABLE" });
+  });
+
+  it("serializes the original reaction mint when the native replacement guard rejects it", async () => {
+    const oldTx = `0x${"a".repeat(64)}`;
+    const replacementTx = `0x${"b".repeat(64)}`;
+    const mint = {
+      status: "minted", txHash: replacementTx, tokenId: "22", nftContract: `0x${"2".repeat(40)}`, metadataUri: "ipfs://replacement.json",
+      originalAsset: { nftContract: `0x${"1".repeat(40)}`, tokenId: "11", metadataUri: "ipfs://original.json", txHash: oldTx },
+      replacement: { batchId: `0x${"3".repeat(64)}`, sourceActionId: `0x${"4".repeat(64)}`, sourceHub: `0x${"5".repeat(40)}`, blockNumber: "99", blockHash: `0x${"6".repeat(64)}` },
+    };
+    replacementGuard.mockResolvedValueOnce([{ status: "minted", txHash: oldTx, tokenId: "11" }]);
+    const { repository } = setup({ ...existing, mintStatus: "minted", mint });
+    await expect(repository.find({ appUserId: "owner", celebritySlug: "changha" })).resolves.toMatchObject({
+      mintStatus: "minted", mint: { status: "minted", txHash: oldTx, tokenId: "11" },
+    });
   });
 });

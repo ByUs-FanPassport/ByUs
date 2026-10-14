@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { deriveCredentialId } from "../../features/passport/domain/credential-issuance";
 import { reactionResultSchema, type ReactionResult } from "../../features/reaction/domain/reaction";
+import { validateOwnerMintReplacements } from "../onchain/owner-mint-replacement";
 
 export type ReactionFailureCode = "CREATOR_NOT_FOUND" | "WALLET_NOT_READY" | "USER_UNAVAILABLE" | "REACTION_UNAVAILABLE";
 
@@ -27,6 +28,12 @@ const failureMap: Readonly<Record<string, ReactionFailureCode>> = {
   P2_USER_UNAVAILABLE: "USER_UNAVAILABLE",
 };
 
+async function guardReactionMint(result: ReactionResult): Promise<ReactionResult> {
+  if (!result.mint) return result;
+  const [mint] = await validateOwnerMintReplacements([result.mint]);
+  return { ...result, mint: mint!, mintStatus: mint!.status };
+}
+
 export class SupabaseReactionRepository implements ReactionRepository {
   constructor(private readonly client: RpcClient, private readonly createId: () => string = randomUUID) {}
 
@@ -48,7 +55,7 @@ export class SupabaseReactionRepository implements ReactionRepository {
     }
     const parsed = reactionResultSchema.safeParse(data);
     if (!parsed.success) throw new ReactionRepositoryError("REACTION_UNAVAILABLE");
-    return parsed.data;
+    return guardReactionMint(parsed.data);
   }
 
   async find(input: { appUserId: string; celebritySlug: string }): Promise<ReactionResult | null> {
@@ -60,7 +67,7 @@ export class SupabaseReactionRepository implements ReactionRepository {
     if (data === null) return null;
     const parsed = reactionResultSchema.safeParse(data);
     if (!parsed.success) throw new ReactionRepositoryError("REACTION_UNAVAILABLE");
-    return parsed.data;
+    return guardReactionMint(parsed.data);
   }
 }
 

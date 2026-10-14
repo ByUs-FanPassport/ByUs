@@ -94,6 +94,7 @@ it("runs the image vote then quiz, using server reward values on the final resul
  fireEvent.click(screen.getByRole("button", { name: "정답 확인하기" }));
  expect(await screen.findByRole("heading", { name: /두 미션.*모두 완료/ })).toHaveFocus();
  expect(screen.getByRole("status")).toHaveTextContent("정답이에요");
+ expect([...document.querySelectorAll("img")].some(image => decodeURIComponent(image.src).includes("/images/credentials/v2/mission.png"))).toBe(true);
  expect(screen.getByText("+3")).toBeInTheDocument();
  expect(screen.getByText("+2")).toBeInTheDocument();
  expect(screen.getByRole("link", { name: "엘리나 팬페이지로" })).toHaveAttribute("href", "/elina?locale=ko");

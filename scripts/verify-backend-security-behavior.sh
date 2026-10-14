@@ -23,6 +23,8 @@ BYUS_COMMUNITY_STAMP_SHARE_RACE_MODE=1 bash "$root_dir/scripts/verify-community-
 
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_ledger.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_action_producers.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/kyaa_existing_credential_replacements.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/fan_membership_certifications.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/kyaa_credential_cutover.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/brand_fanpages.sql"
 bash "$root_dir/scripts/verify-brand-passport-upgrade-concurrency.sh"

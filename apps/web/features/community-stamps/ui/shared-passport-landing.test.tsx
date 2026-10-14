@@ -21,7 +21,8 @@ describe("SharedPassportLanding", () => {
 
   it("posts one verified visit, disables repeats, and sends only the token", async () => {
     const pending = deferred<{ creator: string }>(); action.mockImplementation(() => pending.promise);
-    render(<StrictMode><SharedPassportLanding token={"d".repeat(32)} creator={creator} locale="en" /></StrictMode>);
+    const { container } = render(<StrictMode><SharedPassportLanding token={"d".repeat(32)} creator={creator} locale="en" /></StrictMode>);
+    expect(container.querySelector('img[src="/images/credentials/v2/share.png"]')).toBeInTheDocument();
     const visit = screen.getByRole("button", { name: "View favorite" });
     fireEvent.click(visit); fireEvent.click(visit);
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));

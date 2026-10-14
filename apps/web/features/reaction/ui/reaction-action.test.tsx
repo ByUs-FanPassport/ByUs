@@ -176,7 +176,7 @@ describe("ReactionAction", () => {
     fireEvent.click(button);
     expect(await screen.findByRole("dialog")).toHaveTextContent(locale === "ko" ? "첫 좋아요 도장을 받았어요" : "You earned your First Like Stamp");
     expect(screen.getByRole("link", { name: locale === "ko" ? "내 패스포트 보기" : "View my Passports" })).toHaveAttribute("href", `/passports?locale=${locale}#collection`);
-    expect(decodeURIComponent(screen.getByRole("dialog").querySelector("img")!.getAttribute("src")!)).toContain(`/images/stamps/first-like-${locale}.webp`);
+    expect(decodeURIComponent(screen.getByRole("dialog").querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/reaction.png");
   });
 
   it("remounts state for an in-place Privy owner change instead of retaining the prior done CTA", async () => {

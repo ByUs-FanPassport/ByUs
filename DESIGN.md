@@ -70,6 +70,8 @@ differences when consolidating tokens and components. -->
 - The approved slogan is `Kyaa. Every Fan Moment Counts.` in every locale. Use it for the home heading, default page/share title, installed app name, and guide footers. Preserve the existing kyaa wordmark artwork.
 - Current partner banner copy uses `NCHIVE × Kyaa` and `WELCOME TO KYAA`. Internal identifiers, legacy URLs, and historical records retain their existing names.
 - The connect introduction and Passport artwork use Kyaa. Preserve the whole book, stamps and outro copy with contained video framing; the wide layout places copy beside the film on its paper canvas. Keep playback, skip, replay and reduced-motion behavior. New Membership artwork has a new content-addressed URL; issued artwork remains available.
+- Web credential illustrations use the exact transparent PNGs from the issued kyaa credential v2 bundle. Individual Passport, activity, reaction, membership and community Stamp artwork uses `object-fit: contain` without vintage masks or inherited crop/scale rules; dates, points and localized meaning remain live UI content rather than baked artwork. Keep historical asset files and issued metadata URLs available.
+- The v2 `passport.png` is the standalone representative Passport illustration. The functional Passport canvas remains the fully opened nine-slot record book with its data-driven Stamp overlays and latest-nine semantics; do not place a nine-item grid over the representative illustration's six embossed slots or reduce visible records to match it.
 - MY keeps owned Passports, points, tickets and entry history for unpublished fan pages, while hiding public participation links and requests that would lead to an unavailable page.
 
 ## Intent

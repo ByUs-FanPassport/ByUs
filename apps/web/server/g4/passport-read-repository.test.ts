@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
+const replacementGuard = vi.hoisted(() => vi.fn(async <T>(mints: T[]) => mints));
+vi.mock("../onchain/owner-mint-replacement", () => ({ validateOwnerMintReplacements: replacementGuard }));
 import { PublicImagePassportReadRepository, SupabasePassportReadRepository } from "./passport-read-repository";
 
 const passportId = "10000000-0000-4000-8000-000000000001";
@@ -219,5 +221,28 @@ describe("SupabasePassportReadRepository", () => {
     await expect(databaseFailure.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).rejects.toThrow("query failed");
     const multiple = new SupabasePassportReadRepository({ rpc: vi.fn().mockResolvedValue({ data: [base, base], error: null }) });
     await expect(multiple.findPassport({ id: passportId, appUserId: "owner", locale: "ko" })).rejects.toThrow("multiple rows");
+  });
+
+  it("restores the legacy first-reaction transaction when the replacement guard rejects it", async () => {
+    const oldTx = `0x${"a".repeat(64)}`;
+    const replacementTx = `0x${"b".repeat(64)}`;
+    const replacementMint = {
+      status: "minted", txHash: replacementTx, tokenId: "22", nftContract: `0x${"2".repeat(40)}`, metadataUri: "ipfs://replacement.json",
+      originalAsset: { nftContract: `0x${"1".repeat(40)}`, tokenId: "11", metadataUri: "ipfs://original.json", txHash: oldTx },
+      replacement: { batchId: `0x${"3".repeat(64)}`, sourceActionId: `0x${"4".repeat(64)}`, sourceHub: `0x${"5".repeat(40)}`, blockNumber: "99", blockHash: `0x${"6".repeat(64)}` },
+    } as const;
+    replacementGuard.mockClear();
+    replacementGuard.mockImplementationOnce(async (mints) => [mints[0], { status: "minted", txHash: oldTx, tokenId: "11" }]);
+    const repository = new SupabasePassportReadRepository({ rpc: vi.fn().mockResolvedValue({
+      data: [{ ...detailBase, stamps: [], activities: [], firstReaction: {
+        reactionId: "70000000-0000-4000-8000-000000000001", stampId: "70000000-0000-4000-8000-000000000002",
+        activityId: "70000000-0000-4000-8000-000000000003", reactionType: "FirstReaction",
+        mintStatus: "minted", txHash: replacementTx, mint: replacementMint, issuedAt: "2026-07-21T01:02:00.000Z",
+      } }], error: null,
+    }) });
+    const result = await repository.findPassport({ id: passportId, appUserId: "owner", locale: "ko" });
+    expect(result?.firstReaction).toMatchObject({ mintStatus: "minted", txHash: oldTx, mint: { txHash: oldTx, tokenId: "11" } });
+    expect(replacementGuard).toHaveBeenCalledTimes(1);
+    expect(replacementGuard.mock.calls[0]?.[0]).toHaveLength(2);
   });
 });

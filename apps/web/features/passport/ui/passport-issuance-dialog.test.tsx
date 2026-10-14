@@ -150,9 +150,9 @@ describe("PassportIssuanceCeremony", () => {
     const impact = container.querySelector("[data-issuance-stamp-moment]");
     expect(impact).toHaveAttribute("data-state", "impact");
     expect(screen.getByRole("img", { name: /KARA 팬 인증 Stamp.*1점 획득/ })).toBeInTheDocument();
-    expect(impact).toHaveTextContent("팬 인증");
-    expect(impact).toHaveTextContent("VERIFIED");
+    expect(impact).toHaveTextContent("2026.07.21");
     expect(impact).toHaveTextContent("+1");
+    expect(decodeURIComponent(impact!.querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/knowledge.png");
     expect(container.querySelectorAll('[data-passport-stamp="knowledge"]')).toHaveLength(0);
 
     act(() => {
@@ -189,7 +189,7 @@ describe("PassportIssuanceCeremony", () => {
     expect(screen.getByText("Fan ID를 복사했어요.")).toBeInTheDocument();
   });
 
-  it("localizes the verification seal without baking Korean copy into English", () => {
+  it("localizes the verification description while reusing the same text-free artwork", () => {
     vi.useFakeTimers();
     render(<PassportIssuanceCeremony issuance={aggregate} locale="en" />);
     act(() => {
@@ -197,9 +197,10 @@ describe("PassportIssuanceCeremony", () => {
     });
 
     const seal = screen.getByRole("img", { name: /KARA Fan Verification Stamp.*1 point earned/ });
-    expect(seal).toHaveTextContent("FAN");
-    expect(seal).toHaveTextContent("VERIFIED");
+    expect(seal).toHaveTextContent("2026.07.21");
+    expect(seal).toHaveTextContent("+1");
     expect(seal).not.toHaveTextContent("팬 인증");
+    expect(decodeURIComponent(seal.querySelector("img")!.getAttribute("src")!)).toContain("/images/credentials/v2/knowledge.png");
     vi.useRealTimers();
   });
 

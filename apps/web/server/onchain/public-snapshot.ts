@@ -7,6 +7,7 @@ import { readFinalizedActionSnapshot } from "../../../worker/src/action-public-s
 import { onchainConfig } from "./public-config";
 import { projectPublicOnchainSnapshot } from "./public-aggregate";
 import type { PublicOnchainResult, PublicOnchainSnapshot } from "./public-types";
+import { readFinalizedCredentialReplacements, type CredentialReplacementConfig } from "./credential-replacements";
 
 // Bump this namespace whenever verification or exclusion rules change; Next persists the cache across deployments.
 const readConfig = { ...onchainConfig, rpcUrl: process.env.GIWA_PUBLIC_READ_RPC_URL?.trim() || onchainConfig.rpcUrl };
@@ -15,18 +16,25 @@ const decompress = promisify(gunzip);
 let pending: Promise<string> | undefined;
 const readSnapshot = unstable_cache(async () => {
   pending ??= readFinalizedActionSnapshot(readConfig).then(async (source) => {
+    const representatives = onchainConfig.credentialReplacement.deployment
+      ? await readFinalizedCredentialReplacements(readConfig as CredentialReplacementConfig, source)
+      : new Map();
     // Keep the complete ledger within the platform's cache entry size limit.
-    return (await compress(JSON.stringify(projectPublicOnchainSnapshot(source)))).toString("base64");
+    return (await compress(JSON.stringify(projectPublicOnchainSnapshot(source, new Date(), representatives)))).toString("base64");
   }).finally(() => { pending = undefined; });
   return pending;
 }, [
-  "byus-public-onchain-v5-compressed-binding-provenance",
+  "byus-public-onchain-v6-verified-credential-replacements",
   createHash("sha256").update(readConfig.rpcUrl).digest("hex"),
   ...onchainConfig.deployments.flatMap(({ hubAddress, fromBlock, label, writeStatus }) => [hubAddress, fromBlock.toString(), label, writeStatus]),
   onchainConfig.environmentId,
   onchainConfig.schemaUid,
   onchainConfig.easAddress,
   ...Object.entries(onchainConfig.assetBindings).flatMap(([version, assets]) => [version, ...Object.entries(assets).flatMap(([kind, address]) => [kind, address])]),
+  onchainConfig.credentialReplacement.deployment?.address ?? "credential-migrator-disabled",
+  onchainConfig.credentialReplacement.deployment?.fromBlock.toString() ?? "credential-migrator-disabled",
+  onchainConfig.credentialReplacement.timelock,
+  onchainConfig.credentialReplacement.operator,
   ...onchainConfig.qaWallets,
 ], { revalidate: 600 });
 
