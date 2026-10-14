@@ -1,0 +1,15 @@
+{
+  "changes": [
+    "공개된 인물·그룹 팬페이지 10곳의 한글·영문 이름을 함께 볼 수 있도록 정리했어요.",
+    "엔카이브에는 공식 엠블럼과 팬덤 SAVE 로고를, 위나에는 팬덤명 mymean을 추가했어요.",
+    "팬덤 이름을 누르면 공식 발표를 새 창에서 확인할 수 있어요.",
+    "사진과 이름 영역을 나누고 화면 크기에 맞게 조정해 얼굴과 글자가 겹치지 않도록 했어요.",
+    "첨부 이미지는 공개 팬페이지 자료를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/nchive",
+  "images": [
+    "release-notes/images/2026-10-14-nchive-identity-desktop.png",
+    "release-notes/images/2026-10-14-nchive-identity-mobile.png",
+    "release-notes/images/2026-10-14-wena-fandom-mobile.png"
+  ]
+}

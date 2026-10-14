@@ -1,0 +1,22 @@
+{
+  "verifiedAt": "2026-10-14",
+  "officialChannel": "https://www.youtube.com/@NCHIVE",
+  "emblemAnnouncement": "https://x.com/nchiveofficial/status/2061100455133155482",
+  "fandomAnnouncement": "https://x.com/nchiveofficial/status/1750805783091229003",
+  "assets": [
+    {
+      "file": "official-emblem-20261014.jpg",
+      "source": "https://yt3.googleusercontent.com/3TkEnK-s7WGXgoe8TAs_rc203FdQnFuO7iuTjcKCzSSgFPFG4MHgnlMiznb17mzWry_P9TkEnko=s800-c-k-c0x00ffffff-no-rj",
+      "sha256": "e5eab4d372716d17a25c8545bad67138cf45d835873b3e4f0f0dabc73d5f3aaf",
+      "bytes": 63462,
+      "treatment": "Unmodified 800px official YouTube channel avatar; contains the current red artist emblem."
+    },
+    {
+      "file": "save-announcement.jpg",
+      "source": "https://pbs.twimg.com/media/GEv-cOib0AAFNSQ.jpg?name=orig",
+      "sha256": "23c2e0309b877e1cb4dd44934b7c5699cf5e3d59a9255218d837cc64f3cf8806",
+      "bytes": 128356,
+      "treatment": "Unmodified 1664×1368 official fandom-name announcement. The UI displays only the existing SAVE wordmark via SVG viewBox 550 350 770 260; no lettering, color or background removal."
+    }
+  ]
+}

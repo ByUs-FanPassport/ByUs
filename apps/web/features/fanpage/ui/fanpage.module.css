@@ -81,19 +81,26 @@
 @media(max-width:767px){.heroPicture{inset:0}.page{padding-top:4px;padding-bottom:40px}.hero{height:470px;border-radius:16px}.heroPicture img{object-fit:cover;object-position:var(--hero-mobile-position,50% 20%)}.scrim{background:linear-gradient(0deg,#fff 0%,#fff 7%,#fffc 28%,transparent 65%)}.heroContent{justify-content:flex-end;width:100%;padding:24px;gap:8px}.heroContent h1{font-size:36px}.heroContent>p:not(.eyebrow):not([data-creator-roles]){font-size:13px}.socials{margin:0;gap:16px}.heroContent>section{margin-top:8px}.tabs{margin:14px 0 16px;gap:0;min-height:60px}.tabs>a,.tabs>button{font-size:12px;line-height:1.4;padding:0 4px}.tabs [aria-current=page]::after{left:12%;right:12%}.fanbar{align-items:stretch;flex-wrap:wrap;gap:16px;padding:18px;margin-bottom:24px}.fanbar>div:first-child:not(.fanIdentity){width:100%;line-height:1.6;font-size:15px}.fanbar>.primaryButton{width:100%}.fanIdentity{width:100%;gap:12px}.fanIdentity>strong{flex:1}.ownedFanbar{grid-template-columns:minmax(0,1fr);grid-template-areas:"identity" "actions" "progress";gap:10px}.fanActions{justify-content:space-between}.ownedFanbar .fanIdentity>strong{min-width:0}.progressHeading{gap:8px}.passportLink{font-size:11px}.tier{font-size:12px}.fanbar>.pillButton{min-height:40px;font-size:11px;padding:8px 12px;gap:6px}.homeGrid{grid-template-columns:1fr;gap:24px}.mainColumn,.sideColumn{gap:24px}.sectionHeading{margin-bottom:14px}.sectionHeading h2{font-size:20px}.sectionHeading>a{font-size:11px}.noticeCard{padding:20px}.notice h3{font-size:15px}.liveCard{grid-template-columns:1fr;gap:16px;padding:14px}.liveCard>img{aspect-ratio:1.5}.liveCard>div:last-child{padding:4px 6px 10px}.liveCard h3{font-size:22px}.liveArt{min-height:180px}.certificationCta{padding:22px}.certificationCta h2{font-size:26px}.raffleGrid{grid-template-columns:1fr}.featuredRaffle .raffleCard{grid-template-columns:1fr;gap:12px}.featuredRaffle .raffleImage{aspect-ratio:1.6;min-height:0}.featuredRaffle .raffleBody{padding:4px}.raffleImage{aspect-ratio:1.6}.raffleBody h3{font-size:22px}.commentForm>div{align-items:flex-start}.commentForm small{max-width:70%}.commentMeta{gap:8px}.commentMeta time{font-size:10px}.empty{padding:24px;min-height:160px}.locked{margin:16px 0;padding:36px 22px}.locked h2{font-size:25px}.locked p:not(.eyebrow){font-size:14px}.activity{padding:12px 4px}.headerIdentity{max-width:104px;gap:6px;font-size:12px}.headerIdentity>span:last-child{max-width:56px}}
 
 .hero[data-brand="true"]{display:grid;height:auto;background:#fff}
-/* WENA's four-member portraits need a separate text area to keep every face unobscured. */
-.hero:has([data-creator-hero="wena"]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);height:auto;background:#fff}
-.hero:has([data-creator-hero="wena"]) .heroPicture{position:relative;inset:auto;grid-column:2;grid-row:1;min-height:360px}
-.hero:has([data-creator-hero="wena"]) .scrim{display:none}
-.hero:has([data-creator-hero="wena"]) .heroContent{grid-column:1;grid-row:1;width:100%;height:auto;min-height:360px;padding:32px;gap:12px}
-.hero:has([data-creator-hero="wena"]) .heroContent>p:not(.eyebrow):not([data-creator-roles]){font-size:16px;font-weight:500;line-height:1.65}
-@media(max-width:1023px){.hero:has([data-creator-hero="wena"]){grid-template-columns:minmax(0,1fr)}.hero:has([data-creator-hero="wena"]) .heroPicture{grid-column:1;grid-row:1;min-height:0;aspect-ratio:1280/1017}.hero:has([data-creator-hero="wena"]) .heroContent{grid-row:2;min-height:0;padding:24px}.hero:has([data-creator-hero="wena"]):has(.heroTicketAction) .heroContent{min-height:0}}
-.hero:has([data-creator-hero="wena"]) .wenaIdentity{display:flex;align-items:center;gap:20px}
-.wenaCommunity{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;width:100%}
-.wenaIdentity img{display:block;width:80px;height:80px;padding:2px;background:#000;border-radius:16px;flex-shrink:0}
-.wenaIdentity h1{font-size:clamp(40px,4.3vw,64px);letter-spacing:-.045em}
-.wenaIdentity h1 span{display:block;margin-top:8px;font-size:16px;line-height:1.5;letter-spacing:0;font-weight:650;color:var(--fanpage-text-muted)}
-@media(max-width:767px){.wenaIdentity img{width:64px;height:64px;border-radius:12px}.hero:has([data-creator-hero="wena"]) .heroContent{padding:24px;gap:12px}}
+/* Identity copy has its own area so names and fandom marks never cover faces. */
+.hero[data-artist-identity="true"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);height:auto;background:#fff}
+.hero[data-artist-identity="true"] .heroPicture{position:relative;inset:auto;grid-column:2;grid-row:1;min-height:360px}
+.hero[data-artist-identity="true"] .scrim{display:none}
+.hero[data-artist-identity="true"] .heroContent{grid-column:1;grid-row:1;width:100%;height:auto;min-height:360px;padding:32px;gap:12px;background:#fff}
+.hero[data-artist-identity="true"] .heroContent>p:not(.eyebrow):not([data-creator-roles]){font-size:16px;font-weight:500;line-height:1.65}
+.artistIdentity{display:grid;gap:16px;min-width:0;width:100%}
+.artistName{display:flex;align-items:center;gap:20px;min-width:0}
+.artistCommunity{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;width:100%}
+.artistLogo{display:block;width:80px;height:80px;padding:2px;background:#000;border-radius:16px;flex-shrink:0;object-fit:contain}
+.artistName h1{min-width:0;font-size:clamp(36px,3.8vw,52px);letter-spacing:-.045em;overflow-wrap:anywhere}
+.artistName h1>span{display:block;margin-top:8px;font-size:16px;line-height:1.5;letter-spacing:0;font-weight:650;color:var(--fanpage-text-muted)}
+.fandom{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:0;padding-top:12px;border-top:1px solid #e8e7ec;font-size:13px;line-height:1.5}
+.fandom dt{color:var(--fanpage-text-muted)}.fandom dd{margin:0;min-width:0}
+.fandom a{display:flex;align-items:center;gap:12px;min-height:44px;font-weight:700}
+.fandomKorean{margin-left:8px;font-weight:500;color:var(--fanpage-text-muted)}
+.fandomExternal{width:14px;height:14px;flex:none;color:var(--fanpage-text-muted)}
+.fandomMark{display:block;width:90px;height:31px;flex:none}
+@media(max-width:1023px){.hero[data-artist-identity="true"]{grid-template-columns:minmax(0,1fr)}.hero[data-artist-identity="true"] .heroPicture{grid-column:1;grid-row:1;min-height:0;aspect-ratio:4/3}.hero[data-artist-identity="true"] .heroContent{grid-row:2;min-height:0;padding:24px}.hero[data-artist-identity="true"]:has(.heroTicketAction) .heroContent{min-height:0}.hero:has([data-creator-hero="wena"]) .heroPicture{aspect-ratio:1280/1017}}
+@media(max-width:767px){.artistLogo{width:64px;height:64px;border-radius:12px}.artistName{gap:16px}.hero[data-artist-identity="true"] .heroContent{padding:24px;gap:12px}}
 .hero[data-brand="true"] .heroPicture{position:relative;inset:auto}
 .hero[data-brand="true"] .heroPicture img{position:relative!important;display:block;height:auto!important;object-fit:contain;object-position:center}
 .hero[data-brand="true"] .scrim{display:none}
@@ -150,7 +157,5 @@
 .officialVideos{display:grid;gap:16px;min-width:0}
 .officialVideoFrame{display:block;width:100%;aspect-ratio:16/9;min-height:200px;border:0;border-radius:12px;background:#f7f6f8}
 .officialVideoFrame:focus-visible{outline:3px solid #17161b;outline-offset:4px}
-@media(min-width:768px){.hero:has([data-creator-hero="nchive"]) .scrim{background:linear-gradient(90deg,#fff 0%,#fff 31%,transparent 47%)}}
-@media(max-width:767px){.hero:has([data-creator-hero="nchive"]){height:auto}.hero:has([data-creator-hero="nchive"]) .heroContent{height:auto;padding-top:320px}.hero:has([data-creator-hero="nchive"]) .heroPicture{bottom:auto;height:320px}.hero:has([data-creator-hero="nchive"]) .scrim{background:linear-gradient(180deg,transparent 260px,#fff 320px)}}
 
 .resultAnnouncement { margin-bottom:16px; }
