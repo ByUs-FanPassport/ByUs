@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "위나(We;Na) 팬페이지가 열렸어요.",
+    "사진 4장을 고화질로 다듬고 휴대폰·태블릿·컴퓨터 화면에서 얼굴이 잘 보이도록 배치했어요.",
+    "공식 영상과 3문항 팬 인증 퀴즈를 이용할 수 있어요.",
+    "첨부 이미지는 공개 데이터로 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/wena",
+  "images": [
+    "release-notes/images/2026-10-14-wena-desktop.png",
+    "release-notes/images/2026-10-14-wena-mobile.png",
+    "release-notes/images/2026-10-14-wena-photos.png"
+  ]
+}

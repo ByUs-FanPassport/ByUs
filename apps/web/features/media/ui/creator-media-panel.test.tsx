@@ -2,11 +2,12 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CreatorMediaPanel } from "./creator-media-panel";
 
-const state = vi.hoisted(() => ({ query: "tab=board&section=media&locale=ko", failure: "", allEmpty: false, replace: vi.fn(), more: vi.fn() }));
+const state = vi.hoisted(() => ({ query: "tab=board&section=media&locale=ko", failure: "", allEmpty: false, replace: vi.fn(), more: vi.fn(), sources: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/elina", useSearchParams: () => new URLSearchParams(state.query), useRouter: () => ({ replace: state.replace }) }));
 vi.mock("@privy-io/react-auth", () => ({ usePrivy: () => ({ ready: true, authenticated: false }) }));
 vi.mock("@/components/byus-session-provider", () => ({ useByUsSession: () => ({ ready: true, generation: 0 }) }));
 vi.mock("@/features/fanpage/ui/use-news-source", () => ({ useNewsSource: (url: string | null) => {
+  state.sources(url);
   const youtube = url?.includes("/youtube");
   const failed = state.failure === "all" || (youtube && state.failure === "youtube");
   const official = url?.includes("/media?"), replay = url?.includes("/api/live-events");
@@ -17,8 +18,17 @@ vi.mock("@/features/fanpage/ui/use-news-source", () => ({ useNewsSource: (url: s
     retry: vi.fn(), loadMore: state.more,
   };
 } }));
-beforeEach(() => { state.query = "tab=board&section=media&locale=ko"; state.replace.mockClear(); state.failure = ""; state.allEmpty = false; });
+beforeEach(() => { state.query = "tab=board&section=media&locale=ko"; state.replace.mockClear(); state.sources.mockClear(); state.failure = ""; state.allEmpty = false; });
 afterEach(cleanup);
+
+it("keeps WENA's official links and gallery without requesting unconnected API feeds", () => {
+  render(<CreatorMediaPanel slug="wena" locale="ko" socialLinks={[{ platform: "instagram", url: "https://www.instagram.com/wena_official_/" }, { platform: "youtube", url: "https://www.youtube.com/channel/UCpiXCVf9CaYppJQDDyiD6nA" }]} />);
+  expect(state.sources).toHaveBeenCalledWith("/api/celebrities/wena/media?locale=ko");
+  expect(state.sources).not.toHaveBeenCalledWith("/api/celebrities/wena/instagram");
+  expect(state.sources).not.toHaveBeenCalledWith("/api/celebrities/wena/youtube");
+  expect(screen.getByRole("link", { name: "Instagram" })).toHaveAttribute("href", "https://www.instagram.com/wena_official_/");
+  expect(screen.getByRole("link", { name: /함께한 사진/ })).toBeInTheDocument();
+});
 
 it("makes the thumbnail and text one link, and restores the media filter from its URL", () => {
   const { rerender } = render(<CreatorMediaPanel slug="elina" locale="ko" channelId="channel" />);

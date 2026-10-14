@@ -6,7 +6,7 @@ import { htmlLimitedBots } from "./seo/bots";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   htmlLimitedBots,
-  images: { remotePatterns: publicImageRemotePatterns },
+  images: { remotePatterns: publicImageRemotePatterns, qualities: [75, 90] },
   poweredByHeader: false,
   typedRoutes: true,
   // Sharp 0.35 moved its entry point; Next 16's native dependency tracing

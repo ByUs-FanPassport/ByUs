@@ -46,8 +46,9 @@ export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CRE
   }
   const auth = usePrivy(), session = useByUsSession();
   const official = useNewsSource(`/api/celebrities/${encodeURIComponent(slug)}/media?locale=${toContentLocale(locale)}`, parseOfficial, key, { key: `${auth.ready}:${auth.authenticated}:${session.ownerId ?? auth.user?.id}:${session.generation}`, ready: auth.ready && session.ready, getToken: async () => { if (!auth.authenticated) return null; const token = await auth.getAccessToken(); if (!token) throw Error(); return token; } });
-  const youtube = useNewsSource(socialLinks.some(link => link.platform === "youtube") ? `/api/celebrities/${encodeURIComponent(slug)}/youtube` : null, parseOfficial, key);
-  const instagram = useNewsSource(`/api/celebrities/${encodeURIComponent(slug)}/instagram`, parseInstagram, key);
+  // shortcut: WENA uses its official MV and has no connected Instagram feed; enable API feeds when connected.
+  const youtube = useNewsSource(slug !== "wena" && socialLinks.some(link => link.platform === "youtube") ? `/api/celebrities/${encodeURIComponent(slug)}/youtube` : null, parseOfficial, key);
+  const instagram = useNewsSource(slug === "wena" ? null : `/api/celebrities/${encodeURIComponent(slug)}/instagram`, parseInstagram, key);
   const chzzk = useNewsSource(channelId ? `/api/celebrities/${encodeURIComponent(slug)}/chzzk` : null, parseChzzk, key);
   const replay = useNewsSource(`/api/live-events?locale=${toContentLocale(locale)}`, parseReplay, key);
   const sources = [
@@ -58,7 +59,7 @@ export function CreatorMediaPanel({ slug, locale, channelId = slug === CHZZK_CRE
   ];
   const items: Media[] = [...official.state.data.map(item => ({ ...item, source: "kyaa" })), ...instagram.state.data.map(item => ({ ...item, source: "Instagram" })), ...youtube.state.data.map(item => ({ ...item, source: "YouTube" })), ...chzzk.state.data.map(item => ({ ...item, source: "CHZZK", href: `https://chzzk.naver.com/${channelId}/community` })), ...replay.state.data.filter(item => item.slug === slug).map(item => ({ ...item, source: c.replays }))]
     .filter(item => filter === "all" || item.kind === filter).sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || a.id.localeCompare(b.id));
-  return <section className={mediaStyles.panel} aria-label={`${c.photos} · ${c.videos}`}>
+  return <section className={mediaStyles.panel} data-creator-media={slug} aria-label={`${c.photos} · ${c.videos}`}>
     <div className={mediaStyles.heading}><FanSectionHeader title={`${c.photos} · ${c.videos}`} description={discovery.mediaIntro} /></div>
     {socialLinks.length > 0 && <nav className={mediaStyles.channels} aria-label={discovery.officialChannels}><span>{discovery.officialChannels}</span>{socialLinks.map(link => <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer">{({ youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok", chzzk: "CHZZK" })[link.platform]}<ArrowUpRight size={14} aria-hidden="true" /></a>)}</nav>}
     <div className={`${styles.tabs} ${mediaStyles.filters}`}>{(["all", "photos", "videos", "replays"] as const).map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{c[value]}</button>)}</div>
