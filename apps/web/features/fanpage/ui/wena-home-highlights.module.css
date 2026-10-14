@@ -1,8 +1,0 @@
-.highlights { display:grid; gap:24px; margin-bottom:48px; }
-.media { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); gap:32px; align-items:start; }
-.photos { display:grid; gap:16px; min-width:0; }
-.photoLink { display:block; border-radius:16px; overflow:hidden; background:var(--color-soft); }
-.photoLink img { display:block; width:100%; height:auto; }
-.community { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; border-block:1px solid var(--color-line); padding:24px 0; }
-.community p { margin:0; font-size:16px; line-height:1.65; }
-@media(max-width:767px) { .highlights { margin-bottom:32px; } .media { grid-template-columns:minmax(0,1fr); gap:32px; } .community { align-items:flex-start; } }

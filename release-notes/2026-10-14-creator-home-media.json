@@ -1,0 +1,13 @@
+{
+  "changes": [
+    "엘리나를 포함한 인물·그룹 팬페이지에서 연결된 공식 영상과 사진을 홈에서도 볼 수 있어요.",
+    "영상은 재생 버튼으로 바로 보고, 더 보기를 누르면 전체 목록으로 이동해요. 사진은 원래 비율을 유지해 얼굴과 방송 시간표가 잘리지 않아요.",
+    "자료가 없는 팬페이지는 빈 목록 대신 기존 공식 SNS 링크를 유지해요. 첨부 화면은 실제 공개 자료를 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/elina",
+  "images": [
+    "release-notes/images/2026-10-14-creator-media-elina-mobile.png",
+    "release-notes/images/2026-10-14-creator-media-wena-media.png",
+    "release-notes/images/2026-10-14-creator-media-jenny-photos.png"
+  ]
+}

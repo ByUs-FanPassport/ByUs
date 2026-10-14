@@ -22,6 +22,7 @@
 .grid { grid-template-columns:minmax(0,1fr); gap:16px; margin:24px 0 0; }
 .grid > li { overflow:hidden; border:1px solid var(--color-line); border-radius:16px; background:#fff; }
 .grid > li a { height:100%; padding:0; gap:0; }
+.grid > li:has(.play,.player) a { height:auto; }
 .grid > li img,.grid .videoLink { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:0; background:var(--color-soft); }
 .panel[data-creator-media="wena"] [data-media-kind="photos"] img { aspect-ratio:5/4; height:auto; object-position:50% 0%; }
 .cardBody { display:grid; gap:8px; padding:16px; }
@@ -35,3 +36,17 @@
 
 @media (min-width:640px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (min-width:1024px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+.preview { display:grid; gap:48px; min-width:0; }
+.preview section { min-width:0; }
+.previewGrid { margin-top:16px; align-items:start; }
+.previewGrid [data-media-kind="photos"] img { height:auto; aspect-ratio:auto; }
+.play { display:block; position:relative; width:100%; padding:0; border:0; background:var(--color-soft); cursor:pointer; }
+.play img { display:block; }
+.playIcon { position:absolute; inset:0; display:grid; place-items:center; color:white; background:linear-gradient(transparent 60%,#0003); }
+.playIcon svg { width:48px; height:48px; padding:12px; border-radius:50%; background:#17161bd9; }
+.player { display:block; width:100%; aspect-ratio:16/9; border:0; background:#17161b; }
+.preview :is(a,button,iframe):focus-visible { outline:3px solid var(--color-ink); outline-offset:3px; }
+.previewGrid > li { overflow:visible; }
+.preview .previewGrid img,.play,.player { border-radius:16px 16px 0 0; }
+@media(max-width:767px) { .preview { gap:32px; } .previewGrid { grid-template-columns:minmax(0,1fr); } }

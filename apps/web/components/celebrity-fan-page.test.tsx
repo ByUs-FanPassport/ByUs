@@ -86,6 +86,12 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
     if (url.includes("/notices")) return ok({ notices, nextCursor: null });
     if (url.includes("/api/schedules?")) return ok({ items: [], nextCursor: null });
     if (url.includes("/chzzk")) return ok({ items: [], nextCursor: null });
+    if (url.includes("/media?")) return ok({ items: url.includes("/wena/") ? [
+      { id: "wena-photo", kind: "photos", title: "위나 단체 사진", image: "/photo.webp", asset: null, href: "/c/wena/notices/welcome-to-wena", date: "2026-10-14T00:00:00Z" },
+      { id: "wena-video", kind: "videos", title: "We;Na · Baby Step", image: null, asset: null, href: "https://www.youtube.com/watch?v=172bEkNPqqs", date: "2026-10-14T00:00:00Z" },
+    ] : [], nextCursor: null });
+    if (url.includes("/youtube") || url.includes("/instagram")) return ok({ items: [], nextCursor: null });
+    if (url.includes("/api/live-events?")) return ok({ catalog: { replay: [] } });
     if (url.includes("/raffles")) return ok({ raffles });
     if (url.includes("/api/me/summary")) return ok(summaryPayload(passports, nickname));
     if (url.includes("/api/me/avatar")) return { ok: false, json: async () => ({}) };
@@ -108,7 +114,8 @@ describe("approved fanpage", () => {
     const view = render(<CelebrityFanPage celebrity={wena} locale={locale} upcomingLive={null} />);
     expect(screen.getByRole("heading", { level: 1, name: /We;Na/ })).toHaveTextContent("위나");
     expect(view.container.querySelector('img[src*="official-logo"]')).toBeInTheDocument();
-    expect(screen.getByTitle(/^We;Na · /)).toHaveAttribute("src", expect.stringContaining("/embed/172bEkNPqqs?"));
+    fireEvent.click(await screen.findByRole("button", { name: /We;Na · Baby Step/ }));
+    expect(view.container.querySelector("iframe")).toHaveAttribute("src", expect.stringContaining("/embed/172bEkNPqqs?"));
     expect([...view.container.querySelectorAll("a")].map(link => link.getAttribute("href"))).toContain(`/wena?tab=board&section=media&locale=${locale}&media=photos#celebrity-content`);
     expect([...view.container.querySelectorAll("a")].map(link => link.getAttribute("href"))).toContain(`/wena?tab=board&source=fans&locale=${locale}#celebrity-content`);
     expect(view.container.querySelector('a[href*="verify"]')).toBeInTheDocument();
@@ -363,8 +370,8 @@ describe("approved fanpage", () => {
       status: "closed", entryOpensAt: null, entryClosesAt: "2026-10-08T00:00:00Z", resultsPublishedAt,
       fulfillmentMethod: "digital", perFanTicketLimit: null,
     }] });
-    render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
-    await screen.findByRole("heading", { name: "응모 가능한 선물 0" });
+    const view = render(<CelebrityFanPage celebrity={kara} locale="ko" upcomingLive={null} />);
+    await waitFor(() => expect(view.container.querySelector('[aria-labelledby="home-raffle-heading"]')).not.toBeInTheDocument());
     if (resultsPublishedAt) {
       expect(screen.getByRole("link", { name: "내 결과 확인" })).toHaveAttribute("href", "/my/raffles?locale=ko");
       const notice = screen.getByRole("region", { name: "결과 발표" });

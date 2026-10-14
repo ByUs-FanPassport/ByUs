@@ -1,0 +1,4 @@
+.highlights { display:grid; gap:32px; margin-bottom:48px; }
+.community { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; border-block:1px solid var(--color-line); padding:24px 0; }
+.community p { margin:0; font-size:16px; line-height:1.65; }
+@media(max-width:767px) { .highlights { margin-bottom:32px; } .community { align-items:flex-start; } }
