@@ -15,6 +15,7 @@ import {
   type FanActionJob,
 } from "./action-domain.js";
 import { renderMetadata } from "./metadata.js";
+import { kyaaCredentialImage } from "./kyaa-credential-assets.js";
 import type { ActionChainPort, ActionMetadataPort } from "./action-ports.js";
 import { WorkerError } from "./domain.js";
 import type { MetadataDocument } from "./ports.js";
@@ -76,6 +77,9 @@ export async function buildCanonicalActionPayload(
         leaseExpiresAt: job.leaseExpiresAt,
       } as const;
       const document = renderActionMetadata(renderMetadata(syntheticJob, metadataInput.payload, snapshot.assetBaseUri), snapshot.actionCode, snapshot.schemaVersion);
+      if (snapshot.bindingVersion === 2) {
+        document.image = kyaaCredentialImage(metadataInput.entityType, metadataInput.payload, snapshot.assetBaseUri, snapshot.actionCode);
+      }
       metadataUri = await metadata.pin(document, metadataInput.operationKey);
     }
     intents.push({

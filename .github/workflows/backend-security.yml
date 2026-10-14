@@ -66,7 +66,7 @@ jobs:
           version: stable
       - run: forge test --root contracts
       - name: Verify immediate-registration deployment plan guards
-        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs
+        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs scripts/pin-metadata-assets.test.mjs
       - name: Exercise worker to ActionHub on local Anvil
         run: RUN_ACTION_ANVIL_INTEGRATION=1 npm run test --workspace @byus/worker -- test/action-anvil.integration.test.ts
       - name: Validate ActionHub namespace upgrade compatibility

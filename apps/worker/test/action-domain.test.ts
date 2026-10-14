@@ -4,6 +4,7 @@ import { actionCodes, localActionId, localOccurrenceId, sourceCredentialIssuance
 import { keccak256, stringToHex } from "viem";
 import type { ActionChainPort, ActionReceipt } from "../src/action-ports.js";
 import type { PreparedSubmission } from "../src/domain.js";
+import { KYAA_CREDENTIAL_ASSET_BASE_URI } from "../src/kyaa-credential-assets.js";
 
 const h = (value: string) => `0x${value.repeat(64)}`.slice(0, 66);
 const address = (value: string) => `0x${value.repeat(40)}`.slice(0, 42);
@@ -34,6 +35,26 @@ class HashChain implements ActionChainPort {
 }
 
 describe("canonical fan action domain", () => {
+  it("uses reviewed creator-independent artwork only for binding 2", async () => {
+    for (const bindingVersion of [1, 2]) {
+      const images: string[] = [];
+      const snapshot = { ...source, bindingVersion, assetBaseUri: bindingVersion === 2 ? KYAA_CREDENTIAL_ASSET_BASE_URI : source.assetBaseUri };
+      await buildCanonicalActionPayload(job, snapshot, { pin: async (document) => { images.push(document.image); return "ipfs://metadata"; } }, new HashChain());
+      expect(images).toEqual(bindingVersion === 2
+        ? [`${KYAA_CREDENTIAL_ASSET_BASE_URI}/knowledge.png`, `${KYAA_CREDENTIAL_ASSET_BASE_URI}/passport.png`]
+        : [`${source.assetBaseUri}/stamp/knowledge/kara.png`, `${source.assetBaseUri}/passport/kara.png`]);
+    }
+  });
+
+  it("gives a binding 2 mission its own image without changing its original stamp key", async () => {
+    const images: string[] = [];
+    const snapshot = { ...source, bindingVersion: 2, assetBaseUri: KYAA_CREDENTIAL_ASSET_BASE_URI, actionCode: 4,
+      credentials: [{ ...source.credentials[0]!, metadata: { ...source.credentials[0]!.metadata!, legacyPayload: { recipient: address("4"), celebritySlug: "kara", issuanceId: h("b"), stampType: "Survey" } } }] };
+    const payload = await buildCanonicalActionPayload(job, snapshot, { pin: async (document) => { images.push(document.image); return "ipfs://metadata"; } }, new HashChain());
+    expect(images).toEqual([`${KYAA_CREDENTIAL_ASSET_BASE_URI}/mission.png`]);
+    expect(payload.intents[0]!.issuanceKey).toBe(h("b"));
+  });
+
   it("builds one FAN_VERIFIED action with two deterministically sorted credentials", async () => {
     const pinned: string[] = [];
     const payload = await buildCanonicalActionPayload(job, source, { pin: async (_document, key) => { pinned.push(key); return `ipfs://${key}`; } }, new HashChain(), Date.parse("2026-09-13T00:00:00Z"));

@@ -1,0 +1,215 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "key": "passport",
+      "file": "passport.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1719206,
+      "sha256": "85c67b03fd97d8139af39d4ab3706d4670ac39b0d10680bdc1f275cddf59f18a",
+      "alphaBoundsAbove32": [
+        59,
+        130,
+        1194,
+        1155
+      ]
+    },
+    {
+      "key": "knowledge",
+      "file": "knowledge.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1962474,
+      "sha256": "68d004a01ae05ac8a0b2dffda2be81ac0b9518258847bb82b6dd269500d1eb52",
+      "alphaBoundsAbove32": [
+        70,
+        57,
+        1174,
+        1194
+      ]
+    },
+    {
+      "key": "reservation",
+      "file": "reservation.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1871738,
+      "sha256": "73f7bc418420ec03c1f14d05d462c34ccad85d3b3caeffcb4158d0ee38067b25",
+      "alphaBoundsAbove32": [
+        70,
+        60,
+        1177,
+        1195
+      ]
+    },
+    {
+      "key": "attendance",
+      "file": "attendance.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1887134,
+      "sha256": "84e2b5c430ad11a901c70bf4a490e7297a4327ff71d78912cdd866a3d4554254",
+      "alphaBoundsAbove32": [
+        68,
+        56,
+        1177,
+        1195
+      ]
+    },
+    {
+      "key": "survey",
+      "file": "survey.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1498195,
+      "sha256": "c0dd3efc8382028aece89aa3b16eb34f0b81bda03a9ffc56102bbbb497d7feec",
+      "alphaBoundsAbove32": [
+        155,
+        167,
+        1100,
+        1106
+      ]
+    },
+    {
+      "key": "membership",
+      "file": "membership.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1891228,
+      "sha256": "391e8b1821e5dc09c5ecc622243a7c2c9199130b45366f097893a4e3715051df",
+      "alphaBoundsAbove32": [
+        68,
+        55,
+        1176,
+        1194
+      ]
+    },
+    {
+      "key": "reaction",
+      "file": "reaction.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1893486,
+      "sha256": "45f7f465da0a9c1c8c2b185938b8ccaa3d3239eada5642df794827966303ef26",
+      "alphaBoundsAbove32": [
+        69,
+        55,
+        1176,
+        1194
+      ]
+    },
+    {
+      "key": "welcome",
+      "file": "welcome.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1942143,
+      "sha256": "8473a0ff1791bdc46563c1189be4edf302a23c37cdddd100cc29424eaf966ea9",
+      "alphaBoundsAbove32": [
+        60,
+        48,
+        1185,
+        1197
+      ]
+    },
+    {
+      "key": "first_comment",
+      "file": "first_comment.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1847187,
+      "sha256": "9fff4c840151e390fb3e32190d6361800fdbab1f62d1f6592b2b6272649fa62a",
+      "alphaBoundsAbove32": [
+        69,
+        56,
+        1175,
+        1195
+      ]
+    },
+    {
+      "key": "subscription",
+      "file": "subscription.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1865024,
+      "sha256": "f59329a0be2db54426d6f9a85c551cf4971507d4c2b792f2d277df30d7dbf61e",
+      "alphaBoundsAbove32": [
+        67,
+        54,
+        1176,
+        1195
+      ]
+    },
+    {
+      "key": "support",
+      "file": "support.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1870041,
+      "sha256": "68197d680e9e2a8c840deb28c652242e9f2974ba3e97ccd53ca0548bc2c67c2b",
+      "alphaBoundsAbove32": [
+        68,
+        55,
+        1175,
+        1194
+      ]
+    },
+    {
+      "key": "share",
+      "file": "share.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1877997,
+      "sha256": "80d025760486c549670f242bba164dbbc20b2f0db5697c55a3ac53ef76d80a08",
+      "alphaBoundsAbove32": [
+        69,
+        56,
+        1175,
+        1194
+      ]
+    },
+    {
+      "key": "invite",
+      "file": "invite.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1907825,
+      "sha256": "6a82e0c358dc69a00444a0ac398a05d6a51030dbdbf6950785c4e5ec38a3ffc4",
+      "alphaBoundsAbove32": [
+        68,
+        55,
+        1176,
+        1195
+      ]
+    },
+    {
+      "key": "daily_checkin",
+      "file": "daily_checkin.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1944111,
+      "sha256": "f9f685b63673e551e334b50ac151697e92c6fca49371093cc0c2321c3bfb634f",
+      "alphaBoundsAbove32": [
+        50,
+        33,
+        1192,
+        1205
+      ]
+    },
+    {
+      "key": "mission",
+      "file": "mission.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2005790,
+      "sha256": "6edb70b4e5ff7579162b70f5c554f7cc2c48317177a42dc6889b581d46456418",
+      "alphaBoundsAbove32": [
+        53,
+        42,
+        1197,
+        1208
+      ]
+    }
+  ]
+}
