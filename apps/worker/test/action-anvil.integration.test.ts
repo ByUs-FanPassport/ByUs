@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPublicClient, createWalletClient, decodeEventLog, defineChain, encodeFunctionData, http, keccak256, padHex, stringToHex, type Abi, type Address, type Hex, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { buildCanonicalActionPayload } from "../src/action-builder.js";
+import { KYAA_CREDENTIAL_ASSET_BASE_URI } from "../src/kyaa-credential-assets.js";
 import { actionCodes, type ActionSourceSnapshotV1, type FanActionJob } from "../src/action-domain.js";
 import { actionHubAbi, ViemActionHubAdapter } from "../src/adapters/viem-action-hub.js";
 import { ViemActionLogReader } from "../src/action-chain-reader.js";
@@ -183,6 +184,7 @@ suite("ActionWorker to ActionHub local Anvil", () => {
 
     const generationSnapshot = (key: string, bindingVersion: number, passportAddress: Address, stampAddress: Address): ActionSourceSnapshotV1 => ({
       ...snapshot, canonicalSourceKey: key, bindingVersion,
+      assetBaseUri: bindingVersion === 2 ? KYAA_CREDENTIAL_ASSET_BASE_URI : snapshot.assetBaseUri,
       credentials: [0, 1].map((kind) => {
         const issuanceKey = keccak256(stringToHex(`${key}:${kind}`));
         return { kind: kind as 0 | 1, nftContract: kind === 0 ? passportAddress : stampAddress, issuanceKey, mode: "MINT",
