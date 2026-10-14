@@ -1,0 +1,15 @@
+{
+  "changes": [
+    "위나 팬페이지에 공식 채널의 로고와 We;Na 영문 표기를 반영했어요.",
+    "휴대폰에서도 단체 사진과 이름을 함께 보기 편하도록 첫 화면을 정리했어요.",
+    "홈에서 공식 뮤직비디오와 사진을 둘러보고 팬게시판으로 바로 이동할 수 있어요.",
+    "진행 중인 선물이 없을 때는 사진과 음악을 먼저 보여드려요. 퀴즈 팬 인증과 이벤트 메뉴는 그대로 이용할 수 있어요.",
+    "첨부 이미지는 공개 데이터로 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/wena",
+  "images": [
+    "release-notes/images/2026-10-14-wena-brand-desktop.png",
+    "release-notes/images/2026-10-14-wena-brand-mobile.png",
+    "release-notes/images/2026-10-14-wena-home-media.png"
+  ]
+}

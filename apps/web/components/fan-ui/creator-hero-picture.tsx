@@ -19,8 +19,8 @@ export function CreatorHeroPicture({ slug, image, locale = "ko", className, prio
   const desktopSrc = hero?.src ?? image.url;
   const mobileSrc = hero?.mobileSrc ?? desktopSrc;
   const desktopAlt = image.photos?.landscape?.alt[toContentLocale(locale)] ?? image.alt;
-  const mobileAlt = image.photos?.portrait?.alt[toContentLocale(locale)] ?? image.alt;
-  const desktop = getImageProps({ src: desktopSrc, alt: desktopAlt, fill: true, sizes: "(min-width: 1440px) 940px, (min-width: 768px) calc(69vw - 44px), calc(100vw - 32px)", priority,
+  const mobileAlt = slug === "wena" ? desktopAlt : image.photos?.portrait?.alt[toContentLocale(locale)] ?? image.alt;
+  const desktop = getImageProps({ src: desktopSrc, alt: desktopAlt, fill: true, sizes: slug === "wena" ? "(min-width:1440px) 875px, (min-width:1024px) 64vw, (min-width:768px) calc(100vw - 64px), calc(100vw - 32px)" : "(min-width: 1440px) 940px, (min-width: 768px) calc(69vw - 44px), calc(100vw - 32px)", priority,
     quality: slug === "wena" ? 90 : 75, unoptimized: typeof desktopSrc === "string" && bypassImageOptimization(desktopSrc) }).props;
   const mobileScale = hero?.mobileScale ?? 1;
   const mobile = getImageProps({ src: mobileSrc, alt: mobileAlt, fill: true, sizes: `calc(${100 * mobileScale}vw - ${32 * mobileScale}px)`, priority,

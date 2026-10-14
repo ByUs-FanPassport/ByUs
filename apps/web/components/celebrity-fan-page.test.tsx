@@ -103,6 +103,20 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   return request;
 }
 describe("approved fanpage", () => {
+  it.each(APP_LOCALES)("keeps WENA branding, media discovery and fan participation in %s", async (locale) => {
+    const wena = { ...kara, slug: "wena", name: "위나", locale: toContentLocale(locale) };
+    const view = render(<CelebrityFanPage celebrity={wena} locale={locale} upcomingLive={null} />);
+    expect(screen.getByRole("heading", { level: 1, name: /We;Na/ })).toHaveTextContent("위나");
+    expect(view.container.querySelector('img[src*="official-logo"]')).toBeInTheDocument();
+    expect(screen.getByTitle(/^We;Na · /)).toHaveAttribute("src", expect.stringContaining("/embed/172bEkNPqqs?"));
+    expect([...view.container.querySelectorAll("a")].map(link => link.getAttribute("href"))).toContain(`/wena?tab=board&section=media&locale=${locale}&media=photos#celebrity-content`);
+    expect([...view.container.querySelectorAll("a")].map(link => link.getAttribute("href"))).toContain(`/wena?tab=board&source=fans&locale=${locale}#celebrity-content`);
+    expect(view.container.querySelector('a[href*="verify"]')).toBeInTheDocument();
+    await waitFor(() => expect(view.container.querySelector('[aria-labelledby="home-raffle-heading"]')).not.toBeInTheDocument());
+    view.rerender(<CelebrityFanPage celebrity={wena} locale={locale} upcomingLive={null} initialTab="events" />);
+    expect(screen.queryByTitle(/^We;Na · /)).not.toBeInTheDocument();
+    expect(view.container.querySelector('#celebrity-content a[aria-current="page"]')).toHaveAttribute("href", `/wena?tab=events&locale=${locale}#celebrity-content`);
+  });
   it.each(APP_LOCALES)("keeps NCHIVE official videos in the dedicated media tab in %s", async (locale) => {
     const nchive = { ...kara, slug: "nchive", name: "NCHIVE", locale: toContentLocale(locale) };
     const live = { ...upcomingLive, slug: "nchive-live", celebritySlug: "nchive", title: "NCHIVE LIVE", locale: toContentLocale(locale) };

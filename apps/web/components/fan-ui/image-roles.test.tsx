@@ -21,6 +21,15 @@ describe("independent image roles", () => {
     photo.asset.revision = 2;
     expect(resolvePhoto({ portrait: photo }, "creator.hero.mobile", "/old.jpg").fit).toBe("contain");
   });
+  it("keeps WENA's mobile group photo tied to the approved landscape frame", () => {
+    const landscape = binding("/wena-wide.jpg");
+    landscape.frames["creator.hero.desktop"] = { fit: "cover", x: 45, y: 10, approvedAssetRevision: 1 };
+    const image = { url: "/profile.jpg", position: "center", photos: { ...photos, landscape } };
+    expect(resolveCreatorHeroImage("wena", image)).toMatchObject({ src: "/wena-wide.jpg", mobileSrc: "/wena-wide.jpg", mobileFit: "cover", mobilePosition: "45% 10%" });
+    landscape.asset.revision = 2;
+    expect(resolveCreatorHeroImage("wena", image)?.mobileFit).toBe("contain");
+    expect(resolveCreatorHeroImage("wena", { ...image, photos: { ...photos, landscape: null } })?.mobileSrc).toBe("/profile.jpg");
+  });
   it("does not revive a removed legacy portrait or carry profile zoom into another role", () => {
     expect(creatorCalendarPhotos("elina", "/profile.jpg", { portrait: null })).toEqual(["/profile.jpg"]);
     expect(resolveCreatorImage({ slug: "ifewknow", src: "/profile.jpg", presentation: "collection" }).crop).toMatchObject({ fit: "cover", scale: 1 });

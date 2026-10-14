@@ -165,9 +165,10 @@ export function resolveCreatorHeroImage(slug: string, image: { url: string; posi
   const desktopDimensions = legacyImageDimensions[desktopSource];
   const mobileDimensions = legacyImageDimensions[mobileSource];
   const desktop = resolvePhoto(image.photos, "creator.hero.desktop", image.photos?.landscape === null ? image.url : desktopSource);
-  const mobile = resolvePhoto(image.photos, "creator.hero.mobile", image.photos?.portrait === null ? image.url : mobileSource);
+  // WENA's compact mobile header uses the same complete group portrait and approved frame as desktop.
+  const mobile = slug === "wena" ? desktop : resolvePhoto(image.photos, "creator.hero.mobile", image.photos?.portrait === null ? image.url : mobileSource);
   const desktopConfigured = image.photos && Object.hasOwn(image.photos, "landscape");
-  const mobileConfigured = image.photos && Object.hasOwn(image.photos, "portrait");
+  const mobileConfigured = image.photos && Object.hasOwn(image.photos, slug === "wena" ? "landscape" : "portrait");
   return {
     src: desktopConfigured ? desktop.src : desktopSource,
     mobileSrc: mobileConfigured ? mobile.src : mobileSource,

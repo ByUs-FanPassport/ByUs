@@ -88,7 +88,12 @@
 .hero:has([data-creator-hero="wena"]) .heroContent{grid-column:1;grid-row:1;width:100%;height:auto;min-height:360px;padding:32px;gap:12px}
 .hero:has([data-creator-hero="wena"]) .heroContent>p:not(.eyebrow):not([data-creator-roles]){font-size:16px;font-weight:500;line-height:1.65}
 @media(max-width:1023px){.hero:has([data-creator-hero="wena"]){grid-template-columns:minmax(0,1fr)}.hero:has([data-creator-hero="wena"]) .heroPicture{grid-column:1;grid-row:1;min-height:0;aspect-ratio:1280/1017}.hero:has([data-creator-hero="wena"]) .heroContent{grid-row:2;min-height:0;padding:24px}.hero:has([data-creator-hero="wena"]):has(.heroTicketAction) .heroContent{min-height:0}}
-@media(max-width:767px){.hero:has([data-creator-hero="wena"]) .heroPicture{aspect-ratio:862/1280}}
+.hero:has([data-creator-hero="wena"]) .wenaIdentity{display:flex;align-items:center;gap:20px}
+.wenaCommunity{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;width:100%}
+.wenaIdentity img{display:block;width:80px;height:80px;padding:2px;background:#000;border-radius:16px;flex-shrink:0}
+.wenaIdentity h1{font-size:clamp(40px,4.3vw,64px);letter-spacing:-.045em}
+.wenaIdentity h1 span{display:block;margin-top:8px;font-size:16px;line-height:1.5;letter-spacing:0;font-weight:650;color:var(--fanpage-text-muted)}
+@media(max-width:767px){.wenaIdentity img{width:64px;height:64px;border-radius:12px}.hero:has([data-creator-hero="wena"]) .heroContent{padding:24px;gap:12px}}
 .hero[data-brand="true"] .heroPicture{position:relative;inset:auto}
 .hero[data-brand="true"] .heroPicture img{position:relative!important;display:block;height:auto!important;object-fit:contain;object-position:center}
 .hero[data-brand="true"] .scrim{display:none}
