@@ -13,7 +13,7 @@ function legacyRedirectStatus(): 307 | 308 | null {
 
 function preservesLegacyOrigin(request: NextRequest): boolean {
   const path = request.nextUrl.pathname;
-  return isPrivatePath(path)
+  return (isPrivatePath(path) && !/^\/admin(?:\/|$)/.test(path))
     || /^\/(?:api|_next|images)(?:\/|$)/.test(path)
     || /(?:^|\/)(?:callback|webhook)(?:\/|$)/.test(path)
     || /^\/(?:t|o)(?:\/|$)/.test(path)
@@ -34,6 +34,7 @@ export function proxy(request: NextRequest): NextResponse {
     destination.host = "kyaa.io";
     const response = NextResponse.redirect(destination, redirectStatus);
     if (redirectStatus === 307) response.headers.set("Cache-Control", "private, no-store");
+    if (isPrivatePath(request.nextUrl.pathname)) response.headers.set("X-Robots-Tag", "noindex, nofollow");
     return response;
   }
   if (!request.nextUrl.pathname.startsWith("/api/admin/")) {

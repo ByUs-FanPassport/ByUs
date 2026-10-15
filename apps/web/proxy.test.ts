@@ -16,12 +16,31 @@ describe("legacy domain redirect", () => {
     }
   });
 
-  it("supports the final 308 mode without enabling redirects by default", () => {
-    expect(proxy(new NextRequest("https://byus.kr/live/elina")).headers.has("location")).toBe(false);
+  it.each(["307", "308"])("moves admin pages to kyaa in %s mode without losing their location or indexing protection", (status) => {
+    vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", status);
+    for (const origin of ["https://byus.kr", "https://www.byus.kr"]) {
+      for (const path of ["/admin", "/admin/analytics/outbound"]) {
+        for (const method of ["GET", "HEAD"]) {
+          const suffix = `${path}?lang=en&days=7#details`;
+          const response = proxy(new NextRequest(`${origin}${suffix}`, { method }));
+          expect(response.status).toBe(Number(status));
+          expect(response.headers.get("location")).toBe(`https://kyaa.io${suffix}`);
+          expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+          if (status === "307") expect(response.headers.get("cache-control")).toContain("no-store");
+          const destination = proxy(new NextRequest(response.headers.get("location")!, { method }));
+          expect(destination.headers.has("location")).toBe(false);
+          expect(destination.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+        }
+      }
+    }
+  });
+
+  it.each(["/live/elina", "/admin?lang=ko"])("supports the final 308 mode for %s without enabling redirects by default", (path) => {
+    expect(proxy(new NextRequest(`https://byus.kr${path}`)).headers.has("location")).toBe(false);
     vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "308");
-    const response = proxy(new NextRequest("https://byus.kr/live/elina"));
+    const response = proxy(new NextRequest(`https://byus.kr${path}`));
     expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe("https://kyaa.io/live/elina");
+    expect(response.headers.get("location")).toBe(`https://kyaa.io${path}`);
     expect(response.headers.has("cache-control")).toBe(false);
   });
 
@@ -32,7 +51,7 @@ describe("legacy domain redirect", () => {
 
   it.each([
     "/login", "/my", "/c/elina/tickets", "/settings/kakao/callback", "/connect/instagram/callback", "/s/secret-token", "/t/secret-token",
-    "/o/banksy/private", "/api/public/data", "/api/provider/webhook", "/_next/static/chunk.js", "/images/photo.webp",
+    "/o/banksy/private", "/api/public/data", "/api/admin/session", "/api/provider/webhook", "/_next/static/chunk.js", "/images/photo.webp",
     "/sw.js", "/manifest.webmanifest", "/favicon.ico", "/c/elina/metadata.json",
   ])("keeps excluded legacy path %s on the old origin", (path) => {
     vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
@@ -43,7 +62,9 @@ describe("legacy domain redirect", () => {
     "does not redirect an OAuth return carrying %s",
     (key) => {
       vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
-      expect(proxy(new NextRequest(`https://byus.kr/?${key}=opaque`)).headers.has("location")).toBe(false);
+      for (const path of ["/", "/admin", "/admin/analytics/outbound"]) {
+        expect(proxy(new NextRequest(`https://byus.kr${path}?lang=en&${key}=opaque`)).headers.has("location")).toBe(false);
+      }
     },
   );
 
@@ -56,15 +77,15 @@ describe("legacy domain redirect", () => {
     }
   });
 
-  it("does not redirect POST, kyaa, preview, local, or insecure lookalike origins", () => {
+  it.each(["/live/elina", "/admin?lang=ko", "/admin/analytics/outbound?lang=en"])("does not redirect POST, kyaa, preview, local, or insecure lookalike origins for %s", (path) => {
     vi.stubEnv("LEGACY_DOMAIN_REDIRECT_STATUS", "307");
     const requests = [
-      new NextRequest("https://byus.kr/live/elina", { method: "POST" }),
-      new NextRequest("https://kyaa.io/live/elina"),
-      new NextRequest("https://byus-preview.vercel.app/live/elina"),
-      new NextRequest("http://localhost:3000/live/elina"),
-      new NextRequest("https://byus.kr.attacker.test/live/elina"),
-      new NextRequest("http://byus.kr/live/elina"),
+      new NextRequest(`https://byus.kr${path}`, { method: "POST" }),
+      new NextRequest(`https://kyaa.io${path}`),
+      new NextRequest(`https://byus-preview.vercel.app${path}`),
+      new NextRequest(`http://localhost:3000${path}`),
+      new NextRequest(`https://byus.kr.attacker.test${path}`),
+      new NextRequest(`http://byus.kr${path}`),
     ];
     for (const request of requests) expect(proxy(request).headers.has("location")).toBe(false);
   });
