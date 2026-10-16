@@ -36,6 +36,7 @@ suite("ActionWorker to ActionHub local Anvil", () => {
   let wallet: any;
   const account = privateKeyToAccount(privateKeys[0]);
 
+  // Cold Solidity compilation can exceed a minute before Anvil is started.
   beforeAll(async () => {
     execFileSync("forge", ["build"], { cwd: contractsDir, stdio: "pipe" });
     // MockEAS is an integration-only source and can be omitted by an incremental production build.
@@ -47,7 +48,7 @@ suite("ActionWorker to ActionHub local Anvil", () => {
       try { await publicClient.getChainId(); return; } catch { await new Promise((resolveWait) => setTimeout(resolveWait, 50)); }
     }
     throw new Error("Anvil did not start");
-  }, 60_000);
+  }, 180_000);
   afterAll(() => anvil?.kill("SIGTERM"));
 
   it("mints Passport and Knowledge Stamp, attests once, validates the receipt, and reconciles idempotently", async () => {
