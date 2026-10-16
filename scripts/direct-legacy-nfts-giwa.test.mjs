@@ -7,16 +7,16 @@ import {createHash} from 'node:crypto';
 import {spawnSync,execFileSync} from 'node:child_process';
 import {CID} from 'multiformats/cid';
 import {create as digest} from 'multiformats/hashes/digest';
-import {parseAbi,encodeEventTopics,encodeAbiParameters,encodeFunctionData} from 'viem';
+import {parseAbi,encodeEventTopics,encodeAbiParameters,encodeFunctionData,serializeTransaction,keccak256,recoverTransactionAddress} from 'viem';
 import {EXISTING_NFT_DEPLOYMENT as d,trustedActionContext as context,privateJson,zeroHash} from './migrate-existing-nfts-giwa.mjs';
 import {directHistoryDigest,assertDirectHistory,assertDirectSource,directLegacyMetadata,directAbsenceSql,assertDirectAbsence,
-  verifyDirectHistory,verifyDirectSource} from './direct-legacy-nfts-giwa.mjs';
+  verifyDirectHistory,verifyDirectSource,orphanCompletedJobFingerprint,assertOrphanCompletedJob} from './direct-legacy-nfts-giwa.mjs';
 import {buildFollowupPlan,validateFollowupPlan,replacementPlanHash,directSourceFromEntry,directReconciliationSql,
   followupAssetPreflight,followupUniquenessSql,pendingReplacementEntries,finalizedReplacement} from './replace-existing-nfts-giwa.mjs';
 
 const h=n=>'0x'+n.toString(16).padStart(64,'0'),owner='0x'+'11'.repeat(20);
 const artifact=JSON.parse(fs.readFileSync(new URL('../contracts/out/KyaaCredentialMigrator.sol/KyaaCredentialMigrator.json',import.meta.url)));
-const mint=parseAbi(['function mint(address to,bytes32 issuanceKey,string metadataUri)',
+const mint=parseAbi(['event PassportMinted(bytes32 indexed passportId,uint256 indexed tokenId,address indexed to,string metadataUri)','function mint(address to,bytes32 issuanceKey,string metadataUri)',
   'event StampMinted(bytes32 indexed issuanceId,uint256 indexed tokenId,address indexed to,string metadataUri)']);
 const linked=parseAbi(['event CredentialLinked(bytes32 indexed actionId,address indexed nftContract,uint256 indexed tokenId,uint8 credentialKind,bytes32 issuanceKey,uint8 linkOrigin)']);
 export function directFixture(){
@@ -60,6 +60,106 @@ export function directFixture(){
     data:encodeAbiParameters([{type:'uint8'},{type:'bytes32'},{type:'uint8'}],[1,source.issuanceKey,1])};
   return {source,evidence,head,client,state,scans,plan,verified,outputMetadata,metadata,historyLog};
 }
+
+function orphanFixture(){
+  const f=directFixture(),source=f.source;
+  const doc=structuredClone(source.originalMetadata.document);
+  doc.name='ByUs Fan Passport';doc.description='A soulbound ByUs Fan Passport credential.';
+  doc.attributes.find(a=>a.trait_type==='Credential').value='Fan Passport';
+  const originalMetadata=f.metadata(doc);
+  Object.assign(source,{kind:0,contract:d.oldPassport,issuanceKey:h(30),transactionHash:h(31),metadataUri:originalMetadata.uri,originalMetadata});
+  source.mintProof.txHash=source.transactionHash;
+  f.evidence.hubHistory.targets=[{contract:source.contract,tokenId:source.tokenId}];
+  f.evidence.hubHistory.digest=directHistoryDigest(f.evidence.hubHistory);
+  const user='fa170000-0000-4000-8000-000000000001',id='fa170000-0000-4000-8000-000000000010';
+  const snapshot={id,entity_type:'passport',entity_id:'fa170000-0000-4000-8000-000000000011',
+    operation_key:`byus:passport:v1:${user}:example`,payload_version:1,
+    payload:{recipient:owner,passportId:source.issuanceKey,celebritySlug:'example'},status:'COMPLETED',attempts:1,max_attempts:8,
+    idempotency_key:'fa170000-0000-4000-8000-000000000012',tx_hash:source.transactionHash,token_id:7,
+    last_error_code:null,last_error_message:null,next_attempt_at:'2026-10-01T00:00:00+00:00',lease_owner:null,lease_expires_at:null,
+    created_at:'2026-10-01T00:00:00+00:00',updated_at:'2026-10-01T00:00:00+00:00',completed_at:'2026-10-01T00:01:00+00:00'};
+  source.orphanCompletedJob={format:'kyaa-orphan-completed-job-v1',jobId:id,ownerAppUserId:user,jobSnapshot:snapshot,
+    jobFingerprint:orphanCompletedJobFingerprint(snapshot)};
+  f.rebuild=()=>{
+    const published=f.metadata(directLegacyMetadata(source)),documentHash=replacementPlanHash(published.document);
+    const metadata={format:'kyaa-direct-legacy-metadata-v1',snapshotBlockHash:f.evidence.snapshot.blockHash,
+      documents:[{digest:documentHash,...published}],items:[{contract:source.contract,tokenId:source.tokenId,documentHash}]};
+    f.plan=JSON.parse(privateJson(buildFollowupPlan(artifact,{format:'kyaa-direct-legacy-verified-v1',...f.evidence,items:[source]},metadata,10,172800n,1900000000n,'direct_legacy')));
+  };
+  f.rebuild();return f;
+}
+
+test('explicit orphan COMPLETED evidence binds the full job snapshot into the plan',()=>{
+  const f=orphanFixture();assertDirectSource(f.source,f.evidence);validateFollowupPlan(f.plan,artifact);
+  assert.deepEqual(directSourceFromEntry(f.plan.entries[0]),f.source);
+  assert.throws(()=>buildFollowupPlan(artifact,{...f.verified,items:[f.source,f.source]},f.outputMetadata,
+    10,172800n,1900000000n,'direct_legacy'),/ORPHAN_EXCEPTION_LIMIT/);
+  const reordered=Object.fromEntries(Object.entries(f.source.orphanCompletedJob.jobSnapshot).reverse());
+  assert.equal(orphanCompletedJobFingerprint(reordered),f.source.orphanCompletedJob.jobFingerprint);
+  const changed=structuredClone(f.plan);changed.entries[0].sourceEvidence.orphanCompletedJob.jobSnapshot.attempts++;
+  assert.throws(()=>validateFollowupPlan(changed,artifact));
+});
+test('orphan evidence rejects incomplete snapshots, unsafe numbers and mismatched job bindings',()=>{
+  const f=orphanFixture();
+  for(const mutate of [
+    s=>delete s.orphanCompletedJob.jobSnapshot.created_at,
+    s=>s.orphanCompletedJob.jobSnapshot.attempts++,
+    s=>s.orphanCompletedJob.jobSnapshot.status='RETRYING',
+    s=>s.orphanCompletedJob.jobSnapshot.lease_owner='worker',
+    s=>s.orphanCompletedJob.jobSnapshot.completed_at=null,
+    s=>s.orphanCompletedJob.jobSnapshot.token_id=Number.MAX_SAFE_INTEGER+1,
+    s=>s.orphanCompletedJob.jobSnapshot.token_id=8,
+    s=>s.orphanCompletedJob.jobSnapshot.tx_hash=h(89),
+    s=>s.orphanCompletedJob.jobSnapshot.payload.passportId=h(89),
+    s=>s.orphanCompletedJob.jobSnapshot.payload.recipient=d.admin,
+    s=>s.orphanCompletedJob.jobSnapshot.payload.celebritySlug='other',
+    s=>s.orphanCompletedJob.jobSnapshot.operation_key='byus:passport:v1:wrong',
+    s=>s.orphanCompletedJob.jobSnapshot.payload_version=2,
+    s=>s.orphanCompletedJob.jobSnapshot.entity_type='stamp',
+    s=>s.orphanCompletedJob.ownerAppUserId='fa170000-0000-4000-8000-000000000099',
+  ]){
+    const source=structuredClone(f.source);mutate(source);assert.throws(()=>assertDirectSource(source,f.evidence));
+    source.orphanCompletedJob.jobFingerprint=orphanCompletedJobFingerprint(source.orphanCompletedJob.jobSnapshot);
+    // attempts alone is valid newly reviewed evidence, but an existing manifest rejects any drift.
+    if(source.orphanCompletedJob.jobSnapshot.attempts===2)continue;
+    assert.throws(()=>assertDirectSource(source,f.evidence));
+  }
+  const source=structuredClone(f.source);
+  source.orphanCompletedJob.jobSnapshot.payload.workerSubmission={txHash:source.transactionHash,signedTransaction:'0xdead'};
+  source.orphanCompletedJob.jobFingerprint=orphanCompletedJobFingerprint(source.orphanCompletedJob.jobSnapshot);
+  assert.throws(()=>assertOrphanCompletedJob(source),/ORPHAN_SIGNED_TRANSACTION/);
+});
+test('stored orphan submission matches the original envelope and recovered minter at runtime',async()=>{
+  const f=orphanFixture(),s=f.source;
+  const input=encodeFunctionData({abi:mint,functionName:'mint',args:[owner,s.issuanceKey,s.metadataUri]});
+  // Encode a deterministic synthetic signature fixture; no key, signer or RPC write is used.
+  const signed=serializeTransaction({type:'eip1559',chainId:d.chainId,nonce:1,to:s.contract,value:0n,gas:100000n,
+    maxFeePerGas:2n,maxPriorityFeePerGas:1n,data:input},{r:h(1),s:h(2),yParity:0});
+  s.transactionHash=keccak256(signed);s.mintProof.txHash=s.transactionHash;
+  s.mintProof.minter=(await recoverTransactionAddress({serializedTransaction:signed})).toLowerCase();
+  const j=s.orphanCompletedJob.jobSnapshot;
+  j.tx_hash=s.transactionHash;j.payload.workerSubmission={txHash:s.transactionHash,signedTransaction:signed};
+  s.orphanCompletedJob.jobFingerprint=orphanCompletedJobFingerprint(j);
+  Object.assign(f.state.transaction,{hash:s.transactionHash,to:s.contract,from:s.mintProof.minter,input});
+  Object.assign(f.state.receipt,{transactionHash:s.transactionHash,to:s.contract,from:s.mintProof.minter});
+  f.state.receipt.logs=[{address:s.contract,transactionHash:s.transactionHash,blockNumber:BigInt(s.blockNumber),blockHash:s.blockHash,removed:false,
+    topics:encodeEventTopics({abi:mint,eventName:'PassportMinted',args:{passportId:s.issuanceKey,tokenId:7n,to:owner}}),
+    data:encodeAbiParameters([{type:'string'}],[s.metadataUri])}];
+  const read=f.client.readContract;
+  f.client.readContract=async request=>request.functionName==='tokenByPassportId'?7n:request.functionName==='ownerOf'?owner
+    :request.functionName==='tokenURI'?s.metadataUri:read(request);
+  await verifyDirectSource(f.client,s,f.evidence,f.head);
+  s.mintProof.minter=d.admin;f.state.transaction.from=d.admin;f.state.receipt.from=d.admin;
+  await assert.rejects(verifyDirectSource(f.client,s,f.evidence,f.head),/ORPHAN_SIGNED_SENDER/);
+});
+test('strict direct plans stay byte-for-byte compatible and retain prior SQL guards with the actual snapshot token field',()=>{
+  // Captured from the reviewed c17766bf helper/CLI using this same deterministic fixture.
+  const f=directFixture(),sha=v=>createHash('sha256').update(v).digest('hex');
+  const strengthened="lower(r->>'nftContract')="+"'"+f.source.contract+"'\n          and (r->>'tokenId'='"+f.source.tokenId+"' or r->>'existingTokenId'='"+f.source.tokenId+"')";
+  const prior="lower(r->>'nftContract')='"+f.source.contract+"' and r->>'tokenId'='"+f.source.tokenId+"'";
+  assert.equal(sha(directAbsenceSql(f.source).replace(strengthened,prior)),'606c709699f91d7cc5dd2ef81b96bf7a277f67b96dcf946e3e53c3aea878e9ee');
+  assert.equal(sha(privateJson(f.plan)),'908efa365c4a2fb321e1aba6b22f0e7d7fb4e59354501461546238fc7cbbc16d');
+});
 
 test('explicit direct proof preserves known traits and uses existing kyaa artwork without an entity',async()=>{
   const f=directFixture();assertDirectHistory(f.evidence);assertDirectSource(f.source,f.evidence);
@@ -201,6 +301,11 @@ if(process.env.DIRECT_LEGACY_SQL_CHILD==='1'){
   assert.equal(sql('select count(*) from public.nft_credential_replacements'),'1');
   const user='fa170000-0000-4000-8000-000000000001',binding='fa170000-0000-4000-8000-000000000002',
     occurrence='fa170000-0000-4000-8000-000000000003',job='fa170000-0000-4000-8000-000000000004';
+  const nativeRef=snapshot=>`insert into public.fan_action_occurrences(id,source_namespace,canonical_source_key,app_user_id,source_occurred_at)
+    values('fa170000-0000-4000-8000-000000000081','direct_test','orphan-negative','${user}',clock_timestamp());
+    insert into public.fan_action_outbox(id,occurrence_row_id,binding_id,operation_kind,source_snapshot)
+    values('fa170000-0000-4000-8000-000000000082','fa170000-0000-4000-8000-000000000081','${binding}','record_and_issue','${JSON.stringify(snapshot)}');`;
+
   sql(`insert into public.app_users(id,privy_user_id,verified_email,status) values('${user}','did:privy:direct-test','direct@test.invalid','active');
     insert into public.fan_action_bindings(id,chain_id,environment_id,hub_proxy,relayer,schema_uid,schema_version,binding_version,asset_base_uri,assets)
     values('${binding}',91342,'${context.environmentId}','${d.hub}','${d.admin}','${context.schemaUid}',1,1,'ipfs://test','{}');
@@ -209,8 +314,63 @@ if(process.env.DIRECT_LEGACY_SQL_CHILD==='1'){
     insert into public.fan_action_outbox(id,occurrence_row_id,binding_id,operation_kind,source_snapshot)
     values('${job}','${occurrence}','${binding}','record_and_issue','{"credentials":[{"issuanceKey":"${f.source.issuanceKey}"}]}');`);
   assert.equal(JSON.parse(sql(directAbsenceSql(f.source))).absent,false,'pending native source without a credential row must block direct');
+  assert.equal(JSON.parse(sql(`begin;${nativeRef({credentials:[{issuanceKey:h(73),nftContract:d.oldStamp,existingTokenId:'7'}]})}${directAbsenceSql(f.source)}rollback;`)).absent,false,
+    'pending original existingTokenId blocks strict direct even with a different key and no credential row');
   const blocked=attempt(statement);assert.notEqual(blocked.status,0);assert.match(blocked.stderr,/DIRECT_DATABASE_ASSOCIATION/);
   assert.equal(sql('select count(*) from public.nft_credential_replacements'),'1');
   assert.equal(sql('select count(*) from public.nft_credential_replacement_entities'),'0');
+  // The orphan exception is explicitly reviewed evidence; it must not turn any-job HOLD into an implicit fallback.
+  const orphan=orphanFixture(),oe=orphan.source.orphanCompletedJob,j=oe.jobSnapshot;
+  const q=v=>"'"+String(v).replaceAll("'","''")+"'";
+  sql(`insert into public.user_wallets(app_user_id,chain_id,address) values('${user}',${d.chainId},'${owner}');
+    insert into public.blockchain_jobs select * from jsonb_populate_record(null::public.blockchain_jobs,${q(JSON.stringify(j))}::jsonb);`);
+  oe.jobSnapshot=JSON.parse(sql(`select to_jsonb(j) from public.blockchain_jobs j where id='${j.id}'`));
+  oe.jobFingerprint=orphanCompletedJobFingerprint(oe.jobSnapshot);orphan.rebuild();
+  const strict=structuredClone(orphan.source);delete strict.orphanCompletedJob;
+  assert.equal(JSON.parse(sql(directAbsenceSql(strict))).absent,false,'original strict path still holds any matching job');
+  assert.equal(JSON.parse(sql(directAbsenceSql(orphan.source))).absent,true);
+  const orReceipt={transactionHash:h(40),blockNumber:35955880n,blockHash:h(41)},
+    orProof={target:d.newPassport,event:{newTokenId:9n,minted:true},head:orphan.head};
+  const orSql=directReconciliationSql(orphan.plan,orphan.plan.entries[0],orReceipt,orProof);
+  const mutations=[
+    `update public.blockchain_jobs set attempts=attempts+1 where id='${j.id}';`,
+    `update public.blockchain_jobs set status='RETRYING' where id='${j.id}';`,
+    `update public.blockchain_jobs set tx_hash='${h(70)}' where id='${j.id}';`,
+    `update public.blockchain_jobs set token_id=88 where id='${j.id}';`,
+    `update public.blockchain_jobs set payload=jsonb_set(payload,'{passportId}','"${h(71)}"') where id='${j.id}';`,
+    `update public.blockchain_jobs set payload=jsonb_set(payload,'{recipient}','"${d.admin}"') where id='${j.id}';`,
+    `update public.blockchain_jobs set payload=jsonb_set(payload,'{celebritySlug}','"other"') where id='${j.id}';`,
+    `update public.blockchain_jobs set operation_key=operation_key||':changed' where id='${j.id}';`,
+    `update public.blockchain_jobs set lease_owner='other',lease_expires_at=clock_timestamp() where id='${j.id}';`,
+    `update public.app_users set status='disabled' where id='${user}';`,
+    `update public.user_wallets set address='${d.admin}' where app_user_id='${user}';`,
+    `update public.user_wallets set chain_id=1 where app_user_id='${user}';`,
+    `insert into public.blockchain_jobs(entity_type,entity_id,operation_key,payload,tx_hash) values('passport','${j.entity_id}','another-job','{}',null);`,
+    `insert into public.celebrities(id,slug,image_url,roles) values('${j.entity_id}','orphan-test','/test.png',array['creator']::public.celebrity_role[]);
+      insert into public.blockchain_jobs(id,entity_type,entity_id,operation_key,payload)
+      values('fa170000-0000-4000-8000-000000000090','reaction','${j.entity_id}','byus:reaction:v1:${j.entity_id}','{"recipient":"${owner}","celebritySlug":"orphan-test","issuanceId":"${h(74)}","reactionType":"FirstReaction"}');
+      insert into public.fan_reactions(id,app_user_id,celebrity_id,blockchain_job_id)
+      values('${j.entity_id}','${user}','${j.entity_id}','fa170000-0000-4000-8000-000000000090');`,
+    nativeRef({credentials:[{legacyJobId:j.id}]}),
+    nativeRef({credentials:[{issuanceKey:orphan.source.issuanceKey}]}),
+    nativeRef({credentials:[{nftContract:d.oldPassport,tokenId:'7'}]}),
+    nativeRef({credentials:[{issuanceKey:h(73),nftContract:d.oldPassport,existingTokenId:'7'}]}),
+    `insert into public.fan_action_credentials(outbox_id,entity_type,entity_id,credential_kind,issuance_key,legacy_job_id)
+      values('${job}','passport','${j.entity_id}',0,'${h(72)}','${j.id}');`,
+  ];
+  for(const mutation of mutations){
+    const result=attempt(orSql.replace('begin;',`begin; ${mutation}`));
+    assert.notEqual(result.status,0);assert.match(result.stderr,/DIRECT_DATABASE_ASSOCIATION/);
+    assert.equal(sql('select count(*) from public.nft_credential_replacements'),'1','guard failure must roll back all appends');
+    assert.deepEqual(JSON.parse(sql(`select to_jsonb(j) from public.blockchain_jobs j where id='${j.id}'`)),oe.jobSnapshot);
+  }
+  sql(`create function public.direct_test_fail() returns trigger language plpgsql as $$ begin raise exception 'TEST_DB_FAILURE'; end $$;
+    create trigger direct_test_fail before insert on public.nft_credential_replacements for each row execute function public.direct_test_fail();`);
+  assert.notEqual(attempt(orSql).status,0);assert.equal(sql('select count(*) from public.nft_credential_replacement_batches'),'1');
+  sql('drop trigger direct_test_fail on public.nft_credential_replacements;drop function public.direct_test_fail()');
+  sql(orSql);sql(orSql);
+  assert.equal(sql('select count(*) from public.nft_credential_replacements'),'2');
+  assert.equal(sql('select count(*) from public.nft_credential_replacement_entities'),'0');
+  assert.deepEqual(JSON.parse(sql(`select to_jsonb(j) from public.blockchain_jobs j where id='${j.id}'`)),oe.jobSnapshot);
   process.exit(0);
 }

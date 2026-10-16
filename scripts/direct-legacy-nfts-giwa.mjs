@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {CID} from 'multiformats/cid';
-import {parseAbi,decodeEventLog,decodeFunctionData,toEventSelector,keccak256} from 'viem';
+import {parseAbi,decodeEventLog,decodeFunctionData,toEventSelector,keccak256,parseTransaction,recoverTransactionAddress} from 'viem';
 import {renderMetadata,assertPiiFree} from '../apps/worker/dist/metadata.js';
 import {kyaaCredentialImage,KYAA_CREDENTIAL_ASSET_BASE_URI} from '../apps/worker/dist/kyaa-credential-assets.js';
 import {EXISTING_NFT_DEPLOYMENT as d,trustedActionContext as context,inventoryRanges,inventoryClient,
@@ -16,6 +16,7 @@ const assert=(ok,reason)=>{if(!ok)throw Error(reason);};
 const hash=v=>keccak256(new TextEncoder().encode(privateJson(v)));
 const hex32=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
 const address=v=>typeof v==='string'&&/^0x[0-9a-f]{40}$/.test(v)&&v!==zeroAddress;
+const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(v);
 const uint=v=>typeof v==='string'&&/^[1-9][0-9]*$/.test(v);
 const quote=v=>"'"+String(v).replaceAll("'","''")+"'";
 const exact=(v,keys)=>v&&isDeepStrictEqual(Object.keys(v).sort(),keys.split(',').sort());
@@ -45,7 +46,7 @@ export function assertDirectHistory(evidence){
   return evidence;
 }
 export function assertDirectSource(source,evidence){
-  assert(exact(source,'sourceKind,kind,contract,tokenId,issuanceKey,owner,metadataUri,transactionHash,blockNumber,blockHash,mintProof,originalMetadata')
+  assert(exact(source,'sourceKind,kind,contract,tokenId,issuanceKey,owner,metadataUri,transactionHash,blockNumber,blockHash,mintProof,originalMetadata'+(Object.hasOwn(source,'orphanCompletedJob')?',orphanCompletedJob':''))
     &&source.sourceKind==='direct_legacy'&&[0,1].includes(source.kind)
     &&source.contract===(source.kind===0?d.oldPassport:d.oldStamp)&&uint(source.tokenId)
     &&hex32(source.issuanceKey)&&source.issuanceKey!==zeroHash&&address(source.owner)
@@ -57,6 +58,7 @@ export function assertDirectSource(source,evidence){
     &&address(p.minter)&&p.authorizedMinter===true&&p.directCall===true&&p.canonical===true&&p.finalized===true
     &&BigInt(source.blockNumber)<=BigInt(evidence.snapshot.blockNumber),'DIRECT_MINT_PROOF');
   assert(evidence.hubHistory.targets.some(t=>t.contract===source.contract&&t.tokenId===source.tokenId),'DIRECT_UNAUDITED_ASSET');
+  if(Object.hasOwn(source,'orphanCompletedJob'))assertOrphanCompletedJob(source);
   return source;
 }
 export function assertRawMetadata(proof,uri){
@@ -94,18 +96,80 @@ export function directLegacyMetadata(source){
   rendered.attributes=doc.attributes;
   assertPiiFree(rendered);return rendered;
 }
+// Fingerprint reviewed private evidence independently of JSON object insertion order.
+export function orphanCompletedJobFingerprint(snapshot){
+  const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'
+    ?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+  return createHash('sha256').update(JSON.stringify(canonical(snapshot))).digest('hex');
+}
+export function assertOrphanCompletedJob(source){
+  const e=source.orphanCompletedJob,j=e?.jobSnapshot;
+  assert(exact(e,'format,jobId,ownerAppUserId,jobSnapshot,jobFingerprint')&&e.format==='kyaa-orphan-completed-job-v1'
+    &&uuid(e.jobId)&&uuid(e.ownerAppUserId)&&exact(j,'id,entity_type,entity_id,operation_key,payload_version,payload,status,attempts,max_attempts,idempotency_key,tx_hash,token_id,last_error_code,last_error_message,next_attempt_at,lease_owner,lease_expires_at,created_at,updated_at,completed_at')
+    &&e.jobFingerprint===orphanCompletedJobFingerprint(j),'ORPHAN_JOB_EVIDENCE');
+  const traits=Object.fromEntries(assertRawMetadata(source.originalMetadata,source.metadataUri).attributes.map(a=>[a.trait_type,a.value]));
+  assert(source.kind===0&&traits.Credential==='Fan Passport'&&j.id===e.jobId&&uuid(j.entity_id)&&uuid(j.idempotency_key)
+    &&j.status==='COMPLETED'&&j.entity_type==='passport'&&j.payload_version===1
+    &&Number.isSafeInteger(j.token_id)&&j.token_id>0&&String(j.token_id)===source.tokenId
+    &&Number.isSafeInteger(j.attempts)&&j.attempts>=0&&Number.isSafeInteger(j.max_attempts)&&j.max_attempts>=1&&j.max_attempts<=32
+    &&j.lease_owner===null&&j.lease_expires_at===null&&typeof j.completed_at==='string'&&Number.isFinite(Date.parse(j.completed_at))
+    &&['created_at','updated_at','next_attempt_at'].every(k=>typeof j[k]==='string'&&Number.isFinite(Date.parse(j[k])))
+    &&[j.last_error_code,j.last_error_message].every(v=>v===null||typeof v==='string')
+    &&j.tx_hash===source.transactionHash&&exact(j.payload,'recipient,passportId,celebritySlug'+(Object.hasOwn(j.payload,'workerSubmission')?',workerSubmission':''))
+    &&typeof j.payload.recipient==='string'&&j.payload.recipient.toLowerCase()===source.owner&&j.payload.passportId===source.issuanceKey&&j.payload.celebritySlug===traits.Celebrity
+    &&j.operation_key===`byus:passport:v1:${e.ownerAppUserId}:${traits.Celebrity}`,'ORPHAN_JOB_BINDING');
+  if(Object.hasOwn(j.payload,'workerSubmission')){
+    const w=j.payload.workerSubmission;
+    assert(exact(w,'txHash,signedTransaction')&&w.txHash===source.transactionHash
+      &&typeof w.signedTransaction==='string'&&/^0x(?:[0-9a-fA-F]{2})+$/.test(w.signedTransaction)
+      &&keccak256(w.signedTransaction)===source.transactionHash,'ORPHAN_SIGNED_TRANSACTION');
+    const tx=parseTransaction(w.signedTransaction),call=decodeFunctionData({abi:mintAbi,data:tx.data});
+    assert(tx.chainId===d.chainId&&tx.to?.toLowerCase()===source.contract&&(tx.value??0n)===0n
+      &&Number.isSafeInteger(tx.nonce)&&tx.nonce>=0&&call.functionName==='mint'&&call.args[0].toLowerCase()===source.owner
+      &&call.args[1]===source.issuanceKey&&call.args[2]===source.metadataUri,'ORPHAN_SIGNED_ENVELOPE');
+  }
+  return e;
+}
+function orphanCompletedJobPredicate(source){
+  const e=assertOrphanCompletedJob(source),j=e.jobSnapshot,id=quote(e.jobId),entity=quote(j.entity_id),key=quote(source.issuanceKey),tx=quote(source.transactionHash);
+  return `exists(select 1 from public.blockchain_jobs j where j.id=${id}::uuid and to_jsonb(j)=${quote(privateJson(j))}::jsonb)
+    and (select count(*) from public.user_wallets where address=${quote(source.owner)})=1
+    and exists(select 1 from public.user_wallets w join public.app_users u on u.id=w.app_user_id
+      where w.address=${quote(source.owner)} and w.chain_id=${d.chainId} and w.provider='privy' and w.wallet_type='embedded' and u.id=${quote(e.ownerAppUserId)}::uuid and u.status='active')
+    and not exists(select 1 from public.blockchain_jobs where id<>${id}::uuid and
+      (lower(tx_hash)=${tx} or lower(payload->>'issuanceId')=${key} or lower(payload->>'passportId')=${key}
+      or (entity_type='passport' and token_id=${source.tokenId}::numeric) or entity_id=${entity}::uuid or operation_key=${quote(j.operation_key)} or idempotency_key=${quote(j.idempotency_key)}::uuid))
+    and ${['fan_passports','stamps','fan_reactions','community_stamps','live_collectible_claims'].map(t=>`not exists(select 1 from public.${t}
+      where id=${entity}::uuid or blockchain_job_id=${id}::uuid or lower(tx_hash)=${tx})`).join(' and ')}
+    and not exists(select 1 from public.fan_passports where token_id=${source.tokenId}::numeric)
+    and not exists(select 1 from public.first_reaction_stamps where id=${entity}::uuid or passport_id=${entity}::uuid
+      or reaction_id=${entity}::uuid or blockchain_source_id=${entity}::uuid or activity_id=${entity}::uuid or lower(tx_hash)=${tx})
+    and not exists(select 1 from public.fan_action_credentials where legacy_job_id=${id}::uuid or entity_id=${entity}::uuid)
+    and not exists(select 1 from public.fan_action_outbox o where
+      exists(select 1 from jsonb_array_elements(o.payload->'intents') r where jsonb_typeof(r)<>'object'
+        or lower(r->>'legacyJobId')=${id} or lower(r->>'entityId')=${entity})
+      or exists(select 1 from jsonb_array_elements(o.source_snapshot->'credentials') r where jsonb_typeof(r)<>'object'
+        or lower(r->>'legacyJobId')=${id} or lower(r->>'entityId')=${entity}
+        or r#>>'{metadata,operationKey}'=${quote(j.operation_key)}
+        or lower(r#>>'{metadata,legacyPayload,passportId}')=${key}
+        or lower(r#>>'{metadata,legacyPayload,issuanceId}')=${key}
+        or lower(r#>>'{metadata,legacyPayload,workerSubmission,txHash}')=${tx}))`;
+}
 export function directAbsencePredicate(source){
   assert(source.sourceKind==='direct_legacy'&&hex32(source.transactionHash)&&hex32(source.issuanceKey)
     &&[d.oldPassport,d.oldStamp].includes(source.contract)&&uint(source.tokenId),'DIRECT_SOURCE_FORMAT');
   const tx=quote(source.transactionHash),key=quote(source.issuanceKey);
+  const jobGuard=Object.hasOwn(source,'orphanCompletedJob')?orphanCompletedJobPredicate(source)
+    :`not exists(select 1 from public.blockchain_jobs where tx_hash=${tx} or payload->>'issuanceId'=${key} or payload->>'passportId'=${key})`;
   return `not exists(select 1 from public.fan_action_credentials where
     (nft_contract=${quote(source.contract)} and token_id=${source.tokenId}::numeric) or issuance_key=${key})
-    and not exists(select 1 from public.blockchain_jobs where tx_hash=${tx} or payload->>'issuanceId'=${key} or payload->>'passportId'=${key})
+    and ${Object.hasOwn(source,'orphanCompletedJob')?`(${jobGuard})`:jobGuard}
     and not exists(select 1 from public.fan_action_outbox o where o.tx_hash=${tx}
       or exists(select 1 from jsonb_array_elements(o.payload->'intents') r where jsonb_typeof(r)<>'object'
         or lower(r->>'issuanceKey')=${key} or (lower(r->>'nftContract')=${quote(source.contract)} and r->>'tokenId'=${quote(source.tokenId)}))
       or exists(select 1 from jsonb_array_elements(o.source_snapshot->'credentials') r where jsonb_typeof(r)<>'object'
-        or lower(r->>'issuanceKey')=${key} or (lower(r->>'nftContract')=${quote(source.contract)} and r->>'tokenId'=${quote(source.tokenId)})))
+        or lower(r->>'issuanceKey')=${key} or (lower(r->>'nftContract')=${quote(source.contract)}
+          and (r->>'tokenId'=${quote(source.tokenId)} or r->>'existingTokenId'=${quote(source.tokenId)}))))
     and not exists(select 1 from public.fan_passports where tx_hash=${tx})
     and not exists(select 1 from public.stamps where tx_hash=${tx})
     and not exists(select 1 from public.fan_reactions where tx_hash=${tx})
@@ -144,6 +208,11 @@ export async function verifyDirectSource(client,source,evidence,head){
     &&receipt.to?.toLowerCase()===source.contract&&receipt.from.toLowerCase()===source.mintProof.minter
     &&tx.hash===source.transactionHash&&tx.to?.toLowerCase()===source.contract&&tx.from.toLowerCase()===source.mintProof.minter
     &&(tx.value??0n)===0n&&(await client.getBlock({blockNumber:receipt.blockNumber})).hash===receipt.blockHash,'DIRECT_ORIGINAL_RECEIPT');
+  if(source.orphanCompletedJob?.jobSnapshot.payload.workerSubmission){
+    const signed=source.orphanCompletedJob.jobSnapshot.payload.workerSubmission.signedTransaction;
+    assert((await recoverTransactionAddress({serializedTransaction:signed})).toLowerCase()===source.mintProof.minter
+      &&parseTransaction(signed).data===tx.input,'ORPHAN_SIGNED_SENDER');
+  }
   const call=decodeFunctionData({abi:mintAbi,data:tx.input});
   assert(call.functionName==='mint'&&call.args[0].toLowerCase()===source.owner
     &&call.args[1]===source.issuanceKey&&call.args[2]===source.metadataUri,'DIRECT_ORIGINAL_CALL');
@@ -194,6 +263,7 @@ async function main(){
   assert(await client.getChainId()===d.chainId,'WRONG_CHAIN');
   const head=await client.getBlock({blockTag:'finalized'});await verifyDirectHistory(client,evidence,head);
   const {database}=await import('./replace-existing-nfts-giwa.mjs');
+  assert(proof.items.filter(s=>Object.hasOwn(s,'orphanCompletedJob')).length<=1,'ORPHAN_EXCEPTION_LIMIT');
   const items=[];
   for(const raw of proof.items){
     const docs=metadata.documents.filter(m=>m.uri===raw.metadataUri);assert(docs.length===1,'DIRECT_METADATA_UNIQUE');

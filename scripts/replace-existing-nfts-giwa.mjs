@@ -122,6 +122,7 @@ export function buildFollowupPlan(a,verified,metadata,nonce,delay,expiresAt,sour
       &&metadata.snapshotBlockHash===verified.snapshot?.blockHash,'DIRECT_INVENTORY_BINDING');
     directEvidence=assertDirectHistory({snapshot:verified.snapshot,hubHistory:verified.hubHistory});snapshot=verified.snapshot;
     assert(Array.isArray(verified.items)&&verified.items.length>0&&verified.items.length<=10000,'ITEM_LIMIT');
+    assert(verified.items.filter(s=>Object.hasOwn(s,'orphanCompletedJob')).length<=1,'ORPHAN_EXCEPTION_LIMIT');
     entries=verified.items.map(source=>{
       assertDirectSource(source,directEvidence);
       const expected=directLegacyMetadata(source),matches=metadata.items.filter(m=>m.contract===source.contract&&m.tokenId===source.tokenId);
@@ -134,7 +135,8 @@ export function buildFollowupPlan(a,verified,metadata,nonce,delay,expiresAt,sour
       return {sourceKind,item:{kind:source.kind,oldTokenId:source.tokenId,issuanceKey:source.issuanceKey,recipient:source.owner,
         oldUriHash:textHash(source.metadataUri),newUriHash:textHash(docs[0].uri),sourceHub:zeroAddress,sourceActionId:zeroHash},
       oldContract:source.contract,oldMetadataUri:source.metadataUri,oldTxHash:source.transactionHash,metadataUri:docs[0].uri,
-      sourceRefs:[],aliases:[],sourceEvidence:{mintProof:source.mintProof,originalMetadata:source.originalMetadata},newMetadata};
+      sourceRefs:[],aliases:[],sourceEvidence:{mintProof:source.mintProof,originalMetadata:source.originalMetadata,
+        ...(Object.hasOwn(source,'orphanCompletedJob')?{orphanCompletedJob:source.orphanCompletedJob}:{})},newMetadata};
     });
   }
   assert(entries.every(e=>[0,1].includes(e.item.kind)&&e.oldContract===(e.item.kind===0?d.oldPassport:d.oldStamp)
@@ -334,7 +336,7 @@ export function directReconciliationSql(plan,entry,receipt,proof){
   return `begin; set local lock_timeout='3s'; set local statement_timeout='10s';
     select pg_advisory_xact_lock(hashtext('kyaa-nft-replacements'));
     lock table public.fan_passports,public.stamps,public.fan_reactions,public.community_stamps,public.blockchain_jobs,
-      public.fan_action_outbox,public.fan_action_credentials,public.first_reaction_stamps,public.nft_credential_replacement_entities in share mode nowait;
+      public.fan_action_outbox,public.fan_action_credentials,public.first_reaction_stamps,public.nft_credential_replacement_entities${source.orphanCompletedJob?',public.live_collectible_claims,public.app_users,public.user_wallets':''} in share mode nowait;
     do $direct$ declare current_row public.nft_credential_replacements; batch_row public.nft_credential_replacement_batches; begin
       if not (${directAbsencePredicate(source)}) then raise exception 'DIRECT_DATABASE_ASSOCIATION'; end if;
       ${insert('nft_credential_replacement_batches',batch,'on conflict(batch_id) do nothing')}
