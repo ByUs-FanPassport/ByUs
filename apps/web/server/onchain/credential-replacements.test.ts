@@ -62,10 +62,13 @@ function source(kind: 0 | 1 = 1): FinalizedActionSnapshot {
   };
 }
 
-function fakeClient(fault?: "event" | "mapping" | "owner" | "uri" | "unfinalized" | "immutable", kind: 0 | 1 = 1): PublicClient {
-  const eventBlock = fault === "unfinalized" ? 101n : 90n;
-  const eventBlockHash = fault === "event" ? hash(99) : eventHash;
-  const getLogs = vi.fn(async () => [{
+function fakeClient(
+  fault?: "event" | "mapping" | "owner" | "uri" | "unfinalized" | "immutable",
+  kind: 0 | 1 = 1,
+  { eventBlock = fault === "unfinalized" ? 101n : 90n, finalizedBlock = 100n } = {},
+): PublicClient {
+  const eventBlockHash = fault === "event" ? hash(99) : eventBlock === finalizedBlock ? headHash : eventHash;
+  const getLogs = vi.fn(async ({ fromBlock, toBlock }: { fromBlock: bigint; toBlock: bigint }) => (fault === "unfinalized" || eventBlock >= fromBlock && eventBlock <= toBlock) ? [{
     args: {
       batchId, oldContract: config.assetBindings[1][kind], oldTokenId,
       newContract: config.assetBindings[2][kind], newTokenId, recipient, issuanceKey, metadataHash,
@@ -74,7 +77,7 @@ function fakeClient(fault?: "event" | "mapping" | "owner" | "uri" | "unfinalized
     blockNumber: eventBlock,
     blockHash: eventBlockHash,
     transactionHash: txHash,
-  }]);
+  }] : []);
   const readContract = vi.fn(async (request: { address: Address; functionName: string }) => {
     switch (request.functionName) {
       case "timelock": return config.credentialReplacement.timelock;
@@ -103,13 +106,46 @@ function fakeClient(fault?: "event" | "mapping" | "owner" | "uri" | "unfinalized
   });
   return {
     getChainId: vi.fn(async () => config.chainId),
-    getBlock: vi.fn(async ({ blockNumber }: { blockNumber: bigint }) => ({ hash: blockNumber === 100n ? headHash : eventHash })),
+    getBlock: vi.fn(async ({ blockNumber }: { blockNumber: bigint }) => ({ hash: blockNumber === finalizedBlock ? headHash : eventHash })),
     getLogs,
     readContract,
   } as unknown as PublicClient;
 }
 
 describe("finalized credential replacements", () => {
+  it.each([
+    [1079n, [[80n, 1079n]]],
+    [1080n, [[80n, 1079n], [1080n, 1080n]]],
+    [2080n, [[80n, 1079n], [1080n, 2079n], [2080n, 2080n]]],
+  ] as const)("queries contiguous ranges of at most 1,000 blocks through %s", async (blockNumber, ranges) => {
+    const client = fakeClient(undefined, 1, { finalizedBlock: blockNumber });
+    const result = await readFinalizedCredentialReplacements(config, { ...source(), blockNumber }, client);
+    expect(result.size).toBe(1);
+    expect(vi.mocked(client.getLogs).mock.calls.map(([request]) => [request?.fromBlock, request?.toBlock])).toEqual(ranges);
+  });
+
+  it.each([1079n, 1080n, 2079n, 2080n])("verifies events on chunk boundary %s", async (eventBlock) => {
+    const client = fakeClient(undefined, 1, { eventBlock, finalizedBlock: 2080n });
+    const result = await readFinalizedCredentialReplacements(config, { ...source(), blockNumber: 2080n }, client);
+    expect(result.get(credentialAssetKey(config.assetBindings[1][1], oldTokenId))?.migration?.blockNumber).toBe(eventBlock.toString());
+  });
+
+  it.each(["event", "mapping", "owner", "uri"] as const)("keeps %s verification for logs in later chunks", async (fault) => {
+    const client = fakeClient(fault, 1, { eventBlock: 1080n, finalizedBlock: 2080n });
+    const result = await readFinalizedCredentialReplacements(config, { ...source(), blockNumber: 2080n }, client);
+    expect(result.size).toBe(0);
+  });
+
+  it("fails closed if a later chunk fails after an earlier chunk returned a valid event", async () => {
+    const client = fakeClient(undefined, 1, { finalizedBlock: 2080n });
+    vi.mocked(client.getLogs).mockImplementationOnce(vi.mocked(client.getLogs).getMockImplementation()!)
+      .mockRejectedValueOnce(new Error("RPC log query failed"));
+    await expect(readFinalizedCredentialReplacements(config, { ...source(), blockNumber: 2080n }, client))
+      .rejects.toThrow("RPC log query failed");
+    expect(client.getLogs).toHaveBeenCalledTimes(2);
+    expect(client.readContract).not.toHaveBeenCalledWith(expect.objectContaining({ functionName: "replacements" }));
+  });
+
   it("returns a representative only after event, mapping, ownership, key, and URI verification", async () => {
     const result = await readFinalizedCredentialReplacements(config, source(), fakeClient());
     expect(result.get(credentialAssetKey(config.assetBindings[1][1], oldTokenId))).toMatchObject({

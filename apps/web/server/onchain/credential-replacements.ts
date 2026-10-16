@@ -128,7 +128,12 @@ export async function readFinalizedCredentialReplacements(
   }
 
   const relevantSources = new Set(source.actions.flatMap((action) => action.credentials.map((credential) => credentialAssetKey(credential.nftContract, credential.tokenId))));
-  const logs = await reader.getLogs({ address: deployment.address, event: migratorAbi[0], fromBlock: deployment.fromBlock, toBlock: blockNumber });
+  const logs = [];
+  // The production RPC limits each log query to 1,000 blocks.
+  for (let fromBlock = deployment.fromBlock; fromBlock <= blockNumber; fromBlock += 1_000n) {
+    const toBlock = fromBlock + 999n < blockNumber ? fromBlock + 999n : blockNumber;
+    logs.push(...await reader.getLogs({ address: deployment.address, event: migratorAbi[0], fromBlock, toBlock }));
+  }
   const representatives = new Map<string, PublicRepresentativeAsset>();
   const targets = new Set<string>();
   for (const log of logs) {
