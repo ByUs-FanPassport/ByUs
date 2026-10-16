@@ -3,3 +3,6 @@
 /* Extra height belongs below the artwork, where the description and action sit. */
 .artwork img { display:block; width:100%; height:100%; object-fit:contain; object-position:center top; }
 .unavailable { background:linear-gradient(145deg,#2d2334,#19191e); }
+@media (min-width:1024px) and (max-width:1199px) {
+  .root[data-creator-welcome="true"] .artwork img { object-fit:cover; }
+}

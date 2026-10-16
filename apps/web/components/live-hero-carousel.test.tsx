@@ -120,7 +120,10 @@ it.each([1200, 1800])("uses a split creator welcome only for square artwork (wid
     desktopImage: { ...banner.desktopImage, width, height: 1200 },
   }]} locale="ko" />);
   const welcome = container.querySelector('[data-kind="welcome"]');
-  if (width === 1200) expect(welcome?.querySelector("[data-hero-mobile-image] picture")).toBeInTheDocument();
+  if (width === 1200) {
+    expect(welcome?.querySelector("[data-hero-mobile-image] picture")).toBeInTheDocument();
+    expect(welcome?.querySelector("picture source")).toHaveAttribute("media", "(min-width: 768px) and (max-width: 1023px), (min-width: 1200px)");
+  }
   else {
     expect(welcome).not.toBeInTheDocument();
     expect(container.querySelector('[data-kind="live"] picture')).toBeInTheDocument();

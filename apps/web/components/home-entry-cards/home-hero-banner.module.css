@@ -17,6 +17,7 @@
   .banner[data-kind="guide"] .copy { justify-content:space-between; }
   .banner[data-kind="guide"] .action { margin-top:0; }
 }
+
 .banner[data-kind="live"] .image { display:none; }
 .banner[data-kind="live"] .overlay { display:block; }
 .banner[data-kind="live"] .copy { position:absolute; inset:auto 0 0; width:100%; height:auto; color:#fff; }
@@ -123,4 +124,15 @@
     background:linear-gradient(#0003,#0003),var(--spectrum);
     color:#fff !important;
   }
+}
+
+/* The activity sidebar narrows the hero on small laptops; use the mobile invitation. */
+@media (min-width:1024px) and (max-width:1199px) {
+  .banner[data-kind="welcome"] .image { width:100%; }
+  .banner[data-kind="welcome"] .overlay { display:block; }
+  .banner[data-kind="welcome"] .copy { position:absolute; inset:auto 0 0; width:100%; height:auto; padding:24px; gap:12px; color:#fff; text-shadow:0 1px 3px #0008; }
+  .banner[data-kind="welcome"] .eyebrow { width:fit-content; padding:4px 12px; border:1px solid #ff5fbf99; border-radius:999px; background:#17131abf; color:#fff; font-size:12px; }
+  .banner[data-kind="welcome"] .copy h2 { font-size:32px; }
+  .banner[data-kind="welcome"] .description { color:#fff; font-size:14px; }
+  .banner[data-kind="welcome"] .action { margin-top:8px; }
 }
