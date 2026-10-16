@@ -15,6 +15,7 @@ export const creatorIdentities: Readonly<Record<string, CreatorIdentity>> = {
   "park-myungho": { ko: "박명호", en: "Myungho Park" },
   ifewknow: { ko: "이퓨", en: "ifew" },
   "thisisj-official": { ko: "재희", en: "Jaehee" },
+  hyunji: { ko: "현지", en: "Hyunji" },
   nchive: {
     ko: "엔카이브", en: "NCHIVE", logo: "/images/celebrities/nchive/official-emblem-20261014.jpg",
     fandom: { name: "SAVE", ko: "세이브", source: "https://x.com/nchiveofficial/status/1750805783091229003", mark: "/images/celebrities/nchive/save-announcement.jpg" },

@@ -111,7 +111,7 @@ export function DailyCheckin({
   }
   if (!auth.authenticated) {
     const returnTo = `${creatorHomeHref(creator)}?locale=${locale}#daily-checkin`;
-    return <section className={styles.panel} id="daily-checkin" aria-labelledby="daily-checkin-title"><div><h3 id="daily-checkin-title">{t.title}</h3><p>{t.help}</p></div><Link className={styles.primary} href={`/login?locale=${locale}&returnTo=${encodeURIComponent(returnTo)}` as Route}>{t.login}</Link></section>;
+    return <section className={styles.panel} id="daily-checkin" aria-labelledby="daily-checkin-title"><div><h3 id="daily-checkin-title">{t.title}</h3><p>{t.help}</p></div><Link className={styles.primary} data-fan-action-emphasis="primary" href={`/login?locale=${locale}&returnTo=${encodeURIComponent(returnTo)}` as Route}>{t.login}</Link></section>;
   }
   if (!ownerId) {
     return <section className={styles.panel} id="daily-checkin" aria-labelledby="daily-checkin-title"><div><h3 id="daily-checkin-title">{t.title}</h3><p role="status">{t.loading}</p></div></section>;

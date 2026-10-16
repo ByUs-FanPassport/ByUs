@@ -1,0 +1,13 @@
+{
+  "changes": [
+    "현지 팬페이지가 열렸어요. Instagram 사진 8장과 소개를 둘러보고 팬 인증 퀴즈 3문항에 도전할 수 있어요.",
+    "현지 사진첩의 세로 사진은 원본 비율로 표시하고, 팬페이지의 출석 로그인 버튼 글자를 더 선명하게 보이도록 고쳤어요.",
+    "첨부 이미지는 운영에 등록된 공개 사진을 사용한 로컬 검증 화면이에요."
+  ],
+  "path": "/hyunji",
+  "images": [
+    "release-notes/images/2026-10-16-hyunji-mobile.png",
+    "release-notes/images/2026-10-16-hyunji-desktop.png",
+    "release-notes/images/2026-10-16-hyunji-gallery.png"
+  ]
+}

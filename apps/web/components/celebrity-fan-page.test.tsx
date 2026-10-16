@@ -109,6 +109,20 @@ function stubHubFetch({ notices = [], passports = [], calendarEvents = [], raffl
   return request;
 }
 describe("approved fanpage", () => {
+  it.each(["ko", "en"] as const)("shows Hyunji's registered introduction and Instagram-only profile in %s", async (locale) => {
+    const hyunji = { ...kara, slug: "hyunji", name: "현지", summary: "현지의 사진과 일상을 만나보세요.", roles: ["creator"] as const, socialLinks: [{ platform: "instagram" as const, url: "https://www.instagram.com/hyunjiiee/" }] };
+    const view = render(<CelebrityFanPage celebrity={hyunji} locale={locale} upcomingLive={null} />);
+    const hero = view.container.querySelector('[aria-labelledby="celebrity-heading"]')!;
+    expect(hero).toHaveAttribute("data-artist-identity", "true");
+    expect(within(hero as HTMLElement).getByRole("heading")).toHaveTextContent(locale === "ko" ? "현지Hyunji" : "Hyunji현지");
+    expect(within(hero as HTMLElement).getByText(hyunji.summary)).toBeInTheDocument();
+    expect(within(hero as HTMLElement).getByRole("link", { name: /Instagram/ })).toHaveAttribute("href", "https://www.instagram.com/hyunjiiee/");
+    expect(within(hero as HTMLElement).queryByRole("link", { name: /TikTok|YouTube/ })).not.toBeInTheDocument();
+    const verifyLink = view.container.querySelector('a[href*="verify"]');
+    expect(verifyLink).toBeInTheDocument();
+    expect(decodeURIComponent(verifyLink!.getAttribute("href")!)).toContain("/hyunji/verify");
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/hyunji/raffles"), expect.anything()));
+  });
   it.each(APP_LOCALES)("keeps WENA branding, media discovery and fan participation in %s", async (locale) => {
     const wena = { ...kara, slug: "wena", name: "위나", locale: toContentLocale(locale) };
     const view = render(<CelebrityFanPage celebrity={wena} locale={locale} upcomingLive={null} />);

@@ -25,6 +25,8 @@
 .grid > li:has(.play,.player) a { height:auto; }
 .grid > li img,.grid .videoLink { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:0; background:var(--color-soft); }
 .panel[data-creator-media="wena"] [data-media-kind="photos"] img { aspect-ratio:5/4; height:auto; object-position:50% 0%; }
+.panel[data-creator-media="hyunji"] .grid { align-items:start; }
+.panel[data-creator-media="hyunji"] [data-media-kind="photos"] img { aspect-ratio:auto; height:auto; }
 .cardBody { display:grid; gap:8px; padding:16px; }
 .grid > li strong { display:-webkit-box; min-height:48px; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:16px; line-height:1.5; font-weight:700; overflow-wrap:anywhere; }
 .grid .meta { display:flex; flex-wrap:wrap; align-items:center; gap:4px; color:var(--color-muted); font-size:13px; line-height:1.5; }

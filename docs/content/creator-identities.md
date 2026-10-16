@@ -14,6 +14,7 @@ Reviewed 2026-10-14 against the 10 published person/group fan pages. RUN&MUSIC i
 | thisisj-official | 재희 · Jaehee | [Official linked Instagram](https://www.instagram.com/j.hya/): 재희 | Existing CMS English spelling retained; no stronger English-name or separate fandom/logo evidence found |
 | nchive | NCHIVE · 엔카이브 | [Official YouTube](https://www.youtube.com/@NCHIVE), [2026 emblem announcement](https://x.com/nchiveofficial/status/2061100455133155482) | Current red channel emblem; SAVE · 세이브 and official SAVE wordmark |
 | wena | We;Na · 위나 | [Official YouTube](https://www.youtube.com/@wena_official), existing verified logo provenance | mymean · 마이민; no separate official fandom logo found |
+| hyunji | 현지 · Hyunji | [Instagram](https://www.instagram.com/hyunjiiee/), checked 2026-10-16: profile name `현 지`; Hyunji is the romanized display name | Photos only; no separate fandom name or logo added. See [onboarding sources](hyunji-onboarding.md). |
 
 “Not verified” describes this review, not proof that a fan name or mark does not exist. Personal profile photos are not relabeled as logos. Existing CMS English spellings for Park Myungho and Jaehee are preserved rather than inventing a romanization.
 
