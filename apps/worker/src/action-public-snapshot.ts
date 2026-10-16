@@ -85,7 +85,7 @@ function assertNotAborted(signal: AbortSignal): void {
   if (signal.aborted) throw signal.reason instanceof Error ? signal.reason : new Error("Action public snapshot deadline exceeded");
 }
 
-function snapshotClient(options: FinalizedActionSnapshotOptions, signal: AbortSignal): PublicClient {
+export function snapshotClient(options: Pick<FinalizedActionSnapshotOptions, "rpcUrl" | "chainId">, signal: AbortSignal): PublicClient {
   const chain = defineChain({ id: options.chainId, name: "GIWA Sepolia", nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [options.rpcUrl] } } });
   let nextRequest = 0;
   const pacedFetch: typeof fetch = async (input, init) => {
@@ -104,9 +104,9 @@ function snapshotClient(options: FinalizedActionSnapshotOptions, signal: AbortSi
   return createPublicClient({ chain, batch: { multicall: { deployless: true, wait: 5 } },
     transport: custom({ request: async (args) => {
       assertNotAborted(signal);
-      if (args.method !== "eth_getLogs") return batched.request(args);
       // Keep log scans separate from batches of quick state/transaction reads.
-      return direct.request(args);
+      const transport = args.method === "eth_getLogs" ? direct : batched;
+      return transport.request(args, { retryCount: 2, retryDelay: 1_000, signal });
     } }, { retryCount: 0 }),
   });
 }

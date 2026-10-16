@@ -113,6 +113,31 @@ function fakeClient(
 }
 
 describe("finalized credential replacements", () => {
+  it("bounds concurrent verification and keeps the first verified event when reads finish out of order", async () => {
+    const client = fakeClient();
+    const [event] = await client.getLogs({ fromBlock: 80n, toBlock: 100n });
+    vi.mocked(client.getLogs).mockResolvedValue(Array.from({ length: 33 }, (_, index) => ({
+      ...event, transactionHash: hash(100 + index),
+    })));
+    let active = 0;
+    let peak = 0;
+    let verified = 0;
+    vi.mocked(client.getBlock).mockImplementation(async ({ blockNumber } = {}) => {
+      if (blockNumber === 100n) return { hash: headHash } as never;
+      const index = verified++;
+      peak = Math.max(peak, ++active);
+      await new Promise((resolve) => setTimeout(resolve, index === 0 ? 20 : 1));
+      active--;
+      return { hash: eventHash } as never;
+    });
+    const result = await readFinalizedCredentialReplacements(config, source(), client);
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(16);
+    expect(verified).toBe(33);
+    expect(result.size).toBe(1);
+    expect(result.get(credentialAssetKey(config.assetBindings[1][1], oldTokenId))?.migration?.txHash).toBe(hash(100));
+  });
+
   it.each([
     [1079n, [[80n, 1079n]]],
     [1080n, [[80n, 1079n], [1080n, 1080n]]],

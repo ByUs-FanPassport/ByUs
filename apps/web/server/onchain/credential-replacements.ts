@@ -1,9 +1,6 @@
 import {
-  createPublicClient,
-  defineChain,
   encodeAbiParameters,
   getAddress,
-  http,
   keccak256,
   parseAbi,
   stringToHex,
@@ -11,7 +8,7 @@ import {
   type Hash,
   type PublicClient,
 } from "viem";
-import type { FinalizedActionSnapshot } from "../../../worker/src/action-public-snapshot";
+import { snapshotClient, type FinalizedActionSnapshot } from "../../../worker/src/action-public-snapshot";
 import { onchainConfig } from "./public-config";
 import type { PublicRepresentativeAsset } from "./public-types";
 
@@ -98,8 +95,8 @@ export async function readFinalizedCredentialReplacements(
 ): Promise<ReadonlyMap<string, PublicRepresentativeAsset>> {
   const deployment = config.credentialReplacement.deployment;
   if (deployment.fromBlock > source.blockNumber) return new Map();
-  const chain = defineChain({ id: config.chainId, name: config.network, nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [config.rpcUrl] } } });
-  const reader = client ?? createPublicClient({ chain, batch: { multicall: true }, transport: http(config.rpcUrl, { timeout: 15_000, retryCount: 1 }) });
+  // Leave time for this reader after the action snapshot's four-minute budget.
+  const reader = client ?? snapshotClient(config, AbortSignal.timeout(50_000));
   const blockNumber = source.blockNumber;
   const [chainId, finalizedBlock, timelock, operator, hub, legacyHub, environmentId, oldPassport, oldStamp, newPassport, newStamp] = await Promise.all([
     reader.getChainId(),
@@ -136,45 +133,51 @@ export async function readFinalizedCredentialReplacements(
   }
   const representatives = new Map<string, PublicRepresentativeAsset>();
   const targets = new Set<string>();
-  for (const log of logs) {
-    if (log.blockNumber == null || log.blockNumber > blockNumber || !log.blockHash || !log.transactionHash) continue;
-    const args = log.args;
-    if (args.oldContract == null || args.oldTokenId == null || args.newContract == null || args.newTokenId == null
-      || args.recipient == null || args.issuanceKey == null || args.metadataHash == null || args.sourceHub == null
-      || args.sourceActionId == null || args.leaf == null || args.batchId == null || args.minted == null) continue;
-    const sourceKey = credentialAssetKey(args.oldContract, args.oldTokenId);
-    if (!relevantSources.has(sourceKey)) continue;
-    const kind = getAddress(args.oldContract) === getAddress(config.assetBindings[1][0]) ? 0
-      : getAddress(args.oldContract) === getAddress(config.assetBindings[1][1]) ? 1 : -1;
-    const expectedTarget = kind < 0 ? undefined : config.assetBindings[2][kind as 0 | 1];
-    const targetKey = credentialAssetKey(args.newContract, args.newTokenId);
-    const sourceId = assetIdentity(args.oldContract, args.oldTokenId);
-    const targetId = assetIdentity(args.newContract, args.newTokenId);
-    const [canonicalBlock, replacement, mappedSource, sourceValid, targetValid] = await Promise.all([
-      reader.getBlock({ blockNumber: log.blockNumber }),
-      reader.readContract({ address: deployment.address, abi: migratorAbi, functionName: "replacements", args: [sourceId], blockNumber }),
-      reader.readContract({ address: deployment.address, abi: migratorAbi, functionName: "sourceByTarget", args: [targetId], blockNumber }),
-      kind < 0 ? false : verifyAsset(reader, args.oldContract, kind, args.oldTokenId, args.issuanceKey, args.recipient, blockNumber),
-      kind < 0 ? false : verifyAsset(reader, args.newContract, kind, args.newTokenId, args.issuanceKey, args.recipient, blockNumber, args.metadataHash),
-    ]);
-    const [mappedLeaf, mappedBatch, mappedTokenId, mappedRecipient, mappedMetadataHash, mappedSourceHub, mappedSourceActionId, mappedMinted] = replacement;
-    if (!canonicalBlock.hash || !sameHex(canonicalBlock.hash, log.blockHash) || !expectedTarget
-      || getAddress(args.newContract) !== getAddress(expectedTarget) || !sameHex(mappedLeaf, args.leaf)
-      || !sameHex(mappedBatch, args.batchId) || mappedTokenId !== args.newTokenId
-      || getAddress(mappedRecipient) !== getAddress(args.recipient) || !sameHex(mappedMetadataHash, args.metadataHash)
-      || getAddress(mappedSourceHub) !== getAddress(args.sourceHub) || !sameHex(mappedSourceActionId, args.sourceActionId)
-      || mappedMinted !== args.minted || !sameHex(mappedSource, sourceId) || !sourceValid || !targetValid
-      || representatives.has(sourceKey) || targets.has(targetKey)) continue;
-    representatives.set(sourceKey, {
-      nftContract: getAddress(args.newContract), tokenId: args.newTokenId.toString(), owner: getAddress(args.recipient),
-      issuanceKey: args.issuanceKey, metadataHash: args.metadataHash,
-      migration: {
-        migratorAddress: getAddress(deployment.address), batchId: args.batchId, txHash: log.transactionHash,
-        blockNumber: log.blockNumber.toString(), sourceHub: getAddress(args.sourceHub), sourceActionId: args.sourceActionId,
-        minted: args.minted,
-      },
-    });
-    targets.add(targetKey);
+  for (let index = 0; index < logs.length; index += 16) {
+    const verified = await Promise.all(logs.slice(index, index + 16).map(async (log) => {
+      if (log.blockNumber == null || log.blockNumber > blockNumber || !log.blockHash || !log.transactionHash) return;
+      const args = log.args;
+      if (args.oldContract == null || args.oldTokenId == null || args.newContract == null || args.newTokenId == null
+        || args.recipient == null || args.issuanceKey == null || args.metadataHash == null || args.sourceHub == null
+        || args.sourceActionId == null || args.leaf == null || args.batchId == null || args.minted == null) return;
+      const sourceKey = credentialAssetKey(args.oldContract, args.oldTokenId);
+      if (!relevantSources.has(sourceKey)) return;
+      const kind = getAddress(args.oldContract) === getAddress(config.assetBindings[1][0]) ? 0
+        : getAddress(args.oldContract) === getAddress(config.assetBindings[1][1]) ? 1 : -1;
+      const expectedTarget = kind < 0 ? undefined : config.assetBindings[2][kind as 0 | 1];
+      const targetKey = credentialAssetKey(args.newContract, args.newTokenId);
+      const sourceId = assetIdentity(args.oldContract, args.oldTokenId);
+      const targetId = assetIdentity(args.newContract, args.newTokenId);
+      const [canonicalBlock, replacement, mappedSource, sourceValid, targetValid] = await Promise.all([
+        reader.getBlock({ blockNumber: log.blockNumber }),
+        reader.readContract({ address: deployment.address, abi: migratorAbi, functionName: "replacements", args: [sourceId], blockNumber }),
+        reader.readContract({ address: deployment.address, abi: migratorAbi, functionName: "sourceByTarget", args: [targetId], blockNumber }),
+        kind < 0 ? false : verifyAsset(reader, args.oldContract, kind, args.oldTokenId, args.issuanceKey, args.recipient, blockNumber),
+        kind < 0 ? false : verifyAsset(reader, args.newContract, kind, args.newTokenId, args.issuanceKey, args.recipient, blockNumber, args.metadataHash),
+      ]);
+      const [mappedLeaf, mappedBatch, mappedTokenId, mappedRecipient, mappedMetadataHash, mappedSourceHub, mappedSourceActionId, mappedMinted] = replacement;
+      if (!canonicalBlock.hash || !sameHex(canonicalBlock.hash, log.blockHash) || !expectedTarget
+        || getAddress(args.newContract) !== getAddress(expectedTarget) || !sameHex(mappedLeaf, args.leaf)
+        || !sameHex(mappedBatch, args.batchId) || mappedTokenId !== args.newTokenId
+        || getAddress(mappedRecipient) !== getAddress(args.recipient) || !sameHex(mappedMetadataHash, args.metadataHash)
+        || getAddress(mappedSourceHub) !== getAddress(args.sourceHub) || !sameHex(mappedSourceActionId, args.sourceActionId)
+        || mappedMinted !== args.minted || !sameHex(mappedSource, sourceId) || !sourceValid || !targetValid) return;
+      return { sourceKey, targetKey, asset: {
+        nftContract: getAddress(args.newContract), tokenId: args.newTokenId.toString(), owner: getAddress(args.recipient),
+        issuanceKey: args.issuanceKey, metadataHash: args.metadataHash,
+        migration: {
+          migratorAddress: getAddress(deployment.address), batchId: args.batchId, txHash: log.transactionHash,
+          blockNumber: log.blockNumber.toString(), sourceHub: getAddress(args.sourceHub), sourceActionId: args.sourceActionId,
+          minted: args.minted,
+        },
+      } satisfies PublicRepresentativeAsset };
+    }));
+    // Apply verified results in event order, independent of RPC completion order.
+    for (const result of verified) {
+      if (!result || representatives.has(result.sourceKey) || targets.has(result.targetKey)) continue;
+      representatives.set(result.sourceKey, result.asset);
+      targets.add(result.targetKey);
+    }
   }
   return representatives;
 }
