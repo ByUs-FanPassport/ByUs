@@ -91,17 +91,18 @@ it("renders a managed banner with its own artwork and preserves the guide", () =
   expect(container.querySelector('article[aria-hidden="true"]')).toHaveAttribute("inert");
 });
 
-it("puts announced raffle results first while preserving the other banners and controls", () => {
+it("keeps the managed banner order ahead of announced raffle results", () => {
   const { container } = render(<LiveHeroCarousel homeBanners={[banner]} locale="ko" elinaRaffles={[{
     id: "11111111-1111-4111-8111-111111111111", benefitId: "22222222-2222-4222-8222-222222222222",
     title: "한정판 스태츄", summary: "선물", imageUrl: null, winnerQuantity: 1, status: "closed",
     entryOpensAt: null, entryClosesAt: "2026-10-08T00:00:00Z", resultsPublishedAt: "2026-10-09T00:00:00Z",
     fulfillmentMethod: "physical_shipping", perFanTicketLimit: null,
   }]} />);
+  expect(container.querySelector('[data-active="true"]')).toHaveTextContent(banner.title);
+  expect(screen.getByRole("link", { name: "방송 일정 보기" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "다음 배너" }));
   expect(container.querySelector('[data-active="true"]')).toHaveTextContent("래플 결과가 발표됐어요");
   expect(screen.getByRole("link", { name: "내 결과 확인" })).toHaveAttribute("href", "/my/raffles?locale=ko");
-  fireEvent.click(screen.getByRole("button", { name: "다음 배너" }));
-  expect(screen.getByRole("link", { name: "방송 일정 보기" })).toBeInTheDocument();
   expect(container.querySelectorAll("article")).toHaveLength(2);
 });
 
@@ -110,6 +111,21 @@ it("retains copy and the CTA when an image cannot load", () => {
   fireEvent.error(container.querySelector("picture img")!);
   expect(container.querySelector("[data-banner-image-unavailable]")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "방송 일정 보기" })).toBeInTheDocument();
+});
+
+it.each([1200, 1800])("uses a split creator welcome only for square artwork (width %s)", (width) => {
+  const { container } = render(<LiveHeroCarousel homeBanners={[{
+    ...banner, kind: "announcement", celebrityId: "11111111-1111-4111-8111-111111111111",
+    title: "We;Na × Kyaa", href: "/wena", ctaLabel: "위나 팬페이지 보기",
+    desktopImage: { ...banner.desktopImage, width, height: 1200 },
+  }]} locale="ko" />);
+  const welcome = container.querySelector('[data-kind="welcome"]');
+  if (width === 1200) expect(welcome?.querySelector("[data-hero-mobile-image] picture")).toBeInTheDocument();
+  else {
+    expect(welcome).not.toBeInTheDocument();
+    expect(container.querySelector('[data-kind="live"] picture')).toBeInTheDocument();
+  }
+  expect(screen.getByRole("link", { name: "위나 팬페이지 보기" })).toHaveAttribute("href", "/wena?locale=ko");
 });
 
 it("uses the same locale desktop source when the mobile asset is absent", () => {

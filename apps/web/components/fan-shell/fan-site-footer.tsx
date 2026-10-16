@@ -9,7 +9,7 @@ import type { FanLocale } from "./fan-app-shell";
 import { FanContentContainer } from "./fan-content-container";
 import styles from "./fan-site-footer.module.css";
 
-const TELEGRAM_CHANNEL_URL = "https://t.me/ByUs_official";
+const TELEGRAM_CHANNEL_URL = "https://t.me/Kyaa_Official";
 
 // Brand marks from Simple Icons; Instagram reuses our existing local mark.
 const SOCIAL_CHANNELS = [

@@ -104,8 +104,7 @@ export function LiveHeroCarousel({
   locale: AppLocale;
 }) {
   const t = carouselCopy[locale];
-  const resultsAnnounced = elinaRaffles?.some(raffle => raffle.resultsPublishedAt && raffle.status !== "cancelled");
-  const slides = resultsAnnounced ? [null, ...homeBanners] : [...homeBanners, null];
+  const slides = [...homeBanners, null];
   const total = slides.length;
   const hasControls = total > 1;
   const rootRef = useRef<HTMLDivElement>(null);

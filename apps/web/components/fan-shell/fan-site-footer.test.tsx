@@ -29,7 +29,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).queryByRole("heading", { name: "소셜" })).not.toBeInTheDocument();
     expect(within(footer).getByRole("heading", { name: "소셜" })).toBeInTheDocument();
     const telegram = within(footer).getByRole("link", { name: "kyaa Telegram 채널 열기, 새 창" });
-    expect(telegram).toHaveAttribute("href", "https://t.me/ByUs_official");
+    expect(telegram).toHaveAttribute("href", "https://t.me/Kyaa_Official");
     expect(telegram).toHaveAttribute("target", "_blank");
     expect(telegram).toHaveAttribute("rel", "noopener noreferrer");
     expect(telegram.textContent).toBe("");
@@ -59,7 +59,7 @@ describe("FanSiteFooter", () => {
     expect(within(navigation).queryByRole("link", { name: "Open Privacy Policy" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("heading", { name: "Social" })).not.toBeInTheDocument();
     expect(within(screen.getByRole("contentinfo")).getByRole("heading", { name: "Social" })).toBeInTheDocument();
-    expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open kyaa Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/ByUs_official");
+    expect(within(screen.getByRole("contentinfo")).getByRole("link", { name: "Open kyaa Telegram channel, new window" })).toHaveAttribute("href", "https://t.me/Kyaa_Official");
     expect(within(navigation).queryByRole("link", { name: "Contact" })).not.toBeInTheDocument();
     expect(within(navigation).queryByRole("link", { name: "Open image credits" })).not.toBeInTheDocument();
   });

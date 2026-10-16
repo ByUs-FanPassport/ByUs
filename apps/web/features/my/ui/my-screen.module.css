@@ -3,7 +3,7 @@
 .guest { display:grid; min-height:360px; place-content:center; justify-items:center; padding:var(--space-10) var(--space-5); border:1px solid var(--color-line-subtle); border-radius:var(--radius-collection); text-align:center; }
 .guest>svg { width:48px; height:48px; margin-block-end:var(--space-6); stroke-width:1.4; }
 .guest h2 { margin:0; font-size:24px; letter-spacing:-.025em; }
-.guest p { max-width:48ch; margin:var(--space-3) 0 var(--space-6); color:var(--color-muted); line-height:1.6; }
+.guest p { margin:var(--space-3) 0 var(--space-6); color:var(--color-muted); line-height:1.6; }
 .guest a { width:min(100%,320px); }
 .dashboard { --my-accent:#e52d81; --my-accent-ink:#d51f73; display:grid; min-width:0; gap:var(--space-12); }
 

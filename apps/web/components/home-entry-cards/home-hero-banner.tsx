@@ -6,7 +6,7 @@ export function HomeHeroBanner({ image, eyebrow, title, description, action, des
   image: ReactNode;
   desktopImage?: ReactNode;
   fullImage?: ReactNode;
-  kind?: "live" | "guide";
+  kind?: "live" | "guide" | "welcome";
   eyebrow: ReactNode;
   title: ReactNode;
   description: ReactNode;

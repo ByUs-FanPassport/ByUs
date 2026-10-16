@@ -58,7 +58,9 @@ const reactionStates = (slugs: readonly string[], reacted: (slug: string) => boo
 describe("canonical 03 guest home", () => {
   it.each(APP_LOCALES)("shows the approved Kyaa slogan in %s", (locale) => {
     render(<GuestHome {...defaultProps} featuredLives={[]} locale={locale} />);
-    expect(screen.getByRole("heading", { level: 1, name: "Kyaa. Every Fan Moment Counts." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Kyaa." })).toBeInTheDocument();
+    expect(screen.getByText("Every Fan Moment Counts.", { selector: "p" })).toBeInTheDocument();
+    expect(screen.queryByText("오늘, 최애를 만나는 시간")).not.toBeInTheDocument();
   });
 
   afterEach(() => {

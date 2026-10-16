@@ -1,0 +1,15 @@
+{
+  "changes": [
+    "홈에서 위나 팬페이지 배너를 먼저 볼 수 있어요.",
+    "홈 제목과 슬로건을 나누고, MY 안내 문장의 어색한 줄바꿈과 커뮤니티 최애 이름의 글자 크기를 다듬었어요.",
+    "하단 텔레그램 링크가 새 Kyaa 공식 채널로 연결되도록 고쳤어요.",
+    "첨부 이미지는 공개 콘텐츠로 확인한 로컬 검증 화면이에요."
+  ],
+  "path": "/",
+  "images": [
+    "release-notes/images/2026-10-16-sally-home-mobile.png",
+    "release-notes/images/2026-10-16-sally-home-desktop.png",
+    "release-notes/images/2026-10-16-sally-my.png",
+    "release-notes/images/2026-10-16-sally-community.png"
+  ]
+}

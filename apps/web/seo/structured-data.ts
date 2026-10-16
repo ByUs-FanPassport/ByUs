@@ -32,7 +32,7 @@ export function homeStructuredData() {
           "https://www.instagram.com/official_byus/",
           "https://x.com/official_byus",
           "https://www.threads.com/@official_byus",
-          "https://t.me/ByUs_official",
+          "https://t.me/Kyaa_Official",
         ],
       },
       {

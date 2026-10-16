@@ -67,7 +67,7 @@ differences when consolidating tokens and components. -->
 
 ## Brand copy (2026-10-13)
 
-- The approved slogan is `Kyaa. Every Fan Moment Counts.` in every locale. Use it for the home heading, default page/share title, installed app name, and guide footers. Preserve the existing kyaa wordmark artwork.
+- The approved slogan is `Kyaa. Every Fan Moment Counts.` in every locale. Home displays `Kyaa.` as its heading with `Every Fan Moment Counts.` in the supporting-copy role below it (2026-10-16 Sally feedback); the old LIVE tagline is removed. Keep the full slogan for the default page/share title, installed app name, and guide footers. Preserve the existing kyaa wordmark artwork.
 - Current partner banner copy uses `NCHIVE × Kyaa` and `WELCOME TO KYAA`. Internal identifiers, legacy URLs, and historical records retain their existing names.
 - The connect introduction and Passport artwork use Kyaa. Preserve the whole book, stamps and outro copy with contained video framing; the wide layout places copy beside the film on its paper canvas. Keep playback, skip, replay and reduced-motion behavior. New Membership artwork has a new content-addressed URL; issued artwork remains available.
 - Web credential illustrations use the exact transparent PNGs from the issued kyaa credential v2 bundle. Individual Passport, activity, reaction, membership and community Stamp artwork uses `object-fit: contain` without vintage masks or inherited crop/scale rules; dates, points and localized meaning remain live UI content rather than baked artwork. Keep historical asset files and issued metadata URLs available.

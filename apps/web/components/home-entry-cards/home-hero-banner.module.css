@@ -106,3 +106,21 @@
 }
 
 .fullImage { position:absolute; inset:0; }
+
+/* Match square artwork to the carousel height, including its tablet minimum. */
+@media (min-width:768px) {
+  .banner[data-kind="welcome"] { container-type:size; }
+  .banner[data-kind="welcome"] .image { width:100cqh; }
+  .banner[data-kind="welcome"] .copy { width:calc(100% - 100cqh); justify-content:space-between; }
+  .banner[data-kind="welcome"] .action { margin-top:0; }
+  .banner[data-kind="welcome"] .action > a {
+    width:fit-content;
+    max-width:100%;
+    min-height:48px;
+    gap:16px;
+    padding:0 20px;
+    border-radius:999px;
+    background:linear-gradient(#0003,#0003),var(--spectrum);
+    color:#fff !important;
+  }
+}
