@@ -2,20 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {keccak256,concatHex,encodeAbiParameters} from 'viem';
+import {keccak256,concatHex,encodeAbiParameters,decodeFunctionData,parseAbi} from 'viem';
 import {EXISTING_NFT_DEPLOYMENT as d,trustedActionContext as context,privateJson,zeroHash,zeroAddress} from './migrate-existing-nfts-giwa.mjs';
 import {buildReplacementPlan,validateReplacementPlan,replacementTree,replacementLeaf,itemComponents,
-  assertPreflight,preflightSql,finalizedReplacement,reconciliationSql,pendingReplacementEntries,signStep} from './replace-existing-nfts-giwa.mjs';
+  assertPreflight,preflightSql,finalizedReplacement,reconciliationSql,pendingReplacementEntries,signStep,
+  buildFollowupPlan,validateFollowupPlan,FOLLOWUP_MIGRATOR,verifyFollowupDeployment} from './replace-existing-nfts-giwa.mjs';
 const hash=x=>'0x'+x.repeat(64),owner='0x'+'1'.repeat(40);
 const a=JSON.parse(fs.readFileSync(new URL('../contracts/out/KyaaCredentialMigrator.sol/KyaaCredentialMigrator.json',import.meta.url)));
-function fixture(){
+function fixture(builder=buildReplacementPlan){
   const source={classification:'ELIGIBLE',issues:[],kind:1,tokenId:'7',issuanceKey:hash('2'),owner,
     contract:d.oldStamp,transactionHash:hash('3'),metadataUri:'ipfs://old',sourceHub:zeroAddress,
     sourceActionId:zeroHash,sourceRefs:[],entities:[{entity_type:'reaction',entity_id:'00000000-0000-4000-8000-000000000001',
       app_user_id:'00000000-0000-4000-8000-000000000002',wallet:owner,artwork_type:'reaction',business_status:'completed'}],aliases:[{id:'00000000-0000-4000-8000-000000000003'}]};
   const verified={format:'kyaa-existing-nft-verified-v1',blockHash:hash('4'),blockNumber:'123',items:[source]};
   const metadata={format:'kyaa-existing-nft-metadata-v1',snapshotBlockHash:hash('4'),documents:[{digest:'doc',uri:'ipfs://new'}],items:[{contract:d.oldStamp,tokenId:'7',documentHash:'doc'}]};
-  return JSON.parse(privateJson(buildReplacementPlan(a,verified,metadata,10,172800n,1900000000n)));
+  return JSON.parse(privateJson(builder(a,verified,metadata,10,172800n,1900000000n,'entity')));
 }
 test('manifest reconstructs every call, root and predicted deployment, and detects edits',()=>{
   const plan=fixture();validateReplacementPlan(plan,a);
@@ -100,4 +101,43 @@ test('reconcile SQL preserves large numeric tokens, apostrophes and atomic alias
   assert.match(sql,/100000000000000000000000000000/);assert.match(sql,/999999999999999999999999/);
   assert.match(sql,/old''quote/);assert.match(sql,/begin; select pg_advisory_xact_lock/);
   assert.match(sql,/entity mapping mismatch/);assert.match(sql,/commit;/);
+});
+test('followup entity batches schedule exactly one registerBatch on the existing Migrator',()=>{
+  const plan=fixture(buildFollowupPlan);validateFollowupPlan(plan,a);
+  assert.equal(plan.migrator,FOLLOWUP_MIGRATOR);assert.equal(plan.steps.length,1);
+  assert.equal(plan.sourceKind,'entity');assert.equal(plan.entries[0].sourceKind,'entity');
+  assert.equal(plan.entries[0].item.sourceHub,zeroAddress,'entity-backed legacy remains entity-backed');
+  const timelock=parseAbi(['function scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)',
+    'function executeBatch(address[],uint256[],bytes[],bytes32,bytes32) payable']);
+  const scheduled=decodeFunctionData({abi:timelock,data:plan.steps[0].data});
+  assert.equal(scheduled.functionName,'scheduleBatch');assert.deepEqual(scheduled.args[0].map(a=>a.toLowerCase()),[FOLLOWUP_MIGRATOR]);
+  assert.deepEqual(scheduled.args[1],[0n]);assert.equal(scheduled.args[2].length,1);assert.equal(scheduled.args[5],172800n);
+  const call=decodeFunctionData({abi:a.abi,data:scheduled.args[2][0]});assert.equal(call.functionName,'registerBatch');
+  assert.equal(call.args[0],plan.batchId);assert.equal(call.args[1],plan.root);
+  assert.deepEqual(decodeFunctionData({abi:timelock,data:plan.activate.data}).args[0].map(a=>a.toLowerCase()),[FOLLOWUP_MIGRATOR]);
+  for(const mutate of [p=>{p.migrator=owner;},p=>{p.entries[0].sourceKind='direct_legacy';},p=>{p.steps[0].data='0x';},
+    p=>{p.delay='172799';},p=>{p.entries.push(structuredClone(p.entries[0]));}]){
+    const changed=structuredClone(plan);mutate(changed);assert.throws(()=>validateFollowupPlan(changed,a));
+  }
+});
+test('followup deployment verifies exact runtime, immutable context and both existing mint roles',async()=>{
+  const plan=fixture(buildFollowupPlan);let authorized=true,contextChanged=false;
+  const names=['timelock','operator','hub','legacyHub','oldPassport','oldStamp','newPassport','newStamp'];
+  const client={getBytecode:async()=>a.deployedBytecode.object,readContract:async({functionName,blockNumber})=>{
+    assert.equal(blockNumber,123n);
+    if(functionName==='hasRole')return authorized;
+    if(functionName==='environmentId')return context.environmentId;
+    return contextChanged?owner:plan.constructorArgs[names.indexOf(functionName)];
+  }};
+  await verifyFollowupDeployment(client,plan,a,123n);
+  authorized=false;await assert.rejects(verifyFollowupDeployment(client,plan,a,123n),/MIGRATOR_MINTER/);
+  authorized=true;contextChanged=true;await assert.rejects(verifyFollowupDeployment(client,plan,a,123n),/MIGRATOR_CONTEXT/);
+  contextChanged=false;client.getBytecode=async()=>'0x';await assert.rejects(verifyFollowupDeployment(client,plan,a,123n),/MIGRATOR_RUNTIME/);
+});
+test('followup preparation requires an explicit lane before any RPC or signing input',()=>{
+  for(const sourceKind of [undefined,'unknown']){
+    const result=spawnSync(process.execPath,[new URL('./replace-existing-nfts-giwa.mjs',import.meta.url).pathname,
+      'prepare-followup',...(sourceKind?['--source-kind',sourceKind]:[])],{encoding:'utf8'});
+    assert.equal(result.status,1);assert.match(result.stderr,/EXPLICIT_SOURCE_KIND_REQUIRED/);
+  }
 });

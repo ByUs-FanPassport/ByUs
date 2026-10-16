@@ -67,7 +67,9 @@ jobs:
           version: stable
       - run: forge test --root contracts
       - name: Verify immediate-registration deployment plan guards
-        run: node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs scripts/pin-metadata-assets.test.mjs scripts/migrate-existing-nfts-giwa.test.mjs scripts/replace-existing-nfts-giwa.test.mjs
+        run: |
+          export PATH="$(pg_config --bindir):$PATH"
+          RUN_DIRECT_LEGACY_DB_TEST=1 node --test scripts/prepare-action-hub-cutover.test.mjs scripts/register-giwa-campaign.test.mjs scripts/migrate-kyaa-giwa.test.mjs scripts/pin-metadata-assets.test.mjs scripts/migrate-existing-nfts-giwa.test.mjs scripts/replace-existing-nfts-giwa.test.mjs scripts/direct-legacy-nfts-giwa.test.mjs
       - name: Exercise worker to ActionHub on local Anvil
         run: RUN_ACTION_ANVIL_INTEGRATION=1 npm run test --workspace @byus/worker -- test/action-anvil.integration.test.ts
       - name: Validate ActionHub namespace upgrade compatibility

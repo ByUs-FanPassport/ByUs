@@ -11,6 +11,8 @@ import {privateKeyToAccount} from 'viem/accounts';
 import {EXISTING_NFT_DEPLOYMENT as d,trustedActionContext as context,refComponents,
   privateJson,writePrivate,inventoryClient,zeroHash,zeroAddress} from './migrate-existing-nfts-giwa.mjs';
 import {assertKyaaEnvelope,checkPrivate,persist,readReceipt,confirmedKyaaReceipt,runtimeMatches} from './migrate-kyaa-giwa.mjs';
+import {assertDirectHistory,assertDirectSource,directLegacyMetadata,assertRawMetadata,directAbsencePredicate,directAbsenceSql,
+  assertDirectAbsence,verifyDirectHistory,verifyDirectSource} from './direct-legacy-nfts-giwa.mjs';
 
 const assert=(ok,reason)=>{if(!ok)throw Error(reason);};
 const hash=v=>keccak256(new TextEncoder().encode(privateJson(v)));
@@ -32,6 +34,7 @@ export const itemComponents=[{name:'batchId',type:'bytes32'},{name:'kind',type:'
   {name:'sourceHub',type:'address'},{name:'sourceActionId',type:'bytes32'}];
 const artifact=()=>JSON.parse(fs.readFileSync(new URL('../contracts/out/KyaaCredentialMigrator.sol/KyaaCredentialMigrator.json',import.meta.url)));
 export const replacementPlanHash=hash;
+export const FOLLOWUP_MIGRATOR='0xd72c1ac7f0ec0fcfe596050cff21f6fb477cee0c';
 export const assetIdentity=(address,tokenId)=>keccak256(encodeAbiParameters([{type:'address'},{type:'uint256'}],[address,BigInt(tokenId)]));
 export function replacementLeaf(migrator,item){
   return keccak256(keccak256(encodeAbiParameters([{type:'uint256'},{type:'address'},{type:'bytes32'},
@@ -103,7 +106,86 @@ export function validateReplacementPlan(plan,a){
     items:plan.entries.map((e,i)=>({contract:e.oldContract,tokenId:e.item.oldTokenId,documentHash:String(i)}))};
   assert(isDeepStrictEqual(plan,JSON.parse(privateJson(buildReplacementPlan(a,verified,metadata,plan.steps[0].nonce,BigInt(plan.delay),plan.expiresAt)))),'MANIFEST_CHANGED');
 }
-function database(envFile,sql,write=false){
+export function buildFollowupPlan(a,verified,metadata,nonce,delay,expiresAt,sourceKind){
+  assert(['entity','direct_legacy'].includes(sourceKind),'EXPLICIT_SOURCE_KIND_REQUIRED');
+  assert(Number.isSafeInteger(nonce)&&nonce>=0&&delay>=172800n,'NONCE_OR_TIMELOCK');
+  let entries,snapshot,directEvidence;
+  if(sourceKind==='entity'){
+    assert(verified.items?.filter(s=>s.classification==='ELIGIBLE').every(s=>!s.sourceKind||s.sourceKind==='entity'),'ENTITY_SOURCE_KIND_MISMATCH');
+    const previous=buildReplacementPlan(a,verified,metadata,nonce,delay,expiresAt);
+    snapshot=previous.snapshot;
+    entries=previous.entries.map(({leaf:_,proof:__,item,...rest})=>{
+      const {batchId:___,...fields}=item;return {sourceKind,...rest,item:fields};
+    });
+  }else{
+    assert(verified.format==='kyaa-direct-legacy-verified-v1'&&metadata.format==='kyaa-direct-legacy-metadata-v1'
+      &&metadata.snapshotBlockHash===verified.snapshot?.blockHash,'DIRECT_INVENTORY_BINDING');
+    directEvidence=assertDirectHistory({snapshot:verified.snapshot,hubHistory:verified.hubHistory});snapshot=verified.snapshot;
+    assert(Array.isArray(verified.items)&&verified.items.length>0&&verified.items.length<=10000,'ITEM_LIMIT');
+    entries=verified.items.map(source=>{
+      assertDirectSource(source,directEvidence);
+      const expected=directLegacyMetadata(source),matches=metadata.items.filter(m=>m.contract===source.contract&&m.tokenId===source.tokenId);
+      assert(matches.length===1,'DIRECT_METADATA_UNIQUE');
+      const docs=metadata.documents.filter(d=>d.digest===matches[0].documentHash);
+      assert(docs.length===1&&docs[0].digest===hash(expected)&&isDeepStrictEqual(docs[0].document,expected)
+        &&/^ipfs:\/\/[a-zA-Z0-9]+$/.test(docs[0].uri),'DIRECT_REPLACEMENT_METADATA');
+      const newMetadata={uri:docs[0].uri,raw:docs[0].raw,sha256:docs[0].sha256,document:docs[0].document};
+      assertRawMetadata(newMetadata,docs[0].uri);
+      return {sourceKind,item:{kind:source.kind,oldTokenId:source.tokenId,issuanceKey:source.issuanceKey,recipient:source.owner,
+        oldUriHash:textHash(source.metadataUri),newUriHash:textHash(docs[0].uri),sourceHub:zeroAddress,sourceActionId:zeroHash},
+      oldContract:source.contract,oldMetadataUri:source.metadataUri,oldTxHash:source.transactionHash,metadataUri:docs[0].uri,
+      sourceRefs:[],aliases:[],sourceEvidence:{mintProof:source.mintProof,originalMetadata:source.originalMetadata},newMetadata};
+    });
+  }
+  assert(entries.every(e=>[0,1].includes(e.item.kind)&&e.oldContract===(e.item.kind===0?d.oldPassport:d.oldStamp)
+    &&/^[1-9][0-9]*$/.test(e.item.oldTokenId)&&/^0x[0-9a-f]{64}$/.test(e.item.issuanceKey)
+    &&e.item.issuanceKey!==zeroHash&&/^0x[0-9a-f]{40}$/.test(e.item.recipient)&&e.item.recipient!==zeroAddress),'INVALID_FOLLOWUP_ASSET');
+  assert(new Set(entries.map(e=>`${e.oldContract}:${e.item.oldTokenId}`)).size===entries.length
+    &&new Set(entries.map(e=>`${e.item.kind}:${e.item.issuanceKey}`)).size===entries.length,'DUPLICATE_FOLLOWUP_SOURCE');
+  const migrator=FOLLOWUP_MIGRATOR,batchId=hash({release:'kyaa-existing-nft-followup-v1',sourceKind,migrator,snapshot,entries,directEvidence});
+  entries=entries.map(e=>({...e,item:{batchId,...e.item}}));
+  const tree=replacementTree(entries.map(e=>replacementLeaf(migrator,e.item)));
+  entries.forEach((e,i)=>{e.leaf=replacementLeaf(migrator,e.item);e.proof=tree.proofs[i];});
+  const manifestHash=hash({batchId,snapshot,entries,directEvidence}),targets=[migrator],values=[0n],payloads=[
+    encodeFunctionData({abi:a.abi,functionName:'registerBatch',args:[batchId,tree.root,manifestHash,entries.length,entries.length,BigInt(expiresAt)]})];
+  const salt=hash({batchId,manifestHash,root:tree.root});
+  const operation=keccak256(encodeAbiParameters([{type:'address[]'},{type:'uint256[]'},{type:'bytes[]'},{type:'bytes32'},{type:'bytes32'}],[targets,values,payloads,zeroHash,salt]));
+  return {format:'kyaa-existing-nft-followup-plan-v1',sourceKind,chainId:d.chainId,operator:d.admin,migrator,
+    constructorArgs:[d.timelock,d.admin,d.hub,context.legacyHub,d.oldPassport,d.oldStamp,d.newPassport,d.newStamp],
+    creationHash:keccak256(a.bytecode.object),runtimeHash:keccak256(a.deployedBytecode.object),snapshot,
+    ...(directEvidence?{directEvidence}:{}),batchId,root:tree.root,manifestHash,maxItems:entries.length,maxMints:entries.length,
+    expiresAt:String(expiresAt),delay:String(delay),entries,operation,
+    steps:[{id:'schedule',nonce,to:d.timelock,gas:'600000',data:encodeFunctionData({abi:tl,functionName:'scheduleBatch',args:[targets,values,payloads,zeroHash,salt,delay]})}],
+    activate:{id:'activate',to:d.timelock,gas:'600000',data:encodeFunctionData({abi:tl,functionName:'executeBatch',args:[targets,values,payloads,zeroHash,salt]})},
+    maxFeePerGas:'100000000',mintGasCap:'1000000',maximumExposureWei:String((1200000n+BigInt(entries.length)*1000000n)*100000000n)};
+}
+export function directSourceFromEntry(entry){
+  assert(entry.sourceKind==='direct_legacy'&&!entry.entity&&entry.aliases?.length===0&&entry.sourceRefs?.length===0
+    &&entry.item.sourceHub===zeroAddress&&entry.item.sourceActionId===zeroHash,'DIRECT_ENTRY_FORMAT');
+  return {sourceKind:'direct_legacy',kind:entry.item.kind,contract:entry.oldContract,tokenId:entry.item.oldTokenId,
+    issuanceKey:entry.item.issuanceKey,owner:entry.item.recipient,metadataUri:entry.oldMetadataUri,transactionHash:entry.oldTxHash,
+    blockNumber:entry.sourceEvidence.mintProof.blockNumber,blockHash:entry.sourceEvidence.mintProof.blockHash,...entry.sourceEvidence};
+}
+export function validateFollowupPlan(plan,a){
+  assert(plan.format==='kyaa-existing-nft-followup-plan-v1'&&plan.migrator===FOLLOWUP_MIGRATOR,'FOLLOWUP_PLAN_REQUIRED');
+  let verified;
+  if(plan.sourceKind==='entity'){
+    verified={format:'kyaa-existing-nft-verified-v1',...plan.snapshot,items:plan.entries.map(e=>({
+      classification:'ELIGIBLE',kind:e.item.kind,tokenId:e.item.oldTokenId,issuanceKey:e.item.issuanceKey,
+      owner:e.item.recipient,metadataUri:e.oldMetadataUri,contract:e.oldContract,transactionHash:e.oldTxHash,
+      sourceHub:e.item.sourceHub,sourceActionId:e.item.sourceActionId,sourceRefs:e.sourceRefs,issues:[],
+      entities:[{entity_type:e.entity.type,entity_id:e.entity.id,app_user_id:e.entity.owner,wallet:e.item.recipient,
+        artwork_type:e.entity.artworkType,business_status:e.entity.businessStatus}],aliases:e.aliases.map(id=>({id}))}))};
+  }else verified={format:'kyaa-direct-legacy-verified-v1',...plan.directEvidence,items:plan.entries.map(directSourceFromEntry)};
+  const metadata={format:plan.sourceKind==='entity'?'kyaa-existing-nft-metadata-v1':'kyaa-direct-legacy-metadata-v1',
+    snapshotBlockHash:plan.snapshot.blockHash,documents:plan.entries.map((e,i)=>({digest:plan.sourceKind==='entity'?String(i):hash(e.newMetadata.document),
+      uri:e.metadataUri,...(e.newMetadata??{})})),
+    items:plan.entries.map((e,i)=>({contract:e.oldContract,tokenId:e.item.oldTokenId,documentHash:plan.sourceKind==='entity'?String(i):hash(e.newMetadata.document)}))};
+  // Shared documents have one canonical entry, as in the metadata publication output.
+  metadata.documents=[...new Map(metadata.documents.map(doc=>[doc.digest,doc])).values()];
+  assert(isDeepStrictEqual(plan,JSON.parse(privateJson(buildFollowupPlan(a,verified,metadata,plan.steps[0].nonce,BigInt(plan.delay),plan.expiresAt,plan.sourceKind)))),'FOLLOWUP_MANIFEST_CHANGED');
+}
+export function database(envFile,sql,write=false){
   const env=parseEnv(fs.readFileSync(envFile,'utf8'));
   assert(env.SUPABASE_PROD_PROJECT_REF&&env.SUPABASE_PROD_DB_PASSWORD,'DATABASE_ENV_MISSING');
   return execFileSync('psql',['-XAt','-h','aws-1-ap-northeast-2.pooler.supabase.com','-p','5432',
@@ -138,6 +220,38 @@ async function verifyDeployment(client,plan,a,blockNumber){
     assert((await client.readContract({address:plan.migrator,abi:a.abi,functionName:name,blockNumber})).toLowerCase()===plan.constructorArgs[i],'MIGRATOR_CONTEXT');
   assert(await client.readContract({address:plan.migrator,abi:a.abi,functionName:'environmentId',blockNumber})===context.environmentId,'MIGRATOR_ENVIRONMENT');
 }
+export async function verifyFollowupDeployment(client,plan,a,blockNumber){
+  assert(plan.migrator===FOLLOWUP_MIGRATOR,'FOLLOWUP_MIGRATOR_CHANGED');
+  await verifyDeployment(client,plan,a,blockNumber);
+  for(const address of [d.newPassport,d.newStamp])assert(await client.readContract({address,abi:nft,functionName:'hasRole',args:[role,plan.migrator],blockNumber}),'MIGRATOR_MINTER');
+}
+export async function followupAssetPreflight(client,plan,entry,a,head){
+  const read=(address,abi,functionName,args=[])=>client.readContract({address,abi,functionName,args,blockNumber:head.number});
+  const sourceId=assetIdentity(entry.oldContract,entry.item.oldTokenId),target=entry.item.kind===0?d.newPassport:d.newStamp;
+  const mapping=await read(plan.migrator,a.abi,'replacements',[sourceId]);
+  assert(mapping[0]===zeroHash&&mapping[2]===0n,'SOURCE_ALREADY_REPLACED');
+  const targetToken=await read(target,nft,entry.item.kind===0?'tokenByPassportId':'tokenByIssuanceId',[entry.item.issuanceKey]);
+  for(const [address,token,uri] of [[entry.oldContract,BigInt(entry.item.oldTokenId),entry.oldMetadataUri],
+    [target,targetToken,entry.metadataUri]]){
+    if(token===0n)continue;
+    const [key,owner,metadataUri]=await Promise.all([
+      read(address,nft,entry.item.kind===0?'tokenByPassportId':'tokenByIssuanceId',[entry.item.issuanceKey]),
+      read(address,nft,entry.item.kind===0?'ownerOf':'balanceOf',entry.item.kind===0?[token]:[entry.item.recipient,token]),
+      read(address,nft,entry.item.kind===0?'tokenURI':'uri',[token]),
+    ]);
+    assert(key===token&&(entry.item.kind===0?owner.toLowerCase()===entry.item.recipient:owner===1n)&&metadataUri===uri,'FOLLOWUP_ASSET_CHANGED');
+    if(entry.item.kind===1)assert(await read(address,nft,'totalSupply',[token])===1n,'FOLLOWUP_ASSET_SUPPLY');
+    if(address===target)assert(await read(plan.migrator,a.abi,'sourceByTarget',[assetIdentity(target,token)])===zeroHash,'TARGET_ALREADY_REPLACED');
+  }
+  assert((await client.getBlock({blockNumber:head.number})).hash===head.hash,'FOLLOWUP_SNAPSHOT_REORG');
+  return targetToken;
+}
+export function followupUniquenessSql(entry,targetTokenId=0n){
+  const target=entry.item.kind===0?d.newPassport:d.newStamp;
+  return `select jsonb_build_object('unique',not exists(select 1 from public.nft_credential_replacements where
+    (old_contract=${quote(entry.oldContract)} and old_token_id=${quote(entry.item.oldTokenId)}::numeric)
+    or (new_contract=${quote(target)} and (issuance_key=${quote(entry.item.issuanceKey)} or new_token_id=${BigInt(targetTokenId)})));`;
+}
 export async function finalizedReplacement(client,plan,entry,receipt,a){
   const head=await client.getBlock({blockTag:'finalized'});
   assert(head.number>=receipt.blockNumber,'RECEIPT_NOT_FINALIZED');
@@ -170,6 +284,7 @@ export async function finalizedReplacement(client,plan,entry,receipt,a){
   return {event,head,target};
 }
 export function reconciliationSql(plan,entry,receipt,proof,facts){
+  if(entry.sourceKind==='direct_legacy')return directReconciliationSql(plan,entry,receipt,proof);
   const batch={batch_id:plan.batchId,chain_id:d.chainId,migrator:plan.migrator,environment_id:context.environmentId,
     merkle_root:plan.root,manifest_hash:plan.manifestHash,max_items:plan.maxItems,max_mints:plan.maxMints,
     expires_at:new Date(Number(plan.expiresAt)*1000).toISOString()};
@@ -201,6 +316,52 @@ export function reconciliationSql(plan,entry,receipt,proof,facts){
         where e.replacement_id is distinct from current_row.id or e.app_user_id is distinct from x.app_user_id::uuid or e.original_tx_hash is distinct from x.original_tx_hash)
       then raise exception 'entity mapping mismatch'; end if;
     end $reconcile$; commit;`;
+}
+export function directReconciliationSql(plan,entry,receipt,proof){
+  const source=directSourceFromEntry(entry);
+  assert(plan.format==='kyaa-existing-nft-followup-plan-v1'&&plan.sourceKind==='direct_legacy','DIRECT_FOLLOWUP_REQUIRED');
+  const batch={batch_id:plan.batchId,chain_id:d.chainId,migrator:plan.migrator,environment_id:context.environmentId,
+    merkle_root:plan.root,manifest_hash:plan.manifestHash,max_items:plan.maxItems,max_mints:plan.maxMints,
+    expires_at:new Date(Number(plan.expiresAt)*1000).toISOString()};
+  const replacement={batch_id:plan.batchId,leaf_hash:entry.leaf,credential_kind:entry.item.kind,old_contract:entry.oldContract,
+    old_token_id:entry.item.oldTokenId,old_metadata_uri:entry.oldMetadataUri,old_tx_hash:entry.oldTxHash,
+    new_contract:proof.target,new_token_id:String(proof.event.newTokenId),new_metadata_uri:entry.metadataUri,
+    issuance_key:entry.item.issuanceKey,recipient:entry.item.recipient,source_action_id:zeroHash,source_hub:zeroAddress,
+    tx_hash:receipt.transactionHash,block_number:String(receipt.blockNumber),block_hash:receipt.blockHash,
+    finalized_block_number:String(proof.head.number),finalized_block_hash:proof.head.hash,minted:proof.event.minted};
+  const insert=(table,value,extra)=>{const keys=Object.keys(value);return `insert into public.${table} (${keys.join(',')})
+    select ${keys.join(',')} from jsonb_populate_record(null::public.${table},${quote(privateJson(value))}::jsonb) ${extra};`;};
+  return `begin; set local lock_timeout='3s'; set local statement_timeout='10s';
+    select pg_advisory_xact_lock(hashtext('kyaa-nft-replacements'));
+    lock table public.fan_passports,public.stamps,public.fan_reactions,public.community_stamps,public.blockchain_jobs,
+      public.fan_action_outbox,public.fan_action_credentials,public.first_reaction_stamps,public.nft_credential_replacement_entities in share mode nowait;
+    do $direct$ declare current_row public.nft_credential_replacements; batch_row public.nft_credential_replacement_batches; begin
+      if not (${directAbsencePredicate(source)}) then raise exception 'DIRECT_DATABASE_ASSOCIATION'; end if;
+      ${insert('nft_credential_replacement_batches',batch,'on conflict(batch_id) do nothing')}
+      select * into strict batch_row from public.nft_credential_replacement_batches where batch_id=${quote(plan.batchId)};
+      if not (to_jsonb(batch_row) @> (to_jsonb(jsonb_populate_record(null::public.nft_credential_replacement_batches,${quote(privateJson(batch))}::jsonb))-'created_at')) then raise exception 'batch mismatch'; end if;
+      ${insert('nft_credential_replacements',replacement,'on conflict(old_contract,old_token_id) do nothing')}
+      select * into strict current_row from public.nft_credential_replacements where old_contract=${quote(entry.oldContract)} and old_token_id=${quote(entry.item.oldTokenId)}::numeric;
+      if not (to_jsonb(current_row) @> (to_jsonb(jsonb_populate_record(null::public.nft_credential_replacements,${quote(privateJson(replacement))}::jsonb))-'id'-'verified_at'-'finalized_block_number'-'finalized_block_hash')) then raise exception 'replacement mismatch'; end if;
+      if exists(select 1 from public.nft_credential_replacement_entities where replacement_id=current_row.id)
+        then raise exception 'DIRECT_ENTITY_MAPPING_EXISTS'; end if;
+    end $direct$; commit;`;
+}
+async function followupPreflight(client,plan,a,envFile,entries){
+  assert(envFile,'DATABASE_ENV_REQUIRED');
+  const head=await client.getBlock({blockTag:'finalized'});
+  await verifyFollowupDeployment(client,plan,a,head.number);
+  if(plan.sourceKind==='direct_legacy')await verifyDirectHistory(client,plan.directEvidence,head);
+  for(const entry of entries){
+    if(entry.sourceKind==='direct_legacy'){
+      const source=directSourceFromEntry(entry);
+      assert(isDeepStrictEqual(assertRawMetadata(entry.newMetadata,entry.metadataUri),directLegacyMetadata(source)),'DIRECT_REPLACEMENT_METADATA');
+      assertDirectAbsence(JSON.parse(database(envFile,directAbsenceSql(source))));
+      await verifyDirectSource(client,source,plan.directEvidence,head);
+    }else assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
+    const targetToken=await followupAssetPreflight(client,plan,entry,a,head);
+    assert(JSON.parse(database(envFile,followupUniquenessSql(entry,targetToken))).unique===true,'DATABASE_REPLACEMENT_EXISTS');
+  }
 }
 export function pendingReplacementEntries(plan,journal,mode,limit,onlyLeaf){
   assert(['migrate','reconcile'].includes(mode)&&Number.isSafeInteger(limit)&&limit>0&&limit<=100,'LIMIT_1_TO_100_REQUIRED');
@@ -242,25 +403,32 @@ export async function signStep(client,step,journal,journalFile){
 }
 async function main(){
   const args=process.argv.slice(2),mode=args[0],get=k=>{const i=args.indexOf(k);return i<0?undefined:args[i+1];};
-  assert(['prepare','inspect','deploy-and-schedule','activate','migrate','reconcile'].includes(mode),'UNKNOWN_MODE');
+  assert(['prepare','prepare-followup','inspect','deploy-and-schedule','schedule-followup','activate','migrate','reconcile'].includes(mode),'UNKNOWN_MODE');
+  assert(mode!=='prepare-followup'||['entity','direct_legacy'].includes(get('--source-kind')),'EXPLICIT_SOURCE_KIND_REQUIRED');
   const onlyLeaf=get('--leaf');
   assert(!args.includes('--leaf')||(['migrate','reconcile'].includes(mode)&&/^0x[0-9a-f]{64}$/.test(onlyLeaf??'')),'LEAF_REQUIRES_MIGRATE_OR_RECONCILE');
   const file=get('--manifest'),rpcFile=get('--rpc-file'),envFile=get('--database-env');assert(file&&rpcFile,'MANIFEST_AND_RPC_REQUIRED');
   const client=inventoryClient(fs.readFileSync(rpcFile,'utf8').trim()),a=artifact();
   assert(await client.getChainId()===d.chainId,'WRONG_CHAIN');
   const delay=await client.readContract({address:d.timelock,abi:tl,functionName:'getMinDelay'});
-  if(mode==='prepare'){
+  if(mode==='prepare'||mode==='prepare-followup'){
     const [latest,pending,head]=await Promise.all([client.getTransactionCount({address:d.admin}),client.getTransactionCount({address:d.admin,blockTag:'pending'}),client.getBlock()]);
     assert(latest===pending,'PENDING_ADMIN_TRANSACTION');
-    const plan=buildReplacementPlan(a,JSON.parse(fs.readFileSync(get('--verified'))),JSON.parse(fs.readFileSync(get('--metadata'))),pending,delay,head.timestamp+30n*86400n);
+    const builder=mode==='prepare'?buildReplacementPlan:buildFollowupPlan;
+    const plan=builder(a,JSON.parse(fs.readFileSync(get('--verified'))),JSON.parse(fs.readFileSync(get('--metadata'))),pending,delay,head.timestamp+30n*86400n,get('--source-kind'));
+    if(mode==='prepare-followup')await verifyFollowupDeployment(client,plan,a,head.number);
     writePrivate(file,plan);console.log(privateJson({prepared:true,manifest:file,reviewHash:hash(plan),migrator:plan.migrator,
       batchId:plan.batchId,items:plan.maxItems,delay:plan.delay,maximumExposureWei:plan.maximumExposureWei}));return;
   }
-  checkPrivate(file);const plan=JSON.parse(fs.readFileSync(file));validateReplacementPlan(plan,a);
+  checkPrivate(file);const plan=JSON.parse(fs.readFileSync(file)),followup=plan.format==='kyaa-existing-nft-followup-plan-v1';
+  if(followup)validateFollowupPlan(plan,a);else validateReplacementPlan(plan,a);
+  assert(mode!=='deploy-and-schedule'||!followup,'FOLLOWUP_CANNOT_DEPLOY');
+  assert(mode!=='schedule-followup'||followup,'FOLLOWUP_PLAN_REQUIRED');
   assert(delay===BigInt(plan.delay),'TIMELOCK_DELAY_CHANGED');
   const reviewHash=hash(plan),timestamp=await client.readContract({address:d.timelock,abi:tl,functionName:'getTimestamp',args:[plan.operation]});
   if(mode==='inspect'){
-    const deployed=!!await client.getBytecode({address:plan.migrator});if(deployed)await verifyDeployment(client,plan,a);
+    const deployed=!!await client.getBytecode({address:plan.migrator});
+    if(followup)await verifyFollowupDeployment(client,plan,a);else if(deployed)await verifyDeployment(client,plan,a);
     console.log(privateJson({reviewHash,migrator:plan.migrator,deployed,batchId:plan.batchId,items:plan.maxItems,
       operation:plan.operation,timestamp,readyAt:timestamp>1n?new Date(Number(timestamp)*1000).toISOString():null,done:timestamp===1n}));return;
   }
@@ -272,7 +440,8 @@ async function main(){
   try{
     const journal=fs.existsSync(journalFile)?JSON.parse(fs.readFileSync(journalFile)):{manifestHash:reviewHash,steps:[]};
     assert(journal.manifestHash===reviewHash,'JOURNAL_MANIFEST');
-    if(mode==='deploy-and-schedule'){
+    if(mode==='deploy-and-schedule'||mode==='schedule-followup'){
+      if(followup)await followupPreflight(client,plan,a,envFile,plan.entries);
       for(const step of plan.steps){
         if(step.id==='schedule')await verifyDeployment(client,plan,a);
         const receipt=await signStep(client,step,journal,journalFile);
@@ -285,6 +454,7 @@ async function main(){
     await verifyDeployment(client,plan,a);
     if(mode==='activate'){
       if(timestamp!==1n){
+        if(followup)await followupPreflight(client,plan,a,envFile,plan.entries);
         assert(await client.readContract({address:d.timelock,abi:tl,functionName:'isOperationReady',args:[plan.operation]}),'TIMELOCK_NOT_READY');
         await signStep(client,{...plan.activate,nonce:journal.steps.find(s=>s.id==='activate')?.nonce??await client.getTransactionCount({address:d.admin})},journal,journalFile);
       }
@@ -297,9 +467,12 @@ async function main(){
     let processed=0;
     for(const entry of pendingReplacementEntries(plan,journal,mode,limit,onlyLeaf)){
       const id='mint-'+entry.leaf,saved=journal.steps.find(s=>s.id===id);
-      const facts=assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
+      const direct=entry.sourceKind==='direct_legacy',source=direct?directSourceFromEntry(entry):null;
+      const facts=direct?assertDirectAbsence(JSON.parse(database(envFile,directAbsenceSql(source))))
+        :assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
       let receipt;
       if(mode==='migrate'){
+        if(followup&&!saved)await followupPreflight(client,plan,a,envFile,[entry]);
         const refs=entry.sourceRefs.map(ref=>({...ref,tokenId:BigInt(ref.tokenId)}));
         const step={id,to:plan.migrator,gas:plan.mintGasCap,nonce:saved?.nonce??await client.getTransactionCount({address:d.admin}),
           data:encodeFunctionData({abi:a.abi,functionName:'migrate',args:[{...entry.item,oldTokenId:BigInt(entry.item.oldTokenId)},entry.metadataUri,entry.proof,refs]})};
@@ -309,8 +482,10 @@ async function main(){
       }else receipt=await readReceipt(client,saved.hash);
       assert(receipt,'RECONCILIATION_RECEIPT_MISSING');
       const proof=await finalizedReplacement(client,plan,entry,receipt,a);
-      const freshFacts=assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
-      assert(freshFacts.original.txHash===facts.original.txHash,'ORIGINAL_REFERENCE_CHANGED');
+      if(direct){await verifyDirectHistory(client,plan.directEvidence,proof.head);await verifyDirectSource(client,source,plan.directEvidence,proof.head);}
+      const freshFacts=direct?assertDirectAbsence(JSON.parse(database(envFile,directAbsenceSql(source))))
+        :assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
+      if(!direct)assert(freshFacts.original.txHash===facts.original.txHash,'ORIGINAL_REFERENCE_CHANGED');
       database(envFile,reconciliationSql(plan,entry,receipt,proof,freshFacts),true);
       journal.steps.find(s=>s.id===id).reconciled=true;persist(journalFile,journal);
       processed++;
