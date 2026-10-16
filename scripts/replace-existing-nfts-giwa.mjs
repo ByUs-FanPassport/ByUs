@@ -202,9 +202,12 @@ export function reconciliationSql(plan,entry,receipt,proof,facts){
       then raise exception 'entity mapping mismatch'; end if;
     end $reconcile$; commit;`;
 }
-export function pendingReplacementEntries(plan,journal,mode,limit){
+export function pendingReplacementEntries(plan,journal,mode,limit,onlyLeaf){
   assert(['migrate','reconcile'].includes(mode)&&Number.isSafeInteger(limit)&&limit>0&&limit<=100,'LIMIT_1_TO_100_REQUIRED');
+  if(onlyLeaf!==undefined)assert(limit===1&&/^0x[0-9a-f]{64}$/.test(onlyLeaf)
+    &&plan.entries.some(entry=>entry.leaf===onlyLeaf),'EXACT_REVIEWED_LEAF_AND_LIMIT_1_REQUIRED');
   return plan.entries.filter(entry=>{
+    if(onlyLeaf!==undefined&&entry.leaf!==onlyLeaf)return false;
     const saved=journal.steps.find(s=>s.id==='mint-'+entry.leaf);
     return !saved?.reconciled&&(mode==='migrate'?!saved?.receipt:!!saved);
   }).slice(0,limit);
@@ -240,6 +243,8 @@ export async function signStep(client,step,journal,journalFile){
 async function main(){
   const args=process.argv.slice(2),mode=args[0],get=k=>{const i=args.indexOf(k);return i<0?undefined:args[i+1];};
   assert(['prepare','inspect','deploy-and-schedule','activate','migrate','reconcile'].includes(mode),'UNKNOWN_MODE');
+  const onlyLeaf=get('--leaf');
+  assert(!args.includes('--leaf')||(['migrate','reconcile'].includes(mode)&&/^0x[0-9a-f]{64}$/.test(onlyLeaf??'')),'LEAF_REQUIRES_MIGRATE_OR_RECONCILE');
   const file=get('--manifest'),rpcFile=get('--rpc-file'),envFile=get('--database-env');assert(file&&rpcFile,'MANIFEST_AND_RPC_REQUIRED');
   const client=inventoryClient(fs.readFileSync(rpcFile,'utf8').trim()),a=artifact();
   assert(await client.getChainId()===d.chainId,'WRONG_CHAIN');
@@ -290,7 +295,7 @@ async function main(){
     assert(envFile&&timestamp===1n,'DATABASE_ENV_AND_ACTIVE_BATCH_REQUIRED');
     const limit=Number(get('--limit'));
     let processed=0;
-    for(const entry of pendingReplacementEntries(plan,journal,mode,limit)){
+    for(const entry of pendingReplacementEntries(plan,journal,mode,limit,onlyLeaf)){
       const id='mint-'+entry.leaf,saved=journal.steps.find(s=>s.id===id);
       const facts=assertPreflight(entry,JSON.parse(database(envFile,preflightSql(entry))||'null'));
       let receipt;

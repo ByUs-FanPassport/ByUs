@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {parseEnv,isDeepStrictEqual} from 'node:util';
-import {createPublicClient,http,parseAbi,decodeEventLog,decodeAbiParameters,encodeAbiParameters,keccak256} from 'viem';
+import {createPublicClient,http,parseAbi,decodeEventLog,decodeAbiParameters,encodeAbiParameters,keccak256,toEventSelector} from 'viem';
 import {KYAA_DEPLOYMENT} from './migrate-kyaa-giwa.mjs';
 
 export const EXISTING_NFT_DEPLOYMENT=Object.freeze({...KYAA_DEPLOYMENT,
@@ -157,9 +157,27 @@ export function preferredSource(credentials,validProofs){
   // A current-Hub invalidation must not fall back to an older Hub's still-active copy.
   return credentials.some(c=>c.hub_proxy===d.hub)?validProofs.find(p=>p.hub===d.hub):validProofs[0];
 }
-export async function verifyCurrentInventory(client,chain,db){
+export function parseSourceReceiptHints(proof){
+  assert(proof&&proof.format==='kyaa-source-receipt-hints-v1'&&Object.keys(proof).sort().join(',')==='format,hints'
+    &&Array.isArray(proof.hints)&&proof.hints.length>0,'INVALID_SOURCE_RECEIPT_HINTS');
+  const seen=new Set();
+  return proof.hints.map(hint=>{
+    assert(hint&&Object.keys(hint).sort().join(',')==='actionId,hub,txHash'
+      &&typeof hint.hub==='string'&&/^0x[0-9a-fA-F]{40}$/.test(hint.hub)
+      &&typeof hint.actionId==='string'&&/^0x[0-9a-fA-F]{64}$/.test(hint.actionId)&&hint.actionId.toLowerCase()!==zeroHash
+      &&typeof hint.txHash==='string'&&/^0x[0-9a-fA-F]{64}$/.test(hint.txHash)&&hint.txHash.toLowerCase()!==zeroHash,'INVALID_SOURCE_RECEIPT_HINT');
+    const normalized={hub:hint.hub.toLowerCase(),actionId:hint.actionId.toLowerCase(),txHash:hint.txHash.toLowerCase()};
+    assert([d.hub,trustedActionContext.legacyHub].includes(normalized.hub),'UNTRUSTED_SOURCE_RECEIPT_HUB');
+    const key=`${normalized.hub}:${normalized.actionId}`;
+    assert(!seen.has(key),'DUPLICATE_SOURCE_RECEIPT_HINT');seen.add(key);return normalized;
+  });
+}
+export async function verifyCurrentInventory(client,chain,db,hints=[]){
+  assert(Array.isArray(hints),'INVALID_SOURCE_RECEIPT_HINTS');
+  if(hints.length)hints=parseSourceReceiptHints({format:'kyaa-source-receipt-hints-v1',hints});
   const {actionHubAbi,easAbi}=await import('../apps/worker/dist/action-abi.js');
   const blockNumber=BigInt(chain.blockNumber),cache=new Map();
+  const linkedTopic=toEventSelector(actionHubAbi.find(event=>event.type==='event'&&event.name==='CredentialLinked'));
   const read=(address,abi,functionName,args)=>client.readContract({address,abi,functionName,args,blockNumber});
   const groups=new Map();for(const c of db.credentials){const key=`${c.hub_proxy}:${c.action_id}`;
     if(!groups.has(key))groups.set(key,[]);groups.get(key).push(c);}
@@ -173,8 +191,32 @@ export async function verifyCurrentInventory(client,chain,db){
       const latestId=(await read(c.hub_proxy,actionHubAbi,'latestActionId',[original.occurrenceId])).toLowerCase();
       const record=latestId===c.action_id?original:await read(c.hub_proxy,actionHubAbi,'getAction',[latestId]);
       if(record.status!==2)return {valid:false,reason:'SOURCE_ACTION_INACTIVE'};
-      const rows=groups.get(`${c.hub_proxy}:${latestId}`);
-      if(!rows?.length)return {valid:false,reason:'LATEST_ACTION_REFS_MISSING'};
+      let rows=groups.get(`${c.hub_proxy}:${latestId}`);
+      if(!rows?.length){
+        const hint=hints.find(hint=>hint.hub===c.hub_proxy&&hint.actionId===latestId);
+        if(!hint)return {valid:false,reason:'LATEST_ACTION_REFS_MISSING'};
+        const receipt=await client.getTransactionReceipt({hash:hint.txHash});
+        assert(receipt.status==='success'&&receipt.transactionHash?.toLowerCase()===hint.txHash
+          &&typeof receipt.blockNumber==='bigint'&&receipt.blockNumber>=0n&&receipt.blockNumber<=blockNumber
+          &&/^0x[0-9a-fA-F]{64}$/.test(receipt.blockHash),'INVALID_SOURCE_RECEIPT');
+        assert((await client.getBlock({blockNumber:receipt.blockNumber})).hash?.toLowerCase()===receipt.blockHash.toLowerCase(),'SOURCE_RECEIPT_REORG');
+        rows=[];const assets=new Set();
+        for(const log of receipt.logs){
+          if(log.address?.toLowerCase()!==c.hub_proxy||log.topics?.[0]?.toLowerCase()!==linkedTopic)continue;
+          const {args}=decodeEventLog({abi:actionHubAbi,eventName:'CredentialLinked',data:log.data,topics:log.topics,strict:true});
+          if(args.actionId.toLowerCase()!==latestId)continue;
+          assert(log.removed!==true&&log.transactionHash?.toLowerCase()===hint.txHash&&log.blockNumber===receipt.blockNumber
+            &&log.blockHash?.toLowerCase()===receipt.blockHash.toLowerCase(),'SOURCE_RECEIPT_LOG_MISMATCH');
+          assert(args.nftContract.toLowerCase()!==zeroAddress&&args.tokenId>0n
+            &&[0,1,2].includes(args.credentialKind)&&[0,1].includes(args.linkOrigin)
+            &&(args.credentialKind===2||args.issuanceKey.toLowerCase()!==zeroHash),'INVALID_SOURCE_RECEIPT_REF');
+          const asset=`${args.nftContract.toLowerCase()}:${args.tokenId}`;
+          assert(!assets.has(asset),'DUPLICATE_SOURCE_RECEIPT_REF');assets.add(asset);
+          rows.push({nft_contract:args.nftContract.toLowerCase(),token_id:String(args.tokenId),credential_kind:args.credentialKind,
+            issuance_key:args.issuanceKey.toLowerCase(),link_origin:args.linkOrigin===0?'MINTED_NOW':'LINKED_EXISTING'});
+        }
+        assert(rows.length>0,'SOURCE_RECEIPT_REFS_MISSING');
+      }
       const refs=sourceRefs(rows);
       const [attestation,valid,eas,environment]=await Promise.all([
         read(trustedActionContext.easAddress,easAbi,'getAttestation',[record.easUID]),
@@ -255,6 +297,14 @@ async function pinReplacementMetadata(verified,envFile,output){
 async function main(){
   const args=process.argv.slice(2),get=k=>{const i=args.indexOf(k);return i<0?undefined:args[i+1];};
   assert(['inventory','verify','metadata'].includes(args[0]),'USAGE_INVENTORY_VERIFY_OR_METADATA');
+  assert(!args.some(arg=>arg.startsWith('--source-receipts=')),'SOURCE_RECEIPTS_ARGUMENT');
+  let hints=[];
+  if(args.includes('--source-receipts')){
+    assert(args[0]==='verify','SOURCE_RECEIPTS_VERIFY_ONLY');
+    const file=get('--source-receipts');
+    assert(args.filter(arg=>arg==='--source-receipts').length===1&&file?.trim()&&!file.startsWith('--'),'SOURCE_RECEIPTS_ARGUMENT');
+    hints=parseSourceReceiptHints(JSON.parse(fs.readFileSync(file,'utf8')));
+  }
   const output=get('--output'),rpcFile=get('--rpc-file'),envFile=get('--database-env');
   if(args[0]==='metadata'){
     assert(output&&get('--verified')&&get('--pinata-env'),'METADATA_ARGUMENTS');assert(!fs.existsSync(output),'OUTPUT_EXISTS');
@@ -266,7 +316,7 @@ async function main(){
   if(args[0]==='verify'){
     const chain=JSON.parse(fs.readFileSync(get('--chain'))),client=inventoryClient(fs.readFileSync(rpcFile,'utf8').trim());
     assert(await client.getChainId()===d.chainId,'WRONG_CHAIN');
-    const result={format:'kyaa-existing-nft-verified-v1',...chain,assets:undefined,...await verifyCurrentInventory(client,chain,db)};
+    const result={format:'kyaa-existing-nft-verified-v1',...chain,assets:undefined,...await verifyCurrentInventory(client,chain,db,hints)};
     writePrivate(output,result);console.log(privateJson({output,...result.summary}));return;
   }
   const chain=await captureChainInventory(inventoryClient(fs.readFileSync(rpcFile,'utf8').trim()),p=>console.log(privateJson(p)));

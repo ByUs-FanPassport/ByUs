@@ -3582,8 +3582,8 @@
     "id": "components/onchain/onchain-public-page:copy.directoryTitle"
   },
   "m13d2fec9c752": {
-    "en": "The ActionHub proxy and implementation contracts are listed separately. Passport and Stamp remain the current issuance contracts; only activity before the ActionHub deployment is excluded from these metrics.",
-    "ko": "ActionHub 프록시와 구현 계약을 구분해 표시합니다. Passport·Stamp는 현재 발급 계약이며, ActionHub 배포 이전 활동만 이 페이지의 행동 지표에 소급 합산하지 않습니다.",
+    "en": "The ActionHub proxy and implementation contracts are listed separately. Current issuance uses the kyaa Passport and Stamp contracts; earlier ByUs contracts are also listed. Activity before the ActionHub deployment is excluded from these metrics.",
+    "ko": "ActionHub 프록시와 구현 계약을 구분해 표시합니다. 현재 발급에는 kyaa Passport·Stamp 계약을 사용하며, 이전 ByUs 계약도 함께 표시합니다. ActionHub 배포 이전 활동은 행동 지표에 포함하지 않습니다.",
     "source": "components/onchain/onchain-public-page",
     "id": "components/onchain/onchain-public-page:copy.directoryDescription"
   },
@@ -6905,6 +6905,48 @@
     "source": "features/certification/ui/certification-panel",
     "id": "features/certification/ui/certification-panel:copy.attempt"
   },
+  "m1126b31a7c01": {
+    "en": "A welcome Stamp for joining kyaa.",
+    "ko": "가입하면 받는 기념 스탬프예요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.welcome.help"
+  },
+  "m57edb71ad308": {
+    "en": "Leave your first comment for your favorite.",
+    "ko": "최애에게 첫 댓글을 남겨보세요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.first_comment.help"
+  },
+  "m8d237ac84fe2": {
+    "en": "Verify your subscription to your favorite.",
+    "ko": "최애의 SNS 구독을 인증해요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.subscription.help"
+  },
+  "ma73e6a2b5cc4": {
+    "en": "Keep a record of your support.",
+    "ko": "최애에게 보낸 후원을 기록해요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.support.help"
+  },
+  "m14bb4137cf8e": {
+    "en": "Earn a Stamp when another member signs in and confirms a visit through your Passport link.",
+    "ko": "패스포트 링크를 받은 다른 회원이 로그인 후 최애를 확인하면 받아요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.share.help"
+  },
+  "m6e987219bf15": {
+    "en": "Use a friend’s code to earn a Stamp together.",
+    "ko": "친구 코드를 인증하면 둘 다 받아요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.invite.help"
+  },
+  "mcec3db980a47": {
+    "en": "Check in on your favorite’s calendar each day.",
+    "ko": "최애 캘린더에서 매일 출석해요.",
+    "source": "features/community-stamps/domain/community-stamps",
+    "id": "features/community-stamps/domain/community-stamps:COMMUNITY_STAMPS.daily_checkin.help"
+  },
   "m2f8dbf719303": {
     "en": "Welcome",
     "ko": "가입기념",
@@ -7144,6 +7186,66 @@
     "ko": "최애 페이지를 열지 못했어요. 다시 시도해 주세요.",
     "source": "features/community-stamps/ui/shared-passport-landing",
     "id": "features/community-stamps/ui/shared-passport-landing:inline.m25392b9251ce.failed"
+  },
+  "brand": {
+    "en": "Brand",
+    "ko": "브랜드",
+    "source": "features/creator/domain/creator-role",
+    "id": "features/creator/domain/creator-role:labels.brand"
+  },
+  "ready": {
+    "en": "What’s inside your ticket?",
+    "ko": "나의 티켓에 담긴 결과는?",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.ready"
+  },
+  "open": {
+    "en": "Reveal my result",
+    "ko": "내 결과 확인하기",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.open"
+  },
+  "waiting": {
+    "en": "Drumroll…",
+    "ko": "두구두구…",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.waiting"
+  },
+  "skip": {
+    "en": "Show result now",
+    "ko": "바로 결과 보기",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.skip"
+  },
+  "replay": {
+    "en": "Watch again",
+    "ko": "다시 보기",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.replay"
+  },
+  "help": {
+    "en": "Open your ticket to see your raffle result.",
+    "ko": "티켓을 열어 응모 결과를 확인해 보세요.",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.help"
+  },
+  "thanks": {
+    "en": "Thank you for joining us",
+    "ko": "함께해 줘서 고마워요",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.thanks"
+  },
+  "ticket": {
+    "en": "A ticket for you",
+    "ko": "당신을 위한 티켓",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.ticket"
+  },
+  "result": {
+    "en": "My raffle result",
+    "ko": "내 응모 결과",
+    "source": "features/benefit/ui/raffle-result-reveal",
+    "id": "features/benefit/ui/raffle-result-reveal:copy.result"
   },
   "m18490cca1879": {
     "en": "Idol",
@@ -12172,12 +12274,6 @@
     "ko": "{0}문항",
     "source": "features/quiz/ui/quiz-entry-screen",
     "id": "features/quiz/ui/quiz-entry-screen:copy.questionCount.message"
-  },
-  "mf5082ce93c91": {
-    "en": " about your favorite creator",
-    "ko": "으로 팬심 확인",
-    "source": "features/quiz/ui/quiz-entry-screen",
-    "id": "features/quiz/ui/quiz-entry-screen:copy.questionCountTail"
   },
   "mc9041df7d4b2": {
     "en": "At least {0} correct",

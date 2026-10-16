@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { PublicOnchainResult } from "@/server/onchain/public-types";
+import { APP_LOCALES } from "@/i18n/locales";
 import { OnchainPublicPage } from "./onchain-public-page";
 
 const available: PublicOnchainResult = {
@@ -40,6 +41,21 @@ const available: PublicOnchainResult = {
 };
 
 describe("OnchainPublicPage", () => {
+  it.each(APP_LOCALES)("lists current Kyaa contracts and historical ByUs contracts in %s", (locale) => {
+    render(<OnchainPublicPage locale={locale} result={{ state: "unavailable" }} />);
+    expect(screen.getByText(/kyaa Passport.*ByUs/)).toBeInTheDocument();
+    for (const [name, address] of [
+      ["Fan Passport · kyaa ERC-721 · current", "0xb6c5f48d770a732deb374226eda1e5be209b7ed4"],
+      ["Stamp · kyaa ERC-1155 · current", "0x527a70c0f7cf129650dc282b709327c5958a4ccf"],
+      ["Fan Passport · ByUs ERC-721 · legacy", "0x17f9fb7658a326dd88db523739c227faf50fca20"],
+      ["Stamp · ByUs ERC-1155 · legacy", "0x1adcde3473c4e884e60205b397ece744d8892285"],
+      ["kyaa ActionHub implementation", "0xb135c7070eb7dedbea16c8468f27e17c82f6d5f4"],
+    ]) {
+      expect(screen.getByRole("link", { name: new RegExp(name) })).toHaveAttribute("href", `https://sepolia-explorer.giwa.io/address/${address}`);
+    }
+    expect(screen.queryByText("0x049b758b3d1cc0c66408b264c7f9a96ea479860b")).not.toBeInTheDocument();
+  });
+
   it("keeps an unavailable snapshot distinct from zero and publishes all action definitions", () => {
     render(<OnchainPublicPage locale="ko" result={{ state: "unavailable" }} />);
     expect(screen.getByRole("status")).toHaveTextContent("수치를 0으로 표시하지 않습니다");

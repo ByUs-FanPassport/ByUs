@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
 import {keccak256,concatHex,encodeAbiParameters} from 'viem';
 import {EXISTING_NFT_DEPLOYMENT as d,trustedActionContext as context,privateJson,zeroHash,zeroAddress} from './migrate-existing-nfts-giwa.mjs';
 import {buildReplacementPlan,validateReplacementPlan,replacementTree,replacementLeaf,itemComponents,
@@ -65,6 +66,31 @@ test('a reorg cannot reuse a mined but unfinalized signed nonce for another leaf
   const journal={steps:[{id:'mint-first',nonce:12,signed:'saved',receipt:{blockNumber:'123'}}]};
   for(const nonce of [11,12])await assert.rejects(signStep({}, {id:'mint-next',nonce},journal,'unused'),/SIGNED_NONCE_REUSE/);
   assert.equal(journal.steps.length,1);
+});
+test('a canary selects only its reviewed leaf without changing manifest order or falling back',()=>{
+  const plan={entries:[{leaf:hash('1')},{leaf:hash('2')}]},before=structuredClone(plan),journal={steps:[]};
+  assert.deepEqual(pendingReplacementEntries(plan,journal,'migrate',1,hash('2')),[plan.entries[1]]);
+  assert.deepEqual(plan,before);
+  for(const [limit,leaf] of [[100,hash('2')],[1,hash('3')],[1,'invalid']])
+    assert.throws(()=>pendingReplacementEntries(plan,journal,'migrate',limit,leaf),/EXACT_REVIEWED_LEAF_AND_LIMIT_1_REQUIRED/);
+});
+test('selected canaries keep signed recovery, mined receipt and reconciled skip semantics',()=>{
+  const plan={entries:[{leaf:hash('1')},{leaf:hash('2')}]},leaf=hash('2');
+  for(const [saved,migrateCount,reconcileCount] of [
+    [{signed:'uncertain'},1,1],[{receipt:{}},0,1],[{receipt:{},reconciled:true},0,0],
+  ]){
+    const journal={steps:[{id:'mint-'+leaf,...saved}]};
+    assert.equal(pendingReplacementEntries(plan,journal,'migrate',1,leaf).length,migrateCount);
+    assert.equal(pendingReplacementEntries(plan,journal,'reconcile',1,leaf).length,reconcileCount);
+  }
+});
+test('CLI rejects missing, malformed or misplaced leaf selectors before reading RPC configuration',()=>{
+  const script=new URL('./replace-existing-nfts-giwa.mjs',import.meta.url);
+  for(const args of [['migrate','--leaf'],['migrate','--leaf',''],['migrate','--leaf','bad'],['activate','--leaf',hash('2')]]){
+    const result=spawnSync(process.execPath,[script.pathname,...args],{encoding:'utf8'});
+    assert.equal(result.status,1);
+    assert.match(result.stderr,/LEAF_REQUIRES_MIGRATE_OR_RECONCILE/);
+  }
 });
 test('reconcile SQL preserves large numeric tokens, apostrophes and atomic aliases',()=>{
   const plan=fixture(),entry=plan.entries[0];entry.item.oldTokenId='100000000000000000000000000000';entry.oldMetadataUri="ipfs://old'quote";

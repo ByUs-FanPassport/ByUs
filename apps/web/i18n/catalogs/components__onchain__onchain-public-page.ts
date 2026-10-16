@@ -519,15 +519,15 @@ export const messages = {
     "fr": "Répertoire officiel des adresses"
   },
   "m13d2fec9c752": {
-    "ja": "ActionHubのプロキシコントラクトと実装コントラクトを分けて表示します。PassportとStampは引き続き現在の発行コントラクトです。これらの指標から除外されるのは、ActionHubのデプロイ前の活動のみです。",
-    "zh-Hans": "ActionHub 代理合约和实现合约分开列出。Passport 和 Stamp 仍为当前签发合约；仅 ActionHub 部署前的活动不计入这些指标。",
-    "zh-Hant": "ActionHub 代理合約和實現合約分開列出。Passport 和 Stamp 仍為當前簽發合約；僅 ActionHub 部署前的活動不計入這些指標。",
-    "es": "Los contratos de proxy e implementación de ActionHub se muestran por separado. Passport y Stamp siguen siendo los contratos de emisión actuales; solo la actividad anterior al despliegue de ActionHub se excluye de estas métricas.",
-    "id": "Kontrak proxy dan implementasi ActionHub dicantumkan terpisah. Passport dan Stamp tetap menjadi kontrak penerbitan saat ini; hanya aktivitas sebelum penerapan ActionHub yang dikecualikan dari metrik ini.",
-    "vi": "Hợp đồng proxy và triển khai ActionHub được liệt kê riêng. Passport và Stamp vẫn là hợp đồng phát hành hiện tại; chỉ hoạt động trước khi triển khai ActionHub bị loại khỏi các chỉ số này.",
-    "th": "สัญญาพร็อกซีและสัญญาการใช้งานจริงของ ActionHub แสดงแยกกัน Passport และ Stamp ยังคงเป็นสัญญาการออกในปัจจุบัน โดยตัวชี้วัดนี้ไม่รวมเฉพาะกิจกรรมก่อนติดตั้ง ActionHub",
-    "pt": "Os contratos de proxy e implementação do ActionHub são listados separadamente. Passport e Stamp continuam sendo os contratos de emissão atuais; apenas a atividade anterior à implantação do ActionHub não está incluída nestas métricas.",
-    "fr": "Les contrats proxy et d’implémentation d’ActionHub sont répertoriés séparément. Passport et Stamp restent les contrats d’émission actuels ; seule l’activité antérieure au déploiement d’ActionHub est exclue de ces indicateurs."
+    "ja": "ActionHubのプロキシコントラクトと実装コントラクトを分けて表示します。現在の発行にはkyaa PassportとStampのコントラクトを使用し、以前のByUsコントラクトも掲載しています。ActionHubのデプロイ前の活動は指標に含まれません。",
+    "zh-Hans": "ActionHub 代理合约和实现合约分开列出。目前使用 kyaa Passport 和 Stamp 合约签发凭证，同时保留早期 ByUs 合约的地址。ActionHub 部署前的活动不计入这些指标。",
+    "zh-Hant": "ActionHub 代理合約和實作合約分開列出。目前使用 kyaa Passport 和 Stamp 合約簽發憑證，同時保留早期 ByUs 合約的地址。ActionHub 部署前的活動不計入這些指標。",
+    "es": "Los contratos de proxy e implementación de ActionHub se muestran por separado. La emisión actual usa los contratos kyaa Passport y Stamp; también se muestran los contratos anteriores de ByUs. La actividad anterior al despliegue de ActionHub no se incluye en estas métricas.",
+    "id": "Kontrak proxy dan implementasi ActionHub dicantumkan terpisah. Penerbitan saat ini menggunakan kontrak kyaa Passport dan Stamp; kontrak ByUs sebelumnya juga dicantumkan. Aktivitas sebelum penerapan ActionHub tidak disertakan dalam metrik ini.",
+    "vi": "Hợp đồng proxy và hợp đồng triển khai của ActionHub được liệt kê riêng. Việc phát hành hiện tại sử dụng hợp đồng kyaa Passport và Stamp; các hợp đồng ByUs trước đây cũng được liệt kê. Hoạt động trước khi triển khai ActionHub không được tính vào các chỉ số này.",
+    "th": "สัญญาพร็อกซีและสัญญาการใช้งานจริงของ ActionHub แสดงแยกกัน การออกในปัจจุบันใช้สัญญา kyaa Passport และ Stamp โดยแสดงสัญญา ByUs เดิมไว้ด้วย กิจกรรมก่อนติดตั้ง ActionHub ไม่รวมอยู่ในตัวชี้วัดนี้",
+    "pt": "Os contratos de proxy e implementação do ActionHub são listados separadamente. A emissão atual usa os contratos kyaa Passport e Stamp; os contratos anteriores da ByUs também são listados. A atividade anterior à implantação do ActionHub não está incluída nestas métricas.",
+    "fr": "Les contrats proxy et d’implémentation d’ActionHub sont répertoriés séparément. L’émission actuelle utilise les contrats kyaa Passport et Stamp ; les anciens contrats ByUs sont également indiqués. L’activité antérieure au déploiement d’ActionHub est exclue de ces indicateurs."
   },
   "m9e192c8e2d63": {
     "ja": "アドレス",

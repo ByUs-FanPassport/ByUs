@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { additionalLocales, translate } from "./messages";
@@ -12,26 +12,36 @@ import { discoveryCopy } from "./catalogs/features__fan_posts__discovery";
 import { communityCopy } from "./catalogs/features__community";
 import { feedCopy } from "./catalogs/features__fan_posts__feed";
 import { fanPageNavigationCopy } from "./catalogs/features__fanpage__navigation";
+import { raffleDiscoveryCopy } from "./catalogs/features__benefit__ui__raffle-discovery";
+import { fanPageBrandCopy } from "./catalogs/features__fanpage__brand";
+import { leaderboardActivityCopy } from "./catalogs/features__fanpage__ui__leaderboard-activities";
 
 const fanWebCatalogs = new Set([
   "features__fan_posts__ui.ts", "features__fan_posts__discovery.ts", "features__community.ts", "features__schedules__ui__participation.ts",
   "features__my__ui__personal-copy.ts", "features__profile__ui__account-deletion.ts",
   "features__fan_posts__feed.ts", "features__fanpage__navigation.ts",
+  "features__benefit__ui__raffle-discovery.ts", "features__fanpage__brand.ts", "features__fanpage__ui__leaderboard-activities.ts",
 ]);
 
 describe("localized messages", () => {
   it("keeps fan web copy complete in every locale with matching placeholders", () => {
-    const maps = [contentMessages, personalCopy, accountDeletionCopy, Object.fromEntries(APP_LOCALES.map(locale => [locale, participationCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, discoveryCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, communityCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, feedCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => {
+    const maps = [contentMessages, personalCopy, accountDeletionCopy, raffleDiscoveryCopy, fanPageBrandCopy, leaderboardActivityCopy, Object.fromEntries(APP_LOCALES.map(locale => [locale, participationCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, discoveryCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, communityCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => [locale, feedCopy(locale)])), Object.fromEntries(APP_LOCALES.map(locale => {
       const navigation = fanPageNavigationCopy(locale);
       expect(navigation.board.feed).toBe(feedCopy(locale).feed);
       return [locale, { ...navigation.main, ...navigation.board, boardMenu: navigation.boardMenu }];
     }))];
+    const strings = (value: unknown): Record<string, string> => {
+      if (typeof value === "string") return { "": value };
+      if (typeof value === "function") return strings(value("{name}"));
+      return Object.fromEntries(Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
+        Object.entries(strings(child)).map(([path, text]) => [`${key}.${path}`, text])));
+    };
     const placeholders = (text: string) => (text.match(/\{(?:\d+|[A-Za-z]\w*)\}/g) ?? []).sort();
     for (const map of maps) {
       expect(Object.keys(map).sort()).toEqual([...APP_LOCALES].sort());
-      const english = map.en as Record<string, string>;
+      const english = strings(map.en);
       for (const locale of APP_LOCALES) {
-        const copy = map[locale] as Record<string, string>;
+        const copy = strings(map[locale]);
         expect(Object.keys(copy).sort(), locale).toEqual(Object.keys(english).sort());
         for (const [key, value] of Object.entries(copy)) {
           expect(value.trim(), `${locale}/${key}`).not.toBe("");
@@ -46,15 +56,15 @@ describe("localized messages", () => {
     expect(translate("en", messages, "{0}: {1}", ["A", "B"])).toBe("A: B");
   });
 
-  it("includes all nine added locales and preserves every numbered and named placeholder", () => {
+  it("includes all nine added locales and preserves every numbered and named placeholder", async () => {
     const directory = resolve(process.cwd(), "i18n/catalogs");
     const sources: Record<string, { en: string }> = sourceMessages;
     const expectedLocales = APP_LOCALES.filter(locale => locale !== "ko" && locale !== "en");
     const placeholders = (text: string) => (text.match(/\{(?:\d+|[A-Za-z]\w*)\}/g) ?? []).sort();
     const seen = new Set<string>();
     for (const filename of readdirSync(directory).filter(name => name.endsWith(".ts") && !fanWebCatalogs.has(name))) {
-      const file = readFileSync(resolve(directory, filename), "utf8");
-      const catalog: Record<string, Record<string, string>> = JSON.parse(file.split("export const messages = ")[1].split(/ (?:as const )?satisfies /)[0]);
+      const name = filename.slice(0, -3);
+      const { messages: catalog } = await import(`./catalogs/${name}.ts`) as { messages: Record<string, Record<string, string>> };
       for (const [key, messages] of Object.entries(catalog)) {
         expect(sources[key], `${filename}: ${key} has a source`).toBeDefined();
         expect(seen.has(key), `${key} is unique`).toBe(false);
