@@ -16,11 +16,32 @@ test('deterministic plan preserves old Hub and gives the Timelock exact binding-
  assert.deepEqual(buildKyaaPlan(artifacts,42,172800n),plan);
  assert.throws(()=>buildKyaaPlan(artifacts,42,0n),/TIMELOCK_DELAY/);
 });
-test('receipt-ahead-of-block RPC lag retries only reads and rejects a noncanonical block',async()=>{
- let reads=0;const receipt={blockNumber:99n,blockHash:'0xcanonical'};
+test('receipt-ahead-of-block RPC lag retries only reads and rejects a persistently noncanonical block',async()=>{
+ let reads=0;const receipt={transactionHash:'0xtx',blockNumber:99n,blockHash:'0xcanonical'};
  const c={waitForTransactionReceipt:async()=>receipt,getBlock:async()=>{if(reads++===0)throw Object.assign(new Error(),{name:'BlockNotFoundError'});return {hash:receipt.blockHash};}};
  assert.equal(await confirmedKyaaReceipt(c,'0xtx'),receipt);assert.equal(reads,2);
- await assert.rejects(confirmedKyaaReceipt({...c,getBlock:async()=>({hash:'0xwrong'})},'0xtx'),/NONCANONICAL_RECEIPT/);
+ let mismatches=0;
+ await assert.rejects(confirmedKyaaReceipt({...c,getBlock:async()=>{mismatches++;return {hash:'0xwrong'};}},'0xtx'),/NONCANONICAL_RECEIPT/);
+ assert.equal(mismatches,6);
+});
+for(const moved of [false,true])test(`same transaction is reread after a transient block mismatch${moved?' and canonical re-inclusion':''}`,async()=>{
+ const original={transactionHash:'0xtx',blockNumber:99n,blockHash:'0xinitial'};
+ const canonical=moved?{transactionHash:'0xtx',blockNumber:101n,blockHash:'0xcanonical'}:original;
+ const requests=[];let reads=0;
+ const c={waitForTransactionReceipt:async options=>{requests.push(options);return requests.length===1?original:canonical;},
+  getBlock:async({blockNumber})=>{assert.equal(blockNumber,reads===0?99n:canonical.blockNumber);return {hash:reads++===0?'0xother':canonical.blockHash};}};
+ assert.equal(await confirmedKyaaReceipt(c,'0xtx'),canonical);
+ assert.equal(requests.length,2);assert(requests.every(r=>r.hash==='0xtx'&&r.checkReplacement===false));
+});
+test('receipt for another transaction is rejected without retry',async()=>{
+ let reads=0;
+ const c={waitForTransactionReceipt:async()=>{reads++;return {transactionHash:'0xother',blockNumber:99n,blockHash:'0xcanonical'};},getBlock:async()=>({hash:'0xcanonical'})};
+ await assert.rejects(confirmedKyaaReceipt(c,'0xtx'),/TRANSACTION_RECEIPT_HASH_MISMATCH/);assert.equal(reads,1);
+});
+test('unrelated RPC errors are not converted into canonical receipt retries',async()=>{
+ let reads=0;const failure=Error('RPC_AUTHENTICATION_FAILED');
+ const c={waitForTransactionReceipt:async()=>{reads++;throw failure;}};
+ await assert.rejects(confirmedKyaaReceipt(c,'0xtx'),e=>e===failure);assert.equal(reads,1);
 });
 test('signed envelope cannot redirect, change nonce, calldata, value, chain or fee cap',()=>{
  const p=buildKyaaPlan(artifacts,42,172800n),s=p.steps[3];

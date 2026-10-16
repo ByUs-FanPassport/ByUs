@@ -38,12 +38,16 @@ export async function readReceipt(c,txHash){try{return await c.getTransactionRec
 export async function confirmedKyaaReceipt(c,txHash){
  for(let attempt=0;attempt<6;attempt++){
   try{
-   const receipt=await c.waitForTransactionReceipt({hash:txHash,pollingInterval:1000,timeout:55000});
-   assert((await c.getBlock({blockNumber:receipt.blockNumber})).hash===receipt.blockHash,'NONCANONICAL_RECEIPT');
+   const receipt=await c.waitForTransactionReceipt({hash:txHash,checkReplacement:false,pollingInterval:1000,timeout:55000});
+   assert(receipt.transactionHash===txHash,'TRANSACTION_RECEIPT_HASH_MISMATCH');
+   const block=await c.getBlock({blockNumber:receipt.blockNumber});
+   if(block.hash!==receipt.blockHash)console.error(json({receiptBlockMismatch:true,attempt:attempt+1,transactionHash:txHash,
+    blockNumber:receipt.blockNumber,receiptBlockHash:receipt.blockHash,canonicalBlockHash:block.hash}));
+   assert(block.hash===receipt.blockHash,'NONCANONICAL_RECEIPT');
    return receipt;
   }catch(e){
-   if(e.name!=='BlockNotFoundError'||attempt===5)throw e;
-   // GIWA receipt RPC can briefly lead its block RPC; retry reads, never transmission.
+   if((e.name!=='BlockNotFoundError'&&e.message!=='NONCANONICAL_RECEIPT')||attempt===5)throw e;
+   // GIWA receipt and block reads can briefly disagree; retry the same hash, never transmission.
    await new Promise(resolve=>setTimeout(resolve,1000));
   }
  }
