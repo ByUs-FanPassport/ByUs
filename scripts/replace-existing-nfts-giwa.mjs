@@ -252,7 +252,7 @@ export function followupUniquenessSql(entry,targetTokenId=0n){
   const target=entry.item.kind===0?d.newPassport:d.newStamp;
   return `select jsonb_build_object('unique',not exists(select 1 from public.nft_credential_replacements where
     (old_contract=${quote(entry.oldContract)} and old_token_id=${quote(entry.item.oldTokenId)}::numeric)
-    or (new_contract=${quote(target)} and (issuance_key=${quote(entry.item.issuanceKey)} or new_token_id=${BigInt(targetTokenId)})));`;
+    or (new_contract=${quote(target)} and (issuance_key=${quote(entry.item.issuanceKey)} or new_token_id=${BigInt(targetTokenId)}))));`;
 }
 export async function finalizedReplacement(client,plan,entry,receipt,a){
   const head=await client.getBlock({blockTag:'finalized'});

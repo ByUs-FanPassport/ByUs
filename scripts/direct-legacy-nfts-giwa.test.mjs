@@ -286,11 +286,18 @@ if(process.env.DIRECT_LEGACY_SQL_CHILD==='1'){
   const f=directFixture(),entry=f.plan.entries[0],receipt={transactionHash:h(20),blockNumber:35955880n,blockHash:h(21)},
     proof={target:d.newStamp,event:{newTokenId:8n,minted:true},head:f.head};
   const statement=directReconciliationSql(f.plan,entry,receipt,proof);
+  assert.equal(JSON.parse(sql(followupUniquenessSql(entry))).unique,true);
   sql(`create function public.direct_test_fail() returns trigger language plpgsql as $$ begin raise exception 'TEST_DB_FAILURE'; end $$;
     create trigger direct_test_fail before insert on public.nft_credential_replacements for each row execute function public.direct_test_fail();`);
   assert.notEqual(attempt(statement).status,0);assert.equal(sql('select count(*) from public.nft_credential_replacement_batches'),'0');
   sql('drop trigger direct_test_fail on public.nft_credential_replacements;drop function public.direct_test_fail()');
   sql(statement);sql(statement);
+  assert.equal(JSON.parse(sql(followupUniquenessSql(entry))).unique,false,'existing source blocks another replacement');
+  const targetCollision=structuredClone(entry);targetCollision.item.oldTokenId='99';
+  assert.equal(JSON.parse(sql(followupUniquenessSql(targetCollision))).unique,false,'existing issuance key blocks another source');
+  targetCollision.item.issuanceKey=h(93);
+  assert.equal(JSON.parse(sql(followupUniquenessSql(targetCollision,8n))).unique,false,'existing target token blocks another source and key');
+  assert.equal(JSON.parse(sql(followupUniquenessSql(targetCollision,9n))).unique,true);
   assert.equal(sql('select count(*) from public.nft_credential_replacements'),'1');
   assert.equal(sql('select count(*) from public.nft_credential_replacement_entities'),'0');
   const other=structuredClone(f.plan);other.batchId=h(90);other.manifestHash=h(91);
