@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ read: vi.fn(), project: vi.fn(), cache: vi.fn((fn: () => unknown, _keys: string[], _options: unknown) => fn) }));
+import { gzipSync } from "node:zlib";
+const mocks = vi.hoisted(() => ({ read: vi.fn(), project: vi.fn(), cached: undefined as string | undefined, cache: vi.fn((fn: () => unknown, _keys: string[], _options: unknown) => () => mocks.cached ?? fn()) }));
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: mocks.cache }));
 vi.mock("../../../worker/src/action-public-snapshot", () => ({ readFinalizedActionSnapshot: mocks.read }));
@@ -7,15 +8,51 @@ vi.mock("./public-aggregate", () => ({ projectPublicOnchainSnapshot: mocks.proje
 vi.mock("./credential-replacements", () => ({ readFinalizedCredentialReplacements: vi.fn() }));
 import { getPublicOnchainResult } from "./public-snapshot";
 import { onchainConfig } from "./public-config";
-afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
+afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); mocks.cached = undefined; });
 it("fails closed on an RPC or attestation validation failure", async () => {
   mocks.read.mockRejectedValue(new Error("private diagnostic payload"));
   expect(await getPublicOnchainResult()).toEqual({ state: "unavailable" });
 });
 it("does not present an old cached result as current", async () => {
+  mocks.cached = gzipSync(JSON.stringify({ generatedAt: "2020-01-01T00:00:00Z" })).toString("base64");
   mocks.read.mockResolvedValue({});
   mocks.project.mockReturnValue({ generatedAt: "2020-01-01T00:00:00Z" });
   expect(await getPublicOnchainResult()).toEqual({ state: "unavailable" });
+  expect(mocks.read).toHaveBeenCalledTimes(1);
+});
+it("waits for a verified refresh instead of rejecting a stale cached success", async () => {
+  mocks.cached = gzipSync(JSON.stringify({ generatedAt: "2020-01-01T00:00:00Z" })).toString("base64");
+  const snapshot = { generatedAt: new Date().toISOString(), blockNumber: "123" };
+  mocks.read.mockResolvedValue({});
+  mocks.project.mockReturnValue(snapshot);
+  expect(await getPublicOnchainResult()).toEqual({ state: "available", snapshot });
+  expect(mocks.read).toHaveBeenCalledTimes(1);
+});
+it("keeps serving a cached success within the existing freshness window", async () => {
+  const snapshot = { generatedAt: new Date(Date.now() - 14 * 60 * 1000).toISOString() };
+  mocks.cached = gzipSync(JSON.stringify(snapshot)).toString("base64");
+  expect(await getPublicOnchainResult()).toEqual({ state: "available", snapshot });
+  expect(mocks.read).not.toHaveBeenCalled();
+});
+it("fails closed when refreshing a stale cached success fails", async () => {
+  mocks.cached = gzipSync(JSON.stringify({ generatedAt: "2020-01-01T00:00:00Z" })).toString("base64");
+  mocks.read.mockRejectedValue(new Error("private refresh failure"));
+  expect(await getPublicOnchainResult()).toEqual({ state: "unavailable" });
+  // A failed in-flight refresh must not poison subsequent requests.
+  const snapshot = { generatedAt: new Date().toISOString() };
+  mocks.read.mockResolvedValue({});
+  mocks.project.mockReturnValue(snapshot);
+  expect(await getPublicOnchainResult()).toEqual({ state: "available", snapshot });
+});
+it("coalesces concurrent foreground refreshes of a stale cached success", async () => {
+  mocks.cached = gzipSync(JSON.stringify({ generatedAt: "2020-01-01T00:00:00Z" })).toString("base64");
+  const snapshot = { generatedAt: new Date().toISOString() };
+  mocks.read.mockResolvedValue({});
+  mocks.project.mockReturnValue(snapshot);
+  expect(await Promise.all([getPublicOnchainResult(), getPublicOnchainResult()])).toEqual([
+    { state: "available", snapshot }, { state: "available", snapshot },
+  ]);
+  expect(mocks.read).toHaveBeenCalledTimes(1);
 });
 it("coalesces concurrent reads and uses only the fixed public deployment", async () => {
   mocks.read.mockResolvedValue({});
@@ -57,4 +94,5 @@ it("includes the optional migrator deployment state in the persistent cache name
   expect(keys).toContain(onchainConfig.credentialReplacement.deployment?.fromBlock.toString() ?? "credential-migrator-disabled");
   expect(keys).toContain(onchainConfig.credentialReplacement.timelock);
   expect(keys).toContain(onchainConfig.credentialReplacement.operator);
+  expect(mocks.cache.mock.calls.at(-1)?.[2]).toEqual({ revalidate: 600 });
 });

@@ -14,7 +14,7 @@ const readConfig = { ...onchainConfig, rpcUrl: process.env.GIWA_PUBLIC_READ_RPC_
 const compress = promisify(gzip);
 const decompress = promisify(gunzip);
 let pending: Promise<string> | undefined;
-const readSnapshot = unstable_cache(async () => {
+function readFreshSnapshot(): Promise<string> {
   pending ??= readFinalizedActionSnapshot(readConfig).then(async (source) => {
     const representatives = onchainConfig.credentialReplacement.deployment
       ? await readFinalizedCredentialReplacements(readConfig as CredentialReplacementConfig, source)
@@ -23,7 +23,8 @@ const readSnapshot = unstable_cache(async () => {
     return (await compress(JSON.stringify(projectPublicOnchainSnapshot(source, new Date(), representatives)))).toString("base64");
   }).finally(() => { pending = undefined; });
   return pending;
-}, [
+}
+const readSnapshot = unstable_cache(readFreshSnapshot, [
   "byus-public-onchain-v6-verified-credential-replacements",
   createHash("sha256").update(readConfig.rpcUrl).digest("hex"),
   ...onchainConfig.deployments.flatMap(({ hubAddress, fromBlock, label, writeStatus }) => [hubAddress, fromBlock.toString(), label, writeStatus]),
@@ -40,7 +41,12 @@ const readSnapshot = unstable_cache(async () => {
 
 export async function getPublicOnchainResult(): Promise<PublicOnchainResult> {
   try {
-    const snapshot = JSON.parse((await decompress(Buffer.from(await readSnapshot(), "base64"))).toString()) as PublicOnchainSnapshot;
+    let snapshot = JSON.parse((await decompress(Buffer.from(await readSnapshot(), "base64"))).toString()) as PublicOnchainSnapshot;
+    // Next returns stale entries while revalidating in the background. Wait for
+    // a verified refresh when that entry is too old to present publicly.
+    if (Date.now() - Date.parse(snapshot.generatedAt) > 15 * 60 * 1000) {
+      snapshot = JSON.parse((await decompress(Buffer.from(await readFreshSnapshot(), "base64"))).toString()) as PublicOnchainSnapshot;
+    }
     // A stale cached success must not silently masquerade as a current reading.
     if (Date.now() - Date.parse(snapshot.generatedAt) > 15 * 60 * 1000) return { state: "unavailable" };
     return { state: "available", snapshot };
