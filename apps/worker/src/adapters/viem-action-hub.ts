@@ -11,6 +11,7 @@ import {
   keccak256,
   parseTransaction,
   recoverTransactionAddress,
+  TransactionReceiptNotFoundError,
   type Address,
   type Hash,
   type Hex,
@@ -129,8 +130,7 @@ export class ViemActionHubAdapter implements ActionChainPort {
     try {
       return await this.validateReceipt(submission.txHash as Hash, payload);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!(error instanceof WorkerError) && (message.includes("could not be found") || message.includes("not found"))) {
+      if (error instanceof TransactionReceiptNotFoundError) {
         this.approvedTransactions.add(submission.txHash.toLowerCase());
         return null;
       }
@@ -140,53 +140,71 @@ export class ViemActionHubAdapter implements ActionChainPort {
 
   private async validateReceipt(txHash: Hash, payload: CanonicalActionPayloadV1): Promise<ActionReceipt> {
     const receipt = await this.client.getTransactionReceipt({ hash: txHash });
-    if (receipt.status !== "success") throw new WorkerError("GIWA_ACTION_TRANSACTION_REVERTED", `Action transaction reverted: ${txHash}`, false);
-    let recorded: { args: Record<string, unknown>; logIndex: number } | null = null;
-    const linked: ActionCredentialReceipt[] = [];
-    for (const log of receipt.logs) {
-      if (getAddress(log.address) !== getAddress(this.options.hubAddress)) continue;
-      try {
-        const decoded = decodeEventLog({ abi: actionHubAbi, data: log.data, topics: log.topics });
-        const args = decoded.args as Record<string, unknown>;
-        if (decoded.eventName === "FanActionRecorded" && String(args.actionId).toLowerCase() === payload.actionId.toLowerCase()) recorded = { args, logIndex: log.logIndex };
-        if (decoded.eventName === "CredentialLinked" && String(args.actionId).toLowerCase() === payload.actionId.toLowerCase()) {
-          linked.push({ kind: Number(args.credentialKind), nftContract: String(args.nftContract), tokenId: args.tokenId as bigint, issuanceKey: String(args.issuanceKey), metadataUri: "", linkOrigin: Number(args.linkOrigin), logIndex: log.logIndex });
-        }
-      } catch { /* unrelated hub log */ }
-    }
-    if (!recorded) throw new WorkerError("ACTION_EVENT_NOT_FOUND", `Receipt did not emit FanActionRecorded for ${payload.actionId}`, false);
-    this.assertRecordedEvent(recorded.args, payload);
-    const [record, easAddress] = await Promise.all([
-      this.getAction(payload.actionId as Hash),
-      this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "eas" }),
+    const [head, canonicalReceipt] = await Promise.all([
+      this.client.getBlock({ blockTag: "latest" }),
+      this.client.getBlock({ blockNumber: receipt.blockNumber }),
     ]);
-    this.assertRecord(record, payload);
-    const refs: CredentialRef[] = linked.map((item) => ({ nftContract: item.nftContract as Address, tokenId: item.tokenId, kind: item.kind, issuanceKey: item.issuanceKey as Hash, linkOrigin: item.linkOrigin }));
-    this.assertCredentials(refs, linked, payload, receipt.logs);
-    const credentialRefsHash = this.credentialRefsHash(refs);
-    const origin = payload.operation === 2 ? origins.HISTORICAL : origins.NATIVE;
-    const easData = encodeAbiParameters([
-      { type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }, { type: "uint16" },
-      { type: "uint16" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" },
-      { type: "bytes32" }, { type: "uint32" }, { type: "uint8" }, { type: "bytes32" },
-      { type: "bytes32" }, { type: "bytes32" },
-    ], [payload.occurrenceId as Hash, payload.actionId as Hash, payload.request.revision, payload.request.actionCode, payload.request.schemaVersion, payload.request.policyVersion, payload.environmentId as Hash, payload.request.creatorId as Hash, payload.request.campaignId as Hash, payload.request.occurredDay, origin, payload.request.evidenceCommitment as Hash, credentialRefsHash, payload.request.migrationBatchId as Hash]);
-    if (keccak256(easData).toLowerCase() !== record.recordHash.toLowerCase()) throw new WorkerError("ACTION_RECORD_HASH_MISMATCH", "EAS payload hash does not match Hub recordHash", false);
-    const [attestation, easValid] = await Promise.all([
-      this.client.readContract({ address: easAddress, abi: easAbi, functionName: "getAttestation", args: [record.easUID] }),
-      this.client.readContract({ address: easAddress, abi: easAbi, functionName: "isAttestationValid", args: [record.easUID] }),
-    ]);
-    const zero = `0x${"0".repeat(64)}`;
-    if (!easValid || attestation.uid.toLowerCase() !== record.easUID.toLowerCase()
-      || attestation.schema.toLowerCase() !== payload.schemaUid.toLowerCase()
-      || getAddress(attestation.recipient) !== getAddress(payload.request.fan)
-      || getAddress(attestation.attester) !== getAddress(this.options.hubAddress)
-      || attestation.refUID.toLowerCase() !== zero
-      || attestation.expirationTime !== 0n || attestation.revocationTime !== 0n || !attestation.revocable
-      || attestation.data.toLowerCase() !== easData.toLowerCase()) {
-      throw new WorkerError("EAS_ATTESTATION_MISMATCH", "EAS attestation does not match the canonical action result", false);
+    if (!head.hash || head.number < receipt.blockNumber || canonicalReceipt.hash !== receipt.blockHash) {
+      throw new WorkerError("ACTION_RECEIPT_CHAIN_CHANGED", "Receipt is not canonical at the current RPC head", true);
     }
-    return { txHash, blockNumber: receipt.blockNumber, blockHash: receipt.blockHash, transactionIndex: receipt.transactionIndex, hubLogIndex: recorded.logIndex, easUid: record.easUID, recordHash: record.recordHash, credentialRefsHash, credentials: linked.map((item) => ({ ...item, metadataUri: payload.intents.find((intent) => intent.issuanceKey.toLowerCase() === item.issuanceKey.toLowerCase())?.metadataUri ?? "" })), inclusionStatus: "included" };
+    try {
+      if (receipt.status !== "success") throw new WorkerError("GIWA_ACTION_TRANSACTION_REVERTED", `Action transaction reverted: ${txHash}`, false);
+      let recorded: { args: Record<string, unknown>; logIndex: number } | null = null;
+      const linked: ActionCredentialReceipt[] = [];
+      for (const log of receipt.logs) {
+        if (getAddress(log.address) !== getAddress(this.options.hubAddress)) continue;
+        try {
+          const decoded = decodeEventLog({ abi: actionHubAbi, data: log.data, topics: log.topics });
+          const args = decoded.args as Record<string, unknown>;
+          if (decoded.eventName === "FanActionRecorded" && String(args.actionId).toLowerCase() === payload.actionId.toLowerCase()) recorded = { args, logIndex: log.logIndex };
+          if (decoded.eventName === "CredentialLinked" && String(args.actionId).toLowerCase() === payload.actionId.toLowerCase()) {
+            linked.push({ kind: Number(args.credentialKind), nftContract: String(args.nftContract), tokenId: args.tokenId as bigint, issuanceKey: String(args.issuanceKey), metadataUri: "", linkOrigin: Number(args.linkOrigin), logIndex: log.logIndex });
+          }
+        } catch { /* unrelated hub log */ }
+      }
+      if (!recorded) throw new WorkerError("ACTION_EVENT_NOT_FOUND", `Receipt did not emit FanActionRecorded for ${payload.actionId}`, false);
+      this.assertRecordedEvent(recorded.args, payload);
+      const [record, easAddress] = await Promise.all([
+        this.getAction(payload.actionId as Hash, head.number),
+        this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "eas", blockNumber: head.number }),
+      ]);
+      this.assertRecord(record, payload);
+      const refs: CredentialRef[] = linked.map((item) => ({ nftContract: item.nftContract as Address, tokenId: item.tokenId, kind: item.kind, issuanceKey: item.issuanceKey as Hash, linkOrigin: item.linkOrigin }));
+      this.assertCredentials(refs, linked, payload, receipt.logs);
+      const credentialRefsHash = this.credentialRefsHash(refs);
+      const origin = payload.operation === 2 ? origins.HISTORICAL : origins.NATIVE;
+      const easData = encodeAbiParameters([
+        { type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }, { type: "uint16" },
+        { type: "uint16" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" },
+        { type: "bytes32" }, { type: "uint32" }, { type: "uint8" }, { type: "bytes32" },
+        { type: "bytes32" }, { type: "bytes32" },
+      ], [payload.occurrenceId as Hash, payload.actionId as Hash, payload.request.revision, payload.request.actionCode, payload.request.schemaVersion, payload.request.policyVersion, payload.environmentId as Hash, payload.request.creatorId as Hash, payload.request.campaignId as Hash, payload.request.occurredDay, origin, payload.request.evidenceCommitment as Hash, credentialRefsHash, payload.request.migrationBatchId as Hash]);
+      if (keccak256(easData).toLowerCase() !== record.recordHash.toLowerCase()) throw new WorkerError("ACTION_RECORD_HASH_MISMATCH", "EAS payload hash does not match Hub recordHash", false);
+      const [attestation, easValid] = await Promise.all([
+        this.client.readContract({ address: easAddress, abi: easAbi, functionName: "getAttestation", args: [record.easUID], blockNumber: head.number }),
+        this.client.readContract({ address: easAddress, abi: easAbi, functionName: "isAttestationValid", args: [record.easUID], blockNumber: head.number }),
+      ]);
+      const zero = `0x${"0".repeat(64)}`;
+      if (!easValid || attestation.uid.toLowerCase() !== record.easUID.toLowerCase()
+        || attestation.schema.toLowerCase() !== payload.schemaUid.toLowerCase()
+        || getAddress(attestation.recipient) !== getAddress(payload.request.fan)
+        || getAddress(attestation.attester) !== getAddress(this.options.hubAddress)
+        || attestation.refUID.toLowerCase() !== zero
+        || attestation.expirationTime !== 0n || attestation.revocationTime !== 0n || !attestation.revocable
+        || attestation.data.toLowerCase() !== easData.toLowerCase()) {
+        throw new WorkerError("EAS_ATTESTATION_MISMATCH", "EAS attestation does not match the canonical action result", false);
+      }
+      return { txHash, blockNumber: receipt.blockNumber, blockHash: receipt.blockHash, transactionIndex: receipt.transactionIndex, hubLogIndex: recorded.logIndex, easUid: record.easUID, recordHash: record.recordHash, credentialRefsHash, credentials: linked.map((item) => ({ ...item, metadataUri: payload.intents.find((intent) => intent.issuanceKey.toLowerCase() === item.issuanceKey.toLowerCase())?.metadataUri ?? "" })), inclusionStatus: "included" };
+    } finally {
+      // Pin all state reads while retaining revocations made after the receipt.
+      const [confirmedHead, confirmedReceipt] = await Promise.all([
+        this.client.getBlock({ blockNumber: head.number }),
+        this.client.getBlock({ blockNumber: receipt.blockNumber }),
+      ]);
+      if (confirmedHead.hash !== head.hash || confirmedReceipt.hash !== receipt.blockHash) {
+        throw new WorkerError("ACTION_RECEIPT_CHAIN_CHANGED", "Chain changed while validating the action receipt", true);
+      }
+    }
   }
 
   private async assertBinding(payload: Omit<CanonicalActionPayloadV1, "occurrenceId" | "actionId" | "requestHash" | "workerSubmission"> | CanonicalActionPayloadV1): Promise<void> {
@@ -224,8 +242,8 @@ export class ViemActionHubAdapter implements ActionChainPort {
     if (!decoded.functionName) throw new WorkerError("PREPARED_ACTION_TRANSACTION_MISMATCH", "Action transaction calldata is undecodable", false);
   }
 
-  private async getAction(actionId: Hash): Promise<ActionRecord> {
-    return await this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "getAction", args: [actionId] }) as ActionRecord;
+  private async getAction(actionId: Hash, blockNumber?: bigint): Promise<ActionRecord> {
+    return await this.client.readContract({ address: this.options.hubAddress, abi: actionHubAbi, functionName: "getAction", args: [actionId], blockNumber }) as ActionRecord;
   }
   private assertRecord(record: ActionRecord, payload: CanonicalActionPayloadV1): void {
     const expectedOrigin = payload.operation === 2 ? origins.HISTORICAL : origins.NATIVE;

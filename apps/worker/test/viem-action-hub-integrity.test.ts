@@ -1,4 +1,4 @@
-import { decodeFunctionData, parseTransaction, type PublicClient } from "viem";
+import { decodeFunctionData, parseTransaction, TransactionReceiptNotFoundError, type PublicClient } from "viem";
 import { describe, expect, it, vi } from "vitest";
 import { actionHubAbi, ViemActionHubAdapter } from "../src/adapters/viem-action-hub.js";
 import type { CanonicalActionPayloadV1 } from "../src/action-domain.js";
@@ -41,5 +41,7 @@ describe("ViemActionHubAdapter signed request integrity", () => {
 
     await expect(chain.receipt({ ...payload, request: { ...payload.request, campaignId: h("f") } }, submission)).rejects.toMatchObject({ code: "PREPARED_ACTION_TRANSACTION_MISMATCH", retryable: false });
     expect(client.getTransactionReceipt).not.toHaveBeenCalled();
+    client.getTransactionReceipt.mockRejectedValue(new TransactionReceiptNotFoundError({ hash: submission.txHash as `0x${string}` }));
+    await expect(chain.receipt(payload, submission)).resolves.toBeNull();
   });
 });

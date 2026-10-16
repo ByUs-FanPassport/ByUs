@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createPublicClient, createWalletClient, decodeEventLog, defineChain, encodeFunctionData, http, keccak256, padHex, stringToHex, type Abi, type Address, type Hex, type PublicClient } from "viem";
+import { BlockNotFoundError, createPublicClient, createWalletClient, decodeEventLog, defineChain, encodeFunctionData, http, keccak256, padHex, stringToHex, type Abi, type Address, type Hex, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { buildCanonicalActionPayload } from "../src/action-builder.js";
 import { KYAA_CREDENTIAL_ASSET_BASE_URI } from "../src/kyaa-credential-assets.js";
@@ -123,26 +123,63 @@ suite("ActionWorker to ActionHub local Anvil", () => {
 
     const wrappedClient = (overrides: {
       receiptLogs?: (logs: readonly any[]) => readonly any[];
+      receiptStatus?: "success" | "reverted";
       attestation?: (value: any) => any;
+      stateRead?: (value: any, args: any) => any;
+      block?: (value: any, args: any) => any;
     }): PublicClient => new Proxy(publicClient as PublicClient, {
       get(target, property, receiver) {
-        if (property === "getTransactionReceipt" && overrides.receiptLogs) {
+        if (property === "getTransactionReceipt" && (overrides.receiptLogs || overrides.receiptStatus)) {
           return async (args: any) => {
             const current = await target.getTransactionReceipt(args);
-            return { ...current, logs: overrides.receiptLogs!(current.logs) };
+            return { ...current, status: overrides.receiptStatus ?? current.status, logs: overrides.receiptLogs?.(current.logs) ?? current.logs };
           };
         }
-        if (property === "readContract" && overrides.attestation) {
+        if (property === "readContract" && (overrides.attestation || overrides.stateRead)) {
           return async (args: any) => {
             const current = await target.readContract(args);
+            if (overrides.stateRead) return overrides.stateRead(current, args);
             return args.functionName === "getAttestation" ? overrides.attestation!(current) : current;
           };
+        }
+        if (property === "getBlock" && overrides.block) {
+          return async (args: any) => overrides.block!(await target.getBlock(args), args);
         }
         const value = Reflect.get(target, property, receiver);
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
     const receiptAdapter = (client: PublicClient) => new ViemActionHubAdapter({ rpcUrl, chainId: 91342, privateKey: privateKeys[0], hubAddress: hub, deploymentBlock: 0n, client, feePolicy: { maxGas: 5_000_000n, maxFeePerGasWei: 10_000_000_000n, maxPriorityFeePerGasWei: 10_000_000_000n, maxExecutionFeeWei: 50_000_000_000_000_000n } });
+    await publicClient.request({ method: "evm_mine", params: [] } as any);
+    const stateReads: { functionName: string; blockNumber?: bigint }[] = [];
+    const staleLatest = wrappedClient({ stateRead: (value, args) => {
+      stateReads.push({ functionName: args.functionName, blockNumber: args.blockNumber });
+      return args.functionName === "getAttestation" && args.blockNumber === undefined ? { ...value, recipient: account.address } : value;
+    } });
+    await expect(receiptAdapter(staleLatest).receipt(payload, submission)).resolves.toMatchObject({ txHash: submission.txHash });
+    expect(stateReads.map((read) => read.functionName).sort()).toEqual(["eas", "getAction", "getAttestation", "isAttestationValid"]);
+    expect(new Set(stateReads.map((read) => read.blockNumber)).size).toBe(1);
+    expect(stateReads[0]!.blockNumber).toBeGreaterThanOrEqual(receipt!.blockNumber);
+    const lagging = wrappedClient({ block: (block, args) => args.blockTag === "latest" ? { ...block, number: receipt!.blockNumber - 1n } : block });
+    await expect(receiptAdapter(lagging).receipt(payload, submission)).rejects.toMatchObject({ code: "ACTION_RECEIPT_CHAIN_CHANGED", retryable: true });
+    const changedHead = wrappedClient({ block: (block, args) => args.blockNumber === stateReads[0]!.blockNumber ? { ...block, hash: keccak256(stringToHex("changed-head")) } : block });
+    await expect(receiptAdapter(changedHead).receipt(payload, submission)).rejects.toMatchObject({ code: "ACTION_RECEIPT_CHAIN_CHANGED", retryable: true });
+    for (const corruptAttestation of [false, true]) {
+      let receiptChecks = 0;
+      const reorg = wrappedClient({
+        ...(corruptAttestation ? { attestation: (value: any) => ({ ...value, recipient: account.address }) } : {}),
+        block: (block, args) => args.blockNumber === receipt!.blockNumber && ++receiptChecks > 1 ? { ...block, hash: keccak256(stringToHex("reorg")) } : block,
+      });
+      await expect(receiptAdapter(reorg).receipt(payload, submission)).rejects.toMatchObject({ code: "ACTION_RECEIPT_CHAIN_CHANGED", retryable: true });
+    }
+    const missingBlock = receiptAdapter(wrappedClient({ block: () => { throw new BlockNotFoundError({ blockNumber: receipt!.blockNumber }); } }));
+    await expect(missingBlock.receipt(payload, submission)).rejects.toBeInstanceOf(BlockNotFoundError);
+    await expect(missingBlock.broadcast(submission.signedTransaction)).rejects.toMatchObject({ code: "PREPARED_TRANSACTION_NOT_VALIDATED" });
+    await expect(receiptAdapter(wrappedClient({ receiptStatus: "reverted" })).receipt(payload, submission)).rejects.toMatchObject({ code: "GIWA_ACTION_TRANSACTION_REVERTED", retryable: false });
+    const orphanedRevert = wrappedClient({ receiptStatus: "reverted", block: (block, args) => args.blockNumber === receipt!.blockNumber ? { ...block, hash: keccak256(stringToHex("orphaned")) } : block });
+    await expect(receiptAdapter(orphanedRevert).receipt(payload, submission)).rejects.toMatchObject({ code: "ACTION_RECEIPT_CHAIN_CHANGED", retryable: true });
+    const changedRevert = wrappedClient({ receiptStatus: "reverted", block: (block, args) => args.blockNumber === stateReads[0]!.blockNumber ? { ...block, hash: keccak256(stringToHex("changed")) } : block });
+    await expect(receiptAdapter(changedRevert).receipt(payload, submission)).rejects.toMatchObject({ code: "ACTION_RECEIPT_CHAIN_CHANGED", retryable: true });
     const withoutCredential = wrappedClient({ receiptLogs: (logs) => {
       let removed = false;
       return logs.filter((log) => {
