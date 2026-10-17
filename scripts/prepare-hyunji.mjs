@@ -77,7 +77,7 @@ let quizzes = await rpc("read_admin_quiz_cms", quizArgs);
 if (!quizzes.some(quiz => quiz.status === "published")) {
   const questions = [
     { ko: "현지의 Instagram 아이디는 무엇일까요?", en: "What is Hyunji’s Instagram username?", answers: [["hyunjiiee", "hyunjiiee"], ["hyunji_daily", "hyunji_daily"], ["hello_hyunji", "hello_hyunji"], ["hyunji_official", "hyunji_official"]], correct: 0 },
-    { ko: "현지의 Instagram 프로필에 표시된 이름은 무엇일까요?", en: "Which name appears on Hyunji’s Instagram profile?", answers: [["현아", "현아"], ["현 지", "현 지"], ["지현", "지현"], ["현정", "현정"]], correct: 1 },
+    { ko: "현지의 Instagram 프로필에 표시된 이름은 무엇일까요?", en: "Which name appears on Hyunji’s Instagram profile?", answers: [["현아", "현아"], ["현지", "현지"], ["지현", "지현"], ["현정", "현정"]], correct: 1 },
     { ko: "현지의 Instagram 고정 게시물 첫 사진에는 무엇이 담겨 있나요?", en: "What appears in the first photo of Hyunji’s pinned Instagram post?", answers: [["바다", "The sea"], ["생일 케이크", "A birthday cake"], ["흰 꽃다발", "A white bouquet"], ["붉은 장미", "Red roses"]], correct: 2 },
   ].map((question, index) => ({ position: index + 1, promptKo: question.ko, promptEn: question.en, active: true,
     options: question.answers.map(([labelKo, labelEn], index) => ({ position: index + 1, labelKo, labelEn, isCorrect: index === question.correct, active: true })) }));
@@ -94,7 +94,7 @@ if (!notice) {
   const paragraph = text => ({ type: "paragraph", content: [{ type: "text", text }] });
   const body = locale => ({ type: "doc", content: [
     paragraph(locale === "ko" ? "현지의 팬페이지에 오신 것을 환영해요. Instagram에 담긴 여덟 장의 사진으로 현지의 일상을 만나보세요." : "Welcome to Hyunji’s fan page. Discover eight everyday moments from her Instagram."),
-    paragraph(locale === "ko" ? "현지의 Instagram 아이디는 @hyunjiiee, 프로필 이름은 ‘현 지’예요. 고정 게시물의 첫 사진에는 흰 꽃다발이 담겨 있어요. 사진을 둘러보고 팬 인증 퀴즈에도 도전해 보세요." : "Her Instagram username is @hyunjiiee and her profile name is ‘현 지’. The first photo in her pinned post shows a white bouquet. Explore the photos, then try the fan quiz."),
+    paragraph(locale === "ko" ? "현지의 Instagram 아이디는 @hyunjiiee, 프로필 이름은 ‘현지’예요. 고정 게시물의 첫 사진에는 흰 꽃다발이 담겨 있어요. 사진을 둘러보고 팬 인증 퀴즈에도 도전해 보세요." : "Her Instagram username is @hyunjiiee and her profile name is ‘현지’. The first photo in her pinned post shows a white bouquet. Explore the photos, then try the fan quiz."),
     ...manifest.photos.map(photo => ({ type: "image", attrs: { src: assets[photo.name].url, alt: photo.alt[locale], width: images[photo.name].width, height: images[photo.name].height } })),
     { type: "paragraph", content: [{ type: "text", text: "Instagram · @hyunjiiee", marks: [{ type: "link", attrs: { href: "https://www.instagram.com/hyunjiiee/", target: "_blank", rel: "noopener noreferrer" } }] }] },
   ] });
