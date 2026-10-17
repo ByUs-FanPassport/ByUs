@@ -113,7 +113,15 @@
 ### 운영 적용 및 검증 — 2026-10-17
 
 - notification Lambda 코드를 먼저 갱신하고 `Active`/`Successful` 및 ZIP SHA-256 일치를 확인한 뒤 해당 migration을 적용했다. 기존 두 함수의 정의가 사전 보존본과 같은지 확인하는 조건과 트랜잭션을 사용했다. 설정·IAM·스케줄은 변경하지 않았다.
-- 워커 752테스트, 타입·lint·빌드·Lambda bundle 검사를 통과했다. 빈 PostgreSQL 17에 220개 migration을 적용하고 Telegram SQL·동시성 검증을 통과했다. 온체인 실연동 테스트 1개는 이번 범위에 포함하지 않았다.
+- 워커 752테스트, 타입·lint·빌드·Lambda bundle 검사를 통과했다. 빈 PostgreSQL 17에 248개 migration을 적용하고 Telegram SQL·동시성 검증을 통과했다. 온체인 실연동 테스트 1개는 이번 범위에 포함하지 않았다.
 - 운영 `/today`·`/ops` 응답을 새 렌더러로 검증했다. 신규 트리거 활성화와 격리 RPC의 서비스 역할 전용 권한을 확인했다. 확인 시점 전송 대기·실패는 0건, 기존 결과 불명은 3건이며 재전송하지 않았다.
 - 실제 신규 신고·수령 정보 제출 이벤트의 Telegram 도착은 아직 확인하지 않았다. 검증용 메시지나 가짜 사업 데이터를 운영에 만들지 않았다.
 - 근거와 복구 파일: 원본 checkout의 `work/byus-alert-improvement-20261017/`. 이전 Lambda ZIP, 이전 DB 함수, 적용 조건·복구 SQL, 검증 로그와 운영 집계 응답을 보존했다.
+
+### 잠금 대기 중 처리 권한 만료 보정 — 2026-10-17
+
+`20261017142527_telegram_reject_post_lock_clock.sql`은 오류 묶음 격리 함수가 설정 행 잠금을 얻은 뒤 현재 시각을 읽도록 보정한다. 잠금을 기다리며 lease가 만료되면 큐 상태를 변경하지 않는다. RPC 인자·응답·권한은 동일하며 워커 코드 갱신은 필요하지 않다. 두 세션의 실제 잠금 경쟁을 `scripts/verify-telegram-reject-lease.py`로 검증한다.
+
+CS 600자 4건과 댓글 750자를 한꺼번에 워커에 주입하면 길이 검증에 실패하지만, 실제 `claim_telegram_alert_batch_with_cs_content`는 기존 크기 예산에 따라 CS 4건과 댓글 1건을 나눠 반환한다. `telegram_fan_activity_details.sql`에 실제 원천 RPC → 수집 → 순차 claim 검증을 추가했다. 댓글 원문과 나머지 대기를 보존하며 정상 묶음이 격리되지 않는다. 이 사례는 운영 누락 결함이라는 초기 검토 판단을 정정한 것이다.
+
+보정 migration은 2026-10-17 23:26 KST 운영 적용과 ledger 기록을 완료했다. 함수가 잠금 후 시각 계산만 변경됐고 권한이 그대로임을 확인했다. 새 경쟁 검증은 수정 전 실패·수정 후 통과했고, 실제 249개 migration 파일 재적용 및 전체 Telegram SQL 검증을 통과했다. 혼합 사례의 실제 두 claim을 현재 렌더러에 넣었을 때 각각 2,916·1,149 UTF-16 단위로 격리 없이 처리되고 댓글 750자가 보존됐다. 기존 워커 코드는 변경하지 않았으며 배포 해시·Active/Successful을 확인했다. 근거는 같은 작업 폴더의 `fix-regression-{before,after}.log`, `mixed-real-render-check.json`, `verified-clock-fix.private.json`에 있다. 검증 스크립트의 기존 `migrationsApplied` 출력은 public 테이블 수이므로 migration 수는 적용 파일 로그로 확인했다.

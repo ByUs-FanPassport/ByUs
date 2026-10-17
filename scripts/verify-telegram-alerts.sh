@@ -57,3 +57,4 @@ sql("delete from public.telegram_alert_outbox; select public.configure_telegram_
 print('PASS Telegram two-session claim, begin, destination-switch, command dedupe and cursor races')
 PY
 node "$root_dir/scripts/verify-telegram-certification-concurrency.mjs"
+python3 "$root_dir/scripts/verify-telegram-reject-lease.py"
