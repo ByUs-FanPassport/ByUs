@@ -129,16 +129,21 @@ describe("renderTelegramAlertMessage", () => {
       "• 신규 회원 가입",
       "  제이",
       "  jay@example.com",
+      "  시각: 2026-09-11 19:00:00 KST",
       "• 이퓨 팬 가입",
       "  닉네임 미설정",
       "  이메일 미등록",
+      "  시각: 2026-09-11 19:01:00 KST",
       "• 엘리나 · 서울 팬미팅 예약",
       "  민지",
       "  minji.long+fan@example.com",
+      "  시각: 2026-09-11 19:02:00 KST",
       "• 엘리나 · 서울 팬미팅 출석",
       "  솔",
       "  sol@example.com",
+      "  시각: 2026-09-11 19:03:00 KST",
       "• 엘리나 · 서울 팬미팅 추첨 결과 공개 · 당첨 5명",
+      "  시각: 2026-09-11 19:04:00 KST",
       "",
       "관리자에서 확인하기",
       "https://kyaa.io/admin",
@@ -171,9 +176,11 @@ describe("renderTelegramAlertMessage", () => {
       "• 새 CS 문의 접수",
       "내용: 문의 내용을 확인해 주세요.",
       `https://kyaa.io/admin/inquiries/${inquiryId}`,
+      "  시각: 2026-09-11 19:05:00 KST",
       "• CS 문의에 새 메시지",
       "내용: 문의 내용을 확인해 주세요.",
       `https://kyaa.io/admin/inquiries/${inquiryId}`,
+      "  시각: 2026-09-11 19:06:00 KST",
       "",
       "관리자에서 확인하기",
       "https://kyaa.io/admin",
@@ -292,11 +299,13 @@ describe("renderTelegramAlertMessage", () => {
 function queue(batch: TelegramAlertBatch | null): TelegramAlertQueue & {
   claim: ReturnType<typeof vi.fn>;
   begin: ReturnType<typeof vi.fn>;
+  reject: ReturnType<typeof vi.fn>;
   finish: ReturnType<typeof vi.fn>;
 } {
   return {
     claim: vi.fn().mockResolvedValue(batch),
     begin: vi.fn().mockResolvedValue(true),
+    reject: vi.fn().mockResolvedValue(true),
     finish: vi.fn().mockResolvedValue(undefined),
   };
 }
@@ -339,6 +348,7 @@ describe("TelegramAlertWorker", () => {
     await expect(worker.runOnce()).resolves.toBe(0);
     expect(sender.sendText).toHaveBeenCalledTimes(1);
     expect(q.finish).toHaveBeenCalledExactlyOnceWith(batch.batchId, "unknown", null, null);
+    expect(q.reject).not.toHaveBeenCalled();
   });
 
   it("records throttling with bounded retry metadata", async () => {
@@ -363,6 +373,7 @@ describe("TelegramAlertWorker", () => {
     const sender: TelegramAlertSender = { sendText: vi.fn() };
     await expect(new TelegramAlertWorker(q, sender, "-1001234567890").runOnce())
       .rejects.toThrow("TELEGRAM_ALERT_INVALID_BATCH");
+    expect(q.reject).toHaveBeenCalledExactlyOnceWith(batch.batchId, "-1001234567890");
     expect(q.begin).not.toHaveBeenCalled();
     expect(sender.sendText).not.toHaveBeenCalled();
     expect(q.finish).not.toHaveBeenCalled();
@@ -498,5 +509,67 @@ describe("major activity notifications", () => {
     expect(() => renderTelegramAlertMessage([{ ...activity, message_body: "private proof" }])).toThrow();
     const q = new SupabaseTelegramAlertQueue({ rpc: vi.fn().mockResolvedValue({ error: null, data: { batch_id: "01234567-1234-4234-8234-012345678901", alerts: [activity] } }) });
     expect((await q.claim("-1001234567890"))?.alerts[0]?.kind).toBe("raffle_entered");
+  });
+});
+
+
+describe("invalid Telegram batch quarantine", () => {
+  const batchId = "559fe228-ff92-4a85-a3e9-ad83d9e60f8b";
+  it.each([true, false])("passes through the rejection RPC CAS result %s", async result => {
+    const rpc = vi.fn().mockResolvedValue({ data: result, error: null });
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).reject(batchId, "-1001234567890")).resolves.toBe(result);
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("reject_telegram_alert_batch", { p_batch_id: batchId, p_chat_id: "-1001234567890" });
+  });
+  it.each([{ data: "true", error: null }, { data: null, error: { message: "private detail" } }])("rejects malformed RPC results safely", async result => {
+    const rpc = vi.fn().mockResolvedValue(result);
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).reject(batchId, "-1001234567890")).rejects.toThrow(/^TELEGRAM_ALERT_QUEUE_UNAVAILABLE$/);
+  });
+  it("accepts an anonymous report snapshot and rejects added reporter data", async () => {
+    const report = { ...alerts[0]!, kind: "content_report_created", actor_name: null, actor_email: null, activity_context: "fan_post · " + batchId, activity_quantity: 1 };
+    const rpc = vi.fn().mockResolvedValueOnce({ data: { batch_id: batchId, alerts: [report] }, error: null });
+    const q = new SupabaseTelegramAlertQueue({ rpc });
+    expect((await q.claim("-1001234567890"))?.alerts[0]?.kind).toBe("content_report_created");
+    rpc.mockResolvedValueOnce({ data: { batch_id: batchId, alerts: [{ ...report, reporter: "private" }] }, error: null }).mockResolvedValueOnce({ data: true, error: null });
+    await expect(q.claim("-1001234567890")).rejects.toThrow(/^TELEGRAM_ALERT_INVALID_BATCH$/);
+  });
+
+  it.each([true, false, new Error("private database detail")])("keeps malformed claim errors safe when reject returns %s", async result => {
+    const rpc = vi.fn().mockResolvedValueOnce({ data: { batch_id: batchId, alerts: [{ private: "secret" }] }, error: null });
+    if (result instanceof Error) rpc.mockRejectedValueOnce(result);
+    else rpc.mockResolvedValueOnce({ data: result, error: null });
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890")).rejects.toThrow(/^TELEGRAM_ALERT_INVALID_BATCH$/);
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenLastCalledWith("reject_telegram_alert_batch", { p_batch_id: batchId, p_chat_id: "-1001234567890" });
+  });
+  it.each(["private", undefined, [], null])("does not reject a claim without a valid batch UUID: %s", async batch_id => {
+    const rpc = vi.fn().mockResolvedValue({ data: { batch_id, alerts: [] }, error: null });
+    await expect(new SupabaseTelegramAlertQueue({ rpc }).claim("-1001234567890")).rejects.toThrow(/^TELEGRAM_ALERT_INVALID_BATCH$/);
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+  it.each([false, new Error("private detail")])("does not begin or send after rendering fails even when rejection fails", async result => {
+    const q = queue({ batchId, alerts: Array.from({ length: 6 }, () => alerts[0]!) });
+    if (result instanceof Error) q.reject.mockRejectedValue(result);
+    else q.reject.mockResolvedValue(result);
+    const sender = { sendText: vi.fn() };
+    await expect(new TelegramAlertWorker(q, sender, "-1001234567890").runOnce()).rejects.toThrow(/^TELEGRAM_ALERT_INVALID_BATCH$/);
+    expect(q.reject).toHaveBeenCalledExactlyOnceWith(batchId, "-1001234567890");
+    expect(q.begin).not.toHaveBeenCalled();
+    expect(sender.sendText).not.toHaveBeenCalled();
+  });
+  it("renders report warnings and individual legacy timestamps in mixed detailed batches", () => {
+    const report = { ...alerts[0]!, kind: "content_report_created" as const, actor_name: null, actor_email: null, activity_context: "fan_post · " + batchId, activity_quantity: 1 };
+    const message = renderTelegramAlertMessage([detailedActivity("fan_post_created"), report, alerts[1]!]);
+    expect(message).toMatch(/^⚠️/u);
+    expect(message).toContain("콘텐츠 신고 접수·검토 필요");
+    expect(message).toContain("신고 내용을 확인하고 처리해 주세요.");
+    expect(message).toContain("https://kyaa.io/admin/content-reports");
+    expect(message).toContain("시각: 2026-09-11 19:00:00 KST");
+    expect(message).toContain("시각: 2026-09-11 19:01:00 KST");
+  });
+  it.each(["business_failed", "mint_failed", "delivery_failed"] as const)("adds warning and next action for %s", kind => {
+    const message = renderTelegramAlertMessage([{ ...alerts[0]!, kind, actor_name: null, actor_email: null, activity_context: null, activity_quantity: null }]);
+    expect(message).toMatch(/^⚠️/u);
+    expect(message).toContain("확인");
+    expect(message).toContain("시각: 2026-09-11 19:00:00 KST");
   });
 });

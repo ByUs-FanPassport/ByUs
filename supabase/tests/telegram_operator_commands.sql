@@ -16,7 +16,7 @@ begin
   perform pg_temp.command_expect((stats->>'disabled_users')::integer=(before_users->>'disabled_users')::integer+1,'disabled members explicit');
   perform pg_temp.command_expect(stats->'passport_users'=before_users->'passport_users','passportless users distinct');
   stats:=public.telegram_command_stats('today','2040-01-02T03:00:00Z');
-  perform pg_temp.command_expect(stats->>'date'='2040-01-02' and stats->>'signups'='2','KST midnight half-open interval including disabled signup facts');
+  perform pg_temp.command_expect(stats->>'date'='2040-01-02' and stats->>'signups'='1','KST midnight inclusive and generation time exclusive; future signup excluded');
   perform pg_temp.command_expect(not (stats ?| array['email','nickname','app_user_id']),'aggregate-only projection');
 
   foreach role_name in array array['anon','authenticated','service_role'] loop
