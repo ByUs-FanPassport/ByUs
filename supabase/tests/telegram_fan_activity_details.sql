@@ -10,7 +10,7 @@ declare
   c uuid:='fa300000-0000-4000-8000-000000000013'; artist uuid:='fa300000-0000-4000-8000-000000000021';
   notice uuid:='fa300000-0000-4000-8000-000000000022'; post uuid; comment uuid; reply uuid;
   lounge uuid; lounge_reply uuid; note_comment uuid; key uuid:=gen_random_uuid();
-  d jsonb; batch jsonb; payload jsonb; role_name text; n integer; sent integer:=0; old_like uuid;
+  d jsonb; batch jsonb; first_batch jsonb; payload jsonb; role_name text; n integer; sent integer:=0; old_like uuid;
 begin
   insert into public.app_users(id,privy_user_id,verified_email) values
     (a,'did:privy:telegram-detail-a','detail-a@example.test'),
@@ -109,6 +109,32 @@ begin
   end loop;
   perform pg_temp.expect(sent=8 and (select status='skipped' from public.telegram_alert_outbox where id=old_like),'drain all 8 valid events, retire stale like');
   perform pg_temp.expect(public.claim_telegram_alert_batch_with_cs_content('-1001234567890') is null,'idle silent');
+
+  -- The real claim budget splits four CS previews and a full comment before rendering.
+  for i in 1..4 loop
+    perform public.cs_create(a,'혼합 알림 검증',repeat('문',600),'ko',gen_random_uuid());
+  end loop;
+  update public.telegram_alert_outbox set created_at=now()-interval '1 second'
+    where status='pending' and kind='cs_inquiry_created';
+  comment:=(public.post_fan_post_comment(b,post,null,repeat('댓',750),gen_random_uuid())->>'id')::uuid;
+  first_batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
+  perform pg_temp.expect(jsonb_array_length(first_batch->'alerts')=4 and not exists(
+    select 1 from jsonb_array_elements(first_batch->'alerts') item where item->>'kind'<>'cs_inquiry_created'),
+    'real claim returns four CS messages, not an oversized mixed batch');
+  perform pg_temp.expect((select status='pending' and attempt_count=0 from public.telegram_alert_outbox
+    where activity_source_id=comment),'comment remains pending without a send attempt');
+  perform pg_temp.expect(public.begin_telegram_alert_send((first_batch->>'batch_id')::uuid,'-1001234567890'),'mixed CS begin');
+  perform public.finish_telegram_alert_batch((first_batch->>'batch_id')::uuid,'sent',124);
+  update public.telegram_alert_settings set next_send_at='-infinity';
+  batch:=public.claim_telegram_alert_batch_with_cs_content('-1001234567890');
+  perform pg_temp.expect(jsonb_array_length(batch->'alerts')=1 and batch#>>'{alerts,0,detail,body}'=repeat('댓',750),
+    'next claim preserves the complete comment');
+  raise notice 'TELEGRAM_MIXED_FIXTURE=%',jsonb_build_array(first_batch,batch);
+  perform pg_temp.expect(public.begin_telegram_alert_send((batch->>'batch_id')::uuid,'-1001234567890'),'mixed comment begin');
+  perform public.finish_telegram_alert_batch((batch->>'batch_id')::uuid,'sent',125);
+  update public.telegram_alert_settings set next_send_at='-infinity';
+  perform pg_temp.expect(not exists(select 1 from public.telegram_alert_outbox where status in ('pending','claimed','failed')),
+    'mixed events finish without quarantine or lost remainder');
 
   -- Full 1000-codepoint comments stay in a single message-sized batch.
   perform public.post_fan_post_comment(c,post,null,repeat('💖',1000),gen_random_uuid());

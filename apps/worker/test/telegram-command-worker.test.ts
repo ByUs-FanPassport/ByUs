@@ -271,3 +271,29 @@ describe("operations and marketing commands", () => {
     expect(renderTelegramCommandReply({ command: "help", generated_at: marketing.generated_at })).toContain("/marketing");
   });
 });
+
+
+describe("expanded operations summaries", () => {
+  const today = { command: "today" as const, generated_at: "2026-10-17T10:00:00Z", date: "2026-10-17", signups: 1, fan_joins: 2, reservations: 3, attendances: 4 };
+  const activity = { checkins: 5, reactions: 6, fan_posts: 7, fan_comments: 8, cheers: 9, raffle_entries: 10, raffle_tickets: 11, recipient_submissions: 12 };
+  const ops = { command: "ops" as const, generated_at: today.generated_at, pending_cs: 0, pending_certifications: 0, failed_mints: 0, overdue_mints: 0, failed_deliveries: 0, business_pending: 0, business_failed: 0, telegram_pending: 0, telegram_failed: 4, telegram_unknown: 1, telegram_oldest_pending_at: null };
+  it("preserves old today replies and adds explicit activity units with KST scope", () => {
+    expect(renderTelegramCommandReply(today)).toBe("📅 오늘 현황 · 2026-10-17\n가입 1명 · 팬 가입 2건 · 예약 3건 · 출석 4건");
+    const reply = renderTelegramCommandReply({ ...today, activity });
+    for (const text of ["오늘 진행분", "KST", "19:00", "운영/테스트 계정", "활성 이용자 수", "출석 체크 5건", "리액션 6건", "팬 게시글 7건", "팬 게시글·공지 댓글 8건", "응원글·답글 9건", "응모 10건", "사용 응모권 11장", "수령 정보 제출 12건"]) expect(reply).toContain(text);
+  });
+  it("explains fulfillment subsets, report queue, and invalid Telegram subset", () => {
+    const reply = renderTelegramCommandReply({ ...ops, fulfillment: { information_required: 5, overdue: 2, ready: 3, oldest_information_required_at: today.generated_at }, content_reports_pending: 6, telegram_invalid: 2 });
+    for (const text of ["수령 정보 대기 5건", "그중 기한 경과 2건", "전달 준비 3건", "콘텐츠 신고 검토 대기 6건", "발송 실패 4건 (그중 전송 전 검증 실패 2건)", "/admin/benefits", "/admin/content-reports", "자동 재전송", "워커 가동을 보증하지 않습니다"]) expect(reply).toContain(text);
+    expect(reply).not.toContain("거절 4건");
+  });
+  it.each([
+    { ...today, activity: { ...activity, checkins: -1 } },
+    { ...today, activity: { checkins: 1 } },
+    { ...today, activity: { ...activity, private: "secret" } },
+    { ...ops, fulfillment: { information_required: 1, overdue: 0, ready: 0, oldest_information_required_at: "bad" } },
+    { ...ops, telegram_invalid: -1 },
+  ])("strictly rejects malformed optional aggregates", payload => {
+    expect(() => renderTelegramCommandReply(payload as Parameters<typeof renderTelegramCommandReply>[0])).toThrow();
+  });
+});

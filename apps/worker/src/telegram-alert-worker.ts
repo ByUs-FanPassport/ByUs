@@ -14,6 +14,7 @@ const BOT_TOKEN = /^[1-9]\d{5,11}:[A-Za-z0-9_-]{35}$/;
 const GROUP_OR_CHANNEL_CHAT_ID = /^-[1-9]\d{5,19}$/;
 
 const activityLabels = {
+  "content_report_created": ["콘텐츠 신고 접수·검토 필요", "content-reports"],
   "fan_post_created": [
     "팬 게시글 작성",
     "celebrities"
@@ -126,6 +127,7 @@ const activityLabels = {
 type ActivityKind = keyof typeof activityLabels;
 
 const kindSchema = z.enum([
+  "content_report_created",
   "member_joined",
   "fan_joined",
   "live_reserved",
@@ -381,7 +383,7 @@ function detailedMessage(input: readonly TelegramAlertSnapshot[]): string | null
   }
   const bodies = input.map((alert) => alert.detail?.body == null ? null : cleanDetailText(alert.detail.body));
   const render = (currentBodies: readonly (string | null)[], truncated: ReadonlySet<number>) => [
-    "🎉 kyaa 주요 소식",
+    alertHeader(input),
     "",
     ...input.flatMap((alert, index) => alert.detail
       ? renderDetailedAlert(alert, currentBodies[index] ?? null, truncated.has(index))
@@ -423,7 +425,19 @@ function detailedMessage(input: readonly TelegramAlertSnapshot[]): string | null
   return message;
 }
 
+function alertHeader(input: readonly TelegramAlertSnapshot[]): string {
+  return input.some(alert => ["business_failed", "mint_failed", "delivery_failed", "content_report_created"].includes(alert.kind))
+    ? "⚠️ kyaa 확인이 필요한 소식" : "🎉 kyaa 주요 소식";
+}
+
 function renderLegacyAlert(alert: TelegramAlertSnapshot): string[] {
+  const next = {
+    content_report_created: "신고 내용을 확인하고 처리해 주세요.",
+    business_failed: "담당 메일함과 전송 기록을 확인해 주세요. 결과 불명은 자동 재전송하지 않습니다.",
+    mint_failed: "관리자에서 발급 실패 원인과 재처리 가능 여부를 확인해 주세요.",
+    delivery_failed: "관리자에서 전송 결과를 확인해 주세요. 결과 불명은 자동 재전송하지 않습니다.",
+  }[alert.kind as "content_report_created" | "business_failed" | "mint_failed" | "delivery_failed"];
+  const time = `  시각: ${kstTimestamp(alert.occurred_at)}`;
   if (alert.kind in activityLabels) {
     alertSchema.parse(alert);
     const [label, page] = activityLabels[alert.kind as ActivityKind];
@@ -435,26 +449,26 @@ function renderLegacyAlert(alert: TelegramAlertSnapshot): string[] {
           `  소속: ${cleanPublicName(alert.rsvp.affiliation, 120)}`,
           `  직책: ${cleanPublicName(alert.rsvp.occupation, 120)}`,
         ] : []),
-        `  누적 ${alert.activity_quantity ?? 0}명`, `${ADMIN_URL}/${page}`];
+        `  누적 ${alert.activity_quantity ?? 0}명`, `${ADMIN_URL}/${page}`, ...(next ? [`  ${next}`] : []), time];
     }
     return [`• ${label}`, ...(context ? [`  ${context}`] : []),
-      ...(alert.kind === "raffle_entered" ? [`  사용 응모권 ${alert.activity_quantity ?? 0}장`] : []), `${ADMIN_URL}/${page}`];
+      ...(alert.kind === "raffle_entered" ? [`  사용 응모권 ${alert.activity_quantity ?? 0}장`] : []), `${ADMIN_URL}/${page}`, ...(next ? [`  ${next}`] : []), time];
   }
   if (alert.kind === "campaign_visited") {
-    return ["• 캠페인 링크로 새 방문", `  ${cleanPublicName(alert.campaign_name ?? null, 80)}`, `  채널: ${cleanPublicName(alert.campaign_channel ?? null, 40)} · 브라우저 세션 1건`, `${ADMIN_URL}/campaigns`];
+    return ["• 캠페인 링크로 새 방문", `  ${cleanPublicName(alert.campaign_name ?? null, 80)}`, `  채널: ${cleanPublicName(alert.campaign_channel ?? null, 40)} · 브라우저 세션 1건`, `${ADMIN_URL}/campaigns`, time];
   }
   if (alert.kind === "cs_inquiry_created" || alert.kind === "cs_user_replied") {
     const inquiryId = z.uuid().safeParse(alert.inquiry_id);
     if (!inquiryId.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
     const event = alert.kind === "cs_inquiry_created" ? "새 CS 문의 접수" : "CS 문의에 새 메시지";
     const preview = cleanPublicName(alert.message_body ?? null, 600);
-    return [`• ${event}`, `내용: ${preview}`, `${ADMIN_INQUIRY_URL}/${inquiryId.data}`];
+    return [`• ${event}`, `내용: ${preview}`, `${ADMIN_INQUIRY_URL}/${inquiryId.data}`, time];
   }
   const creatorName = cleanPublicName(alert.creator_name, 48);
   const liveTitle = cleanPublicName(alert.live_title, 72);
   const context = publicContext(creatorName, liveTitle);
   const prefix = context ? `${context} ` : "";
-  if (alert.kind === "draw_published") return [`• ${prefix}추첨 결과 공개 · 당첨 ${alert.winner_count ?? 0}명`];
+  if (alert.kind === "draw_published") return [`• ${prefix}추첨 결과 공개 · 당첨 ${alert.winner_count ?? 0}명`, time];
   const actorName = cleanPublicName(alert.actor_name, 48) || "닉네임 미설정";
   const actorEmail = cleanPublicName(alert.actor_email, 320) || "이메일 미등록";
   let event: string = "주요 활동";
@@ -464,7 +478,7 @@ function renderLegacyAlert(alert: TelegramAlertSnapshot): string[] {
     case "live_reserved": event = `${prefix}예약`; break;
     case "live_attended": event = `${prefix}출석`; break;
   }
-  return [`• ${event}`, `  ${actorName}`, `  ${actorEmail}`];
+  return [`• ${event}`, `  ${actorName}`, `  ${actorEmail}`, time];
 }
 
 export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot[]): string {
@@ -475,7 +489,7 @@ export function renderTelegramAlertMessage(input: readonly TelegramAlertSnapshot
   if (detail) return detail;
   const lines = input.flatMap(renderLegacyAlert);
   const message = [
-    "🎉 kyaa 주요 소식",
+    alertHeader(input),
     "",
     ...lines,
     "",
@@ -568,6 +582,7 @@ export class TelegramHttpSender implements TelegramAlertSender {
 export interface TelegramAlertQueue {
   claim(chatId: string): Promise<TelegramAlertBatch | null>;
   begin(batchId: string, chatId: string): Promise<boolean>;
+  reject(batchId: string, chatId: string): Promise<boolean>;
   finish(
     batchId: string,
     outcome: TelegramAlertOutcome,
@@ -596,8 +611,20 @@ export class SupabaseTelegramAlertQueue implements TelegramAlertQueue {
     const data = await this.call("claim_telegram_alert_batch_with_cs_content", { p_chat_id: chatId });
     if (data === null) return null;
     const parsed = claimedBatchSchema.safeParse(data);
-    if (!parsed.success) throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
+    if (!parsed.success) {
+      const batchId = z.uuid().safeParse(record(data)?.batch_id);
+      if (batchId.success) {
+        try { await this.reject(batchId.data, chatId); } catch { /* preserve the safe validation error */ }
+      }
+      throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
+    }
     return { batchId: parsed.data.batch_id, alerts: parsed.data.alerts };
+  }
+
+  async reject(batchId: string, chatId: string): Promise<boolean> {
+    const data = await this.call("reject_telegram_alert_batch", { p_batch_id: batchId, p_chat_id: chatId });
+    if (typeof data !== "boolean") throw new Error("TELEGRAM_ALERT_QUEUE_UNAVAILABLE");
+    return data;
   }
 
   async begin(batchId: string, chatId: string): Promise<boolean> {
@@ -635,7 +662,12 @@ export class TelegramAlertWorker {
   async runOnce(): Promise<number> {
     const batch = await this.queue.claim(this.chatId);
     if (!batch) return 0;
-    const text = renderTelegramAlertMessage(batch.alerts);
+    let text: string;
+    try { text = renderTelegramAlertMessage(batch.alerts); }
+    catch {
+      try { await this.queue.reject(batch.batchId, this.chatId); } catch { /* preserve the safe validation error */ }
+      throw new Error("TELEGRAM_ALERT_INVALID_BATCH");
+    }
     if (!await this.queue.begin(batch.batchId, this.chatId)) return 0;
     let providerMessageId: bigint;
     try {

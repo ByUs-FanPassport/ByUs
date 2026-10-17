@@ -44,6 +44,10 @@ const usersPayload = z.object({
 const todayPayload = z.object({
   command: z.literal("today"), generated_at: generated, date: z.iso.date(),
   signups: count, fan_joins: count, reservations: count, attendances: count,
+  activity: z.object({
+    checkins: count, reactions: count, fan_posts: count, fan_comments: count, cheers: count,
+    raffle_entries: count, raffle_tickets: count, recipient_submissions: count,
+  }).strict().optional(),
 }).strict();
 const liveSchema = z.object({
   creator_name: z.string(), title: z.string(), starts_at: generated,
@@ -59,6 +63,12 @@ const opsPayload = z.object({
   failed_deliveries: count, business_pending: count, business_failed: count,
   telegram_pending: count, telegram_failed: count, telegram_unknown: count,
   telegram_oldest_pending_at: generated.nullable(),
+  telegram_invalid: count.optional(),
+  content_reports_pending: count.optional(),
+  fulfillment: z.object({
+    information_required: count, overdue: count, ready: count,
+    oldest_information_required_at: generated.nullable(),
+  }).strict().optional(),
 }).strict();
 const marketingCounts = z.object({
   accounts: count, profile_accounts: count, passport_accounts: count, reactions: count,
@@ -167,9 +177,9 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
     case "help": message = [
       "🤖 kyaa 관리자 명령어",
       "/users 회원 현황",
-      "/today 오늘 가입·팬 가입·예약·출석",
+      "/today 오늘 가입·팬 활동·응모·수령 정보 제출",
       "/lives 공개 라이브 현황",
-      "/ops 운영 대기·실패 현황",
+      "/ops 운영 대기·실패·경품 전달·신고 현황",
       "/marketing 최근 7일 성과·확인할 지점",
       "/help 명령어 안내",
     ].join("\n"); break;
@@ -179,7 +189,14 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
       `발급 최종 실패 ${payload.failed_mints}건 · 예정 시각보다 30분 이상 늦은 대기/재시도 ${payload.overdue_mints}건`,
       `팬 알림 최종 실패/결과 불명 ${payload.failed_deliveries}건 (푸시 전달 + 외부 전송 계획)`,
       `사업 문의 메일 대기 ${payload.business_pending}건 · 실패/결과 불명 ${payload.business_failed}건`,
-      `Telegram 대기/전송 중 ${payload.telegram_pending}건 · 거절 ${payload.telegram_failed}건 · 결과 불명 ${payload.telegram_unknown}건`,
+      `Telegram 대기/전송 중 ${payload.telegram_pending}건 · 발송 실패 ${payload.telegram_failed}건${payload.telegram_invalid === undefined ? "" : ` (그중 전송 전 검증 실패 ${payload.telegram_invalid}건)`} · 결과 불명 ${payload.telegram_unknown}건`,
+      ...(payload.fulfillment ? [
+        `경품 수령 정보 대기 ${payload.fulfillment.information_required}건 (그중 기한 경과 ${payload.fulfillment.overdue}건) · 전달 준비 ${payload.fulfillment.ready}건`,
+        `가장 오래된 수령 정보 대기: ${payload.fulfillment.oldest_information_required_at ? seoulTime(payload.fulfillment.oldest_information_required_at) + " KST" : "없음"}`,
+        "https://kyaa.io/admin/benefits",
+      ] : []),
+      ...(payload.content_reports_pending === undefined ? [] : [`콘텐츠 신고 검토 대기 ${payload.content_reports_pending}건`, "https://kyaa.io/admin/content-reports"]),
+      "결과 불명 알림은 자동 재전송하지 않습니다. 관리자에서 전송 기록을 확인해 주세요.",
       `가장 오래된 대기: ${payload.telegram_oldest_pending_at ? seoulTime(payload.telegram_oldest_pending_at) + " KST" : "없음"}`,
       "현재 DB 상태이며 워커 가동을 보증하지 않습니다. Telegram 완료 이력은 30일 보관합니다.",
       "https://kyaa.io/admin/inquiries", "https://kyaa.io/admin/certifications",
@@ -220,6 +237,13 @@ export function renderTelegramCommandReply(raw: TelegramCommandPayload): string 
     case "today": message = [
       `📅 오늘 현황 · ${payload.date}`,
       `가입 ${payload.signups}명 · 팬 가입 ${payload.fan_joins}건 · 예약 ${payload.reservations}건 · 출석 ${payload.attendances}건`,
+      ...(payload.activity ? [
+        `출석 체크 ${payload.activity.checkins}건 · 리액션 ${payload.activity.reactions}건 · 팬 게시글 ${payload.activity.fan_posts}건`,
+        `팬 게시글·공지 댓글 ${payload.activity.fan_comments}건 · 응원글·답글 ${payload.activity.cheers}건`,
+        `응모 ${payload.activity.raffle_entries}건 · 사용 응모권 ${payload.activity.raffle_tickets}장 · 수령 정보 제출 ${payload.activity.recipient_submissions}건`,
+        `생성 시각: ${seoulTime(payload.generated_at)} KST · 오늘 진행분`,
+        "활동 건수이며 활성 이용자 수가 아닙니다. 운영/테스트 계정이 포함됩니다.",
+      ] : []),
     ].join("\n"); break;
     case "lives": message = payload.lives.length === 0
       ? "🎥 공개 라이브 현황 · 총 0개\n조회할 라이브가 없습니다."

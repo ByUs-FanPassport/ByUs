@@ -8,6 +8,7 @@ psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/cs_telegram_alerts.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_campaign_visits.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_certification_reviews.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_operations.sql"
+psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_pm_visibility.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/telegram_fan_activity_details.sql"
 psql -X -v ON_ERROR_STOP=1 -f "$root_dir/supabase/tests/recurring_live_schedules.sql"
 python3 <<'PY'
@@ -56,3 +57,4 @@ sql("delete from public.telegram_alert_outbox; select public.configure_telegram_
 print('PASS Telegram two-session claim, begin, destination-switch, command dedupe and cursor races')
 PY
 node "$root_dir/scripts/verify-telegram-certification-concurrency.mjs"
+python3 "$root_dir/scripts/verify-telegram-reject-lease.py"
