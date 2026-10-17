@@ -50,4 +50,34 @@ describe("official CHZZK LIVE source", () => {
       { state: "unavailable", channelId: offlineChannel, observedAt: now().toISOString() },
     ]);
   });
+
+  it("finishes lists beyond 150 pages before proving a target offline", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => {
+      const page = fetcher.mock.calls.length;
+      return page <= 150
+        ? response([], `cursor-${page + 1}`)
+        : response([{ channelId: liveChannel, liveTitle: "정제니 LIVE" }], null);
+    });
+
+    const result = await fetchChzzkLiveObservations([liveChannel, offlineChannel], {
+      clientId, clientSecret, fetcher, now,
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(151);
+    expect(result.complete).toBe(true);
+    expect(result.observations.map(item => item.state)).toEqual(["live", "offline"]);
+  });
+
+  it("still stops at the scan deadline without claiming a target offline", async () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValue(45_000);
+    const fetcher = vi.fn<typeof fetch>();
+    try {
+      const result = await fetchChzzkLiveObservations([offlineChannel], { clientId, clientSecret, fetcher, now });
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(result.complete).toBe(false);
+      expect(result.observations[0]?.state).toBe("unavailable");
+    } finally {
+      clock.mockRestore();
+    }
+  });
 });

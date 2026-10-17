@@ -9,7 +9,6 @@ import {
 } from "@/features/live/domain/chzzk-live";
 
 const LIVE_ENDPOINT = "https://openapi.chzzk.naver.com/open/v1/lives";
-const MAX_PAGES = 150;
 const MAX_RESPONSE_BYTES = 512 * 1024;
 const REQUEST_TIMEOUT_MS = 10_000;
 const SCAN_TIMEOUT_MS = 45_000;
@@ -89,7 +88,7 @@ export async function fetchChzzkLiveObservations(channelIds: readonly string[], 
   const deadline = Date.now() + SCAN_TIMEOUT_MS;
   let next: string | null = null;
   try {
-    for (let page = 0; page < MAX_PAGES; page += 1) {
+    for (;;) {
       const remainingMs = deadline - Date.now();
       if (remainingMs <= 0) break;
       const result = await fetchPage(next, options, remainingMs);
